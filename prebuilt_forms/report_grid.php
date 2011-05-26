@@ -39,8 +39,7 @@ class iform_report_grid {
       'title'=>'Report Grid',
       'category' => 'Reporting',
       'description'=>'Outputs a grid of data loaded from an Indicia report. Can automatically include the report parameters form required for the '.
-          'generation of the report.',
-      'helpLink' => 'http://code.google.com/p/indicia/wiki/PrebuiltFormReportGrid'
+          'generation of the report.'
     );
   }
   
@@ -53,22 +52,13 @@ class iform_report_grid {
       iform_report_get_report_parameters(),
       array(
         array(
-          'name' => 'columns_config',
-          'caption' => 'Columns Configuration JSON',
-          'description' => 'JSON that describes the columns configuration parameter sent to the report grid component. '.
-              'The <a href="http://jsonlint.com/">JSONLint</a> validator is useful for checking your JSON is correct.',
-          'type' => 'textarea',
-          'required' => false,
-          'group'=>'Report Settings'
-        ), array(
           'name' => 'gallery_col_count',
           'caption' => 'Gallery Column Count',
-          'description' => 'If set to a value greater than one, then each grid row will contain more than one record of data from the database, allowing '.
+          'description' => ' If set to a value greater than one, then each grid row will contain more than one record of data from the database, allowing '.
               ' a gallery style view to be built.',
           'type' => 'int',
           'required' => false,
-          'default' => 1,
-          'group'=>'Report Settings'
+          'default' => 1
         ),
         array(
           'name' => 'items_per_page',
@@ -76,17 +66,7 @@ class iform_report_grid {
           'description' => 'Maximum number of rows shown on each page of the table',
           'type' => 'int',
           'default' => 20,
-          'required' => true,
-          'group'=>'Report Settings'
-        ),
-        array(
-          'name' => 'download_link',
-          'caption' => 'Download link',
-          'description' => 'Should a link be made available to download the report content as CSV?',
-          'type' => 'checkbox',
-          'default' => 1,
-          'required' => false,
-          'group'=>'Report Settings'
+          'required' => true
         )
       )
     );
@@ -104,9 +84,8 @@ class iform_report_grid {
     require_once drupal_get_path('module', 'iform').'/client_helpers/map_helper.php';
     $auth = report_helper::get_read_write_auth($args['website_id'], $args['password']);
     $reportOptions = iform_report_get_report_options($args, $auth);
-    // Add a download link - get_report_data does not use paramDefaults but needs all settings in the extraParams
-    if (!isset($args['download_link']) || $args['download_link'])
-      $r .= '<br/>'.report_helper::report_download_link($reportOptions);
+    // Add a download link - get_report_data does not use paramDefaults but needs all settings in the extraParams 
+    $r .= '<br/>'.report_helper::report_download_link($reportOptions);
     // now the grid
     $r .= '<br/>'.report_helper::report_grid($reportOptions);
     return $r;

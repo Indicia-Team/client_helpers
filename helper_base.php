@@ -19,166 +19,11 @@
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link 	http://code.google.com/p/indicia/
  */
-
+ 
 require_once('helper_config.php');
 
-global $indicia_templates;
-
-/**
- * Provides control templates to define the output of the data entry helper class.
- *
- * @package	Client
- */
-$indicia_templates = array(
-  'prefix' => '',
-  'label' => '<label for="{id}"{labelClass}>{label}:</label>'."\n",
-  'suffix' => "<br/>\n",
-  'nosuffix' => " \n",
-  'requiredsuffix' => '<span class="deh-required">*</span><br/>'."\n",
-  'validation_message' => '<label for="{for}" class="{class}">{error}</label>'."\n",
-  'validation_icon' => '<span class="ui-state-error ui-corner-all validation-icon">'.
-      '<span class="ui-icon ui-icon-alert"></span></span>',
-  'error_class' => 'inline-error',
-  'image_upload' => '<input type="file" id="{id}" name="{fieldname}" accept="png|jpg|gif|jpeg" {title}/>'."\n".
-      '<input type="hidden" id="{pathFieldName}" name="{pathFieldName}" value="{pathFieldValue}"/>'."\n",
-  'text_input' => '<input type="text" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
-  'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
-  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
-  'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" size="30"{class} id="{id}" name="{fieldname}" value="{default}" {title}/>',
-  'select' => '<select id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
-  'select_item' => '<option value="{value}" {selected} >{caption}</option>',
-  'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
-  'listbox' => '<select id="{id}" name="{fieldname}"{class} {disabled} size="{size}" multiple="{multiple}" {title}>{options}</select>',
-  'listbox_item' => '<option value="{value}" {selected} >{caption}</option>',
-  'list_in_template' => '<ul{class} {title}>{items}</ul>',
-  'check_or_radio_group' => '<div{class}>{items}</div>',
-  'check_or_radio_group_item' => '<nobr><span><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked} {disabled}/><label for="{itemId}">{caption}</label></span></nobr>{sep}',
-  'map_panel' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<div id=\"{divId}\" style=\"width: {width}; height: {height};\"{class}></div>');\n".
-    "/* ]]> */</script>",
-  'georeference_lookup' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<input id=\"imp-georef-search\"{class} />');\n".
-    "document.write('<input type=\"button\" id=\"imp-georef-search-btn\" class=\"ui-corner-all ui-widget-content ui-state-default indicia-button\" value=\"{search}\" />');\n".
-    "document.write('<div id=\"imp-georef-div\" class=\"ui-corner-all ui-widget-content ui-helper-hidden\">');\n".
-    "document.write('  <div id=\"imp-georef-output-div\">');\n".
-    "document.write('  </div>');\n".
-    "document.write('  <a class=\"ui-corner-all ui-widget-content ui-state-default indicia-button\" href=\"#\" id=\"imp-georef-close-btn\">{close}</a>');\n".
-    "document.write('</div>');".
-    "\n/* ]]> */</script>",
-  'tab_header' => '<script type="text/javascript">/* <![CDATA[ */'."\n".
-      'document.write(\'<ul class="ui-helper-hidden">{tabs}</ul>\');'.
-      "\n/* ]]> */</script>\n".
-      "<noscript><ul>{tabs}</ul></noscript>\n",
-  'tab_next_button' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<div{class}>');\n".
-    "document.write('  <span>{captionNext}</span>');\n".
-    "document.write('  <span class=\"ui-icon ui-icon-circle-arrow-e\"></span>');\n".
-    "document.write('</div>');\n".
-    "/* ]]> */</script>\n",
-  'tab_prev_button' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<div{class}>');\n".
-    "document.write('  <span class=\"ui-icon ui-icon-circle-arrow-w\"></span>');\n".
-    "document.write('  <span>{captionPrev}</span>');\n".
-    "document.write('</div>');\n".
-    "/* ]]> */</script>\n",
-  'submit_button' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<div{class}>');\n".
-    "document.write('  <span>{captionSave}</span>');\n".
-    "document.write('</div>');\n".
-    "/* ]]> */</script>\n".
-    "<noscript><input type=\"submit\" value=\"{captionSave}\" /></noscript>\n",
-  'loading_block_start' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-      'document.write(\'<div class="ui-widget ui-widget-content ui-corner-all loading-panel" >'.
-      '<img src="'.helper_config::$base_url.'media/images/ajax-loader2.gif" />'.
-      lang::get('loading')."...</div>');\n".
-      'document.write(\'<div class="loading-hide">\');'.
-      "\n/* ]]> */</script>\n",
-  'loading_block_end' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-      "document.write('</div>');\n".
-      "/* ]]> */</script>",
-  'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em>{taxon}</em></span> {authority} '.
-      '<span class="nobreak vernacular">{common}</span></div>',
-  'treeview_node' => '<span>{caption}</span>',
-  'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
-  'tree_browser_node' => '<span>{caption}</span>',
-  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />'."\n".
-      '<input id="{inputId}" name="{inputId}" value="{defaultCaption}" {class} {disabled} {title}/>'."\n",
-  'autocomplete_javascript' => "jQuery('input#{escaped_input_id}').autocomplete('{url}/{table}',
-      {
-        extraParams : {
-          orderby : '{captionField}',
-          mode : 'json',
-          qfield : '{captionField}',
-          {sParams}
-        },
-        parse: function(data)
-        {
-          // Clear the current selected key as the user has changed the search text
-          jQuery('input#{escaped_id}').val('');
-          var results = [];
-          jQuery.each(data, function(i, item) {
-            results[results.length] =
-            {
-              'data' : item,
-              'result' : item.{captionField},
-              'value' : item.{valueField}
-            };
-          });
-          return results;
-        },
-      formatItem: function(item)
-      {
-        return item.{captionField};
-      }
-      {max}
-    });
-    jQuery('input#{escaped_input_id}').result(function(event, data) {
-      jQuery('input#{escaped_id}').attr('value', data.id);
-      jQuery('input#{escaped_id}').change();
-    });\r\n",
-  'linked_list_javascript' => "
-{fn} = function() {
-  $('#{escapedId}').addClass('ui-state-disabled');
-  $('#{escapedId}').html('<option>Loading...</option>');
-  $.getJSON('{request}&{filterField}='+$(this).val(), function(data){
-    $('#{escapedId}').html('');
-    if (data.length>0) {
-      $('#{escapedId}').removeClass('ui-state-disabled');
-      $.each(data, function(i) {
-        $('#{escapedId}').append('<option value=\"'+this.{valueField}+'\">'+this.{captionField}+'</option>');
-      });
-    } else {
-      $('#{escapedId}').html('<option>{instruct}</option>');
-    }
-  });
-};
-jQuery('#{parentControlId}').change({fn});
-jQuery('#{parentControlId}').change();\n",
-  'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
-        'onblur="javascript:decodePostcode(\'{linkedAddressBoxId}\');" />',
-  'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
-        '<input type="hidden" id="imp-geom" name="{table}:geom" value="{defaultGeom}" />',
-  'sref_textbox_latlong' => '<label for="{idLat}">{labelLat}:</label>'.
-        '<input type="text" id="{idLat}" name="{fieldnameLat}" {class} {disabled} value="{defaultLat}" /><br />' .
-        '<label for="{idLong}">{labelLong}:</label>'.
-        '<input type="text" id="{idLong}" name="{fieldnameLong}" {class} {disabled} value="{defaultLong}" />' .
-        '<input type="hidden" id="imp-geom" name="{table}:geom" value="{defaultGeom}" />'.
-        '<input type="hidden" id="{id}" name="{fieldname}" value="{default}" />',
-  'attribute_cell' => "\n<td class=\"scOccAttrCell ui-widget-content {class}\">{content}</td>",
-  'taxon_label_cell' => "\n<td class=\"scTaxonCell ui-state-default\"{colspan}>{content}</td>",
-  'helpText' => "\n<p class=\"{helpTextClass}\">{helpText}</p>",
-  'button' => '<div class="indicia-button ui-state-default ui-corner-all" id="{id}"><span>{caption}</span></div>',
-  'file_box' => '',                   // the JQuery plugin default will apply, this is just a placeholder for template overrides.
-  'file_box_initial_file_info' => '', // the JQuery plugin default will apply, this is just a placeholder for template overrides.
-  'file_box_uploaded_image' => '',    // the JQuery plugin default will apply, this is just a placeholder for template overrides.
-  'paging_container' => "<div class=\"pager ui-helper-clearfix\">\n{paging}\n</div>\n",
-  'paging' => '<div class="left">{first} {prev} {pagelist} {next} {last}</div><div class="right">{showing}</div>'
-);
-
-
-/**
- * Base class for the report and data entry helpers. Provides several generally useful methods and also includes
+/** 
+ * Base class for the report and data entry helpers. Provides several generally useful methods and also includes 
  * resource management.
  */
 class helper_base extends helper_config {
@@ -194,13 +39,13 @@ class helper_base extends helper_config {
    * sub-arrays. This has public access so the Drupal module can perform Drupal specific resource output.
    */
   public static $required_resources=array();
-
+  
   /**
    * @var Array List of all available resources known. Each resource is named, and contains a sub array of
    * deps (dependencies), stylesheets and javascripts.
    */
   public static $resource_list=null;
-
+  
   /**
    * @var string Path to Indicia JavaScript folder. If not specified, then it is calculated from the Warehouse $base_url.
    * This path should be a full path on the server (starting with '/' exluding the domain).
@@ -214,11 +59,11 @@ class helper_base extends helper_config {
   public static $css_path = null;
 
   /**
-   * @var array List of resources that have already been dumped out, so we don't duplicate them. For example, if the
+   * @var array List of resources that have already been dumped out, so we don't duplicate them. For example, if the 
    * site template includes JQuery set $dumped_resources[]='jquery'.
    */
   public static $dumped_resources=array();
-
+  
   /**
    * @var string JavaScript text to be emitted after the data entry form. Each control that
    * needs custom JavaScript can append the script to this variable.
@@ -234,7 +79,7 @@ class helper_base extends helper_config {
    * @var string JavaScript text to be emitted during window.onload.
    */
   public static $onload_javascript = '';
-
+  
   /**
    * List of methods used to report a validation failure. Options are message, message, hint, icon, colour, inline.
    * The inline option specifies that the message should appear on the same line as the control.
@@ -244,7 +89,7 @@ class helper_base extends helper_config {
    * @var array
    */
   public static $validation_mode=array('message', 'colour');
-
+  
   /**
    * @var array Name of the form which has been set up for jQuery validation, if any.
    */
@@ -260,7 +105,7 @@ class helper_base extends helper_config {
    * @var array List of all error messages returned from an attempt to save.
    */
   public static $validation_errors=null;
-
+  
   /**
    * @var Array of default validation rules to apply to the controls on the form if the
    * built in client side validation is used (with the jQuery validation plugin). This array
@@ -273,18 +118,18 @@ class helper_base extends helper_config {
     'sample:entered_sref'=>array('required'),
     'occurrence:taxa_taxon_list_id'=>array('required')
   );
-
+  
   /**
    * @var array List of messages defined to pass to the validation plugin.
    */
   public static $validation_messages = array();
-
+  
   /**
    * @var Boolean Are we linking in the default stylesheet? Handled sligtly different to the others so it can be added to the end of the
    * list, allowing our CSS to override other stuff.
    */
   protected static $default_styles = false;
-
+  
   /**
    * Array of html attributes. When replacing items in a template, these get automatically wrapped. E.g.
    * a template replacement for the class will be converted to class="value". The key is the parameter name,
@@ -295,7 +140,7 @@ class helper_base extends helper_config {
     'outerClass' => 'class',
     'selected' => 'selected'
   );
-
+  
   /**
    * @var array List of error messages that have been displayed, so we don't duplicate them when dumping any
    * remaining ones at the end.
@@ -306,7 +151,7 @@ class helper_base extends helper_config {
    * Method to link up the external css or js files associated with a set of code.
    * This is normally called internally by the control methods to ensure the required files are linked into the page so
    * does not need to be called directly. However it can be useful when writing custom code that uses one of these standard
-   * libraries such as jQuery. Ensures each file is only linked once.
+   * libraries such as jQuery. Ensures each file is only linked once. 
    *
    * @param string $resource Name of resource to link. The following options are available:
    * <ul>
@@ -342,7 +187,7 @@ class helper_base extends helper_config {
       self::$required_resources[] = $resource;
     }
   }
-
+  
   /**
    * List of external resources including stylesheets and js files used by the data entry helper class.
    */
@@ -377,8 +222,6 @@ class helper_base extends helper_config {
       self::$resource_list = array (
         'jquery' => array('javascript' => array(self::$js_path."jquery.js",self::$js_path."ie_vml_sizzlepatch_2.js")),
         'openlayers' => array('javascript' => array(self::$js_path."OpenLayers.js", self::$js_path."proj4js.js", self::$js_path."proj4defs.js")),
-        'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
-        'clearLayer' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."clearLayer.js")),
         'addrowtogrid' => array('javascript' => array(self::$js_path."addRowToGrid.js")),
         'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
         'indiciaMapEdit' => array('deps' =>array('indiciaMap'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.js")),
@@ -389,7 +232,7 @@ class helper_base extends helper_config {
         'jquery_ui_fr' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path."jquery.ui.datepicker-fr.js")),
         'json' => array('javascript' => array(self::$js_path."json2.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js", self::$js_path."jquery.treeview.async.js",
-            self::$js_path."jquery.treeview.edit.js")),
+        self::$js_path."jquery.treeview.edit.js")),
         'googlemaps' => array('javascript' => array("http://maps.google.com/maps?file=api&amp;v=2&amp;sensor=false&amp;key=".parent::$google_api_key)),
         'multimap' => array('javascript' => array("http://developer.multimap.com/API/maps/1.2/".parent::$multimap_api_key)),
         'virtualearth' => array('javascript' => array('http://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1')),
@@ -410,15 +253,14 @@ class helper_base extends helper_config {
         'jqplot_bar' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.barRenderer.min.js')),
         'jqplot_pie' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.pieRenderer.min.js')),
         'jqplot_category_axis_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.categoryAxisRenderer.min.js')),
-        'reportgrid' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path.'jquery.reportgrid.js', self::$js_path.'json2.js')),
+        'reportgrid' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path.'jquery.reportgrid.js')),
         'tabs' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path.'tabs.js')),
         'wizardprogress' => array('deps' => array('tabs'), 'stylesheets' => array(self::$css_path."wizard_progress.css")),
-        'spatialReports' => array('javascript'=>array(self::$js_path.'spatialReports.js'))
       );
     }
     return self::$resource_list;
   }
-
+  
   /**
    * Returns a span containing any validation errors active on the form for the
    * control with the supplied ID.
@@ -460,7 +302,7 @@ class helper_base extends helper_config {
       return '';
     }
   }
-
+  
   /**
    * Sends a POST using the cUrl library
    */
@@ -499,7 +341,7 @@ class helper_base extends helper_config {
     curl_close($session);
     return $return;
   }
-
+  
   /**
    * Calculates the folder that submitted images end up in according to the helper_config.
    */
@@ -507,17 +349,17 @@ class helper_base extends helper_config {
     if (!isset(self::$final_image_folder) || self::$final_image_folder=='warehouse')
       return self::$base_url.(isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
     else {
-      return dirname(__FILE__).'/'.self::$final_image_folder;
-    }
+      return dirname($_SERVER['PHP_SELF']) . '/' . self::relative_client_helper_path() . self::$final_image_folder;
+    }      
   }
-
+  
   /**
    * Calculates the relative path to the client_helpers folder from wherever the current PHP script is.
    */
   public static function relative_client_helper_path() {
     // get the paths to the client helper folder and php file folder as an array of tokens
-    $clientHelperFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath(__FILE__)));
-    $currentPhpFileFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath($_SERVER['SCRIPT_FILENAME'])));
+    $clientHelperFolder = explode(DIRECTORY_SEPARATOR, realpath(dirname(__FILE__)));
+    $currentPhpFileFolder = explode(DIRECTORY_SEPARATOR, realpath(dirname($_SERVER['SCRIPT_FILENAME'])));
     // Find the first part of the paths that is not the same
     for($i = 0; $i<min(count($currentPhpFileFolder), count($clientHelperFolder)); $i++) {
       if ($clientHelperFolder[$i] != $currentPhpFileFolder[$i]) {
@@ -532,7 +374,7 @@ class helper_base extends helper_config {
     }
     return $path;
   }
-
+  
   /**
    * Parameters forms are a quick way of specifying a simple form used to specify the input
    * parameters for a process. Returns the HTML required for a parameters form, e.g. the form
@@ -581,7 +423,7 @@ class helper_base extends helper_config {
       // If this parameter is in the URL or post data, put it in the control instead of the original default
       if (isset($options['defaults'][$key]))
         $ctrlOptions['default'] = $options['defaults'][$key];
-      elseif (isset($info['default']))
+      elseif (isset($info['default'])) 
         $ctrlOptions['default'] = $info['default'];
       if (isset($options['presetParams']) && array_key_exists($key, $options['presetParams'])) {
         $r .= "<input type=\"hidden\" name=\"$key\" value=\"".$options['presetParams'][$key]."\" />\n";
@@ -594,13 +436,13 @@ class helper_base extends helper_config {
           'blankText'=>'<'.lang::get('please select').'>',
           'extraParams'=>$options['readAuth']
         ));
-        if ($popOpts[0]=='direct')
+        if ($popOpts[0]=='direct') 
           $ctrlOptions['table']=$popOpts[1];
         else
           $ctrlOptions['report']=$popOpts[1];
         if (isset($info['linked_to']) && isset($info['linked_filter_field'])) {
           if (isset($options['presetParams']) && array_key_exists($info['linked_to'], $options['presetParams'])) {
-            // if the control this is linked to is hidden because it has a preset value, just use that value as a filter on the
+            // if the control this is linked to is hidden because it has a preset value, just use that value as a filter on the 
             // population call for this control
             $ctrlOptions = array_merge($ctrlOptions, array(
               'extraParams' => array_merge($ctrlOptions['extraParams'], array($info['linked_filter_field']=>$options['presetParams'][$info['linked_to']]))
@@ -626,7 +468,7 @@ class helper_base extends helper_config {
         $ctrlOptions = array_merge($ctrlOptions, array(
           'blankText'=>'<'.lang::get('please select').'>',
           'lookupValues' => $lookupsAssoc
-        ));
+        ));        
         $r .= data_entry_helper::select($ctrlOptions);
       } elseif ($info['datatype']=='date') {
         $r .= data_entry_helper::date_picker($ctrlOptions);
@@ -644,26 +486,10 @@ class helper_base extends helper_config {
     }
     // If the form has defined any tools to add to the map, we need to create JavaScript to add them to the map.
     if (isset($tools)) {
-      self::add_resource('spatialReports');
-      self::add_resource('clearLayer');
-      if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
-        data_entry_helper::$javascript .= "enableBuffering();\n";
       $r .= '<label>'.$ctrlOptions['label'].':</label>';
       $r .= '<div class="control-box">Use the following tools to define the query area.<br/>'.
       '<div id="map-tools" class="olControlEditingToolbar left"></div></div><br/>';
-      $r .= '<input type="hidden" name="'.$ctrlOptions['fieldname'].'" id="hidden-wkt" value="'.
-          (isset($_POST[$ctrlOptions['fieldname']]) ? $_POST[$ctrlOptions['fieldname']] : '').'"/>';
-      if (isset($info['allow_buffer']) && $info['allow_buffer']=='true') {
-        $r .= data_entry_helper::text_input(array(
-          'label'=>'Buffer (m)',
-          'fieldname'=>'geom_buffer',
-          'default'=>isset($_POST['geom_buffer']) ? $_POST['geom_buffer'] : 0
-        ));
-        // keep a copy of the unbuffered polygons in this input, so that when the page reloads both versions
-        // are available
-        $r .= '<input type="hidden" name="orig-wkt" id="orig-wkt" '.
-            'value="'.(isset($_POST['orig-wkt']) ? $_POST['orig-wkt'] : '')."\" />\n";
-      }
+      $r .= '<input type="hidden" name="'.$ctrlOptions['fieldname'].'" class="hidden-wkt" />';
       // Output some JavaScript to setup a toolbar for the map drawing tools. Also JS
       // to handle getting the polygons from the edit layer into the report parameter
       // when run report is clicked.
@@ -672,52 +498,44 @@ $.fn.indiciaMapPanel.defaults.toolbarDiv='map-tools';
 mapInitialisationHooks.push(function(div) {
   // keep a global reference to the map, so we can get it later when Run Report is clicked
   mapDiv = div;
-  var styleMap = new OpenLayers.StyleMap(OpenLayers.Util.applyDefaults(
-        {fillOpacity: 0.05},
-        OpenLayers.Feature.Vector.style['default']));
-  mapDiv.map.editLayer.styleMap = styleMap;\n";
-      
-      if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
-        $origWkt = empty($_POST['orig-wkt']) ? '' : $_POST['orig-wkt'];
-      else
-        $origWkt = empty($_POST[$ctrlOptions['fieldname']]) ? '' : $_POST[$ctrlOptions['fieldname']];
-
-      if (!empty($origWkt))
-        data_entry_helper::$javascript .= "
-  var selorig = new OpenLayers.Feature.Vector(
-      OpenLayers.Geometry.fromWKT('$origWkt'));
-  mapDiv.map.editLayer.addFeatures([selorig]);\n";
-      data_entry_helper::$javascript .= "});
-
+});
 $('#run-report').click(function(evt) {
-  if (document.activeElement.id=='geom_buffer') {
-    $('#geom_buffer').blur();
-  }";
-      if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
-        data_entry_helper::$javascript .= "
-  storeGeomsInHiddenInput(mapDiv.map.editLayer, 'orig-wkt');
-  storeGeomsInHiddenInput(bufferLayer, 'hidden-wkt');\n";
-      else
-        data_entry_helper::$javascript .= "
-  storeGeomsInHiddenInput(mapDiv.map.editLayer, 'hidden-wkt');\n";
-      data_entry_helper::$javascript .= "  if ($('#hidden-wkt').val()==='') {
+  var geoms=[], featureClass='', geom;
+  if (mapDiv.map.editLayer.features.length===0) {
     evt.preventDefault();
-    alert('".lang::get('Please supply a search area for the report.')."');
-    return false;
+    alert('Please supply a search area for the report.');
   }
+  $.each(mapDiv.map.editLayer.features, function(i, feature) {
+    if (i===0) {
+      // grab the first feature's type
+      featureClass = feature.geometry.CLASS_NAME;
+    }
+    if (featureClass == feature.geometry.CLASS_NAME) {
+      // for subsequent features, ignore them unless the same type as the first
+      geoms.push(feature.geometry);
+    }
+  });
+  if (featureClass === 'OpenLayers.Geometry.Polygon') {
+    geom = new OpenLayers.Geometry.MultiPolygon(geoms);
+  } else if (featureClass === 'OpenLayers.Geometry.LineString') {
+    geom = new OpenLayers.Geometry.MultiLineString(geoms);
+  } else if (featureClass === 'OpenLayers.Geometry.Point') {
+    geom = new OpenLayers.Geometry.MultiPoint(geoms);
+  }
+  $('.hidden-wkt').val(geom.toString());
 });
 var add_map_tools = function(opts) {\n";
       foreach ($tools as $tool) {
         data_entry_helper::$javascript .= "opts.standardControls.push('draw$tool');\n";
       }
       data_entry_helper::$javascript .= "
-  opts.standardControls.push('clearEditLayer');
 }
-mapSettingsHooks.push(add_map_tools)\n";
+mapSettingsHooks.push(add_map_tools)
+";
     }
     return $r;
   }
-
+  
   /**
    * Utility method that returns the parts required to build a link back to the current page.
    * @return array Associative array containing path and params (itself a key/value paired associative array).
@@ -725,8 +543,8 @@ mapSettingsHooks.push(add_map_tools)\n";
   public static function get_reload_link_parts() {
     $split = strpos($_SERVER['REQUEST_URI'], '?');
     // convert the query parameters into an array
-    $gets = ($split!==false && strlen($_SERVER['REQUEST_URI']) > $split+1) ?
-        explode('&', substr($_SERVER['REQUEST_URI'], $split+1)) :
+    $gets = ($split!==false && strlen($_SERVER['REQUEST_URI']) > $split+1) ? 
+        explode('&', substr($_SERVER['REQUEST_URI'], $split+1)) : 
         array();
     $getsAssoc = array();
     foreach ($gets as $get) {
@@ -756,7 +574,7 @@ mapSettingsHooks.push(add_map_tools)\n";
     }
     return implode('&', $params);
   }
-
+  
     /**
    * Applies a output template to an array. This is used to build the output for each item in a list,
    * such as a species checklist grid or a radio group.
@@ -805,9 +623,9 @@ mapSettingsHooks.push(add_map_tools)\n";
   protected static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
     if ($readAuth==null) $readAuth=$_POST;
     $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    $interim_path = dirname(__FILE__).'/'.$interim_image_folder;
-    if (!file_exists($interim_path.$path))
-      return "The file $interim_path$path does not exist and cannot be uploaded to the Warehouse.";
+    $uploadpath = self::relative_client_helper_path() . $interim_image_folder;
+    if (!file_exists($uploadpath.$path)) 
+      return "The file $uploadpath$path does not exist and cannot be uploaded to the Warehouse.";
     $serviceUrl = parent::$base_url."index.php/services/".$service;
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
     $postargs = array('name_is_guid' => 'true');
@@ -818,8 +636,8 @@ mapSettingsHooks.push(add_map_tools)\n";
       $postargs['nonce'] = $readAuth['nonce'];
     if ($persist_auth)
       $postargs['persist_auth'] = 'true';
-    $file_to_upload = array('media_upload'=>'@'.realpath($interim_path.$path));
-    $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
+    $file_to_upload = array('media_upload'=>'@'.realpath($uploadpath.$path));    
+    $response = self::http_post($serviceUrl, $file_to_upload + $postargs);    
     $output = json_decode($response['output'], true);
     $r = true; // default is success
     if (is_array($output)) {
@@ -833,20 +651,20 @@ mapSettingsHooks.push(add_map_tools)\n";
       }
     }
     //remove local copy
-    unlink(realpath($interim_path.$path));
+    unlink(realpath($uploadpath.$path));
     return $r;
   }
 
  /**
   * Internal function to find the path to the root of the site, including the trailing slash.
-  */
+  */  
   protected static function getRootFolder() {
     $rootFolder = dirname($_SERVER['PHP_SELF']);
     if ($rootFolder =='\\') $rootFolder = '/'; // if no directory, then on windows may just return a single backslash.
     if (substr($rootFolder, -1)!='/') $rootFolder .= '/';
     return $rootFolder;
   }
-
+  
   /**
   * Retrieves a token and inserts it into a data entry form which authenticates that the
   * form was submitted by this website.
@@ -913,7 +731,7 @@ mapSettingsHooks.push(add_map_tools)\n";
       ),
     );
   }
-
+  
   /**
    * This method allows JavaScript and CSS links to be created and placed in the <head> of the
    * HTML file rather than using dump_javascript which must be called after the form is built.
@@ -935,7 +753,7 @@ mapSettingsHooks.push(add_map_tools)\n";
     // place a css class on the body if JavaScript enabled. And output the resources
     return self::internal_dump_javascript('$("body").addClass("js");', '', '', self::$required_resources);
   }
-
+  
   /**
   * Helper function to collect javascript code in a single location. Should be called at the end of each HTML
   * page which uses the data entry helper so output all JavaScript required by previous calls.
@@ -956,7 +774,7 @@ mapSettingsHooks.push(add_map_tools)\n";
     self::$onload_javascript = "";
     return $dump;
   }
-
+  
   /**
    * Internal implementation of the dump_javascript method which takes the javascript and resources list
    * as flexible parameters, rather that using the globals.
@@ -991,7 +809,6 @@ mapSettingsHooks.push(add_map_tools)\n";
     }
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
       $script = "<script type='text/javascript'>/* <![CDATA[ */
-indiciaData = {windowLoaded:false};
 jQuery(document).ready(function() {
 $javascript
 $late_javascript
@@ -999,7 +816,6 @@ $late_javascript
       if (!empty($onload_javascript)) {
         $script .= "window.onload = function() {
 $onload_javascript
-indiciaData.windowLoaded=true;
 };\n";
       }
       $script .= "/* ]]> */</script>";
@@ -1045,7 +861,7 @@ indiciaData.windowLoaded=true;
       });\n";
     }
   }
-
+  
   /**
    * Internal method to build a control from its options array and its template. Outputs the
    * prefix template, a label (if in the options), a control, the control's errors and a
@@ -1110,7 +926,7 @@ indiciaData.windowLoaded=true;
 
     // Add a label only if specified in the options array. Link the label to the inputId if available,
     // otherwise the fieldname (as the fieldname control could be a hidden control).
-    if (array_key_exists('label', $options) && !empty($options['label'])) {
+    if (array_key_exists('label', $options)) {
       $r .= str_replace(
           array('{label}', '{id}', '{labelClass}'),
           array(
@@ -1132,8 +948,6 @@ indiciaData.windowLoaded=true;
     if ($error && in_array('message', $options['validation_mode'])) {
       $r .=  self::apply_error_template($error, $options['fieldname']);
     }
-    if (isset($options['afterControl']))
-      $r .= $options['afterControl'];
 
     // Add suffix
     if (isset($validationClasses) && !empty($validationClasses) && strpos($validationClasses, 'required')!==false) {
@@ -1147,10 +961,10 @@ indiciaData.windowLoaded=true;
 
     return $r;
   }
-
+  
  /**
   * Call the enable_validation method to turn on client-side validation for any controls with
-  * validation rules defined.
+  * validation rules defined. 
   * To specify validation on each control, set the control's options array
   * to contain a 'validation' entry. This must be set to an array of validation rules in Indicia
   * validation format. For example, 'validation' => array('required', 'email').
@@ -1160,12 +974,12 @@ indiciaData.windowLoaded=true;
     self::$validated_form_id = $form_id;
     self::add_resource('validation');
   }
-
+  
  /**
    * Converts the validation rules in an options array into a string that can be used as the control class,
    * to trigger the jQuery validation plugin.
-   * @param $options. Control options array. For validation to be applied should contain a validation entry,
-   * containing a single validation string or an array of strings.
+   * @param $options. For validation to be applied should contain a validation entry, containing a single
+   * validation string or an array of strings.
    * @return string The validation rules formatted as a class.
    */
   protected static function build_validation_class($options) {
@@ -1184,7 +998,7 @@ indiciaData.windowLoaded=true;
     // Convert these rules into jQuery format.
     return self::convert_to_jquery_val_metadata($rules);
   }
-
+  
   /**
    * Returns templated help text for a control, but only if the position matches the $helpTextPos value, and
    * the $options array contains a helpText entry.
@@ -1199,10 +1013,10 @@ indiciaData.windowLoaded=true;
     } else
       return '';
   }
-
+  
   /**
    * Takes a template string (e.g. <div id="{id}">) and replaces the tokens with the equivalent values looked up from the $options array.
-   */
+   */ 
   protected static function apply_replacements_to_template($template, $options) {
     // Build an array of all the possible tags we could replace in the template.
     $replaceTags=array();
@@ -1215,14 +1029,14 @@ indiciaData.windowLoaded=true;
     }
     return str_replace($replaceTags, $replaceValues, $template);
   }
-
+  
    /**
   * Takes a list of validation rules in Kohana/Indicia format, and converts them to the jQuery validation
   * plugin metadata format.
   * @param array $rules List of validation rules to be converted.
   * @return string Validation metadata classes to add to the input element.
-  * @todo Implement a more complete list of validation rules.
-  * @todo Suspect there is a versioning issue, because the minimum/maximum rule classes don't work.
+  * @todo Implement a more complete list of validation rules. 
+  * @todo Suspect there is a versioning issue, because the minimum/maximum rule classes don't work. 
   */
   protected static function convert_to_jquery_val_metadata($rules) {
     $converted = array();
@@ -1231,13 +1045,12 @@ indiciaData.windowLoaded=true;
       $rule = trim($rule);
       if    ($rule=='required'
           || $rule=='dateISO'
+          || $rule=='date'
           || $rule=='email'
           || $rule=='url'
           || $rule=='time') {
         $converted[] = $rule;
       // Now any rules which need parsing or conversion
-      } else if ($rule=='date') {
-        $converted[] = 'customDate';
       } else if ($rule=='digit') {
         $converted[] = 'digits';
       // the next test uses a regexp named expression to find the digit in a maximum rule (maximum[10])
@@ -1250,7 +1063,7 @@ indiciaData.windowLoaded=true;
     }
     return implode(' ', $converted);
   }
-
+  
    /**
   * Returns a static template which is either a default template or one
   * specified in the options
@@ -1277,12 +1090,12 @@ indiciaData.windowLoaded=true;
     }
     return self::apply_replacements_to_template($r, $options);
   }
-
+  
   /**
    * Method to format a control error message inside a templated span.
-   */
+   */ 
   private static function apply_error_template($error, $fieldname) {
-    if (empty($error))
+    if (empty($error)) 
       return '';
     global $indicia_templates;
     if (empty($error)) return '';
@@ -1290,7 +1103,7 @@ indiciaData.windowLoaded=true;
     $template = str_replace('{for}', $fieldname, $template);
     return str_replace('{error}', lang::get($error), $template);
   }
-
+  
 }
 
 ?>

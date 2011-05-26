@@ -159,10 +159,8 @@ class import_helper extends helper_base {
     $response = self::http_post($request, array());
     $model_required_fields = self::expand_ids_to_fks(json_decode($response['output'], true));
     $preset_fields = self::expand_ids_to_fks(array_keys($_POST));
-    if (!empty($preset_fields))
-      $unlinked_fields = array_diff_key($fields, array_combine($preset_fields, $preset_fields));
-    else
-      $unlinked_fields = $fields;
+    
+    $unlinked_fields = array_diff_key($fields, array_combine($preset_fields, $preset_fields));
     // only use the required fields that are available for selection - the rest are handled somehow else
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
     
@@ -279,55 +277,53 @@ class import_helper extends helper_base {
       return lang::get('upload_not_available');
     $filename=basename($_SESSION['uploaded_file']);
     // move file to server
-    $r = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv');    
-    if ($r===true) {
-      $reload = self::get_reload_link_parts();
-      $reload['params']['uploaded_csv']=$filename;
-      $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-      
-      // initiate local javascript to do the upload with a progress feedback
-      $r = '
-  <div id="progress" class="ui-widget ui-widget-content ui-corner-all">
-  <div id="progress-bar" style="width: 400"></div>
-  <div id="progress-text">Preparing to upload.</div>
-  </div>
-  ';
-      // cache the mappings
-      $metadata = array('mappings' => json_encode($_POST));
-      $post = array_merge($options['auth']['write_tokens'], $metadata);
-      $request = parent::$base_url."index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
-      $response = self::http_post($request, $post);
-      if (!isset($response['output']) || $response['output'] != 'OK')
-        return "Could not upload the mappings metadata. <br/>".print_r($response, true);
-      
-      self::$onload_javascript .= "
-    /**
-    * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
-    * next chunk.
-    */
-    uploadChunk = function() {
-      var limit=10;
-      jQuery.getJSON('".parent::$base_url."index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=".$options['model']."',
-        function(response) {
-          total = total + response.uploaded;
-          filepos = response.filepos;
-          jQuery('#progress-text').html(total + ' records uploaded.');
-          $('#progress-bar').progressbar ('option', 'value', response.progress);
-          if (response.uploaded>=limit) {
-            uploadChunk();
-          } else {
-            jQuery('#progress-text').html('Upload complete.');
-            window.location = '$reloadpath&total='+total;
-          }
-        }
-      );  
-    };
+    self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv');    
     
-    var total=0, filepos=0;
-    jQuery('#progress-bar').progressbar ({value: 0});
-    uploadChunk();
-    ";
-    }
+    $reload = self::get_reload_link_parts();
+    $reload['params']['uploaded_csv']=$filename;
+    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    
+    // initiate local javascript to do the upload with a progress feedback
+    $r = '
+<div id="progress" class="ui-widget ui-widget-content ui-corner-all">
+<div id="progress-bar" style="width: 400"></div>
+<div id="progress-text">Preparing to upload.</div>
+</div>
+';
+    // cache the mappings
+    $metadata = array('mappings' => json_encode($_POST));
+    $post = array_merge($options['auth']['write_tokens'], $metadata);
+    $request = parent::$base_url."index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
+    $response = self::http_post($request, $post);
+    if (!isset($response['output']) || $response['output'] != 'OK')
+      return "Could not upload the mappings metadata. <br/>".print_r($response, true);
+    
+    self::$onload_javascript .= "
+  /**
+  * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
+  * next chunk.
+  */
+  uploadChunk = function() {
+    var limit=10;
+    jQuery.getJSON('".parent::$base_url."index.php/services/import/upload?offset='+total+'&limit='+limit+'&uploaded_csv=$filename&model=".$options['model']."',
+      function(response) {
+        total = total + response.uploaded;
+        jQuery('#progress-text').html(total + ' records uploaded.');
+        $('#progress-bar').progressbar ('option', 'value', response.progress);
+        if (response.uploaded>=limit) {
+          uploadChunk();
+        } else {
+          jQuery('#progress-text').html('Upload complete.');
+          window.location = '$reloadpath&total='+total;
+        }
+      }
+    );  
+  };
+  
+  var total=0;
+  jQuery('#progress-bar').progressbar ({value: 0});
+  uploadChunk();
+  ";
     return $r;
   }
   
@@ -425,9 +421,9 @@ class import_helper extends helper_base {
       // Generate a file id to store the upload as
       $destination = time().rand(0,1000).".".$fext;
       $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      $interim_path = dirname(__FILE__).'/'.$interim_image_folder;
-      if (move_uploaded_file($file['tmp_name'], "$interim_path$destination")) {
-        return "$interim_path$destination";
+      $relpath = self::relative_client_helper_path();
+      if (move_uploaded_file($file['tmp_name'], $relpath.$interim_image_folder.$destination)) {
+        return $relpath.$interim_image_folder.$destination;
       }
     } elseif (isset($options['existing_file']))
       return $options['existing_file'];

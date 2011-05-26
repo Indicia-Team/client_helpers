@@ -28,6 +28,159 @@ require_once('helper_base.php');
 require_once('submission_builder.php');
 require_once("libcurlEmulator/libcurlemu.inc.php");
 
+global $indicia_templates;
+
+/**
+ * Provides control templates to define the output of the data entry helper class.
+ *
+ * @package	Client
+ */
+$indicia_templates = array(
+  'prefix' => '',
+  'label' => '<label for="{id}"{labelClass}>{label}:</label>'."\n",
+  'suffix' => "<br/>\n",
+  'nosuffix' => " \n",
+  'requiredsuffix' => '<span class="deh-required">*</span><br/>'."\n",
+  'validation_message' => '<label for="{for}" class="{class}">{error}</label>'."\n",
+  'validation_icon' => '<span class="ui-state-error ui-corner-all validation-icon">'.
+      '<span class="ui-icon ui-icon-alert"></span></span>',
+  'error_class' => 'inline-error',
+  'image_upload' => '<input type="file" id="{id}" name="{fieldname}" accept="png|jpg|gif|jpeg" {title}/>'."\n".
+      '<input type="hidden" id="{pathFieldName}" name="{pathFieldName}" value="{pathFieldValue}"/>'."\n",
+  'text_input' => '<input type="text" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
+  'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
+  'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
+  'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
+  'date_picker' => '<input type="text" size="30"{class} id="{id}" name="{fieldname}" value="{default}" {title}/>',
+  'select' => '<select id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
+  'select_item' => '<option value="{value}" {selected} >{caption}</option>',
+  'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
+  'listbox' => '<select id="{id}" name="{fieldname}"{class} {disabled} size="{size}" multiple="{multiple}" {title}>{options}</select>',
+  'listbox_item' => '<option value="{value}" {selected} >{caption}</option>',
+  'list_in_template' => '<ul{class} {title}>{items}</ul>',
+  'check_or_radio_group' => '<div{class}>{items}</div>',
+  'check_or_radio_group_item' => '<nobr><span><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked} {disabled}/><label for="{itemId}">{caption}</label></span></nobr>{sep}',
+  'map_panel' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
+    "document.write('<div id=\"{divId}\" style=\"width: {width}; height: {height};\"{class}></div>');\n".
+    "/* ]]> */</script>",
+  'georeference_lookup' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
+    "document.write('<input id=\"imp-georef-search\"{class} />');\n".
+    "document.write('<input type=\"button\" id=\"imp-georef-search-btn\" class=\"ui-corner-all ui-widget-content ui-state-default indicia-button\" value=\"{search}\" />');\n".
+    "document.write('<div id=\"imp-georef-div\" class=\"ui-corner-all ui-widget-content ui-helper-hidden\">');\n".
+    "document.write('  <div id=\"imp-georef-output-div\">');\n".
+    "document.write('  </div>');\n".
+    "document.write('  <a class=\"ui-corner-all ui-widget-content ui-state-default indicia-button\" href=\"#\" id=\"imp-georef-close-btn\">{close}</a>');\n".
+    "document.write('</div>');".
+    "\n/* ]]> */</script>",
+  'tab_header' => '<script type="text/javascript">/* <![CDATA[ */'."\n".
+      'document.write(\'<ul class="ui-helper-hidden">{tabs}</ul>\');'.
+      "\n/* ]]> */</script>\n".
+      "<noscript><ul>{tabs}</ul></noscript>\n",
+  'tab_next_button' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
+    "document.write('<div{class}>');\n".
+    "document.write('  <span>{captionNext}</span>');\n".
+    "document.write('  <span class=\"ui-icon ui-icon-circle-arrow-e\"></span>');\n".
+    "document.write('</div>');\n".
+    "/* ]]> */</script>\n",
+  'tab_prev_button' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
+    "document.write('<div{class}>');\n".
+    "document.write('  <span class=\"ui-icon ui-icon-circle-arrow-w\"></span>');\n".
+    "document.write('  <span>{captionPrev}</span>');\n".
+    "document.write('</div>');\n".
+    "/* ]]> */</script>\n",
+  'submit_button' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
+    "document.write('<div{class}>');\n".
+    "document.write('  <span>{captionSave}</span>');\n".
+    "document.write('</div>');\n".
+    "/* ]]> */</script>\n".
+    "<noscript><input type=\"submit\" value=\"{captionSave}\" /></noscript>\n",
+  'loading_block_start' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
+      'document.write(\'<div class="ui-widget ui-widget-content ui-corner-all loading-panel" >'.
+      '<img src="'.helper_config::$base_url.'media/images/ajax-loader2.gif" />'.
+      lang::get('loading')."...</div>');\n".
+      'document.write(\'<div class="loading-hide">\');'.
+      "\n/* ]]> */</script>\n",
+  'loading_block_end' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
+      "document.write('</div>');\n".
+      "/* ]]> */</script>",
+  'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em>{taxon}</em></span> {authority} '.
+      '<span class="nobreak vernacular">{common}</span></div>',
+  'treeview_node' => '<span>{caption}</span>',
+  'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
+  'tree_browser_node' => '<span>{caption}</span>',
+  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />'."\n".
+      '<input id="{inputId}" name="{inputId}" value="{defaultCaption}" {class} {disabled} {title}/>'."\n",
+  'autocomplete_javascript' => "jQuery('input#{escaped_input_id}').autocomplete('{url}/{table}',
+      {
+        extraParams : {
+          orderby : '{captionField}',
+          mode : 'json',
+          qfield : '{captionField}',
+          {sParams}
+        },
+        parse: function(data)
+        {
+          // Clear the current selected key as the user has changed the search text
+          jQuery('input#{escaped_id}').val('');
+          var results = [];
+          jQuery.each(data, function(i, item) {
+            results[results.length] =
+            {
+              'data' : item,
+              'result' : item.{captionField},
+              'value' : item.{valueField}
+            };
+          });
+          return results;
+        },
+      formatItem: function(item)
+      {
+        return item.{captionField};
+      }
+      {max}
+    });
+    jQuery('input#{escaped_input_id}').result(function(event, data) {
+      jQuery('input#{escaped_id}').attr('value', data.id);
+      jQuery('input#{escaped_id}').change();
+    });\r\n",
+  'linked_list_javascript' => "
+{fn} = function() {
+  $('#{escapedId}').addClass('ui-state-disabled');
+  $('#{escapedId}').html('<option>Loading...</option>');
+  $.getJSON('{request}&{filterField}='+$(this).val(), function(data){
+    $('#{escapedId}').html('');
+    if (data.length>0) {
+      $('#{escapedId}').removeClass('ui-state-disabled');
+      $.each(data, function(i) {
+        $('#{escapedId}').append('<option value=\"'+this.{valueField}+'\">'+this.{captionField}+'</option>');
+      });
+    } else {
+      $('#{escapedId}').html('<option>{instruct}</option>');
+    }
+  });
+};
+jQuery('#{parentControlId}').change({fn});
+jQuery('#{parentControlId}').change();\n",
+  'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
+        'onblur="javascript:decodePostcode(\'{linkedAddressBoxId}\');" />',
+  'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
+        '<input type="hidden" id="imp-geom" name="{table}:geom" value="{defaultGeom}" />',
+  'sref_textbox_latlong' => '<label for="{idLat}">{labelLat}:</label>'.
+        '<input type="text" id="{idLat}" name="{fieldnameLat}" {class} {disabled} value="{defaultLat}" /><br />' .
+        '<label for="{idLong}">{labelLong}:</label>'.
+        '<input type="text" id="{idLong}" name="{fieldnameLong}" {class} {disabled} value="{defaultLong}" />' .
+        '<input type="hidden" id="imp-geom" name="{table}:geom" value="{defaultGeom}" />'.
+        '<input type="hidden" id="{id}" name="{fieldname}" value="{default}" />',
+  'attribute_cell' => "\n<td class=\"scOccAttrCell ui-widget-content {class}\">{content}</td>",
+  'taxon_label_cell' => "\n<td class=\"scTaxonCell ui-state-default\"{colspan}>{content}</td>",
+  'helpText' => "\n<p class=\"{helpTextClass}\">{helpText}</p>",
+  'button' => '<div class="indicia-button ui-state-default ui-corner-all" id="{id}"><span>{caption}</span></div>',
+  'file_box' => '',                   // the JQuery plugin default will apply, this is just a placeholder for template overrides.
+  'file_box_initial_file_info' => '', // the JQuery plugin default will apply, this is just a placeholder for template overrides.
+  'file_box_uploaded_image' => ''     // the JQuery plugin default will apply, this is just a placeholder for template overrides.
+);
+
+
 /**
  * Static helper class that provides automatic HTML and JavaScript generation for Indicia online
  * recording website data entry controls.
@@ -39,7 +192,7 @@ require_once("libcurlEmulator/libcurlemu.inc.php");
  * Optional. If specified, then an HTML label containing this value is prefixed to the control HTML.</li>
  * <li><b>helpText</b><br/>
  * Optional. Defines help text to be displayed alongside the control. The position of the text is defined by
- * helper_base::$helpTextPos, which can be set to before or after (default). The template is defined by
+ * data_entry_helper::$helpTextPos, which can be set to before or after (default). The template is defined by
  * global $indicia_templates['helpText'] and can be replaced on an instance by instance basis by specifying an
  * option 'helpTextTemplate' for the control.
  * <li><b>helpTextTemplate</b>
@@ -56,11 +209,6 @@ require_once("libcurlEmulator/libcurlemu.inc.php");
  * If you need to change the suffix for this control only, set this to refer to the name of an alternate template you
  * have added to the global $indicia_templates array. To change the suffix for all controls, you can update the value of
  * $indicia_templates['suffix'] before building the form.</li>
- * <li><b>afterControl</b>
- * Allows a piece of HTML to be specified which is inserted immediately after the control, before the suffix and
- * helpText. Ideal for inserting buttons that are to be displayed alongside a control such as a Go button
- * for a search box.
- * </li>
  * </ul>
  *
  * @package	Client
@@ -321,15 +469,6 @@ class data_entry_helper extends helper_base {
     $escaped_id=str_replace(':','\\\\:',$options['id']);
     // Don't set js up for the datepicker in the clonable row for the species checklist grid
     if ($escaped_id!='{fieldname}') {
-      if (self::$validated_form_id!==null) {
-        self::$javascript .= "jQuery.validator.addMethod('customDate',
-  function(value, element) {
-    // parseDate throws exception if the value is invalid
-    try{jQuery.datepicker.parseDate( '".$options['dateFormat']."', value);return true;}
-    catch(e){return false;}
-  }, '".lang::get('Please enter a valid date')."'
-);\n";
-      }
       self::$javascript .= "jQuery('#$escaped_id').datepicker({
     dateFormat : '".$options['dateFormat']."',
     changeMonth: true,
@@ -355,7 +494,7 @@ class data_entry_helper extends helper_base {
   // Check for the special default value of today
   if (isset($options['default']) ) {
     if ($options['default']=='today')
-      $options['default'] = date('d/m/Y');
+      $options['default'] = date('Y-m-d');
   }
 
     // Enforce a class on the control called date
@@ -468,7 +607,7 @@ class data_entry_helper extends helper_base {
     global $indicia_templates;
     // Upload directory defaults to client_helpers/upload, but can be overriden.
     $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    $relpath = self::getRootFolder() . self::relative_client_helper_path();
+    $relpath = self::relative_client_helper_path();
     // Allow options to be defaulted and overridden
     $defaults = array(
       'caption' => lang::get('Files'),
@@ -485,10 +624,10 @@ class data_entry_helper extends helper_base {
       'runtimes' => array('html5','silverlight','flash','gears','browserplus','html4'),
       'autoupload' => true,
       'imageWidth' => 200,
-      'uploadScript' => $relpath . 'upload.php',
-      'destinationFolder' => $relpath . $interim_image_folder,
+      'uploadScript' => self::getRootFolder() . $relpath . 'upload.php',
+      'destinationFolder' => self::getRootFolder() . $relpath . $interim_image_folder,
       'finalImageFolder' => self::get_uploaded_image_folder(),
-      'swfAndXapFolder' => $relpath . 'plupload/',
+      'swfAndXapFolder' => self::getRootFolder() .$relpath . 'plupload/',
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
       'table' => 'occurrence_image',
@@ -496,7 +635,7 @@ class data_entry_helper extends helper_base {
       'codeGenerated' => 'all'
     );
     if (isset(self::$final_image_folder_thumbs))
-      $defaults['finalImageFolderThumbs'] = $relpath . self::$final_image_folder_thumbs;
+      $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::relative_client_helper_path() . self::$final_image_folder_thumbs;
     $browser = self::get_browser_info();
     // Flash doesn't seem to work on IE6.
     if ($browser['name']=='msie' && $browser['version']<7)
@@ -633,6 +772,7 @@ class data_entry_helper extends helper_base {
     // We need to see if there is a resource in the resource list for any special files required by this driver. This
     // will do nothing if the resource is absent.
     self::add_resource('georeference_'.$options['driver']);
+    self::$javascript .= "indicia_url='".self::$base_url."';\n";
     foreach ($options as $key=>$value) {
       // if any of the options are for the georeferencer driver, then we must set them in the JavaScript.
       if (substr($key, 0, 6)=='georef') {
@@ -1126,12 +1266,177 @@ class data_entry_helper extends helper_base {
   }
 
   /**
-   * Outputs a chart that loads the content of a report or Indicia table.
-   * @deprecated Use report_helper::report_chart.
-   */
+  * <p>Outputs a div that contains a chart.</p>
+  * <p>The chart is rendered by the jqplot plugin.</p>
+  * <p>The chart loads its data from a report, table or view indicated by the dataSource parameter, and the
+  * method of loading is indicated by xValues, xLabels and yValues. Each of these can be an array to define
+  * a multi-series chart. The largest array from these 4 options defines the total series count. If an option
+  * is not an array, or the array is smaller than the total series count, then the last option is used to fill
+  * in the missing values. For example, by setting:<br/>
+  * 'dataSource' => array('report_1', 'report_2'),<br/>
+  * 'yValues' => 'count',<br/>
+  * 'xLabels' => 'month'<br/>
+  * then you get a chart of count by month, with 2 series' loaded separately from report 1 and report 2. Alternatively
+  * you can use a single report, with 2 different columns for count to define the 2 series:<br/>
+  * 'dataSource' => 'combined_report',<br/>
+  * 'yValues' => array('count_1','count_2'),<br/>
+  * 'xLabels' => 'month'<br/>
+  * The latter is obviuosly slightly more efficient as only a single report is run. Pie charts will always revert to a
+  * single series.</p>
+  *
+  * @param array $options Options array with the following possibilities:<ul>
+  * <li><b>mode</b><br/>
+  * Pass report to retrieve the underlying chart data from a report, or direct for an Indicia table or view. Default is report.</li>
+  * <li><b>readAuth</b><br/>
+  * Read authorisation tokens.</li>
+  * <li><b>dataSource</b><br/>
+  * Name of the report file or table/view(s) to retrieve underlying data. Can be an array for multi-series charts.</li>
+  * <li><b>class</b><br/>
+  * CSS class to apply to the outer div.</li>
+  * <li><b>headerClass</b><br/>
+  * CSS class to apply to the box containing the header.</li>
+  * <li><b>height</b><br/>
+  * Chart height in pixels.</li>
+  * <li><b>width</b><br/>
+  * Chart width in pixels.</li>
+  * <li><b>chartType</b><br/>
+  * Currently supports line, bar or pie.</li>
+  * <li><b>rendererOptions</b><br/>
+  * Associative array of options to pass to the jqplot renderer.
+  * </li>
+  * <li><b>legendOptions</b><br/>
+  * Associative array of options to pass to the jqplot legend. For more information see links below.
+  * </li>
+  * <li><b>seriesOptions</b><br/>
+  * For line and bar charts, associative array of options to pass to the jqplot series. For example:<br/>
+  * 'seriesOptions' => array(array('label'=>'My first series','label'=>'My 2nd series'))<br/>
+  * For more information see links below.
+  * </li>
+  * <li><b>axesOptions</b><br/>
+  * For line and bar charts, associative array of options to pass to the jqplot axes. For example:<br/>
+  * 'axesOptions' => array('yaxis'=>array('min' => 0, 'max' => '3', 'tickInterval' => 1))<br/>
+  * For more information see links below.
+  * </li>
+  * <li><b>yValues</b><br/>
+  * Report or table field name(s) which contains the data values for the y-axis (or the pie segment sizes). Can be
+  * an array for multi-series charts.</li>
+  * <li><b>xValues</b><br/>
+  * Report or table field name(s) which contains the data values for the x-axis. Only used where the x-axis has a numerical value
+  * rather than showing arbitrary categories. Can be an array for multi-series charts.</li>
+  * <li><b>xLabels</b><br/>
+  * When the x-axis shows arbitrary category names (e.g. a bar chart), then this indicates the report or view/table
+  * field(s) which contains the labels. Also used for pie chart segment names. Can be an array for multi-series
+  * charts.</li>
+  * </ul>
+  * @todo look at the ReportEngine to check it is not prone to SQL injection (eg. offset, limit).
+  * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Series
+  * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Axes
+  * @link http://www.jqplot.com/docs/files/plugins/jqplot-barRenderer-js.html
+  * @link http://www.jqplot.com/docs/files/plugins/jqplot-lineRenderer-js.html
+  * @link http://www.jqplot.com/docs/files/plugins/jqplot-pieRenderer-js.html
+  * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Legend
+  */
   public static function report_chart($options) {
-    require_once('report_helper.php');
-    return report_helper::report_chart($options);
+    $options = array_merge(array(
+      'mode' => 'report',
+      'id' => 'chartdiv',
+      'class' => 'ui-widget ui-widget-content ui-corner-all',
+      'headerClass' => 'ui-widget-header ui-corner-all',
+      'height' => 400,
+      'width' => 400,
+      'chartType' => 'line', // bar, pie
+      'rendererOptions' => array(),
+      'legendOptions' => array(),
+      'seriesOptions' => array(),
+      'axesOptions' => array()
+    ), $options);
+    // @todo Check they have supplied a valid set of data & label field names
+    self::add_resource('jqplot');
+    $opts = array();
+    switch ($options['chartType']) {
+      case 'bar' :
+        self::add_resource('jqplot_bar');
+        $renderer='$.jqplot.BarRenderer';
+        break;
+      case 'pie' :
+        self::add_resource('jqplot_pie');
+        $renderer='$.jqplot.PieRenderer';
+        break;
+      // default is line
+    }
+    if (isset($options['xLabels'])) {
+      self::add_resource('jqplot_category_axis_renderer');
+    }
+    $opts[] = "seriesDefaults:{\n".(isset($renderer) ? "  renderer:$renderer,\n" : '')."  rendererOptions:".json_encode($options['rendererOptions'])."}";
+    $opts[] = 'legend:'.json_encode($options['legendOptions']);
+    $opts[] = 'series:'.json_encode($options['seriesOptions']);
+    // make yValues, xValues, xLabels and dataSources into arrays of the same length so we can treat single and multi-series the same
+    $yValues = is_array($options['yValues']) ? $options['yValues'] : array($options['yValues']);
+    $dataSources = is_array($options['dataSource']) ? $options['dataSource'] : array($options['dataSource']);
+    if (isset($options['xValues'])) $xValues = is_array($options['xValues']) ? $options['xValues'] : array($options['xValues']);
+    if (isset($options['xLabels'])) $xLabels = is_array($options['xLabels']) ? $options['xLabels'] : array($options['xLabels']);
+    // What is this biggest array? This is our series count.
+    $seriesCount = max(
+        count($yValues),
+        count($dataSources),
+        (isset($xValues) ? count($xValues) : 0),
+        (isset($xLabels) ? count($xLabels) : 0)
+    );
+    // any array that is too short must be padded out with the last entry
+    if (count($yValues)<$seriesCount) $yValues = array_pad($yValues, $seriesCount, $yValues[count($yValues)-1]);
+    if (count($dataSources)<$seriesCount) $dataSources = array_pad($dataSources, $seriesCount, $dataSources[count($dataSources)-1]);
+    if (isset($xValues) && count($xValues)<$seriesCount) $xValues = array_pad($xValues, $seriesCount, $xValues[count($xValues)-1]);
+    if (isset($xLabels) && count($xLabels)<$seriesCount) $xLabels = array_pad($xLabels, $seriesCount, $xLabels[count($xLabels)-1]);
+    // build the series data
+    $seriesData = array();
+    $lastRequestSource = '';
+    for ($idx=0; $idx<$seriesCount; $idx++) {
+      // copy the array data back into the options array to make a normal request for report data
+      $options['yValues'] = $yValues[$idx];
+      $options['dataSource'] = $dataSources[$idx];
+      if (isset($xValues)) $options['xValues'] = $xValues[$idx];
+      if (isset($xLabels)) $options['xLabels'] = $xLabels[$idx];
+      // now request the report data, only if the last request was not for the same data
+      if ($lastRequestSource != $options['dataSource'])
+        $data=self::get_report_data($options);
+      $lastRequestSource = $options['dataSource'];
+      $values=array();
+      $xLabelsForSeries=array();
+      foreach ($data as $row) {
+        if (isset($options['xValues']))
+          // 2 dimensional data
+          $values[] = '['.$row[$options['xValues']].','.$row[$options['yValues']].']';
+        else {
+          // 1 dimensional data, so we should have labels. For a pie chart these are use as x data values. For other charts they are axis labels.
+          if ($options['chartType']=='pie') {
+            $values[] = '["'.$row[$options['xLabels']].'",'.$row[$options['yValues']].']';
+          } else {
+            $values[] = $row[$options['yValues']];
+            if (isset($options['xLabels']))
+              $xLabelsForSeries[] = $row[$options['xLabels']];
+          }
+        }
+      }
+      // each series will occupy an entry in $seriesData
+      $seriesData[] = '['.implode(',', $values).']';
+    }
+    if (isset($options['xLabels']) && $options['chartType']!='pie') {
+      // make a renderer to output x axis labels
+      $options['axesOptions']['xaxis']['renderer'] = '$.jqplot.CategoryAxisRenderer';
+      $options['axesOptions']['xaxis']['ticks'] = $xLabelsForSeries;
+    }
+    // We need to fudge the json so the renderer class is not a string
+    $opts[] = str_replace('"$.jqplot.CategoryAxisRenderer"', '$.jqplot.CategoryAxisRenderer',
+        'axes:'.json_encode($options['axesOptions']));
+
+    // Finally, dump out the Javascript with our constructed parameters
+    self::$javascript .= "$.jqplot('".$options['id']."',  [".implode(',', $seriesData)."], \n{".implode(",\n", $opts)."});\n";
+    $r = '<div class="'.$options['class'].'" style="width:'.$options['width'].'; ">';
+    if (isset($options['title']))
+      $r .= '<div class="'.$options['headerClass'].'">'.$options['title'].'</div>';
+    $r .= '<div id="'.$options['id'].'" style="height:'.$options['height'].';width:'.$options['width'].'; "></div>'."\n";
+    $r .= "</div>\n";
+    return $r;
   }
 
  /**
@@ -1422,8 +1727,6 @@ class data_entry_helper extends helper_base {
   * Optional. Used to determine which attributes are valid for this website/survey combination</li>
   * <li><b>occurrenceComment</b><br/>
   * Optional. If set to true, then an occurrence comment input field is included on each row.</li>
-  * <li><b>occurrenceConfidential</b><br/>
-  * Optional. If set to true, then an occurrence confidential checkbox is included on each row.</li>
   * <li><b>occurrenceImages</b><br/>
   * Optional. If set to true, then images can be uploaded for each occurrence row. Currently not supported for
   * multi-column grids.</li>
@@ -1460,12 +1763,12 @@ class data_entry_helper extends helper_base {
     if ($options['occurrenceImages']) {
       self::add_resource('plupload');
       // store some globals that we need later when creating uploaders
-      $relpath = self::getRootFolder() . self::relative_client_helper_path();
+      $relpath = self::relative_client_helper_path();
       $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
       self::$javascript .= "uploadSettings = {\n";
-      self::$javascript .= "  uploadScript: '" . $relpath . "upload.php',\n";
-      self::$javascript .= "  destinationFolder: '" . $relpath . $interim_image_folder."',\n";
-      self::$javascript .= "  swfAndXapFolder: '" . $relpath . "plupload/',\n";
+      self::$javascript .= "  uploadScript: '".self::getRootFolder() . $relpath . "upload.php',\n";
+      self::$javascript .= "  destinationFolder: '".self::getRootFolder() . $relpath . $interim_image_folder."',\n";
+      self::$javascript .= "  swfAndXapFolder: '".self::getRootFolder() . $relpath . "plupload/',\n";
       self::$javascript .= "  jsPath: '".self::$js_path."'";
       if (isset($options['resizeWidth'])) {
         self::$javascript .= ",\n  resizeWidth: ".$options['resizeWidth'];
@@ -1549,8 +1852,7 @@ class data_entry_helper extends helper_base {
         }
         $row .= "\n<td class=\"scPresenceCell\"$hidden>";
         if ($options['rowInclusionCheck']!='hasData')
-          // this includes a control to force out a 0 value when the checkbox is unchecked.
-          $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"sc:$id:$existing_record_id:present\" value=\"0\"/><input type=\"checkbox\" class=\"scPresence\" name=\"sc:$id:$existing_record_id:present\" $checked />";
+          $row .= "<input type=\"checkbox\" class=\"scPresence\" name=\"sc:$id:$existing_record_id:present\" $checked />";
         $row .= "</td>";
         foreach ($occAttrControls as $attrId => $control) {
           if ($existing_record_id) {
@@ -1562,7 +1864,7 @@ class data_entry_helper extends helper_base {
           if (isset(self::$entity_to_load[$ctrlId])) {
             $existing_value = self::$entity_to_load[$ctrlId];
           } elseif (array_key_exists('default', $attributes[$attrId])) {
-            // this case happens when reloading an existing record
+		        // this case happens when reloading an existing record
             $existing_value = $attributes[$attrId]['default'];
           } else
             $existing_value = '';
@@ -1593,11 +1895,6 @@ class data_entry_helper extends helper_base {
         if ($options['occurrenceComment']) {
           $row .= "\n<td class=\"ui-widget-content scCommentCell\"><input class=\"scComment\" type=\"text\" name=\"sc:$id:$existing_record_id:occurrence:comment\" ".
           "id=\"sc:$id:$existing_record_id:occurrence:comment\" value=\"".self::$entity_to_load["sc:$id:$existing_record_id:occurrence:comment"]."\" /></td>";
-        }
-        if (isset($options['occurrenceConfidential']) && $options['occurrenceConfidential']) {
-          $row .= "\n<td class=\"ui-widget-content scConfidentialCell\">";
-          $row .= self::checkbox(array('fieldname'=>"sc:$id:$existing_record_id:occurrence:confidential"));
-          $row .= "</td>\n";
         }
         if ($options['occurrenceImages']) {
           $existingImages = is_array(self::$entity_to_load) ? preg_grep("/^sc:$id:$existing_record_id:occurrence_image:id:[0-9]*$/", array_keys(self::$entity_to_load)) : array();
@@ -1689,7 +1986,6 @@ class data_entry_helper extends helper_base {
         self::$entity_to_load['occurrence:record_status']=$occurrence['record_status'];
         self::$entity_to_load['sc:'.$occurrence['taxa_taxon_list_id'].':'.$occurrence['id'].':present'] = true;
         self::$entity_to_load['sc:'.$occurrence['taxa_taxon_list_id'].':'.$occurrence['id'].':occurrence:comment'] = $occurrence['comment'];
-        self::$entity_to_load['sc:'.$occurrence['taxa_taxon_list_id'].':'.$occurrence['id'].':occurrence:confidential'] = $occurrence['confidential'];
         self::$entity_to_load['occurrence:taxa_taxon_list_id']=$occurrence['taxa_taxon_list_id'];
         self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon']=$occurrence['taxon'];
         // Keep a list of all Ids
@@ -1746,9 +2042,6 @@ class data_entry_helper extends helper_base {
         }
         if ($options['occurrenceComment']) {
           $r .= self::get_species_checklist_col_header(lang::get('Comment'), $visibleColIdx, $options['colWidths']) ;
-        }
-        if ($options['occurrenceConfidential']) {
-          $r .= self::get_species_checklist_col_header(lang::get('Confidential'), $visibleColIdx, $options['colWidths']) ;
         }
         if ($options['occurrenceImages']) {
           $r .= self::get_species_checklist_col_header(lang::get('Images'), $visibleColIdx, $options['colWidths']) ;
@@ -1831,7 +2124,6 @@ class data_entry_helper extends helper_base {
         'attrCellTemplate'=>'attribute_cell',
         'PHPtaxonLabel' => false,
         'occurrenceComment' => false,
-        'occurrenceConfidential' => false,
         'occurrenceImages' => false,
         'id' => 'species-grid-'.rand(0,1000),
         'colWidths' => array()
@@ -1930,11 +2222,6 @@ class data_entry_helper extends helper_base {
     if ($options['occurrenceComment']) {
       $r .= '<td class="ui-widget-content scCommentCell"><input class="scComment" type="text" ' .
           'id="sc:-ttlId-::occurrence:comment" name="sc:-ttlId-::occurrence:comment" value="" /></td>';
-    }
-    if (isset($options['occurrenceConfidential']) && $options['occurrenceConfidential']) {
-      $r .= '<td class="ui-widget-content scConfidentialCell">'.
-          self::checkbox(array('fieldname'=>'sc:-ttlId-::occurrence:confidential')).
-          '</td>';
     }
     if ($options['occurrenceImages']) {
       // Add a link, but make it display none for now as we can't link images till we know what species we are linking to.
@@ -3171,7 +3458,7 @@ if (errors.length>0) {
     unset($record['id']);
     $recordData=implode('',$record);
     return ($include_if_any_data && $recordData!='' && !preg_match("/^[0]*$/", $recordData)) ||       // inclusion of record is detected from having a non-zero value in any cell
-      (!$include_if_any_data && array_key_exists('present', $record) && $record['present']!='0'); // inclusion of record detected from the presence checkbox
+      (!$include_if_any_data && array_key_exists('present', $record)); // inclusion of record detected from the presence checkbox
   }
 
   /**
@@ -3574,7 +3861,7 @@ $('.ui-state-default').live('mouseout', function() {
       $item['default'] = self::attributes_get_default($item);
       $retVal[$itemId] = $item;
     }
-    if(!isset($options['id']))
+    if(!$options['id'])
       return $retVal;
 
     $options['extraParams'][$options['key']] = $options['id'];
@@ -3690,7 +3977,7 @@ $('.ui-state-default').live('mouseout', function() {
       $validation = explode("\n", $item['validation_rules']);
       // append the rules to any existing class string
       $attrOptions['class'] = (isset($attrOptions['class']) ? $attrOptions['class'] .' ' : '') .
-          self::build_validation_class(array('fieldname' => $item['fieldname'], 'validation'=>$validation));
+          self::build_validation_class(array('validation'=>$validation));
       if (in_array('required',$validation))
         $attrOptions['suffixTemplate'] = 'requiredsuffix';
     }

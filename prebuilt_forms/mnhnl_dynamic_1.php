@@ -113,9 +113,8 @@ class iform_mnhnl_dynamic_1 {
         array(
           'name'=>'nameShow',
           'caption'=>'Show user profile fields even if logged in',
-          'description'=>'If the survey requests first name and last name or any field which matches a field in the users profile, these are hidden. '.
-              'Check this box to show these fields. Always show these fields if they are required at the warehouse unless the profile module is enabled, '.
-              '<em>copy field values from user profile</em> is selected and the fields are required in the profile.',
+          'description'=>'If the survey requests first name and last name or any field which matches a field in the users profile, these are hidden for logged in '.
+              'users where they are populated if the data is available in the profile and user id is sent instead. Check this box to show these fields.',
           'type'=>'boolean',
           'default' => false,
           'required' => false,
@@ -124,13 +123,12 @@ class iform_mnhnl_dynamic_1 {
         array(
           'name'=>'copyFromProfile',
           'caption'=>'Copy field values from user profile',
-          'description'=>'Copy any matching fields from the user\'s profile into the fields with matching names in the sample data. This works for fields '.
-              'defined in the Drupal Profile module. Applies whether fields are shown or not.',
+          'description'=>'If logged in, copy any matching fields from the user\'s profile into the fields with matching names in the sample data. This currently works for fields '.
+              'defined in the Drupal Profile module.',
           'type'=>'boolean',
           'default' => false,
           'required' => false,
-          'group' => 'User Interface',
-          'visible' => function_exists('profile_load_profile')
+          'group' => 'User Interface'
         ),
         array(
           'name'=>'clientSideValidation',
@@ -151,8 +149,7 @@ class iform_mnhnl_dynamic_1 {
             "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>".
             "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>".
                 "&nbsp;&nbsp;<strong>[species]</strong> - a species grid or input control<br/>".
-                "&nbsp;&nbsp;<strong>[species attributes]</strong> - any custom attributes for the occurrence, if not using the grid. Also includes a file upload ".
-                "box if relevant. The attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they default to 1600.<br/>".
+                "&nbsp;&nbsp;<strong>[species attributes]</strong> - any custom attributes for the occurrence, if not using the grid<br/>".
                 "&nbsp;&nbsp;<strong>[date]</strong><br/>".
                 "&nbsp;&nbsp;<strong>[map]</strong><br/>".
                 "&nbsp;&nbsp;<strong>[spatial reference]</strong><br/>".
@@ -176,8 +173,6 @@ class iform_mnhnl_dynamic_1 {
           'default' => "=Species=\r\n".
               "?Please enter the species you saw and any other information about them.?\r\n".
               "[species]\r\n".
-              "@resizeWidth=1500\r\n".
-              "@resizeHeight=1500\r\n".
               "[species attributes]\r\n".
               "[*]\r\n".
               "=Place=\r\n".
@@ -299,15 +294,6 @@ class iform_mnhnl_dynamic_1 {
           'group'=>'Species'
         ),
         array(
-          'name'=>'occurrence_confidential',
-          'caption'=>'Occurrence Confidential',
-          'description'=>'Should a checkbox be present for confidential status of each occurrence?',
-          'type'=>'boolean',
-          'required' => false,
-          'default'=>false,
-          'group'=>'Species'
-        ),
-        array(
           'name'=>'occurrence_images',
           'caption'=>'Occurrence Images',
           'description'=>'Should occurrences allow images to be uploaded?',
@@ -359,7 +345,7 @@ class iform_mnhnl_dynamic_1 {
             'language' => 'Only allow selection of species using common names in the user\'s language',
             'preferred' => 'Only allow selection of species using names which are flagged as preferred'            
           ),
-          'default' => 'all',
+          'default' => 'autocomplete',
           'group'=>'Species'
         ),
         array(
@@ -556,9 +542,9 @@ class iform_mnhnl_dynamic_1 {
        ,'extraParams'=>$auth['read']
        ,'survey_id'=>$args['survey_id']
     ));
-    //// Make sure the form action points back to this page
+    // Make sure the form action points back to this page
     $reload = data_entry_helper::get_reload_link_parts();
-    $reloadPath = $_SERVER['REQUEST_URI'];
+    $reloadPath = $reload['path'];
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\">\n";
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
     $hiddens = $auth['write'].
@@ -858,8 +844,6 @@ class iform_mnhnl_dynamic_1 {
     if ($args['interface']!=='one_page')
       $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
-    if (!isset($options['standardControls']))
-      $options['standardControls']=array('layerSwitcher','panZoom');
     return data_entry_helper::map_panel($options, $olOptions);
   }
   
@@ -883,7 +867,6 @@ class iform_mnhnl_dynamic_1 {
           'extraParams'=>$extraParams,
           'survey_id'=>$args['survey_id'],
           'occurrenceComment'=>$args['occurrence_comment'],
-          'occurrenceConfidential'=>(isset($args['occurrence_confidential']) ? $args['occurrence_confidential'] : false),
           'occurrenceImages'=>$args['occurrence_images'],
           'PHPtaxonLabel' => true
       ), $options);
@@ -1041,24 +1024,15 @@ class iform_mnhnl_dynamic_1 {
         $r .= data_entry_helper::textarea(array(
           'fieldname'=>'occurrence:comment',
           'label'=>lang::get('Record Comment')
-        ));
-      if ($args['occurrence_confidential'])
-        $r .= data_entry_helper::checkbox(array(
-          'fieldname'=>'occurrence:confidential',
-          'label'=>lang::get('Record Confidental')
-        ));
-      if ($args['occurrence_images']){
-        $opts = array(
+        )); 
+      if ($args['occurrence_images'])
+        $opt = array(
           'table'=>'occurrence_image',
           'label'=>lang::get('Upload your photos'),
         );
-        if ($args['interface']!=='one_page')
+      if ($args['interface']!=='one_page')
           $opts['tabDiv']=$tabalias;
-        $opts['resizeWidth'] = isset($options['resizeWidth']) ? $options['resizeWidth'] : 1600;
-        $opts['resizeHeight'] = isset($options['resizeHeight']) ? $options['resizeHeight'] : 1600;
-        $opts['caption'] = lang::get('Photos');
-        $r .= data_entry_helper::file_box($opts);
-      }
+      $r .= data_entry_helper::file_box($opts);
       return $r;
     } else 
       // in grid mode the attributes are embedded in the grid.
@@ -1069,16 +1043,10 @@ class iform_mnhnl_dynamic_1 {
    * Get the date control.
    */
   private static function get_control_date($auth, $args, $tabalias, $options) {
-    if (isset(data_entry_helper::$entity_to_load['sample:date']) && preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
-      // Date has 4 digit year first (ISO style) - convert date to expected output format
-      // @todo The date format should be a global configurable option. It should also be applied to reloading of custom date attributes.
-      $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
-      data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
-    }
     return data_entry_helper::date_picker(array_merge(array(
       'label'=>lang::get('LANG_Date'),
       'fieldname'=>'sample:date',
-      'default' => isset($args['defaults']['sample:date']) ? $args['defaults']['sample:date'] : ''
+          'default' => isset($args['defaults']['sample:date']) ? $args['defaults']['sample:date'] : ''
     ), $options));
   }
   

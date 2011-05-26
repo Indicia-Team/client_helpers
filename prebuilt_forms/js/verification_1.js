@@ -7,15 +7,13 @@ function submit_to(){
   // We need to dynamically build the submitTo so we get the correct sort order
   var submitTo = "";
   // access globals created by the report grid to get the current state of pagination and sort as a result of AJAX calls
-  if (typeof report_grid_page!=="undefined" && report_grid_page!==null && report_grid_page!=="") {
-    url.params["page-verification-grid"] = report_grid_page;
-  }
-  if (typeof report_grid_orderby!=="undefined" && report_grid_orderby!==null && report_grid_orderby!=="") {
+  url.params["page-verification-grid"] = report_grid_page;
+  if (report_grid_orderby!==null && report_grid_orderby!=="") {
     url.params["orderby-verification-grid"] = report_grid_orderby;
   } else {
     delete url.params["orderby-verification-grid"];
   }
-  if (typeof report_grid_sortdir!=="undefined" && report_grid_sortdir!==null && report_grid_sortdir!=="") {
+  if (report_grid_sortdir!==null && report_grid_sortdir!=="") {
     url.params["sortdir-verification-grid"] = report_grid_sortdir;
   } else {
     delete url.params["sortdir-verification-grid"];
@@ -93,7 +91,7 @@ function indicia_send_to_verifier(taxon, id, cmsUser, websiteId) {
   jQuery.each(row.childNodes, function(i, item) {
     var $item = jQuery(item);
     var attrClass = $item.attr('class');
-    if (typeof attrClass !== "undefined") {
+    if (attrClass !== undefined) {
       var classList = attrClass.split(/\s+/);
       if (jQuery.trim($item.text())!=='' && classList.length >= 2 && classList[0] == 'data') {
         record += classList[1] + ': ' + $item.text() + "\n";

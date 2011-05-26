@@ -95,14 +95,13 @@ $custom_terms = array(
 	,'LANG_Additional_Info_Title' => 'Informations Complémentaires'
 	,'LANG_Date' => 'Date'
 	,'LANG_Time' => 'Heure'
-	,'LANG_To' => ' à '
+	,'LANG_To' => ' a '
 	,'Sky' => 'Ciel : couverture nuageuse '
 	,'Temperature' => 'Température '
 	,'Wind' => 'Vent '
 	,'Shade' => "Fleur à l'ombre "
 	,'Flower Type' => "Il s'agit d'une fleur "
 	,'Habitat' => "Il s'agit d'une habitat "
-	,'Foraging'=> "L'insecte a été photographié ailleurs que sur la fleur"
 	
 	,'LANG_Comments_Title' => 'COMMENTAIRES DES INTERNAUTES'
 	,'LANG_New_Comment' => 'Ajouter un commentaire'
@@ -112,7 +111,6 @@ $custom_terms = array(
 	,'LANG_Submit_Comment' => 'Ajouter'
 	,'LANG_Comment_By' => "par : "
 	,'LANG_Reset_Filter' => 'Réinitialiser'
-	,'LANG_Submit_Location' => 'Modifier'
 	
 	,'validation_required' => "Ce champ est obligatoire"
 	,'Yes' => 'Oui'
@@ -128,20 +126,12 @@ $custom_terms = array(
 	,'LANG_Determination_Incorrect' => 'Cette identification a été signalée comme incorrecte.'
 	,'LANG_Determination_Unconfirmed' => 'Cette identification a été marquée comme non confirmées.'
 	,'LANG_Determination_Unknown' => "Le taxon n'est pas connu de la clé d'identification."
-	,'LANG_Max_Features_Reached' => "Du fait du grand nombre de collections enregistrées sur le site du SPIPOLL, seules les 1000 dernières collections saisies vous sont présentées. Utilisez la géolocalisation et/ou le filtre date pour voir l'ensemble des collections au sein d'une zone et/ou d'une période d'observation données."
+	,'LANG_Max_Features_Reached' => "Le nombre de résultats retournés a dépassé le nombre maximal autorisé. La liste sera abrégée."
 	,'LANG_General' => 'Général'
 	,'LANG_Created_Between' => 'Créé entre'
 	,'LANG_And' => 'et'
 	,'LANG_Or' => 'ou'
 	,'LANG_Indicia_Warehouse_Error' => 'Erreur renvoyée par Indicia Warehouse'
 	,'loading' => 'Chargement'
-	,'LANG_INSEE_Localisation' => 'Localisation'
-	,'LANG_Localisation' => 'Localisation'
-	,'LANG_Front Page' => 'Include collection on front page'
-	,'LANG_Submit_Front_Page' => 'Save'
-	
-	,'LANG_Bad_Collection_ID' => "Vous avez essayé de charger une session comme une collection: ce ID n'est pas une collection."
-	,'LANG_Bad_Insect_ID' => "Vous avez essayé de charger une fleur comme un insecte: cette ID n'est pas un insect."
-	,'LANG_Bad_Flower_ID' => "Vous avez essayé de charger un insecte comme une fleur: cet ID n'est pas une fleur."
 	
 );

@@ -91,20 +91,6 @@ class iform_pollenator_gallery {
           'group'=>'Search'
       ),
       array(
-          'name'=>'search_collections_layer',
-          'caption'=>'Name layer for the Collections Search',
-          'description'=>'The Name of the Geoserver Layer used for the WFS feature lookup when searching Collections.',
-          'type'=>'string',
-          'group'=>'Search'
-      ),
-      array(
-          'name'=>'search_insects_layer',
-          'caption'=>'Name layer for the Insects Search',
-          'description'=>'The Name of the Geoserver Layer used for the WFS feature lookup when searching Insects.',
-          'type'=>'string',
-          'group'=>'Search'
-      ),
-      array(
           'name'=>'collectionsPerPage',
           'caption'=>'Collections per page of search results',
           'description'=>'Number of Collections per page of search results.',
@@ -187,14 +173,7 @@ class iform_pollenator_gallery {
           'type'=>'smpAttr',
           'group'=>'Collection Attributes'
         ),
-        array(      
-          'name'=>'front_page_attr_id',
-          'caption'=>'Front Page Attribute ID',      
-          'description'=>'Indicia ID for the sample attribute that stores the whether a collection is to be included on the front page.',
-          'type'=>'smpAttr',
-          'group'=>'Collection Attributes'
-        ),
-        array(
+      array(
           'name'=>'flower_type_attr_id',
           'caption'=>'Flower Type Attribute ID',      
           'description'=>'Indicia ID for the occurrence attribute that stores how the flower got there.',
@@ -273,14 +252,6 @@ class iform_pollenator_gallery {
           'type'=>'int',
           'group'=>'Insect Attributes'
       ),
-/* 3_2
-      array(
-          'name'=>'foraging_attr_id',
-          'caption'=>'Foraging Attribute ID',
-          'description'=>'The Indicia ID for the occurrence attribute that stores the foraging flag.',
-          'type'=>'int',
-          'group'=>'Insect Attributes'
-      ), */
       array(
           'name'=>'ID_tool_flower_url',
           'caption'=>'Flower ID Tool URL',
@@ -404,10 +375,8 @@ class iform_pollenator_gallery {
     			'IForm n'.$nid.' create insect comment',
     			'IForm n'.$nid.' create collection comment',
     			'IForm n'.$nid.' save filter',
-    			'IForm n'.$nid.' add preferred collection',
-    			'IForm n'.$nid.' edit geolocation',
-    			'IForm n'.$nid.' add to front page',
-    );
+    			'IForm n'.$nid.' add preferred collection'
+    			);
   }
   
 /**
@@ -425,7 +394,7 @@ class iform_pollenator_gallery {
     $uid = $user->uid;
     $email = $user->mail;
     $username = $user->name;
-	
+
     if(!user_access('IForm n'.$node->nid.' access')){
     	return "<p>".lang::get('LANG_Insufficient_Privileges')."</p>";
     }
@@ -547,8 +516,7 @@ class iform_pollenator_gallery {
 	$options = iform_map_get_map_options($args, $readAuth);
 	$olOptions = iform_map_get_ol_options($args);
     // The maps internal projection will be left at its default of 900913.
-    // Switch to degrees, minutes, seconds for lat long.
-    $options['latLongFormat'] = 'DMS';
+	
     $options['initialFeatureWkt'] = null;
     $options['proxy'] = '';
     $options['suffixTemplate'] = 'nosuffix';
@@ -558,11 +526,12 @@ class iform_pollenator_gallery {
     	$options['msgGeorefNothingFound'] = lang::get('msgGeorefNothingFound');
     
     $options2 = $options;
-    $options['searchLayer'] = true;
-    $options['editLayer'] = false;
+    $options['searchLayer'] = 'true';
+    $options['editLayer'] = 'false';
     $options['layers'] = array('polygonLayer');
     
 	$options2['divId'] = "map2";
+    $options2['layers'] = array('locationLayer');
     $options2['height'] = $args['2nd_map_height'];
 
     data_entry_helper::$javascript .= "var flowerTaxa = [";
@@ -654,11 +623,8 @@ alt="Mes filtres" title="Mes filtres" /></div> <div id="gallery-filter-retrieve"
 		  '.data_entry_helper::select($insect_ctrl_args).'
  		  <input type="text" name="insect:taxon_extra_info" class="taxon-info" value="'.lang::get('LANG_More_Precise').'"
 	 		onclick="if(this.value==\''.lang::get('LANG_More_Precise').'\'){this.value=\'\'; this.style.color=\'#000\'}"  
-            onblur="if(this.value==\'\'){this.value=\''.lang::get('LANG_More_Precise').'\'; this.style.color=\'#555\'}" />';
-/* 3_2
-		$r = str_replace("\n", "", data_entry_helper::outputAttribute($occurrence_attributes[$args['foraging_attr_id']], $defAttrOptions));
-*/
-	$r .= '	</div>
+            onblur="if(this.value==\'\'){this.value=\''.lang::get('LANG_More_Precise').'\'; this.style.color=\'#555\'}" />
+		</div>
 		<div id="conditions-filter-header" class="ui-accordion-header ui-helper-reset ui-state-default ui-corner-all">
 	  		<div id="fold-conditions-button" class="ui-state-default ui-corner-all fold-button fold-button-folded">&nbsp;</div>
 			<div id="reset-conditions-button" class="ui-state-default ui-corner-all reset-button">'.lang::get('LANG_Reset_Filter').'</div>
@@ -740,9 +706,7 @@ alt="Mes filtres" title="Mes filtres" /></div> <div id="gallery-filter-retrieve"
 	    <p id="collection-flower-name"></p>
 	    <p>'.lang::get($occurrence_attributes[$args['flower_type_attr_id']]['caption']).': <span id="collection-flower-type" class=\"collection-value\"></span></p>
 	    <p>'.lang::get($location_attributes[$args['habitat_attr_id']]['caption']).': <span id="collection-habitat" class=\"collection-value\"></span></p>
-	    <br />
-	    <p>'.lang::get(LANG_INSEE_Localisation).': <span id="collection-locality" ></span></p>
-	    <br />
+	    <p id="collection-locality"></p>
 	    <p id="collection-user-name"></p>
 	    <a id="collection-user-link">'.lang::get('LANG_User_Link').'</a>
 	  </div>
@@ -755,46 +719,7 @@ alt="Mes filtres" title="Mes filtres" /></div> <div id="gallery-filter-retrieve"
     data_entry_helper::$onload_javascript = $tempScript;
     $r .= '</div>
     </div>
-	<div id="fc-new-location" class="ui-widget-content ui-corner-all">
-	    <p>'.lang::get(LANG_Localisation).'</p>
-		<form id="fc-new-location-form" action="'.iform_ajaxproxy_url($node, 'location').'" method="POST">
-    		<input type="hidden"                       name="website_id" value="'.$args['website_id'].'" />
-    		<input type="hidden"                       name="survey_id" value="'.$args['survey_id'].'" />
-    		<input type="hidden" id="imp-sref-system"  name="location:centroid_sref_system" value="4326" />
-		 	<input type="hidden"                       name="location:name" value="" />
-    		<input type="hidden" id="location-id"      name="location:id" value=""/>
-    	'.data_entry_helper::sref_textbox(array(
-		        'srefField'=>'location:centroid_sref',
-        		'systemfield'=>'location:centroid_sref_system',
-        		'fieldname'=>'location:centroid_sref',
-        		'splitLatLong'=>true,
-		        'labelLat' => lang::get('Latitude'),
-    			'fieldnameLat' => 'place:lat',
-        		'labelLong' => lang::get('Longitude'),
-    			'fieldnameLong' => 'place:long',
-    			'idLat'=>'imp-sref-lat',
-        		'idLong'=>'imp-sref-long',
-    			'suffixTemplate'=>'nosuffix')).'
-       		<input type="submit" id="fc_location_submit_button" class="ui-state-default ui-corner-all submit-button" value="'.lang::get('LANG_Submit_Location').'" />
-    	</form>
-    </div>';
-    if(user_access('IForm n'.$node->nid.' add to front page')){
-    	$r .= '<div id="fc-front-page" class="ui-widget-content ui-corner-all">
-    <form id="fc-front-page-form" action="'.iform_ajaxproxy_url($node, 'sample').'" method="POST">
-       <input type="hidden" name="website_id" value="'.$args['website_id'].'" />
-       <input type="hidden" name="survey_id" value="'.$args['survey_id'].'" />
-       <input type="hidden" name="sample:id" value="" />
-       <input type="hidden" name="sample:date_start" value="2010-01-01"/>
-       <input type="hidden" name="sample:date_end" value="2010-01-01"/>
-       <input type="hidden" name="sample:date_type" value="D"/>
-       <input type="hidden" name="sample:location_id" value="" />
-       <label>'.lang::get('LANG_Front Page').'</label><div class="control-box "><nobr><span><input type="radio" id="smpAttr:'.$args['front_page_attr_id'].':0" name="smpAttr:'.$args['front_page_attr_id'].'" value="0" checked="checked" /><label for="smpAttr:'.$args['front_page_attr_id'].':0">'.lang::get('No').'</label></span></nobr> &nbsp; <nobr><span><input type="radio" id="smpAttr:'.$args['front_page_attr_id'].':1" name="smpAttr:'.$args['front_page_attr_id'].'" value="1" /><label for="smpAttr:'.$args['front_page_attr_id'].':1">'.lang::get('Yes').'</label></span></nobr></div>
-       <input type="submit" id="fc_front_page_submit_button" class="ui-state-default ui-corner-all submit-button" value="'.lang::get('LANG_Submit_Front_Page').'" />
-    </form>
-  </div>';
-    }
-    $r .= '
-    <div id="collection-insects">
+	<div id="collection-insects">
     </div>
 	<div id="fc-comments-header" class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top">
 	    <div id="fc-new-comment-button" class="ui-state-default ui-corner-all new-comment-button">'.lang::get('LANG_New_Comment').'</div>
@@ -844,7 +769,7 @@ alt="Mes filtres" title="Mes filtres" /></div> <div id="gallery-filter-retrieve"
     	<input type="hidden" name="determination:person_name" value="'.$username.'" />  
 		<input type="hidden" name="determination:email_address" value="'.$email.'" />';
 	if(user_access('IForm n'.$node->nid.' insect expert')){
-		$r .= '		<select id="fo-insect-expert-det-type" name="determination:determination_type" />
+		$r .= '		<select name="determination:determination_type" />
 			<option value="C" selected>'.lang::get('LANG_Det_Type_C').'</option>
 			<option value="X">'.lang::get('LANG_Det_Type_X').'</option>
 		</select>';
@@ -877,7 +802,7 @@ alt="Mes filtres" title="Mes filtres" /></div> <div id="gallery-filter-retrieve"
     	<input type="hidden" name="determination:person_name" value="'.$username.'" />  
 		<input type="hidden" name="determination:email_address" value="'.$email.'" />';
 	if(user_access('IForm n'.$node->nid.' flower expert')){
-		$r .= '		<select id="fo-flower-expert-det-type" name="determination:determination_type" />
+		$r .= '		<select name="determination:determination_type" />
 			<option value="C" selected>'.lang::get('LANG_Det_Type_C').'</option>
 			<option value="X">'.lang::get('LANG_Det_Type_X').'</option>
 		</select>';
@@ -1001,8 +926,7 @@ $.validator.messages.required = \"".lang::get('validation_required')."\";
 
 // remove the (don't know) entry from flower type filter.
 jQuery('[name=occAttr\\:".$args['flower_type_attr_id']."]').filter('[value=".$args['flower_type_dont_know']."]').parent().remove();
-jQuery('[name=location\\:geom]').attr('name', 'location:centroid_geom');
-
+ 
 jQuery('#start_date').datepicker({
   dateFormat : 'dd/mm/yy',
   constrainInput: false,
@@ -1027,10 +951,7 @@ myScrollTo = function(selector){
 jQuery('#reset-name-button').click(function(){
 	jQuery('[name=username]').val('');
 });
-jQuery('#name-filter-header').click(function(evt){
-    if($(evt.originalTarget).hasClass('reset-button')){
-        return;
-    }
+jQuery('#fold-name-button').click(function(){
 	jQuery('#name-filter-header').toggleClass('ui-state-active').toggleClass('ui-state-default');
 	jQuery('#fold-name-button').toggleClass('fold-button-folded');
 	jQuery('#name-filter-body').toggleClass('ui-accordion-content-active');
@@ -1041,10 +962,7 @@ jQuery('#reset-date-button').click(function(){
 	jQuery('[name=end_date]').val('".lang::get('click here')."');
 	jQuery('[name=real_end_date]').val('');
 });
-jQuery('#date-filter-header').click(function(evt){
-    if($(evt.originalTarget).hasClass('reset-button')){
-        return;
-    }
+jQuery('#fold-date-button').click(function(){
 	jQuery('#date-filter-header').toggleClass('ui-state-active').toggleClass('ui-state-default');
 	jQuery('#fold-date-button').toggleClass('fold-button-folded');
 	jQuery('#date-filter-body').toggleClass('ui-accordion-content-active');
@@ -1055,10 +973,7 @@ jQuery('#reset-flower-button').click(function(){
 	jQuery('[name=flower\\:taxon_extra_info]').val(\"".lang::get('LANG_More_Precise')."\");
 	jQuery('#flower-filter-body').find(':checkbox').removeAttr('checked');
 });
-jQuery('#flower-filter-header').click(function(evt){
-    if($(evt.originalTarget).hasClass('reset-button')){
-        return;
-    }
+jQuery('#fold-flower-button').click(function(){
 	jQuery('#flower-filter-header').toggleClass('ui-state-active').toggleClass('ui-state-default');
 	jQuery('#fold-flower-button').toggleClass('fold-button-folded');
 	jQuery('#flower-filter-body').toggleClass('ui-accordion-content-active');
@@ -1069,10 +984,8 @@ jQuery('#reset-insect-button').click(function(){
 	jQuery('[name=insect\\:taxon_extra_info]').val(\"".lang::get('LANG_More_Precise')."\");
 	jQuery('#insect-filter-body').find(':checkbox').removeAttr('checked');
 });
-jQuery('#insect-filter-header').click(function(evt){
-    if($(evt.originalTarget).hasClass('reset-button')){
-        return;
-    }
+
+jQuery('#fold-insect-button').click(function(){
 	jQuery('#insect-filter-header').toggleClass('ui-state-active').toggleClass('ui-state-default');
 	jQuery('#fold-insect-button').toggleClass('fold-button-folded');
 	jQuery('#insect-filter-body').toggleClass('ui-accordion-content-active');
@@ -1081,10 +994,8 @@ jQuery('#insect-filter-header').click(function(evt){
 jQuery('#reset-conditions-button').click(function(){
 	jQuery('#conditions-filter-body').find(':checkbox').removeAttr('checked');
 });
-jQuery('#conditions-filter-header').click(function(evt){
-    if($(evt.originalTarget).hasClass('reset-button')){
-        return;
-    }
+
+jQuery('#fold-conditions-button').click(function(){
 	jQuery('#conditions-filter-header').toggleClass('ui-state-active').toggleClass('ui-state-default');
 	jQuery('#fold-conditions-button').toggleClass('fold-button-folded');
 	jQuery('#conditions-filter-body').toggleClass('ui-accordion-content-active');
@@ -1102,10 +1013,7 @@ jQuery('#reset-location-button').click(function(){
 	center.transform(div.map.displayProjection, div.map.projection);
 	div.map.setCenter(center, ".((int) $args['map_zoom']).");
 });
-jQuery('#location-filter-header').click(function(evt){
-    if($(evt.originalTarget).hasClass('reset-button')){
-        return;
-    }
+jQuery('#fold-location-button').click(function(){
 	jQuery('#location-filter-header').toggleClass('ui-state-active').toggleClass('ui-state-default');
 	jQuery('#fold-location-button').toggleClass('fold-button-folded');
 	jQuery('#location-filter-body').toggleClass('ui-accordion-content-active');
@@ -1175,13 +1083,10 @@ convertDate = function(dateStr, incTime){
 loadCollection = function(id, index){
 	abortAjax();
     jQuery('[name=sample_comment\\:sample_id]').val(id);
-    jQuery('[name=sample\\:id]').val(id);
-    jQuery('#fc-add-preferred').attr('smpID', id);
+	jQuery('#fc-add-preferred').attr('smpID', id);
 	collection_preferred_object.collection_id = id;
 	jQuery('#fc-new-comment-button').".(user_access('IForm n'.$node->nid.' create collection comment') ? "show()" : "hide()").";
-	jQuery('#fc-new-comment').removeClass('ui-accordion-content-active');
-	jQuery('#fc-new-location').".(user_access('IForm n'.$node->nid.' edit geolocation') ? "show()" : "hide()").";
-	jQuery('#focus-occurrence,#filter,#fc-next-button,#fc-prev-button').hide();
+    jQuery('#focus-occurrence,#filter,#fc-next-button,#fc-prev-button').hide();
     jQuery('#focus-collection').show();
     if(index != null){
     	if(index < (searchResults.features.length-1) )
@@ -1190,11 +1095,11 @@ loadCollection = function(id, index){
     		jQuery('#fc-prev-button').show().data('index', index-1);
     }
     if(jQuery('#map2').children().length == 0) {
+    	locationLayer = new OpenLayers.Layer.Vector('Location Layer',{displayInLayerSwitcher: false});
     	".$map2JS."
  	};
-	jQuery('#map2')[0].map.editLayer.clickControl.".(user_access('IForm n'.$node->nid.' edit geolocation') ? "" : "de")."activate();
-	jQuery('#map2')[0].map.editLayer.destroyFeatures();
-	jQuery('#map2').width('auto');
+    locationLayer.destroyFeatures();
+ 	jQuery('#map2').width('auto');
 	jQuery('#flower-image').data('occID', 'none').data('collectionIndex', index);
 	jQuery('#collection-insects,#collection-date,#collection-flower-name,#collection-flower-type,#collection-habitat,#collection-user-name').empty();
 	loadComments(id, '#fc-comment-list', 'sample_comment', 'sample_id', 'sample-comment-block', 'sample-comment-body', true);
@@ -1252,15 +1157,7 @@ loadCollection = function(id, index){
   			}}}}}));
 				
 		}
-	}));";
-    if(user_access('IForm n'.$node->nid.' add to front page')){
-    	data_entry_helper::$javascript .= "
-	jQuery('#fc-front-page-form').find('[name^=smpAttr\\:".$args['front_page_attr_id']."]')
-		.attr('name', 'smpAttr:".$args['front_page_attr_id']."')
-		.filter('[value=0]')
-		.attr('checked', 'checked');";
-    }
-	data_entry_helper::$javascript .= "
+	}));
 	ajaxStack.push($.getJSON(\"".$svcUrl."/data/sample_attribute_value\"  +
    			\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
    			\"&sample_id=\" + id + \"&REMOVEABLEJSONP&callback=?\", function(attrdata) {
@@ -1276,21 +1173,7 @@ loadCollection = function(id, index){
 						case ".$args['uid_attr_id'].":
 							collection_preferred_object.user_id = attrdata[i].value
 			       		    jQuery('#collection-user-link').attr('href', '".url('node/'.$node->nid)."?user_id='+attrdata[i].value);
-							if(attrdata[i].value == ".$user->uid.") { // user can edit geolocation of own collections.
-								jQuery('#fc-new-location').show();
-								jQuery('#map2')[0].map.editLayer.clickControl.activate();
-							}
-			       		    break;";
-    if(user_access('IForm n'.$node->nid.' add to front page')){
-    	data_entry_helper::$javascript .= "
-						case ".$args['front_page_attr_id'].":
-							jQuery('#fc-front-page-form').find('[name^=smpAttr\\:".$args['front_page_attr_id']."]')
-								.attr('name', 'smpAttr:".$args['front_page_attr_id'].":'+attrdata[i].id)
-								.filter('[value='+attrdata[i].raw_value+']')
-								.attr('checked', 'checked');
-							break;";
-    }
-	data_entry_helper::$javascript .= "
+							break;
     }}}}}));
 	ajaxStack.push($.getJSON(\"".$svcUrl."/data/sample/\" +id+
 			\"?mode=json&view=detail&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
@@ -1298,15 +1181,7 @@ loadCollection = function(id, index){
    		if(!(collectionData instanceof Array)){
    			alertIndiciaError(collectionData);
    		} else if (collectionData.length>0) {
-   			if(collectionData[0].parent_id != null) {
-   				alertIndiciaError({error: \"".lang::get('LANG_Bad_Collection_ID')."\"});
-   				return;
-   			}
-   			jQuery('[name=sample\\:date_start]').val(collectionData[0].date_start);
-   			jQuery('[name=sample\\:date_end]').val(collectionData[0].date_end);
-   			jQuery('[name=sample\\:date_type]').val(collectionData[0].date_type);
-   			jQuery('[name=sample\\:location_id]').val(collectionData[0].location_id);
-   			if(collectionData[0].date_start == collectionData[0].date_end){
+			if(collectionData[0].date_start == collectionData[0].date_end){
 				collection_preferred_object.date = collectionData[0].date_start.slice(0,10);
 				jQuery('<span>'+convertDate(collectionData[0].date_start, false)+'</span>').appendTo('#collection-date');
 			} else {
@@ -1321,20 +1196,12 @@ loadCollection = function(id, index){
    				if(!(locationData instanceof Array)){
    					alertIndiciaError(locationData);
    				} else if (locationData.length>0) {
-				    jQuery('#location-id').val(locationData[0].id);
-	    			jQuery('[name=location\\:name]').val(locationData[0].name);
-				    jQuery('#imp-sref').val(locationData[0].centroid_sref);
-					jQuery('#imp-geom').val(locationData[0].centroid_geom);
-					var parts=locationData[0].centroid_sref.split(' ');
-					var refx = parts[0].split(',');
-					jQuery('#imp-sref-lat').val(refx[0]);
-					jQuery('#imp-sref-long').val(parts[1]).change();
-				    loadImage('location_image', 'location_id', locationData[0].id, '#environment-image', ".$args['Environment_Image_Ratio'].", function(imageRecord){collection_preferred_object.environment_image_path = imageRecord.path}, 'med-', false);
+					loadImage('location_image', 'location_id', locationData[0].id, '#environment-image', ".$args['Environment_Image_Ratio'].", function(imageRecord){collection_preferred_object.environment_image_path = imageRecord.path}, 'med-', false);
 					var parser = new OpenLayers.Format.WKT();
 					var feature = parser.read(locationData[0].centroid_geom);
-//					jQuery('#map2')[0].map.editLayer.addFeatures([feature]);
-//					var bounds=jQuery('#map2')[0].map.editLayer.getDataExtent();
-//					jQuery('#map2')[0].map.editLayer.map.setCenter(bounds.getCenterLonLat(), 13);
+					locationLayer.addFeatures([feature]);
+					var bounds=locationLayer.getDataExtent();
+					locationLayer.map.setCenter(bounds.getCenterLonLat(), 13);
 			        var filter = new OpenLayers.Filter.Spatial({
   						type: OpenLayers.Filter.Spatial.CONTAINS ,
     					property: 'the_geom',
@@ -1442,8 +1309,6 @@ loadCollection = function(id, index){
 										jQuery('<div><p>".lang::get('LANG_Last_ID').":</p><p><strong>'+string+'</strong></p></div>').addClass('insect-id').appendTo(det);
 									if(detData[i].determination_type == 'B' || detData[i].determination_type == 'I' || detData[i].determination_type == 'U'){
 										tag.removeClass('insect-unknown').addClass('insect-dubious');
-									} else if(detData[i].determination_type == 'C'){
-										tag.removeClass('insect-unknown').addClass('insect-valid');
 									} else {
 										tag.removeClass('insect-unknown').addClass('insect-ok');
 									}
@@ -1494,10 +1359,10 @@ addCollection = function(index, attributes, geom, first){
 	jQuery('<div class=\"ui-state-default ui-corner-all display-button\">".lang::get('LANG_Display')."</div>').click(function(){
 		loadCollection(jQuery(this).data('value'), jQuery(this).data('index'));
 	}).appendTo(displayButtonContainer).data('value',attributes.collection_id).data('index',index);
-	if(attributes.datedebut_txt == attributes.datefin_txt){
-	  jQuery('<p class=\"collection-date\">'+convertDate(attributes.datedebut_txt,false)+'</p>').appendTo(details);
+	if(attributes.datedebut == attributes.datefin){
+	  jQuery('<p class=\"collection-date\">'+convertDate(attributes.datedebut,false)+'</p>').appendTo(details);
     } else {
-	  jQuery('<p class=\"collection-date\">'+convertDate(attributes.datedebut_txt,false)+' - '+convertDate(attributes.datefin_txt,false)+'</p>').appendTo(details);
+	  jQuery('<p class=\"collection-date\">'+convertDate(attributes.datedebut,false)+' - '+convertDate(attributes.datefin,false)+'</p>').appendTo(details);
     }
 	jQuery('<p class=\"collection-name\">'+attributes.nom+'</p>').appendTo(details);
 	var locality = jQuery('<p  class=\"collection-locality\"></p>').appendTo(details);
@@ -1602,8 +1467,6 @@ addInsect = function(index, attributes, endOfRow, first){
 			jQuery('<p>'+string+'</p>').appendTo(determination)
 			if(detData[i].determination_type == 'B' || detData[i].determination_type == 'I' || detData[i].determination_type == 'U'){
 				flag.removeClass('insect-unknown').addClass('insect-dubious');
-			} else if(detData[i].determination_type == 'C'){
-				flag.removeClass('insect-unknown').addClass('insect-valid');
 			} else 
 				flag.removeClass('insect-unknown').addClass('insect-ok');
 		   }
@@ -1765,10 +1628,10 @@ setInsectPage = function(pageNum){
 
 // searchLayer in map is used for georeferencing.
 // map editLayer is switched off. TODO: need to switch off click control
-// editlayer left in map2: replaces locationLayer
 searchLayer = null;
 inseeLayer = null;
 polygonLayer = null;     
+locationLayer = null;
 inseeProtocol = new OpenLayers.Protocol.WFS({
               url:  '".str_replace("{HOST}", $_SERVER['HTTP_HOST'], $args['INSEE_url'])."',
               featurePrefix: '".$args['INSEE_prefix']."',
@@ -1874,21 +1737,6 @@ jQuery('#flower-id-button').click(function(){
 });
 jQuery('#flower-id-cancel').click(function(){
 	pollReset(flowerIDstruc);
-});
-
-// an expert can set the determination type to 'X' manually, so reset everything in this case.
-expertSetUnidentified = function(toolStruct){
-	jQuery('#'+toolStruct.type+'-id-button').data('toolRetValues', []);
-	jQuery(toolStruct.mainForm+' [name=determination\\:taxon_details]').val('');
-	jQuery('#'+toolStruct.type+'_taxa_list').empty();
-	jQuery(toolStruct.mainForm+' [name=determination\\:taxa_taxon_list_id]').val('');
-	jQuery(toolStruct.mainForm+' [name=determination\\:comment]').val(\"".lang::get('LANG_Default_ID_Comment')."\");
-  };
-jQuery('#fo-flower-expert-det-type').click(function(){
-	expertSetUnidentified(flowerIDstruc);
-});
-jQuery('#fo-insect-expert-det-type').click(function(){
-	expertSetUnidentified(insectIDstruc);
 });
 
 jQuery('#flower-id-cancel').hide();
@@ -2091,17 +1939,7 @@ runSearch = function(forCollections){
   		filters.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LESS_THAN_OR_EQUAL_TO, property: 'datedebut', value: end_date}));
  	
   	var flower = jQuery('select[name=flower\\:taxa_taxon_list_id]').val();
-  	if(flower != '') {
-  		var flower_taxon_filter = new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'flower_taxon_ids', value: '*|'+flower+'|*'});
-  		if(jQuery('select[name=flower\\:taxa_taxon_list_id] option:selected').text().substring(0,13) == 'Taxon inconnu'){
-  			ORgroup = [];
-  			ORgroup.push(flower_taxon_filter);
-  			ORgroup.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'status_fleur_code', value: 'X'}));
-  			filters.push(combineOR(ORgroup));
-  		} else { 
-  			filters.push(flower_taxon_filter);
-  		}
-  	}
+  	if(flower != '') filters.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'flower_taxon_ids', value: '*|'+flower+'|*'}));
   	flower = jQuery('[name=flower\\:taxon_extra_info]').val();
   	if(flower != '' && flower != '".lang::get('LANG_More_Precise')."')
   		filters.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'taxons_fleur_precise', value: '*'+flower+'*' }));
@@ -2118,31 +1956,11 @@ runSearch = function(forCollections){
   	if(ORgroup.length >= 1) filters.push(combineOR(ORgroup));
 
   	var insect = jQuery('select[name=insect\\:taxa_taxon_list_id]').val();
-  	if(insect != '') {
-  		var insect_taxon_filter = new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'insect_taxon_ids', value: '*|'+insect+'|*'});
-  		if(jQuery('select[name=insect\\:taxa_taxon_list_id] option:selected').text().substring(0,13) == 'Taxon inconnu'){
-  			ORgroup = [];
-  			ORgroup.push(insect_taxon_filter);
-  			ORgroup.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'status_insecte_code', value: '*X*'}));
-  			filters.push(combineOR(ORgroup));
-  		} else { 
-  			filters.push(insect_taxon_filter);
-  		}
-  	}
+  	if(insect != '') filters.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'insect_taxon_ids', value: '*|'+insect+'|*'}));
   	insect = jQuery('[name=insect\\:taxon_extra_info]').val();
   	if(insect != '' && insect != '".lang::get('LANG_More_Precise')."')
   		filters.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'taxons_insecte_precise', value: '*'+insect+'*'}));
-/* 3_2
-	ORgroup = [];
-	jQuery('#insect-filter-body').find('[name^=occAttr:".$args['foraging_attr_id']."]').filter('[checked]').each(function(index, elem){
-  		if(forCollections)
-  			ORgroup.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: (forCollections ? 'foraging_ids' : ', value: '*'+elem.value+'*'}));
-  		else
-  			ORgroup.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: (forCollections ? 'foraging_id' : ', value: elem.value}));
-	});
-	if(ORgroup.length >= 1) filters.push(combineOR(ORgroup));
-	*/
-  		
+
   	ORgroup = [];
   	jQuery('#conditions-filter-body').find('[name^=smpAttr:".$args['sky_state_attr_id']."]').filter('[checked]').each(function(index, elem){
   		ORgroup.push(new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.LIKE, property: 'sky_ids', value: '*|'+elem.value+'|*'}));
@@ -2167,33 +1985,15 @@ runSearch = function(forCollections){
   	});
   	if(ORgroup.length >= 1) filters.push(combineOR(ORgroup));
   	if(forCollections){
-		properties = ['collection_id','datedebut_txt','datefin_txt','geom','nom','image_de_environment','image_de_la_fleur','flower_id']
-		feature = '".$args['search_collections_layer']."';
+		properties = ['collection_id','datedebut','datefin','geom','nom','image_de_environment','image_de_la_fleur','flower_id']
+		feature = 'spipoll_collections_cache_view';
   	} else {
-  		feature = '".$args['search_insects_layer']."';
+  		feature = 'spipoll_insects_cache_view';
   		properties = ['insect_id','collection_id','geom','image_d_insecte'];
   	}
-  	
-    var style = new OpenLayers.Style({
-                    pointRadius: '\${radius}',
-                    fillColor: '#ffcc66',
-                    fillOpacity: 0.8,
-                    strokeColor: '#cc6633',
-                    strokeWidth: 2,
-                    strokeOpacity: 1
-       }, {context: {radius: function(feature) {
-                     if(feature.attributes.count>=10) return 10;
-                     if(feature.attributes.count>=5) return 8;
-                     if(feature.attributes.count>1) return 6;
-                     return 4;}}
-    });
-    var styleMap = new OpenLayers.StyleMap({\"default\": style});
-    
 	var strategy = new OpenLayers.Strategy.Fixed({preload: false, autoActivate: false});
-	clusterStrategy = new OpenLayers.Strategy.Cluster();
 	searchLayer = new OpenLayers.Layer.Vector('Search Layer', {
-		  styleMap: styleMap,
-	      strategies: [strategy, clusterStrategy],
+          strategies: [strategy],
           displayInLayerSwitcher: false,
 	      protocol: new OpenLayers.Protocol.WFS({
               url: '".str_replace("{HOST}", $_SERVER['HTTP_HOST'], $args['search_url'])."',
@@ -2211,8 +2011,7 @@ runSearch = function(forCollections){
 	if(forCollections) {
 		jQuery('#results-collections-results').empty().append('<div class=\"collection-loading-panel\" ><img src=\"".helper_config::$base_url."media/images/ajax-loader2.gif\" />".lang::get('loading')."...</div>');
 		searchLayer.events.register('featuresadded', {}, function(a1){
-			searchLayer.events.remove('featuresadded');
-			searchResults = clusterStrategy;
+			searchResults = a1;
 			searchResults.type = 'C';
 			if(searchResults.features.length >= ".$args['max_features']."){
 				alert(\"".lang::get('LANG_Max_Features_Reached')."\");
@@ -2227,8 +2026,7 @@ runSearch = function(forCollections){
 	} else {
 		jQuery('#results-insects-results').empty().append('<div class=\"insect-loading-panel\" ><img src=\"".helper_config::$base_url."media/images/ajax-loader2.gif\" />".lang::get('loading')."...</div>');
 		searchLayer.events.register('featuresadded', {}, function(a1){
-			searchLayer.events.remove('featuresadded');
-			searchResults = clusterStrategy;
+			searchResults = a1;
 			searchResults.type = 'I';
 			if(searchResults.features.length >= ".$args['max_features']."){
 				alert(\"".lang::get('LANG_Max_Features_Reached')."\");
@@ -2511,68 +2309,7 @@ jQuery('#fc-new-comment-form').ajaxForm({
 		}
 	} 
 });
-";
-    if(user_access('IForm n'.$node->nid.' add to front page')){
-    	data_entry_helper::$javascript .= "
-jQuery('#fc-front-page-form').ajaxForm({ 
-	async: false,
-	dataType:  'json', 
-	beforeSubmit:   function(data, obj, options){
-		if (!jQuery('form#fc-front-page-form').valid()) { return false; }
-  		jQuery('#fc_front_page_submit_button').addClass('loading-button');
-		return true;
-	},
-	success:   function(data){
-		if(data.error != undefined){
-			alert(data.error);
-		} else {
-			ajaxStack.push(
-				jQuery.ajax({ 
-					type: \"GET\", 
-					url: \"".$svcUrl."/data/sample_attribute_value\"  +
-						\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
-						\"&sample_id=\" + data.outer_id + \"&REMOVEABLEJSONP&callback=?\",
-					dataType: 'json',
-					success: function(attrdata) {
-						if(!(attrdata instanceof Array)){
-							alertIndiciaError(attrdata);
-						} else if (attrdata.length>0) {
-							for(i=0; i< attrdata.length; i++){
-								if (attrdata[i].id){
-									switch(parseInt(attrdata[i].sample_attribute_id)){
-										case ".$args['front_page_attr_id'].":
-											jQuery('#fc-front-page-form').find('[name^=smpAttr\\:".$args['front_page_attr_id']."]')
-												.attr('name', 'smpAttr:".$args['front_page_attr_id'].":'+attrdata[i].id)
-												.filter('[value='+attrdata[i].raw_value+']')
-												.attr('checked', 'checked');
-											break;
-									}
-					}}}}}));
-		}
-	},
-	complete: function (){
-  		jQuery('.loading-button').removeClass('loading-button');
-  	}
-});";
-    }
-	data_entry_helper::$javascript .= "
-jQuery('#fc-new-location-form').ajaxForm({ 
-	async: false,
-	dataType:  'json', 
-	beforeSubmit:   function(data, obj, options){
-		if (!jQuery('form#fc-new-location-form').valid()) { return false; }
-  		jQuery('#fc_location_submit_button').addClass('loading-button');
-		return true;
-	},
-	success:   function(data){
-		if(data.error != undefined){
-			alert(data.error);
-		}
-	},
-	complete: function (){
-  		jQuery('.loading-button').removeClass('loading-button');
-  	}
-});
+
 loadSampleAttributes = function(keyValue){
     jQuery('#fo-insect-start-time,#fo-insect-end-time,#fo-insect-sky,#fo-insect-temp,#fo-insect-wind,#fo-insect-shade').empty();
 	ajaxStack.push($.getJSON(\"".$svcUrl."/data/sample_attribute_value\"  +
@@ -2897,10 +2634,6 @@ loadInsectAddnInfo = function(keyValue, collectionIndex){
    				if(!(smpData instanceof Array)){
    					alertIndiciaError(smpData);
    				} else if (smpData.length > 0) {
-   					if(smpData[0].parent_id == null) {
-   						alertIndiciaError({error: \"".lang::get('LANG_Bad_Insect_ID')."\"});
-   						return;
-		   			}
    					collection = smpData[0].parent_id;
 					collectionProcessing(collection, ".(user_access('IForm n'.$node->nid.' insect expert') ? "true" : "false").");
 					jQuery('#fo-insect-date').empty().append(convertDate(smpData[0].date_start,false));
@@ -2928,11 +2661,7 @@ loadFlowerAddnInfo = function(keyValue, collectionIndex){
    				if(!(collection instanceof Array)){
    					alertIndiciaError(collection);
    				} else if (collection.length > 0) {
-   					if(collection[0].parent_id != null) {
-   						alertIndiciaError({error: \"".lang::get('LANG_Bad_Flower_ID')."\"});
-   						return;
-		   			}
-   					loadLocationAttributes(collection[0].location_id);
+					loadLocationAttributes(collection[0].location_id);
   				}
    		   	  }));
    		}
