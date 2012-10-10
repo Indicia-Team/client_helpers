@@ -29,7 +29,6 @@ global $custom_terms;
 $custom_terms = array(
 	'LANG_Trailer_Text' => "Koordination des Monitorings häufiger Brutvögel CoBiMo in Luxemburg: <a href='http://www.naturemwelt.lu/' target='_blank'>natur&ëmwelt</a> (Centrale ornithologique Luxembourg), <a href='http://www.crpgl.lu' target='_blank'>Centre de Recherche Public - Gabriel Lippmann</a> (Département Environnement et Agro-biotechnologies) & <a href='http://www.environnement.public.lu' target='_blank'>Ministère du Développement durable et des Infrastructures</a> (Département de l'environnement)",
 	'LANG_not_logged_in' => 'Um den Inhalt zu sehen, müssen Sie sich einloggen.',
-	'LANG_no_permissions' => "Sie müssen entweder eine eingetragene Benutzer oder eine eingetragene Admin dieser Form sein, um dieses Formular zugreifen.",
 	'LANG_Location_Layer' => 'Ebene der Erfassungsquadrate',
 	'LANG_Occurrence_List_Layer'=> 'Ebene der Feststellungen',
 	'LANG_Surveys' => 'Erfassung',
@@ -64,8 +63,6 @@ $custom_terms = array(
 	'LANG_Download' => 'Reports and Downloads',
 	'LANG_Direction_Report' => 'Run a report to check that all non downloaded closed surveys have been walked in the same direction as the previously entered survey on that location. Returns the surveys which are in a different direction.',
 	'LANG_Direction_Report_Button' => 'Run Survey Direction Warning Report - CSV',
-	'LANG_Verified_Data_Report' => 'Run a report to return all occurrences that have been verified.',
-	'LANG_Verified_Data_Report_Button' => 'Run Verified Data Report - CSV',
 	'LANG_Initial_Download' => 'Carry out initial download of closed surveys. Sweeps up all records which are in closed surveys but which have not been downloaded yet',
     'LANG_Initial_Download_Button' => 'Initial Download - CSV',
 	'LANG_Confirm_Download' => 'Carry out confirmation download. This outputs the same data that will be included in the final download, but does not tag the data as downloaded. Only includes data in the last initial download unless a survey has since been reopened, when it will be excluded from this report.',

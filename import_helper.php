@@ -96,11 +96,9 @@ class import_helper extends helper_base {
           "<fieldset><legend>Import Settings</legend>\n";
       $formArray = json_decode($response['output'], true);
       if (!is_array($formArray)) {
-        if (class_exists('kohana')) {
-          kohana::log('error', 'Problem occurred during upload. Sent request to get_import_settings and received invalid response.');
-          kohana::log('error', "Request: $request");
-          kohana::log('error', 'Response: '.print_r($response, true));
-        }
+        kohana::log('error', 'Problem occurred during upload. Sent request to get_import_settings and received invalid response.');
+        kohana::log('error', "Request: $request");
+        kohana::log('error', 'Response: '.print_r($response, true));
         return 'Could not upload file. Please check that the indicia_svc_import module is enabled on the Warehouse.';
       }
       $formOptions = array(
