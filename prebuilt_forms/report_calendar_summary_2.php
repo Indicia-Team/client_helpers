@@ -791,7 +791,7 @@ class iform_report_calendar_summary_2 {
   	return isset(self::$siteUrlParams[self::$SurveyKey]);
   }
 
-  private static function location_control($args, $readAuth, $node, &$options)
+  private static function location_control($args, $readAuth, $nid, &$options)
   {
   	// note that when in user specific mode it returns the list currently assigned to the user: it does not give 
   	// locations which the user previously recorded data against, but is no longer allocated to.
@@ -844,7 +844,7 @@ class iform_report_calendar_summary_2 {
           $lookUpValues[$termDetails['id']] = $termDetails['term'];
         }
         // if location is predefined, can not change unless a 'manager_permission'
-        $ctrlid='calendar-location-type-'.$node->nid;
+        $ctrlid='calendar-location-type-'.$nid;
         $ctrl .= data_entry_helper::select(array(
                  'label' => lang::get('Site Type'),
                  'id' => $ctrlid,
@@ -959,7 +959,7 @@ class iform_report_calendar_summary_2 {
       $locs[$location['id']]=$location;
     }
     natcasesort($sort);
-    $ctrlid='calendar-location-select-'.$node->nid;
+    $ctrlid='calendar-location-select-'.$nid;
     $ctrl .='<label for="'.$ctrlid.'" class="location-select-label">'.lang::get('Filter by site').
           ': </label><select id="'.$ctrlid.'" class="location-select">'.
           '<option value="" class="location-select-option" '.($siteUrlParams[self::$locationKey]['value']=='' ? 'selected="selected" ' : '').'>'.$description.'</option>';
@@ -1024,7 +1024,7 @@ class iform_report_calendar_summary_2 {
   	}
   }
   
-  private static function user_control(&$args, $readAuth, $node, &$options)
+  private static function user_control(&$args, $readAuth, $nid, &$options)
   {
   	// user filter is keyed on the CMS User ID; converted to cms_user_id/Indicia user_id pair by report_helper, if applicable.
     // we don't use the userID option as the user_id can be blank, and will force the parameter request if left as a blank
@@ -1162,7 +1162,7 @@ class iform_report_calendar_summary_2 {
     }
     // The option values are CMS User ID, not Indicia ID.
     // This implies that $siteUrlParams[self::$userKey] is also CMS User ID.
-    $ctrlid = 'calendar-user-select-'.$node->nid;
+    $ctrlid = 'calendar-user-select-'.$nid;
     $ctrl .= '<label for="'.$ctrlid.'" class="user-select-label">'.lang::get('Filter by recorder').
           ': </label><select id="'.$ctrlid.'" class="user-select">'.
           '<option value='.($user->uid).' class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$user->uid  ? 'selected="selected" ' : '').'>'.lang::get('My data').'</option>'.
@@ -1280,7 +1280,7 @@ jQuery('#".$ctrlid."').change(function(){
     }
   }
 
-  private static function year_control($args, $readAuth, $node, &$options)
+  private static function year_control($args, $readAuth, $nid, &$options)
   {
     switch($args['dateFilter']){
       case 'none': return '';
@@ -1321,11 +1321,11 @@ jQuery('#".$ctrlid."').change(function(){
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     global $user;
     $retVal = '';
     $logged_in = $user->uid>0;
@@ -1342,7 +1342,7 @@ jQuery('#".$ctrlid."').change(function(){
     if(!self::set_up_survey($args, $auth))
       return(lang::get('set_up_survey returned false: survey_id missing from presets or location_type definition.'));
     $reportOptions = self::get_report_calendar_2_options($args, $auth);
-    $reportOptions['id']='calendar-summary-'.$node->nid;
+    $reportOptions['id']='calendar-summary-'.$nid;
     if (!empty($args['removable_params']))
       self::$removableParams = get_options_array_with_user_data($args['removable_params']);
     self::copy_args($args, $reportOptions,
@@ -1411,9 +1411,9 @@ jQuery('#".$ctrlid."').change(function(){
 
     // Add controls first: set up a control bar
     $retVal .= "\n<table id=\"controls-table\" class=\"ui-widget ui-widget-content ui-corner-all controls-table\"><thead class=\"ui-widget-header\"><tr>";
-    $retVal .= self::year_control($args, $auth, $node, $reportOptions);
-    $retVal .= '<th>'.self::user_control($args, $auth, $node, $reportOptions).'</th>';
-    $retVal .= '<th>'.self::location_control($args, $auth, $node, $reportOptions).'</th>'; // note this includes the location_type control if needed
+    $retVal .= self::year_control($args, $auth, $nid, $reportOptions);
+    $retVal .= '<th>'.self::user_control($args, $auth, $nid, $reportOptions).'</th>';
+    $retVal .= '<th>'.self::location_control($args, $auth, $nid, $reportOptions).'</th>'; // note this includes the location_type control if needed
     $siteUrlParams = self::get_site_url_params();
     if (!empty($args['removable_params'])) {      
       foreach(self::$removableParams as $param=>$caption) {

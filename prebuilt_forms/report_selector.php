@@ -287,17 +287,17 @@ class iform_report_selector {
    * Either return a report picker, or if already picked, the report content.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     iform_load_helpers(array('report_helper', 'map_helper'));
-    $conn = iform_get_connection_details($node);
+    $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (empty($_GET['catname']) || empty($_GET['report'])) 
-      return self::report_picker($args, $node, $readAuth);
+      return self::report_picker($args, $nid, $readAuth);
     else {
       $reports = self::get_reports();
       $reportDef = $reports[$_GET['catname']]['reports'][$_GET['report']];
@@ -306,12 +306,12 @@ class iform_report_selector {
       hostsite_set_page_title($reportDef['title']);
       $fn = "build_report_{$_GET['catname']}_{$_GET['report']}";
       $output = $_GET['output'];
-      hostsite_set_breadcrumb(array($node->title => $_GET['q']));
+      hostsite_set_breadcrumb(array(hostsite_get_page_title($nid) => $_GET['q']));
       return call_user_func(array('iform_report_selector', $fn), $args, $readAuth, $output);
     }
   }
   
-  public static function report_picker($args, $node, $readAuth) {
+  public static function report_picker($args, $nid, $readAuth) {
     $r = '<ul class="categories">';
     $available = self::get_reports();
     $regionTerm = self::get_region_term($args, $readAuth);

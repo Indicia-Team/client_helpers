@@ -288,12 +288,12 @@ class iform_tree_locations {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     global $user;
     data_entry_helper::$helpTextPos = 'before';
     $checks=self::check_prerequisites();
@@ -302,9 +302,9 @@ class iform_tree_locations {
       return $checks;
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
-    self::$ajaxFormUrl = iform_ajaxproxy_url($node, 'loc-smp-occ');
-    self::$ajaxFormLocationUrl = iform_ajaxproxy_url($node, 'location');
-    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($node, 'sample');
+    self::$ajaxFormUrl = iform_ajaxproxy_url($nid, 'loc-smp-occ');
+    self::$ajaxFormLocationUrl = iform_ajaxproxy_url($nid, 'location');
+    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($nid, 'sample');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $settings = array(
       'SiteLocationType' => helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['location_type_term']) ? 'TreeSite' : $args['location_type_term'])),

@@ -91,13 +91,13 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    * @todo: Implement this method 
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     if (empty($args['group_id']))
       drupal_set_message('Please specify a group_id in the page configuration.');
     if (empty($args['instructions_configuration']))
@@ -187,7 +187,7 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
     $r .= str_replace(array('{rootFolder}','{sep}'),
         array($rootFolder, strpos($rootFolder, '?')===FALSE ? '?' : '&'), $pageLinkHtml); 
     $r .= '</div><br>';
-    $r .= parent::get_form($args, $node, $response=null);
+    $r .= parent::get_form($args, $nid, $response=null);
     return $r;
   }
 }

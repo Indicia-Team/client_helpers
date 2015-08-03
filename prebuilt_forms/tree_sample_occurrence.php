@@ -921,7 +921,7 @@ $('[name=sample\\\\:date]').change(function(){
   	} else return false;
   }
 
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     if(is_array($response)) {
       // we have got here via a post that has not been redirected.
       data_entry_helper::$javascript .= "\njQuery('div.field-name-body').remove();\n";
@@ -929,7 +929,7 @@ $('[name=sample\\\\:date]').change(function(){
              '<p>'.lang::get('The creation of this observation was instigated after adding or modifying a tree, which was done in another tab or window - you may now close this browser tab, should you wish.').'</p>'.
              '<a href="JavaScript:window.close()"><input type="button" class="indicia-button" name="close" value="'.lang::get('Close Tab').'" /></a>';
     }
-    return parent::get_form($args, $node, $response);
+    return parent::get_form($args, $nid, $response);
   }
 
 }

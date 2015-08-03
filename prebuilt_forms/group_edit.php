@@ -246,12 +246,12 @@ class iform_group_edit {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return string Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     if (!hostsite_get_user_field('indicia_user_id'))
       return 'Please ensure that you\'ve filled in your surname on your user profile before creating or editing groups.';
     self::createBreadcrumb($args);
@@ -386,7 +386,7 @@ class iform_group_edit {
     $r .= '</fieldset>';
     $r .= self::reportFilterBlock($args, $auth, $hiddenPopupDivs);
     $r .= self::inclusionMethodControl($args);
-    $r .= self::formsBlock($args, $auth, $node);
+    $r .= self::formsBlock($args, $auth);
     // auto-insert the creator as an admin of the new group, unless the admins are manually specified
     if (!$args['include_administrators'] && empty($_GET['group_id']))
       $r .= '<input type="hidden" name="groups_user:admin_user_id[]" value="' .hostsite_get_user_field('indicia_user_id'). '"/>';

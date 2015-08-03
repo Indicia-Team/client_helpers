@@ -160,13 +160,13 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    * @todo: Implement this method 
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     global $user;
     // use the js from the main form, until there is a deviation.
     drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/sectioned_transects_edit_transect.js");
@@ -178,8 +178,8 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
       return $checks;
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
-    self::$ajaxFormUrl = iform_ajaxproxy_url($node, 'location');
-    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($node, 'sample');
+    self::$ajaxFormUrl = iform_ajaxproxy_url($nid, 'location');
+    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($nid, 'sample');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $settings = array(
       'mainLocationType' => helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['main_type_term_1']) ? 'Transect' : $args['main_type_term_1'])),

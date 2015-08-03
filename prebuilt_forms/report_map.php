@@ -169,11 +169,11 @@ class iform_report_map {
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object ID
    * @param array $response Response from Indicia services after posting.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     iform_load_helpers(array('report_helper', 'map_helper'));
     $readAuth = report_helper::get_read_auth($args['website_id'], $args['password']);
     $reportOptions = iform_report_get_report_options($args, $readAuth);

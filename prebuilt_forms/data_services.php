@@ -294,16 +294,16 @@ class iform_data_services {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
-    $conn = iform_get_connection_details($node);
+  public static function get_form($args, $nid, $response=null) {
+    $conn = iform_get_connection_details($nid);
     data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_GET))
-      self::do_data_services_download($args, $node);
+      self::do_data_services_download($args, $nid);
 
   } 
   
@@ -403,9 +403,9 @@ class iform_data_services {
    * URL arguments date_from, date_to, survey_list, format, download-type
    * @global array $indicia_templates
    * @param type $args
-   * @param type $node
+   * @param type $nid
    */
-  private static function do_data_services_download($args, $node) {
+  private static function do_data_services_download($args, $nid) {
     iform_load_helpers(array('report_helper'));
     
     // default data format JSON
@@ -444,7 +444,7 @@ class iform_data_services {
     require_once('includes/user.php');
     $params = get_options_array_with_user_data($additionalParamText);
     $params = array_merge($params, self::build_params($args));
-    $conn = iform_get_connection_details($node);
+    $conn = iform_get_connection_details($nid);
     
     global $indicia_templates;
     // let's just get the URL, not the whole anchor element

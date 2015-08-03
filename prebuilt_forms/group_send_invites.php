@@ -61,12 +61,12 @@ class iform_group_send_invites {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     $reloadPath = self::getReloadPath();   
     data_entry_helper::$website_id=$args['website_id'];
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
