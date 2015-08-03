@@ -1531,11 +1531,15 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
           self::$js_read_tokens['url'] = self::$base_url;
         $script .= "indiciaData.read = ".json_encode(self::$js_read_tokens).";\n";
       }
-      if (!self::$is_ajax)
-        $script .= "$(document).ready(function() {\n";
-      $script .= "$javascript\n$late_javascript\n";
-      if (!self::$is_ajax)
-        $script .= "});\n";
+      if (!empty($javascript) || !empty($late_javascript)) {
+        if (!self::$is_ajax) {
+          $script .= "$(document).ready(function() {\n";
+        }
+        $script .= "$javascript\n$late_javascript\n";
+        if (!self::$is_ajax) {
+          $script .= "});\n";
+        }
+      }
       if (!empty($onload_javascript)) {
         if (self::$is_ajax)
           // ajax requests are simple - page has already loaded so just return the javascript
