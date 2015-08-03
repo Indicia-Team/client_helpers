@@ -2109,9 +2109,10 @@ else
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
+   * $param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
@@ -2119,8 +2120,18 @@ else
     // Can't call getGridMode in this context as we might not have the $_GET value to indicate grid
     if (isset($values['speciesgridmapmode']))
       $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values);
-    else if (isset($values['gridmode']))
-      $submission = data_entry_helper::build_sample_occurrences_list_submission($values);
+    else if (isset($values['gridmode'])) {
+      // Work out the attributes that are for abundance, so could contain a zero
+      $connection = iform_get_connection_details($nid);
+      $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
+      self::load_custom_occattrs($readAuth, $args['survey_id']);
+      $abundanceAttrs = array();
+      foreach (self::$occAttrs as $attr) {
+        if ($attr['system_function']==='sex_stage_count')
+          $abundanceAttrs[] = $attr['attributeId'];
+      }
+      $submission = data_entry_helper::build_sample_occurrences_list_submission($values, false, $abundanceAttrs);
+    }
     else
       $submission = data_entry_helper::build_sample_occurrence_submission($values);
     return($submission);
