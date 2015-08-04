@@ -208,7 +208,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
   // This is Drupal specific code
   
   global $user;
-  $logged_in = $user->uid > 0;
+  $logged_in = hostsite_get_user_field('id') > 0;
   // If the user is not logged in there is no profile so return early.
   if (!$logged_in) {
     // mark CMS related profile fields as handled as they can't be filled in anyway
@@ -220,42 +220,17 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
   }
    
   $hiddens = '';
-  $version6 = (substr(VERSION, 0, 1) == '6');
-  if($version6) {
-    // In version 6 the profile module holds user setttings.
-    // but may not be using profile module, but still need to proceed to handle CMS User ID etc.
-    if (function_exists('profile_load_all_profile')) // D6 specific
-  	  profile_load_all_profile($user);
-  }
-  else {
-    // In version 7, the field module holds user settings.
-    $user = user_load($user->uid);
-  }
-  
   foreach($attributes as &$attribute) {
-    // Construct the name of the user property (which varies between versions) to match against the attribute caption.
-    $attrPropName = ($version6 ? 'profile_' : 'field_') . strtolower(str_replace(' ', '_', $attribute['caption']));
+    $value = hostsite_get_user_field(strtolower(str_replace(' ', '_', $attribute['caption']), false));
 
-    if (isset($user->$attrPropName) && isset($args['copyFromProfile']) && $args['copyFromProfile'] == true) {
-      // Obtain the property value which is stored differently between versions.
-      if($version6) {
-        $attrPropValue = $user->$attrPropName;
-      }
-      else {
-        $attrPropValues = field_get_items('user', $user, $attrPropName);
-        $attrPropValue = isset($attrPropValues[0]['safe value']) ? $attrPropValues[0]['safe value'] : $attrPropValues[0]['value'];
-      }
-      
+    if ($value && isset($args['copyFromProfile']) && $args['copyFromProfile'] == true) {
       // lookups need to be translated to the termlist_term_id, unless they are already IDs
-      if ($attribute['data_type'] === 'L' && !preg_match('/^[\d]+$/', $attrPropValue)) {
+      if ($attribute['data_type'] === 'L' && !preg_match('/^[\d]+$/', $value)) {
         $terms = data_entry_helper::get_population_data(array(
           'table' => 'termlists_term',
-          'extraParams' => $readAuth + array('termlist_id' => $attribute['termlist_id'], 'term' => $attrPropValue)
+          'extraParams' => $readAuth + array('termlist_id' => $attribute['termlist_id'], 'term' => $value)
         ));
         $value = (count($terms) > 0) ? $terms[0]['id'] : '';
-      } 
-      else {
-        $value = $attrPropValue;
       }
       
       if (isset($args['nameShow']) && $args['nameShow'] == true) {
@@ -269,21 +244,21 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
       }
     }
     elseif (strcasecmp($attribute['caption'], 'cms user id') == 0) {
-      $attribute['value'] = $user->uid;
+      $attribute['value'] = hostsite_get_user_field('id');
       $attribute['handled']=true; // user id attribute is never displayed
     }
     elseif (strcasecmp($attribute['caption'], 'cms username') == 0) {
-      $attribute['value'] = $user->name;
+      $attribute['value'] = hostsite_get_user_field('name');
       $attribute['handled']=true; // username attribute is never displayed
     }
     elseif (strcasecmp($attribute['caption'], 'email') == 0) {
       if (isset($args['emailShow']) && $args['emailShow'] == true) {
         // Show the email attribute with default value.
-        $attribute['default'] = $user->mail;
+        $attribute['default'] = hostsite_get_user_field('mail');
       }
       else {
         // Hide the email value
-        $attribute['value'] = $user->mail;
+        $attribute['value'] = hostsite_get_user_field('mail');
         $attribute['handled'] = true; 
       }
     }
