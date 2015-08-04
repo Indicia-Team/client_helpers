@@ -781,16 +781,39 @@ idlist=';
 
   private static function get_media($readAuth) {
     iform_load_helpers(array('data_entry_helper'));
-    $media = data_entry_helper::get_population_data(array(
+    // Retrieve occurrence media for record
+    $occ_media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_medium',
-      'extraParams'=>$readAuth + array('occurrence_id'=>$_GET['occurrence_id']),
-      'nocache'=>true,
-      'sharing'=>'verification'
+      'extraParams' => $readAuth + array('occurrence_id' => $_GET['occurrence_id']),
+      'nocache' => true,
+      'sharing' => 'verification'
+    ));
+    // Retrieve related sample media 
+    $smp_media = data_entry_helper::get_population_data(array(
+      'table' => 'sample_medium',
+      'extraParams' => $readAuth + array('sample_id' => $_GET['sample_id']),
+      'nocache' => true,
+      'sharing' => 'verification'
     ));
     $r = '';
-    if (count($media)===0)
+    if (count($occ_media) + count($smp_media) === 0)
       $r .= lang::get('No media found for this record');
     else {
+      $r .= '<p>'.lang::get('Click on thumbnails to view full size').'</p>';
+      if (count($occ_media) > 0) {
+        $r .= '<p class="header">' . lang::get('Record media') . '</p>';
+        $r .= self::get_media_html($occ_media);
+      }
+      if (count($smp_media) > 0) {
+        $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
+        $r .= self::get_media_html($smp_media);
+      }    
+    }
+    return $r;
+  }
+  
+  private static function get_media_html($media) {
+    $r = '';
       $path = data_entry_helper::get_uploaded_image_folder();
       $r .= '<ul class="gallery">';
       foreach ($media as $file) {
@@ -805,8 +828,6 @@ idlist=';
         $r .= "<li>$media</li>";
       }
       $r .= '</ul>';
-      $r .= '<p>'.lang::get('Click on thumbnails to view full size').'</p>';
-    }
     return $r;
   }
 
