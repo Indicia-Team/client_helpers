@@ -199,11 +199,11 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     }
   }
   
-  protected static function getMode($args, $node) {
+  protected static function getMode($args, $nid) {
     // reload the page after initial save - show parent sample so we can enter the transect data.
     if (!empty($_GET['id']) && !empty($_GET['table']) && $_GET['table']==='sample')
       $_GET['sample_id']=$_GET['id'];
-    return parent::getMode($args, $node);
+    return parent::getMode($args, $nid);
   }
   
   /**

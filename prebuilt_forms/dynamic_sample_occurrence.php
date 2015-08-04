@@ -729,19 +729,15 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * Determine whether to show a grid of existing records or a form for either adding a new record, editing an existing one,
    * or creating a new record from an existing one.
    * @param array $args iform parameters.
-   * @param object $node node being shown.
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING|MODE_CLONE].
    */
-  protected static function getMode($args, $node) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
-    self::$availableForGroups = $node->available_for_groups;
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) {
         // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrupt the data by accident
-        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($node,'admin') && array_key_exists('mnhnld1', $_POST)){
           $locs = array();
           foreach($_POST as $key => $value){
             $parts = explode(':', $key);
@@ -749,11 +745,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           }
           if(count($locs)>0){
             foreach($locs as $loc)
-              iform_loctools_deletelocation($node, $loc);
             foreach($_POST as $key => $value){
               $parts = explode(':', $key);
               if($parts[0]=='location' && $value == 1)
-                iform_loctools_insertlocation($node, $parts[2], $parts[1]);
             }
           }
         }
