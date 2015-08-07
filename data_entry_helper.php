@@ -6172,7 +6172,7 @@ if (errors$uniq.length>0) {
       // check for zero abundance records. First build a regexp that will match the attr IDs to check. Attrs can be
       // just set to true, which means any attr will do.
       if (is_array($zero_attrs))
-        $ids='['.implode('|',$zero_attrs).']';
+        $ids='('.implode('|',$zero_attrs).')';
       else
         $ids = '\d+';
       $zeroCount=0;
