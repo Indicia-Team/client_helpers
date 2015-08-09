@@ -88,7 +88,7 @@ class iform_group_leave {
     if (count($existing)!==1)
       return self::abort('You are not a member of this group.', $args);
     if (!empty($_POST['response']) && $_POST['response']===lang::get('Cancel')) {
-      drupal_goto($args['groups_page_path']);
+      hostsite_goto_page($args['groups_page_path']);
     }
     elseif (!empty($_POST['response']) && $_POST['response']===lang::get('Confirm')) {     
       $data = array('groups_user:id' => $existing[0]['id'], 'groups_user:group_id' => $group['id'], 'groups_user:user_id' => $user_id, 'deleted' => 't');
@@ -96,7 +96,7 @@ class iform_group_leave {
       $response = data_entry_helper::forward_post_to('groups_user', $wrap, $auth['write_tokens']);
       if (isset($response['success'])) {
         hostsite_show_message("You are no longer participating in $group[title]!");
-        drupal_goto($args['groups_page_path']);
+        hostsite_goto_page($args['groups_page_path']);
       } 
       else {
         return self::abort('An error occurred whilst trying to update your group membership.');
