@@ -2611,10 +2611,7 @@ $('#$escaped').change(function(e) {
     $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
     // get local vars for the array
     extract($db);
-    if ($options['cacheLookup'])
-      $options['extraParams']['orderby'] = $options['selectMode'] ? 'original,preferred_taxon' : 'searchterm_length,original,preferred_taxon';
-    else
-      $options['extraParams']['orderby'] = 'taxon';
+    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred_taxon' : 'taxon';
     $options = array_merge(array(
       'fieldname'=>'occurrence:taxa_taxon_list_id',
       'table'=>$tblTaxon,
