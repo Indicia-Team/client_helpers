@@ -72,7 +72,7 @@ class iform_easy_download_2 {
         'default'=>'indicia data admin'
       ),
       array(
-        'name'=>'download_administered_groups_types',
+        'name'=>'download_group_types',
         'caption'=>'Downloadable group type IDs',
         'description'=>'Comma separated list of the IDs of group types that can be downloaded. Leave blank to allow any.',
         'type'=>'text_input',
@@ -320,7 +320,7 @@ class iform_easy_download_2 {
     $conn = iform_get_connection_details($node);
     $args = array_merge(array(
       'download_administered_groups' => 'indicia data admin',
-      'download_administered_groups_types' => ''
+      'download_group_types' => ''
     ), $args);
     data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_POST) && !empty($_POST['format']))
@@ -466,27 +466,26 @@ class iform_easy_download_2 {
           $r[$sharingTypeCode]=$sharingType;
       }
     }
-    if (!empty($args['download_administered_groups'])) {
-      if (user_access($args['download_administered_groups'])) {
-        $params = array(
-          'administrator'=>'t',
-          'user_id'=>hostsite_get_user_field('indicia_user_id'),
-          'view' => 'detail'
-        );
-        if (!empty($args['download_administered_groups_types'])) {
-          $params['query'] = json_encode(array('in'=>array(
-            'group_type_id'=>explode(',', $args['download_administered_groups_types'])
-          )));
-        }
-        // user has access to a download records from the groups they administer
-        $groups = data_entry_helper::get_population_data(array(
-          'table'=>'groups_user',
-          'extraParams'=>data_entry_helper::$js_read_tokens + $params
-        ));
-        foreach ($groups as $group) {
-          $r["R group $group[group_id]"] = lang::get('Records for {1}', $group['group_title']);
-        }
-      }
+    $canDownloadAdministeredGroups = !empty($args['download_administered_groups'])
+        && user_access($args['download_administered_groups']);
+    $params = array(
+      'user_id'=>hostsite_get_user_field('indicia_user_id'),
+      'view' => 'detail'
+    );
+    if (!empty($args['download_group_types'])) {
+      $params['query'] = json_encode(array('in'=>array(
+        'group_type_id'=>explode(',', $args['download_group_types'])
+      )));
+    }
+    // user has access to a download records from the groups they administer
+    $groups = data_entry_helper::get_population_data(array(
+      'table'=>'groups_user',
+      'extraParams'=>data_entry_helper::$js_read_tokens + $params
+    ));
+    foreach ($groups as $group) {
+      if ($canDownloadAdministeredGroups && $group['administrator']==='t')
+        $r["R group $group[group_id]"] = lang::get('All records for {1}', $group['group_title']);
+      $r["R group my $group[group_id]"] = lang::get('My records contributed to {1}', $group['group_title']);
     }
     return $r;
   }
@@ -640,7 +639,7 @@ class iform_easy_download_2 {
       $params['my_records_context']=1;
       $_POST['download-type'] = substr($_POST['download-type'], 0, 1);
     }
-    elseif (preg_match('/^R group (?P<id>\d+)$/', $_POST['download-type'], $matches)) {
+    elseif (preg_match('/^R group (?P<my>(my )?)(?P<id>\d+)$/', $_POST['download-type'], $matches)) {
       // downloading records for a group
       $group = data_entry_helper::get_population_data(array(
         'table'=>'group',
@@ -660,9 +659,11 @@ class iform_easy_download_2 {
         $params['group_id'] = $matches['id'];
       // implicit record inclusion might also be blank, in which case we don't need to filter by
       // group users
+      if ($matches['my'])
+        $params['my_records_context']=1;
     }
     // if not doing a group download then we might need to apply one of the user's filters
-    if (!preg_match('/^R group (?P<id>\d+)$/', $_POST['download-type']) &&
+    if (!preg_match('/^R group/', $_POST['download-type']) &&
         (strlen($_POST['download-type'])>1 || !empty($_POST['download-subfilter']))) {
       // use the saved filters system to filter the records
       $filterData = self::load_filter_set($sharing);
