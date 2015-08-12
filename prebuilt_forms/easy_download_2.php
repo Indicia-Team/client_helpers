@@ -64,6 +64,14 @@ class iform_easy_download_2 {
         'default'=>'indicia data admin'
       ),
       array(
+        'name'=>'download_administered_groups',
+        'caption'=>'Download group records permission',
+        'description'=>'Provide the name of the permission required to allow download of records from recording groups you are an administrator of.',
+        'type'=>'text_input',
+        'required'=>false,
+        'default'=>'indicia data admin'
+      ),
+      array(
         'name'=>'reporting_type_permission',
         'caption'=>'Download type permission - reporting',
         'description'=>'Provide the name of the permission required to allow download of reporting recordsets. '.
@@ -303,11 +311,12 @@ class iform_easy_download_2 {
    */
   public static function get_form($args, $node, $response=null) {
     $conn = iform_get_connection_details($node);
+    $args = array_merge(array(
+      'download_administered_groups' => 'indicia data admin'
+    ), $args);
     data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_POST) && !empty($_POST['format']))
       self::do_data_services_download($args, $node);
-    $conn = iform_get_connection_details($node);
-    data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     $types = self::get_download_types($args);
     $formats = self::get_download_formats($args);
     if (count($types)===0)
@@ -449,6 +458,22 @@ class iform_easy_download_2 {
           $r[$sharingTypeCode]=$sharingType;
       }
     }
+    if (!empty($args['download_administered_groups'])) {
+      if (user_access($args['download_administered_groups'])) {
+        // user has access to a download records from the groups they administer
+        $groups = data_entry_helper::get_population_data(array(
+          'table'=>'groups_user',
+          'extraParams'=>data_entry_helper::$js_read_tokens + array(
+              'administrator'=>'t',
+              'user_id'=>hostsite_get_user_field('indicia_user_id'),
+              'view' => 'detail'
+            )
+        ));
+        foreach ($groups as $group) {
+          $r["R group $group[group_id]"] = lang::get('Records for {1}', $group['group_title']);
+        }
+      }
+    }
     return $r;
   }
   
@@ -577,7 +602,7 @@ class iform_easy_download_2 {
    */
   private static function build_params($args) {
     require_once('includes/user.php');
-    $availableTypes = self::get_download_types($args, data_entry_helper::$js_read_tokens);
+    $availableTypes = self::get_download_types($args);
     if (!array_key_exists($_POST['download-type'], $availableTypes))
       throw new exception('Selected download type not authorised');
     $sharing = substr($_POST['download-type'], 0, 1);
@@ -601,7 +626,30 @@ class iform_easy_download_2 {
       $params['my_records_context']=1;
       $_POST['download-type'] = substr($_POST['download-type'], 0, 1);
     }
-    if (strlen($_POST['download-type'])>1 || !empty($_POST['download-subfilter'])) {
+    elseif (preg_match('/^R group (?P<id>\d+)$/', $_POST['download-type'], $matches)) {
+      // downloading records for a group
+      $group = data_entry_helper::get_population_data(array(
+        'table'=>'group',
+        'extraParams'=>data_entry_helper::$js_read_tokens + array('id'=>$matches['id'], 'view'=>'detail')
+      ));
+      $group = $group[0];
+      $filter = json_decode($group['filter_definition'], true);
+      foreach ($filter as $field=>$value) {
+        // Values shouldn't be arrays. Those which are are stray data from the filter save form.
+        if (!is_array($value)) {
+          $params["{$field}_context"]=$value;
+        }
+      }
+      if ($group['implicit_record_inclusion']==='t')
+        $params['implicit_group_id'] = $matches['id'];
+      elseif ($group['implicit_record_inclusion']==='f')
+        $params['group_id'] = $matches['id'];
+      // implicit record inclusion might also be blank, in which case we don't need to filter by
+      // group users
+    }
+    // if not doing a group download then we might need to apply one of the user's filters
+    if (!preg_match('/^R group (?P<id>\d+)$/', $_POST['download-type']) &&
+        (strlen($_POST['download-type'])>1 || !empty($_POST['download-subfilter']))) {
       // use the saved filters system to filter the records
       $filterData = self::load_filter_set($sharing);
       if (preg_match('/^[RPVDM] filter (\d+)$/', $_POST['download-type'], $matches)) 
@@ -657,6 +705,8 @@ class iform_easy_download_2 {
     $perms = array();
     if (!empty($args['download_all_users_reporting']))
       $perms[] = $args['download_all_users_reporting'];
+    if (!empty($args['download_administered_groups']))
+      $perms[] = $args['download_administered_groups'];
     if (!empty($args['reporting_type_permission']))
       $perms[] = $args['reporting_type_permission'];
     if (!empty($args['peer_review_type_permission']))
