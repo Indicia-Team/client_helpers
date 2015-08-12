@@ -65,7 +65,7 @@ class iform_easy_download_2 {
       ),
       array(
         'name'=>'download_administered_groups',
-        'caption'=>'Download group records permission',
+        'caption'=>'Download all group records permission',
         'description'=>'Provide the name of the permission required to allow download of records from recording groups you are an administrator of.',
         'type'=>'text_input',
         'required'=>false,
