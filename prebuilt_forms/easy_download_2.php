@@ -72,6 +72,13 @@ class iform_easy_download_2 {
         'default'=>'indicia data admin'
       ),
       array(
+        'name'=>'download_administered_groups_types',
+        'caption'=>'Downloadable group type IDs',
+        'description'=>'Comma separated list of the IDs of group types that can be downloaded. Leave blank to allow any.',
+        'type'=>'text_input',
+        'required'=>false
+      ),
+      array(
         'name'=>'reporting_type_permission',
         'caption'=>'Download type permission - reporting',
         'description'=>'Provide the name of the permission required to allow download of reporting recordsets. '.
@@ -312,7 +319,8 @@ class iform_easy_download_2 {
   public static function get_form($args, $node, $response=null) {
     $conn = iform_get_connection_details($node);
     $args = array_merge(array(
-      'download_administered_groups' => 'indicia data admin'
+      'download_administered_groups' => 'indicia data admin',
+      'download_administered_groups_types' => ''
     ), $args);
     data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_POST) && !empty($_POST['format']))
@@ -460,14 +468,20 @@ class iform_easy_download_2 {
     }
     if (!empty($args['download_administered_groups'])) {
       if (user_access($args['download_administered_groups'])) {
+        $params = array(
+          'administrator'=>'t',
+          'user_id'=>hostsite_get_user_field('indicia_user_id'),
+          'view' => 'detail'
+        );
+        if (!empty($args['download_administered_groups_types'])) {
+          $params['query'] = json_encode(array('in'=>array(
+            'group_type_id'=>explode(',', $args['download_administered_groups_types'])
+          )));
+        }
         // user has access to a download records from the groups they administer
         $groups = data_entry_helper::get_population_data(array(
           'table'=>'groups_user',
-          'extraParams'=>data_entry_helper::$js_read_tokens + array(
-              'administrator'=>'t',
-              'user_id'=>hostsite_get_user_field('indicia_user_id'),
-              'view' => 'detail'
-            )
+          'extraParams'=>data_entry_helper::$js_read_tokens + $params
         ));
         foreach ($groups as $group) {
           $r["R group $group[group_id]"] = lang::get('Records for {1}', $group['group_title']);
