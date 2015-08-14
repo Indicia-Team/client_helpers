@@ -330,7 +330,7 @@ class iform_group_edit {
         'label' => ucfirst(lang::get('{1} parent', self::$groupType)),
         'fieldname' => 'from_group_id',
         'table' => 'groups_user',
-        'captionField' => 'title',
+        'captionField' => 'group_title',
         'valueFields' => 'group_id',
         'extraParams' => $auth['read'] + array(
             'group_type_id' => $args['parent_group_type'],
