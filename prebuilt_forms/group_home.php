@@ -100,7 +100,7 @@ class iform_group_home extends iform_dynamic_report_explorer {
       if ($key) {
         $value = is_array($value) ? json_encode($value) : $value;
         $defstring .= "$key=$value\n";
-        if ($key==='indexed_location_id' || $key==='indexed_location_list' || $key==='location_id' || $key==='location_list')
+        if (!empty($value) && $key==='indexed_location_id' || $key==='indexed_location_list' || $key==='location_id' || $key==='location_list')
           $args['location_boundary_id'] = $value;
         elseif (($key==='taxon_group_id' || $key==='taxon_group_list') && strpos($value, ',')===FALSE) {
           // if the report is locked to a single taxon group, then we don't need taxonomy columns.

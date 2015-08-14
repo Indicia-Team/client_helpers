@@ -320,11 +320,11 @@ class iform_easy_download {
         'label' => lang::get('Survey to include'),
         'table' => 'survey',
         'valueField' => 'id',
-        'captionField' => 'title',
+        'captionField' => 'full_title',
         'helpText' => 'Choose a survey, or <all> to not filter by survey.',
         'blankText' => '<all>',
         'class' => 'control-width-4',
-        'extraParams' => $readAuth + array('sharing' => 'data_flow', 'orderby'=>'title')
+        'extraParams' => $readAuth + array('sharing' => 'data_flow', 'orderby'=>'full_title')
       ));
       $r .= '</div>';
       // A survey picker when downloading data you are an expert for
@@ -342,11 +342,11 @@ class iform_easy_download {
         'label' => lang::get('Survey to include'),
         'table' => 'survey',
         'valueField' => 'id',
-        'captionField' => 'title',
+        'captionField' => 'full_title',
         'helpText' => 'Choose a survey, or <all> to not filter by survey.',
         'blankText' => '<all>',
         'class' => 'control-width-4',
-        'extraParams' => $readAuth + array('sharing' => 'verification', 'orderby'=>'title') + $surveysFilter
+        'extraParams' => $readAuth + array('sharing' => 'verification', 'orderby'=>'full_title') + $surveysFilter
       ));
       $r .= '</div>';
     }

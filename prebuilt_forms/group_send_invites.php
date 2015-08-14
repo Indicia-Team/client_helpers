@@ -163,7 +163,8 @@ class iform_group_send_invites {
           'website_id' => $args['website_id']
         );
         $s = submission_builder::build_submission($values, array('model' => 'group_invitation'));
-        $r = data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
+        $auth['write_tokens']['persist_auth'] = $idx < count($emails)-1;
+        data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
         $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
         $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
         $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";

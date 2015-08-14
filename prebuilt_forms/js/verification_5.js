@@ -672,7 +672,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
   function verifyRecordSet(trusted) {
     var request, params=indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords(),
       substatus = $('#process-grid-substatus').length ? '&record_substatus=' + $('#process-grid-substatus').val() : '',
-      ignoreRules=$('.grid-verify-popup input[name=ignore-checks-trusted]').attr('checked')==='checked' ? 'true' : 'false';
+      ignoreRules=$('.grid-verify-popup input[name=ignore-checks-trusted]:checked').length>0 ? 'true' : 'false';
     //If doing trusted only, this through as a report parameter.
     if (trusted) {
       params.quality_context="T";

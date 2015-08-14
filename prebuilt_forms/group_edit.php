@@ -477,6 +477,7 @@ $('#entry_form').submit(function() {
     else {
       $sql .= '(i.limit_to_group_id IS NULL OR i.limit_to_group_id = ' . $group_id . ')';
     }
+    $sql .= ' ORDER BY n.title';
     $qry = db_query($sql);
     $pages=array();
     if (substr(VERSION, 0, 1)==='6') {

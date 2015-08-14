@@ -179,6 +179,7 @@ class iform_group_receive_invite_response {
     $r = data_entry_helper::forward_post_to('groups_user', $s, $auth['write_tokens']);
     // either a success, or already a member (2004=unique key violation)
     if (!isset($r['success']) && (!isset($r['code']) || $r['code']!==2004)) {
+      // @todo Unique constraint needs to be added to groups_users
       if (function_exists('watchdog'))
         watchdog('iform', 'An internal error occurred whilst trying to accept an invite: '.print_r($r, true));
       return self::fail_message('An internal error occurred whilst trying to accept the invite', $args);
@@ -203,7 +204,10 @@ class iform_group_receive_invite_response {
         // probably no point telling the user, as the invite accept worked OK
       }
       hostsite_goto_page($args['group_home_path'], array('group_id'=>$invite['group_id']));
+      module_load_include('inc', 'iform', 'iform.groups');
+      return iform_show_group_join_success($group[0], $auth, true, $args['group_home_path'], $args['group_page_path']);
     }
+    return '';
   }
   
   /**
@@ -220,6 +224,7 @@ class iform_group_receive_invite_response {
     $r = data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
     hostsite_show_message(lang::get("OK, thanks anyway. We've removed your invitation to join this group."));
     hostsite_goto_page($args['groups_page_path']);
+    return '';
   }
   
   /**
@@ -230,6 +235,7 @@ class iform_group_receive_invite_response {
    */
   private static function maybe($args, $invite, $auth) {
     hostsite_show_message(lang::get('Just follow the link in your invitation email if and when you are ready to join.'));
-    hostsite_goto_page($args['groups_page_path']); 
+    hostsite_goto_page($args['groups_page_path']);
+    return '';
   }
 }

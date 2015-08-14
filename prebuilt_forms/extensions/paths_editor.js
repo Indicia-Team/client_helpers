@@ -90,29 +90,31 @@ jQuery(document).ready(function ($) {
     $('#imp-sref').val(Math.abs(ll[1]) + ns + ', ' + Math.abs(ll[0]) + ew);
   }
 
-  function ensureClickedOnRiver(clickPointFeature) {
-    var found, clickLayer = indiciaData.mapdiv.map.editLayer;
-    if (clickLayer.features.length === 3) {
-      // 3rd click, so we are retrying. Remove the first attempt.
-      clickLayer.removeFeatures([clickPointFeature.layer.features[0], clickPointFeature.layer.features[1]]);
-      walkLayer.removeAllFeatures();
-    }
-    // a click could be on several paths if at an intersection. Find them all.
-    $.each(indiciaData.reportlayer.features, function (idx, feature) {
-      if (feature.geometry.intersects(clickPointFeature.geometry)) {
-        found = true;
+  function ensureClickedOnPath(clickPointFeature) {
+    if (clickPointFeature.geometry.CLASS_NAME === "OpenLayers.Geometry.Point") {
+      var found, clickLayer = indiciaData.mapdiv.map.editLayer;
+      if (clickLayer.features.length === 3) {
+        // 3rd click, so we are retrying. Remove the first attempt.
+        clickLayer.removeFeatures([clickPointFeature.layer.features[0], clickPointFeature.layer.features[1]]);
+        walkLayer.removeAllFeatures();
       }
-    });
-    if (!found) {
-      alert('The point you have clicked on is not recognised as a river section. Please click on a marked river section ' +
+      // a click could be on several paths if at an intersection. Find them all.
+      $.each(indiciaData.reportlayer.features, function (idx, feature) {
+        if (feature.geometry.intersects(clickPointFeature.geometry)) {
+          found = true;
+        }
+      });
+      if (!found) {
+        alert('The point you have clicked on is not recognised as a valid route. Please click on the line of a marked route ' +
           'to define the start and end of your walk.');
-      // undo the last click
-      if (clickLayer.length) {
-        clickLayer.removeFeatures([clickLayer.features[clickLayer.features.length - 1]]);
+        // undo the last click
+        if (clickLayer.length) {
+          clickLayer.removeFeatures([clickLayer.features[clickLayer.features.length - 1]]);
+        }
+        return false;
       }
-      return false;
+      return true;
     }
-    return true;
   }
 
   function searchFor2ndClickPoint(geomToTestFor1stClickPoint, geomToTestFor2ndClickPoint) {
@@ -232,7 +234,7 @@ jQuery(document).ready(function ($) {
   function onPointAdded(evt) {
     $.each(evt.features, function (idx, clickPointFeature) {
       if (clickPointFeature.attributes.type !== "ghost") {
-        ensureClickedOnRiver(clickPointFeature);
+        ensureClickedOnPath(clickPointFeature);
         // Are there 2 points on the edit layer to mark the start and end?
         if (indiciaData.mapdiv.map.editLayer.features.length === 2) {
           // retrieve all the individual linestrings for all the features on the map
