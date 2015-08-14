@@ -86,7 +86,7 @@ class iform_group_home extends iform_dynamic_report_explorer {
     data_entry_helper::$javascript .= 'indiciaData.verifiedTranslation = "'.lang::get('Verified')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rejectedTranslation = "'.lang::get('Rejected')."\";\n";
     self::$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    group_authorise_form($args, self::$auth['read']);
+    $isMember = group_authorise_form($args, self::$auth['read']);
     $group = data_entry_helper::get_population_data(array(
       'table'=>'group',
       'extraParams'=>self::$auth['read'] + array('id'=>$_GET['group_id'], 'view'=>'detail')
@@ -107,6 +107,11 @@ class iform_group_home extends iform_dynamic_report_explorer {
           $args['skipped_report_columns'] = array('taxon_group','taxonomy');
         }
       }
+    }
+    // If records private, need to show them on a group report but only if user is group member, which might
+    // not be the case if page accidentally made fully public.
+    if ($isMember && $group['private_records']==='t') {
+      $defstring .= "release_status=A\n";
     }
     if (empty($_GET['implicit'])) {
       // no need for a group user filter

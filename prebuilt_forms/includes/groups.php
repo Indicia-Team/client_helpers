@@ -24,6 +24,7 @@
  * List of methods that assist with handling recording groups.
  * @package Client
  * @subpackage PrebuiltForms.
+ * @return boolean True if the user is a member of the group associated with the page.
  */
 
 function group_authorise_form($args, $readAuth) {
@@ -38,7 +39,11 @@ function group_authorise_form($args, $readAuth) {
     if (hostsite_get_user_field('indicia_user_id')) {
       $gu = data_entry_helper::get_population_data(array(
         'table'=>'groups_user',
-        'extraParams'=>$readAuth + array('group_id'=>$_GET['group_id'], 'user_id'=>hostsite_get_user_field('indicia_user_id')),
+        'extraParams'=>$readAuth + array(
+            'group_id'=>$_GET['group_id'],
+            'user_id'=>hostsite_get_user_field('indicia_user_id'),
+            'pending'=>'f'
+        ),
         'nocache'=>true
       ));
     } else {
@@ -52,9 +57,10 @@ function group_authorise_form($args, $readAuth) {
       hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'alert');
       hostsite_goto_page('<front>');
     } elseif (count($gu)===0 && $gp[0]['administrator']!==NULL) {
-      // not a group member, so throw them out
+      // Administrator field is null if the page is fully public. Else if not a group member, then throw them out.
       hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'alert');
       hostsite_goto_page('<front>');
     }
   }
+  return count($gu)>0;
 }
