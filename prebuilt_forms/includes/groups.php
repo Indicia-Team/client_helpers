@@ -32,7 +32,8 @@ function group_authorise_form($args, $readAuth) {
     // page owned by a different group, so throw them out
     hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert');
     hostsite_goto_page('<front>');
-  }    
+  }
+  $gu = array();
   if (!empty($_GET['group_id'])) {
     // loading data into a recording group. Are they a member or is the page public?
     // @todo: consider performance - 2 web services hits required to check permissions.
@@ -46,8 +47,6 @@ function group_authorise_form($args, $readAuth) {
         ),
         'nocache'=>true
       ));
-    } else {
-      $gu = array();
     }
     $gp = data_entry_helper::get_population_data(array(
       'table'=>'group_page',
