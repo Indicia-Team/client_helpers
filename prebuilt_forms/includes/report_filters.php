@@ -638,7 +638,7 @@ class filter_source extends filter_base {
       if (!empty($source['input_form'])) {
         $r .= '<li class="vis-survey-'.$source['survey_id'].' vis-website-'.$source['website_id'].'">' .
             '<input type="checkbox" value="'.$source['input_form'].'" id="check-form-'.$idx.'"/>' .
-            '<label for="check-form-'.$idx.'">'.ucfirst(trim(preg_replace('/(http:\/\/)|[\/\-_]|(\?q=)/', ' ', $source['input_form']))).'</label></li>';
+            '<label for="check-form-'.$idx.'">'.ucfirst(trim(preg_replace('/(http(s)?:\/\/)|[\/\-_]|(\?q=)/', ' ', $source['input_form']))).'</label></li>';
         $obj[$source['input_form']]=$idx;
       }
     }

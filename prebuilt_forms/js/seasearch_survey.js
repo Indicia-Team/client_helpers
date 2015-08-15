@@ -352,6 +352,7 @@ jQuery(document).ready(function($) {
 
   // Add the Dorset Integrated Seabed layers
   function addDorisLayers(div) {
+
     var seabed = new OpenLayers.Layer.XYZ(
       "Seabed",
       "http://doris.s3.amazonaws.com/bathyalltiles/${z}/${x}/${y}.png",

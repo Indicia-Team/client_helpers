@@ -170,7 +170,8 @@ class iform_ad_hoc_cetaceans {
   public static function get_form($args, $node, $response=null) {
     global $indicia_templates, $user;
     data_entry_helper::enable_validation('entry_form');
-    $url = (!empty($_SERVER['HTTPS'])) ? "https://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'] : "http://".$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
+    $scheme = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
+    $url = "$scheme://$_SERVER[SERVER_NAME]$_SERVER[REQUEST_URI]";
     $r = data_entry_helper::loading_block_start();    
     $r .= "<form method=\"post\" id=\"entry_form\" action=\"$url\">\n";
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);    

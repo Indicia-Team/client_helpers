@@ -167,8 +167,8 @@ class iform_group_send_invites {
         data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
         $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
         $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-        $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-        $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . (empty($pathParam) ? '?' : '&') . 'token=' . $base . $idx;
+        $scheme = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
+        $acceptUrl = "$scheme://$_SERVER[HTTP_HOST]$rootFolder$args[accept_invite_path]" . (empty($pathParam) ? '?' : '&') . 'token=' . $base . $idx;
         $body = $_POST['invite_message'] . "<br/><br/>" .
             '<a href="' . $acceptUrl . '">' . lang::get('Accept this invitation') . '</a>';
         $message = array(
