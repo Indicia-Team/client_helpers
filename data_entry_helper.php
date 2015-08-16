@@ -1010,7 +1010,7 @@ $('#$escaped').change(function(e) {
     if (!empty($options['subType']))
       self::$upload_file_types[$options['subType']]=self::$upload_file_types['image'];
     // Allow options to be defaulted and overridden
-    $scheme = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
+    $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
     $defaults = array(
       'id' => 'default',
       'upload' => true,
@@ -1021,7 +1021,7 @@ $('#$escaped').change(function(e) {
       'runtimes' => array('html5','flash','silverlight','html4'),
       'autoupload' => true,
       'imageWidth' => 200,
-      'uploadScript' => "$scheme://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
+      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
       'destinationFolder' => $relpath . $interim_image_folder,
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
