@@ -223,7 +223,8 @@ function iform_map_get_georef_parameters() {
       'name'=>'georefDriver',
       'caption'=>'Web service used for georeferencing',
       'description'=>'Choose the web service used for resolving place names to points on the map. Each web-service has a '.
-           'different set of characteristics. If you are unsure which to use, the Yahoo! GeoPlanet service is a good starting point.',
+           'different set of characteristics. If you are unsure which to use, the Yahoo! GeoPlanet service is a good starting point, ' .
+           'though note that this service will not work if your site is running on https.',
       'type'=>'select',
       'default'=>'geoplanet',
       'options' => array(
