@@ -521,13 +521,11 @@ class iform_species_details extends iform_dynamic {
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
     $currentUrl = report_helper::get_reload_link_parts();
-    // automatic handling for Drupal clean urls.
-    $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
     // amend currentUrl path if we have drupal dirty URLs so javascript will work properly
-    if ($pathParam==='q' && isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
       $currentUrl['path'] .= '?q='.$currentUrl['params']['q'].'&taxon_meaning_id=';
     } else {
-      $currentUrl['path'] . '&taxon_meaning_id';
+      $currentUrl['path'] .= '&taxon_meaning_id=';
     }
     $options = array_merge(array(
       'dataSource' => 'library/occurrence_associations/filterable_associated_species_list_cloud',

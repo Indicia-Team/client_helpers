@@ -664,8 +664,7 @@ Record ID',
       $url = $args['species_details_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+      $rootFolder = data_entry_helper::getRootFolder(true);
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];
