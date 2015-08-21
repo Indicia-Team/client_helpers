@@ -144,8 +144,7 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
           'pending_path'=>'{rootFolder}?q=groups/pending&group_id=','userFilterMode'=>'member')
     );
     // automatic handling for Drupal clean urls.
-    $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-    $rootFolder = helper_base::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+    $rootFolder = helper_base::getRootFolder(true);
     
     $groupsData = data_entry_helper::get_report_data($reportOptions); 
     if (empty($groupsData)) {
