@@ -616,9 +616,9 @@ Record ID',
         && variable_get('indicia_website_id', 0)==self::$record['website_id']) {
       if (empty($record['input_form']))
         $record['input_form']=$args['default_input_form'];
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? '?q=' : '';
-      $paramJoin= empty($pathParam) ? '?' : '&';
-      $url = data_entry_helper::getRootFolder() . "$pathParam$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
+      $rootFolder = data_entry_helper::getRootFolder(true);
+      $paramJoin = strpos($rootFolder, '?')===false ? '?' : '&';
+      $url =  "$rootFolder$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
       return '<a class="button" href="'.$url.'">' . lang::get('Edit this record') . '</a>';
     }
     else 
@@ -639,8 +639,7 @@ Record ID',
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+      $rootFolder = data_entry_helper::getRootFolder(true);
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
