@@ -177,6 +177,9 @@ class data_entry_helper extends helper_base {
    * <li><b>selectMode</b>
    * Should the autocomplete simulate a select drop down control by adding a drop down arrow after the input box which, when clicked,
    * populates the drop down list with all search results to a maximum of numValues. This is similar to typing * into the box. Default false.</li>
+   * <li><b>matchContains</b>
+   * If true, then the search looks for matches which contain the search characters. Otherwise, the search
+   * looks for matches which start with the search characters. Default false.</li>
    * </ul>
    *
    * @return string HTML to insert into the page for the autocomplete control.
@@ -216,7 +219,8 @@ class data_entry_helper extends helper_base {
       'warnIfNoMatch' => true,
       'continueOnBlur' => true,
       'selectMode' => false,
-      'default' => ''
+      'default' => '',
+      'matchContains' => false
     ), $options);
     if (isset($options['report'])) {
       $options['extraParams']['report'] = $options['report'].'.xml';
@@ -225,6 +229,7 @@ class data_entry_helper extends helper_base {
     $options['warnIfNoMatch'] = $options['warnIfNoMatch'] ? 'true' : 'false';
     $options['continueOnBlur'] = $options['continueOnBlur'] ? 'true' : 'false';
     $options['selectMode'] = $options['selectMode'] ? 'true' : 'false';
+    $options['matchContains'] = $options['matchContains'] ? 'true' : 'false';
     self::add_resource('autocomplete');
     // Escape the id for jQuery selectors
     $escaped_id=self::jq_esc($options['id']);
@@ -2598,6 +2603,8 @@ $('#$escaped').change(function(e) {
    * * **extraParams** - Should contain the read authorisation array and taxon_list_id to filter against.
    * * **warnIfNoMatch** - Should the autocomplete control warn the user if they leave the control whilst
    *   searching and then nothing is matched? Default true.
+   * * **>matchContains** - If true, then the search looks for matches which contain the search
+   *   characters. Otherwise, the search  looks for matches which start with the search characters. Default false.
    *
    * @return string Html for the species autocomplete control.
    */
