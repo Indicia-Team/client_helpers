@@ -163,11 +163,11 @@ class iform_group_send_invites {
           'website_id' => $args['website_id']
         );
         $s = submission_builder::build_submission($values, array('model' => 'group_invitation'));
-        $r = data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
-        $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-        $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+        data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
+        $rootFolder = data_entry_helper::getRootFolder(true);
         $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-        $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . (empty($pathParam) ? '?' : '&') . 'token=' . $base . $idx;
+        $clean = strpos($rootFolder, '?') === false;
+        $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . ($clean ? '?' : '&') . 'token=' . $base . $idx;
         $body = $_POST['invite_message'] . "<br/><br/>" .
             '<a href="' . $acceptUrl . '">' . lang::get('Accept this invitation') . '</a>';
         $message = array(
