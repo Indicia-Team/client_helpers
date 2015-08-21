@@ -1332,14 +1332,20 @@ class helper_base extends helper_config {
 
  /**
   * Internal function to find the path to the root of the site, including the trailing slash.
+  * @param boolean $allowForDirtyUrls Set to true to allow for the content management system's
+  * approach to dirty URLs
+  *
   */
-  public static function getRootFolder() {
+  public static function getRootFolder($allowForDirtyUrls = false) {
     // $_SERVER['SCRIPT_NAME'] can, in contrast to $_SERVER['PHP_SELF'], not
     // be modified by a visitor.
     if ($dir = trim(dirname($_SERVER['SCRIPT_NAME']), '\,/'))
-      return "/$dir/";
+      $r = "/$dir/";
     else
-      return '/';    
+      $r = '/';
+    $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
+    $r .= empty($pathParam) ? '' : "?$pathParam=";
+    return $r;
   }
 
   /**
