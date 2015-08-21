@@ -2604,7 +2604,7 @@ $('#$escaped').change(function(e) {
    * * **warnIfNoMatch** - Should the autocomplete control warn the user if they leave the control whilst
    *   searching and then nothing is matched? Default true.
    * * **>matchContains** - If true, then the search looks for matches which contain the search
-   *   characters. Otherwise, the search  looks for matches which start with the search characters. Default false.
+   *   characters. Otherwise, the search looks for matches which start with the search characters. Default false.
    *
    * @return string Html for the species autocomplete control.
    */
@@ -3391,6 +3391,7 @@ $('#$escaped').change(function(e) {
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].cacheLookup=".($options['cacheLookup'] ? 'true' : 'false').";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20).";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=".(!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false').";\n";
+        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].matchContains=".(!empty($options['matchContains']) && $options['matchContains'] ? 'true' : 'false').";\n";
         self::$javascript .= "addRowToGrid('$url', '".
           $options['id']."', '".$options['lookupListId']."', {'auth_token' : '".
           $options['readAuth']['auth_token']."', 'nonce' : '".$options['readAuth']['nonce']."'},".
