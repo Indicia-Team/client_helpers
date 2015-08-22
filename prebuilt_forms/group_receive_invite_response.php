@@ -117,7 +117,7 @@ class iform_group_receive_invite_response {
     global $user;
     $reloadPath = self::getReloadPath();
     $r = '<p>'.lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.', 
-        variable_get('site_name', ''), $user->name, $invite['group_title']) . '</p>';
+        hostsite_get_name(), $user->name, $invite['group_title']) . '</p>';
     $r .= '<form id="entry_form" action="'.$reloadPath.'" method="POST">';
     $r .= '<input type="hidden" name="token" value="'.$_GET['token'].'"/>';
     $r .= '<input type="submit" id="btn-accept" name="accept" value="'.lang::get('Accept invitation').'"/>';
@@ -152,9 +152,10 @@ class iform_group_receive_invite_response {
    * @return string HTML to add to the page.
    */
   private static function logged_out_page($invite, $auth) {
+    $siteName = hostsite_get_name();
     $r = '<p>'.lang::get('If you would like to join the {1} group called {2} then please log in or register an account for {3} then '.
-            'follow the link in your invitation email again once registered.', 
-        variable_get('site_name', ''), $invite['group_title'], variable_get('site_name', '')) . '</p>';
+            'follow the link in your invitation email again once registered.',
+        $siteName, $invite['group_title'], $siteName) . '</p>';
     hostsite_set_page_title(lang::get('Invitation to join {1}', $invite['group_title']));
     return $r;
   
