@@ -179,7 +179,7 @@ class iform_group_send_invites {
               'MIME-Version' => '1.0',
               'Content-type' => 'text/html; charset=iso-8859-1',
               // prefer site's mail account in from, otherwise looks like spam
-              'From' => variable_get('site_mail', ''),
+              'From' => hostsite_get_config_value('site', 'mail'),
               'Reply-To' => $user->mail
             )
         );

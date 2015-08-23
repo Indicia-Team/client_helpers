@@ -594,10 +594,11 @@ class iform_species_details extends iform_dynamic {
     // This is not a map used for input
     $options['editLayer'] = false;
     // if in Drupal, and IForm proxy is installed, then use this path as OpenLayers proxy
-    if (defined('DRUPAL_BOOTSTRAP_CONFIGURATION') && module_exists('iform_proxy')) {
-      global $base_url;
-      $options['proxy'] = $base_url . '?q=' . variable_get('iform_proxy_path', 'proxy') . '&url=';
-     }
+    // @todo Refactor for Drupal 8.
+    if (function_exists('module_exists') && module_exists('iform_proxy')) {
+      $options['proxy'] = data_entry_helper::getRootFolder(true) .
+          hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
+    }
    
     // output a legend
     if (isset($args['include_layer_list_types']))
@@ -645,10 +646,8 @@ class iform_species_details extends iform_dynamic {
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-      $url = str_replace('{rootFolder}', $rootFolder, $url);
-      $url.= (strpos($url, '?')===false) ? '?' : '&';
+      $url = str_replace('{rootFolder}', data_entry_helper::getRootFolder(true), $url);
+      $url .= (strpos($url, '?')===false) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$taxon_meaning_id;
       $r='<a class="button" href="'.$url.'">' . lang::get('Explore records of {1}', self::get_best_name()) . '</a>';
     }
