@@ -416,7 +416,7 @@ class iform_report_selector {
           $groups = report_helper::get_report_data(array(
             'dataSource' => '/library/taxon_groups/taxon_groups_used_in_checklist',
             'readAuth' => $readAuth,
-            'extraParams' => array('taxon_list_id' => variable_get('iform_master_checklist_id', 0)),
+            'extraParams' => array('taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)),
             'caching' => true,
             'cachePerUser' => false,
             'cachetimeout' => self::SLOW_CACHE_REFRESH
@@ -538,7 +538,7 @@ class iform_report_selector {
       'readAuth' => $readAuth,
       'dataSource' => "library/taxon_groups/filterable_explore_list",
       'extraParams' => array('limit' => 10, 'orderby'=>$sortField, 'sortdir'=>'DESC', 
-          'restrict_to_taxon_list_id' => variable_get('iform_master_checklist_id', 0),
+          'restrict_to_taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
           'min_taxon_rank_sort_order' => $args['min_rank_sort_order_for_species']),
       'caching' => true,
       'cachePerUser' => $reportPerUser,
@@ -665,7 +665,7 @@ class iform_report_selector {
       $groups = report_helper::get_report_data(array(
         'dataSource' => '/library/taxon_groups/taxon_groups_used_in_checklist',
         'readAuth' => $readAuth,
-        'extraParams' => array('taxon_list_id' => variable_get('iform_master_checklist_id', 0)),
+        'extraParams' => array('taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)),
         'caching' => true,
         'cachePerUser' => false,
         'cachetimeout' => self::SLOW_CACHE_REFRESH

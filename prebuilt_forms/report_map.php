@@ -190,9 +190,10 @@ class iform_report_map {
     
     // Use the proxy module if enabled, to get round limitations in URL length for 
     // filtered WMS requests.
-    if (defined('DRUPAL_BOOTSTRAP_CONFIGURATION') && module_exists('iform_proxy')) {
-      global $base_url;
-      $reportOptions['proxy'] = $base_url . '/?q=' . variable_get('iform_proxy_path', 'proxy') . '&url=';
+    // @todo Implement a Drupal 8 friendly method of checking if a module exists
+    if (function_exists('module_exists') && module_exists('iform_proxy')) {
+      $reportOptions['proxy'] = map_helper::getRootFolder(true) .
+          hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
     }
     $r .= '<br/>'.report_helper::report_map($reportOptions);
     $options = iform_map_get_map_options($args, $readAuth);

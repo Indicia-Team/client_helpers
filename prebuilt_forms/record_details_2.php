@@ -613,7 +613,7 @@ Record ID',
     self::load_record($auth, $args);
     $record = self::$record;
     if (($user_id=hostsite_get_user_field('indicia_user_id')) && $user_id==self::$record['created_by_id']
-        && variable_get('indicia_website_id', 0)==self::$record['website_id']) {
+        && $args['website_id']==self::$record['website_id']) {
       if (empty($record['input_form']))
         $record['input_form']=$args['default_input_form'];
       $rootFolder = data_entry_helper::getRootFolder(true);
