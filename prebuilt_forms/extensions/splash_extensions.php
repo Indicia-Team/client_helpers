@@ -873,7 +873,7 @@ class extension_splash_extensions {
 
   data_entry_helper::$javascript .= "
   indiciaData.baseUrl='".$base_url."';  
-  indiciaData.website_id = ".variable_get('indicia_website_id', '').";\n";  
+  indiciaData.website_id = $args[website_id];\n";
   
   data_entry_helper::$javascript .= "
   approve_allocation= function(id,allocation_updater,allocated_to) {
