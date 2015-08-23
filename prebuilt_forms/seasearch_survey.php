@@ -505,7 +505,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
         $values[implode(':', $parts)] = $value;
     }
     // Find the attribute which contains SACFORP habitat data.
-    $readAuth = data_entry_helper::get_read_auth(variable_get('indicia_website_id'), variable_get('indicia_password'));
+    $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $attributeOpts = array(
       'valuetable' => 'occurrence_attribute_value',
       'attrtable' => 'occurrence_attribute',
