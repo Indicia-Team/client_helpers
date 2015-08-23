@@ -732,7 +732,8 @@ idlist=';
       'dataSource' => $details_report,
       'readAuth' => $auth,
       'sharing' => 'verification',
-      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1, 'locality_type_id' => variable_get('indicia_profile_location_type_id', 0))
+      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1,
+          'locality_type_id' => hostsite_get_config_value('iform', 'profile_location_type_id', 0))
     );
     $reportData = report_helper::get_report_data($options);
     // set some values which must exist in the record

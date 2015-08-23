@@ -112,7 +112,7 @@ class iform_user_trust_edit {
       'valueField'=>'id',
       'captionField'=>'name',
       'blankText'=>'<'.lang::get('any').'>',
-      'extraParams'=>$auth['read'] + array('location_type_id'=>variable_get('indicia_profile_location_type_id', '')),
+      'extraParams'=>$auth['read'] + array('location_type_id'=>hostsite_get_config_value('iform', 'profile_location_type_id', '')),
       'class'=>'control-width-4'
     ));
     $col2 = '<p>'.lang::get('Review this recorder\'s experience in the tabs below').'</p>';
@@ -154,7 +154,7 @@ class iform_user_trust_edit {
       'dataSource' => 'library/locations/filterable_locations_verification_breakdown',
       'ajax'=>TRUE,
       'autoloadAjax'=>FALSE,
-      'extraParams'=>array('my_records'=>1, 'location_type_id'=>variable_get('indicia_profile_location_type_id', ''))
+      'extraParams'=>array('my_records'=>1, 'location_type_id'=>hostsite_get_config_value('iform', 'profile_location_type_id', ''))
     ));
     $col2 .= '</div>';
     $col2 .= '</div>';

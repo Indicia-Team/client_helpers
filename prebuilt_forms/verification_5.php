@@ -528,17 +528,15 @@ idlist=';
       'speciesIncludeTaxonGroup' => true,
       'validation' => array('required')
     ));
-    if (function_exists('variable_get')) {
-      $taxon_list_id = variable_get('iform_master_checklist_id', 0);
-      if ($taxon_list_id) {
-        data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
-        $r .= data_entry_helper::checkbox(array(
-          'fieldname' => 'redet-from-full-list',
-          'label' => lang::get('Search all species'),
-          'labelClass' => 'auto',
-          'helpText' => lang::get('Check this box if you want to redetermine to a different species group.')
-        ));
-      }
+    $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    if ($taxon_list_id) {
+      data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
+      $r .= data_entry_helper::checkbox(array(
+        'fieldname' => 'redet-from-full-list',
+        'label' => lang::get('Search all species'),
+        'labelClass' => 'auto',
+        'helpText' => lang::get('Check this box if you want to redetermine to a different species group.')
+      ));
     }
     $r .= '</div></div>';
     return $r;
@@ -809,7 +807,8 @@ idlist=';
       'dataSource' => $details_report,
       'readAuth' => $readAuth,
       'sharing' => 'verification',
-      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1, 'locality_type_id' => variable_get('indicia_profile_location_type_id', 0))
+      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1,
+          'locality_type_id' => hostsite_get_config_value('iform', 'profile_location_type_id', 0))
     );
     $reportData = report_helper::get_report_data($options);
     // set some values which must exist in the record
@@ -1063,7 +1062,7 @@ idlist=';
    */
   public static function ajax_email() {
     global $user;
-    $site_email = variable_get('site_mail', '');
+    $site_email = hostsite_get_config_value('site', 'mail', '');
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
