@@ -868,7 +868,7 @@ idlist=';
    */
   public static function ajax_email() {
     global $user;
-    $site_email = variable_get('site_mail', '');
+    $site_email = hostsite_get_config_value('site', 'mail', '');
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
