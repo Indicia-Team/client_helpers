@@ -1340,8 +1340,7 @@ idlist=';
       $options['indexedLocationTypeIds'] = array_map('intval', explode(',', $args['indexed_location_type_ids']));
     if (!empty($args['other_location_type_ids']))
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
-    $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
-    return $r . $hiddenStuff;
+    return report_filter_panel($readAuth, $options, $args['website_id']);
   }
 
 }
