@@ -6,7 +6,8 @@
   RewriteCond %{REQUEST_URI} !/prebuilt_forms_ajax\.php$
   RewriteCond %{REQUEST_URI} !/upload\.php$
   RewriteCond %{REQUEST_URI} !/proxy\.php$
-  # RewriteCond %{REQUEST_URI} ^(prebuilt_forms_ajax.php)
+  RewriteCond %{REQUEST_URI} !.css$
+  RewriteCond %{REQUEST_URI} !.js$
   RewriteRule ^.*$ - [F]
 
 </IfModule>
