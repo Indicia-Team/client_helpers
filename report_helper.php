@@ -1615,7 +1615,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
         // near the equator but not near the poles. We use a very crude adjustment if necessary
         // which works well around the UK's latitude.
         $defStyleFns['pointRadius'] = "getpointradius: function(feature) {
-          var units = feature.attributes.sref_precision;
+          var units = feature.attributes.sref_precision || 20;
           if (feature.geometry.getCentroid().y > 4000000) {
             units = units * (feature.geometry.getCentroid().y / 8200000);
           }
