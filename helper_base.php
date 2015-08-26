@@ -97,10 +97,7 @@ $indicia_templates = array(
     "document.write('  </div>  {closeButton}');\n".
     "document.write('</div>');".
     "\n/* ]]> */</script>",
-  'tab_header' => '<script type="text/javascript">/* <![CDATA[ */'."\n".
-      'document.write(\'<ul class="ui-helper-hidden">{tabs}</ul>\');'.
-      "\n/* ]]> */</script>\n".
-      "<noscript><ul>{tabs}</ul></noscript>\n",
+  'tab_header' => "<ul>{tabs}</ul>\n",
   'loading_block_start' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
       'document.write(\'<div class="ui-widget ui-widget-content ui-corner-all loading-panel" >'.
       '<img src="'.helper_config::$base_url.'media/images/ajax-loader2.gif" />'.
