@@ -221,7 +221,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
    
   $hiddens = '';
   foreach($attributes as &$attribute) {
-    $value = hostsite_get_user_field(strtolower(str_replace(' ', '_', $attribute['caption']), false));
+    $value = hostsite_get_user_field(strtolower(str_replace(' ', '_', $attribute['caption'])));
 
     if ($value && isset($args['copyFromProfile']) && $args['copyFromProfile'] == true) {
       // lookups need to be translated to the termlist_term_id, unless they are already IDs
