@@ -190,7 +190,7 @@ $indicia_templates = array(
     }
   });
   $('#{escaped_id}\\\\:add').click(function() {addSublistItem{idx}('{escaped_id}', '{escaped_captionField}', '{fieldname}');});  
-  $('#{escaped_id}\\\\:sublist span.ind-delete-icon').live('click', function(event){
+  indiciaFns.on('click', '#{escaped_id}\\\\:sublist span.ind-delete-icon', null, function(event){
     // remove the value from the displayed list and the hidden list
     var li$ = $(this).closest('li');
     li$.remove();
