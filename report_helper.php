@@ -2674,11 +2674,9 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       if($indicia_user_id)
         $options["extraParams"]['user_id'] = $indicia_user_id;
       if($options['my_user_id']){ // false switches this off.
-        $account = user_load($options['my_user_id']);
-        if (function_exists('profile_load_profile'))
-          profile_load_profile($account); /* will not be invoked for Drupal7 where the fields are already in the account object */
-        if(isset($account->profile_indicia_user_id))
-          $options['my_user_id'] = $account->profile_indicia_user_id;
+        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options['my_user_id']);
+        if(!empty($user_id))
+          $options['my_user_id'] = $user_id;
       }
     }
     return $options;
@@ -4008,12 +4006,10 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
     // not the Indicia user id: we do the conversion here.
     if (isset($options["extraParams"]['user_id'])) {
       $options["extraParams"]['cms_user_id'] = $options["extraParams"]['user_id'];
-      if (function_exists('module_exists') && module_exists('easy_login') && $options["extraParams"]['user_id']!='') {
-        $account = user_load($options["extraParams"]['user_id']);
-        if (function_exists('profile_load_profile'))
-          profile_load_profile($account); /* will not be invoked for Drupal7 where the fields are already in the account object */
-        if(isset($account->profile_indicia_user_id))
-          $options["extraParams"]['user_id'] = $account->profile_indicia_user_id;
+      if (function_exists('hostsite_get_user_field') && $options["extraParams"]['user_id']!='') {
+        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options["extraParams"]['user_id']);
+        if(!empty($user_id))
+          $options["extraParams"]['user_id'] = $user_id;
       }
     }
     
