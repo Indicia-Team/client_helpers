@@ -207,7 +207,6 @@ function extract_cms_user_attr(&$attributes, $unset=true) {
 function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth) {
   // This is Drupal specific code
   
-  global $user;
   $logged_in = hostsite_get_user_field('id') > 0;
   // If the user is not logged in there is no profile so return early.
   if (!$logged_in) {
