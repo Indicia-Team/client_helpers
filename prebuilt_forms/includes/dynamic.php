@@ -41,7 +41,7 @@ class iform_dynamic {
   protected static $singleSpeciesName;
   
   // The node id upon which this form appears
-  protected static $node;
+  protected static $nid;
 
   // The class called by iform.module which may be a subclass of iform_location_dynamic
   protected static $called_class;
@@ -202,11 +202,11 @@ class iform_dynamic {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     data_entry_helper::$website_id=$args['website_id'];
     if (!empty($args['high_volume']) && $args['high_volume']) {
       // node level caching for most page hits
-      $cached = data_entry_helper::cache_get(array('node'=>$node->nid), HIGH_VOLUME_CACHE_TIMEOUT);
+      $cached = data_entry_helper::cache_get(array('node'=>$nid), HIGH_VOLUME_CACHE_TIMEOUT);
       if ($cached!==false) {
         $cached = explode('|!|', $cached);
         data_entry_helper::$javascript = $cached[1];
@@ -216,8 +216,8 @@ class iform_dynamic {
         return $cached[0];
       }
     }
-    self::$node = $node;
-    self::$called_class = 'iform_' . $node->iform;
+    self::$nid = $nid;
+    self::$called_class = 'iform_' . hostsite_get_node_field_value($nid, 'iform');
     
     // Convert parameter, defaults, into structured array
     self::parse_defaults($args);
@@ -234,15 +234,16 @@ class iform_dynamic {
     }
     // Determine how the form was requested and therefore what to output
     $mode = (method_exists(self::$called_class, 'getMode'))
-      ? call_user_func(array(self::$called_class, 'getMode'), $args, $node)
+      ? call_user_func(array(self::$called_class, 'getMode'), $args, $nid)
       : '';
     self::$mode = $mode;
     if($mode ===  self::MODE_GRID) {
+      drupal_set_message('grid mode');
       // Output a grid of existing records
-      $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $node, $auth);
+      $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $nid, $auth);
     } else {
       if (($mode === self::MODE_EXISTING || $mode === self::MODE_EXISTING_RO || $mode === self::MODE_CLONE) && is_null(data_entry_helper::$entity_to_load)) { 
-        // only load if not in error situation. 
+        // only load if not in error situation.
         call_user_func_array(array(self::$called_class, 'getEntity'), array(&$args, $auth));
         // when editing, no need to step through all the pages to save a change.
         if ($mode === self::MODE_EXISTING)
@@ -252,19 +253,18 @@ class iform_dynamic {
       $attributes = (method_exists(self::$called_class, 'getAttributes'))
           ? call_user_func(array(self::$called_class, 'getAttributes'), $args, $auth)
           : array();
-      $r = call_user_func(array(self::$called_class, 'get_form_html'), $args, $auth, $attributes);      
+      $r = call_user_func(array(self::$called_class, 'get_form_html'), $args, $auth, $attributes);
     }
     if (!empty($args['high_volume']) && $args['high_volume']) {
       $c = $r . '|!|' . data_entry_helper::$javascript . '|!|' . data_entry_helper::$late_javascript . '|!|' . 
           data_entry_helper::$onload_javascript . '|!|' . json_encode(data_entry_helper::$required_resources);
-      data_entry_helper::cache_set(array('node'=>$node->nid), $c, HIGH_VOLUME_CACHE_TIMEOUT);
+      data_entry_helper::cache_set(array('node'=>$nid), $c, HIGH_VOLUME_CACHE_TIMEOUT);
     }
     return $r;
   }
   
   protected static function get_form_html($args, $auth, $attributes) { 
     $r = call_user_func(array(self::$called_class, 'getHeader'), $args);
-
     $params = array($args, $auth, &$attributes);
     if (self::$mode === self::MODE_CLONE) {
       call_user_func_array(array(self::$called_class, 'cloneEntity'), $params);
@@ -548,21 +548,23 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
             //outputs a control for which a specific extension function has been written.
             $path = call_user_func(array(self::$called_class, 'getReloadPath')); 
             //pass the classname of the form through to the extension control method to allow access to calling class functions and variables
-            $args["calling_class"]='iform_' . self::$node->iform;
+            $args["calling_class"]=self::$called_class;
             $html .= call_user_func(array('extension_' . $parts[0], $parts[1]), $auth, $args, $tabalias, $options, $path, $attributes);
             $hasControls = true;
             // auto-add JavaScript for the extension
             $d6 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='6.x');
-            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js')) { 
+            $d7 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='7.x');
+            // Ignore D8 as it uses asset libraries instead of drupal_add_js
+            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js')) {
               if ($d6)
                 drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', 'module', 'header', FALSE, TRUE, FALSE);
-              else
+              elseif ($d7)
                 drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', array('preprocess'=>FALSE));
             }
             if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css')) {
               if ($d6)
                 drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', 'module', 'all', FALSE);
-              else
+              elseif ($d7)
                 drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', array('preprocess'=>FALSE));
             }
           } 

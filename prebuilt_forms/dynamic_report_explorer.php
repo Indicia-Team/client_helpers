@@ -273,10 +273,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    * Override the get_form to fetch our own auth tokens. This skips the write auth as it is unnecessary, 
    * which makes the tokens cachable therefore faster. It does mean that $auth['write'] will not be available.
    */
-  public static function get_form($args, $node) {
-    $conn = iform_get_connection_details($node);
+  public static function get_form($args, $nid) {
+    $conn = iform_get_connection_details($nid);
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
-    return parent::get_form($args, $node);
+    return parent::get_form($args, $nid);
   }
  
   /**

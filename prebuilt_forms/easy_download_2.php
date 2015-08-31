@@ -311,20 +311,20 @@ class iform_easy_download_2 {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
-    $conn = iform_get_connection_details($node);
+  public static function get_form($args, $nid, $response=null) {
+    $conn = iform_get_connection_details($nid);
     $args = array_merge(array(
       'download_administered_groups' => 'indicia data admin',
       'download_group_types' => ''
     ), $args);
     data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_POST) && !empty($_POST['format']))
-      self::do_data_services_download($args, $node);
+      self::do_data_services_download($args, $nid);
     $types = self::get_download_types($args);
     $formats = self::get_download_formats($args);
     if (count($types)===0)
@@ -413,7 +413,7 @@ class iform_easy_download_2 {
     }
     $r .= '<input type="submit" value="'.lang::get('Download').'"/></form>';
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/easy_download_2')."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$node->nid."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript.="setAvailableDownloadFilters();\n";
     return $r;
   } 
@@ -534,9 +534,9 @@ class iform_easy_download_2 {
    * Performs the download.
    * @global array $indicia_templates
    * @param type $args
-   * @param type $node
+   * @param type $nid
    */
-  private static function do_data_services_download($args, $node) {
+  private static function do_data_services_download($args, $nid) {
     iform_load_helpers(array('report_helper'));
     $format=$_POST['format'];
     $isCustom = preg_match('/^custom-(\d+)$/', $_POST['format'], $matches);
@@ -555,7 +555,7 @@ class iform_easy_download_2 {
     }
     $params = self::build_params($args);
     $params = array_merge($params, get_options_array_with_user_data($additionalParamText));
-    $conn = iform_get_connection_details($node);
+    $conn = iform_get_connection_details($nid);
     
     global $indicia_templates;
     // let's just get the URL, not the whole anchor element

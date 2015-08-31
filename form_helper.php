@@ -166,33 +166,26 @@ class form_helper extends helper_base {
   */
   private static function link_to_group_fields($readAuth, $options) {
     $r = '';
-    if (function_exists('db_query')) {
-      $qry = db_query("SELECT count(*) as count FROM {iform} WHERE iform='group_edit'");
-      if (function_exists('db_fetch_object'))
-        $row = db_fetch_object($qry);
-      else 
-        $row = $qry->fetchObject();
-      if ($row->count>0) {
-        $r .= data_entry_helper::checkbox(array(
-          'label' => lang::get('Allow this form to be used by recording groups'),
-          'fieldname' => 'available_for_groups',
-          'helpText' => lang::get('Tick this box if the form is suitable for use by recording groups for their own record collection or reporting.'),
-          'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : false
-        ));
-        $r .= data_entry_helper::select(array(
-          'label' => lang::get('Restrict to a recording group'),
-          'fieldname' => 'limit_to_group_id',
-          'helpText' => lang::get('If this form is being built for the private use of 1 recording group, then choose that group here. '.
-              'This does not affect visibility of the actual records input using the form. Only applies if the above checkbox is ticked.'),
-          'blankText' => '<' . lang::get('Unrestricted') . '>',
-          'table' => 'group',
-          'valueField' => 'id',
-          'captionField' => 'title',
-          'extraParams' => $readAuth + array('orderby' => 'title'),
-          'default' => isset($options['limit_to_group_id']) ? $options['limit_to_group_id'] : false,
-          'caching' => false
-        ));
-      }
+    if (iform_site_has_group_functionality()) {
+      $r .= data_entry_helper::checkbox(array(
+        'label' => lang::get('Allow this form to be used by recording groups'),
+        'fieldname' => 'available_for_groups',
+        'helpText' => lang::get('Tick this box if the form is suitable for use by recording groups for their own record collection or reporting.'),
+        'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : false
+      ));
+      $r .= data_entry_helper::select(array(
+        'label' => lang::get('Restrict to a recording group'),
+        'fieldname' => 'limit_to_group_id',
+        'helpText' => lang::get('If this form is being built for the private use of 1 recording group, then choose that group here. '.
+            'This does not affect visibility of the actual records input using the form. Only applies if the above checkbox is ticked.'),
+        'blankText' => '<' . lang::get('Unrestricted') . '>',
+        'table' => 'group',
+        'valueField' => 'id',
+        'captionField' => 'title',
+        'extraParams' => $readAuth + array('orderby' => 'title'),
+        'default' => isset($options['limit_to_group_id']) ? $options['limit_to_group_id'] : false,
+        'caching' => false
+      ));
     }
     return $r;
   }

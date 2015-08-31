@@ -434,9 +434,9 @@ class report_helper extends helper_base {
     $currentUrl = self::get_reload_link_parts();
     // automatic handling for Drupal clean urls.
     $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-    $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-    // amend currentUrl path if we have drupal dirty URLs so javascript will work properly
-    if ($pathParam==='q' && isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
+    $rootFolder = self::getRootFolder(true);
+    // amend currentUrl path if we have Drupal 6/7 dirty URLs so javascript will work properly
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
       $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
     }
     $tfoot .= '<tfoot>';
@@ -2675,11 +2675,9 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       if($indicia_user_id)
         $options["extraParams"]['user_id'] = $indicia_user_id;
       if($options['my_user_id']){ // false switches this off.
-        $account = user_load($options['my_user_id']);
-        if (function_exists('profile_load_profile'))
-          profile_load_profile($account); /* will not be invoked for Drupal7 where the fields are already in the account object */
-        if(isset($account->profile_indicia_user_id))
-          $options['my_user_id'] = $account->profile_indicia_user_id;
+        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options['my_user_id']);
+        if(!empty($user_id))
+          $options['my_user_id'] = $user_id;
       }
     }
     return $options;
@@ -4009,12 +4007,10 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
     // not the Indicia user id: we do the conversion here.
     if (isset($options["extraParams"]['user_id'])) {
       $options["extraParams"]['cms_user_id'] = $options["extraParams"]['user_id'];
-      if (function_exists('module_exists') && module_exists('easy_login') && $options["extraParams"]['user_id']!='') {
-        $account = user_load($options["extraParams"]['user_id']);
-        if (function_exists('profile_load_profile'))
-          profile_load_profile($account); /* will not be invoked for Drupal7 where the fields are already in the account object */
-        if(isset($account->profile_indicia_user_id))
-          $options["extraParams"]['user_id'] = $account->profile_indicia_user_id;
+      if (function_exists('hostsite_get_user_field') && $options["extraParams"]['user_id']!='') {
+        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options["extraParams"]['user_id']);
+        if(!empty($user_id))
+          $options["extraParams"]['user_id'] = $user_id;
       }
     }
     

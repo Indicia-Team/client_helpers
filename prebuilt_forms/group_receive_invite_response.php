@@ -67,12 +67,12 @@ class iform_group_receive_invite_response {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     if (empty($_GET['token'])) {
       return self::fail_message("You've arrived at a page intended for accepting invitations to a recording ".
           "group but without the correct information allowing you to join a group", $args);
@@ -116,8 +116,8 @@ class iform_group_receive_invite_response {
   private static function logged_in_page($invite, $auth) {
     global $user;
     $reloadPath = self::getReloadPath();
-    $r = '<p>'.lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.', 
-        variable_get('site_name', ''), $user->name, $invite['group_title']) . '</p>';
+    $r = '<p>'.lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.',
+        hostsite_get_config_value('site', 'name'), $user->name, $invite['group_title']) . '</p>';
     $r .= '<form id="entry_form" action="'.$reloadPath.'" method="POST">';
     $r .= '<input type="hidden" name="token" value="'.$_GET['token'].'"/>';
     $r .= '<input type="submit" id="btn-accept" name="accept" value="'.lang::get('Accept invitation').'"/>';
@@ -152,9 +152,10 @@ class iform_group_receive_invite_response {
    * @return string HTML to add to the page.
    */
   private static function logged_out_page($invite, $auth) {
+    $siteName = hostsite_get_config_value('site', 'name');
     $r = '<p>'.lang::get('If you would like to join the {1} group called {2} then please log in or register an account for {3} then '.
-            'follow the link in your invitation email again once registered.', 
-        variable_get('site_name', ''), $invite['group_title'], variable_get('site_name', '')) . '</p>';
+            'follow the link in your invitation email again once registered.',
+        $siteName, $invite['group_title'], $siteName) . '</p>';
     hostsite_set_page_title(lang::get('Invitation to join {1}', $invite['group_title']));
     return $r;
   

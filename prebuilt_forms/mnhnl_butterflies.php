@@ -157,24 +157,24 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
     return $retVal;
   }
   
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     global $indicia_templates;
     global $user;
     $indicia_templates['select_item'] = '<option value="{value}" {selected} >{caption}&nbsp;</option>';
     if ($user->uid===0)
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>'destination=node/'.($node->nid))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     // we don't use the map, but a lot of the inherited code assumes the map is present.
     self::$svcUrl = data_entry_helper::$base_url.'/index.php/services';
     data_entry_helper::add_resource('openlayers');
     $indicia_templates['label'] = '<label for="{id}"{labelClass}>{label}:</label>'; // can't have the CR on the end
     $indicia_templates['zilch'] = ''; // can't have the CR on the end
-    self::$locations = iform_loctools_listlocations($node);
-    $retVal = parent::get_form($args, $node, $response);
+    self::$locations = iform_loctools_listlocations($nid);
+    $retVal = parent::get_form($args, $nid, $response);
     if(parent::$mode != self::MODE_GRID){
       iform_mnhnl_addCancelButton($args['interface']);
       data_entry_helper::$javascript .= "
 $.validator.messages.required = \"".lang::get('validation_required')."\";";
-      if(!iform_loctools_checkaccess($node,'superuser')){
+      if(!iform_loctools_checkaccess($nid,'superuser')){
         data_entry_helper::$javascript .= "
 jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args['observer_attr_id']."\\:]').attr('readonly',true)";
         if(parent::$mode == self::MODE_NEW){
@@ -183,7 +183,7 @@ jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args[
           data_entry_helper::$javascript .= ";";
         }
       } else {
-        $userlist = iform_loctools_listusers($node);
+        $userlist = iform_loctools_listusers($nid);
         data_entry_helper::$javascript .= "
 existing = jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args['observer_attr_id']."\\:]');
 replacement = '<select name=\"'+existing.attr('name')+'\" >";

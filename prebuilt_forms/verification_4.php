@@ -440,11 +440,11 @@ idlist=';
    * Expects there to be a sample attribute with caption 'Email' containing the email
    * address.
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object's ID
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     if (!self::check_prerequisites())
       return '';
     iform_load_helpers(array('data_entry_helper', 'map_helper', 'report_helper'));
@@ -521,12 +521,12 @@ idlist=';
     $link = data_entry_helper::get_reload_link_parts();
     global $user;
     data_entry_helper::$js_read_tokens = $auth['read'];
-    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$node->nid."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "'.$link['path']."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.website_id = '.$args['website_id'].";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($node, 'occurrence')."&user_id=$indicia_user_id&sharing=verification\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'occurrence')."&user_id=$indicia_user_id&sharing=verification\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/verification_4')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autoDiscard = '.$args['auto_discard_rows'].";\n";
     if (!empty($args['indicia_species_layer_feature_type']) && !empty(data_entry_helper::$geoserver_url)) {
@@ -659,16 +659,18 @@ idlist=';
   /**
    * Ajax handler to provide the content for the details of a single record.
    */
-  public static function ajax_details($website_id, $password, $node) {
-    $details_report = empty($node->params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data' : $node->params['record_details_report'];
-    $attrs_report = empty($node->params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $node->params['record_attrs_report'];
+  public static function ajax_details($website_id, $password, $nid) {
+    $params = hostsite_get_node_field_value($nid, 'params');
+    $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data' : $params['record_details_report'];
+    $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = array(
       'dataSource' => $details_report,
       'readAuth' => $readAuth,
       'sharing' => 'verification',
-      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1, 'locality_type_id' => variable_get('indicia_profile_location_type_id', 0))
+      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1,
+          'locality_type_id' => hostsite_get_config_value('iform', 'profile_location_type_id', 0))
     );
     $reportData = report_helper::get_report_data($options);
     // set some values which must exist in the record
@@ -887,7 +889,7 @@ idlist=';
    */
   public static function ajax_email() {
     global $user;
-    $site_email = variable_get('site_mail', '');
+    $site_email = hostsite_get_config_value('site', 'mail', '');
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
@@ -917,10 +919,11 @@ idlist=';
    * 
    * @param type $website_id
    * @param type $password
-   * @param type $node 
+   * @param type $nid
    */
-  public static function ajax_experience($website_id, $password, $node) {
+  public static function ajax_experience($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
+    $params = hostsite_get_node_field_value($nid, 'params');
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $data = report_helper::get_report_data(array(
       'dataSource' => 'library/totals/user_experience_for_record',
@@ -935,12 +938,12 @@ idlist=';
         $r .= '<h3>Records of ' . $row['what'] . '</h3>';
         $r .= '<table><thead><th></th><th>Last 3 months</th><th>Last year</th><th>All time</th></thead>';
         $r .= '<tbody>';
-        $r .= '<tr class="verified"><th>Verified</th><td>' . self::records_link($row, 'v_3months', $node) . '</td><td>' . 
-                self::records_link($row, 'v_1year', $node) . '</td><td>' . self::records_link($row, 'v_total', $node) . '</td></tr>';
-        $r .= '<tr class="rejected"><th>Rejected</th><td>' . self::records_link($row, 'r_3months', $node) . '</td><td>' . 
-                self::records_link($row, 'r_1year', $node) . '</td><td>' . self::records_link($row, 'r_total', $node) . '</td></tr>';
-        $r .= '<tr class="total"><th>Total</th><td>' . self::records_link($row, 'total_3months', $node) . '</td><td>' . 
-                self::records_link($row, 'total_1year', $node) . '</td><td>' . self::records_link($row, 'total_total', $node) . '</td></tr>';
+        $r .= '<tr class="verified"><th>Verified</th><td>' . self::records_link($row, 'v_3months', $params) . '</td><td>' .
+                self::records_link($row, 'v_1year', $params) . '</td><td>' . self::records_link($row, 'v_total', $params) . '</td></tr>';
+        $r .= '<tr class="rejected"><th>Rejected</th><td>' . self::records_link($row, 'r_3months', $params) . '</td><td>' .
+                self::records_link($row, 'r_1year', $params) . '</td><td>' . self::records_link($row, 'r_total', $params) . '</td></tr>';
+        $r .= '<tr class="total"><th>Total</th><td>' . self::records_link($row, 'total_3months', $params) . '</td><td>' .
+                self::records_link($row, 'total_1year', $params) . '</td><td>' . self::records_link($row, 'total_total', $params) . '</td></tr>';
         $r .= "</tbody></table>\n";
         
       }
@@ -970,8 +973,8 @@ idlist=';
   /**
    * Convert a number on the Experience tab into a link to the Explore page for the underlying records.
    */
-  private static function records_link($row, $value, $node) {
-    if (!empty($node->params['view_records_report_path']) && !empty($_GET['user_id'])) {
+  private static function records_link($row, $value, $nodeParams) {
+    if (!empty($nodeParams['view_records_report_path']) && !empty($_GET['user_id'])) {
       $tokens = explode('_', $value);
       $params = array(
           'filter-date_age' => '', 
@@ -1000,7 +1003,7 @@ idlist=';
         $params['filter-taxon_meaning_list'] = $row['what_id'];
       else
         $params['filter-taxon_group_list'] = $row['what_id'];
-      return l($row[$value], $node->params['view_records_report_path'], 
+      return l($row[$value], $nodeParams['view_records_report_path'],
           array('attributes'=>array('target' => '_blank'), 'query'=>$params));
       
     } else

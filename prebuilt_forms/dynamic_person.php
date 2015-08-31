@@ -107,10 +107,10 @@ class iform_dynamic_person extends iform_dynamic {
   /** 
    * Determine whether to show a grid of existing records or a form for either adding a new record or editing an existing one.
    * @param array $args iform parameters. 
-   * @param object $node node being shown. 
+   * @param object $nid ID of node being shown.
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING].
    */
-  protected static function getMode($args, $node) {
+  protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     

@@ -134,11 +134,11 @@ class iform_tree_map_2 {
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object's ID
    * @param array $response Response from Indicia services after posting.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     $r = "";
     data_entry_helper::add_resource('jquery_ui');
     if(isset($args['advancedUI']) && $args['advancedUI']) {
