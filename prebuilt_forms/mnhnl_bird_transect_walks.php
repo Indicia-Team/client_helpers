@@ -968,7 +968,7 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
                 if(subData[i].date_start != mainDate){
                   values['sample:id']=subData[i].sample_id;
                   values['sample:date']=mainDate;
-                  url=\"".iform_ajaxproxy_url($node, 'sample')."\";
+                  url=\"".iform_ajaxproxy_url($nid, 'sample')."\";
                 }\n";
     // Send AJAX request to set occurrence to 'C' if closed : use sync
     if(!user_access($args['edit_permission']))
@@ -981,13 +981,13 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
                   if(subData[i].record_status == 'I' || typeof values['sample:id'] != 'undefined'){
                     values['occurrence:id']=subData[i].occurrence_id;
                     values['occurrence:record_status']='C';
-                    url=(url == '' ? \"".iform_ajaxproxy_url($node, 'occurrence')."\" : \"".iform_ajaxproxy_url($node, 'smp-occ')."\");
+                    url=(url == '' ? \"".iform_ajaxproxy_url($nid, 'occurrence')."\" : \"".iform_ajaxproxy_url($nid, 'smp-occ')."\");
                   }
                 } else { // any occurrences on unclosed collections must be flagged as 'I' - reopening unverifies.
                   if(subData[i].record_status != 'I'){
                     values['occurrence:id']=subData[i].occurrence_id;
                     values['occurrence:record_status']='I';
-                    url=(url == '' ? \"".iform_ajaxproxy_url($node, 'occurrence')."\" : \"".iform_ajaxproxy_url($node, 'smp-occ')."\");
+                    url=(url == '' ? \"".iform_ajaxproxy_url($nid, 'occurrence')."\" : \"".iform_ajaxproxy_url($nid, 'smp-occ')."\");
                   }
                 }
                 if(url!=''){
@@ -1153,7 +1153,7 @@ jQuery('#ro-occ-occ-warn').hide();
     <p id=\"ro-occ-occ-warn\"><strong>".lang::get('LANG_Read_Only_Occurrence')."</strong></p>
     <p id=\"ro-sur-occ-warn\"><strong>".lang::get('LANG_Read_Only_Survey')."</strong></p>
     <p id=\"na-occ-warn\"><strong>".lang::get('LANG_Page_Not_Available')."</strong></p>
-    <form method=\"post\" id=\"occ-form\" action=\"".iform_ajaxproxy_url($node, 'smp-occ')."\" >
+    <form method=\"post\" id=\"occ-form\" action=\"".iform_ajaxproxy_url($nid, 'smp-occ')."\" >
     <input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />
     <input type=\"hidden\" id=\"sample:survey_id\" name=\"sample:survey_id\" value=\"".$args['survey_id']."\" />
     <input type=\"hidden\" id=\"sample:parent_id\" name=\"sample:parent_id\" value=\"".$parentSample['sample:id']."\" />
