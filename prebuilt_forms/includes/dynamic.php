@@ -548,7 +548,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
             //outputs a control for which a specific extension function has been written.
             $path = call_user_func(array(self::$called_class, 'getReloadPath')); 
             //pass the classname of the form through to the extension control method to allow access to calling class functions and variables
-            $args["calling_class"]='iform_' . hostsite_get_node_field_value($nid, 'iform');
+            $args["calling_class"]=self::$called_class;
             $html .= call_user_func(array('extension_' . $parts[0], $parts[1]), $auth, $args, $tabalias, $options, $path, $attributes);
             $hasControls = true;
             // auto-add JavaScript for the extension
