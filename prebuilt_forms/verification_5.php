@@ -606,14 +606,12 @@ idlist=';
           '<li><a href="#" class="trust-tool">Recorder\'s trust settings</a></li><li><a href="#" class="edit-record">Edit record</a></li></ul>'.
           '<input type="checkbox" class="check-row no-select" style="display: none" value="{occurrence_id}" /></div>'
     ));
-    $hiddenPopupDivs = '';
-    $params = self::report_filter_panel($args, $auth['read'], $hiddenPopupDivs);
+    $params = self::report_filter_panel($args, $auth['read']);
 
     $opts['zoomMapToOutput']=false;
     $grid = report_helper::report_grid($opts);
     $r = str_replace(array('{grid}','{paramsForm}'), array($grid, $params),
         self::get_template_with_map($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
-    $r .= $hiddenPopupDivs;
     $link = data_entry_helper::get_reload_link_parts();
     data_entry_helper::$js_read_tokens = $auth['read'];
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
@@ -1328,8 +1326,9 @@ idlist=';
     if (!empty($args['other_location_type_ids']))
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
     $options['taxon_list_id'] = hostsite_get_config_value('iform', 'master_checklist_id', 0);
-    $hiddenPopupDivs = '';
-    return report_filter_panel($readAuth, $options, $args['website_id'], $hiddenPopupDivs);
+    $hiddenStuff='';
+    $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
+    return $r . $hiddenStuff;
   }
 
 }

@@ -1081,7 +1081,8 @@ idlist=';
       'sharing' => 'verification',
       'linkToMapDiv'=>'map',
       'filter-quality'=>'P'
-    );   
+    );
+    $hiddenStuff='';
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
   }
