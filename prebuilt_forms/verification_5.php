@@ -60,7 +60,8 @@ class iform_verification_5 {
     return array(
       'title'=>'Verification 5',
       'category' => 'Verification',
-      'description'=>'Verification form supporting 2 tier verification statuses.'
+      'description'=>'Verification form supporting 2 tier verification statuses. Requires the ' .
+        'Easy Login module and Indicia AJAX Proxy module to both be enabled.',
     );
   }
 
@@ -452,8 +453,6 @@ idlist=';
     $msg = false;
     if (!function_exists('iform_ajaxproxy_url'))
       $msg = 'The AJAX Proxy module must be enabled to support saving filters on the verification page.';
-    if (!module_exists('easy_login'))
-      $msg = 'The verification 4 page requires the Easy Login module to be enabled.';
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
       $msg = 'Before verifying records, please visit your user account profile and ensure that you have entered your full name, then save it.';
     if ($msg) 
@@ -567,19 +566,6 @@ idlist=';
       $args['email_body_send_to_recorder'] = 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct '.
               'and any other information you have which may help to confirm this.'.
               "\n\n%record%";
-    if (isset($_POST['enable'])) {
-      module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
-    }
-    elseif (!defined('IFORM_AJAXPROXY_PATH')) {
-      $r = '<p>'.lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
-          'Indicia Warehouse without having to reload the page.').'</p>';
-      $r .= '<form method="post">';
-      $r .= '<input type="hidden" name="enable" value="t"/>';
-      $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'"/>';
-      $r .= '</form>';
-      return $r;
-    }
     if (function_exists('drupal_add_js'))
       drupal_add_js('misc/collapse.js');
     // fancybox for popup comment forms etc
@@ -620,21 +606,23 @@ idlist=';
           '<li><a href="#" class="trust-tool">Recorder\'s trust settings</a></li><li><a href="#" class="edit-record">Edit record</a></li></ul>'.
           '<input type="checkbox" class="check-row no-select" style="display: none" value="{occurrence_id}" /></div>'
     ));
-    $params = self::report_filter_panel($args, $auth['read']);
+    $hiddenPopupDivs = '';
+    $params = self::report_filter_panel($args, $auth['read'], $hiddenPopupDivs);
+
     $opts['zoomMapToOutput']=false;
     $grid = report_helper::report_grid($opts);
     $r = str_replace(array('{grid}','{paramsForm}'), array($grid, $params),
         self::get_template_with_map($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
+    $r .= $hiddenPopupDivs;
     $link = data_entry_helper::get_reload_link_parts();
-    global $user;
     data_entry_helper::$js_read_tokens = $auth['read'];
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.username = "'.hostsite_get_user_field('name')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "'.$link['path']."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.website_id = '.$args['website_id'].";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'occurrence')."&user_id=$indicia_user_id&sharing=verification\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/verification_5')."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/verification_5')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autoDiscard = '.$args['auto_discard_rows'].";\n";
     $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
     data_entry_helper::$javascript .= 'indiciaData.imgPath = "' . $imgPath . "\";\n";
@@ -1082,13 +1070,12 @@ idlist=';
    * @return boolean True if the email was sent.
    */
   public static function ajax_email() {
-    global $user;
     $site_email = hostsite_get_config_value('site', 'mail', '');
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
     $headers[] = 'From: '. $site_email;
-    $headers[] = 'Reply-To: '. $user->mail;
+    $headers[] = 'Reply-To: '. hostsite_get_user_field('mail');
     $headers[] = 'Return-Path: '. $site_email;
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = $_POST['body'];
@@ -1340,7 +1327,9 @@ idlist=';
       $options['indexedLocationTypeIds'] = array_map('intval', explode(',', $args['indexed_location_type_ids']));
     if (!empty($args['other_location_type_ids']))
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
-    return report_filter_panel($readAuth, $options, $args['website_id']);
+    $options['taxon_list_id'] = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    $hiddenPopupDivs = '';
+    return report_filter_panel($readAuth, $options, $args['website_id'], $hiddenPopupDivs);
   }
 
 }

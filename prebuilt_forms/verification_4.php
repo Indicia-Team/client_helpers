@@ -41,7 +41,8 @@ class iform_verification_4 {
     return array(
       'title'=>'Verification 4',
       'category' => 'Verification',
-      'description'=>'Verification form based on standard report filtering system.'
+      'description'=>'Verification form based on standard report filtering system. Requires the ' .
+        'Easy Login module and Indicia AJAX Proxy module to both be enabled.'
     );
   }
 
@@ -425,8 +426,6 @@ idlist=';
     $msg = false;
     if (!function_exists('iform_ajaxproxy_url'))
       $msg = 'The AJAX Proxy module must be enabled to support saving filters on the verification page.';
-    if (!module_exists('easy_login'))
-      $msg = 'The verification 4 page requires the Easy Login module to be enabled.';
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
       $msg = 'Before verifying records, please visit your user account profile and ensure that you have entered your full name, then save it.';
     if ($msg) 
@@ -459,19 +458,6 @@ idlist=';
       $args['email_body_send_to_recorder'] = 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct '.
               'and any other information you have which may help to confirm this.'.
               "\n\n%record%";
-    if (isset($_POST['enable'])) {
-      module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
-    }
-    elseif (!defined('IFORM_AJAXPROXY_PATH')) {
-      $r = '<p>'.lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
-          'Indicia Warehouse without having to reload the page.').'</p>';
-      $r .= '<form method="post">';
-      $r .= '<input type="hidden" name="enable" value="t"/>';
-      $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'"/>';
-      $r .= '</form>';
-      return $r;
-    }
     if (function_exists('drupal_add_js'))
       drupal_add_js('misc/collapse.js');
     // fancybox for popup comment forms etc
