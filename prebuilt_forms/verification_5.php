@@ -575,14 +575,13 @@ idlist=';
     data_entry_helper::$js_read_tokens = $auth['read'];
     // Find a list of websites we are allowed verify
     $websiteIds = iform_get_allowed_website_ids($auth['read'], 'verification');
-    if (function_exists('module_exists') && module_exists('easy_login')) {
-      if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_location')===false)
-        $args['param_presets'].="\nexpertise_location={profile_location_expertise}";
-      if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_taxon_groups')===false)
-        $args['param_presets'].="\nexpertise_taxon_groups={profile_taxon_groups_expertise}";
-      if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_surveys')===false)
-        $args['param_presets'].="\nexpertise_surveys={profile_surveys_expertise}";
-    }
+    $gotEasyLogin = function_exists('module_exists') && module_exists('easy_login');
+    if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_location')===false)
+      $args['param_presets'].="\nexpertise_location=" . ($gotEasyLogin ? '{profile_location_expertise}' : '');
+    if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_taxon_groups')===false)
+      $args['param_presets'].="\nexpertise_taxon_groups=" . ($gotEasyLogin ? '{profile_taxon_groups_expertise}' : '');
+    if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_surveys')===false)
+      $args['param_presets'].="\nexpertise_surveys=" . ($gotEasyLogin ? '{profile_surveys_expertise}' : '');
     $args['sharing']='verification';
     $opts = array_merge(
         iform_report_get_report_options($args, $auth['read']),
