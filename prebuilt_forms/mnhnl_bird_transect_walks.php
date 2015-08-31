@@ -187,7 +187,7 @@ class iform_mnhnl_bird_transect_walks {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     global $user;
     global $custom_terms;
     $logged_in = $user->uid>0;
@@ -271,12 +271,12 @@ class iform_mnhnl_bird_transect_walks {
       return '<p>This form must be used with a survey which has the "'.self::ATTR_ATLAS_CODE.'" occurrence attribute allocated to it. Survey_id = '.$args['survey_id'];
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) { // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrept the data by accident
-        if(iform_loctools_checkaccess($node,'admin') && array_key_exists('mnhnlbtw', $_POST)){
-          iform_loctools_deletelocations($node);
+        if(iform_loctools_checkaccess($nid,'admin') && array_key_exists('mnhnlbtw', $_POST)){
+          iform_loctools_deletelocations($nid);
           foreach($_POST as $key => $value){
             $parts = explode(':', $key);
             if($parts[0] == 'location' && $value){
-              iform_loctools_insertlocation($node, $value, $parts[1]);
+              iform_loctools_insertlocation($nid, $value, $parts[1]);
             }
           }
         }
@@ -356,7 +356,7 @@ class iform_mnhnl_bird_transect_walks {
       $optionsArray_Location[$optionName] = implode(':', $parts);
     }
     // Work out list of locations this user can see.
-    $locations = iform_loctools_listlocations($node);
+    $locations = iform_loctools_listlocations($nid);
     if($locations != 'all'){
         data_entry_helper::$javascript .= "var locationList = [".implode(',', $locations)."];\n";
     }
@@ -364,7 +364,7 @@ class iform_mnhnl_bird_transect_walks {
     drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.datagrid.js', 'module');
     if (method_exists(get_called_class(), 'getHeaderHTML')) $r .= call_user_func(array(get_called_class(), 'getHeaderHTML'), $args);
     // Work out list of locations this user can see.
-    // $locations = iform_loctools_listlocations($node);
+    // $locations = iform_loctools_listlocations($nid);
     ///////////////////////////////////////////////////////////////////
     // default mode 0 : display a page with tabs for survey selector,
     // locations allocator and reports (last two require permissions)
@@ -373,10 +373,10 @@ class iform_mnhnl_bird_transect_walks {
       // If the user has permissions, add tabs so can choose to see
       // locations allocator
       $tabs = array('#surveyList'=>lang::get('LANG_Surveys'));
-      if(iform_loctools_checkaccess($node,'admin')){
+      if(iform_loctools_checkaccess($nid,'admin')){
         $tabs['#setLocations'] = lang::get('LANG_Allocate_Locations');
       }
-      if(iform_loctools_checkaccess($node,'superuser')){
+      if(iform_loctools_checkaccess($nid,'superuser')){
         $tabs['#downloads'] = lang::get('LANG_Download');
       }
       if(count($tabs) > 1){
@@ -400,7 +400,7 @@ class iform_mnhnl_bird_transect_walks {
     indiciaSvc: '".$svcUrl."',
     dataColumns: ['location_name', 'date', 'num_visit', 'num_occurrences', 'num_taxa'],
     reportColumnTitles: {location_name : '".lang::get('LANG_Transect')."', date : '".lang::get('LANG_Date')."', num_visit : '".lang::get('LANG_Visit_No')."', num_occurrences : '".lang::get('LANG_Num_Occurrences')."', num_taxa : '".lang::get('LANG_Num_Species')."'},
-    actionColumns: {".lang::get('LANG_Show')." : \"".url('node/'.($node->nid), array('query' => 'sample_id=£id£'))."\"},
+    actionColumns: {".lang::get('LANG_Show')." : \"".url('node/'.($nid), array('query' => 'sample_id=ï¿½idï¿½'))."\"},
     auth : { nonce : '".$readAuth['nonce']."', auth_token : '".$readAuth['auth_token']."'},
     parameters : { survey_id : '".$args['survey_id']."', visit_attr_id : '".$sample_visit_number_id."', closed_attr_id : '".$sample_closure_id."', use_location_list : '".$useloclist."', locations : '".$loclist."'},
     itemsPerPage : 12,
@@ -450,9 +450,9 @@ mapInitialisationHooks.push(function (div) {
       }
       $r .= '
   <div id="surveyList" class="mnhnl-btw-datapanel"><div id="smp_grid"></div>
-    <form><input type="button" value="'.lang::get('LANG_Add_Survey').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'new')).'\'"></form></div>';
+    <form><input type="button" value="'.lang::get('LANG_Add_Survey').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => 'new')).'\'"></form></div>';
       // Add the locations allocator if user has admin rights.
-      if(iform_loctools_checkaccess($node,'admin')){
+      if(iform_loctools_checkaccess($nid,'admin')){
         $r .= '
   <div id="setLocations" class="mnhnl-btw-datapanel">
     <form method="post">
@@ -461,12 +461,12 @@ mapInitialisationHooks.push(function (div) {
         $session = curl_init($url);
         curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
         $entities = json_decode(curl_exec($session), true);
-        $userlist = iform_loctools_listusers($node);
+        $userlist = iform_loctools_listusers($nid);
         if(!empty($entities)){
           foreach($entities as $entity){
             if(!$entity["parent_id"]){ // only assign parent locations.
               $r .= "\n<label for=\"location:".$entity["id"]."\">".$entity["name"].":</label><select id=\"location:".$entity["id"]."\" name=\"location:".$entity["id"]."\"><option value=\"\" >&lt;".lang::get('LANG_Not_Allocated')."&gt;</option>";
-              $defaultuserid = iform_loctools_getuser($node, $entity["id"]);
+              $defaultuserid = iform_loctools_getuser($nid, $entity["id"]);
               foreach($userlist as $uid => $a_user){
                 $r .= "<option value=\"".$uid."\" ".($uid == $defaultuserid ? 'selected="selected" ' : '').">".$a_user->name."</option>";
               }
@@ -480,7 +480,7 @@ mapInitialisationHooks.push(function (div) {
   </div>";
       }
       // Add the downloader if user has manager (superuser) rights.
-      if(iform_loctools_checkaccess($node,'superuser')){
+      if(iform_loctools_checkaccess($nid,'superuser')){
         $r .= '
   <div id="downloads" class="mnhnl-btw-datapanel">
     <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/mnhnl_btw_transect_direction_report.xml&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv">
@@ -730,13 +730,13 @@ mapInitialisationHooks.push(function (div) {
         	$r .= "<div id=\"mergeSurveys\"><p><strong>".lang::get('LANG_Found_Mergable_Surveys')."</strong></p>";
         	foreach($entity as $survey){
         		if($survey['id'] != $parentSample['sample:id']){
-                  $r .= "<form action=\"".url('node/'.($node->nid), array())."\" method=\"get\"><input type=\"submit\" value=\"".lang::get('LANG_Merge_With_ID')." ".$survey['id']."\"><input type=\"hidden\" name=\"merge_sample_id1\" value=\"".$parentSample['sample:id']."\" /><input type=\"hidden\" name=\"merge_sample_id2\" value=\"".$survey['id']."\" /></form>";
+                  $r .= "<form action=\"".url("node/$nid", array())."\" method=\"get\"><input type=\"submit\" value=\"".lang::get('LANG_Merge_With_ID')." ".$survey['id']."\"><input type=\"hidden\" name=\"merge_sample_id1\" value=\"".$parentSample['sample:id']."\" /><input type=\"hidden\" name=\"merge_sample_id2\" value=\"".$survey['id']."\" /></form>";
         		}
         	}
         	$r .= "</div>";
         }
     }
-    $r .= "<form id=\"SurveyForm\" action=\"".iform_ajaxproxy_url($node, 'sample')."\" method=\"post\">
+    $r .= "<form id=\"SurveyForm\" action=\"".iform_ajaxproxy_url($nid, 'sample')."\" method=\"post\">
     <input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />
     <input type=\"hidden\" id=\"sample:survey_id\" name=\"sample:survey_id\" value=\"".$args['survey_id']."\" />";
     if(array_key_exists('sample:id', data_entry_helper::$entity_to_load)){
@@ -1190,8 +1190,8 @@ retriggerGrid = function(){
     indiciaSvc: '".$svcUrl."',
     dataColumns: ['taxon', 'territorial', 'count'],
     reportColumnTitles: {taxon : '".lang::get('LANG_Species')."', territorial : '".lang::get('LANG_Territorial')."', count : '".lang::get('LANG_Count')."'},
-    actionColumns: {'".lang::get('LANG_Show')."' : \"".url('node/'.($node->nid), array('query' => 'occurrence_id=£id£'))."\",
-            '".lang::get('LANG_Highlight')."' : \"script:highlight(£id£);\"},
+    actionColumns: {'".lang::get('LANG_Show')."' : \"".url('node/'.($node->nid), array('query' => 'occurrence_id=ï¿½idï¿½'))."\",
+            '".lang::get('LANG_Highlight')."' : \"script:highlight(ï¿½idï¿½);\"},
     auth : { nonce : '".$readAuth['nonce']."', auth_token : '".$readAuth['auth_token']."'},
     parameters : { survey_id : '".$args['survey_id']."',
             parent_id : jQuery('#SurveyForm [name=sample\\:id]').val(),
@@ -1454,8 +1454,8 @@ $('div#occ_grid').indiciaDataGrid('rpt:reports_for_prebuilt_forms/MNHNL/mnhnl_bt
     indiciaSvc: '".$svcUrl."',
     dataColumns: ['taxon', 'territorial', 'count'],
     reportColumnTitles: {taxon : '".lang::get('LANG_Species')."', territorial : '".lang::get('LANG_Territorial')."', count : '".lang::get('LANG_Count')."'},
-    actionColumns: {'".lang::get('LANG_Show')."' : \"".url('node/'.($node->nid), array('query' => 'occurrence_id=£id£'))."\",
-            '".lang::get('LANG_Highlight')."' : \"script:highlight(£id£);\"},
+    actionColumns: {'".lang::get('LANG_Show')."' : \"".url('node/'.($node->nid), array('query' => 'occurrence_id=ï¿½idï¿½'))."\",
+            '".lang::get('LANG_Highlight')."' : \"script:highlight(ï¿½idï¿½);\"},
     auth : { nonce : '".$readAuth['nonce']."', auth_token : '".$readAuth['auth_token']."'},
     parameters : { survey_id : '".$args['survey_id']."',
             parent_id : '".$parentSample['sample:id']."',

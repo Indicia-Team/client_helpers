@@ -166,17 +166,17 @@ class iform_report_grid {
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object ID
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     iform_load_helpers(array('report_helper'));
     data_entry_helper::add_resource('jquery_form');
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
     $reportOptions = iform_report_get_report_options($args, $auth);
     // get the grid output before outputting the download link, so we can check if the download link is needed.
-    $reportOptions['id']='grid-'.$node->nid;
+    $reportOptions['id']='grid-'.$nid;
     if (isset($args['footer']))
       $reportOptions['footer'] = $args['footer'];
     $reportOptions['downloadLink'] = (!isset($args['download_link']) || $args['download_link']);

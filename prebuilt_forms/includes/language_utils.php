@@ -32,6 +32,7 @@
  * @todo Complete the list
  */
 function iform_lang_iso_639_2($lang=null) {
+  // @todo Check the following for Drupal 8 compatibility
   if ($lang==null) {
     global $language;
     $lang = $language->language;

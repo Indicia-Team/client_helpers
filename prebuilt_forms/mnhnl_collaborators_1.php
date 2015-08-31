@@ -191,7 +191,7 @@ class iform_mnhnl_collaborators_1 {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     global $user;
     $logged_in = $user->uid>0;
     $r = '';
@@ -242,7 +242,7 @@ class iform_mnhnl_collaborators_1 {
           'userID'=>$user->uid
         )
       ));	
-      $r .= '<form><input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'newSample')).'\'"></form>';
+      $r .= '<form><input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => 'newSample')).'\'"></form>';
       return $r;
     }
     ///////////////////////////////////////////////////////////////////

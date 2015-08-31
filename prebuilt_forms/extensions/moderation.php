@@ -50,7 +50,7 @@ class extension_moderation {
       'nocache' => true
     ));
     if (count($notifications)>0) {
-      $auth = data_entry_helper::get_read_write_auth(variable_get('indicia_website_id', 0), variable_get('indicia_password', ''));
+      $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
       //Setup the structure we need to submit.
       foreach ($notifications as $notification) { 
         $data['id']='notification';

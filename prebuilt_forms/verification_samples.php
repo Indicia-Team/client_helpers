@@ -380,11 +380,11 @@ idlist=';
    * Expects there to be a sample attribute with caption 'Email' containing the email
    * address.
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object's ID
    * @param array $response Response from Indicia services after posting a verification.
    * @return string HTML
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     if (!self::check_prerequisites())
       return '';
     iform_load_helpers(array('data_entry_helper', 'map_helper', 'report_helper'));
@@ -457,12 +457,12 @@ idlist=';
     $link = data_entry_helper::get_reload_link_parts();
     global $user;
     data_entry_helper::$js_read_tokens = $auth['read'];
-    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$node->nid."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "'.$link['path']."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.website_id = '.$args['website_id'].";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($node, 'sample')."&user_id=$indicia_user_id&sharing=verification\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'sample')."&user_id=$indicia_user_id&sharing=verification\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/verification_samples')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autoDiscard = '.$args['auto_discard_rows'].";\n";
     $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
@@ -604,16 +604,18 @@ idlist=';
   /**
    * Ajax handler to provide the content for the details of a single record.
    */
-  public static function ajax_details($website_id, $password, $node) {
-    $details_report = empty($node->params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_samples/record_data' : $node->params['record_details_report'];
-    $attrs_report = empty($node->params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $node->params['record_attrs_report'];
+  public static function ajax_details($website_id, $password, $nid) {
+    $params = hostsite_get_node_field_value($nid, 'params');
+    $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_samples/record_data' : $params['record_details_report'];
+    $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = array(
       'dataSource' => $details_report,
       'readAuth' => $readAuth,
       'sharing' => 'verification',
-      'extraParams' => array('sample_id'=>$_GET['sample_id'], 'wantColumns'=>1, 'locality_type_id' => variable_get('indicia_profile_location_type_id', 0))
+      'extraParams' => array('sample_id'=>$_GET['sample_id'], 'wantColumns'=>1,
+          'locality_type_id' => hostsite_get_config_value('iform', 'profile_location_type_id', 0))
     );
     $reportData = report_helper::get_report_data($options);
     // set some values which must exist in the record
@@ -822,7 +824,7 @@ idlist=';
    */
   public static function ajax_email() {
     global $user;
-    $site_email = variable_get('site_mail', '');
+    $site_email = hostsite_get_config_value('site', 'mail', '');
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
@@ -847,11 +849,11 @@ idlist=';
    * Ajax handler to determine if a user is likely to see a notification added to their comments.
    * @param $website_id
    * @param $password
-   * @param $node
+   * @param $nid
    * @return string Either yes, no, maybe or unknown.
    * @throws \Exception
    */
-  public function ajax_do_they_see_notifications($website_id, $password, $node) {
+  public function ajax_do_they_see_notifications($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $data = report_helper::get_report_data(array(

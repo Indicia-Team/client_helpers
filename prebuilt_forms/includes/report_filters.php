@@ -303,8 +303,8 @@ class filter_where extends filter_base {
     $systemsConfig = '4326'; // default
     if (!empty($options['sref_systems']))
       $systemsConfig = $options['sref_systems'];
-    elseif (function_exists('variable_get'))
-      $systemsConfig = variable_get('indicia_spatial_systems', '4326');
+    elseif (function_exists('hostsite_get_config_value'))
+      $systemsConfig = hostsite_get_config_value('iform', 'spatial_systems', '4326');
     $list = explode(',', str_replace(' ', '', $systemsConfig));
     foreach($list as $system) {
       $systems[$system] = lang::get("sref:$system");
@@ -317,14 +317,14 @@ class filter_where extends filter_base {
     $r .= '</fieldset></fieldset>';
     $r .= '<fieldset><legend>'.lang::get('Or, select a drawing tool in the map toolbar then draw a boundary to find intersecting records').'</legend>';
     if (empty($options['linkToMapDiv'])) {
-      if (function_exists('variable_get')) {
-        $initialLat=variable_get('indicia_map_centroid_lat', 55);
-        $initialLong=variable_get('indicia_map_centroid_long', -1);
-        $initialZoom=(int) variable_get('indicia_map_zoom', 5);        
+      if (function_exists('hostsite_get_config_value')) {
+        $initialLat=hostsite_get_config_value('iform', 'map_centroid_lat', 55);
+        $initialLong=hostsite_get_config_value('iform', 'map_centroid_long', -1);
+        $initialZoom=(int) hostsite_get_config_value('iform', 'map_zoom', 5);
       } else {
         $initialLat=55;
         $initialLong=-1;
-        $initialZoom=5;  
+        $initialZoom=5;
       }
       // need our own map on the popup
       // The js wrapper around the map div does not help here, since it breaks fancybox and fancybox is js only anyway.
@@ -678,20 +678,22 @@ class filter_source extends filter_base {
  * @return string HTML for the report filter panel
  */
 function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
-  if (function_exists('iform_load_helpers'))
+  if (function_exists('iform_load_helpers')) {
     iform_load_helpers(array('report_helper'));
-  else
-    //When running on warehouse we don't have iform_load_helpers
-    require_once(DOCROOT.'client_helpers/report_helper.php');
+  }
+  else //When running on warehouse we don't have iform_load_helpers
+  {
+    require_once(DOCROOT . 'client_helpers/report_helper.php');
+  }
   if (!empty($_POST['filter:sharing'])) {
-    $options['sharing']=$_POST['filter:sharing'];
+    $options['sharing'] = $_POST['filter:sharing'];
   }
   $options = array_merge(array(
     'sharing' => 'reporting',
-    'admin' => false,
-    'adminCanSetSharingTo' => array('R'=>'reporting', 'V'=>'verification'),
-    'allowLoad' => true,
-    'allowSave' => true,
+    'admin' => FALSE,
+    'adminCanSetSharingTo' => array('R' => 'reporting', 'V' => 'verification'),
+    'allowLoad' => TRUE,
+    'allowSave' => TRUE,
     'redirect_on_success' => '',
     'presets' => array(
       'my-records',
@@ -706,21 +708,22 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     'entity' => 'occurrence'
   ), $options);
   // Introduce some extra quick filters useful for verifiers.
-  if ($options['sharing']==='verification') {
+  if ($options['sharing'] === 'verification') {
     $options['presets'] = array_merge(array(
-        'queried-records',
-        'answered-records',
-        'accepted-records',
-        'not-accepted-records'
-      ), $options['presets']);
+      'queried-records',
+      'answered-records',
+      'accepted-records',
+      'not-accepted-records'
+    ), $options['presets']);
   }
-  if ($options['entity']==='sample') {
+  if ($options['entity'] === 'sample') {
     unset($options['presets']['my-groups']);
     unset($options['presets']['my-groups-locality']);
   }
   //If in the warehouse we don't need to worry about the iform master list.
-  if (function_exists('variable_get'))
-    $options=array_merge(array('taxon_list_id' =>variable_get('iform_master_checklist_id', 0)),$options);
+  if (function_exists('hostsite_get_config_value')) {
+    $options = array_merge(array('taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)), $options);
+  }
   $options['sharing'] = report_filters_sharing_code_to_full_term($options['sharing']);
   $options['sharingCode'] = report_filters_full_term_to_sharing_code($options['sharing']);
   if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation)$/', $options['sharing']))

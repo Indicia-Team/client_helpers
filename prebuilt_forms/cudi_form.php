@@ -235,7 +235,7 @@ class iform_cudi_form extends iform_dynamic {
    * @param object $node node being shown. 
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING].
    */
-  protected static function getMode($args, $node) {
+  protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     
