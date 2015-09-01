@@ -5973,7 +5973,8 @@ if (errors$uniq.length>0) {
     }
     // get the posted data that might apply species association/interaction information
     $assocDataKeys = preg_grep('/occurrence_association:\d+:(\d+)?:from_occurrence_id/', array_keys($arr));
-    $assocData = array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys));
+    $assocData = count($assocDataKeys) ?
+        array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : array();
     foreach ($records as $id => $record) {
       // determine the id of the grid this record is from
       // $id = <grid_id>-<rowIndex> but <grid_id> could contain a hyphen
