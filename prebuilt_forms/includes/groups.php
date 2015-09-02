@@ -50,7 +50,7 @@ function group_authorise_form($args, $readAuth) {
     }
     $gp = data_entry_helper::get_population_data(array(
       'table'=>'group_page',
-      'extraParams'=>$readAuth + array('group_id'=>$_GET['group_id'], 'path'=>drupal_get_path_alias($_GET['q']))
+      'extraParams'=>$readAuth + array('group_id'=>$_GET['group_id'], 'path'=>hostsite_get_current_page_path())
     ));
     if (count($gp)===0) {
       hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'alert');

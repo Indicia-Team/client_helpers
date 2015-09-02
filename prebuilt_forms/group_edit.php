@@ -417,7 +417,7 @@ $('#entry_form').submit(function() {
     if ($args['include_linked_pages']) {
       $r = '<fieldset><legend>' . lang::get('{1} pages', ucfirst(self::$groupType)) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Pages_Instruct', self::$groupType, lang::get('groups')) . '</p>';
-      $pages = self::getAvailablePages(empty($_GET['group_id']) ? null : $_GET['group_id']);
+      $pages = hostsite_get_group_compatible_pages(empty($_GET['group_id']) ? null : $_GET['group_id']);
       if (empty($_GET['group_id'])) {
         $default = array();
         if (isset($args['default_linked_pages'])) {
@@ -460,46 +460,6 @@ $('#entry_form').submit(function() {
       $r .= '</fieldset>';
     }
     return $r;
-  }
-
-  /**
-   * Retrieve all the pages that are available for linking to this group.
-   * @param integer $group_id ID of group to retrieve pages for.
-   * @return array List of pages.
-   */
-  private static function getAvailablePages($group_id) {
-    $sql = "SELECT n.nid, n.title
-        FROM {iform} i
-        JOIN {node} n ON n.nid=i.nid
-        WHERE i.available_for_groups=1 AND ";
-    if (empty($group_id))
-      $sql .= 'i.limit_to_group_id IS NULL';
-    else {
-      $sql .= '(i.limit_to_group_id IS NULL OR i.limit_to_group_id = ' . $group_id . ')';
-    }
-    $sql .= ' ORDER BY n.title';
-    $qry = db_query($sql);
-    $pages=array();
-    if (substr(VERSION, 0, 1)==='6') {
-      while ($row=db_fetch_object($qry)) {
-        $pages[self::get_path($row->nid)] = $row->title;
-      }
-    } elseif (substr(VERSION, 0, 1)==='7') {
-      foreach ($qry as $row) {
-        $pages[self::get_path($row->nid)] = $row->title;
-      }
-    }
-    return $pages;
-  }
-  
-  /**
-   * Gets the path we want to store for a page node to link to the group.
-   * @param integer $nid Node ID
-   */
-  private static function get_path($nid) {
-    $path = drupal_get_path_alias("node/$nid");
-    $path = preg_replace('/^\/(\?q=)?/', '', $path);
-    return $path;
   }
   
   /** 
