@@ -166,7 +166,7 @@ class form_helper extends helper_base {
   */
   private static function link_to_group_fields($readAuth, $options) {
     $r = '';
-    if (iform_site_has_group_functionality()) {
+    if (hostsite_has_group_functionality()) {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Allow this form to be used by recording groups'),
         'fieldname' => 'available_for_groups',
