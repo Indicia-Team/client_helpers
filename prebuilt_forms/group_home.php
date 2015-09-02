@@ -77,11 +77,10 @@ class iform_group_home extends iform_dynamic_report_explorer {
     if (empty($_GET['group_id']))
       return 'This page needs a group_id URL parameter.';
     global $base_url;
-    global $user;
     iform_load_helpers(array('data_entry_helper')); 
     data_entry_helper::$javascript .= "indiciaData.nodeId=".$nid.";\n";
     data_entry_helper::$javascript .= "indiciaData.baseUrl='".$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.currentUsername='".$user->name."';\n";
+    data_entry_helper::$javascript .= "indiciaData.currentUsername='".hostsite_get_user_field('name')."';\n";
     //Translations for the comment that goes into occurrence_comments when a record is verified or rejected.
     data_entry_helper::$javascript .= 'indiciaData.verifiedTranslation = "'.lang::get('Verified')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rejectedTranslation = "'.lang::get('Rejected')."\";\n";
