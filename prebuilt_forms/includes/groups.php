@@ -30,7 +30,7 @@
 function group_authorise_form($args, $readAuth) {
   if (!empty($args['limit_to_group_id']) && $args['limit_to_group_id']!==(empty($_GET['group_id']) ? '' : $_GET['group_id'])) {
     // page owned by a different group, so throw them out
-    hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert');
+    hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert', true);
     hostsite_goto_page('<front>');
   }
   $gu = array();
@@ -53,11 +53,11 @@ function group_authorise_form($args, $readAuth) {
       'extraParams'=>$readAuth + array('group_id'=>$_GET['group_id'], 'path'=>hostsite_get_current_page_path())
     ));
     if (count($gp)===0) {
-      hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'alert');
+      hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'alert', true);
       hostsite_goto_page('<front>');
     } elseif (count($gu)===0 && $gp[0]['administrator']!==NULL) {
       // Administrator field is null if the page is fully public. Else if not a group member, then throw them out.
-      hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'alert');
+      hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'alert', true);
       hostsite_goto_page('<front>');
     }
   }
