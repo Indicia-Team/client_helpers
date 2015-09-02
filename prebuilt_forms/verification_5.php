@@ -841,7 +841,7 @@ idlist=';
       if ($first && !empty($params['record_details_path'])) {
         $heading .= ' <a title="View full details of the record" target="_blank" href="' .
           hostsite_get_url($params['record_details_path'], array('occurrence_id' => $_GET['occurrence_id'])) .
-          '"><img src="' . data_entry_helper::$images_path . 'nuvola/find-22px.png" width="22" height="22" /></a>';
+          '"><img src="' . report_helper::$images_path . 'nuvola/find-22px.png" width="22" height="22" /></a>';
         $first = false;
       }
       $r .= "<tr><td colspan=\"2\" class=\"header\">$heading</td></tr>\n";
