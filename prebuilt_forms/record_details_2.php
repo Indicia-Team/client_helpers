@@ -436,7 +436,12 @@ Record ID',
     $r = '<div>';
     $comments = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_comment',
-      'extraParams' => $auth['read'] + array('occurrence_id'=>$_GET['occurrence_id'], 'sortdir'=>'DESC', 'orderby'=>'updated_on'),
+      'extraParams' => $auth['read'] + array(
+          'occurrence_id'=>$_GET['occurrence_id'],
+          'sortdir'=>'DESC',
+          'orderby'=>'updated_on',
+          'sharing'=>'reporting'
+      ),
       'nocache'=>true
     ));
     if (count($comments)===0) 
@@ -527,7 +532,8 @@ Record ID',
       'mode' => 'report',
       'autoParamsForm' => false,
       'extraParams' => array(
-        'occurrence_id'=> $_GET['occurrence_id']
+        'occurrence_id'=> $_GET['occurrence_id'],
+        'sharing'=>'reporting'
       )
     )).'</div>';
   }
