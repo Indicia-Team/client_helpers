@@ -5389,7 +5389,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    */
   private static function get_list_item_selected_attribute($value, $selectedItemAttribute, $options, &$itemFieldname) {
     $itemFieldname=false;
-    if (!empty($options['default'])) {
+    if (isset($options['default'])) {
       $default = $options['default'];
       // default value can be passed as an array or a single value
       if (is_array($default)) {
