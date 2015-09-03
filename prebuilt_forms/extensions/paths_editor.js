@@ -92,7 +92,7 @@ jQuery(document).ready(function ($) {
 
   function ensureClickedOnPath(clickPointFeature) {
     if (clickPointFeature.geometry.CLASS_NAME === "OpenLayers.Geometry.Point") {
-      var found, clickLayer = indiciaData.mapdiv.map.editLayer;
+      var found=false, clickLayer = indiciaData.mapdiv.map.editLayer;
       if (clickLayer.features.length === 3) {
         // 3rd click, so we are retrying. Remove the first attempt.
         clickLayer.removeFeatures([clickPointFeature.layer.features[0], clickPointFeature.layer.features[1]]);
@@ -232,17 +232,25 @@ jQuery(document).ready(function ($) {
   }
 
   function onPointAdded(evt) {
-    $.each(evt.features, function (idx, clickPointFeature) {
-      if (clickPointFeature.attributes.type !== "ghost") {
-        ensureClickedOnPath(clickPointFeature);
-        // Are there 2 points on the edit layer to mark the start and end?
-        if (indiciaData.mapdiv.map.editLayer.features.length === 2) {
-          // retrieve all the individual linestrings for all the features on the map
-          createLineStringList();
-          createPathFromStartToEnd();
-        }
+    var doingOtherDraw=false;
+    $.each(indiciaData.mapdiv.map.controls, function() {
+      if (this.active && (this.displayClass==='olControlDrawFeaturePath' || this.displayClass==='olControlDrawFeaturePolygon')) {
+        doingOtherDraw=true;
       }
     });
+    if (!doingOtherDraw) {
+      $.each(evt.features, function (idx, clickPointFeature) {
+        if (clickPointFeature.attributes.type !== "ghost") {
+          ensureClickedOnPath(clickPointFeature);
+          // Are there 2 points on the edit layer to mark the start and end?
+          if (indiciaData.mapdiv.map.editLayer.features.length === 2) {
+            // retrieve all the individual linestrings for all the features on the map
+            createLineStringList();
+            createPathFromStartToEnd();
+          }
+        }
+      });
+    }
   }
 
 
@@ -300,8 +308,13 @@ jQuery(document).ready(function ($) {
       $.each(div.map.controls, function() {
         if (this.displayClass.split(' ').indexOf(controlDisplayClass)!==-1) {
           this.activate();
+        } else if (this.displayClass.match(/^olControlDrawFeature/)) {
+          this.deactivate();
         }
+
       });
+      div.map.editLayer.removeAllFeatures();
+      walkLayer.removeAllFeatures();
       if (typeof indiciaData[$(this).attr('id')]!=="undefined") {
         $(this).after('<p>' + indiciaData[$(this).attr('id')] + '</p>');
         delete indiciaData[$(this).attr('id')];
