@@ -69,16 +69,9 @@ jQuery(document).ready(function ($) {
     return count;
   }
 
-  /**
-   * Adds an array of segments to the walk layer to draw where the walk has been defined.
-   * @param path array of geometries defining the route.
-   */
-  function addWalk(path) {
+  function copyGeomToSref(geom) {
     var ll, ns, ew;
-    walkLayer.addFeatures([new OpenLayers.Feature.Vector(path, {}, {strokeColor: "blue", strokeWidth: 6})]);
-    $('#imp-geom').val(path.toString());
-    // build a lat long string
-    ll = path.getCentroid().transform(indiciaData.mapdiv.map.projection, 'epsg:4326').toString()
+    ll = geom.getCentroid().transform(indiciaData.mapdiv.map.projection, 'epsg:4326').toString()
       .replace('POINT(', '')
       .replace(')', '')
       .split(' ');
@@ -88,6 +81,17 @@ jQuery(document).ready(function ($) {
     ew = ll[0]>0 ? 'E' : 'W';
 
     $('#imp-sref').val(Math.abs(ll[1]) + ns + ', ' + Math.abs(ll[0]) + ew);
+  }
+
+  /**
+   * Adds an array of segments to the walk layer to draw where the walk has been defined.
+   * @param path array of geometries defining the route.
+   */
+  function addWalk(path) {
+    walkLayer.addFeatures([new OpenLayers.Feature.Vector(path, {}, {strokeColor: "blue", strokeWidth: 6})]);
+    $('#imp-geom').val(path.toString());
+    copyGeomToSref(path);
+    // build a lat long string
   }
 
   function ensureClickedOnPath(clickPointFeature) {
@@ -236,6 +240,7 @@ jQuery(document).ready(function ($) {
     $.each(indiciaData.mapdiv.map.controls, function() {
       if (this.active && (this.displayClass==='olControlDrawFeaturePath' || this.displayClass==='olControlDrawFeaturePolygon')) {
         doingOtherDraw=true;
+        copyGeomToSref(evt.features[0].geometry);
       }
     });
     if (!doingOtherDraw) {
