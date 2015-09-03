@@ -532,6 +532,9 @@ $('#entry_form').submit(function() {
       if ($args['include_sensitivity_controls'])
         $r .= lang::get('LANG_Record_Inclusion_Instruct_Sensitive', self::$groupType) . ' ';
       $r .= lang::get('LANG_Record_Inclusion_Instruct_2', self::$groupType, ucfirst(self::$groupType))  . '</p>';
+      if (array_key_exists('group:implicit_record_inclusion', data_entry_helper::$entity_to_load) &&
+          is_null(data_entry_helper::$entity_to_load['group:implicit_record_inclusion']))
+        data_entry_helper::$entity_to_load['group:implicit_record_inclusion'] = '';
       $r .= data_entry_helper::radio_group(array(
         'fieldname' => 'group:implicit_record_inclusion',
         'label' => lang::get('Include records on reports if'),
@@ -543,7 +546,8 @@ $('#entry_form').submit(function() {
           '' => lang::get('they match the filter defined above but it doesn\'t matter who ' .
             'posted the record or via which form', self::$groupType)
         ),
-        'default' => 'f'
+        'default' => 'f',
+        'validation'=>array('required')
       ));
       $r .= ' </fieldset>';
     }
