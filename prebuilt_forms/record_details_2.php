@@ -439,10 +439,10 @@ Record ID',
       'extraParams' => $auth['read'] + array(
           'occurrence_id'=>$_GET['occurrence_id'],
           'sortdir'=>'DESC',
-          'orderby'=>'updated_on',
-          'sharing'=>'reporting'
+          'orderby'=>'updated_on'
       ),
-      'nocache'=>true
+      'nocache'=>true,
+      'sharing'=>'reporting'
     ));
     if (count($comments)===0) 
       $r .= '<p id="no-comments">'.lang::get('No comments have been made.').'</p>';
