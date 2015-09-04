@@ -71,6 +71,7 @@ jQuery(document).ready(function ($) {
 
   function copyGeomToSref(geom) {
     var ll, ns, ew;
+    $('#imp-geom').val(geom.toString());
     ll = geom.getCentroid().transform(indiciaData.mapdiv.map.projection, 'epsg:4326').toString()
       .replace('POINT(', '')
       .replace(')', '')
@@ -89,9 +90,7 @@ jQuery(document).ready(function ($) {
    */
   function addWalk(path) {
     walkLayer.addFeatures([new OpenLayers.Feature.Vector(path, {}, {strokeColor: "blue", strokeWidth: 6})]);
-    $('#imp-geom').val(path.toString());
     copyGeomToSref(path);
-    // build a lat long string
   }
 
   function ensureClickedOnPath(clickPointFeature) {
