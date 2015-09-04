@@ -109,7 +109,7 @@ class iform_group_receive_invite_response {
   private static function fail_message($msg, $args) {
     $r = '<p>' . lang::get($msg) . '</p>';  
     if (hostsite_get_user_field('id'))
-      $r .= '<a class="button" href="' . url($args['groups_page_path']) . '">' . lang::get('Return to Groups page') . '</a>';
+      $r .= '<a class="button" href="' . hostsite_get_url($args['groups_page_path']) . '">' . lang::get('Return to Groups page') . '</a>';
     return $r;
   }
   
