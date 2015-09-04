@@ -345,14 +345,17 @@ SCRIPT;
   // Note, since the following moves the map, we want it to be the first mapInitialisationHook
   data_entry_helper::$javascript .= <<<SCRIPT
 indiciaFns.zoomToBounds = function(mapdiv, bounds) {
-  if (typeof $.cookie === 'undefined' || mapdiv.settings.rememberPos===false || $.cookie('maplon')===null) {
-    if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
-      // if showing something small, don't zoom in too far
-      mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
-    }
-    else {
-      // Set the default view to show the feature we are loading
-      mapdiv.map.zoomToExtent(bounds);
+  // skip zoom to loaded bounds if already zoomed to a report output
+  if (typeof mapdiv.settings.zoomMapToOutput==="undefined" || mapdiv.settings.zoomMapToOutput===false) {
+    if (typeof $.cookie === 'undefined' || mapdiv.settings.rememberPos===false || $.cookie('maplon')===null) {
+      if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
+        // if showing something small, don't zoom in too far
+        mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
+      }
+      else {
+        // Set the default view to show the feature we are loading
+        mapdiv.map.zoomToExtent(bounds);
+      }
     }
   }
 }
