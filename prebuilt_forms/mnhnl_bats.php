@@ -1100,10 +1100,11 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $args iform parameters.
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     if (isset($values['source'])){ // comes from main Sites tab, Admins may create so need to check for locations_website entry
       $locModel = submission_builder::wrap_with_images($values, 'location');
       if(isset($values['locations_website:website_id'])) // assume no other submodels

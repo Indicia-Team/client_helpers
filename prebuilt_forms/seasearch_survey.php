@@ -460,10 +460,11 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
    * Builds the special submission format required for seasearch data
    * @param array $values
    * @param array $args
+   * @param integer $nid The node's ID
    * @return array
    * @throws \Exception
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     // First, build an array of the field values for each habitat sample.
     $habitatSamples = array();
     foreach ($values as $key=>$value) {

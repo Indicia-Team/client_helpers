@@ -919,10 +919,11 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $args iform parameters.
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     $sampleMod = data_entry_helper::wrap_with_attrs($values, 'sample');
     if(isset($values['sample:deleted'])) return($sampleMod);
     $subsamples = array();

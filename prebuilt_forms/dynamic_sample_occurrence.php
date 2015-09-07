@@ -2109,7 +2109,7 @@ else
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
-   * $param integer $nid The node's ID
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
   public static function get_submission($values, $args, $nid) {

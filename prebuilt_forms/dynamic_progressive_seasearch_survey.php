@@ -787,7 +787,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
  
   //Override the get_submission from dyamamic_sample_occurrence to stop it running on reloading pages
   //as we have our own ajax_save method for doing this work.
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
   }
  
   /*
