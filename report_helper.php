@@ -2757,6 +2757,9 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     if (!empty($addFeaturesJs)) {
       report_helper::$javascript .= "      var features = [];\n";
       report_helper::$javascript .= "$addFeaturesJs\n";
+      // Remove layer prior to adding features so that they are not drawn until
+      // we are on the desired zoom level.
+      report_helper::$javascript .= "      div.map.removeLayer(indiciaData.reportlayer);\n";
       report_helper::$javascript .= "      indiciaData.reportlayer.addFeatures(features);\n";
       if ($zoomToExtent && !empty($addFeaturesJs))
         self::$javascript .= "      div.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());\n";
