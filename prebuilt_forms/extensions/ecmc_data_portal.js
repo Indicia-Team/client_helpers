@@ -182,10 +182,14 @@ jQuery(document).ready(function($) {
   };
   
   saveSample = function(sampleId) {
-    var time=$('#input-time-'+sampleId).val(),
-        timeValId=$('#input-time-valId-'+sampleId).val()
+    var utc=$('#input-time-'+sampleId).val(),
+        localTimeValId=$('#input-localtime-val-id-'+sampleId).val(),
+        utcTimeValId=$('#input-utctime-val-id-'+sampleId).val(),
         lat=$('#input-lat-'+sampleId).val(),
-        lng=$('#input-long-'+sampleId).val();
+        lng=$('#input-long-'+sampleId).val(),
+        diff=$('#timediff-'+sampleId).val()
+        localHour=parseInt(utc.substring(0, 2)) + parseInt(diff),
+        localTime=(localHour < 10 ? '0' : '') + localHour + utc.substring(2);
     if (!lat.match(/^\-?[\d]+(\.[\d]+)?$/) || !lng.match(/^\-?[\d]+(\.[\d]+)?$/)) {
       alert('The latitude and longitude cannot be saved because values are not of the correct format.');
       return;
@@ -196,7 +200,8 @@ jQuery(document).ready(function($) {
       'sample:entered_sref': lat + ', ' + lng,
       'sample:entered_sref_system': 4326
     };
-    data['smpAttr:' + indiciaData.timeAttrId + ':'  + timeValId] = time;
+    data['smpAttr:' + indiciaData.utcTimeAttrId + ':'  + utcTimeValId] = utc;
+    data['smpAttr:' + indiciaData.localTimeAttrId + ':'  + localTimeValId] = utc;
     $.post(
       indiciaData.ajaxFormPostUrl,
       data,

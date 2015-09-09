@@ -301,7 +301,8 @@ $('#clone-effort').click(function() {
     hostsite_set_breadcrumb(array('Review transect lines'=>'data/review-transect-lines'));
     data_entry_helper::$javascript .= "mapInitialisationHooks.push(drawPoints);\n";
     data_entry_helper::$javascript .= "indiciaData.website_id=$args[website_id];\n";
-    data_entry_helper::$javascript .= "indiciaData.timeAttrId=$options[timeAttrId];\n";
+    data_entry_helper::$javascript .= "indiciaData.localTimeAttrId=$options[localTimeAttrId];\n";
+    data_entry_helper::$javascript .= "indiciaData.utcTimeAttrId=$options[utcTimeAttrId];\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url(null, 'sample')."\";\n";
     return '';
   }
