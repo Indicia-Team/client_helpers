@@ -141,22 +141,50 @@ jQuery(document).ready(function($) {
   }
   
   drawPoints = function() {
-    var geoms=[], style = {
+    var geoms=[], shadeIdx, shadeHex, style = {
       strokeWidth: 1,
       strokeColor: "#FF0000"
     };
-    $.each(indiciaData.reportlayer.features, function() {
+    $.each(indiciaData.reportlayer.features, function(idx) {
+      // set geometry colours so we get a gist of the sequence
+      shadeIdx = Math.round(idx / indiciaData.reportlayer.features.length * 255);
+      shadeHex = shadeIdx.toString(16);
+      if (shadeHex.length===1) {
+        shadeHex = '0' + shadeHex;
+      }
+      this.attributes.fill = '#FF' + shadeHex + shadeHex;
+      this.attributes.stroke = '#00' + shadeHex + shadeHex;
+      // store the point in the list to build the line
       geoms.push(this.geometry);
     });
+    // Set a stylemap so the points colour up to show the sequence
+    indiciaData.reportlayer.styleMap = new OpenLayers.StyleMap({
+        default: {
+          fillColor: '${fill}',
+          strokeColor: '${stoke}',
+          strokeWidth: 1,
+          pointRadius: 6
+        },
+        select: {
+          fillColor: '#FFFFFF',
+          strokeColor: '#0000ff',
+          strokeWidth: 4,
+          pointRadius: 6
+        }
+      }
+    );
     
-    indiciaData.reportlayer.addFeatures([new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {}, style)]);
+    indiciaData.reportlayer.addFeatures([new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {type: 'route'}, style)]);
+    indiciaData.reportlayer.redraw();
     indiciaData.mapdiv.map.events.on({"featureclick":function(e) {
       log("Map says: " + e.feature.id + " clicked on " + e.feature.layer.name);
     }});
   };
   
   saveSample = function(sampleId) {
-    var lat=$('#input-lat-'+sampleId).val(),
+    var time=$('#input-time-'+sampleId).val(),
+        timeValId=$('#input-time-valId-'+sampleId).val()
+        lat=$('#input-lat-'+sampleId).val(),
         lng=$('#input-long-'+sampleId).val();
     if (!lat.match(/^\-?[\d]+(\.[\d]+)?$/) || !lng.match(/^\-?[\d]+(\.[\d]+)?$/)) {
       alert('The latitude and longitude cannot be saved because values are not of the correct format.');
@@ -166,14 +194,15 @@ jQuery(document).ready(function($) {
       'website_id': indiciaData.website_id,
       'sample:id': sampleId,
       'sample:entered_sref': lat + ', ' + lng,
-      'sample:entered_sref_system':4326
+      'sample:entered_sref_system': 4326
     };
+    data['smpAttr:' + indiciaData.timeAttrId + ':'  + timeValId] = time;
     $.post(
       indiciaData.ajaxFormPostUrl,
       data,
       function (data) {
         if (typeof data.error === "undefined") {
-          $('#input-lat-'+sampleId+',#input-long-'+sampleId).css('border-color','silver');
+          $('#input-time-'+sampleId+',#input-lat-'+sampleId+',#input-long-'+sampleId).css('border-color','silver');
         } else {
           alert(data.error);
         }
@@ -181,27 +210,66 @@ jQuery(document).ready(function($) {
       'json'
     );
   };
+
+  function correctTimeSequence(sampleId) {
+    var $row = $('tr#row' + sampleId),
+      time = $('#input-time-' + sampleId).val(),
+      pos = $('table.report-grid tbody tr').index($row);
+    // shuffle the edited row up or down into correct chronological sequence
+    if (pos>0) {
+      while ($row.prev().length && $row.prev().find('.input-time').val() > time) {
+        $row.prev().before($row);
+        pos--;
+      }
+    }
+    if (pos<$('table.report-grid tbody tr').length-1) {
+      while ($row.next().length && $row.next().find('.input-time').val() < time) {
+        $row.next().after($row);
+        pos++;
+      }
+    }
+  }
+
+  function redrawRoute() {
+    var geoms=[], point, style = {
+      strokeWidth: 1,
+      strokeColor: "#FF0000"
+    };
+    $.each($('table.report-grid tbody tr'), function() {
+      point = new OpenLayers.Geometry.Point($(this).find('.input-long').val(), $(this).find('.input-lat').val());
+      if (indiciaData.mapdiv.map.projection.getCode() != 4326) {
+        point.transform('EPSG:4326', indiciaData.mapdiv.map.projection);
+      }
+      geoms.push(point);
+    });
+    indiciaData.mapdiv.removeAllFeatures(indiciaData.reportlayer, 'route')
+    indiciaData.reportlayer.addFeatures([new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {type: 'route'}, style)]);
+  }
   
   // Change inputs on the transect points review screen will recolour to show they are edited.
-  $('body').on('change', '.input-lat,.input-long', function(e) {
-    if ($(e.currentTarget).val().match(/^\-?[\d]+(\.[\d]+)?$/)) {
-      $(e.currentTarget).css('border', 'solid 1px red');
-    }
-    var sampleId = e.currentTarget.id.replace(/input\-(lat|long)\-/, ''),
+  $('body').on('change', '.input-time,.input-lat,.input-long', function(e) {
+    var sampleId = e.currentTarget.id.replace(/input\-(time|lat|long)\-/, ''),
+        time=$('#input-time-'+sampleId).val(),
         lat=$('#input-lat-'+sampleId).val(),
         lng=$('#input-long-'+sampleId).val(),
         point;
-    // if we hav a valid lat long, move the associated point
-    if (lat.match(/^\-?[\d]+(\.[\d]+)?$/) && lng.match(/^\-?[\d]+(\.[\d]+)?$/)) {
+    // if we have a valid time, lat and long, move the associated point
+    if (time.match(/^([0-9]+):([0-5][0-9]):([0-5][0-9])$/) &&
+        lat.match(/^\-?[\d]+(\.[\d]+)?$/) && lng.match(/^\-?[\d]+(\.[\d]+)?$/)) {
+      $(e.currentTarget).css('border', 'solid 1px red');
       point = new OpenLayers.Geometry.Point(lng, lat);
       if (indiciaData.mapdiv.map.projection.getCode() != 4326) {
         point.transform('EPSG:4326', indiciaData.mapdiv.map.projection);
       }
-      $.each(indiciaData.reportlayer.features, function() {
-        if (this.id===sampleId) {
+      $.each(indiciaData.reportlayer.features, function () {
+        if (this.id === sampleId) {
           this.move(new OpenLayers.LonLat(point.x, point.y));
         }
       });
+      if ($(e.currentTarget).hasClass('input-time')) {
+        correctTimeSequence(sampleId);
+        redrawRoute();
+      }
     }
   });
   
