@@ -1344,7 +1344,7 @@ class helper_base extends helper_config {
       $r = "/$dir/";
     else
       $r = '/';
-    $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
+    $pathParam = ($allowForDirtyUrls && function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
     $r .= empty($pathParam) ? '' : "?$pathParam=";
     return $r;
   }
