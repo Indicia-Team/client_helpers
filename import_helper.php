@@ -45,16 +45,17 @@ class import_helper extends helper_base {
    * pass these to the importer in the $_POST data. For example, you could set taxa_taxon_list:taxon_list_id=3 in
    * the $_POST data when importing species data to force it to go into list 3.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>model</b><br/>
-   * Required. The name of the model data is being imported into.</li>
-   * <li><b>existing_file</b><br/>
-   * Optional. The full path on the server to an already uploaded file to import.</li>
-   * <li><b>auth</b><br/>
-   * Read and write authorisation tokens.</li>
-   * <li><b>presetSettings</b><br/>
-   * Optional associative array of any preset values for the import settings. Any settings which have a presetSetting specified
-   * will be ommitted from the settings form.</li>
+   * @param array $options Options array with the following possibilities:
+   *
+   * * **model** - Required. The name of the model data is being imported into.
+   * * **existing_file** - Optional. The full path on the server to an already uploaded file to import.
+   * * **auth** - Read and write authorisation tokens.
+   * * **presetSettings** - Optional associative array of any preset values for the import
+   *   settings. Any settings which have a presetSetting specified will be ommitted from
+   *   the settings form.
+   * * **occurrenceAssociations** - set to true to enable import of associated occurrences or false to
+   *   disable it. Default false.
+   *
    * </ul>
    */
   public static function importer($options) {
@@ -97,6 +98,8 @@ class import_helper extends helper_base {
     if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
     $request = parent::$base_url."index.php/services/import/get_import_settings/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
+    if (!empty($options['occurrenceAssociations']))
+      $request .= '&occurrence_associations=t';
     $response = self::http_post($request, array());
     if (!empty($response['output'])) {
       // get the path back to the same page

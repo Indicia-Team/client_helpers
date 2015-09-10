@@ -73,6 +73,13 @@ class iform_importer {
             'field in the user profile data).',
         'type'=>'textarea',
         'required'=>false
+      ),
+      array(
+        'name'=>'occurrenceAssociations',
+        'caption'=>'Allow import of associated occurrences',
+        'description'=>'If the data might include 2 associated occurrences in a single row then this option must be enabled.',
+        'type'=>'boolean',
+        'default'=>false
       )
     );
   }
@@ -86,6 +93,10 @@ class iform_importer {
    */
   public static function get_form($args, $nid, $response) {
     iform_load_helpers(array('import_helper'));
+    // apply defaults
+    $args = array_merge(array(
+      'occurrenceAssociations' => false
+    ), $args);
     $auth = import_helper::get_read_write_auth($args['website_id'], $args['password']);
     group_authorise_form($args, $auth['read']);
     if ($args['model']=='url') {
@@ -119,11 +130,13 @@ class iform_importer {
       }
     }
     try {
-      $r = import_helper::importer(array(
+      $options = array(
         'model' => $model,
         'auth' => $auth,
-        'presetSettings' => $presets
-      ));
+        'presetSettings' => $presets,
+        'occurrenceAssociations' => $args['occurrenceAssociations']
+      );
+      $r = import_helper::importer($options);
     } catch (Exception $e) {
       hostsite_show_message($e->getMessage(), 'warning');
       $reload = import_helper::get_reload_link_parts();
