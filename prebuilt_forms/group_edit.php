@@ -331,7 +331,7 @@ class iform_group_edit {
         'fieldname' => 'from_group_id',
         'table' => 'groups_user',
         'captionField' => 'group_title',
-        'valueFields' => 'group_id',
+        'valueField' => 'group_id',
         'extraParams' => $auth['read'] + array(
             'group_type_id' => $args['parent_group_type'],
             'user_id' => hostsite_get_user_field('indicia_user_id'),
