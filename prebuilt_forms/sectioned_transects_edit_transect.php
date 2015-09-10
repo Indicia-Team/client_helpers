@@ -293,10 +293,10 @@ class iform_sectioned_transects_edit_transect {
       'canEditBody' => true,
       'canEditSections' => true, // this is specifically the number of sections: so can't delete or change the attribute value.
       // Allocations of Branch Manager are done by a person holding the managerPermission.
-      'canAllocBranch' => $args['managerPermission']=="" || user_access($args['managerPermission']),
+      'canAllocBranch' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission']),
       // Allocations of Users are done by a person holding the managerPermission or the allocate Branch Manager.
       // The extra check on this for branch managers is done later
-      'canAllocUser' => $args['managerPermission']=="" || user_access($args['managerPermission']) 
+      'canAllocUser' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission'])
     );
     $settings['attributes'] = data_entry_helper::getAttributes(array(
         'id' => $settings['locationId'],
@@ -366,7 +366,7 @@ class iform_sectioned_transects_edit_transect {
         }
         // If a Branch Manager and not a main manager, then can't edit the number of sections
         if($args['branch_assignment_permission'] != '' &&
-            user_access($args['branch_assignment_permission']) &&
+            hostsite_user_has_permission($args['branch_assignment_permission']) &&
             isset($settings['branchCmsUserAttr']['default']) &&
             !empty($settings['branchCmsUserAttr']['default'])) {
           foreach($settings['branchCmsUserAttr']['default'] as $value) { // now multi value
@@ -801,7 +801,7 @@ $('#delete-transect').click(deleteSurvey);
       $new_users = array();
       foreach ($users as $uid=>$name){
         $account = user_load($uid);
-        if(user_access($args['branch_assignment_permission'], $account))
+        if(hostsite_user_has_permission($args['branch_assignment_permission'], $account))
           $new_users[$uid]=$name;
       }
       $users = $new_users;

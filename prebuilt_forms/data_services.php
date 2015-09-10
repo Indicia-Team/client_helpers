@@ -320,7 +320,7 @@ class iform_data_services {
     // selection as appropriate.
     data_entry_helper::$javascript.="indiciaData.optionalFilters={};\n";
     foreach ($args as $arg=>$value) {
-      if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && user_access($value)) {
+      if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
         // download type available. What they can actually download might be limited by a context filter...
         $sharingType=  ucwords(str_replace('_', ' ', $matches[1]));
         $sharingTypeCode=substr($sharingType, 0, 1);
@@ -340,7 +340,7 @@ class iform_data_services {
         }
         if ($sharingTypeCode==='R') {
           $r['R my']=lang::get('My records for reporting');
-          if (user_access($args['download_all_users_reporting']))
+          if (hostsite_user_has_permission($args['download_all_users_reporting']))
             $r['R']=lang::get('All records for reporting');
         }
         elseif ($sharingTypeCode==='V') {
@@ -367,7 +367,7 @@ class iform_data_services {
   private static function get_download_formats($args) {
     $r = array();
     foreach ($args as $arg=>$value) {
-      if ($value && preg_match('/^([a-z_]+)_format_permission$/', $arg, $matches) && user_access($value)) {
+      if ($value && preg_match('/^([a-z_]+)_format_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
         $r[$matches[1]]=lang::get("format_$matches[1]");
       }
     }

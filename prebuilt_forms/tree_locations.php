@@ -311,7 +311,7 @@ class iform_tree_locations {
       'TreeLocationType' => helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['tree_type_term']) ? 'Tree' : $args['tree_type_term'])),
       'locationId' => isset($_GET['id']) ? $_GET['id'] : null,
       // Allocations of Users are done by a person holding the manager_permission.
-      'canAllocUser' => $args['manager_permission']=="" || user_access($args['manager_permission']) 
+      'canAllocUser' => $args['manager_permission']=="" || hostsite_user_has_permission($args['manager_permission'])
     );
     $settings['attributes'] = data_entry_helper::getAttributes(array(
         'id' => $settings['locationId'],
@@ -392,7 +392,7 @@ check_attrs = function(){
     if ($settings['locationId']) {
       data_entry_helper::load_existing_record($auth['read'], 'location', $settings['locationId']);
       // Work out permissions for this user
-      $canEdit = ($args['manager_permission']=="" || user_access($args['manager_permission']));
+      $canEdit = ($args['manager_permission']=="" || hostsite_user_has_permission($args['manager_permission']));
       if($args['allow_user_assignment'] && isset($settings['cmsUserAttr']['default']) && !empty($settings['cmsUserAttr']['default'])) {
         foreach($settings['cmsUserAttr']['default'] as $value) { // multi value
           if($value['default'] == $user->uid) { // comparing string against int so no triple equals

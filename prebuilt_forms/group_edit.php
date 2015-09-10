@@ -846,7 +846,7 @@ $('#entry_form').submit(function() {
     ));
     $group=$group[0];
     if ($group['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
-      if (!function_exists('user_access') || !user_access('Iform groups admin')) {
+      if (!hostsite_user_has_permission('Iform groups admin')) {
         // user did not create group. So, check they are an admin
         $admins = data_entry_helper::get_population_data(array(
           'table'=>'groups_user',

@@ -815,7 +815,7 @@ class iform_report_calendar_summary_2 {
             'caching' => true,
             'dataSource' => 'library/locations/locations_list_exclude_sensitive');
     $allowSensitive = empty($args['sensitivityLocAttrId']) ||
-        (function_exists('user_access') && !empty($args['sensitivityAccessPermission']) && user_access($args['sensitivityAccessPermission']));
+        (!empty($args['sensitivityAccessPermission']) && hostsite_user_has_permission($args['sensitivityAccessPermission']));
     if(!empty($args['sensitivityLocAttrId']))
       $locationListArgs['extraParams']['locattrs'] = $args['sensitivityLocAttrId'];
     $attrArgs = array(
@@ -1038,7 +1038,7 @@ class iform_report_calendar_summary_2 {
     $options['extraParams']['user_id'] = $options['user_id'];
     $userList=array();
     
-    if(!isset($args['manager_permission']) || $args['manager_permission']=="" || !user_access($args['manager_permission'])) {
+    if(!isset($args['manager_permission']) || $args['manager_permission']=="" || !hostsite_user_has_permission($args['manager_permission'])) {
       // user is a normal user or branch manager
       $userList[$user->uid]=$user; // just me
       // unset linkURL if normal user and user_id is not specified to be me: pass in flag so warning message displayed.
@@ -1051,7 +1051,7 @@ class iform_report_calendar_summary_2 {
       	default : // all users or another user so no access to samples via links
       		unset($args['linkURL']);
       		$options['linkMessage'] = '<p>'.lang::get('In order to have the column headings as links to the data entry pages for the Visit, you must set the').' "'.lang::get('Filter by recorder').'" '.
-      				(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission']) ?
+      				(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']) ?
       							lang::get(' control to yourself or branch data.') : lang::get(' control to yourself.')).'</p>';
       }
     } else {
@@ -1166,10 +1166,10 @@ class iform_report_calendar_summary_2 {
     $ctrl .= '<label for="'.$ctrlid.'" class="user-select-label">'.lang::get('Filter by recorder').
           ': </label><select id="'.$ctrlid.'" class="user-select">'.
           '<option value='.($user->uid).' class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$user->uid  ? 'selected="selected" ' : '').'>'.lang::get('My data').'</option>'.
-          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission']) ? '<option value="branch" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=="branch"  ? 'selected="selected" ' : '').'>'.lang::get('Branch data').'</option>' : '').
+          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']) ? '<option value="branch" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=="branch"  ? 'selected="selected" ' : '').'>'.lang::get('Branch data').'</option>' : '').
           '<option value="all" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=='' ? 'selected="selected" ' : '').'>'.lang::get('All recorders').'</option>';
     $found = $siteUrlParams[self::$userKey]['value']==$user->uid ||
-          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission']) && $siteUrlParams[self::$userKey]['value']=="branch") ||
+          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']) && $siteUrlParams[self::$userKey]['value']=="branch") ||
           $siteUrlParams[self::$userKey]['value']=='';
     $userListArr = array();
     foreach($userList as $id => $account) {
@@ -1374,7 +1374,7 @@ jQuery('#".$ctrlid."').change(function(){
     $reportOptions['location_list'] = array();
     // for a branch user, we have an allowed list of locations for which we can link to the sample.
     self::$branchLocationList = array();
-    if(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission'])) {
+    if(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission'])) {
       // Get list of locations attached to this user via the branch cms user id attribute
       // first need to scan param_presets for survey_id..
       $attrArgs = array(
@@ -1405,7 +1405,7 @@ jQuery('#".$ctrlid."').change(function(){
       $reportOptions['location_list'] = self::$branchLocationList;
     }
     // for an admin, we can link to all samples.
-    if(isset($args['manager_permission']) && $args['manager_permission']!="" && user_access($args['manager_permission'])) {
+    if(isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission'])) {
     	$reportOptions['location_list'] = 'all';
     }
 
@@ -1450,7 +1450,7 @@ jQuery('#".$ctrlid."').change(function(){
     $retVal.= '</tr></thead></table>';
     $reportOptions['survey_id']=self::$siteUrlParams[self::$SurveyKey]; // Sort of assuming that only one location type recorded against per survey.
     $reportOptions['downloads'] = array();
-    if((isset($args['manager_permission']) && $args['manager_permission']!="" && user_access($args['manager_permission'])) || // if you are super manager then you can see all the downloads.
+    if((isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission'])) || // if you are super manager then you can see all the downloads.
         $reportOptions['extraParams']['location_list'] != '' || // only filled in for a branch user in branch mode
         $reportOptions['extraParams']['user_id'] != '') { // if user specified - either me in normal or branch mode, or a manager
       for($i=1; $i<=4; $i++){

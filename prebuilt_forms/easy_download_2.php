@@ -394,7 +394,7 @@ class iform_easy_download_2 {
     if (!empty($args['custom_formats'])) {
       $customFormats = json_decode($args['custom_formats'], true);
       foreach ($customFormats as $idx=>$format) {
-        if (empty($format['permission']) || user_access($format['permission'])) 
+        if (empty($format['permission']) || hostsite_user_has_permission($format['permission']))
           $formats["custom-$idx"] = lang::get(isset($format['title']) ? $format['title'] : 'Untitled format');
       }
     }
@@ -432,7 +432,7 @@ class iform_easy_download_2 {
     // selection as appropriate.
     data_entry_helper::$javascript.="indiciaData.optionalFilters={};\n";
     foreach ($args as $arg=>$value) {
-      if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && user_access($value)) {
+      if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
         // download type available. What they can actually download might be limited by a context filter...
         $sharingType=  ucwords(str_replace('_', ' ', $matches[1]));
         $sharingTypeCode=substr($sharingType, 0, 1);
@@ -452,7 +452,7 @@ class iform_easy_download_2 {
         }
         if ($sharingTypeCode==='R') {
           $r['R my']=lang::get('My records for reporting');
-          if (user_access($args['download_all_users_reporting']))
+          if (hostsite_user_has_permission($args['download_all_users_reporting']))
             $r['R']=lang::get('All records for reporting');
         }
         elseif ($sharingTypeCode==='V') {
@@ -468,7 +468,7 @@ class iform_easy_download_2 {
       }
     }
     $canDownloadAdministeredGroups = !empty($args['download_administered_groups'])
-        && user_access($args['download_administered_groups']);
+        && hostsite_user_has_permission($args['download_administered_groups']);
     $params = array(
       'user_id'=>hostsite_get_user_field('indicia_user_id'),
       'view' => 'detail'
@@ -500,7 +500,7 @@ class iform_easy_download_2 {
   private static function get_download_formats($args) {
     $r = array();
     foreach ($args as $arg=>$value) {
-      if ($value && preg_match('/^([a-z_]+)_format_permission$/', $arg, $matches) && user_access($value)) {
+      if ($value && preg_match('/^([a-z_]+)_format_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
         $r[$matches[1]]=lang::get("format_$matches[1]");
       }
     }

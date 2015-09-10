@@ -269,7 +269,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
         'forest on boulders with pink encrusting algae and red seaweeds beneath".')
     ));
 
-    if (user_access('biotope codes')) {
+    if (hostsite_user_has_permission('biotope codes')) {
       $template .= data_entry_helper::text_input(array(
         'fieldname' => "smpAttr:$biotopeCode[attributeId]::habitatIdx",
         'label' => lang::get('Biotope code'),

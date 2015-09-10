@@ -1007,7 +1007,7 @@ class iform_report_calendar_summary {
             'caching' => true,
             'dataSource' => 'library/locations/locations_list_exclude_sensitive');
     $allowSensitive = empty($args['sensitivityLocAttrId']) ||
-        (function_exists('user_access') && !empty($args['sensitivityAccessPermission']) && user_access($args['sensitivityAccessPermission']));
+        (!empty($args['sensitivityAccessPermission']) && hostsite_user_has_permission($args['sensitivityAccessPermission']));
     if(!empty($args['sensitivityLocAttrId']))
       $locationListArgs['extraParams']['locattrs'] = $args['sensitivityLocAttrId']; // if we have a sensitive attribute, may want to change the template to highlight them.
     $attrArgs = array(
@@ -1231,7 +1231,7 @@ class iform_report_calendar_summary {
     } else {
       $options['my_user_id']=$user->uid;
     }
-    if(!isset($args['managerPermission']) || $args['managerPermission']=="" || !user_access($args['managerPermission'])) {
+    if(!isset($args['managerPermission']) || $args['managerPermission']=="" || !hostsite_user_has_permission($args['managerPermission'])) {
       // user is a normal user
       $userList[$user->uid]=$user; // just me
     } else {
@@ -1337,10 +1337,10 @@ class iform_report_calendar_summary {
     $ctrl = '<label for="'.$ctrlid.'" class="user-select-label">'.lang::get('Filter by recorder').
           ': </label><select id="'.$ctrlid.'" class="user-select">'.
           '<option value='.($user->uid).' class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$user->uid  ? 'selected="selected" ' : '').'>'.lang::get('My data').'</option>'.
-          (isset($args['branchManagerPermission']) && $args['branchManagerPermission']!="" && user_access($args['branchManagerPermission']) ? '<option value="branch" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=="branch"  ? 'selected="selected" ' : '').'>'.lang::get('Branch data').'</option>' : '').
+          (isset($args['branchManagerPermission']) && $args['branchManagerPermission']!="" && hostsite_user_has_permission($args['branchManagerPermission']) ? '<option value="branch" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=="branch"  ? 'selected="selected" ' : '').'>'.lang::get('Branch data').'</option>' : '').
           '<option value="all" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=='' ? 'selected="selected" ' : '').'>'.lang::get('All recorders').'</option>';
     $found = $siteUrlParams[self::$userKey]['value']==$user->uid ||
-          (isset($args['branchManagerPermission']) && $args['branchManagerPermission']!="" && user_access($args['branchManagerPermission']) && $siteUrlParams[self::$userKey]['value']=="branch") ||
+          (isset($args['branchManagerPermission']) && $args['branchManagerPermission']!="" && hostsite_user_has_permission($args['branchManagerPermission']) && $siteUrlParams[self::$userKey]['value']=="branch") ||
           $siteUrlParams[self::$userKey]['value']=='';
     $userListArr = array();
     foreach($userList as $id => $account) {
@@ -1571,7 +1571,7 @@ jQuery('#".$ctrlid."').change(function(){
     $reportOptions['location_list'] = array();
     // for a branch user, we have an allowed list of locations for which we can link to the sample.
     self::$branchLocationList = array();
-    if(isset($args['branchManagerPermission']) && $args['branchManagerPermission']!="" && user_access($args['branchManagerPermission'])) {
+    if(isset($args['branchManagerPermission']) && $args['branchManagerPermission']!="" && hostsite_user_has_permission($args['branchManagerPermission'])) {
       // Get list of locations attached to this user via the branch cms user id attribute
       // first need to scan param_presets for survey_id..
       $attrArgs = array(
@@ -1602,7 +1602,7 @@ jQuery('#".$ctrlid."').change(function(){
       $reportOptions['location_list'] = self::$branchLocationList;
     }
     // for an admin, we can link to all samples.
-    if(isset($args['managerPermission']) && $args['managerPermission']!="" && user_access($args['managerPermission'])) {
+    if(isset($args['managerPermission']) && $args['managerPermission']!="" && hostsite_user_has_permission($args['managerPermission'])) {
     	$reportOptions['location_list'] = 'all';
     }
     
@@ -1685,7 +1685,7 @@ jQuery('#".$ctrlid."').change(function(){
           $reportOptions['extraParams']['user_id'] = $account->profile_indicia_user_id;
       }
     }
-    if((isset($args['managerPermission']) && $args['managerPermission']!="" && user_access($args['managerPermission'])) || // if you are super manager then you can see all the downloads.
+    if((isset($args['managerPermission']) && $args['managerPermission']!="" && hostsite_user_has_permission($args['managerPermission'])) || // if you are super manager then you can see all the downloads.
         $reportOptions['extraParams']['location_list'] != '' || // only filled in for a branch user in branch mode
         $reportOptions['extraParams']['user_id'] != '') { // if user specified - either me in normal or branch mode, or a manager
       global $indicia_templates;

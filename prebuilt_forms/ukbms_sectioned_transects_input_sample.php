@@ -808,7 +808,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       $locationType = helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
       $siteParams = $auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
       if ((!isset($args['user_locations_filter']) || $args['user_locations_filter']) &&
-          (!isset($args['managerPermission']) || !user_access($args['managerPermission']))) {
+          (!isset($args['managerPermission']) || !hostsite_user_has_permission($args['managerPermission']))) {
         $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>$user->uid);
       } else
         $siteParams += array('locattrs'=>'');
@@ -826,7 +826,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       }
       // bolt in branch locations. Don't assume that branch list is superset of normal sites list.
       // Only need to do if not a manager - they have already fetched the full list anyway.
-      if(isset($args['branch_assignment_permission']) && user_access($args['branch_assignment_permission']) && $siteParams['locattrs']!='') {
+      if(isset($args['branch_assignment_permission']) && hostsite_user_has_permission($args['branch_assignment_permission']) && $siteParams['locattrs']!='') {
         $siteParams['locattrs']='Branch CMS User ID';
         $siteParams['attr_location_branch_cms_user_id']=$user->uid;
         unset($siteParams['attr_location_cms_user_id']);

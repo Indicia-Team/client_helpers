@@ -467,7 +467,7 @@ jQuery('#".$id."').click(function(){
     $email = $user->mail;
     $username = $user->name;
 
-    if(!user_access('IForm n'.$nid.' access')){
+    if(!hostsite_user_has_permission('IForm n'.$nid.' access')){
     	return "<p>".lang::get('LANG_Insufficient_Privileges')."</p>";
     }
     

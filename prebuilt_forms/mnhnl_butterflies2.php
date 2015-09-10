@@ -143,7 +143,7 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
   	// TBD add check for loctools 
     global $indicia_templates;
-  	$isAdmin = user_access($args['edit_permission']);
+  	$isAdmin = hostsite_user_has_permission($args['edit_permission']);
   	if(!$isAdmin) return('');
   	if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));
     $LocationTypeID = iform_mnhnl_getTermID(parent::$auth, 'indicia:location_types',$args['LocationTypeTerm']);

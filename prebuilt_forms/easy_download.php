@@ -265,7 +265,7 @@ class iform_easy_download {
    */
   public static function get_form($args, $nid, $response=null) {
     // Do they have expert access?
-    $expert = (function_exists('user_access') && user_access($args['permission']));
+    $expert = hostsite_user_has_permission($args['permission']);
     $conn = iform_get_connection_details($nid);
     $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     // Find out which types of filters and formats are available to the user

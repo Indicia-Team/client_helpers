@@ -285,7 +285,7 @@ deleteSurvey = function(sampleID){
   }
 
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
-    $isAdmin = user_access($args['edit_permission']);
+    $isAdmin = hostsite_user_has_permission($args['edit_permission']);
     $auth = array('read'=>$readAuth);
     if(!$isAdmin) return('');
     if(!$retTabs) return array('#downloads' => lang::get('Reports'));

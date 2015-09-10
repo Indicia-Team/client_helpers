@@ -282,7 +282,8 @@ class iform_mnhnl_bird_transect_walks {
         }
       }
     } else {
-      if (array_key_exists('merge_sample_id1', $_GET) && array_key_exists('merge_sample_id2', $_GET) && user_access($args['edit_permission'])){
+      if (array_key_exists('merge_sample_id1', $_GET) && array_key_exists('merge_sample_id2', $_GET) &&
+          hostsite_user_has_permission($args['edit_permission'])){
         $mode = 2;
         // first check can access the 2 samples given
         $parentLoadID = $_GET['merge_sample_id1'];
@@ -678,7 +679,7 @@ mapInitialisationHooks.push(function (div) {
     $closedFieldName = $attributes[$sample_closure_id]['fieldname'];
     $closedFieldValue = data_entry_helper::check_default_value($closedFieldName, array_key_exists('default', $attributes[$sample_closure_id]) ? $attributes[$sample_closure_id]['default'] : '0'); // default is not closed
     if($closedFieldValue == '') $closedFieldValue = '0';
-    if($closedFieldValue == '1' && !user_access($args['edit_permission'])){
+    if($closedFieldValue == '1' && !hostsite_user_has_permission($args['edit_permission'])){
       // sample has been closed, no admin perms. Everything now set to read only.
       $surveyReadOnly = true;
       $disabledText = "disabled=\"disabled\"";
@@ -720,7 +721,7 @@ mapInitialisationHooks.push(function (div) {
     // Set up main Survey Form.
     $r .= "<div id=\"survey\" class=\"mnhnl-btw-datapanel\">
   <p id=\"read-only-survey\"><strong>".lang::get('LANG_Read_Only_Survey')."</strong></p>";
-    if(user_access($args['edit_permission']) && array_key_exists('sample:id', data_entry_helper::$entity_to_load)) {
+    if (hostsite_user_has_permission($args['edit_permission']) && array_key_exists('sample:id', data_entry_helper::$entity_to_load)) {
     	// check for other surveys of same date/transect: only if admin user.
         $url = $svcUrl.'/data/sample?mode=json&view=detail&auth_token='.$readAuth['auth_token']."&nonce=".$readAuth["nonce"]."&date_start=".$parentSample['sample:date_start']."&location_id=".$parentSample['sample:location_id'];
         $session = curl_init($url);
@@ -809,7 +810,7 @@ jQuery('.attr-trailer').prev('br').remove();
 ";
     unset($defAttrOptions['suffixTemplate']);
     unset($defAttrOptions['validation']);
-    if(user_access($args['edit_permission'])) { //  users with admin permissions can override the closing of the
+    if (hostsite_user_has_permission($args['edit_permission'])) { //  users with admin permissions can override the closing of the
       // sample by unchecking the checkbox.
       // Because this is attached to the sample, we have to include the sample required fields in the
       // the post. This means they can't be disabled, so we enable all fields in this case.
@@ -840,7 +841,7 @@ jQuery('#ro-sur-occ-warn').hide();
             }
             jQuery('#close1').addClass('loading-button');
             jQuery('#SurveyForm').submit();\">\n";
-      if(!user_access($args['edit_permission'])) {
+      if(!hostsite_user_has_permission($args['edit_permission'])) {
       	if($mode == 1) data_entry_helper::$javascript .= "jQuery('#close2').hide();\n";
        $r .= "<input type=button id=\"close2\" class=\"ui-state-default ui-corner-all \" value=\"".lang::get('LANG_Save_Survey_And_Close')."\"
         onclick=\"if(confirm('".lang::get('LANG_Close_Survey_Confirm')."')){
@@ -930,7 +931,7 @@ jQuery('#SurveyForm').ajaxForm({
        	if(data.success == 'multiple records' && data.outer_table == 'sample'){
           jQuery('#occ-form').show();
           jQuery('#na-occ-warn,#mergeSurveys').hide();";
-    if(!user_access($args['edit_permission'])) {
+    if(!hostsite_user_has_permission($args['edit_permission'])) {
       // don't need to worry about record_status value for non admins as they can't modify when closed.
       data_entry_helper::$javascript .= "
           if(jQuery('#main-sample-closed').val() == '1'){
@@ -971,7 +972,7 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
                   url=\"".iform_ajaxproxy_url($nid, 'sample')."\";
                 }\n";
     // Send AJAX request to set occurrence to 'C' if closed : use sync
-    if(!user_access($args['edit_permission']))
+    if(!hostsite_user_has_permission($args['edit_permission']))
       data_entry_helper::$javascript .= "                if(jQuery('#main-sample-closed').val() == '1'){\n";
     else
       data_entry_helper::$javascript .= "                if(jQuery('#smpAttr\\\\:".$attributes[$sample_closure_id]['attributeId'].":checked').length > 0){\n";
@@ -1017,7 +1018,7 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
 				case \"survey\":
 					break;
 				default:";
-    if(!user_access($args['edit_permission'])) {
+    if(!hostsite_user_has_permission($args['edit_permission'])) {
     	data_entry_helper::$javascript .= "
 					if(jQuery('#main-sample-closed').val() == 0){
 						var a = $('ul.ui-tabs-nav a')[1];

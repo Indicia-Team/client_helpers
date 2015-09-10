@@ -513,8 +513,8 @@ EOD
     $func = get_user_func(self::$called_class, 'enforcePermissions');
     if ($func) {
       if(call_user_func($func) &&
-              !user_access('IForm n'.$nid.' admin') &&
-              !user_access('IForm n'.$nid.' user')) {
+              !hostsite_user_has_permission('IForm n'.$nid.' admin') &&
+              !hostsite_user_has_permission('IForm n'.$nid.' user')) {
         return lang::get('LANG_no_permissions');
       }
     }

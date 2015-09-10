@@ -194,7 +194,7 @@ class iform_mnhnl_reptiles extends iform_mnhnl_dynamic_1 {
   }
   
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
-    if(!user_access($args['edit_permission'])) return('');
+    if(!hostsite_user_has_permission($args['edit_permission'])) return('');
     $targetSpeciesAttr=iform_mnhnl_getAttr(parent::$auth, $args, 'sample', $args['targetSpeciesAttr']);
     if(!$targetSpeciesAttr) return lang::get('This form must be used with a survey that has the '.$args['targetSpeciesAttr'].' attribute associated with it.');
     if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));

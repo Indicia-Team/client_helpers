@@ -221,7 +221,7 @@ class iform_timed_count {
   	if ($sampleId && !isset(data_entry_helper::$validation_errors))
   		data_entry_helper::load_existing_record($auth['read'], 'sample', $sampleId);
   	
-  	$isAdmin = (isset($args['manager_permission']) && user_access($args['manager_permission']));
+  	$isAdmin = (isset($args['manager_permission']) && hostsite_user_has_permission($args['manager_permission']));
 
   	// The following is butchered from mnhnl.
 	data_entry_helper::$javascript .= "

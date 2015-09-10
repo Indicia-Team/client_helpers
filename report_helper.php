@@ -551,7 +551,7 @@ class report_helper extends helper_base {
             $classes[]='actions';
           } elseif (isset($field['template'])) {
             $value = self::mergeParamsIntoTemplate($row, $field['template'], true, true, true);
-          } else if (isset($field['update']) &&(!isset($field['update']['permission']) || user_access($field['update']['permission']))){
+          } else if (isset($field['update']) &&(!isset($field['update']['permission']) || hostsite_user_has_permission($field['update']['permission']))){
           	// TODO include checks to ensure method etc are included in structure -
           	$updateformID++;
           	$value="<form id=\"updateform-".$updateformID."\" method=\"post\" action=\"".iform_ajaxproxy_url(null, $field['update']['method'])."\"><input type=\"hidden\" name=\"website_id\" value=\"".$field['update']['website_id']."\"><input type=\"hidden\" name=\"transaction_id\" value=\"updateform-".$updateformID."-field\"><input id=\"updateform-".$updateformID."-field\" name=\"".$field['update']['tablename'].":".$field['update']['fieldname']."\" class=\"update-input ".(isset($field['update']['class']) ? $field['update']['class'] : "")."\" value=\"".(isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '')."\">";
