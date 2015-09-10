@@ -8,6 +8,7 @@
   RewriteCond %{REQUEST_URI} !/proxy\.php$
   RewriteCond %{REQUEST_URI} !.css$
   RewriteCond %{REQUEST_URI} !.js$
+  RewriteCond %{REQUEST_URI} !/upload/
   RewriteRule ^.*$ - [F]
 
 </IfModule>
