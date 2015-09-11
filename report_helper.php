@@ -533,12 +533,13 @@ class report_helper extends helper_base {
             $imgs = explode(',', $row[$field['fieldname']]);
             $value='';
             $imgclass=count($imgs)>1 ? 'multi' : 'single';
+            $group=count($imgs)>1 && !empty($options['rowId']) ? ' rel="group-' . $row[$options['rowId']] . '"' : '';
             foreach($imgs as $img) {
               if (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+)/', $img, $matches)) {
                 // http, means an external file
                 $value .= "<a href=\"$img\" class=\"social-icon $matches[site]\"></a>";
               } else {
-                $value .= "<a href=\"$imagePath$img\" class=\"fancybox $imgclass\"><img src=\"$imagePath" . $options['imageThumbPreset'] . "-$img\" /></a>";
+                $value .= "<a href=\"$imagePath$img\" class=\"fancybox $imgclass$group\"><img src=\"$imagePath" . $options['imageThumbPreset'] . "-$img\" /></a>";
               }
             }
             $row[$field['fieldname']] = $value;
