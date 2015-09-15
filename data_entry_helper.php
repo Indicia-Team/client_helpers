@@ -6186,7 +6186,7 @@ if (errors$uniq.length>0) {
       $nonZeroCount=0;
       foreach ($record as $field=>$value) {
         // Is this a field used to trap zero abundance data, with a zero value
-        if (preg_match("/occAttr:$ids$/", $field)) {
+        if (!empty($value) && preg_match("/occAttr:$ids$/", $field)) {
           if (in_array($value, $zero_values))
             $zeroCount++;
           else
@@ -6194,9 +6194,10 @@ if (errors$uniq.length>0) {
         }
       }
       // return false (zero) if there are no non-zero abundance data, and at least one zero abundance indicators
-      if ($zeroCount && !$nonZeroCount) {
+      if ($zeroCount && !$nonZeroCount)
         return false;
-      }
+      elseif (!$zeroCount && !$nonZeroCount && $include_if_any_data)
+        return null;
     }
     //We need to implode the individual field if the field itself is an array (multi-value attributes will be an array).
     foreach ($record as &$recordField) {
