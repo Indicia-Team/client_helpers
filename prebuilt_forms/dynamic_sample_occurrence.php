@@ -59,13 +59,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   public static function get_dynamic_sample_occurrence_definition() {
     return array(
-      'title'=>'Sample with occurrences form',
-      'category' => 'General Purpose Data Entry Forms',
-      'helpLink'=>'http://code.google.com/p/indicia/wiki/TutorialDynamicForm',
-      'description'=>'A sample and occurrence entry form with an optional grid listing the user\'s samples so forms can be ' .
-        'reloaded for editing. Can be used for entry of a single occurrence, ticking species off a checklist, or entering ' .
-        'species into a grid. The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.',
-      'supportsGroups'=>true
+      'title'=>'Enter single record or list of records (customisable)',
+      'category' => 'Data entry forms',
+      'helpLink'=>'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/dynamic-sample-occurrence.html',
+      'description'=>'A data entry form for records (taxon occurrences). Can be used for entry of a single record, ' .
+        'ticking species off a checklist or entering user selected species into a list. Highly customisable.',
+      'supportsGroups'=>true,
+      'core'=>true
     );
   }
 

@@ -361,7 +361,7 @@ Record ID',
       'imageSize' => 'thumb',
       'class' => 'detail-gallery'
     ), $options);
-    $images = data_entry_helper::get_population_data(array(
+    $media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_image',
       'extraParams' => $auth['read'] + array(
         'occurrence_id'=>$_GET['occurrence_id'],
@@ -370,21 +370,27 @@ Record ID',
       ),
     ));
     $r = '<div class="detail-panel" id="detail-panel-photos"><h3>Photos and media</h3><div class="'.$options['class'].'">';
-    if (empty($images))
+    if (empty($media))
       $r .= '<p>No photos or media files available</p>';
     else {
       $r .= '<ul>';
       $imageFolder = data_entry_helper::get_uploaded_image_folder();
-      foreach ($images as $idx => $image) {
-        if ($idx===0) {
+      $firstImage = true;
+      foreach ($media as $idx => $medium) {
+        if ($firstImage && substr($medium['media_type'], 0, 6)==='Image:') {
           // first image can be flagged as the main content image. Used for FB OpenGraph for example.
           global $iform_page_metadata;
           if (!isset($iform_page_metadata))
             $iform_page_metadata = array();
-          $iform_page_metadata['image'] = "$imageFolder$image[path]";
+          $iform_page_metadata['image'] = "$imageFolder$medium[path]";
+          $firstImage = false;
         }
-        $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$image[path]\" class=\"fancybox single\">" .
-            "<img src=\"$imageFolder$options[imageSize]-$image[path]\" /></a><br/>$image[caption]</li>";
+        if ($medium['media_type']==='Audio:Local')
+          $r .= "<li class=\"gallery-item\"><audio controls " .
+              "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
+        else
+          $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
+              "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
       }
       $r .= '</ul>';
     }

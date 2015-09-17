@@ -58,6 +58,7 @@ class form_helper extends helper_base {
     if (!$dir = opendir($path.'prebuilt_forms/'))
       throw new Exception('Cannot open path to prebuilt form library.');
     $groupForms = array();
+    $coreForms = array();
     while (false !== ($file = readdir($dir))) {
       $parts=explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts)-1])=='php') {
@@ -74,6 +75,11 @@ class form_helper extends helper_base {
             if (!isset($groupForms[$definition['category']]))
               $groupForms[$definition['category']] = array();
             $groupForms[$definition['category']][] = $file_tokens[0];
+          }
+          if (!empty($definition['core'])) {
+            if (!isset($coreForms[$definition['category']]))
+              $coreForms[$definition['category']] = array();
+            $coreForms[$definition['category']][] = $file_tokens[0];
           }
         } elseif (is_callable(array('iform_'.$file_tokens[0], 'get_title'))) {
           $title = call_user_func(array('iform_'.$file_tokens[0], 'get_title'));
@@ -103,6 +109,7 @@ class form_helper extends helper_base {
       $value = lang::get($value);
     }
     asort($categories);
+    $categories['more'] = lang::get('Show more...');
     if (count($groupForms)>0)
       $r .= self::link_to_group_fields($readAuth, $options);
     if (isset($options['needWebsiteInputs']) && !$options['needWebsiteInputs']
@@ -125,8 +132,8 @@ class form_helper extends helper_base {
     }
     $r .= data_entry_helper::select(array(
       'id' => 'form-category-picker',
-      'label' => lang::get('Select form category'),
-      'helpText' => lang::get('Select the form category pick a form from.'),
+      'label' => lang::get('Select page category'),
+      'helpText' => lang::get('Select the category for the type of page you are building'),
       'lookupValues' => $categories, 
       'default' => $defaultCategory
     ));
@@ -134,14 +141,16 @@ class form_helper extends helper_base {
     $r .= data_entry_helper::select(array(
       'id' => 'form-picker',
       'fieldname' => 'iform',
-      'label' => lang::get('Select form'),
-      'helpText' => lang::get('Select the Indicia form you want to use.'),
+      'label' => lang::get('Page type'),
+      'helpText' => lang::get('Select the page type you want to use.'),
       'lookupValues' => $availableForms,
       'default' => isset($options['form']) ? $options['form'] : ''
     ));
     
     // div for the form instructions
     $details = '';
+    // Default - we are only going to show core page types in the category and page type drop downs.
+    $showNonCorePageTypes = false;
     if (isset($options['form'])) {
       if (isset($forms[$defaultCategory][$options['form']]['description'])) {
         $details .= '<p>'.$forms[$defaultCategory][$options['form']]['description'].'</p>';
@@ -150,13 +159,15 @@ class form_helper extends helper_base {
         $details .= '<p><a href="'.$forms[$defaultCategory][$options['form']]['helpLink'].'">Find out more...</a></p>';
       }
       if ($details!=='') $details = "<div class=\"ui-state-highlight ui-corner-all page-notice\">$details</div>";
+      // If selecting an existing non-core form, then we need to override the default and show all categories and pages.
+      $showNonCorePageTypes = empty($forms[$defaultCategory][$options['form']]['core']);
     }
     $r .= "<div id=\"form-def\">$details</div>\n";
     $r .= '<input type="button" value="'.lang::get('Load Settings Form').'" id="load-params" disabled="disabled" />';
     if (isset($options['includeOutputDivs']) && $options['includeOutputDivs']) {
       $r .= '<div id="form-params"></div>';
     }
-    self::add_form_picker_js($forms, $groupForms);
+    self::add_form_picker_js($forms, $groupForms, $coreForms, $showNonCorePageTypes);
     return $r;
   }
   
@@ -168,17 +179,19 @@ class form_helper extends helper_base {
     $r = '';
     if (hostsite_has_group_functionality()) {
       $r .= data_entry_helper::checkbox(array(
-        'label' => lang::get('Allow this form to be used by recording groups'),
+        'label' => lang::get('This page is going to be used by recording groups'),
         'fieldname' => 'available_for_groups',
-        'helpText' => lang::get('Tick this box if the form is suitable for use by recording groups for their own record collection or reporting.'),
-        'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : false
+        'helpText' => lang::get('Tick this box if this page will be is made available for use by ' .
+          'recording groups for their own record collection or reporting.'),
+        'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : false,
+        'labelClass' =>'auto'
       ));
       $r .= data_entry_helper::select(array(
-        'label' => lang::get('Restrict to a recording group'),
+        'label' => lang::get('Which recording group?'),
         'fieldname' => 'limit_to_group_id',
-        'helpText' => lang::get('If this form is being built for the private use of 1 recording group, then choose that group here. '.
-            'This does not affect visibility of the actual records input using the form. Only applies if the above checkbox is ticked.'),
-        'blankText' => '<' . lang::get('Unrestricted') . '>',
+        'helpText' => lang::get('If this form is being built specifically for the use of a ' .
+            'single recording group, then choose that group here.'),
+        'blankText' => '<' . lang::get('Any group') . '>',
         'table' => 'group',
         'valueField' => 'id',
         'captionField' => 'title',
@@ -195,9 +208,17 @@ class form_helper extends helper_base {
    * @param array $forms List of prebuilt forms and their associated settings required 
    * by the picker.
    */
-  private static function add_form_picker_js($forms, $groupForms) {
-    self::$javascript .= "var prebuilt_forms = ".json_encode($forms).", prebuilt_group_forms = ".json_encode($groupForms).";
+  private static function add_form_picker_js($forms, $groupForms, $coreForms, $showNonCorePageTypes) {
+    self::$javascript .= "var prebuilt_forms = ".json_encode($forms).
+        ", prebuilt_group_forms = ".json_encode($groupForms).
+        ", prebuilt_core_forms = ".json_encode($coreForms).
+        ", showNonCore = " . ($showNonCorePageTypes ? 'true' : 'false') . ";
 function changeGroupEnabledStatus() {
+  if ($('#available_for_groups').attr('checked')) {
+    $('#ctrl-wrap-limit_to_group_id').slideDown();
+  } else {
+    $('#ctrl-wrap-limit_to_group_id').slideUp();
+  }
   $.each($('#form-category-picker option'), function() {
     if ($('#available_for_groups').attr('checked')) {
       if ($(this).attr('value')==='' || typeof prebuilt_group_forms[$(this).attr('value')]==='undefined') {
@@ -211,8 +232,15 @@ function changeGroupEnabledStatus() {
   });
   $('#form-category-picker').change();
 }
+
 $('#available_for_groups').change(changeGroupEnabledStatus);
+
 changeGroupEnabledStatus();
+
+if (!showNonCore) {
+  alert('Remove non core');
+}
+
 $('#form-category-picker').change(function(e) {
   var opts = '<option value=\"\">".lang::get('&lt;Please select&gt;')."</option>',
     current = $('#form-picker').val();
