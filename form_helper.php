@@ -58,7 +58,7 @@ class form_helper extends helper_base {
     if (!$dir = opendir($path.'prebuilt_forms/'))
       throw new Exception('Cannot open path to prebuilt form library.');
     $groupForms = array();
-    $coreForms = array();
+    $recommendedForms = array();
     while (false !== ($file = readdir($dir))) {
       $parts=explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts)-1])=='php') {
@@ -76,10 +76,10 @@ class form_helper extends helper_base {
               $groupForms[$definition['category']] = array();
             $groupForms[$definition['category']][] = $file_tokens[0];
           }
-          if (!empty($definition['core'])) {
-            if (!isset($coreForms[$definition['category']]))
-              $coreForms[$definition['category']] = array();
-            $coreForms[$definition['category']][] = $file_tokens[0];
+          if (!empty($definition['recommended'])) {
+            if (!isset($recommendedForms[$definition['category']]))
+              $recommendedForms[$definition['category']] = array();
+            $recommendedForms[$definition['category']][] = $file_tokens[0];
           }
         } elseif (is_callable(array('iform_'.$file_tokens[0], 'get_title'))) {
           $title = call_user_func(array('iform_'.$file_tokens[0], 'get_title'));
@@ -109,7 +109,6 @@ class form_helper extends helper_base {
       $value = lang::get($value);
     }
     asort($categories);
-    $categories['more'] = lang::get('Show more...');
     if (count($groupForms)>0)
       $r .= self::link_to_group_fields($readAuth, $options);
     if (isset($options['needWebsiteInputs']) && !$options['needWebsiteInputs']
@@ -130,6 +129,15 @@ class form_helper extends helper_base {
         'default' => isset($options['password']) ? $options['password'] : ''
       ));
     }
+    $r .= data_entry_helper::checkbox(array(
+      'label' => lang::get('Only show recommended page types'),
+      'fieldname' => 'recommended',
+      'helpText' => lang::get('Tick this box to limit the available page types to the recommended ones provided ' .
+          'within the Indicia core. Unticking the box will allow you to select additional page types, such as ' .
+          'those for specific survey methodologies or previous versions of the code.'),
+      'default' => true,
+      'labelClass' =>'auto'
+    ));
     $r .= data_entry_helper::select(array(
       'id' => 'form-category-picker',
       'label' => lang::get('Select page category'),
@@ -149,8 +157,8 @@ class form_helper extends helper_base {
     
     // div for the form instructions
     $details = '';
-    // Default - we are only going to show core page types in the category and page type drop downs.
-    $showNonCorePageTypes = false;
+    // Default - we are only going to show recommended page types in the category and page type drop downs.
+    $showRecommendedPageTypes = true;
     if (isset($options['form'])) {
       if (isset($forms[$defaultCategory][$options['form']]['description'])) {
         $details .= '<p>'.$forms[$defaultCategory][$options['form']]['description'].'</p>';
@@ -160,14 +168,14 @@ class form_helper extends helper_base {
       }
       if ($details!=='') $details = "<div class=\"ui-state-highlight ui-corner-all page-notice\">$details</div>";
       // If selecting an existing non-core form, then we need to override the default and show all categories and pages.
-      $showNonCorePageTypes = empty($forms[$defaultCategory][$options['form']]['core']);
+      $showRecommendedPageTypes = !empty($forms[$defaultCategory][$options['form']]['recommended']);
     }
     $r .= "<div id=\"form-def\">$details</div>\n";
     $r .= '<input type="button" value="'.lang::get('Load Settings Form').'" id="load-params" disabled="disabled" />';
     if (isset($options['includeOutputDivs']) && $options['includeOutputDivs']) {
       $r .= '<div id="form-params"></div>';
     }
-    self::add_form_picker_js($forms, $groupForms, $coreForms, $showNonCorePageTypes);
+    self::add_form_picker_js($forms, $groupForms, $recommendedForms, $showRecommendedPageTypes);
     return $r;
   }
   
@@ -208,38 +216,41 @@ class form_helper extends helper_base {
    * @param array $forms List of prebuilt forms and their associated settings required 
    * by the picker.
    */
-  private static function add_form_picker_js($forms, $groupForms, $coreForms, $showNonCorePageTypes) {
+  private static function add_form_picker_js($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
     self::$javascript .= "var prebuilt_forms = ".json_encode($forms).
         ", prebuilt_group_forms = ".json_encode($groupForms).
-        ", prebuilt_core_forms = ".json_encode($coreForms).
-        ", showNonCore = " . ($showNonCorePageTypes ? 'true' : 'false') . ";
+        ", prebuilt_recommended_forms = ".json_encode($coreForms).
+        ", showRecommended = " . ($showRecommendedPageTypes ? 'true' : 'false') . ";
+function setCategoryAndPageVisibility() {
+  $.each($('#form-category-picker option'), function() {
+    // Hide pages that are not recommended or not group pages, unless specifically allowed. Ignore the <please select> option.
+    if ($(this).attr('value')!=='') {
+      if (($('#available_for_groups').attr('checked') && typeof prebuilt_group_forms[$(this).attr('value')]==='undefined')
+          || ($('#recommended').attr('checked') && typeof prebuilt_recommended_forms[$(this).attr('value')]==='undefined')) {
+        $(this).hide();
+        if ($(this).attr('selected')) {
+          $('#form-category-picker option[value=\"\"]').attr('selected',true);
+        }
+      } else {
+        $(this).show();
+      }
+    }
+  });
+}
 function changeGroupEnabledStatus() {
   if ($('#available_for_groups').attr('checked')) {
     $('#ctrl-wrap-limit_to_group_id').slideDown();
   } else {
     $('#ctrl-wrap-limit_to_group_id').slideUp();
   }
-  $.each($('#form-category-picker option'), function() {
-    if ($('#available_for_groups').attr('checked')) {
-      if ($(this).attr('value')==='' || typeof prebuilt_group_forms[$(this).attr('value')]==='undefined') {
-        $(this).hide();
-      } else {
-        $(this).show();
-      }
-    } else {
-      $(this).show();
-    }
-  });
+  setCategoryAndPageVisibility();
   $('#form-category-picker').change();
 }
 
 $('#available_for_groups').change(changeGroupEnabledStatus);
+$('#recommended').change(setCategoryAndPageVisibility);
 
 changeGroupEnabledStatus();
-
-if (!showNonCore) {
-  alert('Remove non core');
-}
 
 $('#form-category-picker').change(function(e) {
   var opts = '<option value=\"\">".lang::get('&lt;Please select&gt;')."</option>',
