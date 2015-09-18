@@ -37,7 +37,8 @@ class iform_group_leave {
     return array(
       'title'=>'Leave a group',
       'category' => 'Recording groups',
-      'description'=>'A page for leaving the membership of a group.'
+      'description'=>'A page for leaving the membership of a group.',
+      'recommended' => true
     );
   }
   

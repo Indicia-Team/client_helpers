@@ -60,7 +60,8 @@ class iform_group_home extends iform_dynamic_report_explorer {
       'category' => 'Recording groups',
       'description'=>'A report page for recording groups. This is based on a dynamic report explorer, but it applies '.
           'an automatic filter to the page output based on a group_id URL parameter.',
-      'supportsGroups'=>true
+      'supportsGroups'=>true,
+      'recommended' => true
     );
   }
   

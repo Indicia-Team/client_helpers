@@ -36,9 +36,10 @@ class iform_group_admin {
    */
   public static function get_group_admin_definition() {
     return array(
-      'title'=>'Administer a group',
+      'title' => 'Administer a group',
       'category' => 'Recording groups',
-      'description'=>'A form for administering a group, in particular the members list. Should be passed a parameter called group_id.'
+      'description' => 'A form for administering a group, in particular the members list. Should be passed a parameter called group_id.',
+      'recommended' => true
     );
   }
   

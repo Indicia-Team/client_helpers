@@ -78,7 +78,8 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
       'title'=>'Group link to pages from single group',
       'category' => 'Recording groups',
       'description'=>'Display a list of page links on a page for a single reporting group.',
-      'supportsGroups'=>true
+      'supportsGroups'=>true,
+      'recommended' => true
     );
   }
   

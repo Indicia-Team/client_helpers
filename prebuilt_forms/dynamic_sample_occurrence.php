@@ -65,7 +65,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       'description'=>'A data entry form for records (taxon occurrences). Can be used for entry of a single record, ' .
         'ticking species off a checklist or entering user selected species into a list. Highly customisable.',
       'supportsGroups'=>true,
-      'core'=>true
+      'recommended'=>true
     );
   }
 

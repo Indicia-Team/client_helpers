@@ -50,10 +50,11 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    */
   public static function get_dynamic_report_explorer_definition() {
     return array(
-      'title'=>'Dynamic Report Explorer',
+      'title' => 'Reporting page (customisable)',
       'category' => 'Reporting',
-      'description'=>'Provides a dynamically output page which can contain a map and several reports, potentially '.
-          'organised onto several tabs.'
+      'description' => 'Provides a dynamically output page which can contain a map and several reports, potentially '.
+          'organised onto several tabs.',
+      'recommended' => true
     );
   }
   

@@ -62,6 +62,7 @@ class iform_verification_5 {
       'category' => 'Verification',
       'description'=>'Verification form supporting 2 tier verification statuses. Requires the ' .
         'Easy Login module and Indicia AJAX Proxy module to both be enabled.',
+      'recommended' => true
     );
   }
 

@@ -38,7 +38,8 @@ class iform_group_join {
     return array(
       'title'=>'Join a group',
       'category' => 'Recording groups',
-      'description'=>'A page for joining or requesting membership of a group.'
+      'description'=>'A page for joining or requesting membership of a group.',
+      'recommended' => true
     );
   }
   

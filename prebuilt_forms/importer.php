@@ -41,7 +41,8 @@ class iform_importer {
       'category' => 'Utilities',
       'description'=>'A page containing a wizard for uploading CSV file data.',
       'helpLink'=>'https://readthedocs.org/projects/indicia-docs/en/latest/site-building/iform/prebuilt-forms/importer.html',
-      'supportsGroups'=>true
+      'supportsGroups'=>true,
+      'recommended' => true
     );
   }
   

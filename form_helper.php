@@ -254,12 +254,17 @@ changeGroupEnabledStatus();
 
 $('#form-category-picker').change(function(e) {
   var opts = '<option value=\"\">".lang::get('&lt;Please select&gt;')."</option>',
-    current = $('#form-picker').val();
+    current = $('#form-picker').val(), isGroupPageType, isRecommendedPageType;
   if (typeof prebuilt_forms[e.currentTarget.value]==='undefined') {
     $('#form-picker').html('<option value=\"\">".lang::get('&lt;Please select a category first&gt;')."</option>');
   } else {
     $.each(prebuilt_forms[e.currentTarget.value], function(form, def) {
-      if (!$('#available_for_groups').attr('checked') || (typeof prebuilt_group_forms[e.currentTarget.value]!=='undefined' && $.inArray(form, prebuilt_group_forms[e.currentTarget.value])>-1)) {
+      isGroupPageType = typeof prebuilt_group_forms[e.currentTarget.value]!=='undefined'
+          && $.inArray(form, prebuilt_group_forms[e.currentTarget.value])>-1;
+      isRecommendedPageType = typeof prebuilt_recommended_forms[e.currentTarget.value]!=='undefined'
+          && $.inArray(form, prebuilt_recommended_forms[e.currentTarget.value])>-1;
+      if ((!$('#available_for_groups').attr('checked') || isGroupPageType)
+          && (!$('#recommended').attr('checked') || isRecommendedPageType)) {
         opts += '<option value=\"'+form+'\">'+def.title+'</option>';
       }
     });

@@ -40,7 +40,8 @@ class iform_group_edit {
     return array(
       'title'=>'Create or edit a group',
       'category' => 'Recording groups',
-      'description'=>'A form for creating or editing groups of recorders.'
+      'description'=>'A form for creating or editing groups of recorders.',
+      'recommended' => true
     );
   }
   

@@ -39,7 +39,8 @@ class iform_group_send_invites {
     return array(
       'title'=>'Send invites to a group',
       'category' => 'Recording groups',
-      'description'=>'A form for emailing out invites to recording groups.'
+      'description'=>'A form for emailing out invites to recording groups.',
+      'recommended' => true
     );
   }
   

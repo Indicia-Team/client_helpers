@@ -40,7 +40,8 @@ class iform_report_grid {
       'category' => 'Reporting',
       'description'=>'Outputs a grid of data loaded from an Indicia report. Can automatically include the report parameters form required for the '.
           'generation of the report.',
-      'helpLink' => 'http://code.google.com/p/indicia/wiki/PrebuiltFormReportGrid'
+      'helpLink' => 'http://code.google.com/p/indicia/wiki/PrebuiltFormReportGrid',
+      'recommended' => true
     );
   }
   

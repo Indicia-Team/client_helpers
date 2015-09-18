@@ -52,7 +52,8 @@ class iform_species_details extends iform_dynamic {
       'title'=>'View details of a species',
       'category' => 'Utilities',
       'description'=>'A summary view of a species including records. Pass a parameter in the URL called taxon, ' .
-        'containing a taxa_taxon_list_id which defines which species to show.'
+        'containing a taxa_taxon_list_id which defines which species to show.',
+      'recommended' => true
     );
   }
   

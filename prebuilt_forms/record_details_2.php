@@ -50,7 +50,8 @@ class iform_record_details_2 extends iform_dynamic {
       'title'=>'View details of a record 2',
       'category' => 'Utilities',
       'description'=>'A summary view of a record with commenting capability. Pass a parameter in the URL called occurrence_id to '.
-        'define which occurrence to show.'
+        'define which occurrence to show.',
+      'recommended' => true
     );
   }
   

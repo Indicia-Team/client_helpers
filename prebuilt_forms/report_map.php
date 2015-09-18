@@ -41,7 +41,8 @@ class iform_report_map {
       'title'=>'Report Map',
       'category' => 'Reporting',
       'description'=>'Outputs data from a report onto a map. To work, the report must include a column containing spatial data. '.
-          'Can automatically include the report parameters form required for the generation of the report.'
+          'Can automatically include the report parameters form required for the generation of the report.',
+      'recommended' => true
     );
   }
   

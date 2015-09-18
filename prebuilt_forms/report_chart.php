@@ -39,7 +39,8 @@ class iform_report_chart {
       'title'=>'Report Chart',
       'category' => 'Reporting',
       'description'=>'Outputs a chart of data loaded from an Indicia report. Can automatically include the report parameters form required for the '.
-          'generation of the report.'
+          'generation of the report.',
+      'recommended' => true
     );
   }
   

@@ -38,12 +38,12 @@ class iform_dynamic_location extends iform_dynamic {
    */
   public static function get_dynamic_location_definition() {
     return array(
-      'title'=>'Location entry form',
-      'category' => 'General Purpose Data Entry Forms',
-//      'helpLink'=>'',
+      'title'=>'Enter a location (customisable)',
+      'category' => 'Data entry forms',
       'description'=>'A data entry form for defining locations that can later be used to enter samples against. '.
           'An optional grid listing the user\'s locations allows them to be reloaded for editing. '.
-          'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.'
+          'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.',
+      'recommended'=>true
     );
   }
 

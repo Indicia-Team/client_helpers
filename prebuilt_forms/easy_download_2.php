@@ -42,10 +42,11 @@ class iform_easy_download_2 {
    */
   public static function get_easy_download_2_definition() {
     return array(
-      'title'=>'Easy download 2',
+      'title' => 'Easy download 2',
       'category' => 'Utilities',
-      'description'=>'A page for quick and easy download of the data you have access to. Improved integration with record sharing and permissions.',
-      'helpLink'=>'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/easy-download.html'
+      'description' => 'A page for quick and easy download of the data you have access to. Improved integration with record sharing and permissions.',
+      'helpLink' => 'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/easy-download.html',
+      'recommended' => true
     );
   }
   

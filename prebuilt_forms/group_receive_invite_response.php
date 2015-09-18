@@ -40,7 +40,8 @@ class iform_group_receive_invite_response {
       'title'=>'Receive responses from invites',
       'category' => 'Recording groups',
       'description'=>'A page that is hit when the user clicks on a link to accept an email invite to a group. Use the Drupal Blocks '.
-          'system to ensure that a login block is present on this page for non-logged in users.'
+          'system to ensure that a login block is present on this page for non-logged in users.',
+      'recommended' => true
     );
   }
   

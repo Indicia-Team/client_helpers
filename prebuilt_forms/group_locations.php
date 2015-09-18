@@ -39,7 +39,8 @@ class iform_group_locations {
       'category' => 'Recording groups',
       'description'=>'A page listing the locations that are linked to a recording group, with links to allow '.
           'this list of locations to be configured.',
-      'supportsGroups'=>true
+      'supportsGroups'=>true,
+      'recommended' => true
     );
   }
   
