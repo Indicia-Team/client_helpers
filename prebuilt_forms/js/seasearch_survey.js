@@ -20,7 +20,7 @@ jQuery(document).ready(function($) {
       runtimes : 'html5,flash,silverlight,html4',
       imageWidth : '200',
       uploadScript : indiciaData.uploadSettings.uploadScript,
-      destinationFolder : '/sites/all/modules/iform/client_helpers/upload/',
+      destinationFolder : indiciaData.uploadSettings.destinationFolder,
       finalImageFolder : indiciaData.warehouseUrl + 'upload/',
       jsPath : '/sites/all/modules/iform/media/js/',
       buttonTemplate : '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
