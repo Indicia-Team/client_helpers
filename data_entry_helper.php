@@ -5653,7 +5653,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       // select the tab containing the first error, if validation errors are present
       self::$late_javascript .= "
 if (errors$uniq.length>0) {
-  tabs$uniq.tabs('select',$(errors{$uniq}[0]).parents('.ui-tabs-panel')[0].id);
+  indiciaFns.activeTab(tabs$uniq, $(errors{$uniq}[0]).parents('.ui-tabs-panel')[0].id);
   var panel;
   for (var i=0; i<errors$uniq.length; i++) {
     panel = $(errors{$uniq}[i]).parents('.ui-tabs-panel')[0];
@@ -5661,7 +5661,7 @@ if (errors$uniq.length>0) {
   }
 }\n";
       if (array_key_exists('active', $options)) {
-        self::$late_javascript .= "else {tabs$uniq.tabs('select','".$options['active']."');}\n";
+        self::$late_javascript .= "else {indiciaFns.activeTab(tabs$uniq.tabs,'".$options['active']."');}\n";
       }
       if (array_key_exists('style', $options) && $options['style']=='wizard') {
         self::$late_javascript .= "$('#$divId .ui-tabs-nav').hide();\n";
