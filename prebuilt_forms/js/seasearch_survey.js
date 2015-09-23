@@ -75,8 +75,10 @@ jQuery(document).ready(function($) {
         // for existing data, put a hidden which stores the subsample's sample ID.
         if (typeof indiciaData.existingSubsampleData!=="undefined" && typeof indiciaData.existingSubsampleData[currentCount]!=="undefined") {
           existingSubsampleData=indiciaData.existingSubsampleData[currentCount];
-          $('#habitat-blocks').append('<input type="hidden" name="habitat_sample_id:'+addingHabitatIdx+'" value="'+
-              existingSubsampleData.sample_id+'" />');
+          if (typeof existingSubsampleData.sample_id!=="undefined") {
+            $('#habitat-blocks').append('<input type="hidden" name="habitat_sample_id:' + addingHabitatIdx + '" value="' +
+                existingSubsampleData.sample_id + '" />');
+          }
         }
         $(block).html(blockHtml);
         // clear the block ID so we don't duplicate

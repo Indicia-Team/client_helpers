@@ -114,12 +114,6 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     $habitatAttributes = data_entry_helper::getAttributes($attributeOpts, false);
     foreach($habitatAttributes as $attr)
       self::$habitatAttrsByCaption[strtolower($attr['caption'])] = $attr;
-    // load the habitat attribute values, if we have an existing sample
-    if (!empty(self::$loadedSampleId)) {
-      self::load_existing(self::$loadedSampleId, $auth);
-    } else {
-      data_entry_helper::$javascript .= "indiciaData.existingSubsampleData=[];\n";
-    }
     // output some attribute info we can use for validation & business logic
     data_entry_helper::$javascript .= "indiciaData.depthMinLimitAttrNames = " . json_encode(array(
         self::$attrsByCaption['depth shallow bsl']['fieldname'],
@@ -141,7 +135,6 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
       self::$habitatAttrsByCaption['upper depth from chart datum']['attributeId'] . ";\n";
     data_entry_helper::$javascript .= "indiciaData.habitatMaxDepthCDAttrId = " .
       self::$habitatAttrsByCaption['lower depth from chart datum']['attributeId'] . ";\n";
-
     return parent::get_form_html($args, $auth, $attributes);
   }
 
@@ -150,7 +143,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
    * @param integer $sample_id ID of the parent sample being loaded
    * @param array $auth Authorisation tokens
    */
-  protected static function load_existing($sample_id, $auth) {
+  protected static function load_existing_subsamples($sample_id, $auth) {
     iform_load_helpers(array('report_helper'));
     $samples = report_helper::get_report_data(array(
       'dataSource' => 'library/samples/subsamples',
@@ -178,8 +171,6 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     foreach ($media as $medium) {
       self::$existingSubsampleData['sample:'.$value['sample_id']]['media'][] = $medium;
     }
-    data_entry_helper::$javascript .= "indiciaData.existingSubsampleData=" .
-      json_encode(array_values(self::$existingSubsampleData)) . ";\n";
   }
 
   protected static function get_control_addhabitat($auth, $args, $tabAlias, $options) {
@@ -187,6 +178,31 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     $initialCount = count(self::$existingSubsampleData)===0 ? 1 : count(self::$existingSubsampleData);
     data_entry_helper::$javascript .= "indiciaData.initialHabitatCount = $initialCount;\n";
     return '<button id="add-habitat" type="button">Add another habitat</button>';
+  }
+
+  protected static function grab_posted_value_for($idx, $habitatKey, $attrId, $attrType) {
+    // This ensures all output keys are unique
+    static $habitatValUniqueId = 10000;
+    $habitatValUniqueId++;
+    $regexp = "smpAttr:$attrId:(\d+)?:$idx";
+    $postKeys = array_values(preg_grep("/^$regexp$/", array_keys($_POST)));
+    if (count($postKeys)) {
+      // $_POST[$postKeys[0]] contains the attrbute value we attempted to save
+      $existingDataKeys = preg_grep('/^(\d+):'.$attrId.'$/', self::$existingSubsampleData[$habitatKey]['values']);
+      if (count($existingDataKeys))
+        self::$existingSubsampleData[$habitatKey]['values'][$existingDataKeys[0]] = $_POST[$postKeys[0]].":$attrType";
+      else {
+        if (is_array($_POST[$postKeys[0]])) {
+          foreach ($_POST[$postKeys[0]] as $value) {
+            self::$existingSubsampleData[$habitatKey]['values']["$habitatValUniqueId:$attrId"] = ":$value:$attrType";
+            $habitatValUniqueId++;
+          }
+        } else {
+          self::$existingSubsampleData[$habitatKey]['values']["$habitatValUniqueId:$attrId"] = ':' . $_POST[$postKeys[0]] . ":$attrType";
+        }
+
+      }
+    }
   }
 
   protected static function get_control_habitatblocks($auth, $args, $tabAlias, $options) {
@@ -198,6 +214,43 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     $animalTurf = self::$habitatAttrsByCaption['animal turf'];
     $animalBed = self::$habitatAttrsByCaption['animal bed'];
     $sedimentTypes = self::$habitatAttrsByCaption['sediment types'];
+    // load the habitat attribute values, if we have an existing sample
+    if (!empty(self::$loadedSampleId))
+      self::load_existing_subsamples(self::$loadedSampleId, $auth);
+    // if there was a validation failure on server side, the page reloads. Make sure the submitted
+    // form data reloads correctly.
+    if ($_POST) {
+      $count = $_POST['habitat-count'];
+      drupal_set_message(var_export(array_keys($_POST, true)));
+      for ($idx = 1; $idx <= $count; $idx ++) {
+        // Is this an existing habitat we are posting against?
+        $habitatKey = isset($_POST["habitat_sample_id:$idx"]) ? 'sample:'.$_POST["habitat_sample_id:$idx"] : "idx:$idx";
+        if (!isset(self::$existingSubsampleData[$habitatKey]))
+          self::$existingSubsampleData[$habitatKey] = array('values'=>array(), 'media'=>array());
+        self::grab_posted_value_for($idx, $habitatKey, $habitatName['attributeId'], 'T');
+        self::grab_posted_value_for($idx, $habitatKey, $biotopeCode['attributeId'], 'T');
+        self::grab_posted_value_for($idx, $habitatKey, $seabedType['attributeId'], 'L');
+        self::grab_posted_value_for($idx, $habitatKey, $seabedTypeOther['attributeId'], 'T');
+        self::grab_posted_value_for($idx, $habitatKey, $communities['attributeId'], 'L');
+        self::grab_posted_value_for($idx, $habitatKey, $animalTurf['attributeId'], 'T');
+        self::grab_posted_value_for($idx, $habitatKey, $animalBed['attributeId'], 'T');
+        self::grab_posted_value_for($idx, $habitatKey, $sedimentTypes['attributeId'], 'L');
+        $regexp = "sample_medium(\d)+:path:$idx";
+        $media = preg_grep("/^$regexp$/", array_keys($_POST));
+        foreach ($media as $filePathKey) {
+          $def = array(
+            'id' => '',
+            'caption' => $_POST[str_replace(':path:', ':caption:', $filePathKey)],
+            'path' => $_POST[$filePathKey],
+            'media_type_id' => $_POST[str_replace(':path:', ':media_type_id:', $filePathKey)],
+            'media_type' => $_POST[str_replace(':path:', ':media_type:', $filePathKey)]
+          );
+          self::$existingSubsampleData[$habitatKey]['media'][] = $def;
+        }
+      }
+    }
+    data_entry_helper::$javascript .= "indiciaData.existingSubsampleData=" .
+      json_encode(array_values(self::$existingSubsampleData)) . ";\n";
     // build a template for the data entry controls for each habitat
     $template = '<legend title="' . lang::get('Each habitat is numbered. Make sure the description and quantitative data is ' .
         'entered in the correct columns and that you number your sketch or plan in the same way. Each written description ' .
