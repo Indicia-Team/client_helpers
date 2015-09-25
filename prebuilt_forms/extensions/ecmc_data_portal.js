@@ -176,8 +176,8 @@ jQuery(document).ready(function($) {
     if (typeof indiciaData.routeFeature!=="undefined") {
       indiciaData.reportlayer.removeFeatures([indiciaData.routeFeature]);
     }
-    //indiciaData.routeFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {type: 'route'}, style);
-    //indiciaData.reportlayer.addFeatures([indiciaData.routeFeature]);
+    indiciaData.routeFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {type: 'route'}, style);
+    indiciaData.reportlayer.addFeatures([indiciaData.routeFeature]);
     indiciaData.reportlayer.redraw();
   };
   
@@ -217,8 +217,6 @@ jQuery(document).ready(function($) {
   };
 
   deleteSample = function(sampleId) {
-
-
     if (confirm('Are you sure you want to delete the selected point?')) {
       var data = {
         'website_id': indiciaData.website_id,
