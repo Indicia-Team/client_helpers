@@ -236,7 +236,7 @@ jQuery(document).ready(function($) {
               }
             });
             indiciaData.reportlayer.removeFeatures(toRemove, {});
-            drawPoints();
+            redrawRoute();
             alert('The point has been deleted');
           } else {
             alert(data.error);
