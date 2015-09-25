@@ -1,4 +1,4 @@
-var drawPoints, saveSample;
+var drawPoints, saveSample, deleteSample;
 
 jQuery(document).ready(function($) {
   
@@ -173,12 +173,12 @@ jQuery(document).ready(function($) {
         }
       }
     );
-    
-    indiciaData.reportlayer.addFeatures([new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {type: 'route'}, style)]);
+    if (typeof indiciaData.routeFeature!=="undefined") {
+      indiciaData.reportlayer.removeFeatures([indiciaData.routeFeature]);
+    }
+    //indiciaData.routeFeature = new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {type: 'route'}, style);
+    //indiciaData.reportlayer.addFeatures([indiciaData.routeFeature]);
     indiciaData.reportlayer.redraw();
-    indiciaData.mapdiv.map.events.on({"featureclick":function(e) {
-      log("Map says: " + e.feature.id + " clicked on " + e.feature.layer.name);
-    }});
   };
   
   saveSample = function(sampleId) {
@@ -214,6 +214,39 @@ jQuery(document).ready(function($) {
       },
       'json'
     );
+  };
+
+  deleteSample = function(sampleId) {
+
+
+    if (confirm('Are you sure you want to delete the selected point?')) {
+      var data = {
+        'website_id': indiciaData.website_id,
+        'sample:id': sampleId,
+        'sample:deleted': 't'
+      };
+      $.post(
+        indiciaData.ajaxFormPostUrl,
+        data,
+        function (data) {
+          if (typeof data.error === "undefined") {
+            $('#row' + sampleId).remove();
+            var toRemove = [];
+            $.each(indiciaData.reportlayer.features, function() {
+              if (typeof this.attributes!=="undefined" && this.attributes.sampleid==sampleId) {
+                toRemove.push(this);
+              }
+            });
+            indiciaData.reportlayer.removeFeatures(toRemove, {});
+            drawPoints();
+            alert('The point has been deleted');
+          } else {
+            alert(data.error);
+          }
+        },
+        'json'
+      );
+    }
   };
 
   function correctTimeSequence(sampleId) {
