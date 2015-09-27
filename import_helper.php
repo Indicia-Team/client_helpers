@@ -55,8 +55,28 @@ class import_helper extends helper_base {
    *   the settings form.
    * * **occurrenceAssociations** - set to true to enable import of associated occurrences or false to
    *   disable it. Default false.
-   *
-   * </ul>
+   * * **fieldMap** - array of configurations of the fields available to import, one per survey.
+   *   The importer will generate a list of all possible fields in the database to import into
+   *   for a given survey. This typically includes all the standard "core" database fields such
+   *   as species name and sample date, as well as a list of all custom attributes for a survey.
+   *   This list is quite long and some of the default core database fields provided might not be
+   *   appropriate to your survey dataset, leading to possible confusion. So you can use this parameter
+   *   to define database fields and column titles in the spreadsheet that will automatically map to them.
+   *   Provide an array, with each array entry being an associative array containing the definition of the
+   *   fields for 1 survey dataset. In the associative array provide a value called survey_id to link
+   *   this definition to a survey dataset. Also provide a value called fields containing a list of
+   *   database fields you are defining for this dataset, one per line. If you want to link this field
+   *   to a column title then follow the database field name with an equals, then the column title,
+   *   e.g. sample:date=Record date.
+   * * **onlyAllowMappedFields** - set to true and supply field mappings in the fieldMap parameter
+   *   to ensure that only the fields you have specified for the selected survey will be available for
+   *   selection. This allows you to hide all the import fields that you don't want to be used for
+   *   importing into a given survey dataset, thus tidying up the list of options to improve ease of
+   *   use. Default true.
+   * * **skipMappingIfPossible** - set to true to completely bypass the field to column mappings setup
+   *   stage of the import tool if all the columns in the supplied spreadsheet are mapped. Combine this
+   *   with the fieldMap parameter to make predefined import configurations that require little effort
+   *   to use as long as a matching spreadsheet structure is supplied.
    */
   public static function importer($options) {
     if (isset($_GET['total'])) {
@@ -198,6 +218,9 @@ class import_helper extends helper_base {
     $fields = json_decode($response['output'], true);
     if (!is_array($fields))
       return "curl request to $request failed. Response ".print_r($response, true);
+    // Restrict the fields if there is a setting for this survey Id
+    if (!empty($settings['survey_id']))
+      self::limitFields($fields, $options, $settings['survey_id']);
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], true);
@@ -372,6 +395,28 @@ class import_helper extends helper_base {
     self::$javascript .= "update_required_fields();\n";
     self::$javascript .= "$('#entry_form select').change(function() {detect_duplicate_fields(); update_required_fields();});\n";
     return $r;
+  }
+
+  /**
+   * If the configuration only allows the supplied fields for a given survey ID, then limits the
+   * list of available fields retrieve from the warehouse for this survey to that configured list.
+   * @param array $fields Field list obtained from the warehouse for this survey. Disallowed fields
+   * will be removed.
+   * @param array $options Import helper options array
+   * @param integer $survey_id ID of the survey being imported
+   */
+  private static function limitFields(&$fields, $options, $survey_id) {
+    if (isset($options['onlyAllowMappedFields']) && $options['onlyAllowMappedFields'] && isset($options['fieldMap'])) {
+      foreach($options['fieldMap'] as $surveyFieldMap) {
+        if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
+            $surveyFieldMap['survey_id']==$survey_id) {
+          $allowedFields = self::explode_lines($surveyFieldMap['fields']);
+          $trimEqualsValue = create_function('&$val', '$tokens = explode("=",$val); $val=$tokens[0];');
+          array_walk($allowedFields, $trimEqualsValue);
+          $fields = array_intersect_key($fields, array_combine($allowedFields, $allowedFields));
+        }
+      }
+    }
   }
 
   /**
