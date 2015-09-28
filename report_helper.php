@@ -49,7 +49,7 @@ class report_helper extends helper_base {
       'class' => ''
     ), $options);
     // add class rather than replacing existing
-    $options['class'] .= ' report-picker-container control-box ui-widget ui-widget-content ui-helper-clearfix';
+    $options['class'] .= ' report-picker-container ui-widget ui-widget-content ui-helper-clearfix';
     $reports = '';
     $response = self::http_post(self::$base_url.'index.php/services/report/report_list?nonce='.
         $options['readAuth']['nonce'].'&auth_token='.$options['readAuth']['auth_token']);
@@ -57,7 +57,7 @@ class report_helper extends helper_base {
       $output = json_decode($response['output'], true);
       if (isset($output['error']))
         return $output['error'];
-      $reports .= self::get_report_list_level($options['fieldname'], $options['default'], $output);
+      $reports .= self::get_report_list_level($options['id'], $options['default'], $output);
     }
     self::$javascript .= '$("#'.$options['id'].' > ul").treeview({collapsed: true});'."\n";
     self::$javascript .= "indiciaData.reportList=".$response['output'].";\n";
@@ -70,28 +70,28 @@ class report_helper extends helper_base {
   /**
    * Outputs a single level of the hierarchy of available reports, then iterates into sub-
    * folders.
-   * @param string $fieldname The fieldname for the report_picker control (=HTML form value)
+   * @param string $ctrlId The fieldname for the report_picker control (=HTML form value)
    * @param string $default Name of the report to be initially selected
    * @param array $list Array of the reports and folders within the level to be output.
    * @return string HTML for the unordered list containing the level.
    * @access private
    */
-  private static function get_report_list_level($fieldname, $default, $list) {
+  private static function get_report_list_level($ctrlId, $default, $list) {
     $r = '';
     foreach($list as $name=>$item) {
       if ($item['type']=='report') {
         $id = 'opt_'.str_replace('/','_',$item['path']);
         $checked = $item['path']==$default ? ' checked="checked"' : '';
         $r .= '<li><label class="ui-helper-reset auto">'.
-            '<input type="radio" id="'.$id.'" name="'.$fieldname.'" value="'.$item['path'].
-            '" onclick="displayReportMetadata(\'' . $fieldname . '\', \'' . $item['path'] . '\');" ' . $checked . '>'.
-            $item['title'].
-            "</input></label></li>\n";
+            '<input type="radio" id="'.$id.'" name="'.$ctrlId.'" value="'.$item['path'].
+            '" onclick="displayReportMetadata(\'' . $ctrlId . '\', \'' . $item['path'] . '\');" ' . $checked . '/>'.
+            htmlspecialchars($item['title']) .
+            "</label></li>\n";
       }
       else {
         $name = ucwords(str_replace('_', ' ', $name));
         $r .= "<li>$name\n";
-        $r .= self::get_report_list_level($fieldname, $default, $item['content']);
+        $r .= self::get_report_list_level($ctrlId, $default, $item['content']);
         $r .= "</li>\n";
       }
     }
