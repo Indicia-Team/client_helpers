@@ -111,10 +111,10 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     //Admin can specify an area of the page to disable in the form structure if they wish. This area should be enclosed with a div with the id "disableDiv"
     data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, select').attr('disabled','disabled');\n"; 
-    $r = parent::get_form($args, $node);
+    $r = parent::get_form($args, $nid);
     //The system page configuration includes a setting to set the default spatial reference system to British National Grid, but
     //we also need to hide the field so the user cannot change it.
     if ($args['show_grid_system_selector']==false)

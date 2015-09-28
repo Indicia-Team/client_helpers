@@ -26,6 +26,9 @@ jQuery(document).ready(function ($) {
       $('#user-filter\\:0').attr('checked',true);
     }
     var filter=$('input[name="user-filter"]:checked').val();
+    if (typeof filter==="undefined") {
+      filter=$('input[name="user-filter"]').val();
+    }
     switch (filter) {
       case 'expert':
         // expert records - might be limited so a different list of surveys

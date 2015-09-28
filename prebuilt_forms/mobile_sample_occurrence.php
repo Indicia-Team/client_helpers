@@ -56,9 +56,6 @@ class iform_mobile_sample_occurrence {
   // Hold the single species name to be shown on the page to the user.
   protected static $singleSpeciesName;
 
-  // The node id upon which this form appears.
-  protected static $node;
-
   // The class upon which a function has been called which may be a subclass
   // of this.
   protected static $called_class;
@@ -501,14 +498,13 @@ EOD
     /**
    * Return the generated form output.
    * @param array $args The form settings.
-   * @param array $node
+   * @param array $nid
    * @return string Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     iform_load_helpers(array('mobile_entry_helper'));
     data_entry_helper::$website_id = $args['website_id'];
-    self::$node = $node;
-    self::$called_class = 'iform_' . $node->iform;
+    self::$called_class = 'iform_' . hostsite_get_node_field_value($nid, 'iform');
 
   // Convert parameter, $args['defaults'], into structured array.
     self::parse_defaults($args);
@@ -517,8 +513,8 @@ EOD
     $func = get_user_func(self::$called_class, 'enforcePermissions');
     if ($func) {
       if(call_user_func($func) &&
-              !user_access('IForm n'.$node->nid.' admin') &&
-              !user_access('IForm n'.$node->nid.' user')) {
+              !hostsite_user_has_permission('IForm n'.$nid.' admin') &&
+              !hostsite_user_has_permission('IForm n'.$nid.' user')) {
         return lang::get('LANG_no_permissions');
       }
     }

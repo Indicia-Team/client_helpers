@@ -177,6 +177,9 @@ class data_entry_helper extends helper_base {
    * <li><b>selectMode</b>
    * Should the autocomplete simulate a select drop down control by adding a drop down arrow after the input box which, when clicked,
    * populates the drop down list with all search results to a maximum of numValues. This is similar to typing * into the box. Default false.</li>
+   * <li><b>matchContains</b>
+   * If true, then the search looks for matches which contain the search characters. Otherwise, the search
+   * looks for matches which start with the search characters. Default false.</li>
    * </ul>
    *
    * @return string HTML to insert into the page for the autocomplete control.
@@ -216,7 +219,8 @@ class data_entry_helper extends helper_base {
       'warnIfNoMatch' => true,
       'continueOnBlur' => true,
       'selectMode' => false,
-      'default' => ''
+      'default' => '',
+      'matchContains' => false
     ), $options);
     if (isset($options['report'])) {
       $options['extraParams']['report'] = $options['report'].'.xml';
@@ -225,6 +229,7 @@ class data_entry_helper extends helper_base {
     $options['warnIfNoMatch'] = $options['warnIfNoMatch'] ? 'true' : 'false';
     $options['continueOnBlur'] = $options['continueOnBlur'] ? 'true' : 'false';
     $options['selectMode'] = $options['selectMode'] ? 'true' : 'false';
+    $options['matchContains'] = $options['matchContains'] ? 'true' : 'false';
     self::add_resource('autocomplete');
     // Escape the id for jQuery selectors
     $escaped_id=self::jq_esc($options['id']);
@@ -1010,6 +1015,7 @@ $('#$escaped').change(function(e) {
     if (!empty($options['subType']))
       self::$upload_file_types[$options['subType']]=self::$upload_file_types['image'];
     // Allow options to be defaulted and overridden
+    $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
     $defaults = array(
       'id' => 'default',
       'upload' => true,
@@ -1020,7 +1026,7 @@ $('#$escaped').change(function(e) {
       'runtimes' => array('html5','flash','silverlight','html4'),
       'autoupload' => true,
       'imageWidth' => 200,
-      'uploadScript' => "http://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
+      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
       'destinationFolder' => $relpath . $interim_image_folder,
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
@@ -2597,6 +2603,8 @@ $('#$escaped').change(function(e) {
    * * **extraParams** - Should contain the read authorisation array and taxon_list_id to filter against.
    * * **warnIfNoMatch** - Should the autocomplete control warn the user if they leave the control whilst
    *   searching and then nothing is matched? Default true.
+   * * **>matchContains** - If true, then the search looks for matches which contain the search
+   *   characters. Otherwise, the search looks for matches which start with the search characters. Default false.
    *
    * @return string Html for the species autocomplete control.
    */
@@ -2611,10 +2619,7 @@ $('#$escaped').change(function(e) {
     $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
     // get local vars for the array
     extract($db);
-    if ($options['cacheLookup'])
-      $options['extraParams']['orderby'] = $options['selectMode'] ? 'original,preferred_taxon' : 'searchterm_length,original,preferred_taxon';
-    else
-      $options['extraParams']['orderby'] = 'taxon';
+    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred_taxon' : 'taxon';
     $options = array_merge(array(
       'fieldname'=>'occurrence:taxa_taxon_list_id',
       'table'=>$tblTaxon,
@@ -3386,6 +3391,7 @@ $('#$escaped').change(function(e) {
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].cacheLookup=".($options['cacheLookup'] ? 'true' : 'false').";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20).";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=".(!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false').";\n";
+        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].matchContains=".(!empty($options['matchContains']) && $options['matchContains'] ? 'true' : 'false').";\n";
         self::$javascript .= "addRowToGrid('$url', '".
           $options['id']."', '".$options['lookupListId']."', {'auth_token' : '".
           $options['readAuth']['auth_token']."', 'nonce' : '".$options['readAuth']['nonce']."'},".
@@ -5383,7 +5389,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    */
   private static function get_list_item_selected_attribute($value, $selectedItemAttribute, $options, &$itemFieldname) {
     $itemFieldname=false;
-    if (!empty($options['default'])) {
+    if (isset($options['default'])) {
       $default = $options['default'];
       // default value can be passed as an array or a single value
       if (is_array($default)) {
@@ -5647,7 +5653,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       // select the tab containing the first error, if validation errors are present
       self::$late_javascript .= "
 if (errors$uniq.length>0) {
-  tabs$uniq.tabs('select',$(errors{$uniq}[0]).parents('.ui-tabs-panel')[0].id);
+  indiciaFns.activeTab(tabs$uniq, $(errors{$uniq}[0]).parents('.ui-tabs-panel')[0].id);
   var panel;
   for (var i=0; i<errors$uniq.length; i++) {
     panel = $(errors{$uniq}[i]).parents('.ui-tabs-panel')[0];
@@ -5655,7 +5661,7 @@ if (errors$uniq.length>0) {
   }
 }\n";
       if (array_key_exists('active', $options)) {
-        self::$late_javascript .= "else {tabs$uniq.tabs('select','".$options['active']."');}\n";
+        self::$late_javascript .= "else {indiciaFns.activeTab(tabs$uniq.tabs,'".$options['active']."');}\n";
       }
       if (array_key_exists('style', $options) && $options['style']=='wizard') {
         self::$late_javascript .= "$('#$divId .ui-tabs-nav').hide();\n";
@@ -5967,7 +5973,8 @@ if (errors$uniq.length>0) {
     }
     // get the posted data that might apply species association/interaction information
     $assocDataKeys = preg_grep('/occurrence_association:\d+:(\d+)?:from_occurrence_id/', array_keys($arr));
-    $assocData = array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys));
+    $assocData = count($assocDataKeys) ?
+        array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : array();
     foreach ($records as $id => $record) {
       // determine the id of the grid this record is from
       // $id = <grid_id>-<rowIndex> but <grid_id> could contain a hyphen
@@ -6172,14 +6179,14 @@ if (errors$uniq.length>0) {
       // check for zero abundance records. First build a regexp that will match the attr IDs to check. Attrs can be
       // just set to true, which means any attr will do.
       if (is_array($zero_attrs))
-        $ids='['.implode('|',$zero_attrs).']';
+        $ids='('.implode('|',$zero_attrs).')';
       else
         $ids = '\d+';
       $zeroCount=0;
       $nonZeroCount=0;
       foreach ($record as $field=>$value) {
         // Is this a field used to trap zero abundance data, with a zero value
-        if (preg_match("/occAttr:$ids$/", $field)) {
+        if (!empty($value) && preg_match("/occAttr:$ids$/", $field)) {
           if (in_array($value, $zero_values))
             $zeroCount++;
           else
@@ -6187,9 +6194,10 @@ if (errors$uniq.length>0) {
         }
       }
       // return false (zero) if there are no non-zero abundance data, and at least one zero abundance indicators
-      if ($zeroCount && !$nonZeroCount) {
+      if ($zeroCount && !$nonZeroCount)
         return false;
-      }
+      elseif (!$zeroCount && !$nonZeroCount && $include_if_any_data)
+        return null;
     }
     //We need to implode the individual field if the field itself is an array (multi-value attributes will be an array).
     foreach ($record as &$recordField) {

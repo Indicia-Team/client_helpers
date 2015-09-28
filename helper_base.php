@@ -97,10 +97,7 @@ $indicia_templates = array(
     "document.write('  </div>  {closeButton}');\n".
     "document.write('</div>');".
     "\n/* ]]> */</script>",
-  'tab_header' => '<script type="text/javascript">/* <![CDATA[ */'."\n".
-      'document.write(\'<ul class="ui-helper-hidden">{tabs}</ul>\');'.
-      "\n/* ]]> */</script>\n".
-      "<noscript><ul>{tabs}</ul></noscript>\n",
+  'tab_header' => "<ul>{tabs}</ul>\n",
   'loading_block_start' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
       'document.write(\'<div class="ui-widget ui-widget-content ui-corner-all loading-panel" >'.
       '<img src="'.helper_config::$base_url.'media/images/ajax-loader2.gif" />'.
@@ -129,6 +126,7 @@ $indicia_templates = array(
         selectMode: {selectMode},
         warnIfNoMatch: {warnIfNoMatch},
         continueOnBlur: {continueOnBlur},
+        matchContains: {matchContains},
         parse: function(data)
         {
           // Clear the current selected key as the user has changed the search text
@@ -193,7 +191,7 @@ $indicia_templates = array(
     }
   });
   $('#{escaped_id}\\\\:add').click(function() {addSublistItem{idx}('{escaped_id}', '{escaped_captionField}', '{fieldname}');});  
-  $('#{escaped_id}\\\\:sublist span.ind-delete-icon').live('click', function(event){
+  indiciaFns.on('click', '#{escaped_id}\\\\:sublist span.ind-delete-icon', null, function(event){
     // remove the value from the displayed list and the hidden list
     var li$ = $(this).closest('li');
     li$.remove();
@@ -572,6 +570,7 @@ class helper_base extends helper_config {
    * <li>multimap</li>
    * <li>virtualearth</li>
    * <li>fancybox</li>
+   * <li>fancybox2</li>
    * <li>treeBrowser</li>
    * <li>defaultStylesheet</li>
    * <li>validation</li>
@@ -642,6 +641,7 @@ class helper_base extends helper_config {
       // ensure a trailing path
       if (substr($indicia_theme_path, -1)!=='/')
         $indicia_theme_path .= '/';
+      $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
       self::$resource_list = array (
         'indiciaFns' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."indicia.functions.js")),
         'jquery' => array('javascript' => array(self::$js_path."jquery.js",self::$js_path."ie_vml_sizzlepatch_2.js")),
@@ -665,16 +665,17 @@ class helper_base extends helper_config {
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
-        'googlemaps' => array('javascript' => array("http://maps.google.com/maps/api/js?v=3&amp;sensor=false")),
-        'virtualearth' => array('javascript' => array('http://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1')),
+        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3&amp;sensor=false")),
+        'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/jquery.fancybox.pack.js')),
+        'fancybox2' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox2/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox2/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
         'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css"), 'javascript' => array()),
         'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
         'plupload' => array('deps' => array('jquery_ui','fancybox'), 'javascript' => array(
             self::$js_path.'jquery.uploader.js', self::$js_path.'plupload/js/plupload.full.min.js')),
-        'jqplot' => array('stylesheets' => array(self::$js_path.'jqplot/jquery.jqplot.css'), 'javascript' => array(                
-                self::$js_path.'jqplot/jquery.jqplot.js',
+        'jqplot' => array('stylesheets' => array(self::$js_path.'jqplot/jquery.jqplot.min.css'), 'javascript' => array(
+                self::$js_path.'jqplot/jquery.jqplot.min.js',
                 '[IE]'.self::$js_path.'jqplot/excanvas.js')),
         'jqplot_bar' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.barRenderer.min.js')),
         'jqplot_pie' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.pieRenderer.min.js')),
@@ -1332,14 +1333,20 @@ class helper_base extends helper_config {
 
  /**
   * Internal function to find the path to the root of the site, including the trailing slash.
+  * @param boolean $allowForDirtyUrls Set to true to allow for the content management system's
+  * approach to dirty URLs
+  *
   */
-  public static function getRootFolder() {
+  public static function getRootFolder($allowForDirtyUrls = false) {
     // $_SERVER['SCRIPT_NAME'] can, in contrast to $_SERVER['PHP_SELF'], not
     // be modified by a visitor.
     if ($dir = trim(dirname($_SERVER['SCRIPT_NAME']), '\,/'))
-      return "/$dir/";
+      $r = "/$dir/";
     else
-      return '/';    
+      $r = '/';
+    $pathParam = ($allowForDirtyUrls && function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
+    $r .= empty($pathParam) ? '' : "?$pathParam=";
+    return $r;
   }
 
   /**
@@ -1516,12 +1523,14 @@ class helper_base extends helper_config {
    */
   public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper=false, $closure=false) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
+      $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
       $script = $includeWrapper ? "<script type='text/javascript'>/* <![CDATA[ */\n" : "";
       $script .= $closure ? "(function ($) {\n" : "";
       $script .= "
 indiciaData.imagesPath='" . self::$images_path . "';
 indiciaData.warehouseUrl='" . self::$base_url . "';
 indiciaData.windowLoaded=false;
+indiciaData.protocol='$protocol';
 indiciaData.jQuery = jQuery; //saving the current version of jQuery
 ";
       if (self::$js_read_tokens) {
@@ -1531,11 +1540,15 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
           self::$js_read_tokens['url'] = self::$base_url;
         $script .= "indiciaData.read = ".json_encode(self::$js_read_tokens).";\n";
       }
-      if (!self::$is_ajax)
-        $script .= "$(document).ready(function() {\n";
-      $script .= "$javascript\n$late_javascript\n";
-      if (!self::$is_ajax)
-        $script .= "});\n";
+      if (!empty($javascript) || !empty($late_javascript)) {
+        if (!self::$is_ajax) {
+          $script .= "$(document).ready(function() {\n";
+        }
+        $script .= "$javascript\n$late_javascript\n";
+        if (!self::$is_ajax) {
+          $script .= "});\n";
+        }
+      }
       if (!empty($onload_javascript)) {
         if (self::$is_ajax)
           // ajax requests are simple - page has already loaded so just return the javascript

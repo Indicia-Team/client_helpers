@@ -59,13 +59,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   public static function get_dynamic_sample_occurrence_definition() {
     return array(
-      'title'=>'Sample with occurrences form',
-      'category' => 'General Purpose Data Entry Forms',
-      'helpLink'=>'http://code.google.com/p/indicia/wiki/TutorialDynamicForm',
-      'description'=>'A sample and occurrence entry form with an optional grid listing the user\'s samples so forms can be ' .
-        'reloaded for editing. Can be used for entry of a single occurrence, ticking species off a checklist, or entering ' .
-        'species into a grid. The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.',
-      'supportsGroups'=>true
+      'title'=>'Enter single record or list of records (customisable)',
+      'category' => 'Data entry forms',
+      'helpLink'=>'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/dynamic-sample-occurrence.html',
+      'description'=>'A data entry form for records (taxon occurrences). Can be used for entry of a single record, ' .
+        'ticking species off a checklist or entering user selected species into a list. Highly customisable.',
+      'supportsGroups'=>true,
+      'recommended'=>true
     );
   }
 
@@ -659,9 +659,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * Override get_form_html so we can store the remembered argument in a global, to make
    * it available to a hook function which exists outside the form.
    */
-  protected static function get_form_html($args, $auth, $attributes) { 
+  protected static function get_form_html($args, $auth, $attributes) {
     group_authorise_form($args, $auth['read']);
-    // We always want an autocomplete formatter function for species lookups. The form implementation can 
+    // We always want an autocomplete formatter function for species lookups. The form implementation can
     // specify its own if required
     if (method_exists(self::$called_class, 'build_grid_autocomplete_function'))
       call_user_func(array(self::$called_class, 'build_grid_autocomplete_function'), $args);
@@ -729,19 +729,19 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * Determine whether to show a grid of existing records or a form for either adding a new record, editing an existing one,
    * or creating a new record from an existing one.
    * @param array $args iform parameters.
-   * @param object $node node being shown.
+   * @param object $nid node being shown.
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING|MODE_CLONE].
    */
-  protected static function getMode($args, $node) {
+  protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
-    self::$availableForGroups = $node->available_for_groups;
+    self::$availableForGroups = hostsite_get_node_field_value($nid, 'available_for_groups');
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) {
         // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrupt the data by accident
-        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($node,'admin') && array_key_exists('mnhnld1', $_POST)){
+        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin') && array_key_exists('mnhnld1', $_POST)){
           $locs = array();
           foreach($_POST as $key => $value){
             $parts = explode(':', $key);
@@ -749,11 +749,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           }
           if(count($locs)>0){
             foreach($locs as $loc)
-              iform_loctools_deletelocation($node, $loc);
+              iform_loctools_deletelocation($nid, $loc);
             foreach($_POST as $key => $value){
               $parts = explode(':', $key);
               if($parts[0]=='location' && $value == 1)
-                iform_loctools_insertlocation($node, $parts[2], $parts[1]);
+                iform_loctools_insertlocation($nid, $parts[2], $parts[1]);
             }
           }
         }
@@ -969,9 +969,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
     $args['sample_method_id']=data_entry_helper::$entity_to_load['sample:sample_method_id'];
     // enforce that people only access their own data, unless explicitly have permissions
-    $editor = !empty($args['edit_permission']) && function_exists('user_access') && user_access($args['edit_permission']);
+    $editor = !empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']);
     if($editor) return;
-    $readOnly = !empty($args['ro_permission']) && function_exists('user_access') && user_access($args['ro_permission']);
+    $readOnly = !empty($args['ro_permission']) && hostsite_user_has_permission($args['ro_permission']);
     if (function_exists('hostsite_get_user_field') &&
         data_entry_helper::$entity_to_load['sample:created_by_id'] != 1 && // created_by_id can come out as string...
         data_entry_helper::$entity_to_load['sample:created_by_id'] !== hostsite_get_user_field('indicia_user_id')) {
@@ -2109,9 +2109,10 @@ else
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
@@ -2119,8 +2120,18 @@ else
     // Can't call getGridMode in this context as we might not have the $_GET value to indicate grid
     if (isset($values['speciesgridmapmode']))
       $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values);
-    else if (isset($values['gridmode']))
-      $submission = data_entry_helper::build_sample_occurrences_list_submission($values);
+    else if (isset($values['gridmode'])) {
+      // Work out the attributes that are for abundance, so could contain a zero
+      $connection = iform_get_connection_details($nid);
+      $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
+      self::load_custom_occattrs($readAuth, $args['survey_id']);
+      $abundanceAttrs = array();
+      foreach (self::$occAttrs as $attr) {
+        if ($attr['system_function']==='sex_stage_count')
+          $abundanceAttrs[] = $attr['attributeId'];
+      }
+      $submission = data_entry_helper::build_sample_occurrences_list_submission($values, false, $abundanceAttrs);
+    }
     else
       $submission = data_entry_helper::build_sample_occurrence_submission($values);
     return($submission);

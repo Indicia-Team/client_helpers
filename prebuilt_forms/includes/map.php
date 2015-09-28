@@ -108,8 +108,7 @@ function iform_map_get_map_parameters() {
         'bing_aerial' => 'Bing Aerial',
         'bing_hybrid' => 'Bing Hybrid',
         'bing_shaded' => 'Bing Shaded',
-        'osm' => 'OpenStreetMap',
-        'osm_th' => 'OpenStreetMap Tiles@Home'
+        'osm' => 'OpenStreetMap'
       ),
       'sortable'=>true,
       'group'=>'Base Map Layers',
@@ -224,7 +223,8 @@ function iform_map_get_georef_parameters() {
       'name'=>'georefDriver',
       'caption'=>'Web service used for georeferencing',
       'description'=>'Choose the web service used for resolving place names to points on the map. Each web-service has a '.
-           'different set of characteristics. If you are unsure which to use, the Yahoo! GeoPlanet service is a good starting point.',
+           'different set of characteristics. If you are unsure which to use, the Yahoo! GeoPlanet service is a good starting point, ' .
+           'though note that this service will not work if your site is running on https.',
       'type'=>'select',
       'default'=>'geoplanet',
       'options' => array(
@@ -304,9 +304,9 @@ function iform_map_get_map_options($args, $readAuth) {
   $msgGeorefNothingFound = lang::get('LANG_Georef_NothingFound');
   if ($msgGeorefNothingFound!='LANG_Georef_NothingFound') $options['msgGeorefNothingFound'] = $msgGeorefNothingFound;
   // if in Drupal, and IForm proxy is installed, then use this path as OpenLayers proxy
-  if (defined('DRUPAL_BOOTSTRAP_CONFIGURATION') && module_exists('iform_proxy')) {
-    global $base_url;
-    $options['proxy'] = $base_url . '/?q=' . variable_get('iform_proxy_path', 'proxy') . '&url=';
+  // @todo Refactor for Drupal 8
+  if (function_exists('module_exists') && module_exists('iform_proxy')) {
+    $options['proxy'] = data_entry_helper::getRootFolder(true) . hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
   }
   // And a single location boundary if defined
   if (!empty($args['location_boundary_id'])) 
@@ -334,7 +334,7 @@ function iform_map_zoom_to_location($locationId, $readAuth) {
 }
 
 function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
-  $name = str_replace("'", "''", $name);
+  $name = str_replace("'", "\\'", $name);
   // Create code to restrict extent and zoom in if being asked to do so, will add to JS in a moment
   $restrictExtentCode = !$restrict ? '' : <<<SCRIPT
   mapdiv.map.setOptions({restrictedExtent: bounds});
@@ -345,14 +345,17 @@ SCRIPT;
   // Note, since the following moves the map, we want it to be the first mapInitialisationHook
   data_entry_helper::$javascript .= <<<SCRIPT
 indiciaFns.zoomToBounds = function(mapdiv, bounds) {
-  if (typeof $.cookie === 'undefined' || mapdiv.settings.rememberPos===false || $.cookie('maplon')===null) {
-    if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
-      // if showing something small, don't zoom in too far
-      mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
-    }
-    else {
-      // Set the default view to show the feature we are loading
-      mapdiv.map.zoomToExtent(bounds);
+  // skip zoom to loaded bounds if already zoomed to a report output
+  if (typeof mapdiv.settings.zoomMapToOutput==="undefined" || mapdiv.settings.zoomMapToOutput===false) {
+    if (typeof $.cookie === 'undefined' || mapdiv.settings.rememberPos===false || $.cookie('maplon')===null) {
+      if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
+        // if showing something small, don't zoom in too far
+        mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
+      }
+      else {
+        // Set the default view to show the feature we are loading
+        mapdiv.map.zoomToExtent(bounds);
+      }
     }
   }
 }

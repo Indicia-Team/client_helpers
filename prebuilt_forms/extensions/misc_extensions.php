@@ -175,9 +175,7 @@ class extension_misc_extensions {
     static $done_js_has_permission=false;
     if (empty($options['permissionName']))
       return 'Please provide a setting @permissionName for the js_has_permission control.';
-    if (!function_exists('user_access'))
-      return 'Can\'t use the js_has_permission extension outside Drupal.';
-    $val = user_access($options['permissionName']) ? 'true' : 'false';
+    $val = hostsite_user_has_permission($options['permissionName']) ? 'true' : 'false';
     if (!$done_js_has_permission) {
       data_entry_helper::$javascript .= "if (typeof indiciaData.permissions==='undefined') {
   indiciaData.permissions={};

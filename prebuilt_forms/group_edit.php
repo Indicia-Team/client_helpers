@@ -40,7 +40,8 @@ class iform_group_edit {
     return array(
       'title'=>'Create or edit a group',
       'category' => 'Recording groups',
-      'description'=>'A form for creating or editing groups of recorders.'
+      'description'=>'A form for creating or editing groups of recorders.',
+      'recommended' => true
     );
   }
   
@@ -246,12 +247,12 @@ class iform_group_edit {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return string Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     if (!hostsite_get_user_field('indicia_user_id'))
       return 'Please ensure that you\'ve filled in your surname on your user profile before creating or editing groups.';
     self::createBreadcrumb($args);
@@ -330,8 +331,8 @@ class iform_group_edit {
         'label' => ucfirst(lang::get('{1} parent', self::$groupType)),
         'fieldname' => 'from_group_id',
         'table' => 'groups_user',
-        'captionField' => 'title',
-        'valueFields' => 'group_id',
+        'captionField' => 'group_title',
+        'valueField' => 'group_id',
         'extraParams' => $auth['read'] + array(
             'group_type_id' => $args['parent_group_type'],
             'user_id' => hostsite_get_user_field('indicia_user_id'),
@@ -386,7 +387,7 @@ class iform_group_edit {
     $r .= '</fieldset>';
     $r .= self::reportFilterBlock($args, $auth, $hiddenPopupDivs);
     $r .= self::inclusionMethodControl($args);
-    $r .= self::formsBlock($args, $auth, $node);
+    $r .= self::formsBlock($args, $auth);
     // auto-insert the creator as an admin of the new group, unless the admins are manually specified
     if (!$args['include_administrators'] && empty($_GET['group_id']))
       $r .= '<input type="hidden" name="groups_user:admin_user_id[]" value="' .hostsite_get_user_field('indicia_user_id'). '"/>';
@@ -417,7 +418,7 @@ $('#entry_form').submit(function() {
     if ($args['include_linked_pages']) {
       $r = '<fieldset><legend>' . lang::get('{1} pages', ucfirst(self::$groupType)) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Pages_Instruct', self::$groupType, lang::get('groups')) . '</p>';
-      $pages = self::getAvailablePages(empty($_GET['group_id']) ? null : $_GET['group_id']);
+      $pages = hostsite_get_group_compatible_pages(empty($_GET['group_id']) ? null : $_GET['group_id']);
       if (empty($_GET['group_id'])) {
         $default = array();
         if (isset($args['default_linked_pages'])) {
@@ -460,45 +461,6 @@ $('#entry_form').submit(function() {
       $r .= '</fieldset>';
     }
     return $r;
-  }
-
-  /**
-   * Retrieve all the pages that are available for linking to this group.
-   * @param integer $group_id ID of group to retrieve pages for.
-   * @return array List of pages.
-   */
-  private static function getAvailablePages($group_id) {
-    $sql = "SELECT n.nid, n.title
-        FROM {iform} i
-        JOIN {node} n ON n.nid=i.nid
-        WHERE i.available_for_groups=1 AND ";
-    if (empty($group_id))
-      $sql .= 'i.limit_to_group_id IS NULL';
-    else {
-      $sql .= '(i.limit_to_group_id IS NULL OR i.limit_to_group_id = ' . $group_id . ')';
-    }
-    $qry = db_query($sql);
-    $pages=array();
-    if (substr(VERSION, 0, 1)==='6') {
-      while ($row=db_fetch_object($qry)) {
-        $pages[self::get_path($row->nid)] = $row->title;
-      }
-    } elseif (substr(VERSION, 0, 1)==='7') {
-      foreach ($qry as $row) {
-        $pages[self::get_path($row->nid)] = $row->title;
-      }
-    }
-    return $pages;
-  }
-  
-  /**
-   * Gets the path we want to store for a page node to link to the group.
-   * @param integer $nid Node ID
-   */
-  private static function get_path($nid) {
-    $path = drupal_get_path_alias("node/$nid");
-    $path = preg_replace('/^\/(\?q=)?/', '', $path);
-    return $path;
   }
   
   /** 
@@ -571,6 +533,9 @@ $('#entry_form').submit(function() {
       if ($args['include_sensitivity_controls'])
         $r .= lang::get('LANG_Record_Inclusion_Instruct_Sensitive', self::$groupType) . ' ';
       $r .= lang::get('LANG_Record_Inclusion_Instruct_2', self::$groupType, ucfirst(self::$groupType))  . '</p>';
+      if (array_key_exists('group:implicit_record_inclusion', data_entry_helper::$entity_to_load) &&
+          is_null(data_entry_helper::$entity_to_load['group:implicit_record_inclusion']))
+        data_entry_helper::$entity_to_load['group:implicit_record_inclusion'] = '';
       $r .= data_entry_helper::radio_group(array(
         'fieldname' => 'group:implicit_record_inclusion',
         'label' => lang::get('Include records on reports if'),
@@ -582,7 +547,8 @@ $('#entry_form').submit(function() {
           '' => lang::get('they match the filter defined above but it doesn\'t matter who ' .
             'posted the record or via which form', self::$groupType)
         ),
-        'default' => 'f'
+        'default' => 'f',
+        'validation'=>array('required')
       ));
       $r .= ' </fieldset>';
     }
@@ -880,7 +846,7 @@ $('#entry_form').submit(function() {
     ));
     $group=$group[0];
     if ($group['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
-      if (!function_exists('user_access') || !user_access('Iform groups admin')) {
+      if (!hostsite_user_has_permission('Iform groups admin')) {
         // user did not create group. So, check they are an admin
         $admins = data_entry_helper::get_population_data(array(
           'table'=>'groups_user',

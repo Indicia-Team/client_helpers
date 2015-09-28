@@ -37,7 +37,7 @@ class extension_species_checklist {
   public static function add_species_hints($auth, $args, $tabalias, $options, $path) {
     // enable nice tooltips
     //drupal_add_library('system', 'ui.tooltip', true);
-    $filePath = variable_get('file_public_path', conf_path() . '/files');
+    $filePath = hostsite_get_public_file_path();
     data_entry_helper::$javascript .= "initSpeciesHints('$filePath/indicia/speciesHints.json');\n";
     return '<h3>' . lang::get('Hints relating to species names entered') . '</h3> ' .
         '<div id="species-hints"></div>';

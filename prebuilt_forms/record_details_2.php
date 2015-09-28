@@ -50,7 +50,8 @@ class iform_record_details_2 extends iform_dynamic {
       'title'=>'View details of a record 2',
       'category' => 'Utilities',
       'description'=>'A summary view of a record with commenting capability. Pass a parameter in the URL called occurrence_id to '.
-        'define which occurrence to show.'
+        'define which occurrence to show.',
+      'recommended' => true
     );
   }
   
@@ -222,6 +223,7 @@ Record ID',
     if (empty($_GET['occurrence_id'])) {
       return 'This form requires an occurrence_id parameter in the URL.';
     } else {
+      // @todo The call to module_load_included needs to be Drupal version independent
       data_entry_helper::$javascript .= 'indiciaData.username = "'.hostsite_get_user_field('name')."\";\n";
       data_entry_helper::$javascript .= 'indiciaData.user_id = "'.hostsite_get_user_field('indicia_user_id')."\";\n";
       data_entry_helper::$javascript .= 'indiciaData.website_id = '.$args['website_id'].";\n";
@@ -360,7 +362,7 @@ Record ID',
       'imageSize' => 'thumb',
       'class' => 'detail-gallery'
     ), $options);
-    $images = data_entry_helper::get_population_data(array(
+    $media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_image',
       'extraParams' => $auth['read'] + array(
         'occurrence_id'=>$_GET['occurrence_id'],
@@ -369,21 +371,27 @@ Record ID',
       ),
     ));
     $r = '<div class="detail-panel" id="detail-panel-photos"><h3>Photos and media</h3><div class="'.$options['class'].'">';
-    if (empty($images))
+    if (empty($media))
       $r .= '<p>No photos or media files available</p>';
     else {
       $r .= '<ul>';
       $imageFolder = data_entry_helper::get_uploaded_image_folder();
-      foreach ($images as $idx => $image) {
-        if ($idx===0) {
+      $firstImage = true;
+      foreach ($media as $idx => $medium) {
+        if ($firstImage && substr($medium['media_type'], 0, 6)==='Image:') {
           // first image can be flagged as the main content image. Used for FB OpenGraph for example.
           global $iform_page_metadata;
           if (!isset($iform_page_metadata))
             $iform_page_metadata = array();
-          $iform_page_metadata['image'] = "$imageFolder$image[path]";
+          $iform_page_metadata['image'] = "$imageFolder$medium[path]";
+          $firstImage = false;
         }
-        $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$image[path]\" class=\"fancybox single\">" .
-            "<img src=\"$imageFolder$options[imageSize]-$image[path]\" /></a><br/>$image[caption]</li>";
+        if ($medium['media_type']==='Audio:Local')
+          $r .= "<li class=\"gallery-item\"><audio controls " .
+              "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
+        else
+          $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
+              "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
       }
       $r .= '</ul>';
     }
@@ -435,8 +443,13 @@ Record ID',
     $r = '<div>';
     $comments = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_comment',
-      'extraParams' => $auth['read'] + array('occurrence_id'=>$_GET['occurrence_id'], 'sortdir'=>'DESC', 'orderby'=>'updated_on'),
-      'nocache'=>true
+      'extraParams' => $auth['read'] + array(
+          'occurrence_id'=>$_GET['occurrence_id'],
+          'sortdir'=>'DESC',
+          'orderby'=>'updated_on'
+      ),
+      'nocache'=>true,
+      'sharing'=>'reporting'
     ));
     if (count($comments)===0) 
       $r .= '<p id="no-comments">'.lang::get('No comments have been made.').'</p>';
@@ -526,7 +539,8 @@ Record ID',
       'mode' => 'report',
       'autoParamsForm' => false,
       'extraParams' => array(
-        'occurrence_id'=> $_GET['occurrence_id']
+        'occurrence_id'=> $_GET['occurrence_id'],
+        'sharing'=>'reporting'
       )
     )).'</div>';
   }
@@ -613,12 +627,12 @@ Record ID',
     self::load_record($auth, $args);
     $record = self::$record;
     if (($user_id=hostsite_get_user_field('indicia_user_id')) && $user_id==self::$record['created_by_id']
-        && variable_get('indicia_website_id', 0)==self::$record['website_id']) {
+        && $args['website_id']==self::$record['website_id']) {
       if (empty($record['input_form']))
         $record['input_form']=$args['default_input_form'];
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? '?q=' : '';
-      $paramJoin= empty($pathParam) ? '?' : '&';
-      $url = data_entry_helper::getRootFolder() . "$pathParam$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
+      $rootFolder = data_entry_helper::getRootFolder(true);
+      $paramJoin = strpos($rootFolder, '?')===false ? '?' : '&';
+      $url =  "$rootFolder$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
       return '<a class="button" href="'.$url.'">' . lang::get('Edit this record') . '</a>';
     }
     else 
@@ -639,8 +653,7 @@ Record ID',
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+      $rootFolder = data_entry_helper::getRootFolder(true);
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
@@ -665,8 +678,7 @@ Record ID',
       $url = $args['species_details_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+      $rootFolder = data_entry_helper::getRootFolder(true);
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];

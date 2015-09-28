@@ -51,10 +51,10 @@ $(document).ready(function () {
     }
     // Toggle through instructions to get the user started
     if (sequence===0) {
-      $('#instruct').hide("slide", { direction: "up" }, 500);
+      $('#instruct').slideUp();
       $('#instruct2').show();
     } else if (sequence===1) {
-      $('#instruct2').hide("slide", { direction: "up" }, 500);
+      $('#instruct2').slideUp();
     }
     // Find the taxon's key (e.g. tvk)
     key=$(evt.target).parents('tr')[0].id.substr(3);

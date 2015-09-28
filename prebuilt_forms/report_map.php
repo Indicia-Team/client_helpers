@@ -41,7 +41,8 @@ class iform_report_map {
       'title'=>'Report Map',
       'category' => 'Reporting',
       'description'=>'Outputs data from a report onto a map. To work, the report must include a column containing spatial data. '.
-          'Can automatically include the report parameters form required for the generation of the report.'
+          'Can automatically include the report parameters form required for the generation of the report.',
+      'recommended' => true
     );
   }
   
@@ -169,11 +170,11 @@ class iform_report_map {
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object ID
    * @param array $response Response from Indicia services after posting.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     iform_load_helpers(array('report_helper', 'map_helper'));
     $readAuth = report_helper::get_read_auth($args['website_id'], $args['password']);
     $reportOptions = iform_report_get_report_options($args, $readAuth);
@@ -190,9 +191,10 @@ class iform_report_map {
     
     // Use the proxy module if enabled, to get round limitations in URL length for 
     // filtered WMS requests.
-    if (defined('DRUPAL_BOOTSTRAP_CONFIGURATION') && module_exists('iform_proxy')) {
-      global $base_url;
-      $reportOptions['proxy'] = $base_url . '/?q=' . variable_get('iform_proxy_path', 'proxy') . '&url=';
+    // @todo Implement a Drupal 8 friendly method of checking if a module exists
+    if (function_exists('module_exists') && module_exists('iform_proxy')) {
+      $reportOptions['proxy'] = map_helper::getRootFolder(true) .
+          hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
     }
     $r .= '<br/>'.report_helper::report_map($reportOptions);
     $options = iform_map_get_map_options($args, $readAuth);

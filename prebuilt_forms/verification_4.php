@@ -41,7 +41,8 @@ class iform_verification_4 {
     return array(
       'title'=>'Verification 4',
       'category' => 'Verification',
-      'description'=>'Verification form based on standard report filtering system.'
+      'description'=>'Verification form based on standard report filtering system. Requires the ' .
+        'Easy Login module and Indicia AJAX Proxy module to both be enabled.'
     );
   }
 
@@ -425,8 +426,6 @@ idlist=';
     $msg = false;
     if (!function_exists('iform_ajaxproxy_url'))
       $msg = 'The AJAX Proxy module must be enabled to support saving filters on the verification page.';
-    if (!module_exists('easy_login'))
-      $msg = 'The verification 4 page requires the Easy Login module to be enabled.';
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
       $msg = 'Before verifying records, please visit your user account profile and ensure that you have entered your full name, then save it.';
     if ($msg) 
@@ -440,11 +439,11 @@ idlist=';
    * Expects there to be a sample attribute with caption 'Email' containing the email
    * address.
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object's ID
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     if (!self::check_prerequisites())
       return '';
     iform_load_helpers(array('data_entry_helper', 'map_helper', 'report_helper'));
@@ -459,19 +458,6 @@ idlist=';
       $args['email_body_send_to_recorder'] = 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct '.
               'and any other information you have which may help to confirm this.'.
               "\n\n%record%";
-    if (isset($_POST['enable'])) {
-      module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
-    }
-    elseif (!defined('IFORM_AJAXPROXY_PATH')) {
-      $r = '<p>'.lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
-          'Indicia Warehouse without having to reload the page.').'</p>';
-      $r .= '<form method="post">';
-      $r .= '<input type="hidden" name="enable" value="t"/>';
-      $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'"/>';
-      $r .= '</form>';
-      return $r;
-    }
     if (function_exists('drupal_add_js'))
       drupal_add_js('misc/collapse.js');
     // fancybox for popup comment forms etc
@@ -521,12 +507,12 @@ idlist=';
     $link = data_entry_helper::get_reload_link_parts();
     global $user;
     data_entry_helper::$js_read_tokens = $auth['read'];
-    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$node->nid."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "'.$link['path']."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.website_id = '.$args['website_id'].";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($node, 'occurrence')."&user_id=$indicia_user_id&sharing=verification\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'occurrence')."&user_id=$indicia_user_id&sharing=verification\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/verification_4')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autoDiscard = '.$args['auto_discard_rows'].";\n";
     if (!empty($args['indicia_species_layer_feature_type']) && !empty(data_entry_helper::$geoserver_url)) {
@@ -659,16 +645,18 @@ idlist=';
   /**
    * Ajax handler to provide the content for the details of a single record.
    */
-  public static function ajax_details($website_id, $password, $node) {
-    $details_report = empty($node->params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data' : $node->params['record_details_report'];
-    $attrs_report = empty($node->params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $node->params['record_attrs_report'];
+  public static function ajax_details($website_id, $password, $nid) {
+    $params = hostsite_get_node_field_value($nid, 'params');
+    $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data' : $params['record_details_report'];
+    $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = array(
       'dataSource' => $details_report,
       'readAuth' => $readAuth,
       'sharing' => 'verification',
-      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1, 'locality_type_id' => variable_get('indicia_profile_location_type_id', 0))
+      'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'], 'wantColumns'=>1,
+          'locality_type_id' => hostsite_get_config_value('iform', 'profile_location_type_id', 0))
     );
     $reportData = report_helper::get_report_data($options);
     // set some values which must exist in the record
@@ -781,16 +769,39 @@ idlist=';
 
   private static function get_media($readAuth) {
     iform_load_helpers(array('data_entry_helper'));
-    $media = data_entry_helper::get_population_data(array(
+    // Retrieve occurrence media for record
+    $occ_media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_medium',
-      'extraParams'=>$readAuth + array('occurrence_id'=>$_GET['occurrence_id']),
-      'nocache'=>true,
-      'sharing'=>'verification'
+      'extraParams' => $readAuth + array('occurrence_id' => $_GET['occurrence_id']),
+      'nocache' => true,
+      'sharing' => 'verification'
+    ));
+    // Retrieve related sample media 
+    $smp_media = data_entry_helper::get_population_data(array(
+      'table' => 'sample_medium',
+      'extraParams' => $readAuth + array('sample_id' => $_GET['sample_id']),
+      'nocache' => true,
+      'sharing' => 'verification'
     ));
     $r = '';
-    if (count($media)===0)
+    if (count($occ_media) + count($smp_media) === 0)
       $r .= lang::get('No media found for this record');
     else {
+      $r .= '<p>'.lang::get('Click on thumbnails to view full size').'</p>';
+      if (count($occ_media) > 0) {
+        $r .= '<p class="header">' . lang::get('Record media') . '</p>';
+        $r .= self::get_media_html($occ_media);
+      }
+      if (count($smp_media) > 0) {
+        $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
+        $r .= self::get_media_html($smp_media);
+      }    
+    }
+    return $r;
+  }
+  
+  private static function get_media_html($media) {
+    $r = '';
       $path = data_entry_helper::get_uploaded_image_folder();
       $r .= '<ul class="gallery">';
       foreach ($media as $file) {
@@ -805,8 +816,6 @@ idlist=';
         $r .= "<li>$media</li>";
       }
       $r .= '</ul>';
-      $r .= '<p>'.lang::get('Click on thumbnails to view full size').'</p>';
-    }
     return $r;
   }
 
@@ -866,7 +875,7 @@ idlist=';
    */
   public static function ajax_email() {
     global $user;
-    $site_email = variable_get('site_mail', '');
+    $site_email = hostsite_get_config_value('site', 'mail', '');
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
@@ -896,10 +905,11 @@ idlist=';
    * 
    * @param type $website_id
    * @param type $password
-   * @param type $node 
+   * @param type $nid
    */
-  public static function ajax_experience($website_id, $password, $node) {
+  public static function ajax_experience($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
+    $params = hostsite_get_node_field_value($nid, 'params');
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $data = report_helper::get_report_data(array(
       'dataSource' => 'library/totals/user_experience_for_record',
@@ -914,12 +924,12 @@ idlist=';
         $r .= '<h3>Records of ' . $row['what'] . '</h3>';
         $r .= '<table><thead><th></th><th>Last 3 months</th><th>Last year</th><th>All time</th></thead>';
         $r .= '<tbody>';
-        $r .= '<tr class="verified"><th>Verified</th><td>' . self::records_link($row, 'v_3months', $node) . '</td><td>' . 
-                self::records_link($row, 'v_1year', $node) . '</td><td>' . self::records_link($row, 'v_total', $node) . '</td></tr>';
-        $r .= '<tr class="rejected"><th>Rejected</th><td>' . self::records_link($row, 'r_3months', $node) . '</td><td>' . 
-                self::records_link($row, 'r_1year', $node) . '</td><td>' . self::records_link($row, 'r_total', $node) . '</td></tr>';
-        $r .= '<tr class="total"><th>Total</th><td>' . self::records_link($row, 'total_3months', $node) . '</td><td>' . 
-                self::records_link($row, 'total_1year', $node) . '</td><td>' . self::records_link($row, 'total_total', $node) . '</td></tr>';
+        $r .= '<tr class="verified"><th>Verified</th><td>' . self::records_link($row, 'v_3months', $params) . '</td><td>' .
+                self::records_link($row, 'v_1year', $params) . '</td><td>' . self::records_link($row, 'v_total', $params) . '</td></tr>';
+        $r .= '<tr class="rejected"><th>Rejected</th><td>' . self::records_link($row, 'r_3months', $params) . '</td><td>' .
+                self::records_link($row, 'r_1year', $params) . '</td><td>' . self::records_link($row, 'r_total', $params) . '</td></tr>';
+        $r .= '<tr class="total"><th>Total</th><td>' . self::records_link($row, 'total_3months', $params) . '</td><td>' .
+                self::records_link($row, 'total_1year', $params) . '</td><td>' . self::records_link($row, 'total_total', $params) . '</td></tr>';
         $r .= "</tbody></table>\n";
         
       }
@@ -949,8 +959,8 @@ idlist=';
   /**
    * Convert a number on the Experience tab into a link to the Explore page for the underlying records.
    */
-  private static function records_link($row, $value, $node) {
-    if (!empty($node->params['view_records_report_path']) && !empty($_GET['user_id'])) {
+  private static function records_link($row, $value, $nodeParams) {
+    if (!empty($nodeParams['view_records_report_path']) && !empty($_GET['user_id'])) {
       $tokens = explode('_', $value);
       $params = array(
           'filter-date_age' => '', 
@@ -979,7 +989,7 @@ idlist=';
         $params['filter-taxon_meaning_list'] = $row['what_id'];
       else
         $params['filter-taxon_group_list'] = $row['what_id'];
-      return l($row[$value], $node->params['view_records_report_path'], 
+      return l($row[$value], $nodeParams['view_records_report_path'],
           array('attributes'=>array('target' => '_blank'), 'query'=>$params));
       
     } else
@@ -1071,7 +1081,8 @@ idlist=';
       'sharing' => 'verification',
       'linkToMapDiv'=>'map',
       'filter-quality'=>'P'
-    );   
+    );
+    $hiddenStuff='';
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
   }

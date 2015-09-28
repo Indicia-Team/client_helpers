@@ -41,7 +41,8 @@ class iform_importer {
       'category' => 'Utilities',
       'description'=>'A page containing a wizard for uploading CSV file data.',
       'helpLink'=>'https://readthedocs.org/projects/indicia-docs/en/latest/site-building/iform/prebuilt-forms/importer.html',
-      'supportsGroups'=>true
+      'supportsGroups'=>true,
+      'recommended' => true
     );
   }
   
@@ -73,19 +74,85 @@ class iform_importer {
             'field in the user profile data).',
         'type'=>'textarea',
         'required'=>false
-      )
+      ),
+      array(
+        'name'=>'occurrenceAssociations',
+        'caption'=>'Allow import of associated occurrences',
+        'description'=>'If the data might include 2 associated occurrences in a single row then this option must be enabled.',
+        'type'=>'boolean',
+        'default'=>false
+      ),
+      array(
+        'name'=>'fieldMap',
+        'caption'=>'Field/column mappings',
+        'description'=>'Use this control to predefine mappings between database fields and columns in the spreadsheet. ' .
+            'You can then use the mappings to describe a complete spreadsheet template for a given survey dataset ' .
+            'structure, so the mappings page can be skipped. Or you can use this to define the possible database fields ' .
+            'that are available to pick from when importing into a particular survey dataset.',
+        'type' => 'jsonwidget',
+        'schema' => '{
+          "type":"seq",
+          "title":"Surveys list",
+          "desc":"Add each survey for which you want to have a predefined spreadsheet template to this list",
+          "sequence": [{
+            "type":"map",
+            "title":"Survey",
+            "desc":"List of surveys which have associated automatic mappings",
+            "mapping": {
+              "survey_id": {
+                "title":"Survey ID",
+                "type":"str"
+              },
+              "fields": {
+                "title":"Database field list",
+                "type":"txt",
+                "desc":"List of database fields with optional column names to map to them. Add an row ' .
+                  'for each database field (e.g. sample:location_name or smpAttr:4). If a spreadsheet column ' .
+                  'with a given title should be automatically mapped to this field then add an equals followed ' .
+                  'by the column title, e.g. sample:date=Record date."
+              }
+            }
+          }]
+        }'
+      ),
+      array(
+        'name'=>'onlyAllowMappedFields',
+        'caption'=>'Only allow mapped fields',
+        'description'=>'If this box is ticked and a survey is chosen which has fields defined above ' .
+            'then only fields which are listed will be available for selection. All other fields will '.
+            'be hidden from the mapping stage.',
+        'type'=>'boolean',
+        'default'=>true
+      ),
+      array(
+        'name'=>'skipMappingIfPossible',
+        'caption'=>'Skip the mapping step if possible',
+        'description'=>'If this box is ticked and all the columns in the import spreadsheet can be automatically ' .
+          'mapped to database fields, then the import mappings step is skipped. Therefore if you describe all the ' .
+          'columns in the spreadsheet in the field/column mappings above the import process can be significantly ' .
+          'simplified.',
+        'type'=>'boolean',
+        'default'=>false
+      ),
     );
   }
 
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object's ID
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
     iform_load_helpers(array('import_helper'));
+    // apply defaults
+    $args = array_merge(array(
+      'occurrenceAssociations' => false,
+      'fieldMap' => array(),
+      'onlyAllowMappedFields' => true,
+      'skipMappingIfPossible' => false
+    ), $args);
     $auth = import_helper::get_read_write_auth($args['website_id'], $args['password']);
     group_authorise_form($args, $auth['read']);
     if ($args['model']=='url') {
@@ -119,11 +186,16 @@ class iform_importer {
       }
     }
     try {
-      $r = import_helper::importer(array(
+      $options = array(
         'model' => $model,
         'auth' => $auth,
-        'presetSettings' => $presets
-      ));
+        'presetSettings' => $presets,
+        'occurrenceAssociations' => $args['occurrenceAssociations'],
+        'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], true),
+        'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
+        'skipMappingIfPossible' => $args['skipMappingIfPossible']
+      );
+      $r = import_helper::importer($options);
     } catch (Exception $e) {
       hostsite_show_message($e->getMessage(), 'warning');
       $reload = import_helper::get_reload_link_parts();

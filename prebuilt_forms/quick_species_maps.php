@@ -42,7 +42,8 @@ class iform_quick_species_maps {
       'title'=>'Quick Species Maps',
       'category' => 'Reporting',
       'description'=>'A list of species that can quickly be added to a distribution map.',
-      'helpLink'=>'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/quick-species-maps.html'
+      'helpLink'=>'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/quick-species-maps.html',
+      'recommended' => true
     );
   }
   
@@ -101,15 +102,15 @@ class iform_quick_species_maps {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    * @todo: Implement this method 
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     iform_load_helpers(array('report_helper', 'map_helper'));
-    $conn = iform_get_connection_details($node);
+    $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
     $r = '<div id="leftcol">';
     $reportOptions = iform_report_get_report_options($args, $readAuth);

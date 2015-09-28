@@ -104,7 +104,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * work correctly in this sitution. Disabling them also makes the user interface much clearer.
    * This setup allows the occurrences to be saved correctly with minimal alteration to existing code that we already know works correctly.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     if (!empty($_GET['sample_id'])) {
       //Disable the existing records grid so the user can only delete items from here
       data_entry_helper::$javascript .= "$('#Epiphytes-free').find('input[type=checkbox]').attr('disabled','disabled');\n";
@@ -114,7 +114,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
       //Just before the post is processed, we re-enable the grid, so the values are exposed in the submission else they won't be processed
       data_entry_helper::$javascript .= "$('#entry_form').submit(function() { $('#Epiphytes-free').find('input[type=checkbox]').removeAttr('disabled');});\n";
     }
-    return parent::get_form($args, $node);
+    return parent::get_form($args, $nid);
   }
  
   /**
@@ -206,9 +206,10 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';

@@ -434,9 +434,9 @@ class report_helper extends helper_base {
     $currentUrl = self::get_reload_link_parts();
     // automatic handling for Drupal clean urls.
     $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-    $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-    // amend currentUrl path if we have drupal dirty URLs so javascript will work properly
-    if ($pathParam==='q' && isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
+    $rootFolder = self::getRootFolder(true);
+    // amend currentUrl path if we have Drupal 6/7 dirty URLs so javascript will work properly
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
       $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
     }
     $tfoot .= '<tfoot>';
@@ -533,12 +533,13 @@ class report_helper extends helper_base {
             $imgs = explode(',', $row[$field['fieldname']]);
             $value='';
             $imgclass=count($imgs)>1 ? 'multi' : 'single';
+            $group=count($imgs)>1 && !empty($options['rowId']) ? ' rel="group-' . $row[$options['rowId']] . '"' : '';
             foreach($imgs as $img) {
               if (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+)/', $img, $matches)) {
                 // http, means an external file
                 $value .= "<a href=\"$img\" class=\"social-icon $matches[site]\"></a>";
               } else {
-                $value .= "<a href=\"$imagePath$img\" class=\"fancybox $imgclass\"><img src=\"$imagePath" . $options['imageThumbPreset'] . "-$img\" /></a>";
+                $value .= "<a href=\"$imagePath$img\" class=\"fancybox $imgclass$group\"><img src=\"$imagePath" . $options['imageThumbPreset'] . "-$img\" /></a>";
               }
             }
             $row[$field['fieldname']] = $value;
@@ -550,7 +551,7 @@ class report_helper extends helper_base {
             $classes[]='actions';
           } elseif (isset($field['template'])) {
             $value = self::mergeParamsIntoTemplate($row, $field['template'], true, true, true);
-          } else if (isset($field['update']) &&(!isset($field['update']['permission']) || user_access($field['update']['permission']))){
+          } else if (isset($field['update']) &&(!isset($field['update']['permission']) || hostsite_user_has_permission($field['update']['permission']))){
           	// TODO include checks to ensure method etc are included in structure -
           	$updateformID++;
           	$value="<form id=\"updateform-".$updateformID."\" method=\"post\" action=\"".iform_ajaxproxy_url(null, $field['update']['method'])."\"><input type=\"hidden\" name=\"website_id\" value=\"".$field['update']['website_id']."\"><input type=\"hidden\" name=\"transaction_id\" value=\"updateform-".$updateformID."-field\"><input id=\"updateform-".$updateformID."-field\" name=\"".$field['update']['tablename'].":".$field['update']['fieldname']."\" class=\"update-input ".(isset($field['update']['class']) ? $field['update']['class'] : "")."\" value=\"".(isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '')."\">";
@@ -1615,7 +1616,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
         // near the equator but not near the poles. We use a very crude adjustment if necessary
         // which works well around the UK's latitude.
         $defStyleFns['pointRadius'] = "getpointradius: function(feature) {
-          var units = feature.attributes.sref_precision;
+          var units = feature.attributes.sref_precision || 20;
           if (feature.geometry.getCentroid().y > 4000000) {
             units = units * (feature.geometry.getCentroid().y / 8200000);
           }
@@ -2675,11 +2676,9 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       if($indicia_user_id)
         $options["extraParams"]['user_id'] = $indicia_user_id;
       if($options['my_user_id']){ // false switches this off.
-        $account = user_load($options['my_user_id']);
-        if (function_exists('profile_load_profile'))
-          profile_load_profile($account); /* will not be invoked for Drupal7 where the fields are already in the account object */
-        if(isset($account->profile_indicia_user_id))
-          $options['my_user_id'] = $account->profile_indicia_user_id;
+        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options['my_user_id']);
+        if(!empty($user_id))
+          $options['my_user_id'] = $user_id;
       }
     }
     return $options;
@@ -2759,6 +2758,9 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     if (!empty($addFeaturesJs)) {
       report_helper::$javascript .= "      var features = [];\n";
       report_helper::$javascript .= "$addFeaturesJs\n";
+      // Remove layer prior to adding features so that they are not drawn until
+      // we are on the desired zoom level.
+      report_helper::$javascript .= "      div.map.removeLayer(indiciaData.reportlayer);\n";
       report_helper::$javascript .= "      indiciaData.reportlayer.addFeatures(features);\n";
       if ($zoomToExtent && !empty($addFeaturesJs))
         self::$javascript .= "      div.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());\n";
@@ -4009,12 +4011,10 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
     // not the Indicia user id: we do the conversion here.
     if (isset($options["extraParams"]['user_id'])) {
       $options["extraParams"]['cms_user_id'] = $options["extraParams"]['user_id'];
-      if (function_exists('module_exists') && module_exists('easy_login') && $options["extraParams"]['user_id']!='') {
-        $account = user_load($options["extraParams"]['user_id']);
-        if (function_exists('profile_load_profile'))
-          profile_load_profile($account); /* will not be invoked for Drupal7 where the fields are already in the account object */
-        if(isset($account->profile_indicia_user_id))
-          $options["extraParams"]['user_id'] = $account->profile_indicia_user_id;
+      if (function_exists('hostsite_get_user_field') && $options["extraParams"]['user_id']!='') {
+        $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options["extraParams"]['user_id']);
+        if(!empty($user_id))
+          $options["extraParams"]['user_id'] = $user_id;
       }
     }
     

@@ -30,9 +30,12 @@ var setAvailableDownloadFilters;
     // remove the filters available from the select so we can repopulate with the appropriate ones
     $('#download-subfilter option').remove();
     $('#download-subfilter').append('<option value="">&lt;All available records&gt;</option>');
-    $.each(indiciaData.optionalFilters[sharingType], function(filter, title) {
-      $('#download-subfilter').append('<option value="'+filter.replace(/^filter_/, '')+'">'+title+'</option>');
-    });
+    // Group downloads will use filter of their own rather than users
+    if ($('#download-type').val().substr(0,7)!=='R group') {
+      $.each(indiciaData.optionalFilters[sharingType], function (filter, title) {
+        $('#download-subfilter').append('<option value="' + filter.replace(/^filter_/, '') + '">' + title + '</option>');
+      });
+    }
     // if just the Select a filter option available, can hide the control
     if ($('#download-subfilter option').length===1) {
       $('#ctrl-wrap-download-subfilter').hide();

@@ -60,7 +60,8 @@ class iform_group_home extends iform_dynamic_report_explorer {
       'category' => 'Recording groups',
       'description'=>'A report page for recording groups. This is based on a dynamic report explorer, but it applies '.
           'an automatic filter to the page output based on a group_id URL parameter.',
-      'supportsGroups'=>true
+      'supportsGroups'=>true,
+      'recommended' => true
     );
   }
   
@@ -68,31 +69,30 @@ class iform_group_home extends iform_dynamic_report_explorer {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     if (empty($_GET['group_id']))
       return 'This page needs a group_id URL parameter.';
     global $base_url;
-    global $user;
     iform_load_helpers(array('data_entry_helper')); 
-    data_entry_helper::$javascript .= "indiciaData.nodeId=".$node->nid.";\n";
+    data_entry_helper::$javascript .= "indiciaData.nodeId=".$nid.";\n";
     data_entry_helper::$javascript .= "indiciaData.baseUrl='".$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.currentUsername='".$user->name."';\n";
+    data_entry_helper::$javascript .= "indiciaData.currentUsername='".hostsite_get_user_field('name')."';\n";
     //Translations for the comment that goes into occurrence_comments when a record is verified or rejected.
     data_entry_helper::$javascript .= 'indiciaData.verifiedTranslation = "'.lang::get('Verified')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rejectedTranslation = "'.lang::get('Rejected')."\";\n";
     self::$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    group_authorise_form($args, self::$auth['read']);
+    $isMember = group_authorise_form($args, self::$auth['read']);
     $group = data_entry_helper::get_population_data(array(
       'table'=>'group',
       'extraParams'=>self::$auth['read'] + array('id'=>$_GET['group_id'], 'view'=>'detail')
     ));
     $group = $group[0];
-    hostsite_set_page_title("$group[title]: {$node->title}");
+    hostsite_set_page_title("$group[title]: " . hostsite_get_page_title($nid));
     $def = json_decode($group['filter_definition'], true);
     $defstring='';
     // reconstruct this as a string to feed into dynamic report explorer
@@ -100,13 +100,18 @@ class iform_group_home extends iform_dynamic_report_explorer {
       if ($key) {
         $value = is_array($value) ? json_encode($value) : $value;
         $defstring .= "$key=$value\n";
-        if ($key==='indexed_location_id' || $key==='indexed_location_list' || $key==='location_id' || $key==='location_list')
+        if (!empty($value) && $key==='indexed_location_id' || $key==='indexed_location_list' || $key==='location_id' || $key==='location_list')
           $args['location_boundary_id'] = $value;
         elseif (($key==='taxon_group_id' || $key==='taxon_group_list') && strpos($value, ',')===FALSE) {
           // if the report is locked to a single taxon group, then we don't need taxonomy columns.
           $args['skipped_report_columns'] = array('taxon_group','taxonomy');
         }
       }
+    }
+    // If records private, need to show them on a group report but only if user is group member, which might
+    // not be the case if page accidentally made fully public.
+    if ($isMember && $group['private_records']==='t') {
+      $defstring .= "release_status=A\n";
     }
     if (empty($_GET['implicit'])) {
       // no need for a group user filter
@@ -121,7 +126,7 @@ class iform_group_home extends iform_dynamic_report_explorer {
     $args['param_presets'] .= "\n";
     if (!empty($args['hide_standard_param_filter']))
       data_entry_helper::$javascript .= "$('#standard-params').hide();\n";
-    return parent::get_form($args, $node);
+    return parent::get_form($args, $nid);
   }
 
 }

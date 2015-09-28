@@ -39,7 +39,8 @@ class iform_group_send_invites {
     return array(
       'title'=>'Send invites to a group',
       'category' => 'Recording groups',
-      'description'=>'A form for emailing out invites to recording groups.'
+      'description'=>'A form for emailing out invites to recording groups.',
+      'recommended' => true
     );
   }
   
@@ -61,12 +62,12 @@ class iform_group_send_invites {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     $reloadPath = self::getReloadPath();   
     data_entry_helper::$website_id=$args['website_id'];
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -163,11 +164,12 @@ class iform_group_send_invites {
           'website_id' => $args['website_id']
         );
         $s = submission_builder::build_submission($values, array('model' => 'group_invitation'));
-        $r = data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
-        $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-        $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+        $auth['write_tokens']['persist_auth'] = $idx < count($emails)-1;
+        data_entry_helper::forward_post_to('group_invitation', $s, $auth['write_tokens']);
+        $rootFolder = data_entry_helper::getRootFolder(true);
         $protocol = ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] != 'off') || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
-        $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . (empty($pathParam) ? '?' : '&') . 'token=' . $base . $idx;
+        $clean = strpos($rootFolder, '?') === false;
+        $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . ($clean ? '?' : '&') . 'token=' . $base . $idx;
         $body = $_POST['invite_message'] . "<br/><br/>" .
             '<a href="' . $acceptUrl . '">' . lang::get('Accept this invitation') . '</a>';
         $message = array(
@@ -179,7 +181,7 @@ class iform_group_send_invites {
               'MIME-Version' => '1.0',
               'Content-type' => 'text/html; charset=iso-8859-1',
               // prefer site's mail account in from, otherwise looks like spam
-              'From' => variable_get('site_mail', ''),
+              'From' => hostsite_get_config_value('site', 'mail'),
               'Reply-To' => $user->mail
             )
         );

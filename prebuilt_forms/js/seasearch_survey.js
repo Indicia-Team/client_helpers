@@ -20,7 +20,7 @@ jQuery(document).ready(function($) {
       runtimes : 'html5,flash,silverlight,html4',
       imageWidth : '200',
       uploadScript : indiciaData.uploadSettings.uploadScript,
-      destinationFolder : '/sites/all/modules/iform/client_helpers/upload/',
+      destinationFolder : indiciaData.uploadSettings.destinationFolder,
       finalImageFolder : indiciaData.warehouseUrl + 'upload/',
       jsPath : '/sites/all/modules/iform/media/js/',
       buttonTemplate : '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
@@ -75,8 +75,10 @@ jQuery(document).ready(function($) {
         // for existing data, put a hidden which stores the subsample's sample ID.
         if (typeof indiciaData.existingSubsampleData!=="undefined" && typeof indiciaData.existingSubsampleData[currentCount]!=="undefined") {
           existingSubsampleData=indiciaData.existingSubsampleData[currentCount];
-          $('#habitat-blocks').append('<input type="hidden" name="habitat_sample_id:'+addingHabitatIdx+'" value="'+
-              existingSubsampleData.sample_id+'" />');
+          if (typeof existingSubsampleData.sample_id!=="undefined") {
+            $('#habitat-blocks').append('<input type="hidden" name="habitat_sample_id:' + addingHabitatIdx + '" value="' +
+                existingSubsampleData.sample_id + '" />');
+          }
         }
         $(block).html(blockHtml);
         // clear the block ID so we don't duplicate
@@ -352,6 +354,7 @@ jQuery(document).ready(function($) {
 
   // Add the Dorset Integrated Seabed layers
   function addDorisLayers(div) {
+
     var seabed = new OpenLayers.Layer.XYZ(
       "Seabed",
       "http://doris.s3.amazonaws.com/bathyalltiles/${z}/${x}/${y}.png",

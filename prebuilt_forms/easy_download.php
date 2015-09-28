@@ -258,15 +258,15 @@ class iform_easy_download {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return string Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     // Do they have expert access?
-    $expert = (function_exists('user_access') && user_access($args['permission']));
-    $conn = iform_get_connection_details($node);
+    $expert = hostsite_user_has_permission($args['permission']);
+    $conn = iform_get_connection_details($nid);
     $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     // Find out which types of filters and formats are available to the user
     $filters = self::get_filters($args, $readAuth);
@@ -287,7 +287,7 @@ class iform_easy_download {
       return 'This download page is configured so that no download format options are available.';
     
     if (!empty($_POST))
-      self::do_download($args, $node);
+      self::do_download($args, $nid);
     
     iform_load_helpers(array('data_entry_helper'));
     $reload = data_entry_helper::get_reload_link_parts();  
@@ -320,11 +320,11 @@ class iform_easy_download {
         'label' => lang::get('Survey to include'),
         'table' => 'survey',
         'valueField' => 'id',
-        'captionField' => 'title',
+        'captionField' => 'full_title',
         'helpText' => 'Choose a survey, or <all> to not filter by survey.',
         'blankText' => '<all>',
         'class' => 'control-width-4',
-        'extraParams' => $readAuth + array('sharing' => 'data_flow', 'orderby'=>'title')
+        'extraParams' => $readAuth + array('sharing' => 'data_flow', 'orderby'=>'full_title')
       ));
       $r .= '</div>';
       // A survey picker when downloading data you are an expert for
@@ -342,11 +342,11 @@ class iform_easy_download {
         'label' => lang::get('Survey to include'),
         'table' => 'survey',
         'valueField' => 'id',
-        'captionField' => 'title',
+        'captionField' => 'full_title',
         'helpText' => 'Choose a survey, or <all> to not filter by survey.',
         'blankText' => '<all>',
         'class' => 'control-width-4',
-        'extraParams' => $readAuth + array('sharing' => 'verification', 'orderby'=>'title') + $surveysFilter
+        'extraParams' => $readAuth + array('sharing' => 'verification', 'orderby'=>'full_title') + $surveysFilter
       ));
       $r .= '</div>';
     }
@@ -420,24 +420,24 @@ class iform_easy_download {
   /**
    * Handles a request for download. Works out which type of request it is and calls the appropriate function.
    * @param array $args Form configuration arguments
-   * @param object $node Node object
+   * @param object $nid Node object's ID
    */
-  private static function do_download($args, $node) {
+  private static function do_download($args, $nid) {
     if ($_POST['format']===lang::get('Spreadsheet (CSV)'))
-      self::do_data_services_download($args, $node, 'csv');
+      self::do_data_services_download($args, $nid, 'csv');
     elseif ($_POST['format']===lang::get('Tab Separated File (TSV)'))
-      self::do_data_services_download($args, $node, 'tsv');
+      self::do_data_services_download($args, $nid, 'tsv');
     elseif ($_POST['format']===lang::get('Google Earth File'))
-      self::do_data_services_download($args, $node, 'kml');
+      self::do_data_services_download($args, $nid, 'kml');
     elseif ($_POST['format']===lang::get('GPS Track File'))
-      self::do_data_services_download($args, $node, 'gpx');
+      self::do_data_services_download($args, $nid, 'gpx');
     elseif ($_POST['format']===lang::get('NBN Format'))
-      self::do_data_services_download($args, $node, 'nbn');
+      self::do_data_services_download($args, $nid, 'nbn');
   }
   
-  private static function do_data_services_download($args, $node, $format) {
+  private static function do_data_services_download($args, $nid, $format) {
     iform_load_helpers(array('report_helper'));
-    $conn = iform_get_connection_details($node);
+    $conn = iform_get_connection_details($nid);
     $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (preg_match('/^library\/occurrences\/filterable/', $args["report_$format"])) 
       $filter = self::build_filter($args, $readAuth, $format, true);  
