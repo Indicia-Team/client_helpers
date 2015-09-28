@@ -245,20 +245,7 @@ class import_helper extends helper_base {
 
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
-    $savedFieldMappings=array();
-    //get the user's checked preference for the import page
-    if (function_exists('hostsite_get_user_field')) {
-      $json = hostsite_get_user_field('import_field_mappings');
-      if ($json===false) {
-        if (!hostsite_set_user_field('import_field_mappings', '[]'))
-          self::$rememberingMappings=false;
-      } else {
-        $json=trim($json);
-        $savedFieldMappings=json_decode(trim($json), true);
-      }
-    } else
-      // host does not support user profiles, so we can't remember mappings
-      self::$rememberingMappings=false;
+    $savedFieldMappings = self::getSavedFieldMappings($options, $settings);
     //  if the user checked the Remember All checkbox need to remember this setting
     $checkedRememberAll=isset($savedFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
 
@@ -395,6 +382,47 @@ class import_helper extends helper_base {
     self::$javascript .= "update_required_fields();\n";
     self::$javascript .= "$('#entry_form select').change(function() {detect_duplicate_fields(); update_required_fields();});\n";
     return $r;
+  }
+
+  /**
+   * Returns an array of saved field mappings that were previously stored in the user profile,
+   * or mappings that were provided via the page's configuration form.
+   * If the user profile does not support saving mappings then sets self::$rememberingMappings to false.
+   * @param array $options Options array passed to the import helper which might contain a fieldMap.
+   * @param array $settings Settings array for this import which might contain the survey_id.
+   * @return array|mixed
+   */
+  private static function getSavedFieldMappings($options, $settings) {
+    $savedFieldMappings=array();
+    //get the user's checked preference for the import page
+    if (function_exists('hostsite_get_user_field')) {
+      $json = hostsite_get_user_field('import_field_mappings');
+      if ($json===false) {
+        if (!hostsite_set_user_field('import_field_mappings', '[]'))
+          self::$rememberingMappings=false;
+      } else {
+        $json=trim($json);
+        $savedFieldMappings=json_decode(trim($json), true);
+      }
+    } else
+      // host does not support user profiles, so we can't remember mappings
+      self::$rememberingMappings=false;
+    if (!empty($settings['survey_id'] && !empty($options['fieldMap']))) {
+      foreach($options['fieldMap'] as $surveyFieldMap) {
+        if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
+            $surveyFieldMap['survey_id'] == $settings['survey_id']) {
+          // The fieldMap config is a list of database fields with optional '=column titles' added to them.
+          // Need a list of column titles mapped to fields so swap this around.
+          $fields = self::explode_lines($surveyFieldMap['fields']);
+          foreach ($fields as $field) {
+            $tokens = explode('=', $field);
+            if (count($tokens)===2)
+              $savedFieldMappings[$tokens[1]] = $tokens[0];
+          }
+        }
+      }
+    }
+    return $savedFieldMappings;
   }
 
   /**
