@@ -39,6 +39,11 @@ class import_helper extends helper_base {
   private static $rememberingMappings=true;
 
   /**
+   * @var array List of field to column mappings that we managed to set automatically
+   */
+  private static $automaticMappings=array();
+
+  /**
    * Outputs an import wizard. The csv file to be imported should be available in the $_POST data, unless
    * the existing_file option is specified.
    * Additionally, if there are any preset values which apply to each row in the import data then you can
@@ -89,7 +94,7 @@ class import_helper extends helper_base {
     } elseif ($_POST['import_step']==1) {
       return self::upload_mappings_form($options);
     } elseif ($_POST['import_step']==2) {
-      return self::run_upload($options);
+      return self::run_upload($options, $_POST);
     }
   }
 
@@ -245,9 +250,9 @@ class import_helper extends helper_base {
 
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
-    $savedFieldMappings = self::getSavedFieldMappings($options, $settings);
+    $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     //  if the user checked the Remember All checkbox need to remember this setting
-    $checkedRememberAll=isset($savedFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
+    $checkedRememberAll=isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
 
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
       '<p>'.lang::get('column_mapping_instructions').'</p>'.
@@ -267,11 +272,15 @@ class import_helper extends helper_base {
 });\n";
     }
     $r .= '</tr></thead><tbody>';
+    $colCount = 0;
     foreach ($columns as $column) {
-      $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
-      $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
-      $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $savedFieldMappings);
-      $r .=  "</select></td></tr>\n";
+      if (!empty(trim($column))) {
+        $colCount ++;
+        $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
+        $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
+        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings);
+        $r .= "</select></td></tr>\n";
+      }
     }
     $r .= '</tbody>';
     $r .= '</table>';
@@ -282,6 +291,10 @@ class import_helper extends helper_base {
     $r .= '<input type="hidden" name="import_step" value="2" />';
     $r .= '<input type="submit" name="submit" id="submit" value="'.lang::get('Upload').'" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
+    if (!empty($options['skipMappingIfPossible']) && count(self::$automaticMappings) === $colCount) {
+       // Abort the mappings page as we don't need it
+      return self::run_upload($options, self::$automaticMappings);
+    }
     
     self::$javascript .= "function detect_duplicate_fields() {
       var valueStore = [];
@@ -385,15 +398,15 @@ class import_helper extends helper_base {
   }
 
   /**
-   * Returns an array of saved field mappings that were previously stored in the user profile,
+   * Returns an array of field to column title mappings that were previously stored in the user profile,
    * or mappings that were provided via the page's configuration form.
    * If the user profile does not support saving mappings then sets self::$rememberingMappings to false.
    * @param array $options Options array passed to the import helper which might contain a fieldMap.
    * @param array $settings Settings array for this import which might contain the survey_id.
    * @return array|mixed
    */
-  private static function getSavedFieldMappings($options, $settings) {
-    $savedFieldMappings=array();
+  private static function getAutoFieldMappings($options, $settings) {
+    $autoFieldMappings=array();
     //get the user's checked preference for the import page
     if (function_exists('hostsite_get_user_field')) {
       $json = hostsite_get_user_field('import_field_mappings');
@@ -402,7 +415,7 @@ class import_helper extends helper_base {
           self::$rememberingMappings=false;
       } else {
         $json=trim($json);
-        $savedFieldMappings=json_decode(trim($json), true);
+        $autoFieldMappings=json_decode(trim($json), true);
       }
     } else
       // host does not support user profiles, so we can't remember mappings
@@ -417,12 +430,12 @@ class import_helper extends helper_base {
           foreach ($fields as $field) {
             $tokens = explode('=', $field);
             if (count($tokens)===2)
-              $savedFieldMappings[$tokens[1]] = $tokens[0];
+              $autoFieldMappings[$tokens[1]] = $tokens[0];
           }
         }
       }
     }
-    return $savedFieldMappings;
+    return $autoFieldMappings;
   }
 
   /**
@@ -485,8 +498,9 @@ class import_helper extends helper_base {
   /**
    * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
    * @param array $options Array of options passed to the import control.
+   * @param array $mappings List of column title to field mappings
    */
-  private static function run_upload($options) {
+  private static function run_upload($options, $mappings) {
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
@@ -501,14 +515,14 @@ class import_helper extends helper_base {
       // initiate local javascript to do the upload with a progress feedback
       $r = '
   <div id="progress" class="ui-widget ui-widget-content ui-corner-all">
-  <div id="progress-bar" style="width: 400"></div>
+  <div id="progress-bar" style="width: 400px"></div>
   <div id="progress-text">Preparing to upload.</div>
   </div>
   ';
-      $metadata = array('mappings' => json_encode($_POST));
+      $metadata = array('mappings' => json_encode($mappings));
       // cache the mappings
       if (function_exists('hostsite_set_user_field')) {
-        foreach ($_POST as $column => $setting) {
+        foreach ($mappings as $column => $setting) {
           $userSettings[str_replace("_", " ", $column)] = $setting;
         }
         //if the user has not selected the Remember checkbox for a column setting and the Remember All checkbox is not selected
@@ -605,9 +619,9 @@ class import_helper extends helper_base {
   * @param string $model Name of the model
   * @param array  $fields List of the available possible import columns
   * @param string $column The name of the column from the CSV file currently being worked on.
-  * @param array $savedFieldMappings An array containing the user's custom saved settings for the page.
+  * @param array $autoFieldMappings An array containing the automatic field mappings for the page.
   */
-  private static function get_column_options($model, $fields, $column, $savedFieldMappings) {
+  private static function get_column_options($model, $fields, $column, $autoFieldMappings) {
     $skipped = array('id', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
       'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning', 'deleted', 'image_path');
     //strip the column of spaces for use in html ids
@@ -667,8 +681,8 @@ class import_helper extends helper_base {
         //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
         //This means only the first occurrence for the needle is exploded which is desirable in the situation as the field caption
         //contains colons in some situations.
-        if (!empty($savedFieldMappings[$column]) && $savedFieldMappings[$column]!=='<Not imported>') {
-          $savedData = explode(':',$savedFieldMappings[$column],2);
+        if (!empty($autoFieldMappings[$column]) && $autoFieldMappings[$column]!=='<Not imported>') {
+          $savedData = explode(':',$autoFieldMappings[$column],2);
           $savedSectionHeading = $savedData[0];
           $savedMainCaption = $savedData[1];
         } else {
@@ -684,7 +698,7 @@ class import_helper extends helper_base {
           $itWasSaved[$column] = $saveDetectRulesResult['itWasSaved'];
         } else {
           //only use the auto field selection rules to select the drop-down if there isn't a saved option
-          if (!isset($savedFieldMappings[$column])) {
+          if (!isset($autoFieldMappings[$column])) {
             $nonSaveDetectRulesResult = self::auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved[$column], false);
             $selected = $nonSaveDetectRulesResult['selected'];
           }
@@ -696,6 +710,8 @@ class import_helper extends helper_base {
         } else 
           $optionID = $idColumn.'Normal';
         $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
+        if ($selected)
+          self::$automaticMappings[$column] = $field;
       }
       
       // if we have got an option for this field, add to the list
@@ -723,7 +739,7 @@ class import_helper extends helper_base {
         $r .= $option;
       }
     }  
-    $r = self::items_to_draw_once_per_import_column($r, $column, $itWasSaved, $savedFieldMappings, $multiMatch);
+    $r = self::items_to_draw_once_per_import_column($r, $column, $itWasSaved, isset($autoFieldMappings['RememberAll']), $multiMatch);
     return $r;
   }
 
@@ -802,12 +818,12 @@ class import_helper extends helper_base {
   * @param string $r The HTML to be returned.
   * @param string $column Column from the import CSV file we are currently working with
   * @param integer $itWasSaved This is 1 if a setting is saved for the column and the column would not have been automatically calculated as that value anyway.
-  * @param array $savedFieldMappings An array containing the user' preferences for the import page.
+  * @param boolean $rememberAll Is the remember all mappings option set?.
   * @param integer $multiMatch Array of columns where there are multiple matches for the column and this cannot be resolved.
   * @return string HTMl string 
   */
-  private static function items_to_draw_once_per_import_column($r, $column, $itWasSaved, $savedFieldMappings, $multiMatch) {
-    $checked = ($itWasSaved[$column] == 1 || isset($savedFieldMappings['RememberAll'])) ? ' checked="checked"' : '';
+  private static function items_to_draw_once_per_import_column($r, $column, $itWasSaved, $rememberAll, $multiMatch) {
+    $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
     $optionID = str_replace(" ", "", $column).'Normal';
     $r = "<option value=\"&lt;Not imported&gt;\">&lt;".lang::get('Not imported').'&gt;</option>'.$r.'</optgroup>';
     if (self::$rememberingMappings) 
@@ -819,7 +835,7 @@ class import_helper extends helper_base {
           "Any alterations you make to this default selection in the future will also be remembered until you deselect the checkbox.'></td>";
 
     if ($itWasSaved[$column] == 1) {
-      $r .= "<tr><td></td><td class=\"note\">The above mapping is a remembered previous choice.</td></tr>";
+      $r .= "<tr><td></td><td class=\"note\">Please check the suggested mapping above is correct.</td></tr>";
     }
     //If we find there is a match we cannot resolve uniquely, then give the user a checkbox to reduce the drop-down to suggestions only.
     //Do this by hiding items whose class has "Normal" at the end as these are the items that do not contain the duplicates.
