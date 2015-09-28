@@ -283,7 +283,7 @@ class import_helper extends helper_base {
     foreach ($columns as $column) {
       $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
       $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
-      $r .= self::get_column_options($options['model'], $unlinked_fields, $column,' ', $savedFieldMappings);
+      $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $savedFieldMappings);
       $r .=  "</select></td></tr>\n";
     }
     $r .= '</tbody>';
@@ -577,10 +577,9 @@ class import_helper extends helper_base {
   * @param string $model Name of the model
   * @param array  $fields List of the available possible import columns
   * @param string $column The name of the column from the CSV file currently being worked on.
-  * @param string $selected The name of the initially selected field if there is one.
   * @param array $savedFieldMappings An array containing the user's custom saved settings for the page.
   */
-  private static function get_column_options($model, $fields, $column, $selected='', $savedFieldMappings) {
+  private static function get_column_options($model, $fields, $column, $savedFieldMappings) {
     $skipped = array('id', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
       'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning', 'deleted', 'image_path');
     //strip the column of spaces for use in html ids
