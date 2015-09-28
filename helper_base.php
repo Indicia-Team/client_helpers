@@ -1114,6 +1114,8 @@ class helper_base extends helper_config {
           $extras[$param] = ($popOpts[0]=='direct' ? $value : (is_array($value) ? implode(',',$value) : $value));
           // $extras[$param] = $value;
       }
+      if (!isset($extras['orderby']))
+        $extras['orderby'] = $popOpts[3];
       $ctrlOptions = array_merge($ctrlOptions, array(
         'valueField'=>$popOpts[2],
         'captionField'=>$popOpts[3],
