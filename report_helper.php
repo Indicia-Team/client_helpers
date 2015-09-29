@@ -61,7 +61,7 @@ class report_helper extends helper_base {
       $output = json_decode($response['output'], true);
       if (isset($output['error']))
         return $output['error'];
-      $reports .= self::get_report_list_level($options['id'], $options['default'], $output);
+      $reports .= self::get_report_list_level($options['id'], $options['fieldname'], $options['default'], $output);
     }
     self::$javascript .= '$("#'.$options['id'].' > ul").treeview({collapsed: true});'."\n";
     self::$javascript .= "indiciaData.reportList=".$response['output'].";\n";
@@ -81,14 +81,14 @@ class report_helper extends helper_base {
    * @return string HTML for the unordered list containing the level.
    * @access private
    */
-  private static function get_report_list_level($ctrlId, $default, $list) {
+  private static function get_report_list_level($ctrlId, $fieldName, $default, $list) {
     $r = '';
     foreach($list as $name=>$item) {
       if ($item['type']=='report') {
         $id = 'opt_'.str_replace('/','_',$item['path']);
         $checked = $item['path']==$default ? ' checked="checked"' : '';
         $r .= '<li><label class="ui-helper-reset auto">'.
-            '<input type="radio" id="'.$id.'" name="'.$ctrlId.'" value="'.$item['path'].
+            '<input type="radio" id="'.$id.'" name="'.$fieldName.'" value="'.$item['path'].
             '" onclick="displayReportMetadata(\'' . $ctrlId . '\', \'' . $item['path'] . '\');" ' . $checked . '/>'.
             htmlspecialchars($item['title']) .
             "</label></li>\n";
@@ -96,7 +96,7 @@ class report_helper extends helper_base {
       else {
         $name = ucwords(str_replace('_', ' ', $name));
         $r .= "<li>$name\n";
-        $r .= self::get_report_list_level($ctrlId, $default, $item['content']);
+        $r .= self::get_report_list_level($ctrlId, $fieldName, $default, $item['content']);
         $r .= "</li>\n";
       }
     }
