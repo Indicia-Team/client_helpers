@@ -53,6 +53,10 @@ class report_helper extends helper_base {
     $reports = '';
     $response = self::http_post(self::$base_url.'index.php/services/report/report_list?nonce='.
         $options['readAuth']['nonce'].'&auth_token='.$options['readAuth']['auth_token']);
+    self::$js_read_tokens = array(
+      'auth_token'=>$options['readAuth']['auth_token'],
+      'nonce'=>$options['readAuth']['nonce']
+    );
     if (isset($response['output'])) {
       $output = json_decode($response['output'], true);
       if (isset($output['error']))
@@ -64,6 +68,7 @@ class report_helper extends helper_base {
     self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').click();'."\n";
     self::$javascript .= '$(\'#'.$options['id'].' > ul input[checked="checked"]\').parents("#'.$options['id'].' ul").show();'."\n";
     $options['reports']=$reports;
+    $options['moreinfo']=lang::get('More info');
     return self::apply_template('report_picker', $options);
   }
 
