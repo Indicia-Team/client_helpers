@@ -607,7 +607,7 @@ idlist=';
   public static function ajax_details($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
     $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_samples/record_data' : $params['record_details_report'];
-    $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
+    $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_samples/record_data_attributes' : $params['record_attrs_report'];
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = array(
@@ -638,7 +638,6 @@ idlist=';
       if ($col==='email' && !empty($record[$col]))
         $email=$record[$col];
     }
-
     // Do the custom attributes
     $options = array(
       'dataSource' => $attrs_report,
