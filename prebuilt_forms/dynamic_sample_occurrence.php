@@ -45,6 +45,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static $group = false;
   
   protected static $availableForGroups = false;
+  protected static $limitToGroupId = 0;
   
   /**
    * The list of attributes loaded for occurrences. Keep a class level variable, so that we can track the ones we have already
@@ -738,6 +739,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
     self::$availableForGroups = hostsite_get_node_field_value($nid, 'available_for_groups');
+    self::$limitToGroupId = hostsite_get_node_field_value($nid, 'limit_to_group_id');
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) {
         // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrupt the data by accident
@@ -1113,8 +1115,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       if (empty(data_entry_helper::$entity_to_load['sample:group_title'])) {
         data_entry_helper::$entity_to_load['sample:group_title'] = self::$group['title'];
       }
-      $msg=empty(self::$loadedSampleId) ? 'This form will be posted to the <strong>{1}</strong> group.' : 'This form was posted to the <strong>{1}</strong> group.';
-      $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
+      // if a possibility of confusion when using this form, add info to clarify which group you are posting to
+      if (empty(self::$limitToGroupId)) {
+        $msg = empty(self::$loadedSampleId) ?
+            'This records you enter using this form will be added to the <strong>{1}</strong> group.' :
+            'The records on this form are part of the <strong>{1}</strong> group.';
+        $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
+      }
     } elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
       // Group enabled form being used to add new records, but no group specified in URL path, so give 
       // the user a chance to pick from their list of possible groups for this form.
