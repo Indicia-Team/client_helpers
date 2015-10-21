@@ -738,8 +738,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
-    self::$availableForGroups = hostsite_get_node_field_value($nid, 'available_for_groups');
-    self::$limitToGroupId = hostsite_get_node_field_value($nid, 'limit_to_group_id');
+    self::$availableForGroups = $args['available_for_groups'];
+    self::$limitToGroupId = $args['limit_to_group_id'];
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) {
         // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrupt the data by accident
