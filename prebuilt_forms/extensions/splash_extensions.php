@@ -246,6 +246,7 @@ class extension_splash_extensions {
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
       $options['report']='reports_for_prebuilt_forms/Splash/get_plots_for_square_id';
+      $options['extraParams']['current_user_id']=$currentUserId;
       if (!empty($options['plotNumberAttrId']))
         $options['extraParams']['plot_number_attr_id']=$options['plotNumberAttrId'];
       //Create the drop-down for the plot
