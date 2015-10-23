@@ -102,6 +102,14 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
           'default'=>false,
           'group'=>'Splash Squares Page Setup'
         ),
+        array(
+          'name'=>'include_delete_button',
+          'caption'=>'Include a delete button on the page when appropriate?',
+          'description'=>'Should a delete button be displayed on the page when it is appropriate to do so?',
+          'type'=>'boolean',
+          'default'=>false,
+          'group'=>'Splash Squares Page Setup'
+        ),
       )
     );
     return $retVal;
@@ -115,6 +123,9 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
     //Admin can specify an area of the page to disable in the form structure if they wish. This area should be enclosed with a div with the id "disableDiv"
     data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, select').attr('disabled','disabled');\n"; 
     $r = parent::get_form($args, $nid);
+    if (empty($args['include_delete_button']) || $args['include_delete_button']==false) {
+      data_entry_helper::$javascript .= "$('#delete-button').hide();\n"; 
+    }
     //The system page configuration includes a setting to set the default spatial reference system to British National Grid, but
     //we also need to hide the field so the user cannot change it.
     if ($args['show_grid_system_selector']==false)
