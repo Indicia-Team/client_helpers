@@ -2027,6 +2027,8 @@ else
         'readAuth'=>$auth['read'],
         'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
       ));
+      //Need to escape characters otherwise a name like O'Brian will break the page HTML
+      $defaultUserData[0]['fullname_firstname_first']=addslashes($defaultUserData[0]['fullname_firstname_first']);
       data_entry_helper::$javascript .= "$('#sample\\\\:recorder_names').val('".$defaultUserData[0]['fullname_firstname_first']."');";
     }
     return data_entry_helper::textarea(array_merge(array(
