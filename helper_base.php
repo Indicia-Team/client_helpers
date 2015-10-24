@@ -1076,6 +1076,22 @@ class helper_base extends helper_config {
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" class=\"".$fieldPrefix."idlist-param\" />\n";
     } elseif (isset($options['extraParams']) && array_key_exists($key, $options['extraParams'])) {
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" />\n";
+      //if the report parameter is a lookup and its population_call is set to species_autocomplete
+      //Options such as @speciesIncludeBothNames can be included as a [params] control form structure
+      //option
+    } elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {  
+      $ctrlOptions['extraParams']=$options['readAuth'];
+      if (empty($options['speciesCacheLookup'])||$options['speciesCacheLookup']==false)
+        $ctrlOptions['cacheLookup']=false;
+      else 
+        $ctrlOptions['cacheLookup']=true;
+      if (!empty($options['speciesTaxonListId']))
+        $ctrlOptions['extraParams']['taxon_list_id']=$options['speciesTaxonListId'];
+      if (!empty($options['speciesIncludeBothNames'])&&$options['speciesIncludeBothNames']==true)
+        $ctrlOptions['speciesIncludeBothNames']=true;
+      if (!empty($options['speciesIncludeTaxonGroup'])&&$options['speciesIncludeTaxonGroup']==true)
+        $ctrlOptions['speciesIncludeTaxonGroup']=true;
+      $r .= data_entry_helper::species_autocomplete($ctrlOptions);
     } elseif ($info['datatype']=='lookup' && isset($info['population_call'])) {
       // population call is colon separated, of the form direct|report:table|view|report:idField:captionField:params(key=value,key=value,...)
       $popOpts = explode(':', $info['population_call']);
@@ -1128,14 +1144,7 @@ class helper_base extends helper_config {
           ));
         }
       }
-      //If user has set option, then make any lookup parameter an autocomplete, note that autocomplete controls also have a "selectMode"
-      //which is why there is a further option provided if you want to use that mode.
-      if ((!empty($options['forceLookupParamAutocomplete']) && $options['forceLookupParamAutocomplete']==true)) {
-        if (!empty($options['forceLookupParamAutocompleteSelectMode']) && $options['forceLookupParamAutocompleteSelectMode']==true)
-          $ctrlOptions['selectMode']=true;
-        $r .= data_entry_helper::autocomplete($ctrlOptions);
-      } else 
-        $r .= data_entry_helper::select($ctrlOptions);
+      $r .= data_entry_helper::select($ctrlOptions);
     } elseif ($info['datatype']=='lookup' && isset($info['lookup_values'])) {
       // Convert the lookup values into an associative array
       $lookups = explode(',', $info['lookup_values']);
@@ -1148,14 +1157,7 @@ class helper_base extends helper_config {
         'blankText'=>'<'.lang::get('please select').'>',
         'lookupValues' => $lookupsAssoc
       ));
-      //If user has set option, then make any lookup parameter an autocomplete, note that autocomplete controls also have a "selectMode"
-      //which is why there is a further option provided if you want to use that mode.
-      if ((!empty($options['forceLookupParamAutocomplete']) && $options['forceLookupParamAutocomplete']==true)) {
-        if (!empty($options['forceLookupParamAutocompleteSelectMode']) && $options['forceLookupParamAutocompleteSelectMode']==true)
-          $ctrlOptions['selectMode']=true;
-        $r .= data_entry_helper::autocomplete($ctrlOptions);
-      } else 
-        $r .= data_entry_helper::select($ctrlOptions);
+      $r .= data_entry_helper::select($ctrlOptions);
     } elseif ($info['datatype']=='date') {
       $r .= data_entry_helper::date_picker($ctrlOptions);
     } elseif ($info['datatype']=='geometry') {
