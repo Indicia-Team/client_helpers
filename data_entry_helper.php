@@ -4921,18 +4921,18 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         $options['caption']=lang::get($options['captionNext']).' &gt;';
         $r .= str_replace('{content}', str_replace("\n", "", self::apply_template('button', $options)), $indicia_templates['jsWrap']);
       } else {
-        if ($options['includeDeleteButton']) {
-          $options['class']=$buttonClass." tab-delete";
-          $options['id']='tab-delete';
-          $options['caption']=lang::get($options['captionDelete']);
-          $options['name']='delete-button';
-          $r .= self::apply_template('submitButton', $options);
-        }
         if ($options['includeSubmitButton']) {
           $options['class']=$buttonClass." tab-submit";
           $options['id']='tab-submit';
           $options['caption']=lang::get($options['captionSave']);
           $options['name']='action-submit';
+          $r .= self::apply_template('submitButton', $options);
+        }
+        if ($options['includeDeleteButton']) {
+          $options['class']=$buttonClass." tab-delete";
+          $options['id']='tab-delete';
+          $options['caption']=lang::get($options['captionDelete']);
+          $options['name']='delete-button';
           $r .= self::apply_template('submitButton', $options);
         }
       }

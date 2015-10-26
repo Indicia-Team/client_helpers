@@ -227,6 +227,7 @@ class iform_dynamic_person extends iform_dynamic {
    */
   protected static function getSubmitButtons($args) {
     $r = '';
+    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Submit')."\" />\n";
     if (!empty(data_entry_helper::$entity_to_load['person:id'])) {
       // use a button here, not input, as Chrome does not post the input value
       $r .= '<button type="submit" class="indicia-button" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
@@ -242,7 +243,6 @@ class iform_dynamic_person extends iform_dynamic {
       });\n";
        */
     }
-    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Submit')."\" />\n";
     return $r;
   }
   
