@@ -592,7 +592,7 @@ class extension_splash_extensions {
       map_helper::$javascript .= "indiciaData.freeDrawPlotTypeNames=".json_encode(explode(',',$options['freeDrawPlotTypeNames'])).";";
     //The user provides the square sizes associated with the various plot types as a comma seperated option list.
     $squareSizesOptionsSplit=explode(',',$options['squareSizes']);
-    //Eash option consists of the following formats
+    //Each option consists of the following formats
     //<plot type id>|<square side lengh> or <plot type id>|<rectangle width>|<rectangle length> or <plot type id>|0 (for drawPolygon plots)
     //So these options need splitting into an array for use
     foreach ($squareSizesOptionsSplit as $squareSizeOption) {
@@ -607,27 +607,10 @@ class extension_splash_extensions {
      else
         $squareSizesArray[$squareSizeSingleOptionSplit[0]]=array($squareSizeSingleOptionSplit[1],$squareSizeSingleOptionSplit[2]);
     }    
-    //Javascript needs to know the square sizes for each location type (note that squares can actually be rectangles now code is extended for PSS project)
+    //Javascript needs to know the square sizes for each location type (note that squares can actually be rectangles if required now, however code still refers to
+    //squares as this was a late enhancement)
     $squareSizesForJavascript=json_encode($squareSizesArray);
-    map_helper::$javascript .= "indiciaData.squareSizes=$squareSizesForJavascript;\n";
-    if (!empty($options['pssMode'])) {
-      //In PSS, the size of the plot types are displayed in fields on screen.
-      map_helper::$javascript .= "indiciaData.plotWidthAttrId='".$options['plotWidthAttrId']."';\n";
-      map_helper::$javascript .= "indiciaData.plotLengthAttrId='".$options['plotLengthAttrId']."';\n";
-      map_helper::$javascript .= "indiciaData.pssMode=true;\n";
-    } else {
-      map_helper::$javascript .= "indiciaData.noSizeWarning='Please select plot type from the drop-down.';\n";
-    }
-    //In edit mode, we need to manually load the plot geom
-    map_helper::$javascript .= "$('#imp-boundary-geom').val($('#imp-geom').val());\n";
-    //On NPMS/PSS system there is a checkbox for enhanced mode (when this isn't selected, plots are not configurable and default to a 3 x 3 square.
-    //Note that on splash there is no enhanced mode so plots are fully configurable.
-    if (!empty($options['enhancedModeCheckboxAttrId']))
-      map_helper::$javascript .= "indiciaData.enhancedModeCheckboxAttrId=".$options['enhancedModeCheckboxAttrId'].";\n";
-    //On PSS/NPMS non-enhanced mode the user can define some attributes that should be hidden from view.
-    //Comma separated list.
-    if (!empty($options['hideLocationAttrsInSimpleMode']))
-      map_helper::$javascript .= "indiciaData.hideLocationAttrsInSimpleMode='".$options['hideLocationAttrsInSimpleMode']."';\n";
+    self::draw_map_plot_setup_indiciaData($options,$squareSizesForJavascript);
     //If enhanced mode is toggled, then clear the map and also run the code as if the plot type has changed.
     //This allows the plot drawing to be reset for a new mode.
     map_helper::$javascript .= "  
@@ -650,6 +633,11 @@ class extension_splash_extensions {
     });
     //Don't use $(document).ready as that fires before the indiciaData.mapdiv is setup
     $(window).load(function() {
+      //NPMS/PSS used to use on-screen attributes to define the plot size, they changed their minds on this so that
+      //users can no longer see the values to change on screen, however I have left the engine for this intact in case they want to go
+      //back, so simply hide the on-screen attributes.
+      $('[id^=\"container-locAttr\\\\:'+indiciaData.plotWidthAttrId+'\"]').hide();
+      $('[id^=\"container-locAttr\\\\:'+indiciaData.plotLengthAttrId+'\"]').hide();
       plot_type_dropdown_change();
       if (!$('#location\\\\:location_type_id').val()) {
         indiciaData.plotWidthLength='';
@@ -667,12 +655,78 @@ class extension_splash_extensions {
     data_entry_helper::$javascript .= '
     $("#save-button").click(function() { 
       if (!$("#imp-boundary-geom").val()) {
-        alert("Please select a plot type and create a plot before continuing."); 
+        alert("Please select a plot type and then select a plot position on the map before continuing. If you are using a Linear plot in Enhanced Mode, you will also need to make sure the plot is manually drawn onto the map."); 
         return false; 
       } else { 
         $("#entry_form").submit(); 
       }
     });';
+  }
+  
+  /* Function to setup the data to pass to javascript in the draw_map_plot function */
+  private static function draw_map_plot_setup_indiciaData($options,$squareSizesForJavascript) {
+    map_helper::$javascript .= "indiciaData.squareSizes=$squareSizesForJavascript;\n";
+    if (!empty($options['pssMode'])) {
+      //In NPMS/PSS, the size of the plot types used to be shown on screen, this is no longer the case, however the basic code of how this works remains intact
+      //in case the client changes their minds. These attributes simply get hidden on screen now, but we could revert to displaying them if needed.
+      map_helper::$javascript .= "indiciaData.plotWidthAttrId='".$options['plotWidthAttrId']."';\n";
+      map_helper::$javascript .= "indiciaData.plotLengthAttrId='".$options['plotLengthAttrId']."';\n";
+      //When use linear (free draw) plots, we have two extra boxes to fill if for the start and end grid references
+      //of the plot which are not otherwise saved because it is free draw.
+      //Applies to both "normal" and enhanced modes.
+      if (!empty($options['linearGridRef1'])&&!empty($options['linearGridRef2'])) {
+        map_helper::$javascript .= "indiciaData.linearGridRef1='".$options['linearGridRef1']."';\n";
+        map_helper::$javascript .= "indiciaData.linearGridRef2='".$options['linearGridRef2']."';\n";
+      }      
+      //When using square plots, we have an extra box for the user to fill-in the south-west corner of the plot.
+      if (!empty($options['swGridRef'])) {
+        map_helper::$javascript .= "indiciaData.swGridRef='".$options['swGridRef']."';\n";
+      }
+      map_helper::$javascript .= "indiciaData.pssMode=true;\n";
+    }
+    map_helper::$javascript .= "indiciaData.noSizeWarning='Please select plot type from the drop-down.';\n";
+    //In edit mode, we need to manually load the plot geom
+    map_helper::$javascript .= "$('#imp-boundary-geom').val($('#imp-geom').val());\n";
+    //On NPMS/PSS system there is a checkbox for enhanced mode (when this isn't selected, plots are not configurable and default to a 3 x 3 square.
+    //Note that on splash there is no enhanced mode so plots are fully configurable.
+    if (!empty($options['enhancedModeCheckboxAttrId']))
+      map_helper::$javascript .= "indiciaData.enhancedModeCheckboxAttrId=".$options['enhancedModeCheckboxAttrId'].";\n";
+    //On PSS/NPMS non-enhanced mode the user can define some attributes that should be hidden from view.
+    //Comma separated list.
+    if (!empty($options['hideLocationAttrsInSimpleMode']))
+      map_helper::$javascript .= "indiciaData.hideLocationAttrsInSimpleMode='".$options['hideLocationAttrsInSimpleMode']."';\n";
+  }
+  
+  /*
+   * Very similar to dynamic_report_explorer report grid control, however in this case the control automatically switches on
+   * map zooming for results if the user is using a post code search. This is because we don't want to use this mode when the user
+   * is returning all squares as it doesn't seem to work properly on live, it looks likely that because there are so many squares, then it tries
+   * to draw the zoom before all the data is returned and therefore draws the zoom in the wrong place. 
+   */
+  public static function unallocated_squares_grid($auth, $args, $tabalias, $options, $path) {
+    if (!isset($options['reportGridNumber'])) {
+      drupal_set_message('Please fill in the report grid number option for the unallocated_squares_grid control, starting with 0 for the first grid on the page');
+      return false;
+    }
+    iform_load_helpers(array('report_helper'));
+    $args['report_name']='';
+    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'reportGroup'=>'dynamic',
+        'autoParamsForm'=>false,
+        'sharing'=>$sharing,
+        'ajax'=>true,
+        'id'=>'report-grid-'.$options['reportGridNumber']
+      ),
+      $options
+    );
+    if (!empty($_GET['dynamic-post_code_geom'])&&!empty($_GET['dynamic-distance_from_post_code'])) {
+      $reportOptions['sendOutputToMap']=true;
+      $reportOptions['zoomMapToOutput']=true;
+    }
+    return report_helper::report_grid($reportOptions);
   }
  
   /*
@@ -1283,6 +1337,8 @@ class extension_splash_extensions {
    * @rolesExemptFromApproval Optional comma separated list of user roles that do not need to be part of the square approval process
    * @excludedSquareAttrId Optional location attribute id if you need to exclude squares where the excluded flag has been set.
    * @dontReturnAllocatedLocations Optional, when true then locations that are already allocated to another user are not available for selection (maximum of one location allocation per person)
+   * @maxAllocationForLocationAttrId Optional, Id of attribute that holds the maximum number of people that can be allocated to a location before it becomes hidden for selection. Provide this attribute id to enable this option.
+   * An example might be an event location, where only a certain number of people can attend.
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
     global $user;
@@ -1337,6 +1393,8 @@ class extension_splash_extensions {
       $extraParams['excluded_square_attr_id']=$options['excludedSquareAttrId'];
     if (!empty($options['dontReturnAllocatedLocations']))
       $extraParams['dont_return_allocated_locations']=$options['dontReturnAllocatedLocations'];
+    if (!empty($options['maxAllocationForLocationAttrId']))
+      $extraParams['max_allocation_for_location_attr_id']=$options['maxAllocationForLocationAttrId'];
     //If we don't want to automatically get the location id from the URL, then display a drop-down of locations the user can select from   
     if (empty($locationIdFromURL)) {
       $r .= '<label>'.$locationDropDownLabel.'</label> ';
@@ -1496,5 +1554,14 @@ class extension_splash_extensions {
     }
     $r .= '</select>';
     return '<label>User : </label>'.$r.'<br>';
+  }
+  
+  /*
+   * On the Request a Square page we need to hide the column filter on the My Allocations grid only
+   */
+  public static function hide_my_allocations_report_grid_filter($auth, $args, $tabalias, $options, $path) {
+    data_entry_helper::$javascript .= "
+    $('#col-filter-location_name-report-grid-0').hide()
+    ";
   }
 }
