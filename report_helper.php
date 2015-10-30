@@ -198,6 +198,9 @@ class report_helper extends helper_base {
   *      {rootFolder} to be replaced by the root folder of the site, in this case it excludes the path parameter used in Drupal when 
   *      dirty URLs are used (since this is a direct link to a URL). 
   *  - visible: true or false, defaults to true
+  *  - responsive-hide: an array, keyed by breakpoint name, with boolean values  
+  *      to indicate whether the column will be hidden when the breakpoint
+  *      condition is met. Only takes effect if the 'responsive'option is set.
   *  - template: allows you to create columns that contain dynamic content using a template, rather than just the output
   *      of a field. The template text can contain fieldnames in braces, which will be replaced by the respective field values.
   *      Add -escape-quote or -escape-dblquote to the fieldname for quote escaping, or -escape-htmlquote/-escape-htmldblquote
@@ -223,8 +226,12 @@ class report_helper extends helper_base {
   *      separating each path with a comma. 
   * </li>
   * <li><b>rowId</b>
-  * Optional. Names the field in the data that contains the unique identifier for each row. If set, then the &lt;tr&gt; elements have their id attributes
-  * set to row + this field value, e.g. row37. This is used to allow synchronisation of the selected table rows with a report map output showing the same data.</li>
+  * Optional. Names the field in the data that contains the unique identifier
+  * for each row. If set, then the &lt;tr&gt; elements have their id attributes
+  * set to row + this field value, e.g. row37. This is used to allow
+  * synchronisation of the selected table rows with a report map output showing
+  * the same data.
+  * </li>
   * <li><b>includeAllColumns</b>
   * Defaults to true. If true, then any columns in the report, view or table which are not in the columns
   * option array are automatically added to the grid after any columns specified in the columns option array.
@@ -299,7 +306,9 @@ class report_helper extends helper_base {
   * Default true but requires a rowId to be set. If true, then filtering the grid causes the map to also filter.
   * </li>
   * <li><b>includePopupFilter</b>
-  * Set to true if you want to include a filter in the report header that displays a popup allowing the user to select exactly what data they want to display on the report.
+  * Set to true if you want to include a filter in the report header that
+  * displays a popup allowing the user to select exactly what data they want to
+  * display on the report.
   * </li>
   * <li><b>zoomMapToOutput</b>
   * Default true. When combined with sendOutputToMap=true, defines that the map will automatically zoom to show the records.
@@ -309,7 +318,8 @@ class report_helper extends helper_base {
   * field values, e.g. to colour rows in the grid according to the data.
   * </li>
   * <li><b>callback</b>
-  * Set to the name of a JavaScript function that should already exist which will be called each time the grid reloads (e.g. when paginating or sorting).
+  * Set to the name of a JavaScript function that should already exist which
+  * will be called each time the grid reloads (e.g. when paginating or sorting).
   * </li>
   * <li><b>linkToReportPath</b>
   * Allows drill down into reports. Holds the URL of the report that is called when the user clicks on 
@@ -334,6 +344,14 @@ class report_helper extends helper_base {
   * <li><b>imageThumbPreset</b>
   * Defaults to thumb. Preset name for the image to be loaded from the warehouse as the preview thumbnail for images, e.g. thumb or med.
   * </li>
+  * <li><b>responsive</b>
+  * Set to an array of options to pass to FooTable to make the table responsive.
+  * Used in conjunction with the columns['responsive-hide'] option to determine
+  * which columns are hidden at different breakpoints.
+  * Supported options are 
+  *   - breakpoints: an array keyed by breakpoint name with values of screen
+  *     width at which to apply the breakpoint. Footable defaults apply if
+  *     omitted.
   * </ul>
   */
   public static function report_grid($options) {
@@ -375,32 +393,52 @@ class report_helper extends helper_base {
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
         foreach ($options['columns'] as $field) {
-          if (isset($field['visible']) && ($field['visible']==='false' || $field['visible']===false))
-            continue; // skip this column as marked invisible
+          if (isset($field['visible']) && ($field['visible'] === 'false' || $field['visible'] === false)) {
+             // skip this column as marked invisible 
+            continue;           
+          }
+          
           // allow the display caption to be overriden in the column specification
-          if (empty($field['display']) && empty($field['fieldname']))
-            $caption='';
-          else
+          if (empty($field['display']) && empty($field['fieldname'])) {
+            $caption = '';
+          }
+          else {
             $caption = empty($field['display']) ? $field['fieldname'] : lang::get($field['display']);
-          if (isset($field['fieldname']) && !(isset($field['img']) && $field['img']=='true')) {
-            if (empty($field['orderby'])) $field['orderby']=$field['fieldname'];
+          }
+          
+          if (isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
+            if (empty($field['orderby'])) {
+              $field['orderby'] = $field['fieldname'];
+            }
             $sortLink = $sortUrl.$sortAndPageUrlParams['orderby']['name'].'='.$field['orderby'];
             // reverse sort order if already sorted by this field in ascending dir
-            if ($sortAndPageUrlParams['orderby']['value']==$field['orderby'] && $sortAndPageUrlParams['sortdir']['value']!='DESC')
+            if ($sortAndPageUrlParams['orderby']['value'] == $field['orderby'] && $sortAndPageUrlParams['sortdir']['value'] != 'DESC') {
               $sortLink .= '&'.$sortAndPageUrlParams['sortdir']['name']."=DESC";
+            }
             $sortLink=htmlspecialchars($sortLink);
             // store the field in a hidden input field
-            $captionLink = "<input type=\"hidden\" value=\"".$field['orderby']."\"/><a href=\"$sortLink\" rel=\"nofollow\" title=\"Sort by $caption\">$caption</a>";
+            $captionLink = "<input type=\"hidden\" value=\"" . $field['orderby'] . "\"/><a href=\"$sortLink\" rel=\"nofollow\" title=\"Sort by $caption\">$caption</a>";
             // set a style for the sort order
-            $orderStyle = ($sortAndPageUrlParams['orderby']['value']==$field['orderby']) ? ' '.$sortdirval : '';
+            $orderStyle = ($sortAndPageUrlParams['orderby']['value'] == $field['orderby']) ? ' '.$sortdirval : '';
             $orderStyle .= ' sortable';
             $fieldId = ' id="' . $options['id'] . '-th-' . $field['orderby'] . '"';
-          } else {
+          } 
+          else {
             $orderStyle = '';
             $fieldId = '';
             $captionLink=$caption;
           }
-          $thead .= "<th$fieldId class=\"$thClass$orderStyle\">$captionLink</th>\n";
+          
+          // Create a data-hide attribute for responsive tables.
+          $datahide = '';
+          if (isset($field['responsive-hide'])) {
+            $datahide = implode(',', array_keys(array_filter($field['responsive-hide'])));
+            if($datahide != '') {
+              $datahide = " data-hide=\"$datahide\"";
+            }
+          }
+          
+          $thead .= "<th$fieldId class=\"$thClass$orderStyle\"$datahide>$captionLink</th>\n";
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
               case 'text':
@@ -679,15 +717,50 @@ $('.update-input').focus(function(evt) {
     if (!empty($r)) {
       // Output a div to keep the grid and pager together
       $r = "<div id=\"".$options['id']."\">$r</div>\n";
-      // Now AJAXify the grid
-      self::add_resource('reportgrid');
-      global $indicia_templates;
-      if (!empty(parent::$warehouse_proxy))
-        $warehouseUrl = parent::$warehouse_proxy;
-      else
-        $warehouseUrl = parent::$base_url;
-      $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-      self::$javascript .= "
+
+      // Add responsive behaviour to table if specified in options.
+      // For backwards compatibility, no changes are made to the html output
+      // by this function. Instead the table is decorated in javascript and 
+      // then made responsive with the footables plugin.
+      if (isset($options['responsive'])) {
+        // Add the javascript plugins.
+        self::add_resource('indiciaFootable');
+        // Add inline javascript to invoke the plugins on this grid.
+        $footable_options = json_encode($options['responsive']);
+        self::$javascript .= "jQuery('#{$options['id']}').indiciaFootable($footable_options);\n";
+
+        // Footable needs calling after each Ajax update. There is an existing 
+        // callback option which we can use but it only accepts a single function.
+        // Therefore, create a new function and append any pre-existing callback.
+        // Note, '-' is not allowed in JavaScript identifiers.
+        $callback = 'callback_' . str_replace('-', '_', $options['id']);
+        if(empty($options['callback'])) {
+          // The callback is not currently used.
+          self::$javascript .= "
+window['$callback'] = function() {
+  jQuery('#{$options['id']}').find('table').trigger('footable_redraw');
+}";        
+        }
+        else {
+          // A callback has been specified so append to footable callback.
+          self::$javascript .= "
+window['$callback'] = function() {
+  jQuery('#{$options['id']}').find('table').trigger('footable_redraw');
+  window[{$options['callback']}]();
+}";        
+        }
+        // Store the callback name to pass to jquery.reportgrid.js.
+        $options['callback'] = $callback;
+
+        // Now AJAXify the grid
+        self::add_resource('reportgrid');
+        global $indicia_templates;
+        if (!empty(parent::$warehouse_proxy))
+          $warehouseUrl = parent::$warehouse_proxy;
+        else
+          $warehouseUrl = parent::$base_url;
+        $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+        self::$javascript .= "
 if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
 simple_tooltip('input.col-filter','tooltip');
@@ -716,36 +789,37 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   msgRowLinkedToMapHint: '".lang::get('Click the row to highlight the record on the map. Double click to zoom in.')."',
   msgNoInformation: '".lang::get('No information available')."',
   altRowClass: '$options[altRowClass]'";
-      if (isset($options['sharing'])) {
-        if (!isset($options['extraParams']))
-          $options['extraParams']=array();
-        $options['extraParams']['sharing']=$options['sharing'];
+        if (isset($options['sharing'])) {
+          if (!isset($options['extraParams']))
+            $options['extraParams']=array();
+          $options['extraParams']['sharing']=$options['sharing'];
+        }
+        if (!empty($options['rowClass']))
+          self::$javascript .= ",\n  rowClass: '".$options['rowClass']."'";
+        if (isset($options['extraParams']))
+          self::$javascript .= ",\n  extraParams: ".json_encode(array_merge($options['extraParams'], $currentParamValues));
+        if (isset($options['filters']))
+          self::$javascript .= ",\n  filters: ".json_encode($options['filters']);
+        if (isset($orderby))
+          self::$javascript .= ",\n  orderby: '".$orderby."'";
+        if (isset($sortdir))
+          self::$javascript .= ",\n  sortdir: '".$sortdir."'";
+        if (isset($response['count']))
+          self::$javascript .= ",\n  recordCount: ".$response['count'];
+        if (isset($options['columns']))
+          self::$javascript .= ",\n  columns: ".json_encode($options['columns']);
+        self::$javascript .= "\n});\n";
       }
-      if (!empty($options['rowClass']))
-        self::$javascript .= ",\n  rowClass: '".$options['rowClass']."'";
-      if (isset($options['extraParams']))
-        self::$javascript .= ",\n  extraParams: ".json_encode(array_merge($options['extraParams'], $currentParamValues));
-      if (isset($options['filters']))
-        self::$javascript .= ",\n  filters: ".json_encode($options['filters']);
-      if (isset($orderby))
-        self::$javascript .= ",\n  orderby: '".$orderby."'";
-      if (isset($sortdir))
-        self::$javascript .= ",\n  sortdir: '".$sortdir."'";
-      if (isset($response['count']))
-        self::$javascript .= ",\n  recordCount: ".$response['count'];
-      if (isset($options['columns']))
-        self::$javascript .= ",\n  columns: ".json_encode($options['columns']);
-      self::$javascript .= "\n});\n";
+      if (isset($options['sendOutputToMap']) && $options['sendOutputToMap']) {
+        self::$javascript.= "mapSettingsHooks.push(function(opts) {\n";
+        self::$javascript.= "  opts.clickableLayers.push(indiciaData.reportlayer);\n";
+        self::$javascript.= "  opts.clickableLayersOutputMode='reportHighlight';\n";
+        self::$javascript .= "});\n";
+      }
+      if ($options['ajax'] && $options['autoloadAjax'])
+        self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload();\n";
+      return $r;
     }
-    if (isset($options['sendOutputToMap']) && $options['sendOutputToMap']) {
-      self::$javascript.= "mapSettingsHooks.push(function(opts) {\n";
-      self::$javascript.= "  opts.clickableLayers.push(indiciaData.reportlayer);\n";
-      self::$javascript.= "  opts.clickableLayersOutputMode='reportHighlight';\n";
-      self::$javascript .= "});\n";
-    }
-    if ($options['ajax'] && $options['autoloadAjax'])
-      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload();\n";
-    return $r;
   }
 
  /**
