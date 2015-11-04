@@ -692,7 +692,14 @@ class helper_base extends helper_config {
         'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.pack.js")),
         'verification' => array('javascript'=>array(self::$js_path."verification.js")),
         'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
-        'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js"))
+        'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
+        'footable' => array(
+            'stylesheets' => array(self::$js_path.'footable/css/footable.core.min.css'), 
+            'javascript' => array( self::$js_path.'footable/dist/footable.min.js',),
+            'deps' => array('jquery')),
+        'indiciaFootable' => array(
+            'javascript' => array(self::$js_path . 'jquery.indiciaFootable.js'), 
+            'deps' => array('footable')),
       );
     }
     return self::$resource_list;
