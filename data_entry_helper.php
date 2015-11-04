@@ -2710,22 +2710,30 @@ $('#$escaped').change(function(e) {
   * control from the parent list of the one given. This will take the form of an autocomplete
   * box against the parent list which will add an extra row to the control upon selection.</p>
   *
-  * <p>To change the format of the label displayed for each taxon in the grid rows that are pre-loaded into the grid,
-  * use the global $indicia_templates variable to set the value for the entry 'taxon_label'. The tags available in the template are {taxon}, {preferred_name},
-  * {authority} and {common}. This can be a PHP snippet if PHPtaxonLabel is set to true.</p>
+  * <p>To change the format of the label displayed for each taxon in the grid 
+  * rows that are pre-loaded into the grid, use the global $indicia_templates 
+  * variable to set the value for the entry 'taxon_label'. The tags available in
+  * the template are {taxon}, {preferred_name}, {authority} and {common}. This
+  * can be a PHP snippet if PHPtaxonLabel is set to true.</p>
   *
-  * <p>To change the format of the label displayed for each taxon in the autocomplete used for searching for species to add to the grid,
-  * use the global $indicia_templates variable to set the value for the entry 'format_species_autocomplete_fn'. This must be a JavaScript function
-  * which takes a single parameter. The parameter is the item returned from the database with attributes taxon, preferred ('t' or 'f'),
-  * preferred_name, common, authority, taxon_group, language. The function must return the string to display in the autocomplete list.</p>
+  * <p>To change the format of the label displayed for each taxon in the 
+  * autocomplete used for searching for species to add to the grid, use the 
+  * global $indicia_templates variable to set the value for the entry 
+  * 'format_species_autocomplete_fn'. This must be a JavaScript function which 
+  * takes a single parameter. The parameter is the item returned from the 
+  * database with attributes taxon, preferred ('t' or 'f'), preferred_name, 
+  * common, authority, taxon_group, language. The function must return the 
+  * string to display in the autocomplete list.</p>
   *
-  * <p>To perform an action on the event of a new row being added to the grid, write a JavaScript function taking arguments (data, row) and add to the array
-  * hook_species_checklist_new_row, where data is an object containing the details of the taxon row as loaded from the data services.</p>
+  * <p>To perform an action on the event of a new row being added to the grid, 
+  * write a JavaScript function taking arguments (data, row) and add to the 
+  * array hook_species_checklist_new_row, where data is an object containing the
+  * details of the taxon row as loaded from the data services.</p>
   *
   * @param array $options Options array with the following possibilities:<ul>
   * <li><b>listId</b><br/>
-  * Optional. The ID of the taxon_lists record which is to be used to obtain the species or taxon list. This is
-  * required unless lookupListId is provided.</li>
+  * Optional. The ID of the taxon_lists record which is to be used to obtain the
+  * species or taxon list. This is equired unless lookupListId is provided.</li>
   * <li><b>occAttrs</b><br/>
   * Optional integer array, where each entry corresponds to the id of the desired attribute in the
   * occurrence_attributes table. If omitted, then all the occurrence attributes for this survey are loaded.</li>
@@ -2750,24 +2758,30 @@ $('#$escaped').change(function(e) {
   * used during development or when there is a specific need to reflect taxa that have only 
   * just been added to the list.
   * <li><b>taxonFilterField</b><br/>
-  * If the list of species to be made available for recording is to be limited (either by species or taxon group), allows selection of 
-  * the field to filter against. Options are none (default), preferred_name, taxon_meaning_id, taxa_taxon_list_id, taxon_group. If filtering for a large list
-  * of taxa then taxon_meaning_id or taxa_taxon_list_id is more efficient.
+  * If the list of species to be made available for recording is to be limited 
+  * (either by species or taxon group), allows selection of the field to filter 
+  * against. Options are none (default), preferred_name, taxon_meaning_id, 
+  * taxa_taxon_list_id, taxon_group. If filtering for a large list of taxa then 
+  * taxon_meaning_id or taxa_taxon_list_id is more efficient.
   * </li>
   * <li><b>taxonFilter</b><br/>
   * If taxonFilterField is not set to none, then pass an array of values to filter against, i.e. an array of
   * taxon preferred names, taxon meaning ids or taxon group titles.
   * </li>
   * <li><b>usersPreferredGroups</b><br/>
-  * If the user has defined a list of taxon groups they like to record, then supply an array of the taxon group IDs in this parameter.
-  * This lets the user easily opt to record against their chosen groups.
+  * If the user has defined a list of taxon groups they like to record, then 
+  * supply an array of the taxon group IDs in this parameter. This lets the user
+  * easily opt to record against their chosen groups.
   * </li>
   * <li><b>userControlsTaxonFilter</b><br/>
-  * If set to true, then a filter button in the title of the species input column allows the user to configure the filter applied to 
-  * which taxa are available to select from, e.g. which taxon groups can be picked from. Only applies when lookupListId is set.
+  * If set to true, then a filter button in the title of the species input 
+  * column allows the user to configure the filter applied to which taxa are 
+  * available to select from, e.g. which taxon groups can be picked from. Only 
+  * applies when lookupListId is set.
   * </li>
   * <li><b>speciesNameFilterMode</b><br/>
-  * Optional. Method of filtering the available species names (both for initial population into the grid and additional rows). Options are
+  * Optional. Method of filtering the available species names (both for initial 
+  * population into the grid and additional rows). Options are
   *   preferred - only preferred names
   *   currentLanguage - only names in the language identified by the language option are included
   *   excludeSynonyms - all names except synonyms (non-preferred latin names) are included.
@@ -2775,21 +2789,30 @@ $('#$escaped').change(function(e) {
   * <li><b>header</b><br/>
   * Include a header row in the grid? Defaults to true.</li>
   * <li><b>columns</b><br/>
-  * Number of repeating columns of output. For example, a simple grid of species checkboxes could be output in 2 or 3 columns.
-  * Defaults to 1.</li>
+  * Number of repeating columns of output. For example, a simple grid of species
+  * checkboxes could be output in 2 or 3 columns.Defaults to 1.</li>
   * <li><b>rowInclusionCheck</b><br/>
-  * Defines how the system determines whether a row in the grid actually contains an occurrence or not. There are 4 options: <br/>
-  * checkbox - a column is included in the grid containing a presence checkbox. If checked then an occurrence is created for the row. This is the default unless listId is not set.<br/>
-  * alwaysFixed - occurrences are created for all rows in the grid. Rows cannot be removed from the grid apart from newly added rows.<br/>
-  * alwaysRemovable - occurrences are created for all rows in the grid. Rows can always be removed from the grid. Best used with no listId so there are
-  * no default taxa in the grid, otherwise editing an existing sample will re-add all the existing taxa. This is the default when listId is not set, but 
+  * Defines how the system determines whether a row in the grid actually 
+  * contains an occurrence or not. There are 4 options: <br/>
+  * checkbox - a column is included in the grid containing a presence checkbox. 
+  * If checked then an occurrence is created for the row. This is the default 
+  * unless listId is not set.<br/>
+  * alwaysFixed - occurrences are created for all rows in the grid. Rows cannot 
+  * be removed from the grid apart from newly added rows.<br/>
+  * alwaysRemovable - occurrences are created for all rows in the grid. Rows can
+  * always be removed from the grid. Best used with no listId so there are no 
+  * default taxa in the grid, otherwise editing an existing sample will re-add 
+  * all the existing taxa. This is the default when listId is not set, but 
   * lookupListId is set.<br/>
-  * hasData - occurrences are created for any row which has a data value specified in at least one of its columns. <br/>
-  * This option supercedes the checkboxCol option which is still recognised for backwards compatibility.</li>
+  * hasData - occurrences are created for any row which has a data value 
+  * specified in at least one of its columns. <br/>
+  * This option supercedes the checkboxCol option which is still recognised for 
+  * backwards compatibility.</li>
   * <li><b>hasDataIgnoreAttrs</b><br/>
-  * Optional integer array, where each entry corresponds to the id of an attribute that should be ignored when doing
-  * the hasData row inclusion check. If a column has a default value, especially a gridIdAttribute, you may not want
-  * it to trigger creation of an occurrence so include it in this array.</li>
+  * Optional integer array, where each entry corresponds to the id of an 
+  * attribute that should be ignored when doing the hasData row inclusion check.
+  * If a column has a default value, especially a gridIdAttribute, you may not
+  * wantit to trigger creation of an occurrence so include it in this array.</li>
   * <li><b>class</b><br/>
   * Optional. CSS class names to add to the control.</li>
   * <li><b>cachetimeout</b><br/>
@@ -2816,10 +2839,13 @@ $('#$escaped').change(function(e) {
   * If set, then the image files will be resized before upload using this as the maximum pixels height.
   * </li>
   * <li><b>resizeQuality</b><br/>
-  * Defines the quality of the resize operation (from 1 to 100). Has no effect unless either resizeWidth or resizeHeight are non-zero.
+  * Defines the quality of the resize operation (from 1 to 100). Has no effect 
+  * unless either resizeWidth or resizeHeight are non-zero.
   * <li><b>colWidths</b><br/>
-  * Optional. Array containing percentage values for each visible column's width, with blank entries for columns that are not specified. If the array is shorter
-  * than the actual number of columns then the remaining columns use the default width determined by the browser.</li>
+  * Optional. Array containing percentage values for each visible column's 
+  * width, with blank entries for columns that are not specified. If the array 
+  * is shorter than the actual number of columns then the remaining columns use 
+  * the default width determined by the browser.</li>
   * <li><b>attrCellTemplate</b><br/>
   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
   * for each cell containing an attribute input control. Valid replacements are {label}, {class} and {content}.
@@ -2827,26 +2853,34 @@ $('#$escaped').change(function(e) {
   * <li><b>language</b><br/>
   * Language used to filter lookup list items in attributes. ISO 639:3 format. </li>
   * <li><b>PHPtaxonLabel</b></li>
-  * If set to true, then the taxon_label template should contain a PHP statement that returns the HTML to display for each
-  * taxon's label. Otherwise the template should be plain HTML. Defaults to false.</li>
+  * If set to true, then the taxon_label template should contain a PHP statement
+  * that returns the HTML to display for each taxon's label. Otherwise the 
+  * template should be plain HTML. Defaults to false.</li>
   * <li><b>useLoadedExistingRecords</b></li>
-  * Optional. Defaults to false. Set to true to prevent a grid from making a web service call to load existing occurrence
-  * data when reloading a sample. This can be useful if there are more than one species checklist on the page such as when
-  * species input is split across several tabs - the first can load all the data and subsequent grids just display 
-  * the appropriate records depending on the species they are configured to show.</li>
+  * Optional. Defaults to false. Set to true to prevent a grid from making a web
+  * service call to load existing occurrence data when reloading a sample. This
+  * can be useful if there are more than one species checklist on the page such
+  * as when species input is split across several tabs - the first can load all
+  * the data and subsequent grids just display the appropriate records depending
+  * on the species they are configured to show.</li>
   * <li><b>reloadExtraParams</b></li>
-  * Set to an array of additional parameters such as filter criteria to pass to the service request used to load 
-  * existing records into the grid when reloading a sample. Especially useful when there are more than one species checklist
-  * on a single form, so that each grid can display the appropriate output.</li>
+  * Set to an array of additional parameters such as filter criteria to pass to
+  * the service request used to load existing records into the grid when 
+  * reloading a sample. Especially useful when there are more than one species
+  * checklist on a single form, so that each grid can display the appropriate
+  * output.</li>
   * <li><b>subSpeciesColumn</b>
-  * If true and doing grid based data entry with lookupListId set so allowing the recorder to add species they choose to 
-  * the bottom of the grid, subspecies will be displayed in a separate column so the recorder picks the species 
-  * first then the subspecies. The species checklist must be configured as a simple 2 level list so that species are 
-  * parents of the subspecies. For performance reasons, this option forces the cacheLookup option to be set to true therefore it 
-  * requires the cache_builder module to be running on the warehouse. Defaults to false.</li>
+  * If true and doing grid based data entry with lookupListId set so allowing 
+  * the recorder to add species they choose to the bottom of the grid, 
+  * subspecies will be displayed in a separate column so the recorder picks the
+  * species first then the subspecies. The species checklist must be configured
+  * as a simple 2 level list so that species are parents of the subspecies. For
+  * performance reasons, this option forces the cacheLookup option to be set to
+  * true therefore it requires the cache_builder module to be running on the 
+  * warehouse. Defaults to false.</li>
   * <li><b>subSpeciesRemoveSspRank</b>
-  * Set to true to force the displayed subspecies names to remove the rank (var., forma, ssp) etc. Useful if all subspecies
-  * are the same rank.
+  * Set to true to force the displayed subspecies names to remove the rank 
+  * (var., forma, ssp) etc. Useful if all subspecies are the same rank.
   * </li>
   * </ul>
   * The output of this control can be configured using the following templates: 
@@ -2880,40 +2914,51 @@ $('#$escaped').change(function(e) {
   * HTML wrapper for cells containing attribute inputs.
   * </li>
   * <li><b>attributeIds</b><br/>
-  * Provide an array of occurrence attribute IDs if you want to limit those shown in the grid. The default list of
-  * attributes shown is the list associated with the survey on the warehouse, but this option allows you to ignore
-  * some. An example use of this might be when you have multiple grids on the page each supporting a different
-  * species group with different attributes. 
+  * Provide an array of occurrence attribute IDs if you want to limit those
+  * shown in the grid. The default list of attributes shown is the list 
+  * associated with the survey on the warehouse, but this option allows you to
+  * ignore some. An example use of this might be when you have multiple grids on
+  * the page each supporting a different species group with different attributes. 
   * </li>
   * <li><b>gridIdAttributeId</b><br/>
-  * If you have multiple grids on one input form, then you can create an occurrence attribute (text) for your
-  * survey which will store the ID of the grid used to create the record. Provide the attribute's ID through this
-  * parameter so that the grid can automatically save the value and use it when reloading records, so that the
-  * records are reloaded into the correct grid. To do this, you would need to set a unique ID for each grid using the 
-  * id parameter. You can combine this with the attributeIds parameter to show different columns for each grid.
+  * If you have multiple grids on one input form, then you can create an 
+  * occurrence attribute (text) for your survey which will store the ID of the
+  * grid used to create the record. Provide the attribute's ID through this
+  * parameter so that the grid can automatically save the value and use it when
+  * reloading records, so that the records are reloaded into the correct grid.
+  * To do this, you would need to set a unique ID for each grid using the id 
+  * parameter. You can combine this with the attributeIds parameter to show 
+  * different columns for each grid.
   * </li>
   * <li><b>speciesControlToUseSubSamples</b>
-  * Optional. Enables support for sub samples in the grid where input records can be allocated to different sub samples, e.g. 
-  * when inputting a list of records at different places. Default false.
+  * Optional. Enables support for sub samples in the grid where input records 
+  * can be allocated to different sub samples, e.g. when inputting a list of 
+  * records at different places. Default false.
   * </li>
   * <li><b>subSamplePerRow</b>
-  * Optional. Requires speciesControlToUseSubSamples to be set to true, then if this is also true it generates a sub-sample 
-  * per row in the grid. It is then necessary to write code which processes the submission to at least a spatial reference
-  * for each sub sample. This might be used when an occurrence attribute in the grid can be used to calculate the sub-sample's
-  * spatial reference, such as when capturing the reticules and bearing for a cetacean sighting.
+  * Optional. Requires speciesControlToUseSubSamples to be set to true, then if
+  * this is also true it generates a sub-sample per row in the grid. It is then
+  * necessary to write code which processes the submission to at least a spatial
+  * reference for each sub sample. This might be used when an occurrence 
+  * attribute in the grid can be used to calculate the sub-sample's spatial 
+  * reference, such as when capturing the reticules and bearing for a cetacean
+  * sighting.
   * </li>
   * <li><b>subSampleSampleMethodID</b>
   * Optional. sample_method_id to use for the subsamples.
   * </li>
   * <li><b>copyDataFromPreviousRow</b>
-  * Optional. When enabled, the system will copy data from the previous row into new rows on the species grid. The data is copied
-  * automatically when the new row is created and also when edits are made to the previous row. The columns to copy are determined 
-  * by the previousRowColumnsToInclude option. 
+  * Optional. When enabled, the system will copy data from the previous row into
+  * new rows on the species grid. The data is copied automatically when the new
+  * row is created and also when edits are made to the previous row. The columns
+  * to copy are determined  by the previousRowColumnsToInclude option. 
   * </li>
   * <li><b>previousRowColumnsToInclude</b>
-  * Optional. Requires copyDataFromPreviousRow to be set to true. Allows the user to specify which columns of data from the previous 
-  * row will be copied into a new row on the species grid. Comma separated list of column titles, non-case or white space sensitive.
-  * Any unrecognised columns are ignored and the images column cannot be copied.
+  * Optional. Requires copyDataFromPreviousRow to be set to true. Allows the 
+  * user to specify which columns of data from the previous row will be copied 
+  * into a new row on the species grid. Comma separated list of column titles, 
+  * non-case or white space sensitive. Any unrecognised columns are ignored and 
+  * the images column cannot be copied.
   * </li>
   * <li><b>sticky</b>
   * Optional, defaults to true. Enables sticky table headers if supported by the host site (e.g. Drupal). 
@@ -2924,8 +2969,11 @@ $('#$escaped').change(function(e) {
   * addRowToGrid.js::autocompleterSettingsToReturn the list may contain fewer than numValues.
   * </li>
   * <li><b>selectMode</b>
-  * Should the species autocomplete used for adding new rows simulate a select drop down control by adding a drop down arrow after the input box which, when clicked,
-  * populates the drop down list with all search results to a maximum of numValues. This is similar to typing * into the box. Default false.
+  * Should the species autocomplete used for adding new rows simulate a select 
+  * drop down control by adding a drop down arrow after the input box which, 
+  * when clicked, populates the drop down list with all search results to a 
+  * maximum of numValues. This is similar to typing * into the box. Default 
+  * false.
   * </li>
   * <li><b>speciesColTitle</b>
   * Title for the species column which will be looked up in lang files. If not set, uses
