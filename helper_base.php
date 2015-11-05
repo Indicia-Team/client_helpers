@@ -694,8 +694,9 @@ class helper_base extends helper_config {
         'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
         'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
         'footable' => array(
-            'stylesheets' => array(self::$js_path.'footable/css/footable.core.min.css'), 
-            'javascript' => array( self::$js_path.'footable/dist/footable.min.js',),
+            'stylesheets' => array(self::$js_path.'footable/css/footable.standalone.min.css'), 
+            'javascript' => array( self::$js_path.'footable/js/footable.min.js',),
+            // Requires jQuery >= 1.6
             'deps' => array('jquery')),
         'indiciaFootable' => array(
             'javascript' => array(self::$js_path . 'jquery.indiciaFootable.js'), 
