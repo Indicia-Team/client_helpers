@@ -217,4 +217,12 @@ jQuery(document).ready(function($) {
   mapInitialisationHooks.push(updatePositionData);
   mapClickForSpatialRefHooks.push(setClickedPosition);
 
+  // Prevemt accidental form submit on return key.
+  $('form#entry_form').on('keypress keydown keyup', function(e) {
+    if (e.which == 13) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
 });
