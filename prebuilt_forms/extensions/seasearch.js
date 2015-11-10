@@ -231,4 +231,14 @@ jQuery(document).ready(function($) {
     }
   });
 
+  // when toggling drift vs non-drift dive, clear out the unnecessary positions
+  $('input[name="which-point"]').change(function() {
+    if ($('input[name="which-point"]:checked').val()==='centre') {
+      $('#input-lat-deg-from,#input-lat-deg-to,#input-lat-min-from,#input-lat-min-to,' +
+          '#input-long-deg-from,#input-long-deg-to,#input-long-min-from,#input-long-min-to').val('');
+    } else {
+      $('#input-lat-deg,#input-lat-min,#input-long-deg,#input-long-min').val('');
+    }
+  })
+
 });
