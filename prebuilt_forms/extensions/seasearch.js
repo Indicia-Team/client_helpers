@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
    */
   $('table#position-data :input').change(function() {
     $('#input-os-grid').val('');
-    updatePositionData();
+    updatePositionData(indiciaData.mapdiv, true);
   });
 
   /**
@@ -81,7 +81,7 @@ jQuery(document).ready(function($) {
    * Draws the geometry for a drift dive from an array of points.
    * @param points
    */
-  function drawDriftGeom(points) {
+  function drawDriftGeom(points, recenter) {
     var wkt='', feature, pointsList=[], parser = new OpenLayers.Format.WKT(),
       editLayer=indiciaData.mapdiv.map.editLayer;
     if (points.length===1) {
@@ -99,8 +99,10 @@ jQuery(document).ready(function($) {
       feature.attributes = {type: "driftLine"};
       indiciaData.mapdiv.removeAllFeatures(editLayer, 'driftLine');
       editLayer.addFeatures([feature]);
-      zoom = Math.min(editLayer.getZoomForExtent(editLayer.getDataExtent()), indiciaData.mapdiv.settings.maxZoom);
-      indiciaData.mapdiv.map.setCenter(editLayer.getDataExtent().getCenterLonLat(), zoom);
+      if (recenter) {
+        zoom = Math.min(editLayer.getZoomForExtent(editLayer.getDataExtent()), indiciaData.mapdiv.settings.maxZoom);
+        indiciaData.mapdiv.map.setCenter(editLayer.getDataExtent().getCenterLonLat(), zoom);
+      }
     }
   }
 
@@ -137,9 +139,13 @@ jQuery(document).ready(function($) {
   /**
    * Method called when setting up or when any control containing position data changes. Ensures that the current state
    * of the position data is correctly reflected on the map.
+   * @param boolean recenter True if the map should recenter and zoom in on the geometry
    */
-  function updatePositionData() {
+  function updatePositionData(div, recenter) {
     var latLong, $hiddenInput, updateGeom=false, points=[];
+    if (typeof recenter==="undefined") {
+      recenter = true;
+    }
     calcCentreFromDrift();
     $hiddenInput = getEl(indiciaData.driftStartAttrFieldname);
     if ($('#input-drift-from').find(':input[value=]').length===0) {
@@ -184,7 +190,7 @@ jQuery(document).ready(function($) {
       $hiddenInput.val();
     }
     if (updateGeom) {
-      drawDriftGeom(points);
+      drawDriftGeom(points, recenter);
     }
   }
 
@@ -210,7 +216,7 @@ jQuery(document).ready(function($) {
       $('#input-long-deg'+qualifier).val(tokens[0]);
       $('#input-long-min'+qualifier).val((('0.' + tokens[1])*60).toFixed(4));
 
-      updatePositionData();
+      updatePositionData(indiciaData.mapdiv, false);
     }
   }
 
