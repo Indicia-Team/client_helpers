@@ -43,8 +43,8 @@ class extension_seasearch {
           'and @drift_start_attr_id options to be supplied.';
     $options = array_merge(array(
       'systems' => array(
-        '4326'=>'Latitude and longitiude (degrees and decimal minutes WGS84)',
-        '4277'=>'Latitude and longitiude (degrees and decimal minutes OSGB36)',
+        '4326'=>'Latitude and longitude (degrees and decimal minutes WGS84)',
+        '4277'=>'Latitude and longitude (degrees and decimal minutes OSGB36)',
         'OSGB' => 'Ordnance Survey British National Grid'
       )
     ), $options);
