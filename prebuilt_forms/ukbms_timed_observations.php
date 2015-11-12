@@ -330,7 +330,7 @@ class iform_ukbms_timed_observations {
 
   public static function get_sample_form($args, $nid, $response) {
     global $user;
-    if (!module_exists('iform_ajaxproxy'))
+    if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     iform_load_helpers(array('map_helper'));
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -486,7 +486,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     $r .= "</div>"; // right
     $r .= '</form>';
     // Recorder Name - assume Easy Login uid
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (hostsite_module_exists('easy_login')) {
       $userId = hostsite_get_user_field('indicia_user_id');
  // For non easy login test only     $userId = 1;
       foreach($attributes as $attrID => $attr){
@@ -519,7 +519,7 @@ mapInitialisationHooks.push(function(mapdiv) {
 
   public static function get_occurrences_form($args, $nid, $response) {
     global $user;
-  	if (!module_exists('iform_ajaxproxy'))
+  	if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
   	drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
@@ -559,7 +559,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     ));
     $sample=$sample[0];
     $date=$sample['date_start'];
-    if (!function_exists('module_exists') || !module_exists('easy_login')) {
+    if (!hostsite_module_exists('easy_login')) {
       // work out the CMS User sample ID.
       $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Field Observation'));
       $attributes = data_entry_helper::getAttributes(array(
@@ -791,7 +791,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
     data_entry_helper::$javascript .= "indiciaData.sample = ".$sampleId.";\n";
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (hostsite_module_exists('easy_login')) {
       data_entry_helper::$javascript .= "indiciaData.easyLogin = true;\n";
       $userId = hostsite_get_user_field('indicia_user_id');
       if (!empty($userId)) data_entry_helper::$javascript .= "indiciaData.UserID = ".$userId.";\n";

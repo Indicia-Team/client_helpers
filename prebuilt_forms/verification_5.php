@@ -576,7 +576,7 @@ idlist=';
     data_entry_helper::$js_read_tokens = $auth['read'];
     // Find a list of websites we are allowed verify
     $websiteIds = iform_get_allowed_website_ids($auth['read'], 'verification');
-    $gotEasyLogin = function_exists('module_exists') && module_exists('easy_login');
+    $gotEasyLogin = hostsite_module_exists('easy_login');
     if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_location')===false)
       $args['param_presets'].="\nexpertise_location=" . ($gotEasyLogin ? '{profile_location_expertise}' : '');
     if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_taxon_groups')===false)

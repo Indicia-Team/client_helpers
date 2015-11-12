@@ -122,9 +122,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'group' => 'User Interface',
           // Note that we can't test Drupal module availability whilst loading this form for a new iform, using Ajax. So 
           // in this case we show the control even though it is not usable (the help text explains the module requirement).          
-          'visible' => !function_exists('module_exists') ||
-                       (module_exists('profile') && substr(VERSION, 0, 1) == '6') ||
-                       (module_exists('field') && substr(VERSION, 0, 1) == '7')
+          'visible' => (hostsite_module_exists('profile') && substr(VERSION, 0, 1) == '6') ||
+                       (hostsite_module_exists('field') && substr(VERSION, 0, 1) == '7')
         ),
         array(
           'name'=>'structure',

@@ -744,7 +744,7 @@ class iform_ukbms_sectioned_transects_input_sample {
 
   public static function get_sample_form($args, $nid, $response) {
     global $user;
-    if (!module_exists('iform_ajaxproxy'))
+    if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     iform_load_helpers(array('map_helper'));
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -918,7 +918,7 @@ class iform_ukbms_sectioned_transects_input_sample {
 
     $r .= '</form>';
     // Recorder Name - assume Easy Login uid
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (hostsite_module_exists('easy_login')) {
       $userId = hostsite_get_user_field('indicia_user_id');
  // For non easy login test only     $userId = 1;
       foreach($attributes as $attrID => $attr){
@@ -955,7 +955,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
     $oldCtrlWrapTemplate = $indicia_templates['controlWrap'];
     $indicia_templates['controlWrap'] = '{control}';
-  	if (!module_exists('iform_ajaxproxy'))
+  	if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
   	drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
@@ -996,7 +996,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $sample=$sample[0];
     $parentLocId = $sample['location_id'];
     $date=$sample['date_start'];
-    if (!function_exists('module_exists') || !module_exists('easy_login')) {
+    if (!hostsite_module_exists('easy_login')) {
       // work out the CMS User sample ID.
       $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect'));
       $attributes = data_entry_helper::getAttributes(array(
@@ -1469,7 +1469,7 @@ indiciaData.speciesList1Subset = ".(isset($args['common_taxon_list_id']) && $arg
     data_entry_helper::$javascript .= "indiciaData.transect = ".$parentLocId.";\n";
     data_entry_helper::$javascript .= "indiciaData.parentSample = ".$parentSampleId.";\n";
     data_entry_helper::$javascript .= "indiciaData.sections = ".json_encode($sections).";\n";
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (hostsite_module_exists('easy_login')) {
       data_entry_helper::$javascript .= "indiciaData.easyLogin = true;\n";
       $userId = hostsite_get_user_field('indicia_user_id');
       if (!empty($userId)) data_entry_helper::$javascript .= "indiciaData.UserID = ".$userId.";\n";
