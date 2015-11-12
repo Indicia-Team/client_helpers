@@ -51,6 +51,10 @@ jQuery(document).ready(function($) {
       $.each($('#input-centre input'), function() {
         $(this)[0].className = $(this)[0].className.replace('required: false', 'required: true');
       });
+      // Tell map it's position may have changed
+      if (typeof indiciaData.mapdiv!=="undefined") {
+        indiciaData.mapdiv.map.updateSize();
+      }
     }
   }
 
@@ -186,8 +190,9 @@ jQuery(document).ready(function($) {
         updateGeom=true;
       }
       points.push(buildPoint('to'));
-    } else {
-      $hiddenInput.val();
+    } else if ($hiddenInput.val()!=='') {
+      $hiddenInput.val('');
+      updateGeom=true;
     }
     if (updateGeom) {
       drawDriftGeom(points, recenter);
@@ -236,8 +241,6 @@ jQuery(document).ready(function($) {
     if ($('input[name="which-point"]:checked').val()==='centre') {
       $('#input-lat-deg-from,#input-lat-deg-to,#input-lat-min-from,#input-lat-min-to,' +
           '#input-long-deg-from,#input-long-deg-to,#input-long-min-from,#input-long-min-to').val('');
-    } else {
-      $('#input-lat-deg,#input-lat-min,#input-long-deg,#input-long-min').val('');
     }
   })
 
