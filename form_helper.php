@@ -43,7 +43,7 @@ class form_helper extends helper_base {
    * <li><b>includeOutputDiv</b><br/>
    * Set to true to generate a div after the controls which will receive the form parameter
    * controls when a form is selected.</li>
-   * <li><b>needWebsiteInputs</b><br/>
+   * <li><b>allowConnectionOverride</b><br/>
    * Defaults to false. In this state, the website ID and password controls are not displayed
    * when both the values are already specified, though hidden inputs are put into the form.
    * When set to true, the website ID and password input controls are always included in the form output.
@@ -111,11 +111,19 @@ class form_helper extends helper_base {
     asort($categories);
     if (count($groupForms)>0)
       $r .= self::link_to_group_fields($readAuth, $options);
-    if (isset($options['needWebsiteInputs']) && !$options['needWebsiteInputs']
+    if (isset($options['allowConnectionOverride']) && !$options['allowConnectionOverride']
         && !empty($options['website_id']) && !empty($options['password'])) {
       $r .= '<input type="hidden" id="website_id" name="website_id" value="'.$options['website_id'].'"/>';
       $r .= '<input type="hidden" id="password" name="password" value="'.$options['password'].'"/>';
     } else {
+      $r .= data_entry_helper::text_input(array(
+        'label' => lang::get('Warehouse URL'),
+        'fieldname' => 'base_url',
+        'helpText' => lang::get('Enter the URL of the warehouse you are using if you want to override the site default. ' .
+            'Include the trailing slash, e.g. http://myexamplewarehouse.com/'),
+        'default' => isset($options['base_url']) ? $options['base_url'] : '',
+        'class' => 'control-width-5'
+      ));
       $r .= data_entry_helper::text_input(array(
         'label' => lang::get('Website ID'),
         'fieldname' => 'website_id',
