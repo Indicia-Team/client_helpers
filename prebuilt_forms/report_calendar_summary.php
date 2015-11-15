@@ -1226,7 +1226,7 @@ class iform_report_calendar_summary {
     // var_dump($siteUrlParams);
     $options['extraParams']['user_id'] = $siteUrlParams[self::$userKey]['value'] == "branch" ? '' : $siteUrlParams[self::$userKey]['value'];
     $userList=array();
-    if (hostsite_module_exists('easy_login') && hostsite_module_exists('hostsite_get_user_field')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login') && hostsite_module_exists('hostsite_get_user_field')) {
       $options['my_user_id']=hostsite_get_user_field('indicia_user_id');
     } else {
       $options['my_user_id']=$user->uid;
@@ -1257,7 +1257,7 @@ class iform_report_calendar_summary {
           }
         }
        } else {
-        if (hostsite_module_exists('easy_login')) {
+        if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
           $sampleArgs=array(// 'nocache'=>true,
             'extraParams'=>array_merge(array('view'=>'detail', 'website_id'=>$args['website_id'], 'survey_id'=>self::$siteUrlParams[self::$SurveyKey]), $readAuth),
             'table'=>'sample','columns'=>'created_by_id');
@@ -1606,7 +1606,7 @@ jQuery('#".$ctrlid."').change(function(){
     	$reportOptions['location_list'] = 'all';
     }
     
-    if (hostsite_module_exists('easy_login') && function_exists('hostsite_get_user_field')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login') && function_exists('hostsite_get_user_field')) {
       $reportOptions['my_user_id']=hostsite_get_user_field('indicia_user_id');
     } else {
       $reportOptions['my_user_id']=$user->uid;
@@ -1677,7 +1677,7 @@ jQuery('#".$ctrlid."').change(function(){
     // user_id if relevant to this installation. We now need to do the same for the report links.
     if (isset($reportOptions['extraParams']['user_id'])) {
       $reportOptions['extraParams']['cms_user_id'] = $reportOptions['extraParams']['user_id'];
-      if (hostsite_module_exists('easy_login')) {
+      if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
         $account = user_load($reportOptions['extraParams']['user_id']);
         if (function_exists('profile_load_profile'))
           profile_load_profile($account); /* will not be invoked for Drupal7 where the fields are already in the account object */

@@ -549,7 +549,7 @@ idlist=';
     $auth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     // Find a list of websites we are allowed verify
     $websiteIds = iform_get_allowed_website_ids($auth, 'verification');
-    if (hostsite_module_exists('easy_login')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_location')===false)
         $args['param_presets'].="\nexpertise_location={profile_location_expertise}";
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_taxon_groups')===false)

@@ -191,7 +191,7 @@ class iform_report_map {
     
     // Use the proxy module if enabled, to get round limitations in URL length for 
     // filtered WMS requests.
-    if (hostsite_module_exists('iform_proxy')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('iform_proxy')) {
       $reportOptions['proxy'] = map_helper::getRootFolder(true) .
           hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
     }

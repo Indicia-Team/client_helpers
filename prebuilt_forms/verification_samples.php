@@ -420,7 +420,7 @@ idlist=';
     $indicia_user_id=self::get_indicia_user_id($args);
     data_entry_helper::$js_read_tokens = $auth['read'];
     // Find a list of websites we are allowed verify
-    if (hostsite_module_exists('easy_login')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_location')===false)
         $args['param_presets'].="\nexpertise_location={profile_location_expertise}";
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_taxon_groups')===false)
