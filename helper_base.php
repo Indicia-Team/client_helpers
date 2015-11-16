@@ -1385,7 +1385,12 @@ class helper_base extends helper_config {
     $r = self::cache_get(array('readauth-wid'=>$website_id), 600, false);
     if ($r===false) {
       $postargs = "website_id=$website_id";
-      $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_nonce', $postargs);
+      $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
+      if (isset($response['status'])) {
+        if ($response['status']===404) {
+          throw new Exception('Warehouse security service not found - please check the warehouse URL is correct.', 404);
+        }
+      }
       $nonce = $response['output'];
       $r = array(
           'auth_token' => sha1("$nonce:$password"),
