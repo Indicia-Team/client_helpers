@@ -91,6 +91,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
                   "&nbsp;&nbsp;<strong>[map]</strong> - outputs report content as a map.<br/>".
                   "&nbsp;&nbsp;<strong>[reportgrid]</strong> - outputs report content in tabular form.<br/>".
                   "&nbsp;&nbsp;<strong>[reportchart]</strong> - outputs report content in chart form.<br/>".
+                  "&nbsp;&nbsp;<strong>[reportfreeform]</strong> - outputs report content in flexible HTML.<br/>".
               "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). ".
               "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
               "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
@@ -381,6 +382,30 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       iform_report_apply_explore_user_own_preferences($reportOptions);
     self::$reportCount++;
     return report_helper::report_grid($reportOptions);
+  }
+
+  /*
+   * Freeform report
+   * Allows flexible HTML output from report content.
+   */
+  protected static function get_control_reportfreeform($auth, $args, $tabalias, $options) {
+    iform_load_helpers(array('report_helper'));
+    $args['report_name']='';
+    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'reportGroup'=>'dynamic',
+        'autoParamsForm'=>false,
+        'sharing'=>$sharing,
+        'id'=>'report-freeform-'.self::$reportCount
+      ),
+      $options
+    );
+    if (self::$applyUserPrefs)
+      iform_report_apply_explore_user_own_preferences($reportOptions);
+    self::$reportCount++;
+    return report_helper::freeform_report($reportOptions);
   }
   
   /*
