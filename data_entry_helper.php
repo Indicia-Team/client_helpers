@@ -2979,7 +2979,32 @@ $('#$escaped').change(function(e) {
   * Title for the species column which will be looked up in lang files. If not set, uses
   * species_checklist.species.
   * </li>
-  * 
+  * <li><b>responsive</b>
+  * Set to true to enable responsive behaviour for the grid.
+  * Used in conjunction with the responsiveCols and responsiveOpts options.
+  * </li>      
+  * <li><b>responsiveOpts</b>
+  * Set to an array of options to pass to FooTable to make the table responsive.
+  * Used in conjunction with the responsiveCols option to determine
+  * which columns are hidden at different breakpoints.
+  * Supported options are 
+  *   - breakpoints: an array keyed by breakpoint name with values of screen
+  *     width at which to apply the breakpoint. The footable defaults, which
+  *     cannot be overridden, are 
+  *       - phone, 480
+  *       - tablet, 1024
+  * </li>      
+  * <li><b>responsiveCols</b>
+  * An array, keyed by column identifier to determine the behaviour of the 
+  * column. Each value is an array, keyed by breakpoint name, with boolean 
+  * values  to indicate whether the column will be hidden when the breakpoint
+  * condition is met. Only takes effect if the 'responsive' option is set.
+  * Column identifiers are
+  *  - sensitive
+  *  - comment
+  *  - media
+  *  - attr<em>N</em> where <em>N</em> is an occurrence attribute id.
+  * </li>
   * </ul>
   * @return string HTML for the species checklist input grid.
   */
@@ -3479,6 +3504,15 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         $r .= self::add_link_popup($options);
         // make the media types setting available to the grid row add js which has to create file uploader controls
         self::$javascript .= "indiciaData.uploadSettings.mediaTypes=".json_encode($options['mediaTypes']).";\n";
+      }
+
+      // Add responsive behaviour to table if specified in options.
+      if ($options['responsive']) {
+        // Add the javascript plugin.
+        self::add_resource('indiciaFootableChecklist');
+        // Add inline javascript to invoke the plugins on this grid.
+        $footable_options = json_encode($options['responsiveOpts']);
+        self::$javascript .= "jQuery('#{$options['id']}').indiciaFootableChecklist($footable_options);\n";
       }
       return $r;
     } else {
@@ -4037,9 +4071,21 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     $r = '';
     $visibleColIdx = 0;
     if ($options['header']) {
-      $r .= "<thead class=\"ui-widget-header\"><tr>";
-      for ($i=0; $i<$options['columns']; $i++) {
-        $colspan = !empty($options['lookupListId']) || $options['rowInclusionCheck']=='alwaysRemovable' ? ' colspan="2"' : '';
+      $r .= '<thead class="ui-widget-header"><tr>';
+      for ($i = 0; $i < $options['columns']; $i++) {
+        // The colspan trick of having buttons under the species column heading
+        // messes up FooTables so give the buttons their own header.
+        if ($options['responsive']) {
+          if (!empty($options['lookupListId']) || $options['rowInclusionCheck']=='alwaysRemovable') {
+            $r .= '<th class="row-buttons"></th>';
+          }
+          $colspan = '';
+        }
+        else {
+          $colspan = !empty($options['lookupListId']) || $options['rowInclusionCheck']=='alwaysRemovable' ? ' colspan="2"' : '';
+        }
+        
+        // Species column - no option to hide in repsonsive mode.
         $speciesColTitle = empty($options['speciesColTitle']) ? lang::get('species_checklist.species') : lang::get($options['speciesColTitle']);
         if ($options['userControlsTaxonFilter'] && !empty($options['lookupListId'])) {
           global $indicia_templates;
@@ -4051,21 +4097,54 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         $r .= self::get_species_checklist_col_header($options['id']."-species-$i", $speciesColTitle, $visibleColIdx, $options['colWidths'], $colspan);
         if ($options['subSpeciesColumn'])
           $r .= self::get_species_checklist_col_header($options['id']."-subspecies-$i", lang::get('Subspecies'), $visibleColIdx, $options['colWidths']);
-        $hidden = ($options['rowInclusionCheck']=='checkbox' ? '' : ' style="display:none"');
-        $r .= self::get_species_checklist_col_header($options['id']."-present-$i", lang::get('species_checklist.present'),
-          $visibleColIdx, $options['colWidths'], $hidden);
 
-        foreach ($occAttrs as $idx=>$a) {
-          $r .= self::get_species_checklist_col_header($options['id']."-attr$idx-$i", lang::get($a), $visibleColIdx, $options['colWidths']) ;
+        // Presence column - always hide unless rowInclusionCheck is 'checkbox'.
+        // Ignored by responsive mode as it has to remain on principal row for
+        // deletion code to work.
+        $attrs = '';
+        if ($options['rowInclusionCheck'] != 'checkbox') {
+          $attrs = ' style="display:none"';
+          if ($options['responsive']) {
+            $attrs .= ' data-hide="all" data-ignore="true" data-editable="true"';
+          }
         }
+        $r .= self::get_species_checklist_col_header($options['id']."-present-$i", lang::get('species_checklist.present'),
+          $visibleColIdx, $options['colWidths'], $attrs);
+
+        // All attributes - may be hidden in responsive mode, depending upon
+        // the settings in the responsiveCols array.
+        foreach ($occAttrs as $idx=>$a) {
+          $attrs = self::get_species_checklist_col_responsive($options, "attr$idx");
+          $r .= self::get_species_checklist_col_header($options['id']."-attr$idx-$i", lang::get($a), $visibleColIdx, $options['colWidths'], $attrs);
+        }        
         if ($options['occurrenceComment']) {
-          $r .= self::get_species_checklist_col_header($options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths']) ;
+          $attrs = self::get_species_checklist_col_responsive($options, 'comment');
+          $r .= self::get_species_checklist_col_header($options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceSensitivity']) {
-          $r .= self::get_species_checklist_col_header($options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths']) ;
+          $attrs = self::get_species_checklist_col_responsive($options, 'sensitive');
+          $r .= self::get_species_checklist_col_header($options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
         }
+        
+        // Non-responsive behaviour is to show an Add Media button in a column
+        // which, when clicked, adds a row to the grid for files and hides the 
+        // button. Column can be hidden in responsive mode.
         if (count($options['mediaTypes'])) {
-          $r .= self::get_species_checklist_col_header($options['id']."-images-$i", lang::get($onlyImages ? 'Add photos' : 'Add media'), $visibleColIdx, $options['colWidths']) ;
+          $attrs = self::get_species_checklist_col_responsive($options, 'media');
+          $r .= self::get_species_checklist_col_header($options['id']."-images-$i", lang::get($onlyImages ? 'Add photos' : 'Add media'), $visibleColIdx, $options['colWidths'], $attrs);
+          // In responsive mode, add an additional column for files which is 
+          // always hidden so it appears in a row below.
+          if ($options['responsive']) {
+            $attrs = ' data-hide="all" data-editable="true"';
+//            $attrs = '';
+            $r .= self::get_species_checklist_col_header($options['id']."-files-$i", lang::get($onlyImages ? 'Photos' : 'Media'), $visibleColIdx, $options['colWidths'], $attrs);
+          }
+        }
+        
+        // Additional column for toggle button in responsive mode which cannot
+        // be hidden.
+        if ($options['responsive']) {
+          $r .= '<th class="footable-toggle-col" data-toggle="true"></th>';
         }
       }
       $r .= '</tr></thead>';
@@ -4085,7 +4164,26 @@ $('#".$options['id']." .species-filter').click(function(evt) {
   private static function get_species_checklist_col_header($id, $caption, &$colIdx, $colWidths, $attrs='') {
     $width = count($colWidths)>$colIdx && $colWidths[$colIdx] ? ' style="width: '.$colWidths[$colIdx].'%;"' : '';
     if (!strpos($attrs, 'display:none')) $colIdx++;
-    return "<th id=\"$id\"$attrs$width>".$caption."</th>";
+    return "<th id=\"$id\"$attrs$width>$caption</th>";
+  }
+
+  /**
+   * Returns attributes to define responsive behaviour of column.
+   * @param array $options Control options array.
+   * @param string $column The column identifier which is the key to the 
+   * $options['responsiveHide'] array.
+   * @return string CSS attributes to attach to column header.
+   */
+  private static function get_species_checklist_col_responsive($options, $column) {
+    // Create a data-hide attribute for responsive tables.
+    $attrs = '';
+    if (isset($options['responsiveCols'][$column])) {
+      $attrs = implode(',', array_keys(array_filter($options['responsiveCols'][$column])));
+      if($attrs != '') {
+        $attrs = " data-hide=\"$attrs\" data-editable=\"true\"";
+      }
+    }
+    return $attrs;
   }
 
   /**
@@ -4241,7 +4339,8 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       'speciesGridPageLinkTooltip' => '',
       // legacy - occurrenceImages means just local image support
       'mediaTypes' => !empty($options['occurrenceImages']) && $options['occurrenceImages'] ?
-        array('Image:Local') : array()
+        array('Image:Local') : array(),
+      'responsive' => false,
     ), $options);
     // subSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
@@ -4413,7 +4512,19 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
       $r .= '<td class="ui-widget-content scAddMediaCell"><a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'].'--idx-:">'.
         lang::get($label).'</a><span class="species-checklist-select-species">'.lang::get('Select a species first').'</span></td>';
+
+      // Extra columnn for photos in responsive mode.
+      if ($options['responsive']) {
+        $ctrlId = 'container-sc:' . $options['id'] . '--idx-::occurrence_medium-' . mt_rand();
+        $r .= '<td class="scMediaCell"><div class="scMedia file-box" id="' . $ctrlId . '"></div></td>';
+      }
     }
+
+    // Extra column for responsive toggle.
+    if ($options['responsive']) {
+      $r .= '<td class="footable-toggle-cell"></td>';
+    }
+    
     $r .= "</tr></tbody></table>\n";
     return $r;
   }
