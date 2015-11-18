@@ -352,6 +352,7 @@ class report_helper extends helper_base {
   *   - breakpoints: an array keyed by breakpoint name with values of screen
   *     width at which to apply the breakpoint. Footable defaults apply if
   *     omitted.
+  * </li>
   * </ul>
   */
   public static function report_grid($options) {
@@ -434,7 +435,7 @@ class report_helper extends helper_base {
           if (isset($field['responsive-hide'])) {
             $datahide = implode(',', array_keys(array_filter($field['responsive-hide'])));
             if($datahide != '') {
-              $datahide = " data-hide=\"$datahide\"";
+              $datahide = " data-hide=\"$datahide\" data-editable=\"true\"";
             }
           }
           
