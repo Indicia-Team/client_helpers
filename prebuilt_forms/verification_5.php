@@ -573,7 +573,6 @@ idlist=';
     data_entry_helper::add_resource('fancybox');
     data_entry_helper::add_resource('validation');
     $indicia_user_id=self::get_indicia_user_id($args);
-    data_entry_helper::$js_read_tokens = $auth['read'];
     // Find a list of websites we are allowed verify
     $websiteIds = iform_get_allowed_website_ids($auth['read'], 'verification');
     $gotEasyLogin = function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login');
@@ -613,7 +612,6 @@ idlist=';
     $r = str_replace(array('{grid}','{paramsForm}'), array($grid, $params),
         self::get_template_with_map($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();
-    data_entry_helper::$js_read_tokens = $auth['read'];
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "'.hostsite_get_user_field('name')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";

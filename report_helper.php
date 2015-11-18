@@ -53,10 +53,6 @@ class report_helper extends helper_base {
     $reports = '';
     $response = self::http_post(self::$base_url.'index.php/services/report/report_list?nonce='.
         $options['readAuth']['nonce'].'&auth_token='.$options['readAuth']['auth_token']);
-    self::$js_read_tokens = array(
-      'auth_token'=>$options['readAuth']['auth_token'],
-      'nonce'=>$options['readAuth']['nonce']
-    );
     if (isset($response['output'])) {
       $output = json_decode($response['output'], true);
       if (isset($output['error']))
@@ -1356,8 +1352,13 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
     }
     // add a header
     $r .= "<div id=\"$options[id]\" class=\"$options[class]\">$options[header]";
+    $rootFolder = self::getRootfolder(true);
+    $sep = strpos($rootFolder, '?')===FALSE ? '?' : '&';
     // output each row
     foreach ($records as $row) {
+      // add some extra replacements for handling links
+      $row['rootFolder'] = $rootFolder;
+      $row['sep'] = $sep;
       // for each row, check through the list of report bands
       foreach ($options['bands'] as &$band) {
         // default is to output a band

@@ -1378,6 +1378,7 @@ class helper_base extends helper_config {
    * @param string $website_id Indicia ID for the website.
    * @param string $password Indicia password for the website.
    * @return array Read authorisation tokens array.
+   * @throws Exception
    */
   public static function get_read_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
@@ -1400,6 +1401,7 @@ class helper_base extends helper_config {
     } 
     else
       $r = json_decode($r, true);
+    self::$js_read_tokens = $r;
     return $r;
   }
 
@@ -1421,12 +1423,13 @@ class helper_base extends helper_config {
         'value="'.sha1($nonces['write'].':'.$password).'" />'."\r\n";
     $write .= '<input id="nonce" name="nonce" type="hidden" class="hidden" ' .
         'value="'.$nonces['write'].'" />'."\r\n";
+    self::$js_read_tokens = array(
+      'auth_token' => sha1($nonces['read'].':'.$password),
+      'nonce' => $nonces['read']
+    );
     return array(
       'write' => $write,
-      'read' => array(
-        'auth_token' => sha1($nonces['read'].':'.$password),
-        'nonce' => $nonces['read']
-      ),
+      'read' => self::$js_read_tokens,
       'write_tokens' => array(
         'auth_token' => sha1($nonces['write'].':'.$password),
         'nonce' => $nonces['write']

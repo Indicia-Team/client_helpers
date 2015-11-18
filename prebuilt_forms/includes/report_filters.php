@@ -998,7 +998,6 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     
   }   
   $r .= '</div>';
-  report_helper::$js_read_tokens = $readAuth;
   report_helper::$javascript .= "indiciaData.lang.CreateAFilter='".lang::get('Create a filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ModifyFilter='".lang::get('Modify filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.FilterReport='".lang::get('New report')."';\n";

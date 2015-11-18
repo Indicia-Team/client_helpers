@@ -590,7 +590,6 @@ idlist=';
     $link = data_entry_helper::get_reload_link_parts();
     global $user;
     $auth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-    data_entry_helper::$js_read_tokens = $auth;
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";
