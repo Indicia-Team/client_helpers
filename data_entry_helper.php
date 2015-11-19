@@ -4516,7 +4516,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       // Extra columnn for photos in responsive mode.
       if ($options['responsive']) {
         $ctrlId = 'container-sc:' . $options['id'] . '--idx-::occurrence_medium-' . mt_rand();
-        $r .= '<td class="scMediaCell"><div class="scMedia file-box" id="' . $ctrlId . '"></div></td>';
+        $r .= '<td class="scMediaCell"><div class="scMedia" id="' . $ctrlId . '"></div></td>';
       }
     }
 
