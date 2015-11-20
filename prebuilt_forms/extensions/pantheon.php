@@ -59,6 +59,8 @@ class extension_pantheon {
 
   /**
    * Outputs the list of buttons to appear under a Pantheon report.
+   * Also enables use of the jsPlumb library for connections between report output boxes.
+   * Download the latest jsPlumb JS file into sites/all/libraries/jsPlumb/jsPlumb.js.
    * @param array $options Array with the following options:
    * * extras - array of additional buttons to include. Each entry contains a link
    *   parameter and a label and the current sample_id query string parameter will be added to the link.
@@ -66,7 +68,7 @@ class extension_pantheon {
    * @return string HTML to include on the page.
    */
   public static function button_links($auth, $args, $tabalias, $options, $path) {
-    drupal_add_js('sites/all/libraries/jqPlumb/jqPLumb.js');
+    drupal_add_js('sites/all/libraries/jsPlumb/jsPLumb.js');
     $r = '';
     if (!empty($options['extras'])) {
       $r .= '<ul class="button-links extras">';
