@@ -26,11 +26,15 @@
 class extension_pantheon {
 
   /**
-   *
-   * @param $options
-   * * template
-   * * param
-   * @return string
+   * Updates the page title with dynamic values.
+   * Replaces the following:
+   * * {sample_id} with the current ID (loaded from the URL query parameter dynamic-sample_id)
+   * * {term:<queryparam>} with a term from the warehouse. Replace <queryparam> with the
+   *   name of a URL query string parameter that contains the value of the termlists_term
+   *   record to load the term for.
+   * @param $options Array with the following options:
+   * * auth - Must contain a read entry for read authorisation tokens
+   * @return string Empty string
    */
   public static function set_dynamic_page_title($auth, $args, $tabalias, $options, $path) {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
@@ -52,21 +56,15 @@ class extension_pantheon {
     }
     return '';
   }
-/* NOT USED?
-  public static function add_term_from_query_param_term_id_to_title($auth, $args, $tabalias, $options, $path) {
-    if (arg(0) == 'node' && is_numeric(arg(1)) && !empty($_GET[$options['term_id_param']])) {
-      iform_load_helpers(array('data_entry_helper'));
-      $nid = arg(1);
-      $terms = data_entry_helper::get_population_data(array(
-        'table' => 'termlists_term',
-        'extraParams' => $auth['read'] + array('id' => $_GET[$options['term_id_param']], 'view' => 'cache'),
-        'columns' => 'term'
-      ));
-      hostsite_set_page_title(hostsite_get_page_title($nid) .
-        str_replace('#value#', $terms[0]['term'], $options['template']));
-    }
-  }
-*/
+
+  /**
+   * Outputs the list of buttons to appear under a Pantheon report.
+   * @param array $options Array with the following options:
+   * * extras - array of additional buttons to include. Each entry contains a link
+   *   parameter and a label and the current sample_id query string parameter will be added to the link.
+   * * back - set to true if this needs a Back to Summary button.
+   * @return string HTML to include on the page.
+   */
   public static function button_links($auth, $args, $tabalias, $options, $path) {
     drupal_add_js('sites/all/libraries/jqPlumb/jqPLumb.js');
     $r = '';
