@@ -2845,7 +2845,8 @@ $('#$escaped').change(function(e) {
   * Optional. Array containing percentage values for each visible column's 
   * width, with blank entries for columns that are not specified. If the array 
   * is shorter than the actual number of columns then the remaining columns use 
-  * the default width determined by the browser.</li>
+  * the default width determined by the browser. Ignored if checklist is
+  * responsive and hides columns.</li>
   * <li><b>attrCellTemplate</b><br/>
   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
   * for each cell containing an attribute input control. Valid replacements are {label}, {class} and {content}.
@@ -4355,6 +4356,10 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       );
     }
     $options['table'] = $options['cacheLookup'] ? 'cache_taxa_taxon_list' : 'taxa_taxon_list';
+    // colWidths are disabled for responsive checklists
+    if ($options['responsive']) {
+      $options['colWidths'] = array();
+    }
     return $options;
   }
 
