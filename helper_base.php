@@ -698,8 +698,8 @@ class helper_base extends helper_config {
 //            'javascript' => array( self::$js_path.'footable/dist/footable.min.js',), /*** does not contain bugfixes ***/
             'javascript' => array( self::$js_path.'footable/js/footable.js',),
             'deps' => array('jquery')),
-        'indiciaFootable' => array(
-            'javascript' => array(self::$js_path . 'jquery.indiciaFootable.js'), 
+        'indiciaFootableReport' => array(
+            'javascript' => array(self::$js_path . 'jquery.indiciaFootableReport.js'), 
             'deps' => array('footable')),
         'indiciaFootableChecklist' => array(
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 

@@ -725,10 +725,10 @@ $('.update-input').focus(function(evt) {
       // then made responsive with the footables plugin.
       if (isset($options['responsive'])) {
         // Add the javascript plugins.
-        self::add_resource('indiciaFootable');
+        self::add_resource('indiciaFootableReport');
         // Add inline javascript to invoke the plugins on this grid.
         $footable_options = json_encode($options['responsive']);
-        self::$javascript .= "jQuery('#{$options['id']}').indiciaFootable($footable_options);\n";
+        self::$javascript .= "jQuery('#{$options['id']}').indiciaFootableReport($footable_options);\n";
 
         // Footable needs calling after each Ajax update. There is an existing 
         // callback option which we can use but it only accepts a single function.
