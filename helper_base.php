@@ -589,6 +589,9 @@ class helper_base extends helper_config {
    * <li>timeentry</li>
    * <li>verification</li>
    * <li>complexAttrGrid</li>
+   * <li>footable</li>
+   * <li>indiciaFootableReport</li>
+   * <li>indiciaFootableChecklist</li>
    * </ul>
    */
   public static function add_resource($resource)
