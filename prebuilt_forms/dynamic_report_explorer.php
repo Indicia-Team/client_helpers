@@ -384,7 +384,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'sharing'=>$sharing,
         'ajax'=>true,
         'id'=>'report-grid-'.self::$reportCount,
-        'responsive' => array(
+        'responsiveOpts' => array(
           'breakpoints' => array(
             'phone' => '480',
             'tablet-portrait' => '768',
