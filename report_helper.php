@@ -344,7 +344,7 @@ class report_helper extends helper_base {
   * <li><b>imageThumbPreset</b>
   * Defaults to thumb. Preset name for the image to be loaded from the warehouse as the preview thumbnail for images, e.g. thumb or med.
   * </li>
-  * <li><b>responsive</b>
+  * <li><b>responsiveOpts</b>
   * Set to an array of options to pass to FooTable to make the table responsive.
   * Used in conjunction with the columns['responsive-hide'] option to determine
   * which columns are hidden at different breakpoints.
@@ -723,11 +723,11 @@ $('.update-input').focus(function(evt) {
       // For backwards compatibility, no changes are made to the html output
       // by this function. Instead the table is decorated in javascript and 
       // then made responsive with the footables plugin.
-      if (isset($options['responsive'])) {
+      if (isset($options['responsiveOpts'])) {
         // Add the javascript plugins.
         self::add_resource('indiciaFootableReport');
         // Add inline javascript to invoke the plugins on this grid.
-        $footable_options = json_encode($options['responsive']);
+        $footable_options = json_encode($options['responsiveOpts']);
         self::$javascript .= "jQuery('#{$options['id']}').indiciaFootableReport($footable_options);\n";
 
         // Footable needs calling after each Ajax update. There is an existing 
