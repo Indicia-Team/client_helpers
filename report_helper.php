@@ -720,9 +720,8 @@ $('.update-input').focus(function(evt) {
       $r = "<div id=\"".$options['id']."\">$r</div>\n";
 
       // Add responsive behaviour to table if specified in options.
-      // For backwards compatibility, no changes are made to the html output
-      // by this function. Instead the table is decorated in javascript and 
-      // then made responsive with the footables plugin.
+      // The table is made responsive with the footables plugin based on the
+      // data-hide attributes added to the <th> elements
       if (isset($options['responsiveOpts'])) {
         // Add the javascript plugins.
         self::add_resource('indiciaFootableReport');
@@ -752,16 +751,17 @@ window['$callback'] = function() {
         }
         // Store the callback name to pass to jquery.reportgrid.js.
         $options['callback'] = $callback;
+      }
 
-        // Now AJAXify the grid
-        self::add_resource('reportgrid');
-        global $indicia_templates;
-        if (!empty(parent::$warehouse_proxy))
-          $warehouseUrl = parent::$warehouse_proxy;
-        else
-          $warehouseUrl = parent::$base_url;
-        $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-        self::$javascript .= "
+      // Now AJAXify the grid
+      self::add_resource('reportgrid');
+      global $indicia_templates;
+      if (!empty(parent::$warehouse_proxy))
+        $warehouseUrl = parent::$warehouse_proxy;
+      else
+        $warehouseUrl = parent::$base_url;
+      $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+      self::$javascript .= "
 if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
 simple_tooltip('input.col-filter','tooltip');
@@ -790,37 +790,36 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   msgRowLinkedToMapHint: '".lang::get('Click the row to highlight the record on the map. Double click to zoom in.')."',
   msgNoInformation: '".lang::get('No information available')."',
   altRowClass: '$options[altRowClass]'";
-        if (isset($options['sharing'])) {
-          if (!isset($options['extraParams']))
-            $options['extraParams']=array();
-          $options['extraParams']['sharing']=$options['sharing'];
-        }
-        if (!empty($options['rowClass']))
-          self::$javascript .= ",\n  rowClass: '".$options['rowClass']."'";
-        if (isset($options['extraParams']))
-          self::$javascript .= ",\n  extraParams: ".json_encode(array_merge($options['extraParams'], $currentParamValues));
-        if (isset($options['filters']))
-          self::$javascript .= ",\n  filters: ".json_encode($options['filters']);
-        if (isset($orderby))
-          self::$javascript .= ",\n  orderby: '".$orderby."'";
-        if (isset($sortdir))
-          self::$javascript .= ",\n  sortdir: '".$sortdir."'";
-        if (isset($response['count']))
-          self::$javascript .= ",\n  recordCount: ".$response['count'];
-        if (isset($options['columns']))
-          self::$javascript .= ",\n  columns: ".json_encode($options['columns']);
-        self::$javascript .= "\n});\n";
+      if (isset($options['sharing'])) {
+        if (!isset($options['extraParams']))
+          $options['extraParams']=array();
+        $options['extraParams']['sharing']=$options['sharing'];
       }
-      if (isset($options['sendOutputToMap']) && $options['sendOutputToMap']) {
-        self::$javascript.= "mapSettingsHooks.push(function(opts) {\n";
-        self::$javascript.= "  opts.clickableLayers.push(indiciaData.reportlayer);\n";
-        self::$javascript.= "  opts.clickableLayersOutputMode='reportHighlight';\n";
-        self::$javascript .= "});\n";
-      }
-      if ($options['ajax'] && $options['autoloadAjax'])
-        self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload();\n";
-      return $r;
+      if (!empty($options['rowClass']))
+        self::$javascript .= ",\n  rowClass: '".$options['rowClass']."'";
+      if (isset($options['extraParams']))
+        self::$javascript .= ",\n  extraParams: ".json_encode(array_merge($options['extraParams'], $currentParamValues));
+      if (isset($options['filters']))
+        self::$javascript .= ",\n  filters: ".json_encode($options['filters']);
+      if (isset($orderby))
+        self::$javascript .= ",\n  orderby: '".$orderby."'";
+      if (isset($sortdir))
+        self::$javascript .= ",\n  sortdir: '".$sortdir."'";
+      if (isset($response['count']))
+        self::$javascript .= ",\n  recordCount: ".$response['count'];
+      if (isset($options['columns']))
+        self::$javascript .= ",\n  columns: ".json_encode($options['columns']);
+      self::$javascript .= "\n});\n";
     }
+    if (isset($options['sendOutputToMap']) && $options['sendOutputToMap']) {
+      self::$javascript.= "mapSettingsHooks.push(function(opts) {\n";
+      self::$javascript.= "  opts.clickableLayers.push(indiciaData.reportlayer);\n";
+      self::$javascript.= "  opts.clickableLayersOutputMode='reportHighlight';\n";
+      self::$javascript .= "});\n";
+    }
+    if ($options['ajax'] && $options['autoloadAjax'])
+      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload();\n";
+    return $r;
   }
 
  /**
