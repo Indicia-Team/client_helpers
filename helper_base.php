@@ -697,14 +697,15 @@ class helper_base extends helper_config {
         'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
         'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
         'footable' => array(
-            'stylesheets' => array(self::$js_path.'footable/css/footable.core.min.css'), 
+            'stylesheets' => array(self::$js_path . 'footable/css/footable.core.min.css'), 
 //            'javascript' => array( self::$js_path.'footable/dist/footable.min.js',), /*** does not contain bugfixes ***/
-            'javascript' => array( self::$js_path.'footable/js/footable.js',),
+            'javascript' => array( self::$js_path . 'footable/js/footable.js',),
             'deps' => array('jquery')),
         'indiciaFootableReport' => array(
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableReport.js'), 
             'deps' => array('footable')),
         'indiciaFootableChecklist' => array(
+            'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'), 
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
             'deps' => array('footable')),
       );
