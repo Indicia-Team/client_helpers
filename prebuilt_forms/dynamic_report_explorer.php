@@ -386,9 +386,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'id'=>'report-grid-'.self::$reportCount,
         'responsiveOpts' => array(
           'breakpoints' => array(
-            'phone' => '480',
-            'tablet-portrait' => '768',
-            'tablet-landscape' => '1024',
+            'phone' => 480,
+            'tablet-portrait' => 768,
+            'tablet-landscape' => 1024,
           ),
         ),           
       ),
