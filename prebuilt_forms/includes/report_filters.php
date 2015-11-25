@@ -579,6 +579,7 @@ class filter_source extends filter_base {
         'dataSource' => 'library/websites/websites_list',
         'readAuth' => $readAuth,
         'caching' => true,
+        'cachePerUser' => false,
         'extraParams' => array('sharing' => $options['sharing'])
       ));  
       if (count($sources)>1) {
@@ -605,6 +606,7 @@ class filter_source extends filter_base {
         'dataSource' => 'library/surveys/surveys_list',
         'readAuth' => $readAuth,
         'caching' => true,
+        'cachePerUser' => false,
         'extraParams' => array('sharing' => $options['sharing'])
       ));
       $titleToDisplay='fulltitle';
