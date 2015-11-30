@@ -500,6 +500,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
       // if not logged in and linked to warehouse, we can't use standard params functionality like saving, so...
       return '';
+    $hiddenStuff = '';
     $r = report_filter_panel($auth['read'], $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
   }
