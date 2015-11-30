@@ -1104,6 +1104,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   * on the page called handle_chart_click_path and this will be called with the path, series index, point index and row data as parameters. It can
   * then return the modified path, so you can write custom logic, e.g. to map the series index to a specific report filter.
   * </li>
+  * <li><b>responsive</b>
+  * If set to true, redraws plot to fit screen width.
+  * </li>
   * </ul>
   * @todo look at the ReportEngine to check it is not prone to SQL injection (eg. offset, limit).
   * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Series
@@ -1244,8 +1247,14 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
         'axes:'.json_encode($options['axesOptions']));
 
     // Finally, dump out the Javascript with our constructed parameters
-    self::$javascript .= "$.jqplot('".$options['id']."', " . json_encode($seriesData) . ", \n{".implode(",\n", $opts)."});\n";
-     //once again we only include summary report clicking functionality if user has setup the appropriate options
+    if (empty($options['id'])) {
+      $options['id'] = 'report-chart-' . rand();
+    }
+    $plotName = preg_replace('/[^a-zA-Z0-9]/', '_', $options['id']);
+    self::$javascript .= "var $plotName = $.jqplot('{$options['id']}', " . json_encode($seriesData) . ", \n{" . implode(",\n", $opts) . "});\n";
+    // Store the plot object with its div.
+    self::$javascript .= "$('#{$options['id']}').data('jqplot', $plotName);\n";
+    //once again we only include summary report clicking functionality if user has setup the appropriate options
     if(isset($options['linkToReportPath'])) {
       //open the report, note that data[0] varies depending on whether we are using a pie or bar. But we have
       //saved the data to the array twice already to handle this
@@ -1275,6 +1284,45 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   $('#chartdiv').bind('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
     $('table.jqplot-table-legend td').removeClass('highlight');
   });\n";
+
+    if (!empty($options['responsive'])) {
+      // Make plots responsive.
+      $options['width'] = '100%';
+
+      static $handlers_once = false;
+      if (!$handlers_once) {
+        // Only need to emit event handlers once.
+        self::$javascript .= "$(window).resize(function(){
+          $('.jqplot-target').each(function() {
+            var jqp = $(this).data('jqplot');
+            $.each(jqp.series, function(i, series) {
+              series.barWidth = undefined;
+            });
+            jqp.replot({resetAxes: true});
+          });
+        });\n";
+
+        // If plots are hidden across several tabs, replot when tab is 
+        //activated.
+        self::$javascript .= "var tabs = $('#{$options['id']}').closest('#controls');
+        if (tabs.length > 0) {
+          indiciaFns.bindTabsActivate(tabs, function(evt, ui) {
+            var panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
+            var plots = $(panel).find('.jqplot-target');
+            if (plots.length > 0) {
+              // The activated panel holds jqplots.
+              plots.each(function() {
+                var jqp = $(this).data('jqplot');
+                jqp.replot({resetAxes: true});
+              });
+            }
+          });
+        };\n";
+        $handlers_once = true;
+      }
+      
+    }
+    
     $heightStyle = '';
     $widthStyle = '';
     if (!empty($options['height']))
@@ -1283,7 +1331,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       if (substr($options['width'], -1)!=='%')
         $options['width'] .= 'px';
       $widthStyle = "width: $options[width];";
-    }
+    }    
     $r .= "<div class=\"$options[class]\" style=\"$widthStyle\">";
     if (isset($options['title']))
       $r .= '<div class="'.$options['headerClass'].'">'.$options['title'].'</div>';
