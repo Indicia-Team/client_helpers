@@ -1,5 +1,9 @@
 // retrieve a query string parameter
 function getParameterByName(name) {
+  // special case - dynamic-sample_id can be provided as params table=sample&id=...
+  if (name==='dynamic-sample_id' && location.search.match(/table=sample/)) {
+    name='id';
+  }
   name = name.replace(/[\[]/, "\\[").replace(/[\]]/, "\\]");
   var regex = new RegExp("[\\?&]" + name + "=([^&#]*)"),
     results = regex.exec(location.search);
