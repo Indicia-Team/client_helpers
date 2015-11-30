@@ -83,6 +83,11 @@ class iform_quick_species_maps {
           'required'=>false,
           'default'=>"dist_point_red\ndist_point_blue",
           'group'=>'Other Map Settings'
+        ), array(
+          'name' => 'species_details_page_path',
+          'caption' => 'Species details page path',
+          'description' => 'Path to the species details page, if any. Adds a link to the page to the table.',
+          'type' => 'text_input'
         )
       )
     );
@@ -124,10 +129,19 @@ class iform_quick_species_maps {
     ), $reportOptions);
     $reportOptions['rowId']='external_key';
     $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path()."../media/images/" : report_helper::$images_path;
+    $actions = array(
+      array('img'=>"{$imgPath}add.png",'caption'=>'Click to add this species to the map')
+    );
+    // Add an action column for the species details page
+    if (!empty($args['species_details_page_path']))
+      $actions[] = array(
+          'img'=>"{$imgPath}nuvola/find-22px.png",
+          'caption'=>'View details of this species',
+          'url'=>$args['species_details_page_path'],
+          'urlParams'=>array('taxon_meaning_id'=>'{taxon_meaning_id}')
+      );
     $reportOptions['columns'][] = array(
-      'actions'=>array(
-        array('img'=>"$imgPath/add.png",'caption'=>'Click to add this species to the map')
-      )        
+      'actions'=>$actions
     );
     $r .= report_helper::report_grid($reportOptions);
     $r .= '</div>';
