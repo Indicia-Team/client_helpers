@@ -2083,33 +2083,35 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
    * @throws \Exception
    */
   protected static function _get_cached_services_call($request, $options) {
-    $cacheLoaded = false;
+    $cacheLoaded = FALSE;
     // allow use of the legacy nocache parameter.
-    if (isset($options['nocache']) && $options['nocache']===true)
-      $options['caching'] = false;
+    if (isset($options['nocache']) && $options['nocache']===TRUE)
+      $options['caching'] = FALSE;
     $useCache = !self::$nocache && !isset($_GET['nocache']) && !empty($options['caching']) && $options['caching'];
-    if ($useCache && $options['caching']!=='store') {
+    if ($useCache) {
       // Get the URL params, so we know what the unique thing is we are caching
       $parsedURL=parse_url(parent::$base_url.$request);
       parse_str($parsedURL["query"], $cacheOpts);
       unset($cacheOpts['auth_token']);
       unset($cacheOpts['nonce']);
       $cacheOpts['path']=$parsedURL['path'];
-      if (isset($options['cachePerUser']) && !$options['cachePerUser']) 
+      if (isset($options['cachePerUser']) && !$options['cachePerUser'])
         unset($cacheOpts['user_id']);
-      $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+      $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
-      $response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
-      if ($response!==false)
-        $cacheLoaded = true;
+      if ($options['caching']!=='store') {
+        $response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        if ($response!==FALSE)
+          $cacheLoaded = TRUE;
+      }
     }
-    if (!isset($response) || $response===false)
-      $response = self::http_post(parent::$base_url.$request, null);
-    $r = json_decode($response['output'], true);
+    if (!isset($response) || $response===FALSE)
+      $response = self::http_post(parent::$base_url . $request, NULL);
+    $r = json_decode($response['output'], TRUE);
     if (!is_array($r)) {
       $response['request'] = $request;
-      throw new Exception('Invalid response received from Indicia Warehouse. '.print_r($response, true));
+      throw new Exception('Invalid response received from Indicia Warehouse. '.print_r($response, TRUE));
     }
     // Only cache valid responses and when not already cached
     if ($useCache && !isset($r['error']) && !$cacheLoaded)
