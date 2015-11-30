@@ -2605,6 +2605,8 @@ $('#$escaped').change(function(e) {
    *   searching and then nothing is matched? Default true.
    * * **>matchContains** - If true, then the search looks for matches which contain the search
    *   characters. Otherwise, the search looks for matches which start with the search characters. Default false.
+   * * **outputPreferredNameToSelector** - If set, then the contents of the HTML element with the matching selector are
+   *   replaced with the preferred name of the selected species when chosen. Default false.
    *
    * @return string Html for the species autocomplete control.
    */
@@ -2627,7 +2629,8 @@ $('#$escaped').change(function(e) {
       'captionFieldInEntity'=>'taxon',
       'valueField'=>$colId,
       'formatFunction'=>empty($indicia_templates['format_species_autocomplete_fn']) ? $indicia_templates['taxon_label'] : $indicia_templates['format_species_autocomplete_fn'],
-      'simplify'=>$options['cacheLookup'] ? 'true' : 'false'
+      'simplify'=>$options['cacheLookup'] ? 'true' : 'false',
+      'outputPreferredNameToSelector' => false
     ), $options);
     if (isset($duplicateCheckFields))
       $options['duplicateCheckFields']=$duplicateCheckFields;
@@ -2640,6 +2643,13 @@ $('#$escaped').change(function(e) {
           array('id'=>$options['default'],'columns'=>"taxon")
       ));
       $options['defaultCaption']=$r[0]['taxon'];
+    }
+    if ($options['outputPreferredNameToSelector']) {
+      self::$javascript .= "  $('#occurrence\\\\:taxa_taxon_list_id').change(function(evt, data) {
+        if (typeof data!=='undefined') {
+          $('$options[outputPreferredNameToSelector]').html(data.preferred_taxon);
+        }
+      });\n";
     }
     return self::autocomplete($options);
   }

@@ -42,7 +42,7 @@ $indicia_templates = array(
   'label' => '<label for="{id}"{labelClass}>{label}:</label>'."\n",
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>'."\n",
   'suffix' => "\n",
-  'requiredsuffix' => "<span class=\"deh-required\">*</span>\n",
+  'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   'anchorButton' => '<a class="ui-corner-all ui-widget-content ui-state-default indicia-button {class}" href="{href}" id="{id}">{caption}</a>',
@@ -153,7 +153,7 @@ $indicia_templates = array(
       if (typeof data.icon!=='undefined') {
         $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
       }
-      $('input#{escaped_id}').change();
+      $('input#{escaped_id}').trigger('change', data);
     });\r\n",
   'sub_list' => '<div id="{id}:box" class="control-box wide"><div>'."\n".
     '<div>'."\n".
@@ -1775,7 +1775,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
     $r .= self::get_help_text($options, 'after');
     if (isset($options['id']) ) {
       $wrap = empty($options['controlWrapTemplate']) ? $indicia_templates['controlWrap'] : $indicia_templates[$options['controlWrapTemplate']];
-      $r = str_replace(array('{control}', '{id}'), array($r, str_replace(':', '-', $options['id'])), $wrap);
+      $r = str_replace(array('{control}', '{id}'), array("\n$r", str_replace(':', '-', $options['id'])), $wrap);
     }
     if (!empty($options['tooltip'])) {
       // preliminary support for
