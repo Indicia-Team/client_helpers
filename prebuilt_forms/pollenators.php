@@ -486,7 +486,7 @@ jQuery('#".$id."').click(function(){
 		data_entry_helper::add_resource('jquery_ui_'.$args['language']);
 	data_entry_helper::enable_validation('cc-1-collection-details'); // don't care about ID itself, just want resources
 
-	if($args['help_module'] != '' && $args['help_inclusion_function'] != '' && module_exists($args['help_module']) && function_exists($args['help_inclusion_function'])) {
+	if($args['help_module'] != '' && $args['help_inclusion_function'] != '' && hostsite_module_exists($args['help_module']) && function_exists($args['help_inclusion_function'])) {
     	$use_help = true;
     	data_entry_helper::$javascript .= call_user_func($args['help_inclusion_function']);
     } else {

@@ -198,10 +198,10 @@ jQuery(document).ready(function($) {
     }
     var processRow = function(row, idx) {
       if (habitatIdx===1) {
-        select = $(row).find('.scSACFORPCell select');
+        select = $(row).find('.scSACFORPCell select:first');
       }
       else {
-        select = $(row).find('.scSACFORPCell select').clone();
+        select = $(row).find('.scSACFORPCell select:first').clone();
         $(row).find('.scCommentCell').before($('<td class="scOccAttrCell ui-widget-content scSACFORPCell"></td>').append(select));
       }
       $(select).attr('id', 'species-grid-'+idx+':habitat-'+habitatIdx);

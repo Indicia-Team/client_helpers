@@ -15,7 +15,7 @@ jQuery(document).ready(function($) {
    */
   $('table#position-data :input').change(function() {
     $('#input-os-grid').val('');
-    updatePositionData();
+    updatePositionData(indiciaData.mapdiv, true);
   });
 
   /**
@@ -51,6 +51,10 @@ jQuery(document).ready(function($) {
       $.each($('#input-centre input'), function() {
         $(this)[0].className = $(this)[0].className.replace('required: false', 'required: true');
       });
+      // Tell map it's position may have changed
+      if (typeof indiciaData.mapdiv!=="undefined") {
+        indiciaData.mapdiv.map.updateSize();
+      }
     }
   }
 
@@ -81,7 +85,7 @@ jQuery(document).ready(function($) {
    * Draws the geometry for a drift dive from an array of points.
    * @param points
    */
-  function drawDriftGeom(points) {
+  function drawDriftGeom(points, recenter) {
     var wkt='', feature, pointsList=[], parser = new OpenLayers.Format.WKT(),
       editLayer=indiciaData.mapdiv.map.editLayer;
     if (points.length===1) {
@@ -99,8 +103,10 @@ jQuery(document).ready(function($) {
       feature.attributes = {type: "driftLine"};
       indiciaData.mapdiv.removeAllFeatures(editLayer, 'driftLine');
       editLayer.addFeatures([feature]);
-      zoom = Math.min(editLayer.getZoomForExtent(editLayer.getDataExtent()), indiciaData.mapdiv.settings.maxZoom);
-      indiciaData.mapdiv.map.setCenter(editLayer.getDataExtent().getCenterLonLat(), zoom);
+      if (recenter) {
+        zoom = Math.min(editLayer.getZoomForExtent(editLayer.getDataExtent()), indiciaData.mapdiv.settings.maxZoom);
+        indiciaData.mapdiv.map.setCenter(editLayer.getDataExtent().getCenterLonLat(), zoom);
+      }
     }
   }
 
@@ -137,9 +143,13 @@ jQuery(document).ready(function($) {
   /**
    * Method called when setting up or when any control containing position data changes. Ensures that the current state
    * of the position data is correctly reflected on the map.
+   * @param boolean recenter True if the map should recenter and zoom in on the geometry
    */
-  function updatePositionData() {
+  function updatePositionData(div, recenter) {
     var latLong, $hiddenInput, updateGeom=false, points=[];
+    if (typeof recenter==="undefined") {
+      recenter = true;
+    }
     calcCentreFromDrift();
     $hiddenInput = getEl(indiciaData.driftStartAttrFieldname);
     if ($('#input-drift-from').find(':input[value=]').length===0) {
@@ -180,11 +190,12 @@ jQuery(document).ready(function($) {
         updateGeom=true;
       }
       points.push(buildPoint('to'));
-    } else {
-      $hiddenInput.val();
+    } else if ($hiddenInput.val()!=='') {
+      $hiddenInput.val('');
+      updateGeom=true;
     }
     if (updateGeom) {
-      drawDriftGeom(points);
+      drawDriftGeom(points, recenter);
     }
   }
 
@@ -210,11 +221,27 @@ jQuery(document).ready(function($) {
       $('#input-long-deg'+qualifier).val(tokens[0]);
       $('#input-long-min'+qualifier).val((('0.' + tokens[1])*60).toFixed(4));
 
-      updatePositionData();
+      updatePositionData(indiciaData.mapdiv, false);
     }
   }
 
   mapInitialisationHooks.push(updatePositionData);
   mapClickForSpatialRefHooks.push(setClickedPosition);
+
+  // Prevemt accidental form submit on return key.
+  $('form#entry_form').on('keypress keydown keyup', function(e) {
+    if (e.which == 13) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
+  // when toggling drift vs non-drift dive, clear out the unnecessary positions
+  $('input[name="which-point"]').change(function() {
+    if ($('input[name="which-point"]:checked').val()==='centre') {
+      $('#input-lat-deg-from,#input-lat-deg-to,#input-lat-min-from,#input-lat-min-to,' +
+          '#input-long-deg-from,#input-long-deg-to,#input-long-min-from,#input-long-min-to').val('');
+    }
+  })
 
 });

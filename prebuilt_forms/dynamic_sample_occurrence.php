@@ -122,9 +122,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'group' => 'User Interface',
           // Note that we can't test Drupal module availability whilst loading this form for a new iform, using Ajax. So 
           // in this case we show the control even though it is not usable (the help text explains the module requirement).          
-          'visible' => !function_exists('module_exists') ||
-                       (module_exists('profile') && substr(VERSION, 0, 1) == '6') ||
-                       (module_exists('field') && substr(VERSION, 0, 1) == '7')
+          'visible' => !function_exists('hostsite_module_exists') ||
+                       (hostsite_module_exists('profile') && substr(VERSION, 0, 1) == '6') ||
+                       (hostsite_module_exists('field') && substr(VERSION, 0, 1) == '7')
         ),
         array(
           'name'=>'structure',
@@ -2027,6 +2027,8 @@ else
         'readAuth'=>$auth['read'],
         'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
       ));
+      //Need to escape characters otherwise a name like O'Brian will break the page HTML
+      $defaultUserData[0]['fullname_firstname_first']=addslashes($defaultUserData[0]['fullname_firstname_first']);
       data_entry_helper::$javascript .= "$('#sample\\\\:recorder_names').val('".$defaultUserData[0]['fullname_firstname_first']."');";
     }
     return data_entry_helper::textarea(array_merge(array(
@@ -2353,6 +2355,7 @@ else
   protected static function getSubmitButtons($args) {
     $r = '';
     if(self::$mode === self::MODE_EXISTING_RO) return $r; // don't allow users to submit if in read only mode.
+    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Submit')."\" />\n";
     if (!empty(self::$loadedSampleId) && $args['multiple_occurrence_mode']==='single') {
       // use a button here, not input, as Chrome does not post the input value
       $r .= '<button type="submit" class="indicia-button" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
@@ -2363,7 +2366,6 @@ else
         }
       });\n";
     }
-    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Submit')."\" />\n";
     return $r;
   }
   

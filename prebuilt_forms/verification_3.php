@@ -549,7 +549,7 @@ idlist=';
     $auth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     // Find a list of websites we are allowed verify
     $websiteIds = iform_get_allowed_website_ids($auth, 'verification');
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_location')===false)
         $args['param_presets'].="\nexpertise_location={profile_location_expertise}";
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_taxon_groups')===false)
@@ -590,7 +590,6 @@ idlist=';
     $link = data_entry_helper::get_reload_link_parts();
     global $user;
     $auth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-    data_entry_helper::$js_read_tokens = $auth;
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";

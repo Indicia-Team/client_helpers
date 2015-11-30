@@ -301,7 +301,7 @@ class iform_data_services {
    */
   public static function get_form($args, $nid, $response=null) {
     $conn = iform_get_connection_details($nid);
-    data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
+    data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_GET))
       self::do_data_services_download($args, $nid);
 

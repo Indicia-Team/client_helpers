@@ -1077,7 +1077,7 @@ class iform_report_calendar_summary_2 {
           }
         }
        } else {
-        if (function_exists('module_exists') && module_exists('easy_login')) {
+        if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
           // easy_login active: identify users who have entered data by the created_by_id on the main sample record.
           // TODO consider whether should check only top level samples here? may not be necessary if sample_method set.
           $sampleArgs=array(// 'nocache'=>true,

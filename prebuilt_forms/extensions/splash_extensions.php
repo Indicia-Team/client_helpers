@@ -246,6 +246,7 @@ class extension_splash_extensions {
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
       $options['report']='reports_for_prebuilt_forms/Splash/get_plots_for_square_id';
+      $options['extraParams']['current_user_id']=$currentUserId;
       if (!empty($options['plotNumberAttrId']))
         $options['extraParams']['plot_number_attr_id']=$options['plotNumberAttrId'];
       //Create the drop-down for the plot
@@ -949,8 +950,6 @@ class extension_splash_extensions {
     }
     $minSquareDate=new DateTime($options['minimumLocationDate']);
     $r = '';
-    //Need to call this so we can use indiciaData.read
-    data_entry_helper::$js_read_tokens = $auth['read'];
     if (!function_exists('iform_ajaxproxy_url'))
       return 'An AJAX Proxy module must be enabled for user sites administration to work.';
     $r .= '<div><form method="post"><textarea id="upload-data" name="upload-data" cols="20" rows="50"></textarea>';
@@ -1087,8 +1086,6 @@ class extension_splash_extensions {
     $r .= '<input type="submit" id="sync-addresses" value="Sync"></form></div><br>'; 
     
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
-    //Need to call this so we can use indiciaData.read
-    data_entry_helper::$js_read_tokens = $auth['read'];
 
     //Make a list of the different address fields we need to upload to warehouse
     $typesOfAddressField=array('Address','Town','County','Country','Post Code');
@@ -1341,8 +1338,6 @@ class extension_splash_extensions {
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
     global $user;
-    //Need to call this so we can use indiciaData.read
-    data_entry_helper::$js_read_tokens = $auth['read'];
     if (!function_exists('iform_ajaxproxy_url'))
       return 'An AJAX Proxy module must be enabled for user sites administration to work.';
      if (!empty($options['locationDropDownLabel']))

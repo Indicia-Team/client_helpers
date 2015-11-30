@@ -1486,7 +1486,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         $options['extraParams'] += $filterFields;
       }
     }
-    data_entry_helper::$js_read_tokens = $options['readAuth'];
     data_entry_helper::$javascript .= "indiciaData['rowInclusionCheck-".$options['id']."'] = '".$options['rowInclusionCheck']."';\n";
     data_entry_helper::$javascript .= "indiciaData['copyDataFromPreviousRow-".$options['id']."'] = '".$options['copyDataFromPreviousRow']."';\n";
     data_entry_helper::$javascript .= "indiciaData['includeSpeciesGridLinkPage-".$options['id']."'] = '".$options['includeSpeciesGridLinkPage']."';\n";

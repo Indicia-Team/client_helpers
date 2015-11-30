@@ -175,9 +175,8 @@ function iform_map_get_map_parameters() {
       'default'=>"layerSwitcher\npanZoomBar"
     )
   );
-  // Check for easy login module to allow integration into profile locations. If no module_exists function then 
-  // we are in the AJAX call for the form details for a new iform, so must show it as we have no way of knowing.
-  if (!function_exists('module_exists') || module_exists('easy_login')) {
+  // Check for easy login module to allow integration into profile locations.
+  if (!function_exists('hostsite_module_exists') || hostsite_module_exists('easy_login')) {
     $r[] = array(
       'name'=>'display_user_profile_location',
       'caption'=>'Display location from user profile',
@@ -304,8 +303,7 @@ function iform_map_get_map_options($args, $readAuth) {
   $msgGeorefNothingFound = lang::get('LANG_Georef_NothingFound');
   if ($msgGeorefNothingFound!='LANG_Georef_NothingFound') $options['msgGeorefNothingFound'] = $msgGeorefNothingFound;
   // if in Drupal, and IForm proxy is installed, then use this path as OpenLayers proxy
-  // @todo Refactor for Drupal 8
-  if (function_exists('module_exists') && module_exists('iform_proxy')) {
+  if (function_exists('hostsite_module_exists') && hostsite_module_exists('iform_proxy')) {
     $options['proxy'] = data_entry_helper::getRootFolder(true) . hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
   }
   // And a single location boundary if defined

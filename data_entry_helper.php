@@ -206,7 +206,6 @@ class data_entry_helper extends helper_base {
       $warehouseUrl = parent::$warehouse_proxy;
     else
       $warehouseUrl = parent::$base_url;
-    self::$js_read_tokens = array('auth_token'=>$options['extraParams']['auth_token'], 'nonce'=>$options['extraParams']['nonce']);
     $options = array_merge(array(
       'template'=>'autocomplete',
       'url' => isset($options['report']) ? $warehouseUrl."index.php/services/report/requestReport" : $warehouseUrl."index.php/services/data/".$options['table'],
@@ -2991,7 +2990,6 @@ $('#$escaped').change(function(e) {
         $options['extraParams'] += $filterFields;
       }
     }
-    self::$js_read_tokens = $options['readAuth'];
     self::$javascript .= "indiciaData['rowInclusionCheck-".$options['id']."'] = '".$options['rowInclusionCheck']."';\n";
     self::$javascript .= "indiciaData['copyDataFromPreviousRow-".$options['id']."'] = '".$options['copyDataFromPreviousRow']."';\n";
     self::$javascript .= "indiciaData['includeSpeciesGridLinkPage-".$options['id']."'] = '".$options['includeSpeciesGridLinkPage']."';\n";
@@ -4837,7 +4835,6 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'button'=>$button
     );
     self::add_resource('verification');
-    self::$js_read_tokens = $options['readAuth'];
     self::$javascript .= "indiciaData.verifyMessages=[];\n";
     self::$javascript .= "indiciaData.verifyMessages.nothingToCheck='".
       lang::get('There are no records on this form to check.')."';\n";
@@ -4931,18 +4928,18 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         $options['caption']=lang::get($options['captionNext']).' &gt;';
         $r .= str_replace('{content}', str_replace("\n", "", self::apply_template('button', $options)), $indicia_templates['jsWrap']);
       } else {
-        if ($options['includeDeleteButton']) {
-          $options['class']=$buttonClass." tab-delete";
-          $options['id']='tab-delete';
-          $options['caption']=lang::get($options['captionDelete']);
-          $options['name']='delete-button';
-          $r .= self::apply_template('submitButton', $options);
-        }
         if ($options['includeSubmitButton']) {
           $options['class']=$buttonClass." tab-submit";
           $options['id']='tab-submit';
           $options['caption']=lang::get($options['captionSave']);
           $options['name']='action-submit';
+          $r .= self::apply_template('submitButton', $options);
+        }
+        if ($options['includeDeleteButton']) {
+          $options['class']=$buttonClass." tab-delete";
+          $options['id']='tab-delete';
+          $options['caption']=lang::get($options['captionDelete']);
+          $options['name']='delete-button';
           $r .= self::apply_template('submitButton', $options);
         }
       }

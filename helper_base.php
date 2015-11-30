@@ -1092,6 +1092,22 @@ class helper_base extends helper_config {
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" class=\"".$fieldPrefix."idlist-param\" />\n";
     } elseif (isset($options['extraParams']) && array_key_exists($key, $options['extraParams'])) {
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" />\n";
+      //if the report parameter is a lookup and its population_call is set to species_autocomplete
+      //Options such as @speciesIncludeBothNames can be included as a [params] control form structure
+      //option
+    } elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {  
+      $ctrlOptions['extraParams']=$options['readAuth'];
+      if (empty($options['speciesCacheLookup'])||$options['speciesCacheLookup']==false)
+        $ctrlOptions['cacheLookup']=false;
+      else 
+        $ctrlOptions['cacheLookup']=true;
+      if (!empty($options['speciesTaxonListId']))
+        $ctrlOptions['extraParams']['taxon_list_id']=$options['speciesTaxonListId'];
+      if (!empty($options['speciesIncludeBothNames'])&&$options['speciesIncludeBothNames']==true)
+        $ctrlOptions['speciesIncludeBothNames']=true;
+      if (!empty($options['speciesIncludeTaxonGroup'])&&$options['speciesIncludeTaxonGroup']==true)
+        $ctrlOptions['speciesIncludeTaxonGroup']=true;
+      $r .= data_entry_helper::species_autocomplete($ctrlOptions);
     } elseif ($info['datatype']=='lookup' && isset($info['population_call'])) {
       // population call is colon separated, of the form direct|report:table|view|report:idField:captionField:params(key=value,key=value,...)
       $popOpts = explode(':', $info['population_call']);
@@ -1146,14 +1162,7 @@ class helper_base extends helper_config {
           ));
         }
       }
-      //If user has set option, then make any lookup parameter an autocomplete, note that autocomplete controls also have a "selectMode"
-      //which is why there is a further option provided if you want to use that mode.
-      if ((!empty($options['forceLookupParamAutocomplete']) && $options['forceLookupParamAutocomplete']==true)) {
-        if (!empty($options['forceLookupParamAutocompleteSelectMode']) && $options['forceLookupParamAutocompleteSelectMode']==true)
-          $ctrlOptions['selectMode']=true;
-        $r .= data_entry_helper::autocomplete($ctrlOptions);
-      } else 
-        $r .= data_entry_helper::select($ctrlOptions);
+      $r .= data_entry_helper::select($ctrlOptions);
     } elseif ($info['datatype']=='lookup' && isset($info['lookup_values'])) {
       // Convert the lookup values into an associative array
       $lookups = explode(',', $info['lookup_values']);
@@ -1166,14 +1175,7 @@ class helper_base extends helper_config {
         'blankText'=>'<'.lang::get('please select').'>',
         'lookupValues' => $lookupsAssoc
       ));
-      //If user has set option, then make any lookup parameter an autocomplete, note that autocomplete controls also have a "selectMode"
-      //which is why there is a further option provided if you want to use that mode.
-      if ((!empty($options['forceLookupParamAutocomplete']) && $options['forceLookupParamAutocomplete']==true)) {
-        if (!empty($options['forceLookupParamAutocompleteSelectMode']) && $options['forceLookupParamAutocompleteSelectMode']==true)
-          $ctrlOptions['selectMode']=true;
-        $r .= data_entry_helper::autocomplete($ctrlOptions);
-      } else 
-        $r .= data_entry_helper::select($ctrlOptions);
+      $r .= data_entry_helper::select($ctrlOptions);
     } elseif ($info['datatype']=='date') {
       $r .= data_entry_helper::date_picker($ctrlOptions);
     } elseif ($info['datatype']=='geometry') {
@@ -1376,6 +1378,7 @@ class helper_base extends helper_config {
    * @param string $website_id Indicia ID for the website.
    * @param string $password Indicia password for the website.
    * @return array Read authorisation tokens array.
+   * @throws Exception
    */
   public static function get_read_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
@@ -1383,7 +1386,12 @@ class helper_base extends helper_config {
     $r = self::cache_get(array('readauth-wid'=>$website_id), 600, false);
     if ($r===false) {
       $postargs = "website_id=$website_id";
-      $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_nonce', $postargs);
+      $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
+      if (isset($response['status'])) {
+        if ($response['status']===404) {
+          throw new Exception('Warehouse security service not found - please check the warehouse URL is correct.', 404);
+        }
+      }
       $nonce = $response['output'];
       $r = array(
           'auth_token' => sha1("$nonce:$password"),
@@ -1393,6 +1401,7 @@ class helper_base extends helper_config {
     } 
     else
       $r = json_decode($r, true);
+    self::$js_read_tokens = $r;
     return $r;
   }
 
@@ -1414,12 +1423,13 @@ class helper_base extends helper_config {
         'value="'.sha1($nonces['write'].':'.$password).'" />'."\r\n";
     $write .= '<input id="nonce" name="nonce" type="hidden" class="hidden" ' .
         'value="'.$nonces['write'].'" />'."\r\n";
+    self::$js_read_tokens = array(
+      'auth_token' => sha1($nonces['read'].':'.$password),
+      'nonce' => $nonces['read']
+    );
     return array(
       'write' => $write,
-      'read' => array(
-        'auth_token' => sha1($nonces['read'].':'.$password),
-        'nonce' => $nonces['read']
-      ),
+      'read' => self::$js_read_tokens,
       'write_tokens' => array(
         'auth_token' => sha1($nonces['write'].':'.$password),
         'nonce' => $nonces['write']
@@ -2073,33 +2083,35 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
    * @throws \Exception
    */
   protected static function _get_cached_services_call($request, $options) {
-    $cacheLoaded = false;
+    $cacheLoaded = FALSE;
     // allow use of the legacy nocache parameter.
-    if (isset($options['nocache']) && $options['nocache']===true)
-      $options['caching'] = false;
+    if (isset($options['nocache']) && $options['nocache']===TRUE)
+      $options['caching'] = FALSE;
     $useCache = !self::$nocache && !isset($_GET['nocache']) && !empty($options['caching']) && $options['caching'];
-    if ($useCache && $options['caching']!=='store') {
+    if ($useCache) {
       // Get the URL params, so we know what the unique thing is we are caching
       $parsedURL=parse_url(parent::$base_url.$request);
       parse_str($parsedURL["query"], $cacheOpts);
       unset($cacheOpts['auth_token']);
       unset($cacheOpts['nonce']);
       $cacheOpts['path']=$parsedURL['path'];
-      if (isset($options['cachePerUser']) && !$options['cachePerUser']) 
+      if (isset($options['cachePerUser']) && !$options['cachePerUser'])
         unset($cacheOpts['user_id']);
-      $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
+      $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
-      $response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
-      if ($response!==false)
-        $cacheLoaded = true;
+      if ($options['caching']!=='store') {
+        $response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        if ($response!==FALSE)
+          $cacheLoaded = TRUE;
+      }
     }
-    if (!isset($response) || $response===false)
-      $response = self::http_post(parent::$base_url.$request, null);
-    $r = json_decode($response['output'], true);
+    if (!isset($response) || $response===FALSE)
+      $response = self::http_post(parent::$base_url . $request, NULL);
+    $r = json_decode($response['output'], TRUE);
     if (!is_array($r)) {
       $response['request'] = $request;
-      throw new Exception('Invalid response received from Indicia Warehouse. '.print_r($response, true));
+      throw new Exception('Invalid response received from Indicia Warehouse. '.print_r($response, TRUE));
     }
     // Only cache valid responses and when not already cached
     if ($useCache && !isset($r['error']) && !$cacheLoaded)

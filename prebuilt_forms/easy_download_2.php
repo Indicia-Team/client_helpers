@@ -323,7 +323,7 @@ class iform_easy_download_2 {
       'download_administered_groups' => 'indicia data admin',
       'download_group_types' => ''
     ), $args);
-    data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
+    data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_POST) && !empty($_POST['format']))
       self::do_data_services_download($args, $nid);
     $types = self::get_download_types($args);

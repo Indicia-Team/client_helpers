@@ -579,6 +579,7 @@ class filter_source extends filter_base {
         'dataSource' => 'library/websites/websites_list',
         'readAuth' => $readAuth,
         'caching' => true,
+        'cachePerUser' => false,
         'extraParams' => array('sharing' => $options['sharing'])
       ));  
       if (count($sources)>1) {
@@ -605,6 +606,7 @@ class filter_source extends filter_base {
         'dataSource' => 'library/surveys/surveys_list',
         'readAuth' => $readAuth,
         'caching' => true,
+        'cachePerUser' => false,
         'extraParams' => array('sharing' => $options['sharing'])
       ));
       $titleToDisplay='fulltitle';
@@ -622,6 +624,7 @@ class filter_source extends filter_base {
       'dataSource' => 'library/input_forms/input_forms_list',
       'readAuth' => $readAuth,
       'caching' => true,
+      'cachePerUser' => false,
       'extraParams' => array('sharing' => $options['sharing'])
     );
     //If in the warehouse then we are only interested in the website for the milestone we are editing
@@ -998,7 +1001,6 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     
   }   
   $r .= '</div>';
-  report_helper::$js_read_tokens = $readAuth;
   report_helper::$javascript .= "indiciaData.lang.CreateAFilter='".lang::get('Create a filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ModifyFilter='".lang::get('Modify filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.FilterReport='".lang::get('New report')."';\n";

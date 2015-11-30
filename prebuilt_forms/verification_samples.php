@@ -334,7 +334,7 @@ idlist=';
     $msg = false;
     if (!function_exists('iform_ajaxproxy_url'))
       $msg = 'The AJAX Proxy module must be enabled to support saving filters on the verification page.';
-    if (!module_exists('easy_login'))
+    if (!hostsite_module_exists('easy_login'))
       $msg = 'The verification 4 page requires the Easy Login module to be enabled.';
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
       $msg = 'Before verifying records, please visit your user account profile and ensure that you have entered your full name, then save it.';
@@ -418,9 +418,8 @@ idlist=';
     data_entry_helper::add_resource('fancybox');
     data_entry_helper::add_resource('validation');
     $indicia_user_id=self::get_indicia_user_id($args);
-    data_entry_helper::$js_read_tokens = $auth['read'];
     // Find a list of websites we are allowed verify
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_location')===false)
         $args['param_presets'].="\nexpertise_location={profile_location_expertise}";
       if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_taxon_groups')===false)
@@ -456,7 +455,6 @@ idlist=';
       self::get_template_with_map($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();
     global $user;
-    data_entry_helper::$js_read_tokens = $auth['read'];
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";

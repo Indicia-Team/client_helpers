@@ -134,7 +134,7 @@ class iform_sectioned_transects_input_sample {
 
   public static function get_sample_form($args, $nid, $response) {
     global $user;
-    if (!module_exists('iform_ajaxproxy'))
+    if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     iform_load_helpers(array('map_helper'));
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -254,7 +254,7 @@ class iform_sectioned_transects_input_sample {
   }
 
   public static function get_occurrences_form($args, $nid, $response) {
-    if (!module_exists('iform_ajaxproxy'))
+    if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     data_entry_helper::add_resource('jquery_form');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);

@@ -475,7 +475,7 @@ check_attrs = function(){
       drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));      
     }
     $ok=true;
-    if (!module_exists('iform_ajaxproxy')) {
+    if (!hostsite_module_exists('iform_ajaxproxy')) {
        drupal_set_message('This form must be used in Drupal with the Indicia AJAX Proxy module enabled.');
        $ok=false;
     }
