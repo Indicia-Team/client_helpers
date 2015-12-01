@@ -94,6 +94,14 @@ class iform_report_selector {
           'required' => false
         ),
         array(
+          'name' => 'responsive',
+          'caption' => 'Responsive',
+          'description' => 'Allow output to adjust to fit screen size.',
+          'type' => 'checkbox',
+          'default' => 0,
+          'required' => false,
+        ),
+        array(
           'name' => 'report_my_sites_records',
           'caption' => 'Include report - My sites heat map showing record counts',
           'type' => 'checkbox',
@@ -519,6 +527,9 @@ class iform_report_selector {
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d')))
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(
@@ -585,11 +596,33 @@ class iform_report_selector {
           'labels' => array_reverse($groupLabels)
         )
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(
         'downloadLink' => true
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsiveOpts'] = array(
+          'breakpoints' => array('tp' => 768),  
+        );
+        $reportOptions['columns'] = array();
+        $reportOptions['columns'][] = array('fieldname' => 'month');
+        for ($i = 0; $i < 10; $i++) {
+          $reportOptions['columns'][] = array(
+              'fieldname' => 'group_' . ($i + 1),
+              'display' => $groupLabels[$i],
+              'responsive-hide' => array('tp' => true),
+          );
+        }
+        $reportOptions['columns'][] = array(
+            'fieldname' => 'other',
+            'display' => $groupLabels[10],
+            'responsive-hide' => array('tp' => true),
+        );
+      }
       $r .= report_helper::report_grid($reportOptions);
     }
     return $r; 
@@ -636,6 +669,9 @@ class iform_report_selector {
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d')))
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(
@@ -698,6 +734,9 @@ class iform_report_selector {
         'legendOptions' => array('show' => true),
         'rendererOptions' => array('sliceMargin' => 3)
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(
