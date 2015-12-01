@@ -1293,10 +1293,25 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       if (!$handlers_once) {
         // Only need to emit event handlers once.
         self::$javascript .= "$(window).resize(function(){
+          // Calculate scaling factor to alter dimensions according to width.
+          var scaling = 1;
+          var shadow = true;
+          var width = $(window).width()
+          if (width < 480) {
+            scaling = 0;
+            shadow = false;
+          }
+          else if (width < 1024) {
+            scaling = (width - 480) / (1024 - 480);
+          }
+          
           $('.jqplot-target').each(function() {
             var jqp = $(this).data('jqplot');
             $.each(jqp.series, function(i, series) {
               series.barWidth = undefined;
+              series.shadow = shadow;
+              series.shadowWidth = scaling * 3;
+              series.barMargin = 8 * scaling + 2;
             });
             jqp.replot({resetAxes: true});
           });
