@@ -1387,10 +1387,8 @@ class helper_base extends helper_config {
     if ($r===false) {
       $postargs = "website_id=$website_id";
       $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
-      if (isset($response['status'])) {
-        if ($response['status']===404) {
-          throw new Exception('Warehouse security service not found - please check the warehouse URL is correct.', 404);
-        }
+      if (array_key_exists('status', $response)) {
+        throw new Exception($response['output'], $response['status']);
       }
       $nonce = $response['output'];
       $r = array(
@@ -1418,6 +1416,9 @@ class helper_base extends helper_config {
     self::$website_id = $website_id; /* Store this for use with data caching */
     $postargs = "website_id=$website_id";
     $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
+    if (array_key_exists('status', $response)) {
+      throw new Exception($response['output'], $response['status']);
+    }
     $nonces = json_decode($response['output'], true);
     $write = '<input id="auth_token" name="auth_token" type="hidden" class="hidden" ' .
         'value="'.sha1($nonces['write'].':'.$password).'" />'."\r\n";
