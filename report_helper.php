@@ -1296,10 +1296,14 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
           // Calculate scaling factor to alter dimensions according to width.
           var scaling = 1;
           var shadow = true;
+          var placement = 'outsideGrid';
+          var location = 'ne';
           var width = $(window).width()
           if (width < 480) {
             scaling = 0;
             shadow = false;
+            placement = 'outside';
+            location = 's';
           }
           else if (width < 1024) {
             scaling = (width - 480) / (1024 - 480);
@@ -1307,12 +1311,20 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
           
           $('.jqplot-target').each(function() {
             var jqp = $(this).data('jqplot');
-            $.each(jqp.series, function(i, series) {
-              series.barWidth = undefined;
-              series.shadow = shadow;
-              series.shadowWidth = scaling * 3;
-              series.barMargin = 8 * scaling + 2;
-            });
+            for (var plugin in jqp.plugins) {
+              if (plugin == 'pieRenderer') {
+                jqp.legend.placement = placement;
+                jqp.legend.location = location;
+              }
+              else if (plugin == 'barRenderer') {
+                $.each(jqp.series, function(i, series) {
+                  series.barWidth = undefined;
+                  series.shadow = shadow;
+                  series.shadowWidth = scaling * 3;
+                  series.barMargin = 8 * scaling + 2;
+                });
+              }
+            }
             jqp.replot({resetAxes: true});
           });
         });\n";
