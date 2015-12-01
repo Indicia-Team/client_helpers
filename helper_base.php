@@ -39,8 +39,8 @@ $indicia_templates = array(
   'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
       "document.write('{content}');".
       "/* ]]> */</script>\n",
-  'label' => '<label for="{id}"{labelClass}>{label}:</label>'."\n",
-  'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>'."\n",
+  'label' => '<label for="{id}"{labelClass}>{label}:</label>',
+  'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
   'suffix' => "\n",
   'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
@@ -112,8 +112,8 @@ $indicia_templates = array(
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
-  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />'."\n".
-      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>'."\n",
+  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
+      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
   'autocomplete_javascript' => "jQuery('input#{escaped_input_id}').autocomplete('{url}',
       {
         extraParams : {
