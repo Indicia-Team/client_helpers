@@ -177,6 +177,15 @@ class iform_group_edit {
         'required'=>FALSE
       ),
       array(
+        'name'=>'include_licence',
+        'caption'=>'Include licence control',
+        'description'=>'Include a control for selecting a licence to apply to all records in the group. Licences must be ' .
+            'configured for the website on the warehouse first.',
+        'type'=>'checkbox',
+        'default'=>FALSE,
+        'required'=>FALSE
+      ),
+      array(
         'name' => 'data_inclusion_mode',
         'caption' => 'Group data inclusion',
         'description' => 'How will the decision regarding how records are included in group data be made',
@@ -266,7 +275,8 @@ class iform_group_edit {
       'include_linked_pages'=>true,
       'include_private_records'=>false,
       'include_administrators'=>false,
-      'include_members'=>false, 
+      'include_members'=>false,
+      'include_licence'=>false,
       'filter_types' => '{"":"what,where,when","Advanced":"source,quality"}',
       'indexed_location_type_ids' => '',
       'other_location_type_ids' => '',
@@ -628,6 +638,18 @@ $('#entry_form').submit(function() {
         'class' => $class
       ));
     }
+    if ($args['include_licence']) {
+      $r .= data_entry_helper::select(array(
+        'blankText' => '<' . lang::get('No licence selected') . '>',
+        'label' => lang::get('Licence for records'),
+        'helpText' => lang::get('Choose a licence to apply to all records added explicitly to this {1}.', self::$groupType),
+        'fieldname' => 'group:licence_id',
+        'table' => 'licence',
+        'extraParams' => $auth['read'],
+        'captionField' => 'title',
+        'valueField' => 'id'
+      ));
+    }
     if (!empty(data_entry_helper::$validation_errors['groups_user:general'])) {
       global $indicia_templates;
       $fieldname = $args['include_administrators'] ? 'groups_user:admin_user_id' :
@@ -879,6 +901,7 @@ $('#entry_form').submit(function() {
       'group:filter_id'=>$group['filter_id'],
       'group:logo_path'=>$group['logo_path'],
       'group:implicit_record_inclusion'=>$group['implicit_record_inclusion'],
+      'group:licence_id'=>$group['licence_id'],
       'filter:id'=>$group['filter_id']
     );
     if ($args['include_report_filter']) {
