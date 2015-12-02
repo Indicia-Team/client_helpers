@@ -1312,7 +1312,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
           $('.jqplot-target').each(function() {
             var jqp = $(this).data('jqplot');
             for (var plugin in jqp.plugins) {
-              if (plugin == 'pieRenderer') {
+              if (plugin == 'pieRenderer' && jqp.legend.show) {
                 jqp.legend.placement = placement;
                 jqp.legend.location = location;
               }
