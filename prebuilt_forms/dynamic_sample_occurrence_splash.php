@@ -215,7 +215,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
     //Page only supported in grid mode at the moment.
     if (isset($values['gridmode']))
-      $submission = self::get_splash_subsamples_occurrences_submission($args,$values);
+      $submission = self::get_splash_subsamples_occurrences_submission($args, $values);
     else
       drupal_set_message('Please set the page to "gridmode"');
     //Cycle through each occurrence
@@ -236,7 +236,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * @param array $values Associative array of form data values.
    * @return array Partially completed submission structure.
    */
-  public static function get_splash_subsamples_occurrences_submission($args,$values, $include_if_any_data=false,
+  public static function get_splash_subsamples_occurrences_submission($args, $values, $include_if_any_data=false,
        $zero_attrs = false, $zero_values=array('0','None','Absent'))
   {
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
@@ -448,7 +448,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * @param array $record Record submission array from the form post.
    * @param boolean $include_if_any_data If set, then records are automatically created if any of the custom
    * attributes are filled in.
-   * @param mixed $zero_attrs Optional array of attribute IDs to restrict checks for zero abundance records to,
+   * @param mixed $zero_attrs Optional array of attribute defs keyed by attribute ID to restrict checks for zero abundance records to,
    * or pass true to check all attributes.
    * @param array $zero_values Array of values to consider as zero, which might include localisations of words
    * such as "absent" and "zero" as well as "0".
@@ -472,7 +472,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
       // check for zero abundance records. First build a regexp that will match the attr IDs to check. Attrs can be
       // just set to true, which means any attr will do.
       if (is_array($zero_attrs))
-        $ids='['.implode('|',$zero_attrs).']';
+        $ids='['.implode('|',array_keys($zero_attrs)).']';
       else
         $ids = '\d+';
       $zeroCount=0;

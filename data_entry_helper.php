@@ -5902,7 +5902,7 @@ if (errors$uniq.length>0) {
    * @param boolean $include_if_any_data If true, then any list entry which has any data
    * set will be included in the submission. This defaults to false, unless the grid was
    * created with rowInclusionCheck=hasData in the grid options.
-   * @param array $zero_attrs Set to an array of abundance attribute field IDs that can be
+   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
    * @param array $zero_values Set to an array of values which are considered to indicate a
@@ -6042,7 +6042,7 @@ if (errors$uniq.length>0) {
    * @param boolean $include_if_any_data If true, then any list entry which has any data
    * set will be included in the submission. This defaults to false, unless the grid was
    * created with rowInclusionCheck=hasData in the grid options.
-   * @param array $zero_attrs Set to an array of abundance attribute field IDs that can be
+   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
    * @param array $zero_values Set to an array of values which are considered to indicate a
@@ -6161,17 +6161,18 @@ if (errors$uniq.length>0) {
   /**
    * Test whether the data extracted from the $_POST for a species_checklist grid row refers to an occurrence record.
    * @param array $record Record submission array from the form post.
-   * @param boolean $include_if_any_data If set, then records are automatically created if any of the custom
+   * @param boolean $includeIfAnyData If set, then records are automatically created if any of the custom
    * attributes are filled in.
-   * @param mixed $zero_attrs Optional array of attribute IDs to restrict checks for zero abundance records to,
-   * or pass true to check all attributes.
-   * @param array $zero_values Array of values to consider as zero, which might include localisations of words
+   * @param mixed $zeroAttrs Optional array of attribute defs keyed by attribute ID to restrict checks for
+   * zero abundance records to or pass true to check all attributes. Any lookup attributes must also have a
+   * terms key, containing an array of the lookup's terms (each having at least an id and term key).
+   * @param array $zeroValues Array of values to consider as zero, which might include localisations of words
    * such as "absent" and "zero" as well as "0".
    * @param array $hasDataIgnoreAttrs Array or attribute IDs to ignore when checking if record is present.
    * @access Private
    * @return boolean True if present, false if absent (zero abundance record), null if not defined in the data (no occurrence).
    */
-  public static function wrap_species_checklist_record_present($record, $include_if_any_data, $zero_attrs, $zero_values, $hasDataIgnoreAttrs) {
+  public static function wrap_species_checklist_record_present($record, $includeIfAnyData, $zeroAttrs, $zeroValues, $hasDataIgnoreAttrs) {
     // present should contain the ttl ID, or zero if the present box was unchecked
     $gotTtlId=array_key_exists('present', $record) && $record['present']!='0';
     // as we are working on a copy of the record, discard the ID and taxa_taxon_list_id so it is easy to check if there is any other data for the row.
@@ -6182,11 +6183,11 @@ if (errors$uniq.length>0) {
       unset($record['occAttr:' . $attrID]);
     }
     // if zero attrs not an empty array, we must proceed to check for zeros
-    if ($zero_attrs) {
+    if ($zeroAttrs) {
       // check for zero abundance records. First build a regexp that will match the attr IDs to check. Attrs can be
       // just set to true, which means any attr will do.
-      if (is_array($zero_attrs))
-        $ids='('.implode('|',$zero_attrs).')';
+      if (is_array($zeroAttrs))
+        $ids = '(' . implode('|', array_keys($zeroAttrs)) . ')';
       else
         $ids = '\d+';
       $zeroCount=0;
@@ -6194,7 +6195,17 @@ if (errors$uniq.length>0) {
       foreach ($record as $field=>$value) {
         // Is this a field used to trap zero abundance data, with a zero value
         if (!empty($value) && preg_match("/occAttr:$ids$/", $field)) {
-          if (in_array($value, $zero_values))
+          $attrId = str_replace('occAttr:', '', $field);
+          $attr = $zeroAttrs[$attrId];
+          if ($attr['data_type']==='L') {
+            foreach ($attr['terms'] as $term) {
+              if ($term['id']==$value) {
+                $value = $term['term'];
+                break;
+              }
+            }
+          }
+          if (in_array($value, $zeroValues))
             $zeroCount++;
           else
             $nonZeroCount++;
@@ -6203,7 +6214,7 @@ if (errors$uniq.length>0) {
       // return false (zero) if there are no non-zero abundance data, and at least one zero abundance indicators
       if ($zeroCount && !$nonZeroCount)
         return false;
-      elseif (!$zeroCount && !$nonZeroCount && $include_if_any_data)
+      elseif (!$zeroCount && !$nonZeroCount && $includeIfAnyData)
         return null;
     }
     //We need to implode the individual field if the field itself is an array (multi-value attributes will be an array).
@@ -6212,8 +6223,8 @@ if (errors$uniq.length>0) {
         $recordField = implode('',$recordField);
     }
     $recordData=implode('',$record);
-    $record = ($include_if_any_data && $recordData!='' && !preg_match("/^[0]*$/", $recordData)) ||       // inclusion of record is detected from having a non-zero value in any cell
-      (!$include_if_any_data && $gotTtlId); // inclusion of record detected from the presence checkbox
+    $record = ($includeIfAnyData && $recordData!='' && !preg_match("/^[0]*$/", $recordData)) ||       // inclusion of record is detected from having a non-zero value in any cell
+      (!$includeIfAnyData && $gotTtlId); // inclusion of record detected from the presence checkbox
     // return null if no record to create
     return $record ? true : null;
   }
@@ -6345,7 +6356,7 @@ if (errors$uniq.length>0) {
    * @param boolean $include_if_any_data If true, then any list entry which has any data
    * set will be included in the submission. Set this to true when hiding the select checkbox
    * in the grid.
-   * @param array $zero_attrs Set to an array of abundance attribute field IDs that can be
+   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
    * @param array $zero_values Set to an array of values which are considered to indicate a
@@ -6382,7 +6393,7 @@ if (errors$uniq.length>0) {
    * @param boolean $include_if_any_data If true, then any list entry which has any data
    * set will be included in the submission. Set this to true when hiding the select checkbox
    * in the grid.
-   * @param array $zero_attrs Set to an array of abundance attribute field IDs that can be
+   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
    * @param array $zero_values Set to an array of values which are considered to indicate a

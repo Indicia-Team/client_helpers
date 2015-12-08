@@ -2175,9 +2175,19 @@ else
       $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
       self::load_custom_occattrs($readAuth, $args['survey_id']);
       $abundanceAttrs = array();
-      foreach (self::$occAttrs as $attr) {
-        if ($attr['system_function']==='sex_stage_count')
-          $abundanceAttrs[] = $attr['attributeId'];
+      foreach (self::$occAttrs as &$attr) {
+        if ($attr['system_function']==='sex_stage_count') {
+          // If we have any lookups, we need to load the terms so we can compare the data properly
+          // as term Ids are never zero
+          if ($attr['data_type']==='L') {
+            $attr['terms'] = data_entry_helper::get_population_data(array(
+              'table' => 'termlists_term',
+              'extraParams' => $readAuth + array('termlist_id'=>$attr['termlist_id'], 'view'=>'cache', 'columns'=>'id,term'),
+              'cachePerUser' => false
+            ));
+          }
+          $abundanceAttrs[$attr['attributeId']] = $attr;
+        }
       }
       $submission = data_entry_helper::build_sample_occurrences_list_submission($values, false, $abundanceAttrs);
     }
