@@ -800,8 +800,7 @@ $('#delete-transect').click(deleteSurvey);
     if($settings['canAllocBranch']){ // only check the users permissions if can change value - for performance reasons.
       $new_users = array();
       foreach ($users as $uid=>$name){
-        $account = user_load($uid);
-        if(hostsite_user_has_permission($args['branch_assignment_permission'], $account))
+        if(hostsite_user_has_permission($args['branch_assignment_permission'], $uid))
           $new_users[$uid]=$name;
       }
       $users = $new_users;
