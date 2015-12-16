@@ -404,16 +404,17 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     $canEditType = !$settings['locationId'] ||
                    (isset($args['managerPermission']) && $args['managerPermission']!= '' && hostsite_user_has_permission($args['managerPermission']));
     if($canEditType) {
-      $r .= data_entry_helper::select(array(
+      if(count($lookUpValues)>2) { // includes the "please select" empty option
+        $r .= data_entry_helper::select(array(
             'label' => lang::get('Site Type'),
             'id' => 'location_type_id',
       		'fieldname' => 'location:location_type_id',
             'lookupValues' => $lookUpValues
-      ));
-      data_entry_helper::$javascript .= "$('#location_type_id').change(function(){
+        ));
+        data_entry_helper::$javascript .= "$('#location_type_id').change(function(){
   switch($(this).val()){\n";
-      for($i = 1; $i < 4; $i++){
-        if(!empty($args['main_type_term_'.$i])) {
+        for($i = 1; $i < 4; $i++){
+         if(!empty($args['main_type_term_'.$i])) {
           $type = helper_base::get_termlist_terms($auth, 'indicia:location_types', array($args['main_type_term_'.$i]));
           data_entry_helper::$javascript .= "    case \"".$type[0]['id']."\":\n";
           if(!isset($args['can_change_section_number_'.$i]) || !$args['can_change_section_number_'.$i]) {
@@ -433,12 +434,15 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
             data_entry_helper::$javascript .= "      $('[name=".str_replace(':','\\\\:',$settings['numSectionsAttr'])."]').removeAttr('readonly').css('color','');\n";
           }
           data_entry_helper::$javascript .= "      break;\n";
+         }
         }
-      }
-      data_entry_helper::$javascript .= "    default: break;
+        data_entry_helper::$javascript .= "    default: break;
   };
   return true;
 });\n";
+      } else if(!$settings['locationId']) {
+      	$r .= '<input type="hidden" name="location:location_type_id" id="location:location_type_id" value="'.$typeTermIDs[0]['id'].'" />';
+      }
     }
     if ($settings['locationId'])
       $r .= '<input type="hidden" name="location:id" id="location:id" value="'.$settings['locationId']."\" />\n";
