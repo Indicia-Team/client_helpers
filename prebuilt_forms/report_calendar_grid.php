@@ -214,15 +214,15 @@ class iform_report_calendar_grid {
     $cellclass="newLink";
     foreach($records as $record){
       $location=empty($record["location_name"]) ? $record["entered_sref"] : $record["location_name"];
-      $cellContents .= '<a href="'.$options["existingURL"].'sample_id='.$record["sample_id"].'" title="View existing sample for '.$location.' on '.$options['consider_date'].' (ID='.$record["sample_id"].')" >'.$location.'</a> ';
+      $cellContents .= '<a href="'.$options["existingURL"].'sample_id='.$record["sample_id"].'" title="'.sprintf(lang::get('View existing sample for %s on %s (ID=%d)'), $location, $options['consider_date'], $record["sample_id"]).'" >'.$location.'</a> ';
       // we assume that the location has been filtered in the report.
       $cellclass='existingLink';
     }
     // we want to be able to add more.
     $c = count($records);
     if(!isset($options['siteIDFilter']) || $c==0)
-      $cellContents .= ' <a href="'.$options["newURL"].'date='.$options['consider_date'].'" class="newLink" title="Create a new sample on '.$options['consider_date'].
-        (isset($options['siteIDFilter']) && ($c==0 || $records[0]['location_id']!=$options['siteIDFilter']) ? ' for the selected location.' : '').'"></a> ';
+      $cellContents .= ' <a href="'.$options["newURL"].'date='.$options['consider_date'].'" class="newLink" title="'.sprintf(lang::get('Create a new sample on %s'),$options['consider_date']).
+        (isset($options['siteIDFilter']) && ($c==0 || $records[0]['location_id']!=$options['siteIDFilter']) ? lang::get(' for the selected location.') : '').'"></a> ';
     return array('cellclass'=>$cellclass, 'cellContents'=>$cellContents);
   }
 
@@ -485,7 +485,7 @@ jQuery('#".$ctrlid."').change(function(){
     $gets = ($split!==false && strlen($url) > $split+1) ? explode('&', substr($url, $split+1)) : array();
     $getsAssoc = array();
     foreach ($gets as $get) {
-    	var_dump($get);
+//    	var_dump($get);
     	 
       $tokens = explode('=', $get);
       if (count($tokens)===1) $tokens[] = '';
@@ -493,7 +493,7 @@ jQuery('#".$ctrlid."').change(function(){
     }
      $path = $split!==false ? substr($url, 0, $split) : $url;
     foreach($extensions as $extension){
-  	var_dump($extension);
+//  	var_dump($extension);
     	if(strpos($extension, '&') !== false) {
         $tokens = explode('=', substr($extension, 1));
         $getsAssoc[$tokens[0]] = $tokens[1]; // this means that the extension can/will override the original url it the same.
