@@ -261,37 +261,44 @@ class iform_distribution_map_1 {
         $meaningId = $taxonIdentifier;
       }
       
-      // We still need to fetch the species record, to get its common name
-      $fetchOpts = array(
-        'table' => 'taxa_taxon_list',
-        'extraParams' => $readAuth + array(
-        'view' => 'detail',
-        'language_iso' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
-        'taxon_meaning_id' => $meaningId
-        )
-      );
-      $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
-
-      if (count($taxonRecords) == 0) {
-        // No common name was found for this language so revert to taxon.
-        unset($fetchOpts['extraParams']['language_iso']);
+      if (strstr($args['layer_title'], '{species}') !== FALSE) {
+        // We still need to fetch the species record, to get its common name
+        // to be inserted in the layer title.
+        $fetchOpts = array(
+          'table' => 'taxa_taxon_list',
+          'extraParams' => $readAuth + array(
+          'view' => 'detail',
+          'language_iso' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+          'taxon_meaning_id' => $meaningId
+          )
+        );
         $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
+
         if (count($taxonRecords) == 0) {
-          // If there are still no records then the supplied taxon_meaning_id
-          // was incorrect.
-          return lang::get("The taxon identified by the taxon identifier cannot be found.");
+          // No common name was found for this language so revert to taxon.
+          unset($fetchOpts['extraParams']['language_iso']);
+          $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
+          if (count($taxonRecords) == 0) {
+            // If there are still no records then the supplied taxon_meaning_id
+            // was incorrect.
+            return lang::get("The taxon identified by the taxon identifier cannot be found.");
+          }
         }
+        $layerTitle = str_replace('{species}', $taxonRecords[0]['taxon'], $args['layer_title']);
+    }
+      else {
+        $layerTitle = $args['layer_title'];
       }
+    }
+    else {
+      $layerTitle = lang::get('All species occurrences');
     }
 
     $url = map_helper::$geoserver_url.'wms';
     // Get the style if there is one selected
     $style = $args["wms_style"] ? ", styles: '".$args["wms_style"]."'" : '';   
     map_helper::$onload_javascript .= "\n    var filter='website_id=".$args['website_id']."';";
-    if ($args['show_all_species'])
-      $layerTitle = lang::get('All species occurrences');
-    else {
-      $layerTitle = str_replace('{species}', $taxonRecords[0]['taxon'], $args['layer_title']);
+    if (!$args['show_all_species']) {
       map_helper::$onload_javascript .= "\n    filter += ' AND taxon_meaning_id=$meaningId';\n";
     }
     if (!empty($args['cql_filter'])) {
