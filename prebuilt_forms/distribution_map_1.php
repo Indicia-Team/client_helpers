@@ -271,6 +271,17 @@ class iform_distribution_map_1 {
         )
       );
       $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
+
+      if (count($taxonRecords) == 0) {
+        // No common name was found for this language so revert to taxon.
+        unset($fetchOpts['extraParams']['language_iso']);
+        $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
+        if (count($taxonRecords) == 0) {
+          // If there are still no records then the supplied taxon_meaning_id
+          // was incorrect.
+          return lang::get("The taxon identified by the taxon identifier cannot be found.");
+        }
+      }
     }
 
     $url = map_helper::$geoserver_url.'wms';
