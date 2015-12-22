@@ -3399,6 +3399,9 @@ $('#$escaped').change(function(e) {
           ));
           $row .= "</td>\n";
         }
+        
+        // Add a cell for the Add Media button which is hidden if there is
+        // existing media.
         if ($options['mediaTypes']) {
           $existingImages = is_array(self::$entity_to_load) ? preg_grep("/^sc:$loadedTxIdx:$existing_record_id:occurrence_medium:id:[a-z0-9]*$/", array_keys(self::$entity_to_load)) : array();
           $row .= "\n<td class=\"ui-widget-content scAddMediaCell\">";
@@ -3407,7 +3410,31 @@ $('#$escaped').change(function(e) {
           $row .= "<a href=\"\"$style class=\"add-media-link button $mediaBtnClass\" id=\"$fieldname\">" .
             "$mediaBtnLabel</a>";
           $row .= "</td>";
+
+          // Add a cell for photos in responsive mode.
+          if ($options['responsive']) {
+            if (count($existingImages) == 0) {
+              // The cell is empty
+              $ctrlId = "container-sc:{$options['id']}-$txIdx:$existing_record_id:occurrence_medium-" . mt_rand();
+              $row .= '<td class="scMediaCell"><div class="scMedia" id="' . $ctrlId . '"></div></td>';
+            }
+            else {
+              // Create a cell containing the popula
+              $row .= '<td class="scMediaCell">' . data_entry_helper::file_box(array(
+                'table'=>"sc:$options[id]-$txIdx:$existing_record_id:occurrence_medium",
+                'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existing_record_id:occurrence_medium",
+                'mediaTypes' => $options['mediaTypes'],
+                'readAuth' => $options['readAuth']
+              )) . '</td>';
+            }
+          }
         }
+        
+        // Add a cell for responsive toggle.
+        if ($options['responsive']) {
+          $row .= '<td class="footable-toggle-cell"></td>';
+        }
+
         // Are we in the first column of a multicolumn grid, or doing single column grid? If so start new row. 
         if ($colIdx === 0) {
           $rows[$rowIdx] = $row;
@@ -3415,7 +3442,9 @@ $('#$escaped').change(function(e) {
           $rows[$rowIdx % (ceil(count($taxonRows)/$options['columns']))] .= $row;
         }
         $rowIdx++;
-        if ($options['mediaTypes'] && count($existingImages) > 0) {
+        
+        // Add media in a following row when not in responsive mode.
+        if ($options['mediaTypes'] && count($existingImages) > 0 && !$options['responsive']) {
           $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls)
             + ($options['occurrenceComment'] ? 1 : 0) + ($options['occurrenceSensitivity'] ? 1 : 0) + (count($options['mediaTypes']) ? 1 : 0);
           $rows[$rowIdx]='<td colspan="'.$totalCols.'">'.data_entry_helper::file_box(array(
