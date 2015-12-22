@@ -82,7 +82,7 @@ class extension_notifications_centre {
       return '<p>'.lang::get('The notifications system will be enabled when you fill in at least your surname on your account.').'</p>';
   }  
   
-  private static function initialise($auth, $args, $tabalias, $options, $path, $user_id) {
+  private static function initialise($auth, $args, $tabalias, &$options, $path, $user_id) {
     if (!self::$initialised) {
       $indicia_user_id=hostsite_get_user_field('indicia_user_id');
       if ($indicia_user_id) {
@@ -105,6 +105,19 @@ class extension_notifications_centre {
         if (!empty($_POST['remove-notifications']) && $_POST['remove-notifications']==1)
           self::build_notifications_removal_submission($user_id, $args, $options);
       }
+      
+      // Build $options['columns'] from $args
+      if(array_key_exists('columns_config_list', $args)) {
+        // From e.g.Dynamic report explorer which supports multiple grids.
+        $columnLists = json_decode($args['columns_config_list'], true);
+        // Assume we want the config for the first grid.
+        $options['columns'] = $columnLists[0];
+      }
+      else if(array_key_exists('columns_config', $args)) {
+        // From e.g. Report grid or the above
+        $options['columns'] = json_decode($args['columns_config'], true);
+      }
+            
       self::$initialised = true;
     }
   }
@@ -281,16 +294,18 @@ class extension_notifications_centre {
             'template'=>'<div class="type-{source_type}"><div class="status-{record_status}"></div></div><div class="note-type-{source_type}">{comment}</div>'.
             '<div class="comment-from helpText" style="margin-left: 34px; display: block;">from {username} on {triggered_date}</div>', 'display'=>'Message'),
         'occurrence_id' => array('fieldname'=>'occurrence_id'),
-        'actions' => array('actions'=>$availableActions),
+        'actions' => array('actions' => $availableActions, 'responsive-hide' => array('phone' => true)),
         'triggered_date' => array('fieldname'=>'triggered_date', 'visible' => false)
     );
     // allow columns config to override our default setup
     if (!empty($options['columns'])) {
       foreach($options['columns'] as $column) {
-        if (!empty($column['actions']))
+        if (!empty($column['actions'])) {
           $columns['actions'] = $column;
-        elseif (!empty($column['fieldname']))
+        }
+        elseif (!empty($column['fieldname'])) {
           $columns[$column['fieldname']] = $column;
+        }
       }
     }
     $r = report_helper::report_grid(array(
@@ -304,7 +319,14 @@ class extension_notifications_centre {
       'extraParams'=>$extraParams,
       'paramDefaults'=>array('source_filter'=>'all'),
       'paramsFormButtonCaption'=>lang::get('Filter'),
-      'columns'=>array_values($columns)
+      'columns'=>array_values($columns),
+      'responsiveOpts' => array(
+        'breakpoints' => array(
+          'phone' => 480,
+          'tablet-portrait' => 768,
+          'tablet-landscape' => 1024,
+        ),
+      ),           
     ));
     return $r;
   }

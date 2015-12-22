@@ -194,6 +194,9 @@ class report_helper extends helper_base {
   *      {rootFolder} to be replaced by the root folder of the site, in this case it excludes the path parameter used in Drupal when 
   *      dirty URLs are used (since this is a direct link to a URL). 
   *  - visible: true or false, defaults to true
+  *  - responsive-hide: an array, keyed by breakpoint name, with boolean values  
+  *      to indicate whether the column will be hidden when the breakpoint
+  *      condition is met. Only takes effect if the 'responsive'option is set.
   *  - template: allows you to create columns that contain dynamic content using a template, rather than just the output
   *      of a field. The template text can contain fieldnames in braces, which will be replaced by the respective field values.
   *      Add -escape-quote or -escape-dblquote to the fieldname for quote escaping, or -escape-htmlquote/-escape-htmldblquote
@@ -219,8 +222,12 @@ class report_helper extends helper_base {
   *      separating each path with a comma. 
   * </li>
   * <li><b>rowId</b>
-  * Optional. Names the field in the data that contains the unique identifier for each row. If set, then the &lt;tr&gt; elements have their id attributes
-  * set to row + this field value, e.g. row37. This is used to allow synchronisation of the selected table rows with a report map output showing the same data.</li>
+  * Optional. Names the field in the data that contains the unique identifier
+  * for each row. If set, then the &lt;tr&gt; elements have their id attributes
+  * set to row + this field value, e.g. row37. This is used to allow
+  * synchronisation of the selected table rows with a report map output showing
+  * the same data.
+  * </li>
   * <li><b>includeAllColumns</b>
   * Defaults to true. If true, then any columns in the report, view or table which are not in the columns
   * option array are automatically added to the grid after any columns specified in the columns option array.
@@ -295,7 +302,9 @@ class report_helper extends helper_base {
   * Default true but requires a rowId to be set. If true, then filtering the grid causes the map to also filter.
   * </li>
   * <li><b>includePopupFilter</b>
-  * Set to true if you want to include a filter in the report header that displays a popup allowing the user to select exactly what data they want to display on the report.
+  * Set to true if you want to include a filter in the report header that
+  * displays a popup allowing the user to select exactly what data they want to
+  * display on the report.
   * </li>
   * <li><b>zoomMapToOutput</b>
   * Default true. When combined with sendOutputToMap=true, defines that the map will automatically zoom to show the records.
@@ -305,7 +314,8 @@ class report_helper extends helper_base {
   * field values, e.g. to colour rows in the grid according to the data.
   * </li>
   * <li><b>callback</b>
-  * Set to the name of a JavaScript function that should already exist which will be called each time the grid reloads (e.g. when paginating or sorting).
+  * Set to the name of a JavaScript function that should already exist which
+  * will be called each time the grid reloads (e.g. when paginating or sorting).
   * </li>
   * <li><b>linkToReportPath</b>
   * Allows drill down into reports. Holds the URL of the report that is called when the user clicks on 
@@ -329,6 +339,15 @@ class report_helper extends helper_base {
   * </li>
   * <li><b>imageThumbPreset</b>
   * Defaults to thumb. Preset name for the image to be loaded from the warehouse as the preview thumbnail for images, e.g. thumb or med.
+  * </li>
+  * <li><b>responsiveOpts</b>
+  * Set to an array of options to pass to FooTable to make the table responsive.
+  * Used in conjunction with the columns['responsive-hide'] option to determine
+  * which columns are hidden at different breakpoints.
+  * Supported options are 
+  *   - breakpoints: an array keyed by breakpoint name with values of screen
+  *     width at which to apply the breakpoint. Footable defaults apply if
+  *     omitted.
   * </li>
   * </ul>
   */
@@ -371,32 +390,52 @@ class report_helper extends helper_base {
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
         foreach ($options['columns'] as $field) {
-          if (isset($field['visible']) && ($field['visible']==='false' || $field['visible']===false))
-            continue; // skip this column as marked invisible
+          if (isset($field['visible']) && ($field['visible'] === 'false' || $field['visible'] === false)) {
+             // skip this column as marked invisible 
+            continue;           
+          }
+          
           // allow the display caption to be overriden in the column specification
-          if (empty($field['display']) && empty($field['fieldname']))
-            $caption='';
-          else
+          if (empty($field['display']) && empty($field['fieldname'])) {
+            $caption = '';
+          }
+          else {
             $caption = empty($field['display']) ? $field['fieldname'] : lang::get($field['display']);
-          if (isset($field['fieldname']) && !(isset($field['img']) && $field['img']=='true')) {
-            if (empty($field['orderby'])) $field['orderby']=$field['fieldname'];
+          }
+          
+          if (isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
+            if (empty($field['orderby'])) {
+              $field['orderby'] = $field['fieldname'];
+            }
             $sortLink = $sortUrl.$sortAndPageUrlParams['orderby']['name'].'='.$field['orderby'];
             // reverse sort order if already sorted by this field in ascending dir
-            if ($sortAndPageUrlParams['orderby']['value']==$field['orderby'] && $sortAndPageUrlParams['sortdir']['value']!='DESC')
+            if ($sortAndPageUrlParams['orderby']['value'] == $field['orderby'] && $sortAndPageUrlParams['sortdir']['value'] != 'DESC') {
               $sortLink .= '&'.$sortAndPageUrlParams['sortdir']['name']."=DESC";
+            }
             $sortLink=htmlspecialchars($sortLink);
             // store the field in a hidden input field
-            $captionLink = "<input type=\"hidden\" value=\"".$field['orderby']."\"/><a href=\"$sortLink\" rel=\"nofollow\" title=\"Sort by $caption\">$caption</a>";
+            $captionLink = "<input type=\"hidden\" value=\"" . $field['orderby'] . "\"/><a href=\"$sortLink\" rel=\"nofollow\" title=\"Sort by $caption\">$caption</a>";
             // set a style for the sort order
-            $orderStyle = ($sortAndPageUrlParams['orderby']['value']==$field['orderby']) ? ' '.$sortdirval : '';
+            $orderStyle = ($sortAndPageUrlParams['orderby']['value'] == $field['orderby']) ? ' '.$sortdirval : '';
             $orderStyle .= ' sortable';
             $fieldId = ' id="' . $options['id'] . '-th-' . $field['orderby'] . '"';
-          } else {
+          } 
+          else {
             $orderStyle = '';
             $fieldId = '';
             $captionLink=$caption;
           }
-          $thead .= "<th$fieldId class=\"$thClass$orderStyle\">$captionLink</th>\n";
+          
+          // Create a data-hide attribute for responsive tables.
+          $datahide = '';
+          if (isset($field['responsive-hide'])) {
+            $datahide = implode(',', array_keys(array_filter($field['responsive-hide'])));
+            if($datahide != '') {
+              $datahide = " data-hide=\"$datahide\" data-editable=\"true\"";
+            }
+          }
+          
+          $thead .= "<th$fieldId class=\"$thClass$orderStyle\"$datahide>$captionLink</th>\n";
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
               case 'text':
@@ -675,6 +714,41 @@ $('.update-input').focus(function(evt) {
     if (!empty($r)) {
       // Output a div to keep the grid and pager together
       $r = "<div id=\"".$options['id']."\">$r</div>\n";
+
+      // Add responsive behaviour to table if specified in options.
+      // The table is made responsive with the footables plugin based on the
+      // data-hide attributes added to the <th> elements
+      if (isset($options['responsiveOpts'])) {
+        // Add the javascript plugins.
+        self::add_resource('indiciaFootableReport');
+        // Add inline javascript to invoke the plugins on this grid.
+        $footable_options = json_encode($options['responsiveOpts']);
+        self::$javascript .= "jQuery('#{$options['id']}').indiciaFootableReport($footable_options);\n";
+
+        // Footable needs calling after each Ajax update. There is an existing 
+        // callback option which we can use but it only accepts a single function.
+        // Therefore, create a new function and append any pre-existing callback.
+        // Note, '-' is not allowed in JavaScript identifiers.
+        $callback = 'callback_' . str_replace('-', '_', $options['id']);
+        if(empty($options['callback'])) {
+          // The callback is not currently used.
+          self::$javascript .= "
+window['$callback'] = function() {
+  jQuery('#{$options['id']}').find('table').trigger('footable_redraw');
+}";        
+        }
+        else {
+          // A callback has been specified so append to footable callback.
+          self::$javascript .= "
+window['$callback'] = function() {
+  jQuery('#{$options['id']}').find('table').trigger('footable_redraw');
+  window[{$options['callback']}]();
+}";        
+        }
+        // Store the callback name to pass to jquery.reportgrid.js.
+        $options['callback'] = $callback;
+      }
+
       // Now AJAXify the grid
       self::add_resource('reportgrid');
       global $indicia_templates;
@@ -1026,6 +1100,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   * on the page called handle_chart_click_path and this will be called with the path, series index, point index and row data as parameters. It can
   * then return the modified path, so you can write custom logic, e.g. to map the series index to a specific report filter.
   * </li>
+  * <li><b>responsive</b>
+  * If set to true, redraws plot to fit screen width.
+  * </li>
   * </ul>
   * @todo look at the ReportEngine to check it is not prone to SQL injection (eg. offset, limit).
   * @link http://www.jqplot.com/docs/files/jqplot-core-js.html#Series
@@ -1166,8 +1243,14 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
         'axes:'.json_encode($options['axesOptions']));
 
     // Finally, dump out the Javascript with our constructed parameters
-    self::$javascript .= "$.jqplot('".$options['id']."', " . json_encode($seriesData) . ", \n{".implode(",\n", $opts)."});\n";
-     //once again we only include summary report clicking functionality if user has setup the appropriate options
+    if (empty($options['id'])) {
+      $options['id'] = 'report-chart-' . rand();
+    }
+    $plotName = preg_replace('/[^a-zA-Z0-9]/', '_', $options['id']);
+    self::$javascript .= "var $plotName = $.jqplot('{$options['id']}', " . json_encode($seriesData) . ", \n{" . implode(",\n", $opts) . "});\n";
+    // Store the plot object with its div.
+    self::$javascript .= "$('#{$options['id']}').data('jqplot', $plotName);\n";
+    //once again we only include summary report clicking functionality if user has setup the appropriate options
     if(isset($options['linkToReportPath'])) {
       //open the report, note that data[0] varies depending on whether we are using a pie or bar. But we have
       //saved the data to the array twice already to handle this
@@ -1197,6 +1280,72 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   $('#chartdiv').bind('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
     $('table.jqplot-table-legend td').removeClass('highlight');
   });\n";
+
+    if (!empty($options['responsive'])) {
+      // Make plots responsive.
+      $options['width'] = '100%';
+
+      static $handlers_once = false;
+      if (!$handlers_once) {
+        // Only need to emit event handlers once.
+        self::$javascript .= "$(window).resize(function(){
+          // Calculate scaling factor to alter dimensions according to width.
+          var scaling = 1;
+          var shadow = true;
+          var placement = 'outsideGrid';
+          var location = 'ne';
+          var width = $(window).width()
+          if (width < 480) {
+            scaling = 0;
+            shadow = false;
+            placement = 'outside';
+            location = 's';
+          }
+          else if (width < 1024) {
+            scaling = (width - 480) / (1024 - 480);
+          }
+          
+          $('.jqplot-target').each(function() {
+            var jqp = $(this).data('jqplot');
+            for (var plugin in jqp.plugins) {
+              if (plugin == 'pieRenderer' && jqp.legend.show) {
+                jqp.legend.placement = placement;
+                jqp.legend.location = location;
+              }
+              else if (plugin == 'barRenderer') {
+                $.each(jqp.series, function(i, series) {
+                  series.barWidth = undefined;
+                  series.shadow = shadow;
+                  series.shadowWidth = scaling * 3;
+                  series.barMargin = 8 * scaling + 2;
+                });
+              }
+            }
+            jqp.replot({resetAxes: true});
+          });
+        });\n";
+
+        // If plots are hidden across several tabs, replot when tab is 
+        //activated.
+        self::$javascript .= "var tabs = $('#{$options['id']}').closest('#controls');
+        if (tabs.length > 0) {
+          indiciaFns.bindTabsActivate(tabs, function(evt, ui) {
+            var panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
+            var plots = $(panel).find('.jqplot-target');
+            if (plots.length > 0) {
+              // The activated panel holds jqplots.
+              plots.each(function() {
+                var jqp = $(this).data('jqplot');
+                jqp.replot({resetAxes: true});
+              });
+            }
+          });
+        };\n";
+        $handlers_once = true;
+      }
+      
+    }
+    
     $heightStyle = '';
     $widthStyle = '';
     if (!empty($options['height']))
@@ -1205,7 +1354,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       if (substr($options['width'], -1)!=='%')
         $options['width'] .= 'px';
       $widthStyle = "width: $options[width];";
-    }
+    }    
     $r .= "<div class=\"$options[class]\" style=\"$widthStyle\">";
     if (isset($options['title']))
       $r .= '<div class="'.$options['headerClass'].'">'.$options['title'].'</div>';
