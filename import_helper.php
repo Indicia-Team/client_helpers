@@ -274,7 +274,8 @@ class import_helper extends helper_base {
     $r .= '</tr></thead><tbody>';
     $colCount = 0;
     foreach ($columns as $column) {
-      if (!empty(trim($column))) {
+      $column = trim($column);
+      if (!empty($column)) {
         $colCount ++;
         $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
@@ -420,7 +421,7 @@ class import_helper extends helper_base {
     } else
       // host does not support user profiles, so we can't remember mappings
       self::$rememberingMappings=false;
-    if (!empty($settings['survey_id'] && !empty($options['fieldMap']))) {
+    if (!empty($settings['survey_id']) && !empty($options['fieldMap'])) {
       foreach($options['fieldMap'] as $surveyFieldMap) {
         if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
             $surveyFieldMap['survey_id'] == $settings['survey_id']) {
