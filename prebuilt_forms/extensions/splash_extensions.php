@@ -1564,4 +1564,31 @@ class extension_splash_extensions {
     $('#col-filter-location_name-report-grid-0').hide()
     ";
   }
+  
+  /**
+   * Hide/show instructions on the page based on the selected options. Currently supports showing specific options for
+   * - Expert mode
+   * - Linear Plots in Expert Mode.
+   * 
+   * Help text should be placed manually into the form structure using the following div tag if you wish your help to look the same
+   * as text placed inside ?? in the form structure (e.g. ?My help text?)
+   * div class="page-notice ui-state-highlight ui-corner-all expert-help"
+   * Change the class expert-help to linear-expert-help as required. 
+   */
+  public static function mode_specific_instructions($auth, $args, $tabalias, $options, $path) {
+    if (!empty($options['expertModeAttrId']))
+      data_entry_helper::$javascript .= "indiciaData.expertModeAttrId=".json_encode(explode(',',$options['expertModeAttrId'])).";";
+    
+    if (!empty($options['linearLocationTypeId']))
+      data_entry_helper::$javascript .= "indiciaData.linearLocationTypeId=".json_encode(explode(',',$options['linearLocationTypeId'])).";";
+    //Make sure we hide all option specific instructions when the page first loads.
+    data_entry_helper::$javascript .= "
+      $(window).load(function() {
+        context_sensitive_instructions();
+      });
+      $('#locAttr\\\\:'+indiciaData.expertModeAttrId+', #location\\\\:location_type_id').change(function() {
+        context_sensitive_instructions();
+      });
+      ";
+  }
 }
