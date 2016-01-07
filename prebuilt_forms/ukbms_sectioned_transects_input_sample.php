@@ -75,7 +75,7 @@ class iform_ukbms_sectioned_transects_input_sample {
    */
   public static function get_parameters() {
     return array_merge(
-      iform_map_get_map_parameters(),
+//      iform_map_get_map_parameters(),
       array(
         array(
           'name'=>'survey_id',
@@ -242,14 +242,6 @@ class iform_ukbms_sectioned_transects_input_sample {
           'default' => 'here',
           'group' => 'Species 2'
         ),
-/*      	array(
-          'name' => 'force_second',
-          'caption' => 'Include full species list in second tab',
-          'description' => 'In the second species tab, include the full species list: if not selected a species control will be provided to add the required taxon to the list.',
-          'type' => 'boolean',
-          'required' => false,
-          'group' => 'Species 2'
-        ), */
         array(
           'name'=>'second_taxon_list_id',
           'caption'=>'Second Tab Species List',
@@ -321,14 +313,6 @@ class iform_ukbms_sectioned_transects_input_sample {
           'default' => 'here',
           'group' => 'Species 3'
         ),
-      	/* array(
-          'name' => 'force_third',
-          'caption' => 'Include full species list in third tab',
-          'description' => 'In the third species tab, include the full species list: if not selected a species control will be provided to add the required taxon to the list.',
-          'type' => 'boolean',
-          'required' => false,
-          'group' => 'Species 3'
-        ), */
         array(
           'name'=>'third_taxon_list_id',
           'caption'=>'Third Tab Species List',
@@ -400,14 +384,6 @@ class iform_ukbms_sectioned_transects_input_sample {
           'default' => 'here',
           'group' => 'Species 4'
         ),
-      	/* array(
-          'name' => 'force_fourth',
-          'caption' => 'Include full species list in fourth tab',
-          'description' => 'In the fourth species tab, include the full species list: if not selected a species control will be provided to add the required taxon to the list.',
-          'type' => 'boolean',
-          'required' => false,
-          'group' => 'Species 4'
-        ), */
         array(
           'name'=>'fourth_taxon_list_id',
           'caption'=>'Fourth Tab Species List',
@@ -458,26 +434,6 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Species 4'
         ),
         array(
-          'name'=>'map_taxon_list_id',
-          'caption'=>'Map based data entry Species List',
-          'description'=>'The species checklist used to drive the autocomplete in the optional map based grid. If not provided, the species map and its tab are omitted.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'captionField'=>'title',
-          'valueField'=>'id',
-          'required'=>false,
-          'siteSpecific'=>true,
-          'group'=>'Species Map'
-        ),
-        array(
-          'name'=>'species_map_tab',
-          'caption'=>'Map based data entry Tab Title',
-          'description'=>'The title to be used on the Map based data entry tab.',
-          'type'=>'string',
-          'required' => false,
-          'group'=>'Species Map'
-        ),
-        array(
           'fieldname'=>'cache_lookup',
           'label'=>'Cache lookups',
           'helpText'=>'Tick this box to select to use a cached version of the lookup list when '.
@@ -505,119 +461,6 @@ class iform_ukbms_sectioned_transects_input_sample {
           ),
           'default' => 'autocomplete',
           'group'=>'Species Map'
-        ),
-        array(
-          'name'=>'map_taxon_filter_field',
-          'caption'=>'Map based data entry Tab Species List: Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected Species List, then select which field you will '.
-              'use to specify the filter by.',
-          'type'=>'select',
-          'options' => array(
-            'taxon' => 'Taxon',
-            'taxon_meaning_id' => 'Taxon Meaning ID',
-            'taxon_group' => 'Taxon group title'
-          ),
-          'siteSpecific'=>true,
-          'required'=>false,
-          'group'=>'Species Map'
-        ),
-        array(
-          'name'=>'map_taxon_filter',
-          'caption'=>'Map based data entry Tab Species List: Taxon filter items',
-          'description'=>'When filtering the list of available taxa, taxa will not be available for recording unless they match one of the '.
-              'values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group.',
-          'type' => 'textarea',
-          'siteSpecific'=>true,
-          'required'=>false,
-          'group'=>'Species Map'
-        ),
-        array(
-          'name' => 'species_include_both_names',
-          'caption' => 'Include both names in species controls and added rows',
-          'description' => 'When using a species grid with the ability to add new rows, the autocomplete control by default shows just the searched taxon name in the drop down. '.
-              'Set this to include both the latin and common names, with the searched one first. This also controls the label when adding a new taxon row into the grid.',
-          'type' => 'boolean',
-          'required' => false,
-          'group' => 'Species Map'
-        ),
-        array(
-          'name' => 'species_include_taxon_group',
-          'caption' => 'Include taxon group name in species autocomplete and added rows',
-          'description' => 'When using a species grid with the ability to add new rows, the autocomplete control by default shows just the searched taxon name in the drop down. '.
-              'Set this to include the taxon group title.  This also controls the label when adding a new taxon row into the grid.',
-          'type' => 'boolean',
-          'required' => false,
-          'group' => 'Species Map'
-        ),
-        array(
-          'name'=>'occurrence_comment',
-          'caption'=>'Occurrence Comment',
-          'description'=>'Should an input box be present for a comment against each occurrence?',
-          'type'=>'boolean',
-          'required' => false,
-          'default'=>false,
-          'group'=>'Species Map'
-        ),
-        array(
-          'name'=>'occurrence_sensitivity',
-          'caption'=>'Occurrence Sensitivity',
-          'description'=>'Should a control be present for sensitivity of each record?  This applies when using grid entry mode or when using the [species attributes] control '.
-              'to output all the occurrence related input controls automatically. The [sensitivity] control outputs a sensitivity input control independently of this setting.',
-          'type'=>'boolean',
-          'required' => false,
-          'default'=>false,
-          'group'=>'Species Map'
-        ),
-        array(
-          'name'=>'occurrence_images',
-          'caption'=>'Occurrence Images',
-          'description'=>'Should occurrences allow images to be uploaded? This applies when using grid entry mode or when using the [species attributes] control '.
-              'to output all the occurrence related input controls automatically. The [photos] control outputs a photos input control independently of this setting.',
-          'type'=>'boolean',
-          'required' => false,
-          'default'=>false,
-          'group'=>'Species Map'
-        ),
-        array(
-          'name'=>'species_names_filter',
-          'caption'=>'Species Names Filter',
-          'description'=>'Select the filter to apply to the species names which are available to choose from.',
-          'type'=>'select',
-          'options' => array(
-            'all' => 'All names are available',
-            'language' => 'Only allow selection of species using common names in the user\'s language',
-            'preferred' => 'Only allow selection of species using names which are flagged as preferred',
-            'excludeSynonyms' => 'Allow common names or preferred latin names'
-          ),
-          'default' => 'all',
-          'group'=>'Species Map'
-        ),
-        array(
-          'name' => 'edit_taxa_names',
-          'caption' => 'Include option to edit entered taxa',
-          'description' => 'Include an icon to allow taxa to be edited after they has been entered into the species grid.',
-          'type'=>'checkbox',
-          'default'=>false,
-          'required'=>false,
-          'group' => 'Species Map',
-        ),
-        array(
-          'name'=>'col_widths',
-          'caption'=>'Grid Column Widths',
-          'description'=>'Provide percentage column widths for each species checklist grid column as a comma separated list. To leave a column at its default with, put a blank '.
-              'entry in the list. E.g. "25,,20" would set the first column to 25% width and the 3rd column to 20%, leaving the other columns as they are.',
-          'type'=>'string',
-          'group'=>'Species Map',
-          'required' => false
-        ),
-        array(
-          'name'=>'spatial_systems',
-          'caption'=>'Allowed Spatial Ref Systems',
-          'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326). '.
-              'Set to "default" to use the settings defined in the IForm Settings page.',
-          'type'=>'string',
-          'default' => 'default',
-          'group'=>'Other Map Settings'
         ),
         array(
           'name'=>'defaults',
@@ -672,24 +515,6 @@ class iform_ukbms_sectioned_transects_input_sample {
           'type' => 'boolean',
           'required' => false,
           'default' => true,
-          'group' => 'Transects Editor Settings'
-        ),
-        array(
-          'name' => 'include_map_samples_form',
-          'caption' => 'Include map',
-          'description' => 'Should a map be displayed on the sample details page? This shows the transect picked.',
-          'type' => 'boolean',
-          'required' => false,
-          'default' => false,
-          'group' => 'Transects Editor Settings'
-        ),
-        array(
-          'name'=>'percent_width',
-          'caption'=>'Map Percent Width',
-          'description'=>'The percentage width that the map will take on the front page.',
-          'type'=>'int',
-          'required' => true,
-          'default' => 50,
           'group' => 'Transects Editor Settings'
         ),
         array(
