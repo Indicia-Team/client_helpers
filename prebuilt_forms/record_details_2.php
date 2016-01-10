@@ -248,7 +248,7 @@ Record ID',
     $fields=helper_base::explode_lines($args['fields']);
     $fieldsLower=helper_base::explode_lines(strtolower($args['fields']));
     //Draw the Record Details, but only if they aren't requested as hidden by the administrator
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}</span><span{class}>{value}</span></div>';
+    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}</span>{anchorfrom}<span{class}>{value}</span>{anchorto}</div>';
     $test=$args['operator']==='in';
     $availableFields = array(
       'sensitive'=>'Sensitive',
@@ -266,6 +266,7 @@ Record ID',
       'occurrence_comment'=>'Record comment',
       'location_name'=>'Site name',
       'sample_comment'=>'Sample comment',
+      'licence_code'=>'Licence'
     );
     if (!empty(self::$record['sensitivity_precision'])) {
       unset($availableFields['recorder']);
@@ -288,12 +289,15 @@ Record ID',
         // special case, sensitive icon
         $class = self::$record[$field] === 'This record is sensitive' ? ' class="ui-state-error"' : '';
         $caption = self::$record[$field] === 'This record is sensitive' ? '' : "$caption:";
-        $details_report .= str_replace(array('{caption}', '{value}', '{class}'),
-          array(
-            lang::get($caption),
-            lang::get(self::$record[$field]),
-            $class
-          ), $attrsTemplate);
+        // special case, licence
+        $class = $field==='licence_code' ? ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"' : $class;
+        $anchorfrom = $field==='licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
+        $anchorto = $field==='licence_code' ? '</a>' : '';
+        $details_report .= str_replace(
+          array('{caption}', '{value}', '{class}', '{anchorfrom}', '{anchorto}'),
+          array(lang::get($caption), lang::get(self::$record[$field]), $class, $anchorfrom, $anchorto),
+          $attrsTemplate
+        );
       }
     }
     $created = date('jS F Y \a\t H:i', strtotime(self::$record['created_on']));
@@ -302,8 +306,8 @@ Record ID',
     if ($created!==$updated)
       $dateInfo .= lang::get(' and last updated on {1}', $updated);
     if ($test===in_array('submission date', $fieldsLower))
-      $details_report .= str_replace(array('{caption}','{value}','{class}'),
-          array(lang::get('Submission date'), $dateInfo, ''), $attrsTemplate);
+      $details_report .= str_replace(array('{caption}','{value}','{class}', '{anchorfrom}', '{anchorto}'),
+          array(lang::get('Submission date'), $dateInfo, '', '', ''), $attrsTemplate);
     $details_report .= '</div>';
     
     if (!self::$record['sensitivity_precision']) {
@@ -312,7 +316,7 @@ Record ID',
         'readAuth' => $auth['read'],
         'class'=>'record-details-fields ui-helper-clearfix',
         'dataSource'=>$options['dataSource'],
-        'bands'=>array(array('content'=>str_replace('{class}', '', $attrsTemplate))),
+        'bands'=>array(array('content'=>str_replace(array('{class}', '{anchorfrom}', '{anchorto}'), '', $attrsTemplate))),
         'extraParams'=>array(
           'occurrence_id'=>$_GET['occurrence_id'],
           //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
