@@ -2125,6 +2125,11 @@ else
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
+    $extensions = array();
+    if (isset($values['submission_extensions'])) {
+      $extensions = $values['submission_extensions'];
+      unset($values['submission_extensions']);
+    }
     // default for forms setup on old versions is grid - list of occurrences
     // Can't call getGridMode in this context as we might not have the $_GET value to indicate grid
     if (isset($values['speciesgridmapmode']))
@@ -2143,6 +2148,13 @@ else
     }
     else
       $submission = data_entry_helper::build_sample_occurrence_submission($values);
+    foreach ($extensions as $extension) {
+      $class_method = explode('.', "$extension");
+      require_once("extensions/$class_method[0].php");
+      $class_method[0] = "extension_$class_method[0]";
+      // array on 3rd parameter is a way of forcing pass by reference
+      call_user_func($class_method, $values, array(&$submission));
+    }
     return($submission);
   }
 
