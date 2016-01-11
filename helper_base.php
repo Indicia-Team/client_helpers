@@ -1401,7 +1401,7 @@ class helper_base extends helper_config {
     $r = self::cache_get(array('readauth-wid'=>$website_id), 600, false);
     if ($r===false) {
       $postargs = "website_id=$website_id";
-      $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
+      $response = self::http_post(self::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
       if (array_key_exists('status', $response)) {
         throw new Exception($response['output'], $response['status']);
       }
@@ -1430,7 +1430,7 @@ class helper_base extends helper_config {
   public static function get_read_write_auth($website_id, $password) {
     self::$website_id = $website_id; /* Store this for use with data caching */
     $postargs = "website_id=$website_id";
-    $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
+    $response = self::http_post(self::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
     if (array_key_exists('status', $response)) {
       throw new Exception($response['output'], $response['status']);
     }
