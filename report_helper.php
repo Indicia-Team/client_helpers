@@ -4395,25 +4395,8 @@ update_controls();
   			$sampleFields[] = $field;
   		}
   	}
-  
+
   	if($options['location_list'] != 'all' && count($options['location_list']) == 0) $options['location_list'] = 'none';
-  	foreach($records as $recid => $record){
-  		// If the taxon has changed
-  		$this_date = date_create(str_replace('/','-',$record['date_start'])); // prevents day/month ordering issues
-  		$this_index = $this_date->format('z');
-  		$this_weekday = $this_date->format('N');
-  		
-  		if($this_weekday > $weekstart[1]) // scan back to start of week
-  			$this_date->modify('-'.($this_weekday-$weekstart[1]).' day');
-  		else if($this_weekday < $weekstart[1])
-  			$this_date->modify('-'.(7+$this_weekday-$weekstart[1]).' day');
-  		// this_date now points to the start of the week. Next work out the week number.
-  		$this_yearday = $this_date->format('z');
-  		$weekno = $record['period_number'];
-  		if(isset($weekList[$weekno])){
-  			if(!in_array($record['location_name'],$weekList[$weekno])) $weekList[$weekno][] = $record['location_name'];
-  		} else $weekList[$weekno] = array($record['location_name']);
-  	}
   	$warnings .= '<span style="display:none;">Records date pre-processing complete : '.date(DATE_ATOM).'</span>'."\n";
   	$count = count($records);
   	$warnings .= '<span style="display:none;">Number of records processed : '.$count.' : '.date(DATE_ATOM).'</span>'."\n";
@@ -4697,7 +4680,7 @@ jQuery('#estimateChart .disable-button').click(function(){
  				foreach($records as $occurrence){
   					if(!in_array($occurrence['sample_id'], $sampleList)) {
   						$sampleList[] = $occurrence['sample_id'];
-  						$sampleData = array('id'=>$occurrence['sample_id'], 'date'=>$occurrence['date'], 'location'=>$occurrence['locaton_name']);
+  						$sampleData = array('id'=>$occurrence['sample_id'], 'date'=>$occurrence['date'], 'location'=>$occurrence['location_name']);
 	  					$rawArray[$occurrence['sample_id']] = array();
   						if($sampleFields){
   							foreach($sampleFields as $sampleField) {
