@@ -4399,7 +4399,7 @@ update_controls();
   	if($options['location_list'] != 'all' && count($options['location_list']) == 0) $options['location_list'] = 'none';
   	foreach($records as $recid => $record){
   		// If the taxon has changed
-  		$this_date = date_create(str_replace('/','-',$record['date'])); // prevents day/month ordering issues
+  		$this_date = date_create(str_replace('/','-',$record['date_start'])); // prevents day/month ordering issues
   		$this_index = $this_date->format('z');
   		$this_weekday = $this_date->format('N');
   		
