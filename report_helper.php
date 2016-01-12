@@ -4797,7 +4797,7 @@ jQuery('#estimateChart .disable-button').click(function(){
 		$handle = fopen($cacheFolder.$cacheFile, 'wb');
   		fwrite($handle, $rawDataDownloadGrid);
   		fclose($handle);
-  		$downloadTab .= '<tr><td>'.lang::get('Download Raw Data Grid (CSV Format)').' : '.$cacheFolder.$cacheFile.' </td><td><a target="_blank" href="'.$base_url.'/'.drupal_get_path('module', 'iform').'/client_helpers/cache/'.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
+  		$downloadTab .= '<tr><td>'.lang::get('Download Raw Data Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.drupal_get_path('module', 'iform').'/client_helpers/cache/'.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
   	}
 
   	if($hasData && count($options['downloads'])>0) {
