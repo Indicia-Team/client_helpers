@@ -39,10 +39,10 @@ $indicia_templates = array(
   'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
       "document.write('{content}');".
       "/* ]]> */</script>\n",
-  'label' => '<label for="{id}"{labelClass}>{label}:</label>'."\n",
-  'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>'."\n",
+  'label' => '<label for="{id}"{labelClass}>{label}:</label>',
+  'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
   'suffix' => "\n",
-  'requiredsuffix' => "<span class=\"deh-required\">*</span>\n",
+  'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   'anchorButton' => '<a class="ui-corner-all ui-widget-content ui-state-default indicia-button {class}" href="{href}" id="{id}">{caption}</a>',
@@ -112,8 +112,8 @@ $indicia_templates = array(
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
-  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />'."\n".
-      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>'."\n",
+  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
+      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
   'autocomplete_javascript' => "jQuery('input#{escaped_input_id}').autocomplete('{url}',
       {
         extraParams : {
@@ -153,7 +153,7 @@ $indicia_templates = array(
       if (typeof data.icon!=='undefined') {
         $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
       }
-      $('input#{escaped_id}').change();
+      $('input#{escaped_id}').trigger('change', data);
     });\r\n",
   'sub_list' => '<div id="{id}:box" class="control-box wide"><div>'."\n".
     '<div>'."\n".
@@ -589,6 +589,9 @@ class helper_base extends helper_config {
    * <li>timeentry</li>
    * <li>verification</li>
    * <li>complexAttrGrid</li>
+   * <li>footable</li>
+   * <li>indiciaFootableReport</li>
+   * <li>indiciaFootableChecklist</li>
    * </ul>
    */
   public static function add_resource($resource)
@@ -692,7 +695,19 @@ class helper_base extends helper_config {
         'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.pack.js")),
         'verification' => array('javascript'=>array(self::$js_path."verification.js")),
         'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
-        'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js"))
+        'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
+        'footable' => array(
+            'stylesheets' => array(self::$js_path . 'footable/css/footable.core.min.css'), 
+//            'javascript' => array( self::$js_path.'footable/dist/footable.min.js',), /*** does not contain bugfixes ***/
+            'javascript' => array( self::$js_path . 'footable/js/footable.js',),
+            'deps' => array('jquery')),
+        'indiciaFootableReport' => array(
+            'javascript' => array(self::$js_path . 'jquery.indiciaFootableReport.js'), 
+            'deps' => array('footable')),
+        'indiciaFootableChecklist' => array(
+            'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'), 
+            'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
+            'deps' => array('footable')),
       );
     }
     return self::$resource_list;
@@ -1387,10 +1402,8 @@ class helper_base extends helper_config {
     if ($r===false) {
       $postargs = "website_id=$website_id";
       $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
-      if (isset($response['status'])) {
-        if ($response['status']===404) {
-          throw new Exception('Warehouse security service not found - please check the warehouse URL is correct.', 404);
-        }
+      if (array_key_exists('status', $response)) {
+        throw new Exception($response['output'], $response['status']);
       }
       $nonce = $response['output'];
       $r = array(
@@ -1418,6 +1431,9 @@ class helper_base extends helper_config {
     self::$website_id = $website_id; /* Store this for use with data caching */
     $postargs = "website_id=$website_id";
     $response = self::http_post(parent::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
+    if (array_key_exists('status', $response)) {
+      throw new Exception($response['output'], $response['status']);
+    }
     $nonces = json_decode($response['output'], true);
     $write = '<input id="auth_token" name="auth_token" type="hidden" class="hidden" ' .
         'value="'.sha1($nonces['write'].':'.$password).'" />'."\r\n";
@@ -1785,7 +1801,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
     $r .= self::get_help_text($options, 'after');
     if (isset($options['id']) ) {
       $wrap = empty($options['controlWrapTemplate']) ? $indicia_templates['controlWrap'] : $indicia_templates[$options['controlWrapTemplate']];
-      $r = str_replace(array('{control}', '{id}'), array($r, str_replace(':', '-', $options['id'])), $wrap);
+      $r = str_replace(array('{control}', '{id}'), array("\n$r", str_replace(':', '-', $options['id'])), $wrap);
     }
     if (!empty($options['tooltip'])) {
       // preliminary support for

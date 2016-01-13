@@ -738,8 +738,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
-    self::$availableForGroups = hostsite_get_node_field_value($nid, 'available_for_groups');
-    self::$limitToGroupId = hostsite_get_node_field_value($nid, 'limit_to_group_id');
+    self::$availableForGroups = $args['available_for_groups'];
+    self::$limitToGroupId = $args['limit_to_group_id'];
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) {
         // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrupt the data by accident
@@ -1107,6 +1107,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if (isset(data_entry_helper::$entity_to_load['occurrence:id'])) {
       $r .= '<input type="hidden" id="occurrence:id" name="occurrence:id" value="' . data_entry_helper::$entity_to_load['occurrence:id'] . '" />' . PHP_EOL;
     }
+    $r .= self::get_group_licence_html();
     if (!empty(data_entry_helper::$entity_to_load['sample:group_id'])) {
       $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"".data_entry_helper::$entity_to_load['sample:group_id']."\" />\n";
       // If the group does not release it's records, set the release_status flag
@@ -1174,6 +1175,45 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if ($args['multiple_occurrence_mode']==='multi')
       $r .= '<input type="hidden" value="true" name="gridmode" />';
     return $r;
+  }
+
+  /**
+   * Retrieves the licence message and licence ID to add to the page, if relevant.
+   * E.g. if the sample is already licenced, or the group you are posting to has selected
+   * a licence.
+   * @return string
+   */
+  private static function get_group_licence_html() {
+    $r = '';
+    if (!empty(data_entry_helper::$entity_to_load['sample:licence_id']) || !empty(self::$group['licence_id'])) {
+      if (!empty(data_entry_helper::$entity_to_load['sample:licence_id'])) {
+        $msg = 'The records on this form are licenced as <strong>{1}</strong>.';
+        $licence_id = data_entry_helper::$entity_to_load['sample:licence_id'];
+        $code = data_entry_helper::$entity_to_load['sample:licence_code'];
+      } else {
+        $msg = 'This records you enter using this form will be licenced as <strong>{1}</strong>.';
+        $licence_id = self::$group['licence_id'];
+        $code =  self::$group['licence_code'];
+      }
+      $licence = self::licence_code_to_text($code);
+      $r .= '<p class="licence licence-' . strtolower($code) . '">' . lang::get($msg, $licence) . '</p>';
+      $r .= "<input type=\"hidden\" name=\"sample:licence_id\" value=\"$licence_id\" />";
+    }
+    return $r;
+  }
+
+  /**
+   * Converts a licence code (e.g. CC-BY) to readable text.
+   * @param string $code
+   * @return string
+   */
+  private static function licence_code_to_text($code) {
+    return str_replace(
+      array('CC','BY','NC','0','OGL'),
+      array(lang::get('Creative Commons'), lang::get('By Attribution'), lang::get('Non-Commercial'),
+        lang::get(' (no rights reserved)'), lang::get('Open Government Licence')),
+      $code
+    );
   }
 
   /**
@@ -2125,6 +2165,11 @@ else
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
+    $extensions = array();
+    if (isset($values['submission_extensions'])) {
+      $extensions = $values['submission_extensions'];
+      unset($values['submission_extensions']);
+    }
     // default for forms setup on old versions is grid - list of occurrences
     // Can't call getGridMode in this context as we might not have the $_GET value to indicate grid
     if (isset($values['speciesgridmapmode']))
@@ -2135,14 +2180,31 @@ else
       $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
       self::load_custom_occattrs($readAuth, $args['survey_id']);
       $abundanceAttrs = array();
-      foreach (self::$occAttrs as $attr) {
-        if ($attr['system_function']==='sex_stage_count')
-          $abundanceAttrs[] = $attr['attributeId'];
+      foreach (self::$occAttrs as &$attr) {
+        if ($attr['system_function']==='sex_stage_count') {
+          // If we have any lookups, we need to load the terms so we can compare the data properly
+          // as term Ids are never zero
+          if ($attr['data_type']==='L') {
+            $attr['terms'] = data_entry_helper::get_population_data(array(
+              'table' => 'termlists_term',
+              'extraParams' => $readAuth + array('termlist_id'=>$attr['termlist_id'], 'view'=>'cache', 'columns'=>'id,term'),
+              'cachePerUser' => false
+            ));
+          }
+          $abundanceAttrs[$attr['attributeId']] = $attr;
+        }
       }
       $submission = data_entry_helper::build_sample_occurrences_list_submission($values, false, $abundanceAttrs);
     }
     else
       $submission = data_entry_helper::build_sample_occurrence_submission($values);
+    foreach ($extensions as $extension) {
+      $class_method = explode('.', "$extension");
+      require_once("extensions/$class_method[0].php");
+      $class_method[0] = "extension_$class_method[0]";
+      // array on 3rd parameter is a way of forcing pass by reference
+      call_user_func($class_method, $values, array(&$submission));
+    }
     return($submission);
   }
 

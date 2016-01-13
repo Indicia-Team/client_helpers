@@ -219,6 +219,16 @@ class iform_dynamic_report_explorer extends iform_dynamic {
                     'by the value of the id field for the current row."
               }
             }
+          },
+          "responsive-hide": {
+            "type":"map",
+            "title":"Responsive hide",
+            "desc":"List of breakpoint names where this column will be hidden if the display is smaller than the breakpoint size.",
+            "mapping": {
+              "phone": {"type":"bool","required":true,"desc":"Hidden if screen <= 480px."},
+              "tablet-portrait": {"type":"bool","required":true,"desc":"Hidden if 480px < screen <= 768px."},
+              "tablet-landscape": {"type":"bool","required":true,"desc":"Hidden if 768px < screen <= 1024px."},
+            }
           }
         }
       }
@@ -374,7 +384,14 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'autoParamsForm'=>false,
         'sharing'=>$sharing,
         'ajax'=>true,
-        'id'=>'report-grid-'.self::$reportCount
+        'id'=>'report-grid-'.self::$reportCount,
+        'responsiveOpts' => array(
+          'breakpoints' => array(
+            'phone' => 480,
+            'tablet-portrait' => 768,
+            'tablet-landscape' => 1024,
+          ),
+        ),           
       ),
       $options
     );

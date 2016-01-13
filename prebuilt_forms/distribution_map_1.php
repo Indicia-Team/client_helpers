@@ -210,21 +210,29 @@ class iform_distribution_map_1 {
     // setup the map options
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
+ 
     if (!$args['show_all_species']) {
-      if (isset($args['taxon_identifier']) && !empty($args['taxon_identifier']))
+      if (isset($args['taxon_identifier']) && !empty($args['taxon_identifier'])) {
         // This page is for a predefined species map
         $taxonIdentifier = $args['taxon_identifier'];
-      else {
-        if (isset($_GET['taxon']))
-        $taxonIdentifier = $_GET['taxon'];
-        else
-        return lang::get("The distribution map cannot be displayed without a taxon identifier");
       }
+      else {
+        if (isset($_GET['taxon'])) {
+          $taxonIdentifier = $_GET['taxon'];
+        }
+        else {
+          return lang::get("The distribution map cannot be displayed without a taxon identifier");
+        }
+      }
+      
       if ($args['external_key']==true) {
-        if (empty($args['taxon_list_id']))
-          return lang::get('This form is configured with the Distribution Layer - External Key option ticked, but no species list has been configured to '.
-              'lookup the external keys against.');
-        // the taxon identifier is an external key, so we need to translate to a meaning ID.
+        if (empty($args['taxon_list_id'])) {
+          return lang::get('This form is configured with the Distribution Layer - External Key '
+                  . 'option ticked, but no species list has been configured to '
+                  . 'lookup the external keys against.');
+        }
+        
+        // The taxon identifier is an external key, so we need to translate to a meaning ID.
         $fetchOpts = array(
         'table' => 'taxa_taxon_list',
         'extraParams' => $readAuth + array(
@@ -232,47 +240,70 @@ class iform_distribution_map_1 {
             'external_key' => $taxonIdentifier,
             'taxon_list_id' => $args['taxon_list_id'],
             'preferred' => true
-        )
+          )
         );
         $prefRecords = data_entry_helper::get_population_data($fetchOpts);
         // We might have multiple records back, e.g. if there are several photos, but we should have a unique meaning id.
         $meaningId=0;
         foreach($prefRecords as $prefRecord) {
-        if ($meaningId!=0 && $meaningId!=$prefRecord['taxon_meaning_id'])
+          if ($meaningId!=0 && $meaningId!=$prefRecord['taxon_meaning_id']) {
             // bomb out, as we  don't know which taxon to display
             return lang::get("The taxon identifier cannot be used to identify a unique taxon.");
-        $meaningId = $prefRecord['taxon_meaning_id'];
+          }
+          $meaningId = $prefRecord['taxon_meaning_id'];
         }
-        if ($meaningId==0)
-        return lang::get("The taxon identified by the taxon identifier cannot be found.");
-        $meaningId = $prefRecords[0]['taxon_meaning_id'];
-      } else
+        if ($meaningId == 0) {
+          return lang::get("The taxon identified by the taxon identifier cannot be found.");
+        }
+      } 
+      else {
         // the taxon identifier is the meaning ID.
         $meaningId = $taxonIdentifier;
-      // We still need to fetch the species record, to get its common name
-      $fetchOpts = array(
-        'table' => 'taxa_taxon_list',
-        'extraParams' => $readAuth + array(
-        'view' => 'detail',
-        'language_iso' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
-        'taxon_meaning_id' => $meaningId
-        )
-      );
-      $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
+      }
+      
+      if (strstr($args['layer_title'], '{species}') !== FALSE) {
+        // We still need to fetch the species record, to get its common name
+        // to be inserted in the layer title.
+        $fetchOpts = array(
+          'table' => 'taxa_taxon_list',
+          'extraParams' => $readAuth + array(
+          'view' => 'detail',
+          'language_iso' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+          'taxon_meaning_id' => $meaningId
+          )
+        );
+        $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
+
+        if (count($taxonRecords) == 0) {
+          // No common name was found for this language so revert to taxon.
+          unset($fetchOpts['extraParams']['language_iso']);
+          $taxonRecords = data_entry_helper::get_population_data($fetchOpts);
+          if (count($taxonRecords) == 0) {
+            // If there are still no records then the supplied taxon_meaning_id
+            // was incorrect.
+            return lang::get("The taxon identified by the taxon identifier cannot be found.");
+          }
+        }
+        $layerTitle = str_replace('{species}', $taxonRecords[0]['taxon'], $args['layer_title']);
+    }
+      else {
+        $layerTitle = $args['layer_title'];
+      }
+    }
+    else {
+      $layerTitle = lang::get('All species occurrences');
     }
 
     $url = map_helper::$geoserver_url.'wms';
     // Get the style if there is one selected
     $style = $args["wms_style"] ? ", styles: '".$args["wms_style"]."'" : '';   
     map_helper::$onload_javascript .= "\n    var filter='website_id=".$args['website_id']."';";
-    if ($args['show_all_species'])
-      $layerTitle = lang::get('All species occurrences');
-    else {
-      $layerTitle = str_replace('{species}', $taxonRecords[0]['taxon'], $args['layer_title']);
+    if (!$args['show_all_species']) {
       map_helper::$onload_javascript .= "\n    filter += ' AND taxon_meaning_id=$meaningId';\n";
     }
-    if (!empty($args['cql_filter']))
+    if (!empty($args['cql_filter'])) {
       map_helper::$onload_javascript .= "\n    filter += ' AND(".str_replace("'","\'",$args['cql_filter']).")';\n";
+    }
     
     $layerTitle = str_replace("'","\'",$layerTitle);
     map_helper::$onload_javascript .= "\n    var distLayer = new OpenLayers.Layer.WMS(

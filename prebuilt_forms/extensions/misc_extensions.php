@@ -282,4 +282,17 @@ class extension_misc_extensions {
     hostsite_set_page_title($options['title']);
     return '';
   }
+
+  /**
+   * Helper method to enable jQuery tooltips.
+   */
+  public static function enable_tooltips() {
+    drupal_add_library('system', 'ui.tooltip', true);
+    data_entry_helper::$javascript .= "
+$('form#entry_form').tooltip({
+  open: function(event, ui) {
+    $(ui.tooltip).siblings(\".ui-tooltip\").remove();
+  }
+});\n";
+  }
 }
