@@ -990,7 +990,12 @@ class iform_ukbms_sectioned_transects_input_sample {
         } else {
           $attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
         }
-        $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').'">' . data_entry_helper::outputAttribute($attr, $attrOpts) . '</td>';
+        if($attr['default']=='')
+        	$attrOpts['class'] .= ' ui-state-error';
+        $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').'">' .
+        		data_entry_helper::outputAttribute($attr, $attrOpts) .
+        		($attr['default']=='' ? '<p htmlfor="'.$attrOpts['id'].'" class="inline-error">' . lang::get('This field is required') . '</p>' : '') .
+        		'</td>';
       }
       $r .= '<td class="ui-state-disabled first"></td>';
       $r .= '</tr>';
@@ -1058,128 +1063,19 @@ class iform_ukbms_sectioned_transects_input_sample {
     }
     data_entry_helper::$javascript .= "];\n";
 
-    if(isset($args['second_taxon_list_id']) && $args['second_taxon_list_id']!=''){
-      $isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_2']) && $args['occurrence_attribute_id_2']!="" ?
-      		    $args['occurrence_attribute_id_2'] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
-      $r .= '<div id="grid2"><p id="grid2-loading">' . lang::get('Loading - Please Wait') . '</p>' . (isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>') . '<table id="transect-input2" class="ui-widget species-grid"><thead class="table-header">';
-      $r .= '<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
-      foreach ($sections as $idx=>$section) {
-        $r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
-      }
-      $r .= ($isNumber ? '<th class="ui-widget-header">' . lang::get('Total') . '</th>' : '').'</tr></thead>';
-      // No output rows at the top for any transect section level sample attributes in second grid.
-      $r .= '<tbody class="ui-widget-content occs-body"></tbody>';
-      if($isNumber) {
-        $r .= '<tfoot><tr><td>Total</td>';
-        foreach ($sections as $idx=>$section) {
-          $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').' col-total"></td>';
-        }
-        $r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
-      }
-      $r .= '</table>';
-      if($args['start_list_2'] != "full")
-        $r .= '<label for="taxonLookupControl2" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl2" name="taxonLookupControl2" >';
-      $r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div>';
-    }
-    if(isset($args['third_taxon_list_id']) && $args['third_taxon_list_id']!=''){
-      $isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_3']) && $args['occurrence_attribute_id_3']!="" ?
-          $args['occurrence_attribute_id_3'] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
-      $r .= '<div id="grid3"><p id="grid3-loading">' . lang::get('Loading - Please Wait') . '</p>' . (isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>') . '<table id="transect-input3" class="ui-widget species-grid"><thead class="table-header">';
-      $r .= '<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
-      foreach ($sections as $idx=>$section) {
-        $r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
-      }
-      $r .= ($isNumber ? '<th class="ui-widget-header">' . lang::get('Total') . '</th>' : '').'</tr></thead>';
-      // No output rows at the top for any transect section level sample attributes in second grid.
-      $r .= '<tbody class="ui-widget-content occs-body"></tbody>';
-      if($isNumber) {
-        $r .= '<tfoot><tr><td>Total</td>';
-        foreach ($sections as $idx=>$section) {
-          $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').' col-total"></td>';
-        }
-        $r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
-      }
-      $r .= '</table>';
-      if($args['start_list_3'] != "full")
-        $r .= '<label for="taxonLookupControl3" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl3" name="taxonLookupControl3" >';
-      $r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div>';
-    }
-    if(isset($args['fourth_taxon_list_id']) && $args['fourth_taxon_list_id']!=''){
-      $isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_4']) && $args['occurrence_attribute_id_4']!="" ?
-          $args['occurrence_attribute_id_4'] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
-      $r .= '<div id="grid4"><p id="grid4-loading">' . lang::get('Loading - Please Wait') . '</p>' . (isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>') . '<table id="transect-input4" class="ui-widget species-grid"><thead class="table-header">';
-      $r .= '<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
-      foreach ($sections as $idx=>$section) {
-        $r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
-      }
-      $r .= ($isNumber ? '<th class="ui-widget-header">' . lang::get('Total') . '</th>' : '').'</tr></thead>';
-      // No output rows at the top for any transect section level sample attributes in second grid.
-      $r .= '<tbody class="ui-widget-content occs-body"></tbody>';
-      if($isNumber) {
-        $r .= '<tfoot><tr><td>Total</td>';
-        foreach ($sections as $idx=>$section) {
-          $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').' col-total"></td>';
-        }
-        $r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
-      }
-      $r .= '</table>';
-      if($args['start_list_4'] != "full")
-        $r .= '<label for="taxonLookupControl4" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl4" name="taxonLookupControl4" >';
-      $r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div>';
-    }
+    if(isset($args['second_taxon_list_id']) && $args['second_taxon_list_id']!='')
+    	$r .= self::_buildGrid (2, $args, $sections, $occ_attributes);
+
+    if(isset($args['third_taxon_list_id']) && $args['third_taxon_list_id']!='')
+    	$r .= self::_buildGrid (3, $args, $sections, $occ_attributes);
+    
+    if(isset($args['fourth_taxon_list_id']) && $args['fourth_taxon_list_id']!='')
+    	$r .= self::_buildGrid (4, $args, $sections, $occ_attributes);
+
     $reloadPath = self::getReloadPath();
     $defaults = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $record_status = isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C';
-    if(isset($args['map_taxon_list_id']) && $args['map_taxon_list_id']!=''){
-      // TODO convert to AJAX.
-      data_entry_helper::enable_validation('entry_form');
-      
-      $r .= '<div id="gridmap">'."\n".'<form method="post" id="entry_form" action="'.$reloadPath.'">'.$auth['write'].
-            '<p>When using this page, please remember that the data is not saved to the database as you go (which is the case for the previous tabs). In order to save the data entered in this page you must click on the Save button at the bottom of the page.</p>'.
-            '<input type="hidden" id="website_id" name="website_id" value="'.$args["website_id"].'" />'.
-            '<input type="hidden" id="survey_id" name="sample:survey_id" value="'.$args["survey_id"].'" />'.
-            '<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="'.$record_status.'" />'.
-            '<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>'.
-            '<input type="hidden" name="page" value="speciesmap"/>'.
-            '<input type="hidden" name="sample:location_id" value="'.$parentLocId.'"/>';
-      if (preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
-        // Date has 4 digit year first (ISO style) - convert date to expected output format
-        $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
-        data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
-      }
-      $r .= '<input type="hidden" name="sample:date" value="'.data_entry_helper::$entity_to_load['sample:date'].'"/>';
-      // leave the sample_method as it is stored now.
-      // Dont need the place search, as we will zoom in to the main location. TODO
-      $options = iform_map_get_map_options($args, $auth["read"]);
-      if (isset(data_entry_helper::$entity_to_load["sample:geom"])) {
-        $options["initialFeatureWkt"] = data_entry_helper::$entity_to_load["sample:wkt"];
-      }
-      $options["tabDiv"] = "gridmap";
-      $olOptions = iform_map_get_ol_options($args);
-      if (!isset($options["standardControls"]))
-        $options["standardControls"]=array("layerSwitcher","panZoomBar");
-      $r .= data_entry_helper::map_panel($options, $olOptions);
-      // [species map]
-      $r .= self::control_speciesmap($auth, $args, "gridmap", array());
-      /**
-       * The speciesmapsummary is not implemented here
-       */
-      $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Save').'" /></form></div>';
-      data_entry_helper::$javascript .= "var speciesMapTabHandler = function(event, ui) {
-  panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
-  if (panel.id=='".$options["tabDiv"]."') {
-    if (indiciaData.ParentSampleLayer.features.length > 0) {
-      var bounds=indiciaData.ParentSampleLayer.getDataExtent();
-      bounds.extend(indiciaData.SubSampleLayer.getDataExtent());
-      // extend the boundary to include a buffer, so the map does not zoom too tight.
-      bounds.scale(1.2);
-      indiciaData.ParentSampleLayer.map.zoomToExtent(bounds);
-    }
-  }
-};
-indiciaFns.bindTabsActivate(jQuery(jQuery('#".$options["tabDiv"]."').parent()), speciesMapTabHandler);\n";
-    } else // enable validation on the comments form in order to include the simplified ajax queuing for the autocomplete.
-      data_entry_helper::enable_validation('validation-form');
+    data_entry_helper::enable_validation('validation-form');
 
     $r .= '</div>';
     // a stub form to attach validation to.
@@ -1328,6 +1224,35 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
     return $r;
   }
 
+  protected static function _buildGrid ($tabNum, $args, $sections, $occ_attributes) {
+  	$isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
+  			$args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
+  		
+  	$r = '<div id="grid'.$tabNum.'">' .
+  			'<p id="grid'.$tabNum.'-loading">' . lang::get('Loading - Please Wait') . '</p>' .
+  			(isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>') .
+  			'<table id="transect-input'.$tabNum.'" class="ui-widget species-grid"><thead class="table-header">' .
+  			'<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
+  	foreach ($sections as $idx=>$section) {
+  		$r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
+  	}
+  	$r .= ($isNumber ? '<th class="ui-widget-header">' . lang::get('Total') . '</th>' : '').'</tr></thead>';
+  	// No output rows at the top for any transect section level sample attributes in these grids.
+  	$r .= '<tbody class="ui-widget-content occs-body"></tbody>';
+  	if($isNumber) { // add a totals row only if the attribute is a number
+  		$r .= '<tfoot><tr><td>Total</td>';
+  		foreach ($sections as $idx=>$section) {
+  			$r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').' col-total"></td>';
+  		}
+  		$r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
+  	}
+  	$r .= '</table>';
+  	if($args['start_list_'.$tabNum] != "full")
+  		$r .= '<label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" >';
+  	$r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div>';
+  	return $r;
+  }
+  
   protected static function getReloadPath () {
   	$reload = data_entry_helper::get_reload_link_parts();
   	unset($reload['params']['sample_id']);
@@ -1343,142 +1268,6 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
   	return $reloadPath;
   }
 
-  /**
-   * Get the control for map based species input, assumed to be multiple entry: ie a grid. Can be single species though.
-   * Uses the normal species grid, so all options that apply to that, apply to this.
-   * An option called sampleMethodId can be used to specify the sample method used for subsamples, and therefore the
-   * controls to show for subsamples.
-   */
-  protected static function control_speciesmap($auth, $args, $tabAlias, $options) {
-  	// The ID must be done here so it can be accessed by both the species grid and the buttons.
-  	$code = rand(0,1000);
-  	$defaults = array('id' => 'species-grid-'.$code, buttonsId => 'species-grid-buttons-'.$code);
-  	$options = array_merge($defaults, $options);
-    // assume gridmode = true
-  	// Force a new option
-  	$options['speciesControlToUseSubSamples'] = true;
-  	$sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Field Observation'));
-  	$options['subSampleSampleMethodID'] = $sampleMethods[0]['id'];
-  	$options['base_url'] = data_entry_helper::$base_url;
-  	if (!isset($args['cache_lookup']) || ($args['species_ctrl'] !== 'autocomplete'))
-  		$args['cache_lookup']=false; // default for old form configurations or when not using an autocomplete
-  	//The filter can be a URL or on the edit tab, so do the processing to work out the filter to use
-    $filterLines = helper_base::explode_lines($args['map_taxon_filter']);
-  	// store in the argument so that it can be used elsewhere
-  	$args['map_taxon_filter'] = implode("\n", $filterLines);
-  	//Single species mode only ever applies if we have supplied only one filter species and we aren't in taxon group mode
-  	if ($args['map_taxon_filter_field']!=='taxon_group' && $args['map_taxon_filter_field']!=='' && count($filterLines)===1) {
-  		$response = self::get_single_species_data($auth, $args, $filterLines);
-  		//Optional message to display the single species on the page
-  		if ($args['single_species_message'])
-  			self::$singleSpeciesName=$response[0]['taxon'];
-  		if (count($response)==0)
-  			//if the response is empty there is no matching taxon, so clear the filter as we can try and display the checklist with all data
-  			$args['taxon_filter']='';
-  		elseif (count($response)==1)
-  		//Keep the id of the single species in a hidden field for processing if in single species mode
-  		// TBD
-  		return '<input type="hidden" name="occurrence:taxa_taxon_list_id" value="'.$response[0]['id']."\"/>\n";
-  	}
-  	$extraParams = $auth['read'];
-  	self::build_grid_autocomplete_function($args);
-  	// the imp-sref & imp-geom are within the dialog so it is updated.
-  	$speciesCtrl = self::get_control_species_checklist($auth, $args, $extraParams, $options); // this preloads the subsample data.
-  	$systems = explode(',', str_replace(' ', '', $args['spatial_systems']));
-  	// note that this control only uses the first spatial reference system in the list.
-  	$system = '<input type="hidden" id="imp-sref-system" name="sample:entered_sref_system" value="'.$systems[0].'" />';
-  	// since we handle the system ourself, we need to include the system handled js files.
-  	data_entry_helper::include_sref_handler_js(array($systems[0]=>''));
-  	/** Switch off sample attributes for this until Indicia can handle allocation better
-  	$args['sample_method_id'] = $sampleMethods[0]['id'];
-  	$sampleAttrs = self::getAttributes($args, $auth);
-  	foreach ($sampleAttrs as &$attr) {
-  		$attr['fieldname'] = 'sc:n::'.$attr['fieldname'];
-  		$attr['id'] = 'sc:n::'.$attr['id'];
-  	}
-  	$attrOptions = self::get_attr_specific_options($options);
-  	$sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), null, $attrOptions);
-  	$r .= '<div id="'.$options['id'].'-subsample-ctrls" style="display: none">'.$sampleCtrls.'</div>';
-  	**/
-  	$r = '<div id="'.$options['id'].'-subsample-ctrls" style="display: none"></div>';
-  	$r .= '<div id="'.$options['id'].'-container" style="display: none">'.
-  			'<input type="hidden" id="imp-sref" />'. // a dummy to capture feedback from the map
-  			'<input type="hidden" id="imp-geom" />'. // a dummy to capture feedback from the map
-  			'<input type="hidden" name="sample:entered_sref" value="'.data_entry_helper::check_default_value('sample:entered_sref', '').'">'.
-  			'<input type="hidden" name="sample:geom" value="'.data_entry_helper::check_default_value('sample:geom', '').'" >'.
-  			$system.
-  			'<div id="'.$options['id'].'-blocks">'.
-  			self::get_control_speciesmap_controls($auth, $args, $options).
-  			'</div>'.
-  			'<input type="hidden" value="true" name="speciesgridmapmode" />'.
-  			$speciesCtrl.
-  			'</div>';
-  	return $r;
-  }
-  
-  
-  /* Set up the control JS and also return the existing data subsample blocks */
-  protected static function get_control_speciesmap_controls($auth, $args, $options){
-  	$langStrings = array('AddLabel' => lang::get("Add records to map"),
-  			'AddMessage' => lang::get("Please click on the map where you would like to add your records. Zoom the map in for greater precision."),
-  			'AddDataMessage' => lang::get("Please enter all the species records for this position into the grid below. When you have finished, click the Finish button to return to the map where you may choose another grid reference to enter data for."),
-  
-  			'MoveLabel' => lang::get("Move records"),
-  			'MoveMessage1' => lang::get("Please select the records on the map you wish to move."),
-  			'MoveMessage2' => lang::get("Please click on the map to choose the new position. Press the Cancel button to choose another set of records to move instead."),
-  
-  			'ModifyLabel' => lang::get("Modify records"),
-  			'ModifyMessage1' => lang::get("Please select the records on the map you wish to change."),
-  			'ModifyMessage2' => lang::get("Change (or add to) the records for this position. When you have finished, click the Finish button: this will return you to the map where you may choose another set of records to change."),
-  
-  			'DeleteLabel' => lang::get("Delete records"),
-  			'DeleteMessage' => lang::get("Please select the records on the map you wish to delete."),
-  			'ConfirmDeleteTitle' => lang::get("Confirm deletion of records"),
-  			'ConfirmDeleteText' => lang::get("Are you sure you wish to delete all the records at {OLD}?"),
-  
-  			'CancelLabel' => lang::get("Cancel"),
-  			'FinishLabel' => lang::get("Finish"),
-  			'Yes' => lang::get("Yes"),
-  			'No' => lang::get("No"),
-  			'SRefLabel' => lang::get('LANG_SRef_Label'));
-  	// make sure we load the JS.
-  	data_entry_helper::add_resource('control_speciesmap_controls');
-  	data_entry_helper::$javascript .= "control_speciesmap_addcontrols(".json_encode($options).",".json_encode($langStrings).");\n";
-  	$blocks = "";
-  	if (isset(data_entry_helper::$entity_to_load)) {
-  		foreach(data_entry_helper::$entity_to_load as $key => $value){
-  			$a = explode(':', $key, 4);
-  			if(count($a)==4 && $a[0] == 'sc' && $a[3] == 'sample:entered_sref'){
-  				$geomKey = $a[0].':'.$a[1].':'.$a[2].':sample:geom';
-  				$idKey = $a[0].':'.$a[1].':'.$a[2].':sample:id';
-  				$deletedKey = $a[0].':'.$a[1].':'.$a[2].':sample:deleted';
-  				// dont need to worry about sample_method_id for existing subsamples.
-  				$blocks .= '<div id="scm-'.$a[1].'-block" class="scm-block">'.
-  						'<label>'.lang::get('LANG_SRef_Label').':</label> '.
-  						'<input type="text" value="'.$value.'" readonly="readonly" name="'.$key.'">'.
-  						'<input type="hidden" value="'.data_entry_helper::$entity_to_load[$geomKey].'" name="'.$geomKey.'">'.
-  						'<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
-  						(isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey].'" name="'.$idKey.'">' : '');
-  				/** Switch off sample attributes for this until Indicia can handle allocation better
-  				if (!empty($options['sampleMethodId'])) {
-  					$sampleAttrs = self::getAttributesForSample($args, $auth, $a[2]);
-  					foreach ($sampleAttrs as &$attr) {
-  						$attr['fieldname'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['fieldname'];
-  						$attr['id'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['id'];
-  					}
-  					$attrOptions = self::get_attr_specific_options($options);
-  					$sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), null, $attrOptions);
-  					$blocks .= '<div id="scm-'.$a[1].'-subsample-ctrls">' .
-  							$sampleCtrls .
-  							'</div>';
-  				}
-  				**/
-  				$blocks .= '</div>';
-  			}
-  		}
-  	}
-  	return $blocks;
-  }
   
   /**
    * Parses an options array to extract the attribute specific option settings, e.g. smpAttr:4|caption=Habitat etc.
@@ -1729,9 +1518,6 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
    */
   public static function get_submission($values, $args) {
     $subsampleModels = array();
-    if (isset($values['page']) && ($values['page']=='speciesmap')) {
-      $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values);
-    } else {
     if (!isset($values['page']) || ($values['page']=='mainSample')) {
       // submitting the first page, with top level sample details
       $read = array(
@@ -1824,7 +1610,6 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
     $submission = submission_builder::build_submission($values, array('model' => 'sample'));
     if(count($subsampleModels)>0)
       $submission['subModels'] = $subsampleModels;
-    }
     return($submission);
   }
   
@@ -1843,7 +1628,7 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
    * for initial submission of the parent sample.
    */
   public static function get_redirect_on_success($values, $args) {
-    return  ($values['page']==='speciesmap' || $values['page']==='delete') ? $args['my_walks_page'] : '';
+    return  ($values['page']==='delete') ? $args['my_walks_page'] : '';
   }
 
 }

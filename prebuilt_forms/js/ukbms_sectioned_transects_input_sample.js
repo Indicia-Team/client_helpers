@@ -13,11 +13,18 @@ function saveSample(code) {
         id=parts.join('\\:');
         jQuery('#'+id).val(jQuery(src).val());
         jQuery('#'+id).attr('name', jQuery(src).attr('name'));
+    	jQuery(src).closest('td').find('.ui-state-error').removeClass('ui-state-error');
+    	jQuery(src).closest('td').find('.inline-error').remove();
+        if(jQuery(src).val()='') {
+        	jQuery(src).addClass('ui-state-error');
+        	jQuery(src).after('<p htmlfor="'.$attrOpts['id'].'" class="inline-error">This field is required</p>';
+        }
       });
       jQuery('#smpsref').val(section.centroid_sref);
       jQuery('#smpsref_system').val(section.centroid_sref_system);
       jQuery('#smploc').val(section.id);
-      jQuery('#smp-form').submit();
+      if(jQuery('.smpAttr-' + section.code).closest('td').find('.ui-state-error').length == 0)
+        jQuery('#smp-form').submit();
     }
   });
 }
