@@ -1550,6 +1550,37 @@ class extension_splash_extensions {
     return '<label>User : </label>'.$r.'<br>';
   }
   
+  //The map pages uses node specific javascript that is very similar to the javascript functions found in
+  //add_locations_to_user in this file (we couldn't call this code for re-use).
+  //Use a simple function to supply the required indiciaData for that node specific javascript
+  public static function supply_indicia_data_to_map_square_allocator($auth, $args, $tabalias, $options, $path) {
+    data_entry_helper::$js_read_tokens = $auth['read'];
+    if (function_exists('hostsite_get_user_field')) {
+      data_entry_helper::$javascript.="
+        indiciaData.indiciaUserId='".hostsite_get_user_field('indicia_user_id')."';\n";
+    }
+    if (isset($args['website_id']))
+      data_entry_helper::$javascript .= "indiciaData.website_id = ".$args['website_id'].";\n";
+    if (function_exists('iform_ajaxproxy_url'))
+      data_entry_helper::$javascript .= "indiciaData.postUrl='".iform_ajaxproxy_url(null, 'person_attribute_value')."';\n";
+    if (isset($options['mySitesPsnAttrId']))
+      data_entry_helper::$javascript .= "indiciaData.mySitesPsnAttrId='".$options['mySitesPsnAttrId']."';\n";
+
+    if (!empty($options['rolesExemptFromApproval']))
+      $RolesExemptFromApproval=explode(',',$options['rolesExemptFromApproval']);      
+    else 
+      $RolesExemptFromApproval=array(); 
+    //See if any of the user's roles are in the exempt list.
+    foreach ($RolesExemptFromApproval as $exemptRole) {
+      foreach ($user->roles as $userRole) {
+        if ($exemptRole===$userRole)
+          $updatedBySystem = ',"updated_by_id":1'; 
+            data_entry_helper::$javascript.="
+        indiciaData.updatedBySystem='".$updatedBySystem."';\n";
+      }
+    }
+  }
+  
   /*
    * On the Request a Square page we need to hide the column filter on the My Allocations grid only
    */
