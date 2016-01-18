@@ -128,7 +128,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     global $indicia_templates;
     // This bit optionally adds '- common' or '- latin' depending on what was being searched
     if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-      $php = '$r = "<span class=\"scCommon\">{common}</span> <span class=\"scTaxon\"><em>{taxon}</em></span>";' . "\n";
+      $php = '$r = "<span class=\"scTaxon\"><em>{taxon}</em></span> <span class=\"scCommon\">{common}</span>";' . "\n";
     } else {
       $php = '$r = "<em>{taxon}</em>";' . "\n";
     }
