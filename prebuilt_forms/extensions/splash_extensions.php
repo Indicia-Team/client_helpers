@@ -245,6 +245,7 @@ class extension_splash_extensions {
       $options['reportProvidesOrderBy']=true;
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
+      $options['extraParams']['user_square_attr_id']=$userSquareAttrId;
       $options['report']='reports_for_prebuilt_forms/Splash/get_plots_for_square_id';
       $options['extraParams']['current_user_id']=$currentUserId;
       if (!empty($options['plotNumberAttrId']))
