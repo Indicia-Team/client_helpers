@@ -98,8 +98,9 @@ class extension_pantheon {
       $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('pantheon/summary') . '">Back to Summary</a></li>';
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
 <li><a id="assemblages-link" class="button" href="' . hostsite_get_url('assemblages/overview') . '">ISIS assemblage summary</a></li>
-<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris/ecological-divisions') . '">OSIRIS traits summary</a></li>
-<li><a id="horus-link" class="button"href="' . hostsite_get_url('horus/quality-scores-overview') . '">HORUS indices summary</a></li>
+<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris/ecological-divisions') . '">Osiris traits summary</a></li>
+<li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Horus indices summary</a></li>
+<li><a id="combined-summary" class="button" href="' . hostsite_get_url('pantheon/combined-summary') . '">Combined summary</a></li>
 </ul>';
     return $r;
   }
