@@ -148,6 +148,7 @@ class form_helper extends helper_base {
     ));
     $r .= data_entry_helper::select(array(
       'id' => 'form-category-picker',
+      'fieldname' => 'iform-cetegory',
       'label' => lang::get('Select page category'),
       'helpText' => lang::get('Select the category for the type of page you are building'),
       'lookupValues' => $categories, 
@@ -236,14 +237,17 @@ function setCategoryAndPageVisibility() {
       if (($('#available_for_groups').attr('checked') && typeof prebuilt_group_forms[$(this).attr('value')]==='undefined')
           || ($('#recommended').attr('checked') && typeof prebuilt_recommended_forms[$(this).attr('value')]==='undefined')) {
         $(this).hide();
+        $(this).attr('disabled', 'disabled');
         if ($(this).attr('selected')) {
           $('#form-category-picker option[value=\"\"]').attr('selected',true);
         }
       } else {
         $(this).show();
+        $(this).removeAttr('disabled');
       }
     }
   });
+  $('#form-category-picker').change();
 }
 function changeGroupEnabledStatus() {
   if ($('#available_for_groups').attr('checked')) {
