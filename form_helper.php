@@ -34,7 +34,7 @@ require_once('helper_base.php');
 class form_helper extends helper_base {
 
   /**
-   * Outputs a pair of linked selects, for picking a prebuilt form from the library. The first select is for picking a form 
+   * Outputs a pair of linked selects, for picking a prebuilt form from the library. The first select is for picking a form
    * category and the second select is populated by AJAX for picking the actual form.
    * @param array $readAuth Read authorisation tokens
    * @param array $options Options array with the following possibilities:<ul>
@@ -49,6 +49,8 @@ class form_helper extends helper_base {
    * When set to true, the website ID and password input controls are always included in the form output.
    * </li>
    * </ul>
+   * @return string HTML for the form picker.
+   * @throws \Exception
    */
   public static function prebuilt_form_picker($readAuth, $options) {
     require_once('data_entry_helper.php');
@@ -57,6 +59,7 @@ class form_helper extends helper_base {
     $r = '';
     if (!$dir = opendir($path.'prebuilt_forms/'))
       throw new Exception('Cannot open path to prebuilt form library.');
+    $forms = array();
     $groupForms = array();
     $recommendedForms = array();
     while (false !== ($file = readdir($dir))) {
@@ -154,7 +157,7 @@ class form_helper extends helper_base {
       'lookupValues' => $categories, 
       'default' => $defaultCategory
     ));
-    
+
     $r .= data_entry_helper::select(array(
       'id' => 'form-picker',
       'fieldname' => 'iform',
@@ -187,11 +190,16 @@ class form_helper extends helper_base {
     self::add_form_picker_js($forms, $groupForms, $recommendedForms, $showRecommendedPageTypes);
     return $r;
   }
-  
+
   /**
-  * If there are any recording groups, then add controls to the config to allow the forms to be linked to the recording group
-  * functionality.
-  */
+   * If there are any recording groups, then add controls to the config to allow the forms to be linked to the recording group
+   * functionality.
+   * @param $readAuth Read authorisation tokens
+   * @param $options Control options array. Set $options['available_for_groups'] to true to set the
+   * available for groups checkbox default and $options['limit_to_group_id'] to set the default
+   * group to limit this form to if any.
+   * @return string
+   */
   private static function link_to_group_fields($readAuth, $options) {
     $r = '';
     if (hostsite_has_group_functionality()) {
