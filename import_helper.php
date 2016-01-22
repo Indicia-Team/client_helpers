@@ -82,6 +82,8 @@ class import_helper extends helper_base {
    *   stage of the import tool if all the columns in the supplied spreadsheet are mapped. Combine this
    *   with the fieldMap parameter to make predefined import configurations that require little effort
    *   to use as long as a matching spreadsheet structure is supplied.
+   * @return string
+   * @throws \exception
    */
   public static function importer($options) {
     if (isset($_GET['total'])) {
@@ -96,6 +98,7 @@ class import_helper extends helper_base {
     } elseif ($_POST['import_step']==2) {
       return self::run_upload($options, $_POST);
     }
+    else throw new exception('Invalid importer state');
   }
 
   /**
@@ -105,7 +108,7 @@ class import_helper extends helper_base {
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = '<form action="'.$reloadpath.'" method="post" enctype="multipart/form-data">';
-    $r .= '<label for="id">'.lang::get('Select *.csv (comma separated values) file to upload').':</label>';
+    $r .= '<label for="upload">'.lang::get('Select *.csv (comma separated values) file to upload').':</label>';
     $r .= '<input type="file" name="upload" id="upload"/>';
     $r .= '<input type="Submit" value="'.lang::get('Upload').'"></form>';
     return $r;
@@ -116,7 +119,6 @@ class import_helper extends helper_base {
    * @param array $options Options array passed to the import control.
    */
   private static function import_settings_form($options) {
-    $r = '';
     $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
 
     // by this time, we should always have an existing file
@@ -260,7 +262,7 @@ class import_helper extends helper_base {
       '<thead class="ui-widget-header">'.
       "<tr><th>".lang::get('Column in CSV File')."</th><th>".lang::get('Maps to attribute')."</th>";
     if (self::$rememberingMappings) {
-      $r .= "<th id='remember-all-header' name='remember-all-header'>".lang::get('Remember choice?').
+      $r .= "<th>".lang::get('Remember choice?').
          "<br/><input type='checkbox' name='RememberAll' id='RememberAll' value='1' title='".
          lang::get('Tick all boxes to remember every column mapping next time you import.')."'$checkedRememberAll/></th>";
       self::$javascript .= "$('#RememberAll').change(function() {
@@ -523,6 +525,7 @@ class import_helper extends helper_base {
       $metadata = array('mappings' => json_encode($mappings));
       // cache the mappings
       if (function_exists('hostsite_set_user_field')) {
+        $userSettings = array();
         foreach ($mappings as $column => $setting) {
           $userSettings[str_replace("_", " ", $column)] = $setting;
         }
@@ -630,6 +633,7 @@ class import_helper extends helper_base {
     $r = '';
     $heading='';
     $labelListIndex = 0;
+    $labelList = array();
     $itWasSaved[$column] = 0;
 
     foreach ($fields as $field=>$caption) {
@@ -720,22 +724,23 @@ class import_helper extends helper_base {
         // first check if we need a new heading
         if ($prefix!=$heading) {
           $heading = $prefix;
+          $class = '';
           if (isset($labelListHeading[$column.$heading])) {
             $subOptionList = explode(':', $labelListHeading[$column.$heading]);
             $foundDuplicate=false;
             foreach ($subOptionList as $subOption) {
               if (isset($labelList[$subOption]) && $labelList[$subOption] > 1) {
-                $theID = $idColumn.'Duplicate';
+                $class = $idColumn.'Duplicate';
                 $foundDuplicate = true;
               }
               if (isset($labelList[$subOption]) && $labelList[$subOption] == 1 and $foundDuplicate == false)
-                $theID = $idColumn.'Normal';
+                $class = $idColumn.'Normal';
             }
           }
           if (!empty($r)) 
             $r .= '</optgroup>';
-            $r .= "<optgroup class=\"$theID\" label=\"";
-            $r .= self::processLabel(lang::get($heading)).'">';
+          $r .= "<optgroup class=\"$class\" label=\"";
+          $r .= self::processLabel(lang::get($heading)).'">';
         }
         $r .= $option;
       }
@@ -820,7 +825,7 @@ class import_helper extends helper_base {
   * @param string $column Column from the import CSV file we are currently working with
   * @param integer $itWasSaved This is 1 if a setting is saved for the column and the column would not have been automatically calculated as that value anyway.
   * @param boolean $rememberAll Is the remember all mappings option set?.
-  * @param integer $multiMatch Array of columns where there are multiple matches for the column and this cannot be resolved.
+  * @param array $multiMatch Array of columns where there are multiple matches for the column and this cannot be resolved.
   * @return string HTMl string 
   */
   private static function items_to_draw_once_per_import_column($r, $column, $itWasSaved, $rememberAll, $multiMatch) {
@@ -858,10 +863,10 @@ class import_helper extends helper_base {
  /**
   * Used by the get_column_options method to add "lookup existing record" to the appropriate captions
   * in the drop-downs on the import page.
-  * @param type $caption The drop-down item currently being worked on
-  * @param type $prefix Caption prefix
-  * @param type $fieldname The database field that the caption relates to.
-  * @param type $model Name of the model
+  * @param string $caption The drop-down item currently being worked on
+  * @param string $prefix Caption prefix
+  * @param string $fieldname The database field that the caption relates to.
+  * @param string $model Name of the model
   * @return string $caption A caption for the column drop-down on the import page.
   */
   private static function make_clean_caption($caption, $prefix, $fieldname, $model) {
@@ -882,11 +887,13 @@ class import_helper extends helper_base {
     }
     return $caption;
   }
-  
-  
+
+
   /**
    * Method to upload the file in the $_FILES array, or return the existing file if already uploaded.
    * @param array $options Options array passed to the import control.
+   * @return string
+   * @throws \Exception
    * @access private
    */
   private static function get_uploaded_file($options) {
@@ -916,7 +923,7 @@ class import_helper extends helper_base {
    * of each phrase a capital.
    *
    * @param string $text The text to alter.
-   * @return The altered string.
+   * @return string The altered string.
    */
   private static function processLabel($text) {
     return ucFirst(preg_replace('/[\s_]+/', ' ', $text));
