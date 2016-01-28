@@ -1342,7 +1342,7 @@ class extension_splash_extensions {
    * An example might be an event location, where only a certain number of people can attend.
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
-    global $user;
+    global $user;  
     //Need to call this so we can use indiciaData.read
     data_entry_helper::$js_read_tokens = $auth['read'];
     if (!function_exists('iform_ajaxproxy_url'))
@@ -1413,8 +1413,13 @@ class extension_splash_extensions {
       $r .= self:: user_select_for_add_sites_to_any_user_control($auth['read'],$args);
     
     $r .= '<input id="add-user-site-button" type="button" value="'.$addButtonLabel.'"/><br></form><br>';
+    $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
+    data_entry_helper::$javascript.="
+        indiciaData.postUrl='".$postUrl."';";
     
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
+    data_entry_helper::$javascript.="
+        indiciaData.mySitesPsnAttrId='".$options['mySitesPsnAttrId']."';";
 
     //Firstly check both a uer and location have been selected.
     //Then get the current user/sites saved in the database and if the new combination doesn't already exist then call a function to add it.
