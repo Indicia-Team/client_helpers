@@ -1,0 +1,77 @@
+<?php
+
+class extension_group_hierarchies {
+
+  /**
+   * Outputs a link from a groups list page to a create group edit page. Can be used
+   * when showing the list of child groups for a selected group (e.g. projects for
+   * a consultancy, or centres for an organisation). If so, then the link is only
+   * shown if you are admin of that group.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param array $options Options array with the following parameters:
+   *   * caption - string caption to ouput.
+   *   * class - CSS class to add to the link.
+   *   * parent_parameter - name of the parameter in the query string that holds the parent
+   *     group ID. If specified, then you must be an admin of that group for the link
+   *     to be output.
+   *   * path - string, path to link to.
+   * @param $path
+   */
+  public static function create_group_link($auth, $args, $tabalias, $options, $path) {
+    if (empty($options['path']) || empty($options['caption']))
+      return 'group_hierarchies.create_group_link control requires a path and caption option.';
+    // Are we linking to a parent group to check permissions to do this?
+    if (!empty($options['parent_parameter'])) {
+      if (empty($_GET[$options['parent_parameter']]) || !is_numeric($_GET[$options['parent_parameter']]))
+        return '';
+      $data = data_entry_helper::get_population_data(array(
+        'table' => 'groups_user',
+        'extraParams' => $auth['read'] + array(
+            'user_id' => hostsite_get_user_field('indicia_user_id'),
+            'group_id' => $_GET[$options['parent_parameter']]
+          )
+      ));
+      if (empty($data) || $data[0]['administrator']!=='t') {
+        return '';
+      }
+    }
+    $rootFolder = data_entry_helper::getRootFolder(true);
+    $path = str_replace('{rootFolder}', $rootFolder, $options['path']);
+    if (!empty($options['parent_parameter'])) {
+      $sep = strpos($rootFolder, '?')===FALSE ? '?' : '&';
+      $path .= $sep . 'from_group_id=' . $_GET[$options['parent_parameter']];
+    }
+    $class = empty($options['class']) ? '' : " class=\"$options[class]\"";
+    $r = "<a href=\"$path\"$class>$options[caption]</a>";
+    return $r;
+  }
+
+  public static function set_page_title($auth, $args, $tabalias, $options, $path) {
+    if (empty($options['parent_parameter']) || empty($_GET[$options['parent_parameter']]) ||
+      !is_numeric($_GET[$options['parent_parameter']])
+    ) {
+      return 'group_hierarchies.set_page_title control requires a numeric parent_parameter option ' .
+      'which matches to a URL parameter of the same name.';
+    }
+    if (arg(0) == 'node' && is_numeric(arg(1))) {
+      $nid = arg(1);
+      $data = data_entry_helper::get_population_data(array(
+        'table' => 'groups_user',
+        'extraParams' => $auth['read'] + array(
+            'user_id' => hostsite_get_user_field('indicia_user_id'),
+            'group_id' => $_GET[$options['parent_parameter']],
+            'view' => 'detail'
+          )
+      ));
+      if (count($data)) {
+        $title = hostsite_get_page_title($nid);
+        $title = str_replace('{group}', $data[0]['group_title'], $title);
+        hostsite_set_page_title($title);
+      }
+      return '';
+    }
+  }
+
+}
