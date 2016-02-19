@@ -158,7 +158,8 @@ function iform_map_get_map_parameters() {
     array(
       'name' => 'indicia_wms_layers',
       'caption' => 'WMS layers from GeoServer',
-      'description' => 'List of WMS feature type names, one per line, which are installed on the GeoServer and are to be added to the map as overlays.',
+      'description' => 'List of WMS feature type names, one per line, which are installed on the GeoServer and are to be added to the map as overlays. ' .
+         'Optionally, prefix the feature type name with a title to appear in the layer switcher using the form title = feature-name.',
       'type' => 'textarea',
       'group'=>'Other Map Settings',
       'required'=>false
@@ -287,7 +288,21 @@ function iform_map_get_map_options($args, $readAuth) {
   }
   // And any indicia Wms layers from the GeoServer
   if (!empty($args['indicia_wms_layers'])) {
-    $options['indiciaWMSLayers'] = explode("\n", $args['indicia_wms_layers']);
+    $wmsLayers = explode("\n", $args['indicia_wms_layers']);
+    // Each layer may either just be a feature name or, optionally, may be
+    // prefixed by a title in the form title = feature.
+    foreach ($wmsLayers as $layer) {
+      $separatorPos = strpos($layer, '=');
+      if ($separatorPos !== FALSE) {
+        // A title is present.
+        $title = trim(substr($layer, 0, $separatorPos - 1));
+        $feature = trim(substr($layer, $separatorPos + 1)); 
+        $options['indiciaWMSLayers'][$title] = $feature;
+      }
+      else {
+        $options['indiciaWMSLayers'][] = $layer;
+      }      
+    }
   }
   // set up standard control list if supplied
   if (array_key_exists('standard_controls', $args) && $args['standard_controls']) {
