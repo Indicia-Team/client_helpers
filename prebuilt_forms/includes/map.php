@@ -295,7 +295,7 @@ function iform_map_get_map_options($args, $readAuth) {
       $separatorPos = strpos($layer, '=');
       if ($separatorPos !== FALSE) {
         // A title is present.
-        $title = trim(substr($layer, 0, $separatorPos - 1));
+        $title = trim(substr($layer, 0, $separatorPos));
         $feature = trim(substr($layer, $separatorPos + 1)); 
         $options['indiciaWMSLayers'][$title] = $feature;
       }
