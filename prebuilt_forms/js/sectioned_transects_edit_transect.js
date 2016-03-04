@@ -251,7 +251,7 @@ deleteSection = function(section) {
   data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
   data[indiciaData.numSectionsAttrName] = ''+(numSections-1);
   // reload the form when all ajax done.
-  $('.remove-section').ajaxStop(function(event){    
+  $( document ).ajaxStop(function(event){    
     window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
   });
   $.post(indiciaData.ajaxFormPostUrl,
@@ -287,13 +287,54 @@ insertSection = function(section) {
   data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
   data[indiciaData.numSectionsAttrName] = ''+(numSections+1);
   // reload the form when all ajax done.
-  $('.insert-section').ajaxStop(function(event){    
-    window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
+  $( document ).ajaxStop(function(event){
+	  setTimeout(function(){
+		    window.location.reload(true);
+		},100); 
+//    window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
   });
   $.post(indiciaData.ajaxFormPostUrl,
           data,
           function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
           'json');
+};
+
+var numberOfSamples = 0;
+var numberOfSections = 0;
+var numberOfRecordsCompleted = 0;
+
+//insert a section
+reloadSection = function(section) {
+  var data;
+  // section comes in like "S1"
+  jQuery('.reload-section').addClass('waiting-button');
+  
+  numberOfSections = parseInt(jQuery('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10) - (parseInt(section.substr(1))+1);
+
+  var dialog = jQuery('<p>Please wait whilst the section is deleted (including the observations recorded against it), and the other sections are renumbered.<br/>' +
+		  			'After the records are updated, the page should reload.<br/>' +
+		  			'<span id="recordCounter">0 of '+(numberOfSections+1)+'</span></p>').dialog({ title: "Outside Site", buttons: { "OK": function() { dialog.dialog('close'); }}});
+		  // plus 1 is for delete
+	if(typeof indiciaData.sections[section] !== "undefined"){
+		jQuery.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
+	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+	        function(sdata) {
+				numberOfSamples = sdata.length;
+				jQuery('#recordCounter').html(numberOfRecordsCompleted+' of '+(numberOfSamples+numberOfSections+1));
+	        	if (typeof sdata.error==="undefined") {
+	        		jQuery.each(sdata, function(idx, sample) {
+	        			numberOfRecordsCompleted++;
+	    				jQuery('#recordCounter').html(numberOfRecordsCompleted+' of '+(numberOfSamples+numberOfSections+1));
+	        			// Would post the delete here
+	        		});
+	        	}
+			});
+	}
+
+  window.onbeforeunload = null;
+  setTimeout(function(){
+		    window.location.reload(true);
+		},10000); 
 };
 
 $(document).ready(function() {
@@ -355,6 +396,10 @@ $(document).ready(function() {
         var current = $('#section-select-route li.selected').html();
         if(confirm(indiciaData.sectionInsertConfirm + ' ' + current + '?')) insertSection(current);
       });
+      $('.reload-section').click(function(evt) {
+          var current = $('#section-select-route li.selected').html();
+          reloadSection(current);
+        });
       $('.erase-route').click(function(evt) {
         var current = $('#section-select-route li.selected').html(),
             oldSection = [];
@@ -626,7 +671,5 @@ $(document).ready(function() {
           '<td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
-
 });
-
 }(jQuery));

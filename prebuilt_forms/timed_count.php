@@ -623,8 +623,8 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     $systems=array();
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) $systems[$system] = lang::get($system); 
-    $r .= "<label for=\"imp-sref\">".lang::get('Grid Reference').":</label> <input type=\"text\" id=\"imp-sref\" name=\"sample:entered_sref\" value=\"".data_entry_helper::$entity_to_load['sample:entered_sref']."\" readonly=\"readonly\" class=\"required\" />";
-    $r .= "<input type=\"hidden\" id=\"imp-geom\" name=\"sample:geom\" value=\"".data_entry_helper::$entity_to_load['sample:geom']."\" />";
+    $r .= "<label for=\"imp-sref\">".lang::get('Grid Reference').":</label> <input type=\"text\" id=\"imp-sref\" name=\"sample:entered_sref\" value=\"".(isset(data_entry_helper::$entity_to_load['sample:entered_sref']) ? data_entry_helper::$entity_to_load['sample:entered_sref'] : '')."\" readonly=\"readonly\" class=\"required\" />";
+    $r .= "<input type=\"hidden\" id=\"imp-geom\" name=\"sample:geom\" value=\"".(isset(data_entry_helper::$entity_to_load['sample:geom']) ? data_entry_helper::$entity_to_load['sample:geom'] : '')."\" />";
     if (count($systems) == 1) {
       // Hidden field for the system
       $keys = array_keys($systems);
@@ -633,7 +633,8 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
       $r .= self::sref_system_select(array('fieldname'=>'sample:entered_sref_system'));
     }
     
-    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
+    if(isset($args['georefPreferredArea']) && $args['georefPreferredArea']!='')
+	    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
     $r .= data_entry_helper::map_panel($options, $olOptions);
 
     $r .= data_entry_helper::textarea(array('label'=>'Comment', 'fieldname'=>'sample:comment', 'class'=>'wide'));
@@ -713,13 +714,15 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
       ));
       // subssamples ordered by id desc, so reorder by date asc.
       usort($subSamples, "iform_timed_count_subsample_cmp");
+//      var_dump($subSamples);
+//      throw(1);
       for($i = 0; $i < count($subSamples); $i++){
         data_entry_helper::$entity_to_load['C'.($i+1).':sample:id'] = $subSamples[$i]['sample_id'];
         data_entry_helper::$entity_to_load['C'.($i+1).':sample:date'] = $subSamples[$i]['date']; // this is in correct format
         foreach($subSamples[$i] as $field => $value){
           if(preg_match('/^attr_sample_/',  $field)){
             $parts=explode('_',$field);
-            if($subSamples[$i]['attr_id_sample_'.$parts[2]] != null)
+            if(isset($subSamples[$i]['attr_id_sample_'.$parts[2]]) && $subSamples[$i]['attr_id_sample_'.$parts[2]] != null)
               data_entry_helper::$entity_to_load['C'.($i+1).':smpAttr:'+$parts[2]+':'+$subSamples[$i]['attr_id_sample_'.$parts[2]]] = $value;
           }
         }

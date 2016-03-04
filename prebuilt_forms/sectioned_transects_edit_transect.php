@@ -639,6 +639,7 @@ $('#delete-transect').click(deleteSurvey);
       $options['toolbarSuffix'] .= '<input type="button" value="'.lang::get('Erase Route').'" class="erase-route form-button right" title="'.lang::get('If the Draw Line control is active, this will erase each drawn point one at a time. If not active, then this will erase the whole highlighted route. This keeps the Section, allowing you to redraw the route for it.').'">';
       if($settings['canEditSections'] && count($settings['sections'])<$args['maxSectionCount'] && $settings['numSectionsAttr'] != "") // do not allow insertion of section if it exceeds max number, or if the is no section number attribute
         $options['toolbarSuffix'] .= '<input type="button" value="'.lang::get('Insert Section').'" class="insert-section form-button right" title="'.lang::get('This inserts an extra section after the currently selected section. All subsequent sections are renumbered, increasing by one. All associated occurrences are kept with the moved sections. This can be used to facilitate the splitting of this section.').'">';
+      $options['toolbarSuffix'] .= '<input type="button" value="'.lang::get('Reload').'" class="reload-section form-button right" >';
       // also let the user click on a feature to select it. The highlighter just makes it easier to select one.
       // these controls are not present in read-only mode: all you can do is look at the map.
       $options['standardControls'][] = 'selectFeature';
@@ -703,7 +704,8 @@ $('#delete-transect').click(deleteSurvey);
     		'id' => 'section-location-system-select');
     // Output the hidden system control
     $r .= '<input type="hidden" id="section-location-system" name="location:centroid_sref_system" value="" />';
-    $r .= data_entry_helper::sref_system_select($options);
+    if(count($list)>1)
+    	$r .= data_entry_helper::sref_system_select($options);
     // force a blank centroid, so that the Warehouse will recalculate it from the boundary
     //$r .= "<input type=\"hidden\" name=\"location:centroid_geom\" value=\"\" />\n";   
     $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '));
@@ -765,8 +767,8 @@ $('#delete-transect').click(deleteSurvey);
     if (isset($cmsUserAttr['default']) && !empty($cmsUserAttr['default'])) {
       foreach($cmsUserAttr['default'] as $value) {
         $rows .= '<tr><td id="user-'.$value['default'].'"><input type="hidden" name="'.$value['fieldname'].'" '.
-            'value="'.$value['default'].'"/>'.$users[$value['default']].
-            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>';
+            'value="'.$value['default'].'"/>'.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).
+            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close" title="Remove user '.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).'"></span></div></td></tr>';
         }
     }
     if (empty($rows))
@@ -824,8 +826,8 @@ $('#delete-transect').click(deleteSurvey);
       foreach($branchCmsUserAttr['default'] as $value) {
         if($settings['canAllocBranch'])
           $rows .= '<tr><td id="branch-coord-'.$value['default'].'"><input type="hidden" name="'.$value['fieldname'].'" '.
-            'value="'.$value['default'].'"/>'.$users[$value['default']].
-            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>';
+            'value="'.$value['default'].'"/>'.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).
+            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close" title="Remove user '.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).'"></span></div></td></tr>';
         else
           $rows .= '<tr><td>'.$users[$value['default']].'</td><td></td></tr>';
       }

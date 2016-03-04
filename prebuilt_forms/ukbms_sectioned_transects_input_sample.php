@@ -54,6 +54,11 @@ function ukbms_stis_sectionSort($a, $b)
  */
 class iform_ukbms_sectioned_transects_input_sample {
 
+	private static $auth;
+	private static $userId;
+	private static $sampleID;
+	private static $locationID;
+	
   /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
@@ -75,7 +80,7 @@ class iform_ukbms_sectioned_transects_input_sample {
    */
   public static function get_parameters() {
     return array_merge(
-//      iform_map_get_map_parameters(),
+      iform_map_get_map_parameters(),
       array(
         array(
           'name'=>'survey_id',
@@ -101,8 +106,8 @@ class iform_ukbms_sectioned_transects_input_sample {
         ),
         array(
           'name'=>'transect_type_term',
-          'caption'=>'Transect type term',
-          'description'=>'Select the term used for transect location types.',
+          'caption'=>'Transect Location type term',
+          'description'=>'Select the location type for the Transects.',
           'type' => 'select',
           'table'=>'termlists_term',
           'captionField'=>'term',
@@ -113,8 +118,8 @@ class iform_ukbms_sectioned_transects_input_sample {
         ),
         array(
           'name'=>'section_type_term',
-          'caption'=>'Section type term',
-          'description'=>'Select the term used for section location types.',
+          'caption'=>'Section Location type term',
+          'description'=>'Select the location type for the Transect Sections.',
           'type' => 'select',
           'table'=>'termlists_term',
           'captionField'=>'term',
@@ -124,6 +129,30 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Transects Editor Settings'
         ), 
         array(
+          'name'=>'transect_sample_method_term',
+          'caption'=>'Transect Sample method term',
+          'description'=>'Select the sample method used for samples registered on the Transects.',
+          'type' => 'select',
+          'table'=>'termlists_term',
+          'captionField'=>'term',
+          'valueField'=>'term',
+          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'required' => true,
+          'group'=>'Transects Editor Settings'
+        ),
+        array(
+          'name'=>'section_sample_method_term',
+          'caption'=>'Section Sample method term',
+          'description'=>'Select the sample method used for samples registered on the Transect Sections.',
+          'type' => 'select',
+          'table'=>'termlists_term',
+          'captionField'=>'term',
+          'valueField'=>'term',
+          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'required' => true,            
+          'group'=>'Transects Editor Settings'
+        ), 
+      	array(
           'name'=>'species_tab_1',
           'caption'=>'Species Tab 1 Title',
           'description'=>'The title to be used on the species checklist for the main tab.',
@@ -139,6 +168,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'taxon_list',
           'captionField'=>'title',
           'valueField'=>'id',
+          'required' => true,
           'siteSpecific'=>true,
           'group'=>'Species'
         ),
@@ -211,7 +241,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'type'=>'select',
           'options' => array(
             'full' => 'Full species list',
-            'common' => 'Common species list',
+            'common' => 'Common species list', // only available on tab 1
             'here' => 'Previous species recorded at this location',
             'mine' => 'Previous species recorded by user'
             // no filled entry, will always do this, plue "here" as a minimum
@@ -221,6 +251,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species'
         ),
         array(
+          'name' => 'disable_full_1',
+          'caption' => 'Disable Full List',
+          'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the first tab.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species'
+        ),
+      	array(
           'name'=>'species_tab_2',
           'caption'=>'Species Tab 2 Title',
           'description'=>'The title to be used on the species checklist for the second tab.',
@@ -231,7 +270,7 @@ class iform_ukbms_sectioned_transects_input_sample {
         array(
           'name' => 'start_list_2',
           'caption' => 'Start with species list',
-          'description' => 'Preselect which species list to polulate the second species grid with: if not Full a species control will be provided to allow the addition of extra taxa to the list.',
+          'description' => 'Preselect which species list to populate the second species grid with: if not Full a species control will be provided to allow the addition of extra taxa to the list.',
           'type'=>'select',
           'options' => array(
             'full' => 'Full species list',
@@ -243,6 +282,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species 2'
         ),
         array(
+          'name' => 'disable_full_2',
+          'caption' => 'Disable Full List',
+          'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the second tab.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species 2'
+        ),
+      	array(
           'name'=>'second_taxon_list_id',
           'caption'=>'Second Tab Species List',
           'description'=>'The species checklist used to drive the autocomplete in the optional second grid. If not provided, the second grid and its tab are omitted.',
@@ -314,6 +362,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species 3'
         ),
         array(
+          'name' => 'disable_full_3',
+          'caption' => 'Disable Full List',
+          'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the third tab.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species 3'
+        ),
+      	array(
           'name'=>'third_taxon_list_id',
           'caption'=>'Third Tab Species List',
           'description'=>'The species checklist used to drive the autocomplete in the optional third grid. If not provided, the third grid and its tab are omitted.',
@@ -385,6 +442,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Species 4'
         ),
         array(
+          'name' => 'disable_full_4',
+          'caption' => 'Disable Full List',
+          'description' => 'Some lists (e.g. the full UK Species List) may be too big to allow the grid to populate the full list. Select this to prevent the full list being displayed in the fourth tab.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species 4'
+        ),
+      	array(
           'name'=>'fourth_taxon_list_id',
           'caption'=>'Fourth Tab Species List',
           'description'=>'The species checklist used to drive the autocomplete in the optional fourth grid. If not provided, the fourth grid and its tab are omitted.',
@@ -557,81 +623,130 @@ class iform_ukbms_sectioned_transects_input_sample {
    * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
-    if (isset($response['error']))
-      data_entry_helper::dump_errors($response);
-    if (isset($_REQUEST['page']) && $_REQUEST['page']==='mainSample' && !isset(data_entry_helper::$validation_errors) && !isset($response['error'])) {
-      // we have just saved the sample page, so move on to the occurrences list,
-      return self::get_occurrences_form($args, $nid, $response);
-    } else {
-      return self::get_sample_form($args, $nid, $response);
-    }
-  }
-
-  public static function get_sample_form($args, $nid, $response) {
-    global $user;
-    if (!hostsite_module_exists('iform_ajaxproxy'))
-      return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     iform_load_helpers(array('map_helper'));
-    $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    $sampleId = isset($_GET['sample_id']) ? $_GET['sample_id'] : null;
-    if ($sampleId) {
-      data_entry_helper::load_existing_record($auth['read'], 'sample', $sampleId);
-      $locationId = data_entry_helper::$entity_to_load['sample:location_id'];
-    } else {
-      $locationId = isset($_GET['site']) ? $_GET['site'] : null;
-      // location ID also might be in the $_POST data after a validation save of a new record
-      if (!$locationId && isset($_POST['sample:location_id']))
-        $locationId = $_POST['sample:location_id'];
+
+  	$r = (isset($response['error']) ? data_entry_helper::dump_errors($response) : '');
+  	if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('iform_ajaxproxy')) {
+    	return $r.'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
+  	}
+    if (!hostsite_module_exists('easy_login')) {
+    	return $r.'This form must be used in Drupal with the Easy Login module enabled.';
     }
+    self::$userId = hostsite_get_user_field('indicia_user_id');
+    if (empty(self::$userId)) {
+		// return '<p>Easy Login active but could not identify user</p>'; // something is wrong
+		// TODO REPLACE
+    	self::$userId = 1;
+		$r .= '<p>Easy Login active but could not identify user</p>';
+    }
+    
+    self::$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
+    
+    self::$sampleID = isset($_GET['sample_id']) ? $_GET['sample_id'] : null;
+    // TODO if error, the entity to load should already be filled in.
+    if (self::$sampleID) {
+    	data_entry_helper::load_existing_record(self::$auth['read'], 'sample', self::$sampleID);
+    	self::$locationID = data_entry_helper::$entity_to_load['sample:location_id'];
+    } else {
+    	self::$locationID = isset($_GET['site']) ? $_GET['site'] : null;
+    	// location ID also might be in the $_POST data after a validation save of a new record
+    	if (!self::$locationID && isset($_POST['sample:location_id']))
+    		self::$locationID = $_POST['sample:location_id'];
+    }
+
     $url = explode('?', $args['my_walks_page'], 2);
     $params = NULL;
     $fragment = NULL;
     // fragment is always at the end.
     if(count($url)>1){
-      $params = explode('#', $url[1], 2);
-      if(count($params)>1) $fragment=$params[1];
-      $params=$params[0];
+    	$params = explode('#', $url[1], 2);
+    	if(count($params)>1) $fragment=$params[1];
+    	$params=$params[0];
     } else {
-      $url = explode('#', $url[0], 2);
-      if (count($url)>1) $fragment=$url[1];
+    	$url = explode('#', $url[0], 2);
+    	if (count($url)>1) $fragment=$url[1];
     }
     $args['my_walks_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
-    $r = '<form method="post" id="sample">';
-    $r .= $auth['write'];
+    
+    if (((isset($_REQUEST['page']) && $_REQUEST['page']==='mainSample') || isset($_REQUEST['occurrences'])) && !isset(data_entry_helper::$validation_errors) && !isset($response['error'])) {
+      // we have just saved the sample page, so move on to the occurrences list,
+      return $r.self::get_occurrences_form($args, $nid, $response);
+    } else {
+      return $r.self::get_sample_form($args, $nid, $response);
+    }
+  }
+
+  public static function get_sample_form($args, $nid, $response) {
+    global $user;
+    
+    data_entry_helper::add_resource('autocomplete');
+
+    $formOptions = array(
+    		'userID' => self::$userId,
+    		'surveyID' => $args['survey_id']
+    	);
+
+    $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));
+    if (count($sampleMethods) != 1) {
+    	return 'Did not recognise sample method '.$args['transect_sample_method_term'];
+  	}
+    $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
+    if (count($locationType) != 1) {
+    	return 'Did not recognise location type '.$args['transect_type_term'];
+  	}
+    
+    $attributes = data_entry_helper::getAttributes(array(
+    		'id' => self::$sampleID,
+    		'valuetable'=>'sample_attribute_value',
+    		'attrtable'=>'sample_attribute',
+    		'key'=>'sample_id',
+    		'fieldprefix'=>'smpAttr',
+    		'extraParams'=>self::$auth['read'],
+    		'survey_id'=>$args['survey_id'],
+    		'sample_method_id'=>$sampleMethods[0]['id']
+    ));
+    
+    if(isset($args['include_map_samples_form']) && $args['include_map_samples_form'])
+    	$r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: '.(98-(isset($args['percent_width']) ? $args['percent_width'] : 50)).'%">';
+    
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call, so it can get location details.
-    $r .= '<input type="hidden" name="page" value="mainSample"/>';
-    $r .= '<input type="hidden" name="read_nonce" value="'.$auth['read']['nonce'].'"/>';
-    $r .= '<input type="hidden" name="read_auth_token" value="'.$auth['read']['auth_token'].'"/>';
-    $r .= '<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>';
-    if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
-      $r .= '<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>';
-    }
-    $r .= '<input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'"/>';
-
-    if(isset($args['include_map_samples_form']) && $args['include_map_samples_form'])
-      $r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: '.(98-(isset($args['percent_width']) ? $args['percent_width'] : 50)).'%">';
-
-    if ($locationId) {
+    $r = '<form method="post" id="sample">' .
+    		self::$auth['write'] .
+    		'<input type="hidden" name="page" value="mainSample"/>' .
+    		'<input type="hidden" name="read_nonce" value="'.self::$auth['read']['nonce'].'"/>' .
+    		'<input type="hidden" name="read_auth_token" value="'.self::$auth['read']['auth_token'].'"/>' .
+    		'<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' .
+    		'<input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'"/>' .
+			(isset(data_entry_helper::$entity_to_load['sample:id']) ?
+				'<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' : '') .
+			'<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
+    		get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), self::$auth['read']);
+    
+    if (self::$locationID) {
       $site = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => $auth['read'] + array('view'=>'detail','id'=>$locationId,'deleted'=>'f')
+        'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>self::$locationID,'deleted'=>'f')
       ));
+      // TODO check if site is valid
       $site = $site[0];
-      $r .= '<input type="hidden" name="sample:location_id" value="'.$locationId.'"/>';
-      $r .= '<input type="hidden" name="sample:entered_sref" value="'.$site['centroid_sref'].'"/>';
       if(in_array($site['centroid_sref_system'], array('osgb','osie')))
         $site['centroid_sref_system'] = strtoupper($site['centroid_sref_system']);
-      $r .= '<input type="hidden" name="sample:entered_sref_system" value="'.$site['centroid_sref_system'].'"/>';
+      $r .= '<input type="hidden" name="sample:location_id" value="'.self::$locationID.'"/>' .
+			'<input type="hidden" name="sample:entered_sref" value="'.$site['centroid_sref'].'"/>' .
+			'<input type="hidden" name="sample:entered_sref_system" value="'.$site['centroid_sref_system'].'"/>';
     }
-    if ($locationId && (isset(data_entry_helper::$entity_to_load['sample:id']) || isset($_GET['site']))) {
-      // for reload of existing or the the site is specified in the URL, don't let the user switch the transect as that would mess everything up.
+    
+    // location control
+    if (self::$locationID && (isset(data_entry_helper::$entity_to_load['sample:id']) || isset($_GET['site']))) {
+      // for reload of existing data or if the site is specified in the URL, don't let the user change the transect as that would mess everything up.
       $r .= '<label>'.lang::get('Transect').':</label> <span class="value-label">'.$site['name'].'</span><br/>';
     } else {
       // Output only the locations for this website and transect type. Note we load both transects and sections, just so that
       // we always use the same warehouse call and therefore it uses the cache.
-      $locationType = helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
-      $siteParams = $auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
+      // Allocation of locations to user is done by the CMS User Attribute on the Location record.
+      // TODO convert this to use the Indicia user ID.
+      $siteParams = self::$auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
       if ((!isset($args['user_locations_filter']) || $args['user_locations_filter']) &&
           (!isset($args['managerPermission']) || !hostsite_user_has_permission($args['managerPermission']))) {
         $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>$user->uid);
@@ -661,115 +776,96 @@ class iform_ukbms_sectioned_transects_input_sample {
             'nocache' => true
         ));
         foreach ($availableSites as $site) {
-          $sitesLookup[$site['location_id']]=$site['name'];
+          $sitesLookup[$site['location_id']]=$site['name']; // note no duplicates if assigned as user and branch
           $sitesJs[$site['location_id']] = $site;
         }
         natcasesort($sitesLookup); // merge into original list in alphabetic order.
       }
-      data_entry_helper::$javascript .= "indiciaData.sites = ".json_encode($sitesJs).";\n";
+      $formOptions['sites'] = $sitesJs;
       $options = array(
         'label' => lang::get('Select Transect'),
         'validation' => array('required'),
         'blankText'=>lang::get('please select'),
         'lookupValues' => $sitesLookup,
       );
-      if ($locationId)
-        $options['default'] = $locationId;
+      if (self::$locationID)
+        $options['default'] = self::$locationID;
       $r .= data_entry_helper::location_select($options);
     }
-    if (!$locationId) {
-      $r .= '<input type="hidden" name="sample:entered_sref" value="" id="entered_sref"/>';
-      $r .= '<input type="hidden" name="sample:entered_sref_system" value="" id="entered_sref_system"/>';
+    if (!self::$locationID) {
+      $r .= '<input type="hidden" name="sample:entered_sref" value="" id="entered_sref"/>' .
+			'<input type="hidden" name="sample:entered_sref_system" value="" id="entered_sref_system"/>';
       // sref values for the sample will be populated automatically when the submission is built.
     }
-    $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect')); // hardcoded??
-    $attributes = data_entry_helper::getAttributes(array(
-      'id' => $sampleId,
-      'valuetable'=>'sample_attribute_value',
-      'attrtable'=>'sample_attribute',
-      'key'=>'sample_id',
-      'fieldprefix'=>'smpAttr',
-      'extraParams'=>$auth['read'],
-      'survey_id'=>$args['survey_id'],
-      'sample_method_id'=>$sampleMethods[0]['id']
-    ));
-    $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
-    if(isset($_GET['date'])){
-      $r .= '<input type="hidden" name="sample:date" value="'.$_GET['date'].'"/>';
-      $r .= '<label>'.lang::get('Date').':</label> <span class="value-label">'.$_GET['date'].'</span><br/>';
-    } else {
-      if (isset(data_entry_helper::$entity_to_load['sample:date']) && preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
-        // Date has 4 digit year first (ISO style) - convert date to expected output format
-        // @todo The date format should be a global configurable option. It should also be applied to reloading of custom date attributes.
-        $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
-        data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
-      }
-      $r .= data_entry_helper::date_picker(array(
-        'label' => lang::get('Date'),
-        'fieldname' => 'sample:date',
-      ));
-    }
-    // are there any option overrides for the custom attributes?
-    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) 
-      $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
-    else 
-      $blockOptions=array();
-    $r .= get_attribute_html($attributes, $args, array('extraParams'=>$auth['read']), null, $blockOptions);
-    $r .= data_entry_helper::textarea(array(
-      'fieldname'=>'sample:comment',
-      'label'=>lang::get('Notes'),
-      'helpText'=>"Use this space to input comments about this week's walk."
-    ));
-    $r .= '<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />';
-    $r .= '<input type="submit" value="'.lang::get('Next').'" />';
-    $r .= '<a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Cancel').'</a>';
-    if (isset(data_entry_helper::$entity_to_load['sample:id']))
-      $r .= '<button id="delete-button" type="button" class="ui-state-default ui-corner-all" />'.lang::get('Delete').'</button>';
 
+    // Date entry field.
+    if (isset(data_entry_helper::$entity_to_load['sample:date']) && preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
+		// Date has 4 digit year first (ISO style) - convert date to expected output format
+		// @todo The date format should be a global configurable option. It should also be applied to reloading of custom date attributes.
+		$d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
+		data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
+	}
+    if (!isset(data_entry_helper::$entity_to_load['sample:date']) && isset($_GET['date'])){
+		$r .= '<input type="hidden" name="sample:date" value="'.$_GET['date'].'"/>' .
+				'<label>'.lang::get('Date').':</label> <span class="value-label">'.$_GET['date'].'</span><br/>';
+    } else { 
+		$r .= data_entry_helper::date_picker(array(
+				'label' => lang::get('Date'),
+				'fieldname' => 'sample:date',
+			  ));
+	}
+
+	// remainder of form : sample attributes, comment, and buttons.
+    $r .= get_attribute_html($attributes, $args, array('extraParams'=>self::$auth['read']), null,
+    			(isset($args['custom_attribute_options']) && $args['custom_attribute_options'] ?
+					get_attr_options_array_with_user_data($args['custom_attribute_options']) : array())) .
+    		data_entry_helper::textarea(array(
+      			'fieldname'=>'sample:comment',
+      			'label'=>lang::get('Notes'),
+      			'helpText'=>"Use this space to input comments about this week's walk."
+    			)) .
+    		'<input type="submit" value="'.lang::get('Next').'" />' .
+    		'<a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Cancel').'</a>' .
+    		(isset(data_entry_helper::$entity_to_load['sample:id']) ?
+      			'<button id="delete-button" type="button" />'.lang::get('Delete').'</button>' : '') .
+    		'</form>';
+    
+    // Include side by side map if requested.
     if(isset($args['include_map_samples_form']) && $args['include_map_samples_form']){
-      $r .= "</div>" .
-            '<div class="right" style="width: '.(isset($args['percent_width']) ? $args['percent_width'] : 50).'%">';
-      // no place search: [map]
-      $options = iform_map_get_map_options($args, $auth['read']);
+      // no place search
+      $options = iform_map_get_map_options($args, self::$auth['read']);
+      $olOptions = iform_map_get_ol_options($args);
       if (!empty(data_entry_helper::$entity_to_load['sample:wkt'])) {
         $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['sample:wkt'];
       }
-      $olOptions = iform_map_get_ol_options($args);
-      if (!isset($options['standardControls']))
-        $options['standardControls']=array('layerSwitcher','panZoomBar');
-      $r .= map_helper::map_panel($options, $olOptions);
-      $r .= "</div>"; // right
+      $r .= '</div>' .
+            '<div class="right" style="width: '.(isset($args['percent_width']) ? $args['percent_width'] : 50).'%">' .
+      		map_helper::map_panel($options, $olOptions) .
+      		'</div>';
     }
 
-    $r .= '</form>';
-    // Recorder Name - assume Easy Login uid
-    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
-      $userId = hostsite_get_user_field('indicia_user_id');
- // For non easy login test only     $userId = 1;
-      foreach($attributes as $attrID => $attr){
-        if(strcasecmp('Recorder Name', $attr["untranslatedCaption"]) == 0 && !empty($userId)){
-          // determining which you have used is difficult from a services based autocomplete, esp when the created_by_id is not available on the data.
-          data_entry_helper::add_resource('autocomplete');
-          data_entry_helper::$javascript .= "bindRecorderNameAutocomplete(".$attrID.", '".$userId."', '".data_entry_helper::$base_url."', '".$args['survey_id']."', '".$auth['read']['auth_token']."', '".$auth['read']['nonce']."');\n";
-        }
+    // Find Recorder Name attribuute for use with autocomplete.
+    foreach($attributes as $attrID => $attr){
+      if(strcasecmp('Recorder Name', $attr["untranslatedCaption"]) == 0){
+        $formOptions['recorderNameAttrID'] = $attrID; // will be undefined if not present.
       }
     }
+
+    // Extra form to delete sample.
+    $formOptions['deleteConfirm'] = lang::get('Are you sure you want to delete this walk?');
     if (isset(data_entry_helper::$entity_to_load['sample:id'])){
-      // allow deletes if sample id is present.
-      data_entry_helper::$javascript .= "jQuery('#delete-button').click(function(){
-  if(confirm(\"".lang::get('Are you sure you want to delete this walk?')."\")){
-    jQuery('#delete-form').submit();
-  } // else do nothing.
-});\n";
       // note we only require bare minimum in order to flag a sample as deleted.
-      $r .= '<form method="post" id="delete-form" style="display: none;">';
-      $r .= $auth['write'];
-      $r .= '<input type="hidden" name="page" value="delete"/>';
-      $r .= '<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>';
-      $r .= '<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>';
-      $r .= '<input type="hidden" name="sample:deleted" value="t"/>';
-      $r .= '</form>';
+      $r .= '<form method="post" id="delete-form" style="display: none;">' .
+      			self::$auth['write'] .
+      			'<input type="hidden" name="page" value="delete"/>' .
+      			'<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' .
+      			'<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' .
+      			'<input type="hidden" name="sample:deleted" value="t"/>' .
+      			'</form>';
     }
+
+    data_entry_helper::$javascript .= "\nsetUpSamplesForm(".json_encode((object)$formOptions).");\n\n";
+    
     data_entry_helper::enable_validation('sample');
     return $r;
   }
@@ -777,34 +873,45 @@ class iform_ukbms_sectioned_transects_input_sample {
   public static function get_occurrences_form($args, $nid, $response) {
     global $user;
     global $indicia_templates;
+
+    $formOptions = array(
+    				'userID' => self::$userId,
+    				'surveyID' => $args['survey_id'],
+    				'autoCompletes' => array(),
+    				'speciesList' => array(),
+    				'speciesListForce' => array(),
+    				'speciesListFilterField' => array(),
+    				'speciesListFilterValues' => array(),
+    				'duplicateTaxonMessage' => lang::get('LANG_Duplicate_Taxon'),
+    				'existingOccurrences' => array(),
+    				'occurrence_attribute' => array(),
+    				'occurrence_attribute_ctrl' => array(),
+					'maxTabs' => 4,
+    				'commonTaxonMeaningIDs' => array(),
+					'allTaxonMeaningIDsAtTransect' => array(),
+					'existingTaxonMeaningIDs' => array(),
+    				'myTaxonMeaningIDs' => array()
+    );
+    
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
     $oldCtrlWrapTemplate = $indicia_templates['controlWrap'];
     $indicia_templates['controlWrap'] = '{control}';
-  	if (!hostsite_module_exists('iform_ajaxproxy'))
-      return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
+
   	drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
-    $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
+    data_entry_helper::add_resource('jquery_ui');
+    data_entry_helper::add_resource('json');
+    data_entry_helper::add_resource('autocomplete');
+    
     // did the parent sample previously exist? Default is no.
     $existing=false;
-    $url = explode('?', $args['my_walks_page'], 2);
-    $params = NULL;
-    $fragment = NULL;
-    // fragment is always at the end.
-    if(count($url)>1){
-      $params = explode('#', $url[1], 2);
-      if(count($params)>1) $fragment=$params[1];
-      $params=$params[0];
-    } else {
-      $url = explode('#', $url[0], 2);
-      if (count($url)>1) $fragment=$url[1];
-    }
-    $args['my_walks_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
+    
+    // TODO move this to main function.
     if (isset($_POST['sample:id'])) {
       // have just posted an edit to the existing parent sample, so can use it to get the parent location id.
       $parentSampleId = $_POST['sample:id'];
       $existing=true;
-      data_entry_helper::load_existing_record($auth['read'], 'sample', $parentSampleId);
+      data_entry_helper::load_existing_record(self::$auth['read'], 'sample', $parentSampleId);
     } else {
       if (isset($response['outer_id']))
         // have just posted a new parent sample, so can use it to get the parent location id.
@@ -814,36 +921,25 @@ class iform_ukbms_sectioned_transects_input_sample {
         $existing=true;
       }
     }
+
+    // TODO this should already be in the entity to load
     $sample = data_entry_helper::get_population_data(array(
       'table' => 'sample',
-      'extraParams' => $auth['read'] + array('view'=>'detail','id'=>$parentSampleId,'deleted'=>'f')
+      'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>$parentSampleId,'deleted'=>'f')
     ));
     $sample=$sample[0];
-    $parentLocId = $sample['location_id'];
+
+    $parentLocId = $sample['location_id']; // TODO should already be in self::$locationID
     $date=$sample['date_start'];
-    if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('easy_login')) {
-      // work out the CMS User sample ID.
-      $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect'));
-      $attributes = data_entry_helper::getAttributes(array(
-        'valuetable'=>'sample_attribute_value',
-        'attrtable'=>'sample_attribute',
-        'key'=>'sample_id',
-        'fieldprefix'=>'smpAttr',
-        'extraParams'=>$auth['read'],
-        'survey_id'=>$args['survey_id'],
-        'sample_method_id'=>$sampleMethods[0]['id']
-      ));
-      if (false== ($cmsUserAttr = extract_cms_user_attr($attributes)))
-        return 'Easy Login not active: This form is designed to be used with the CMS User ID attribute setup for samples in the survey.';
-    }
+
     // find any attributes that apply to transect section samples.
-    $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect Section'));
+    $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array('Transect Section'));
     $attributes = data_entry_helper::getAttributes(array(
       'valuetable'=>'sample_attribute_value',
       'attrtable'=>'sample_attribute',
       'key'=>'sample_id',
       'fieldprefix'=>'smpAttr',
-      'extraParams'=>$auth['read'],
+      'extraParams'=>self::$auth['read'],
       'survey_id'=>$args['survey_id'],
       'sample_method_id'=>$sampleMethods[0]['id'],
       'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
@@ -853,18 +949,20 @@ class iform_ukbms_sectioned_transects_input_sample {
     // Only returns section based subsamples, not map.
     $subSamples = data_entry_helper::get_population_data(array(
       'report' => 'library/samples/samples_list_for_parent_sample',
-      'extraParams' => $auth['read'] + array('sample_id'=>$parentSampleId,'date_from'=>'','date_to'=>'', 'sample_method_id'=>$sampleMethods[0]['id'], 'smpattrs'=>implode(',', array_keys($attributes))),
+      'extraParams' => self::$auth['read'] + array('sample_id'=>$parentSampleId,'date_from'=>'','date_to'=>'', 'sample_method_id'=>$sampleMethods[0]['id'], 'smpattrs'=>implode(',', array_keys($attributes))),
       'nocache'=>true
     ));
     // transcribe the response array into a couple of forms that are useful elsewhere - one for outputting JSON so the JS knows about
     // the samples, and another for lookup of sample data by code later.
-    $subSampleJson = array();
+    $subSampleList = array();
     $subSamplesByCode = array();
     foreach ($subSamples as $subSample) {
-      $subSampleJson[] = '"'.$subSample['code'].'": '.$subSample['sample_id'];
+      $subSampleList[$subSample['code']] = $subSample['sample_id'];
       $subSamplesByCode[$subSample['code']] = $subSample;
     }
-    data_entry_helper::$javascript .= "indiciaData.samples = { ".implode(', ', $subSampleJson)."};\n";
+    $formOptions['subSamples'] = (object)$subSampleList;
+
+    $occurrences = array();
     if ($existing) {
       // Only need to load the occurrences for a pre-existing sample
       $attrs = array($args['occurrence_attribute_id']);
@@ -873,13 +971,12 @@ class iform_ukbms_sectioned_transects_input_sample {
       if(isset($args['occurrence_attribute_id_4']) && $args['occurrence_attribute_id_4'] != "") $attrs[] = $args['occurrence_attribute_id_4'];
       $o = data_entry_helper::get_population_data(array(
         'report' => 'reports_for_prebuilt_forms/UKBMS/ukbms_occurrences_list_for_parent_sample',
-        'extraParams' => $auth['read'] + array('view'=>'detail','sample_id'=>$parentSampleId,'survey_id'=>$args['survey_id'],'date_from'=>'','date_to'=>'','taxon_group_id'=>'',
+        'extraParams' => self::$auth['read'] + array('view'=>'detail','sample_id'=>$parentSampleId,'survey_id'=>$args['survey_id'],'date_from'=>'','date_to'=>'','taxon_group_id'=>'',
             'smpattrs'=>'', 'occattrs'=>implode(',',$attrs)),
         // don't cache as this is live data
         'nocache' => true
       ));
       // build an array keyed for easy lookup
-      $occurrences = array();
       foreach($o as $occurrence) {
         $occurrences[$occurrence['sample_id'].':'.$occurrence['taxon_meaning_id']] = array(
           'ttl_id'=>$occurrence['taxa_taxon_list_id'],
@@ -891,24 +988,23 @@ class iform_ukbms_sectioned_transects_input_sample {
           $occurrences[$occurrence['sample_id'].':'.$occurrence['taxon_meaning_id']]['value_'.$attr] = $occurrence['attr_occurrence_'.$attr];
           $occurrences[$occurrence['sample_id'].':'.$occurrence['taxon_meaning_id']]['a_id_'.$attr] = $occurrence['attr_id_occurrence_'.$attr];
         }
+		$formOptions['existingTaxonMeaningIDs'][$occurrence['taxon_meaning_id']] = true;
       }
-      // store it in data for JS to read when populating the grid
-      data_entry_helper::$javascript .= "indiciaData.existingOccurrences = ".json_encode($occurrences).";\n";
-    } else {
-      data_entry_helper::$javascript .= "indiciaData.existingOccurrences = {};\n";
-    }
+      $formOptions['existingTaxonMeaningIDs'] = array_keys($formOptions['existingTaxonMeaningIDs']);
+	}
+    // store it in data for JS to read when populating the grid
+    $formOptions['existingOccurrences'] = $occurrences;
+    
     $occ_attributes = data_entry_helper::getAttributes(array(
     		'valuetable'=>'occurrence_attribute_value',
     		'attrtable'=>'occurrence_attribute',
     		'key'=>'occurrence_id',
     		'fieldprefix'=>'occAttr',
-    		'extraParams'=>$auth['read'],
+    		'extraParams'=>self::$auth['read'],
     		'survey_id'=>$args['survey_id'],
     		'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
     ));
-    data_entry_helper::$javascript .= "indiciaData.occurrence_attribute = [];\n";
-    data_entry_helper::$javascript .= "indiciaData.occurrence_attribute_ctrl = [];\n";
-    $defAttrOptions = array('extraParams'=>$auth['read']+array('orderby'=>'id'));
+    $defAttrOptions = array('extraParams'=>self::$auth['read']+array('orderby'=>'id'));
     foreach(array($args['occurrence_attribute_id'],
               (isset($args['occurrence_attribute_id_2']) && $args['occurrence_attribute_id_2']!="" ? $args['occurrence_attribute_id_2'] : $args['occurrence_attribute_id']),
               (isset($args['occurrence_attribute_id_3']) && $args['occurrence_attribute_id_3']!="" ? $args['occurrence_attribute_id_3'] : $args['occurrence_attribute_id']),
@@ -916,328 +1012,262 @@ class iform_ukbms_sectioned_transects_input_sample {
             as $idx => $attr){
       unset($occ_attributes[$attr]['caption']);
       $ctrl = data_entry_helper::outputAttribute($occ_attributes[$attr], $defAttrOptions);
-      data_entry_helper::$javascript .= "indiciaData.occurrence_attribute[".($idx+1)."] = $attr;\n";
-      data_entry_helper::$javascript .= "indiciaData.occurrence_attribute_ctrl[".($idx+1)."] = jQuery('".(str_replace("\n","",$ctrl))."');\n";
+      $formOptions['occurrence_attribute'][$idx+1] = $attr;
+	  $formOptions['occurrence_attribute_ctrl'][$idx+1] = str_replace("\n","",$ctrl);
     }
     
     // Fetch the sections
-    $sectionLocationType = helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['section_type_term']) ? 'Section' : $args['section_type_term']));
+    $sectionLocationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['section_type_term']) ? 'Section' : $args['section_type_term']));
     $sections = data_entry_helper::get_population_data(array(
       'table' => 'location',
-      'extraParams' => $auth['read'] + array('view'=>'detail','parent_id'=>$parentLocId,'deleted'=>'f','location_type_id'=>$sectionLocationType[0]['id']),
+      'extraParams' => self::$auth['read'] + array('view'=>'detail','parent_id'=>$parentLocId,'deleted'=>'f','location_type_id'=>$sectionLocationType[0]['id']),
       'nocache' => true
     ));
     usort($sections, "ukbms_stis_sectionSort");
+    $formOptions['sections'] = $sections;
+
     $location = data_entry_helper::get_population_data(array(
       'table' => 'location',
-      'extraParams' => $auth['read'] + array('view'=>'detail','id'=>$parentLocId)
+      'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>$parentLocId)
     ));
     $r = "<h2>".$location[0]['name']." on ".$date."</h2><div id=\"tabs\">\n";
+ 
+    // bit of a bodge here but converts backwardly compatible args into useful ones.
+    $args['taxon_list_id_1']		= $args['taxon_list_id'];
+    $args['taxon_filter_field_1']	= (isset($args['main_taxon_filter_field']) ? $args['main_taxon_filter_field'] : '');
+    $args['taxon_filter_1']			= (isset($args['main_taxon_filter']) ? $args['main_taxon_filter'] : '');
+    $args['taxon_list_id_2']		= (isset($args['second_taxon_list_id']) ? $args['second_taxon_list_id'] : '');
+    $args['taxon_filter_field_2']	= (isset($args['second_taxon_filter_field']) ? $args['second_taxon_filter_field'] : '');
+    $args['taxon_filter_2']			= (isset($args['second_taxon_filter']) ? $args['second_taxon_filter'] : '');
+    $args['taxon_list_id_3']		= (isset($args['third_taxon_list_id']) ? $args['third_taxon_list_id'] : '');
+    $args['taxon_filter_field_3']	= (isset($args['third_taxon_filter_field']) ? $args['third_taxon_filter_field'] : '');
+    $args['taxon_filter_3']			= (isset($args['third_taxon_filter']) ? $args['third_taxon_filter'] : '');
+    $args['taxon_list_id_4']		= (isset($args['fourth_taxon_list_id']) ? $args['fourth_taxon_list_id'] : '');
+    $args['taxon_filter_field_4']	= (isset($args['fourth_taxon_filter_field']) ? $args['fourth_taxon_filter_field'] : '');
+    $args['taxon_filter_4']			= (isset($args['fourth_taxon_filter']) ? $args['fourth_taxon_filter'] : '');
+    
     $tabs = array('#grid1'=>t($args['species_tab_1'])); // tab 1 is required.
-    if(isset($args['second_taxon_list_id']) && $args['second_taxon_list_id']!='')
+    if($args['taxon_list_id_2']!='')
       $tabs['#grid2']=t(isset($args['species_tab_2']) && $args['species_tab_2'] != '' ? $args['species_tab_2'] : 'Species Tab 2');
     if(isset($args['third_taxon_list_id']) && $args['third_taxon_list_id']!='')
       $tabs['#grid3']=t(isset($args['species_tab_3']) && $args['species_tab_3'] != '' ? $args['species_tab_3'] : 'Species Tab 3');
     if(isset($args['fourth_taxon_list_id']) && $args['fourth_taxon_list_id']!='')
       $tabs['#grid4']=t(isset($args['species_tab_4']) && $args['species_tab_4'] != '' ? $args['species_tab_4'] : 'Species Tab 4');
-    if(isset($args['map_taxon_list_id']) && $args['map_taxon_list_id']!='')
-      $tabs['#gridmap']=t(isset($args['species_map_tab']) && $args['species_map_tab'] != '' ? $args['species_map_tab'] : 'Map Based Tab');
     $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
     data_entry_helper::enable_tabs(array(
         'divId'=>'tabs',
         'style'=>'Tabs'
     ));
-    $listSelected = isset($args['start_list']) ? $args['start_list'] : 'full';
-    // will assume that first table is based on abundance count, so do totals
-    $r .= '<div id="grid1">'.
-          '<label for="listSelect">'.lang::get('Use species list').' :</label>'.
-          '<select id="listSelect">'.
-            '<option value="full"'.($listSelected == 'full' ? ' selected="selected"' : '').'>'.lang::get('All species').'</option>'.
-            '<option value="common"'.($listSelected == 'common' ? ' selected="selected"' : '').'>'.lang::get('Common species').'</option>'.
-            '<option value="here"'.($listSelected == 'here' ? ' selected="selected"' : '').'>'.lang::get('Species known at this site').'</option>'.
-            '<option value="mine"'.($listSelected == 'mine' ? ' selected="selected"' : '').'>'.lang::get('Species I have recorded').'</option>'.
-          '</select>'.
-          '<span id="listSelectMsg"></span>';
-    $r .= '<table id="transect-input1" class="ui-widget species-grid"><thead class="table-header">';
-    $r .= '<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
-    foreach ($sections as $idx=>$section) {
-      $r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
-    }
-    $r .= '<th class="ui-widget-header">' . lang::get('Total') . '</th>';
-    $r .= '</tr></thead>';
-    $r .= '<tbody class="ui-widget-content">';
-    // output rows at the top for any transect section level sample attributes
-    $rowClass='';
-    foreach ($attributes as $attr) {
-      $r .= '<tr '.$rowClass.' id="smp-'.$attr['attributeId'].'"><td>'.$attr['caption'].'</td>';
-      $rowClass=$rowClass=='' ? 'class="alt-row"':'';
-      unset($attr['caption']);
-      foreach ($sections as $idx=>$section) {
-        // output a cell with the attribute - tag it with a class & id to make it easy to find from JS.
-        $attrOpts = array(
-            'class' => 'smp-input smpAttr-'.$section['code'],
-            'id' => $attr['fieldname'].':'.$section['code'],
-            'extraParams'=>$auth['read']
-        );
-        // if there is an existing value, set it and also ensure the attribute name reflects the attribute value id.
-        if (isset($subSamplesByCode[$section['code']])) {
-          // but have to take into account possibility that this field has been blanked out, so deleting the attribute.
-          if(isset($subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']]) && $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']] != ''){
-            $attrOpts['fieldname'] = $attr['fieldname'] . ':' . $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']];
-            $attr['default'] = $subSamplesByCode[$section['code']]['attr_sample_'.$attr['attributeId']];
-          } else
-            $attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
-        } else {
-          $attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
-        }
-        if($attr['default']=='')
-        	$attrOpts['class'] .= ' ui-state-error';
-        $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').'">' .
-        		data_entry_helper::outputAttribute($attr, $attrOpts) .
-        		($attr['default']=='' ? '<p htmlfor="'.$attrOpts['id'].'" class="inline-error">' . lang::get('This field is required') . '</p>' : '') .
-        		'</td>';
-      }
-      $r .= '<td class="ui-state-disabled first"></td>';
-      $r .= '</tr>';
-    }
-    $r .= '</tbody>';
-    $r .= '<tbody class="ui-widget-content occs-body"></tbody>';
-    $r .= '<tfoot><tr><td>Total</td>';
-    foreach ($sections as $idx=>$section) {
-      $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').' col-total"></td>';
-    }
-    $r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
-    $r .= '</table>'.
-          '<span id="taxonLookupControlContainer"><label for="taxonLookupControl" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl" name="taxonLookupControl" ></span>';
-    $r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div>';
 
-    $extraParams = array_merge($auth['read'],
-                   array('taxon_list_id' => $args['taxon_list_id'],
-                         'preferred' => 't', // important
-                         'allow_data_entry' => 't',
-                         'view' => 'cache',
-                         'orderby' => 'taxonomic_sort_order'));
-    if (!empty($args['main_taxon_filter_field']) && !empty($args['main_taxon_filter']))
-      $extraParams[$args['main_taxon_filter_field']] = helper_base::explode_lines($args['main_taxon_filter']);
-    $taxa = data_entry_helper::get_population_data(array('table' => 'taxa_taxon_list', 'extraParams' => $extraParams));
-    data_entry_helper::$javascript .= "indiciaData.speciesList1List = [";
-    $first = true;
-    foreach($taxa as $taxon){
-      data_entry_helper::$javascript .= ($first ? "\n" : ",\n")."{'id':".$taxon['id'].",'taxon_meaning_id':".$taxon['taxon_meaning_id'].",'preferred_language_iso':'".$taxon["preferred_language_iso"]."','default_common_name':'".str_replace("'","\\'", $taxon["default_common_name"])."','preferred_taxon':'".str_replace("'","\\'", $taxon["preferred_taxon"])."'}";
-      $first = false;
-    }
-    data_entry_helper::$javascript .= "];\n";
+    // Produce special lists required for grid one, where user can choose full list, common, here or mine.
+    // other grids are fixed by form configuration.
     
+    // Common is only used on first species tab.
     if (!empty($args['common_taxon_list_id'])) {
-      $extraParams = array_merge($auth['read'],
+      $extraParams = array_merge(self::$auth['read'],
           array('taxon_list_id' => $args['common_taxon_list_id'],
               'preferred' => 't',
               'allow_data_entry' => 't',
-              'view' => 'cache',
-              'orderby' => 'taxonomic_sort_order'));
+              'view' => 'cache'));
       if (!empty($args['common_taxon_filter_field']) && !empty($args['common_taxon_filter']))
         $extraParams[$args['common_taxon_filter_field']] = helper_base::explode_lines($args['common_taxon_filter']);
-      $taxa = data_entry_helper::get_population_data(array('table' => 'taxa_taxon_list', 'extraParams' => $extraParams));
-      data_entry_helper::$javascript .= "indiciaData.speciesList1SubsetList = [";
-      $first = true;
+      $taxa = data_entry_helper::get_population_data(array('table' => 'taxa_taxon_list', 'extraParams' => $extraParams, 'columns' => 'taxon_meaning_id'));
       foreach($taxa as $taxon){
-        data_entry_helper::$javascript .= ($first ? "\n" : ",\n")."{'id':".$taxon['id'].",'taxon_meaning_id':".$taxon['taxon_meaning_id'].",'preferred_language_iso':'".$taxon["preferred_language_iso"]."','default_common_name':'".str_replace("'","\\'", $taxon["default_common_name"])."','preferred_taxon':'".str_replace("'","\\'", $taxon["preferred_taxon"])."'}";
-        $first = false;
+      	$formOptions['commonTaxonMeaningIDs'][] = $taxon['taxon_meaning_id'];
       }
-      data_entry_helper::$javascript .= "];\n";
-      data_entry_helper::$javascript .= "indiciaData.startList='".$listSelected."';\n";
     }
-
-    $allTaxonMeaningIdsAtTransect = data_entry_helper::get_population_data(array(
+    
+    $taxa = data_entry_helper::get_population_data(array(
         'report' => 'reports_for_prebuilt_forms/UKBMS/ukbms_taxon_meanings_at_transect',
-        'extraParams' => $auth['read'] + array('location_id' => $parentLocId, 'survey_id'=>$args['survey_id']),
-        // don't cache as this is live data
-        'nocache' => true
+        'extraParams' => self::$auth['read'] + array('location_id' => $parentLocId, 'survey_id'=>$args['survey_id']),
+        'nocache' => true // don't cache as this is live data
     ));
+    foreach($taxa as $taxon){
+    	$formOptions['allTaxonMeaningIDsAtTransect'][] = $taxon['taxon_meaning_id'];
+    } // all meanings will include currently filled in data.
+
+    $extraParams = array_merge(self::$auth['read'],
+          array('created_by_id' => self::$userId,
+          		'survey_id'=>$args['survey_id'],
+				'view' => 'cache'));
+	$taxa = data_entry_helper::get_population_data(array('table' => 'occurrence', 'extraParams' => $extraParams, 'columns' => 'taxon_meaning_id'));
+	foreach($taxa as $taxon){
+		$formOptions['myTaxonMeaningIDs'][$taxon['taxon_meaning_id']] = true;
+	}
+	$formOptions['myTaxonMeaningIDs'] = array_keys($formOptions['myTaxonMeaningIDs']);
+        
+   	$r .= self::_buildGrid ($formOptions, 1, $args, $sections, $occ_attributes, count($occurrences)>0, true, $attributes, $subSamplesByCode) .
+			($args['taxon_list_id_2'] !='' ? self::_buildGrid ($formOptions, 2, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+			($args['taxon_list_id_3'] !='' ? self::_buildGrid ($formOptions, 3, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+			($args['taxon_list_id_4'] !='' ? self::_buildGrid ($formOptions, 4, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+		  '</div>';
     
-    data_entry_helper::$javascript .= "indiciaData.allTaxonMeaningIdsAtTransect = [";
-    $first = true;
-    foreach($allTaxonMeaningIdsAtTransect as $taxon){
-    	data_entry_helper::$javascript .= ($first ? "" : ",").$taxon['taxon_meaning_id'];
-    	$first = false;
-    }
-    data_entry_helper::$javascript .= "];\n";
-
-    if(isset($args['second_taxon_list_id']) && $args['second_taxon_list_id']!='')
-    	$r .= self::_buildGrid (2, $args, $sections, $occ_attributes);
-
-    if(isset($args['third_taxon_list_id']) && $args['third_taxon_list_id']!='')
-    	$r .= self::_buildGrid (3, $args, $sections, $occ_attributes);
-    
-    if(isset($args['fourth_taxon_list_id']) && $args['fourth_taxon_list_id']!='')
-    	$r .= self::_buildGrid (4, $args, $sections, $occ_attributes);
-
-    $reloadPath = self::getReloadPath();
-    $defaults = helper_base::explode_lines_key_value_pairs($args['defaults']);
-    $record_status = isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C';
-    data_entry_helper::enable_validation('validation-form');
-
-    $r .= '</div>';
-    // a stub form to attach validation to.
+    // stub form to attach validation to.
     $r .= '<form style="display: none" id="validation-form"></form>';
+    data_entry_helper::enable_validation('validation-form');
     // A stub form for AJAX posting when we need to create an occurrence
-    $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($nid, 'occurrence').'">';
-    $r .= '<input name="website_id" value="'.$args['website_id'].'"/>';
-    $r .= '<input name="survey_id" value="'.$args["survey_id"].'" />';
-    $r .= '<input name="occurrence:id" id="occid" />';
-    $r .= '<input name="occurrence:deleted" id="occdeleted" />';
-    $r .= '<input name="occurrence:zero_abundance" id="occzero" />';
-    $r .= '<input name="occurrence:taxa_taxon_list_id" id="ttlid" />';
-    $r .= '<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="'.$record_status.'" />';
-    $r .= '<input name="occurrence:sample_id" id="occ_sampleid"/>';
     if(isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "") {
-      $locationType = helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
+      $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
       $site_attributes = data_entry_helper::getAttributes(array(
             'valuetable'=>'location_attribute_value'
             ,'attrtable'=>'location_attribute'
             ,'key'=>'location_id'
             ,'fieldprefix'=>'locAttr'
-            ,'extraParams'=>$auth['read'] + array('id'=>$args["sensitiveAttrID"])
+            ,'extraParams'=>self::$auth['read'] + array('id'=>$args["sensitiveAttrID"])
             ,'location_type_id'=>$locationType[0]['id']
             ,'survey_id'=>$args['survey_id']
             ,'id' => $parentLocId // location ID
       ));
-      $r .= '<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.
-            (count($site_attributes)>0 && $site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '')
-            .'"/>';
     }
-    $r .= '<input name="occAttr:' . $args['occurrence_attribute_id'] . '" id="occattr"/>';
-    $r .= '<input name="transaction_id" id="transaction_id"/>';
-    $r .= '<input name="user_id" value="'.hostsite_get_user_field('user_id', 1).'"/>';
-    $r .= '</form>';
+    $defaults = helper_base::explode_lines_key_value_pairs($args['defaults']);
+    $record_status = isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C';
+    $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($nid, 'occurrence').'">' .
+    		'<input name="website_id" value="'.$args['website_id'].'"/>' .
+    		'<input name="survey_id" value="'.$args["survey_id"].'" />' .
+    		'<input name="occurrence:id" id="occid" />' .
+    		'<input name="occurrence:deleted" id="occdeleted" />' .
+    		'<input name="occurrence:zero_abundance" id="occzero" />' .
+    		'<input name="occurrence:taxa_taxon_list_id" id="ttlid" />' .
+    		'<input name="occurrence:record_status" value="'.$record_status.'" />' .
+    		'<input name="occurrence:sample_id" id="occ_sampleid"/>' .
+    		(isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "" ?
+	      		'<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($site_attributes)>0 && $site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
+			'<input name="occAttr:' . $args['occurrence_attribute_id'] . '" id="occattr"/>' .
+			'<input name="transaction_id" id="transaction_id"/>' .
+			'<input name="user_id" value="'.self::$userId.'"/>' .
+ 		  '</form>';
+
     // A stub form for AJAX posting when we need to update a sample
-    $r .= '<form style="display: none" id="smp-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">';
-    $r .= '<input name="website_id" value="'.$args['website_id'].'"/>';
-    $r .= '<input name="sample:id" id="smpid" />';
-    $r .= '<input name="sample:parent_id" value="'.$parentSampleId.'" />';
-    $r .= '<input name="sample:survey_id" value="'.$args['survey_id'].'" />';
-    $r .= '<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />';
-    $r .= '<input name="sample:entered_sref" id="smpsref" />';
-    $r .= '<input name="sample:entered_sref_system" id="smpsref_system" />';
-    $r .= '<input name="sample:location_id" id="smploc" />';
-    $r .= '<input name="sample:date" value="'.$date.'" />';
+    $r .= '<form style="display: none" id="smp-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">' .
+    		'<input name="website_id" value="'.$args['website_id'].'"/>' .
+    		'<input name="sample:id" id="smpid" />' .
+    		'<input name="sample:parent_id" value="'.$parentSampleId.'" />' .
+    		'<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
+    		'<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
+    		'<input name="sample:entered_sref" id="smpsref" />' .
+    		'<input name="sample:entered_sref_system" id="smpsref_system" />' .
+    		'<input name="sample:location_id" id="smploc" />' .
+    		'<input name="sample:date" value="'.$date.'" />';
     // include a stub input for each transect section sample attribute
     foreach ($attributes as $attr) {
       $r .= '<input id="'.$attr['fieldname'].'" />';
     }
-    $r .= '</form>';
-    // tell the Javascript where to get species from.
-    // @todo handle diff species lists.
-    data_entry_helper::add_resource('jquery_ui');
-    data_entry_helper::add_resource('json');
-    data_entry_helper::add_resource('autocomplete');
+    $r .=   '<input name="transaction_id" id="transaction_id"/>' .
+			'<input name="user_id" value="'.self::$userId.'"/>' .
+    	  '</form>';
 
-    data_entry_helper::$javascript .= "indiciaData.speciesList1 = ".$args['taxon_list_id'].";\n";
-    if (!empty($args['main_taxon_filter_field']) && !empty($args['main_taxon_filter'])) {
-      data_entry_helper::$javascript .= "indiciaData.speciesList1FilterField = '".$args['main_taxon_filter_field']."';\n";
-      $filterLines = helper_base::explode_lines($args['main_taxon_filter']);
-      data_entry_helper::$javascript .= "indiciaData.speciesList1FilterValues = '".json_encode($filterLines)."';\n";
+    // A stub form for posting when we need to flag a super sample as finished
+    $r .= '<form style="display: none" id="finished-form" method="post" >' .
+    		'<input name="website_id" value="'.$args['website_id'].'"/>' .
+    		'<input name="sample:id" value="'.$parentSampleId.'" />' .
+    		'<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
+    		'<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
+    		'<input name="sample:entered_sref" id="smpsref" />' .
+    		'<input name="sample:entered_sref_system" id="smpsref_system" />' .
+    		'<input name="sample:location_id" id="smploc" />' .
+    		'<input name="sample:date" value="'.$date.'" />';
+    // include a stub input for each transect section sample attribute
+    foreach ($attributes as $attr) {
+    	$r .= '<input id="'.$attr['fieldname'].'" />';
     }
-    data_entry_helper::$javascript .= "bindSpeciesAutocomplete(\"taxonLookupControl\",\"table#transect-input1\",\"".data_entry_helper::$base_url."index.php/services/data\", \"".$args['taxon_list_id']."\",
-  indiciaData.speciesList1FilterField, indiciaData.speciesList1FilterValues, {\"auth_token\" : \"".$auth['read']['auth_token']."\", \"nonce\" : \"".$auth['read']['nonce']."\"},
-  \"".lang::get('LANG_Duplicate_Taxon')."\", 25, 1);\n
-indiciaData.speciesList1Subset = ".(isset($args['common_taxon_list_id']) && $args['common_taxon_list_id']!="" ? $args['common_taxon_list_id'] : "-1").";\n";
-    if (!empty($args['common_taxon_filter_field']) && !empty($args['common_taxon_filter'])) {
-      data_entry_helper::$javascript .= "indiciaData.speciesList1SubsetFilterField = '".$args['common_taxon_filter_field']."';\n";
-      $filterLines = helper_base::explode_lines($args['common_taxon_filter']);
-      data_entry_helper::$javascript .= "indiciaData.speciesList1SubsetFilterValues = '".json_encode($filterLines)."';\n";
-    }
-
-    data_entry_helper::$javascript .= "indiciaData.speciesList2 = ".(isset($args['second_taxon_list_id']) && $args['second_taxon_list_id'] != "" ? $args['second_taxon_list_id'] : "-1").";\n";
-    if (!empty($args['second_taxon_filter_field']) && !empty($args['second_taxon_filter'])) {
-      data_entry_helper::$javascript .= "indiciaData.speciesList2FilterField = '".$args['second_taxon_filter_field']."';\n";
-      $filterLines = helper_base::explode_lines($args['second_taxon_filter']);
-      data_entry_helper::$javascript .= "indiciaData.speciesList2FilterValues = ".json_encode($filterLines).";\n";
-    }
-    data_entry_helper::$javascript .= "indiciaData.speciesList2Force = '".$args['start_list_2']."';\n";
-    if($args['start_list_2']!='full')
-      data_entry_helper::$javascript .= "bindSpeciesAutocomplete(\"taxonLookupControl2\",\"table#transect-input2\",\"".data_entry_helper::$base_url."index.php/services/data\", indiciaData.speciesList2,
-  indiciaData.speciesList2FilterField, indiciaData.speciesList2FilterValues, {\"auth_token\" : \"".$auth['read']['auth_token']."\", \"nonce\" : \"".$auth['read']['nonce']."\"},
-  \"".lang::get('LANG_Duplicate_Taxon')."\", 25, 2);\n\n";
-
-    data_entry_helper::$javascript .= "indiciaData.speciesList3 = ".(isset($args['third_taxon_list_id']) && $args['third_taxon_list_id'] != "" ? $args['third_taxon_list_id'] : "-1").";\n";
-    if (!empty($args['third_taxon_filter_field']) && !empty($args['third_taxon_filter'])) {
-      data_entry_helper::$javascript .= "indiciaData.speciesList3FilterField = '".$args['third_taxon_filter_field']."';\n";
-      $filterLines = helper_base::explode_lines($args['third_taxon_filter']);
-      data_entry_helper::$javascript .= "indiciaData.speciesList3FilterValues = ".json_encode($filterLines).";\n";
-    }
-    data_entry_helper::$javascript .= "indiciaData.speciesList3Force = '".$args['start_list_3']."';\n";
-    if($args['start_list_3']!='full')
-      data_entry_helper::$javascript .= "bindSpeciesAutocomplete(\"taxonLookupControl3\",\"table#transect-input3\",\"".data_entry_helper::$base_url."index.php/services/data\", indiciaData.speciesList3,
-    indiciaData.speciesList3FilterField, indiciaData.speciesList3FilterValues, {\"auth_token\" : \"".$auth['read']['auth_token']."\", \"nonce\" : \"".$auth['read']['nonce']."\"},
-    \"".lang::get('LANG_Duplicate_Taxon')."\", 25, 3);\n\n";
+    $r .=   '<input name="transaction_id" id="transaction_id"/>' .
+    		'<input name="user_id" value="'.self::$userId.'"/>' .
+    		'</form>';
     
-    data_entry_helper::$javascript .= "indiciaData.speciesList4 = ".(isset($args['fourth_taxon_list_id']) && $args['fourth_taxon_list_id'] != "" ? $args['fourth_taxon_list_id'] : "-1").";\n";
-    if (!empty($args['fourth_taxon_filter_field']) && !empty($args['fourth_taxon_filter'])) {
-      data_entry_helper::$javascript .= "indiciaData.speciesList4FilterField = '".$args['fourth_taxon_filter_field']."';\n";
-      $filterLines = helper_base::explode_lines($args['fourth_taxon_filter']);
-      data_entry_helper::$javascript .= "indiciaData.speciesList4FilterValues = ".json_encode($filterLines).";\n";
-    }
-    data_entry_helper::$javascript .= "indiciaData.speciesList4Force = '".$args['start_list_4']."';\n";
-    // allow js to do AJAX by passing in the information it needs to post forms
-    if($args['start_list_4']!='full')
-      data_entry_helper::$javascript .= "bindSpeciesAutocomplete(\"taxonLookupControl4\",\"table#transect-input4\",\"".data_entry_helper::$base_url."index.php/services/data\", indiciaData.speciesList4,
-  indiciaData.speciesList4FilterField, indiciaData.speciesList4FilterValues, {\"auth_token\" : \"".$auth['read']['auth_token']."\", \"nonce\" : \"".$auth['read']['nonce']."\"},
-  \"".lang::get('LANG_Duplicate_Taxon')."\", 25, 4);\n\n";
+    data_entry_helper::$javascript .= "\nsetUpOccurrencesForm(".json_encode((object)$formOptions).");\n\n";
 
-    data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
-    data_entry_helper::$javascript .= "indiciaData.transect = ".$parentLocId.";\n";
-    data_entry_helper::$javascript .= "indiciaData.parentSample = ".$parentSampleId.";\n";
-    data_entry_helper::$javascript .= "indiciaData.sections = ".json_encode($sections).";\n";
-    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
-      data_entry_helper::$javascript .= "indiciaData.easyLogin = true;\n";
-      $userId = hostsite_get_user_field('indicia_user_id');
-      if (!empty($userId)) data_entry_helper::$javascript .= "indiciaData.UserID = ".$userId.";\n";
-      else return '<p>Easy Login active but could not identify user</p>'; // something is wrong 
-    } else {
-      data_entry_helper::$javascript .= "indiciaData.easyLogin = false;\n";
-      data_entry_helper::$javascript .= "indiciaData.CMSUserAttrID = ".$cmsUserAttr['attributeId'] .";\n";
-      data_entry_helper::$javascript .= "indiciaData.CMSUserID = ".$user->uid.";\n";
-    }
-    // Do an AJAX population of the grid rows.
-    data_entry_helper::$javascript .= "loadSpeciesList();
-indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
-    var target = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];;
-    // first get rid of any previous tables
-    jQuery('table.sticky-header').remove();
-    jQuery('table.sticky-enabled thead.tableHeader-processed').removeClass('tableHeader-processed');
-    jQuery('table.sticky-enabled.tableheader-processed').removeClass('tableheader-processed');
-    jQuery('table.species-grid.sticky-enabled').removeClass('sticky-enabled');
-    var table = jQuery('#'+target.id+' table.species-grid');
-    if(table.length > 0) {
-        table.addClass('sticky-enabled');
-        if(typeof Drupal.behaviors.tableHeader == 'object') // Drupal 7
-          Drupal.behaviors.tableHeader.attach(table.parent());
-        else // Drupal6 : it is a function
-          Drupal.behaviors.tableHeader(target);
-    }
-    // remove any hanging autocomplete select list.
-    jQuery('.ac_results').hide();
-});";
     $indicia_templates['controlWrap'] = $oldCtrlWrapTemplate;
     return $r;
   }
 
-  protected static function _buildGrid ($tabNum, $args, $sections, $occ_attributes) {
+  protected static function _buildGrid (&$formOptions, $tabNum, $args, $sections, $occ_attributes, $existing, $includeControl = false, $attributes = array(), $subSamplesByCode = array()) {
   	$isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
   			$args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
-  		
+
+  	// TODO this to be selected from user field.
+  	// HOWTO configure
+  	// Home » Administration » Configuration » People » Account settings, Manage Fields
+  	// Add a new "Vertical Tab" Under "Recording settings", called "Preferences"/group_preferences beneath "Who you are"
+  	// Add a new field "Default species view" (field_default_species_view) under this, type "List (text)"
+  	// Set the allowed list to :
+  	//  full|The full taxa list
+  	//  common|Common taxa list
+  	//  mine|Taxa from the list previously recorded by me
+  	//  here|Taxa from the list previously recorded at this site.
+  	// Leave "Required field" and "Display on user registration form" unchecked.
+  	// Help Text : This selects what default species list is displayed when you enter first data for a walk. Common is only available on the first tab (Butterflies): if you choose this option, the other tabs will display the full list. The full list will not be displayed on the final (Others) tab, as this is the full UK list and is very big: in this case, those taxa previously recorded here will be displayed. When viewing data subsequently, only those taxa who have data recorded will initially be displayed. Leaving unselected will default to the standard form configuration setting.
+  	// Default: N/A
+  	// Number of values: 1
+  	
+  	$listSelected = hostsite_get_user_field('default_species_view');
+  	if (empty($listSelected)) {
+		$listSelected = isset($args['start_list_'.$tabNum]) ? $args['start_list_'.$tabNum] : 'here';
+  	}
+  	if(!in_array($listSelected, array('full','common','mine','here'))) {
+		$listSelected = 'here';
+  	}
+  	if($listSelected == 'common' && $tabNum != 1) { // common is only available on tab 1
+  		$listSelected = 'full';
+  	}
+  	if($listSelected == 'full' && isset($args['disable_full_'.$tabNum]) && $args['disable_full_'.$tabNum]) {
+  		$listSelected = 'here';
+  	}
+  	
   	$r = '<div id="grid'.$tabNum.'">' .
   			'<p id="grid'.$tabNum.'-loading">' . lang::get('Loading - Please Wait') . '</p>' .
-  			(isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>') .
+    		($includeControl ?
+  					'<label for="listSelect'.$tabNum.'">'.lang::get('Use species list').' :</label>'.
+  					'<select id="listSelect'.$tabNum.'">'.
+  					  '<option value="full"'.($listSelected == 'full' ? ' selected="selected"' : '').'>'.lang::get('All species').'</option>'.
+  					  ($tabNum == 1 && (count($formOptions['commonTaxonMeaningIDs']) > 0) ? '<option value="common"'.($listSelected == 'common' ? ' selected="selected"' : '').'>'.lang::get('Common species').'</option>' : '').
+  					  '<option value="here"'.($listSelected == 'here' ? ' selected="selected"' : '').'>'.lang::get('Species known at this site').'</option>'.
+  					  '<option value="mine"'.($listSelected == 'mine' ? ' selected="selected"' : '').'>'.lang::get('Species I have recorded').'</option>'.
+  					'</select>'.
+  					'<span id="listSelect'.$tabNum.'Msg"></span>'
+  				:
+  					(isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>')
+  			) .
   			'<table id="transect-input'.$tabNum.'" class="ui-widget species-grid"><thead class="table-header">' .
   			'<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
   	foreach ($sections as $idx=>$section) {
   		$r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
   	}
   	$r .= ($isNumber ? '<th class="ui-widget-header">' . lang::get('Total') . '</th>' : '').'</tr></thead>';
-  	// No output rows at the top for any transect section level sample attributes in these grids.
+  	// output rows at the top for any transect section level sample attributes
+  	$rowClass='';
+  	$r .= '<tbody class="ui-widget-content">';
+  	foreach ($attributes as $attr) {
+  		$r .= '<tr '.$rowClass.' id="smp-'.$attr['attributeId'].'"><td>'.$attr['caption'].'</td>';
+  		$rowClass=$rowClass=='' ? 'class="alt-row"':'';
+  		unset($attr['caption']);
+  		foreach ($sections as $idx=>$section) {
+  			// output a cell with the attribute - tag it with a class & id to make it easy to find from JS.
+  			$attrOpts = array(
+  					'class' => 'smp-input smpAttr-'.$section['code'],
+  					'id' => $attr['fieldname'].':'.$section['code'],
+  					'extraParams'=>self::$auth['read']
+  			);
+  			// if there is an existing value, set it and also ensure the attribute name reflects the attribute value id.
+  			if (isset($subSamplesByCode[$section['code']])) {
+  				// but have to take into account possibility that this field has been blanked out, so deleting the attribute.
+  				if(isset($subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']]) && $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']] != ''){
+  					$attrOpts['fieldname'] = $attr['fieldname'] . ':' . $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']];
+  					$attr['default'] = $subSamplesByCode[$section['code']]['attr_sample_'.$attr['attributeId']];
+  				} else
+  					$attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
+  			} else {
+  				$attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
+  			}
+  			if($attr['default']=='')
+  				$attrOpts['class'] .= ' ui-state-error';
+  			$r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').'">' .
+  					data_entry_helper::outputAttribute($attr, $attrOpts) .
+  					($attr['default']=='' ? '<p htmlfor="'.$attrOpts['id'].'" class="inline-error">' . lang::get('This field is required') . '</p>' : '') .
+  					'</td>';
+  		}
+  		$r .= ($isNumber ? '<td class="ui-state-disabled first"></td>' : '').'</tr>';
+  	}
+  	$r .= '</tbody>';
   	$r .= '<tbody class="ui-widget-content occs-body"></tbody>';
   	if($isNumber) { // add a totals row only if the attribute is a number
   		$r .= '<tfoot><tr><td>Total</td>';
@@ -1247,268 +1277,27 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
   		$r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
   	}
   	$r .= '</table>';
-  	if($args['start_list_'.$tabNum] != "full")
-  		$r .= '<label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" >';
+
+  	if($listSelected !='full' || $includeControl || $tabNum == 1)
+  		$r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
   	$r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div>';
+  	
+  	$formOptions['speciesList'][$tabNum] = $args['taxon_list_id_'.$tabNum];
+  	$formOptions['speciesListForce'][$tabNum] = $listSelected;
+  	if ($args['taxon_filter_'.$tabNum] != '') {
+  		$filterLines = helper_base::explode_lines($args['taxon_filter_'.$tabNum]);
+  		$formOptions['speciesListFilterField'][$tabNum] = $args['taxon_filter_field_'.$tabNum];
+  		$formOptions['speciesListFilterValues'][$tabNum] = $filterLines; 		
+  	}
+  	if($listSelected !='full' || $includeControl || $tabNum == 1) {
+  		$autoComplete = new stdClass();
+  		$autoComplete->tabNum = $tabNum;
+  		$formOptions['autoCompletes'][] = $autoComplete;
+  	}
+  	 
   	return $r;
   }
   
-  protected static function getReloadPath () {
-  	$reload = data_entry_helper::get_reload_link_parts();
-  	unset($reload['params']['sample_id']);
-  	unset($reload['params']['new']);
-  	$reloadPath = $reload['path'];
-  	if(count($reload['params'])) {
-  		// decode params prior to encoding to prevent double encoding.
-  		foreach ($reload['params'] as $key => $param) {
-  			$reload['params'][$key] = urldecode($param);
-  		}
-  		$reloadPath .= '?'.http_build_query($reload['params']);
-  	}
-  	return $reloadPath;
-  }
-
-  
-  /**
-   * Parses an options array to extract the attribute specific option settings, e.g. smpAttr:4|caption=Habitat etc.
-   * Commented out until attribute handling sorted on warehouse.
-   *
-  private static function get_attr_specific_options($options) {
-  	$attrOptions = array();
-  	foreach ($options as $option => $value) {
-  		if (preg_match('/^(?P<controlname>[a-z][a-z][a-z]Attr:[0-9]*)\|(?P<option>.*)$/', $option, $matches)) {
-  			if (!isset($attrOptions[$matches['controlname']]))
-  				$attrOptions[$matches['controlname']] = array();
-  			$attrOptions[$matches['controlname']][$matches['option']] = $value;
-  		}
-  	}
-  	return $attrOptions;
-  }
-  */
-  
-  /**
-   * Get the species data for the page in single species mode
-   */
-  protected static function get_single_species_data($auth, $args, $filterLines) {
-  	//The form is configured for filtering by taxon name, meaning id or external key. If there is only one specified, then the form
-  	//cannot display a species checklist, as there is no point. So, convert our preferred taxon name, meaning ID or external_key to find the
-  	//preferred taxa_taxon_list_id from the selected checklist
-  	$filter = array(
-  			'preferred'=>'t',
-  			'taxon_list_id'=>$args['map_taxon_list_id']
-  	);
-  	if ($args['map_taxon_filter_field']=='preferred_name') {
-  		$filter['taxon']=$filterLines[0];
-  	} else {
-  		$filter[$args['map_taxon_filter_field']]=$filterLines[0];
-  	}
-  	$options = array(
-  			'table' => 'taxa_taxon_list',
-  			'extraParams' => $auth['read'] + $filter
-  	);
-  	$response =data_entry_helper::get_population_data($options);
-  	// Call code that handles the error logs
-  	self::get_single_species_logging($auth, $args, $filterLines, $response);
-  	return $response;
-  }
-  
-  /**
-   * Error logging code for the page in single species mode
-   */
-  protected static function get_single_species_logging($auth, $args, $filterLines, $response) {
-  	//Go through each filter line and add commas between the values so it looks nice in the log
-  	$filters = implode(', ', $filterLines);
-  	//If only one filter is supplied but more than one match is found, we can't continue as we don't know which one to match against.
-  	if (count($response)>1 and count($filterLines)==1 and empty($response['error'])) {
-  		if (function_exists('watchdog')) {
-  			watchdog('indicia', 'Multiple matches have been found when using the filter \''.$args['taxon_filter_field'].'\'. '.
-  					'The filter was passed the following value(s)'.$filters);
-  			throw new exception(lang::get('This form is setup for single species recording, but more than one species matching the criteria exists in the list.'));
-  		}
-  	}
-  	//If our filter returns nothing at all, we log it, we return string 'no matches' which the system then uses to clear the filter
-  	if (count($response)==0) {
-  		if (function_exists('watchdog'))
-  			watchdog('missing sp.', 'No matches were found when using the filter \''.$args['taxon_filter_field'].'\'. '.
-  					'The filter was passed the following value(s)'.$filters);
-  	}
-  }
-  
-  /**
-   * Build a PHP function  to format the species added to the grid according to the form parameters
-   * autocomplete_include_both_names and autocomplete_include_taxon_group.
-   */
-  protected static function build_grid_autocomplete_function($args) {
-  	global $indicia_templates;
-  	// always include the searched name. In this JavaScript we need to behave slightly differently
-  	// if using the cached as opposed to the standard versions of taxa_taxon_list.
-  	$db = data_entry_helper::get_species_lookup_db_definition($args['cache_lookup']);
-  	// get local vars for the array
-  	extract($db);
-  
-  	$fn = "function(item) { \n".
-  			"  var r;\n".
-  			"  if (item.$colLanguage!==null && item.$colLanguage.toLowerCase()==='$valLatinLanguage') {\n".
-  			"    r = '<em>'+item.$colTaxon+'</em>';\n".
-  			"  } else {\n".
-  			"    r = item.$colTaxon;\n".
-  			"  }\n";
-  	// This bit optionally adds '- common' or '- latin' depending on what was being searched
-  	if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-  		$fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n".
-  				"    r += ' - ' + item.$colCommon;\n".
-  				"  } else if (item.preferred='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n".
-  				"    r += ' - <em>' + item.$colPreferred + '</em>';\n".
-  				"  }\n";
-  	}
-  	// this bit optionally adds the taxon group
-  	if (isset($args['species_include_taxon_group']) && $args['species_include_taxon_group'])
-  		$fn .= "  r += '<br/><strong>' + item.taxon_group + '</strong>'\n";
-  	// Close the function
-  	$fn .= " return r;\n".
-  			"}\n";
-  	// Set it into the indicia templates
-  	$indicia_templates['format_species_autocomplete_fn'] = $fn;
-  }
-  
-  /**
-   * Returns the species checklist input control.
-   * @param array $auth Read authorisation tokens
-   * @param array $args Form configuration
-   * @param array $extraParams Extra parameters array, pre-configured with filters for taxa and name types.
-   * @param array $options additional options for the control, e.g. those configured in the form structure.
-   * @return HTML for the species_checklist control.
-   */
-  protected static function get_control_species_checklist($auth, $args, $extraParams, $options) {
-  	global $user;
-  
-  	// Build the configuration options
-  	if (isset($options['view']))
-  		$extraParams['view'] = $options['view'];
-  	// make sure that if extraParams is specified as a config option, it does not replace the essential stuff
-  	if (isset($options['extraParams']))
-  		$options['extraParams'] = array_merge($extraParams, $options['extraParams']);
-  	$species_ctrl_opts=array_merge(array(
-  			'occAttrOptions' => array(),
-  			'listId' => '',
-  			'label' => lang::get('occurrence:taxa_taxon_list_id'),
-  			'columns' => 1,
-  			'extraParams' => $extraParams,
-  			'survey_id' => $args['survey_id'],
-  			'occurrenceComment' => $args['occurrence_comment'],
-  			'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : false),
-  			'occurrenceImages' => $args['occurrence_images'],
-  			'PHPtaxonLabel' => true,
-  			'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), // used for termlists in attributes
-  			'cacheLookup' => $args['cache_lookup'],
-  			'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),
-  			'userControlsTaxonFilter' => false,
-  			'subSpeciesColumn' => false,
-  			'copyDataFromPreviousRow' => false,
-  			'editTaxaNames' => !empty($args['edit_taxa_names']) && $args['edit_taxa_names']
-  	), $options);
-  	if ($groups=hostsite_get_user_field('taxon_groups')) {
-  		$species_ctrl_opts['usersPreferredGroups'] = unserialize($groups);
-  	}
-  	if ($args['map_taxon_list_id']) $species_ctrl_opts['lookupListId']=$args['map_taxon_list_id'];
-  	//We only do the work to setup the filter if the user has specified a filter in the box
-  	if (!empty($args['map_taxon_filter_field']) && (!empty($args['map_taxon_filter']))) {
-  		$species_ctrl_opts['taxonFilterField']=$args['map_taxon_filter_field'];
-  		$filterLines = helper_base::explode_lines($args['map_taxon_filter']);
-  		$species_ctrl_opts['taxonFilter']=$filterLines;
-  	}
-  	if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths']=explode(',', $args['col_widths']);
-  	self::build_grid_taxon_label_function($args, $options);
-  	// Start by outputting a hidden value that tells us we are using a grid when the data is posted,
-  	// then output the grid control
-  	return '<input type="hidden" value="true" name="gridmode" />'.
-  			data_entry_helper::species_checklist($species_ctrl_opts);
-  }
-  
-  /**
-   * Function to map from the species_names_filter argument to the speciesNamesFilterMode required by the
-   * checklist grid. For legacy reasons they don't quite match.
-   */
-  protected static function getSpeciesNameFilterMode($args) {
-  	if (isset($args['species_names_filter'])) {
-  		switch ($args['species_names_filter']) {
-  			case 'language':
-  				return 'currentLanguage';
-  			default:
-  				return $args['species_names_filter'];
-  		}
-  	}
-  	// default is no species name filter.
-  	return false;
-  }
-  
-  /**
-   * Build a JavaScript function  to format the display of existing taxa added to the species input grid
-   * when an existing sample is loaded.
-   */
-  protected static function build_grid_taxon_label_function($args, $options) {
-  	global $indicia_templates;
-  	if (!empty($options['taxonLabelTemplate']) && !empty($indicia_templates[$options['taxonLabelTemplate']])) {
-  		$indicia_templates['taxon_label'] = $indicia_templates[$options['taxonLabelTemplate']];
-  		return;
-  	}
-  	// Set up the indicia templates for taxon labels according to options, as long as the template has been left at it's default state
-  	if ($indicia_templates['taxon_label'] == '<div class="biota"><span class="nobreak sci binomial"><em>{taxon}</em></span> {authority} '.
-  			'<span class="nobreak vernacular">{common}</span></div>') {
-  			// always include the searched name
-  	$php = '$r="";'."\n".
-  			'if ("{language}"=="lat") {'."\n".
-  			'  $r = "<em>{taxon}</em>";'."\n".
-  			'} else {'."\n".
-  			'  $r = "{taxon}";'."\n".
-  			'}'."\n";
-  	// This bit optionally adds '- common' or '- latin' depending on what was being searched
-  	if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-  		$php .= "\n\n".'if ("{preferred}"=="t" && "{common}"!="{taxon}" && "{common}"!="") {'."\n\n\n".
-  				'  $r .= " - {common}";'."\n".
-  				'} else if ("{preferred}"=="f" && "{preferred_name}"!="{taxon}" && "{preferred_name}"!="") {'."\n".
-  				'  $r .= " - <em>{preferred_name}</em>";'."\n".
-  				'}'."\n";
-  	}
-  	// this bit optionally adds the taxon group
-  	if (isset($args['species_include_taxon_group']) && $args['species_include_taxon_group'])
-  		$php .= '$r .= "<br/><strong>{taxon_group}</strong>";'."\n";
-  	// Close the function
-  	$php .= 'return $r;'."\n";
-  	$indicia_templates['taxon_label'] = $php;
-  	}
-  }
-  
-  /**
-   * Load the attributes for the sample defined by $entity_to_load
-   */
-  protected static function getAttributes($args, $auth) {
-  	return self::getAttributesForSample($args, $auth, data_entry_helper::$entity_to_load['sample:id']);
-  }
-  
-  /**
-   * Load the attributes for the sample defined by a supplied Id.
-   */
-  private static function getAttributesForSample($args, $auth, $id) {
-  	$attrOpts = array(
-  			'valuetable'=>'sample_attribute_value'
-  			,'attrtable'=>'sample_attribute'
-  			,'key'=>'sample_id'
-  			,'fieldprefix'=>'smpAttr'
-  			,'extraParams'=>$auth['read']
-  			,'survey_id'=>$args['survey_id']
-  	);
-  	if (!empty($id))
-  		$attrOpts['id'] = $id;
-  	// select only the custom attributes that are for this sample method or all sample methods, if this
-  	// form is for a specific sample method.
-  	if (!empty($args['sample_method_id']))
-  		$attrOpts['sample_method_id']=$args['sample_method_id'];
-  	$attributes = data_entry_helper::getAttributes($attrOpts, false);
-  	return $attributes;
-  }
-  
-
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
