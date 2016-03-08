@@ -1248,51 +1248,55 @@ $('#$escaped').change(function(e) {
     return self::apply_template('georeference_lookup', $options);
   }
   
- /**
-  * A version of the select control which supports hierarchical termlist data by adding new selects to the next line
-  * populated with the child terms when a parent term is selected.
-  *
-  * @param array $options Options array with the following possibilities:<ul>
-  * <li><b>fieldname</b><br/>
-  * Required. The name of the database field this control is bound to.</li>
-  * <li><b>id</b><br/>
-  * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-  * <li><b>default</b><br/>
-  * Optional. The default value to assign to the control. This is overridden when reloading a
-  * record with existing data for this control.</li>
-  * <li><b>class</b><br/>
-  * Optional. CSS class names to add to the control.</li>  *
-  * <li><b>table</b><br/>
-  * Table name to get data from for the select options. Should be termlists_term for termlist data.</li>
-  * <li><b>report</b><br/>
-  * Report name to get data from for the select options if the select is being populated by a service call using a report.
-  * Mutually exclusive with the table option. The report should return a parent_id field.</li>
-  * <li><b>captionField</b><br/>
-  * Field to draw values to show in the control from if the select is being populated by a service call.</li>
-  * <li><b>valueField</b><br/>
-  * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
-  * to the value of captionField.</li>
-  * <li><b>extraParams</b><br/>
-  * Optional. Associative array of items to pass via the query string to the service. This
-  * should at least contain the read authorisation array if the select is being populated by a service call. It can also contain
-  * view=cache to use the cached termlists entries or view=detail for the uncached version.</li>
-  * <li><b>captionTemplate</b><br/>
-  * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-  * with each database field represented as {fieldname}.</li>
-  * </ul>
-  * The output of this control can be configured using the following templates: 
-  * <ul>
-  * <li><b>select</b></br>
-  * Template used for the HTML select element.
-  * </li>
-  * <li><b>select_item</b></br>
-  * Template used for each option item placed within the select element.
-  * </li>
-  * <li><b>hidden_text</b></br>
-  * HTML used for a hidden input that will hold the value to post to the database.
-  * </li>
-  * </ul>
-  */
+  /**
+   * A version of the select control which supports hierarchical termlist data by adding new selects to the next line
+   * populated with the child terms when a parent term is selected.
+   *
+   * @param array $options Options array with the following possibilities:<ul>
+   * <li><b>fieldname</b><br/>
+   * Required. The name of the database field this control is bound to.</li>
+   * <li><b>id</b><br/>
+   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
+   * <li><b>default</b><br/>
+   * Optional. The default value to assign to the control. This is overridden when reloading a
+   * record with existing data for this control.</li>
+   * <li><b>class</b><br/>
+   * Optional. CSS class names to add to the control.</li>  *
+   * <li><b>table</b><br/>
+   * Table name to get data from for the select options. Should be termlists_term for termlist data.</li>
+   * <li><b>report</b><br/>
+   * Report name to get data from for the select options if the select is being populated by a service call using a report.
+   * Mutually exclusive with the table option. The report should return a parent_id field.</li>
+   * <li><b>captionField</b><br/>
+   * Field to draw values to show in the control from if the select is being populated by a service call.</li>
+   * <li><b>valueField</b><br/>
+   * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
+   * to the value of captionField.</li>
+   * <li><b>extraParams</b><br/>
+   * Optional. Associative array of items to pass via the query string to the service. This
+   * should at least contain the read authorisation array if the select is being populated by a service call. It can also contain
+   * view=cache to use the cached termlists entries or view=detail for the uncached version.</li>
+   * <li><b>captionTemplate</b><br/>
+   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
+   * with each database field represented as {fieldname}.</li>
+   * </ul>
+   * The output of this control can be configured using the following templates:
+   * <ul>
+   * <li><b>select</b></br>
+   * Template used for the HTML select element.
+   * </li>
+   * <li><b>select_item</b></br>
+   * Template used for each option item placed within the select element.
+   * </li>
+   * <li><b>hidden_text</b></br>
+   * HTML used for a hidden input that will hold the value to post to the database.
+   * </li>
+   * <li><b>autoSelectSingularChildItem</b></br>
+   * When selecting parent items in the hierarchical select, then sometimes there might be only one child item.
+   * Set this option to true if you want that single item to be automatically selected in that scenario.
+   * </li>
+   * </ul>
+   */
   public static function hierarchical_select($options) {
     $options = array_merge(array(
       'id'=>'select-'.rand(0,10000),
@@ -1312,7 +1316,7 @@ $('#$escaped').change(function(e) {
       else {
         $itemCaption = $item[$options['captionField']];
       }
-      
+
       if (empty($item['parent_id']))
         $lookupValues[$itemValue] = $itemCaption;
       else {
@@ -1327,18 +1331,22 @@ $('#$escaped').change(function(e) {
     $id = preg_replace('/[^a-zA-Z0-9]/', '', $options['id']);
     // dump the control population data out for JS to use
     self::$javascript .= "indiciaData.selectData$id=".json_encode($childData).";\n";
+    
+    if (isset($options['autoSelectSingularChildItem']) AND $options['autoSelectSingularChildItem']==true)
+      self::$javascript .= "indiciaData.autoSelectSingularChildItem=true;\n";
+
     // Convert the options so that the top-level select uses the lookupValues we've already loaded rather than reloads its own.
     unset($options['table']);
     unset($options['report']);
     unset($options['captionField']);
     unset($options['valueField']);
     $options['lookupValues'] = $lookupValues;
-    
+
     // as we are going to output a select using the options, but will use a hidden field for the form value for the selected item, 
     // grab the fieldname and prevent the topmost select having the same name.
     $fieldname = $options['fieldname'];
     $options['fieldname'] = 'parent-'.$options['fieldname'];
-    
+
     // Output a select. Use templating to add a wrapper div, so we can keep all the hierarchical selects together. 
     global $indicia_templates;
     $oldTemplate = $indicia_templates['select'];
@@ -1362,18 +1370,28 @@ $('#$escaped').change(function(e) {
     self::$javascript .= "
   // enclosure needed in case there are multiple on the page
   (function () {
-    function pickHierarchySelectNode(select) {
+    function pickHierarchySelectNode(select,fromOnChange) {
       select.nextAll().remove();
       if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
         var html='<select class=\"hierarchy-select\"><option>".$options['blankText']."</option>', obj;
         $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
-          html += '<option value=\"'+item.id+'\">' + item.caption + '</option>';
+          //If option is set then if there is only a single child item, auto select it in the list
+          //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
+          //We don't want to auto-select the child on page load, if that hasn't actually been saved to the database yet.
+          if (indiciaData.selectData$id [select.val()].length ===1 && indiciaData.autoSelectSingularChildItem===true && fromOnChange===true) {
+            html += '<option value=\"'+item.id+'\" selected>' + item.caption + '</option>';
+            //Need to set the hidden value for submission, so correct value is actually saved to the database, not just shown visually on screen.
+            //Make sure we escape the colon for jQuery selector also.
+            $('#'+'".$hiddenOptions['id']."'.replace(':','\\\\:')).val(item.id);
+          } else {
+            html += '<option value=\"'+item.id+'\">' + item.caption + '</option>';
+          }
         });
         html += '</select>';
         obj=$(html);
         obj.change(function(evt) { 
           $('#fld-$safeId').val($(evt.target).val());
-          pickHierarchySelectNode($(evt.target));
+          pickHierarchySelectNode($(evt.target),true);
         });
         select.after(obj);
       }    
@@ -1381,10 +1399,10 @@ $('#$escaped').change(function(e) {
     
     $('#$safeId').change(function(evt) {
       $('#fld-$safeId').val($(evt.target).val());
-      pickHierarchySelectNode($(evt.target));
+      pickHierarchySelectNode($(evt.target),true);
     });
     
-    pickHierarchySelectNode($('#$safeId')); 
+    pickHierarchySelectNode($('#$safeId'),false); 
   
     // Code from here on is to reload existing values.
     function findItemParent(idToFind) {
