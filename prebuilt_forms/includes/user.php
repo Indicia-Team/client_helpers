@@ -62,9 +62,10 @@ function iform_user_get_user_parameters() {
  * @param array $args Parameters passed to the form.
  */
 function iform_user_get_hidden_inputs($args) {
-  $uid = hostsite_get_user_field('id');
-  $email = hostsite_get_user_field('mail');
-  $username = hostsite_get_user_field('name');
+  global $user;
+  $uid = $user->uid;
+  $email = $user->mail;
+  $username = $user->name;
   $uid_attr_id = $args['uid_attr_id'];
   $email_attr_id = $args['email_attr_id'];
   $username_attr_id = $args['username_attr_id'];
@@ -82,6 +83,7 @@ function iform_user_get_hidden_inputs($args) {
  * @return array Associative array.
  */
 function get_options_array_with_user_data($listData) {
+  global $user;
   $r = array();
   if ($listData != ''){
     $params = helper_base::explode_lines($listData);
@@ -110,18 +112,20 @@ function get_options_array_with_user_data($listData) {
  * [permission] - does the user have this permission? Replaces with 1 if they have the permission, else 0.
  */
 function apply_user_replacements($text) {
+  global $user;
   if (!is_string($text))
     return $text;
   $replace=array('{user_id}', '{username}', '{email}');
   $replaceWith=array(
-      hostsite_get_user_field('id'),
-      hostsite_get_user_field('name'),
-      hostsite_get_user_field('mail'),
+      $user->uid, 
+      isset($user->name) ? $user->name : '', 
+      isset($user->mail) ? $user->mail : ''
   );
   // Do basic replacements and trim the data
   $text=trim(str_replace($replace, $replaceWith, $text));  
   // Look for any profile field replacments
   if (preg_match_all('/{([^}]*)}/', $text, $matches) && function_exists('hostsite_get_user_field')) {
+    $profileLoaded=false;
     foreach($matches[1] as $profileField) {
       // got a request for a user profile field, so copy it's value across into the report parameters
       $fieldName = preg_replace('/^profile_/', '', $profileField);
@@ -144,7 +148,7 @@ function apply_user_replacements($text) {
   // Look for any permission replacements
   if (preg_match_all('/\[([^\]]*)\]/', $text, $matches)) {
     foreach($matches[1] as $permission) {
-      $value = hostsite_user_has_permission($permission) ? '1' : '0';
+      $value = user_access($permission) ? '1' : '0';
       $text=str_replace("[$permission]", $value, $text);
     }
   }

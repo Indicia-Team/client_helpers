@@ -266,13 +266,13 @@ class iform_sectioned_transects_edit_transect {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    * @todo: Implement this method 
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     global $user;
     $checks=self::check_prerequisites();
     $args = self::getArgDefaults($args);
@@ -280,8 +280,8 @@ class iform_sectioned_transects_edit_transect {
       return $checks;
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
-    self::$ajaxFormUrl = iform_ajaxproxy_url($nid, 'location');
-    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($nid, 'sample');
+    self::$ajaxFormUrl = iform_ajaxproxy_url($node, 'location');
+    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($node, 'sample');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $typeTerms = array(
       empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term'],
@@ -293,10 +293,10 @@ class iform_sectioned_transects_edit_transect {
       'canEditBody' => true,
       'canEditSections' => true, // this is specifically the number of sections: so can't delete or change the attribute value.
       // Allocations of Branch Manager are done by a person holding the managerPermission.
-      'canAllocBranch' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission']),
+      'canAllocBranch' => $args['managerPermission']=="" || user_access($args['managerPermission']),
       // Allocations of Users are done by a person holding the managerPermission or the allocate Branch Manager.
       // The extra check on this for branch managers is done later
-      'canAllocUser' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission'])
+      'canAllocUser' => $args['managerPermission']=="" || user_access($args['managerPermission']) 
     );
     $settings['attributes'] = data_entry_helper::getAttributes(array(
         'id' => $settings['locationId'],
@@ -366,7 +366,7 @@ class iform_sectioned_transects_edit_transect {
         }
         // If a Branch Manager and not a main manager, then can't edit the number of sections
         if($args['branch_assignment_permission'] != '' &&
-            hostsite_user_has_permission($args['branch_assignment_permission']) &&
+            user_access($args['branch_assignment_permission']) &&
             isset($settings['branchCmsUserAttr']['default']) &&
             !empty($settings['branchCmsUserAttr']['default'])) {
           foreach($settings['branchCmsUserAttr']['default'] as $value) { // now multi value
@@ -475,14 +475,14 @@ class iform_sectioned_transects_edit_transect {
       drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));      
     }
     $ok=true;
-    if (!hostsite_module_exists('iform_ajaxproxy')) {
+    if (!module_exists('iform_ajaxproxy')) {
        drupal_set_message('This form must be used in Drupal with the Indicia AJAX Proxy module enabled.');
        $ok=false;
     }
     if (!function_exists('iform_ajaxproxy_url')) {
       drupal_set_message(lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
           'Indicia Warehouse without having to reload the page.'));
-      $r = '<form method="post">';
+      $r .= '<form method="post">';
       $r .= '<input type="hidden" name="enable" value="t"/>';
       $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'">';
       $r .= '</form>';
@@ -801,7 +801,7 @@ $('#delete-transect').click(deleteSurvey);
       $new_users = array();
       foreach ($users as $uid=>$name){
         $account = user_load($uid);
-        if(hostsite_user_has_permission($args['branch_assignment_permission'], $account))
+        if(user_access($args['branch_assignment_permission'], $account))
           $new_users[$uid]=$name;
       }
       $users = $new_users;

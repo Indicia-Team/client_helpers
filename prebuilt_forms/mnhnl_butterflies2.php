@@ -143,7 +143,7 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
   	// TBD add check for loctools 
     global $indicia_templates;
-  	$isAdmin = hostsite_user_has_permission($args['edit_permission']);
+  	$isAdmin = user_access($args['edit_permission']);
   	if(!$isAdmin) return('');
   	if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));
     $LocationTypeID = iform_mnhnl_getTermID(parent::$auth, 'indicia:location_types',$args['LocationTypeTerm']);
@@ -1103,11 +1103,10 @@ hook_new_site_added = function(feature) {
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters.
-   * @param integer $nid The node's ID
+   * @param array $args iform parameters. 
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args, $nid) {
+  public static function get_submission($values, $args) {
     if (isset($values['source'])){ // comes from main Sites tab, Admins may create so need to check for locations_website entry
       $locModel = submission_builder::wrap_with_images($values, 'location');
       if(isset($values['locations_website:website_id'])) // assume no other submodels

@@ -77,17 +77,17 @@ class extension_notifications_centre {
     $indicia_user_id=hostsite_get_user_field('indicia_user_id');
     self::initialise($auth, $args, $tabalias, $options, $path, $indicia_user_id);
     if ($indicia_user_id)
-      return self::notifications_grid($auth, $options, $args['website_id'], $indicia_user_id); // system
+      return self::notifications_grid($auth, $options, variable_get('indicia_website_id', ''), $indicia_user_id); // system
     else
       return '<p>'.lang::get('The notifications system will be enabled when you fill in at least your surname on your account.').'</p>';
   }  
   
-  private static function initialise($auth, $args, $tabalias, &$options, $path, $user_id) {
+  private static function initialise($auth, $args, $tabalias, $options, $path,$user_id) {
     if (!self::$initialised) {
       $indicia_user_id=hostsite_get_user_field('indicia_user_id');
       if ($indicia_user_id) {
         iform_load_helpers(array('report_helper'));
-        report_helper::$javascript .= "indiciaData.website_id = ".$args['website_id'].";\n";
+        report_helper::$javascript .= "indiciaData.website_id = ".variable_get('indicia_website_id', '').";\n";
         report_helper::$javascript .= "indiciaData.user_id = ".$indicia_user_id.";\n";
         //The proxy url used when interacting with the notifications table in the database.
         report_helper::$javascript .= "indiciaData.notification_proxy_url = '".iform_ajaxproxy_url(null, 'notification')."';\n";
@@ -103,21 +103,8 @@ class extension_notifications_centre {
         //called remove-notifications is set. We can check for this when the 
         //page reloads and then call the remove notifications code.    
         if (!empty($_POST['remove-notifications']) && $_POST['remove-notifications']==1)
-          self::build_notifications_removal_submission($user_id, $args, $options);
+          self::build_notifications_removal_submission($user_id, $options);
       }
-      
-      // Build $options['columns'] from $args
-      if(array_key_exists('columns_config_list', $args)) {
-        // From e.g.Dynamic report explorer which supports multiple grids.
-        $columnLists = json_decode($args['columns_config_list'], true);
-        // Assume we want the config for the first grid.
-        $options['columns'] = $columnLists[0];
-      }
-      else if(array_key_exists('columns_config', $args)) {
-        // From e.g. Report grid or the above
-        $options['columns'] = json_decode($args['columns_config'], true);
-      }
-            
       self::$initialised = true;
     }
   }
@@ -153,14 +140,14 @@ class extension_notifications_centre {
   /**
    * Build a submission that the system can understand that includes the notifications we
    * want to remove.
+   * @param type $auth
    * @param integer $user_id
-   * @param array $args Form configuration arguments
    * @param array $options
    * 
    */
-  private static function build_notifications_removal_submission($user_id, $args, $options) {
+  private static function build_notifications_removal_submission($user_id,$options) {
     // rebuild the auth token since this is a reporting page but we need to submit data.
-    $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
+    $auth = data_entry_helper::get_read_write_auth(variable_get('indicia_website_id', ''), variable_get('indicia_password', ''));
     //Using 'submission_list' and 'entries' allows us to specify several top-level submissions to the system
     //i.e. we need to be able to submit several notifications.
     $submission['submission_list']['entries'] = array();
@@ -170,7 +157,7 @@ class extension_notifications_centre {
       'system_name'=>'indicia',
       'default_edit_page_path'=>'',
       'view_record_page_path'=>'',
-      'website_id'=>$args['website_id']
+      'website_id'=>variable_get('indicia_website_id', '')
     );
     //If the page is using a filter drop-down option, then collect the type of notification
     //to remove from the filter drop-down
@@ -294,18 +281,16 @@ class extension_notifications_centre {
             'template'=>'<div class="type-{source_type}"><div class="status-{record_status}"></div></div><div class="note-type-{source_type}">{comment}</div>'.
             '<div class="comment-from helpText" style="margin-left: 34px; display: block;">from {username} on {triggered_date}</div>', 'display'=>'Message'),
         'occurrence_id' => array('fieldname'=>'occurrence_id'),
-        'actions' => array('actions' => $availableActions, 'responsive-hide' => array('phone' => true)),
+        'actions' => array('actions'=>$availableActions),
         'triggered_date' => array('fieldname'=>'triggered_date', 'visible' => false)
     );
     // allow columns config to override our default setup
     if (!empty($options['columns'])) {
       foreach($options['columns'] as $column) {
-        if (!empty($column['actions'])) {
+        if (!empty($column['actions']))
           $columns['actions'] = $column;
-        }
-        elseif (!empty($column['fieldname'])) {
+        elseif (!empty($column['fieldname']))
           $columns[$column['fieldname']] = $column;
-        }
       }
     }
     $r = report_helper::report_grid(array(
@@ -319,14 +304,7 @@ class extension_notifications_centre {
       'extraParams'=>$extraParams,
       'paramDefaults'=>array('source_filter'=>'all'),
       'paramsFormButtonCaption'=>lang::get('Filter'),
-      'columns'=>array_values($columns),
-      'responsiveOpts' => array(
-        'breakpoints' => array(
-          'phone' => 480,
-          'tablet-portrait' => 768,
-          'tablet-landscape' => 1024,
-        ),
-      ),           
+      'columns'=>array_values($columns)
     ));
     return $r;
   }

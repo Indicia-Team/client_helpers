@@ -316,8 +316,8 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
    * @param type $node The node
    * @return type The parent get_form method html
    */
-  public static function get_form($args, $nid) {
-    $pageMode = self::getMode($args, $nid);
+  public static function get_form($args, $node) { 
+    $pageMode = self::getMode($args, $node);
     global $user;
     //Always override any role a user has with a larger role if they have that role.
     $roleType = 'guest';
@@ -407,7 +407,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     $r = '';
     //We need a div so we can can put the form into read only mode when required.
     $r = '<div id = "disableDiv">';
-    $r .= parent::get_form($args, $nid);
+    $r .= parent::get_form($args, $node); 
     $r .= '</div>';
     //Get a list of sightings, this is used to determine if there are any that are verified or if there are no sightings at all.
     //If we find this is the case then we set the form into read only mode.
@@ -506,11 +506,10 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
-   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
   
-  public static function get_submission($values, $args, $nid) {
+  public static function get_submission($values, $args) {
     return create_submission($values, $args);
   }
 }

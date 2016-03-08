@@ -455,7 +455,7 @@ jQuery('#".$id."').click(function(){
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $nid) {
+  public static function get_form($args, $node) {
   	global $user;
   	// There is a language entry in the args parameter list: this is derived from the $language DRUPAL global.
   	// It holds the 2 letter code, used to pick the language file from the lang subdirectory of prebuilt_forms.
@@ -467,7 +467,7 @@ jQuery('#".$id."').click(function(){
     $email = $user->mail;
     $username = $user->name;
 
-    if(!hostsite_user_has_permission('IForm n'.$nid.' access')){
+    if(!user_access('IForm n'.$node->nid.' access')){
     	return "<p>".lang::get('LANG_Insufficient_Privileges')."</p>";
     }
     
@@ -486,7 +486,7 @@ jQuery('#".$id."').click(function(){
 		data_entry_helper::add_resource('jquery_ui_'.$args['language']);
 	data_entry_helper::enable_validation('cc-1-collection-details'); // don't care about ID itself, just want resources
 
-	if($args['help_module'] != '' && $args['help_inclusion_function'] != '' && hostsite_module_exists($args['help_module']) && function_exists($args['help_inclusion_function'])) {
+	if($args['help_module'] != '' && $args['help_inclusion_function'] != '' && module_exists($args['help_module']) && function_exists($args['help_inclusion_function'])) {
     	$use_help = true;
     	data_entry_helper::$javascript .= call_user_func($args['help_inclusion_function']);
     } else {
@@ -625,7 +625,7 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
     <span id="cc-1-protocol-details"></span>
   </div>
   <div id="cc-1-body" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active poll-section-body">
-   <form id="cc-1-collection-details" action="'.iform_ajaxproxy_url($nid, 'loc-sample').'" method="POST">
+   <form id="cc-1-collection-details" action="'.iform_ajaxproxy_url($node, 'loc-sample').'" method="POST">
     <input type="hidden" id="website_id"       name="website_id" value="'.$args['website_id'].'" />
     <input type="hidden" id="imp-sref"         name="location:centroid_sref"  value="" />
     <input type="hidden" id="imp-geom"         name="location:centroid_geom" value="" />
@@ -655,7 +655,7 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
     <p>'.lang::get('LANG_Collection_Trailer_Point_2').'</p>
   </div>
 <div style="display:none" />
-    <form id="cc-1-delete-collection" action="'.iform_ajaxproxy_url($nid, 'sample').'" method="POST">
+    <form id="cc-1-delete-collection" action="'.iform_ajaxproxy_url($node, 'sample').'" method="POST">
        <input type="hidden" name="website_id" value="'.$args['website_id'].'" />
        <input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'" />
        <input type="hidden" name="sample:id" value="" />
@@ -1114,7 +1114,7 @@ $('#cc-1-reinit-button').click(function() {
   <div id="cc-2-body" class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-top ui-accordion-content-active poll-section-body">
     <div id="cc-2-flower" >
 	  <div id="cc-2-flower-title">'.lang::get('LANG_Upload_Flower').'</div>
-	  <form id="cc-2-flower-upload" enctype="multipart/form-data" action="'.iform_ajaxproxy_url($nid, 'media').'" method="POST">
+	  <form id="cc-2-flower-upload" enctype="multipart/form-data" action="'.iform_ajaxproxy_url($node, 'media').'" method="POST">
     		<input type="hidden" id="website_id" name="website_id" value="'.$args['website_id'].'" />
     		<input name="upload_file" type="file" class="required" />
      		<input type="submit" value="'.lang::get('LANG_Upload').'" class="btn-submit" />
@@ -1148,14 +1148,14 @@ $('#cc-1-reinit-button').click(function() {
  	<div id="cc-2-environment">
 	  '.iform_pollenators::help_button($use_help, "environment-help-button", $args['help_function'], $args['help_environment_arg']).'
 	  <div id="cc-2-environment-title">'.lang::get('LANG_Upload_Environment').'</div>
- 	  <form id="cc-2-environment-upload" enctype="multipart/form-data" action="'.iform_ajaxproxy_url($nid, 'media').'" method="POST">
+ 	  <form id="cc-2-environment-upload" enctype="multipart/form-data" action="'.iform_ajaxproxy_url($node, 'media').'" method="POST">
     	<input type="hidden" id="website_id" name="website_id" value="'.$args['website_id'].'" />
     	<input name="upload_file" type="file" class="required" />
     	<input type="submit" value="'.lang::get('LANG_Upload').'" class="btn-submit" />
  	  	<div id="cc-2-environment-image" class="poll-image"></div>
       </form>
  	</div>
- 	<form id="cc-2-floral-station" action="'.iform_ajaxproxy_url($nid, 'loc-smp-occ').'" method="POST">
+ 	<form id="cc-2-floral-station" action="'.iform_ajaxproxy_url($node, 'loc-smp-occ').'" method="POST">
       <input type="hidden" id="website_id" name="website_id" value="'.$args['website_id'].'" />
       <input type="hidden" id="location:id" name="location:id" value="" />
       <input type="hidden" id="location:name" name="location:name" value=""/>
@@ -1336,7 +1336,7 @@ toolPoller = function(toolStruct){
         $('#cc-4-insect-image').empty();
         $('#cc-4-insect-image').addClass('loading');
         jQuery('form#cc-4-main-form input[name=occurrence_image\\:path]').val('');
-        $.post('".iform_ajaxproxy_url($nid, 'remoteMedia')."',
+        $.post('".iform_ajaxproxy_url($node, 'remoteMedia')."',
 			{ website_id : '".$args['website_id']."',
 			  file_url : da.urlimage },
 			function(data) {
@@ -1787,7 +1787,7 @@ $('#cc-2-valid-button').click(function() {
   </div>
 </div>
 <div style="display:none" />
-    <form id="cc-3-delete-session" action="'.iform_ajaxproxy_url($nid, 'sample').'" method="POST">
+    <form id="cc-3-delete-session" action="'.iform_ajaxproxy_url($node, 'sample').'" method="POST">
        <input type="hidden" name="website_id" value="'.$args['website_id'].'" />
        <input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'" />
        <input type="hidden" name="sample:id" value="" />
@@ -1933,7 +1933,7 @@ addSession = function(){
 		session.children(':first').children(':first').hide(); // this is the mod button itself
     });
     var formContainer = jQuery('<div />').appendTo(newSession);
-    var newForm = jQuery('<form action=\"".iform_ajaxproxy_url($nid, 'sample')."\" method=\"POST\" class=\"poll-session-form\" />').appendTo(formContainer);
+    var newForm = jQuery('<form action=\"".iform_ajaxproxy_url($node, 'sample')."\" method=\"POST\" class=\"poll-session-form\" />').appendTo(formContainer);
 	jQuery('<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />').appendTo(newForm);
 	jQuery('<input type=\"hidden\" name=\"sample:survey_id\" value=\"".$args['survey_id']."\" />').appendTo(newForm);
 	jQuery('<input type=\"hidden\" name=\"sample:parent_id\" />').appendTo(newForm).val(jQuery('#cc-1-collection-details > input[name=sample\\:id]').val());
@@ -2109,7 +2109,7 @@ jQuery('.mod-button').click(function() {
   <div id="cc-4-body" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active poll-section-body">  
     <div id="cc-4-insect">
       <div id="cc-4-insect-title">'.lang::get('LANG_Upload_Insect').'</div>
-      <form id="cc-4-insect-upload" enctype="multipart/form-data" action="'.iform_ajaxproxy_url($nid, 'media').'" method="POST">
+      <form id="cc-4-insect-upload" enctype="multipart/form-data" action="'.iform_ajaxproxy_url($node, 'media').'" method="POST">
     	<input type="hidden" id="website_id" name="website_id" value="'.$args['website_id'].'" />
     	<input name="upload_file" type="file" class="required" />
         <input type="submit" value="'.lang::get('LANG_Upload').'" class="btn-submit" />
@@ -2140,7 +2140,7 @@ jQuery('.mod-button').click(function() {
       </div>
     </div>
     <div class="poll-break"></div> 
- 	<form id="cc-4-main-form" action="'.iform_ajaxproxy_url($nid, 'occurrence').'" method="POST" >
+ 	<form id="cc-4-main-form" action="'.iform_ajaxproxy_url($node, 'occurrence').'" method="POST" >
     	<input type="hidden" id="website_id" name="website_id" value="'.$args['website_id'].'" />
     	<input type="hidden" id="occurrence_image:path" name="occurrence_image:path" value="" />
     	<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="C" />
@@ -2178,7 +2178,7 @@ jQuery('.mod-button').click(function() {
   </div>
 </div>
 <div style="display:none" />
-    <form id="cc-4-delete-insect" action="'.iform_ajaxproxy_url($nid, 'occurrence').'" method="POST">
+    <form id="cc-4-delete-insect" action="'.iform_ajaxproxy_url($node, 'occurrence').'" method="POST">
        <input type="hidden" name="website_id" value="'.$args['website_id'].'" />
        <input type="hidden" name="occurrence:use_determination" value="Y"/>    
        <input type="hidden" name="occurrence:id" value="" />
@@ -2609,7 +2609,7 @@ $('#cc-4-valid-photo-button').click(function(){
    <p id="cc-5-good">'.lang::get('LANG_Can_Complete_Msg').'</p> 
    <p id="cc-5-bad">'.lang::get('LANG_Cant_Complete_Msg').'</p> 
    <div style="display:none" />
-    <form id="cc-5-collection" action="'.iform_ajaxproxy_url($nid, 'sample').'" method="POST">
+    <form id="cc-5-collection" action="'.iform_ajaxproxy_url($node, 'sample').'" method="POST">
        <input type="hidden" name="website_id" value="'.$args['website_id'].'" />
        <input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'" />
        <input type="hidden" name="sample:id" value="" />
@@ -2706,7 +2706,7 @@ $('#cc-5-complete-collection').click(function(){
    </div>
   <div id="cc-6-footer" class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active poll-section-footer">
     <a id="cc-6-consult-collection" href="" class="ui-state-default ui-corner-all link-button">'.lang::get('LANG_Consult_Collection').'</a>
-    <a href="'.url('node/'.$nid).'" class="ui-state-default ui-corner-all link-button">'.lang::get('LANG_Create_New_Collection').'</a>
+    <a href="'.url('node/'.$node->nid).'" class="ui-state-default ui-corner-all link-button">'.lang::get('LANG_Create_New_Collection').'</a>
   </div>
 </div>
 </div></div>

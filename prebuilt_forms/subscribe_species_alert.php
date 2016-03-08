@@ -73,7 +73,6 @@ class iform_subscribe_species_alert {
           'table'=>'taxon_list',
           'valueField'=>'id',
           'captionField'=>'title',
-          'sharing' => 'reporting',
           'required'=>FALSE,
           'group'=>'Lookups',
           'siteSpecific'=>TRUE
@@ -100,12 +99,12 @@ class iform_subscribe_species_alert {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     $form = '<form action="#" method="POST" id="entry_form">';
     if ($_POST) {
       $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -221,7 +220,6 @@ class iform_subscribe_species_alert {
         'valueField' => 'id',
         'captionField' => 'title',
         'extraParams' => $auth['read'] + array('id' => $args['full_lists'], 'orderby' => 'title'),
-        'sharing' => 'reporting',
         'class' => 'control-width-4'
       ));
     }

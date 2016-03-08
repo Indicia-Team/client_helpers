@@ -109,7 +109,7 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
     if($args['sample_method_id']!=data_entry_helper::$entity_to_load['sample:sample_method_id'])
       throw new exception(lang::get('Attempt to access a record with the wrong sample_method_id.'));
     // enforce that people only access their own data, unless explicitly have permissions
-  	$editor = !empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']);
+  	$editor = !empty($args['edit_permission']) && function_exists('user_access') && user_access($args['edit_permission']);
   	if (!$editor && function_exists('hostsite_get_user_field') &&
   			data_entry_helper::$entity_to_load['sample:created_by_id'] != 1 && // created_by_id can come out as string...
   			data_entry_helper::$entity_to_load['sample:created_by_id'] !== hostsite_get_user_field('indicia_user_id'))
@@ -120,7 +120,7 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
     if(!isset(data_entry_helper::$entity_to_load['sample:date']) &&
         isset($_GET['date']))
       data_entry_helper::$entity_to_load['sample:date'] = $_GET['date'];
-    if (self::$loadedSampleId && !(empty($args['edit_permission']) || hostsite_user_has_permission($args['edit_permission']))){
+    if (self::$loadedSampleId && !(empty($args['edit_permission']) || !function_exists('user_access') || user_access($args['edit_permission']))){
       if (isset(data_entry_helper::$entity_to_load['sample:date']) && preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
         // Date has 4 digit year first (ISO style) - convert date to expected output format
         // @todo The date format should be a global configurable option. It should also be applied to reloading of custom date attributes.
@@ -921,7 +921,7 @@ $('[name=sample\\\\:date]').change(function(){
   	} else return false;
   }
 
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     if(is_array($response)) {
       // we have got here via a post that has not been redirected.
       data_entry_helper::$javascript .= "\njQuery('div.field-name-body').remove();\n";
@@ -929,7 +929,7 @@ $('[name=sample\\\\:date]').change(function(){
              '<p>'.lang::get('The creation of this observation was instigated after adding or modifying a tree, which was done in another tab or window - you may now close this browser tab, should you wish.').'</p>'.
              '<a href="JavaScript:window.close()"><input type="button" class="indicia-button" name="close" value="'.lang::get('Close Tab').'" /></a>';
     }
-    return parent::get_form($args, $nid, $response);
+    return parent::get_form($args, $node, $response);
   }
 
 }

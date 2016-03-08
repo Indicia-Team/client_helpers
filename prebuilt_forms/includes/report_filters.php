@@ -35,13 +35,9 @@ class filter_what extends filter_base {
   public function get_title() {
     return 'What';
   }
-
+  
   /**
    * Define the HTML required for this filter's UI panel.
-   * @param array $readAuth Read authorisation tokens
-   * @param array $options
-   * @return string
-   * @throws \exception
    */
   public function get_controls($readAuth, $options) {
     $r='';
@@ -53,27 +49,23 @@ class filter_what extends filter_base {
     $r .= '<div id="what-tabs">'."\n";
     // data_entry_helper::tab_header breaks inside fancybox. So output manually.
     $r .= '<ul class="ui-helper-hidden">' .
-        '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>Species groups</span></a></li>';
-    if ($familySortOrder!=='off') {
-      $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>Families and other higher taxa</span></a></li>';
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>Species and lower taxa</span></a></li>';
-    } else {
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>Species</span></a></li>';
-    }
-    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>Level</span></a></li>' .
+        '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>Species groups</span></a></li>' .
+        '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>Families and other higher taxa</span></a></li>' . 
+        '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>Species and lower taxa</span></a></li>' . 
+        '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>Level</span></a></li>' .
         '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>Other flags</span></a></li>' .
         '</ul>';
     $r .= '<div id="species-group-tab">' . "\n";
     if (function_exists('hostsite_get_user_field')) {
-      $myGroupIds = hostsite_get_user_field('taxon_groups', array(), true);
+      $myGroupIds = hostsite_get_user_field('taxon_groups', '');
     } else {
-      $myGroupIds = array();
+      $myGroupIds = '';
     }
     if ($myGroupIds) {
       $r .= '<h3>' . lang::get('My groups') . '</h3>';
       $myGroupsData = data_entry_helper::get_population_data(array(
         'table' => 'taxon_group',
-        'extraParams' => $readAuth + array('query'=>json_encode(array('in'=>array('id', $myGroupIds))))
+        'extraParams' => $readAuth + array('query'=>json_encode(array('in'=>array('id', unserialize($myGroupIds)))))
       ));
       $myGroupNames = array();
       data_entry_helper::$javascript .= "indiciaData.myGroups = [];\n";
@@ -104,38 +96,31 @@ class filter_what extends filter_base {
       'addToTable' => false
     ));
     $r .= "</div>\n";
-    if ($familySortOrder!=='off') {
-      $r .= '<div id="families-tab">' . "\n";
-      $r .= '<p>' . lang::get('Search for and build a list of families or other higher taxa to include') . '</p>' .
+    $r .= '<div id="families-tab">' . "\n";
+    $r .= '<p>' . lang::get('Search for and build a list of families or other higher taxa to include') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-      $subListOptions = array(
-        'fieldname' => 'higher_taxa_taxon_list_list',
-        'table' => 'cache_taxa_taxon_list',
-        'captionField' => 'taxon',
-        'valueField' => 'id',
-        'extraParams' => $readAuth + array(
-            'preferred' => 't',
-            'query' => '{"where":["taxon_rank_sort_order<=' . $familySortOrder . '"]}'
-          ),
-        'addToTable' => FALSE
-      );
-      //Use all taxa in the warehouse as there isn't an iform master list so don't need the taxon list id param
-      if (isset($options['taxon_list_id'])) {
-        $subListOptions['extraParams'] = array_merge(array('taxon_list_id' => $options['taxon_list_id']), $subListOptions['extraParams']);
-      }
-      $r .= data_entry_helper::sub_list($subListOptions);
-      $r .= "</div>\n";
-    }
+    $subListOptions = array(      
+      'fieldname' => 'higher_taxa_taxon_list_list',
+      'table' => 'cache_taxa_taxon_list',
+      'captionField' => 'taxon',
+      'valueField' => 'id',
+      'extraParams' => $readAuth + array('preferred' => 't', 'query' => '{"where":["taxon_rank_sort_order<='.$familySortOrder.'"]}'),
+      'addToTable' => false
+    );
+    //Use all taxa in the warehouse as there isn't an iform master list so don't need the taxon list id param
+    if (isset($options['taxon_list_id']))
+      $subListOptions['extraParams'] = array_merge(array('taxon_list_id' => $options['taxon_list_id']),$subListOptions['extraParams']);
+    $r .= data_entry_helper::sub_list($subListOptions);
+    $r .= "</div>\n";
     $r .= '<div id="species-tab">' . "\n";
     $r .= '<p>' . lang::get('Search for and build a list of species or genera to include.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-    $rankFilter = $familySortOrder==='off' ? array() : array('query' => '{"where":["taxon_rank_sort_order>'.$familySortOrder.'"]}');
-    $subListOptions = array(
+    $subListOptions = array(      
       'fieldname' => 'taxa_taxon_list_list',
       'table' => 'cache_taxa_taxon_list',
       'captionField' => 'taxon',
       'valueField' => 'preferred_taxa_taxon_list_id',
-      'extraParams' => $readAuth + $rankFilter,
+      'extraParams' => $readAuth + array('query' => '{"where":["taxon_rank_sort_order>'.$familySortOrder.'"]}'),
       'addToTable' => false
     );
     //Use all taxa in the warehouse as there isn't an iform master list so don't need the taxon list id param
@@ -303,8 +288,8 @@ class filter_where extends filter_base {
     $systemsConfig = '4326'; // default
     if (!empty($options['sref_systems']))
       $systemsConfig = $options['sref_systems'];
-    elseif (function_exists('hostsite_get_config_value'))
-      $systemsConfig = hostsite_get_config_value('iform', 'spatial_systems', '4326');
+    elseif (function_exists('variable_get'))
+      $systemsConfig = variable_get('indicia_spatial_systems', '4326');
     $list = explode(',', str_replace(' ', '', $systemsConfig));
     foreach($list as $system) {
       $systems[$system] = lang::get("sref:$system");
@@ -317,14 +302,14 @@ class filter_where extends filter_base {
     $r .= '</fieldset></fieldset>';
     $r .= '<fieldset><legend>'.lang::get('Or, select a drawing tool in the map toolbar then draw a boundary to find intersecting records').'</legend>';
     if (empty($options['linkToMapDiv'])) {
-      if (function_exists('hostsite_get_config_value')) {
-        $initialLat=hostsite_get_config_value('iform', 'map_centroid_lat', 55);
-        $initialLong=hostsite_get_config_value('iform', 'map_centroid_long', -1);
-        $initialZoom=(int) hostsite_get_config_value('iform', 'map_zoom', 5);
+      if (function_exists('variable_get')) {
+        $initialLat=variable_get('indicia_map_centroid_lat', 55);
+        $initialLong=variable_get('indicia_map_centroid_long', -1);
+        $initialZoom=(int) variable_get('indicia_map_zoom', 5);        
       } else {
         $initialLat=55;
         $initialLong=-1;
-        $initialZoom=5;
+        $initialZoom=5;  
       }
       // need our own map on the popup
       // The js wrapper around the map div does not help here, since it breaks fancybox and fancybox is js only anyway.
@@ -340,10 +325,8 @@ class filter_where extends filter_base {
         'initial_zoom'=>$initialZoom,
         'width'=>'100%',
         'height'=>400,
-        'standardControls'=>array('layerSwitcher','panZoomBar','drawPolygon','drawLine','drawPoint',
-          'modifyFeature','clearEditLayer'),
-        'readAuth' => $readAuth,
-        'gridRefHint' => true
+        'standardControls'=>array('layerSwitcher','panZoomBar','drawPolygon','drawLine','drawPoint','clearEditLayer'),
+        'readAuth' => $readAuth
       ));
       $indicia_templates['jsWrap'] = $oldwrap;
     } 
@@ -427,36 +410,6 @@ class filter_occurrence_id extends filter_base {
 }
 
 /**
- * Class defining a "id" filter - sample selection by known id.
- */
-class filter_sample_id extends filter_base {
-
-  public function get_title() {
-    return 'Sample ID';
-  }
-
-  /**
-   * Define the HTML required for this filter's UI panel.
-   */
-  public function get_controls($readAuth, $options) {
-    $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
-    $r .= data_entry_helper::select(array(
-      'label' => lang::get('Sample ID'),
-      'fieldname' => 'sample_id_op',
-      'lookupValues'=>array('='=>'is','>='=>'is at least','<='=>'is at most'),
-      'controlWrapTemplate' => 'justControl'
-    ));
-    $r .= data_entry_helper::text_input(array(
-      'fieldname' => 'sample_id',
-      'class'=>'control-width-2',
-      'controlWrapTemplate' => 'justControl'
-    ));
-    $r .= '</div>';
-    return $r;
-  }
-}
-
-/**
  * Class defining a "quality" filter - record status, photos, verification rule check selection.
  */
 class filter_quality extends filter_base {
@@ -475,65 +428,17 @@ class filter_quality extends filter_base {
       'fieldname'=>'quality',
       'id'=>'quality-filter',
       'lookupValues' => array(
-        'V1' => lang::get('Accepted as correct records only'),
-        'V' => lang::get('Accepted records only'),
-        '-3' => lang::get('Reviewer agreed at least plausible'),
+        'V' => lang::get('Verified records only'),
         'C' => lang::get('Recorder was certain'),
         'L' => lang::get('Recorder thought the record was at least likely'),
-        'P' => lang::get('Not reviewed'),
-        'T' => lang::get('Not reviewed but trusted recorder'),
-        '!R' => lang::get('Exclude not accepted records'),
-        '!D' => lang::get('Exclude queried or not accepted records'),
+        'P' => lang::get('Pending verification'),
+        'T' => lang::get('Pending verification for trusted records'),
+        '!R' => lang::get('Exclude rejected'),
+        '!D' => lang::get('Exclude dubious or rejected'),
         'all' => lang::get('All records'),
         'D' => lang::get('Queried records only'),
-        'A' => lang::get('Answered records only'),
-        'R' => lang::get('Not accepted records only'),
-        'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
-        'DR' => lang::get('Queried or not accepted records')
-      )
-    ));
-    $r .= data_entry_helper::select(array(
-      'label'=>'Automated checks',
-      'fieldname'=>'autochecks',
-      'lookupValues'=>array(
-        ''=>lang::get('Not filtered'),
-        'P'=>lang::get('Only include records that pass all automated checks'),
-        'F'=>lang::get('Only include records that fail at least one automated check')
-      )
-    ));
-    $r .= data_entry_helper::checkbox(array(
-      'label' => lang::get('Only include records which have photos available'),
-      'fieldname' => 'has_photos'
-    ));
-    return $r;
-  }
-}
-
-/**
- * Class defining a "quality" filter for samples - based on record status.
- */
-class filter_quality_sample extends filter_base {
-
-  public function get_title() {
-    return 'Quality';
-  }
-
-  /**
-   * Define the HTML required for this filter's UI panel.
-   */
-  public function get_controls($readAuth) {
-    $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
-    $r .= data_entry_helper::select(array(
-      'label'=>lang::get('Samples to include'),
-      'fieldname'=>'quality',
-      'id'=>'quality-filter',
-      'lookupValues' => array(
-        'V' => lang::get('Accepted records only'),
-        'P' => lang::get('Not reviewed'),
-        '!R' => lang::get('Exclude not accepted records'),
-        '!D' => lang::get('Exclude queried or not accepted records'),
-        'all' => lang::get('All records'),
-        'R' => lang::get('Not accepted records only')
+        'R' => lang::get('Rejected records only'),
+        'DR' => lang::get('Queried or rejected records')
       )
     ));
     $r .= data_entry_helper::select(array(
@@ -579,7 +484,6 @@ class filter_source extends filter_base {
         'dataSource' => 'library/websites/websites_list',
         'readAuth' => $readAuth,
         'caching' => true,
-        'cachePerUser' => false,
         'extraParams' => array('sharing' => $options['sharing'])
       ));  
       if (count($sources)>1) {
@@ -606,7 +510,6 @@ class filter_source extends filter_base {
         'dataSource' => 'library/surveys/surveys_list',
         'readAuth' => $readAuth,
         'caching' => true,
-        'cachePerUser' => false,
         'extraParams' => array('sharing' => $options['sharing'])
       ));
       $titleToDisplay='fulltitle';
@@ -624,7 +527,6 @@ class filter_source extends filter_base {
       'dataSource' => 'library/input_forms/input_forms_list',
       'readAuth' => $readAuth,
       'caching' => true,
-      'cachePerUser' => false,
       'extraParams' => array('sharing' => $options['sharing'])
     );
     //If in the warehouse then we are only interested in the website for the milestone we are editing
@@ -641,7 +543,7 @@ class filter_source extends filter_base {
       if (!empty($source['input_form'])) {
         $r .= '<li class="vis-survey-'.$source['survey_id'].' vis-website-'.$source['website_id'].'">' .
             '<input type="checkbox" value="'.$source['input_form'].'" id="check-form-'.$idx.'"/>' .
-            '<label for="check-form-'.$idx.'">'.ucfirst(trim(preg_replace('/(http(s)?:\/\/)|[\/\-_]|(\?q=)/', ' ', $source['input_form']))).'</label></li>';
+            '<label for="check-form-'.$idx.'">'.ucfirst(trim(preg_replace('/(http:\/\/)|[\/\-_]|(\?q=)/', ' ', $source['input_form']))).'</label></li>';
         $obj[$source['input_form']]=$idx;
       }
     }
@@ -653,10 +555,10 @@ class filter_source extends filter_base {
 }
 
 /**
- * Code to output a standardised report filtering panel.
+ * Code to output a standardised report filtering panel. 
  *
- * Filters can be saved and loaded by each user. Additionally, filters can define permissions to a certain task, e.g. they can be used to define the
- * context within which someone can verify. In this case they provide the "outer limit" of the available records.
+ * Filters can be saved and loaded by each user. Additionally, filters can define permissions to a certain task, e.g. they can be used to define the 
+ * context within which someone can verify. In this case they provide the "outer limit" of the available records. 
  * Requires a [map] control on the page. If you don't want a map, the current option is to include one anyway and use css to hide the #map-container div.
  *
  * @param array $readAuth Pass read authorisation tokens.
@@ -664,69 +566,41 @@ class filter_source extends filter_base {
  *   sharing - define the record sharing task that is being filtered against. Options are reporting (default), peer_review, verification, moderation, data_flow.
  *   context_id - can also be passed as URL parameter. Force the initial selection of a particular context (a record which has defines_permissions=true in the
  *   filters table. Set to "default" to select their profile verification settings when sharing=verification.
- *   filter_id - can also be passed as URL parameter. Force the initial selection of a particular filter record in the filters table.
+ *   filter_id - can also be passed as URL parameter. Force the initial selection of a particular filter record in the filters table. 
  *   filterTypes - allows control of the list of filter panels available, e.g. to turn one off. Associative array keyed by category
  *   so that the filter panels can be grouped (use a blank key if not required). The array values are an array of or strings with a comma separated list
  *   of the filter types to included in the category - options are what, where, when, who, quality, source.
- *   filter-#name# - set the initial value of a report filter parameter #name#.
+ *   filter-#name# - set the initial value of a report filter parameter #name#. 
  *   allowLoad - set to false to disable the load bar at the top of the panel.
  *   allowSave - set to false to disable the save bar at the foot of the panel.
  *   presets - provide an array of preset filters to provide in the filters drop down. Choose from my-records, my-groups (uses
  *     your list of taxon groups in the user account), my-locality (uses your recording locality from the user account),
- *     my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records, queried-records,
- *     answered-records, accepted-records, not-accepted-records.
+ *     my-groups-locality (uses taxon groups and recording locatlity from the user account).
  * @param integer $website_id The current website's warehouse ID.
  * @param string $hiddenStuff Output parameter which will contain the hidden popup HTML that will be shown
  * using fancybox during filter editing. Should be appended AFTER any form element on the page as nested forms are not allowed.
- * @return string HTML for the report filter panel
  */
 function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
-  if (function_exists('iform_load_helpers')) {
+  if (function_exists('iform_load_helpers'))
     iform_load_helpers(array('report_helper'));
-  }
-  else //When running on warehouse we don't have iform_load_helpers
-  {
-    require_once(DOCROOT . 'client_helpers/report_helper.php');
-  }
+  else
+    //When running on warehouse we don't have iform_load_helpers
+    require_once(DOCROOT.'client_helpers/report_helper.php');
   if (!empty($_POST['filter:sharing'])) {
-    $options['sharing'] = $_POST['filter:sharing'];
+    $options['sharing']=$_POST['filter:sharing'];
   }
   $options = array_merge(array(
     'sharing' => 'reporting',
-    'admin' => FALSE,
-    'adminCanSetSharingTo' => array('R' => 'reporting', 'V' => 'verification'),
-    'allowLoad' => TRUE,
-    'allowSave' => TRUE,
+    'admin' => false,
+    'adminCanSetSharingTo' => array('R'=>'reporting', 'V'=>'verification'),
+    'allowLoad' => true,
+    'allowSave' => true,
     'redirect_on_success' => '',
-    'presets' => array(
-      'my-records',
-      'my-queried-records',
-      'my-queried-or-not-accepted-records',
-      'my-not-reviewed-records',
-      'my-accepted-records',
-      'my-groups',
-      'my-locality',
-      'my-groups-locality'
-    ),
-    'entity' => 'occurrence'
+    'presets' => array('my-records', 'my-queried-rejected-records', 'my-pending-records', 'my-verified-records', 'my-groups', 'my-locality', 'my-groups-locality')
   ), $options);
-  // Introduce some extra quick filters useful for verifiers.
-  if ($options['sharing'] === 'verification') {
-    $options['presets'] = array_merge(array(
-      'queried-records',
-      'answered-records',
-      'accepted-records',
-      'not-accepted-records'
-    ), $options['presets']);
-  }
-  if ($options['entity'] === 'sample') {
-    unset($options['presets']['my-groups']);
-    unset($options['presets']['my-groups-locality']);
-  }
   //If in the warehouse we don't need to worry about the iform master list.
-  if (function_exists('hostsite_get_config_value')) {
-    $options = array_merge(array('taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)), $options);
-  }
+  if (function_exists('variable_get'))
+    $options=array_merge(array('taxon_list_id' =>variable_get('iform_master_checklist_id', 0)),$options);
   $options['sharing'] = report_filters_sharing_code_to_full_term($options['sharing']);
   $options['sharingCode'] = report_filters_full_term_to_sharing_code($options['sharing']);
   if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation)$/', $options['sharing']))
@@ -734,7 +608,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   report_helper::add_resource('reportfilters');
   report_helper::add_resource('validation');
   report_helper::add_resource('fancybox');
-  if (function_exists('hostsite_add_library'))
+  if (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY!=='7.x')
     hostsite_add_library('collapse');
   $filterData = report_filters_load_existing($readAuth, $options['sharingCode']);
   $existing = '';
@@ -749,24 +623,20 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
           if (hostsite_get_user_field('id'))
             $title = lang::get('My records'); 
           break;
-        case 'my-queried-records':
+        case 'my-queried-rejected-records':
           if (hostsite_get_user_field('id'))
-            $title = lang::get('My queried records');
+            $title = lang::get('My rejected or queried records'); 
           break;
-        case 'my-queried-or-not-accepted-records':
+        case 'my-pending-records':
           if (hostsite_get_user_field('id'))
-            $title = lang::get('My not accepted or queried records');
+            $title = lang::get('My pending verification records'); 
           break;
-        case 'my-not-reviewed-records':
+        case 'my-verified-records':
           if (hostsite_get_user_field('id'))
-            $title = lang::get('My not reviewed records');
-          break;
-        case 'my-accepted-records':
-          if (hostsite_get_user_field('id'))
-            $title = lang::get('My accepted records');
+            $title = lang::get('My verified records'); 
           break;
         case 'my-groups':
-          if (hostsite_get_user_field('taxon_groups', false, true))
+          if (hostsite_get_user_field('taxon_groups'))
             $title = lang::get('Records in species groups I like to record'); 
           break;
         case 'my-locality':
@@ -774,20 +644,8 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
             $title = lang::get('Records in the locality I generally record in'); 
           break;
         case 'my-groups-locality':
-          if (hostsite_get_user_field('taxon_groups', false, true) && hostsite_get_user_field('location'))
+          if (hostsite_get_user_field('taxon_groups') && hostsite_get_user_field('location'))
             $title = lang::get('Records of my species groups in my locality'); 
-          break;
-        case 'queried-records':
-          $title = lang::get('Queried records');
-          break;
-        case 'answered-records':
-          $title = lang::get('Records with answers');
-          break;
-        case 'accepted-records':
-          $title = lang::get('Accepted records');
-          break;
-        case 'not-accepted-records':
-          $title = lang::get('Not accepted records');
           break;
         default:
           throw new exception("Unsupported preset $preset for the filter panel");
@@ -798,8 +656,8 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       }
     }
     if (count($options['presets'])) {
-      if ($groups=hostsite_get_user_field('taxon_groups', false, true))
-        data_entry_helper::$javascript .= "indiciaData.userPrefsTaxonGroups='".implode(',', $groups)."';\n";
+      if ($groups=hostsite_get_user_field('taxon_groups'))
+        data_entry_helper::$javascript .= "indiciaData.userPrefsTaxonGroups='".implode(',', array_keys(unserialize($groups)))."';\n";
       if ($location=hostsite_get_user_field('location'))
         data_entry_helper::$javascript .= "indiciaData.userPrefsLocation=".$location.";\n";
     }
@@ -807,8 +665,8 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     if ($options['sharing']==='verification') {
       // apply legacy verification settings from their profile
       $location_id = hostsite_get_user_field('location_expertise');
-      $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise', false, true);
-      $survey_ids = hostsite_get_user_field('surveys_expertise', false, true);
+      $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise');
+      $survey_ids = hostsite_get_user_field('surveys_expertise');
       if ($location_id || $taxon_group_ids || $survey_ids) {
         $selected = (!empty($options['context_id']) && $options['context_id']==='default') ? 'selected="selected" ' : '';
         $contexts .= "<option value=\"default\" $selected>".lang::get('My verification records')."</option>";
@@ -817,18 +675,20 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
           // user profile geographic limits should always be based on an indexed location.
           $def['indexed_location_id'] = $location_id;
         if ($taxon_group_ids) {
-          $def['taxon_group_list']=implode(',', $taxon_group_ids);
+          $arr=unserialize($taxon_group_ids);
+          $def['taxon_group_list']=implode(',', $arr);
           $def['taxon_group_names']=array();
           $groups = data_entry_helper::get_population_data(array(
             'table' => 'taxon_group',
-            'extraParams' => $readAuth + array('id' => $taxon_group_ids)
+            'extraParams' => $readAuth + array('id' => $arr)
           ));
           foreach ($groups as $group) {
             $def['taxon_group_names'][$group['id']]=$group['title'];
           }
         }
         if ($survey_ids) {
-          $def['survey_list']=implode(',', array_filter($survey_ids));
+          $arr=unserialize($survey_ids);
+          $def['survey_list']=implode(',', array_filter($arr));
         }
         $contextDefs['default'] = $def;
       }
@@ -855,7 +715,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       $reload = data_entry_helper::get_reload_link_parts();
       $reloadPath = $reload['path'];
       if(count($reload['params'])) $reloadPath .= '?'.data_entry_helper::array_to_query_string($reload['params']);
-      $r .= "<form action=\"$reloadPath\" method=\"post\" >";
+      $r .= "<form action=\"$reloadPath\" method=\"post\" />";
       $r .= data_entry_helper::select(array(
           'label'=>lang::get('Select filter type'),
           'fieldname'=>'filter:sharing',
@@ -897,27 +757,15 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       $r .= "<input type=\"hidden\" id=\"select-filters-user\" value=\"$options[filters_user_id]\"/>";
   }
   $r .= '<div id="filter-panes">';
-  if ($options['entity']==='occurrence') {
-    $filters = array(
-      'filter_what'=>new filter_what(),
-      'filter_where'=>new filter_where(),
-      'filter_when'=>new filter_when(),
-      'filter_who'=>new filter_who(),
-      'filter_occurrence_id'=>new filter_occurrence_id(),
-      'filter_quality'=>new filter_quality(),
-      'filter_source'=>new filter_source()
-    );
-
-  } elseif ($options['entity']==='sample') {
-    $filters = array(
-      'filter_where'=>new filter_where(),
-      'filter_when'=>new filter_when(),
-      'filter_who'=>new filter_who(),
-      'filter_sample_id'=>new filter_sample_id(),
-      'filter_quality'=>new filter_quality_sample(),
-      'filter_source'=>new filter_source()
-    );
-  }
+  $filters = array(
+    'filter_what'=>new filter_what(),
+    'filter_where'=>new filter_where(), 
+    'filter_when'=>new filter_when(), 
+    'filter_who'=>new filter_who(), 
+    'filter_occurrence_id'=>new filter_occurrence_id(), 
+    'filter_quality'=>new filter_quality(),
+    'filter_source'=>new filter_source()
+  );
   if (!empty($options['filterTypes'])) {
     $filterModules = array();
     foreach ($options['filterTypes'] as $category => $list) {
@@ -1001,6 +849,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     
   }   
   $r .= '</div>';
+  report_helper::$js_read_tokens = $readAuth;
   report_helper::$javascript .= "indiciaData.lang.CreateAFilter='".lang::get('Create a filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ModifyFilter='".lang::get('Modify filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.FilterReport='".lang::get('New report')."';\n";

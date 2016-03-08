@@ -791,7 +791,7 @@ class iform_report_calendar_summary_2 {
   	return isset(self::$siteUrlParams[self::$SurveyKey]);
   }
 
-  private static function location_control($args, $readAuth, $nid, &$options)
+  private static function location_control($args, $readAuth, $node, &$options)
   {
   	// note that when in user specific mode it returns the list currently assigned to the user: it does not give 
   	// locations which the user previously recorded data against, but is no longer allocated to.
@@ -815,7 +815,7 @@ class iform_report_calendar_summary_2 {
             'caching' => true,
             'dataSource' => 'library/locations/locations_list_exclude_sensitive');
     $allowSensitive = empty($args['sensitivityLocAttrId']) ||
-        (!empty($args['sensitivityAccessPermission']) && hostsite_user_has_permission($args['sensitivityAccessPermission']));
+        (function_exists('user_access') && !empty($args['sensitivityAccessPermission']) && user_access($args['sensitivityAccessPermission']));
     if(!empty($args['sensitivityLocAttrId']))
       $locationListArgs['extraParams']['locattrs'] = $args['sensitivityLocAttrId'];
     $attrArgs = array(
@@ -844,7 +844,7 @@ class iform_report_calendar_summary_2 {
           $lookUpValues[$termDetails['id']] = $termDetails['term'];
         }
         // if location is predefined, can not change unless a 'manager_permission'
-        $ctrlid='calendar-location-type-'.$nid;
+        $ctrlid='calendar-location-type-'.$node->nid;
         $ctrl .= data_entry_helper::select(array(
                  'label' => lang::get('Site Type'),
                  'id' => $ctrlid,
@@ -959,7 +959,7 @@ class iform_report_calendar_summary_2 {
       $locs[$location['id']]=$location;
     }
     natcasesort($sort);
-    $ctrlid='calendar-location-select-'.$nid;
+    $ctrlid='calendar-location-select-'.$node->nid;
     $ctrl .='<label for="'.$ctrlid.'" class="location-select-label">'.lang::get('Filter by site').
           ': </label><select id="'.$ctrlid.'" class="location-select">'.
           '<option value="" class="location-select-option" '.($siteUrlParams[self::$locationKey]['value']=='' ? 'selected="selected" ' : '').'>'.$description.'</option>';
@@ -1024,7 +1024,7 @@ class iform_report_calendar_summary_2 {
   	}
   }
   
-  private static function user_control(&$args, $readAuth, $nid, &$options)
+  private static function user_control(&$args, $readAuth, $node, &$options)
   {
   	// user filter is keyed on the CMS User ID; converted to cms_user_id/Indicia user_id pair by report_helper, if applicable.
     // we don't use the userID option as the user_id can be blank, and will force the parameter request if left as a blank
@@ -1038,7 +1038,7 @@ class iform_report_calendar_summary_2 {
     $options['extraParams']['user_id'] = $options['user_id'];
     $userList=array();
     
-    if(!isset($args['manager_permission']) || $args['manager_permission']=="" || !hostsite_user_has_permission($args['manager_permission'])) {
+    if(!isset($args['manager_permission']) || $args['manager_permission']=="" || !user_access($args['manager_permission'])) {
       // user is a normal user or branch manager
       $userList[$user->uid]=$user; // just me
       // unset linkURL if normal user and user_id is not specified to be me: pass in flag so warning message displayed.
@@ -1051,7 +1051,7 @@ class iform_report_calendar_summary_2 {
       	default : // all users or another user so no access to samples via links
       		unset($args['linkURL']);
       		$options['linkMessage'] = '<p>'.lang::get('In order to have the column headings as links to the data entry pages for the Visit, you must set the').' "'.lang::get('Filter by recorder').'" '.
-      				(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']) ?
+      				(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission']) ?
       							lang::get(' control to yourself or branch data.') : lang::get(' control to yourself.')).'</p>';
       }
     } else {
@@ -1077,7 +1077,7 @@ class iform_report_calendar_summary_2 {
           }
         }
        } else {
-        if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
+        if (function_exists('module_exists') && module_exists('easy_login')) {
           // easy_login active: identify users who have entered data by the created_by_id on the main sample record.
           // TODO consider whether should check only top level samples here? may not be necessary if sample_method set.
           $sampleArgs=array(// 'nocache'=>true,
@@ -1162,14 +1162,14 @@ class iform_report_calendar_summary_2 {
     }
     // The option values are CMS User ID, not Indicia ID.
     // This implies that $siteUrlParams[self::$userKey] is also CMS User ID.
-    $ctrlid = 'calendar-user-select-'.$nid;
+    $ctrlid = 'calendar-user-select-'.$node->nid;
     $ctrl .= '<label for="'.$ctrlid.'" class="user-select-label">'.lang::get('Filter by recorder').
           ': </label><select id="'.$ctrlid.'" class="user-select">'.
           '<option value='.($user->uid).' class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$user->uid  ? 'selected="selected" ' : '').'>'.lang::get('My data').'</option>'.
-          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']) ? '<option value="branch" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=="branch"  ? 'selected="selected" ' : '').'>'.lang::get('Branch data').'</option>' : '').
+          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission']) ? '<option value="branch" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=="branch"  ? 'selected="selected" ' : '').'>'.lang::get('Branch data').'</option>' : '').
           '<option value="all" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']=='' ? 'selected="selected" ' : '').'>'.lang::get('All recorders').'</option>';
     $found = $siteUrlParams[self::$userKey]['value']==$user->uid ||
-          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']) && $siteUrlParams[self::$userKey]['value']=="branch") ||
+          (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission']) && $siteUrlParams[self::$userKey]['value']=="branch") ||
           $siteUrlParams[self::$userKey]['value']=='';
     $userListArr = array();
     foreach($userList as $id => $account) {
@@ -1280,7 +1280,7 @@ jQuery('#".$ctrlid."').change(function(){
     }
   }
 
-  private static function year_control($args, $readAuth, $nid, &$options)
+  private static function year_control($args, $readAuth, $node, &$options)
   {
     switch($args['dateFilter']){
       case 'none': return '';
@@ -1321,11 +1321,11 @@ jQuery('#".$ctrlid."').change(function(){
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $nid Drupal node object
+   * @param array $node Drupal node object
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $nid, $response) {
+  public static function get_form($args, $node, $response) {
     global $user;
     $retVal = '';
     $logged_in = $user->uid>0;
@@ -1342,7 +1342,7 @@ jQuery('#".$ctrlid."').change(function(){
     if(!self::set_up_survey($args, $auth))
       return(lang::get('set_up_survey returned false: survey_id missing from presets or location_type definition.'));
     $reportOptions = self::get_report_calendar_2_options($args, $auth);
-    $reportOptions['id']='calendar-summary-'.$nid;
+    $reportOptions['id']='calendar-summary-'.$node->nid;
     if (!empty($args['removable_params']))
       self::$removableParams = get_options_array_with_user_data($args['removable_params']);
     self::copy_args($args, $reportOptions,
@@ -1374,7 +1374,7 @@ jQuery('#".$ctrlid."').change(function(){
     $reportOptions['location_list'] = array();
     // for a branch user, we have an allowed list of locations for which we can link to the sample.
     self::$branchLocationList = array();
-    if(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission'])) {
+    if(isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && user_access($args['branch_manager_permission'])) {
       // Get list of locations attached to this user via the branch cms user id attribute
       // first need to scan param_presets for survey_id..
       $attrArgs = array(
@@ -1405,15 +1405,15 @@ jQuery('#".$ctrlid."').change(function(){
       $reportOptions['location_list'] = self::$branchLocationList;
     }
     // for an admin, we can link to all samples.
-    if(isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission'])) {
+    if(isset($args['manager_permission']) && $args['manager_permission']!="" && user_access($args['manager_permission'])) {
     	$reportOptions['location_list'] = 'all';
     }
 
     // Add controls first: set up a control bar
     $retVal .= "\n<table id=\"controls-table\" class=\"ui-widget ui-widget-content ui-corner-all controls-table\"><thead class=\"ui-widget-header\"><tr>";
-    $retVal .= self::year_control($args, $auth, $nid, $reportOptions);
-    $retVal .= '<th>'.self::user_control($args, $auth, $nid, $reportOptions).'</th>';
-    $retVal .= '<th>'.self::location_control($args, $auth, $nid, $reportOptions).'</th>'; // note this includes the location_type control if needed
+    $retVal .= self::year_control($args, $auth, $node, $reportOptions);
+    $retVal .= '<th>'.self::user_control($args, $auth, $node, $reportOptions).'</th>';
+    $retVal .= '<th>'.self::location_control($args, $auth, $node, $reportOptions).'</th>'; // note this includes the location_type control if needed
     $siteUrlParams = self::get_site_url_params();
     if (!empty($args['removable_params'])) {      
       foreach(self::$removableParams as $param=>$caption) {
@@ -1450,7 +1450,7 @@ jQuery('#".$ctrlid."').change(function(){
     $retVal.= '</tr></thead></table>';
     $reportOptions['survey_id']=self::$siteUrlParams[self::$SurveyKey]; // Sort of assuming that only one location type recorded against per survey.
     $reportOptions['downloads'] = array();
-    if((isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission'])) || // if you are super manager then you can see all the downloads.
+    if((isset($args['manager_permission']) && $args['manager_permission']!="" && user_access($args['manager_permission'])) || // if you are super manager then you can see all the downloads.
         $reportOptions['extraParams']['location_list'] != '' || // only filled in for a branch user in branch mode
         $reportOptions['extraParams']['user_id'] != '') { // if user specified - either me in normal or branch mode, or a manager
       for($i=1; $i<=4; $i++){

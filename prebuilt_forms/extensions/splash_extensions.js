@@ -1,4 +1,4 @@
-var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, limit_to_post_code,context_sensitive_instructions;
+var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, limit_to_post_code;
 
 (function($) {
   //If the use selects a private plot, then we need to set the sensitivity precision
@@ -307,26 +307,6 @@ var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, l
       }
     });
   }
-  
-  /*
-   * Show instructions depending on on what options are selected.  
-   */
-  context_sensitive_instructions=function() {
-    //Only show Expert Mode help when that checkbox is selected.
-    //Only show Expert Mode Linear Plot help if Expert Mode is selected, and the Lineaer Plot Type is selected.
-    if ($('#locAttr\\:'+indiciaData.expertModeAttrId).is(':checked')) {      
-      $('.expert-help').show();
-      if ($('#location\\:location_type_id').val() == indiciaData.linearLocationTypeId) {
-        $('.linear-expert-help').show();
-      } else {
-        $('.linear-expert-help').hide();
-      }
-    } else {
-      $('.expert-help').hide();
-      $('.linear-expert-help').hide();
-    }
-  }
-    
   /*
    * Returns true if an item is found in an array
    */

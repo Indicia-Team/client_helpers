@@ -43,7 +43,7 @@ class form_helper extends helper_base {
    * <li><b>includeOutputDiv</b><br/>
    * Set to true to generate a div after the controls which will receive the form parameter
    * controls when a form is selected.</li>
-   * <li><b>allowConnectionOverride</b><br/>
+   * <li><b>needWebsiteInputs</b><br/>
    * Defaults to false. In this state, the website ID and password controls are not displayed
    * when both the values are already specified, though hidden inputs are put into the form.
    * When set to true, the website ID and password input controls are always included in the form output.
@@ -58,7 +58,6 @@ class form_helper extends helper_base {
     if (!$dir = opendir($path.'prebuilt_forms/'))
       throw new Exception('Cannot open path to prebuilt form library.');
     $groupForms = array();
-    $recommendedForms = array();
     while (false !== ($file = readdir($dir))) {
       $parts=explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts)-1])=='php') {
@@ -75,11 +74,6 @@ class form_helper extends helper_base {
             if (!isset($groupForms[$definition['category']]))
               $groupForms[$definition['category']] = array();
             $groupForms[$definition['category']][] = $file_tokens[0];
-          }
-          if (!empty($definition['recommended'])) {
-            if (!isset($recommendedForms[$definition['category']]))
-              $recommendedForms[$definition['category']] = array();
-            $recommendedForms[$definition['category']][] = $file_tokens[0];
           }
         } elseif (is_callable(array('iform_'.$file_tokens[0], 'get_title'))) {
           $title = call_user_func(array('iform_'.$file_tokens[0], 'get_title'));
@@ -111,19 +105,11 @@ class form_helper extends helper_base {
     asort($categories);
     if (count($groupForms)>0)
       $r .= self::link_to_group_fields($readAuth, $options);
-    if (isset($options['allowConnectionOverride']) && !$options['allowConnectionOverride']
+    if (isset($options['needWebsiteInputs']) && !$options['needWebsiteInputs']
         && !empty($options['website_id']) && !empty($options['password'])) {
       $r .= '<input type="hidden" id="website_id" name="website_id" value="'.$options['website_id'].'"/>';
       $r .= '<input type="hidden" id="password" name="password" value="'.$options['password'].'"/>';
     } else {
-      $r .= data_entry_helper::text_input(array(
-        'label' => lang::get('Warehouse URL'),
-        'fieldname' => 'base_url',
-        'helpText' => lang::get('Enter the URL of the warehouse you are using if you want to override the site default. ' .
-            'Include the trailing slash, e.g. http://myexamplewarehouse.com/'),
-        'default' => isset($options['base_url']) ? $options['base_url'] : '',
-        'class' => 'control-width-5'
-      ));
       $r .= data_entry_helper::text_input(array(
         'label' => lang::get('Website ID'),
         'fieldname' => 'website_id',
@@ -137,19 +123,10 @@ class form_helper extends helper_base {
         'default' => isset($options['password']) ? $options['password'] : ''
       ));
     }
-    $r .= data_entry_helper::checkbox(array(
-      'label' => lang::get('Only show recommended page types'),
-      'fieldname' => 'recommended',
-      'helpText' => lang::get('Tick this box to limit the available page types to the recommended ones provided ' .
-          'within the Indicia core. Unticking the box will allow you to select additional page types, such as ' .
-          'those for specific survey methodologies or previous versions of the code.'),
-      'default' => true,
-      'labelClass' =>'auto'
-    ));
     $r .= data_entry_helper::select(array(
       'id' => 'form-category-picker',
-      'label' => lang::get('Select page category'),
-      'helpText' => lang::get('Select the category for the type of page you are building'),
+      'label' => lang::get('Select form category'),
+      'helpText' => lang::get('Select the form category pick a form from.'),
       'lookupValues' => $categories, 
       'default' => $defaultCategory
     ));
@@ -157,16 +134,14 @@ class form_helper extends helper_base {
     $r .= data_entry_helper::select(array(
       'id' => 'form-picker',
       'fieldname' => 'iform',
-      'label' => lang::get('Page type'),
-      'helpText' => lang::get('Select the page type you want to use.'),
+      'label' => lang::get('Select form'),
+      'helpText' => lang::get('Select the Indicia form you want to use.'),
       'lookupValues' => $availableForms,
       'default' => isset($options['form']) ? $options['form'] : ''
     ));
     
     // div for the form instructions
     $details = '';
-    // Default - we are only going to show recommended page types in the category and page type drop downs.
-    $showRecommendedPageTypes = true;
     if (isset($options['form'])) {
       if (isset($forms[$defaultCategory][$options['form']]['description'])) {
         $details .= '<p>'.$forms[$defaultCategory][$options['form']]['description'].'</p>';
@@ -175,15 +150,13 @@ class form_helper extends helper_base {
         $details .= '<p><a href="'.$forms[$defaultCategory][$options['form']]['helpLink'].'">Find out more...</a></p>';
       }
       if ($details!=='') $details = "<div class=\"ui-state-highlight ui-corner-all page-notice\">$details</div>";
-      // If selecting an existing non-core form, then we need to override the default and show all categories and pages.
-      $showRecommendedPageTypes = !empty($forms[$defaultCategory][$options['form']]['recommended']);
     }
     $r .= "<div id=\"form-def\">$details</div>\n";
     $r .= '<input type="button" value="'.lang::get('Load Settings Form').'" id="load-params" disabled="disabled" />';
     if (isset($options['includeOutputDivs']) && $options['includeOutputDivs']) {
       $r .= '<div id="form-params"></div>';
     }
-    self::add_form_picker_js($forms, $groupForms, $recommendedForms, $showRecommendedPageTypes);
+    self::add_form_picker_js($forms, $groupForms);
     return $r;
   }
   
@@ -193,28 +166,32 @@ class form_helper extends helper_base {
   */
   private static function link_to_group_fields($readAuth, $options) {
     $r = '';
-    if (hostsite_has_group_functionality()) {
-      $r .= data_entry_helper::checkbox(array(
-        'label' => lang::get('This page is going to be used by recording groups'),
-        'fieldname' => 'available_for_groups',
-        'helpText' => lang::get('Tick this box if this page will be is made available for use by ' .
-          'recording groups for their own record collection or reporting.'),
-        'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : false,
-        'labelClass' =>'auto'
-      ));
-      $r .= data_entry_helper::select(array(
-        'label' => lang::get('Which recording group?'),
-        'fieldname' => 'limit_to_group_id',
-        'helpText' => lang::get('If this form is being built specifically for the use of a ' .
-            'single recording group, then choose that group here.'),
-        'blankText' => '<' . lang::get('Any group') . '>',
-        'table' => 'group',
-        'valueField' => 'id',
-        'captionField' => 'title',
-        'extraParams' => $readAuth + array('orderby' => 'title'),
-        'default' => isset($options['limit_to_group_id']) ? $options['limit_to_group_id'] : false,
-        'caching' => false
-      ));
+    if (function_exists('db_query')) {
+      $qry = db_query("SELECT count(*) as count FROM {iform} WHERE iform='group_edit'");
+      if (function_exists('db_fetch_object'))
+        $row = db_fetch_object($qry);
+      else 
+        $row = $qry->fetchObject();
+      if ($row->count>0) {
+        $r .= data_entry_helper::checkbox(array(
+          'label' => lang::get('Allow this form to be used by recording groups'),
+          'fieldname' => 'available_for_groups',
+          'helpText' => lang::get('Tick this box if the form is suitable for use by recording groups for their own record collection or reporting.'),
+          'default' => isset($options['available_for_groups']) ? $options['available_for_groups'] : false
+        ));
+        $r .= data_entry_helper::select(array(
+          'label' => lang::get('Restrict to a recording group'),
+          'fieldname' => 'limit_to_group_id',
+          'helpText' => lang::get('If this form is being built for the private use of 1 recording group, then choose that group here. '.
+              'This does not affect visibility of the actual records input using the form. Only applies if the above checkbox is ticked.'),
+          'blankText' => '<' . lang::get('Unrestricted') . '>',
+          'table' => 'group',
+          'valueField' => 'id',
+          'captionField' => 'title',
+          'extraParams' => $readAuth,
+          'default' => isset($options['limit_to_group_id']) ? $options['limit_to_group_id'] : false
+        ));
+      }
     }
     return $r;
   }
@@ -224,55 +201,32 @@ class form_helper extends helper_base {
    * @param array $forms List of prebuilt forms and their associated settings required 
    * by the picker.
    */
-  private static function add_form_picker_js($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
-    self::$javascript .= "var prebuilt_forms = ".json_encode($forms).
-        ", prebuilt_group_forms = ".json_encode($groupForms).
-        ", prebuilt_recommended_forms = ".json_encode($coreForms).
-        ", showRecommended = " . ($showRecommendedPageTypes ? 'true' : 'false') . ";
-function setCategoryAndPageVisibility() {
+  private static function add_form_picker_js($forms, $groupForms) {
+    self::$javascript .= "var prebuilt_forms = ".json_encode($forms).", prebuilt_group_forms = ".json_encode($groupForms).";
+function changeGroupEnabledStatus() {
   $.each($('#form-category-picker option'), function() {
-    // Hide pages that are not recommended or not group pages, unless specifically allowed. Ignore the <please select> option.
-    if ($(this).attr('value')!=='') {
-      if (($('#available_for_groups').attr('checked') && typeof prebuilt_group_forms[$(this).attr('value')]==='undefined')
-          || ($('#recommended').attr('checked') && typeof prebuilt_recommended_forms[$(this).attr('value')]==='undefined')) {
+    if ($('#available_for_groups').attr('checked')) {
+      if ($(this).attr('value')==='' || typeof prebuilt_group_forms[$(this).attr('value')]==='undefined') {
         $(this).hide();
-        if ($(this).attr('selected')) {
-          $('#form-category-picker option[value=\"\"]').attr('selected',true);
-        }
       } else {
         $(this).show();
       }
+    } else {
+      $(this).show();
     }
   });
-}
-function changeGroupEnabledStatus() {
-  if ($('#available_for_groups').attr('checked')) {
-    $('#ctrl-wrap-limit_to_group_id').slideDown();
-  } else {
-    $('#ctrl-wrap-limit_to_group_id').slideUp();
-  }
-  setCategoryAndPageVisibility();
   $('#form-category-picker').change();
 }
-
 $('#available_for_groups').change(changeGroupEnabledStatus);
-$('#recommended').change(setCategoryAndPageVisibility);
-
 changeGroupEnabledStatus();
-
 $('#form-category-picker').change(function(e) {
   var opts = '<option value=\"\">".lang::get('&lt;Please select&gt;')."</option>',
-    current = $('#form-picker').val(), isGroupPageType, isRecommendedPageType;
+    current = $('#form-picker').val();
   if (typeof prebuilt_forms[e.currentTarget.value]==='undefined') {
     $('#form-picker').html('<option value=\"\">".lang::get('&lt;Please select a category first&gt;')."</option>');
   } else {
     $.each(prebuilt_forms[e.currentTarget.value], function(form, def) {
-      isGroupPageType = typeof prebuilt_group_forms[e.currentTarget.value]!=='undefined'
-          && $.inArray(form, prebuilt_group_forms[e.currentTarget.value])>-1;
-      isRecommendedPageType = typeof prebuilt_recommended_forms[e.currentTarget.value]!=='undefined'
-          && $.inArray(form, prebuilt_recommended_forms[e.currentTarget.value])>-1;
-      if ((!$('#available_for_groups').attr('checked') || isGroupPageType)
-          && (!$('#recommended').attr('checked') || isRecommendedPageType)) {
+      if (!$('#available_for_groups').attr('checked') || (typeof prebuilt_group_forms[e.currentTarget.value]!=='undefined' && $.inArray(form, prebuilt_group_forms[e.currentTarget.value])>-1)) {
         opts += '<option value=\"'+form+'\">'+def.title+'</option>';
       }
     });
@@ -310,15 +264,11 @@ $('#load-params').click(function() {
     if (typeof prebuilt_forms[$('#form-category-picker').val()][$('#form-picker').val()] !== \"undefined\") {
       // now use an Ajax request to get the form params
       $.post(
-        '".self::getRootFolder(false) . self::client_helper_path()."prebuilt_forms_ajax.php',
+        '".self::getRootFolder() . self::client_helper_path()."prebuilt_forms_ajax.php',
         {form: $('#form-picker').val(),
             website_id: $('#website_id').val(),
             password: $('#password').val(),
-            base_url: '".self::$base_url."',
-            generator: $('meta').filter(function() { 
-              return typeof $(this).attr('name')!=='undefined' && $(this).attr('name').toLowerCase() === 'generator';
-            }).attr('content')
-        },
+            base_url: '".self::$base_url."'},
         function(data) {
           $('#form-params').hide().html(data).fadeIn();
           Drupal.attachBehaviors();
@@ -347,13 +297,10 @@ $('#load-params').click(function() {
    * Optional. Defaults to false. If true then only parameters marked as specific to a site
    * are loaded. Used to provide a reduced version of the params form after migrating a
    * form between sites (e.g. when installing a Drupal feature).</li>
-   * <li><b>generator</b>
-   * Optional. A string which, if it contains 'Drupal 7' is used to output
-   * html specific to that CMS. </li>
    * </ul>
    */
   public static function prebuilt_form_params_form($options) {
-    if (function_exists('hostsite_add_library')) {
+    if (function_exists('hostsite_add_library') && (!defined('DRUPAL_CORE_COMPATIBILITY') || DRUPAL_CORE_COMPATIBILITY!=='7.x')) {
       hostsite_add_library('collapse');
     }
     require_once('data_entry_helper.php');
@@ -406,24 +353,16 @@ $('#load-params').click(function() {
     }
     $class=(isset($options['expandFirst']) && $options['expandFirst']) ? 'collapsible' : 'collapsible collapsed';
     foreach($fieldsets as $fieldset=>$content) {
-      $r .= "<fieldset class=\"$class\">\n";
-      // In Drupal 7 the fieldset output includes an extra span
-      // When called from within Drupal, DRUPAL_CORE_COMPATIBILITY can determine
-      // version. When called by Ajax version has to be sent in $options.
-      if((defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='7.x') ||
-          (isset($options['generator']) && stristr($options['generator'], 'Drupal 7'))) {
-        $legendContent = "<span class=\"fieldset-legend\">$fieldset</span>";
-      }
-      else {
-        $legendContent = $fieldset;
-      }
-      $r .= "<legend>$legendContent</legend>\n";
-      $r .= "<div class=\"fieldset-wrapper\">\n";
+      // Drupal 7 collapsible fieldsets broken, see http://drupal.org/node/1607822
+      // so we remove the class
+      if (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='7.x')
+        $class='';
+      $r .= "<fieldset class=\"$class\"><legend>$fieldset</legend>\n";
       $r .= $fieldsets[$fieldset];
-      $r .= "</div>\n"; 
       $r .= "\n</fieldset>\n";
       // any subsequent fieldset should be collapsed
-      $class = 'collapsible collapsed';
+      if (isset($options['expandFirst']) && $options['expandFirst'])
+        $class .= ' collapsed';
     }
     self::$nocache = $oldnocache;
     return $r;

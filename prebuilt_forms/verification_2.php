@@ -144,11 +144,11 @@ class iform_verification_2 {
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $nid Drupal node object's ID
+   * @param array $node Drupal node object
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $nid, $response) {
+  public static function get_form($args, $node, $response) {
     global $user;
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $r = '';

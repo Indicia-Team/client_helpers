@@ -294,16 +294,16 @@ class iform_data_services {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
-    $conn = iform_get_connection_details($nid);
-    data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
+  public static function get_form($args, $node, $response=null) {
+    $conn = iform_get_connection_details($node);
+    data_entry_helper::$js_read_tokens = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (!empty($_GET))
-      self::do_data_services_download($args, $nid);
+      self::do_data_services_download($args, $node);
 
   } 
   
@@ -320,7 +320,7 @@ class iform_data_services {
     // selection as appropriate.
     data_entry_helper::$javascript.="indiciaData.optionalFilters={};\n";
     foreach ($args as $arg=>$value) {
-      if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
+      if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && user_access($value)) {
         // download type available. What they can actually download might be limited by a context filter...
         $sharingType=  ucwords(str_replace('_', ' ', $matches[1]));
         $sharingTypeCode=substr($sharingType, 0, 1);
@@ -340,7 +340,7 @@ class iform_data_services {
         }
         if ($sharingTypeCode==='R') {
           $r['R my']=lang::get('My records for reporting');
-          if (hostsite_user_has_permission($args['download_all_users_reporting']))
+          if (user_access($args['download_all_users_reporting']))
             $r['R']=lang::get('All records for reporting');
         }
         elseif ($sharingTypeCode==='V') {
@@ -367,7 +367,7 @@ class iform_data_services {
   private static function get_download_formats($args) {
     $r = array();
     foreach ($args as $arg=>$value) {
-      if ($value && preg_match('/^([a-z_]+)_format_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
+      if ($value && preg_match('/^([a-z_]+)_format_permission$/', $arg, $matches) && user_access($value)) {
         $r[$matches[1]]=lang::get("format_$matches[1]");
       }
     }
@@ -403,9 +403,9 @@ class iform_data_services {
    * URL arguments date_from, date_to, survey_list, format, download-type
    * @global array $indicia_templates
    * @param type $args
-   * @param type $nid
+   * @param type $node
    */
-  private static function do_data_services_download($args, $nid) {
+  private static function do_data_services_download($args, $node) {
     iform_load_helpers(array('report_helper'));
     
     // default data format JSON
@@ -444,7 +444,7 @@ class iform_data_services {
     require_once('includes/user.php');
     $params = get_options_array_with_user_data($additionalParamText);
     $params = array_merge($params, self::build_params($args));
-    $conn = iform_get_connection_details($nid);
+    $conn = iform_get_connection_details($node);
     
     global $indicia_templates;
     // let's just get the URL, not the whole anchor element

@@ -37,8 +37,7 @@ class iform_group_leave {
     return array(
       'title'=>'Leave a group',
       'category' => 'Recording groups',
-      'description'=>'A page for leaving the membership of a group.',
-      'recommended' => true
+      'description'=>'A page for leaving the membership of a group.'
     );
   }
   
@@ -59,12 +58,12 @@ class iform_group_leave {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     if (!$user_id=hostsite_get_user_field('indicia_user_id'))
       return self::abort('Please ensure that you\'ve filled in your surname on your user profile before leaving a group.', $args);
     if (empty($_GET['group_id']))
@@ -89,7 +88,7 @@ class iform_group_leave {
     if (count($existing)!==1)
       return self::abort('You are not a member of this group.', $args);
     if (!empty($_POST['response']) && $_POST['response']===lang::get('Cancel')) {
-      hostsite_goto_page($args['groups_page_path']);
+      drupal_goto($args['groups_page_path']);
     }
     elseif (!empty($_POST['response']) && $_POST['response']===lang::get('Confirm')) {     
       $data = array('groups_user:id' => $existing[0]['id'], 'groups_user:group_id' => $group['id'], 'groups_user:user_id' => $user_id, 'deleted' => 't');
@@ -97,7 +96,7 @@ class iform_group_leave {
       $response = data_entry_helper::forward_post_to('groups_user', $wrap, $auth['write_tokens']);
       if (isset($response['success'])) {
         hostsite_show_message("You are no longer participating in $group[title]!");
-        hostsite_goto_page($args['groups_page_path']);
+        drupal_goto($args['groups_page_path']);
       } 
       else {
         return self::abort('An error occurred whilst trying to update your group membership.');

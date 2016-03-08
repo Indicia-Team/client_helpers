@@ -1897,7 +1897,7 @@ class iform_wwt_colour_marked_report {
     $defAttrOptions = array('extraParams'=>$auth['read'], 'class'=>"required");
     $attrHtml = '';
     // Drupal specific code
-    if (!hostsite_user_has_permission('IForm n'.self::$node->nid.' enter data by proxy')) {
+    if (!user_access('IForm n'.self::$node->nid.' enter data by proxy')) {
       if (isset($options['lockable'])) {
         unset($options['lockable']);
       }
@@ -1907,7 +1907,7 @@ class iform_wwt_colour_marked_report {
     $defAttrOptions += $options;
     $blockOptions = array();
     $attrHtml .= get_attribute_html($attributes, $args, $defAttrOptions, 'Enter data by proxy', $blockOptions);
-    if (!hostsite_user_has_permission('IForm n'.self::$node->nid.' enter data by proxy')) {
+    if (!user_access('IForm n'.self::$node->nid.' enter data by proxy')) {
       $attrHtml .= '</div>';
     }
   

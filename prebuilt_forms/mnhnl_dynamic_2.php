@@ -213,7 +213,7 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
    * Next the functions which relate to the main front page.
    */
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
-    if(!hostsite_user_has_permission($args['edit_permission'])) return('');
+    if(!user_access($args['edit_permission'])) return('');
     if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));
     if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
     $primary = iform_mnhnl_getTermID(array('read'=>$readAuth), 'indicia:location_types',$args['LocationTypeTerm']);
@@ -251,7 +251,7 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
     if (!$userIdAttr) return lang::get('getSampleListGrid function: This form must be used with a survey that has the CMS User ID sample attribute associated with it, so records can be tagged against their creator.');
     $extraParams = array('survey_id'=>$args['survey_id'], 
         'userID_attr_id'=>$userIdAttr,
-        'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid)); // use -1 if admin - non logged in will not get this far.
+        'userID'=>(user_access($args['edit_permission']) ? -1 :  $user->uid)); // use -1 if admin - non logged in will not get this far.
     $userNameAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS Username', isset($args['sample_method_id']) && $args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if ($userNameAttr) $extraParams['userName_attr_id']=$userNameAttr;
     if(isset($args['targetSpeciesAttr']) && $args['targetSpeciesAttr']!="") {
@@ -319,8 +319,7 @@ deleteSurvey = function(sampleID){
   
   protected static function getSampleListGridPreamble() {
     global $user;
-    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').
-        (hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
+    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(user_access($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
     return $r;
   }
   protected static function getReportActions() {
@@ -1633,11 +1632,10 @@ mapInitialisationHooks.push(function(mapdiv) {
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters.
-   * @param integer $nid The node's ID
+   * @param array $args iform parameters. 
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args, $nid) {
+  public static function get_submission($values, $args) {
     if (isset($values['source'])){ // comes from main Sites tab, Admins may create so need to check for locations_website entry
       $locModel = submission_builder::wrap_with_images($values, 'location');
       if(isset($values['locations_website:website_id'])) // assume no other submodels

@@ -210,7 +210,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
   }
   
   protected static function getExtraGridModeTabsSub($retTabs, $readAuth, $args, $attributes, $rep1, $rep2, $rep3) {
-    $isAdmin = isset($args['edit_permission']) && $args['edit_permission']!="" && hostsite_user_has_permission($args['edit_permission']);
+    $isAdmin = isset($args['edit_permission']) && $args['edit_permission']!="" && user_access($args['edit_permission']);
     if(!$isAdmin) return('');
     if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));
     $confirmedLocationTypeID = iform_mnhnl_getTermID(parent::$auth, 'indicia:location_types',$args['SecondaryLocationTypeTerm']);
@@ -298,8 +298,8 @@ myTerms_change();
       $r = call_user_func(array(get_called_class(), 'getSampleListGridPreamble'));
     else
       $r = '';
-    $isAdmin = isset($args['edit_permission']) && $args['edit_permission']!="" && hostsite_user_has_permission($args['edit_permission']);
-    $isExpert = isset($args['ro_permission']) && $args['ro_permission']!="" && hostsite_user_has_permission($args['ro_permission']);
+    $isAdmin = isset($args['edit_permission']) && $args['edit_permission']!="" && user_access($args['edit_permission']);
+    $isExpert = isset($args['ro_permission']) && $args['ro_permission']!="" && user_access($args['ro_permission']);
     $extraparams = array('survey_id'=>$args['survey_id'],
         'userID_attr_id'=>$userIdAttr,
         'username_attr_id'=>$usernameAttr,
@@ -622,7 +622,7 @@ hook_set_defaults=function(){
     if(self::$mode === self::MODE_EXISTING_RO) $options['disabled']=true;
   	$retVal = iform_mnhnl_lux5kgridControl($auth, $args, parent::$node, array_merge(
       array('initLoadArgs' => '{initial: true}'), $options));
-    self::set_code_functionality($auth, $args, hostsite_user_has_permission($args['edit_permission']));
+    self::set_code_functionality($auth, $args, user_access($args['edit_permission']));
     return $retVal;
   }
 
@@ -1100,11 +1100,10 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters.
-   * @param integer $nid The node's ID
+   * @param array $args iform parameters. 
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args, $nid) {
+  public static function get_submission($values, $args) {
     if (isset($values['source'])){ // comes from main Sites tab, Admins may create so need to check for locations_website entry
       $locModel = submission_builder::wrap_with_images($values, 'location');
       if(isset($values['locations_website:website_id'])) // assume no other submodels

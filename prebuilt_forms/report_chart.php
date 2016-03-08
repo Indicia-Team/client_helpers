@@ -39,8 +39,7 @@ class iform_report_chart {
       'title'=>'Report Chart',
       'category' => 'Reporting',
       'description'=>'Outputs a chart of data loaded from an Indicia report. Can automatically include the report parameters form required for the '.
-          'generation of the report.',
-      'recommended' => true
+          'generation of the report.'
     );
   }
   
@@ -358,11 +357,11 @@ class iform_report_chart {
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $nid Drupal node object ID
+   * @param array $node Drupal node object
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $nid, $response) {
+  public static function get_form($args, $node, $response) {
     iform_load_helpers(array('report_helper', 'map_helper'));
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']); 
     $chartOptions = iform_report_get_report_options($args, $auth);

@@ -55,7 +55,9 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
         $('#instructions').hide();
         $('#record-details-content').show();
         if ($row.parents('tbody').length !== 0) {
-          // point the comments tabs to the correct AJAX call for the selected occurrence.
+          // point the image and comments tabs to the correct AJAX call for the selected occurrence.
+          indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('media'), 'media-tab-tab', 
+              indiciaData.ajaxUrl + '/media/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrence_id);
           indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('comments'), 'comments-tab-tab', 
               indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrence_id);
           // reload current tabs
@@ -375,15 +377,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
           }
         );
       } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'media') {
-        $.get(
-          indiciaData.ajaxUrl + '/media/' + indiciaData.nid + urlSep +
-              'occurrence_id=' + occurrence_id + '&sample_id=' + currRec.extra.sample_id,
-          null,
-          function (data) {
-            $('#media-tab').html(data);
-            $('#media-tab a.fancybox').fancybox();
-          }
-        );
+        $('#media-tab a.fancybox').fancybox();
       }
       // make it clear things are loading
       if (indiciaData.mapdiv !== null) {
