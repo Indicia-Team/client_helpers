@@ -239,11 +239,11 @@ class iform_verification_1 {
    * Expects there to be a sample attribute with caption 'Email' containing the email
    * address.
    * @param array $args Input parameters.
-   * @param array $nid Drupal node object's ID
+   * @param array $node Drupal node object
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $nid, $response) {
+  public static function get_form($args, $node, $response) {
     global $user, $indicia_templates;
     // put each param control in a div, which makes it easier to layout with CSS
     $indicia_templates['prefix']='<div id="container-{fieldname}" class="param-container">';

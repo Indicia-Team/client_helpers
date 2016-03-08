@@ -1,7 +1,6 @@
 var iTM2Opts = {};
 var iTM2Data = {
 		mySiteWKT : [],
-		mySites: [],
 		myData: [],
 		mySpecies: [],
 		mySpeciesIDs: [],
@@ -15,7 +14,7 @@ var iTM2Data = {
 		year2: '',
 		species2: '',
 		event2: '',
-		advancedButtons: true
+		advancedButtons: false
 };
 
 // for loops: Use of these is meant to prevent bugs.
@@ -50,10 +49,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 			// If this means deselecting current choice: set species control to blank.
 			if(iTM2Data.mySpeciesIDs[m] == oldSpecies && !validSpecies)
 				$(iTM2Opts.speciesControlSelector).val('');
-			$(iTM2Opts.speciesControlSelector).find('option[value='+iTM2Data.mySpeciesIDs[m]+']').each(function(idx, elem){
-				if(validSpecies) $(elem).removeAttr('disabled').show();
-				else $(elem).attr('disabled','disabled').hide();
-			});
+			$(iTM2Opts.speciesControlSelector).find('option[value='+iTM2Data.mySpeciesIDs[m]+']').attr('disabled',validSpecies?'':'disabled');
 		}
 		$('.dateErrorWarning').remove();
 		if(!anySpecies)
@@ -66,7 +62,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 		var oldEvent = $(iTM2Opts.eventControlSelector).val();
 		if(species=='') {
 			$(iTM2Opts.eventControlSelector).val('');
-			$(iTM2Opts.eventControlSelector).find('option[value!=]').attr('disabled','disabled').hide();
+			$(iTM2Opts.eventControlSelector).find('option[value!=]').attr('disabled','disabled');
 		} else { // else search through events for that year/species: enable/disable as appropriate.
 			for(var k=0; k<iTM2Opts.triggerEvents.length; k++) {
 				var validEvent = false;
@@ -76,14 +72,8 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 				// If this means deselecting current event choice: set event control to blank.
 				if(k == oldEvent && !validEvent)
 					$(iTM2Opts.eventControlSelector).val('');
-				$(iTM2Opts.eventControlSelector).find('option[value='+k+']').each(function(idx, elem){
-					if(validEvent) $(elem).removeAttr('disabled').show();
-					else $(elem).attr('disabled','disabled').hide();
-				});
+				$(iTM2Opts.eventControlSelector).find('option[value='+k+']').attr('disabled',validEvent?'':'disabled');
 			}
-			if($(iTM2Opts.eventControlSelector).val() == '' &&
-					$(iTM2Opts.eventControlSelector).find('option[value!=]').not(':disabled').length == 1)
-				$(iTM2Opts.eventControlSelector).val($(iTM2Opts.eventControlSelector).find('option[value!=]').not(':disabled').val());
 		}
 	};
   
@@ -387,19 +377,10 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 		$( iTM2Opts.dotControlSelector ).slider( 'option', 'value', iTM2Data.dotSize );
 		$( iTM2Opts.dotControlSelector ).slider({change : function( event, ui ) {
 			iTM2Data.dotSize = $( iTM2Opts.dotControlSelector ).slider( 'value' );
-			if($( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.features.length>0){
-				var features = $( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.features;
-				$( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.removeFeatures(features);
-				for(p=0; p< features.length; p++)
-					features[p].style.pointRadius = iTM2Data.dotSize+2;
-				$( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.addFeatures(features);
-			}
-			if( iTM2Opts.twinMaps && $( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.features.length>0){
-				var features = $( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.features;
-				$( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.removeFeatures(features);
-				for(p=0; p< features.length; p++)
-					features[p].style.pointRadius = iTM2Data.dotSize+2;
-				$( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.addFeatures(features);
+			if(iTM2Data.mySiteFeatures.length>0){
+				sitesLayer.removeFeatures(iTM2Data.mySiteFeatures);
+				indiciaTreeMap2Data.mySiteFeatures.style.pointRadius = iTM2Data.dotSize+2;
+				sitesLayer.addFeatures(iTM2Data.mySiteFeatures);
 			}
 			resetMap();
 		}});
@@ -407,19 +388,10 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 		$( iTM2Opts.dotControlSelector ).val( iTM2Data.dotSize );
 		$( iTM2Opts.dotControlSelector ).change(function( event, ui ) {
 			iTM2Data.dotSize = $( iTM2Opts.dotControlSelector ).val();
-			if($( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.features.length>0){
-				var features = $( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.features;
-				$( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.removeFeatures(features);
-				for(p=0; p< features.length; p++)
-					features[p].style.pointRadius = iTM2Data.dotSize+2;
-				$( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.addFeatures(features);
-			}
-			if( iTM2Opts.twinMaps && $( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.features.length>0){
-				var features = $( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.features;
-				$( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.removeFeatures(features);
-				for(p=0; p< features.length; p++)
-					features[p].style.pointRadius = iTM2Data.dotSize+2;
-				$( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.addFeatures(features);
+			if(iTM2Data.mySiteFeatures.length>0){
+				sitesLayer.removeFeatures(iTM2Data.mySiteFeatures);
+				indiciaTreeMap2Data.mySiteFeatures.style.pointRadius = iTM2Data.dotSize+2;
+				sitesLayer.addFeatures(iTM2Data.mySiteFeatures);
 			}
 			resetMap();
 		});
@@ -504,7 +476,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 	      				if(typeof iTM2Data.mySpecies[data.records[i].species_id] == 'undefined') {
 	      		    		iTM2Data.mySpeciesIDs.push(data.records[i].species_id);
 	      		    		iTM2Data.mySpecies[data.records[i].species_id] = {id: data.records[i].species_id, taxon: data.records[i].taxon};
-	      		    		$(iTM2Opts.speciesControlSelector).append('<option value="'+data.records[i].species_id+'" '+(side=='rh'?'disabled="disabled" style="display:none;"':'')+'>'+data.records[i].taxon+'</option>');
+	      		    		$(iTM2Opts.speciesControlSelector).append('<option value="'+data.records[i].species_id+(side=='rh'?'" disabled="disabled':'')+'">'+data.records[i].taxon+'</option>');
 	      		    	}
 	      				for(k=0; k<iTM2Opts.triggerEvents.length; k++){
 	      					// event definition
@@ -568,7 +540,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 	    	  		if( iTM2Opts.twinMaps ) $( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.destroyFeatures();
   					if( iTM2Data.mySiteWKT.length > 0 ) {
   						var feature = parser.read((iTM2Data.mySiteWKT.length == 1 ? 'POINT(' : 'MULTIPOINT(') + iTM2Data.mySiteWKT.join(',') + ')');
-    	  				feature.style = {fillColor: 0, fillOpacity: 0, strokeWidth: 2, strokeColor: 'Yellow', graphicName: 'square', pointRadius: iTM2Data.dotSize+2};
+    	  				feature.style = {fillColor: 0, fillOpacity: 0, strokeWidth: 2, strokeColor: 'Yellow', graphicName: 'square'};;
     	    	  		$( iTM2Opts.primaryMapSelector )[0].map.sitesLayer.addFeatures([feature]);
     	    	  		if( iTM2Opts.twinMaps ) $( iTM2Opts.secondaryMapSelector )[0].map.sitesLayer.addFeatures([feature.clone()]);    	  			
 	    	  		}

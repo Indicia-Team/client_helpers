@@ -118,7 +118,7 @@ class iform_pollenator_reidentify {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $nid) {
+  public static function get_form($args, $node) {
 	$r = '';
 	drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
 	data_entry_helper::link_default_stylesheet();
@@ -201,7 +201,7 @@ class iform_pollenator_reidentify {
 		<label >'.lang::get('Single?').'</label><input type="checkbox" value="invalid" id="do-only-one" name="do-only-one"><br/>
 		<label >'.lang::get('Becomes invalid?').'</label><input type="checkbox" value="invalid" id="becomes-invalid" name="becomes-invalid"><br/>
 		<label>New Taxa : </label><table id="new-insect-id-list"><thead><tr><th>Species</th><th>ID</th><th>Remove</th></tr></thead><tbody id="new-insect-id-list-body" class="new-id-list-body"><tr id="insectAutocompleteRow1" class="autocompleteRow"><td>'.lang::get('Add').' <input name="insectAutocomplete1" id="insectAutocomplete1" /></td><td><input name="insect2" id="insect2" /></td><td></td></tr></tbody></table>
-    <form id="bulk-reassignment-form" action="'.iform_ajaxproxy_url($nid, 'determination').'" method="POST" >
+    <form id="bulk-reassignment-form" action="'.iform_ajaxproxy_url($node, 'determination').'" method="POST" >
 		<input type="hidden" name="website_id" value="'.$args['website_id'].'" />
 		<input type="hidden" name="determination:occurrence_id" value="" />
 		<input type="hidden" name="determination:cms_ref" value="'.$uid.'" />  

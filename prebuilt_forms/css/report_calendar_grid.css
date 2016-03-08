@@ -33,12 +33,16 @@ table td.year-picker {
 }
 /* line 41, sass/report_calendar_grid.scss */
 table td.year-picker > * {
+  display: -moz-inline-box;
+  -moz-box-orient: vertical;
   display: inline-block;
   vertical-align: middle;
   *vertical-align: auto;
-  *zoom: 1;
-  *display: inline;
   margin: 0 1em;
+}
+/* line 7, ../../../../../../../../../../Ruby192/lib/ruby/gems/1.9.1/gems/compass-0.11.5/frameworks/compass/stylesheets/compass/css3/_inline-block.scss */
+table td.year-picker > * {
+  *display: inline;
 }
 /* line 46, sass/report_calendar_grid.scss */
 table td a {
@@ -46,14 +50,21 @@ table td a {
   border: solid silver 1px;
   -moz-border-radius: 4px;
   -webkit-border-radius: 4px;
+  -o-border-radius: 4px;
+  -ms-border-radius: 4px;
+  -khtml-border-radius: 4px;
   border-radius: 4px;
+  display: -moz-inline-box;
+  -moz-box-orient: vertical;
   display: inline-block;
   vertical-align: middle;
   *vertical-align: auto;
-  *zoom: 1;
-  *display: inline;
   padding: 2px;
   margin: 2px;
+}
+/* line 7, ../../../../../../../../../../Ruby192/lib/ruby/gems/1.9.1/gems/compass-0.11.5/frameworks/compass/stylesheets/compass/css3/_inline-block.scss */
+table td a {
+  *display: inline;
 }
 /* line 53, sass/report_calendar_grid.scss */
 table td a.newLink {
@@ -64,7 +75,7 @@ table td a.newLink {
   background-position: center center;
   background-repeat: no-repeat;
   background-size: auto auto;
-  background-image: url("../../../../media/images/add.png") !important;
+  background-image: url("../../../media/images/add.png") !important;
 }
 /* line 59, sass/report_calendar_grid.scss */
 table tr.datarow td {

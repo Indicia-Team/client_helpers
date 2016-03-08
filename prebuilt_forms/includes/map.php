@@ -108,7 +108,8 @@ function iform_map_get_map_parameters() {
         'bing_aerial' => 'Bing Aerial',
         'bing_hybrid' => 'Bing Hybrid',
         'bing_shaded' => 'Bing Shaded',
-        'osm' => 'OpenStreetMap'
+        'osm' => 'OpenStreetMap',
+        'osm_th' => 'OpenStreetMap Tiles@Home'
       ),
       'sortable'=>true,
       'group'=>'Base Map Layers',
@@ -175,8 +176,9 @@ function iform_map_get_map_parameters() {
       'default'=>"layerSwitcher\npanZoomBar"
     )
   );
-  // Check for easy login module to allow integration into profile locations.
-  if (!function_exists('hostsite_module_exists') || hostsite_module_exists('easy_login')) {
+  // Check for easy login module to allow integration into profile locations. If no module_exists function then 
+  // we are in the AJAX call for the form details for a new iform, so must show it as we have no way of knowing.
+  if (!function_exists('module_exists') || module_exists('easy_login')) {
     $r[] = array(
       'name'=>'display_user_profile_location',
       'caption'=>'Display location from user profile',
@@ -222,8 +224,7 @@ function iform_map_get_georef_parameters() {
       'name'=>'georefDriver',
       'caption'=>'Web service used for georeferencing',
       'description'=>'Choose the web service used for resolving place names to points on the map. Each web-service has a '.
-           'different set of characteristics. If you are unsure which to use, the Yahoo! GeoPlanet service is a good starting point, ' .
-           'though note that this service will not work if your site is running on https.',
+           'different set of characteristics. If you are unsure which to use, the Yahoo! GeoPlanet service is a good starting point.',
       'type'=>'select',
       'default'=>'geoplanet',
       'options' => array(
@@ -273,7 +274,7 @@ function iform_map_get_map_options($args, $readAuth) {
     'rememberPos'=>isset($args['remember_pos']) ? ($args['remember_pos']==true) : false
   );
   // If they have defined a custom base layer, add it
-  if (!empty($args['wms_base_title']) && !empty($args['wms_base_url']) && !empty($args['wms_base_layer'])) {
+  if ($args['wms_base_title'] && $args['wms_base_url'] && $args['wms_base_layer']) {
     data_entry_helper::$onload_javascript .= "var baseLayer = new OpenLayers.Layer.WMS(
       '".$args['wms_base_title']."',
       '".$args['wms_base_url']."',
@@ -282,7 +283,7 @@ function iform_map_get_map_options($args, $readAuth) {
     $options['layers'][] = 'baseLayer';
   }
   // Also add any tilecaches they have defined
-  if (!empty($args['tile_cache_layers'])) {
+  if ($args['tile_cache_layers']) {
     $options['tilecacheLayers'] = json_decode($args['tile_cache_layers'], true);
   }
   // And any indicia Wms layers from the GeoServer
@@ -303,8 +304,9 @@ function iform_map_get_map_options($args, $readAuth) {
   $msgGeorefNothingFound = lang::get('LANG_Georef_NothingFound');
   if ($msgGeorefNothingFound!='LANG_Georef_NothingFound') $options['msgGeorefNothingFound'] = $msgGeorefNothingFound;
   // if in Drupal, and IForm proxy is installed, then use this path as OpenLayers proxy
-  if (function_exists('hostsite_module_exists') && hostsite_module_exists('iform_proxy')) {
-    $options['proxy'] = data_entry_helper::getRootFolder(true) . hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
+  if (defined('DRUPAL_BOOTSTRAP_CONFIGURATION') && module_exists('iform_proxy')) {
+    global $base_url;
+    $options['proxy'] = $base_url . '/?q=' . variable_get('iform_proxy_path', 'proxy') . '&url=';
   }
   // And a single location boundary if defined
   if (!empty($args['location_boundary_id'])) 
@@ -332,50 +334,43 @@ function iform_map_zoom_to_location($locationId, $readAuth) {
 }
 
 function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
-  $name = str_replace("'", "\\'", $name);
-  // Create code to restrict extent and zoom in if being asked to do so, will add to JS in a moment
-  $restrictExtentCode = !$restrict ? '' : <<<SCRIPT
-  mapdiv.map.setOptions({restrictedExtent: bounds});
-  if (mapdiv.map.getZoomForExtent(bounds)>mapdiv.map.getZoom()) {
-    mapdiv.map.zoomTo(mapdiv.map.getZoomForExtent(bounds));
-  }
-SCRIPT;
+  $name = str_replace("'", "''", $name);
   // Note, since the following moves the map, we want it to be the first mapInitialisationHook
-  data_entry_helper::$javascript .= <<<SCRIPT
-indiciaFns.zoomToBounds = function(mapdiv, bounds) {
-  // skip zoom to loaded bounds if already zoomed to a report output
-  if (typeof mapdiv.settings.zoomMapToOutput==="undefined" || mapdiv.settings.zoomMapToOutput===false) {
-    if (typeof $.cookie === 'undefined' || mapdiv.settings.rememberPos===false || $.cookie('maplon')===null) {
-      if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
-        // if showing something small, don't zoom in too far
-        mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
-      }
-      else {
-        // Set the default view to show the feature we are loading
-        mapdiv.map.zoomToExtent(bounds);
-      }
-    }
-  }
-}
+  data_entry_helper::$javascript .= "
 mapInitialisationHooks.push(function(mapdiv) {
   var parser, feature, loclayer = new OpenLayers.Layer.Vector(
-    '$name',
+    '".$name."',
     {'sphericalMercator': true, displayInLayerSwitcher: true}
   );
   parser = new OpenLayers.Format.WKT();
-  feature = parser.read('$geom');
+  feature = parser.read('".$geom."');
   feature.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
   feature.style.fillOpacity=0;
   loclayer.addFeatures([feature]);
   // Don't zoom to the locality if the map is set to remember last position
   var bounds=feature.geometry.getBounds();
   mapdiv.map.updateSize();
-  indiciaData.initialBounds = bounds;
-  indiciaFns.zoomToBounds(mapdiv, bounds);
-$restrictExtentCode
-  mapdiv.map.addLayer(loclayer);
-});
-SCRIPT;
+  if (typeof $.cookie === 'undefined' || mapdiv.settings.rememberPos===false || $.cookie('maplon')===null) {
+    if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
+      // if showing something small, don't zoom in too far
+      mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
+    }
+    else {
+      // Set the default view to show the feature we are loading
+      mapdiv.map.zoomToExtent(bounds);
+    }
+  }
+  ";
+  if ($restrict) {
+    // restrict extent and zoom in if being asked to do so
+    data_entry_helper::$javascript .= "mapdiv.map.setOptions({restrictedExtent: bounds});
+    if (mapdiv.map.getZoomForExtent(bounds)>mapdiv.map.getZoom()) {
+      mapdiv.map.zoomTo(mapdiv.map.getZoomForExtent(bounds));
+    }
+  ";
+  }
+      data_entry_helper::$javascript .= "mapdiv.map.addLayer(loclayer);
+});\n";
 }
 
 /**
@@ -385,7 +380,7 @@ SCRIPT;
  * @return array Options array for OpenLayers, or null if not specified.
  */
 function iform_map_get_ol_options($args) {
-  if (!empty($args['openlayers_options'])) {
+  if ($args['openlayers_options']) {
     $opts = json_decode($args['openlayers_options'], true);
   } else {
     $opts = array();

@@ -42,8 +42,7 @@ class iform_quick_species_maps {
       'title'=>'Quick Species Maps',
       'category' => 'Reporting',
       'description'=>'A list of species that can quickly be added to a distribution map.',
-      'helpLink'=>'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/quick-species-maps.html',
-      'recommended' => true
+      'helpLink'=>'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/quick-species-maps.html'
     );
   }
   
@@ -83,11 +82,6 @@ class iform_quick_species_maps {
           'required'=>false,
           'default'=>"dist_point_red\ndist_point_blue",
           'group'=>'Other Map Settings'
-        ), array(
-          'name' => 'species_details_page_path',
-          'caption' => 'Species details page path',
-          'description' => 'Path to the species details page, if any. Adds a link to the page to the table.',
-          'type' => 'text_input'
         )
       )
     );
@@ -107,15 +101,15 @@ class iform_quick_species_maps {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    * @todo: Implement this method 
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     iform_load_helpers(array('report_helper', 'map_helper'));
-    $conn = iform_get_connection_details($nid);
+    $conn = iform_get_connection_details($node);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
     $r = '<div id="leftcol">';
     $reportOptions = iform_report_get_report_options($args, $readAuth);
@@ -129,19 +123,10 @@ class iform_quick_species_maps {
     ), $reportOptions);
     $reportOptions['rowId']='external_key';
     $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path()."../media/images/" : report_helper::$images_path;
-    $actions = array(
-      array('img'=>"{$imgPath}add.png",'caption'=>'Click to add this species to the map')
-    );
-    // Add an action column for the species details page
-    if (!empty($args['species_details_page_path']))
-      $actions[] = array(
-          'img'=>"{$imgPath}nuvola/find-22px.png",
-          'caption'=>'View details of this species',
-          'url'=>$args['species_details_page_path'],
-          'urlParams'=>array('taxon_meaning_id'=>'{taxon_meaning_id}')
-      );
     $reportOptions['columns'][] = array(
-      'actions'=>$actions
+      'actions'=>array(
+        array('img'=>"$imgPath/add.png",'caption'=>'Click to add this species to the map')
+      )        
     );
     $r .= report_helper::report_grid($reportOptions);
     $r .= '</div>';

@@ -42,8 +42,7 @@ $readAuth = form_helper::get_read_auth($_POST['website_id'], $_POST['password'])
 echo form_helper::prebuilt_form_params_form(array(
   'form' => $_POST['form'],
   'readAuth' => $readAuth,
-  'expandFirst' => true,
-  'generator' => (isset($_POST['generator'])) ? $_POST['generator'] : 'No generator metatag posted',
+  'expandFirst' => true
 ));
 data_entry_helper::$dumped_resources[] = 'jquery';
 data_entry_helper::$dumped_resources[] = 'jquery_ui';

@@ -23,6 +23,12 @@
 require_once('includes/map.php');
 require_once('includes/report.php');
 
+// TODO: check on Live:
+// My sites squares layer.
+// Check functionality of Advanced UI slider control, date displayed
+// Check functionality of Advanced UI dot control
+// Check works OK with map2 disabled.
+//
 // TODO DEV
 // picture of species in corner.
 // Add speed control
@@ -134,11 +140,11 @@ class iform_tree_map_2 {
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $nid Drupal node object's ID
+   * @param array $node Drupal node object
    * @param array $response Response from Indicia services after posting.
    * @return HTML string
    */
-  public static function get_form($args, $nid, $response) {
+  public static function get_form($args, $node, $response) {
     $r = "";
     data_entry_helper::add_resource('jquery_ui');
     if(isset($args['advancedUI']) && $args['advancedUI']) {
@@ -151,8 +157,9 @@ class iform_tree_map_2 {
 		drupal_add_js('/misc/ui/jquery.ui.slider.js');
 //      drupal_add_js('/misc/ui/jquery.ui.button.min.js');
     }
+    iform_load_helpers(array('map_helper'));
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-    
+
     $now = new DateTime('now');
     $year = (isset($_REQUEST['year']) ? $_REQUEST['year'] : $year = $now->format('Y'));
 
@@ -220,7 +227,7 @@ class iform_tree_map_2 {
     $options['divId']='map2';
     if(isset($args['twinMaps']) && $args['twinMaps'])
     	$r .= '<div class="rightMap mapContainers leftMapOnly">'.map_helper::map_panel($options, $olOptions).'</div>';
-    
+
     $r .= '<div class="ui-helper-clearfix"></div><div id="timeControls">'.
     		(isset($args['advancedUI']) && $args['advancedUI'] ? '<div id="timeSlider"></div>' : '').
     		'<div id="toolbar">'.

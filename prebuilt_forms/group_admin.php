@@ -36,10 +36,9 @@ class iform_group_admin {
    */
   public static function get_group_admin_definition() {
     return array(
-      'title' => 'Administer a group',
+      'title'=>'Administer a group',
       'category' => 'Recording groups',
-      'description' => 'A form for administering a group, in particular the members list. Should be passed a parameter called group_id.',
-      'recommended' => true
+      'description'=>'A form for administering a group, in particular the members list. Should be passed a parameter called group_id.'
     );
   }
   
@@ -105,12 +104,12 @@ class iform_group_admin {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     if (!hostsite_get_user_field('indicia_user_id'))
       return 'Please ensure that you\'ve filled in your surname on your user profile before creating or editing groups.';
     self::createBreadcrumb($args);
@@ -123,7 +122,7 @@ class iform_group_admin {
     hostsite_set_page_title(lang::get('Administer {1}', $group['title']));
     report_helper::$javascript .= "indiciaData.website_id=$args[website_id];\n";
     report_helper::$javascript .= "indiciaData.group_id=$group[id];\n";
-    report_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'groups_user')."\";\n";
+    report_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url(null, 'groups_user')."\";\n";
     if (!empty($args['admin_role_name']))
       $adminRoleOnScreenName=$args['admin_role_name'];
     else 
@@ -199,7 +198,7 @@ class iform_group_admin {
       'nocache'=>true
     ));
     if ($group[0]['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
-      if (!hostsite_user_has_permission('Iform groups admin')) {
+      if (!function_exists('user_access') || !user_access('Iform groups admin')) {
         // user did not create group. So, check they are an admin
         $admins = data_entry_helper::get_population_data(array(
           'table'=>'groups_user',

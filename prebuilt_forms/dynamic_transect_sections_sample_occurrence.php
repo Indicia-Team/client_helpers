@@ -112,10 +112,9 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
-   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args, $nid) {
+  public static function get_submission($values, $args) {
     $submission = self::build_sample_subsamples_occurrences_submission($values, $args['section_id_attribute']);
     return($submission);
   }

@@ -41,7 +41,7 @@ class iform_dynamic {
   protected static $singleSpeciesName;
   
   // The node id upon which this form appears
-  protected static $nid;
+  protected static $node;
 
   // The class called by iform.module which may be a subclass of iform_location_dynamic
   protected static $called_class;
@@ -202,11 +202,11 @@ class iform_dynamic {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $nid) {
+  public static function get_form($args, $node) {
     data_entry_helper::$website_id=$args['website_id'];
     if (!empty($args['high_volume']) && $args['high_volume']) {
       // node level caching for most page hits
-      $cached = data_entry_helper::cache_get(array('node'=>$nid), HIGH_VOLUME_CACHE_TIMEOUT);
+      $cached = data_entry_helper::cache_get(array('node'=>$node->nid), HIGH_VOLUME_CACHE_TIMEOUT);
       if ($cached!==false) {
         $cached = explode('|!|', $cached);
         data_entry_helper::$javascript = $cached[1];
@@ -216,8 +216,8 @@ class iform_dynamic {
         return $cached[0];
       }
     }
-    self::$nid = $nid;
-    self::$called_class = 'iform_' . hostsite_get_node_field_value($nid, 'iform');
+    self::$node = $node;
+    self::$called_class = 'iform_' . $node->iform;
     
     // Convert parameter, defaults, into structured array
     self::parse_defaults($args);
@@ -234,16 +234,15 @@ class iform_dynamic {
     }
     // Determine how the form was requested and therefore what to output
     $mode = (method_exists(self::$called_class, 'getMode'))
-      ? call_user_func(array(self::$called_class, 'getMode'), $args, $nid)
+      ? call_user_func(array(self::$called_class, 'getMode'), $args, $node)
       : '';
     self::$mode = $mode;
     if($mode ===  self::MODE_GRID) {
-      drupal_set_message('grid mode');
       // Output a grid of existing records
-      $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $nid, $auth);
+      $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $node, $auth);
     } else {
       if (($mode === self::MODE_EXISTING || $mode === self::MODE_EXISTING_RO || $mode === self::MODE_CLONE) && is_null(data_entry_helper::$entity_to_load)) { 
-        // only load if not in error situation.
+        // only load if not in error situation. 
         call_user_func_array(array(self::$called_class, 'getEntity'), array(&$args, $auth));
         // when editing, no need to step through all the pages to save a change.
         if ($mode === self::MODE_EXISTING)
@@ -253,18 +252,19 @@ class iform_dynamic {
       $attributes = (method_exists(self::$called_class, 'getAttributes'))
           ? call_user_func(array(self::$called_class, 'getAttributes'), $args, $auth)
           : array();
-      $r = call_user_func(array(self::$called_class, 'get_form_html'), $args, $auth, $attributes);
+      $r = call_user_func(array(self::$called_class, 'get_form_html'), $args, $auth, $attributes);      
     }
     if (!empty($args['high_volume']) && $args['high_volume']) {
       $c = $r . '|!|' . data_entry_helper::$javascript . '|!|' . data_entry_helper::$late_javascript . '|!|' . 
           data_entry_helper::$onload_javascript . '|!|' . json_encode(data_entry_helper::$required_resources);
-      data_entry_helper::cache_set(array('node'=>$nid), $c, HIGH_VOLUME_CACHE_TIMEOUT);
+      data_entry_helper::cache_set(array('node'=>$node->nid), $c, HIGH_VOLUME_CACHE_TIMEOUT);
     }
     return $r;
   }
   
   protected static function get_form_html($args, $auth, $attributes) { 
     $r = call_user_func(array(self::$called_class, 'getHeader'), $args);
+
     $params = array($args, $auth, &$attributes);
     if (self::$mode === self::MODE_CLONE) {
       call_user_func_array(array(self::$called_class, 'cloneEntity'), $params);
@@ -386,7 +386,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
   protected static function getHeader($args) {
     // Make sure the form action points back to this page
     $reloadPath = call_user_func(array(self::$called_class, 'getReloadPath'));    
-    $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
+    $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\">\n";
     // request automatic JS validation
     if (!isset($args['clientSideValidation']) || $args['clientSideValidation'])
       data_entry_helper::enable_validation('entry_form');
@@ -518,14 +518,10 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
             // urlParam is special as it loads the control's default value from $_GET
             if ($option[0]==='urlParam' && isset($_GET[$option[1]]))
               $options['default'] = $_GET[$option[1]];
-            // label and helpText should both get translated
-            if ($option[0]==='label' || $option[0]==='helpText') {
-              $options[$option[0]] = lang::get($options[$option[0]]);
-            }
           }
         }
         // if @permission specified as an option, then check that the user has access to this control
-        if (!empty($options['permission']) && !hostsite_user_has_permission($options['permission']))
+        if (!empty($options['permission']) && !user_access($options['permission']))
           continue;
         $parts = explode('.', str_replace(array('[', ']'), '', $component));
         $method = 'get_control_'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($component));
@@ -543,30 +539,19 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
           $hasControls = true;
         }
         elseif (count($parts)===2) {
-          include_once(dirname($_SERVER['SCRIPT_FILENAME']) . '/' . data_entry_helper::relative_client_helper_path() . 'prebuilt_forms/extensions/'.$parts[0].'.php');
+          require_once(dirname($_SERVER['SCRIPT_FILENAME']) . '/' . data_entry_helper::relative_client_helper_path() . '/prebuilt_forms/extensions/'.$parts[0].'.php');
           if (method_exists('extension_' . $parts[0], $parts[1])) { 
             //outputs a control for which a specific extension function has been written.
             $path = call_user_func(array(self::$called_class, 'getReloadPath')); 
             //pass the classname of the form through to the extension control method to allow access to calling class functions and variables
-            $args["calling_class"]=self::$called_class;
+            $args["calling_class"]='iform_' . self::$node->iform;
             $html .= call_user_func(array('extension_' . $parts[0], $parts[1]), $auth, $args, $tabalias, $options, $path, $attributes);
             $hasControls = true;
             // auto-add JavaScript for the extension
-            $d6 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='6.x');
-            $d7 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='7.x');
-            // Ignore D8 as it uses asset libraries instead of drupal_add_js
-            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js')) {
-              if ($d6)
-                drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', 'module', 'header', FALSE, TRUE, FALSE);
-              elseif ($d7)
-                drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', array('preprocess'=>FALSE));
-            }
-            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css')) {
-              if ($d6)
-                drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', 'module', 'all', FALSE);
-              elseif ($d7)
-                drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', array('preprocess'=>FALSE));
-            }
+            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js'))
+              drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', array('preprocess'=>FALSE));
+            if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css'))
+              drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', array('preprocess'=>FALSE));
           } 
           else
             $html .= lang::get("The $component extension cannot be found.");

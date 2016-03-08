@@ -146,8 +146,8 @@ class iform_timed_count {
         ),
         array(
           'name'=>'numberOfCounts',
-          'caption'=>'Min number of counts',
-          'description'=>'Min number of counts to be displayed on the entry page for this location.',
+          'caption'=>'Max number of counts',
+          'description'=>'Max number of counts to be entered in this location.',
           'type'=>'int',
           'required'=>true,
           'siteSpecific'=>true,
@@ -724,11 +724,6 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
           }
         }
       }
-    } else {
-    	return "An internal error has occurred: there has been a mismatch between the validation applied in the browser and that applied by the warehouse.<br/>".
-    		"Please contact the site administrator, and provide them with the following diagnostic information.<br>".
-			print_r(data_entry_helper::$validation_errors, true)."<br>".
-			print_r($_POST, true);
     }
 
     data_entry_helper::$javascript .= "indiciaData.speciesList = ".$args['taxon_list_id'].";\n";
@@ -775,7 +770,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) 
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
     else $blockOptions=array();
-    for($i = 0; $i < max($args['numberOfCounts'], count($subSamples)+1); $i++){
+    for($i = 0; $i < $args['numberOfCounts']; $i++){
       $subSampleId = (isset($subSamples[$i]) ? $subSamples[$i]['sample_id'] : null);
       $r .= "<fieldset id=\"count-$i\"><legend>".lang::get('Count ').($i+1)."</legend>";
       if($subSampleId) $r .= "<input type='hidden' name='C".($i+1).":sample:id' value='".$subSampleId."'/>";
@@ -794,10 +789,10 @@ $('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date
   myFieldset.find('.smp-input,[name=taxonLookupControl]').removeAttr('disabled'); // leave the count fields as are.
 });\n";
       }
-      if($subSampleId && count($subSamples)>1)
+      if($subSampleId && $i)
         $r .= "<label for='C".($i+1).":sample:deleted'>Delete this count:</label>
-<input id='C".($i+1).":sample:deleted' type='checkbox' value='t' name='C".($i+1).":sample:deleted' class='subSampleDelete'><br />
-<p class='helpText'>".lang::get('Setting this will delete this count when the page is saved. Only one count can be deleted at a time.').'</p>';
+<input id='C".($i+1).":sample:deleted' type='checkbox' value='t' name='C".($i+1).":sample:deleted'><br />
+<p>".lang::get('Setting this will delete this count when the page is saved.').'</p>';
       
       foreach ($attributes as $attr) {
         if(strcasecmp($attr['untranslatedCaption'],'Unconfirmed Individuals')==0) continue;
@@ -882,11 +877,10 @@ $('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date
       if($i && !$subSampleId) $r .= '<button type="button" class="clear-button ui-state-default ui-corner-all smp-input" disabled="disabled" />'.lang::get('Clear this count').'</button>';
       $r .= '</fieldset>';
     }
-    $r .= '<p>'.lang::get('In order to enter extra counts, save these first, and then view the form again for this location. Each time you do so an extra blank count will be displayed at the bottom, ready to be entered.').'</p>';
     $r .= '<input type="submit" value="'.lang::get('Save').'" />';
     $r .= '<a href="'.$args['summary_page'].'"><button type="button" class="ui-state-default ui-corner-all" />'.lang::get('Cancel').'</button></a></form>';
     data_entry_helper::enable_validation('subsamples');
-    data_entry_helper::$javascript .= "initButtons();\nprocessDeleted();\n";
+    data_entry_helper::$javascript .= "initButtons();\n";
     return $r;
   }
 
@@ -902,7 +896,7 @@ $('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date
     if (!isset($values['page']) || $values['page']=='site') {
       // submitting the first page, with top level sample details
       // keep the first count date on a subsample for use later.
-      // only create the subsample if this is a new top level sample: if existing, then this will already have been done.
+      // only create if a new sample: if existing, then this will already exist.
       if(isset($values['C1:sample:date']) && !isset($values['sample:id'])){
         $sampleMethods = helper_base::get_termlist_terms(array('read'=>$read), 'indicia:sample_methods', array('Timed Count Count'));
         $smp = array('fkId' => 'parent_id',
@@ -913,23 +907,23 @@ $('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date
                                        'sample_method_id' => array('value' => $sampleMethods[0]['id'])
                      )),
                    'copyFields' => array('entered_sref'=>'entered_sref','entered_sref_system'=>'entered_sref_system'));
+//                   'copyFields' => array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'));
         $subsampleModels[] = $smp;
       }
     } else if($values['page']=='occurrences'){
       // at this point there is a parent supersample.
-      // loop from 1 to numberOfCounts, or number of existing subsamples+1, whichever is bigger.
+      // loop from 1 to numberOfCounts, or number of existing subsamples, whichever is bigger.
       $subSamples = data_entry_helper::get_population_data(array(
         'table' => 'sample',
-        'extraParams' => $read + array('parent_id'=>$values['sample:id'], 'view'=>'detail', 'survey_id'=>$values['sample:survey_id']),
+        'extraParams' => $read + array('parent_id'=>$values['sample:id']),
         'nocache'=>true
       ));
-      for($i = 1; $i <= max(count($subSamples)+1, $args['numberOfCounts']); $i++){
+      for($i = 1; $i <= max(count($subSamples), $args['numberOfCounts']); $i++){
         if(isset($values['C'.$i.':sample:id']) || (isset($values['C'.$i.':sample:date']) && $values['C'.$i.':sample:date']!='')){
           $subSample = array('website_id' => $values['website_id'],
                              'survey_id' => $values['sample:survey_id']);
           $occurrences = array();
           $occModels = array();
-          // separate out the sample and occurrence details for the subsample visit
           foreach($values as $field => $value){
             $parts = explode(':',$field,2);
             if($parts[0]=='C'.$i) $subSample[$parts[1]] = $value;
@@ -937,14 +931,14 @@ $('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date
           }
           ksort($occurrences);
           foreach($occurrences as $field => $value){
-            // have taken off O<i> front so is now <j>:<ttlid>:<occid>:<attrid>:<attrvalid> - sorted in <j> order, which is the occurrence order in the table.
+            // have take off O<i> do is now <j>:<ttlid>:<occid>:<attrid>:<attrvalid> - sorted in <j> order
             $parts = explode(':',$field);
             $occurrence = array('website_id' => $values['website_id']);
-            if($parts[1] != '--ttlid--') $occurrence['taxa_taxon_list_id'] = $parts[1]; // can't see situation where this is not filled in
-            if($parts[2] != '--occid--') $occurrence['id'] = $parts[2]; // if an existing entry.
+            if($parts[1] != '--ttlid--') $occurrence['taxa_taxon_list_id'] = $parts[1];
+            if($parts[2] != '--occid--') $occurrence['id'] = $parts[2];
             if($value == '') $occurrence['deleted'] = 't';
-            else if($parts[4] == '--valid--') $occurrence['occAttr:'.$parts[3]] = $value; // new attribute value
-            else $occurrence['occAttr:'.$parts[3].':'.$parts[4]] = $value; // existing attribute value
+            else if($parts[4] == '--valid--') $occurrence['occAttr:'.$parts[3]] = $value;
+            else $occurrence['occAttr:'.$parts[3].':'.$parts[4]] = $value;
             if (array_key_exists('occurrence:determiner_id', $values)) $occurrence['determiner_id'] = $values['occurrence:determiner_id'];
             if (array_key_exists('occurrence:record_status', $values)) $occurrence['record_status'] = $values['occurrence:record_status'];
             if(isset($occurrence['id']) || !isset($occurrence['deleted'])){

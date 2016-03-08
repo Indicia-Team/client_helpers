@@ -79,7 +79,7 @@ class iform_record_details {
     $auth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     data_entry_helper::load_existing_record($auth, 'occurrence', $_GET['occurrence_id']);
     data_entry_helper::load_existing_record($auth, 'sample', data_entry_helper::$entity_to_load['occurrence:sample_id']);
-    $r = "<div id=\"controls\">\n";
+    $r .= "<div id=\"controls\">\n";
     $r .= "<table>\n";
     if (!in_array('Species', $hidden))
       $r .= "<tr><td><strong>".lang::get('Species')."</strong></td><td>".data_entry_helper::$entity_to_load['occurrence:taxon']."</td></tr>\n";
@@ -115,7 +115,7 @@ class iform_record_details {
     }
     $r .= "</table>\n";
     $r .= "</div>\n";
-    $options = iform_map_get_map_options($args, $auth);
+    $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
     $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['occurrence:wkt'];
     $r .= map_helper::map_panel($options, $olOptions);

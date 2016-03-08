@@ -484,7 +484,7 @@ function iform_mnhnl_recordernamesControl($node, $auth, $args, $tabalias, $optio
     $results = db_query('SELECT uid, name FROM {users}');
     while($result = db_fetch_object($results)){
     	$account = user_load($result->uid);
-    	if($account->uid != 1 && hostsite_user_has_permission($args['permission_name'], $account)){
+    	if($account->uid != 1 && user_access($args['permission_name'], $account)){
 			$userlist[$result->name] = $result->name;
 		}
     }
@@ -3965,7 +3965,7 @@ function iform_mnhnl_set_editable($auth, $args, $node, $locList, $force, $loctyp
     data_entry_helper::$javascript .= "\ncanEditExistingSites = ".($force ? "true" : "false").";\n";
     return;
   }
-  $isAdmin = hostsite_user_has_permission($args['edit_permission']);
+  $isAdmin = user_access($args['edit_permission']);
   if($isAdmin) {
   	data_entry_helper::$javascript .= "\ncanEditExistingSites = true;\n";
     return;

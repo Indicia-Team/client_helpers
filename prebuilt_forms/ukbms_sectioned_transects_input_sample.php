@@ -725,26 +725,26 @@ class iform_ukbms_sectioned_transects_input_sample {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    * @todo: Implement this method
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     if (isset($response['error']))
       data_entry_helper::dump_errors($response);
     if (isset($_REQUEST['page']) && $_REQUEST['page']==='mainSample' && !isset(data_entry_helper::$validation_errors) && !isset($response['error'])) {
       // we have just saved the sample page, so move on to the occurrences list,
-      return self::get_occurrences_form($args, $nid, $response);
+      return self::get_occurrences_form($args, $node, $response);
     } else {
-      return self::get_sample_form($args, $nid, $response);
+      return self::get_sample_form($args, $node, $response);
     }
   }
 
-  public static function get_sample_form($args, $nid, $response) {
+  public static function get_sample_form($args, $node, $response) {
     global $user;
-    if (!hostsite_module_exists('iform_ajaxproxy'))
+    if (!module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     iform_load_helpers(array('map_helper'));
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -808,7 +808,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       $locationType = helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
       $siteParams = $auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
       if ((!isset($args['user_locations_filter']) || $args['user_locations_filter']) &&
-          (!isset($args['managerPermission']) || !hostsite_user_has_permission($args['managerPermission']))) {
+          (!isset($args['managerPermission']) || !user_access($args['managerPermission']))) {
         $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>$user->uid);
       } else
         $siteParams += array('locattrs'=>'');
@@ -826,7 +826,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       }
       // bolt in branch locations. Don't assume that branch list is superset of normal sites list.
       // Only need to do if not a manager - they have already fetched the full list anyway.
-      if(isset($args['branch_assignment_permission']) && hostsite_user_has_permission($args['branch_assignment_permission']) && $siteParams['locattrs']!='') {
+      if(isset($args['branch_assignment_permission']) && user_access($args['branch_assignment_permission']) && $siteParams['locattrs']!='') {
         $siteParams['locattrs']='Branch CMS User ID';
         $siteParams['attr_location_branch_cms_user_id']=$user->uid;
         unset($siteParams['attr_location_cms_user_id']);
@@ -918,7 +918,7 @@ class iform_ukbms_sectioned_transects_input_sample {
 
     $r .= '</form>';
     // Recorder Name - assume Easy Login uid
-    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
+    if (function_exists('module_exists') && module_exists('easy_login')) {
       $userId = hostsite_get_user_field('indicia_user_id');
  // For non easy login test only     $userId = 1;
       foreach($attributes as $attrID => $attr){
@@ -949,13 +949,13 @@ class iform_ukbms_sectioned_transects_input_sample {
     return $r;
   }
 
-  public static function get_occurrences_form($args, $nid, $response) {
+  public static function get_occurrences_form($args, $node, $response) {
     global $user;
     global $indicia_templates;
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
     $oldCtrlWrapTemplate = $indicia_templates['controlWrap'];
     $indicia_templates['controlWrap'] = '{control}';
-  	if (!hostsite_module_exists('iform_ajaxproxy'))
+  	if (!module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
   	drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
@@ -996,7 +996,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $sample=$sample[0];
     $parentLocId = $sample['location_id'];
     $date=$sample['date_start'];
-    if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('easy_login')) {
+    if (!function_exists('module_exists') || !module_exists('easy_login')) {
       // work out the CMS User sample ID.
       $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Transect'));
       $attributes = data_entry_helper::getAttributes(array(
@@ -1360,7 +1360,7 @@ indiciaFns.bindTabsActivate(jQuery(jQuery('#".$options["tabDiv"]."').parent()), 
     // a stub form to attach validation to.
     $r .= '<form style="display: none" id="validation-form"></form>';
     // A stub form for AJAX posting when we need to create an occurrence
-    $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($nid, 'occurrence').'">';
+    $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($node, 'occurrence').'">';
     $r .= '<input name="website_id" value="'.$args['website_id'].'"/>';
     $r .= '<input name="survey_id" value="'.$args["survey_id"].'" />';
     $r .= '<input name="occurrence:id" id="occid" />';
@@ -1390,7 +1390,7 @@ indiciaFns.bindTabsActivate(jQuery(jQuery('#".$options["tabDiv"]."').parent()), 
     $r .= '<input name="user_id" value="'.hostsite_get_user_field('user_id', 1).'"/>';
     $r .= '</form>';
     // A stub form for AJAX posting when we need to update a sample
-    $r .= '<form style="display: none" id="smp-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">';
+    $r .= '<form style="display: none" id="smp-form" method="post" action="'.iform_ajaxproxy_url($node, 'sample').'">';
     $r .= '<input name="website_id" value="'.$args['website_id'].'"/>';
     $r .= '<input name="sample:id" id="smpid" />';
     $r .= '<input name="sample:parent_id" value="'.$parentSampleId.'" />';
@@ -1469,7 +1469,7 @@ indiciaData.speciesList1Subset = ".(isset($args['common_taxon_list_id']) && $arg
     data_entry_helper::$javascript .= "indiciaData.transect = ".$parentLocId.";\n";
     data_entry_helper::$javascript .= "indiciaData.parentSample = ".$parentSampleId.";\n";
     data_entry_helper::$javascript .= "indiciaData.sections = ".json_encode($sections).";\n";
-    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
+    if (function_exists('module_exists') && module_exists('easy_login')) {
       data_entry_helper::$javascript .= "indiciaData.easyLogin = true;\n";
       $userId = hostsite_get_user_field('indicia_user_id');
       if (!empty($userId)) data_entry_helper::$javascript .= "indiciaData.UserID = ".$userId.";\n";

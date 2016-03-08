@@ -39,6 +39,7 @@ require_once('includes/report.php');
 
 class iform_record_details_2 extends iform_dynamic {
 
+  private static $sampleLoaded = false;
   protected static $record;
     
   /** 
@@ -50,8 +51,7 @@ class iform_record_details_2 extends iform_dynamic {
       'title'=>'View details of a record 2',
       'category' => 'Utilities',
       'description'=>'A summary view of a record with commenting capability. Pass a parameter in the URL called occurrence_id to '.
-        'define which occurrence to show.',
-      'recommended' => true
+        'define which occurrence to show.'
     );
   }
   
@@ -135,7 +135,6 @@ Record ID',
                 "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>".
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>".
                 "&nbsp;&nbsp;<strong>[previous determinations]</strong> - a list of previous determinations for this record<br/>".
-                 "&nbsp;&nbsp;<strong>[occurrence associations]</strong> - a list of associated occurrence information (recorded interactions)<br/>".
             "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). ".
             "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
             "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
@@ -192,38 +191,23 @@ Record ID',
           'default' => '',
           'group' => 'Path configuration'
         ),
-        array(
-          'name'=>'map_geom_precision',
-          'caption'=>'Map geometry precision',
-          'description'=>'If you want to output a lower precision map geometry than was actually recorded, ' .
-              'select the precision here',
-          'type'=>'select',
-          'options'=>array('1'=>'1km', '2' => '2km', '10' => '10km'),
-          'required' => false,
-          'group' => 'Other Map Settings'
-        )
       )
     );
     return $retVal;
   }
-
+ 
   /**
    * Override the get_form_html function.
    * getForm in dynamic.php will now call this.
    * Vary the display of the page based on the interface type
-   *
+   * 
    * @package    Client
    * @subpackage PrebuiltForms
-   * @param $args
-   * @param $auth
-   * @param $attributes
-   * @return mixed|string
-   */
+   */ 
   protected static function get_form_html($args, $auth, $attributes) {
     if (empty($_GET['occurrence_id'])) {
       return 'This form requires an occurrence_id parameter in the URL.';
     } else {
-      // @todo The call to module_load_included needs to be Drupal version independent
       data_entry_helper::$javascript .= 'indiciaData.username = "'.hostsite_get_user_field('name')."\";\n";
       data_entry_helper::$javascript .= 'indiciaData.user_id = "'.hostsite_get_user_field('indicia_user_id')."\";\n";
       data_entry_helper::$javascript .= 'indiciaData.website_id = '.$args['website_id'].";\n";
@@ -248,10 +232,10 @@ Record ID',
     $fields=helper_base::explode_lines($args['fields']);
     $fieldsLower=helper_base::explode_lines(strtolower($args['fields']));
     //Draw the Record Details, but only if they aren't requested as hidden by the administrator
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}</span>{anchorfrom}<span{class}>{value}</span>{anchorto}</div>';
+    $detailstemplateHtml = '';
+    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>';
     $test=$args['operator']==='in';
     $availableFields = array(
-      'sensitive'=>'Sensitive',
       'occurrence_id'=>'Record ID',
       'taxon'=>'Species',
       'preferred_taxon'=>'Preferred species name',
@@ -266,48 +250,21 @@ Record ID',
       'occurrence_comment'=>'Record comment',
       'location_name'=>'Site name',
       'sample_comment'=>'Sample comment',
-      'licence_code'=>'Licence'
     );
-    if (!empty(self::$record['sensitivity_precision'])) {
-      unset($availableFields['recorder']);
-      unset($availableFields['inputter']);
-      unset($availableFields['entered_sref']);
-      unset($availableFields['occurrence_comment']);
-      unset($availableFields['location_name']);
-      unset($availableFields['sample_comment']);
-    }
     
-    self::load_record($auth, $args);
+    self::load_record($auth);
     
     $details_report = '<div class="record-details-fields ui-helper-clearfix">';
     foreach($availableFields as $field=>$caption) {
-      if ($caption === 'Species') {
-        $title = lang::get('Record of {1}', self::$record[$field]);
-        hostsite_set_page_title($title);
-      }
-      if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
-        // special case, sensitive icon
-        $class = self::$record[$field] === 'This record is sensitive' ? ' class="ui-state-error"' : '';
-        $caption = self::$record[$field] === 'This record is sensitive' ? '' : "$caption:";
-        // special case, licence
-        $class = $field==='licence_code' ? ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"' : $class;
-        $anchorfrom = $field==='licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
-        $anchorto = $field==='licence_code' ? '</a>' : '';
-        $details_report .= str_replace(
-          array('{caption}', '{value}', '{class}', '{anchorfrom}', '{anchorto}'),
-          array(lang::get($caption), lang::get(self::$record[$field]), $class, $anchorfrom, $anchorto),
-          $attrsTemplate
-        );
-      }
+      if ($test===in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field]))
+        $details_report .= str_replace(array('{caption}','{value}'), array($caption, self::$record[$field]), $attrsTemplate);      
     }
     $created = date('jS F Y \a\t H:i', strtotime(self::$record['created_on']));
     $updated = date('jS F Y \a\t H:i', strtotime(self::$record['updated_on']));
     $dateInfo = lang::get('Entered on {1}', $created);
     if ($created!==$updated)
       $dateInfo .= lang::get(' and last updated on {1}', $updated);
-    if ($test===in_array('submission date', $fieldsLower))
-      $details_report .= str_replace(array('{caption}','{value}','{class}', '{anchorfrom}', '{anchorto}'),
-          array(lang::get('Submission date'), $dateInfo, '', '', ''), $attrsTemplate);
+    $details_report .= str_replace(array('{caption}','{value}'), array(lang::get('Submission date'), $dateInfo), $attrsTemplate);
     $details_report .= '</div>';
     
     if (!self::$record['sensitivity_precision']) {
@@ -316,7 +273,7 @@ Record ID',
         'readAuth' => $auth['read'],
         'class'=>'record-details-fields ui-helper-clearfix',
         'dataSource'=>$options['dataSource'],
-        'bands'=>array(array('content'=>str_replace(array('{class}', '{anchorfrom}', '{anchorto}'), '', $attrsTemplate))),
+        'bands'=>array(array('content'=>$attrsTemplate)),
         'extraParams'=>array(
           'occurrence_id'=>$_GET['occurrence_id'],
           //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
@@ -359,48 +316,30 @@ Record ID',
    * @subpackage PrebuiltForms
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(array('report_helper'));
     data_entry_helper::add_resource('fancybox');
     $options = array_merge(array(
       'itemsPerPage' => 20,
       'imageSize' => 'thumb',
       'class' => 'detail-gallery'
     ), $options);
-    $media = data_entry_helper::get_population_data(array(
-      'table' => 'occurrence_image',
-      'extraParams' => $auth['read'] + array(
+    return '<div class="detail-panel" id="detail-panel-photos"><h3>Photos and media</h3>'.report_helper::freeform_report(array(
+      'readAuth' => $auth['read'],
+      'dataSource'=>'occurrence_image',
+      'itemsPerPage' => $options['itemsPerPage'],
+      'class' => $options['class'],
+      'header'=>'<ul>',
+      'footer'=>'</ul>',
+      'bands'=>array(array('content'=>'<li class="gallery-item"><a href="{imageFolder}{path}" class="fancybox single"><img src="{imageFolder}'.$options['imageSize'].'-{path}" /></a><br/>{caption}</li>')),
+      'emptyText' => '<p>No photos or media files available</p>',
+      //mode direct means the datasource is a table instead of a report
+      'mode' => 'direct',
+      'autoParamsForm' => false,
+      'extraParams' => array(
         'occurrence_id'=>$_GET['occurrence_id'],
-        'sharing'=>'reporting',
-        'limit' => $options['itemsPerPage']
-      ),
-    ));
-    $r = '<div class="detail-panel" id="detail-panel-photos"><h3>Photos and media</h3><div class="'.$options['class'].'">';
-    if (empty($media))
-      $r .= '<p>No photos or media files available</p>';
-    else {
-      $r .= '<ul>';
-      $imageFolder = data_entry_helper::get_uploaded_image_folder();
-      $firstImage = true;
-      foreach ($media as $idx => $medium) {
-        if ($firstImage && substr($medium['media_type'], 0, 6)==='Image:') {
-          // first image can be flagged as the main content image. Used for FB OpenGraph for example.
-          global $iform_page_metadata;
-          if (!isset($iform_page_metadata))
-            $iform_page_metadata = array();
-          $iform_page_metadata['image'] = "$imageFolder$medium[path]";
-          $firstImage = false;
-        }
-        if ($medium['media_type']==='Audio:Local')
-          $r .= "<li class=\"gallery-item\"><audio controls " .
-              "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
-        else
-          $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
-              "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
-      }
-      $r .= '</ul>';
-    }
-    $r .= '</div></div>';
-    return $r;
+        'sharing'=>'reporting'        
+      )      
+    )) . '</div>';
   }
   
   
@@ -412,11 +351,11 @@ Record ID',
    * @subpackage PrebuiltForms
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('map_helper'));
-    self::load_record($auth, $args);
+    iform_load_helpers(array('data_entry_helper'));
+    self::load_record($auth);
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
-      array('maxZoom'=>14, 'maxZoomBuffer' => 4),
+      array('maxZoom'=>14),
       $options
     );
     if (isset(self::$record['geom'])) {
@@ -430,7 +369,7 @@ Record ID',
     
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
-    return '<div class="detail-panel" id="detail-panel-map"><h3>Map</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
+    return '<div class="detail-panel" id="detail-panel-map"><h3>Map</h3>' . data_entry_helper::map_panel($options, $olOptions) . '</div>';
     
   }
  
@@ -442,38 +381,30 @@ Record ID',
    * @package    Client
    * @subpackage PrebuiltForms
    */
-  protected static function get_control_comments($auth, $args) {
+  protected static function get_control_comments($auth, $args) { 
     iform_load_helpers(array('data_entry_helper'));
-    $r = '<div>';
+    $r = '<div>'; 
     $comments = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_comment',
-      'extraParams' => $auth['read'] + array(
-          'occurrence_id'=>$_GET['occurrence_id'],
-          'sortdir'=>'DESC',
-          'orderby'=>'updated_on'
-      ),
-      'nocache'=>true,
-      'sharing'=>'reporting'
+      'extraParams' => $auth['read'] + array('occurrence_id'=>$_GET['occurrence_id'], 'sortdir'=>'DESC', 'orderby'=>'updated_on'),
+      'nocache'=>true
     ));
+    
     if (count($comments)===0) 
       $r .= '<p id="no-comments">'.lang::get('No comments have been made.').'</p>';
-    else {
       $r .= '<div id="comment-list">';
-      foreach($comments as $comment) {
-        $r .= '<div class="comment">';
-        $r .= '<div class="header">';
-        $r .= "<strong>$comment[person_name]</strong> ";
-        $commentTime = strtotime($comment['updated_on']);
-        // Output the comment time. Skip if in future (i.e. server/client date settings don't match)
-        if ($commentTime < time())
-          $r .= self::ago($commentTime);
-        $r .= '</div>';
-        $c = str_replace("\n", '<br/>', $comment['comment']);
-        $r .= "<div>$c</div>";
-        $r .= '</div>';
-      }
+    foreach($comments as $comment) {
+      $r .= '<div class="comment">';
+      $r .= '<div class="header">';
+      $r .= '<strong>'.(empty($comment['person_name']) ? $comment['username'] : $comment['person_name']).'</strong> ';
+      $r .= self::ago(strtotime($comment['updated_on']));
+      $r .= '</div>';
+      $c = str_replace("\n", '<br/>', $comment['comment']);
+      $r .= "<div>$c</div>";
       $r .= '</div>';
     }
+    $r .= '</div>';
+    
     global $user;
     $r .= '<form><fieldset><legend>'.lang::get('Add new comment').'</legend>';
     $r .= '<input type="hidden" id="comment-by" value="'.$user->name.'"/>';
@@ -510,85 +441,6 @@ Record ID',
           'sharing'=>'reporting'
         ),
     ));
-  }
-
-  /**
-   * Outputs a list of associated occurrence information (recorded interactions).
-   * @param $auth
-   * @param $args
-   * @param $tabalias
-   * @param $options
-   * @return string
-   * @throws \exception
-   */
-  protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
-    $options = array_merge(array(
-      'dataSource' => 'library/occurrence_associations/filterable_explore_list',
-      'itemsPerPage' => 100,
-      'header' => '<ul>',
-      'footer' => '</ul>',
-      'bands' => array(array('content'=>'<li>{association_detail}</li>')),
-      'emptyText' => '<p>No association information available</p>'
-    ), $options);
-    return '<div class="detail-panel" id="detail-panel-occurrenceassociations"><h3>'.lang::get('Associations').'</h3>' .
-    report_helper::freeform_report(array(
-      'readAuth' => $auth['read'],
-      'dataSource'=> $options['dataSource'],
-      'itemsPerPage' => $options['itemsPerPage'],
-      'header'=> $options['header'],
-      'footer'=> $options['footer'],
-      'bands'=> $options['bands'],
-      'emptyText' => $options['emptyText'],
-      'mode' => 'report',
-      'autoParamsForm' => false,
-      'extraParams' => array(
-        'occurrence_id'=> $_GET['occurrence_id'],
-        'sharing'=>'reporting'
-      )
-    )).'</div>';
-  }
-
-  /**
-   * Outputs a login form. Not displayed if already logged in.
-   * @param array $auth
-   * @param array $args
-   * @param string $tabalias
-   * @param array $options Options array passed in the configuration to the [login] control.
-   * Possible values include instruct - the instruction to display above the login form.
-   * @return string
-   */
-  protected static function get_control_login($auth, $args, $tabalias, $options) {
-    global $user;
-    $options = array_merge(array(
-      'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.'
-    ), $options);
-    if ($user->uid===0) {
-      $form_state = array('noredirect' => TRUE);
-      $form = drupal_build_form('user_login', $form_state);
-      return '<div class="detail-panel" id="detail-panel-login">' .
-          '<h3>'.lang::get('Login').'</h3>' .
-          '<p>' . lang::get($options['instruct']) . '</p>' .
-          drupal_render($form) .
-          '</div>';
-    }
-    else
-      return '';
-  }
-
-  protected static function get_control_block($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
-    $block = module_invoke($options['module'], $options['hook'], $options['args']);
-    if ($options['module'] === 'addtoany') {
-      self::load_record($auth, $args);
-      // lets not promote sharing of sensitive stuff
-      if (self::$record['sensitivity_precision'])
-        return '';
-      report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-url', window.location.href);\n";
-      $title = 'Check out this record of '.self::$record['taxon'];
-      report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
-    }
-    return render($block['content']);
   }
   
   /**
@@ -628,15 +480,15 @@ Record ID',
   protected static function buttons_edit($auth, $args, $tabalias, $options) {
     if (!$args['default_input_form'])
       throw new exception('Please set the default input form path setting before using the [edit button] control');
-    self::load_record($auth, $args);
+    self::load_record($auth);
     $record = self::$record;
     if (($user_id=hostsite_get_user_field('indicia_user_id')) && $user_id==self::$record['created_by_id']
-        && $args['website_id']==self::$record['website_id']) {
+        && variable_get('indicia_website_id', 0)==self::$record['website_id']) {
       if (empty($record['input_form']))
         $record['input_form']=$args['default_input_form'];
-      $rootFolder = data_entry_helper::getRootFolder(true);
-      $paramJoin = strpos($rootFolder, '?')===false ? '?' : '&';
-      $url =  "$rootFolder$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
+      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? '?q=' : '';
+      $paramJoin= empty($pathParam) ? '?' : '&';
+      $url = data_entry_helper::getRootFolder() . "$pathParam$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
       return '<a class="button" href="'.$url.'">' . lang::get('Edit this record') . '</a>';
     }
     else 
@@ -657,7 +509,8 @@ Record ID',
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $rootFolder = data_entry_helper::getRootFolder(true);
+      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
+      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
@@ -682,7 +535,8 @@ Record ID',
       $url = $args['species_details_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $rootFolder = data_entry_helper::getRootFolder(true);
+      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
+      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];
@@ -787,33 +641,14 @@ Record ID';
   /**
    * Loads the record associated with the page if not already loaded.
    */
-  protected static function load_record($auth, $args) {
+  protected static function load_record($auth) {
     if (!isset(self::$record)) {
-      $params = array('occurrence_id'=>$_GET['occurrence_id'], 'sharing'=>'reporting');
-      if (!empty($args['map_geom_precision']))
-        $params['geom_precision'] = $args['map_geom_precision'];
       $records=report_helper::get_report_data(array(
         'readAuth' => $auth['read'],
         'dataSource'=>'reports_for_prebuilt_forms/record_details_2/record_data',
-        'extraParams'=>$params,
+        'extraParams'=>array('occurrence_id'=>$_GET['occurrence_id'], 'sharing'=>'reporting')
       ));
       self::$record = $records[0];
-      // set the page metadata
-      global $iform_page_metadata;
-      if (!isset($iform_page_metadata))
-        $iform_page_metadata = array();
-      $species = self::$record['taxon'];
-      if (!empty(self::$record['preferred_taxon']) && $species !== self::$record['preferred_taxon'])
-        $species .= ' (' . self::$record['preferred_taxon'] . ')';
-      $iform_page_metadata['description'] = lang::get('Record of {1} on {2}', $species, self::$record['date']);
-      if (!empty(self::$record['sample_comment']))
-        $iform_page_metadata['description'] .= '. ' . trim(self::$record['sample_comment'], '. \t\n\r\0\x0B') . '.';
-      if (!empty(self::$record['occurrence_comment']))
-        $iform_page_metadata['description'] .= ' ' . trim(self::$record['occurrence_comment'], '. \t\n\r\0\x0B') . '.';
-      if (empty(self::$record['sensitivity_precision'])) {
-        $iform_page_metadata['latitude'] = number_format((float)self::$record['lat'], 5, '.', '');
-        $iform_page_metadata['longitude'] = number_format((float)self::$record['long'], 5, '.', '');
-      }
     }
   }
   
@@ -826,3 +661,4 @@ Record ID';
    
    
 }
+?>

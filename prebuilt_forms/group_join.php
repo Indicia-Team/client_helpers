@@ -38,8 +38,7 @@ class iform_group_join {
     return array(
       'title'=>'Join a group',
       'category' => 'Recording groups',
-      'description'=>'A page for joining or requesting membership of a group.',
-      'recommended' => true
+      'description'=>'A page for joining or requesting membership of a group.'
     );
   }
   
@@ -66,12 +65,12 @@ class iform_group_join {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     if (!$user_id=hostsite_get_user_field('indicia_user_id'))
       return self::abort('Please ensure that you\'ve filled in your surname on your user profile before joining a group.', $args);
     if (empty($_GET['group_id']))
@@ -115,7 +114,7 @@ class iform_group_join {
       $wrap = submission_builder::wrap($data, 'groups_user');
       $r = data_entry_helper::forward_post_to('groups_user', $wrap, $auth['write_tokens']);
       if (!isset($r['success'])) 
-        return self::abort('An error occurred whilst trying to update your group membership.', $args);
+        return self::abort('An error occurred whilst trying to update your group membership.');
       elseif ($group['joining_method']==='R') 
         return self::abort("Your request to join $group[title] is now awaiting approval.", $args);
       else
@@ -133,7 +132,19 @@ class iform_group_join {
   }
   
   private static function success($auth, $group, $args) {
-    module_load_include('inc', 'iform', 'iform.groups');
-    return iform_show_group_join_success($group, $auth, true, $args['group_home_path'], $args['groups_page_path']);
+    hostsite_set_page_title("Welcome to $group[title]!");
+    $pageData = data_entry_helper::get_population_data(array(
+      'table'=>'group_page',
+      'extraParams' => $auth['read'] + array('group_id' => $group['id'], 'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))))
+    ));
+    $r = '<p>'.lang::get("You've successfully joined $group[title]. You can").':</p>';
+    $r .= '<ul>';
+    if (!empty($args['group_home_path']))
+      $r .= '<li><a href="'.hostsite_get_url($args['group_home_path'], array('group_id'=>$group['id'])).'">'.lang::get("Visit the $group[title] home page").'<a></li>';
+    foreach ($pageData as $page) 
+      $r .= '<li><a href="'.hostsite_get_url($page['path'], array('group_id'=>$group['id'])).'">'.lang::get($page['caption']).'<a></li>';
+    $r .= '<li><a href="'.hostsite_get_url($args['groups_page_path']).'">'.lang::get("Return to your recording groups list").'<a></li>';
+    $r .= '</ul>';
+    return $r;
   }
 }

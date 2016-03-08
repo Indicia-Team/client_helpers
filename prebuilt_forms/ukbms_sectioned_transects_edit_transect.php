@@ -160,13 +160,13 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $nid The Drupal node object's ID.
+   * @param object $node The Drupal node object.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    * @todo: Implement this method 
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $node, $response=null) {
     global $user;
     // use the js from the main form, until there is a deviation.
     drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/sectioned_transects_edit_transect.js");
@@ -178,8 +178,8 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
       return $checks;
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
-    self::$ajaxFormUrl = iform_ajaxproxy_url($nid, 'location');
-    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($nid, 'sample');
+    self::$ajaxFormUrl = iform_ajaxproxy_url($node, 'location');
+    self::$ajaxFormSampleUrl = iform_ajaxproxy_url($node, 'sample');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $settings = array(
       'mainLocationType' => helper_base::get_termlist_terms($auth, 'indicia:location_types', array(empty($args['main_type_term_1']) ? 'Transect' : $args['main_type_term_1'])),
@@ -188,10 +188,10 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
       'canEditBody' => true,
       'canEditSections' => true, // this is specifically the number of sections: so can't delete or change the attribute value.
       // Allocations of Branch Manager are done by a person holding the managerPermission.
-      'canAllocBranch' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission']),
+      'canAllocBranch' => $args['managerPermission']=="" || user_access($args['managerPermission']),
       // Allocations of Users are done by a person holding the managerPermission or the allocate Branch Manager.
       // The extra check on this for branch managers is done later
-      'canAllocUser' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission'])
+      'canAllocUser' => $args['managerPermission']=="" || user_access($args['managerPermission']) 
     );
     // WARNING!!!! we are making the assumption that the attributes are defined to be the same for all the location_types.
     $settings['attributes'] = data_entry_helper::getAttributes(array(
@@ -263,7 +263,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         }
         // If a Branch Manager and not a main manager, then can't edit the number of sections
         if($args['branch_assignment_permission'] != '' &&
-            hostsite_user_has_permission($args['branch_assignment_permission']) &&
+            user_access($args['branch_assignment_permission']) &&
             isset($settings['branchCmsUserAttr']['default']) &&
             !empty($settings['branchCmsUserAttr']['default'])) {
           foreach($settings['branchCmsUserAttr']['default'] as $value) { // now multi value
@@ -402,7 +402,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     }
     // if location is predefined, can not change unless a 'managerPermission'
     $canEditType = !$settings['locationId'] ||
-                   (isset($args['managerPermission']) && $args['managerPermission']!= '' && hostsite_user_has_permission($args['managerPermission']));
+                   (isset($args['managerPermission']) && $args['managerPermission']!= '' && function_exists('user_access') && user_access($args['managerPermission']));
     if($canEditType) {
       $r .= data_entry_helper::select(array(
             'label' => lang::get('Site Type'),

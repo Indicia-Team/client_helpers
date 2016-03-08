@@ -183,6 +183,8 @@ class extension_my_sites {
    * @locationDropDownLabel can be set to override the label of the Location drop-down.
    */
   public static function add_sites_to_any_user($auth, $args, $tabalias, $options, $path) {
+    //Need to call this so we can use indiciaData.read
+    data_entry_helper::$js_read_tokens = $auth['read'];
     if (!function_exists('iform_ajaxproxy_url'))
       return 'An AJAX Proxy module must be enabled for user sites administration to work.';
      if (!empty($options['locationDropDownLabel']))

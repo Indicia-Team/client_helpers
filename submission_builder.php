@@ -44,11 +44,13 @@ class submission_builder extends helper_config {
    *     'fieldPrefix' => 'Optional prefix for HTML form fields in the main model. If not specified then the main model name is used.',
    *     'subModels' => array('child model name' =>  array(
    *         'fieldPrefix'=>'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
-   *         'fk' => 'foreign key name'
+   *         'fk' => 'foreign key name',
+   *         'image_entity' => 'name of image entity if present'
    *     )),
    *     'superModels' => array('parent model name' =>  array(
    *         'fieldPrefix'=>'Optional prefix for HTML form fields in the sub model. If not specified then the sub model name is used.',
-   *         'fk' => 'foreign key name'
+   *         'fk' => 'foreign key name',
+   *         'image_entity' => 'name of image entity if present'
    *     )),
    *     'metaFields' => array('fieldname1', 'fieldname2', ...),
    *     'joinsTo' => array('model that this has a many to many join with', ...)
@@ -351,7 +353,7 @@ class submission_builder extends helper_config {
     // either moved to the warehouse, or if already on the warehouse, processed to create
     // thumbnails.
     foreach ($_FILES as $fieldname => &$file) {
-      if ($file['name'] && is_string($file['name'])) {
+      if ($file['name']) {
         // Get the original file's extension
         $parts = explode(".",$file['name']);
         $fext = array_pop($parts);

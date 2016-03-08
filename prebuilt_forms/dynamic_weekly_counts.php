@@ -357,11 +357,10 @@ class iform_dynamic_weekly_counts extends iform_dynamic_sample_occurrence {
    * Handles the construction of a submission array from a set of form values. 
    *
    * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters.
-   * @param integer $nid The node's ID
+   * @param array $args iform parameters. 
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args, $nid) {
+  public static function get_submission($values, $args) {
     $fromDate=self::getStartDate($args);
     $values['sample:date_start']=date('Y-m-d', $fromDate);
     $dateEnd=strtotime('+' . ($args['weeks']*7-1) . ' days', $fromDate);

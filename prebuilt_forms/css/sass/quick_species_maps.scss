@@ -1,25 +1,15 @@
 @import "compass/css3";
 
-// Put map and grid side by side only on wider screens.
-@media only screen and (min-width: 768px) {
-  div {
-    #rightcol {
-      width: 49%; 
-      float: right;
-    }
-    #leftcol {
-      width: 49%; 
-      float: left;
-    }
-  }
-}
-
 div {
   #rightcol {
+    width: 49%; 
+    float: right;
     @include box-shadow(silver 3px 3px 6px);
     border: solid silver 1px;
   }
   #leftcol {
+    width: 49%; 
+    float: left;
     @include box-shadow(silver 3px 3px 6px);
     border: solid silver 1px;
   }
@@ -63,10 +53,4 @@ div {
   input[type="checkbox"] {
     
   }
-}
-
-.action-button {
-  min-width: 16px;
-  min-height: 16px;
-  border-bottom: none;
 }
