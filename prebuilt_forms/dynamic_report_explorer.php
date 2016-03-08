@@ -50,10 +50,11 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    */
   public static function get_dynamic_report_explorer_definition() {
     return array(
-      'title'=>'Dynamic Report Explorer',
+      'title' => 'Reporting page (customisable)',
       'category' => 'Reporting',
-      'description'=>'Provides a dynamically output page which can contain a map and several reports, potentially '.
-          'organised onto several tabs.'
+      'description' => 'Provides a dynamically output page which can contain a map and several reports, potentially '.
+          'organised onto several tabs.',
+      'recommended' => true
     );
   }
   
@@ -90,6 +91,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
                   "&nbsp;&nbsp;<strong>[map]</strong> - outputs report content as a map.<br/>".
                   "&nbsp;&nbsp;<strong>[reportgrid]</strong> - outputs report content in tabular form.<br/>".
                   "&nbsp;&nbsp;<strong>[reportchart]</strong> - outputs report content in chart form.<br/>".
+                  "&nbsp;&nbsp;<strong>[reportfreeform]</strong> - outputs report content in flexible HTML.<br/>".
               "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). ".
               "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
               "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
@@ -217,6 +219,16 @@ class iform_dynamic_report_explorer extends iform_dynamic {
                     'by the value of the id field for the current row."
               }
             }
+          },
+          "responsive-hide": {
+            "type":"map",
+            "title":"Responsive hide",
+            "desc":"List of breakpoint names where this column will be hidden if the display is smaller than the breakpoint size.",
+            "mapping": {
+              "phone": {"type":"bool","required":true,"desc":"Hidden if screen <= 480px."},
+              "tablet-portrait": {"type":"bool","required":true,"desc":"Hidden if 480px < screen <= 768px."},
+              "tablet-landscape": {"type":"bool","required":true,"desc":"Hidden if 768px < screen <= 1024px."},
+            }
           }
         }
       }
@@ -273,10 +285,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    * Override the get_form to fetch our own auth tokens. This skips the write auth as it is unnecessary, 
    * which makes the tokens cachable therefore faster. It does mean that $auth['write'] will not be available.
    */
-  public static function get_form($args, $node) {
-    $conn = iform_get_connection_details($node);
+  public static function get_form($args, $nid) {
+    $conn = iform_get_connection_details($nid);
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
-    return parent::get_form($args, $node);
+    return parent::get_form($args, $nid);
   }
  
   /**
@@ -372,7 +384,14 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'autoParamsForm'=>false,
         'sharing'=>$sharing,
         'ajax'=>true,
-        'id'=>'report-grid-'.self::$reportCount
+        'id'=>'report-grid-'.self::$reportCount,
+        'responsiveOpts' => array(
+          'breakpoints' => array(
+            'phone' => 480,
+            'tablet-portrait' => 768,
+            'tablet-landscape' => 1024,
+          ),
+        ),           
       ),
       $options
     );
@@ -380,6 +399,30 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       iform_report_apply_explore_user_own_preferences($reportOptions);
     self::$reportCount++;
     return report_helper::report_grid($reportOptions);
+  }
+
+  /*
+   * Freeform report
+   * Allows flexible HTML output from report content.
+   */
+  protected static function get_control_reportfreeform($auth, $args, $tabalias, $options) {
+    iform_load_helpers(array('report_helper'));
+    $args['report_name']='';
+    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'reportGroup'=>'dynamic',
+        'autoParamsForm'=>false,
+        'sharing'=>$sharing,
+        'id'=>'report-freeform-'.self::$reportCount
+      ),
+      $options
+    );
+    if (self::$applyUserPrefs)
+      iform_report_apply_explore_user_own_preferences($reportOptions);
+    self::$reportCount++;
+    return report_helper::freeform_report($reportOptions);
   }
   
   /*
@@ -474,6 +517,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
       // if not logged in and linked to warehouse, we can't use standard params functionality like saving, so...
       return '';
+    $hiddenStuff = '';
     $r = report_filter_panel($auth['read'], $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
   }

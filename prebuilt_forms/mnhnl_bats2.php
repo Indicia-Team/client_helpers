@@ -967,10 +967,11 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $args iform parameters.
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     foreach($values as $key => $value){
       $parts = explode(':', $key, 5);
       if(count($parts)==3 && $parts[0]=='locAttr' && $parts[2]=='term')

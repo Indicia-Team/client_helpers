@@ -38,12 +38,12 @@ class iform_dynamic_location extends iform_dynamic {
    */
   public static function get_dynamic_location_definition() {
     return array(
-      'title'=>'Location entry form',
-      'category' => 'General Purpose Data Entry Forms',
-//      'helpLink'=>'',
+      'title'=>'Enter a location (customisable)',
+      'category' => 'Data entry forms',
       'description'=>'A data entry form for defining locations that can later be used to enter samples against. '.
           'An optional grid listing the user\'s locations allows them to be reloaded for editing. '.
-          'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.'
+          'The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.',
+      'recommended'=>true
     );
   }
 
@@ -139,10 +139,10 @@ class iform_dynamic_location extends iform_dynamic {
   /** 
    * Determine whether to show a gird of existing records or a form for either adding a new record or editing an existing one.
    * @param array $args iform parameters. 
-   * @param object $node node being shown. 
+   * @param object $nid ID of node being shown.
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING].
    */
-  protected static function getMode($args, $node) {
+  protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     

@@ -237,19 +237,19 @@ class iform_npms_paths extends iform_wildflower_count {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object.
    * @param array $errors When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $errors=null) {
+  public static function get_form($args, $nid, $errors=null) {
     $r = '';
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     // Determine how the form was requested and therefore what to output
-    self::$mode = self::getMode($args, $node);
+    self::$mode = self::getMode($args, $nid);
     if(self::$mode ===  self::MODE_GRID) {
       //Displayed the grid when the page opens initially
-      $r .= self::getGrid($args, $node, $auth);
+      $r .= self::getGrid($args, $nid, $auth);
     } else {
       // variables to tracks which parts of the plots grid are not completed, so we can display a correct message
       $someGridRefsMissing=false;
@@ -414,12 +414,13 @@ class iform_npms_paths extends iform_wildflower_count {
    * Override function to add the report parameter for the ID of the custom attribute which holds the linked sample.
    * Depends upon a report existing that uses the parameter e.g. npms_sample_occurrence_samples
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($node->nid)))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login',
+          array('query'=>array("destination=node/$nid"))).'">login</a> to the website.');
     }
 
     // Get the Indicia User ID to filter on.
@@ -447,10 +448,10 @@ class iform_npms_paths extends iform_wildflower_count {
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new&gridmode'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new&gridmode'))).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'=>''))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new'=>''))).'\'">';
     }
     $r .= '</form>';
     return $r;
@@ -508,11 +509,11 @@ class iform_npms_paths extends iform_wildflower_count {
   /**
    * Construct a grid of existing records.
    * @param array $args iform parameters.
-   * @param object $node node being shown.
+   * @param object $nid ID of node being shown.
    * @param array $auth authentication tokens for accessing the warehouse.
    * @return string HTML for grid.
    */
-  protected static function getGrid($args, $node, $auth) {
+  protected static function getGrid($args, $nid, $auth) {
     $r = '';
     $attributeOpts = array(
       'valuetable' => 'sample_attribute_value'
@@ -526,17 +527,17 @@ class iform_npms_paths extends iform_wildflower_count {
       $attributeOpts['sample_method_id'] = $args['sample_method_id'];
     $attributes = data_entry_helper::getAttributes($attributeOpts, false);
     // Here is where we get the table of samples
-    $r .= "<div id=\"sampleList\">".self::getSampleListGrid($args, $node, $auth, $attributes)."</div>";
+    $r .= "<div id=\"sampleList\">".self::getSampleListGrid($args, $nid, $auth, $attributes)."</div>";
     return $r;
   }
   
   /*
    * When the page loads we need to know what mode it is in e.g. add mode, edit mode or do we just display a list of existing records.
    * @param array $args iform parameters.
-   * @param object $node node being shown.
+   * @param object $nid ID of node being shown.
    * @return integer Mode of the page as a number.
    */
-  protected static function getMode($args, $node) {
+  protected static function getMode($args, $nid) {
     // Use mode MODE_GRID by default
     self::$mode = self::MODE_GRID;
     self::$loadedSampleId = null;

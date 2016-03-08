@@ -310,27 +310,27 @@ class iform_ukbms_timed_observations {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     if (isset($response['error']))
       data_entry_helper::dump_errors($response);
     if ((isset($_REQUEST['page']) && $_REQUEST['page']==='mainSample' && !isset(data_entry_helper::$validation_errors) && !isset($response['error'])) ||
         (isset($_REQUEST['page']) && $_REQUEST['page']==='notes')) {
       // we have just saved the sample page, so move on to the occurrences list,
       // or we have had an error in the notes page
-      return self::get_occurrences_form($args, $node, $response);
+      return self::get_occurrences_form($args, $nid, $response);
     } else {
-      return self::get_sample_form($args, $node, $response);
+      return self::get_sample_form($args, $nid, $response);
     }
   }
 
-  public static function get_sample_form($args, $node, $response) {
+  public static function get_sample_form($args, $nid, $response) {
     global $user;
-    if (!module_exists('iform_ajaxproxy'))
+    if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
     iform_load_helpers(array('map_helper'));
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -486,7 +486,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     $r .= "</div>"; // right
     $r .= '</form>';
     // Recorder Name - assume Easy Login uid
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
       $userId = hostsite_get_user_field('indicia_user_id');
  // For non easy login test only     $userId = 1;
       foreach($attributes as $attrID => $attr){
@@ -517,9 +517,9 @@ mapInitialisationHooks.push(function(mapdiv) {
     return $r;
   }
 
-  public static function get_occurrences_form($args, $node, $response) {
+  public static function get_occurrences_form($args, $nid, $response) {
     global $user;
-  	if (!module_exists('iform_ajaxproxy'))
+  	if (!hostsite_module_exists('iform_ajaxproxy'))
       return 'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
   	drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
@@ -559,7 +559,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     ));
     $sample=$sample[0];
     $date=$sample['date_start'];
-    if (!function_exists('module_exists') || !module_exists('easy_login')) {
+    if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('easy_login')) {
       // work out the CMS User sample ID.
       $sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Field Observation'));
       $attributes = data_entry_helper::getAttributes(array(
@@ -741,7 +741,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     data_entry_helper::enable_validation('notes_form');
     
     // A stub form for AJAX posting when we need to create an occurrence
-    $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($node, 'occurrence').'">';
+    $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($nid, 'occurrence').'">';
     $r .= '<input name="website_id" value="'.$args['website_id'].'"/>';
     $r .= '<input name="occurrence:id" id="occid" />';
     $r .= '<input name="occurrence:taxa_taxon_list_id" id="ttlid" />';
@@ -791,7 +791,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
     data_entry_helper::$javascript .= "indiciaData.sample = ".$sampleId.";\n";
-    if (function_exists('module_exists') && module_exists('easy_login')) {
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
       data_entry_helper::$javascript .= "indiciaData.easyLogin = true;\n";
       $userId = hostsite_get_user_field('indicia_user_id');
       if (!empty($userId)) data_entry_helper::$javascript .= "indiciaData.UserID = ".$userId.";\n";

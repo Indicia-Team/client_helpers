@@ -119,10 +119,10 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     //Admin can specify an area of the page to disable in the form structure if they wish. This area should be enclosed with a div with the id "disableDiv"
     data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, select').attr('disabled','disabled');\n"; 
-    $r = parent::get_form($args, $node);
+    $r = parent::get_form($args, $nid);
     if (empty($args['include_delete_button']) || $args['include_delete_button']==false) {
       data_entry_helper::$javascript .= "$('#delete-button').hide();\n"; 
     }

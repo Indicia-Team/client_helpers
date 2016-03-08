@@ -94,6 +94,14 @@ class iform_report_selector {
           'required' => false
         ),
         array(
+          'name' => 'responsive',
+          'caption' => 'Responsive',
+          'description' => 'Allow output to adjust to fit screen size.',
+          'type' => 'checkbox',
+          'default' => 0,
+          'required' => false,
+        ),
+        array(
           'name' => 'report_my_sites_records',
           'caption' => 'Include report - My sites heat map showing record counts',
           'type' => 'checkbox',
@@ -287,17 +295,17 @@ class iform_report_selector {
    * Either return a report picker, or if already picked, the report content.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid, $response=null) {
     iform_load_helpers(array('report_helper', 'map_helper'));
-    $conn = iform_get_connection_details($node);
+    $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
     if (empty($_GET['catname']) || empty($_GET['report'])) 
-      return self::report_picker($args, $node, $readAuth);
+      return self::report_picker($args, $nid, $readAuth);
     else {
       $reports = self::get_reports();
       $reportDef = $reports[$_GET['catname']]['reports'][$_GET['report']];
@@ -306,12 +314,12 @@ class iform_report_selector {
       hostsite_set_page_title($reportDef['title']);
       $fn = "build_report_{$_GET['catname']}_{$_GET['report']}";
       $output = $_GET['output'];
-      hostsite_set_breadcrumb(array($node->title => $_GET['q']));
+      hostsite_set_breadcrumb(array(hostsite_get_page_title($nid) => $_GET['q']));
       return call_user_func(array('iform_report_selector', $fn), $args, $readAuth, $output);
     }
   }
   
-  public static function report_picker($args, $node, $readAuth) {
+  public static function report_picker($args, $nid, $readAuth) {
     $r = '<ul class="categories">';
     $available = self::get_reports();
     $regionTerm = self::get_region_term($args, $readAuth);
@@ -416,7 +424,7 @@ class iform_report_selector {
           $groups = report_helper::get_report_data(array(
             'dataSource' => '/library/taxon_groups/taxon_groups_used_in_checklist',
             'readAuth' => $readAuth,
-            'extraParams' => array('taxon_list_id' => variable_get('iform_master_checklist_id', 0)),
+            'extraParams' => array('taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)),
             'caching' => true,
             'cachePerUser' => false,
             'cachetimeout' => self::SLOW_CACHE_REFRESH
@@ -519,6 +527,9 @@ class iform_report_selector {
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d')))
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(
@@ -538,7 +549,7 @@ class iform_report_selector {
       'readAuth' => $readAuth,
       'dataSource' => "library/taxon_groups/filterable_explore_list",
       'extraParams' => array('limit' => 10, 'orderby'=>$sortField, 'sortdir'=>'DESC', 
-          'restrict_to_taxon_list_id' => variable_get('iform_master_checklist_id', 0),
+          'restrict_to_taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
           'min_taxon_rank_sort_order' => $args['min_rank_sort_order_for_species']),
       'caching' => true,
       'cachePerUser' => $reportPerUser,
@@ -585,11 +596,33 @@ class iform_report_selector {
           'labels' => array_reverse($groupLabels)
         )
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(
         'downloadLink' => true
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsiveOpts'] = array(
+          'breakpoints' => array('tp' => 768),  
+        );
+        $reportOptions['columns'] = array();
+        $reportOptions['columns'][] = array('fieldname' => 'month');
+        for ($i = 0; $i < 10; $i++) {
+          $reportOptions['columns'][] = array(
+              'fieldname' => 'group_' . ($i + 1),
+              'display' => $groupLabels[$i],
+              'responsive-hide' => array('tp' => true),
+          );
+        }
+        $reportOptions['columns'][] = array(
+            'fieldname' => 'other',
+            'display' => $groupLabels[10],
+            'responsive-hide' => array('tp' => true),
+        );
+      }
       $r .= report_helper::report_grid($reportOptions);
     }
     return $r; 
@@ -636,6 +669,9 @@ class iform_report_selector {
         'autoParamsForm' => false,
         'axesOptions' => array('yaxis'=>array('min' => 0, 'tickOptions' => array('formatString' => '%d')))
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(
@@ -665,7 +701,7 @@ class iform_report_selector {
       $groups = report_helper::get_report_data(array(
         'dataSource' => '/library/taxon_groups/taxon_groups_used_in_checklist',
         'readAuth' => $readAuth,
-        'extraParams' => array('taxon_list_id' => variable_get('iform_master_checklist_id', 0)),
+        'extraParams' => array('taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0)),
         'caching' => true,
         'cachePerUser' => false,
         'cachetimeout' => self::SLOW_CACHE_REFRESH
@@ -698,6 +734,9 @@ class iform_report_selector {
         'legendOptions' => array('show' => true),
         'rendererOptions' => array('sliceMargin' => 3)
       );
+      if (!empty($args['responsive'])) {
+        $reportOptions['responsive'] = true;
+      }
       $r .= report_helper::report_chart($reportOptions);
     } else {
       $reportOptions += array(

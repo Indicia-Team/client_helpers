@@ -40,7 +40,8 @@ class iform_group_edit {
     return array(
       'title'=>'Create or edit a group',
       'category' => 'Recording groups',
-      'description'=>'A form for creating or editing groups of recorders.'
+      'description'=>'A form for creating or editing groups of recorders.',
+      'recommended' => true
     );
   }
   
@@ -176,6 +177,15 @@ class iform_group_edit {
         'required'=>FALSE
       ),
       array(
+        'name'=>'include_licence',
+        'caption'=>'Include licence control',
+        'description'=>'Include a control for selecting a licence to apply to all records in the group. Licences must be ' .
+            'configured for the website on the warehouse first.',
+        'type'=>'checkbox',
+        'default'=>FALSE,
+        'required'=>FALSE
+      ),
+      array(
         'name' => 'data_inclusion_mode',
         'caption' => 'Group data inclusion',
         'description' => 'How will the decision regarding how records are included in group data be made',
@@ -246,12 +256,12 @@ class iform_group_edit {
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
-   * @param object $node The Drupal node object.
+   * @param object $nid The Drupal node object's ID.
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
-   * @return Form HTML.
+   * @return string Form HTML.
    */
-  public static function get_form($args, $node, $response=null) {
+  public static function get_form($args, $nid) {
     if (!hostsite_get_user_field('indicia_user_id'))
       return 'Please ensure that you\'ve filled in your surname on your user profile before creating or editing groups.';
     self::createBreadcrumb($args);
@@ -265,7 +275,8 @@ class iform_group_edit {
       'include_linked_pages'=>true,
       'include_private_records'=>false,
       'include_administrators'=>false,
-      'include_members'=>false, 
+      'include_members'=>false,
+      'include_licence'=>false,
       'filter_types' => '{"":"what,where,when","Advanced":"source,quality"}',
       'indexed_location_type_ids' => '',
       'other_location_type_ids' => '',
@@ -284,11 +295,11 @@ class iform_group_edit {
     elseif (!is_array($args['group_type']))
       $args['group_type']=array($args['group_type']);
     if (count($args['group_type'])===1) {
-      $response = data_entry_helper::get_population_data(array(
+      $terms = data_entry_helper::get_population_data(array(
         'table'=>'termlists_term',
         'extraParams'=>$auth['read'] + array('id'=>$args['group_type'][0])
       ));
-      self::$groupType=strtolower($response[0]['term']);
+      self::$groupType=strtolower($terms[0]['term']);
     }
     self::$groupType = lang::get(self::$groupType);
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
@@ -330,8 +341,8 @@ class iform_group_edit {
         'label' => ucfirst(lang::get('{1} parent', self::$groupType)),
         'fieldname' => 'from_group_id',
         'table' => 'groups_user',
-        'captionField' => 'title',
-        'valueFields' => 'group_id',
+        'captionField' => 'group_title',
+        'valueField' => 'group_id',
         'extraParams' => $auth['read'] + array(
             'group_type_id' => $args['parent_group_type'],
             'user_id' => hostsite_get_user_field('indicia_user_id'),
@@ -386,7 +397,7 @@ class iform_group_edit {
     $r .= '</fieldset>';
     $r .= self::reportFilterBlock($args, $auth, $hiddenPopupDivs);
     $r .= self::inclusionMethodControl($args);
-    $r .= self::formsBlock($args, $auth, $node);
+    $r .= self::formsBlock($args, $auth);
     // auto-insert the creator as an admin of the new group, unless the admins are manually specified
     if (!$args['include_administrators'] && empty($_GET['group_id']))
       $r .= '<input type="hidden" name="groups_user:admin_user_id[]" value="' .hostsite_get_user_field('indicia_user_id'). '"/>';
@@ -417,7 +428,7 @@ $('#entry_form').submit(function() {
     if ($args['include_linked_pages']) {
       $r = '<fieldset><legend>' . lang::get('{1} pages', ucfirst(self::$groupType)) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Pages_Instruct', self::$groupType, lang::get('groups')) . '</p>';
-      $pages = self::getAvailablePages(empty($_GET['group_id']) ? null : $_GET['group_id']);
+      $pages = hostsite_get_group_compatible_pages(empty($_GET['group_id']) ? null : $_GET['group_id']);
       if (empty($_GET['group_id'])) {
         $default = array();
         if (isset($args['default_linked_pages'])) {
@@ -431,7 +442,7 @@ $('#entry_form').submit(function() {
         }
       }
       else
-        $default = self::getGroupPages($args, $auth);
+        $default = self::getGroupPages($auth);
       $r .= data_entry_helper::complex_attr_grid(array(
         'fieldname' => 'group:pages[]',
         'columns' => array(
@@ -447,8 +458,9 @@ $('#entry_form').submit(function() {
             'label' => 'Who can access the page?',
             'datatype' => 'lookup',
             'lookupValues' => array(
-              'f' => lang::get('Available to all group members', self::$groupType),
-              't' => lang::get('Available only to group admins', self::$groupType),
+              '' => lang::get('Available to anyone'),
+              'f' => lang::get('Available only to group members'),
+              't' => lang::get('Available only to group admins'),
             ),
             'default' => 'f'
           )
@@ -461,47 +473,10 @@ $('#entry_form').submit(function() {
     return $r;
   }
   
-  /**
-   * Retrieve all the pages that are available for linking to this group.
-   */
-  private static function getAvailablePages($group_id) {
-    $sql = "SELECT n.nid, n.title
-        FROM {iform} i
-        JOIN {node} n ON n.nid=i.nid
-        WHERE i.available_for_groups=1 AND ";
-    if (empty($group_id))
-      $sql .= 'i.limit_to_group_id IS NULL';
-    else {
-      $sql .= '(i.limit_to_group_id IS NULL OR i.limit_to_group_id = ' . $group_id . ')';
-    }
-    $qry = db_query($sql);
-    $pages=array();
-    if (substr(VERSION, 0, 1)==='6') {
-      while ($row=db_fetch_object($qry)) {
-        $pages[self::get_path($row->nid)] = $row->title;
-      }
-    } elseif (substr(VERSION, 0, 1)==='7') {
-      foreach ($qry as $row) {
-        $pages[self::get_path($row->nid)] = $row->title;
-      }
-    }
-    return $pages;
-  }
-  
-  /**
-   * Gets the path we want to store for a page node to link to the group.
-   * @param integer $nid Node ID
-   */
-  private static function get_path($nid) {
-    $path = drupal_get_path_alias("node/$nid");
-    $path = preg_replace('/^\/(\?q=)?/', '', $path);
-    return $path;
-  }
-  
   /** 
    * Retrieve the pages linked to this group from the database.
    */
-  private static function getGroupPages($args, $auth) {
+  private static function getGroupPages($auth) {
     $pages = data_entry_helper::get_population_data(array(
       'table' => 'group_page',
       'extraParams' => $auth['read'] + array('group_id'=>$_GET['group_id']),
@@ -518,7 +493,8 @@ $('#entry_form').submit(function() {
     if ($args['include_logo_controls'])
       return data_entry_helper::image_upload(array(
         'fieldname' => 'group:logo_path',
-        'label' => lang::get('Logo')
+        'label' => lang::get('Logo'),
+        'existingFilePreset' => 'med'
       ));
     else
       return '';
@@ -562,20 +538,30 @@ $('#entry_form').submit(function() {
         'default' => $implicit
       ));
     } else {
-      $r = '<fieldset><legend>' . lang::get('How to post records for the {1}', self::$groupType) . '</legend>';
-      $r .= '<p>' . lang::get('LANG_Record_Inclusion_Instruct_1', self::$groupType, lang::get("group's")) . ' ';
+      $r = '<fieldset><legend>' . lang::get('How to decide which records to include in the {1} reports', self::$groupType) . '</legend>';
+      $r .= '<p>' . lang::get('LANG_Record_Inclusion_Instruct_1', self::$groupType, lang::get(self::$groupType . "'s")) . ' ';
       if ($args['include_sensitivity_controls'])
-        $r .= lang::get('LANG_Record_Inclusion_Instruct_Sensitive') . ' ';
-      $r .= lang::get('LANG_Record_Inclusion_Instruct_1', self::$groupType, ucfirst(self::$groupType))  . '</p>';
-      $r .= data_entry_helper::select(array(
+        $r .= lang::get('LANG_Record_Inclusion_Instruct_Sensitive', self::$groupType) . ' ';
+      $r .= lang::get('LANG_Record_Inclusion_Instruct_2', self::$groupType, ucfirst(self::$groupType))  . '</p>';
+      if (isset(data_entry_helper::$entity_to_load) &&
+          array_key_exists('group:implicit_record_inclusion', data_entry_helper::$entity_to_load) &&
+          is_null(data_entry_helper::$entity_to_load['group:implicit_record_inclusion']))
+        data_entry_helper::$entity_to_load['group:implicit_record_inclusion'] = '';
+      $r .= data_entry_helper::radio_group(array(
         'fieldname' => 'group:implicit_record_inclusion',
-        'label' => lang::get('Records are included in the {1} if', self::$groupType),
+        'label' => lang::get('Include records on reports if'),
         'lookupValues' => array(
-          't' => lang::get('they match the filter defined above'),
-          'f' => lang::get('they were recorded on a group data entry form')
-        )
+          'f' => lang::get('they were posted by a group member and match the filter defined above ' .
+            'and they were submitted via a {1} data entry form', self::$groupType),
+          't' => lang::get('they were posted by a group member and match the filter defined above, ' .
+            'but it doesn\'t matter which recording form was used', self::$groupType),
+          '' => lang::get('they match the filter defined above but it doesn\'t matter who ' .
+            'posted the record or via which form', self::$groupType)
+        ),
+        'default' => 'f',
+        'validation'=>array('required')
       ));
-      $r .' </fieldset>';
+      $r .= ' </fieldset>';
     }
     return $r;
   }
@@ -596,23 +582,26 @@ $('#entry_form').submit(function() {
         'label' => ucfirst(lang::get('{1} active from', self::$groupType)),
         'fieldname' => 'group:from_date',
         'controlWrapTemplate' => 'justControl',
-        'helpText' => lang::get('LANG_From_Field_Instruct')
+        'helpText' => lang::get('LANG_From_Field_Instruct'),
+        'allowFuture' => true
       ));
       $r .= data_entry_helper::date_picker(array(
         'label' => lang::get('to'),
         'fieldname' => 'group:to_date',
         'labelClass' => 'auto',
         'controlWrapTemplate' => 'justControl',
-        'helpText' => lang::get('LANG_To_Field_Instruct')
+        'helpText' => lang::get('LANG_To_Field_Instruct'),
+        'allowFuture' => true
       ));
       $r .= '</div>';
     }
     return $r;
   }
-  
+
   /**
-   * Returns controls for defining the list of group members and administrators if this option is enabled. 
+   * Returns controls for defining the list of group members and administrators if this option is enabled.
    * @param array $args Form configuration arguments
+   * @param array $auth Authorisation tokens
    * @return string HTML to output
    */
   private static function memberControls($args, $auth) {
@@ -625,7 +614,7 @@ $('#entry_form').submit(function() {
         'fieldname'=>'groups_user:admin_user_id',
         'label' => ucfirst(lang::get('{1} administrators', self::$groupType)),
         'table'=>'user',
-        'captionField'=>'name_and_email',
+        'captionField'=>'person_name',
         'valueField'=>'id',
         'extraParams'=>$auth['read']+array('view'=>'detail'),
         'helpText'=>lang::get('LANG_Admins_Field_Instruct', self::$groupType),
@@ -647,6 +636,18 @@ $('#entry_form').submit(function() {
         'helpText'=>lang::get('LANG_Members_Field_Instruct'),
         'addToTable'=>false,
         'class' => $class
+      ));
+    }
+    if ($args['include_licence']) {
+      $r .= data_entry_helper::select(array(
+        'blankText' => '<' . lang::get('No licence selected') . '>',
+        'label' => lang::get('Licence for records'),
+        'helpText' => lang::get('Choose a licence to apply to all records added explicitly to this {1}.', self::$groupType),
+        'fieldname' => 'group:licence_id',
+        'table' => 'licence',
+        'extraParams' => $auth['read'],
+        'captionField' => 'title',
+        'valueField' => 'id'
       ));
     }
     if (!empty(data_entry_helper::$validation_errors['groups_user:general'])) {
@@ -671,9 +672,9 @@ $('#entry_form').submit(function() {
     $hiddenPopupDivs='';
     if ($args['include_report_filter']) {
       $r .= '<fieldset><legend>' . lang::get('Records that are of interest to the {1}', lang::get(self::$groupType)) . '</legend>';
-      $r .= '<p>' . lang::get('LANG_Filter_Instruct', lang::get(self::$groupType), lang::get("group's")) . '</p>';
-      $indexedLocationTypeIds = explode(',', $args['indexed_location_type_ids']);
-      $otherLocationTypeIds = explode(',', $args['other_location_type_ids']);
+      $r .= '<p>' . lang::get('LANG_Filter_Instruct', lang::get(self::$groupType), lang::get(self::$groupType . "'s")) . '</p>';
+      $indexedLocationTypeIds =  array_map('intval', explode(',', $args['indexed_location_type_ids']));
+      $otherLocationTypeIds =  array_map('intval', explode(',', $args['other_location_type_ids']));
       $r .= report_filter_panel($auth['read'], array(
         'allowLoad'=>false,
         'allowSave' => false,
@@ -718,22 +719,26 @@ $('#entry_form').submit(function() {
       $values['group_relation:relationship_type_id']=$args['parent_group_relationship_type'];
     }
     $s = submission_builder::build_submission($values, $struct);
-    // scan the posted values for group pages. This search grabs the first column value keys.
-    $pageKeys = preg_grep('/^group\+:pages:\d*:\d+:0$/', array_keys($values));
+    // scan the posted values for group pages. This search grabs the first column value keys, or if this
+    // is disabled then the hidden deleted field.
+    $pageKeys = preg_grep('/^group\+:pages:\d*:\d+:(0|deleted)$/', array_keys($values));
     $pages = array();
     foreach ($pageKeys as $key) {
-      // skip empty rows, unless they were rows loaded for an existing group_pages record
-      if (!empty($values[$key]) || preg_match('/^group\+:pages:(\d+)/', $key)) {
+      // skip empty rows, unless they were rows loaded for an existing group_pages record. Also
+      // skip deletions of non-existing rows or non-deletions of any row.
+      if ((!empty($values[$key]) || preg_match('/^group\+:pages:(\d+)/', $key))
+          && !preg_match('/::(\d+):deleted$/', $key)
+          && !(preg_match('/:deleted$/', $key) && $values[$key]==='f')) {
         // get the key without the column index, so we can access any column we want
-        $base = preg_replace('/0$/', '', $key);
+        $base = preg_replace('/(0|deleted)$/', '', $key);
         if ((isset($values[$base.'deleted']) && $values[$base.'deleted']==='t') || empty($values[$base.'0']))
-          $page = array('deleted'=>'t');
+          $page = array('deleted' => 't');
         else {
           $tokens=explode(':',$values[$base.'0']);
           $path = $tokens[0];
           $caption=empty($values[$base.'1']) ? $tokens[1] : $values[$base.'1'];
           $administrator=explode(':',$values[$base.'2']);
-          $administrator = empty($administrator) ? 'f' : $administrator[0];
+          $administrator = empty($administrator) ? null : $administrator[0];
           $page = array(
             'caption' => $caption,
             'path' => $path,
@@ -848,25 +853,27 @@ $('#entry_form').submit(function() {
     }
     return $reloadPath;
   }
-  
+
   /**
    * Fetch an existing group's information from the database when editing.
    * @param integer $id Group ID
    * @param array $auth Authorisation tokens
+   * @param $args
+   * @throws \exception
    */
   private static function loadExistingGroup($id, $auth, $args) {
     $group = data_entry_helper::get_population_data(array(
       'table'=>'group',
-      'extraParams'=>$auth['read']+array('view'=>'detail', 'id'=>$_GET['group_id']),
+      'extraParams'=>$auth['read']+array('view'=>'detail', 'id'=>$id),
       'nocache'=>true
     ));
     $group=$group[0];
     if ($group['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
-      if (!function_exists('user_access') || !user_access('Iform groups admin')) {
+      if (!hostsite_user_has_permission('Iform groups admin')) {
         // user did not create group. So, check they are an admin
         $admins = data_entry_helper::get_population_data(array(
           'table'=>'groups_user',
-          'extraParams'=>$auth['read']+array('group_id'=>$_GET['group_id'], 'administrator'=>'t'),
+          'extraParams'=>$auth['read']+array('group_id'=>$id, 'administrator'=>'t'),
           'nocache'=>true
         ));
         $found=false;
@@ -893,6 +900,8 @@ $('#entry_form').submit(function() {
       'group:private_records'=>$group['private_records'],
       'group:filter_id'=>$group['filter_id'],
       'group:logo_path'=>$group['logo_path'],
+      'group:implicit_record_inclusion'=>$group['implicit_record_inclusion'],
+      'group:licence_id'=>$group['licence_id'],
       'filter:id'=>$group['filter_id']
     );
     if ($args['include_report_filter']) {
@@ -903,7 +912,7 @@ $('#entry_form').submit(function() {
     if ($args['include_administrators'] || $args['include_members']) {
       $members = data_entry_helper::get_population_data(array(
         'table'=>'groups_user',
-        'extraParams'=>$auth['read']+array('view'=>'detail', 'group_id'=>$_GET['group_id']),
+        'extraParams'=>$auth['read']+array('view'=>'detail', 'group_id'=>$id),
         'nocache'=>true
       ));
       $admins = array();

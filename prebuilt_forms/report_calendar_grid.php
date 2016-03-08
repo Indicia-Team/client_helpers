@@ -118,14 +118,6 @@ class iform_report_calendar_grid {
       		'group'=>'Controls'
       	),
         array(
-      		'name'=>'first_year',
-      		'caption'=>'First Year of Data',
-      		'description'=>'Used to determine first year displayed in the year control. Final Year will be current year.',
-      		'type'=>'int',
-          	'required' => false,
-      		'group'=>'Controls'
-      	),
-        array(
           'name'=>'includeSrefInLocationFilter',
           'caption'=>'Include Sref in location filter name',
           'description'=>'When including a user specific location filter, choose whether to include the sref when generating the select name.',
@@ -299,7 +291,7 @@ jQuery('#".$ctrlid."').change(function(){
   ";
   }
 
-  private static function location_type_control($args, $readAuth, $node)
+  private static function location_type_control($args, $readAuth, $nid)
   {
     $siteUrlParams = self::get_site_url_params();
     $presets = get_options_array_with_user_data($args['param_presets']);
@@ -333,7 +325,7 @@ jQuery('#".$ctrlid."').change(function(){
           $lookUpValues[$termDetails['id']] = $termDetails['term'];
         }
         // if location is predefined, can not change unless a 'managerPermission'
-        $ctrlid='calendar-location-type-'.$node->nid;
+        $ctrlid='calendar-location-type-'.$nid;
         self::set_up_control_change($ctrlid, self::$locationTypeKey, array(self::$locationKey));
         return data_entry_helper::select(array(
             'label' => lang::get('Site Type'),
@@ -347,7 +339,7 @@ jQuery('#".$ctrlid."').change(function(){
     return '';
   }
   
-  private static function location_control($args, $readAuth, $node)
+  private static function location_control($args, $readAuth, $nid)
   {
     global $user;
     $siteUrlParams = self::get_site_url_params();
@@ -367,6 +359,8 @@ jQuery('#".$ctrlid."').change(function(){
         'fieldprefix'=>'locAttr',
         'extraParams'=>$readAuth,
         'survey_id'=>$siteUrlParams[self::$SurveyKey]['value']);
+    if (!empty($presets['location_type_id'])) 
+      $attrArgs['location_type_id'] = $presets['location_type_id'];
     if($siteUrlParams[self::$locationTypeKey]['value']!="")
       $attrArgs['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
     $locationAttributes = data_entry_helper::getAttributes($attrArgs, false);
@@ -397,7 +391,7 @@ jQuery('#".$ctrlid."').change(function(){
     if (isset($locationList['error'])) {
       return $locationList['error'];
     }
-    $ctrlid='calendar-location-select-'.$node->nid;
+    $ctrlid='calendar-location-select-'.$nid;
     $ctrl .='<label for="'.$ctrlid.'" class="location-select-label">'.lang::get('Filter by site').
           ':</label> <select id="'.$ctrlid.'" class="location-select">'.
           '<option value="" class="location-select-option" '.(self::$siteUrlParams[self::$locationKey]['value']==null ? 'selected=\"selected\" ' : '').'>'.lang::get('All sites').'</option>';
@@ -426,11 +420,11 @@ jQuery('#".$ctrlid."').change(function(){
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $node Drupal node object
+   * @param array $nid Drupal node object's ID
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $node, $response) {
+  public static function get_form($args, $nid, $response) {
   // Future enhancement? manager user access right who can see all walks by all people, with a person filter drop down.
   // Future enhancement? Download list of surveys used as basis for calendar
     global $user;
@@ -446,13 +440,14 @@ jQuery('#".$ctrlid."').change(function(){
     iform_load_helpers(array('report_helper'));
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
     
-    $grid = self::location_type_control($args, $auth, $node).
-            (isset($args['includeLocationFilter']) && $args['includeLocationFilter'] ? self::location_control($args, $auth, $node) : '');
+    $grid = self::location_type_control($args, $auth, $nid).
+            (isset($args['includeLocationFilter']) && $args['includeLocationFilter'] ?
+              self::location_control($args, $auth, $nid) : '');
     
     /* survey_id should be set in param_presets $args entry.  */
     $reportOptions = self::get_report_calendar_options($args, $auth);
     // get the grid output before outputting the download link, so we can check if the download link is needed.
-    $reportOptions['id']='calendar-grid-'.$node->nid;
+    $reportOptions['id']='calendar-grid-'.$nid;
     if(isset($_GET['year'])) {
       $reportOptions['year']=$_GET['year'];
       $reportOptions['viewPreviousIfTooEarly']=false;

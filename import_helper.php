@@ -39,23 +39,49 @@ class import_helper extends helper_base {
   private static $rememberingMappings=true;
 
   /**
+   * @var array List of field to column mappings that we managed to set automatically
+   */
+  private static $automaticMappings=array();
+
+  /**
    * Outputs an import wizard. The csv file to be imported should be available in the $_POST data, unless
    * the existing_file option is specified.
    * Additionally, if there are any preset values which apply to each row in the import data then you can
    * pass these to the importer in the $_POST data. For example, you could set taxa_taxon_list:taxon_list_id=3 in
    * the $_POST data when importing species data to force it to go into list 3.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>model</b><br/>
-   * Required. The name of the model data is being imported into.</li>
-   * <li><b>existing_file</b><br/>
-   * Optional. The full path on the server to an already uploaded file to import.</li>
-   * <li><b>auth</b><br/>
-   * Read and write authorisation tokens.</li>
-   * <li><b>presetSettings</b><br/>
-   * Optional associative array of any preset values for the import settings. Any settings which have a presetSetting specified
-   * will be ommitted from the settings form.</li>
-   * </ul>
+   * @param array $options Options array with the following possibilities:
+   *
+   * * **model** - Required. The name of the model data is being imported into.
+   * * **existing_file** - Optional. The full path on the server to an already uploaded file to import.
+   * * **auth** - Read and write authorisation tokens.
+   * * **presetSettings** - Optional associative array of any preset values for the import
+   *   settings. Any settings which have a presetSetting specified will be ommitted from
+   *   the settings form.
+   * * **occurrenceAssociations** - set to true to enable import of associated occurrences or false to
+   *   disable it. Default false.
+   * * **fieldMap** - array of configurations of the fields available to import, one per survey.
+   *   The importer will generate a list of all possible fields in the database to import into
+   *   for a given survey. This typically includes all the standard "core" database fields such
+   *   as species name and sample date, as well as a list of all custom attributes for a survey.
+   *   This list is quite long and some of the default core database fields provided might not be
+   *   appropriate to your survey dataset, leading to possible confusion. So you can use this parameter
+   *   to define database fields and column titles in the spreadsheet that will automatically map to them.
+   *   Provide an array, with each array entry being an associative array containing the definition of the
+   *   fields for 1 survey dataset. In the associative array provide a value called survey_id to link
+   *   this definition to a survey dataset. Also provide a value called fields containing a list of
+   *   database fields you are defining for this dataset, one per line. If you want to link this field
+   *   to a column title then follow the database field name with an equals, then the column title,
+   *   e.g. sample:date=Record date.
+   * * **onlyAllowMappedFields** - set to true and supply field mappings in the fieldMap parameter
+   *   to ensure that only the fields you have specified for the selected survey will be available for
+   *   selection. This allows you to hide all the import fields that you don't want to be used for
+   *   importing into a given survey dataset, thus tidying up the list of options to improve ease of
+   *   use. Default true.
+   * * **skipMappingIfPossible** - set to true to completely bypass the field to column mappings setup
+   *   stage of the import tool if all the columns in the supplied spreadsheet are mapped. Combine this
+   *   with the fieldMap parameter to make predefined import configurations that require little effort
+   *   to use as long as a matching spreadsheet structure is supplied.
    */
   public static function importer($options) {
     if (isset($_GET['total'])) {
@@ -68,7 +94,7 @@ class import_helper extends helper_base {
     } elseif ($_POST['import_step']==1) {
       return self::upload_mappings_form($options);
     } elseif ($_POST['import_step']==2) {
-      return self::run_upload($options);
+      return self::run_upload($options, $_POST);
     }
   }
 
@@ -97,6 +123,8 @@ class import_helper extends helper_base {
     if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
     $request = parent::$base_url."index.php/services/import/get_import_settings/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
+    if (!empty($options['occurrenceAssociations']))
+      $request .= '&occurrence_associations=t';
     $response = self::http_post($request, array());
     if (!empty($response['output'])) {
       // get the path back to the same page
@@ -188,10 +216,16 @@ class import_helper extends helper_base {
       $request .= '&website_id='.trim($settings['website_id']);
     if (!empty($settings['survey_id']))
       $request .= '&survey_id='.trim($settings['survey_id']);
+    if (!empty($settings['useAssociations']) && $settings['useAssociations'])
+    	$request .= '&use_associations=true';
+    
     $response = self::http_post($request, array());
     $fields = json_decode($response['output'], true);
     if (!is_array($fields))
       return "curl request to $request failed. Response ".print_r($response, true);
+    // Restrict the fields if there is a setting for this survey Id
+    if (!empty($settings['survey_id']))
+      self::limitFields($fields, $options, $settings['survey_id']);
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], true);
@@ -216,22 +250,9 @@ class import_helper extends helper_base {
 
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
-    $savedFieldMappings=array();
-    //get the user's checked preference for the import page
-    if (function_exists('hostsite_get_user_field')) {
-      $json = hostsite_get_user_field('import_field_mappings');
-      if ($json===false) {
-        if (!hostsite_set_user_field('import_field_mappings', '[]'))
-          self::$rememberingMappings=false;
-      } else {
-        $json=trim($json);
-        $savedFieldMappings=json_decode(trim($json), true);
-      }
-    } else
-      // host does not support user profiles, so we can't remember mappings
-      self::$rememberingMappings=false;
+    $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     //  if the user checked the Remember All checkbox need to remember this setting
-    $checkedRememberAll=isset($savedFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
+    $checkedRememberAll=isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
 
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
       '<p>'.lang::get('column_mapping_instructions').'</p>'.
@@ -251,11 +272,16 @@ class import_helper extends helper_base {
 });\n";
     }
     $r .= '</tr></thead><tbody>';
+    $colCount = 0;
     foreach ($columns as $column) {
-      $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
-      $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
-      $r .= self::get_column_options($options['model'], $unlinked_fields, $column,' ', $savedFieldMappings);
-      $r .=  "</select></td></tr>\n";
+      $column = trim($column);
+      if (!empty($column)) {
+        $colCount ++;
+        $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
+        $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
+        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings);
+        $r .= "</select></td></tr>\n";
+      }
     }
     $r .= '</tbody>';
     $r .= '</table>';
@@ -266,6 +292,10 @@ class import_helper extends helper_base {
     $r .= '<input type="hidden" name="import_step" value="2" />';
     $r .= '<input type="submit" name="submit" id="submit" value="'.lang::get('Upload').'" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
+    if (!empty($options['skipMappingIfPossible']) && count(self::$automaticMappings) === $colCount) {
+       // Abort the mappings page as we don't need it
+      return self::run_upload($options, self::$automaticMappings);
+    }
     
     self::$javascript .= "function detect_duplicate_fields() {
       var valueStore = [];
@@ -369,6 +399,69 @@ class import_helper extends helper_base {
   }
 
   /**
+   * Returns an array of field to column title mappings that were previously stored in the user profile,
+   * or mappings that were provided via the page's configuration form.
+   * If the user profile does not support saving mappings then sets self::$rememberingMappings to false.
+   * @param array $options Options array passed to the import helper which might contain a fieldMap.
+   * @param array $settings Settings array for this import which might contain the survey_id.
+   * @return array|mixed
+   */
+  private static function getAutoFieldMappings($options, $settings) {
+    $autoFieldMappings=array();
+    //get the user's checked preference for the import page
+    if (function_exists('hostsite_get_user_field')) {
+      $json = hostsite_get_user_field('import_field_mappings');
+      if ($json===false) {
+        if (!hostsite_set_user_field('import_field_mappings', '[]'))
+          self::$rememberingMappings=false;
+      } else {
+        $json=trim($json);
+        $autoFieldMappings=json_decode(trim($json), true);
+      }
+    } else
+      // host does not support user profiles, so we can't remember mappings
+      self::$rememberingMappings=false;
+    if (!empty($settings['survey_id']) && !empty($options['fieldMap'])) {
+      foreach($options['fieldMap'] as $surveyFieldMap) {
+        if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
+            $surveyFieldMap['survey_id'] == $settings['survey_id']) {
+          // The fieldMap config is a list of database fields with optional '=column titles' added to them.
+          // Need a list of column titles mapped to fields so swap this around.
+          $fields = self::explode_lines($surveyFieldMap['fields']);
+          foreach ($fields as $field) {
+            $tokens = explode('=', $field);
+            if (count($tokens)===2)
+              $autoFieldMappings[$tokens[1]] = $tokens[0];
+          }
+        }
+      }
+    }
+    return $autoFieldMappings;
+  }
+
+  /**
+   * If the configuration only allows the supplied fields for a given survey ID, then limits the
+   * list of available fields retrieve from the warehouse for this survey to that configured list.
+   * @param array $fields Field list obtained from the warehouse for this survey. Disallowed fields
+   * will be removed.
+   * @param array $options Import helper options array
+   * @param integer $survey_id ID of the survey being imported
+   */
+  private static function limitFields(&$fields, $options, $survey_id) {
+    if (isset($options['onlyAllowMappedFields']) && $options['onlyAllowMappedFields'] && isset($options['fieldMap'])) {
+      foreach($options['fieldMap'] as $surveyFieldMap) {
+        if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
+            $surveyFieldMap['survey_id']==$survey_id) {
+          $allowedFields = self::explode_lines($surveyFieldMap['fields']);
+          $trimEqualsValue = create_function('&$val', '$tokens = explode("=",$val); $val=$tokens[0];');
+          array_walk($allowedFields, $trimEqualsValue);
+          $fields = array_intersect_key($fields, array_combine($allowedFields, $allowedFields));
+        }
+      }
+    }
+  }
+
+  /**
    * When an array (e.g. $_POST containing preset import values) has values with actual ids in it, we need to
    * convert these to fk_* so we can compare the array of preset data with other arrays of expected data.
    * @param array $arr Array of IDs.
@@ -406,8 +499,9 @@ class import_helper extends helper_base {
   /**
    * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
    * @param array $options Array of options passed to the import control.
+   * @param array $mappings List of column title to field mappings
    */
-  private static function run_upload($options) {
+  private static function run_upload($options, $mappings) {
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
@@ -422,14 +516,14 @@ class import_helper extends helper_base {
       // initiate local javascript to do the upload with a progress feedback
       $r = '
   <div id="progress" class="ui-widget ui-widget-content ui-corner-all">
-  <div id="progress-bar" style="width: 400"></div>
+  <div id="progress-bar" style="width: 400px"></div>
   <div id="progress-text">Preparing to upload.</div>
   </div>
   ';
-      $metadata = array('mappings' => json_encode($_POST));
+      $metadata = array('mappings' => json_encode($mappings));
       // cache the mappings
       if (function_exists('hostsite_set_user_field')) {
-        foreach ($_POST as $column => $setting) {
+        foreach ($mappings as $column => $setting) {
           $userSettings[str_replace("_", " ", $column)] = $setting;
         }
         //if the user has not selected the Remember checkbox for a column setting and the Remember All checkbox is not selected
@@ -526,10 +620,9 @@ class import_helper extends helper_base {
   * @param string $model Name of the model
   * @param array  $fields List of the available possible import columns
   * @param string $column The name of the column from the CSV file currently being worked on.
-  * @param string $selected The name of the initially selected field if there is one.
-  * @param array $savedFieldMappings An array containing the user's custom saved settings for the page.
+  * @param array $autoFieldMappings An array containing the automatic field mappings for the page.
   */
-  private static function get_column_options($model, $fields, $column, $selected='', $savedFieldMappings) {
+  private static function get_column_options($model, $fields, $column, $autoFieldMappings) {
     $skipped = array('id', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
       'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning', 'deleted', 'image_path');
     //strip the column of spaces for use in html ids
@@ -589,8 +682,8 @@ class import_helper extends helper_base {
         //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
         //This means only the first occurrence for the needle is exploded which is desirable in the situation as the field caption
         //contains colons in some situations.
-        if (!empty($savedFieldMappings[$column]) && $savedFieldMappings[$column]!=='<Not imported>') {
-          $savedData = explode(':',$savedFieldMappings[$column],2);
+        if (!empty($autoFieldMappings[$column]) && $autoFieldMappings[$column]!=='<Not imported>') {
+          $savedData = explode(':',$autoFieldMappings[$column],2);
           $savedSectionHeading = $savedData[0];
           $savedMainCaption = $savedData[1];
         } else {
@@ -606,7 +699,7 @@ class import_helper extends helper_base {
           $itWasSaved[$column] = $saveDetectRulesResult['itWasSaved'];
         } else {
           //only use the auto field selection rules to select the drop-down if there isn't a saved option
-          if (!isset($savedFieldMappings[$column])) {
+          if (!isset($autoFieldMappings[$column])) {
             $nonSaveDetectRulesResult = self::auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved[$column], false);
             $selected = $nonSaveDetectRulesResult['selected'];
           }
@@ -618,6 +711,8 @@ class import_helper extends helper_base {
         } else 
           $optionID = $idColumn.'Normal';
         $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
+        if ($selected)
+          self::$automaticMappings[$column] = $field;
       }
       
       // if we have got an option for this field, add to the list
@@ -645,7 +740,7 @@ class import_helper extends helper_base {
         $r .= $option;
       }
     }  
-    $r = self::items_to_draw_once_per_import_column($r, $column, $itWasSaved, $savedFieldMappings, $multiMatch);
+    $r = self::items_to_draw_once_per_import_column($r, $column, $itWasSaved, isset($autoFieldMappings['RememberAll']), $multiMatch);
     return $r;
   }
 
@@ -678,6 +773,7 @@ class import_helper extends helper_base {
     */
     $alternatives = array(
       "sample:entered sref"=>array("/(sample)?(spatial|grid)ref(erence)?/"),
+      "occurrence_2:taxa taxon list (lookup existing record)"=>array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "occurrence:taxa taxon list (lookup existing record)"=>array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "sample:location name"=>array("/(site|location)(name)?/"),
       "smpAttr:eunis habitat (lookup existing record)" => array("/(habitat|eunishabitat)/")
@@ -705,6 +801,7 @@ class import_helper extends helper_base {
               $itWasSaved = 0; 
             else 
               $selected=true;
+            break;
           }
         } 
       }
@@ -722,12 +819,12 @@ class import_helper extends helper_base {
   * @param string $r The HTML to be returned.
   * @param string $column Column from the import CSV file we are currently working with
   * @param integer $itWasSaved This is 1 if a setting is saved for the column and the column would not have been automatically calculated as that value anyway.
-  * @param array $savedFieldMappings An array containing the user' preferences for the import page.
+  * @param boolean $rememberAll Is the remember all mappings option set?.
   * @param integer $multiMatch Array of columns where there are multiple matches for the column and this cannot be resolved.
   * @return string HTMl string 
   */
-  private static function items_to_draw_once_per_import_column($r, $column, $itWasSaved, $savedFieldMappings, $multiMatch) {
-    $checked = ($itWasSaved[$column] == 1 || isset($savedFieldMappings['RememberAll'])) ? ' checked="checked"' : '';
+  private static function items_to_draw_once_per_import_column($r, $column, $itWasSaved, $rememberAll, $multiMatch) {
+    $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
     $optionID = str_replace(" ", "", $column).'Normal';
     $r = "<option value=\"&lt;Not imported&gt;\">&lt;".lang::get('Not imported').'&gt;</option>'.$r.'</optgroup>';
     if (self::$rememberingMappings) 
@@ -739,7 +836,7 @@ class import_helper extends helper_base {
           "Any alterations you make to this default selection in the future will also be remembered until you deselect the checkbox.'></td>";
 
     if ($itWasSaved[$column] == 1) {
-      $r .= "<tr><td></td><td class=\"note\">The above mapping is a remembered previous choice.</td></tr>";
+      $r .= "<tr><td></td><td class=\"note\">Please check the suggested mapping above is correct.</td></tr>";
     }
     //If we find there is a match we cannot resolve uniquely, then give the user a checkbox to reduce the drop-down to suggestions only.
     //Do this by hiding items whose class has "Normal" at the end as these are the items that do not contain the duplicates.
@@ -768,12 +865,12 @@ class import_helper extends helper_base {
   * @return string $caption A caption for the column drop-down on the import page.
   */
   private static function make_clean_caption($caption, $prefix, $fieldname, $model) {
+  	$captionSuffix = (substr($prefix,strlen($prefix)-2,2)=='_2' ? // in a association situation with a second record
+  						' (2)' : '');
     if (empty($caption)) {
       if (substr($fieldname,0,3)=='fk_') {
-        $captionSuffix=' ('.lang::get('lookup existing record').')';
-      } else {
-        $captionSuffix='';
-      }    
+        $captionSuffix .= ' ('.lang::get('lookup existing record').')';
+      }   
       $fieldname=str_replace(array('fk_','_id'), array('',''), $fieldname);
       if ($prefix==$model || $prefix=="metaFields" || $prefix==substr($fieldname,0,strlen($prefix))) {
         $caption = self::processLabel($fieldname).$captionSuffix;
@@ -781,9 +878,8 @@ class import_helper extends helper_base {
         $caption = self::processLabel("$fieldname").$captionSuffix;
       }
     } else {
-      if (substr($fieldname,0,3)=='fk_') 
-        $caption .=' ('.lang::get('lookup existing record').')'; 
-      }
+        $caption .= (substr($fieldname,0,3)=='fk_' ? ' ('.lang::get('lookup existing record').')' : ''); 
+    }
     return $caption;
   }
   

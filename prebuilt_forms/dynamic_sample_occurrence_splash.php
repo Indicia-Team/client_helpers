@@ -104,7 +104,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * work correctly in this sitution. Disabling them also makes the user interface much clearer.
    * This setup allows the occurrences to be saved correctly with minimal alteration to existing code that we already know works correctly.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     if (!empty($_GET['sample_id'])) {
       //Disable the existing records grid so the user can only delete items from here
       data_entry_helper::$javascript .= "$('#Epiphytes-free').find('input[type=checkbox]').attr('disabled','disabled');\n";
@@ -114,7 +114,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
       //Just before the post is processed, we re-enable the grid, so the values are exposed in the submission else they won't be processed
       data_entry_helper::$javascript .= "$('#entry_form').submit(function() { $('#Epiphytes-free').find('input[type=checkbox]').removeAttr('disabled');});\n";
     }
-    return parent::get_form($args, $node);
+    return parent::get_form($args, $nid);
   }
  
   /**
@@ -206,15 +206,16 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
     //Page only supported in grid mode at the moment.
     if (isset($values['gridmode']))
-      $submission = self::get_splash_subsamples_occurrences_submission($args,$values);
+      $submission = self::get_splash_subsamples_occurrences_submission($args, $values);
     else
       drupal_set_message('Please set the page to "gridmode"');
     //Cycle through each occurrence
@@ -235,7 +236,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * @param array $values Associative array of form data values.
    * @return array Partially completed submission structure.
    */
-  public static function get_splash_subsamples_occurrences_submission($args,$values, $include_if_any_data=false,
+  public static function get_splash_subsamples_occurrences_submission($args, $values, $include_if_any_data=false,
        $zero_attrs = false, $zero_values=array('0','None','Absent'))
   {
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
@@ -447,7 +448,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
    * @param array $record Record submission array from the form post.
    * @param boolean $include_if_any_data If set, then records are automatically created if any of the custom
    * attributes are filled in.
-   * @param mixed $zero_attrs Optional array of attribute IDs to restrict checks for zero abundance records to,
+   * @param mixed $zero_attrs Optional array of attribute defs keyed by attribute ID to restrict checks for zero abundance records to,
    * or pass true to check all attributes.
    * @param array $zero_values Array of values to consider as zero, which might include localisations of words
    * such as "absent" and "zero" as well as "0".
@@ -471,7 +472,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
       // check for zero abundance records. First build a regexp that will match the attr IDs to check. Attrs can be
       // just set to true, which means any attr will do.
       if (is_array($zero_attrs))
-        $ids='['.implode('|',$zero_attrs).']';
+        $ids='['.implode('|',array_keys($zero_attrs)).']';
       else
         $ids = '\d+';
       $zeroCount=0;

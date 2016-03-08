@@ -41,12 +41,25 @@ class extension_seasearch {
     if (empty($options['drift_start_attr_id']) || empty($options['drift_end_attr_id']))
       return 'The seasearch.drift_dive_position_entry control requires @drift_start_attr_id ' .
           'and @drift_start_attr_id options to be supplied.';
+    $options = array_merge(array(
+      'systems' => array(
+        '4326'=>'Latitude and longitude (degrees and decimal minutes WGS84)',
+        '4277'=>'Latitude and longitude (degrees and decimal minutes OSGB36)',
+        'OSGB' => 'Ordnance Survey British National Grid'
+      )
+    ), $options);
     $centreTokens = self::getCentreTokens();
+    $driftStartAttr = "smpAttr:$options[drift_start_attr_id]";
+    $driftEndAttr = "smpAttr:$options[drift_end_attr_id]";
     foreach ($attributes as $attribute) {
-      if (preg_match("/^smpAttr:$options[drift_start_attr_id](:\d+)?$/", $attribute['fieldname']))
+      if (preg_match("/^smpAttr:$options[drift_start_attr_id](:\d+)?$/", $attribute['fieldname'])) {
         $driftStartDefault = $attribute['default'];
-      if (preg_match("/^smpAttr:$options[drift_end_attr_id](:\d+)?$/", $attribute['fieldname']))
+        $driftStartAttr = $attribute['fieldname'];
+      }
+      if (preg_match("/^smpAttr:$options[drift_end_attr_id](:\d+)?$/", $attribute['fieldname'])) {
         $driftEndDefault = $attribute['default'];
+        $driftEndAttr = $attribute['fieldname'];
+      }
     }
     $regexToExtractPartsOfLatLong = '/(?P<latdeg>\d+):(?P<latmin>\d+(\.\d+)?)N, (?P<longdeg>\d+):(?P<longmin>\d+(\.\d+)?)(?P<longdir>[EW])/';
     preg_match($regexToExtractPartsOfLatLong, $driftStartDefault, $driftStartTokens);
@@ -62,11 +75,7 @@ class extension_seasearch {
     $r = '<label class="auto">Position format and datum '.
       data_entry_helper::sref_system_select(array(
         'fieldname'=>'sample:entered_sref_system',
-        'systems'=>array(
-          '4326'=>'Latitude and longitiude (degrees and decimal minutes WGS84)',
-          '4277'=>'Latitude and longitiude (degrees and decimal minutes OSGB36)',
-          'OSGB' => 'Ordnance Survey British National Grid'
-        )
+        'systems'=>$options['systems']
       )) . '</label>';
     $r .= '<div><div id="input-ll-container"><p>'.lang::get('Position (degrees and decimal minutes)').'</p>';
     $r .= '<table id="position-data"><thead><th colspan="2"></th><th colspan="2">'.lang::get('Latitude').'</th><th colspan="2">'.lang::get('Longitude').
@@ -104,10 +113,10 @@ class extension_seasearch {
     $default = empty(data_entry_helper::$entity_to_load['sample:entered_sref']) ? '' : data_entry_helper::$entity_to_load['sample:entered_sref'];
     $r .= "<input type=\"hidden\" name=\"sample:entered_sref\" id=\"imp-sref\" value=\"$default\" />";
     // Pass the drift start and end  attribute IDs to JS so the values can be synced to the visible controls
-    data_entry_helper::$javascript .= "indiciaData.driftStartAttrFieldname='smpAttr:$options[drift_start_attr_id]';\n";
-    $r .= "<input type=\"hidden\" name=\"smpAttr:$options[drift_start_attr_id]\" id=\"smpAttr:$options[drift_start_attr_id]\" value=\"$driftStartDefault\"/>";
-    data_entry_helper::$javascript .= "indiciaData.driftEndAttrFieldname='smpAttr:$options[drift_end_attr_id]';\n";
-    $r .= "<input type=\"hidden\" name=\"smpAttr:$options[drift_end_attr_id]\" name=\"smpAttr:$options[drift_end_attr_id]\"  value=\"$driftEndDefault\"/>";
+    data_entry_helper::$javascript .= "indiciaData.driftStartAttrFieldname='$driftStartAttr';\n";
+    $r .= "<input type=\"hidden\" name=\"$driftStartAttr\" id=\"$driftStartAttr\" value=\"$driftStartDefault\"/>";
+    data_entry_helper::$javascript .= "indiciaData.driftEndAttrFieldname='$driftEndAttr';\n";
+    $r .= "<input type=\"hidden\" name=\"$driftEndAttr\" id=\"$driftEndAttr\"  value=\"$driftEndDefault\"/>";
     $r .= '</div>';
     return $r;
   }

@@ -52,7 +52,8 @@ class iform_species_details extends iform_dynamic {
       'title'=>'View details of a species',
       'category' => 'Utilities',
       'description'=>'A summary view of a species including records. Pass a parameter in the URL called taxon, ' .
-        'containing a taxa_taxon_list_id which defines which species to show.'
+        'containing a taxa_taxon_list_id which defines which species to show.',
+      'recommended' => true
     );
   }
   
@@ -126,6 +127,7 @@ class iform_species_details extends iform_dynamic {
               "&nbsp;&nbsp;<strong>[explore]</strong> - a button “Explore this species' records” which takes you to explore all records, filtered to the species.<br/>".
               "&nbsp;&nbsp;<strong>[photos]</strong> - photos associated with the occurrence<br/>".
               "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location<br/>".
+              "&nbsp;&nbsp;<strong>[occurrenceassociations]</strong> - a list of associated species, drawn from the occurrence associations data.<br/>".
           "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). ".
           "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
           "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
@@ -289,7 +291,7 @@ class iform_species_details extends iform_dynamic {
   protected static function get_form_html($args, $auth, $attributes) {
     if (isset($_POST['enable'])) {
       module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
+      hostsite_show_message(lang::get('The Indicia AJAX Proxy module has been enabled.'));
     }
     if (!defined('IFORM_AJAXPROXY_PATH')) {
       $r = '<p>'.lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
@@ -516,6 +518,43 @@ class iform_species_details extends iform_dynamic {
       )
     )).'</div>';
   }
+
+  protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
+    iform_load_helpers(array('report_helper'));
+    $currentUrl = report_helper::get_reload_link_parts();
+    // amend currentUrl path if we have drupal dirty URLs so javascript will work properly
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?')===false) {
+      $currentUrl['path'] .= '?q='.$currentUrl['params']['q'].'&taxon_meaning_id=';
+    } else {
+      $currentUrl['path'] .= '&taxon_meaning_id=';
+    }
+    $options = array_merge(array(
+      'dataSource' => 'library/occurrence_associations/filterable_associated_species_list_cloud',
+      'itemsPerPage' => 20,
+      'class' => 'cloud',
+      'header' => '<ul>',
+      'footer' => '</ul>',
+      'bands' => array(array('content'=>'<li style="font-size: {font_size}px">' .
+          "<a href=\"$currentUrl[path]{taxon_meaning_id}\">{species}<a/></li>")),
+      'emptyText' => '<p>No association species information available</p>'
+    ), $options);
+    return '<div class="detail-panel" id="detail-panel-occurrenceassociations"><h3>'.lang::get('Associated species').'</h3>' .
+    report_helper::freeform_report(array(
+      'readAuth' => $auth['read'],
+      'dataSource'=> $options['dataSource'],
+      'itemsPerPage' => $options['itemsPerPage'],
+      'class' => $options['class'],
+      'header'=> $options['header'],
+      'footer'=> $options['footer'],
+      'bands'=> $options['bands'],
+      'emptyText' => $options['emptyText'],
+      'mode' => 'report',
+      'autoParamsForm' => false,
+      'extraParams' => array(
+        'taxon_meaning_list'=> self::$taxon_meaning_id
+      )
+    )).'</div>';
+  }
   
   /**
    * Draw Map section of the page.
@@ -556,10 +595,11 @@ class iform_species_details extends iform_dynamic {
     // This is not a map used for input
     $options['editLayer'] = false;
     // if in Drupal, and IForm proxy is installed, then use this path as OpenLayers proxy
-    if (defined('DRUPAL_BOOTSTRAP_CONFIGURATION') && module_exists('iform_proxy')) {
-      global $base_url;
-      $options['proxy'] = $base_url . '?q=' . variable_get('iform_proxy_path', 'proxy') . '&url=';
-     }
+    // @todo Refactor for Drupal 8.
+    if (function_exists('hostsite_module_exists') && hostsite_module_exists('iform_proxy')) {
+      $options['proxy'] = data_entry_helper::getRootFolder(true) .
+          hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
+    }
    
     // output a legend
     if (isset($args['include_layer_list_types']))
@@ -607,10 +647,8 @@ class iform_species_details extends iform_dynamic {
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
           $url='{rootFolder}'.$url;
-      $pathParam = (function_exists('variable_get') && variable_get('clean_url', 0)=='0') ? 'q' : '';
-      $rootFolder = data_entry_helper::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-      $url = str_replace('{rootFolder}', $rootFolder, $url);
-      $url.= (strpos($url, '?')===false) ? '?' : '&';
+      $url = str_replace('{rootFolder}', data_entry_helper::getRootFolder(true), $url);
+      $url .= (strpos($url, '?')===false) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$taxon_meaning_id;
       $r='<a class="button" href="'.$url.'">' . lang::get('Explore records of {1}', self::get_best_name()) . '</a>';
     }

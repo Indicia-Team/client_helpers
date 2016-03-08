@@ -45,6 +45,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static $group = false;
   
   protected static $availableForGroups = false;
+  protected static $limitToGroupId = 0;
   
   /**
    * The list of attributes loaded for occurrences. Keep a class level variable, so that we can track the ones we have already
@@ -59,13 +60,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   public static function get_dynamic_sample_occurrence_definition() {
     return array(
-      'title'=>'Sample with occurrences form',
-      'category' => 'General Purpose Data Entry Forms',
-      'helpLink'=>'http://code.google.com/p/indicia/wiki/TutorialDynamicForm',
-      'description'=>'A sample and occurrence entry form with an optional grid listing the user\'s samples so forms can be ' .
-        'reloaded for editing. Can be used for entry of a single occurrence, ticking species off a checklist, or entering ' .
-        'species into a grid. The attributes on the form are dynamically generated from the survey setup on the Indicia Warehouse.',
-      'supportsGroups'=>true
+      'title'=>'Enter single record or list of records (customisable)',
+      'category' => 'Data entry forms',
+      'helpLink'=>'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/dynamic-sample-occurrence.html',
+      'description'=>'A data entry form for records (taxon occurrences). Can be used for entry of a single record, ' .
+        'ticking species off a checklist or entering user selected species into a list. Highly customisable.',
+      'supportsGroups'=>true,
+      'recommended'=>true
     );
   }
 
@@ -121,9 +122,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'group' => 'User Interface',
           // Note that we can't test Drupal module availability whilst loading this form for a new iform, using Ajax. So 
           // in this case we show the control even though it is not usable (the help text explains the module requirement).          
-          'visible' => !function_exists('module_exists') ||
-                       (module_exists('profile') && substr(VERSION, 0, 1) == '6') ||
-                       (module_exists('field') && substr(VERSION, 0, 1) == '7')
+          'visible' => !function_exists('hostsite_module_exists') ||
+                       (hostsite_module_exists('profile') && substr(VERSION, 0, 1) == '6') ||
+                       (hostsite_module_exists('field') && substr(VERSION, 0, 1) == '7')
         ),
         array(
           'name'=>'structure',
@@ -160,6 +161,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                 "location's centroid as the sample map reference.<br/>".
                 "&nbsp;&nbsp;<strong>[location select]</strong> - a select control for picking a stored location. A spatial reference is still required.<br/>".
                 "&nbsp;&nbsp;<strong>[location map]</strong> - combines location select, map and spatial reference controls for recording only at stored locations.<br/>".
+                "&nbsp;&nbsp;<strong>[occurrence comment]</strong> - a text box for occurrence level comment. Alternatively use the ".
+                    "[species attributes] control to output all input controls for the species automatically. <br/>".
                 "&nbsp;&nbsp;<strong>[photos]</strong> - use when in single record entry mode to provide a control for uploading occurrence photos. Alternatively use the ".
                     "[species attributes] control to output all input controls for the species automatically. The [photos] control overrides the setting <strong>Occurrence Images</strong>.<br/>".
                 "&nbsp;&nbsp;<strong>[place search]</strong> - zooms the map to the entered location.<br/>".
@@ -657,9 +660,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * Override get_form_html so we can store the remembered argument in a global, to make
    * it available to a hook function which exists outside the form.
    */
-  protected static function get_form_html($args, $auth, $attributes) { 
+  protected static function get_form_html($args, $auth, $attributes) {
     group_authorise_form($args, $auth['read']);
-    // We always want an autocomplete formatter function for species lookups. The form implementation can 
+    // We always want an autocomplete formatter function for species lookups. The form implementation can
     // specify its own if required
     if (method_exists(self::$called_class, 'build_grid_autocomplete_function'))
       call_user_func(array(self::$called_class, 'build_grid_autocomplete_function'), $args);
@@ -682,25 +685,31 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'extraParams'=>$auth['read']+array('view'=>'detail','id'=>data_entry_helper::$entity_to_load['sample:group_id'])
       ));
       self::$group=self::$group[0];
-      $filterdef = json_decode(self::$group['filter_definition']);
-      // does the group filter define a site or boundary for the recording? If so we need to show it and limit the map extent
-      $locationIDToLoad = empty($filterdef->location_id) ? 
-          (empty($filterdef->indexed_location_id) ? false : $filterdef->indexed_location_id) : $filterdef->location_id;
-      if ($locationIDToLoad) {
-        $response = data_entry_helper::get_population_data(array(
-          'table' => 'location',
-          'extraParams' => $auth['read'] + array('id'=>$locationIDToLoad, 'view' => 'detail')
-        ));
-        $geom = $response[0]['boundary_geom'] ? $response[0]['boundary_geom'] : $response[0]['centroid_geom'];  
-        iform_map_zoom_to_geom($geom, lang::get('Boundary of {1} for the {2} group', $response[0]['name'], self::$group['title']), true);
-        self::hide_other_boundaries($args);
-      }
-      elseif (!empty($filterdef->searchArea)) {
-        iform_map_zoom_to_geom($filterdef->searchArea, lang::get('Recording area for the {1} group', self::$group['title']), true);
-        self::hide_other_boundaries($args);
+      $filterDef = json_decode(self::$group['filter_definition']);
+      if (empty($args['location_boundary_id'])) {
+        // Does the group filter define a site or boundary for the recording? If so and the form
+        // is not locked to a boundary, we need to show it and limit the map extent.
+        $locationIDToLoad = empty($filterDef->location_id) ?
+          (empty($filterDef->indexed_location_id) ? FALSE : $filterDef->indexed_location_id) : $filterDef->location_id;
+        if ($locationIDToLoad) {
+          $response = data_entry_helper::get_population_data(array(
+            'table' => 'location',
+            'extraParams' => $auth['read'] + array(
+                'id' => $locationIDToLoad,
+                'view' => 'detail'
+              )
+          ));
+          $geom = $response[0]['boundary_geom'] ? $response[0]['boundary_geom'] : $response[0]['centroid_geom'];
+          iform_map_zoom_to_geom($geom, lang::get('Boundary of {1} for the {2} group', $response[0]['name'], self::$group['title']), TRUE);
+          self::hide_other_boundaries($args);
+        }
+        elseif (!empty($filterDef->searchArea)) {
+          iform_map_zoom_to_geom($filterDef->searchArea, lang::get('Recording area for the {1} group', self::$group['title']), TRUE);
+          self::hide_other_boundaries($args);
+        }
       }
       if (!empty($filterDef->taxon_group_names)) {
-        $args['taxon_filter'] = implode("\n", array_values((array)$filterdef->taxon_group_names));
+        $args['taxon_filter'] = implode("\n", array_values((array)$filterDef->taxon_group_names));
         $args['taxon_filter_field']='taxon_group';
       }
       // @todo Consider other types of species filter, e.g. family or species list?
@@ -721,19 +730,20 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * Determine whether to show a grid of existing records or a form for either adding a new record, editing an existing one,
    * or creating a new record from an existing one.
    * @param array $args iform parameters.
-   * @param object $node node being shown.
+   * @param object $nid node being shown.
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING|MODE_CLONE].
    */
-  protected static function getMode($args, $node) {
+  protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
-    self::$availableForGroups = $node->available_for_groups;
+    self::$availableForGroups = $args['available_for_groups'];
+    self::$limitToGroupId = $args['limit_to_group_id'];
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) {
         // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrupt the data by accident
-        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($node,'admin') && array_key_exists('mnhnld1', $_POST)){
+        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin') && array_key_exists('mnhnld1', $_POST)){
           $locs = array();
           foreach($_POST as $key => $value){
             $parts = explode(':', $key);
@@ -741,11 +751,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           }
           if(count($locs)>0){
             foreach($locs as $loc)
-              iform_loctools_deletelocation($node, $loc);
+              iform_loctools_deletelocation($nid, $loc);
             foreach($_POST as $key => $value){
               $parts = explode(':', $key);
               if($parts[0]=='location' && $value == 1)
-                iform_loctools_insertlocation($node, $parts[2], $parts[1]);
+                iform_loctools_insertlocation($nid, $parts[2], $parts[1]);
             }
           }
         }
@@ -918,7 +928,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function getEntity($args, $auth) {
     data_entry_helper::$entity_to_load = array();
-    if (self::getGridMode($args)) {
+    if ((call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
         // multi-record mode using a checklist grid. We really just need to know the sample ID.
         if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
           $response = data_entry_helper::get_population_data(array(
@@ -961,9 +971,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
     $args['sample_method_id']=data_entry_helper::$entity_to_load['sample:sample_method_id'];
     // enforce that people only access their own data, unless explicitly have permissions
-    $editor = !empty($args['edit_permission']) && function_exists('user_access') && user_access($args['edit_permission']);
+    $editor = !empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']);
     if($editor) return;
-    $readOnly = !empty($args['ro_permission']) && function_exists('user_access') && user_access($args['ro_permission']);
+    $readOnly = !empty($args['ro_permission']) && hostsite_user_has_permission($args['ro_permission']);
     if (function_exists('hostsite_get_user_field') &&
         data_entry_helper::$entity_to_load['sample:created_by_id'] != 1 && // created_by_id can come out as string...
         data_entry_helper::$entity_to_load['sample:created_by_id'] !== hostsite_get_user_field('indicia_user_id')) {
@@ -1097,6 +1107,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if (isset(data_entry_helper::$entity_to_load['occurrence:id'])) {
       $r .= '<input type="hidden" id="occurrence:id" name="occurrence:id" value="' . data_entry_helper::$entity_to_load['occurrence:id'] . '" />' . PHP_EOL;
     }
+    $r .= self::get_group_licence_html();
     if (!empty(data_entry_helper::$entity_to_load['sample:group_id'])) {
       $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"".data_entry_helper::$entity_to_load['sample:group_id']."\" />\n";
       // If the group does not release it's records, set the release_status flag
@@ -1105,8 +1116,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       if (empty(data_entry_helper::$entity_to_load['sample:group_title'])) {
         data_entry_helper::$entity_to_load['sample:group_title'] = self::$group['title'];
       }
-      $msg=empty(self::$loadedSampleId) ? 'This form will be posted to the <strong>{1}</strong> group.' : 'This form was posted to the <strong>{1}</strong> group.';
-      $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
+      // if a possibility of confusion when using this form, add info to clarify which group you are posting to
+      if (empty(self::$limitToGroupId)) {
+        $msg = empty(self::$loadedSampleId) ?
+            'This records you enter using this form will be added to the <strong>{1}</strong> group.' :
+            'The records on this form are part of the <strong>{1}</strong> group.';
+        $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
+      }
     } elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
       // Group enabled form being used to add new records, but no group specified in URL path, so give 
       // the user a chance to pick from their list of possible groups for this form.
@@ -1159,6 +1175,45 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if ($args['multiple_occurrence_mode']==='multi')
       $r .= '<input type="hidden" value="true" name="gridmode" />';
     return $r;
+  }
+
+  /**
+   * Retrieves the licence message and licence ID to add to the page, if relevant.
+   * E.g. if the sample is already licenced, or the group you are posting to has selected
+   * a licence.
+   * @return string
+   */
+  private static function get_group_licence_html() {
+    $r = '';
+    if (!empty(data_entry_helper::$entity_to_load['sample:licence_id']) || !empty(self::$group['licence_id'])) {
+      if (!empty(data_entry_helper::$entity_to_load['sample:licence_id'])) {
+        $msg = 'The records on this form are licenced as <strong>{1}</strong>.';
+        $licence_id = data_entry_helper::$entity_to_load['sample:licence_id'];
+        $code = data_entry_helper::$entity_to_load['sample:licence_code'];
+      } else {
+        $msg = 'This records you enter using this form will be licenced as <strong>{1}</strong>.';
+        $licence_id = self::$group['licence_id'];
+        $code =  self::$group['licence_code'];
+      }
+      $licence = self::licence_code_to_text($code);
+      $r .= '<p class="licence licence-' . strtolower($code) . '">' . lang::get($msg, $licence) . '</p>';
+      $r .= "<input type=\"hidden\" name=\"sample:licence_id\" value=\"$licence_id\" />";
+    }
+    return $r;
+  }
+
+  /**
+   * Converts a licence code (e.g. CC-BY) to readable text.
+   * @param string $code
+   * @return string
+   */
+  private static function licence_code_to_text($code) {
+    return str_replace(
+      array('CC','BY','NC','0','OGL'),
+      array(lang::get('Creative Commons'), lang::get('By Attribution'), lang::get('Non-Commercial'),
+        lang::get(' (no rights reserved)'), lang::get('Open Government Licence')),
+      $code
+    );
   }
 
   /**
@@ -1539,7 +1594,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if ($groups=hostsite_get_user_field('taxon_groups')) {
       $species_ctrl_opts['usersPreferredGroups'] = unserialize($groups);
     }
-    if ($args['extra_list_id']) $species_ctrl_opts['lookupListId']=$args['extra_list_id'];
+    if ($args['extra_list_id'] && !isset($options['lookupListId']))
+      $species_ctrl_opts['lookupListId']=$args['extra_list_id'];
     //We only do the work to setup the filter if the user has specified a filter in the box
     if (!empty($args['taxon_filter_field']) && (!empty($args['taxon_filter']))) {
       $species_ctrl_opts['taxonFilterField']=$args['taxon_filter_field'];
@@ -1648,7 +1704,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // if using something other than an autocomplete, then set the caption template to include the appropriate names. Autocompletes
     // use a JS function instead.
     global $indicia_templates;
-    if ($ctrl!=='autocomplete' && isset($args['species_include_both_names']) && $args['species_include_both_names']) {
+    if ($ctrl!=='autocomplete' && isset($args['species_include_both_names']) && $args['species_include_both_names']
+        && !isset($species_ctrl_opts['captionTemplate'])) {
       if ($args['species_names_filter']==='all')
         $indicia_templates['species_caption'] = "{{$colTaxon}}";
       elseif ($args['species_names_filter']==='language')
@@ -1730,7 +1787,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function get_control_samplecomment($auth, $args, $tabAlias, $options) {
     return data_entry_helper::textarea(array_merge(array(
       'fieldname'=>'sample:comment',
-      'label'=>lang::get('Overall Comment')
+      'label'=>lang::get('Overall comment')
     ), $options));
   }
 
@@ -1781,7 +1838,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       if ($args['occurrence_comment'])
         $r .= data_entry_helper::textarea(array(
           'fieldname'=>'occurrence:comment',
-          'label'=>lang::get('Record Comment')
+          'label'=>lang::get('Record comment')
         ));
       if ($args['occurrence_images']){
         $r .= self::occurrence_photo_input($auth['read'], $options, $tabAlias, $args);
@@ -1797,10 +1854,12 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function get_control_date($auth, $args, $tabAlias, $options) {
     if (isset(data_entry_helper::$entity_to_load['sample:date']) && preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
-      // Date has 4 digit year first (ISO style) - convert date to expected output format
-      // @todo The date format should be a global configurable option. It should also be applied to reloading of custom date attributes.
+      // Date has 4 digit year first (ISO style) - convert date to expected output format.
+      //Note this only affects the loading of the date itself when the form initially loads, the format displayed as soon as the 
+      //date picker is selected is determined by Drupal's settings.
+      // @todo The date format should be a global configurable option.
       $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
-      data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
+      data_entry_helper::$entity_to_load['sample:date'] = $d->format(helper_base::$date_format);
     }
     if($args['language'] != 'en')
       data_entry_helper::add_resource('jquery_ui_'.$args['language']); // this will autoload the jquery_ui resource. The date_picker does not have access to the args.
@@ -1968,6 +2027,18 @@ else
   }
   
   /**
+   * Get the occurrence comment control
+   */
+  protected static function get_control_occurrencecomment($auth, $args, $tabAlias, $options) {
+    if (!(call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
+      return data_entry_helper::textarea(array_merge(array(
+        'fieldname'=>'occurrence:comment',
+        'label'=>lang::get('Record comment')
+      ), $options));
+    }
+  }
+  
+  /**
    * Get the photos control
    */
   protected static function get_control_photos($auth, $args, $tabAlias, $options) {
@@ -2037,8 +2108,9 @@ else
       $attrSpecificOptions = array();
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
       $sensitivity_controls = get_attribute_html(self::$occAttrs, $args, $ctrlOptions, 'sensitivity', $attrSpecificOptions);
-      return data_entry_helper::sensitivity_input(array(
-        'additionalControls' => $sensitivity_controls
+      return data_entry_helper::sensitivity_input(array_merge(
+        $options,
+        array('additionalControls' => $sensitivity_controls)
       ));
     }
     else 
@@ -2086,9 +2158,10 @@ else
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
+   * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
@@ -2096,8 +2169,28 @@ else
     // Can't call getGridMode in this context as we might not have the $_GET value to indicate grid
     if (isset($values['speciesgridmapmode']))
       $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values);
-    else if (isset($values['gridmode']))
-      $submission = data_entry_helper::build_sample_occurrences_list_submission($values);
+    else if (isset($values['gridmode'])) {
+      // Work out the attributes that are for abundance, so could contain a zero
+      $connection = iform_get_connection_details($nid);
+      $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
+      self::load_custom_occattrs($readAuth, $args['survey_id']);
+      $abundanceAttrs = array();
+      foreach (self::$occAttrs as &$attr) {
+        if ($attr['system_function']==='sex_stage_count') {
+          // If we have any lookups, we need to load the terms so we can compare the data properly
+          // as term Ids are never zero
+          if ($attr['data_type']==='L') {
+            $attr['terms'] = data_entry_helper::get_population_data(array(
+              'table' => 'termlists_term',
+              'extraParams' => $readAuth + array('termlist_id'=>$attr['termlist_id'], 'view'=>'cache', 'columns'=>'id,term'),
+              'cachePerUser' => false
+            ));
+          }
+          $abundanceAttrs[$attr['attributeId']] = $attr;
+        }
+      }
+      $submission = data_entry_helper::build_sample_occurrences_list_submission($values, false, $abundanceAttrs);
+    }
     else
       $submission = data_entry_helper::build_sample_occurrence_submission($values);
     return($submission);
