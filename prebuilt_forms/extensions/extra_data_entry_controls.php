@@ -25,6 +25,11 @@
  */
 class extension_extra_data_entry_controls {
 
+  /**
+   * A conttrol which provides autocomplete functionality to lookup against the list of
+   * people who are users of this website.
+   * @return string THML
+   */
   public static function person_autocomplete($auth, $args, $tabalias, $options, $path) {
     if (empty($options['fieldname']))
       return 'A @fieldname option is required for the [extra_data_entry_controls.person_autocomplete] control.';
@@ -42,6 +47,11 @@ class extension_extra_data_entry_controls {
     return $r;
   }
 
+  /**
+   * A variation on the species autocomplete control that allows an additional associated
+   * occurrence to be attached to the submission. Use for single species record forms.
+   * @return string HTML for the control
+   */
   public static function associated_occurrence($auth, $args, $tabalias, $options, $path) {
     if (empty($options['association_type_id']))
       return 'A @association_type_id option is required for the [extra_data_entry_controls.associated_occurrence] control.';
@@ -103,6 +113,13 @@ class extension_extra_data_entry_controls {
     return $r;
   }
 
+  /**
+   * Extension method that processes a submission to add the occurrence association
+   * for the above associated_occurrence control.
+   * @param $values
+   * @param $s_array
+   * @throws \exception
+   */
   public static function build_submission_associations($values, $s_array) {
     $index = 0;
     // @todo Not as simple as the following, as could be deleting?
@@ -120,12 +137,13 @@ class extension_extra_data_entry_controls {
       // special value indicates an existing association which has not been changed. We
       // therefore don't need to post it.
       return;
-    // clone and clean up the main species record
+    // clone and clean up the main species record by removing attributes and media
     $assoc = array_merge($s_array[0]['subModels'][0]);
     foreach ($assoc['model']['fields'] as $field => $value) {
       if (substr($field, 0, 8)==='occAttr:')
         unset($assoc['model']['fields'][$field]);
     }
+    unset ($assoc['model']['subModels']);
     // convert this to a record of the associated species
     $assoc['model']['fields']['taxa_taxon_list_id'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index"]);
     $assoc['model']['fields']['taxa_taxon_list_id:taxon'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index:taxon"]);
