@@ -58,6 +58,16 @@ class extension_pantheon {
           $title = str_replace('{term:' . $matches['param'] . '}', $terms[0]['term'], $title);
 
       }
+      if (preg_match('/{attr:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
+        $attrs = data_entry_helper::get_population_data(array(
+          'table' => 'taxa_taxon_list_attribute',
+          'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']]),
+          'columns' => 'caption'
+        ));
+        if (count($attrs))
+          $title = str_replace('{attr:' . $matches['param'] . '}', $attrs[0]['caption'], $title);
+
+      }
       hostsite_set_page_title($title);
     }
     return '';
@@ -79,16 +89,18 @@ class extension_pantheon {
     if (!empty($options['extras'])) {
       $r .= '<ul class="button-links extras">';
       foreach ($options['extras'] as $extra) {
-        $r .= '<li><a id="isis-link" class="button" href="' . $extra['link'] . '">' . $extra['label'] . '</a></li>';
+        $r .= '<li><a id="isis-link" class="button" href="' . hostsite_get_url($extra['link']) . '">' . $extra['label'] . '</a></li>';
       }
       $r .= '</ul>';
     }
     $r .= '<ul class="button-links">';
     if (!empty($options['back']))
-      $r .= '<li><a id="summary-link" class="button" href="pantheon/summary">Back to Summary</a></li>';
-    $r .= '<li><a id="assemblages-link" class="button" href="assemblages/overview">Assemblages</a></li>
-<li><a id="osiris-link" class="button" href="osiris/ecological-divisions">Traits</a></li>
-<li><a id="horus-link" class="button"href="horus/quality-scores-overview">Quality Scores</a></li>
+      $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('pantheon/summary') . '">Back to Summary</a></li>';
+    $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
+<li><a id="assemblages-link" class="button" href="' . hostsite_get_url('assemblages/overview') . '">ISIS assemblage summary</a></li>
+<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris/ecological-divisions') . '">Osiris traits summary</a></li>
+<li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Horus indices summary</a></li>
+<li><a id="combined-summary" class="button" href="' . hostsite_get_url('pantheon/combined-summary') . '">Combined summary</a></li>
 </ul>';
     return $r;
   }

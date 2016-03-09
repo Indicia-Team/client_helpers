@@ -91,16 +91,13 @@ class filter_what extends filter_base {
     }
     $r .= '<p>' . lang::get('Search for and build a list of species groups to include') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions are limiting the groups available to choose from.') . '</div>';
-    if (empty($options['taxon_list_id']))
-      $extraParams = $readAuth;
-    else
-      $extraParams = $readAuth + array('taxon_list_id'=>$options['taxon_list_id']);
+    $baseParams = empty($options['taxon_list_id']) ? $readAuth : $readAuth + array('taxon_list_id'=>$options['taxon_list_id']);
     $r .= data_entry_helper::sub_list(array(
       'fieldname' => 'taxon_group_list',
       'report' => 'library/taxon_groups/taxon_groups_used_in_checklist_lookup',
       'captionField' => 'q',
       'valueField' => 'id',
-      'extraParams' => $extraParams,
+      'extraParams' => $baseParams,
       'addToTable' => false
     ));
     $r .= "</div>\n";
@@ -113,34 +110,27 @@ class filter_what extends filter_base {
         'table' => 'cache_taxa_taxon_list',
         'captionField' => 'taxon',
         'valueField' => 'id',
-        'extraParams' => $readAuth + array(
+        'extraParams' => $baseParams + array(
             'preferred' => 't',
             'query' => '{"where":["taxon_rank_sort_order<=' . $familySortOrder . '"]}'
           ),
         'addToTable' => FALSE
       );
-      //Use all taxa in the warehouse as there isn't an iform master list so don't need the taxon list id param
-      if (isset($options['taxon_list_id'])) {
-        $subListOptions['extraParams'] = array_merge(array('taxon_list_id' => $options['taxon_list_id']), $subListOptions['extraParams']);
-      }
       $r .= data_entry_helper::sub_list($subListOptions);
       $r .= "</div>\n";
     }
     $r .= '<div id="species-tab">' . "\n";
     $r .= '<p>' . lang::get('Search for and build a list of species or genera to include.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-    $rankFilter = $familySortOrder==='off' ? array() : array('query' => '{"where":["taxon_rank_sort_order>'.$familySortOrder.'"]}');
+    $rankFilter = $familySortOrder==='off' ? array() : array('query' => '{"where":["(taxon_rank_sort_order>'.$familySortOrder.' or taxon_rank_sort_order is null)"]}');
     $subListOptions = array(
       'fieldname' => 'taxa_taxon_list_list',
       'table' => 'cache_taxa_taxon_list',
       'captionField' => 'taxon',
       'valueField' => 'preferred_taxa_taxon_list_id',
-      'extraParams' => $readAuth + $rankFilter,
+      'extraParams' => $baseParams + $rankFilter,
       'addToTable' => false
     );
-    //Use all taxa in the warehouse as there isn't an iform master list so don't need the taxon list id param
-    if (isset($options['taxon_list_id']))
-      $subListOptions['extraParams'] = array_merge(array('taxon_list_id' => $options['taxon_list_id']),$subListOptions['extraParams']);
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
     $r .= "<div id=\"rank-tab\">\n";

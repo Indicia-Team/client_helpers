@@ -346,7 +346,8 @@ class iform_group_edit {
         'extraParams' => $auth['read'] + array(
             'group_type_id' => $args['parent_group_type'],
             'user_id' => hostsite_get_user_field('indicia_user_id'),
-            'view' => 'detail'
+            'view' => 'detail',
+            'pending' => 'f'
           ),
         'validation' => array('required'),
         'blankText' => lang::get('<please select>')
