@@ -1993,7 +1993,8 @@ $('#$escaped').change(function(e) {
     $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
     if (array_key_exists('presetLayers', $options)) $mapPanelOptions['presetLayers'] = $options['presetLayers'];
     if (array_key_exists('tabDiv', $options)) $mapPanelOptions['tabDiv'] = $options['tabDiv'];
-    $r .= self::map_panel($mapPanelOptions);
+    require_once('map_helper.php');
+    $r .= map_helper::map_panel($mapPanelOptions);
     return $r;
   }
 
@@ -2003,7 +2004,7 @@ $('#$escaped').change(function(e) {
    * @param array $olOptions Refer to map_helper::map_panel documentation.
    * @deprecated Use map_helper::map_panel instead.
    */
-  public static function map_panel($options, $olOptions=null) {
+  public static function map_panel($options, $olOptions=array()) {
     require_once('map_helper.php');
     return map_helper::map_panel($options, $olOptions);
   }
