@@ -4031,7 +4031,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       if($foundFirst){
        $locationArray[$i]['estimates'] = $locationArray[$i]['summary'];
        $locationArray[$i]['hasEstimates'] = true;
-       if(!$locationArray[$i+1]['hasData']) {
+       if($i < count($locationArray)-1 && !$locationArray[$i+1]['hasData']) {
         for($j= $i+2; $j <= $maxWeekNo; $j++)
           if($locationArray[$j]['hasData']) break;
         if($j <= $maxWeekNo) { // have found another value later on, so interpolate between them
