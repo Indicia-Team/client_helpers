@@ -280,7 +280,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['location:centroid_geom'];
     if ($boundaries && isset(data_entry_helper::$entity_to_load['location:boundary_geom'])) 
       $options['initialBoundaryWkt'] = data_entry_helper::$entity_to_load['location:boundary_geom'];
-    if ($args['interface']!=='one_page')
+    if ($tabalias)
       $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
     if (!isset($options['standardControls']))

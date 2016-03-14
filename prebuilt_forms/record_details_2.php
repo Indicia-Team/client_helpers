@@ -423,7 +423,7 @@ Record ID',
       $options['initialFeatureWkt'] = self::$record['geom'];
     }
     
-    if ($args['interface']!=='one_page')
+    if ($tabalias)
       $options['tabDiv'] = $tabalias;
     
     $olOptions = iform_map_get_ol_options($args);

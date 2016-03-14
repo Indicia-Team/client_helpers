@@ -568,7 +568,7 @@ class iform_species_details extends iform_dynamic {
     global $user;
     // setup the map options
     $options = iform_map_get_map_options($args, $auth['read']);
-    if ($args['interface']!=='one_page')
+    if ($tabalias)
       $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
     $url = map_helper::$geoserver_url.'wms';
