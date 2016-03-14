@@ -25,12 +25,21 @@ require_once 'includes/user.php';
 require_once 'includes/language_utils.php';
 require_once 'includes/form_generation.php';
 
+// HOWTO configure default species view to be selected from user field.
+// Home » Administration » Configuration » People » Account settings, Manage Fields
+// Add a new "Vertical Tab" Under "Recording settings", called "Preferences"/group_preferences beneath "Who you are"
+// Add a new field "Default species view" (field_default_species_view) under this, type "List (text)"
+// Set the allowed list to :
+//  full|The full taxa list
+//  common|Common taxa list
+//  mine|Taxa from the list previously recorded by me
+//  here|Taxa from the list previously recorded at this site.
+// Leave "Required field" and "Display on user registration form" unchecked.
+// Help Text : This selects what default species list is displayed when you enter first data for a walk. Common is only available on the first tab (Butterflies): if you choose this option, the other tabs will display the full list. The full list will not be displayed on the final (Others) tab, as this is the full UK list and is very big: in this case, those taxa previously recorded here will be displayed. When viewing data subsequently, only those taxa who have data recorded will initially be displayed. Leaving unselected will default to the standard form configuration setting.
+// Default: N/A
+// Number of values: 1
 
 // TODO
-// Convert List creation on subsidiary grids to look up taxon details for the taxons we have rather than driving from list.
-// Add species auto completes to bottom of grids
-// When auto complete selected, new row added.
-// Add check to prevent duplicate rows
 // add filtering ability to auto complete look up and discriminator between subsidiary grids.
 /**
  * A custom function for usort which sorts by the location code of a list of sections.
@@ -552,7 +561,7 @@ class iform_ukbms_sectioned_transects_input_sample {
         array(
           'name'=>'my_walks_page',
           'caption'=>'Path to My Walks',
-          'description'=>'Path used to access the My Walks page after a successful submission.',
+          'description'=>'Path used to access the My Walks page after a successful submission. This is the default if not from URL parameter provided.',
           'type'=>'text_input',
           'required'=>true,
           'siteSpecific'=>true
@@ -607,6 +616,17 @@ class iform_ukbms_sectioned_transects_input_sample {
           'type' => 'int',
           'required' => false,
           'group' => 'Sensitivity Handling'
+        ),
+        array(
+          'name'=>'finishedAttrID',
+          'caption' => 'Sample attribute used to flag walk as finished',
+          'description' => 'A boolean sample attribute, which is set to true if data entry on the walk has been finished.',
+          'type'=>'select',
+          'table'=>'sample_attribute',
+          'captionField'=>'caption',
+          'valueField'=>'id',
+          'siteSpecific'=>true,
+          'required' => false
         )
       )
     );
@@ -634,10 +654,10 @@ class iform_ukbms_sectioned_transects_input_sample {
     }
     self::$userId = hostsite_get_user_field('indicia_user_id');
     if (empty(self::$userId)) {
-		// return '<p>Easy Login active but could not identify user</p>'; // something is wrong
+		return '<p>Easy Login active but could not identify user</p>'; // something is wrong
 		// TODO REPLACE
-    	self::$userId = 1;
-		$r .= '<p>Easy Login active but could not identify user</p>';
+    	// self::$userId = 1;
+		// $r .= '<p>Easy Login active but could not identify user</p>';
     }
     
     self::$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -654,7 +674,10 @@ class iform_ukbms_sectioned_transects_input_sample {
     		self::$locationID = $_POST['sample:location_id'];
     }
 
-    $url = explode('?', $args['my_walks_page'], 2);
+    if(isset($_POST['from'])) $url = $_POST['from'];
+    else if(isset($_GET['from'])) $url = $_GET['from'];
+    else $url = $args['my_walks_page'];
+    $url = explode('?', $url, 2);
     $params = NULL;
     $fragment = NULL;
     // fragment is always at the end.
@@ -666,7 +689,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     	$url = explode('#', $url[0], 2);
     	if (count($url)>1) $fragment=$url[1];
     }
-    $args['my_walks_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
+    $args['return_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
     
     if (((isset($_REQUEST['page']) && $_REQUEST['page']==='mainSample') || isset($_REQUEST['occurrences'])) && !isset(data_entry_helper::$validation_errors) && !isset($response['error'])) {
       // we have just saved the sample page, so move on to the occurrences list,
@@ -714,6 +737,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $r = '<form method="post" id="sample">' .
     		self::$auth['write'] .
     		'<input type="hidden" name="page" value="mainSample"/>' .
+    		'<input type="hidden" name="from" value="'.$args['return_page'].'"/>' .
     		'<input type="hidden" name="read_nonce" value="'.self::$auth['read']['nonce'].'"/>' .
     		'<input type="hidden" name="read_auth_token" value="'.self::$auth['read']['auth_token'].'"/>' .
     		'<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' .
@@ -825,7 +849,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       			'helpText'=>"Use this space to input comments about this week's walk."
     			)) .
     		'<input type="submit" value="'.lang::get('Next').'" />' .
-    		'<a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Cancel').'</a>' .
+    		'<a href="'.$args['return_page'].'" class="button">'.lang::get('Cancel').'</a>' .
     		(isset(data_entry_helper::$entity_to_load['sample:id']) ?
       			'<button id="delete-button" type="button" />'.lang::get('Delete').'</button>' : '') .
     		'</form>';
@@ -862,6 +886,11 @@ class iform_ukbms_sectioned_transects_input_sample {
       			'<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' .
       			'<input type="hidden" name="sample:deleted" value="t"/>' .
       			'</form>';
+    }
+
+    $formOptions['finishedAttrID'] = false;
+    if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
+    	$formOptions['finishedAttrID'] = $args['finishedAttrID'];
     }
 
     data_entry_helper::$javascript .= "\nsetUpSamplesForm(".json_encode((object)$formOptions).");\n\n";
@@ -911,7 +940,6 @@ class iform_ukbms_sectioned_transects_input_sample {
       // have just posted an edit to the existing parent sample, so can use it to get the parent location id.
       $parentSampleId = $_POST['sample:id'];
       $existing=true;
-      data_entry_helper::load_existing_record(self::$auth['read'], 'sample', $parentSampleId);
     } else {
       if (isset($response['outer_id']))
         // have just posted a new parent sample, so can use it to get the parent location id.
@@ -922,15 +950,10 @@ class iform_ukbms_sectioned_transects_input_sample {
       }
     }
 
-    // TODO this should already be in the entity to load
-    $sample = data_entry_helper::get_population_data(array(
-      'table' => 'sample',
-      'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>$parentSampleId,'deleted'=>'f')
-    ));
-    $sample=$sample[0];
-
-    $parentLocId = $sample['location_id']; // TODO should already be in self::$locationID
-    $date=$sample['date_start'];
+    data_entry_helper::load_existing_record(self::$auth['read'], 'sample', $parentSampleId);
+    
+    $parentLocId = data_entry_helper::$entity_to_load['sample:location_id']; // TODO should already be in self::$locationID
+    $date = data_entry_helper::$entity_to_load['sample:date_start'];
 
     // find any attributes that apply to transect section samples.
     $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array('Transect Section'));
@@ -1030,7 +1053,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       'table' => 'location',
       'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>$parentLocId)
     ));
-    $r = "<h2>".$location[0]['name']." on ".$date."</h2><div id=\"tabs\">\n";
+    $r = '<h2 id="ukbms_stis_header">'.$location[0]['name']." on ".$date."</h2><div id=\"tabs\">\n";
  
     // bit of a bodge here but converts backwardly compatible args into useful ones.
     $args['taxon_list_id_1']		= $args['taxon_list_id'];
@@ -1137,7 +1160,7 @@ class iform_ukbms_sectioned_transects_input_sample {
 			'<input name="user_id" value="'.self::$userId.'"/>' .
  		  '</form>';
 
-    // A stub form for AJAX posting when we need to update a sample
+    // A stub form for AJAX posting when we need to update a subsample
     $r .= '<form style="display: none" id="smp-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">' .
     		'<input name="website_id" value="'.$args['website_id'].'"/>' .
     		'<input name="sample:id" id="smpid" />' .
@@ -1156,23 +1179,41 @@ class iform_ukbms_sectioned_transects_input_sample {
 			'<input name="user_id" value="'.self::$userId.'"/>' .
     	  '</form>';
 
-    // A stub form for posting when we need to flag a super sample as finished
-    $r .= '<form style="display: none" id="finished-form" method="post" >' .
-    		'<input name="website_id" value="'.$args['website_id'].'"/>' .
-    		'<input name="sample:id" value="'.$parentSampleId.'" />' .
-    		'<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
-    		'<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
-    		'<input name="sample:entered_sref" id="smpsref" />' .
-    		'<input name="sample:entered_sref_system" id="smpsref_system" />' .
-    		'<input name="sample:location_id" id="smploc" />' .
-    		'<input name="sample:date" value="'.$date.'" />';
-    // include a stub input for each transect section sample attribute
-    foreach ($attributes as $attr) {
-    	$r .= '<input id="'.$attr['fieldname'].'" />';
+    $formOptions['hideFinished'] = true;
+    $formOptions['finished'] = lang::get('(Finished)');
+    if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
+    	// A stub form for posting when we need to flag a super sample as finished
+    	$formOptions['return_page'] = $args['return_page'];
+    	$sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));    	 
+    	$finished_attributes = data_entry_helper::getAttributes(array(
+            'valuetable'=>'sample_attribute_value'
+            ,'attrtable'=>'sample_attribute'
+            ,'key'=>'sample_id'
+            ,'fieldprefix'=>'smpAttr'
+            ,'extraParams'=>self::$auth['read']
+            ,'sample_method_id'=>$sampleMethods[0]['id']
+            ,'survey_id'=>$args['survey_id']
+            ,'id' => $parentSampleId
+	    ));
+    	$r .= "\n".'<form style="display: none" id="finished-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">' .
+    			'<input name="website_id" value="'.$args['website_id'].'"/>' .
+    			'<input name="sample:id" value="'.$parentSampleId.'" />' .
+    			'<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
+    			'<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
+    			'<input name="sample:location_id" id="smploc" value="'.$parentLocId.'"/>' .
+    			'<input name="sample:date" value="'.$date.'" />';
+    	// include a stub input for each transect sample attribute: need to include all as some will be mandatory
+    	foreach ($finished_attributes as $attr) {
+    		if($attr['attributeId'] == $args["finishedAttrID"]) {
+    			$r .= '<p>DEFAULT '.$attr['default'].'</p>';
+    			$formOptions['hideFinished'] = $attr['default'];
+    			$attr['default'] = 1;
+    		}
+    		$r .= '<input name="'.$attr['fieldname'].'" value="'.$attr['default'].'"/>'; //TODO html safe for text?
+	    }
+		$r .=   '<input name="user_id" value="'.self::$userId.'"/>' .
+    			'</form>';
     }
-    $r .=   '<input name="transaction_id" id="transaction_id"/>' .
-    		'<input name="user_id" value="'.self::$userId.'"/>' .
-    		'</form>';
     
     data_entry_helper::$javascript .= "\nsetUpOccurrencesForm(".json_encode((object)$formOptions).");\n\n";
 
@@ -1184,21 +1225,6 @@ class iform_ukbms_sectioned_transects_input_sample {
   	$isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
   			$args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
 
-  	// TODO this to be selected from user field.
-  	// HOWTO configure
-  	// Home » Administration » Configuration » People » Account settings, Manage Fields
-  	// Add a new "Vertical Tab" Under "Recording settings", called "Preferences"/group_preferences beneath "Who you are"
-  	// Add a new field "Default species view" (field_default_species_view) under this, type "List (text)"
-  	// Set the allowed list to :
-  	//  full|The full taxa list
-  	//  common|Common taxa list
-  	//  mine|Taxa from the list previously recorded by me
-  	//  here|Taxa from the list previously recorded at this site.
-  	// Leave "Required field" and "Display on user registration form" unchecked.
-  	// Help Text : This selects what default species list is displayed when you enter first data for a walk. Common is only available on the first tab (Butterflies): if you choose this option, the other tabs will display the full list. The full list will not be displayed on the final (Others) tab, as this is the full UK list and is very big: in this case, those taxa previously recorded here will be displayed. When viewing data subsequently, only those taxa who have data recorded will initially be displayed. Leaving unselected will default to the standard form configuration setting.
-  	// Default: N/A
-  	// Number of values: 1
-  	
   	$listSelected = hostsite_get_user_field('default_species_view');
   	if (empty($listSelected)) {
 		$listSelected = isset($args['start_list_'.$tabNum]) ? $args['start_list_'.$tabNum] : 'here';
@@ -1280,7 +1306,10 @@ class iform_ukbms_sectioned_transects_input_sample {
 
   	if($listSelected !='full' || $includeControl || $tabNum == 1)
   		$r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
-  	$r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div>';
+  	$r .= '<br /><a href="'.$args['return_page'].'" class="button">'.lang::get('Return to walk list').'</a>';
+  	if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '')
+  		$r .= '<input type="button" class="button smp-finish" value="'.lang::get('Flag as finished and return to walk list').'"/>';
+  	$r .= '</div>';
   	
   	$formOptions['speciesList'][$tabNum] = $args['taxon_list_id_'.$tabNum];
   	$formOptions['speciesListForce'][$tabNum] = $listSelected;
@@ -1303,7 +1332,6 @@ class iform_ukbms_sectioned_transects_input_sample {
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
    * @return array Submission structure.
-   * @todo: Implement this method
    */
   public static function get_submission($values, $args) {
     $subsampleModels = array();

@@ -24,6 +24,11 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 					$('#delete-form').submit();
 			} // else do nothing.
 		});
+
+		if(formOptions['finishedAttrID'] && $('#smpAttr\\:' + formOptions['finishedAttrID'] + ':checked').length == 0) { 
+			$('#smpAttr\\:' + formOptions['finishedAttrID']).parent().find('input').attr('disabled',true);
+		}
+
 	}
 	
 	setUpOccurrencesForm = function (options) {
@@ -137,8 +142,29 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			}
 		});
 
+	    if(formOptions['hideFinished'] !== false && formOptions['hideFinished'] != 0) {
+		    $('.smp-finish').remove();
+		    $('#ukbms_stis_header').append(' <i>' + formOptions['finished'] + '<i>');
+	    } else {
+		    $('.smp-finish').click(finishSample);
+	    }
+
+		$('#finished-form').ajaxForm({
+			async: false,
+			dataType:  'json',
+			success: function(data){
+				window.location.href = formOptions['return_page'];
+			}
+		});
 	}
-	
+
+	/**
+	 * Updates the main supersample, setting the finished attribute to true.
+	 */
+	finishSample = function () {
+		$('#finished-form').submit();
+	}
+
 	/**
 	 * Updates the sample for a section, including attributes.
 	 */
