@@ -119,11 +119,9 @@ var reportOptions;
 							});
 							
 							// Next sort out the species list drop downs.
-							$('#'+reportOptions.species1SelectID+' option').remove();
-							$('#'+reportOptions.species2SelectID+' option').remove();
+							$('#'+reportOptions.species1SelectID+' option,#'+reportOptions.species2SelectID+' option').remove();
 							if(reportOptions.species.length) {
-								$('#'+reportOptions.species1SelectID).append('<option value="">&lt;'+reportOptions.pleaseSelectMsg+'&gt;</option><option value="0">'+reportOptions.allSpeciesMsg+'</option>');
-								$('#'+reportOptions.species2SelectID).append('<option value="">&lt;'+reportOptions.pleaseSelectMsg+'&gt;</option><option value="0">'+reportOptions.allSpeciesMsg+'</option>');								
+								$('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID).append('<option value="">&lt;'+reportOptions.pleaseSelectMsg+'&gt;</option><option value="0">'+reportOptions.allSpeciesMsg+'</option>');
 								reportOptions.species.sort(function (a, b) { return a.taxon.localeCompare(b.taxon); } );
 								$('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID+',#'+reportOptions.weekNumSelectID).removeAttr('disabled');
 								$.each(reportOptions.species, function(idx, species){
@@ -156,8 +154,7 @@ var reportOptions;
 											}
 										}
 							  		}
-									$('#'+reportOptions.species1SelectID).append('<option value="'+species.taxon_meaning_id+'">'+species.taxon+(species.taxon != species.preferred_taxon ? ' (' + species.preferred_taxon + ')' : '')+'</option>');
-									$('#'+reportOptions.species2SelectID).append('<option value="'+species.taxon_meaning_id+'">'+species.taxon+(species.taxon != species.preferred_taxon ? ' (' + species.preferred_taxon + ')' : '')+'</option>');
+									$('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID).append('<option value="'+species.taxon_meaning_id+'" title="'+(species.taxon != species.preferred_taxon ? species.preferred_taxon : '')+'">'+species.taxon+'</option>');
 								});
 								// have to do all species calcs after the data rounding. special taxon_meaning_id of 0
 								// reportOptions.species.unshift({'taxon': reportOptions.allSpeciesMsg, 'preferred_taxon': reportOptions.allSpeciesMsg, 'taxon_meaning_id':0});
@@ -172,8 +169,7 @@ var reportOptions;
 							  		}
 								}
 							} else {
-								$('#'+reportOptions.species1SelectID).append('<option value="">&lt;'+reportOptions.noDataMsg+'&gt;</option>');
-								$('#'+reportOptions.species2SelectID).append('<option value="">&lt;'+reportOptions.noDataMsg+'&gt;</option>');
+								$('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID).append('<option value="">&lt;'+reportOptions.noDataMsg+'&gt;</option>');
 							}
 							$('#currentlyLoaded').empty().append(reportOptions.dataLoadedMsg + ' : ' + reportOptions.loadedYear + ' : ' + reportOptions.loadedLocation);
 							$('#loadButton').removeClass('waiting-button');
@@ -184,10 +180,10 @@ var reportOptions;
 		$('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID+',#'+reportOptions.weekNumSelectID).change(function(){
 			var week = $('#'+reportOptions.weekNumSelectID).val();
 			var seriesData = [];
-			var max = 0;
 
 			reportOptions.opts.series = [];
 			$('#'+reportOptions.id).empty(); // can we destroy?
+			$('#'+reportOptions.id).data('jqplot','N');
 			
 			reportOptions.opts.title.text = reportOptions.loadedYear + ' : ' + reportOptions.loadedLocation + ' : ';
 			if(week == 'all') {
@@ -210,8 +206,9 @@ var reportOptions;
 				seriesData.push(reportOptions.values[$('#'+reportOptions.species2SelectID).val()][week]);
 			}
 			if(seriesData.length == 0) return;
-			var plot = $.jqplot(reportOptions.id, seriesData, reportOptions.opts);
-			$('#'+reportOptions.id).data('jqplot',plot);
+			reportOptions.seriesData = seriesData;
+			$.jqplot(reportOptions.id, reportOptions.seriesData, reportOptions.opts);
+			$('#'+reportOptions.id).data('jqplot','Y');
         });
 		
 		$('#'+ reportOptions.locationTypeSelectID).change(function(){
@@ -222,40 +219,30 @@ var reportOptions;
 		
 		$(window).resize(function(){
     		// Calculate scaling factor to alter dimensions according to width.
+		  if(typeof $('#'+reportOptions.id).data('jqplot') == 'undefined' ||
+				  $('#'+reportOptions.id).data('jqplot') != 'Y')
+			  return;
           var scaling = 1;
           var shadow = true;
-          var placement = 'outsideGrid';
+          // var placement = 'outsideGrid'; always the case here
           var location = 'ne';
           var width = $(window).width()
           if (width < 480) {
             scaling = 0;
             shadow = false;
-//            placement = 'outside';
             location = 's';
-          }
-          else if (width < 1024) {
+          } else if (width < 1024) {
             scaling = (width - 480) / (1024 - 480);
-//            placement = 'outside';
             location = 's';
           }
-    
-          $('.jqplot-target').each(function() {
-            var jqp = $(this).data('jqplot');
-            if(typeof jqp == 'undefined') return;
-//            jqp.options.legend.placement = placement;
-//          jqp.options.legend.location = location;
-            for (var plugin in jqp.plugins) {
-              if (plugin == 'barRenderer') {
-                $.each(jqp.series, function(i, series) {
-                  series.barWidth = undefined;
-                  series.shadow = shadow;
-                  series.shadowWidth = scaling * 3;
-                  series.barMargin = 8 * scaling + 2;
-                });
-              }
-            }
-            jqp.replot({resetAxes: true});
-          });
+          reportOptions.opts.legend.location = location;  
+          reportOptions.opts.seriesDefaults.rendererOptions.shadow = shadow;
+       	  reportOptions.opts.seriesDefaults.rendererOptions.shadowWidth = scaling * 3;
+       	  reportOptions.opts.seriesDefaults.rendererOptions.barMargin = 8 * scaling + 2;
+
+		  $('#'+reportOptions.id).empty(); // can we destroy?
+		  var plot = $.jqplot(reportOptions.id, reportOptions.seriesData, reportOptions.opts);
+          // can't use replot as moving the legend about.
         });
 	}
 	

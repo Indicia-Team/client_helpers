@@ -22,8 +22,6 @@
 
 // TODO
 /*
- * Bugfix resize legend placement
- * Bugfix chart optinos jsonwidget
  * Extend to allow sensitive sites to be displayed as italic.
  */
 
@@ -51,7 +49,7 @@ class iform_ukbms_section_plot {
     return array(
       'title'=>'UKBMS Section Plot',
       'category' => 'Reporting',
-      'description'=>'This shows the total annual counts section-by-section, and is able to show this for individual species as well as all-species. No estimates – just the numbers actually seen in each section.',
+      'description'=>'This shows the total annual counts section-by-section, and is able to show this for individual species as well as all-species. No estimates - just the numbers actually seen in each section.',
     );
   }
 
@@ -729,7 +727,7 @@ class iform_ukbms_section_plot {
       $rendererOptions = json_decode($rendererOptions, true);
     else $rendererOptions = array();
     $opts['seriesDefaults'] = array("renderer"=>$renderer, "rendererOptions" => $rendererOptions);
-    $opts['legend'] = array("show"=>true, 'placement'=>'outsideGrid' );
+    $opts['legend'] = array("show"=>true, 'placement'=>'outsideGrid');
     $opts['series'] = array();
     $opts['title'] = array("text"=>"Title");
     $optsToCopyThrough = array('legend'=>'legendOptions', 'series'=>'seriesOptions', 'seriesColors'=>'seriesColors');
@@ -754,10 +752,6 @@ class iform_ukbms_section_plot {
 uspPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot.CanvasAxisLabelRenderer"','"$.jqplot.BarRenderer"'), array('$.jqplot.CategoryAxisRenderer','$.jqplot.CanvasAxisLabelRenderer','$.jqplot.BarRenderer'), json_encode($options)) . ");
 ";
 
-/*
-
-
-    */
     $heightStyle = (!empty($options['height']) ? "height: $options[height]px;" : '');
     $widthStyle = "width: 100%;";
     // Add controls first: set up a control bar
