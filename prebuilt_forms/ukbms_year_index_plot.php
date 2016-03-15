@@ -22,10 +22,13 @@
 
 // TODO
 /*
+ * Add control to pick between counts and index values 
+ * Create reports for counts values, index values.
+ * Add trendline
+ * Different colour for index vs estimate?
  * set extra params Survey_id into report ?? Has to come from the location_type_id control.
  * Extend to allow sensitive sites to be displayed as italic.
- * Rotate Y -axis 90deg
- * Highlight title more.
+ * Copy axes label jsonwidget change from section plot.
  */
 
 /*
@@ -42,17 +45,17 @@ require_once('includes/user.php');
  * @package Client
  * @subpackage PrebuiltForms
  */
-class iform_ukbms_section_plot {
+class iform_ukbms_year_index_plot {
 
   /** 
    * Return the form metadata.
    * @return string The definition of the form.
    */
-  public static function get_ukbms_section_plot_definition() {
+  public static function get_ukbms_year_index_plot_definition() {
     return array(
-      'title'=>'UKBMS Section Plot',
+      'title'=>'UKBMS Year by Year Index Plot',
       'category' => 'Reporting',
-      'description'=>'This shows the total annual counts section-by-section, and is able to show this for individual species as well as all-species. No estimates - just the numbers actually seen in each section.',
+      'description'=>'TODO',
     );
   }
 
@@ -174,66 +177,6 @@ class iform_ukbms_section_plot {
       	),
 
         array(
-          'name'=>'weekstart',
-          'caption'=>'Start of week definition',
-          'description'=>'Define the first day of the week. There are 2 options.<br/>'.
-                        "&nbsp;&nbsp;<strong>weekday=&lt;n&gt;</strong> where <strong>&lt;n&gt;</strong> is a number between 1 (for Monday) and 7 (for Sunday).<br/>".
-                        "&nbsp;&nbsp;<strong>date=MMM/DD</strong> where <strong>MMM/DD</strong> is a month/day combination: e.g. choosing Apr/01 will start each week on the day of the week on which the 1st of April occurs.",
-          'type'=>'string',
-          'default' => 'date=Apr/01',
-          'group' => 'Data Handling'
-        ),
-        array(
-          'name'=>'weekOneContains',
-          'caption'=>'Week One Contains',
-          'description'=>'When including a week number column, calculate week one as the week containing this date: value should be in the format <strong>MMM/DD</strong>, which is a month/day combination: e.g. choosing Apr/01 will mean week one contains the date of the 1st of April. Default is the Jan-01',
-          'type'=>'string',
-          'required' => false,
-          'group' => 'Data Handling'
-        ),
-        array(
-          'name'=>'inSeasonWeeks',
-          'caption'=>'In Season weeks',
-          'description'=>'Defines weeks which are in-season, by their week numbers. Colon separated - start:end.<br />'.
-                         'Example: "1:26" - Weeks one to twenty six inclusive.',
-          'type'=>'string',
-          'group' => 'Data Handling'
-        ),
-        array(
-          'name'=>'allWeeks',
-          'caption'=>'All weeks',
-          'description'=>'Defines weeks which are included in the all weeks definition, by their week numbers. Colon separated - start:end.<br />'.
-                         'Examples: "-3:30" - Weeks minus 3 to thirty inclusive.',
-          'type'=>'string',
-          'group' => 'Data Handling'
-        ),
-      	array(
-      		'name'=>'dataCombining',
-      		'caption'=>'Summary Data Combination method',
-      		'description'=>'When data is aggregated for a location/week combination, this determines how.',
-      		'type' => 'select',
-      		'lookupValues' => array('add'=>'Add all occurrences together',
-      						'max'=>'Choose the value from the sample with the greatest count',
-      						'location'=>'Average over all samples for that location during that week'),
-      		'required' => true,
-      		'default' => 'add',
-      		'group' => 'Data Handling'
-      	),
-      	array(
-      		'name'=>'dataRound',
-      		'caption'=>'Data Rounding',
-      		'description'=>'When data is averaged, this determines what rounding is carried out. Note that anything between 0 and 1 will be rounded up to 1.',
-      		'type' => 'select',
-      		'lookupValues' => array('none'=>'None (may result in non-integer values)',
-      						'nearest'=>'To the nearest integer, .5 rounds up',
-      						'up'=>'To the integer greater than or equal to the value',
-      						'down'=>'To the integer less than or equal to the value'),
-      		'required' => true,
-      		'default' => 'none',
-      		'group' => 'Data Handling'
-      	),
-      		
-        array(
           'name' => 'width',
           'caption' => 'Chart Width',
           'description' => 'Width of the output chart in pixels: if not set then it will automatically to fill the space.',
@@ -313,7 +256,11 @@ class iform_ukbms_section_plot {
           "fontSize":{"type":"str","desc":"CSS spec for the font-size css attribute."},
           "textColor":{"type":"str","desc":"CSS spec for the color attribute."},
         }},
-        "label":{"type":"str","desc":"Label for the axis."},
+        "labelOptions":{"type":"map","mapping":{
+          "label":{"type":"str","desc":"Label for the axis."},
+          "show":{"type":"bool","desc":"Check to show the axis label."},
+          "escapeHTML":{"type":"bool","desc":"Check to escape HTML entities in the label."},
+        }},
         "min":{"type":"number","desc":"minimum value of the axis (in data units, not pixels)."},
         "max":{"type":"number","desc":"maximum value of the axis (in data units, not pixels)."},
         "autoscale":{"type":"bool","desc":"Autoscale the axis min and max values to provide sensible tick spacing."},
@@ -352,7 +299,11 @@ class iform_ukbms_section_plot {
           "fontSize":{"type":"str","desc":"CSS spec for the font-size css attribute."},
           "textColor":{"type":"str","desc":"CSS spec for the color attribute."},
         }},
-        "label":{"type":"str","desc":"Label for the axis."},
+        "labelOptions":{"type":"map","mapping":{
+          "label":{"type":"str","desc":"Label for the axis."},
+          "show":{"type":"bool","desc":"Check to show the axis label."},
+          "escapeHTML":{"type":"bool","desc":"Check to escape HTML entities in the label."},
+        }},
         "min":{"type":"number","desc":"minimum value of the axis (in data units, not pixels)."},
         "max":{"type":"number","desc":"maximum value of the axis (in data units, not pixels)."},
         "autoscale":{"type":"bool","desc":"Autoscale the axis min and max values to provide sensible tick spacing."},
@@ -552,31 +503,6 @@ class iform_ukbms_section_plot {
     }
   }
 
-  private static function _year_control($args, $readAuth, $nid, $options)
-  {
-  	$now = new DateTime('now');
-	$r = '<label for="'.$options['yearSelectID'].'">'.lang::get("Year").' : </label><select id="'.$options['yearSelectID'].'" name="year">';
-	for($i = $now->format('Y'); $i >= $args['first_year']; $i--){
-		$r .= '<option value="'.$i.'">'.$i.'</option>';
-    }
-    $r .= '</select>';
-    return $r;
-  }
-
-  private static function _week_number_control($args, $readAuth, $nid, $options)
-  {
-  	$partsA=explode(':',$args['inSeasonWeeks']);
-  	$partsB=explode(':',$args['allWeeks']);
-  	$r = '<label for="'.$options['weekNumSelectID'].'">'.lang::get("Week Number").' : </label><select id="'.$options['weekNumSelectID'].'" name="week">' .
-			'<option value="season" class="week-select-option" >'.lang::get('All in-season weeks').' ('.$partsA[0].' '.lang::get('to').' '.$partsA[1].')</option>' .
-			'<option value="all" class="week-select-option" >'.lang::get('All weeks').' ('.$partsB[0].' '.lang::get('to').' '.$partsB[1].')</option>';
-  	for($i = $partsB[0]; $i <= $partsB[1]; $i++){
-  		$r .= '<option value="'.$i.'" class="week-select-option" >'.$i.'</option>';
-  	}
-  	$r .= '</select>';
-  	return $r;
-  }
-  
   private static function _get_sorted_termlist_terms($auth, $key, $filter){
     $terms = helper_base::get_termlist_terms($auth, $key, $filter);
     $retVal = array();
@@ -597,7 +523,6 @@ class iform_ukbms_section_plot {
   {
   	/* NB only interested in complete data picture - not user specific */
   	return '<tr>' .
-			'<th>' . self::_year_control($args, $auth, $nid, $options) . '</th>' .
 		  	'<th>' . self::_location_control($args, $auth, $nid, $options) . '</th>' . // note this includes the location_type control if needed
 		  	'<th>' . self::_load_data_button($args, $auth, $nid, $options) . '</th>' .
 		  	'</tr>';
@@ -608,7 +533,6 @@ class iform_ukbms_section_plot {
   	return '<tr>' .
   			'<th>' . self::_species1_control($args, $auth, $nid, $options) . '</th>' .
   			'<th>' . self::_species2_control($args, $auth, $nid, $options) . '</th>' .
-   			'<th>' . self::_week_number_control($args, $auth, $nid, $options) . '</th>' .
   			'</tr>';
   }
 
@@ -639,21 +563,6 @@ class iform_ukbms_section_plot {
     $renderer='$.jqplot.BarRenderer';
     
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
-
-    // ISO Date - Mon=1, Sun=7
-    // Week 1 = the week with date_from in
-    $inSeasonWeekNumberFilter=explode(':',$args['inSeasonWeeks']);
-    if(count($inSeasonWeekNumberFilter)!=2 ||
-    		($inSeasonWeekNumberFilter[0] != '' && (intval($inSeasonWeekNumberFilter[0])!=$inSeasonWeekNumberFilter[0] || $inSeasonWeekNumberFilter[0]>52)) ||
-    		($inSeasonWeekNumberFilter[1] != '' && (intval($inSeasonWeekNumberFilter[1])!=$inSeasonWeekNumberFilter[1] || $inSeasonWeekNumberFilter[1]<$inSeasonWeekNumberFilter[0] || $inSeasonWeekNumberFilter[1]>52))) {
-    			return ("CONFIG ERROR: Invalid format for In Season Weeks definition: ".$options['inSeasonWeeks']);
-	}
-	$allWeekNumberFilter=explode(':',$args['allWeeks']);
-	if(count($allWeekNumberFilter)!=2 ||
-			($allWeekNumberFilter[0] != '' && (intval($allWeekNumberFilter[0])!=$allWeekNumberFilter[0] || $allWeekNumberFilter[0]>52)) ||
-			($allWeekNumberFilter[1] != '' && (intval($allWeekNumberFilter[1])!=$allWeekNumberFilter[1] || $allWeekNumberFilter[1]<$allWeekNumberFilter[0] || $allWeekNumberFilter[1]>52))) {
-				return ("CONFIG ERROR: Invalid format for All Weeks definition: ".$options['allWeeks']);
-	}
     
     $options = array(
       'dataSource' => $args['report_name'],
@@ -662,19 +571,10 @@ class iform_ukbms_section_plot {
       'base_url' => data_entry_helper::$base_url,
       'pleaseSelectMsg' => lang::get('Please select...'),
       'noDataMsg' => lang::get('No data available'),
-      'allWeeksDescription' => lang::get('All Weeks'),
-      'seasonWeeksDescription' => lang::get('In-season Weeks'),
       'dataLoadedMsg' => lang::get('Data Currently Loaded'),
       'class' => 'ui-widget ui-widget-content report-grid',
       'extraParams' => array(),
       'reportExtraParams' => '',
-      'weekLabel' => lang::get("Week"),
-      // The week start calculation must be done in JS after the date is specified.
-      'weekstart' => explode('=',$args['weekstart']),
-      'allWeeksMin' => $allWeekNumberFilter[0],
-      'allWeeksMax' => $allWeekNumberFilter[1],
-      'seasonWeeksMin' => $inSeasonWeekNumberFilter[0],
-      'seasonWeeksMax' => $inSeasonWeekNumberFilter[1],
       'seriesData' => array(),
       'id' => 'usp-chart-'.$nid,
       'yearSelectID' => 'usp-year-select-'.$nid,
@@ -683,13 +583,12 @@ class iform_ukbms_section_plot {
       'dataLoadButtonID' => 'usp-data-load-button-'.$nid,
       'species1SelectID' => 'usp-species1-select-'.$nid,
       'species2SelectID' => 'usp-species2-select-'.$nid,
-      'weekNumSelectID' => 'usp-week-number-select-'.$nid,
       'allSpeciesMsg' => lang::get("All Species")
     );
 
     self::_set_up_survey_mapping($args, $auth, $options);
 
-    self::_copy_args($args, $options, array('weekOneContains','width','height','dataCombining', 'dataRound'));
+    self::_copy_args($args, $options, array('width','height','dataCombining', 'dataRound'));
 
     if(isset($args['countOccAttrId']) && $args['countOccAttrId']!='') {
       $options['countOccAttr']= 'attr_occurrence_'.str_replace(' ', '_', strtolower($args['countOccAttrId']));
@@ -738,7 +637,12 @@ class iform_ukbms_section_plot {
       $axesOptions = json_decode($axesOptions, true);
     else $axesOptions = array();
     $axesOptions['xaxis']['renderer'] = '$.jqplot.CategoryAxisRenderer';
+
     $axesOptions['xaxis']['ticks'] = array();
+    $now = new DateTime('now');
+    for($i = $args['first_year']; $i <= $now->format('Y'); $i++)
+    	$axesOptions['xaxis']['ticks'][] = $i;
+
     $opts['axes'] = $axesOptions;
     $options['opts'] = $opts;
     
