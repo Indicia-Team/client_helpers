@@ -2360,10 +2360,10 @@ if (typeof mapSettingsHooks!=='undefined') {
               $action['url'] = '{rootFolder}'.$action['url'];
             }
           } else {
-            // If input_form is not available use surrentUrl as default
+            // If input_form is not available use currentUrl as default
             $action['url'] = '{currentUrl}';
           }          
-        } 
+        }
                 
         $actionUrl = self::mergeParamsIntoTemplate($row, $action['url'], true);
         // include any $_GET parameters to reload the same page, except the parameters that are specified by the action
