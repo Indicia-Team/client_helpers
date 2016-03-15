@@ -74,4 +74,38 @@ class extension_group_hierarchies {
     }
   }
 
+  /**
+   * Adds a Drupal breadcrumb to the page. Wrapper for misc_extensions.breadcrumb with extra
+   * support for hierarchies of groups.
+   * The $options array can contain the following parameters:
+   * * path - an associative array of paths and captions. The paths can contain replacements
+   *   wrapped in # characters which will be replaced by the $_GET parameter of the same name.
+   *   Either the key or the value in this array can contain additional replacements {parent_title}
+   *   and {parent_id} which are replaced by the group title and ID respectively for the parent
+   *   of the group loaded onto the current page by the dynamic-from_group_id parameter.
+   * * includeCurrentPage - set to false to disable addition of the current page title to the end
+   *   of the breadcrumb.
+   */
+  public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
+    require_once('misc_extensions.php');
+    if (!empty($options['path']) && !empty($_GET['dynamic-from_group_id'])) {
+      $parent = data_entry_helper::get_report_data(array(
+        'dataSource'=>'library/groups/groups_list',
+        'readAuth'=>$auth['read'],
+        'extraParams'=>array('to_group_id' => $_GET['dynamic-from_group_id'], 'userFilterMode'=>'all', 'currentUser'=>''),
+        'caching' => true
+      ));
+      if (count($parent)) {
+        $path = array();
+        foreach ($options['path'] as $key=>$value) {
+          $key = str_replace(array('{parent}', '{parent_id}'), array($parent[0]['title'], $parent[0]['id']), $key);
+          $value = str_replace(array('{parent}', '{parent_id}'), array($parent[0]['title'], $parent[0]['id']), $value);
+          $path[$key] = $value;
+        }
+      }
+      $options['path'] = $path;
+    }
+    return extension_misc_extensions::breadcrumb($auth, $args, $tabalias, $options, $path);
+  }
+
 }
