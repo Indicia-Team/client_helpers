@@ -223,9 +223,11 @@ class extension_misc_extensions {
   
   /**
    * Adds a Drupal breadcrumb to the page.
-   * Pass a parameter called @options, containing an associative array of paths and captions.
-   * The paths can contain replacements wrapped in # characters which will be replaced by the $_GET
-   * parameter of the same name.
+   * The $options array can contain the following parameters:
+   * * path - an associative array of paths and captions. The paths can contain replacements
+   *   wrapped in # characters which will be replaced by the $_GET parameter of the same name.
+   * * includeCurrentPage - set to false to disable addition of the current page title to the end
+   *   of the breadcrumb.
    */
   public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
     if (!isset($options['path']))
@@ -233,7 +235,7 @@ class extension_misc_extensions {
     $breadcrumb[] = l('Home', '<front>');
     foreach ($options['path'] as $path => $caption) {
       $parts = explode('?', $path, 2);
-      $options = array();
+      $itemOptions = array();
       if (count($parts)>1) {
         foreach ($_REQUEST as $key=>$value) {
           // GET parameters can be used as replacements.
@@ -241,14 +243,15 @@ class extension_misc_extensions {
         }
         $query = array();
         parse_str($parts[1], $query);
-        $options['query'] = $query;
+        $itemOptions['query'] = $query;
       }
       $path = $parts[0];
       // don't use Drupal l function as a it messes with query params
       $caption = lang::get($caption);
-      $breadcrumb[] = l($caption, $path, $options);
+      $breadcrumb[] = l($caption, $path, $itemOptions);
     }
-    $breadcrumb[] = drupal_get_title();
+    if (empty($options['includeCurrentPage']) || $options['includeCurrentPage']!==false)
+      $breadcrumb[] = drupal_get_title();
     drupal_set_breadcrumb($breadcrumb);
     return '';
   }
