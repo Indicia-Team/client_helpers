@@ -1261,7 +1261,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     );
     if (!empty(data_entry_helper::$entity_to_load['sample:wkt']))
       $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['sample:wkt'];
-    if ($args['interface']!=='one_page')
+    if ($tabalias)
       $options['tabDiv'] = $tabAlias;
     $olOptions = iform_map_get_ol_options($args);
     if (!isset($options['standardControls']))
@@ -2382,7 +2382,7 @@ else
       'resizeHeight' => 1600,
       'readAuth' => $readAuth
     );
-    if ($args['interface']!=='one_page')
+    if ($tabalias)
       $opts['tabDiv']=$tabAlias;
     foreach ($options as $key => $value) {
       // skip attribute specific options as they break the JavaScript.

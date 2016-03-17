@@ -1296,6 +1296,10 @@ $('#$escaped').change(function(e) {
    * <li><b>hidden_text</b></br>
    * HTML used for a hidden input that will hold the value to post to the database.
    * </li>
+   * <li><b>autoSelectSingularChildItem</b></br>
+   * When selecting parent items in the hierarchical select, then sometimes there might be only one child item.
+   * Set this option to true if you want that single item to be automatically selected in that scenario.
+   * </li>
    * </ul>
    */
   public static function hierarchical_select($options) {
@@ -1332,6 +1336,10 @@ $('#$escaped').change(function(e) {
     $id = preg_replace('/[^a-zA-Z0-9]/', '', $options['id']);
     // dump the control population data out for JS to use
     self::$javascript .= "indiciaData.selectData$id=".json_encode($childData).";\n";
+    
+    if (isset($options['autoSelectSingularChildItem']) AND $options['autoSelectSingularChildItem']==true)
+      self::$javascript .= "indiciaData.autoSelectSingularChildItem=true;\n";
+
     // Convert the options so that the top-level select uses the lookupValues we've already loaded rather than reloads its own.
     unset($options['table']);
     unset($options['report']);
@@ -1367,18 +1375,28 @@ $('#$escaped').change(function(e) {
     self::$javascript .= "
   // enclosure needed in case there are multiple on the page
   (function () {
-    function pickHierarchySelectNode(select) {
+    function pickHierarchySelectNode(select,fromOnChange) {
       select.nextAll().remove();
       if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
         var html='<select class=\"hierarchy-select\"><option>".$options['blankText']."</option>', obj;
         $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
-          html += '<option value=\"'+item.id+'\">' + item.caption + '</option>';
+          //If option is set then if there is only a single child item, auto select it in the list
+          //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
+          //We don't want to auto-select the child on page load, if that hasn't actually been saved to the database yet.
+          if (indiciaData.selectData$id [select.val()].length ===1 && indiciaData.autoSelectSingularChildItem===true && fromOnChange===true) {
+            html += '<option value=\"'+item.id+'\" selected>' + item.caption + '</option>';
+            //Need to set the hidden value for submission, so correct value is actually saved to the database, not just shown visually on screen.
+            //Make sure we escape the colon for jQuery selector also.
+            $('#'+'".$hiddenOptions['id']."'.replace(':','\\\\:')).val(item.id);
+          } else {
+            html += '<option value=\"'+item.id+'\">' + item.caption + '</option>';
+          }
         });
         html += '</select>';
         obj=$(html);
         obj.change(function(evt) { 
           $('#fld-$safeId').val($(evt.target).val());
-          pickHierarchySelectNode($(evt.target));
+          pickHierarchySelectNode($(evt.target),true);
         });
         select.after(obj);
       }    
@@ -1386,10 +1404,10 @@ $('#$escaped').change(function(e) {
     
     $('#$safeId').change(function(evt) {
       $('#fld-$safeId').val($(evt.target).val());
-      pickHierarchySelectNode($(evt.target));
+      pickHierarchySelectNode($(evt.target),true);
     });
     
-    pickHierarchySelectNode($('#$safeId')); 
+    pickHierarchySelectNode($('#$safeId'),false); 
   
     // Code from here on is to reload existing values.
     function findItemParent(idToFind) {
@@ -1975,7 +1993,8 @@ $('#$escaped').change(function(e) {
     $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
     if (array_key_exists('presetLayers', $options)) $mapPanelOptions['presetLayers'] = $options['presetLayers'];
     if (array_key_exists('tabDiv', $options)) $mapPanelOptions['tabDiv'] = $options['tabDiv'];
-    $r .= self::map_panel($mapPanelOptions);
+    require_once('map_helper.php');
+    $r .= map_helper::map_panel($mapPanelOptions);
     return $r;
   }
 
@@ -1985,7 +2004,7 @@ $('#$escaped').change(function(e) {
    * @param array $olOptions Refer to map_helper::map_panel documentation.
    * @deprecated Use map_helper::map_panel instead.
    */
-  public static function map_panel($options, $olOptions=null) {
+  public static function map_panel($options, $olOptions=array()) {
     require_once('map_helper.php');
     return map_helper::map_panel($options, $olOptions);
   }

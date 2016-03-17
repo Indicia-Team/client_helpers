@@ -2910,13 +2910,13 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     }";  
     }
     report_helper::$javascript .= "\n    mapInitialisationHooks.push(function(div) {\n";
+    report_helper::$javascript .= "      div.map.addLayer(indiciaData.reportlayer);\n";
     if (!empty($addFeaturesJs)) {
       report_helper::$javascript .= "      var features = [];\n";
       report_helper::$javascript .= "$addFeaturesJs\n";
       report_helper::$javascript .= "      indiciaData.reportlayer.addFeatures(features);\n";
       if ($zoomToExtent && !empty($addFeaturesJs))
         self::$javascript .= "      div.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());\n";
-      report_helper::$javascript .= "      div.map.addLayer(indiciaData.reportlayer);\n";
       if (!empty($featureDoubleOutlineColour)) {
         // push a clone of the array of features onto a layer which will draw an outline.
         report_helper::$javascript .= "
@@ -4031,7 +4031,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       if($foundFirst){
        $locationArray[$i]['estimates'] = $locationArray[$i]['summary'];
        $locationArray[$i]['hasEstimates'] = true;
-       if(!$locationArray[$i+1]['hasData']) {
+       if($i < $maxWeekNo && !$locationArray[$i+1]['hasData']) {
         for($j= $i+2; $j <= $maxWeekNo; $j++)
           if($locationArray[$j]['hasData']) break;
         if($j <= $maxWeekNo) { // have found another value later on, so interpolate between them
