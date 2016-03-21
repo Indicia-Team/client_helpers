@@ -697,38 +697,6 @@ class extension_splash_extensions {
     if (!empty($options['hideLocationAttrsInSimpleMode']))
       map_helper::$javascript .= "indiciaData.hideLocationAttrsInSimpleMode='".$options['hideLocationAttrsInSimpleMode']."';\n";
   }
-  
-  /*
-   * Very similar to dynamic_report_explorer report grid control, however in this case the control automatically switches on
-   * map zooming for results if the user is using a post code search. This is because we don't want to use this mode when the user
-   * is returning all squares as it doesn't seem to work properly on live, it looks likely that because there are so many squares, then it tries
-   * to draw the zoom before all the data is returned and therefore draws the zoom in the wrong place. 
-   */
-  public static function unallocated_squares_grid($auth, $args, $tabalias, $options, $path) {
-    if (!isset($options['reportGridNumber'])) {
-      drupal_set_message('Please fill in the report grid number option for the unallocated_squares_grid control, starting with 0 for the first grid on the page');
-      return false;
-    }
-    iform_load_helpers(array('report_helper'));
-    $args['report_name']='';
-    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    $reportOptions = array_merge(
-      iform_report_get_report_options($args, $auth['read']),
-      array(
-        'reportGroup'=>'dynamic',
-        'autoParamsForm'=>false,
-        'sharing'=>$sharing,
-        'ajax'=>true,
-        'id'=>'report-grid-'.$options['reportGridNumber']
-      ),
-      $options
-    );
-    if (!empty($_GET['dynamic-post_code_geom'])&&!empty($_GET['dynamic-distance_from_post_code'])) {
-      $reportOptions['sendOutputToMap']=true;
-      $reportOptions['zoomMapToOutput']=true;
-    }
-    return report_helper::report_grid($reportOptions);
-  }
  
   /*
    * When the administrator allocates squares to a user, allow the user to enter a mileage value
@@ -742,6 +710,8 @@ class extension_splash_extensions {
    */
   public static function postcode_distance_limiter($auth, $args, $tabalias, $options, $path) {
     $r='';
+    if (isset($options['useZoomToFeatures']))
+      data_entry_helper::$javascript .= "indiciaData.useZoomToFeatures='".$options['useZoomToFeatures']."';\n";
     //When then screen loads, attempt to add a point to the map showing the user's post code (which is in the $_GET).
     data_entry_helper::$javascript.="
       jQuery(document).ready(function($) {
@@ -754,6 +724,22 @@ class extension_splash_extensions {
           }
       });
     });
+    //Zoom map to the list of squares returned to the map
+    //Note can't use sendOutToMap and built in zoom option as this doesn't pass the colours from the report,
+    //it also causes extra unwanted features on the map to appear.
+    jQuery(window).load(function($) {
+      if (indiciaData.useZoomToFeatures && indiciaData.useZoomToFeatures==true) {
+        //AVB: Need map to load first to get extent - nasty way of doing this - cleanup when I have more time!
+        window.setTimeout(zoomToAllFeatures,1000);
+      }
+    });
+    function zoomToAllFeatures() {
+      var featuresExtent=indiciaData.reportlayer.getDataExtent();
+      //Only zoom into features if some exist.
+      if (featuresExtent) {
+        indiciaData.mapdiv.map.zoomToExtent(featuresExtent);
+      }
+    };
     ";
     //Once the limiter is applied, the post code geom is passed to the URL and so is the indicia user id, so we need to pick these up from the URL
     if (!empty($_GET['dynamic-post_code_geom'])) {
