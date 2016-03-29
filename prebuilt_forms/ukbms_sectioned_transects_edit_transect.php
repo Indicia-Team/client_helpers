@@ -154,7 +154,27 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
           'type' => 'int',
           'required' => false,
           'group'=>'Transects Editor Settings'
+        ),
+      	array(
+      		'name'=>'autocalc_transect_length_attr_id',
+      		'caption'=>'Location attribute to autocalc transect length',
+      		'description'=>'Location attribute that stores the total transect length: summed from the lengths of the individual sections.',
+      		'type'=>'select',
+      		'table'=>'location_attribute',
+      		'valueField'=>'id',
+      		'captionField'=>'caption',
+      		'group'=>'Transects Editor Settings',
+      		'required'=>false
+      	),
+        array(
+          'name'=>'custom_attribute_options',
+          'caption'=>'Options for custom attributes',
+          'description'=>'A list of additional options to pass through to custom attributes, one per line. Each option should be specified as '.
+              'the attribute name followed by | then the option name, followed by = then the value. For example, smpAttr:1|class=control-width-5.',
+          'type'=>'textarea',
+      	  'group'=>'Transects Editor Settings'
         )
+      		
     ));
     $retVal = array();
     foreach($parentVal as $param){
@@ -252,6 +272,8 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     $settings['numSectionsAttr'] = "";
     $settings['maxSectionCount'] = $args['maxSectionCount'];
     $settings['autocalcSectionLengthAttrId'] = empty($args['autocalc_section_length_attr_id']) ? 0 : $args['autocalc_section_length_attr_id'];
+    $settings['autocalcTransectLengthAttrId'] = empty($args['autocalc_transect_length_attr_id']) ? 0 : $args['autocalc_transect_length_attr_id'];
+    $settings['autocalcTransectLengthAttrName'] = 0;
     $settings['defaultSectionGridRef'] = empty($args['default_section_grid_ref']) ? 'parent' : $args['default_section_grid_ref'];
     if ($settings['locationId']) {
       $fixedSectionNumber = false;
@@ -321,6 +343,12 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
               data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext');\n";
           }
         }
+        if (isset($args['autocalc_transect_length_attr_id']) && 
+        		$args['autocalc_transect_length_attr_id'] != '' &&
+        		$attr['attributeId']==$args['autocalc_transect_length_attr_id']) {
+          $settings['autocalcTransectLengthAttrName'] = $attr['fieldname'];
+          data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext');\n";
+        }
       }
       $sections = data_entry_helper::get_population_data(array(
         'table' => 'location',
@@ -333,12 +361,33 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         	$section['centroid_sref_system'] = strtoupper($section['centroid_sref_system']);
         data_entry_helper::$javascript .= "indiciaData.sections.$code = {'geom':'".$section['boundary_geom']."','id':'".$section['id']."','sref':'".$section['centroid_sref']."','system':'".$section['centroid_sref_system']."'};\n";
         $settings['sections'][$code]=$section;
+        
+        if (isset($args['autocalc_transect_length_attr_id']) &&
+        		$args['autocalc_transect_length_attr_id'] != '') {
+    		$section_attributes = data_entry_helper::getAttributes(array(
+		        'valuetable'=>'location_attribute_value',
+		        'attrtable'=>'location_attribute',
+		        'key'=>'location_id',
+		        'fieldprefix'=>'locAttr',
+		        'extraParams'=>$auth['read'] + array('id' => $args['autocalc_section_length_attr_id']),
+		        'survey_id'=>$args['survey_id'],
+		        'location_type_id' => $settings['sectionLocationType'][0]['id'],
+		        'id' => $section['id']
+		    ), false);
+    		if(count($section_attributes) > 0 &&
+    				$section_attributes[0]['default'] != '')
+    			data_entry_helper::$javascript .= "indiciaData.sections.".$code.".sectionLen = ".$section_attributes[0]['default']." ;\n";
+        }
       }
-    } else { // not an existing site therefore no walks. On initial save, no section data is created.
+    } else { // not an existing site therefore no walks or sections. On initial save, no section data is created.
       foreach($settings['attributes'] as $attr) {
         if ($attr['caption']==='No. of sections') {
           $settings['numSectionsAttr'] = $attr['fieldname'];
           data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',1).attr('max',".$args['maxSectionCount'].");\n";
+        }
+        if ($attr['attributeId']==$args['autocalc_transect_length_attr_id']) {
+          $settings['autocalcTransectLengthAttrName'] = $attr['fieldname'];
+          data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext');\n";
         }
       }
       $settings['walks'] = array();
@@ -395,6 +444,8 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     data_entry_helper::$javascript .= "indiciaData.numSectionsAttrName = \"".$settings['numSectionsAttr']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.maxSectionCount = \"".$settings['maxSectionCount']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.autocalcSectionLengthAttrId = ".$settings['autocalcSectionLengthAttrId'].";\n";
+    data_entry_helper::$javascript .= "indiciaData.autocalcTransectLengthAttrId = ".$settings['autocalcTransectLengthAttrId'].";\n";
+    data_entry_helper::$javascript .= "indiciaData.autocalcTransectLengthAttrName = \"".$settings['autocalcTransectLengthAttrName']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.defaultSectionGridRef = '".$settings['defaultSectionGridRef']."';\n";
     if ($settings['locationId'])
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
@@ -527,17 +578,28 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
 
     // setup the map options
     $options = iform_map_get_map_options($args, $auth['read']);
+    
+    $blockOptions = array();
+    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) {
+    	$blockOptionList = explode("\n", $args['custom_attribute_options']);
+    	foreach($blockOptionList as $opt) {
+    		$tokens = explode('|', $opt);
+    		$optvalue = explode('=', $tokens[1]);
+    		$blockOptions[$tokens[0]][$optvalue[0]] = $optvalue[1];
+    	}
+    }
+    
     // find the form blocks that need to go below the map.
     $bottom = '';
     $bottomBlocks = explode("\n", isset($args['bottom_blocks']) ? $args['bottom_blocks'] : '');
     foreach ($bottomBlocks as $block) {
-      $bottom .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), $block);
+      $bottom .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), $block, $blockOptions);
     }
     // other blocks to go at the top, next to the map
     if(isset($args['site_help']) && $args['site_help'] != ''){
       $r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.t($args['site_help']).'</p>';
     }
-    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read'])); 
+    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read']), null, $blockOptions); 
     $r .= '</fieldset>';
     $r .= "</div>"; // left
     $r .= '<div class="right" style="width: 44%">';
