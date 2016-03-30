@@ -182,7 +182,7 @@ class filter_when extends filter_base {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth) {
+  public function get_controls() {
     // additional helptext in case it is needed when a context is applied
     $r = '<p class="helpText context-instruct">'.lang::get('Please note that your access permissions are limiting the record dates available.').'</p>';
     $r .= '<fieldset><legend>'.lang::get('Which date field to filter on').'</legend>';
@@ -226,14 +226,24 @@ class filter_where extends filter_base {
   public function get_title() {
     return lang::get('Where');
   }
-  
+
   /**
    * Define the HTML required for this filter's UI panel.
    * Options available:
    * * **personSiteAttrId** - a multi-value location attribute used to link users to their recording sites.
    * * **includeSitesCreatedByUser** - boolean which defines if sites that the user is the creator of are available. Default TRUE.
    * * **indexedLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the spatial index builder
-   * * **otherLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the 
+   * * **otherLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the
+   * @param array $readAuth Read authorisation tokens
+   * @param array $options Control options array. Options include:
+   *
+   * * includeSitesCreatedByUser - Defines if user created sites are available for selection. True or false
+   * * indexedLocationTypeIds - array of location type IDs for sites which can be selected using the index
+   *   system for filtering.
+   * * otherLocationTypeIds - as above, but does not use the spatial index builder. Should only be used for
+   *   smaller or less complex site boundaries.
+   * @return string
+   * @throws \exception
    */
   public function get_controls($readAuth, $options) {
     if (function_exists('iform_load_helpers'))
@@ -377,7 +387,7 @@ class filter_who extends filter_base {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth, $options) {
+  public function get_controls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, you cannnot change this setting because of your access permissions in this context.') . '</div>';
     $r .= data_entry_helper::checkbox(array(
       'label' => lang::get('Only include my records'),
@@ -399,7 +409,7 @@ class filter_occurrence_id extends filter_base {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth, $options) { 
+  public function get_controls() {
     $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select(array(
       'label' => lang::get('Record ID'),
@@ -429,7 +439,7 @@ class filter_sample_id extends filter_base {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth, $options) {
+  public function get_controls() {
     $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select(array(
       'label' => lang::get('Sample ID'),
@@ -459,7 +469,7 @@ class filter_quality extends filter_base {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth) {
+  public function get_controls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
     $r .= data_entry_helper::select(array(
       'label'=>lang::get('Records to include'),
@@ -512,7 +522,7 @@ class filter_quality_sample extends filter_base {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth) {
+  public function get_controls() {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
     $r .= data_entry_helper::select(array(
       'label'=>lang::get('Samples to include'),
@@ -670,6 +680,7 @@ class filter_source extends filter_base {
  * @param string $hiddenStuff Output parameter which will contain the hidden popup HTML that will be shown
  * using fancybox during filter editing. Should be appended AFTER any form element on the page as nested forms are not allowed.
  * @return string HTML for the report filter panel
+ * @throws \exception If attempting to use an unrecognised filter preset.
  */
 function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   if (function_exists('iform_load_helpers')) {
@@ -730,6 +741,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $filterData = report_filters_load_existing($readAuth, $options['sharingCode']);
   $existing = '';
   $contexts = '';
+  $contextDefs = array();
   // add some preset filters in
   //If in the warehouse we don't need to worry about user specific preferences when setting up milestones.
   if (function_exists('hostsite_get_user_field')) {
@@ -794,7 +806,6 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       if ($location=hostsite_get_user_field('location'))
         data_entry_helper::$javascript .= "indiciaData.userPrefsLocation=".$location.";\n";
     }
-    $contextDefs = array();
     if ($options['sharing']==='verification') {
       // apply legacy verification settings from their profile
       $location_id = hostsite_get_user_field('location_expertise');
@@ -892,6 +903,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       $r .= "<input type=\"hidden\" id=\"select-filters-user\" value=\"$options[filters_user_id]\"/>";
   }
   $r .= '<div id="filter-panes">';
+  $filters = array();
   if ($options['entity']==='occurrence') {
     $filters = array(
       'filter_what'=>new filter_what(),
@@ -902,7 +914,6 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'filter_quality'=>new filter_quality(),
       'filter_source'=>new filter_source()
     );
-
   } elseif ($options['entity']==='sample') {
     $filters = array(
       'filter_where'=>new filter_where(),
@@ -1041,7 +1052,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     report_helper::$onload_javascript .= "indiciaData.filter.orig=$.extend({}, params);\n";
   }
   $getParams = empty($getParams) ? '{}' : json_encode($getParams);
-  if (!empty($options['filters_user_id'])) {
+  if (!empty($options['filters_user_id']) && isset($fu)) {
     report_helper::$onload_javascript .= "loadFilterUser(".json_encode($fu[0]).", $getParams);\n";
   } else {
     report_helper::$onload_javascript .= "if ($('#select-filter').val()) {\n".
