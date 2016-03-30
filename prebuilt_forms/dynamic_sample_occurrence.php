@@ -1254,7 +1254,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   /**
    * Get the map control.
    */
-  protected static function get_control_map($auth, $args, $tabAlias, $options) {
+  protected static function get_control_map($auth, $args, $tabalias, $options) {
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
       $options
@@ -1262,7 +1262,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if (!empty(data_entry_helper::$entity_to_load['sample:wkt']))
       $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['sample:wkt'];
     if ($tabalias)
-      $options['tabDiv'] = $tabAlias;
+      $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
@@ -1888,7 +1888,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     ), $options);
     if (!isset($location_list_args['label']))
       $location_list_args['label'] = lang::get('LANG_Location_Label');
-    if (isset($args['users_manage_own_sites']) && $args['users_manage_own_sites']) {
+    if ((isset($args['users_manage_own_sites']) && $args['users_manage_own_sites'])
+        || (!empty($_GET['group_id']))) {
       $userId = hostsite_get_user_field('indicia_user_id');
       if (!empty($userId)) {
         if (!empty($options['personSiteAttrId'])) {
@@ -1900,9 +1901,19 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       }
       $location_list_args['extraParams']['view']='detail';
       $location_list_args['allowCreate']=true;
-      // pass through the group we are recording in, if any, so we can show group sites
-      if (!empty($_GET['group_id']))
-        $location_list_args['extraParams']['group_id']=$_GET['group_id'];
+      // pass through the group we are recording in plus its parent, if any, so we can show group sites
+      if (!empty($_GET['group_id'])) {
+        $parent = data_entry_helper::get_report_data(array(
+          'dataSource'=>'library/groups/groups_list',
+          'readAuth'=>$auth['read'],
+          'extraParams'=>array('to_group_id' => $_GET['group_id'], 'userFilterMode'=>'all', 'currentUser'=>''),
+          'caching' => true
+        ));
+        $groups = $_GET['group_id'];
+        if (count($parent))
+          $groups .= ','.$parent[0]['id'];
+        $location_list_args['extraParams']['group_id'] = $groups;
+      }
     }
     if (empty($location_list_args['numValues']))
       // set a relatively high number until we sort out the "more" handling like species autocomplete.
@@ -2374,7 +2385,7 @@ else
    * @param array $options Options array for the control.
    * @param string $tabAlias ID of the tab's div if this is being loaded onto a div.
    */
-  protected static function occurrence_photo_input($readAuth, $options, $tabAlias, $args) {
+  protected static function occurrence_photo_input($readAuth, $options, $tabalias, $args) {
     $opts = array(
       'table'=>'occurrence_medium',
       'readAuth' => $readAuth,
@@ -2383,7 +2394,7 @@ else
       'readAuth' => $readAuth
     );
     if ($tabalias)
-      $opts['tabDiv']=$tabAlias;
+      $opts['tabDiv']=$tabalias;
     foreach ($options as $key => $value) {
       // skip attribute specific options as they break the JavaScript.
       if (strpos($key, ':')===false)
