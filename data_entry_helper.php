@@ -4984,6 +4984,7 @@ $('#sensitive-blur').change(function() {
     // Do stuff with extraParams
     $sParams = '';
     foreach ($options['extraParams'] as $a => $b){
+      $b = str_replace("'", "\'", $b);
       $sParams .= "$a : '$b',";
     }
     // lop the comma off the end
@@ -5369,7 +5370,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     }
     if ($entity=='sample') {
       self::$entity_to_load['sample:geom'] = self::$entity_to_load['sample:wkt']; // value received from db in geom is not WKT, which is assumed by all the code.
-      self::$entity_to_load['sample:date'] = self::$entity_to_load['sample:date_start']; // bit of a bodge to get around vague dates.
+      self::$entity_to_load['sample:date'] = empty(self::$entity_to_load['sample:display_date']) ?
+        self::$entity_to_load['sample:date_start'] : self::$entity_to_load['sample:display_date'];
     } elseif ($entity=='occurrence') {
       // prepare data to work in autocompletes
       if (!empty(self::$entity_to_load['occurrence:taxon']) && empty(self::$entity_to_load['occurrence:taxa_taxon_list:taxon']))
@@ -7038,6 +7040,8 @@ if (errors$uniq.length>0) {
               $value['value'] = $d->format(helper_base::$date_format);
               //If a date, then we default to the value after formatting
               $defaultValue = $value['value'];
+            } elseif ($item['data_type']==='V') {
+              $defaultValue = $value['value'];
             } else {
               //If not date we need to use the raw_value, items like drop-downs won't reload correctly without this
               $defaultValue = $value['raw_value'];
@@ -7072,8 +7076,8 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * For a single sample or occurrence attribute array loaded from the database, find the appropriate default value depending on the
-   * data type.
+   * For a single sample or occurrence attribute array loaded from the database, find the
+   * appropriate default value depending on the data type.
    * @param array $item The attribute's definition array.
    * @todo Handle vague dates. At the moment we just use the start date.
    */
@@ -7250,6 +7254,8 @@ if (errors$uniq.length>0) {
       case 'Specific Date': // Date
       case 'V': // Vague Date
       case 'Vague Date': // Vague Date
+        if (!empty($attrOptions['displayValue']))
+          $attrOptions['default'] = $attrOptions['displayValue'];
         $attrOptions['class'] = ($item['data_type'] == 'D' ? "date-picker " : "vague-date-picker ");
         if (isset($item['validation_rules']) && strpos($item['validation_rules'],'date_in_past')=== false)
           $attrOptions['allowFuture']=true;
