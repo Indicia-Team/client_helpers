@@ -33,7 +33,7 @@ class filter_base {
 class filter_what extends filter_base {
   
   public function get_title() {
-    return 'What';
+    return lang::get('What');
   }
 
   /**
@@ -53,15 +53,15 @@ class filter_what extends filter_base {
     $r .= '<div id="what-tabs">'."\n";
     // data_entry_helper::tab_header breaks inside fancybox. So output manually.
     $r .= '<ul class="ui-helper-hidden">' .
-        '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>Species groups</span></a></li>';
+        '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>'.lang::get('Species groups').'</span></a></li>';
     if ($familySortOrder!=='off') {
-      $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>Families and other higher taxa</span></a></li>';
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>Species and lower taxa</span></a></li>';
+      $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>'.lang::get('Families and other higher taxa').'</span></a></li>';
+      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>'.lang::get('Species and lower taxa').'</span></a></li>';
     } else {
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>Species</span></a></li>';
+      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>'.lang::get('Species').'</span></a></li>';
     }
-    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>Level</span></a></li>' .
-        '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>Other flags</span></a></li>' .
+    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>'.lang::get('Level').'</span></a></li>' .
+        '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>'.lang::get('Other flags').'</span></a></li>' .
         '</ul>';
     $r .= '<div id="species-group-tab">' . "\n";
     if (function_exists('hostsite_get_user_field')) {
@@ -176,7 +176,7 @@ class filter_what extends filter_base {
 class filter_when extends filter_base {
   
   public function get_title() {
-    return 'When';
+    return lang::get('When');
   }
   
   /**
@@ -184,13 +184,13 @@ class filter_when extends filter_base {
    */
   public function get_controls($readAuth) {
     // additional helptext in case it is needed when a context is applied
-    $r = '<p class="helpText context-instruct">Please note that your access permissions are limiting the record dates available.</p>';
+    $r = '<p class="helpText context-instruct">'.lang::get('Please note that your access permissions are limiting the record dates available.').'</p>';
     $r .= '<fieldset><legend>'.lang::get('Which date field to filter on').'</legend>';
     $r .= data_entry_helper::select(array(
       'label'=>lang::get('Date field'),
       'fieldname'=>'date_type',
       'lookupValues'=>array('recorded'=>lang::get('Field record date'),'input'=>lang::get('Input date'),
-            'edited'=>lang::get('Last changed date'), 'verified'=>'Verification status change date')
+            'edited'=>lang::get('Last changed date'), 'verified'=>lang::get('Verification status change date'))
     ));
     $r .= '</fieldset>';
     $r .= '<fieldset class="exclusive"><legend>'.lang::get('Specify a date range for the records to include').'</legend>';
@@ -208,7 +208,8 @@ class filter_when extends filter_base {
     $r .= '<fieldset class="exclusive" id="age"><legend>'.lang::get('Or, specify a maximum age for the records to include').'</legend>';
     $r .= data_entry_helper::text_input(array(
       'label'=>lang::get('Max. record age'),
-      'helpText'=>'How old records can be before they are dropped from the report? Enter a number followed by the unit (days, weeks, months or years), e.g. "2 days" or "1 year".',
+      'helpText'=>lang::get('How old records can be before they are dropped from the report? ' .
+          'Enter a number followed by the unit (days, weeks, months or years), e.g. "2 days" or "1 year".'),
       'fieldname'=>'date_age',
       'validation' => array('regex[/^[0-9]+\s*(day|week|month|year)(s)?$/]')
     ));
@@ -223,7 +224,7 @@ class filter_when extends filter_base {
 class filter_where extends filter_base {
   
   public function get_title() {
-    return 'Where';
+    return lang::get('Where');
   }
   
   /**
@@ -370,7 +371,7 @@ class filter_where extends filter_base {
 class filter_who extends filter_base {
   
   public function get_title() {
-    return 'Who';
+    return lang::get('Who');
   }
   
   /**
@@ -392,7 +393,7 @@ class filter_who extends filter_base {
 class filter_occurrence_id extends filter_base {
   
   public function get_title() {
-    return 'Record ID';
+    return lang::get('Record ID');
   }
   
   /**
@@ -403,7 +404,7 @@ class filter_occurrence_id extends filter_base {
     $r .= data_entry_helper::select(array(
       'label' => lang::get('Record ID'),
       'fieldname' => 'occurrence_id_op',
-      'lookupValues'=>array('='=>'is','>='=>'is at least','<='=>'is at most'),
+      'lookupValues'=>array('=' => lang::get('is'), '>=' => lang::get('is at least'), '<=' => lang::get('is at most')),
       'controlWrapTemplate' => 'justControl'
     ));
     $r .= data_entry_helper::text_input(array(
@@ -422,7 +423,7 @@ class filter_occurrence_id extends filter_base {
 class filter_sample_id extends filter_base {
 
   public function get_title() {
-    return 'Sample ID';
+    return lang::get('Sample ID');
   }
 
   /**
@@ -433,7 +434,7 @@ class filter_sample_id extends filter_base {
     $r .= data_entry_helper::select(array(
       'label' => lang::get('Sample ID'),
       'fieldname' => 'sample_id_op',
-      'lookupValues'=>array('='=>'is','>='=>'is at least','<='=>'is at most'),
+      'lookupValues'=>array('=' => lang::get('is'), '>=' => lang::get('is at least'), '<=' => lang::get('is at most')),
       'controlWrapTemplate' => 'justControl'
     ));
     $r .= data_entry_helper::text_input(array(
@@ -452,7 +453,7 @@ class filter_sample_id extends filter_base {
 class filter_quality extends filter_base {
   
   public function get_title() {
-    return 'Quality';
+    return lang::get('Quality');
   }
   
   /**
@@ -483,7 +484,7 @@ class filter_quality extends filter_base {
       )
     ));
     $r .= data_entry_helper::select(array(
-      'label'=>'Automated checks',
+      'label'=>lang::get('Automated checks'),
       'fieldname'=>'autochecks',
       'lookupValues'=>array(
         ''=>lang::get('Not filtered'),
@@ -505,7 +506,7 @@ class filter_quality extends filter_base {
 class filter_quality_sample extends filter_base {
 
   public function get_title() {
-    return 'Quality';
+    return lang::get('Quality');
   }
 
   /**
@@ -527,7 +528,7 @@ class filter_quality_sample extends filter_base {
       )
     ));
     $r .= data_entry_helper::select(array(
-      'label'=>'Automated checks',
+      'label'=>lang::get('Automated checks'),
       'fieldname'=>'autochecks',
       'lookupValues'=>array(
         ''=>lang::get('Not filtered'),
@@ -549,7 +550,7 @@ class filter_quality_sample extends filter_base {
 class filter_source extends filter_base {
   
   public function get_title() {
-    return 'Source';
+    return lang::get('Source');
   }
   
   /**
@@ -684,7 +685,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $options = array_merge(array(
     'sharing' => 'reporting',
     'admin' => FALSE,
-    'adminCanSetSharingTo' => array('R' => 'reporting', 'V' => 'verification'),
+    'adminCanSetSharingTo' => array('R' => lang::get('reporting'), 'V' => lang::get('verification')),
     'allowLoad' => TRUE,
     'allowSave' => TRUE,
     'redirect_on_success' => '',
@@ -861,7 +862,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     }
   }
   if ($options['allowLoad']) {
-    $r .= '<div class="header ui-toolbar ui-widget-header ui-helper-clearfix"><div><span id="active-filter-label">'. lang::get('New report') . '</span></div><span class="changed" style="display:none" title="This filter has been changed">*</span>';
+    $r .= '<div class="header ui-toolbar ui-widget-header ui-helper-clearfix"><div><span id="active-filter-label">'.
+        lang::get('New report') . '</span></div><span class="changed" style="display:none" title="' .
+        lang::get('This filter has been changed') . '">*</span>';
     $r .= '<div>';
     if ($contexts) {
       data_entry_helper::$javascript .= "indiciaData.filterContextDefs = " . json_encode($contextDefs) . ";\n";
@@ -872,13 +875,15 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
         $r .= '<input type="hidden" id="context-filter" value="'.$keys[0].'" />';
       }
     }
-    $r .= '<label for="select-filter">'.lang::get('Filter:').'</label><select id="select-filter"><option value="" selected="selected">' . lang::get('Select filter') . "...</option>$existing</select>";
+    $r .= '<label for="select-filter">'.lang::get('Filter:').'</label><select id="select-filter"><option value="" selected="selected">' .
+        lang::get('Select filter') . "...</option>$existing</select>";
     $r .= '<button type="button" id="filter-apply">' . lang::get('Apply') . '</button>';
     $r .= '<button type="button" id="filter-reset" class="disabled">' . lang::get('Reset') . '</button>';
     $r .= '<button type="button" id="filter-build">' . lang::get('Create a filter') . '</button></div>';
     $r .= '</div>';
     $r .= '<div id="filter-details" style="display: none">';
-    $r .= '<img src="'.data_entry_helper::$images_path.'nuvola/close-22px.png" width="22" height="22" alt="Close filter builder" title="Close filter builder" class="button" id="filter-done"/>'."\n";
+    $r .= '<img src="'.data_entry_helper::$images_path.'nuvola/close-22px.png" width="22" height="22" alt="Close filter builder" title="' .
+        lang::get('Close filter builder') . '" class="button" id="filter-done"/>'."\n";
   } else {
     $r .= '<div id="filter-details">';
     if (!empty($options['filter_id']))
@@ -947,7 +952,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       if (empty($options['adminCanSetSharingTo']))
         throw new exception('Report standard params panel in admin mode so adminCanSetSharingTo option must be populated.');
       $r .= data_entry_helper::autocomplete(array(
-        'label'=>'For who?',
+        'label'=>lang::get('For who?'),
         'fieldname'=>'filters_user:user_id',
         'table'=>'user',
         'valueField' => 'id',
@@ -957,7 +962,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
         'class'=>'control-width-5'
       ));
       $r .= data_entry_helper::textarea(array(
-        'label' => 'Description',
+        'label' => lang::get('Description'),
         'fieldname' => 'filter:description'
       ));
     }
@@ -983,8 +988,8 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   foreach ($filterModules as $category => $list) {
     foreach ($list as $moduleName=>$module) {
       $hiddenStuff .= "<div style=\"display: none\"><div class=\"filter-popup\" id=\"controls-$moduleName\"><form action=\"#\" class=\"filter-controls\"><fieldset>" . $module->get_controls($readAuth, $options) . 
-        '<button class="fb-close" type="button">Cancel</button>' .
-        '<button class="fb-apply" type="submit">Apply</button></fieldset></form></div></div>';
+        '<button class="fb-close" type="button">' . lang::get('Cancel') . '</button>' .
+        '<button class="fb-apply" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
       $shortName=str_replace('filter_', '', $moduleName);
       report_helper::$javascript .= "indiciaData.lang.NoDescription$shortName='".lang::get('Click to Filter '.ucfirst($shortName))."';\n";
     }
