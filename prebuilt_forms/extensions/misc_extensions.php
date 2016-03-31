@@ -246,6 +246,12 @@ class extension_misc_extensions {
         $itemOptions['query'] = $query;
       }
       $path = $parts[0];
+      // handle links to # anchors
+      $fragments = explode('#', $path, 2);
+      if (count($fragments)>1) {
+        $path=$fragments[0];
+        $itemOptions['fragment'] = $fragments[1];
+      }
       // don't use Drupal l function as a it messes with query params
       $caption = lang::get($caption);
       $breadcrumb[] = l($caption, $path, $itemOptions);
