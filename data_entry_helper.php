@@ -5370,8 +5370,15 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     }
     if ($entity=='sample') {
       self::$entity_to_load['sample:geom'] = self::$entity_to_load['sample:wkt']; // value received from db in geom is not WKT, which is assumed by all the code.
+      // If the date is a vague date, use the string formatted by the db.
+      // @todo Would allow better localisation if the vague date formatting could be applied on the client.
       self::$entity_to_load['sample:date'] = empty(self::$entity_to_load['sample:display_date']) ?
         self::$entity_to_load['sample:date_start'] : self::$entity_to_load['sample:display_date'];
+      // If not a vague date, then the ISO formatted string from the db needs converting to local format.
+      if (isset(self::$entity_to_load['sample:date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', self::$entity_to_load['sample:date'])) {
+        $d = new DateTime(self::$entity_to_load['sample:date']);
+        self::$entity_to_load['sample:date'] = $d->format(self::$date_format);
+      }
     } elseif ($entity=='occurrence') {
       // prepare data to work in autocompletes
       if (!empty(self::$entity_to_load['occurrence:taxon']) && empty(self::$entity_to_load['occurrence:taxa_taxon_list:taxon']))
