@@ -206,12 +206,12 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
    * Override function to add the report parameter for the ID of the custom attribute which holds the linked sample.
    * Depends upon a report existing that uses the parameter e.g. npms_sample_occurrence_samples
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($node->nid)))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array("destination=node/$nid"))).'">login</a> to the website.');
     }
 
     // Get the Indicia User ID to filter on.
@@ -253,10 +253,10 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new&gridmode'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new&gridmode'))).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'=>''))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => array('new'=>''))).'\'">';
     }
     $r .= '</form>';
     return $r;

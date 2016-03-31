@@ -244,7 +244,7 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
   /*
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
   	global $user;
     // get the CMS User ID attribute so we can filter the grid to this user
     $userIdAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS User ID', isset($args['sample_method_id']) && $args['sample_method_id']!="" ? $args['sample_method_id'] : false);
@@ -292,7 +292,7 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
       'autoParamsForm' => true,
       'extraParams' => $extraParams));	
     $r .= '<form>';    
-    $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'new')).'\'">';    
+    $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => 'new')).'\'">';
     $r .= '</form>
 <div style="display:none" />
     <form id="form-delete-survey" action="'.iform_mnhnl_getReloadPath().'" method="POST">'.$auth['write'].'

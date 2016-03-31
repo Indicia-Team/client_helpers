@@ -785,11 +785,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   /**
    * Construct a grid of existing records.
    * @param array $args iform parameters.
-   * @param object $node node being shown.
+   * @param object $nid ID of node being shown.
    * @param array $auth authentication tokens for accessing the warehouse.
    * @return string HTML for grid.
    */
-  protected static function getGrid($args, $node, $auth) {
+  protected static function getGrid($args, $nid, $auth) {
     $r = '';
     $attributeOpts = array(
       'valuetable' => 'sample_attribute_value'
@@ -806,7 +806,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $tabs = array('#sampleList'=>lang::get('LANG_Main_Samples_Tab'));
 
     // Add in a tab for the allocation of locations if this option was selected
-    if($args['includeLocTools'] && function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($node,'admin')){
+    if($args['includeLocTools'] && function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin')){
       $tabs['#setLocations'] = lang::get('LANG_Allocate_Locations');
     }
 
@@ -825,10 +825,10 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
 
     // Here is where we get the table of samples
-    $r .= "<div id=\"sampleList\">".call_user_func(array(self::$called_class, 'getSampleListGrid'), $args, $node, $auth, $attributes)."</div>";
+    $r .= "<div id=\"sampleList\">".call_user_func(array(self::$called_class, 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
 
     // Add content to the Allocate Locations tab if this option was selected
-    if($args['includeLocTools'] && function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($node,'admin')){
+    if($args['includeLocTools'] && function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin')){
       $r .= '<div id="setLocations">';
       $url = data_entry_helper::$base_url.'/index.php/services/data/location?mode=json&view=detail' .
               '&auth_token=' . $auth['read']['auth_token'] .
@@ -862,7 +862,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $r .= '<form method="post"><input type="hidden" id="mnhnld1" name="mnhnld1" value="mnhnld1" /><input type="hidden" name="page" value="'.$page.'" />
   <div class="location-allocation-wrapper-outer" ><div class="location-allocation-wrapper-inner"><table border="1"><thead><tr><th class="freeze-first-col">'.lang::get('Location').'</th>';
       // Main table body
-      $userlist = iform_loctools_listusers($node);
+      $userlist = iform_loctools_listusers($nid);
       foreach($userlist as $uid => $a_user){
       	$r .= '<th>'.$a_user->name.'</th>';
       }
@@ -872,7 +872,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           $entity=$entities[$i+($page-1)*$options['loctoolsPageSize']];
           // only assign parent locations.
           $r .= '<tr><td class="freeze-first-col">'.$entity["name"].'</td>';
-          $defaultuserids = iform_loctools_getusers($node, $entity["id"]);
+          $defaultuserids = iform_loctools_getusers($nid, $entity["id"]);
           foreach($userlist as $uid => $a_user){
             $r .= '<td><input type="hidden" name="location:'.$entity["id"].':'.$uid.'" value="0"><input type="checkbox" name="location:'.$entity["id"].':'.$uid.(in_array($uid, $defaultuserids) ? '" checked="checked"' : '"').' value="1"></td>';
           }
@@ -2244,12 +2244,12 @@ else
   /**
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination'=>'node/'.($node->nid)))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination'=>"node/$nid"))).'">login</a> to the website.');
     }
     $filter = array();
     // Get the CMS User ID attribute so we can filter the grid to this user
@@ -2295,10 +2295,10 @@ else
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new' => '1'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new' => '1', 'gridmode' => '1'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1', 'gridmode' => '1'))).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new' => '1'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1'))).'\'">';
     }
     $r .= '</form>';
     return $r;
