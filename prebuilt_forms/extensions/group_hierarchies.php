@@ -42,6 +42,10 @@ class extension_group_hierarchies {
     if (!empty($options['parent_parameter'])) {
       $sep = strpos($rootFolder, '?')===FALSE ? '?' : '&';
       $path .= $sep . 'from_group_id=' . $_GET[$options['parent_parameter']];
+      // also pass through the actual parent parameter as it is, so that the current page can
+      // reload OK after saving.
+      if ($options['parent_parameter']!=='from_group_id')
+        $path .= "&$options[parent_parameter]=" . $_GET[$options['parent_parameter']];
     }
     $class = empty($options['class']) ? '' : " class=\"$options[class]\"";
     $r = "<a href=\"$path\"$class>$options[caption]</a>";
