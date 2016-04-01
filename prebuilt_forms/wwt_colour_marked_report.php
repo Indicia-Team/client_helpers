@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form for WWT Colour-marked wildfowl.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * NB relies on the individuals and associations optional module being enabled in the warehouse.
  * 
  * @package    Client

@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  *
  * @package    Client
  * @subpackage PrebuiltForms
@@ -576,32 +576,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'helpText' => 'The sample method that will be used for created samples.'
         ),
         array(
-          'name'=>'includeLocTools',
-          'caption'=>'Include Location Tools',
-          'description'=>'Include a tab for the allocation of locations when displaying the initial grid. This is done using the iform_loctools module.',
-          'type'=>'boolean',
-          'required' => false,
-          'default' => false,
-          'group' => 'Locations'
-        ),
-        array(
-          'name'=>'loctoolsLocTypeID',
-          'caption'=>'Location Tools Location Type ID filter',
-          'description'=>'When performing allocation of locations, filter available locations by this location_type_id.',
-          'type'=>'int',
-          'required' => false,
-          'group' => 'Locations'
-        ),
-        array(
-          'name'=>'loctoolsPageSize',
-          'caption'=>'Location Tools Page Size',
-          'description'=>'When performing allocation of locations, this is the size of each page of locations.',
-          'type'=>'int',
-          'required' => true,
-          'default' => 20,
-          'group' => 'Locations'
-        ),
-        array(
           'name'=>'defaults',
           'caption'=>'Default Values',
           'description'=>'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
@@ -740,30 +714,10 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     self::$loadedOccurrenceId = null;
     self::$availableForGroups = $args['available_for_groups'];
     self::$limitToGroupId = $args['limit_to_group_id'];
-    if ($_POST) {
-      if(!array_key_exists('website_id', $_POST)) {
-        // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrupt the data by accident
-        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin') && array_key_exists('mnhnld1', $_POST)){
-          $locs = array();
-          foreach($_POST as $key => $value){
-            $parts = explode(':', $key);
-            if($parts[0]=='location' && !in_array($parts[1], $locs)) $locs[] = $parts[1];
-          }
-          if(count($locs)>0){
-            foreach($locs as $loc)
-              iform_loctools_deletelocation($nid, $loc);
-            foreach($_POST as $key => $value){
-              $parts = explode(':', $key);
-              if($parts[0]=='location' && $value == 1)
-                iform_loctools_insertlocation($nid, $parts[2], $parts[1]);
-            }
-          }
-        }
-      } else if(!is_null(data_entry_helper::$entity_to_load)){
-        // errors with new sample or entity populated with post, so display this data.
-        $mode = self::MODE_EXISTING;
-      } // else valid save, so go back to gridview: default mode 0
-    }
+    if ($_POST && array_key_exists('website_id', $_POST) && !is_null(data_entry_helper::$entity_to_load)) {
+      // errors with new sample or entity populated with post, so display this data.
+      $mode = self::MODE_EXISTING;
+    } // else valid save, so go back to gridview: default mode 0
     if (!empty($_GET['sample_id']) && $_GET['sample_id']!='{sample_id}'){
       $mode = self::MODE_EXISTING;
       self::$loadedSampleId = $_GET['sample_id'];
@@ -805,11 +759,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
     $tabs = array('#sampleList'=>lang::get('LANG_Main_Samples_Tab'));
 
-    // Add in a tab for the allocation of locations if this option was selected
-    if($args['includeLocTools'] && function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin')){
-      $tabs['#setLocations'] = lang::get('LANG_Allocate_Locations');
-    }
-
     // An option for derived classes to add in extra tabs
     if (method_exists(self::$called_class, 'getExtraGridModeTabs')) {
       $extraTabs = call_user_func(array(self::$called_class, 'getExtraGridModeTabs'), false, $auth['read'], $args, $attributes);
@@ -826,87 +775,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
     // Here is where we get the table of samples
     $r .= "<div id=\"sampleList\">".call_user_func(array(self::$called_class, 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
-
-    // Add content to the Allocate Locations tab if this option was selected
-    if($args['includeLocTools'] && function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin')){
-      $r .= '<div id="setLocations">';
-      $url = data_entry_helper::$base_url.'/index.php/services/data/location?mode=json&view=detail' .
-              '&auth_token=' . $auth['read']['auth_token'] .
-              '&nonce=' . $auth['read']["nonce"] .
-              "&parent_id=NULL&orderby=name" .
-              "&columns=id,name" .
-              (isset($args['loctoolsLocTypeID'])&&$args['loctoolsLocTypeID']<>''?'&location_type_id='.$args['loctoolsLocTypeID']:'');
-      if(!isset($options['loctoolsPageSize'])) $options['loctoolsPageSize'] = 20;
-      $page = empty($_REQUEST['page']) ? 1 : $_REQUEST['page']; // starts at 1.
-      $session = curl_init($url);
-      curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
-      $entities = json_decode(curl_exec($session), true);
-      $pages = ceil(count($entities) / $options['loctoolsPageSize']); // starts at 1
-      $count = ($page<$pages) ? $options['loctoolsPageSize'] : (count($entities)-1)%$options['loctoolsPageSize']+1; // number displayed on this page
-      // build a jumper control:
-      if($pages>1){
-        $reload = data_entry_helper::get_reload_link_parts();
-        $r .= '<form method="GET" action="'.$reload['path'].'">';
-        if(count($reload['params']))
-          foreach($reload['params'] as $param=>$value)
-            if($param != "page")
-              $r .= '<input type="hidden" name="'.$param.'" value="'.$value.'">';
-        $r .= '<label style="width:auto;" for="pageField">'.lang::get('Jump to page for location').':</label><select id="pageField" name="page"><option value="1">'.lang::get('Pick').'</option>';
-        foreach($entities as $idx=>$entity){
-          $r .= '<option value="'.(ceil(($idx+1)/$options['loctoolsPageSize'])).'">'.$entity["name"].'</option>';
-        }
-        $r .= "<input type=\"submit\" class=\"default-button\" value=\"".lang::get('Go')."\" /></form>\n";
-        $r .= '<p>'.lang::get('You must save any changes made to data on this page before viewing any other page, otherwise those changes will be lost.')."</p>\n";
-      }
-      
-      $r .= '<form method="post"><input type="hidden" id="mnhnld1" name="mnhnld1" value="mnhnld1" /><input type="hidden" name="page" value="'.$page.'" />
-  <div class="location-allocation-wrapper-outer" ><div class="location-allocation-wrapper-inner"><table border="1"><thead><tr><th class="freeze-first-col">'.lang::get('Location').'</th>';
-      // Main table body
-      $userlist = iform_loctools_listusers($nid);
-      foreach($userlist as $uid => $a_user){
-      	$r .= '<th>'.$a_user->name.'</th>';
-      }
-      $r .= "</tr></thead><tbody>";
-      if(!empty($entities)){
-        for($i = 0; $i<$count; $i++){
-          $entity=$entities[$i+($page-1)*$options['loctoolsPageSize']];
-          // only assign parent locations.
-          $r .= '<tr><td class="freeze-first-col">'.$entity["name"].'</td>';
-          $defaultuserids = iform_loctools_getusers($nid, $entity["id"]);
-          foreach($userlist as $uid => $a_user){
-            $r .= '<td><input type="hidden" name="location:'.$entity["id"].':'.$uid.'" value="0"><input type="checkbox" name="location:'.$entity["id"].':'.$uid.(in_array($uid, $defaultuserids) ? '" checked="checked"' : '"').' value="1"></td>';
-          }
-          $r .= "</tr>";
-        }
-      }
-      $r .= "</tbody></table></div></div>\n";
-      
-      // build pager outside scrollable table.
-      $numEachSide = 5;
-      if($pages>1){
-      	$path = iform_mnhnl_getReloadPath();
-      	$path .= (strpos($path,'?')===false ? '?' : '&').'page=';
-      	$r .= "<div class=\"pager ui-helper-clearfix\">";
-      	if($page == 1)
-      		$r .= '<span class="ui-state-disabled pager-button">1</span>';
-      	else
-      		$r .= '<a class="pager-button" href="'.$path.'1" rel="nofollow">1</a>';
-      	if($page-$numEachSide > 2) $r .= '...';
-      	for($i = max(2,$page-$numEachSide); $i<=min($pages-1,$page+$numEachSide); $i++) {
-      		if($page == $i)
-      			$r .= ' <span class="ui-state-disabled pager-button">'.$i.'</span> ';
-      		else
-      			$r .= '<a class="pager-button" href="'.$path.$i.'" rel="nofollow">'.$i.'</a>';
-      	}
-      	if($page+$numEachSide < $pages-1) $r .= '...';
-      	if($page == $pages)
-      		$r .= '<span class="ui-state-disabled pager-button">'.$pages.'</span>';
-      	else
-      		$r .= '<a class="pager-button" href="'.$path.$pages.'" rel="nofollow">'.$pages.'</a>';
-      	$r .= "</div>";
-      }
-      $r .= '<input type="submit" class="default-button" value="'.lang::get('Save Location Allocations').'" /></form></div>';
-    }
 
     // Add content to extra tabs that derived classes may have added
     if (method_exists(self::$called_class, 'getExtraGridModeTabs')) {

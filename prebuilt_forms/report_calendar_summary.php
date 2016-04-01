@@ -986,7 +986,6 @@ class iform_report_calendar_summary {
     global $user;
     $ctrl = '';
     $siteUrlParams = self::get_site_url_params();
-    // loctools is not appropriate here as it is based on a node, for which this is a very simple one, invoking other nodes for the sample creation
     if(!isset($args['includeLocationFilter']) || !$args['includeLocationFilter'])
       return '';
     // this is user specific: when no user selection control, or all users selected then default to all locations
