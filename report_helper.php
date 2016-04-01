@@ -483,27 +483,31 @@ class report_helper extends helper_base {
     $tfoot .= '<tr><td colspan="'.count($options['columns'])*$options['galleryColCount'].'">'.self::output_pager($options, $pageUrl, $sortAndPageUrlParams, $response).'</td></tr>'.
     $extraFooter = '';
     if (isset($options['footer']) && !empty($options['footer'])) {
-      $footer = str_replace(array('{rootFolder}',
-                '{currentUrl}',
-                '{sep}',
-                '{warehouseRoot}',
-                '{geoserverRoot}',
-                '{nonce}',
-                '{auth}',
-                '{iUserID}',
-                '{user_id}',
-      		    '{website_id}'),
-          array($rootFolder,
-                $currentUrl['path'],
-                strpos($rootFolder, '?')===FALSE ? '?' : '&',
-                self::$base_url,
-                self::$geoserver_url,
-                'nonce='.$options['readAuth']['nonce'],
-                'auth_token='.$options['readAuth']['auth_token'],
-                (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
-          		$user->uid,
-                self::$website_id
-          ), $options['footer']);
+      $footer = str_replace(
+        array(
+          '{rootFolder}',
+          '{currentUrl}',
+          '{sep}',
+          '{warehouseRoot}',
+          '{geoserverRoot}',
+          '{nonce}',
+          '{auth}',
+          '{iUserID}',
+          '{user_id}',
+          '{website_id}'),
+        array(
+          $rootFolder,
+          $currentUrl['path'],
+          strpos($rootFolder, '?')===FALSE ? '?' : '&',
+          self::$base_url,
+          self::$geoserver_url,
+          'nonce='.$options['readAuth']['nonce'],
+          'auth_token='.$options['readAuth']['auth_token'],
+          (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
+          $user->uid,
+          self::$website_id
+        ), $options['footer']
+      );
       // Merge in any references to the parameters sent to the report: could extend this in the future to pass in the extraParams
       foreach($currentParamValues as $key=>$param){
         $footer = str_replace(array('{'.$key.'}'), array($param), $footer);
