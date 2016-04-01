@@ -185,7 +185,8 @@ class report_helper extends helper_base {
   *      current page's URL, {rootFolder} to represent the folder on the server that the current PHP page is running from, {input_form}
   *      (provided it is returned by the report) to represent the path to the form that created the record, {imageFolder} for the image 
   *      upload folder and {sep} to specify either a ? or & between the URL and the first query parameter, depending on whether 
-  *      {rootFolder} already contains a ?. Because the javascript may pass the field values as parameters to functions,
+  *      {rootFolder} already contains a ?. The url and urlParams can also have replacements from any query string parameter in the URL
+  *      so report parameters can be passed through to linked actions. Because the javascript may pass the field values as parameters to functions,
   *      there are escaped versions of each of the replacements available for the javascript action type. Add -escape-quote or
   *      -escape-dblquote to the fieldname for quote escaping, or -escape-htmlquote/-escape-htmldblquote for escaping quotes in HTML
   *      attributes. For example this would be valid in the action javascript: foo("{bar-escape-dblquote}");
@@ -2368,20 +2369,17 @@ if (typeof mapSettingsHooks!=='undefined') {
             $action['url'] = '{currentUrl}';
           }          
         }
-                
+        // field values available for merging into the action include the row data and the
+        // query string parameters
+        $row = array_merge($currentUrl['params'], $row);
+        // merge field value replacements into the URL
         $actionUrl = self::mergeParamsIntoTemplate($row, $action['url'], true);
-        // include any $_GET parameters to reload the same page, except the parameters that are specified by the action
-        if (isset($action['urlParams']))
-          $urlParams = array_merge($currentUrl['params'], $action['urlParams']);
-        else if (substr($action['url'], 0, 1)=='#')
-          // if linking to an internal bookmark, no need to attach the url parameters
-          $urlParams = array();
-        else
-          $urlParams = array_merge($currentUrl['params']);
-        if (count($urlParams)>0) {
-          $actionUrl.= (strpos($actionUrl, '?')===false) ? '?' : '&';
+        // merge field value replacements into the URL parameters
+        if (count($action['urlParams'])>0) {
+          $actionUrl .= (strpos($actionUrl, '?')===false) ? '?' : '&';
+          $actionUrl .= self::mergeParamsIntoTemplate($row, self::array_to_query_string($action['urlParams']), true);
         }
-        $href=' href="'.$actionUrl.self::mergeParamsIntoTemplate($row, self::array_to_query_string($urlParams), true).'"';
+        $href=" href=\"$actionUrl\"";
       } else {
         $href='';
       }
