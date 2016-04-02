@@ -188,6 +188,10 @@ class import_helper extends helper_base {
       $request .= '&website_id='.trim($settings['website_id']);
     if (!empty($settings['survey_id']))
       $request .= '&survey_id='.trim($settings['survey_id']);
+    if($options['model'] == 'sample' && isset($settings['sample:sample_method_id']) && trim($settings['sample:sample_method_id']) != '')
+    	$request .= '&sample_method_id='.trim($settings['sample:sample_method_id']);
+    else if($options['model'] == 'location' && isset($settings['location:location_type_id']) && trim($settings['location:location_type_id']) != '')
+    	$request .= '&location_type_id='.trim($settings['location:location_type_id']);
     $response = self::http_post($request, array());
     $fields = json_decode($response['output'], true);
     if (!is_array($fields))
