@@ -843,7 +843,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if($editor) return;
     $readOnly = !empty($args['ro_permission']) && hostsite_user_has_permission($args['ro_permission']);
     if (function_exists('hostsite_get_user_field') &&
-        data_entry_helper::$entity_to_load['sample:created_by_id'] != 1 && // created_by_id can come out as string...
         data_entry_helper::$entity_to_load['sample:created_by_id'] !== hostsite_get_user_field('indicia_user_id')) {
       if($readOnly)
         self::$mode = self::MODE_EXISTING_RO;
