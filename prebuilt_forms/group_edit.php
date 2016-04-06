@@ -286,14 +286,17 @@ class iform_group_edit {
     $reloadPath = self::getReloadPath();   
     data_entry_helper::$website_id=$args['website_id'];
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    if (!empty($_GET['group_id'])) {
-      self::loadExistingGroup($_GET['group_id'], $auth, $args);
-    }
     // maintain compatibility with form settings from before group type became multiselect.
     if (empty($args['group_type']))
       $args['group_type'] = array();
     elseif (!is_array($args['group_type']))
       $args['group_type']=array($args['group_type']);
+    if (!empty($_GET['group_id'])) {
+      self::loadExistingGroup($_GET['group_id'], $auth, $args);
+      // If reloading a group, the group type must be available for selection.
+      if (!in_array(data_entry_helper::$entity_to_load['group:group_type_id'], $args['group_type']))
+        $args['group_type'][] = data_entry_helper::$entity_to_load['group:group_type_id'];
+    }
     if (count($args['group_type'])===1) {
       $terms = data_entry_helper::get_population_data(array(
         'table'=>'termlists_term',
@@ -868,6 +871,10 @@ $('#entry_form').submit(function() {
       'extraParams'=>$auth['read']+array('view'=>'detail', 'id'=>$id),
       'nocache'=>true
     ));
+    if (empty($group)) {
+      drupal_set_message("The group with ID $id could not be found.");
+      return;
+    }
     $group=$group[0];
     if ($group['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
       if (!hostsite_user_has_permission('Iform groups admin')) {

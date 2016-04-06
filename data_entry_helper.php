@@ -1993,7 +1993,8 @@ $('#$escaped').change(function(e) {
     $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
     if (array_key_exists('presetLayers', $options)) $mapPanelOptions['presetLayers'] = $options['presetLayers'];
     if (array_key_exists('tabDiv', $options)) $mapPanelOptions['tabDiv'] = $options['tabDiv'];
-    $r .= self::map_panel($mapPanelOptions);
+    require_once('map_helper.php');
+    $r .= map_helper::map_panel($mapPanelOptions);
     return $r;
   }
 
@@ -2003,7 +2004,7 @@ $('#$escaped').change(function(e) {
    * @param array $olOptions Refer to map_helper::map_panel documentation.
    * @deprecated Use map_helper::map_panel instead.
    */
-  public static function map_panel($options, $olOptions=null) {
+  public static function map_panel($options, $olOptions=array()) {
     require_once('map_helper.php');
     return map_helper::map_panel($options, $olOptions);
   }
@@ -4983,6 +4984,7 @@ $('#sensitive-blur').change(function() {
     // Do stuff with extraParams
     $sParams = '';
     foreach ($options['extraParams'] as $a => $b){
+      $b = str_replace("'", "\'", $b);
       $sParams .= "$a : '$b',";
     }
     // lop the comma off the end
@@ -5368,7 +5370,15 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     }
     if ($entity=='sample') {
       self::$entity_to_load['sample:geom'] = self::$entity_to_load['sample:wkt']; // value received from db in geom is not WKT, which is assumed by all the code.
-      self::$entity_to_load['sample:date'] = self::$entity_to_load['sample:date_start']; // bit of a bodge to get around vague dates.
+      // If the date is a vague date, use the string formatted by the db.
+      // @todo Would allow better localisation if the vague date formatting could be applied on the client.
+      self::$entity_to_load['sample:date'] = empty(self::$entity_to_load['sample:display_date']) ?
+        self::$entity_to_load['sample:date_start'] : self::$entity_to_load['sample:display_date'];
+      // If not a vague date, then the ISO formatted string from the db needs converting to local format.
+      if (isset(self::$entity_to_load['sample:date']) && preg_match('/^\d{4}-\d{2}-\d{2}$/', self::$entity_to_load['sample:date'])) {
+        $d = new DateTime(self::$entity_to_load['sample:date']);
+        self::$entity_to_load['sample:date'] = $d->format(self::$date_format);
+      }
     } elseif ($entity=='occurrence') {
       // prepare data to work in autocompletes
       if (!empty(self::$entity_to_load['occurrence:taxon']) && empty(self::$entity_to_load['occurrence:taxa_taxon_list:taxon']))
@@ -7037,6 +7047,8 @@ if (errors$uniq.length>0) {
               $value['value'] = $d->format(helper_base::$date_format);
               //If a date, then we default to the value after formatting
               $defaultValue = $value['value'];
+            } elseif ($item['data_type']==='V') {
+              $defaultValue = $value['value'];
             } else {
               //If not date we need to use the raw_value, items like drop-downs won't reload correctly without this
               $defaultValue = $value['raw_value'];
@@ -7071,8 +7083,8 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * For a single sample or occurrence attribute array loaded from the database, find the appropriate default value depending on the
-   * data type.
+   * For a single sample or occurrence attribute array loaded from the database, find the
+   * appropriate default value depending on the data type.
    * @param array $item The attribute's definition array.
    * @todo Handle vague dates. At the moment we just use the start date.
    */
@@ -7249,6 +7261,8 @@ if (errors$uniq.length>0) {
       case 'Specific Date': // Date
       case 'V': // Vague Date
       case 'Vague Date': // Vague Date
+        if (!empty($attrOptions['displayValue']))
+          $attrOptions['default'] = $attrOptions['displayValue'];
         $attrOptions['class'] = ($item['data_type'] == 'D' ? "date-picker " : "vague-date-picker ");
         if (isset($item['validation_rules']) && strpos($item['validation_rules'],'date_in_past')=== false)
           $attrOptions['allowFuture']=true;

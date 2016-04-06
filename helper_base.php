@@ -233,9 +233,9 @@ if ($("#{escapedId} option").length===0) {
 }'."\n",
     
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
-        'onblur="javascript:decodePostcode(\'{linkedAddressBoxId}\');" />',
+        'onblur="javascript:decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
   'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
-        '<input type="hidden" id="{geomid}" name="{geomFieldname}" value="{defaultGeom}" />',
+        '<input type="hidden" id="{geomid}" name="{geomFieldname}" value="{defaultGeom}" />'."\n",
   'sref_textbox_latlong' => '<label for="{idLat}">{labelLat}:</label>'.
         '<input type="text" id="{idLat}" name="{fieldnameLat}" {class} {disabled} value="{defaultLat}" /><br />' .
         '<label for="{idLong}">{labelLong}:</label>'.
@@ -493,9 +493,8 @@ class helper_base extends helper_config {
    * Global format for display of dates such as sample date, date attributes in Drupal.
    * Note this only affects the loading of the date itself when a form in edit mode loads, the format displayed as soon as the 
    * date picker is selected is determined by Drupal's settings. So make sure Drupal's date format and this option match up. 
-   * @todo need to create a proper config option for this
-   * @todo not all dates will respect this format yet. Sample dates (dynamic sample occurrence) and also the display of custom attribute dates on forms will currently respect the
-   * format so far.
+   * @todo Need to create a proper config option for this.
+   * @todo Need to ensure this setting is utilised every where it should be.
    *
    */
   public static $date_format='d/m/Y';

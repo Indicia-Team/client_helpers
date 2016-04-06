@@ -345,7 +345,6 @@ jQuery('#".$ctrlid."').change(function(){
     $siteUrlParams = self::get_site_url_params();
     $ctrl = '';
     // survey_id either comes from the location_type control, or from presets; in that order.
-    // loctools is not appropriate here as it is based on a node, for which this is a very simple one, invoking other nodes for the sample creation
     // need to scan param_presets for survey_id..
     $presets = get_options_array_with_user_data($args['param_presets']);
 

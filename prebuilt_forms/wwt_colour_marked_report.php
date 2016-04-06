@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form for WWT Colour-marked wildfowl.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * NB relies on the individuals and associations optional module being enabled in the warehouse.
  * 
  * @package    Client
@@ -730,13 +730,14 @@ class iform_wwt_colour_marked_report {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $node) {
+  public static function get_form($args, $nid) {
     define ("MODE_GRID", 0);
     define ("MODE_NEW_SAMPLE", 1);
     define ("MODE_EXISTING", 2);
     self::parse_defaults($args);
     self::getArgDefaults($args);
-    self::$node = $node;
+
+    self::$nid = $nid;
     
     // if we use locks, we want them to be distinct for each drupal user
     if (function_exists('profile_load_profile')) { // check we are in drupal
@@ -775,11 +776,11 @@ class iform_wwt_colour_marked_report {
     $loadedSubjectObservationId = null;
     if ($_POST) {
       if(!array_key_exists('website_id', $_POST)) { // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrept the data by accident
-        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($node,'admin') && array_key_exists('mnhnld1', $_POST)){
-          iform_loctools_deletelocations($node);
+        if(function_exists('iform_loctools_checkaccess') && iform_loctools_checkaccess($nid,'admin') && array_key_exists('mnhnld1', $_POST)){
+          iform_loctools_deletelocations($nid);
           foreach($_POST as $key => $value){
             $parts = explode(':', $key);
-            iform_loctools_insertlocation($node, $parts[2], $parts[1]);
+            iform_loctools_insertlocation($nid, $parts[2], $parts[1]);
           }
         }
       } else if(!is_null(data_entry_helper::$entity_to_load)) {
@@ -830,7 +831,7 @@ class iform_wwt_colour_marked_report {
       $tabs = array('#sampleList'=>lang::get('LANG_Main_Samples_Tab'));
       if($args['includeLocTools'] 
         && function_exists('iform_loctools_checkaccess') 
-        && iform_loctools_checkaccess($node,'admin')) {
+        && iform_loctools_checkaccess($nid,'admin')) {
         $tabs['#setLocations'] = lang::get('LANG_Allocate_Locations');
       }
       if (method_exists(get_called_class(), 'getExtraGridModeTabs')) {
@@ -843,10 +844,10 @@ class iform_wwt_colour_marked_report {
         $r .= "<div id=\"controls\">".(data_entry_helper::enable_tabs(array('divId'=>'controls','active'=>'#sampleList')))."<div id=\"temp\"></div>";
         $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
       }
-      $r .= "<div id=\"sampleList\">".call_user_func(array(get_called_class(), 'getSampleListGrid'), $args, $node, $auth, $attributes)."</div>";
+      $r .= "<div id=\"sampleList\">".call_user_func(array(get_called_class(), 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
       if($args['includeLocTools'] 
         && function_exists('iform_loctools_checkaccess') 
-        && iform_loctools_checkaccess($node,'admin')) {
+        && iform_loctools_checkaccess($nid,'admin')) {
         $r .= '
   <div id="setLocations">
     <form method="post">
@@ -855,7 +856,7 @@ class iform_wwt_colour_marked_report {
         $session = curl_init($url);
         curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
         $entities = json_decode(curl_exec($session), true);
-        $userlist = iform_loctools_listusers($node);
+        $userlist = iform_loctools_listusers($nid);
         foreach($userlist as $uid => $a_user) {
           $r .= '<td>'.$a_user->name.'</td>';
         }
@@ -864,7 +865,7 @@ class iform_wwt_colour_marked_report {
           foreach($entities as $entity) {
             if(!$entity["parent_id"]) { // only assign parent locations.
               $r .= "<tr><td>".$entity["name"]."</td>";
-              $defaultuserids = iform_loctools_getusers($node, $entity["id"]);
+              $defaultuserids = iform_loctools_getusers($nid, $entity["id"]);
               foreach($userlist as $uid => $a_user) {
                 $r .= '<td><input type="checkbox" name="location:'.$entity["id"].':'.$uid.(in_array($uid, $defaultuserids) ? '" checked="checked"' : '"').'></td>';
               }
@@ -959,7 +960,7 @@ class iform_wwt_colour_marked_report {
     }
     // reset button
     $r .= '<input type="button" class="ui-state-default ui-corner-all" value="'.lang::get('Abandon Form and Reload').'" '
-      .'onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'newSample')).'\'">';    
+      .'onclick="window.location.href=\''.url('node/'.($nid->nid), array('query' => 'newSample')).'\'">';
     // clear all padlocks button
     $r .= ' <input type="button" class="ui-state-default ui-corner-all" value="'.lang::get('Clear All Padlocks').'" '
       .'onclick="if (indicia && indicia.locks) indicia.locks.unlockRegion(\'body\');">';    
@@ -1897,7 +1898,7 @@ class iform_wwt_colour_marked_report {
     $defAttrOptions = array('extraParams'=>$auth['read'], 'class'=>"required");
     $attrHtml = '';
     // Drupal specific code
-    if (!hostsite_user_has_permission('IForm n'.self::$node->nid.' enter data by proxy')) {
+    if (!hostsite_user_has_permission('IForm n'.self::$nid.' enter data by proxy')) {
       if (isset($options['lockable'])) {
         unset($options['lockable']);
       }
@@ -1907,7 +1908,7 @@ class iform_wwt_colour_marked_report {
     $defAttrOptions += $options;
     $blockOptions = array();
     $attrHtml .= get_attribute_html($attributes, $args, $defAttrOptions, 'Enter data by proxy', $blockOptions);
-    if (!hostsite_user_has_permission('IForm n'.self::$node->nid.' enter data by proxy')) {
+    if (!hostsite_user_has_permission('IForm n'.self::$nid.' enter data by proxy')) {
       $attrHtml .= '</div>';
     }
   
@@ -2955,7 +2956,7 @@ class iform_wwt_colour_marked_report {
   /**
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     // get the CMS User ID attribute so we can filter the grid to this user
     /*
@@ -2968,7 +2969,7 @@ class iform_wwt_colour_marked_report {
     */
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>'destination=node/'.($node->nid))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     }
     // use drupal profile to get warehouse user id
     if (function_exists('profile_load_profile')) {

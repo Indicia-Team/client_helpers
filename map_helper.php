@@ -412,6 +412,7 @@ var mapTabHandler = function(event, ui) {
   }
 }
 indiciaFns.bindTabsActivate($($('#$options[tabDiv]').parent()), mapTabHandler);
+
 SCRIPT;
         // Insert this script at the beginning, because it must be done before the tabs are initialised or the 
         // first tab cannot fire the event

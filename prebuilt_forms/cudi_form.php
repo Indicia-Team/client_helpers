@@ -256,13 +256,13 @@ class iform_cudi_form extends iform_dynamic {
   /** 
    * Construct a grid of existing records.
    * @param array $args iform parameters. 
-   * @param object $node node being shown. 
+   * @param object $nid ID of node being shown.
    * @param array $auth authentication tokens for accessing the warehouse. 
    * @return string HTML for grid.
    */
-  protected static function getGrid($args, $node, $auth) {
+  protected static function getGrid($args, $nid, $auth) {
     $r = '<div id="locationList">' . 
-            call_user_func(array(self::$called_class, 'getLocationListGrid'), $args, $node, $auth) . 
+            call_user_func(array(self::$called_class, 'getLocationListGrid'), $args, $nid, $auth) .
           '</div>';
     return $r;  
   }
@@ -710,7 +710,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['location:centroid_geom'];
     if ($boundaries && isset(data_entry_helper::$entity_to_load['location:boundary_geom'])) 
       $options['initialBoundaryWkt'] = data_entry_helper::$entity_to_load['location:boundary_geom'];
-    if ($args['interface']!=='one_page')
+    if ($tabalias)
       $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
     if (!isset($options['standardControls']))
@@ -1376,12 +1376,12 @@ mapInitialisationHooks.push(function(mapdiv) {
    * Filtering of locations is by Indicia User ID stored in the user profile.
    * Enable Easy Login module to achieve this function.
    */
-  protected static function getLocationListGrid($args, $node, $auth) {
+  protected static function getLocationListGrid($args, $nid, $auth) {
     global $user;
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>'destination=node/'.($node->nid))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     }
     
     // get the Indicia User ID attribute so we can filter the grid to this user
@@ -1420,7 +1420,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     ));    
     $r .= '<form>';    
     $r .= '<input type="button" value="' . lang::get('LANG_Add_Location') . '" ' .
-            'onclick="window.location.href=\'' . url('node/'.($node->nid), array('query' => 'new')) . '\'">';    
+            'onclick="window.location.href=\'' . url("node/$nid", array('query' => 'new')) . '\'">';
     $r .= '</form>';
     return $r;
   }

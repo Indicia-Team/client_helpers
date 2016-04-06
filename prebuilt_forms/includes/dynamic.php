@@ -463,8 +463,9 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
       // keep track on if the tab actually has real content, so we can avoid floating instructions if all the controls 
       // were removed by user profile integration for example.
       $hasControls = false;
-      // get a machine readable alias for the heading, if we are showing tabs
-      if ($args['interface']==='one_page')
+      // get a machine readable alias for the heading, if we are showing tabs and we are loading
+      // anything other than the first tab.
+      if ($args['interface']==='one_page' || count($tabHtml)===0)
         $tabalias = null;
       else
         $tabalias = 'tab-'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
