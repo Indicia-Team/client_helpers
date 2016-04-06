@@ -4007,7 +4007,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
    * @param int $sampleId ID of the sample to load
    * @param array $readAuth Read authorisation array
    * @param boolean $loadMedia Array of media type terms to load.
-   * @param boolean $extraParams Extra params to pass to the web service call for filtering.
+   * @param array $extraParams Extra params to pass to the web service call for filtering.
    * @return array Array with key of occurrence_id and value of $taxonInstance.
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='') {

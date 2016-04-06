@@ -238,7 +238,6 @@ class iform_dynamic {
       : '';
     self::$mode = $mode;
     if($mode ===  self::MODE_GRID) {
-      drupal_set_message('grid mode');
       // Output a grid of existing records
       $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $nid, $auth);
     } else {

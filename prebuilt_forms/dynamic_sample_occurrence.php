@@ -705,7 +705,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * or creating a new record from an existing one.
    * @param array $args iform parameters.
    * @param object $nid node being shown.
-   * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING|MODE_CLONE].
+   * @return int The mode [MODE_GRID|MODE_NEW|MODE_EXISTING|MODE_CLONE].
    */
   protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
@@ -745,17 +745,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function getGrid($args, $nid, $auth) {
     $r = '';
-    $attributeOpts = array(
-      'valuetable' => 'sample_attribute_value'
-      ,'attrtable' => 'sample_attribute'
-      ,'key' => 'sample_id'
-      ,'fieldprefix' => 'smpAttr'
-      ,'extraParams' => $auth['read']
-      ,'survey_id' => $args['survey_id']
-    );
-    if(isset($args['sample_method_id']))
-      $attributeOpts['sample_method_id'] = $args['sample_method_id'];
-    $attributes = data_entry_helper::getAttributes($attributeOpts, false);
+    $attributes = self::getAttributesForEntity('sample', $args, $auth, false);
 
     $tabs = array('#sampleList'=>lang::get('LANG_Main_Samples_Tab'));
 
@@ -769,7 +759,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // Only actually need to show tabs if there is more than one
     if(count($tabs) > 1){
       $active = isset($_GET['page']) ? '#setLocations' : '#sampleList';
-      $r .= "<div id=\"controls\">".(data_entry_helper::enable_tabs(array('divId'=>'controls','active'=>$active)))."<div id=\"temp\"></div>";
+      data_entry_helper::enable_tabs(array('divId'=>'controls','active'=>$active));
+      $r .= '<div id="controls"><div id="temp"></div>';
       $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
     }
 
@@ -853,32 +844,49 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
   /**
    * Load the attributes for the sample defined by $entity_to_load
+   * @param array $args Form configuration arguments
+   * @param array $auth Authorisation tokens
+   * @return array List of attribute definitions
    */
   protected static function getAttributes($args, $auth) {
-    return self::getAttributesForSample($args, $auth, 
+    $attributes = self::getAttributesForEntity('sample', $args, $auth,
         isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
+    // if in single record entry mode, occurrence attribute controls are handled similarly
+    // to sample attribute controls.
+    if ($args['multiple_occurrence_mode']==='single' ||
+        ($args['multiple_occurrence_mode']==='either' && empty($_GET['gridmode']))) {
+      self::$occAttrs = self::getAttributesForEntity('occurrence', $args, $auth,
+          isset(data_entry_helper::$entity_to_load['occurrence:id']) ? data_entry_helper::$entity_to_load['occurrence:id'] : '');
+      $attributes = array_merge($attributes, self::$occAttrs);
+    }
+    return $attributes;
   }
   
   /**
    * Load the attributes for the sample defined by a supplied Id.
+   * @param string $entity Associated entity name, either sample or occurrence.
+   * @param array $args Form configuration arguments
+   * @param array $auth Authorisation tokens
+   * @param integer $id ID of the sample or occurrence record being reloaded if relevant
+   * @return array List of attribute definitions
    */
-  protected static function getAttributesForSample($args, $auth, $id) {
+  protected static function getAttributesForEntity($entity, $args, $auth, $id=null) {
+    $prefix = $entity==='sample' ? 'smp' : 'occ';
     $attrOpts = array(   
-    'valuetable'=>'sample_attribute_value'
-    ,'attrtable'=>'sample_attribute'
-    ,'key'=>'sample_id'
-    ,'fieldprefix'=>'smpAttr'
-    ,'extraParams'=>$auth['read']
-    ,'survey_id'=>$args['survey_id']
+      'valuetable'=>"{$entity}_attribute_value",
+      'attrtable'=>"{$entity}_attribute",
+      'key'=>"{$entity}_id",
+      'fieldprefix'=>"{$prefix}Attr",
+      'extraParams'=>$auth['read'],
+      'survey_id'=>$args['survey_id']
     );
     if (!empty($id))
       $attrOpts['id'] = $id;  
     // select only the custom attributes that are for this sample method or all sample methods, if this
     // form is for a specific sample method.
-    if (!empty($args['sample_method_id']))
+    if ($entity==='sample' && !empty($args['sample_method_id']))
       $attrOpts['sample_method_id']=$args['sample_method_id'];
-    $attributes = data_entry_helper::getAttributes($attrOpts, false);
-    return $attributes;
+    return data_entry_helper::getAttributes($attrOpts, false);
   }
 
   /* Overrides function in class iform_dynamic.
@@ -957,8 +965,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // Unset the sample and occurrence id from entitiy_to_load as for a new record.
     unset(data_entry_helper::$entity_to_load['sample:id']);
     unset(data_entry_helper::$entity_to_load['occurrence:id']);
-    
-}
+  }
 
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
@@ -1183,7 +1190,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $r = '';
     if (isset($options['sampleMethodId'])) {
       $args['sample_method_id'] = $options['sampleMethodId'];
-      $sampleAttrs = self::getAttributes($args, $auth);
+      $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth);
       foreach ($sampleAttrs as &$attr) {
         $attr['fieldname'] = 'sc:n::'.$attr['fieldname'];
         $attr['id'] = 'sc:n::'.$attr['id'];
@@ -1213,7 +1220,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function get_control_speciesmapsummary($auth, $args, $tabAlias, $options) {
     // don't have access to the id for the species map control, and visa versa (has a random element)
     // have to use a clas to identify it.
-    return '<div class="control_speciesmapsummary"><table class="ui-widget ui-widget-content species-grid-summary"><thead class="ui-widget-header"/><tbody/></table></div>';
+    return '<div class="control_speciesmapsummary"><table class="ui-widget ui-widget-content species-grid-summary"><thead class="ui-widget-header"></thead><tbody/></table></div>';
   }
   
   /* Set up the control JS and also return the existing data subsample blocks */
@@ -1259,7 +1266,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                     (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey].'" name="'.$idKey.'">' : '');
                     
           if (!empty($options['sampleMethodId'])) {
-            $sampleAttrs = self::getAttributesForSample($args, $auth, $a[2]);
+            $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth, $a[2]);
             foreach ($sampleAttrs as &$attr) {
               $attr['fieldname'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['fieldname'];
               $attr['id'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['id'];
@@ -1401,11 +1408,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * @param array $args Form configuration
    * @param array $extraParams Extra parameters array, pre-configured with filters for taxa and name types.
    * @param array $options additional options for the control, e.g. those configured in the form structure.
-   * @return HTML for the species_checklist control.
+   * @return string HTML for the species_checklist control.
    */
   protected static function get_control_species_checklist($auth, $args, $extraParams, $options) {
-    global $user;
-    
     // Build the configuration options
     if (isset($options['view']))
       $extraParams['view'] = $options['view'];    
@@ -1498,7 +1503,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if (isset($options['taxonGroupSelect']) && $options['taxonGroupSelect']) {
       $label = isset($options['taxonGroupSelectLabel']) ? $options['taxonGroupSelectLabel'] : 'Species Group';
       $helpText = isset($options['taxonGroupSelectHelpText']) ? $options['taxonGroupSelectHelpText'] : 'Choose which species group you want to pick a species from.';
-      $default = '';
       if (!empty(data_entry_helper::$entity_to_load['occurrence:taxa_taxon_list_id'])) {
         // need to find the default value
         $species = data_entry_helper::get_population_data(array(
@@ -1680,8 +1684,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     return data_entry_helper::file_box(array_merge(array(
       'table'=>'sample_medium',
       'readAuth' => $auth['read'],
-      'caption'=>lang::get($label),
-      'readAuth'=>$auth['read']
+      'caption'=>lang::get($label)
     ), $options));
   }
 
@@ -1690,7 +1693,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function get_control_speciesattributes($auth, $args, $tabAlias, $options) {
     if (!(call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
-      self::load_custom_occattrs($auth['read'], $args['survey_id']);
       $ctrlOptions = array('extraParams'=>$auth['read']);
       $attrSpecificOptions = array();
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
@@ -1708,7 +1710,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'label'=>lang::get('Record comment')
         ));
       if ($args['occurrence_images']){
-        $r .= self::occurrence_photo_input($auth['read'], $options, $tabAlias, $args);
+        $r .= self::occurrence_photo_input($auth['read'], $options, $tabAlias);
       }
       return $r;
     } else
@@ -1883,7 +1885,6 @@ else
   protected static function get_control_occattr($auth, $args, $tabAlias, $options) {
     $attribName = 'occAttr:' . $options['ctrlId'];
     if ($args['multiple_occurrence_mode']==='single') {
-      self::load_custom_occattrs($auth['read'], $args['survey_id']);
       foreach (self::$occAttrs as $idx => $attr) {
         if ($attr['id'] === $attribName) {
           self::$occAttrs[$idx]['handled'] = true;
@@ -1905,6 +1906,8 @@ else
         'fieldname'=>'occurrence:comment',
         'label'=>lang::get('Record comment')
       ), $options));
+    } else {
+      return '';
     }
   }
   
@@ -1913,7 +1916,7 @@ else
    */
   protected static function get_control_photos($auth, $args, $tabAlias, $options) {
     if ($args['multiple_occurrence_mode']==='single') {
-      return self::occurrence_photo_input($auth['read'], $options, $tabAlias, $args);
+      return self::occurrence_photo_input($auth['read'], $options, $tabAlias);
     }
     else 
       return "[photos] control cannot be included in form when in grid entry mode, since photos are automatically included in the grid.";
@@ -1973,7 +1976,6 @@ else
    */
   protected static function get_control_sensitivity($auth, $args, $tabAlias, $options) {
     if ($args['multiple_occurrence_mode']==='single') {
-      self::load_custom_occattrs($auth['read'], $args['survey_id']);
       $ctrlOptions = array('extraParams'=>$auth['read']);
       $attrSpecificOptions = array();
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
@@ -2048,7 +2050,6 @@ else
       // Work out the attributes that are for abundance, so could contain a zero
       $connection = iform_get_connection_details($nid);
       $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
-      self::load_custom_occattrs($readAuth, $args['survey_id']);
       $abundanceAttrs = array();
       foreach (self::$occAttrs as &$attr) {
         if ($attr['system_function']==='sex_stage_count') {
@@ -2212,45 +2213,19 @@ else
   }
   
   /**
-   * Load the list of occurrence attributes into a static variable. 
-   *
-   * By maintaining a single list of attributes we can track which have already been output.
-   * @param array $readAuth Read authorisation tokens.
-   * @param integer $surveyId ID of the survey to load occurrence attributes for.
-   */
-  protected static function load_custom_occattrs($readAuth, $surveyId) {
-    if (!isset(self::$occAttrs)) {
-      // Add any dynamically generated controls
-      $attrArgs = array(
-         'valuetable'=>'occurrence_attribute_value',
-         'attrtable'=>'occurrence_attribute',
-         'key'=>'occurrence_id',
-         'fieldprefix'=>'occAttr',
-         'extraParams'=>$readAuth,
-         'survey_id'=>$surveyId
-      );
-      if (self::$loadedOccurrenceId) {
-        // if we have a single occurrence Id to load, use it to get attribute values
-        $attrArgs['id'] = self::$loadedOccurrenceId;
-      }
-      self::$occAttrs = data_entry_helper::getAttributes($attrArgs, false);
-    }
-  }
-  
-  /**
    * Provides a control for inputting photos against the record, when in single record mode.
    *
    * @param array $readAuth Read authorisation tokens
    * @param array $options Options array for the control.
-   * @param string $tabAlias ID of the tab's div if this is being loaded onto a div.
+   * @param string $tabalias ID of the tab's div if this is being loaded onto a div.
+   * @return string HTML for the control.
    */
-  protected static function occurrence_photo_input($readAuth, $options, $tabalias, $args) {
+  protected static function occurrence_photo_input($readAuth, $options, $tabalias) {
     $opts = array(
       'table'=>'occurrence_medium',
       'readAuth' => $readAuth,
       'resizeWidth' => 1600,
-      'resizeHeight' => 1600,
-      'readAuth' => $readAuth
+      'resizeHeight' => 1600
     );
     if ($tabalias)
       $opts['tabDiv']=$tabalias;

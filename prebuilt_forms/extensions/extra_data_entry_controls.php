@@ -33,6 +33,8 @@ class extension_extra_data_entry_controls {
   public static function person_autocomplete($auth, $args, $tabalias, $options, $path) {
     if (empty($options['fieldname']))
       return 'A @fieldname option is required for the [extra_data_entry_controls.person_autocomplete] control.';
+    if (!empty($options['default']) && empty($options['defaultCaption']))
+      $options['defaultCaption'] = $options['default'];
     $options = array_merge(array(
       'label' => 'Person',
       'table'=>'user',
@@ -42,14 +44,16 @@ class extension_extra_data_entry_controls {
       'extraParams' => $auth['read'] + array('view'=>'detail'),
       'class'=>'control-width-5'
     ), $options);
-    $r = '';
-    $r .= data_entry_helper::autocomplete($options);
-    return $r;
+    return data_entry_helper::autocomplete($options);
   }
 
   /**
    * A variation on the species autocomplete control that allows an additional associated
    * occurrence to be attached to the submission. Use for single species record forms.
+   * @param array $options Options array for the control with the following possibilities:
+   *   * association_type_id - ID of the association type term to tag against the association.
+   *   * copy_attributes - comma separated list of occurrence attribute IDs whose values are
+   *     to be cloned from the main occurrence to the association.
    * @return string HTML for the control
    */
   public static function associated_occurrence($auth, $args, $tabalias, $options, $path) {
@@ -110,6 +114,12 @@ class extension_extra_data_entry_controls {
         'default' => 'extra_data_entry_controls.build_submission_associations'
       ));
     }
+    if (!empty($options['copy_attributes']) && preg_match('/^\d+(?:,\d+)*$/', $options['copy_attributes'])) {
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => 'association_copy_attributes',
+        'default' => $options['copy_attributes']
+      ));
+    }
     return $r;
   }
 
@@ -137,12 +147,16 @@ class extension_extra_data_entry_controls {
       // special value indicates an existing association which has not been changed. We
       // therefore don't need to post it.
       return;
-    // clone and clean up the main species record by removing attributes and media
+    // clone and clean up the main species record by removing unwanted attributes and media
+    $copiedAttrs = array();
+    if (!empty($values['association_copy_attributes']))
+      $copiedAttrs = explode(',', $values['association_copy_attributes']);
     $assoc = array_merge($s_array[0]['subModels'][0]);
     foreach ($assoc['model']['fields'] as $field => $value) {
-      if (substr($field, 0, 8)==='occAttr:')
+      if (substr($field, 0, 8)==='occAttr:' && !in_array(substr($field, 8), $copiedAttrs))
         unset($assoc['model']['fields'][$field]);
     }
+    drupal_set_message(var_export($assoc['model']['fields'], true));
     unset ($assoc['model']['subModels']);
     // convert this to a record of the associated species
     $assoc['model']['fields']['taxa_taxon_list_id'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index"]);
