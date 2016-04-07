@@ -360,7 +360,20 @@ idlist=';
 
   private static function get_template_with_map($args, $readAuth, $extraParams, $paramDefaults) {
     $r = '<div id="outer-with-map" class="ui-helper-clearfix">';
-    $r .= '<div id="grid" class="left" style="width:65%">{paramsForm}{grid}</div>';
+    $r .= '<div id="grid" class="left" style="width:65%">{paramsForm}<div id="grids-tabs">';
+    // note - there is a dependency in the JS that comments is the last tab and media the 2nd to last.
+    $r .= data_entry_helper::tab_header(array(
+      'tabs'=>array(
+        '#records-tab'=>lang::get('Records'),
+        '#log-tab'=>lang::get('Log'),
+      )
+    ));
+    data_entry_helper::enable_tabs(array(
+      'divId'=>'grids-tabs'
+    ));
+    $r .= '<div id="records-tab">{grid}</div>';
+    $r .= '<div id="log-tab">{log}</div>';
+    $r .= '</div></div>';
     $r .= '<div id="map-and-record" class="right" style="width: 34%"><div id="summary-map">';
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
@@ -609,7 +622,19 @@ idlist=';
 
     $opts['zoomMapToOutput']=false;
     $grid = report_helper::report_grid($opts);
-    $r = str_replace(array('{grid}','{paramsForm}'), array($grid, $params),
+    $log = report_helper::report_grid(array(
+      'dataSource'=>'library/occurrence_comments/filterable_explore_list',
+      'id' => 'comments-log',
+      'rowId' => 'occurrence_id',
+      'reportGroup' => 'verification',
+      'ajax'=>TRUE,
+      'sharing'=>'verification',
+      'mode' => 'report',
+      'readAuth' => $auth['read'],
+      'itemsPerPage' => 20,
+      'extraParams' => array('smpattrs' => '', 'occattrs' => '')
+    ));
+    $r = str_replace(array('{grid}','{log}','{paramsForm}'), array($grid, $log, $params),
         self::get_template_with_map($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
