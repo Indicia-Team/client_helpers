@@ -516,8 +516,8 @@ idlist=';
     $r .= '<button type="button" id="btn-redetermine" class="default-button" title="'.
       lang::get('Propose a new determination for this record.').'">'.lang::get('Redet.').'</button>';
     // @todo following needs to be disabled if record is not on iRecord.
-    $r .= '<button type="button" id="btn-edit-record" class="default-button" title="'.
-      lang::get('Edit the record on its original data entry form.').'">'.lang::get('Edit').'</button>';
+    $r .= '<a id="btn-edit-record" class="button default-button" title="'.
+      lang::get('Edit the record on its original data entry form.').'">'.lang::get('Edit').'</a>';
     $r .= '</div>';
     return $r;
   }
@@ -632,7 +632,14 @@ idlist=';
       'mode' => 'report',
       'readAuth' => $auth['read'],
       'itemsPerPage' => 20,
-      'extraParams' => array('smpattrs' => '', 'occattrs' => '')
+      'extraParams' => array('smpattrs' => '', 'occattrs' => ''),
+      'columns' => array(
+        array(
+          'display'=>'',
+          'template' => '<input type="hidden" class="row-input-form" value="{rootFolder}{input_form}"/>' .
+              '<input type="hidden" class="row-belongs-to-site" value="{belongs_to_site}"/>'
+        )
+      )
     ));
     $r = str_replace(array('{grid}','{log}','{paramsForm}'), array($grid, $log, $params),
         self::get_template_with_map($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));

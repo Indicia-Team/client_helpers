@@ -59,7 +59,7 @@ ul.gallery li {
 }
 
 #action-buttons {
-  button {
+  button, a {
     width: $verify-button-width;
     margin: 0 $verify-button-margin 2px 0;
     margin-bottom: 2px;
@@ -68,6 +68,11 @@ ul.gallery li {
     box-sizing: border-box;
     padding: 0;
     font-size: 0.9em;
+    text-align: center;
+    line-height: 11px;
+  }
+  a {
+    padding-top: 7px;
   }
   #actions-less button {
     width: 36%;

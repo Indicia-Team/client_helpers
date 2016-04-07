@@ -68,6 +68,9 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     $('#record-details-toolbar *').attr('disabled', 'disabled');
     occurrence_id = tr.id.substr(3);
     $(tr).addClass('selected');
+    var path=$(tr).find('.row-input-form').val(),
+        sep=(path.indexOf('?')>=0) ? '&' : '?';
+    $('#btn-edit-record').attr('href', path+sep+'occurrence_id='+occurrence_id);
     // make it clear things are loading
     $('#chart-div').css('opacity', 0.15);
     rowRequest = $.getJSON(
@@ -1135,10 +1138,6 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
         sep=(path.indexOf('?')>=0) ? '&' : '?';
       window.location=path+sep+'occurrence_id='+id;
     }
-
-    $('#btn-edit-record').click(function() {
-      editThisRecord(occurrence_id);
-    });
 
     /**
      * On the redetermine popup, handle the switch to and from searching the full species lists for records which come from
