@@ -131,6 +131,9 @@ class data_entry_helper extends helper_base {
    * @param array $options Options array with the following possibilities:<ul>
    * <li><b>fieldname</b><br/>
    * Required. The name of the database field this control is bound to.</li>
+   * <li><b>inputId</b><br/>
+   * The ID and name given to the visible input (as opposed to the hidden input which receives
+   * the looked up ID. Defaults to fieldname:captionFieldInEntity.</li>
    * <li><b>id</b><br/>
    * Optional. The id to assign to the HTML control. This should be left to its default value for
    * integration with other mapping controls to work correctly.</li>
@@ -192,7 +195,8 @@ class data_entry_helper extends helper_base {
     if (!array_key_exists('id', $options)) $options['id']=$options['fieldname'];
     if (!array_key_exists('captionFieldInEntity', $options)) $options['captionFieldInEntity']=$options['captionField'];
     // the inputId is the id given to the text field, e.g. occurrence:taxa_taxon_list_id:taxon
-    $options['inputId'] = $options['id'].':'.$options['captionFieldInEntity'];
+    if (empty($options['inputId']))
+      $options['inputId'] = $options['id'].':'.$options['captionFieldInEntity'];
     $defaultCaption = self::check_default_value($options['inputId']);
 
     if ( !is_null($defaultCaption) ) {
