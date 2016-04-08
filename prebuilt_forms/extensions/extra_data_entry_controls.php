@@ -42,8 +42,13 @@ class extension_extra_data_entry_controls {
       'captionField' => 'person_name',
       'formatFunction'=>"format_person_autocomplete",
       'extraParams' => $auth['read'] + array('view'=>'detail'),
-      'class'=>'control-width-5'
+      'class'=>'control-width-5',
+      'inputId' => $options['fieldname']
     ), $options);
+    // we swap the input ID for the fieldname so that the visible control contains the text value to save
+    // if not looking up a known person. The fieldname gets assigned to the hidden control which only
+    // gets used after a lookup operation.
+    $options['fieldname'] = "$options[fieldname]-lookup";
     return data_entry_helper::autocomplete($options);
   }
 
@@ -156,7 +161,6 @@ class extension_extra_data_entry_controls {
       if (substr($field, 0, 8)==='occAttr:' && !in_array(substr($field, 8), $copiedAttrs))
         unset($assoc['model']['fields'][$field]);
     }
-    drupal_set_message(var_export($assoc['model']['fields'], true));
     unset ($assoc['model']['subModels']);
     // convert this to a record of the associated species
     $assoc['model']['fields']['taxa_taxon_list_id'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index"]);
