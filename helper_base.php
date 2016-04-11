@@ -40,6 +40,7 @@ $indicia_templates = array(
       "document.write('{content}');".
       "/* ]]> */</script>\n",
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
+  'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>', // no colon
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
   'suffix' => "\n",
   'requiredsuffix' => "<span class=\"deh-required\">*</span>",
@@ -1754,8 +1755,8 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
 
     // Add a label only if specified in the options array. Link the label to the inputId if available,
     // otherwise the fieldname (as the fieldname control could be a hidden control).
-    if (!empty($options['label'])) {
-      $r .= str_replace(
+    if (!empty($options['label']))
+      $label = str_replace(
           array('{label}', '{id}', '{labelClass}'),
           array(
               $options['label'],
@@ -1764,10 +1765,15 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
           ),
           isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] : $indicia_templates['label']
       );
+    if (!empty($options['label']) && (!isset($options['labelPosition']) || $options['labelPosition'] != 'after')) {
+    	$r .= $label;
     }
     // Output the main control
     $r .= self::apply_replacements_to_template($indicia_templates[$template], $options);
-
+    if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
+    	$r .= $label;
+    }
+    
     // Add a lock icon to the control if the lockable option is set to true
     if (array_key_exists('lockable', $options) && $options['lockable']===true) {
       $r .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
