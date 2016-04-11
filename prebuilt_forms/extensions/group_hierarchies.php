@@ -97,7 +97,8 @@ class extension_group_hierarchies {
         'dataSource'=>'library/groups/groups_list',
         'readAuth'=>$auth['read'],
         'extraParams'=>array('to_group_id' => $_GET['dynamic-from_group_id'], 'userFilterMode'=>'all', 'currentUser'=>''),
-        'caching' => true
+        'caching' => true,
+        'cachePerUser' => false
       ));
       if (count($parent)) {
         $path = array();
