@@ -3968,7 +3968,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     }
     ";
       if (!empty($options['usersPreferredGroups']))
-        self::$javascript .= " else if ($('#filter-mode-user').attr('checked')==true) {
+        self::$javascript .= " else if ($('#filter-mode-user').is(':checked')) {
       applyFilterMode('user');
     }";
       self::$javascript .= "\n    $.fancybox.close();
@@ -4729,13 +4729,13 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     $r .= '</div></fieldset>';
     self::$javascript .= "
 var doSensitivityChange = function(evt) {
-  if ($('#sensitive-checkbox').attr('checked')) {
+  if ($('#sensitive-checkbox').is(':checked')) {
     $('#sensitivity-controls input, #sensitivity-controls select').removeAttr('disabled');
   } else {
     $('#sensitivity-controls input, #sensitivity-controls select').attr('disabled', true);
   }
-  $('#sensitivity-controls').css('opacity', $('#sensitive-checkbox').attr('checked') ? 1 : .5);
-  if ($('#sensitive-checkbox').attr('checked')=== true && typeof evt!=='undefined' && $('#sensitive-blur').val()==='') {
+  $('#sensitivity-controls').css('opacity', $('#sensitive-checkbox').is(':checked') ? 1 : .5);
+  if ($('#sensitive-checkbox').is(':checked')=== true && typeof evt!=='undefined' && $('#sensitive-blur').val()==='') {
     // set a default
     $('#sensitive-blur').val('".$options['defaultBlur']."');
   } 
