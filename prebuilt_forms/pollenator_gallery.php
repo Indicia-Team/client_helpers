@@ -4472,7 +4472,7 @@ $('#username').autocomplete([";
     	$results = db_query('SELECT uid, name FROM {users} ORDER BY name');
 	    while($result = db_fetch_object($results)){
 	      $account = user_load($result->uid);
-	      if($account->uid != 1) // && hostsite_user_has_permission('IForm loctools node '.$nid.' user', $account)){
+	      if($account->uid != 1)
 	        $userList[] = '"'.str_replace('"','\\"',$account->name).'"';
 	    }
 	  	self::_cacheResponse($userList);

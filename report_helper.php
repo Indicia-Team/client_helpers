@@ -185,7 +185,8 @@ class report_helper extends helper_base {
   *      current page's URL, {rootFolder} to represent the folder on the server that the current PHP page is running from, {input_form}
   *      (provided it is returned by the report) to represent the path to the form that created the record, {imageFolder} for the image 
   *      upload folder and {sep} to specify either a ? or & between the URL and the first query parameter, depending on whether 
-  *      {rootFolder} already contains a ?. Because the javascript may pass the field values as parameters to functions,
+  *      {rootFolder} already contains a ?. The url and urlParams can also have replacements from any query string parameter in the URL
+  *      so report parameters can be passed through to linked actions. Because the javascript may pass the field values as parameters to functions,
   *      there are escaped versions of each of the replacements available for the javascript action type. Add -escape-quote or
   *      -escape-dblquote to the fieldname for quote escaping, or -escape-htmlquote/-escape-htmldblquote for escaping quotes in HTML
   *      attributes. For example this would be valid in the action javascript: foo("{bar-escape-dblquote}");
@@ -483,27 +484,31 @@ class report_helper extends helper_base {
     $tfoot .= '<tr><td colspan="'.count($options['columns'])*$options['galleryColCount'].'">'.self::output_pager($options, $pageUrl, $sortAndPageUrlParams, $response).'</td></tr>'.
     $extraFooter = '';
     if (isset($options['footer']) && !empty($options['footer'])) {
-      $footer = str_replace(array('{rootFolder}',
-                '{currentUrl}',
-                '{sep}',
-                '{warehouseRoot}',
-                '{geoserverRoot}',
-                '{nonce}',
-                '{auth}',
-                '{iUserID}',
-                '{user_id}',
-      		    '{website_id}'),
-          array($rootFolder,
-                $currentUrl['path'],
-                strpos($rootFolder, '?')===FALSE ? '?' : '&',
-                self::$base_url,
-                self::$geoserver_url,
-                'nonce='.$options['readAuth']['nonce'],
-                'auth_token='.$options['readAuth']['auth_token'],
-                (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
-          		$user->uid,
-                self::$website_id
-          ), $options['footer']);
+      $footer = str_replace(
+        array(
+          '{rootFolder}',
+          '{currentUrl}',
+          '{sep}',
+          '{warehouseRoot}',
+          '{geoserverRoot}',
+          '{nonce}',
+          '{auth}',
+          '{iUserID}',
+          '{user_id}',
+          '{website_id}'),
+        array(
+          $rootFolder,
+          $currentUrl['path'],
+          strpos($rootFolder, '?')===FALSE ? '?' : '&',
+          self::$base_url,
+          self::$geoserver_url,
+          'nonce='.$options['readAuth']['nonce'],
+          'auth_token='.$options['readAuth']['auth_token'],
+          (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
+          $user->uid,
+          self::$website_id
+        ), $options['footer']
+      );
       // Merge in any references to the parameters sent to the report: could extend this in the future to pass in the extraParams
       foreach($currentParamValues as $key=>$param){
         $footer = str_replace(array('{'.$key.'}'), array($param), $footer);
@@ -2360,24 +2365,21 @@ if (typeof mapSettingsHooks!=='undefined') {
               $action['url'] = '{rootFolder}'.$action['url'];
             }
           } else {
-            // If input_form is not available use surrentUrl as default
+            // If input_form is not available use currentUrl as default
             $action['url'] = '{currentUrl}';
           }          
-        } 
-                
-        $actionUrl = self::mergeParamsIntoTemplate($row, $action['url'], true);
-        // include any $_GET parameters to reload the same page, except the parameters that are specified by the action
-        if (isset($action['urlParams']))
-          $urlParams = array_merge($currentUrl['params'], $action['urlParams']);
-        else if (substr($action['url'], 0, 1)=='#')
-          // if linking to an internal bookmark, no need to attach the url parameters
-          $urlParams = array();
-        else
-          $urlParams = array_merge($currentUrl['params']);
-        if (count($urlParams)>0) {
-          $actionUrl.= (strpos($actionUrl, '?')===false) ? '?' : '&';
         }
-        $href=' href="'.$actionUrl.self::mergeParamsIntoTemplate($row, self::array_to_query_string($urlParams), true).'"';
+        // field values available for merging into the action include the row data and the
+        // query string parameters
+        $row = array_merge($currentUrl['params'], $row);
+        // merge field value replacements into the URL
+        $actionUrl = self::mergeParamsIntoTemplate($row, $action['url'], true);
+        // merge field value replacements into the URL parameters
+        if (count($action['urlParams'])>0) {
+          $actionUrl .= (strpos($actionUrl, '?')===false) ? '?' : '&';
+          $actionUrl .= self::mergeParamsIntoTemplate($row, self::array_to_query_string($action['urlParams']), true);
+        }
+        $href=" href=\"$actionUrl\"";
       } else {
         $href='';
       }
@@ -2910,13 +2912,13 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     }";  
     }
     report_helper::$javascript .= "\n    mapInitialisationHooks.push(function(div) {\n";
+    report_helper::$javascript .= "      div.map.addLayer(indiciaData.reportlayer);\n";
     if (!empty($addFeaturesJs)) {
       report_helper::$javascript .= "      var features = [];\n";
       report_helper::$javascript .= "$addFeaturesJs\n";
       report_helper::$javascript .= "      indiciaData.reportlayer.addFeatures(features);\n";
       if ($zoomToExtent && !empty($addFeaturesJs))
         self::$javascript .= "      div.map.zoomToExtent(indiciaData.reportlayer.getDataExtent());\n";
-      report_helper::$javascript .= "      div.map.addLayer(indiciaData.reportlayer);\n";
       if (!empty($featureDoubleOutlineColour)) {
         // push a clone of the array of features onto a layer which will draw an outline.
         report_helper::$javascript .= "
@@ -4031,7 +4033,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       if($foundFirst){
        $locationArray[$i]['estimates'] = $locationArray[$i]['summary'];
        $locationArray[$i]['hasEstimates'] = true;
-       if(!$locationArray[$i+1]['hasData']) {
+       if($i < $maxWeekNo && !$locationArray[$i+1]['hasData']) {
         for($j= $i+2; $j <= $maxWeekNo; $j++)
           if($locationArray[$j]['hasData']) break;
         if($j <= $maxWeekNo) { // have found another value later on, so interpolate between them
@@ -4254,6 +4256,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   	else if(isset($options['branch_location_list']))
   		$extraParams['query'] = urlencode(json_encode(array('in'=>array('location_id', $options['branch_location_list']))));
   	else $extraParams['location_id'] = 'NULL';
+  	$extraParams['columns'] = 'date_start,date_end,date_type,type,period_number,taxa_taxon_list_id,taxonomic_sort_order,taxon,preferred_taxon,default_common_name,taxon_meaning_id,count,estimate';
   	$records = data_entry_helper::get_population_data(array(
   			'table'=>'summary_occurrence',
   			'extraParams'=>$extraParams
@@ -4394,25 +4397,8 @@ update_controls();
   			$sampleFields[] = $field;
   		}
   	}
-  
+
   	if($options['location_list'] != 'all' && count($options['location_list']) == 0) $options['location_list'] = 'none';
-  	foreach($records as $recid => $record){
-  		// If the taxon has changed
-  		$this_date = date_create(str_replace('/','-',$record['date'])); // prevents day/month ordering issues
-  		$this_index = $this_date->format('z');
-  		$this_weekday = $this_date->format('N');
-  		
-  		if($this_weekday > $weekstart[1]) // scan back to start of week
-  			$this_date->modify('-'.($this_weekday-$weekstart[1]).' day');
-  		else if($this_weekday < $weekstart[1])
-  			$this_date->modify('-'.(7+$this_weekday-$weekstart[1]).' day');
-  		// this_date now points to the start of the week. Next work out the week number.
-  		$this_yearday = $this_date->format('z');
-  		$weekno = $record['period_number'];
-  		if(isset($weekList[$weekno])){
-  			if(!in_array($record['location_name'],$weekList[$weekno])) $weekList[$weekno][] = $record['location_name'];
-  		} else $weekList[$weekno] = array($record['location_name']);
-  	}
   	$warnings .= '<span style="display:none;">Records date pre-processing complete : '.date(DATE_ATOM).'</span>'."\n";
   	$count = count($records);
   	$warnings .= '<span style="display:none;">Number of records processed : '.$count.' : '.date(DATE_ATOM).'</span>'."\n";
@@ -4460,15 +4446,15 @@ update_controls();
   	$warnings .= '<span style="display:none;">Controls complete : '.date(DATE_ATOM).'</span>'."\n";
   	$seriesToDisplay=(isset($options['outputSeries']) ? explode(',', $options['outputSeries']) : 'all');
   	$thClass = $options['thClass'];
- 	$summaryTab = '<div class="results-grid-wrapper-outer"><div class="results-grid-wrapper-inner"><table id="'.$options['tableID'].'-summary" class="'.$options['tableClass'].'"><thead class="'.$thClass.'">';
- 	$estimateTab = '<div class="results-grid-wrapper-outer"><div class="results-grid-wrapper-inner"><table id="'.$options['tableID'].'-estimate" class="'.$options['tableClass'].'"><thead class="'.$thClass.'">';
+ 	$summaryTab = '<table id="'.$options['tableID'].'-summary" class="'.$options['tableClass'].'"><thead class="'.$thClass.'">';
+ 	$estimateTab = '<table id="'.$options['tableID'].'-estimate" class="'.$options['tableClass'].'"><thead class="'.$thClass.'">';
  	$summaryDataDownloadGrid = '';
   	$estimateDataDownloadGrid = '';
   	$rawDataDownloadGrid = '';
-  	$summaryTab .= '<tr><th class="freeze-first-col">'.lang::get('Week').'</th>'.$tableNumberHeaderRow.'<th>Total</th></tr>'.
-			    	'<tr><th class="freeze-first-col">'.lang::get('Date').'</th>'.$tableDateHeaderRow.'<th></th></tr></thead><tbody>';
-  	$estimateTab .= '<tr><th class="freeze-first-col">'.lang::get('Week').'</th>'.$tableNumberHeaderRow.'<th>Total with<br/>estimates</th></tr>'.
-			    	'<tr><th class="freeze-first-col">'.lang::get('Date').'</th>'.$tableDateHeaderRow.'<th></th></tr></thead><tbody>';
+  	$summaryTab .= '<tr><th>'.lang::get('Week').'</th>'.$tableNumberHeaderRow.'<th>Total</th></tr>'.
+			    	'<tr><th>'.lang::get('Date').'</th>'.$tableDateHeaderRow.'<th></th></tr></thead><tbody>';
+  	$estimateTab .= '<tr><th>'.lang::get('Week').'</th>'.$tableNumberHeaderRow.'<th>Total</th></tr>'.
+			    	'<tr><th>'.lang::get('Date').'</th>'.$tableDateHeaderRow.'<th>(with<br/>estimates)</th></tr></thead><tbody>';
   	$summaryDataDownloadGrid .= 'Week,'.$downloadNumberHeaderRow.',Total'."\n".lang::get('Date').','.$downloadDateHeaderRow.",\n";
   	$estimateDataDownloadGrid .= 'Week,'.$downloadNumberHeaderRow.',Estimates Total'."\n".lang::get('Date').','.$downloadDateHeaderRow.",\n";
   	$altRow=false;
@@ -4492,8 +4478,8 @@ update_controls();
   		if (!empty($seriesLabels[$seriesID])) {
   			$total=0;  // row total
   			$estimatesTotal=0;  // row total
-  			$summaryTab .= '<tr class="datarow '.($altRow?$options['altRowClass']:'').'"><td class="freeze-first-col"'.(isset($seriesLabels[$seriesID]['preferred']) ? ' title="'.$seriesLabels[$seriesID]['preferred'].'"' : '').'>'.$seriesLabels[$seriesID]['label'].'</td>';
-  			$estimateTab .= '<tr class="datarow '.($altRow?$options['altRowClass']:'').'"><td class="freeze-first-col"'.(isset($seriesLabels[$seriesID]['preferred']) ? ' title="'.$seriesLabels[$seriesID]['preferred'].'"' : '').'>'.$seriesLabels[$seriesID]['label'].'</td>';
+  			$summaryTab .= '<tr class="datarow '.($altRow?$options['altRowClass']:'').'"><td'.(isset($seriesLabels[$seriesID]['preferred']) ? ' title="'.$seriesLabels[$seriesID]['preferred'].'"' : '').'>'.$seriesLabels[$seriesID]['label'].'</td>';
+  			$estimateTab .= '<tr class="datarow '.($altRow?$options['altRowClass']:'').'"><td'.(isset($seriesLabels[$seriesID]['preferred']) ? ' title="'.$seriesLabels[$seriesID]['preferred'].'"' : '').'>'.$seriesLabels[$seriesID]['label'].'</td>';
   			$summaryDataDownloadGrid .= '"'.$seriesLabels[$seriesID]['label'].'","'.(isset($seriesLabels[$seriesID]['preferred']) ? $seriesLabels[$seriesID]['preferred'] : '').'"';
   			$estimateDataDownloadGrid .= '"'.$seriesLabels[$seriesID]['label'].'","'.(isset($seriesLabels[$seriesID]['preferred']) ? $seriesLabels[$seriesID]['preferred'] : '').'"';
   			for($i= $minWeekNo; $i <= $maxWeekNo; $i++){
@@ -4558,8 +4544,8 @@ update_controls();
   			'axes:'.json_encode($options['axesOptions']));
   	$opts[] = $axesOpts;
   	 
-  	$summaryTab .= "<tr class=\"totalrow\"><td class=\"freeze-first-col\">".lang::get('Total (Summary)').'</td>';
-  	$estimateTab .= "<tr class=\"totalrow estimates\"><td class=\"freeze-first-col\">".lang::get('Total inc Estimates').'</td>';
+  	$summaryTab .= "<tr class=\"totalrow\"><td>".lang::get('Total (Summary)').'</td>';
+  	$estimateTab .= "<tr class=\"totalrow estimates\"><td>".lang::get('Total inc Estimates').'</td>';
    	$summaryDataDownloadGrid .= '"'.lang::get('Total (Summary)').'",';
   	$estimateDataDownloadGrid .= '"'.lang::get('Total').'",';
   	for($i= $minWeekNo; $i <= $maxWeekNo; $i++) {
@@ -4572,8 +4558,8 @@ update_controls();
 	$summaryDataDownloadGrid .= ','.$grandTotal."\n";
   	$estimateTab .= '<td class="total-column grand-total estimates">'.$estimatesGrandTotal.'</td></tr>';
 	$estimateDataDownloadGrid .= ','.$estimatesGrandTotal."\n";
-  	$summaryTab .= "</tbody></table></div></div>\n";
-  	$estimateTab .= "</tbody></table></div></div>\n";
+  	$summaryTab .= "</tbody></table>\n";
+  	$estimateTab .= "</tbody></table>\n";
   	data_entry_helper::$javascript .= "var seriesData = {ids: [".implode(',', $seriesIDs)."], summary: [".implode(',', $summarySeriesData)."], estimates: [".implode(',', $estimatesSeriesData)."]};\n";
   	data_entry_helper::$javascript .= "
 function replot(type){
@@ -4607,19 +4593,6 @@ indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
   panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
   if (panel.id==='summaryChart') { replot('summary'); }
   if (panel.id==='estimateChart') { replot('estimates'); }
-  if (panel.id==='summaryData' || panel.id==='estimateData' || panel.id==='rawData') {
-  	var max=0;
-  	var extMax=0;
-  	$('#'+panel.id+' .freeze-first-col').each(function(idx, elem){
-  	  $(elem).css('width',''); 
-  	  if(max < $(elem).width()) max= $(elem).width();
-  	  if(extMax < $(elem).outerWidth(true)) extMax= $(elem).outerWidth(true);});
-  	$('#'+panel.id+' .freeze-first-col').width(max+1);
-  	$('#'+panel.id+' .results-grid-wrapper-inner').css('margin-left',extMax+1);
-  	$('#'+panel.id+' table').hide();
-  	$('#'+panel.id+' > div.results-grid-wrapper-outer').each(function(idx, elem){ $(elem).css('width',''); $(elem).width($(elem).width());});
-  	$('#'+panel.id+' table').show();
-  }
 });
 ";
 	$summarySeriesPanel="";
@@ -4697,7 +4670,7 @@ jQuery('#estimateChart .disable-button').click(function(){
   			$altRow=false;
   			$records = $response['records'];
   			$rawTab = (isset($options['linkMessage']) ? $options['linkMessage'] : '');
-  			$rawDataDownloadGrid = lang::get('Date').',';
+  			$rawDataDownloadGrid = lang::get('Week').',';
   			$rawArray = array();
   			$sampleList=array();
   			$sampleDateList=array();
@@ -4706,11 +4679,10 @@ jQuery('#estimateChart .disable-button').click(function(){
   			if(!$hasRawData)
   				$rawTab .= '<p>'.lang::get('No raw data available for this period with these filter values.').'</p>';
  			else {
-  				$rawTab = '<div class="results-grid-wrapper-outer"><div class="results-grid-wrapper-inner"><table class="'.$options['tableClass'].'"><thead class="'.$thClass.'"><tr><th class="freeze-first-col">'.lang::get('Date').'</th>';
  				foreach($records as $occurrence){
   					if(!in_array($occurrence['sample_id'], $sampleList)) {
   						$sampleList[] = $occurrence['sample_id'];
-  						$sampleData = array('id'=>$occurrence['sample_id'], 'date'=>$occurrence['date'], 'location'=>$occurrence['locaton_name']);
+  						$sampleData = array('id'=>$occurrence['sample_id'], 'date'=>$occurrence['date'], 'location'=>$occurrence['location_name']);
 	  					$rawArray[$occurrence['sample_id']] = array();
   						if($sampleFields){
   							foreach($sampleFields as $sampleField) {
@@ -4732,6 +4704,23 @@ jQuery('#estimateChart .disable-button').click(function(){
   						else $rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']] += $count;
   					}
   				}
+  				$rawTab = '<table class="'.$options['tableClass'].'"><thead class="'.$thClass.'"><tr><th>'.lang::get('Week').'</th>';
+	  			foreach($sampleDateList as $sample){
+  					$sample_date = date_create($sample['date']);
+//  					$this_index = $this_date->format('z');
+  					$this_weekday = $sample_date->format('N');
+  					if($this_weekday > $weekstart[1]) // scan back to start of week
+  						$sample_date->modify('-'.($this_weekday-$weekstart[1]).' day');
+  					else if($this_weekday < $weekstart[1])
+  						$sample_date->modify('-'.(7+$this_weekday-$weekstart[1]).' day');
+  					$this_yearday = $sample_date->format('z');
+  					$weekno = (int)floor(($this_yearday-$weekOne_date_yearday)/7)+1;
+  						
+  					$rawTab .= '<th>'.$weekno.'</th>';
+	  				$rawDataDownloadGrid .= ','.$weekno;
+  				}
+  				$rawDataDownloadGrid .= "\n".lang::get('Date').',';
+  				$rawTab .= '</tr><tr><th>'.lang::get('Date').'</th>';
 	  			foreach($sampleDateList as $sample){
   					$sample_date = date_create($sample['date']);
   					$rawTab .= '<th>'.
@@ -4745,7 +4734,7 @@ jQuery('#estimateChart .disable-button').click(function(){
   				$rawTab .= '</tr></thead><tbody>';
   				if($sampleFields){
   					foreach($sampleFields as $sampleField) { // last-sample-datarow
-  						$rawTab .= '<tr class="sample-datarow '.($altRow?$options['altRowClass']:'').'"><td class="freeze-first-col">'.$sampleField['caption'].'</td>';
+  						$rawTab .= '<tr class="sample-datarow '.($altRow?$options['altRowClass']:'').'"><td>'.$sampleField['caption'].'</td>';
 	  				  	$rawDataDownloadGrid .= '"'.$sampleField['caption'].'",';
   					  	foreach($sampleDateList as $sample){
   							$rawTab .= '<td>'.($sample[$sampleField['caption']]===null || $sample[$sampleField['caption']]=='' ? '&nbsp;' : $sample[$sampleField['caption']]).'</td>';
@@ -4760,8 +4749,8 @@ jQuery('#estimateChart .disable-button').click(function(){
   				foreach($sortData as $sortedTaxon){
   					$seriesID=$sortedTaxon[1]; // this is the meaning id
   					if (!empty($seriesLabels[$seriesID])) {
-	   					$rawTab .= '<tr class="datarow '.($altRow?$options['altRowClass']:'').'"><td class="freeze-first-col"'.(isset($seriesLabels[$seriesID]['preferred']) ? ' title="'.$seriesLabels[$seriesID]['preferred'].'"' : '').'>'.$seriesLabels[$seriesID]['label'].'</td>';
-  						$rawDataDownloadGrid .= '"'.$seriesLabels[$seriesID]['label'].'","'.(isset($seriesLabels[$seriesID]['preferred']) ? $seriesLabels[$seriesID]['preferred'] : '').'",';
+	   					$rawTab .= '<tr class="datarow '.($altRow?$options['altRowClass']:'').'"><td'.(isset($seriesLabels[$seriesID]['preferred']) ? ' title="'.$seriesLabels[$seriesID]['preferred'].'"' : '').'>'.$seriesLabels[$seriesID]['label'].'</td>';
+  						$rawDataDownloadGrid .= '"'.$seriesLabels[$seriesID]['label'].'","'.(isset($seriesLabels[$seriesID]['preferred']) ? $seriesLabels[$seriesID]['preferred'] : '').'"';
 	  					foreach($sampleList as $sampleID){
   							$rawTab .= '<td>'.(isset($rawArray[$sampleID][$seriesID]) ? $rawArray[$sampleID][$seriesID] : '&nbsp;').'</td>';
   							$rawDataDownloadGrid .= ','.(isset($rawArray[$sampleID][$seriesID]) ? $rawArray[$sampleID][$seriesID] : '');
@@ -4771,7 +4760,7 @@ jQuery('#estimateChart .disable-button').click(function(){
 	  					$altRow=!$altRow;
   					}
   				}
-  				$rawTab .= '</tbody></table></div></div>';
+  				$rawTab .= '</tbody></table>';
  			}
   		}
   	} else $rawTab = "<p>Raw Data is only available when a location is specified.</p>";
@@ -4788,7 +4777,9 @@ jQuery('#estimateChart .disable-button').click(function(){
   	unset($options['extraParams']['orderby']); // may have been set for raw data
   	// No need for saved reports to be atomic events. Will be purged automatically.
   	global $base_url;
-  	$cacheFolder = data_entry_helper::$cache_folder ? data_entry_helper::$cache_folder : data_entry_helper::relative_client_helper_path() . 'cache/';
+  	// need to use cache under the module to ensure files can be accessed from outside. Using the data_entry_helper::$cache_folder
+  	// could lead to location being unaccessible (i.e. outside the htdocs)
+  	$cacheFolder = data_entry_helper::relative_client_helper_path() . 'cache/';
   	if($hasData && $options['includeSummaryGridDownload']) {
   		$cacheFile = $options['downloadFilePrefix'].'summaryDataGrid'.$timestamp.'.csv';
   		$handle = fopen($cacheFolder.$cacheFile, 'wb');

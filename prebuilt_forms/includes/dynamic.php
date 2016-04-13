@@ -238,7 +238,6 @@ class iform_dynamic {
       : '';
     self::$mode = $mode;
     if($mode ===  self::MODE_GRID) {
-      drupal_set_message('grid mode');
       // Output a grid of existing records
       $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $nid, $auth);
     } else {
@@ -463,8 +462,9 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
       // keep track on if the tab actually has real content, so we can avoid floating instructions if all the controls 
       // were removed by user profile integration for example.
       $hasControls = false;
-      // get a machine readable alias for the heading, if we are showing tabs
-      if ($args['interface']==='one_page')
+      // get a machine readable alias for the heading, if we are showing tabs and we are loading
+      // anything other than the first tab.
+      if ($args['interface']==='one_page' || count($tabHtml)===0)
         $tabalias = null;
       else
         $tabalias = 'tab-'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
@@ -544,7 +544,15 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
         }
         elseif (count($parts)===2) {
           include_once(dirname($_SERVER['SCRIPT_FILENAME']) . '/' . data_entry_helper::relative_client_helper_path() . 'prebuilt_forms/extensions/'.$parts[0].'.php');
-          if (method_exists('extension_' . $parts[0], $parts[1])) { 
+          if (method_exists('extension_' . $parts[0], $parts[1])) {
+            if (!empty($options['fieldname'])) {
+              // If reloading an existing attribute, set the default and fieldname to contain the value ID.
+              $attribKey = array_search($options['fieldname'], $attribNames);
+              if ($attribKey!==false) {
+                $options['fieldname'] = $attributes[$attribKey]['fieldname'];
+                $options['default'] = $attributes[$attribKey]['default'];
+              }
+            }
             //outputs a control for which a specific extension function has been written.
             $path = call_user_func(array(self::$called_class, 'getReloadPath')); 
             //pass the classname of the form through to the extension control method to allow access to calling class functions and variables

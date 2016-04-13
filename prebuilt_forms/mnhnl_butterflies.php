@@ -330,11 +330,11 @@ deleteSurvey = function(sampleID){
   /**
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
   	global $user;
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>'destination=node/'.($node->nid))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     }
     $userIdAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS User ID', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if (!$userIdAttr) return lang::get('This form must be used with a survey that has the CMS User ID sample attribute associated with it.');
@@ -360,14 +360,14 @@ deleteSurvey = function(sampleID){
       'extraParams' => array(
         'survey_id'=>$args['survey_id'], 
         'userID_attr_id'=>$userIdAttr,
-        'userID'=>(iform_loctools_checkaccess($node,'superuser') ? -1 :  $user->uid), // use -1 if superuser - non logged in will not get this far.
+        'userID'=>(iform_loctools_checkaccess($nid,'superuser') ? -1 :  $user->uid), // use -1 if superuser - non logged in will not get this far.
         'userName_attr_id'=>$userNameAttr,
         'userName'=>($user->name),
         'observer_attr_id'=>$observerAttr
     )
     ));	
     $r .= '<form>';    
-    $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'new')).'\'">';
+    $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => 'new')).'\'">';
     $r .= '</form>';
     return $r;
   }

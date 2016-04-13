@@ -110,8 +110,9 @@ class extension_notifications_centre {
       if(array_key_exists('columns_config_list', $args)) {
         // From e.g.Dynamic report explorer which supports multiple grids.
         $columnLists = json_decode($args['columns_config_list'], true);
-        // Assume we want the config for the first grid.
-        $options['columns'] = $columnLists[0];
+        if (!empty($columnsLists))
+          // Assume we want the config for the first grid.
+          $options['columns'] = $columnLists[0];
       }
       else if(array_key_exists('columns_config', $args)) {
         // From e.g. Report grid or the above

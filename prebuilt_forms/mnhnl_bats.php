@@ -280,10 +280,10 @@ myTerms_change();
     return '';
   }
   
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     if ($user->uid===0)
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>'destination=node/'.($node->nid))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
     $userIdAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS User ID');
     if (!$userIdAttr) return lang::get('This form must be used with a survey that has the CMS User ID sample attribute associated with it so records can be tagged against their creator.');
     $usernameAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS Username');
@@ -321,7 +321,7 @@ myTerms_change();
       'extraParams' => $extraparams
     ));    
     $r .= '<form>';    
-    $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'new')).'\'">';
+    $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => 'new')).'\'">';
     $r .= "</form>
 <div style=\"display:none\" />
     <form id=\"form-delete-survey\" action=\"".iform_mnhnl_getReloadPath()."\" method=\"POST\">".parent::$auth['write']."

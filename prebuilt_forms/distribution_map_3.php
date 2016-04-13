@@ -82,7 +82,7 @@ class iform_distribution_map_3 {
           'name' => 'taxon_identifier_1',
           'caption' => 'Taxon Identifier',
           'description' => 'Meaning ID of the species to load, or external key if specified in the next option. Only use this if this page is for a fixed species, ' .
-              'else it can be left blank and the ID or key provided in the URL using a parameter called taxon.',
+              'else it can be left blank and the ID or key provided in the URL using a parameter called taxon_1.',
           'type' => 'textfield',
           'required' => false,
           'group' => 'Distribution Layer 1'
@@ -145,7 +145,7 @@ class iform_distribution_map_3 {
           'name' => 'taxon_identifier_2',
           'caption' => 'Taxon Identifier',
           'description' => 'Meaning ID of the species to load, or external key if specified in the next option. Only use this if this page is for a fixed species, ' .
-              'else it can be left blank and the ID or key provided in the URL using a parameter called taxon.',
+              'else it can be left blank and the ID or key provided in the URL using a parameter called taxon_2.',
           'type' => 'textfield',
           'required' => false,
           'group' => 'Distribution Layer 2'
@@ -209,7 +209,7 @@ class iform_distribution_map_3 {
           'name' => 'taxon_identifier_3',
           'caption' => 'Taxon Identifier',
           'description' => 'Meaning ID of the species to load, or external key if specified in the next option. Only use this if this page is for a fixed species, ' .
-              'else it can be left blank and the ID or key provided in the URL using a parameter called taxon.',
+              'else it can be left blank and the ID or key provided in the URL using a parameter called taxon_3.',
           'type' => 'textfield',
           'required' => false,
           'group' => 'Distribution Layer 3',

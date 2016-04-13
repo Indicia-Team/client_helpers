@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  *
  * @package    Client
  * @subpackage PrebuiltForms
@@ -119,7 +119,6 @@ $('.control-box').each(function(idx,elem){
    * Get the control for species input, either a grid or a single species input control.
    */
   protected static function get_control_species($auth, $args, $tabAlias, $options) {
-    global $user;
     $extraParams = $auth['read'];
     $extraParams['preferred'] = "true";
     // Build the configuration options
@@ -162,8 +161,6 @@ $('.control-box').each(function(idx,elem){
     // load taxon list
     // load attributes.
     $options = data_entry_helper::get_species_checklist_options($options);
-    //make a copy of the options so that we can maipulate it
-    $overrideOptions = $options;
     $occAttrControls = array();
     $occAttrs = array();
     $taxonRows = array();
@@ -199,32 +196,29 @@ $('.control-box').each(function(idx,elem){
                    $base.drupal_get_path('module', 'iform').'/client_helpers/prebuilt_forms/images/ofs_pollinator/'.$filename.'.png') ;
         }
       }
-      $grid .= '</tr></thead>';
-      $rows = array();
-      $taxonCounter = array();
-      $rowIdx = 0;
-      $grid .= "\n<tbody>\n";
+      $grid .= "</tr></thead>\n";
+      $grid .= "<tbody>\n";
       if(count($taxonRows))
         $grid .= '<tr class="top"><td rowspan="2" class="dot-right"><b>No obvious wings</b></td><td>Antennae short</td>'.
-          self::dump_one_row(0, $taxonRows[0], $taxalist, $taxonRows, $occAttrControls, $attributes, $options).'</tr>';
+          self::dump_one_row(0, $taxonRows[0], $taxalist, $occAttrControls, $attributes, $options).'</tr>';
       if(count($taxonRows)>1)
         $grid .= '<tr class="dot-top"><td>Antennae varying lengths</td>'.
-          self::dump_one_row(1, $taxonRows[1], $taxalist, $taxonRows, $occAttrControls, $attributes, $options).'</tr>';
+          self::dump_one_row(1, $taxonRows[1], $taxalist, $occAttrControls, $attributes, $options).'</tr>';
       if(count($taxonRows)>2)
         $grid .= '<tr class="top"><td rowspan="2" class="dot-right"><b>One pair of wings</b><br/>One pair of wings, usually clear<br />Wings, held out from or held along the body</td><td rowspan="2" class="scOtherFeaturesCell" >Antennae usually short<br/><img src="'.$base.drupal_get_path('module', 'iform').'/client_helpers/prebuilt_forms/images/ofs_pollinator/short-antennae.png" alt=""></td>'.
-          self::dump_one_row(2, $taxonRows[2], $taxalist, $taxonRows, $occAttrControls, $attributes, $options).'</tr>';
+          self::dump_one_row(2, $taxonRows[2], $taxalist, $occAttrControls, $attributes, $options).'</tr>';
       if(count($taxonRows)>3)
         $grid .= '<tr class="dot-top">'.
-          self::dump_one_row(3, $taxonRows[3], $taxalist, $taxonRows, $occAttrControls, $attributes, $options).'</tr>';
+          self::dump_one_row(3, $taxonRows[3], $taxalist, $occAttrControls, $attributes, $options).'</tr>';
       if(count($taxonRows)>4)
         $grid .= '<tr class="top"><td class="dot-right"><b>Two pairs of wings</b><br/>Two pairs of wings, coloured</td><td>Antennae usually long</td>'.
-          self::dump_one_row(4, $taxonRows[4], $taxalist, $taxonRows, $occAttrControls, $attributes, $options).'</tr>';
+          self::dump_one_row(4, $taxonRows[4], $taxalist, $occAttrControls, $attributes, $options).'</tr>';
       if(count($taxonRows)>5)
         $grid .= '<tr class="dot-top"><td rowspan="2" class="dot-right">Two pairs of wings, usually clear<br/>Wings held out from or held along body</td><td rowspan="2" class="scOtherFeaturesCell" >Antennae usually long<br/><img src="'.$base.drupal_get_path('module', 'iform').'/client_helpers/prebuilt_forms/images/ofs_pollinator/long-antennae.png" alt=""></td>'.
-          self::dump_one_row(5, $taxonRows[5], $taxalist, $taxonRows, $occAttrControls, $attributes, $options).'</tr>';
+          self::dump_one_row(5, $taxonRows[5], $taxalist, $occAttrControls, $attributes, $options).'</tr>';
       if(count($taxonRows)>6)
         $grid .= '<tr class="dot-top">'.
-          self::dump_one_row(6, $taxonRows[6], $taxalist, $taxonRows, $occAttrControls, $attributes, $options).'</tr>';
+          self::dump_one_row(6, $taxonRows[6], $taxalist, $occAttrControls, $attributes, $options).'</tr>';
       $txnID=7;
       if(count($taxonRows)>$txnID){
         $grid .= '<tr class="top"><td class="dot-right"><strong>Other or Unknown</strong></td><td>Record here if you know what it is, or put \'Unknown\'</td>'.
@@ -234,24 +228,24 @@ $('.control-box').each(function(idx,elem){
       }
       $grid .= "</tbody>\n</table>\n";
       $grid .= '<input name="rowInclusionCheck" value="hasData" type="hidden" />';
-      $r .= $grid;
-      return $r;
+      return $grid;
     } else {
       return $taxalist['error'];
     }
   }
   
   private static function get_species_checklist_col_header($id, $caption, &$colIdx, $colWidths, $styles='', $img='') {
+    $spanStyle = '';
   	if ($styles != 'display:none') {
   		$colIdx++;
   	    $styles .= count($colWidths)>$colIdx && $colWidths[$colIdx] ? ' width: '.$colWidths[$colIdx].'%;"' : '';
   	    $styles .= $img!='' ? ' background-image:url(\''.$img.'\'); background-size: cover; height: 80px; text-align: center;' : '';
   	    $spanStyle = $img!='' ? ' style="background-color: white;"' : '';
   	}
-  	return "<th id=\"$id\" style=\"$styles\"><span $spanStyle>".$caption."</span></th>";
+  	return "<th id=\"$id\" style=\"$styles\"><span$spanStyle>".$caption."</span></th>";
   }
   
-  private function dump_one_row($txIdx, $rowIds, $taxalist, $taxonRows, $occAttrControls, $attributes, $options)
+  private static function dump_one_row($txIdx, $rowIds, $taxalist, $occAttrControls, $attributes, $options)
   {
     global $indicia_templates;
   	$ttlId = $rowIds['ttlId'];
@@ -278,7 +272,7 @@ $('.control-box').each(function(idx,elem){
   	$row .= str_replace(array('{content}','{colspan}','{tableId}','{idx}'),
   			array($firstCell,'',$options['id'],$txIdx), $indicia_templates['taxon_label_cell']);
   	$row .= "\n<td class=\"scPresenceCell\" headers=\"$options[id]-present-$txIdx\" style=\"display:none\">";
-  	$fieldname = "sc:$options[id]-$txIdx:$existing_record_id:present";
+  	$fieldname = "sc:$options[id]-$txIdx::present";
   	$row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[id]\"/>";
   	$row .= "</td>";
     $row .= self::addAttributeCols($occAttrControls, $attributes, $options, $txIdx);
@@ -288,14 +282,12 @@ $('.control-box').each(function(idx,elem){
   private static function addAttributeCols($occAttrControls, $attributes, $options, $txIdx) {
     global $indicia_templates;
     $idx = 0;
+    $row = '';
     foreach ($occAttrControls as $attrId => $control) {
   		$existing_value='';
-  		$valId=false;
   		// no existing record, so use a default control ID which excludes the existing record ID.
   		$ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
-  		$loadedCtrlFieldName='-';
-  	
-  		if ($existing_value==='' && array_key_exists('default', $attributes[$attrId]))
+  		if (array_key_exists('default', $attributes[$attrId]))
   			// this case happens when reloading an existing record
   			$existing_value = $attributes[$attrId]['default'];
   		// inject the field name into the control HTML
@@ -312,7 +304,7 @@ $('.control-box').each(function(idx,elem){
   				$oc = str_replace('value=""', 'value="'.$existing_value.'"', $oc);
   			}
   		}
-  		$errorField = "occAttr:$attrId" . ($valId ? ":$valId" : '');
+  		$errorField = "occAttr:$attrId";
   		$error = data_entry_helper::check_errors($errorField);
   		if ($error) {
   			$oc = str_replace("class='", "class='ui-state-error ", $oc);
@@ -326,14 +318,6 @@ $('.control-box').each(function(idx,elem){
   		$idx++;
   	}
     return $row;
-  }
-
-  private static function species_checklist_implode_rows($rows, $imageRowIdxs) {
-  	$r = '';
-  	foreach ($rows as $idx => $row) {
-  		$r .= "<tr>$row</tr>\n";
-  	}
-  	return $r;
   }
   
   /**

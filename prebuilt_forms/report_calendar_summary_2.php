@@ -798,7 +798,6 @@ class iform_report_calendar_summary_2 {
     global $user;
     $ctrl = '';
     $siteUrlParams = self::get_site_url_params();
-    // loctools is not appropriate here as it is based on a node, for which this is a very simple one, invoking other nodes for the sample creation
     if(!isset($args['includeLocationFilter']) || !$args['includeLocationFilter'])
       return '';
     // this is user specific: when no user selection control, or all users selected then default to all locations
@@ -843,7 +842,6 @@ class iform_report_calendar_summary_2 {
         foreach($terms as $termDetails){
           $lookUpValues[$termDetails['id']] = $termDetails['term'];
         }
-        // if location is predefined, can not change unless a 'manager_permission'
         $ctrlid='calendar-location-type-'.$nid;
         $ctrl .= data_entry_helper::select(array(
                  'label' => lang::get('Site Type'),
@@ -1057,7 +1055,8 @@ class iform_report_calendar_summary_2 {
     } else {
       // user is manager, so need to load the list of users they can choose to report against 
       if(!($userList = self::_fetchDBCache($user->uid))) {
-       $userList=array();
+       $userList=array(); // make sure I'm on list
+       $userList[$user->uid] = $user; // make sure I'm on list
        if(!isset($args['userLookUp']) || !$args['userLookUp']) {
         // look up all users, not just those that have entered data.
         $results = db_query('SELECT uid, name FROM {users}');
@@ -1146,13 +1145,13 @@ class iform_report_calendar_summary_2 {
           $results = db_query('SELECT uid, name FROM {users}');
           if(version_compare(VERSION, '7', '<')) {
             while($result = db_fetch_object($results)){
-              if($result->uid && isset($userList[$result->uid]) && $userList[$result->uid])
-                $userList[$account->uid] = user_load($result->uid);;
+              if($result->uid && isset($userList[$result->uid]) && $userList[$result->uid] === true)
+                $userList[$result->uid] = user_load($result->uid);
             }
           } else {
             foreach ($results as $result) { // DB handling is different in 7
-              if($result->uid && isset($userList[$result->uid]) && $userList[$result->uid])
-                $userList[$account->uid] = user_load($result->uid);;
+              if($result->uid && isset($userList[$result->uid]) && $userList[$result->uid] === true)
+                $userList[$result->uid] = user_load($result->uid);
             }
           }
         }
@@ -1172,17 +1171,21 @@ class iform_report_calendar_summary_2 {
           (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']) && $siteUrlParams[self::$userKey]['value']=="branch") ||
           $siteUrlParams[self::$userKey]['value']=='';
     $userListArr = array();
-    foreach($userList as $id => $account) {
-      // if account comes from cache, then it is an array, if from drupal an object - convert.
-      if(!is_array($account))
-        $account = get_object_vars($account);
-      if($account !== true && $id!=$user->uid){
-        $userListArr[$id] = $account['name'];
+    foreach($userList as $id => $account)
+      if($id != $user->uid) { // don't do me
+        if($account === true) // could not load user for some reason
+        	$userListArr[$id] = 'CMS User '.$id;
+        else {
+    	  // if account comes from cache, then it is an array, if from drupal an object - convert.
+          if(!is_array($account))
+            $account = get_object_vars($account);
+          $userListArr[$id] = $account['name'];
+        }
       }
-    }
+    
     natcasesort($userListArr);
     foreach($userListArr as $id => $name) {
-      $ctrl .= '<option value='.$id.' class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$id ? 'selected="selected" ' : '').'>'.$name.'</option>';
+      $ctrl .= '<option value="'.$id.'" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$id ? 'selected="selected" ' : '').'>'.$name.'</option>';
       $found = $found || $siteUrlParams[self::$userKey]['value']==$id;
     }
     // masquerading may produce some odd results when flipping between accounts.
@@ -1195,9 +1198,9 @@ class iform_report_calendar_summary_2 {
         // can't use "myData" as with cached reports >1 person may have same filename, but different reports. Also
         // providing explicit name makes it clearer.
       	// if account comes from cache, then it is an array, if from drupal an object.
-        $account = is_array($userList[$siteUrlParams[self::$userKey]['value']]) ? 
-                     $userList[$siteUrlParams[self::$userKey]['value']] :
-                     get_object_vars($userList[$siteUrlParams[self::$userKey]['value']]);
+      	$userID = $siteUrlParams[self::$userKey]['value'];
+      	$account = $userList[$userID] === true ? array('name'=>'CMSUser'.$userID) :
+      		(is_array($userList[$userID]) ? $userList[$userID] : get_object_vars($userList[$userID]));
       	$options['downloadFilePrefix'] .= preg_replace('/[^A-Za-z0-9]/i', '', $account['name']).'_';
         break;
     }
@@ -1321,7 +1324,7 @@ jQuery('#".$ctrlid."').change(function(){
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
-   * @param array $nid Drupal node object
+   * @param array $nid Drupal node number
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */

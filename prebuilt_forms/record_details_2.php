@@ -423,7 +423,7 @@ Record ID',
       $options['initialFeatureWkt'] = self::$record['geom'];
     }
     
-    if ($args['interface']!=='one_page')
+    if ($tabalias)
       $options['tabDiv'] = $tabalias;
     
     $olOptions = iform_map_get_ol_options($args);
@@ -662,6 +662,7 @@ Record ID',
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
+      $taxon = str_replace(' - zero abundance found', '', $taxon);
       $r='<a class="button" href="'.$url.'">' . lang::get('Explore records of {1}', $taxon) . '</a>';
     }
     else 
@@ -687,6 +688,7 @@ Record ID',
       $url.= (strpos($url, '?')===false) ? '?' : '&';
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
+      $taxon = str_replace(' - zero abundance found', '', $taxon);
       return '<a class="button" href="'.$url.'">' . lang::get('{1} details page', $taxon) . '</a>';
     }
     return '';

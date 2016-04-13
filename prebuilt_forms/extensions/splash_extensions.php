@@ -245,6 +245,7 @@ class extension_splash_extensions {
       $options['reportProvidesOrderBy']=true;
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
+      $options['extraParams']['user_square_attr_id']=$userSquareAttrId;
       $options['report']='reports_for_prebuilt_forms/Splash/get_plots_for_square_id';
       $options['extraParams']['current_user_id']=$currentUserId;
       if (!empty($options['plotNumberAttrId']))
@@ -696,38 +697,6 @@ class extension_splash_extensions {
     if (!empty($options['hideLocationAttrsInSimpleMode']))
       map_helper::$javascript .= "indiciaData.hideLocationAttrsInSimpleMode='".$options['hideLocationAttrsInSimpleMode']."';\n";
   }
-  
-  /*
-   * Very similar to dynamic_report_explorer report grid control, however in this case the control automatically switches on
-   * map zooming for results if the user is using a post code search. This is because we don't want to use this mode when the user
-   * is returning all squares as it doesn't seem to work properly on live, it looks likely that because there are so many squares, then it tries
-   * to draw the zoom before all the data is returned and therefore draws the zoom in the wrong place. 
-   */
-  public static function unallocated_squares_grid($auth, $args, $tabalias, $options, $path) {
-    if (!isset($options['reportGridNumber'])) {
-      drupal_set_message('Please fill in the report grid number option for the unallocated_squares_grid control, starting with 0 for the first grid on the page');
-      return false;
-    }
-    iform_load_helpers(array('report_helper'));
-    $args['report_name']='';
-    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    $reportOptions = array_merge(
-      iform_report_get_report_options($args, $auth['read']),
-      array(
-        'reportGroup'=>'dynamic',
-        'autoParamsForm'=>false,
-        'sharing'=>$sharing,
-        'ajax'=>true,
-        'id'=>'report-grid-'.$options['reportGridNumber']
-      ),
-      $options
-    );
-    if (!empty($_GET['dynamic-post_code_geom'])&&!empty($_GET['dynamic-distance_from_post_code'])) {
-      $reportOptions['sendOutputToMap']=true;
-      $reportOptions['zoomMapToOutput']=true;
-    }
-    return report_helper::report_grid($reportOptions);
-  }
  
   /*
    * When the administrator allocates squares to a user, allow the user to enter a mileage value
@@ -741,6 +710,8 @@ class extension_splash_extensions {
    */
   public static function postcode_distance_limiter($auth, $args, $tabalias, $options, $path) {
     $r='';
+    if (isset($options['useZoomToFeatures']))
+      data_entry_helper::$javascript .= "indiciaData.useZoomToFeatures='".$options['useZoomToFeatures']."';\n";
     //When then screen loads, attempt to add a point to the map showing the user's post code (which is in the $_GET).
     data_entry_helper::$javascript.="
       jQuery(document).ready(function($) {
@@ -753,6 +724,22 @@ class extension_splash_extensions {
           }
       });
     });
+    //Zoom map to the list of squares returned to the map
+    //Note can't use sendOutToMap and built in zoom option as this doesn't pass the colours from the report,
+    //it also causes extra unwanted features on the map to appear.
+    jQuery(window).load(function($) {
+      if (indiciaData.useZoomToFeatures && indiciaData.useZoomToFeatures==true) {
+        //AVB: Need map to load first to get extent - nasty way of doing this - cleanup when I have more time!
+        window.setTimeout(zoomToAllFeatures,1000);
+      }
+    });
+    function zoomToAllFeatures() {
+      var featuresExtent=indiciaData.reportlayer.getDataExtent();
+      //Only zoom into features if some exist.
+      if (featuresExtent) {
+        indiciaData.mapdiv.map.zoomToExtent(featuresExtent);
+      }
+    };
     ";
     //Once the limiter is applied, the post code geom is passed to the URL and so is the indicia user id, so we need to pick these up from the URL
     if (!empty($_GET['dynamic-post_code_geom'])) {
@@ -874,7 +861,7 @@ class extension_splash_extensions {
 
   data_entry_helper::$javascript .= "
   indiciaData.baseUrl='".$base_url."';  
-  indiciaData.website_id = $args[website_id];\n";
+  indiciaData.website_id = ".variable_get('indicia_website_id', '').";\n";  
   
   data_entry_helper::$javascript .= "
   approve_allocation= function(id,allocation_updater,allocated_to) {
@@ -950,6 +937,8 @@ class extension_splash_extensions {
     }
     $minSquareDate=new DateTime($options['minimumLocationDate']);
     $r = '';
+    //Need to call this so we can use indiciaData.read
+    data_entry_helper::$js_read_tokens = $auth['read'];
     if (!function_exists('iform_ajaxproxy_url'))
       return 'An AJAX Proxy module must be enabled for user sites administration to work.';
     $r .= '<div><form method="post"><textarea id="upload-data" name="upload-data" cols="20" rows="50"></textarea>';
@@ -1086,6 +1075,8 @@ class extension_splash_extensions {
     $r .= '<input type="submit" id="sync-addresses" value="Sync"></form></div><br>'; 
     
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
+    //Need to call this so we can use indiciaData.read
+    data_entry_helper::$js_read_tokens = $auth['read'];
 
     //Make a list of the different address fields we need to upload to warehouse
     $typesOfAddressField=array('Address','Town','County','Country','Post Code');
@@ -1335,9 +1326,15 @@ class extension_splash_extensions {
    * @dontReturnAllocatedLocations Optional, when true then locations that are already allocated to another user are not available for selection (maximum of one location allocation per person)
    * @maxAllocationForLocationAttrId Optional, Id of attribute that holds the maximum number of people that can be allocated to a location before it becomes hidden for selection. Provide this attribute id to enable this option.
    * An example might be an event location, where only a certain number of people can attend.
+   * @allocatedLocationEmailSubject Optional, Provide a subject line if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailMessage option must also be provided. 
+   * Does not current send email if the location is provided by an ID in the URL rather than via a selection drop-down.
+   * @allocatedLocationEmailMessage Optional, Provide the message if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailSubject option must also be provided. 
+   * Does not current send email if the location is provided by an ID in the URL rather than via a selection drop-down. Put {location_name} or {person_name} into the text to replace with the location or person name when message is sent.
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
-    global $user;
+    global $user;  
+    //Need to call this so we can use indiciaData.read
+    data_entry_helper::$js_read_tokens = $auth['read'];
     if (!function_exists('iform_ajaxproxy_url'))
       return 'An AJAX Proxy module must be enabled for user sites administration to work.';
      if (!empty($options['locationDropDownLabel']))
@@ -1366,6 +1363,15 @@ class extension_splash_extensions {
       $locationIdFromURL=$_GET[$options['locationParamFromURL']];
     else
       $locationIdFromURL=0;
+    //Setup options for sending an email to the user on successful location assignment
+    if (!empty($options['allocatedLocationEmailSubject'])&& $options['allocatedLocationEmailSubject']==true
+            && !empty($options['allocatedLocationEmailMessage'])&& $options['allocatedLocationEmailMessage']==true) {
+      data_entry_helper::$javascript.="indiciaData.allocatedLocationEmailName='".$user->name."';";
+      data_entry_helper::$javascript.="indiciaData.allocatedLocationEmailSubject='".$options['allocatedLocationEmailSubject']."';";
+      data_entry_helper::$javascript.="indiciaData.allocatedLocationEmailMessage='".$options['allocatedLocationEmailMessage']."';";
+      data_entry_helper::$javascript.="indiciaData.allocatedLocationEmailTo='".$user->mail."';";  
+
+    }
     //Get the user_id from the URL if we can, this would hide the user drop-down and make
     //the control applicable to a single user.
     if (!empty($options['userParamFromURL'])&&!empty($_GET[$options['userParamFromURL']]))
@@ -1406,8 +1412,13 @@ class extension_splash_extensions {
       $r .= self:: user_select_for_add_sites_to_any_user_control($auth['read'],$args);
     
     $r .= '<input id="add-user-site-button" type="button" value="'.$addButtonLabel.'"/><br></form><br>';
+    $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
+    data_entry_helper::$javascript.="
+        indiciaData.postUrl='".$postUrl."';";
     
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
+    data_entry_helper::$javascript.="
+        indiciaData.mySitesPsnAttrId='".$options['mySitesPsnAttrId']."';";
 
     //Firstly check both a uer and location have been selected.
     //Then get the current user/sites saved in the database and if the new combination doesn't already exist then call a function to add it.
@@ -1470,7 +1481,12 @@ class extension_splash_extensions {
           function (data) {
             if (typeof data.error === 'undefined') {
               alert('User site configuration saved successfully');
-              location.reload();
+              if (indiciaData.allocatedLocationEmailName && indiciaData.allocatedLocationEmailSubject && indiciaData.allocatedLocationEmailMessage && indiciaData.allocatedLocationEmailTo && $('#location-select :selected').text()) {
+                //Don't reload until email send attempt complete otherwise ajax will fail
+                sendEmailOnLocationAllocation(indiciaData.allocatedLocationEmailName,indiciaData.allocatedLocationEmailSubject,indiciaData.allocatedLocationEmailMessage,indiciaData.allocatedLocationEmailTo,$('#location-select :selected').text());
+              } else {
+                location.reload();
+              }
             } else {
               alert(data.error);
             }              
@@ -1478,6 +1494,23 @@ class extension_splash_extensions {
           'json'
         );
       }
+    }
+    var sendEmailOnLocationAllocation = function (personName,subject,message,emailTo,locationName) {
+      $.ajax({
+        type: 'POST',
+        url:'sites/all/modules/iform/client_helpers/prebuilt_forms/extensions/splash_extensions_send_.php',
+          data: {\"personName\":personName,\"subject\":subject,\"message\":message,\"emailTo\":emailTo,\"locationName\":locationName},
+          success: function (data) {
+            if (typeof data.error !== 'undefined') {
+              alert(data.error);
+            }              
+          },
+          complete: function (response) {
+            location.reload();
+          },
+          datatype: 'jsonp'
+      });
+      return false;
     }
     ";
     //Call duplicate check when administrator elects to save a user/site combination
@@ -1550,6 +1583,37 @@ class extension_splash_extensions {
     return '<label>User : </label>'.$r.'<br>';
   }
   
+  //The map pages uses node specific javascript that is very similar to the javascript functions found in
+  //add_locations_to_user in this file (we couldn't call this code for re-use).
+  //Use a simple function to supply the required indiciaData for that node specific javascript
+  public static function supply_indicia_data_to_map_square_allocator($auth, $args, $tabalias, $options, $path) {
+    data_entry_helper::$js_read_tokens = $auth['read'];
+    if (function_exists('hostsite_get_user_field')) {
+      data_entry_helper::$javascript.="
+        indiciaData.indiciaUserId='".hostsite_get_user_field('indicia_user_id')."';\n";
+    }
+    if (isset($args['website_id']))
+      data_entry_helper::$javascript .= "indiciaData.website_id = ".$args['website_id'].";\n";
+    if (function_exists('iform_ajaxproxy_url'))
+      data_entry_helper::$javascript .= "indiciaData.postUrl='".iform_ajaxproxy_url(null, 'person_attribute_value')."';\n";
+    if (isset($options['mySitesPsnAttrId']))
+      data_entry_helper::$javascript .= "indiciaData.mySitesPsnAttrId='".$options['mySitesPsnAttrId']."';\n";
+
+    if (!empty($options['rolesExemptFromApproval']))
+      $RolesExemptFromApproval=explode(',',$options['rolesExemptFromApproval']);      
+    else 
+      $RolesExemptFromApproval=array(); 
+    //See if any of the user's roles are in the exempt list.
+    foreach ($RolesExemptFromApproval as $exemptRole) {
+      foreach ($user->roles as $userRole) {
+        if ($exemptRole===$userRole)
+          $updatedBySystem = ',"updated_by_id":1'; 
+            data_entry_helper::$javascript.="
+        indiciaData.updatedBySystem='".$updatedBySystem."';\n";
+      }
+    }
+  }
+  
   /*
    * On the Request a Square page we need to hide the column filter on the My Allocations grid only
    */
@@ -1557,5 +1621,32 @@ class extension_splash_extensions {
     data_entry_helper::$javascript .= "
     $('#col-filter-location_name-report-grid-0').hide()
     ";
+  }
+  
+  /**
+   * Hide/show instructions on the page based on the selected options. Currently supports showing specific options for
+   * - Expert mode
+   * - Linear Plots in Expert Mode.
+   * 
+   * Help text should be placed manually into the form structure using the following div tag if you wish your help to look the same
+   * as text placed inside ?? in the form structure (e.g. ?My help text?)
+   * div class="page-notice ui-state-highlight ui-corner-all expert-help"
+   * Change the class expert-help to linear-expert-help as required. 
+   */
+  public static function mode_specific_instructions($auth, $args, $tabalias, $options, $path) {
+    if (!empty($options['expertModeAttrId']))
+      data_entry_helper::$javascript .= "indiciaData.expertModeAttrId=".json_encode(explode(',',$options['expertModeAttrId'])).";";
+    
+    if (!empty($options['linearLocationTypeId']))
+      data_entry_helper::$javascript .= "indiciaData.linearLocationTypeId=".json_encode(explode(',',$options['linearLocationTypeId'])).";";
+    //Make sure we hide all option specific instructions when the page first loads.
+    data_entry_helper::$javascript .= "
+      $(window).load(function() {
+        context_sensitive_instructions();
+      });
+      $('#locAttr\\\\:'+indiciaData.expertModeAttrId+', #location\\\\:location_type_id').change(function() {
+        context_sensitive_instructions();
+      });
+      ";
   }
 }
