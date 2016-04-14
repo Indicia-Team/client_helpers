@@ -1009,7 +1009,6 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $r .= '</div>';
   report_helper::$javascript .= "indiciaData.lang.CreateAFilter='".lang::get('Create a filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ModifyFilter='".lang::get('Modify filter')."';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterReport='".lang::get('New report')."';\n";
   report_helper::$javascript .= "indiciaData.lang.FilterSaved='".lang::get('The filter has been saved')."';\n";
   report_helper::$javascript .= "indiciaData.lang.FilterDeleted='".lang::get('The filter has been deleted')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ConfirmFilterChangedLoad='".lang::get('Do you want to load the selected filter and lose your current changes?')."';\n";
