@@ -874,7 +874,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   if ($options['allowLoad']) {
     $r .= '<div class="header ui-toolbar ui-widget-header ui-helper-clearfix"><div><span id="active-filter-label">'.
-        lang::get('New report') . '</span></div><span class="changed" style="display:none" title="' .
+        '</span></div><span class="changed" style="display:none" title="' .
         lang::get('This filter has been changed') . '">*</span>';
     $r .= '<div>';
     if ($contexts) {
