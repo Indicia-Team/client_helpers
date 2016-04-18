@@ -166,7 +166,17 @@ class iform_verification_5 {
           "visible": {"type":"bool","desc":"Should this column be shown? Hidden columns can still be used in templates or actions."},
           "template": {"type":"str","desc":"Allows you to create columns that contain dynamic content using a template, rather than just the output '.
           'of a field. The template text can contain fieldnames in braces, which will be replaced by the respective field values. '.
-          'Note that template columns cannot be sorted by clicking grid headers." }
+          'Note that template columns cannot be sorted by clicking grid headers." },
+          "responsive-hide": {
+            "type":"map",
+            "title":"Responsive hide",
+            "desc":"List of breakpoint names where this column will be hidden if the display is smaller than the breakpoint size.",
+            "mapping": {
+              "phone": {"type":"bool","required":true,"desc":"Hidden if screen <= 480px."},
+              "tablet-portrait": {"type":"bool","required":true,"desc":"Hidden if 480px < screen <= 768px."},
+              "tablet-landscape": {"type":"bool","required":true,"desc":"Hidden if 768px < screen <= 1024px."},
+            }
+          }
         }
       }
     ]
@@ -608,7 +618,14 @@ idlist=';
           'sharing'=>'verification',
           'ajax'=>TRUE,
           'callback' => 'verificationGridLoaded',
-          'rowClass' => 'zero-{zero_abundance}'
+          'rowClass' => 'zero-{zero_abundance}',
+          'responsiveOpts' => array(
+            'breakpoints' => array(
+              'phone' => 480,
+              'tablet-portrait' => 768,
+              'tablet-landscape' => 1300,
+            )
+          )
         )
     );
     array_unshift($opts['columns'], array(
