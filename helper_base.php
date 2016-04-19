@@ -1805,6 +1805,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
     if (!empty($options['tooltip'])) {
       // preliminary support for
       $id = str_replace(':', '\\\\:', array_key_exists('inputId', $options) ? $options['inputId'] : $options['id']);
+      $options['tooltip'] = addcslashes($options['tooltip'], "'");
       self::$javascript .= "$('#$id').attr('title', '$options[tooltip]');\n";
     }
     return $r;
