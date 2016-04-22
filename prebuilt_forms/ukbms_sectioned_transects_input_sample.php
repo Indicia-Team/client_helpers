@@ -1018,6 +1018,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     // store it in data for JS to read when populating the grid
     $formOptions['existingOccurrences'] = $occurrences;
     
+    // The occurrence attribute must be flagged as numeric:true in the survey specific validation rules in order for totals to be worked out.
     $occ_attributes = data_entry_helper::getAttributes(array(
     		'valuetable'=>'occurrence_attribute_value',
     		'attrtable'=>'occurrence_attribute',
