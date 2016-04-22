@@ -206,7 +206,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
   public static function get_form($args, $nid, $response=null) {
     global $user;
     // use the js from the main form, until there is a deviation.
-    drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/sectioned_transects_edit_transect.js");
+    // drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/sectioned_transects_edit_transect.js");
     drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/sectioned_transects_edit_transect.css");
     
     $checks=self::check_prerequisites();
@@ -440,7 +440,10 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     data_entry_helper::$javascript .= "indiciaData.sectionTypeId = '".$settings['sectionLocationType'][0]['id']."';\n";
     data_entry_helper::$javascript .= "indiciaData.sectionDeleteConfirm = \"".lang::get('Are you sure you wish to delete section')."\";\n";
     data_entry_helper::$javascript .= "indiciaData.sectionInsertConfirm = \"".lang::get('Are you sure you wish to insert a new section after section')."\";\n";
-    data_entry_helper::$javascript .= "indiciaData.sectionChangeConfirm = \"".lang::get('Do you wish to save the currently unsaved changes you have made to the Section Details?')."\";\n";
+    data_entry_helper::$javascript .= "indiciaData.routeChangeConfirm = \"".lang::get('Do you wish to save the currently unsaved modification you have made to the Route, before selecting the new Section? Select Yes to save the Route, or No to abandon the Route modification.')."\";\n";
+    data_entry_helper::$javascript .= "indiciaData.routeChangeConfirmCancel = \"".lang::get('Do you wish to save the currently unsaved modification you have made to the Route, before selecting the new Section? Select Yes to save the Route, No to abandon the Route modification, or Cancel to keep the Route modification without saving it and without swapping to the new Section.')."\";\n";
+    data_entry_helper::$javascript .= "indiciaData.sectionChangeConfirm = \"".lang::get('Do you wish to save the currently unsaved modifications you have made to the Section Details, before selecting the new Section? Select Yes to save the Section Details, or No to abandon the Section Detail modifications.')."\";\n";
+    data_entry_helper::$javascript .= "indiciaData.sectionChangeConfirmCancel = \"".lang::get('Do you wish to save the currently unsaved modifications you have made to the Section Details, before selecting the new Section? Select Yes to save the Section Details, No to abandon the Section Detail modifications, or Cancel to keep the Section Details modifications without saving them and without swapping to the new Section.')."\";\n";
     data_entry_helper::$javascript .= "indiciaData.numSectionsAttrName = \"".$settings['numSectionsAttr']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.maxSectionCount = \"".$settings['maxSectionCount']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.autocalcSectionLengthAttrId = ".$settings['autocalcSectionLengthAttrId'].";\n";
@@ -554,7 +557,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     		foreach($otherSites as $otherSite) {
     			if(strncmp($otherSite['code'],$args['autogeneratePrefix'],strlen($args['autogeneratePrefix'])))
     				$myVal = intval(substr($otherSite['code'],strlen($args['autogeneratePrefix'])));
-    				if($val<=$myVal) $val = myVal+1;
+    				if($val<=$myVal) $val = $myVal+1;
     		}
     		data_entry_helper::$entity_to_load['location:code'] = $args['autogeneratePrefix'].$val;
 	    }
