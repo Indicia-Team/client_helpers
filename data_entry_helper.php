@@ -3385,7 +3385,7 @@ $('#$escaped').change(function(e) {
           $oc = str_replace('{fieldname}', $ctrlId, $control);
           if ($existing_value<>"") {
             // For select controls, specify which option is selected from the existing value
-            if (substr($oc, 0, 7)==='<select') {
+            if (substr(trim($oc), 0, 7)==='<select') {
               $oc = str_replace('value="'.$existing_value.'"',
                 'value="'.$existing_value.'" selected="selected"', $oc);
             } else if(strpos($oc, 'type="checkbox"') !== false) {
