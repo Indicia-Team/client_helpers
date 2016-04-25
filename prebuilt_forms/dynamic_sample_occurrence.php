@@ -745,7 +745,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function getGrid($args, $nid, $auth) {
     $r = '';
-    $attributes = self::getAttributesForEntity('sample', $args, $auth, false);
+    $attributes = self::getAttributesForEntity('sample', $args, $auth['read'], false);
 
     $tabs = array('#sampleList'=>lang::get('LANG_Main_Samples_Tab'));
 
@@ -849,16 +849,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * @return array List of attribute definitions
    */
   protected static function getAttributes($args, $auth) {
-    $attributes = self::getAttributesForEntity('sample', $args, $auth,
+    $attributes = self::getAttributesForEntity('sample', $args, $auth['read'],
         isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
-    // if in single record entry mode, occurrence attribute controls are handled similarly
-    // to sample attribute controls.
-    if ($args['multiple_occurrence_mode']==='single' ||
-        ($args['multiple_occurrence_mode']==='either' && empty($_GET['gridmode']))) {
-      self::$occAttrs = self::getAttributesForEntity('occurrence', $args, $auth,
-          isset(data_entry_helper::$entity_to_load['occurrence:id']) ? data_entry_helper::$entity_to_load['occurrence:id'] : '');
-      $attributes = array_merge($attributes, self::$occAttrs);
-    }
+    self::$occAttrs = self::getAttributesForEntity('occurrence', $args, $auth['read'],
+        isset(data_entry_helper::$entity_to_load['occurrence:id']) ? data_entry_helper::$entity_to_load['occurrence:id'] : '');
+    $attributes = array_merge($attributes, self::$occAttrs);
     return $attributes;
   }
   
@@ -866,18 +861,18 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * Load the attributes for the sample defined by a supplied Id.
    * @param string $entity Associated entity name, either sample or occurrence.
    * @param array $args Form configuration arguments
-   * @param array $auth Authorisation tokens
+   * @param array $readAuth Authorisation tokens
    * @param integer $id ID of the sample or occurrence record being reloaded if relevant
    * @return array List of attribute definitions
    */
-  protected static function getAttributesForEntity($entity, $args, $auth, $id=null) {
+  protected static function getAttributesForEntity($entity, $args, $readAuth, $id=null) {
     $prefix = $entity==='sample' ? 'smp' : 'occ';
     $attrOpts = array(   
       'valuetable'=>"{$entity}_attribute_value",
       'attrtable'=>"{$entity}_attribute",
       'key'=>"{$entity}_id",
       'fieldprefix'=>"{$prefix}Attr",
-      'extraParams'=>$auth['read'],
+      'extraParams'=>$readAuth,
       'survey_id'=>$args['survey_id']
     );
     if (!empty($id))
@@ -1190,7 +1185,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $r = '';
     if (isset($options['sampleMethodId'])) {
       $args['sample_method_id'] = $options['sampleMethodId'];
-      $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth);
+      $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth['read']);
       foreach ($sampleAttrs as &$attr) {
         $attr['fieldname'] = 'sc:n::'.$attr['fieldname'];
         $attr['id'] = 'sc:n::'.$attr['id'];
@@ -1266,7 +1261,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                     (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey].'" name="'.$idKey.'">' : '');
                     
           if (!empty($options['sampleMethodId'])) {
-            $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth, $a[2]);
+            $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth['read'], $a[2]);
             foreach ($sampleAttrs as &$attr) {
               $attr['fieldname'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['fieldname'];
               $attr['id'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['id'];
@@ -2051,7 +2046,9 @@ else
       $connection = iform_get_connection_details($nid);
       $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
       $abundanceAttrs = array();
-      foreach (self::$occAttrs as &$attr) {
+      $occAttrs = self::getAttributesForEntity('occurrence', $args, $readAuth,
+        isset(self::$loadedOccurrenceId) ? self::$loadedOccurrenceId : '');
+      foreach ($occAttrs as &$attr) {
         if ($attr['system_function']==='sex_stage_count') {
           // If we have any lookups, we need to load the terms so we can compare the data properly
           // as term Ids are never zero
