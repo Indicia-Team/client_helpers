@@ -1450,7 +1450,7 @@ jQuery('#".$ctrlid."').change(function(){
     // Caching
     $checked = self::$siteUrlParams[self::$cacheKey]['value'] === true ? ' checked="checked"' : '';
     $retVal .= '<th><input type="checkbox" name="cachingParam" id="cachingParam" class="cachingParam"'.$checked.'/>'.
-    		'<label for="cachingParam" title="'.lang::get("When fetching the full data set, selcting this improves performance by not going to the warehouse to get the data. Occassionally, even when selected, the data will be refreshed, which will appear to slow down the response.").'" >'.lang::get("Use cached data").'</label></th>';
+    		'<label for="cachingParam" title="'.lang::get("When fetching the full data set, selecting this improves performance by not going to the warehouse to get the data. Occassionally, even when selected, the data will be refreshed, which will appear to slow down the response.").'" >'.lang::get("Use cached data").'</label></th>';
     $reportOptions['caching'] = self::$siteUrlParams[self::$cacheKey]['value'];
     self::set_up_control_change('cachingParam', self::$cacheKey, array(), true);
     // are there any params that should be set to blank using one of the removable params tickboxes?
