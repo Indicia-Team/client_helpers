@@ -2126,7 +2126,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
       if ($options['caching']!=='store') {
-        $response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+      	$response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response!==FALSE)
           $cacheLoaded = TRUE;
       }
@@ -2139,8 +2139,9 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       throw new Exception('Invalid response received from Indicia Warehouse. '.print_r($response, TRUE));
     }
     // Only cache valid responses and when not already cached
-    if ($useCache && !isset($r['error']) && !$cacheLoaded)
-      self::_cacheResponse($cacheFile, $response, $cacheOpts);
+    if ($useCache && !isset($r['error']) && !$cacheLoaded) {
+      self::_cacheResponse($cacheFile, $response, $cacheOpts, $options['caching']==='store');
+    }
     self::_purgeCache();
     self::_purgeImages();
     return $r;
@@ -2241,10 +2242,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
    * @param array $response http_post return value
    * @param array $options Options array : contents used to tag what this data is.
    */
-  protected static function _cacheResponse($file, $response, $options)
+  protected static function _cacheResponse($file, $response, $options, $force=false)
   {
     // need to create the file as a binary event - so create a temp file and move across.
-    if ($file && !is_file($file) && isset($response['output'])) {
+    if ($file && (!is_file($file) || $force) && isset($response['output'])) {
       $handle = fopen($file.getmypid(), 'wb');
       fputs($handle, self::array_to_query_string($options)."\n");
       fwrite($handle, $response['output']);
