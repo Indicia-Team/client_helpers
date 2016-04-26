@@ -303,6 +303,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		var TaxonData, query = {};
 		
 		if (N > formOptions.maxTabs) return;
+		$('#taxonLookupControlContainer'+N).show();
 		if(formOptions.speciesList[N]>0){
 			TaxonData = {
 					'taxon_list_id': formOptions.speciesList[N],
@@ -316,6 +317,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			};
 			switch(formOptions.speciesListForce[N]){
 				case 'full': // = all values in list: by definition will include all existing data on this sample.
+			    	$('#taxonLookupControlContainer'+N).hide();
 					break;
 				case 'common': // = all in commonlist, plus existing
 					query = {"in":{"taxon_meaning_id":formOptions.commonTaxonMeaningIDs.concat(formOptions.existingTaxonMeaningIDs)}};		
@@ -734,7 +736,10 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 				return results;
 			},
 			formatItem: function(item) {
-				return item.taxon+' <em>&lt;'+item.preferred_taxon+'&gt;</em>';
+				if(item.taxon == item.preferred_taxon)
+					return '<em>'+item.taxon+'</em>';
+				else
+					return item.taxon+' <em>&lt;'+item.preferred_taxon+'&gt;</em>';
 			}
 		});
 		ctrl.bind('result', handleSelectedTaxon);
