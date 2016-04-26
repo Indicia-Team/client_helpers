@@ -27,5 +27,5 @@ global $custom_terms;
  * @package	Client
  */
 $custom_terms = array(
-	'LANG_Georef_Label' => 'Search for Place on Map'
+	'LANG_Georef_Label' => 'Search for Place'
 );
