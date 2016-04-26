@@ -4263,9 +4263,12 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   		$extraParams['query'] = urlencode(json_encode(array('in'=>array('location_id', $options['branch_location_list']))));
   	else $extraParams['location_id'] = 'NULL';
   	$extraParams['columns'] = 'date_start,date_end,date_type,type,period_number,taxa_taxon_list_id,taxonomic_sort_order,taxon,preferred_taxon,default_common_name,taxon_meaning_id,count,estimate';
+  	if(!isset($options['caching']))
+  		$options['caching']=true;
   	$records = data_entry_helper::get_population_data(array(
   			'table'=>'summary_occurrence',
-  			'extraParams'=>$extraParams
+  			'extraParams'=>$extraParams,
+  			'caching'=> $options['caching']
   	));
   	if (isset($records['error'])) return $records['error'];
   	data_entry_helper::$javascript .= "

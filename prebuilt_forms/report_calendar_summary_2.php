@@ -51,6 +51,9 @@ class iform_report_calendar_summary_2 {
   /* This is the URL parameter used to pass the year filter through */
   private static $yearKey = 'year';
 
+  /* This is the URL parameter used to pass the caching filter through */
+  private static $cacheKey = 'caching';
+  
   // internal key, not used on URL: maps the location_id to the survey_id.
   private static $SurveyKey = 'survey_id';
 
@@ -807,11 +810,11 @@ class iform_report_calendar_summary_2 {
     $options['extraParams']['location_list'] = '';
     
     // Set up common data.
-    $locationListArgs=array(// 'nocache'=>true,
+    $locationListArgs=array(
     		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '', 'sensattr' => '', 'exclude_sensitive' => 0),
     				$readAuth),
             'readAuth' => $readAuth,
-            'caching' => true,
+            'caching' => $siteUrlParams[self::$cacheKey]['value'],
             'dataSource' => 'library/locations/locations_list_exclude_sensitive');
     $allowSensitive = empty($args['sensitivityLocAttrId']) ||
         (!empty($args['sensitivityAccessPermission']) && hostsite_user_has_permission($args['sensitivityAccessPermission']));
@@ -823,7 +826,8 @@ class iform_report_calendar_summary_2 {
     		'key'=>'location_id',
     		'fieldprefix'=>'locAttr',
     		'extraParams'=>$readAuth,
-    		'survey_id'=>self::$siteUrlParams[self::$SurveyKey]);
+    		'survey_id'=>self::$siteUrlParams[self::$SurveyKey],
+            'caching' => $siteUrlParams[self::$cacheKey]['value']);
     
     if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
       $types = explode(',',$args['locationTypesFilter']);
@@ -869,10 +873,11 @@ class iform_report_calendar_summary_2 {
       }
       $cmsAttr=extract_cms_user_attr($locationAttributes,false);
       if(!$cmsAttr) return lang::get('Location control: CMS User ID Attribute missing from locations.');
-      $attrListArgs=array(// 'nocache'=>true,
+      $attrListArgs=array(
       		'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
       				'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=>$options['user_id']),
       				$readAuth),
+            'caching' => $siteUrlParams[self::$cacheKey]['value'],
       		'table'=>'location_attribute_value');
       $description="All ".($user->uid == $options['user_id'] ? 'my' : 'user')." sites";
       $attrList = data_entry_helper::get_population_data($attrListArgs);
@@ -910,11 +915,12 @@ class iform_report_calendar_summary_2 {
       // get my sites, including sensitive sites.
       $cmsAttr=extract_cms_user_attr($locationAttributes,false);
       if($cmsAttr) {
-        $attrListArgs=array(// 'nocache'=>true,
+        $attrListArgs=array(
             'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
                 'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=>$user->uid),
                 $readAuth),
-            'table'=>'location_attribute_value');
+            'caching' => $siteUrlParams[self::$cacheKey]['value'],
+        	'table'=>'location_attribute_value');
         $attrList = data_entry_helper::get_population_data($attrListArgs);
         if (isset($attrList['error'])) return $attrList['error'];
         if(count($attrList)>0) {
@@ -1079,9 +1085,11 @@ class iform_report_calendar_summary_2 {
         if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
           // easy_login active: identify users who have entered data by the created_by_id on the main sample record.
           // TODO consider whether should check only top level samples here? may not be necessary if sample_method set.
-          $sampleArgs=array(// 'nocache'=>true,
+          $sampleArgs=array(
             'extraParams'=>array_merge(array('view'=>'detail', 'website_id'=>$args['website_id'], 'survey_id'=>self::$siteUrlParams[self::$SurveyKey]), $readAuth),
-            'table'=>'sample','columns'=>'created_by_id');
+            'table'=>'sample','columns'=>'created_by_id',
+            'caching' => $siteUrlParams[self::$cacheKey]['value']
+          );
           if(isset($args['userLookUpSampleMethod']) && $args['userLookUpSampleMethod']!="") {
             $sampleMethods = helper_base::get_termlist_terms(array('read'=>$readAuth), 'indicia:sample_methods', array(trim($args['userLookUpSampleMethod'])));
             $sampleArgs['extraParams']['sample_method_id']=$sampleMethods[0]['id'];
@@ -1123,7 +1131,9 @@ class iform_report_calendar_summary_2 {
             'key'=>'sample_id',
             'fieldprefix'=>'smpAttr',
             'extraParams'=>$readAuth,
-            'survey_id'=>self::$siteUrlParams[self::$SurveyKey]);
+            'survey_id'=>self::$siteUrlParams[self::$SurveyKey],
+            'caching' => $siteUrlParams[self::$cacheKey]['value']
+          );
           if(isset($args['userLookUpSampleMethod']) && $args['userLookUpSampleMethod']!="") {
             $sampleMethods = helper_base::get_termlist_terms(array('read'=>$readAuth), 'indicia:sample_methods', array(trim($args['userLookUpSampleMethod'])));
             $attrArgs['sample_method_id']=$sampleMethods[0]['id'];
@@ -1131,11 +1141,12 @@ class iform_report_calendar_summary_2 {
           $sampleAttributes = data_entry_helper::getAttributes($attrArgs, false);
           if (false== ($cmsAttr = extract_cms_user_attr($sampleAttributes)))
             return(lang::get('User control: Looking up users who have previously entered data - non easy_login, so using CMS User ID attribute on samples: CMS User ID sample attribute missing.<br/>'.'<span style="display:none;">'.print_r($attrArgs,true).'</span>'));
-          $attrListArgs=array(// 'nocache'=>true,
+          $attrListArgs=array(
             'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
                              'sample_attribute_id'=>$cmsAttr['attributeId'],'columns'=>'id,raw_value'),
                        $readAuth),
-            'table'=>'sample_attribute_value');
+            'table'=>'sample_attribute_value',
+            'caching' => $siteUrlParams[self::$cacheKey]['value']);
           $attrList = data_entry_helper::get_population_data($attrListArgs);
           if (isset($attrList['error'])) return $attrList['error'];
           foreach($attrList as $attr)
@@ -1234,7 +1245,11 @@ class iform_report_calendar_summary_2 {
         self::$yearKey => array(
           'name' => self::$yearKey,
           'value' => isset($_GET[self::$yearKey]) ? $_GET[self::$yearKey] : date('Y')
-        )
+        ),
+      	self::$cacheKey => array(
+      	  'name' => self::$cacheKey,
+      	  'value' => (isset($_GET[self::$cacheKey]) && $_GET[self::$cacheKey] == 'false')  ? 'store' : true // cache by default
+      	)
       );
       foreach (self::$removableParams as $param=>$caption) {
         self::$siteUrlParams[$param] = array(
@@ -1266,14 +1281,15 @@ class iform_report_calendar_summary_2 {
   private static function set_up_control_change($ctrlid, $urlparam, $skipParams, $checkBox=false) {
     // Need to use a global for pageURI as the internal controls may have changed, and we want
     // their values to be carried over.
-    $prop = ($checkBox) ? 'attr("checked")' : 'val()';
+    $prop = ($checkBox) ? 'filter(":checked").length' : 'val()';
     data_entry_helper::$javascript .="
 jQuery('#".$ctrlid."').change(function(){
-  var dialog = $('<p>Please wait whilst the next set of data is loaded.</p>').dialog({ title: 'Loading...', buttons: { 'OK': function() { dialog.dialog('close'); }}});
-  // no need to update other controls on the page, as we jump off it straight away.
-  window.location = rebuild_page_url(pageURI, \"".$urlparam."\", jQuery(this).$prop);
-});
-";
+  var dialog = $('<p>Please wait whilst the next set of data is loaded.</p>').dialog({ title: 'Loading...', buttons: { 'OK': function() { dialog.dialog('close'); }}});\n";
+	// no need to update other controls on the page, as we jump off it straight away.
+	if($checkBox) {
+		data_entry_helper::$javascript .="  window.location = rebuild_page_url(pageURI, \"".$urlparam."\", jQuery(this).filter(':checked').length > 0 ? 'true' : 'false');\n});\n";
+	} else
+	    data_entry_helper::$javascript .="  window.location = rebuild_page_url(pageURI, \"".$urlparam."\", jQuery(this).val());\n});\n";
   }
 
   private static function copy_args($args, &$options, $list){
@@ -1386,7 +1402,9 @@ jQuery('#".$ctrlid."').change(function(){
       		'key'=>'location_id',
       		'fieldprefix'=>'locAttr',
       		'extraParams'=>$auth,
-      		'survey_id'=>self::$siteUrlParams[self::$SurveyKey]);
+      		'survey_id'=>self::$siteUrlParams[self::$SurveyKey],
+            'caching' => self::$siteUrlParams[self::$cacheKey]['value']
+      );
       if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
         $attrArgs['location_type_id'] = self::$siteUrlParams[self::$locationTypeKey]['value'];
       }
@@ -1394,11 +1412,12 @@ jQuery('#".$ctrlid."').change(function(){
       $cmsAttr= self::extract_attr($locationAttributes, $args['branchFilterAttribute']);
       if(!$cmsAttr)
          return(lang::get('Branch Manager location list lookup: missing Branch allocation attribute').' {'.print_r($attrArgs,true).'} : '.$args['branchFilterAttribute']);
-      $attrListArgs=array(// 'nocache'=>true,
+      $attrListArgs=array(
       			'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
       					'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=>$user->uid),
       					$auth),
-      			'table'=>'location_attribute_value');
+      			'table'=>'location_attribute_value',
+            	'caching' => self::$siteUrlParams[self::$cacheKey]['value']);
       $attrList = data_entry_helper::get_population_data($attrListArgs);
       if (isset($attrList['error']))
         return $attrList['error'];
@@ -1428,6 +1447,12 @@ jQuery('#".$ctrlid."').change(function(){
       }
       self::set_up_control_change('removeParam-'.$param, $param, array(), true);
     }
+    // Caching
+    $checked = self::$siteUrlParams[self::$cacheKey]['value'] === true ? ' checked="checked"' : '';
+    $retVal .= '<th><input type="checkbox" name="cachingParam" id="cachingParam" class="cachingParam"'.$checked.'/>'.
+    		'<label for="cachingParam" title="'.lang::get("When fetching the full data set, selcting this improves performance by not going to the warehouse to get the data. Occassionally, even when selected, the data will be refreshed, which will appear to slow down the response.").'" >'.lang::get("Use cached data").'</label></th>';
+    $reportOptions['caching'] = self::$siteUrlParams[self::$cacheKey]['value'];
+    self::set_up_control_change('cachingParam', self::$cacheKey, array(), true);
     // are there any params that should be set to blank using one of the removable params tickboxes?
     foreach (self::$removableParams as $param=>$caption)
       if (isset($_GET[$param]) && $_GET[$param]==='true') {
