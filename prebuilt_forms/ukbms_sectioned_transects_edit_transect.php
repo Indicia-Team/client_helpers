@@ -49,7 +49,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
    * @todo: Implement this method
    */
   public static function get_parameters() {
-    $parentVal = array_merge(
+    $retVal = array_merge(
       parent::get_parameters(),
       array(
       	array(
@@ -176,17 +176,17 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         )
       		
     ));
-    $retVal = array();
-    foreach($parentVal as $param){
+    foreach($retVal as &$param){
       switch($param['name']) {
         case 'transect_type_term': break;
       	case 'survey_id':
           $param['description'] = 'The survey that data will be used to define custom attributes. This needs to match the survey used to submit visit data for sites of the first location type.';
           $param['group'] = 'Transects Editor Settings';
-          $retVal[] = $param;
           break;
-        default:
-          $retVal[] = $param;
+    	case 'georefDriver':
+    	  $param['required']=false; // method of georef detection is to see if driver specified: allows ommision of area preferences.
+          break;
+    	default:
           break;
       }
     }
@@ -332,7 +332,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
           if($fixedSectionNumber) {
             for ($i=1; $i<=$fixedSectionNumber; $i++)
               $settings['sections']["S$i"]=null;
-            data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').val($fixedSectionNumber).attr('readonly','readonly').css('color','graytext');\n";
+            data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').val($fixedSectionNumber).attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
           } else {
             for ($i=1; $i<=$attr['displayValue']; $i++) {
               $settings['sections']["S$i"]=null;
@@ -340,14 +340,14 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
             $existingSectionCount = empty($attr['displayValue']) ? 1 : $attr['displayValue'];
             data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('min',$existingSectionCount).attr('max',".$args['maxSectionCount'].");\n";
             if(!$settings['canEditSections'])
-              data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext');\n";
+              data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
           }
         }
         if (isset($args['autocalc_transect_length_attr_id']) && 
         		$args['autocalc_transect_length_attr_id'] != '' &&
         		$attr['attributeId']==$args['autocalc_transect_length_attr_id']) {
           $settings['autocalcTransectLengthAttrName'] = $attr['fieldname'];
-          data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext');\n";
+          data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
         }
       }
       $sections = data_entry_helper::get_population_data(array(
@@ -387,7 +387,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         }
         if ($attr['attributeId']==$args['autocalc_transect_length_attr_id']) {
           $settings['autocalcTransectLengthAttrName'] = $attr['fieldname'];
-          data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext');\n";
+          data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr['id'])."').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
         }
       }
       $settings['walks'] = array();
@@ -496,13 +496,13 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         alert('You are reducing the number of sections below that already existing. Please use the Remove Section button on the Your Route tab to reduce the number of sections to ".$args['section_number_'.$i]." before changing the Site type');
         return false;
       }
-      $('[name=".str_replace(':','\\\\:',$settings['numSectionsAttr'])."]').val(".$args['section_number_'.$i].").attr('readonly','readonly').css('color','graytext');\n";
+      $('[name=".str_replace(':','\\\\:',$settings['numSectionsAttr'])."]').val(".$args['section_number_'.$i].").attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
             else
               // not saved yet, so no sections yet created, hence no need to worry about existing value. make number attribute readonly. set value. min value will be 1.
-              data_entry_helper::$javascript .= "      $('[name=".str_replace(':','\\\\:',$settings['numSectionsAttr'])."]').val(".$args['section_number_'.$i].").attr('readonly','readonly').css('color','graytext');\n";
+              data_entry_helper::$javascript .= "      $('[name=".str_replace(':','\\\\:',$settings['numSectionsAttr'])."]').val(".$args['section_number_'.$i].").attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
           } else {
             // user modifiable number of sections. value of attribute is left alone: don't have to worry att his point whether existing data.
-            data_entry_helper::$javascript .= "      $('[name=".str_replace(':','\\\\:',$settings['numSectionsAttr'])."]').removeAttr('readonly').css('color','');\n";
+            data_entry_helper::$javascript .= "      $('[name=".str_replace(':','\\\\:',$settings['numSectionsAttr'])."]').removeAttr('readonly').css('color','').css('background-color','');\n";
           }
           data_entry_helper::$javascript .= "      break;\n";
          }
@@ -555,9 +555,10 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     		));
     		$val = 1;
     		foreach($otherSites as $otherSite) {
-    			if(strncmp($otherSite['code'],$args['autogeneratePrefix'],strlen($args['autogeneratePrefix'])))
+    			if(strncmp($otherSite['code'],$args['autogeneratePrefix'],strlen($args['autogeneratePrefix']))) {
     				$myVal = intval(substr($otherSite['code'],strlen($args['autogeneratePrefix'])));
     				if($val<=$myVal) $val = $myVal+1;
+    			}
     		}
     		data_entry_helper::$entity_to_load['location:code'] = $args['autogeneratePrefix'].$val;
 	    }
@@ -567,15 +568,18 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     			'class' => 'control-width-4',
     			'disabled' => hostsite_user_has_permission($args['managerPermission']) ? '' : ' readonly="readonly" '
     	));
+    	if(!hostsite_user_has_permission($args['managerPermission']))
+        	data_entry_helper::$javascript .= "$('[name=location\\\\:code]').css('color','graytext').css('background-color','#d0d0d0');\n";
     } else {
-      if ($settings['locationId'] && data_entry_helper::$entity_to_load['location:code']!='' && data_entry_helper::$entity_to_load['location:code'] != null)
+      if ($settings['locationId'] && data_entry_helper::$entity_to_load['location:code']!='' && data_entry_helper::$entity_to_load['location:code'] != null) {
         $r .= data_entry_helper::text_input(array(
           'fieldname' => 'location:code',
           'label' => lang::get('Site Code'),
           'class' => 'control-width-4',
           'disabled' => ' readonly="readonly" '
         ));
-      else
+        data_entry_helper::$javascript .= "$('[name=location\\\\:code]').css('color','graytext').css('background-color','#d0d0d0');\n";
+      } else
         $r .= "<p>".lang::get('The Site Code will be allocated by the Administrator.')."</p>";
     }
 
@@ -606,18 +610,11 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     $r .= '</fieldset>';
     $r .= "</div>"; // left
     $r .= '<div class="right" style="width: 44%">';
-    if(isset($args['georefPreferredArea']) && $args['georefPreferredArea']!='' && !$settings['locationId']) {
+    if(isset($args['georefDriver']) && $args['georefDriver']!='' && !$settings['locationId']) {
       $help = t('Use the search box to find a nearby town or village, then drag the map to pan and click on the map to set the centre grid reference of the transect. '.
           'Alternatively if you know the grid reference you can enter it in the Grid Ref box on the left.');
       $r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.$help.'</p>';
-      $r .= data_entry_helper::georeference_lookup(array(
-        'label' => lang::get('Search for place'),
-        'driver'=>$args['georefDriver'],
-        'georefPreferredArea' => $args['georefPreferredArea'],
-        'georefCountry' => $args['georefCountry'],
-        'georefLang' => $args['language'],
-        'readAuth' => $auth['read']
-      ));
+      $r .= data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
     }
     if(isset($args['maxPrecision']) && $args['maxPrecision'] != ''){
       $options['clickedSrefPrecisionMax'] = $args['maxPrecision'];
