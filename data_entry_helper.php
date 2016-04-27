@@ -6419,7 +6419,7 @@ if (errors$uniq.length>0) {
       $nonZeroCount=0;
       foreach ($record as $field=>$value) {
         // Is this a field used to trap zero abundance data, with a zero value
-        if (!$value!=='' && preg_match("/occAttr:(?P<attrId>$ids)(:\d+)?$/", $field, $matches)) {
+        if ($value!=='' && preg_match("/occAttr:(?P<attrId>$ids)(:\d+)?$/", $field, $matches)) {
           $attr = $zeroAttrs[$matches['attrId']];
           if ($attr['data_type']==='L') {
             foreach ($attr['terms'] as $term) {
