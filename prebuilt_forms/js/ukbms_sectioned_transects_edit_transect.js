@@ -113,7 +113,7 @@ loadSectionDetails = function(section) {
   }
 };
 
-saveTransectLength = function(numSections) {
+saveTransectLength = function(numSections, saveNumSections) {
   if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
 		indiciaData.autocalcTransectLengthAttrId &&
 		indiciaData.autocalcSectionLengthAttrId) {
@@ -127,8 +127,8 @@ saveTransectLength = function(numSections) {
 	}
 	// load into form.
     $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
-    if(numSections)
-    	ldata[indiciaData.numSectionsAttrName] = ''+(numSections-1);
+    if(saveNumSections !== false)
+    	ldata[indiciaData.numSectionsAttrName] = ''+saveNumSections;
     ldata[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
     $.post(indiciaData.ajaxFormPostUrl,
             ldata,
@@ -341,7 +341,7 @@ deleteSection = function(section) {
     },100); 
   });
   window.onbeforeunload = null;
-  saveTransectLength(numSections);
+  saveTransectLength(numSections, numSections-1);
 };
 
 //insert a section
@@ -464,7 +464,8 @@ saveRoute = function() {
         async: false // Synchronous due to method of working out current in success function
     });
     // Now update the parent with the total transect length
-    saveTransectLength(false);
+    var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
+    saveTransectLength(numSections, false);
 }
 
 $(document).ready(function() {
@@ -587,7 +588,8 @@ $(document).ready(function() {
               $('#section-select-'+current).addClass('missing');
             }
             // recalculate total transect length
-            saveTransectLength(false);
+            var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
+            saveTransectLength(numSections, false);
           },
           'json'
         );

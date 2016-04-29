@@ -638,7 +638,7 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
       $r .= self::sref_system_select(array('fieldname'=>'sample:entered_sref_system'));
     }
     
-    if(isset($args['georefDriver']) && $args['georefDriver']!='')
+    if(isset($args['georefDriver']) && $args['georefDriver']!='' && !isset(data_entry_helper::$entity_to_load['sample:id']))
 	    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
     $r .= data_entry_helper::map_panel($options, $olOptions);
 

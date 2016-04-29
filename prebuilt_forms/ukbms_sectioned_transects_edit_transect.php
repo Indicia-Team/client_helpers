@@ -272,8 +272,11 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     $settings['numSectionsAttr'] = "";
     $settings['maxSectionCount'] = $args['maxSectionCount'];
     $settings['autocalcSectionLengthAttrId'] = empty($args['autocalc_section_length_attr_id']) ? 0 : $args['autocalc_section_length_attr_id'];
+    if ($settings['autocalcSectionLengthAttrId'] > 0)
+    	data_entry_helper::$javascript .= "$('#locAttr\\\\:".$settings['autocalcSectionLengthAttrId']."').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
     $settings['autocalcTransectLengthAttrId'] = empty($args['autocalc_transect_length_attr_id']) ? 0 : $args['autocalc_transect_length_attr_id'];
     $settings['autocalcTransectLengthAttrName'] = 0;
+
     $settings['defaultSectionGridRef'] = empty($args['default_section_grid_ref']) ? 'parent' : $args['default_section_grid_ref'];
     if ($settings['locationId']) {
       $fixedSectionNumber = false;
@@ -555,7 +558,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     		));
     		$val = 1;
     		foreach($otherSites as $otherSite) {
-    			if(strncmp($otherSite['code'],$args['autogeneratePrefix'],strlen($args['autogeneratePrefix']))) {
+    			if(strncmp($otherSite['code'],$args['autogeneratePrefix'],strlen($args['autogeneratePrefix']))==0) {
     				$myVal = intval(substr($otherSite['code'],strlen($args['autogeneratePrefix'])));
     				if($val<=$myVal) $val = $myVal+1;
     			}
