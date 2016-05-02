@@ -2334,6 +2334,8 @@ if (typeof mapSettingsHooks!=='undefined') {
       // skip any actions which are marked as invisible for this row.
       if (isset($action['visibility_field']) && $row[$action['visibility_field']]==='f')
         continue;
+      if (isset($action['permission']) && !hostsite_user_has_permisson($action['permission']))
+        continue;
       if (isset($action['url'])) {
         // Catch lazy cases where the URL does not contain the rootFolder so assumes a relative path
         if ( strcasecmp(substr($action['url'], 0, 12), '{rootfolder}') !== 0 && 
