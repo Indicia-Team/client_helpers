@@ -325,6 +325,10 @@ $('form#entry_form').tooltip({
    *     centroid_sref value to (the spatial reference of the centre of the
    *     location). Defaults to 'sample:entered_sref'. Set to false to disable
    *     saving the centroid spatial reference
+   *   * save_centroid_sref_system_to_field - name of the field to save the
+   *     location's centroid_sref_system value to (the system used for the
+   *     centroid). Defaults to 'sample:entered_sref_system'. Set to false to
+   *     disable saving the centroid spatial reference system.
    *   * save_boundary_geom_to_field - name of the field to save the location's
    *     boundary_geom value to. Set this to sample:geom to store the location
    *     boundary in the sample. Defaults to false.
@@ -336,6 +340,7 @@ $('form#entry_form').tooltip({
       'info_template' => lang::get('<p>You are submitting a record at {name} ({centroid_sref})</p>'),
       'save_id_to_field' => 'sample:location_id',
       'save_centroid_sref_to_field' => 'sample:entered_sref',
+      'save_centroid_sref_system_to_field' => 'sample:entered_sref_system',
       'save_boundary_geom_to_field' => false
     ), $options);
     if (empty($_GET[$options['param']]))
@@ -344,7 +349,8 @@ $('form#entry_form').tooltip({
       'table' => 'location',
       'extraParams' => $auth['read'] + array(
           'id' => $_GET[$options['param']],
-          'view' => $options['save_boundary_geom_to_field'] ? 'detail' : 'list')
+          'view' => 'detail'
+      )
     ));
     if (count($locations)===0)
       return lang::get('<p>Location not found</p>');
@@ -365,6 +371,11 @@ $('form#entry_form').tooltip({
       $r .= data_entry_helper::hidden_text(array(
         'fieldname' => $options['save_centroid_sref_to_field'],
         'default' => $location['centroid_sref']
+      ));
+    if ($options['save_centroid_sref_system_to_field'])
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => $options['save_centroid_sref_system_to_field'],
+        'default' => $location['centroid_sref_system']
       ));
     if ($options['save_boundary_geom_to_field'])
       $r .= data_entry_helper::hidden_text(array(
