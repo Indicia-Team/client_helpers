@@ -634,7 +634,7 @@ $('#entry_form').submit(function() {
         'fieldname'=>'groups_user:user_id',
         'label' => lang::get('Other {1} members', self::$groupType),
         'table'=>'user',
-        'captionField'=>'name_and_email',
+        'captionField'=>'person_name',
         'valueField'=>'id',
         'extraParams'=>$auth['read']+array('view'=>'detail'),
         'helpText'=>lang::get('LANG_Members_Field_Instruct'),
