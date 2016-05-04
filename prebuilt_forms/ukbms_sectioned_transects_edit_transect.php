@@ -176,15 +176,17 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         )
       		
     ));
-    foreach($retVal as &$param){
-      switch($param['name']) {
-        case 'transect_type_term': break;
+    for($i= count($retVal)-1; $i>=0; $i--){
+      switch($retVal[$i]['name']) {
+        case 'transect_type_term':
+        	unset($retVal[$i]);
+        	break;
       	case 'survey_id':
-          $param['description'] = 'The survey that data will be used to define custom attributes. This needs to match the survey used to submit visit data for sites of the first location type.';
-          $param['group'] = 'Transects Editor Settings';
+          $retVal[$i]['description'] = 'The survey that data will be used to define custom attributes. This needs to match the survey used to submit visit data for sites of the first location type.';
+          $retVal[$i]['group'] = 'Transects Editor Settings';
           break;
     	case 'georefDriver':
-    	  $param['required']=false; // method of georef detection is to see if driver specified: allows ommision of area preferences.
+    	  $retVal[$i]['required']=false; // method of georef detection is to see if driver specified: allows ommision of area preferences.
           break;
     	default:
           break;

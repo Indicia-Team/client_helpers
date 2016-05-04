@@ -1,5 +1,5 @@
 var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncPost, deleteWalks,
-    deleteLocation, deleteSections, deleteSection, saveTransectLength;
+    deleteLocation, deleteSections, deleteSection, updateTransectDetails;
 
 (function ($) {
 /*
@@ -35,10 +35,10 @@ clearSection = function() {
         $(ctrl).attr('name', nameparts[0] + ':' + nameparts[1]);
       }
       // clear the control's value
-      if (typeof ctrl.checked === "undefined") {
-        $(ctrl).val('');
+      if ($(ctrl).is(':checkbox')) {
+          $(ctrl).attr('checked', false);
       } else {
-        $(ctrl).attr('checked', false);
+          $(ctrl).val('');
       }
     } else if ($(ctrl).hasClass('hierarchy-select')) {
       $(ctrl).val('');
@@ -113,13 +113,16 @@ loadSectionDetails = function(section) {
   }
 };
 
-saveTransectLength = function(numSections, saveNumSections) {
+updateTransectDetails = function(newNumSections) {
+  var transectLen = 0;
+  var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
+  var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
+  var save = (newNumSections !== false);
+  
   if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
 		indiciaData.autocalcTransectLengthAttrId &&
 		indiciaData.autocalcSectionLengthAttrId) {
 	// add all sections lengths together
-	var transectLen = 0;
-    var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
 	for(var i = 1; i <= numSections; i++){
 		if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
 			transectLen += indiciaData.sections['S'+i].sectionLen;
@@ -127,13 +130,21 @@ saveTransectLength = function(numSections, saveNumSections) {
 	}
 	// load into form.
     $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
-    if(saveNumSections !== false)
-    	ldata[indiciaData.numSectionsAttrName] = ''+saveNumSections;
     ldata[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
-    $.post(indiciaData.ajaxFormPostUrl,
-            ldata,
-            function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
-            'json');
+    save = true;
+  }
+
+  if(newNumSections !== false)
+    ldata[indiciaData.numSectionsAttrName] = ''+newNumSections;
+  
+  if(save)
+	  syncPost(indiciaData.ajaxFormPostUrl, ldata);
+  
+  if(newNumSections !== false) {
+	window.onbeforeunload = null;
+	setTimeout(function(){
+		  window.location.reload(true);
+	});
   }
 }
 
@@ -147,12 +158,12 @@ confirmSelectSection = function(section, doFeature, withCancel) {
 	  indiciaData.routeChanged = true;
   if(indiciaData.routeChanged === true) {
     var buttons =  { 
-        "Yes": function() { dialog.dialog('close');
+        "Yes": function() { $(this).dialog('close');
         	saveRoute();
             indiciaData.routeChanged = false;
             checkIfSectionChanged(section, doFeature, withCancel);
         }, // synchronous for bit that matters. 
-        "No":  function() { dialog.dialog('close');
+        "No":  function() { $(this).dialog('close');
         	// replace the route with the previous one for this section.
         	// At his point, indiciaData.currentSection should point to existing, previously selected section.
         	var removeSections = [];
@@ -175,7 +186,7 @@ confirmSelectSection = function(section, doFeature, withCancel) {
         	indiciaData.routeChanged = false;
         	checkIfSectionChanged(section, doFeature, withCancel); }};
     if(withCancel) {
-      buttons.Cancel = function() { dialog.dialog('close'); };
+      buttons.Cancel = function() { $(this).dialog('close'); };
     }
     // display dialog and drive from its button events.
     var dialog = $('<p>'+(withCancel ? indiciaData.routeChangeConfirmCancel : indiciaData.routeChangeConfirm) +'</p>').dialog({ title: "Save Route Data?", buttons: buttons });
@@ -186,14 +197,14 @@ confirmSelectSection = function(section, doFeature, withCancel) {
 checkIfSectionChanged = function(section, doFeature, withCancel) {
   if(indiciaData.sectionDetailsChanged === true) {
     var buttons =  { 
-        "Yes": function() { dialog.dialog('close');
+        "Yes": function() { $(this).dialog('close');
         	$('#section-form').submit();
         	selectSection(section, doFeature);
         },
-        "No":  function() { dialog.dialog('close');
+        "No":  function() { $(this).dialog('close');
         	selectSection(section, doFeature); }};
     if(withCancel) {
-      buttons.Cancel = function() { dialog.dialog('close'); };
+      buttons.Cancel = function() { $(this).dialog('close'); };
     }
     // display dialog and drive from its button events.
     var dialog = $('<p>'+(withCancel ? indiciaData.sectionChangeConfirmCancel : indiciaData.sectionChangeConfirm) +'</p>').dialog({ title: "Save Section Details?", buttons: buttons });
@@ -295,7 +306,8 @@ deleteSection = function(section) {
   // section comes in like "S1"
   // TODO Add progress bar
   $('<p>Please wait whilst the section and its walk data are removed, the subsequent sections renumbered, and the number of sections counter on the Transect changed. The page will reload automatically when complete.</p>').dialog({ title: "Please Wait",
-	  	buttons: {"OK": function() { dialog.dialog('close');}}});
+	  	buttons: {"OK": function() {
+	  		$( this ).dialog('close');}}});
 
   $('.remove-section').addClass('waiting-button');
   // if it has been saved, delete any subsamples lodged against it.
@@ -335,13 +347,7 @@ deleteSection = function(section) {
   // update the attribute value for number of sections.
   // and finally update the total transect length on the transect.
   // reload the form when all ajax done. This will reload the new section list and total transect length into the form
-  $( document ).ajaxStop(function(event){    
-	  setTimeout(function(){
-		    window.location.reload(true);
-    },100); 
-  });
-  window.onbeforeunload = null;
-  saveTransectLength(numSections, numSections-1);
+  updateTransectDetails(numSections-1);
 };
 
 //insert a section
@@ -350,7 +356,7 @@ insertSection = function(section) {
   // section comes in like "S1"
   // TODO Add progress bar
   $('<p>Please wait whilst the subsequent sections are renumbered, and the number of sections counter on the Transect changed. The page will reload automatically when complete.</p>').dialog({ title: "Please Wait",
-	  	buttons: {"OK": function() { dialog.dialog('close');}}});
+	  	buttons: {"OK": function() { $(this).dialog('close');}}});
   $('.insert-section').addClass('waiting-button');
   // loop through all the subsections with a greater section number
   // subsamples are attached to the location and parent, but the location_name is not filled in, so don't need to change that
@@ -363,28 +369,10 @@ insertSection = function(section) {
                   'location:code':'S'+(i+1),
                   'location:name':$('#location\\:name').val() + ' - ' + 'S'+(i+1),
                   'website_id':indiciaData.website_id};
-      $.post(indiciaData.ajaxFormPostUrl,
-            data,
-            function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
-            'json');
+      syncPost(indiciaData.ajaxFormPostUrl, data);
     }
   }
-  // update the attribute value for number of sections.
-  data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
-  data[indiciaData.numSectionsAttrName] = ''+(numSections+1);
-  // no need to calculate increase in transect length.
-  // reload the form when all ajax done.
-  $( document ).ajaxStop(function(event){
-	  setTimeout(function(){
-		    window.location.reload(true);
-		},100); 
-//    window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
-  });
-  window.onbeforeunload = null;
-  $.post(indiciaData.ajaxFormPostUrl,
-          data,
-          function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
-          'json');
+  updateTransectDetails(numSections+1);
 };
 
 
@@ -464,8 +452,7 @@ saveRoute = function() {
         async: false // Synchronous due to method of working out current in success function
     });
     // Now update the parent with the total transect length
-    var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
-    saveTransectLength(numSections, false);
+    updateTransectDetails(false);
 }
 
 $(document).ready(function() {
@@ -588,8 +575,7 @@ $(document).ready(function() {
               $('#section-select-'+current).addClass('missing');
             }
             // recalculate total transect length
-            var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
-            saveTransectLength(numSections, false);
+            updateTransectDetails(false);
           },
           'json'
         );
