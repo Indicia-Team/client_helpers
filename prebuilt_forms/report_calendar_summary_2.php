@@ -1319,8 +1319,9 @@ jQuery('#".$ctrlid."').change(function(){
           $r .= "<th><a id=\"year-control-next\" title=\"".($siteUrlParams[self::$yearKey]['value']+1)."\" rel=\"nofollow\" href=\"".$reloadUrl['path'].$param.($siteUrlParams[self::$yearKey]['value']+1)."\" class=\"ui-datepicker-next ui-corner-all\"><span class=\"ui-icon ui-icon-circle-triangle-e\">Next</span></a></th>";
         } else $r .= '<th/>';
         $options['year'] = $siteUrlParams[self::$yearKey]['value'];
-        $options['date_start'] = $siteUrlParams[self::$yearKey]['value'].'-Jan-01';
-        $options['date_end'] = $siteUrlParams[self::$yearKey]['value'].'-Dec-31';
+        // ISO Date d/m/Y, due to change in report engine
+        $options['date_start'] = '01/01/'.$siteUrlParams[self::$yearKey]['value'];
+        $options['date_end'] = '31/12/'.$siteUrlParams[self::$yearKey]['value'];
         $options['downloadFilePrefix'] .= $siteUrlParams[self::$yearKey]['value'].'_';
         return $r;
     }
