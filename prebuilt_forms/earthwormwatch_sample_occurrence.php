@@ -186,12 +186,12 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    * Override function to add the report parameter for the ID of the custom attribute which holds the linked sample.
    * Depends upon a report existing that uses the parameter e.g. earthworm_sample_occurrence_samples
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('<br><br><br><br><br><br><p>Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($node->nid)))).'">Login</a> to the website, or <a href="'.url('user/register', array('query'=>array('destination=node/'.($node->nid)))).'">Register</a> if you haven’t done so previously.</p><br><br><br><br><br><br>');
+      return lang::get('<br><br><br><br><br><br><p>Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($nid)))).'">Login</a> to the website, or <a href="'.url('user/register', array('query'=>array('destination=node/'.($nid)))).'">Register</a> if you haven’t done so previously.</p><br><br><br><br><br><br>');
     }
 
     // Get the Indicia User ID to filter on.
@@ -230,10 +230,10 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new&gridmode'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new&gridmode'))).'\'">';
     } else {
-      $r .= '<input id="add-new-pit-button" type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'=>''))).'\'">';
+      $r .= '<input id="add-new-pit-button" type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new'=>''))).'\'">';
     }
     $r .= '</form>';
     return $r;
@@ -455,7 +455,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
   }
   
   /* Custom submission because when changes are made to fields shered between pits, they need to be copied to the other pit */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     //To Do: Do we even these "remembered" lines?
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
