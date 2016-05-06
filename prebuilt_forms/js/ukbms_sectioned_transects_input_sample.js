@@ -304,6 +304,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		
 		if (N > formOptions.maxTabs) return;
 		$('#taxonLookupControlContainer'+N).show();
+		$('#grid'+N+'-loading').show();
 		if(formOptions.speciesList[N]>0){
 			TaxonData = {
 					'taxon_list_id': formOptions.speciesList[N],
@@ -345,12 +346,14 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 					$.each(formOptions.sections, function(idx, section) {
 						$('table#transect-input'+N+' tfoot .col-total.col-'+(idx+1)).html(typeof section.total['table#transect-input'+N]==="undefined" ? 0 : section.total['table#transect-input'+N]);
 					});
-					$('#grid'+N+'-loading').remove();
+					$('#grid'+N+'-loading').hide();
 					process(N+1);
 				}
 			});
-		} else
+		} else {
+			$('#grid'+N+'-loading').hide();
 			process(N+1);
+		}
 	}
 
 	checkErrors = function (data) {
@@ -563,9 +566,8 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	// Currently hardcoded for list 1 only
 	listTypeChange = function(val, table, initial) {
 		var N = 1;
-		
+		$('#grid'+N+'-loading').show();
 		$('#taxonLookupControlContainer1').show();
-		$('#listSelect1Msg').empty().append('Please Wait...'); // TODO WHERE
 		$(table + ' .table-selected').removeClass('table-selected');
 		$(table + ' .ui-state-active').removeClass('ui-state-active');
 		
@@ -602,8 +604,11 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    					addSpeciesToGrid(data, 'table#transect-input'+N, N);
 	    					// at this point only adding empty rows, so no affect on totals.
 	    					removeTaggedRows('table#transect-input1'); // redoes row classes
+	    					$('#grid'+N+'-loading').hide();
 	    				}
 	    			});
+	    		} else {
+	    			$('#grid'+N+'-loading').hide();
 	    		}
 	    		break;
 	    	case 'common':
@@ -613,10 +618,12 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    			}
 	    		}
 	    		removeTaggedRows('table#transect-input1');
+				$('#grid'+N+'-loading').hide();
 	    		break;
 	    	case 'mine':
 	    		if(typeof formOptions.myTaxonMeaningIds == 'undefined' || formOptions.myTaxonMeaningIds.length == 0) {
     				removeTaggedRows('table#transect-input1');
+	    			$('#grid'+N+'-loading').hide();
     				break;
 	    		}
 	    		TaxonData = {
@@ -642,6 +649,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    				addSpeciesToGrid(data, 'table#transect-input'+N, N);
 	    				// at this point only adding empty rows, so no affect on totals.
 	    				removeTaggedRows('table#transect-input1');
+    					$('#grid'+N+'-loading').hide();
 	    			}
 	    		});
 	    		break;
@@ -650,6 +658,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    		if(!initial) {
 		    		if(formOptions.allTaxonMeaningIDsAtTransect.length == 0) {
 	    				removeTaggedRows('table#transect-input1');
+		    			$('#grid'+N+'-loading').hide();
 	    				break;
 		    		}
 	    			TaxonData = {
@@ -676,6 +685,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    					addSpeciesToGrid(data, 'table#transect-input'+N, N);
 	    					// at this point only adding empty rows, so no affect on totals.
 	    					removeTaggedRows('table#transect-input1');
+	    					$('#grid'+N+'-loading').hide();
 	    				}
 	    			});
 	    		} else {
@@ -683,7 +693,6 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    		}
 	    		break;
 	    }
-	    $('#listSelect1Msg').empty();
 	}
 
 	//autocompletes assume ID

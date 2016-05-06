@@ -1233,7 +1233,7 @@ class iform_ukbms_sectioned_transects_input_sample {
   	if(!in_array($listSelected, array('full','common','mine','here'))) {
 		$listSelected = 'here';
   	}
-  	if($listSelected == 'common' && $tabNum != 1) { // common is only available on tab 1
+  	if($listSelected == 'common' && ($tabNum != 1 || count($formOptions['commonTaxonMeaningIDs']) == 0)) { // common is only available on tab 1, provided it is defined
   		$listSelected = 'full';
   	}
   	if($listSelected == 'full' && isset($args['disable_full_'.$tabNum]) && $args['disable_full_'.$tabNum]) {
@@ -1241,7 +1241,7 @@ class iform_ukbms_sectioned_transects_input_sample {
   	}
   	
   	$r = '<div id="grid'.$tabNum.'">' .
-  			'<p id="grid'.$tabNum.'-loading">' . lang::get('Loading - Please Wait') . '</p>' .
+  			'<p id="grid'.$tabNum.'-loading"><b>' . lang::get('Loading - Please Wait') . '</b></p>' .
     		($includeControl ?
   					'<label for="listSelect'.$tabNum.'">'.lang::get('Use species list').' :</label>'.
   					'<select id="listSelect'.$tabNum.'">'.
@@ -1249,8 +1249,7 @@ class iform_ukbms_sectioned_transects_input_sample {
   					  ($tabNum == 1 && (count($formOptions['commonTaxonMeaningIDs']) > 0) ? '<option value="common"'.($listSelected == 'common' ? ' selected="selected"' : '').'>'.lang::get('Common species').'</option>' : '').
   					  '<option value="here"'.($listSelected == 'here' ? ' selected="selected"' : '').'>'.lang::get('Species known at this site').'</option>'.
   					  '<option value="mine"'.($listSelected == 'mine' ? ' selected="selected"' : '').'>'.lang::get('Species I have recorded').'</option>'.
-  					'</select>'.
-  					'<span id="listSelect'.$tabNum.'Msg"></span>'
+  					'</select>'
   				:
   					(isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>')
   			) .
