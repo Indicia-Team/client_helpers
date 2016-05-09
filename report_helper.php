@@ -2366,7 +2366,7 @@ if (typeof mapSettingsHooks!=='undefined') {
         // merge field value replacements into the URL
         $actionUrl = self::mergeParamsIntoTemplate($row, $action['url'], true);
         // merge field value replacements into the URL parameters
-        if (count($action['urlParams'])>0) {
+        if (array_key_exists('urlParams', $action) && count($action['urlParams'])>0) {
           $actionUrl .= (strpos($actionUrl, '?')===false) ? '?' : '&';
           $actionUrl .= self::mergeParamsIntoTemplate($row, self::array_to_query_string($action['urlParams']), true);
         }
