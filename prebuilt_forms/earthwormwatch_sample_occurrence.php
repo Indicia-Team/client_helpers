@@ -471,7 +471,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       $finalSubmission['submission_list']['entries'][1]=$otherPitSubmission;
       $finalSubmission['id']='sample';
     } else {
-       $finalSubmission=$mainSubmission;
+      $finalSubmission=$mainSubmission;
     }
     return $finalSubmission;
   }
@@ -499,10 +499,17 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
         'extraParams'=> $readAuth + array('value' => $values['sample:id'], 'sample_attribute_id' => $args['pit_1_survey_attr']),
         'nocache' => true
       ));
-      $idForOtherPit=$pit2Data[0]['sample_id'];
+      if (!empty($pit2Data[0]['sample_id']))
+        $idForOtherPit=$pit2Data[0]['sample_id'];
     }
-    $otherPitSubmission=self::build_second_pit_submission($values, $args,$mainSubmission,$idForOtherPit);
-    $otherPitSubmission['fields']['id']['value']=$idForOtherPit;
+    //If we can't find a value for the other pit, there might not be one. This would happen in the situation where 
+    //the user was editing pit 1 and pit 2 didn't exist yet. In that case don't return the other submission.
+    if (!empty($idForOtherPit)) {
+      $otherPitSubmission=self::build_second_pit_submission($values, $args,$mainSubmission,$idForOtherPit);
+      $otherPitSubmission['fields']['id']['value']=$idForOtherPit;
+    } else {
+      $otherPitSubmission=null;
+    }
     return $otherPitSubmission;
   }
   
