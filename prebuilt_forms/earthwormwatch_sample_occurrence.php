@@ -331,7 +331,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    * Post Code control to allow the spatial reference to be automatically populated by entering a Post Code.
    */
   protected static function get_control_postcode($auth, $args, $tabalias, $options) {
-    if (!empty(!empty($args['postcode_attr_id']))) {
+    if (!empty($args['postcode_attr_id'])) {
       $fieldName='smpAttr:'.$args['postcode_attr_id'];
       //If data exists then load existing data into control
       if (!empty($_GET['sample_id'])) {
