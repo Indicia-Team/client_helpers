@@ -463,7 +463,7 @@ class extension_splash_extensions {
     //Make the page read-only in summary mode
     if (!empty($_GET['summary_mode']) && $_GET['summary_mode']==true) {
       data_entry_helper::$javascript .= "$('.read-only-capable').find('input, textarea, text, button, select').attr('disabled','disabled');\n";
-      data_entry_helper::$javascript .= "$('.page-notice, .indicia-button').hide();\n";
+      data_entry_helper::$javascript .= "$('.page-notice').hide();\n";
     }
   }
  
@@ -730,7 +730,7 @@ class extension_splash_extensions {
     jQuery(window).load(function($) {
       if (indiciaData.useZoomToFeatures && indiciaData.useZoomToFeatures==true) {
         //AVB: Need map to load first to get extent - nasty way of doing this - cleanup when I have more time!
-        window.setTimeout(zoomToAllFeatures,1000);
+        window.setTimeout(zoomToAllFeatures,2000);
       }
     });
     function zoomToAllFeatures() {
@@ -1326,6 +1326,9 @@ class extension_splash_extensions {
    * @dontReturnAllocatedLocations Optional, when true then locations that are already allocated to another user are not available for selection (maximum of one location allocation per person)
    * @maxAllocationForLocationAttrId Optional, Id of attribute that holds the maximum number of people that can be allocated to a location before it becomes hidden for selection. Provide this attribute id to enable this option.
    * An example might be an event location, where only a certain number of people can attend.
+   * @allocatedLocationEmailSubject Optional, Provide a subject line if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailMessage option must also be provided. 
+   * @allocatedLocationEmailMessage Optional, Provide the message if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailSubject option must also be provided. 
+   * Put {location_name} or {username} into the text to replace with the location or username when message is sent.
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
     global $user;  
@@ -1359,6 +1362,11 @@ class extension_splash_extensions {
       $locationIdFromURL=$_GET[$options['locationParamFromURL']];
     else
       $locationIdFromURL=0;
+    //Setup options for sending an email to the user on successful location assignment
+    if (!empty($options['allocatedLocationEmailSubject'])&& $options['allocatedLocationEmailSubject']==true
+            && !empty($options['allocatedLocationEmailMessage'])&& $options['allocatedLocationEmailMessage']==true) {
+      self::setup_and_prepare_location_allocation_email($auth,$options);
+    }
     //Get the user_id from the URL if we can, this would hide the user drop-down and make
     //the control applicable to a single user.
     if (!empty($options['userParamFromURL'])&&!empty($_GET[$options['userParamFromURL']]))
@@ -1399,13 +1407,8 @@ class extension_splash_extensions {
       $r .= self:: user_select_for_add_sites_to_any_user_control($auth['read'],$args);
     
     $r .= '<input id="add-user-site-button" type="button" value="'.$addButtonLabel.'"/><br></form><br>';
-    $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
-    data_entry_helper::$javascript.="
-        indiciaData.postUrl='".$postUrl."';";
     
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
-    data_entry_helper::$javascript.="
-        indiciaData.mySitesPsnAttrId='".$options['mySitesPsnAttrId']."';";
 
     //Firstly check both a uer and location have been selected.
     //Then get the current user/sites saved in the database and if the new combination doesn't already exist then call a function to add it.
@@ -1468,7 +1471,23 @@ class extension_splash_extensions {
           function (data) {
             if (typeof data.error === 'undefined') {
               alert('User site configuration saved successfully');
-              location.reload();
+              if (indiciaData.doSendEmail) {
+                var parameters;
+                //remove overlay off back of URL
+                var url = window.location.href.split('#')[0]; 
+                //Replace any existing parameters. Am sure there must be a nicer way to do this, but this works for now
+                url = url.split('?location_id_to_email')[0];
+                url = url.split('&location_id_to_email')[0];
+                if (url.indexOf('?') !== -1) {
+                  parameters = '&location_id_to_email='+locationId+'&user_id_to_email='+userIdToAdd;
+                } else {
+                  parameters = '?location_id_to_email='+locationId+'&user_id_to_email='+userIdToAdd;
+                }
+                url = url+parameters;
+                window.location.href = url;
+              } else {
+                location.reload();
+              }
             } else {
               alert(data.error);
             }              
@@ -1516,7 +1535,11 @@ class extension_splash_extensions {
         {\"website_id\":".$args['website_id'].",\"id\":pav_id, \"deleted\":\"t\"},
         function (data) {
           if (typeof data.error === 'undefined') {
-            location.reload(); 
+            //Avoid including the email paramters when removing locations as we don't want to send the 
+            //location sign-up email
+            var url = window.location.href.split('?location_id_to_email')[0]; 
+            url = window.location.href.split('&location_id_to_email')[0]; 
+            window.location.href = url;
           } else {
             alert(data.error);
           }
@@ -1548,10 +1571,60 @@ class extension_splash_extensions {
     return '<label>User : </label>'.$r.'<br>';
   }
   
+  /*
+   * Setup the sending of the location allocation email to the person allocated the location if required.
+   */
+  private static function setup_and_prepare_location_allocation_email($auth,$options) {
+    data_entry_helper::$javascript.="indiciaData.doSendEmail=true;\n";
+    //Once the page actually reloads after the allocation, the email can be sent
+    if (!empty($_GET['location_id_to_email'])&&!empty($_GET['user_id_to_email'])) {
+      $locationData = data_entry_helper::get_population_data(array(
+        'table' => 'location',
+        'extraParams' => $auth['read'] + array('id' => $_GET['location_id_to_email']),
+        'nocache' => true
+      )); 
+      $userData = data_entry_helper::get_population_data(array(
+        'table' => 'user',
+        'extraParams' => $auth['read'] + array('id' => $_GET['user_id_to_email'], 'view' => 'detail'),
+        'nocache' => true
+      )); 
+      if (!empty($locationData[0]['name'])&&!empty($userData[0]['email_address'])&&!empty($userData[0]['username'])) {
+        self::send_location_allocation_email($userData[0]['username'],$options['allocatedLocationEmailSubject'],$options['allocatedLocationEmailMessage'],$userData[0]['email_address'],$locationData[0]['name']);
+      } else {
+        return watchdog('iform', 'Location signup email not sent as not all the parameters were supplied');
+      }   
+    }
+  }
+  
+  /*
+   * Optionally send email to user when location is assigned to them
+   */
+  private static function send_location_allocation_email($username,$subject,$message,$emailTo,$locationName) {
+    //Replacements for the person's username and the location name tags in the message with the real location and person name.
+    $message = str_replace("{username}", $username, $message);
+    $message = str_replace("{location_name}", $locationName, $message);
+    if (!empty(variable_get('site_mail', '')))
+      $emailFrom=variable_get('site_mail', '');
+    if (!empty($emailFrom)) {
+      $sent = mail($emailTo, $subject, wordwrap($message, 70),             
+          'From: '. $emailFrom . PHP_EOL .
+          'Reply-To: '. $emailFrom.
+          'Return-Path: '. $emailFrom);
+    } else {
+      $sent = mail($emailTo, $subject, wordwrap($message, 70));
+    }
+    if ($sent) {
+      watchdog('iform', 'Location signup email sent to '.$username.' '.$emailTo);
+    } else {
+      watchdog('iform', 'Location signup failed to '.$username.' '.$emailTo);
+    }
+  }
+  
   //The map pages uses node specific javascript that is very similar to the javascript functions found in
   //add_locations_to_user in this file (we couldn't call this code for re-use).
   //Use a simple function to supply the required indiciaData for that node specific javascript
   public static function supply_indicia_data_to_map_square_allocator($auth, $args, $tabalias, $options, $path) {
+    global $user;
     data_entry_helper::$js_read_tokens = $auth['read'];
     if (function_exists('hostsite_get_user_field')) {
       data_entry_helper::$javascript.="
@@ -1568,13 +1641,14 @@ class extension_splash_extensions {
       $RolesExemptFromApproval=explode(',',$options['rolesExemptFromApproval']);      
     else 
       $RolesExemptFromApproval=array(); 
-    //See if any of the user's roles are in the exempt list.
+    //See if any of the user's roles are in the exempt list, if they are then set the updated_by_id on the person_attribute_value
+    //to the system id, as this will bypass the approval system required for squares.
     foreach ($RolesExemptFromApproval as $exemptRole) {
       foreach ($user->roles as $userRole) {
-        if ($exemptRole===$userRole)
-          $updatedBySystem = ',"updated_by_id":1'; 
-            data_entry_helper::$javascript.="
-        indiciaData.updatedBySystem='".$updatedBySystem."';\n";
+        if ($exemptRole===$userRole) {
+          $updatedBySystem = '1'; 
+          data_entry_helper::$javascript.="indiciaData.updatedBySystem='".$updatedBySystem."';\n";
+        }
       }
     }
   }
@@ -1613,5 +1687,22 @@ class extension_splash_extensions {
         context_sensitive_instructions();
       });
       ";
+  }
+  
+  /*
+   * Sensitive plots are no longer going to be used. Hide the existing checkbox and display a warning
+   * if there is an existing sensitive plot (as these will remain, but can no longer be altered.
+   */
+  public static function disable_sensitive_plot_box($auth, $args, $tabAlias, $options) {
+    if (!empty($options['sensitiveAttrId'])) {
+      data_entry_helper::$javascript .= "
+      $(window).load(function() {
+        if (!$('#locAttr\\\\:".$options['sensitiveAttrId']."').is(':checked')) {
+          $('#no-plot-test').remove();
+        }
+        $('#ctrl-wrap-locAttr-".$options['sensitiveAttrId']."').remove()
+      });\n";
+      return '<div id="no-plot-test" style="color:red">This plot has been marked as sensitive</div><br>';
+    }
   }
 }
