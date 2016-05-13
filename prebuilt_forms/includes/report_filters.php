@@ -676,6 +676,8 @@ class filter_source extends filter_base {
  *     your list of taxon groups in the user account), my-locality (uses your recording locality from the user account),
  *     my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records, queried-records,
  *     answered-records, accepted-records, not-accepted-records.
+ *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard filter
+ *     user interface.
  * @param integer $website_id The current website's warehouse ID.
  * @param string $hiddenStuff Output parameter which will contain the hidden popup HTML that will be shown
  * using fancybox during filter editing. Should be appended AFTER any form element on the page as nested forms are not allowed.
@@ -904,7 +906,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $r .= '<div id="filter-panes">';
   $filters = array();
-  if ($options['entity']==='occurrence') {
+  if(isset($options['generateFilterListCallback'])) {
+    $filters = call_user_func($options['generateFilterListCallback'], $options['entity']);
+  } else if ($options['entity']==='occurrence') {
     $filters = array(
       'filter_what'=>new filter_what(),
       'filter_where'=>new filter_where(),
