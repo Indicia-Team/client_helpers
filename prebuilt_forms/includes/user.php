@@ -125,15 +125,22 @@ function apply_user_replacements($text) {
     foreach($matches[1] as $profileField) {
       // got a request for a user profile field, so copy it's value across into the report parameters
       $fieldName = preg_replace('/^profile_/', '', $profileField);
+      // split off any field qualifier for vocabulary objects
+      $parts = explode(':',$fieldName);
+      $fieldName = $parts[0];
+      $objectField = count($parts)>1 ? $parts[1] : 'tid';
       $value = hostsite_get_user_field($fieldName);
       if ($value) {
         // unserialise the data if it is serialised, e.g. when using profile_checkboxes to store a list of values.
-        $value = @unserialize($value);
+        $unserialisedValue = @unserialize($value);
         // arrays are returned as a comma separated list
-        if (is_array($value))
-          $value = implode(',',$value);
-        else 
-          $value = $value ? $value : hostsite_get_user_field($fieldName);
+        if (is_array($unserialisedValue))
+          $value = implode(',',$unserialisedValue);
+        else if(is_object($value)) { // if the field is a vocabulary item, then $value is a object, unserialize gives null
+          $value = get_object_vars($value);
+          $value = $value[$objectField];
+        } else
+          $value = $unserialisedValue ? $unserialisedValue : $value;
         // nulls must be passed as empty string params.
         $value = ($value===null ? '' : $value);
       } else
