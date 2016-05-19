@@ -195,7 +195,9 @@ class iform_group_edit {
             'explicit' => 'Explicit. Records must be deliberately posted into the group.',
             'choose' => 'Let the group administrator decide this'
         ),
-        'default' => 'choose'
+        'default' => 'choose',
+        'required' => false,
+        'blankText' => 'All matching filter. All data matching the filter are included on reports.'
       ),
       array(
         'name' => 'filter_types',
