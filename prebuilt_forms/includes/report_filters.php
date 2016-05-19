@@ -1040,6 +1040,10 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   foreach($options as $key=>$value) {
     if (substr($key, 0, 7)==='filter-') {
+      // The parameter value might be json encoded
+      $decoded=json_decode($value, TRUE);
+      // if not json then need to use option value as it is
+      $value = $decoded ? $decoded : $value;
       $optionParams[substr($key, 7)]=$value;
     }
   }

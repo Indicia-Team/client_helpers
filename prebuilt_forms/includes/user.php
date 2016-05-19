@@ -121,7 +121,7 @@ function apply_user_replacements($text) {
   // Do basic replacements and trim the data
   $text=trim(str_replace($replace, $replaceWith, $text));  
   // Look for any profile field replacments
-  if (preg_match_all('/{([^}]*)}/', $text, $matches) && function_exists('hostsite_get_user_field')) {
+  if (preg_match_all('/{([a-zA-Z0-9\-_]+)}/', $text, $matches) && function_exists('hostsite_get_user_field')) {
     foreach($matches[1] as $profileField) {
       // got a request for a user profile field, so copy it's value across into the report parameters
       $fieldName = preg_replace('/^profile_/', '', $profileField);
@@ -142,7 +142,7 @@ function apply_user_replacements($text) {
     }
   }
   // Look for any permission replacements
-  if (preg_match_all('/\[([^\]]*)\]/', $text, $matches)) {
+  if (preg_match_all('/\[([a-zA-Z0-9\-_ ]+)\]/', $text, $matches)) {
     foreach($matches[1] as $permission) {
       $value = hostsite_user_has_permission($permission) ? '1' : '0';
       $text=str_replace("[$permission]", $value, $text);
