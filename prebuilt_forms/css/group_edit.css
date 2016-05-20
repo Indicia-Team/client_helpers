@@ -4,20 +4,11 @@
 #complex-attr-grid-group-pages {
   table-layout: fixed;
 }
-#complex-attr-grid-group-pages .complex-attr-grid-col0 {
+#complex-attr-grid-group-pages th {
   padding: 0;
-  width: 45%;
-}
-#complex-attr-grid-group-pages .complex-attr-grid-col1 {
-  padding: 0;
-  width: 20%;
-}
-#complex-attr-grid-group-pages .complex-attr-grid-col2 {
-  padding: 0;
-  width: 30%;
 }
 #complex-attr-grid-group-pages .complex-attr-grid-col-del {
-  /* Leave the final column to take up remaining width */
+  width: 20px;
 }
 
 #complex-attr-grid-group-pages input, 
