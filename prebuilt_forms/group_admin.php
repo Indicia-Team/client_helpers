@@ -89,7 +89,15 @@ class iform_group_admin {
         'description'=>'Path to the Drupal page which my groups are listed on.',
         'type'=>'text_input',
         'required'=>false
-      ), 
+      ),
+      array(
+        'name'=>'include_page_access_levels',
+        'caption'=>'Include page access level controls',
+        'description'=>'Include the option to specify the access level for the member when viewing restricted group pages?',
+        'type'=>'checkbox',
+        'default'=>FALSE,
+        'required'=>FALSE
+      ),
     );
   }
   
@@ -156,17 +164,53 @@ class iform_group_admin {
         'caption'=>'Remove from group',
         'javascript'=>'removeMember({groups_user_id},\'{name}\');',
       );
+    // Allow change of user access level page setup to allow this.
+    if (!empty($args['include_page_access_levels'])) {
+      $actions[] = array(
+        'caption'=>lang::get('change access level'),
+        'javascript'=>'changeAccessLevel({groups_user_id}, \'{access_level}\');'
+      );
+    }
+    $columns = array(
+      array(
+        'display'=>lang::get('Actions'),
+        'actions'=>$actions
+      )
+    );
+    if (empty($args['include_page_access_levels'])) {
+      $columns[] = array('fieldname'=>'access_level', 'visible'=>false);
+    }
     $r = report_helper::report_grid(array(
       'dataSource'=>'library/groups/group_members',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('group_id'=>$group['id']),
-      'columns'=>array(
-        array(
-          'display'=>lang::get('Actions'),
-          'actions'=>$actions
-        )
-      )
+      'columns'=>$columns
     ));
+    $r .= '<div style="display: none"><div id="dialog-form" title="Create new user">
+  <p>The user will be able to access pages with the folloing access level or lower.</p>
+  <form>
+    <fieldset>
+      <label for="update_access_level_to">Update access level to</label>
+      <select id="updated_access_level">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+      <input type="hidden" id="updated_access_level_user_id" />
+
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
+</div></div>';
     return $r;
   }
   
