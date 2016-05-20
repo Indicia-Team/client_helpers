@@ -149,6 +149,14 @@ class iform_group_edit {
         'required'=>FALSE
       ),
       array(
+        'name'=>'include_page_access_levels',
+        'caption'=>'Include page access level controls',
+        'description'=>'Include the option to specify the access level required for a user to view a group page?',
+        'type'=>'checkbox',
+        'default'=>FALSE,
+        'required'=>FALSE
+      ),
+      array(
         'name'=>'include_private_records',
         'caption'=>'Include private records field',
         'description'=>'Include the optional field for witholding records from release?',
@@ -275,6 +283,7 @@ class iform_group_edit {
       'include_sensitivity_controls'=>true,
       'include_report_filter'=>true,
       'include_linked_pages'=>true,
+      'include_page_access_levels'=>false,
       'include_private_records'=>false,
       'include_administrators'=>false,
       'include_members'=>false,
@@ -449,28 +458,42 @@ $('#entry_form').submit(function() {
       }
       else
         $default = self::getGroupPages($auth);
+      $columns = array(
+        array(
+          'label' => 'Form',
+          'datatype' => 'lookup',
+          'lookupValues' => $pages,
+          'validation' => array('unique')
+        ), array(
+          'label' => 'Link caption',
+          'datatype' => 'text'
+        ), array(
+          'label' => 'Who can access the page?',
+          'datatype' => 'lookup',
+          'lookupValues' => array(
+            '' => lang::get('Available to anyone'),
+            'f' => lang::get('Available only to group members'),
+            't' => lang::get('Available only to group admins'),
+          ),
+          'default' => 'f'
+        )
+      );
+      if ($args['include_page_access_levels'])
+        $values = array(
+          '0' => lang::get('0 - no additional access level required')
+        );
+        for ($i=1; $i<=10; $i++) {
+          $values[$i] = lang::get('Requires access level {1} or higher', $i);
+        }
+        $columns[] = array(
+          'label' => 'Additional minimum page access level',
+          'datatype' => 'lookup',
+          'lookupValues' => $values,
+          'default' => '0'
+        );
       $r .= data_entry_helper::complex_attr_grid(array(
         'fieldname' => 'group:pages[]',
-        'columns' => array(
-          array(
-            'label' => 'Form',
-            'datatype' => 'lookup',
-            'lookupValues' => $pages,
-            'validation' => array('unique')
-          ), array(
-            'label' => 'Link caption',
-            'datatype' => 'text'
-          ), array(
-            'label' => 'Who can access the page?',
-            'datatype' => 'lookup',
-            'lookupValues' => array(
-              '' => lang::get('Available to anyone'),
-              'f' => lang::get('Available only to group members'),
-              't' => lang::get('Available only to group admins'),
-            ),
-            'default' => 'f'
-          )
-        ), 
+        'columns' => $columns,
         'default' => $default,
         'defaultRows' => min(3, count($pages))
       ));
@@ -490,7 +513,9 @@ $('#entry_form').submit(function() {
     ));
     $r = array();
     foreach ($pages as $page) {
-      $r[] = array('fieldname' => "group+:pages:$page[id]", 'default'=>json_encode(array($page['path'], $page['caption'], $page['administrator'])));
+      $r[] = array('fieldname' => "group+:pages:$page[id]", 'default'=>json_encode(
+        array($page['path'], $page['caption'], $page['administrator'], $page['access_level'])
+      ));
     }
     return $r;
   }
@@ -745,10 +770,13 @@ $('#entry_form').submit(function() {
           $caption=empty($values[$base.'1']) ? $tokens[1] : $values[$base.'1'];
           $administrator=explode(':',$values[$base.'2']);
           $administrator = empty($administrator) ? null : $administrator[0];
+          $access_level=explode(':',$values[$base.'3']);
+          $access_level = empty($access_level) ? null : $access_level[0];
           $page = array(
             'caption' => $caption,
             'path' => $path,
-            'administrator' => $administrator
+            'administrator' => $administrator,
+            'access_level' => $access_level
           );
         }
         // if existing group page, hook up to the id
