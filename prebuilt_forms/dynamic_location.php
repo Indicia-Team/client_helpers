@@ -434,7 +434,8 @@ mapInitialisationHooks.push(function(mapdiv) {
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>"destination=node/$nid")).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.
+          hostsite_get_url('user/login', array('destination'=>"node/$nid")).'">login</a> to the website.');
     }
     
     // get the Indicia User ID attribute so we can filter the grid to this user
@@ -473,7 +474,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     ));    
     $r .= '<form>';    
     $r .= '<input type="button" value="' . lang::get('LANG_Add_Location') . '" ' .
-            'onclick="window.location.href=\'' . url('node/'.($nid->nid), array('query' => array('new' => '1'))) . '\'">';
+            'onclick="window.location.href=\'' . hostsite_get_url('node/'.($nid->nid), array('new' => '1')) . '\'">';
     $r .= '</form>';
     return $r;
   }
