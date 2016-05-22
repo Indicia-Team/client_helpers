@@ -433,7 +433,7 @@ class iform_easy_download_2 {
       $r .= '<input type="hidden" name="format" value="'.array_pop($keys).'"/>';
     }
     $r .= '<input type="submit" value="'.lang::get('Download').'"/></form>';
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/easy_download_2')."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/easy_download_2')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript.="setAvailableDownloadFilters();\n";
     return $r;

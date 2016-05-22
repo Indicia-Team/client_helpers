@@ -2113,7 +2113,7 @@ else
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination'=>"node/$nid"))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.hostsite_get_url('user/login', array('destination'=>"node/$nid")).'">login</a> to the website.');
     }
     $filter = array();
     // Get the CMS User ID attribute so we can filter the grid to this user
@@ -2159,10 +2159,10 @@ else
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1', 'gridmode' => '1'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.hostsite_get_url('node/'.$nid, array('new' => '1')).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.hostsite_get_url('node/'.$nid, array('new' => '1', 'gridmode' => '1')).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.hostsite_get_url('node/'.$nid, array('new' => '1')).'\'">';
     }
     $r .= '</form>';
     return $r;
