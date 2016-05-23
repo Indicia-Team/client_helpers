@@ -167,6 +167,31 @@ class iform_group_admin {
         )
       )
     ));
+    $r .= '<div style="display: none"><div id="dialog-form" title="Change access level">
+  <p>The user will be able to access pages with the folloing access level or lower.</p>
+  <form>
+    <fieldset>
+      <label for="update_access_level_to">Update access level to</label>
+      <select id="updated_access_level">
+        <option value="0">0</option>
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+      </select>
+      <input type="hidden" id="updated_access_level_user_id" />
+
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
+</div></div>';
     return $r;
   }
   
