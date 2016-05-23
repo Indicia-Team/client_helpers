@@ -46,6 +46,7 @@ class iform_easy_download_2 {
       'category' => 'Utilities',
       'description' => 'A page for quick and easy download of the data you have access to. Improved integration with record sharing and permissions.',
       'helpLink' => 'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/easy-download.html',
+      'supportsGroups'=>true,
       'recommended' => true
     );
   }
@@ -503,6 +504,9 @@ class iform_easy_download_2 {
       'user_id'=>hostsite_get_user_field('indicia_user_id'),
       'view' => 'detail'
     );
+    // group page integration
+    if (!empty($_GET['group_id']))
+      $params['group_id']=$_GET['group_id'];
     if (!empty($args['download_group_types'])) {
       $params['query'] = json_encode(array('in'=>array(
         'group_type_id'=>explode(',', $args['download_group_types'])
