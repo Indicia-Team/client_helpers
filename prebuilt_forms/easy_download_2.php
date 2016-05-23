@@ -58,6 +58,14 @@ class iform_easy_download_2 {
   public static function get_parameters() {   
     return array(
       array(
+        'name'=>'download_my_records',
+        'caption'=>'Enable downloading of my records',
+        'description'=>'Allow a user to download their own records.',
+        'type'=>'checkbox',
+        'required'=>false,
+        'default'=>true
+      ),
+      array(
         'name'=>'download_all_users_reporting',
         'caption'=>'Download all users for reporting permission',
         'description'=>'Provide the name of the permission required to allow download of all records for reporting (as opposed to just my records).',
@@ -67,11 +75,19 @@ class iform_easy_download_2 {
       ),
       array(
         'name'=>'download_administered_groups',
-        'caption'=>'Download all group records permission',
+        'caption'=>'Download administered group records permission',
         'description'=>'Provide the name of the permission required to allow download of records from recording groups you are an administrator of.',
         'type'=>'text_input',
         'required'=>false,
         'default'=>'indicia data admin'
+      ),
+      array(
+        'name'=>'download_member_groups',
+        'caption'=>'Download any group records permission',
+        'description'=>'Provide the name of the permission required to allow download of records from recording groups you are a member of.',
+        'type'=>'text_input',
+        'required'=>false,
+        'default'=>''
       ),
       array(
         'name'=>'download_group_types',
@@ -204,6 +220,7 @@ class iform_easy_download_2 {
         'valueField'=>'id',
         'captionField'=>'title',
         'sharing'=>'data_flow',
+        'blankText'=>'<allow user to choose>',
         'siteSpecific'=>true
       ),
       array(
@@ -321,7 +338,9 @@ class iform_easy_download_2 {
   public static function get_form($args, $nid, $response=null) {
     $conn = iform_get_connection_details($nid);
     $args = array_merge(array(
+      'download_my_records' => true,
       'download_administered_groups' => 'indicia data admin',
+      'download_member_groups' => '',
       'download_group_types' => ''
     ), $args);
     data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
@@ -455,7 +474,8 @@ class iform_easy_download_2 {
             }
           }
           if ($sharingTypeCode === 'R') {
-            $r['R my'] = lang::get('My records for reporting');
+            if ($args['download_my_records'])
+              $r['R my'] = lang::get('My records for reporting');
             if (hostsite_user_has_permission($args['download_all_users_reporting'])) {
               $r['R'] = lang::get('All records for reporting');
             }
@@ -478,6 +498,8 @@ class iform_easy_download_2 {
     }
     $canDownloadAdministeredGroups = !empty($args['download_administered_groups'])
         && hostsite_user_has_permission($args['download_administered_groups']);
+    $canDownloadMemberGroups = !empty($args['download_member_groups'])
+      && hostsite_user_has_permission($args['download_member_groups']);
     $params = array(
       'user_id'=>hostsite_get_user_field('indicia_user_id'),
       'view' => 'detail'
@@ -496,9 +518,10 @@ class iform_easy_download_2 {
       'extraParams'=>data_entry_helper::$js_read_tokens + $params
     ));
     foreach ($groups as $group) {
-      if ($canDownloadAdministeredGroups && $group['administrator']==='t')
+      if (($canDownloadAdministeredGroups && $group['administrator']==='t') || $canDownloadMemberGroups)
         $r["R group $group[group_id]"] = lang::get('All records for {1}', $group['group_title']);
-      $r["R group my $group[group_id]"] = lang::get('My records contributed to {1}', $group['group_title']);
+      if ($args['download_my_records'])
+        $r["R group my $group[group_id]"] = lang::get('My records contributed to {1}', $group['group_title']);
     }
     return $r;
   }
