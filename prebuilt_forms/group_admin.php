@@ -186,7 +186,7 @@ class iform_group_admin {
       'extraParams'=>array('group_id'=>$group['id']),
       'columns'=>$columns
     ));
-    $r .= '<div style="display: none"><div id="dialog-form" title="Create new user">
+    $r .= '<div style="display: none"><div id="dialog-form" title="Change access level">
   <p>The user will be able to access pages with the folloing access level or lower.</p>
   <form>
     <fieldset>
