@@ -5747,7 +5747,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     }
     $options['items']=$items;
     // We don't want to output for="" in the top label, as it is not directly associated to a button
-    $options['labelTemplate'] = 'toplabel';
+    $options['labelTemplate'] = (isset($options['label']) && substr($options['label'], -1) == '?' ? 'toplabelNoColon' : 'toplabel');
     if (isset($itemClass) && !empty($itemClass) && strpos($itemClass, 'required')!==false) {
       $options['suffixTemplate'] = 'requiredsuffix';
     }
@@ -5850,7 +5850,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     // apply defaults
     $options = array_merge(array(
       'style' => 'tabs',
-      'progressBar' => false
+      'progressBar' => false,
+      'progressBarOptions' => array()
     ), $options);
     if (empty($options['navButtons']))
       $options['navButtons'] = $options['style']==='wizard';
@@ -5902,7 +5903,8 @@ if (errors$uniq.length>0) {
     // add a progress bar to indicate how many steps are complete in the wizard
     if (isset($options['progressBar']) && $options['progressBar']==true) {
       data_entry_helper::add_resource('wizardprogress');
-      data_entry_helper::$javascript .= "wizardProgressIndicator({divId:'$divId'});\n";
+      $progressBarOptions = array_merge(array('divId' => $divId), $options['progressBarOptions']);
+      data_entry_helper::$javascript .= "wizardProgressIndicator(".json_encode($progressBarOptions).");\n";
     } else {
       data_entry_helper::add_resource('tabs');
     }
