@@ -408,7 +408,10 @@ var mapTabHandler = function(event, ui) {
     if (typeof indiciaData.initialBounds !== "undefined") {
       indiciaFns.zoomToBounds(indiciaData.mapdiv, indiciaData.initialBounds);
       delete indiciaData.initialBounds;
-    }
+    } else
+	  // Sometimes the map is not resized : googlemaps are too optimised and don't redraw with updateSize above.
+      if(typeof indiciaData.mapdiv.map.baseLayer.onMapResize !== "undefined")
+      	indiciaData.mapdiv.map.baseLayer.onMapResize();
   }
 }
 indiciaFns.bindTabsActivate($($('#$options[tabDiv]').parent()), mapTabHandler);
