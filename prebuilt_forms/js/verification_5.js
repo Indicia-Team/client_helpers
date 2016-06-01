@@ -364,7 +364,8 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       if (email.type === 'recordCheck') {
         // ensure media are loaded
         $.ajax({
-          url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrence_id,
+          url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep +
+            'occurrence_id=' + occurrence_id + '&sample_id=' + currRec.extra.sample_id,
           async: false,
           dataType: 'json',
           success: function (response) {
