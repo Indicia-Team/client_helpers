@@ -1,7 +1,9 @@
+#species-hints-outer {
+  display: none;
+}
+
 #species-hints {
   width: 100%;
-  height: 75px;
-  overflow: auto;
   border: solid silver 1px;
   font-size: 14px;
   background-color: #f6f2d6;
