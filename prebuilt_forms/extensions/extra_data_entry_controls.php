@@ -48,7 +48,7 @@ class extension_extra_data_entry_controls {
     // we swap the input ID for the fieldname so that the visible control contains the text value to save
     // if not looking up a known person. The fieldname gets assigned to the hidden control which only
     // gets used after a lookup operation.
-    $options['fieldname'] = "$options[fieldname]-lookup";
+    $options['fieldname'] = "$options[fieldname]:lookup";
     return data_entry_helper::autocomplete($options);
   }
 
@@ -121,7 +121,7 @@ class extension_extra_data_entry_controls {
     }
     if (!empty($options['copy_attributes']) && preg_match('/^\d+(?:,\d+)*$/', $options['copy_attributes'])) {
       $r .= data_entry_helper::hidden_text(array(
-        'fieldname' => 'association_copy_attributes',
+        'fieldname' => "association_copy_attributes:$index" ,
         'default' => $options['copy_attributes']
       ));
     }
@@ -154,8 +154,8 @@ class extension_extra_data_entry_controls {
       return;
     // clone and clean up the main species record by removing unwanted attributes and media
     $copiedAttrs = array();
-    if (!empty($values['association_copy_attributes']))
-      $copiedAttrs = explode(',', $values['association_copy_attributes']);
+    if (!empty($values["association_copy_attributes:$index"]))
+      $copiedAttrs = explode(',', $values["association_copy_attributes:$index"]);
     $assoc = array_merge($s_array[0]['subModels'][0]);
     foreach ($assoc['model']['fields'] as $field => $value) {
       if (substr($field, 0, 8)==='occAttr:' && !in_array(substr($field, 8), $copiedAttrs))
