@@ -76,7 +76,6 @@ class iform_group_join {
       return self::abort('Please ensure that you\'ve filled in your surname on your user profile before joining a group.', $args);
     if (empty($_GET['group_id']))
       return self::abort('This form must be called with a group_id in the URL parameters.', $args);
-    $r = '';
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $group = data_entry_helper::get_population_data(array(
       'table'=>'group',
@@ -101,6 +100,8 @@ class iform_group_join {
           $data = array('groups_user:id' => $existing[0]['id'], 'groups_user:pending' => 'f');
           $wrap = submission_builder::wrap($data, 'groups_user');
           $r = data_entry_helper::forward_post_to('groups_user', $wrap, $auth['write_tokens']);
+          if (!isset($r['success']))
+            return self::abort('An error occurred whilst trying to update your group membership.', $args);
           return self::success($auth, $group, $args);
         } else
           return self::abort("You've already got a membership request for $group[title] pending approval.", $args);

@@ -348,7 +348,7 @@ class iform_my_dot_map {
         $r .= "<tbody>\n";
         foreach ($occurrence as $record) {
           $r .= '<tr class="biota"><td>'.$record['taxon'].'</td><td class="binomial"><em>'.$record['preferred_taxon'].'</em></td><td>'
-              .$record['abundance'].'</td><td>'.$record['date'].'</td><td>'.$record['entered_sref'].'</td>'.$record['comment']."</td><td></tr>\n";
+              .$record['abundance'].'</td><td>'.$record['date'].'</td><td>'.$record['entered_sref'].'</td><td>'.$record['comment']."</td></tr>\n";
         }
         $r .= "</tbody></table>\n";
       }

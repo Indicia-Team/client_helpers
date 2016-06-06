@@ -676,6 +676,8 @@ class filter_source extends filter_base {
  *     your list of taxon groups in the user account), my-locality (uses your recording locality from the user account),
  *     my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records, queried-records,
  *     answered-records, accepted-records, not-accepted-records.
+ *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard filter
+ *     user interface.
  * @param integer $website_id The current website's warehouse ID.
  * @param string $hiddenStuff Output parameter which will contain the hidden popup HTML that will be shown
  * using fancybox during filter editing. Should be appended AFTER any form element on the page as nested forms are not allowed.
@@ -874,7 +876,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   if ($options['allowLoad']) {
     $r .= '<div class="header ui-toolbar ui-widget-header ui-helper-clearfix"><div><span id="active-filter-label">'.
-        lang::get('New report') . '</span></div><span class="changed" style="display:none" title="' .
+        '</span></div><span class="changed" style="display:none" title="' .
         lang::get('This filter has been changed') . '">*</span>';
     $r .= '<div>';
     if ($contexts) {
@@ -904,7 +906,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $r .= '<div id="filter-panes">';
   $filters = array();
-  if ($options['entity']==='occurrence') {
+  if(isset($options['generateFilterListCallback'])) {
+    $filters = call_user_func($options['generateFilterListCallback'], $options['entity']);
+  } else if ($options['entity']==='occurrence') {
     $filters = array(
       'filter_what'=>new filter_what(),
       'filter_where'=>new filter_where(),
@@ -1009,7 +1013,6 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $r .= '</div>';
   report_helper::$javascript .= "indiciaData.lang.CreateAFilter='".lang::get('Create a filter')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ModifyFilter='".lang::get('Modify filter')."';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterReport='".lang::get('New report')."';\n";
   report_helper::$javascript .= "indiciaData.lang.FilterSaved='".lang::get('The filter has been saved')."';\n";
   report_helper::$javascript .= "indiciaData.lang.FilterDeleted='".lang::get('The filter has been deleted')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ConfirmFilterChangedLoad='".lang::get('Do you want to load the selected filter and lose your current changes?')."';\n";
@@ -1041,6 +1044,10 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   foreach($options as $key=>$value) {
     if (substr($key, 0, 7)==='filter-') {
+      // The parameter value might be json encoded
+      $decoded=json_decode($value, TRUE);
+      // if not json then need to use option value as it is
+      $value = $decoded ? $decoded : $value;
       $optionParams[substr($key, 7)]=$value;
     }
   }

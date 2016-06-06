@@ -197,7 +197,7 @@ class report_helper extends helper_base {
   *  - visible: true or false, defaults to true
   *  - responsive-hide: an array, keyed by breakpoint name, with boolean values  
   *      to indicate whether the column will be hidden when the breakpoint
-  *      condition is met. Only takes effect if the 'responsive'option is set.
+  *      condition is met. Only takes effect if the 'responsiveOpts'option is set.
   *  - template: allows you to create columns that contain dynamic content using a template, rather than just the output
   *      of a field. The template text can contain fieldnames in braces, which will be replaced by the respective field values.
   *      Add -escape-quote or -escape-dblquote to the fieldname for quote escaping, or -escape-htmlquote/-escape-htmldblquote
@@ -735,21 +735,12 @@ $('.update-input').focus(function(evt) {
         // Therefore, create a new function and append any pre-existing callback.
         // Note, '-' is not allowed in JavaScript identifiers.
         $callback = 'callback_' . str_replace('-', '_', $options['id']);
-        if(empty($options['callback'])) {
-          // The callback is not currently used.
-          self::$javascript .= "
+        // create JS call to existing callback if it exists
+        $callToCallback = empty($options['callback']) ? '' : "  window['$options[callback]']();\n";
+        self::$javascript .= "
 window['$callback'] = function() {
-  jQuery('#{$options['id']}').find('table').trigger('footable_redraw');
-}";        
-        }
-        else {
-          // A callback has been specified so append to footable callback.
-          self::$javascript .= "
-window['$callback'] = function() {
-  jQuery('#{$options['id']}').find('table').trigger('footable_redraw');
-  window[{$options['callback']}]();
-}";        
-        }
+  jQuery('#$options[id]').find('table').trigger('footable_redraw');
+$callToCallback}";
         // Store the callback name to pass to jquery.reportgrid.js.
         $options['callback'] = $callback;
       }
@@ -2343,6 +2334,8 @@ if (typeof mapSettingsHooks!=='undefined') {
       // skip any actions which are marked as invisible for this row.
       if (isset($action['visibility_field']) && $row[$action['visibility_field']]==='f')
         continue;
+      if (isset($action['permission']) && !hostsite_user_has_permission($action['permission']))
+        continue;
       if (isset($action['url'])) {
         // Catch lazy cases where the URL does not contain the rootFolder so assumes a relative path
         if ( strcasecmp(substr($action['url'], 0, 12), '{rootfolder}') !== 0 && 
@@ -2375,7 +2368,7 @@ if (typeof mapSettingsHooks!=='undefined') {
         // merge field value replacements into the URL
         $actionUrl = self::mergeParamsIntoTemplate($row, $action['url'], true);
         // merge field value replacements into the URL parameters
-        if (count($action['urlParams'])>0) {
+        if (array_key_exists('urlParams', $action) && count($action['urlParams'])>0) {
           $actionUrl .= (strpos($actionUrl, '?')===false) ? '?' : '&';
           $actionUrl .= self::mergeParamsIntoTemplate($row, self::array_to_query_string($action['urlParams']), true);
         }

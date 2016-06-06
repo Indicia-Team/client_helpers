@@ -84,14 +84,6 @@ class iform_group_admin {
         'required'=>false
       ),
       array(
-        'name'=>'admin_role_name',
-        'caption'=>'Administrator role name',
-        'description'=>'On screen name to give to the administrator role (e.g. mentor).',
-        'type'=>'string',
-        'group' => 'Other IForm Parameters',
-        'required'=>false
-      ),
-      array(
         'name'=>'groups_page_path',
         'caption'=>'Path to main groups page',
         'description'=>'Path to the Drupal page which my groups are listed on.',

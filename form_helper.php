@@ -123,7 +123,10 @@ class form_helper extends helper_base {
         'label' => lang::get('Warehouse URL'),
         'fieldname' => 'base_url',
         'helpText' => lang::get('Enter the URL of the warehouse you are using if you want to override the site default. ' .
-            'Include the trailing slash, e.g. http://myexamplewarehouse.com/'),
+            'Include the trailing slash, e.g. http://myexamplewarehouse.com/. This option can be used to provide pages ' .
+            'that use an alternative reporting warehouse. It should not be used for recording as the user\'s warehouse ' .
+            'user ID will differ between the 2 warehouses, therefore any data posted to this warehouse will be associated ' .
+            'with the admin user account.'),
         'default' => isset($options['base_url']) ? $options['base_url'] : '',
         'class' => 'control-width-5'
       ));

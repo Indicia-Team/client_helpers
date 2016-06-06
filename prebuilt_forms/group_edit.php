@@ -195,7 +195,9 @@ class iform_group_edit {
             'explicit' => 'Explicit. Records must be deliberately posted into the group.',
             'choose' => 'Let the group administrator decide this'
         ),
-        'default' => 'choose'
+        'default' => 'choose',
+        'required' => false,
+        'blankText' => 'All matching filter. All data matching the filter are included on reports.'
       ),
       array(
         'name' => 'filter_types',
@@ -208,16 +210,24 @@ class iform_group_edit {
       array(
         'name' => 'indexed_location_type_ids',
         'caption'=>'Indexed location types',
-        'description'=>'Comma separated list of location type IDs that are available for selection as a filter boudary, where the location type is indexed.',
+        'description'=>'Comma separated list of location type IDs that are available for selection as a filter boundary, where the location type is indexed.',
         'type'=>'text_input',
         'required'=>FALSE
       ),
       array(
         'name' => 'other_location_type_ids',
         'caption'=>'Other location types',
-        'description'=>'Comma separated list of location type IDs that are available for selection as a filter boudary, where the location type is not indexed.',
+        'description'=>'Comma separated list of location type IDs that are available for selection as a filter boundary, where the location type is not indexed.',
         'type'=>'text_input',
         'required'=>FALSE
+      ),
+      array(
+        'name' => 'taxon_list_id',
+        'caption' => 'Taxon list ID',
+        'description' => 'If you need to override the default taxon list used on this site for the filter builder, ' .
+          'specify the ID here. This allows you to filter to species, higher taxa and families from the ' .
+          'alternative list',
+        'type' => 'text_input'
       ),
       array(
         'name' => 'default_linked_pages',
@@ -634,7 +644,7 @@ $('#entry_form').submit(function() {
         'fieldname'=>'groups_user:user_id',
         'label' => lang::get('Other {1} members', self::$groupType),
         'table'=>'user',
-        'captionField'=>'name_and_email',
+        'captionField'=>'person_name',
         'valueField'=>'id',
         'extraParams'=>$auth['read']+array('view'=>'detail'),
         'helpText'=>lang::get('LANG_Members_Field_Instruct'),
@@ -679,14 +689,17 @@ $('#entry_form').submit(function() {
       $r .= '<p>' . lang::get('LANG_Filter_Instruct', lang::get(self::$groupType), lang::get(self::$groupType . "'s")) . '</p>';
       $indexedLocationTypeIds =  array_map('intval', explode(',', $args['indexed_location_type_ids']));
       $otherLocationTypeIds =  array_map('intval', explode(',', $args['other_location_type_ids']));
-      $r .= report_filter_panel($auth['read'], array(
+      $options = array(
         'allowLoad'=>false,
         'allowSave' => false,
         'filterTypes' => $args['filter_types'],
         'embedInExistingForm' => true,
         'indexedLocationTypeIds' => $indexedLocationTypeIds,
         'otherLocationTypeIds' => $otherLocationTypeIds
-      ), $args['website_id'], $hiddenPopupDivs);
+      );
+      if (!empty($args['taxon_list_id']) && preg_match('/^\d+$/', trim($args['taxon_list_id'])))
+        $options['taxon_list_id'] = $args['taxon_list_id'];
+      $r .= report_filter_panel($auth['read'], $options, $args['website_id'], $hiddenPopupDivs);
       // fields to auto-create a filter record for this group's defined set of records
       $r .= data_entry_helper::hidden_text(array('fieldname'=>'filter:id'));
       $r .= '<input type="hidden" name="filter:title" id="filter-title-val"/>';
