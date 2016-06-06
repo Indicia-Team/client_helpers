@@ -1680,7 +1680,7 @@ $('#$escaped').change(function(e) {
                 }
                 //If there is a date value then we use the date field instead.
                 //This is because the vague date engine returns to this special field
-                if (item.value_date !== null)
+                if (typeof item.value_date !== 'undefined' && item.value_date !== null)
                   input.val(item.value_date);
                 //booleans need special treatment because checkboxes rely on using the
                 //'checked' attribute instead of using the value.
