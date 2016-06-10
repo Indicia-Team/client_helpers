@@ -488,7 +488,6 @@ idlist=';
     $r = '<div id="actions-less" class="buttons-row">';
     $r .= '<button type="button" id="btn-accepted" title="'.lang::get('Set to accepted').'"><img width="18" height="18" src="'.$imgPath.'nuvola/ok-16px.png"/></button>';
     $r .= '<button type="button" id="btn-notaccepted" title="'.lang::get('Set to not accepted').'"><img width="18" height="18" src="'.$imgPath.'nuvola/cancel-16px.png"/></button>';
-    // $r .= '<button type="button" id="btn-reject" title="'.lang::get('Reject').'"><img width="18" height="18" src="'.$imgPath.'nuvola/cancel-16px.png"/></button>';
     $r .= '</div>'; // action-less
     return $r;
   }
