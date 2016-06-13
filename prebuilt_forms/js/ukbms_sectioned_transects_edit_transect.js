@@ -154,7 +154,8 @@ updateTransectDetails = function(newNumSections) {
  */
 confirmSelectSection = function(section, doFeature, withCancel) {
   // continue to save if the route is either unchanged or user says no.
-  if(indiciaData.modifyFeature.active && indiciaData.modifyFeature.modified)
+  if(typeof indiciaData.modifyFeature !== "undefined" &&
+		  indiciaData.modifyFeature.active && indiciaData.modifyFeature.modified)
 	  indiciaData.routeChanged = true;
   if(indiciaData.routeChanged === true) {
     var buttons =  { 
@@ -228,12 +229,16 @@ selectSection = function(section, doFeature) {
   if(doFeature){
 	// Deactivate the controls if active and unselect previous route feature.
 	if (typeof indiciaData.mapdiv !== "undefined") {
-      indiciaData.navControl.deactivate();
-	  indiciaData.modifyFeature.deactivate();
-	  indiciaData.drawFeature.deactivate();
-	  indiciaData.selectFeature.deactivate();
-	  indiciaData.selectFeature.unselectAll();
-	  indiciaData.currentFeature = null;
+      indiciaData.navControl.deactivate(); // Nav control always exists
+      if(typeof indiciaData.modifyFeature !== "undefined")
+    	  indiciaData.modifyFeature.deactivate();
+      if(typeof indiciaData.drawFeature !== "undefined")
+    	  indiciaData.drawFeature.deactivate();
+      if(typeof indiciaData.selectFeature !== "undefined") {
+    	  indiciaData.selectFeature.deactivate();
+    	  indiciaData.selectFeature.unselectAll();
+      }
+      indiciaData.currentFeature = null;
 	  // if we click a new route: no feature yet, also no data!
 	  $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
 	      if (feature.attributes.section===section) {
@@ -241,23 +246,28 @@ selectSection = function(section, doFeature) {
 	      }
 	  });
 	  if (indiciaData.currentFeature === null) {
-	    indiciaData.drawFeature.activate();
+		  if(typeof indiciaData.drawFeature !== "undefined")
+	    	  indiciaData.drawFeature.activate();
 	  } else {
-	    indiciaData.modifyFeature.activate();
-        indiciaData.selectFeature.select(indiciaData.currentFeature);
+		  if(typeof indiciaData.modifyFeature !== "undefined")
+	    	  indiciaData.modifyFeature.activate();
+		  if(typeof indiciaData.selectFeature !== "undefined")
+	    	  indiciaData.selectFeature.select(indiciaData.currentFeature);
 	  }
     }
   } else { // doFeature = false implies that this has come from a map event. i.e. select of feature using select control
     // Deactivate the controls if active and unselect previous route feature.
     if (typeof indiciaData.mapdiv !== "undefined") {
-		  indiciaData.selectFeature.deactivate();
+    	  if(typeof indiciaData.selectFeature !== "undefined")
+	    	  indiciaData.selectFeature.deactivate();
 		  indiciaData.currentFeature = null;
 		  $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
 		      if (feature.attributes.section===section) {
 		    	  indiciaData.currentFeature = feature;
 		      }
 		  });
-		  indiciaData.modifyFeature.activate();
+		  if(typeof indiciaData.modifyFeature !== "undefined")
+	    	  indiciaData.modifyFeature.activate();
 	}
   }
   indiciaData.routeChanged = false;
@@ -375,13 +385,16 @@ insertSection = function(section) {
   updateTransectDetails(numSections+1);
 };
 
+var saveRouteDialog;
 
 saveRoute = function() {
     var current, oldSection = [];
 	// This saves the currently selected route aginst the currently selected section.
 	$('.save-route').addClass('waiting-button');
+
 	$('#section-details-tab').show();
     current = $('#section-select-route li.selected').html();          
+	saveRouteDialog = jQuery('<p>Saving the route data for section '+current+'.<br><span class="route-status">Saving Route...</span></p>').dialog({ title: "Save Route", buttons: { "Hide": function() { $(this).dialog('close'); }}});
     // Leave indiciaData.currentFeature selected
     // Prepare data to post the new or edited section to the db
     var data = {
@@ -452,7 +465,9 @@ saveRoute = function() {
         async: false // Synchronous due to method of working out current in success function
     });
     // Now update the parent with the total transect length
+    $('.route-status').empty().html('Updating total transect length...');
     updateTransectDetails(false);
+    saveRouteDialog.dialog('close');
 }
 
 $(document).ready(function() {
@@ -480,13 +495,13 @@ $(document).ready(function() {
           label.insertAfter(elementBefore);
           elem.addClass('ui-state-error');
         }
-        alert('The section information has NOT been saved. There are errors which require attention, and which have been highlighted - please correct them and re-save.');
+        jQuery('<p>The information for section '+current+' has NOT been saved. There are errors which require attention, and which have been highlighted - please correct them and re-save.</p>').dialog({ title: "Section Save Failed", buttons: { "OK": function() { $(this).dialog('close'); }}});
       } else {
         var current = $('#section-select li.selected').html();
         // store the Sref...
         indiciaData.sections[current].sref = $('#section-location-sref').val();
         indiciaData.sections[current].system = $('#section-location-system-select').val();
-        alert('The section information has been succesfully saved.');
+        jQuery('<p>The information for section '+current+' has been succesfully saved.</p>').dialog({ title: "Section Saved", buttons: { "OK": function() { $(this).dialog('close'); }}});
         indiciaData.sectionDetailsChanged = false;
       }
     }
@@ -589,40 +604,88 @@ $(document).ready(function() {
       function copy_over_transects()
       {
     	var copyFeatures = [];
-        $.each(div.map.editLayer.features, function(idx, elem){
-          if(typeof elem.attributes.section == "undefined"){
-        	  copyFeatures.push(elem);
+    	var removeFeatures = [];
+    	var oldFeatures = [];
+        var mainMapDiv = $('#map');
+        var routeMapDiv = $('#route-map');
+
+        mainMapDiv = mainMapDiv[0];
+        routeMapDiv = routeMapDiv[0];
+
+        // keep transect feature on route map upto date with main map: always copy from main.
+        // first remove all parent layer features.
+        $.each(routeMapDiv.map.parentLayer.features, function(idx, elem){ oldFeatures.push(elem); });
+        if(oldFeatures.length>0)
+        	routeMapDiv.map.parentLayer.removeFeatures(oldFeatures);
+        
+        // next remove edit layer transect feature if present.
+        $.each(routeMapDiv.map.editLayer.features, function(idx, elem){
+          // there may be route modification circle features
+          // main transect comes across as type clickpoint.
+          if(typeof elem.attributes.section === "undefined" && typeof elem.attributes.type !== "undefined" && elem.attributes.type === "clickPoint"){
+        	  removeFeatures.push(elem);
           }
         });
-        if(copyFeatures.length>0){
-          div.map.parentLayer.destroyFeatures();
-          div.map.editLayer.removeFeatures(copyFeatures);
-          div.map.parentLayer.addFeatures(copyFeatures);
-        }
+        if(removeFeatures.length>0)
+        	routeMapDiv.map.editLayer.removeFeatures(removeFeatures);
+ 
+        // finally copy from main map.
+        $.each(mainMapDiv.map.editLayer.features, function(idx, elem){
+            if(typeof elem.attributes.type !== "undefined" && elem.attributes.type === "clickPoint"){
+            	copyFeatures.push(elem.clone());
+            }
+        });
+        if(copyFeatures.length>0)
+        	routeMapDiv.map.parentLayer.addFeatures(copyFeatures);
+        else if(removeFeatures.length>0)
+        	routeMapDiv.map.parentLayer.addFeatures(removeFeatures);
+        else if(removeFeatures.length>0) // backup just in case
+        	routeMapDiv.map.parentLayer.addFeatures(oldFeatures);
       }
-      copy_over_transects();
-      indiciaFns.bindTabsActivate($('.ui-tabs'), function(event, ui) {
-        function _extendBounds(bounds, buffer) {
-            var dy = (bounds.top-bounds.bottom) * buffer;
-            var dx = (bounds.right-bounds.left) * buffer;
-            bounds.top = bounds.top + dy;
-            bounds.bottom = bounds.bottom - dy;
-            bounds.right = bounds.right + dx;
-            bounds.left = bounds.left - dx;
-            return bounds;
-        }
-
-        var div, target = (typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0]);
-        if((div = $('#'+target.id+' #route-map')).length > 0){
-          copy_over_transects();
-          div = div[0];
+      
+      function resetMainMap(div) {
+          div.map.updateSize();
+          if (typeof indiciaData.initialBounds !== "undefined") {
+            indiciaFns.zoomToBounds(div, indiciaData.initialBounds);
+            delete indiciaData.initialBounds;
+          } else if(typeof div.map.baseLayer.onMapResize !== "undefined")
+            div.map.baseLayer.onMapResize();    	  
+      }
+      
+      function resetRouteMap(div) {
+          function _extendBounds(bounds, buffer) {
+              var dy = (bounds.top-bounds.bottom) * buffer;
+              var dx = (bounds.right-bounds.left) * buffer;
+              bounds.top = bounds.top + dy;
+              bounds.bottom = bounds.bottom - dy;
+              bounds.right = bounds.right + dx;
+              bounds.left = bounds.left - dx;
+              return bounds;
+          }
+          
           // when the route map is initially created it is hidden, so is not rendered, and the calculations of the map size are wrong
           // (Width is 100 rather than 100%), so any initial zoom in to the transect by the map panel is wrong.
-          var bounds = div.map.parentLayer.getDataExtent();
-          if(div.map.editLayer.features.length>0)
+          div.map.updateSize();
+          var bounds = div.map.parentLayer.getDataExtent(); // this holds the transect
+          if(div.map.editLayer.features.length>0) // this holds the sections.
             bounds.extend(div.map.editLayer.getDataExtent());
           _extendBounds(bounds,div.settings.maxZoomBuffer);
           div.map.zoomToExtent(bounds);
+          if(typeof div.map.baseLayer.onMapResize !== "undefined")
+          	div.map.baseLayer.onMapResize();
+      }
+      copy_over_transects();
+      // Need to work around issue where standard mapTabHandler can only handle one map
+      indiciaFns.bindTabsActivate($('.ui-tabs'), function(event, ui) {
+        var div,
+            target = (typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0]);
+        if((div = $('#'+target.id+' #route-map')).length > 0){ // Your Route map is being displayed on this tab
+          copy_over_transects();
+          div = div[0]; // equivalent of indiciaData.mapdiv
+          resetRouteMap(div)
+        } else if ((div = $('#'+target.id+' #map')).length > 0){ // Main map is being displayed on this tab
+          div = div[0]; // equivalent of indiciaData.mapdiv
+          resetMainMap(div)
         }
       });
       // find the selectFeature control so we can interact with it later
@@ -649,7 +712,7 @@ $(document).ready(function() {
             indiciaData.navControl = control;
         }
       });
-      
+
       div.map.editLayer.style = null;
       var baseStyle = { strokeWidth: 4, strokeDashstyle: "dash" },
           defaultRule = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: "#0000FF"}, baseStyle) }),
@@ -681,11 +744,9 @@ $(document).ready(function() {
     		  f.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(section.geom), {section:'S'+idx.substr(1), type:"boundary"}));
       });
       div.map.editLayer.addFeatures(f);
+      resetRouteMap(div); // route map
       // select the first section
       selectSection('S1', true);
-      if (f.length>0) {
-        div.map.zoomToExtent(div.map.editLayer.getDataExtent());
-      }
 
       $('#map-toolbar-outer').append('<input class="save-route form-button right" type="button" value="Save Route">');
       $('.save-route').click(function(evt) {

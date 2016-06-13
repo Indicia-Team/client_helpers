@@ -457,6 +457,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     data_entry_helper::$javascript .= "indiciaData.defaultSectionGridRef = '".$settings['defaultSectionGridRef']."';\n";
     if ($settings['locationId'])
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
+    
     return $r;
   }
 
@@ -543,7 +544,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     $r .= data_entry_helper::sref_and_system(array(
       'fieldname' => 'location:centroid_sref',
       'geomFieldname' => 'location:centroid_geom',
-      'label' => 'Grid Ref.',
+      'label' => lang::get('Grid Ref.'),
       'systems' => $systems,
       'class' => 'required',
       'helpText' => lang::get('Click on the map to set the central grid reference.'),
@@ -567,14 +568,19 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     		}
     		data_entry_helper::$entity_to_load['location:code'] = $args['autogeneratePrefix'].$val;
 	    }
-    	$r .= data_entry_helper::text_input(array(
+	    $locCodeDefn = array(
     			'fieldname' => 'location:code',
     			'label' => lang::get('Site Code'),
     			'class' => 'control-width-4',
-    			'disabled' => hostsite_user_has_permission($args['managerPermission']) ? '' : ' readonly="readonly" '
-    	));
-    	if(!hostsite_user_has_permission($args['managerPermission']))
+    			'disabled' => hostsite_user_has_permission($args['managerPermission']) ? '' : ' readonly="readonly" ',
+    			'helpText' => lang::get('An internal reference; this value cannot be edited')
+    	);
+	    if(!hostsite_user_has_permission($args['managerPermission'])) {
+	    	$locCodeDefn['disabled'] = ' readonly="readonly" ';
+    		$locCodeDefn['helpText'] = lang::get('An internal reference; this value cannot be edited');
         	data_entry_helper::$javascript .= "$('[name=location\\\\:code]').css('color','graytext').css('background-color','#d0d0d0');\n";
+	    }
+    	$r .= data_entry_helper::text_input($locCodeDefn);
     } else {
       if ($settings['locationId'] && data_entry_helper::$entity_to_load['location:code']!='' && data_entry_helper::$entity_to_load['location:code'] != null) {
         $r .= data_entry_helper::text_input(array(
@@ -678,4 +684,61 @@ $('#delete-transect').click(deleteSurvey);
     }
     return $r;
   }
+  
+  protected static function get_your_route_tab($auth, $args, $settings) {
+  	$r = '<div id="your-route" class="ui-helper-clearfix">';
+  	$olOptions = iform_map_get_ol_options($args);
+  	$options = iform_map_get_map_options($args, $auth['read']);
+  	$options['divId'] = 'route-map';
+  	$options['toolbarDiv'] = 'top';
+  	// $options['tabDiv']='your-route';
+  	$options['gridRefHint']=true;
+  	if ($settings['canEditBody']){
+  		$options['toolbarPrefix'] = parent::section_selector($settings, 'section-select-route');
+  		if($settings['canEditSections'] && count($settings['sections'])>1 && $settings['numSectionsAttr'] != "") // do not allow deletion of last section, or if the is no section number attribute
+  			$options['toolbarSuffix'] = '<input type="button" value="'.lang::get('Remove Section').'" class="remove-section form-button right" title="'.lang::get('Completely remove the highlighted section. The total number of sections will be reduced by one. The form will be reloaded after the section is deleted.').'">';
+  		else $options['toolbarSuffix'] = '';
+  		$options['toolbarSuffix'] .= '<input type="button" value="'.lang::get('Erase Route').'" class="erase-route form-button right" title="'.lang::get('If the Draw Line control is active, this will erase each drawn point one at a time. If not active, then this will erase the whole highlighted route. This keeps the Section, allowing you to redraw the route for it.').'">';
+  		if($settings['canEditSections'] && count($settings['sections'])<$args['maxSectionCount'] && $settings['numSectionsAttr'] != "") // do not allow insertion of section if it exceeds max number, or if the is no section number attribute
+  			$options['toolbarSuffix'] .= '<input type="button" value="'.lang::get('Insert Section').'" class="insert-section form-button right" title="'.lang::get('This inserts an extra section after the currently selected section. All subsequent sections are renumbered, increasing by one. All associated occurrences are kept with the moved sections. This can be used to facilitate the splitting of this section.').'">';
+  		// also let the user click on a feature to select it. The highlighter just makes it easier to select one.
+  		// these controls are not present in read-only mode: all you can do is look at the map.
+  		$options['standardControls'][] = 'selectFeature';
+  		$options['standardControls'][] = 'hoverFeatureHighlight';
+  		$options['standardControls'][] = 'drawLine';
+  		$options['standardControls'][] = 'modifyFeature';
+  		$options['switchOffSrefRetrigger'] = true;
+  		$help = lang::get('Select a section from the list then click on the map to draw the route and double click to finish. '.
+  				'You can also select a section using the query tool to click on the section lines. If you make a mistake in the middle '.
+  				'of drawing a route, then you can use the Erase Route button to remove the last point drawn. After a route has been '.
+  				'completed use the Modify a feature tool to correct the line shape (either by dragging one of the circles along the '.
+  				'line to form the correct shape, or by placing the mouse over a circle and pressing the Delete button on your keyboard '.
+  				'to remove that point). Alternatively you could just redraw the line - this new line will then replace the old one '.
+  				'completely. If you are not in the middle of drawing a line, the Erase Route button will erase the whole route for the '.
+  				'currently selected section.').
+  				($settings['numSectionsAttr'] != "" ?
+  						'<br />'.(count($settings['sections'])>1 ?
+  								lang::get('The Remove Section button will remove the section completely, reducing the number of sections by one.').' '
+  								: '').
+  						lang::get('To increase the number of sections, return to the Site Details tab, and increase the value in the No. of sections field there.')
+  						: '');
+  		$r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.$help.'</p>';
+  	}
+  	$options['clickForSpatialRef'] = false;
+  	// override the opacity so the parent square does not appear filled in.
+  	$options['fillOpacity'] = 0;
+  	// override the map height and buffer size, which are specific to this map.
+  	$options['height'] = $args['route_map_height'];
+  	$options['maxZoomBuffer'] = $args['route_map_buffer'];
+  
+  	$r .= map_helper::map_panel($options, $olOptions);
+  	if(count($settings['section_attributes']) == 0)
+  		$r .= '<button class="indicia-button right" type="button" title="'.
+  		lang::get('Returns to My Sites page. Any changes to sections carried out on this page (including creating new ones) are saved to the database as they are done, but changes to the Site Details must be saved using the Save button on that tab.').
+  		'" onclick="window.location.href=\'' . url($args['redirect_on_success']) . '\'">'.lang::get('Return to My Sites').'</button>';
+  	$r .= '</div>';
+  	return $r;
+  }
+  
+  
 }

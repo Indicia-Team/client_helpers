@@ -718,7 +718,7 @@ $('#delete-transect').click(deleteSurvey);
   /**
    * Build a row of buttons for selecting the route.
    */
-  private static function section_selector($settings, $id) {
+  protected static function section_selector($settings, $id) {
     $sectionArr = array();
     foreach ($settings['sections'] as $code=>$section)
       $sectionArr[$code] = $code;
