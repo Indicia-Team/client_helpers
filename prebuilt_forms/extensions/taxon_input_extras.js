@@ -14,8 +14,8 @@ jQuery(document).ready(function($) {
       $('#species-hints').prepend('<div class="species-hint">' +
         '<div class="species-hint-label">Additional info for records of ' + taxon + '</div>' +
         '<div class="species-hint-content">' + speciesListJson[key]) + '</div></div>';
+      $('#species-hints-outer').show();
     }
-    $('#species-hints-outer').show();
   }
 
   if (typeof hook_species_checklist_new_row!=="undefined") {
@@ -25,6 +25,7 @@ jQuery(document).ready(function($) {
   }
 
   $('#occurrence\\:taxa_taxon_list_id\\:taxon').result(function(event, data, value) {
+    $('#species-hints-outer').hide();
     $('#species-hints').html('');
     showHint(data.original, data.external_key);
   });
