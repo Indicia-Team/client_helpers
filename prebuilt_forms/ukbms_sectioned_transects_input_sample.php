@@ -1180,9 +1180,11 @@ class iform_ukbms_sectioned_transects_input_sample {
 			'<input name="user_id" value="'.self::$userId.'"/>' .
     	  '</form>';
 
-    $formOptions['hideFinished'] = true;
-    $formOptions['finished'] = lang::get('(Finished)');
+    $formOptions['finishedAttrID'] = false;
     if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
+    	$formOptions['finishedAttrID'] = $args['finishedAttrID'];
+    	$formOptions['hideFinished'] = true;
+    	$formOptions['finished'] = lang::get('(Finished)');
     	// A stub form for posting when we need to flag a super sample as finished
     	$formOptions['return_page'] = $args['return_page'];
     	$sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));    	 
@@ -1307,9 +1309,10 @@ class iform_ukbms_sectioned_transects_input_sample {
   	if($listSelected !='full' || $includeControl || $tabNum == 1)
   		$r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
   	$r .= '<br /><a href="'.$args['return_page'].'" class="button">'.lang::get('Return to walk list').'</a>';
-  	if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '')
+  	if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') 
   		$r .= '<input type="button" class="button smp-finish" value="'.lang::get('Flag as finished and return to walk list').'"/>';
   	$r .= '</div>';
+  	// page is ajax so no submit button.
   	
   	$formOptions['speciesList'][$tabNum] = $args['taxon_list_id_'.$tabNum];
   	$formOptions['speciesListForce'][$tabNum] = $listSelected;

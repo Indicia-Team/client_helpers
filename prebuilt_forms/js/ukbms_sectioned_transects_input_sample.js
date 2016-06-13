@@ -142,11 +142,13 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			}
 		});
 
-	    if(formOptions['hideFinished'] !== false && formOptions['hideFinished'] != 0) {
-		    $('.smp-finish').remove();
-		    $('#ukbms_stis_header').append(' <i>' + formOptions['finished'] + '<i>');
-	    } else {
-		    $('.smp-finish').click(finishSample);
+	    if(formOptions['finishedAttrID']) {
+	    	if(formOptions['hideFinished'] !== false && formOptions['hideFinished'] != 0) {
+	    		$('.smp-finish').remove(); // button to flag as finished. 
+	    		$('#ukbms_stis_header').append(' <i>' + formOptions['finished'] + '<i>');
+	    	} else {
+	    		$('.smp-finish').click(finishSample);
+	    	}
 	    }
 
 		$('#finished-form').ajaxForm({
