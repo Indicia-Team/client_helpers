@@ -1199,12 +1199,15 @@ class iform_report_calendar_summary_2 {
       $ctrl .= '<option value="'.$id.'" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$id ? 'selected="selected" ' : '').'>'.$name.'</option>';
       $found = $found || $siteUrlParams[self::$userKey]['value']==$id;
     }
+    // Haven't found the selected user on the list: this means select defaults to top option which is the user themselves.
+    if(!$found) $siteUrlParams[self::$userKey]['value']=$user->uid;
     // masquerading may produce some odd results when flipping between accounts.
     switch($siteUrlParams[self::$userKey]['value']){
       case '' : $options['downloadFilePrefix'] .= lang::get('AllRecorders').'_';
         break;
-      case "branch" : $options['downloadFilePrefix'] .= lang::get('MyBranch').'_';
-        // need to add user after branch so we know which branch
+      case "branch" :
+      	$options['downloadFilePrefix'] .= lang::get('MyBranch').'_'.preg_replace('/[^A-Za-z0-9]/i', '', $user->name).'_';
+        break;
       default :
         // can't use "myData" as with cached reports >1 person may have same filename, but different reports. Also
         // providing explicit name makes it clearer.
@@ -1215,8 +1218,6 @@ class iform_report_calendar_summary_2 {
       	$options['downloadFilePrefix'] .= preg_replace('/[^A-Za-z0-9]/i', '', $account['name']).'_';
         break;
     }
-    // Haven't found the selected user on the list: this means select defaults to top option which is the user themselves.
-    if(!$found) $siteUrlParams[self::$userKey]['value']=$user->uid;
     $ctrl.='</select>';
     self::set_up_control_change($ctrlid, self::$userKey, array('locationID'));
     return $ctrl;
