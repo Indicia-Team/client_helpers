@@ -40,7 +40,10 @@ $indicia_templates = array(
       "document.write('{content}');".
       "/* ]]> */</script>\n",
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
+  'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>', // label ends with another punctuation mark
+  'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>', // no colon
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
+  'toplabelNoColon' => '<label data-for="{id}"{labelClass}>{label}</label>',
   'suffix' => "\n",
   'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
@@ -667,7 +670,7 @@ class helper_base extends helper_config {
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
-        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3&amp;sensor=false")),
+        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3&sensor=false")),
         'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/jquery.fancybox.pack.js')),
         'fancybox2' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox2/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox2/source/jquery.fancybox.pack.js')),
@@ -1755,19 +1758,27 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
     // Add a label only if specified in the options array. Link the label to the inputId if available,
     // otherwise the fieldname (as the fieldname control could be a hidden control).
     if (!empty($options['label'])) {
-      $r .= str_replace(
+      $labelTemplate = isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] :
+      	(substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
+      $label = str_replace(
           array('{label}', '{id}', '{labelClass}'),
           array(
               $options['label'],
               array_key_exists('inputId', $options) ? $options['inputId'] : $options['id'],
               array_key_exists('labelClass', $options) ? ' class="'.$options['labelClass'].'"' : '',
           ),
-          isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] : $indicia_templates['label']
+          $labelTemplate
       );
+    }
+    if (!empty($options['label']) && (!isset($options['labelPosition']) || $options['labelPosition'] != 'after')) {
+    	$r .= $label;
     }
     // Output the main control
     $r .= self::apply_replacements_to_template($indicia_templates[$template], $options);
-
+    if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
+    	$r .= $label;
+    }
+    
     // Add a lock icon to the control if the lockable option is set to true
     if (array_key_exists('lockable', $options) && $options['lockable']===true) {
       $r .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);

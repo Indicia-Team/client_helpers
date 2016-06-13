@@ -21,10 +21,9 @@
  */
 
 /**
- * Extension class that extends the functionality of the species checklist data input
- * control.
+ * Extension class that extends the functionality of the data entry of species.
  */
-class extension_species_checklist {
+class extension_taxon_input_extras {
 
   /**
    * An extension control for dynamic forms that adds a box to output hints on any
@@ -39,7 +38,7 @@ class extension_species_checklist {
     //drupal_add_library('system', 'ui.tooltip', true);
     $filePath = hostsite_get_public_file_path();
     data_entry_helper::$javascript .= "initSpeciesHints('$filePath/indicia/speciesHints.json');\n";
-    return '<h3>' . lang::get('Hints relating to species names entered') . '</h3> ' .
-        '<div id="species-hints"></div>';
+    return '<div id="species-hints-outer"><h3>' . lang::get('Hints relating to species names entered') . '</h3> ' .
+        "<div id=\"species-hints\"></div></div>";
   }
 }

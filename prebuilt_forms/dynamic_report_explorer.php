@@ -500,7 +500,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       'sharing' => empty($args['sharing']) ? 'reporting' : $args['sharing']
     ), $options);
     if ($args['redirect_on_success'])
-      $options['redirect_on_success']=url($args['redirect_on_success']);
+      $options['redirect_on_success']=hostsite_get_url($args['redirect_on_success']);
     // any preset params on the report page should be loaded as initial settings for the filter.
     if (!empty($args['param_presets'])) {
       $params = data_entry_helper::explode_lines_key_value_pairs($args['param_presets']);

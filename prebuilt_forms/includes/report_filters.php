@@ -60,6 +60,7 @@ class filter_what extends filter_base {
     } else {
       $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>'.lang::get('Species').'</span></a></li>';
     }
+    $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>'.lang::get('Designations').'</span></a></li>';
     $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>'.lang::get('Level').'</span></a></li>' .
         '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>'.lang::get('Other flags').'</span></a></li>' .
         '</ul>';
@@ -130,6 +131,19 @@ class filter_what extends filter_base {
       'valueField' => 'preferred_taxa_taxon_list_id',
       'extraParams' => $baseParams + $rankFilter,
       'addToTable' => false
+    );
+    $r .= data_entry_helper::sub_list($subListOptions);
+    $r .= "</div>\n";
+    $r .= "<div id=\"designations-tab\">\n";
+    $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
+      ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
+    $subListOptions = array(
+      'fieldname' => 'taxon_designation_list',
+      'table' => 'taxon_designation',
+      'captionField' => 'title',
+      'valueField' => 'id',
+      'extraParams' => $readAuth,
+      'addToTable' => FALSE
     );
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
@@ -676,6 +690,8 @@ class filter_source extends filter_base {
  *     your list of taxon groups in the user account), my-locality (uses your recording locality from the user account),
  *     my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records, queried-records,
  *     answered-records, accepted-records, not-accepted-records.
+ *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard filter
+ *     user interface.
  * @param integer $website_id The current website's warehouse ID.
  * @param string $hiddenStuff Output parameter which will contain the hidden popup HTML that will be shown
  * using fancybox during filter editing. Should be appended AFTER any form element on the page as nested forms are not allowed.
@@ -904,7 +920,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $r .= '<div id="filter-panes">';
   $filters = array();
-  if ($options['entity']==='occurrence') {
+  if(isset($options['generateFilterListCallback'])) {
+    $filters = call_user_func($options['generateFilterListCallback'], $options['entity']);
+  } else if ($options['entity']==='occurrence') {
     $filters = array(
       'filter_what'=>new filter_what(),
       'filter_where'=>new filter_where(),

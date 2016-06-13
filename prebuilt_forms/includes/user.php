@@ -108,6 +108,13 @@ function get_options_array_with_user_data($listData) {
  * {email} - the email address stored for the user in the content management system.
  * {profile_*} - the respective field from the user profile stored in the content management system.
  * [permission] - does the user have this permission? Replaces with 1 if they have the permission, else 0.
+ * 
+ * Can handle text and serialised arrays (which are returned as comma separated list), and also Drupal
+ * vocabulary profile data: these are returned as stdClass objects from the hostsite_get_user_field call.
+ * There are two possibilities for what the user may want to store when it comes to vocab data: either 
+ * the tid or the name (actual text value). The default is 'tid' (the vocabulary term id): this can be
+ * overriden by appending :name to the field name - e.g. {profile_hub} will give hub tid, {profile_hub:name}
+ * will give the hub text name.
  */
 function apply_user_replacements($text) {
   if (!is_string($text))
@@ -125,15 +132,22 @@ function apply_user_replacements($text) {
     foreach($matches[1] as $profileField) {
       // got a request for a user profile field, so copy it's value across into the report parameters
       $fieldName = preg_replace('/^profile_/', '', $profileField);
+      // split off any field qualifier for vocabulary objects
+      $parts = explode(':',$fieldName);
+      $fieldName = $parts[0];
+      $objectField = count($parts)>1 ? $parts[1] : 'tid';
       $value = hostsite_get_user_field($fieldName);
       if ($value) {
         // unserialise the data if it is serialised, e.g. when using profile_checkboxes to store a list of values.
-        $value = @unserialize($value);
+        $unserialisedValue = @unserialize($value);
         // arrays are returned as a comma separated list
-        if (is_array($value))
-          $value = implode(',',$value);
-        else 
-          $value = $value ? $value : hostsite_get_user_field($fieldName);
+        if (is_array($unserialisedValue))
+          $value = implode(',',$unserialisedValue);
+        else if(is_object($value)) { // if the field is a vocabulary item, then $value is a object, unserialize gives null
+          $value = get_object_vars($value);
+          $value = $value[$objectField];
+        } else
+          $value = $unserialisedValue ? $unserialisedValue : $value;
         // nulls must be passed as empty string params.
         $value = ($value===null ? '' : $value);
       } else

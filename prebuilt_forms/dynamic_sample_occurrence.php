@@ -849,12 +849,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * @return array List of attribute definitions
    */
   protected static function getAttributes($args, $auth) {
-    $attributes = self::getAttributesForEntity('sample', $args, $auth['read'],
+    return self::getAttributesForEntity('sample', $args, $auth['read'],
         isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
-    self::$occAttrs = self::getAttributesForEntity('occurrence', $args, $auth['read'],
-        isset(data_entry_helper::$entity_to_load['occurrence:id']) ? data_entry_helper::$entity_to_load['occurrence:id'] : '');
-    $attributes = array_merge($attributes, self::$occAttrs);
-    return $attributes;
   }
   
   /**
@@ -1688,6 +1684,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function get_control_speciesattributes($auth, $args, $tabAlias, $options) {
     if (!(call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
+      self::load_custom_occattrs($auth['read'], $args['survey_id']);
       $ctrlOptions = array('extraParams'=>$auth['read']);
       $attrSpecificOptions = array();
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
@@ -1880,6 +1877,7 @@ else
   protected static function get_control_occattr($auth, $args, $tabAlias, $options) {
     $attribName = 'occAttr:' . $options['ctrlId'];
     if ($args['multiple_occurrence_mode']==='single') {
+      self::load_custom_occattrs($auth['read'], $args['survey_id']);
       foreach (self::$occAttrs as $idx => $attr) {
         if ($attr['id'] === $attribName) {
           self::$occAttrs[$idx]['handled'] = true;
@@ -1971,6 +1969,7 @@ else
    */
   protected static function get_control_sensitivity($auth, $args, $tabAlias, $options) {
     if ($args['multiple_occurrence_mode']==='single') {
+      self::load_custom_occattrs($auth['read'], $args['survey_id']);
       $ctrlOptions = array('extraParams'=>$auth['read']);
       $attrSpecificOptions = array();
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
@@ -2114,7 +2113,7 @@ else
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination'=>"node/$nid"))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.hostsite_get_url('user/login', array('destination'=>"node/$nid")).'">login</a> to the website.');
     }
     $filter = array();
     // Get the CMS User ID attribute so we can filter the grid to this user
@@ -2160,10 +2159,10 @@ else
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1', 'gridmode' => '1'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.hostsite_get_url('node/'.$nid, array('new' => '1')).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.hostsite_get_url('node/'.$nid, array('new' => '1', 'gridmode' => '1')).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new' => '1'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.hostsite_get_url('node/'.$nid, array('new' => '1')).'\'">';
     }
     $r .= '</form>';
     return $r;
@@ -2207,6 +2206,20 @@ else
   protected static function getReportActions() {
     return array(array('display' => 'Actions', 'actions' =>
         array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}','occurrence_id'=>'{occurrence_id}')))));
+  }
+
+  /**
+   * Load the list of occurrence attributes into a static variable.
+   *
+   * By maintaining a single list of attributes we can track which have already been output.
+   * @param array $readAuth Read authorisation tokens.
+   * @param integer $surveyId ID of the survey to load occurrence attributes for.
+   */
+  protected static function load_custom_occattrs($readAuth, $surveyId) {
+    if (!isset(self::$occAttrs)) {
+      self::$occAttrs = self::getAttributesForEntity('occurrence', array('survey_id'=>$surveyId), $readAuth,
+        isset(data_entry_helper::$entity_to_load['occurrence:id']) ? data_entry_helper::$entity_to_load['occurrence:id'] : '');
+    }
   }
   
   /**
