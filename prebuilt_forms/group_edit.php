@@ -571,10 +571,10 @@ $('#entry_form').submit(function() {
    */
   private static function inclusionMethodControl($args) {
     if ($args['data_inclusion_mode']!=='choose') {
-      $implicit = $args['data_inclusion_mode'] === 'implicit' ? 't' : 'f';
+      $mappings = array(''=>'', 'implicit'=>'t', 'explicit'=>'f');
       $r = data_entry_helper::hidden_text(array(
         'fieldname' => 'group:implicit_record_inclusion',
-        'default' => $implicit
+        'default' => $mappings[$args['data_inclusion_mode']]
       ));
     } else {
       $r = '<fieldset><legend>' . lang::get('How to decide which records to include in the {1} reports', self::$groupType) . '</legend>';
