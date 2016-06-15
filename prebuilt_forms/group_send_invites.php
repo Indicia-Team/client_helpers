@@ -91,7 +91,7 @@ class iform_group_send_invites {
     ));
     $r .= '<button type="submit" class="indicia-button" id="save-button">'.lang::get('Send Invites')."</button>\n";
     $r .= '<button type="button" class="indicia-button" id="not-now-button" ' .
-        'onclick="window.location.href=\'' . url($args['redirect_on_success']) . '\'">'.lang::get('Not Now')."</button>\n";
+        'onclick="window.location.href=\'' . hostsite_get_url($args['redirect_on_success']) . '\'">'.lang::get('Not Now')."</button>\n";
     $r .= '</form>';
     data_entry_helper::enable_validation('entry_form');
     return $r;
