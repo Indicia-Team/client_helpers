@@ -159,11 +159,6 @@ confirmSelectSection = function(section, doFeature, withCancel) {
 	  indiciaData.routeChanged = true;
   if(indiciaData.routeChanged === true) {
     var buttons =  { 
-        "Yes": function() { $(this).dialog('close');
-        	saveRoute();
-            indiciaData.routeChanged = false;
-            checkIfSectionChanged(section, doFeature, withCancel);
-        }, // synchronous for bit that matters. 
         "No":  function() { $(this).dialog('close');
         	// replace the route with the previous one for this section.
         	// At his point, indiciaData.currentSection should point to existing, previously selected section.
@@ -171,6 +166,11 @@ confirmSelectSection = function(section, doFeature, withCancel) {
         	var oldSection = [];
         	var div = $('#route-map');
         	div = div[0];
+    		if(typeof indiciaData.modifyFeature !== "undefined")
+    		    indiciaData.modifyFeature.deactivate();
+    		if(typeof indiciaData.drawFeature !== "undefined")
+    		    indiciaData.drawFeature.deactivate();
+		    indiciaData.navControl.activate(); // Nav control always exists
         	$.each(div.map.editLayer.features, function(idx, feature) {
         		if (feature.attributes.section===indiciaData.currentSection) {
         			removeSections.push(feature);
@@ -185,7 +185,14 @@ confirmSelectSection = function(section, doFeature, withCancel) {
         		div.map.editLayer.addFeatures(oldSection);
         	} // dont worry about selection.
         	indiciaData.routeChanged = false;
-        	checkIfSectionChanged(section, doFeature, withCancel); }};
+        	checkIfSectionChanged(section, doFeature, withCancel);
+        },
+        "Yes": function() { $(this).dialog('close');
+        	saveRoute();
+        	indiciaData.routeChanged = false;
+        	checkIfSectionChanged(section, doFeature, withCancel);
+        } // synchronous for bit that matters. 
+    };
     if(withCancel) {
       buttons.Cancel = function() { $(this).dialog('close'); };
     }
@@ -755,7 +762,57 @@ $(document).ready(function() {
           // We assume that user has pressed button deliberately, so no confirmation.
     	  if(indiciaData.currentFeature === null) return; // no feature selected so don't save
           if($('.save-route').hasClass('waiting-button')) return; // prevents double clicking.
-          saveRoute();
+          $('.save-route').addClass('waiting-button');
+
+          var buttons =  { 
+        	"Abort changes" : function() {
+        	    $(this).dialog('close');
+        	    // replace the route with the previous one for this section.
+        	    // At this point, indiciaData.currentSection should point to existing, previously selected section.
+        	    var removeSections = [];
+        	    var oldSection = [];
+        	    var div = $('#route-map');
+        	    div = div[0];
+        		if(typeof indiciaData.modifyFeature !== "undefined")
+        		    indiciaData.modifyFeature.deactivate();
+        		if(typeof indiciaData.drawFeature !== "undefined")
+        		    indiciaData.drawFeature.deactivate();
+  		        indiciaData.navControl.activate(); // Nav control always exists
+        	    $.each(div.map.editLayer.features, function(idx, feature) {
+        	        if (feature.attributes.section===indiciaData.currentSection) {
+        	            removeSections.push(feature);
+        	        }
+        	    });
+        	    if (removeSections.length>0) {
+        	        div.map.editLayer.removeFeatures(removeSections, {});
+        	    }
+        	    if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined' &&
+        	    		typeof indiciaData.sections[indiciaData.currentSection].geom !== 'undefined') {
+        	        oldSection.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom),
+        	            		            {section:indiciaData.currentSection, type:"boundary"}));
+        	        div.map.editLayer.addFeatures(oldSection);
+        	    } // dont worry about selection.
+        	    indiciaData.routeChanged = false;
+        	    $('.save-route').removeClass('waiting-button');
+        	  },
+        	"Don't save":  function() {
+        	    $('.save-route').removeClass('waiting-button');
+        	    $(this).dialog('close');
+        	  },
+          	"Yes": function() {
+        		$(this).dialog('close');
+        	    saveRoute();
+        	  }
+          };
+          // display dialog and drive from its button events.
+          var dialog = $('<p>Are you sure you wish to save this route now? Choose &quot;Yes&quot; to save the changes; &quot;Don&apos;t save&quot; to leave the route as is, but not save it just yet; and &quot;Abort changes&quot; to wind back the changes, and (if applicable) replace the new route with the previously saved version.</p>')
+        	    	.dialog({ title: "Save Route Data?",
+        	    		buttons: buttons,
+        	    		width: 400,
+        	    	    closeOnEscape: false,
+        	    	    open: function(event, ui) {
+        	    	        $(".ui-dialog-titlebar-close", $(this).parent()).remove();
+        	    	    }});
       });
       
       function featureAddedEvent(evt) {
