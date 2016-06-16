@@ -142,7 +142,7 @@ function apply_user_replacements($text) {
     }
   }
   // Look for any permission replacements
-  if (preg_match_all('/\[([^\]]*)\]/', $text, $matches)) {
+  if (preg_match_all('/\[([^\]+]*)\]/', $text, $matches)) {
     foreach($matches[1] as $permission) {
       $value = hostsite_user_has_permission($permission) ? '1' : '0';
       $text=str_replace("[$permission]", $value, $text);
