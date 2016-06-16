@@ -125,8 +125,12 @@ class import_helper extends helper_base {
     if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
     $request = parent::$base_url."index.php/services/import/get_import_settings/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
+
+    $switches = isset($options['switches']) && is_array($options['switches']) ? $options['switches'] : array();
     if (!empty($options['occurrenceAssociations']))
-      $request .= '&occurrence_associations=t';
+      $switches['occurrence_associations']='t';
+    $request .= '&'.self::array_to_query_string($switches);
+    
     $response = self::http_post($request, array());
     if (!empty($response['output'])) {
       // get the path back to the same page
@@ -197,6 +201,15 @@ class import_helper extends helper_base {
       );
     } else 
       $settings = $_POST;
+    if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
+    	// when not using associations make sure that the association fields are not passed through.
+    	// These fields would confuse the association detection logic.
+    	foreach($settings as $key => $value){
+    		$parts = explode(':', $key);
+    		if($parts[0]==$options['model'].'_association' || $parts[0]==$options['model'].'_2')
+    			unset($settings[$key]);
+    	}
+    }
     // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
     foreach ($settings as $key => $value) {
       if (empty($value)) {
