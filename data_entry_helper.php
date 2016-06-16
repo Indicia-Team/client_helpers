@@ -1680,7 +1680,7 @@ $('#$escaped').change(function(e) {
                 }
                 //If there is a date value then we use the date field instead.
                 //This is because the vague date engine returns to this special field
-                if (item.value_date !== null)
+                if (typeof item.value_date !== 'undefined' && item.value_date !== null)
                   input.val(item.value_date);
                 //booleans need special treatment because checkboxes rely on using the
                 //'checked' attribute instead of using the value.
@@ -3385,7 +3385,7 @@ $('#$escaped').change(function(e) {
           $oc = str_replace('{fieldname}', $ctrlId, $control);
           if ($existing_value<>"") {
             // For select controls, specify which option is selected from the existing value
-            if (substr($oc, 0, 7)==='<select') {
+            if (substr(trim($oc), 0, 7)==='<select') {
               $oc = str_replace('value="'.$existing_value.'"',
                 'value="'.$existing_value.'" selected="selected"', $oc);
             } else if(strpos($oc, 'type="checkbox"') !== false) {
@@ -5747,7 +5747,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     }
     $options['items']=$items;
     // We don't want to output for="" in the top label, as it is not directly associated to a button
-    $options['labelTemplate'] = 'toplabel';
+    $options['labelTemplate'] = (isset($options['label']) && substr($options['label'], -1) == '?' ? 'toplabelNoColon' : 'toplabel');
     if (isset($itemClass) && !empty($itemClass) && strpos($itemClass, 'required')!==false) {
       $options['suffixTemplate'] = 'requiredsuffix';
     }
@@ -5850,7 +5850,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     // apply defaults
     $options = array_merge(array(
       'style' => 'tabs',
-      'progressBar' => false
+      'progressBar' => false,
+      'progressBarOptions' => array()
     ), $options);
     if (empty($options['navButtons']))
       $options['navButtons'] = $options['style']==='wizard';
@@ -5902,7 +5903,8 @@ if (errors$uniq.length>0) {
     // add a progress bar to indicate how many steps are complete in the wizard
     if (isset($options['progressBar']) && $options['progressBar']==true) {
       data_entry_helper::add_resource('wizardprogress');
-      data_entry_helper::$javascript .= "wizardProgressIndicator({divId:'$divId'});\n";
+      $progressBarOptions = array_merge(array('divId' => $divId), $options['progressBarOptions']);
+      data_entry_helper::$javascript .= "wizardProgressIndicator(".json_encode($progressBarOptions).");\n";
     } else {
       data_entry_helper::add_resource('tabs');
     }
@@ -6412,16 +6414,15 @@ if (errors$uniq.length>0) {
       // check for zero abundance records. First build a regexp that will match the attr IDs to check. Attrs can be
       // just set to true, which means any attr will do.
       if (is_array($zeroAttrs))
-        $ids = '(' . implode('|', array_keys($zeroAttrs)) . ')';
+        $ids = implode('|', array_keys($zeroAttrs));
       else
         $ids = '\d+';
       $zeroCount=0;
       $nonZeroCount=0;
       foreach ($record as $field=>$value) {
         // Is this a field used to trap zero abundance data, with a zero value
-        if (!empty($value) && preg_match("/occAttr:$ids$/", $field)) {
-          $attrId = str_replace('occAttr:', '', $field);
-          $attr = $zeroAttrs[$attrId];
+        if ($value!=='' && preg_match("/occAttr:(?P<attrId>$ids)(:\d+)?$/", $field, $matches)) {
+          $attr = $zeroAttrs[$matches['attrId']];
           if ($attr['data_type']==='L') {
             foreach ($attr['terms'] as $term) {
               if ($term['id']==$value) {

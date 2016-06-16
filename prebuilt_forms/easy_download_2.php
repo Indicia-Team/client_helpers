@@ -46,6 +46,7 @@ class iform_easy_download_2 {
       'category' => 'Utilities',
       'description' => 'A page for quick and easy download of the data you have access to. Improved integration with record sharing and permissions.',
       'helpLink' => 'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/easy-download.html',
+      'supportsGroups'=>true,
       'recommended' => true
     );
   }
@@ -57,6 +58,14 @@ class iform_easy_download_2 {
   public static function get_parameters() {   
     return array(
       array(
+        'name'=>'download_my_records',
+        'caption'=>'Enable downloading of my records',
+        'description'=>'Allow a user to download their own records.',
+        'type'=>'checkbox',
+        'required'=>false,
+        'default'=>true
+      ),
+      array(
         'name'=>'download_all_users_reporting',
         'caption'=>'Download all users for reporting permission',
         'description'=>'Provide the name of the permission required to allow download of all records for reporting (as opposed to just my records).',
@@ -66,11 +75,19 @@ class iform_easy_download_2 {
       ),
       array(
         'name'=>'download_administered_groups',
-        'caption'=>'Download all group records permission',
+        'caption'=>'Download administered group records permission',
         'description'=>'Provide the name of the permission required to allow download of records from recording groups you are an administrator of.',
         'type'=>'text_input',
         'required'=>false,
         'default'=>'indicia data admin'
+      ),
+      array(
+        'name'=>'download_member_groups',
+        'caption'=>'Download any group records permission',
+        'description'=>'Provide the name of the permission required to allow download of records from recording groups you are a member of.',
+        'type'=>'text_input',
+        'required'=>false,
+        'default'=>''
       ),
       array(
         'name'=>'download_group_types',
@@ -203,6 +220,7 @@ class iform_easy_download_2 {
         'valueField'=>'id',
         'captionField'=>'title',
         'sharing'=>'data_flow',
+        'blankText'=>'<allow user to choose>',
         'siteSpecific'=>true
       ),
       array(
@@ -320,7 +338,9 @@ class iform_easy_download_2 {
   public static function get_form($args, $nid, $response=null) {
     $conn = iform_get_connection_details($nid);
     $args = array_merge(array(
+      'download_my_records' => true,
       'download_administered_groups' => 'indicia data admin',
+      'download_member_groups' => '',
       'download_group_types' => ''
     ), $args);
     data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
@@ -413,7 +433,7 @@ class iform_easy_download_2 {
       $r .= '<input type="hidden" name="format" value="'.array_pop($keys).'"/>';
     }
     $r .= '<input type="submit" value="'.lang::get('Download').'"/></form>';
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/easy_download_2')."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/easy_download_2')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript.="setAvailableDownloadFilters();\n";
     return $r;
@@ -431,48 +451,62 @@ class iform_easy_download_2 {
     // we'll store any standard params filters that are user optional ones into js data, so the UI can allow
     // selection as appropriate.
     data_entry_helper::$javascript.="indiciaData.optionalFilters={};\n";
-    foreach ($args as $arg=>$value) {
-      if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
-        // download type available. What they can actually download might be limited by a context filter...
-        $sharingType=  ucwords(str_replace('_', ' ', $matches[1]));
-        $sharingTypeCode=substr($sharingType, 0, 1);
-        $gotPermissionsFilterForThisType=false;
-        // a place to store optional filters of this type in the js data
-        data_entry_helper::$javascript.="indiciaData.optionalFilters.$sharingTypeCode={};\n";
-        // load their filters
-        $filters = self::load_filter_set($sharingTypeCode);
-        foreach ($filters as $filter) {
-          // the filter either defines their permissions, or is a user defined filter which they can optionally apply
-          if ($filter['defines_permissions']==='t') {
-            $r["$sharingTypeCode filter $filter[id]"]="$sharingType - $filter[title]";
-            $gotPermissionsFilterForThisType=true;
-          } else {
-            data_entry_helper::$javascript.="indiciaData.optionalFilters.$sharingTypeCode.filter_$filter[id]='$filter[title]';\n";
+    // if loaded via group link, don't load up the other download types
+    if (empty($_GET['group_id'])) {
+      foreach ($args as $arg => $value) {
+        if ($value && preg_match('/^([a-z_]+)_type_permission$/', $arg, $matches) && hostsite_user_has_permission($value)) {
+          // download type available. What they can actually download might be limited by a context filter...
+          $sharingType = ucwords(str_replace('_', ' ', $matches[1]));
+          $sharingTypeCode = substr($sharingType, 0, 1);
+          $gotPermissionsFilterForThisType = FALSE;
+          // a place to store optional filters of this type in the js data
+          data_entry_helper::$javascript .= "indiciaData.optionalFilters.$sharingTypeCode={};\n";
+          // load their filters
+          $filters = self::load_filter_set($sharingTypeCode);
+          foreach ($filters as $filter) {
+            // the filter either defines their permissions, or is a user defined filter which they can optionally apply
+            if ($filter['defines_permissions'] === 't') {
+              $r["$sharingTypeCode filter $filter[id]"] = "$sharingType - $filter[title]";
+              $gotPermissionsFilterForThisType = TRUE;
+            }
+            else {
+              data_entry_helper::$javascript .= "indiciaData.optionalFilters.$sharingTypeCode.filter_$filter[id]='$filter[title]';\n";
+            }
+          }
+          if ($sharingTypeCode === 'R') {
+            if ($args['download_my_records'])
+              $r['R my'] = lang::get('My records for reporting');
+            if (hostsite_user_has_permission($args['download_all_users_reporting'])) {
+              $r['R'] = lang::get('All records for reporting');
+            }
+          }
+          elseif ($sharingTypeCode === 'V') {
+            // load their profile settings for verification
+            $location_id = hostsite_get_user_field('location_expertise');
+            $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise');
+            $survey_ids = hostsite_get_user_field('surveys_expertise');
+            if ($location_id || $taxon_group_ids || $survey_ids) {
+              $r['V profile'] = lang::get('Verification - my verification records');
+            }
+          }
+          elseif (!$gotPermissionsFilterForThisType) // If no permissions defined for this sharing type for this user, then allow an all-access download
+          {
+            $r[$sharingTypeCode] = $sharingType;
           }
         }
-        if ($sharingTypeCode==='R') {
-          $r['R my']=lang::get('My records for reporting');
-          if (hostsite_user_has_permission($args['download_all_users_reporting']))
-            $r['R']=lang::get('All records for reporting');
-        }
-        elseif ($sharingTypeCode==='V') {
-          // load their profile settings for verification
-          $location_id = hostsite_get_user_field('location_expertise');
-          $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise');
-          $survey_ids = hostsite_get_user_field('surveys_expertise');
-          if ($location_id || $taxon_group_ids || $survey_ids)
-            $r['V profile'] = lang::get('Verification - my verification records');
-        } elseif (!$gotPermissionsFilterForThisType) 
-          // If no permissions defined for this sharing type for this user, then allow an all-access download
-          $r[$sharingTypeCode]=$sharingType;
       }
     }
     $canDownloadAdministeredGroups = !empty($args['download_administered_groups'])
         && hostsite_user_has_permission($args['download_administered_groups']);
+    $canDownloadMemberGroups = !empty($args['download_member_groups'])
+      && hostsite_user_has_permission($args['download_member_groups']);
     $params = array(
       'user_id'=>hostsite_get_user_field('indicia_user_id'),
       'view' => 'detail'
     );
+    // group page integration
+    if (!empty($_GET['group_id']))
+      $params['group_id']=$_GET['group_id'];
     if (!empty($args['download_group_types'])) {
       $params['query'] = json_encode(array('in'=>array(
         'group_type_id'=>explode(',', $args['download_group_types'])
@@ -484,9 +518,10 @@ class iform_easy_download_2 {
       'extraParams'=>data_entry_helper::$js_read_tokens + $params
     ));
     foreach ($groups as $group) {
-      if ($canDownloadAdministeredGroups && $group['administrator']==='t')
+      if (($canDownloadAdministeredGroups && $group['administrator']==='t') || $canDownloadMemberGroups)
         $r["R group $group[group_id]"] = lang::get('All records for {1}', $group['group_title']);
-      $r["R group my $group[group_id]"] = lang::get('My records contributed to {1}', $group['group_title']);
+      if ($args['download_my_records'])
+        $r["R group my $group[group_id]"] = lang::get('My records contributed to {1}', $group['group_title']);
     }
     return $r;
   }
@@ -720,29 +755,29 @@ class iform_easy_download_2 {
   public static function get_perms($nid, $args) {
     $perms = array();
     if (!empty($args['download_all_users_reporting']))
-      $perms[] = $args['download_all_users_reporting'];
+      $perms[$args['download_all_users_reporting']] = '';
     if (!empty($args['download_administered_groups']))
-      $perms[] = $args['download_administered_groups'];
+      $perms[$args['download_administered_groups']] = '';
     if (!empty($args['reporting_type_permission']))
-      $perms[] = $args['reporting_type_permission'];
+      $perms[$args['reporting_type_permission']] = '';
     if (!empty($args['peer_review_type_permission']))
-      $perms[] = $args['peer_review_type_permission'];
+      $perms[$args['peer_review_type_permission']] = '';
     if (!empty($args['verification_type_permission']))
-      $perms[] = $args['verification_type_permission'];
+      $perms[$args['verification_type_permission']] = '';
     if (!empty($args['data_flow_type_permission']))
-      $perms[] = $args['data_flow_type_permission'];
+      $perms[$args['data_flow_type_permission']] = '';
     if (!empty($args['moderation_type_permission']))
-      $perms[] = $args['moderation_type_permission'];
+      $perms[$args['moderation_type_permission']] = '';
     if (!empty($args['csv_format_permission']))
-      $perms[] = $args['csv_format_permission'];
+      $perms[$args['csv_format_permission']] = '';
     if (!empty($args['tsv_format_permission']))
-      $perms[] = $args['tsv_format_permission'];
+      $perms[$args['tsv_format_permission']] = '';
     if (!empty($args['kml_format_permission']))
-      $perms[] = $args['kml_format_permission'];
+      $perms[$args['kml_format_permission']] = '';
     if (!empty($args['gpx_format_permission']))
-      $perms[] = $args['gpx_format_permission'];  
+      $perms[$args['gpx_format_permission']] = '';
     if (!empty($args['nbn_format_permission']))
-      $perms[] = $args['nbn_format_permission'];
+      $perms[$args['nbn_format_permission']] = '';
     if (!empty($args['custom_formats'])) {
       $customFormats = json_decode($args['custom_formats'], true);
       foreach ($customFormats as $idx=>$format) {

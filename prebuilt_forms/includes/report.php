@@ -222,8 +222,10 @@ function iform_report_get_report_options($args, $readAuth) {
   if (!empty($args['skipped_report_columns'])) {
     // look for configured columns that should be skipped
     foreach($columns as &$column) {
-      if (array_key_exists($column['fieldname'], $args['skipped_report_columns'])) {
-        $column['visible']=false;
+      $index = array_search($column['fieldname'], $args['skipped_report_columns']);
+      if ($index!==FALSE) {
+        if (!array_key_exists('visible', $column))
+          $column['visible']=false;
         unset($args['skipped_report_columns']);
       }
     }

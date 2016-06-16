@@ -1,9 +1,12 @@
-var approveMember;
-var removeMember;
-var toggleRole;
+var approveMember,
+  removeMember,
+  toggleRole,
+  changeAccessLevel;
 
 (function ($) {
   "use strict";
+  var dialog, form;
+
   approveMember=function(id) {
     var data = {
       'website_id': indiciaData.website_id,
@@ -72,5 +75,54 @@ var toggleRole;
       },
       'json'
     );    
+  };
+
+  function updateAccessLevel() {
+    var data = {
+      'website_id': indiciaData.website_id,
+      'groups_user:id': $('#updated_access_level_user_id').val(),
+      'groups_user:access_level': $('#updated_access_level').val()
+    };
+    $.post(
+      indiciaData.ajaxFormPostUrl,
+      data,
+      function (data) {
+        if (typeof data.error === "undefined") {
+          indiciaData.reports.report_output.grid_report_output.reload();
+          alert('Access level updated');
+        } else {
+          alert(data.error);
+        }
+      },
+      'json'
+    );
+    dialog.dialog( "close" );
+  }
+
+  changeAccessLevel = function(id, access_level) {
+    dialog = $( "#dialog-form" ).dialog({
+      autoOpen: false,
+      height: 300,
+      width: 350,
+      modal: true,
+      buttons: {
+        "Update access level": updateAccessLevel,
+        Cancel: function() {
+          dialog.dialog( "close" );
+        }
+      },
+      close: function() {
+        form[ 0 ].reset();
+      }
+    });
+    $( "#updated_access_level").val(access_level);
+    $( "#updated_access_level_user_id").val(id);
+
+    form = dialog.find( "form" ).on( "submit", function( event ) {
+      event.preventDefault();
+      updateAccessLevel();
+    });
+
+    dialog.dialog( "open" );
   };
 })(jQuery);

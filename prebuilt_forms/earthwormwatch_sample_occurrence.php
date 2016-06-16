@@ -186,12 +186,12 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    * Override function to add the report parameter for the ID of the custom attribute which holds the linked sample.
    * Depends upon a report existing that uses the parameter e.g. earthworm_sample_occurrence_samples
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('<br><br><br><br><br><br><p>Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($node->nid)))).'">Login</a> to the website, or <a href="'.url('user/register', array('query'=>array('destination=node/'.($node->nid)))).'">Register</a> if you haven’t done so previously.</p><br><br><br><br><br><br>');
+      return lang::get('<br><br><br><br><br><br><p>Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($nid)))).'">Login</a> to the website, or <a href="'.url('user/register', array('query'=>array('destination=node/'.($nid)))).'">Register</a> if you haven’t done so previously.</p><br><br><br><br><br><br>');
     }
 
     // Get the Indicia User ID to filter on.
@@ -230,10 +230,10 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new&gridmode'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new&gridmode'))).'\'">';
     } else {
-      $r .= '<input id="add-new-pit-button" type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'=>''))).'\'">';
+      $r .= '<input id="add-new-pit-button" type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => array('new'=>''))).'\'">';
     }
     $r .= '</form>';
     return $r;
@@ -331,7 +331,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    * Post Code control to allow the spatial reference to be automatically populated by entering a Post Code.
    */
   protected static function get_control_postcode($auth, $args, $tabalias, $options) {
-    if (!empty(!empty($args['postcode_attr_id']))) {
+    if (!empty($args['postcode_attr_id'])) {
       $fieldName='smpAttr:'.$args['postcode_attr_id'];
       //If data exists then load existing data into control
       if (!empty($_GET['sample_id'])) {
@@ -455,7 +455,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
   }
   
   /* Custom submission because when changes are made to fields shered between pits, they need to be copied to the other pit */
-  public static function get_submission($values, $args) {
+  public static function get_submission($values, $args, $nid) {
     //To Do: Do we even these "remembered" lines?
     global $remembered;
     $remembered = isset($args['remembered']) ? $args['remembered'] : '';
@@ -471,7 +471,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       $finalSubmission['submission_list']['entries'][1]=$otherPitSubmission;
       $finalSubmission['id']='sample';
     } else {
-       $finalSubmission=$mainSubmission;
+      $finalSubmission=$mainSubmission;
     }
     return $finalSubmission;
   }
@@ -499,10 +499,17 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
         'extraParams'=> $readAuth + array('value' => $values['sample:id'], 'sample_attribute_id' => $args['pit_1_survey_attr']),
         'nocache' => true
       ));
-      $idForOtherPit=$pit2Data[0]['sample_id'];
+      if (!empty($pit2Data[0]['sample_id']))
+        $idForOtherPit=$pit2Data[0]['sample_id'];
     }
-    $otherPitSubmission=self::build_second_pit_submission($values, $args,$mainSubmission,$idForOtherPit);
-    $otherPitSubmission['fields']['id']['value']=$idForOtherPit;
+    //If we can't find a value for the other pit, there might not be one. This would happen in the situation where 
+    //the user was editing pit 1 and pit 2 didn't exist yet. In that case don't return the other submission.
+    if (!empty($idForOtherPit)) {
+      $otherPitSubmission=self::build_second_pit_submission($values, $args,$mainSubmission,$idForOtherPit);
+      $otherPitSubmission['fields']['id']['value']=$idForOtherPit;
+    } else {
+      $otherPitSubmission=null;
+    }
     return $otherPitSubmission;
   }
   

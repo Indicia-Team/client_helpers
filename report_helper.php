@@ -2334,6 +2334,8 @@ if (typeof mapSettingsHooks!=='undefined') {
       // skip any actions which are marked as invisible for this row.
       if (isset($action['visibility_field']) && $row[$action['visibility_field']]==='f')
         continue;
+      if (isset($action['permission']) && !hostsite_user_has_permission($action['permission']))
+        continue;
       if (isset($action['url'])) {
         // Catch lazy cases where the URL does not contain the rootFolder so assumes a relative path
         if ( strcasecmp(substr($action['url'], 0, 12), '{rootfolder}') !== 0 && 
@@ -2366,7 +2368,7 @@ if (typeof mapSettingsHooks!=='undefined') {
         // merge field value replacements into the URL
         $actionUrl = self::mergeParamsIntoTemplate($row, $action['url'], true);
         // merge field value replacements into the URL parameters
-        if (count($action['urlParams'])>0) {
+        if (array_key_exists('urlParams', $action) && count($action['urlParams'])>0) {
           $actionUrl .= (strpos($actionUrl, '?')===false) ? '?' : '&';
           $actionUrl .= self::mergeParamsIntoTemplate($row, self::array_to_query_string($action['urlParams']), true);
         }

@@ -99,7 +99,7 @@ class iform_group_home extends iform_dynamic_report_explorer {
     foreach($def as $key=>$value) {
       if ($key) {
         $value = is_array($value) ? json_encode($value) : $value;
-        $defstring .= "$key=$value\n";
+        $defstring .= "{$key}_context=$value\n";
         if (!empty($value) && $key==='indexed_location_id' || $key==='indexed_location_list' || $key==='location_id' || $key==='location_list')
           $args['location_boundary_id'] = $value;
         elseif (!empty($value) && $key==='searchArea') {

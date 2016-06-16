@@ -299,6 +299,7 @@ class iform_dynamic {
           'divId'=>'controls',
           'style'=>$args['interface'],
           'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==true,
+          'progressBarOptions' => isset($args['progressBarOptions']) ? $args['progressBarOptions'] : array(),
           'navButtons' => isset($args['force_next_previous']) && $args['force_next_previous']
       ));
     } else {
