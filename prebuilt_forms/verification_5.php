@@ -1066,7 +1066,7 @@ idlist=';
       'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'])
     );
     $comments = report_helper::get_report_data($options);
-    $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
+    $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path()."../media/images/" : report_helper::$images_path;
     $r = '';
     if (count($comments)===0)
       $r .= '<p id="no-comments">'.lang::get('No comments have been made.').'</p>';
@@ -1178,7 +1178,8 @@ idlist=';
     }
     // See if there is a filled in profile_experience field for the user. If so, add
     // the statement to the response.
-    if (!empty($_GET['user_id'])) {
+    // @todo Drupal 8 compatibility
+    if (!empty($_GET['user_id']) && class_exists('EntityFieldQuery')) {
       // user ID is a warehouse ID, we need the associated Drupal account...
       $query = new EntityFieldQuery();
       $query->entityCondition('entity_type', 'user')
