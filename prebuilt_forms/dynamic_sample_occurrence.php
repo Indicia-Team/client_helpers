@@ -1108,7 +1108,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         // capture new row events on the grid
         data_entry_helper::$javascript .= "hook_species_checklist_new_row.push(function(data) {
   if (data.preferred_name=='$tokens[0]') {
-    $('#click-$fieldset').fancybox({showCloseButton: false}).trigger('click');
+    $('#click-$fieldset').fancybox({closeBtn: false}).trigger('click');
   }
 });\n";
       }
