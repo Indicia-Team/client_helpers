@@ -110,7 +110,8 @@ class filter_what extends filter_base {
       $subListOptions = array(
         'fieldname' => 'higher_taxa_taxon_list_list',
         'autocompleteControl' => 'species_autocomplete',
-        'captionField' => 'original',
+        'captionField' => 'searchterm',
+        'captionFieldInEntity' => 'searchterm',
         'speciesIncludeBothNames' => true,
         'speciesIncludeTaxonGroup' => true,
         'valueField' => 'id',
@@ -130,7 +131,8 @@ class filter_what extends filter_base {
     $subListOptions = array(
       'fieldname' => 'taxa_taxon_list_list',
       'autocompleteControl' => 'species_autocomplete',
-      'captionField' => 'original',
+      'captionField' => 'searchterm',
+      'captionFieldInEntity' => 'searchterm',
       'speciesIncludeBothNames' => true,
       'speciesIncludeTaxonGroup' => true,
       'valueField' => 'preferred_taxa_taxon_list_id',
