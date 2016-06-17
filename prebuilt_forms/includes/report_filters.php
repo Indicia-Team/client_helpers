@@ -109,8 +109,10 @@ class filter_what extends filter_base {
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
       $subListOptions = array(
         'fieldname' => 'higher_taxa_taxon_list_list',
-        'table' => 'cache_taxa_taxon_list',
-        'captionField' => 'taxon',
+        'autocompleteControl' => 'species_autocomplete',
+        'captionField' => 'original',
+        'speciesIncludeBothNames' => true,
+        'speciesIncludeTaxonGroup' => true,
         'valueField' => 'id',
         'extraParams' => $baseParams + array(
             'preferred' => 't',
@@ -127,8 +129,10 @@ class filter_what extends filter_base {
     $rankFilter = $familySortOrder==='off' ? array() : array('query' => '{"where":["(taxon_rank_sort_order>'.$familySortOrder.' or taxon_rank_sort_order is null)"]}');
     $subListOptions = array(
       'fieldname' => 'taxa_taxon_list_list',
-      'table' => 'cache_taxa_taxon_list',
-      'captionField' => 'taxon',
+      'autocompleteControl' => 'species_autocomplete',
+      'captionField' => 'original',
+      'speciesIncludeBothNames' => true,
+      'speciesIncludeTaxonGroup' => true,
       'valueField' => 'preferred_taxa_taxon_list_id',
       'extraParams' => $baseParams + $rankFilter,
       'addToTable' => false
