@@ -481,6 +481,11 @@ $('#$escaped').change(function(e) {
    * Defines the JavaScript added to the page to implement the click handling for the various
    * butons.
    * </li>
+   * <li><b>autocompleteControl</b></br>
+   * Defines the name of the data entry helper control function used to provide the autocomplete
+   * control. Defaults to autocomplete but can be swapped to species_autocomplete for species name
+   * lookup for example.
+   * </li>
    * </ul>
    *
    * @return string HTML to insert into the page for the sub_list control.
@@ -492,7 +497,10 @@ $('#$escaped').change(function(e) {
     // checks essential options, uses fieldname as id default and 
     // loads defaults if error or edit
     $options = self::check_options($options);
-    if (!isset($options['addToTable'])) $options['addToTable']=true;
+    $options = array_merge(array(
+      'addToTable' => true,
+      'autocompleteControl' => 'autocomplete'
+    ), $options);
     if ($options['addToTable']===true) {
       // we can only work with the caption field
       $options['captionField'] = 'caption';
@@ -546,10 +554,9 @@ $('#$escaped').change(function(e) {
     $list_options['controlWrapTemplate'] = 'justControl';
     if (!empty($options['selectMode']) && $options['selectMode'])
       $list_options['selectMode']=true;
-    if (!empty($options['numValues']))
-      $list_options['numValues']=$options['numValues'];
     // set up add panel
-    $options['panel_control'] = self::autocomplete($list_options);
+    $control = $options['autocompleteControl'];
+    $options['panel_control'] = self::$control($list_options);
 
     // prepare other main control options
     $options['inputId'] = $options['id'].':'.$options['captionField'];
