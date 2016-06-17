@@ -1308,7 +1308,14 @@ class iform_ukbms_sectioned_transects_input_sample {
 
   	if($listSelected !='full' || $includeControl || $tabNum == 1)
   		$r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
-  	$r .= '<br /><a href="'.$args['return_page'].'" class="button">'.lang::get('Return to walk list').'</a>';
+  	$r .= '<br />';
+  	$reloadUrl = data_entry_helper::get_reload_link_parts();
+  	// find the names of the params we must not include
+  	foreach ($reloadUrl['params'] as $key => $value) {
+  		$reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
+  	}
+  	$r .= '<a href="'.$reloadUrl['path'].'" class="button">'.lang::get('Back to visit details').'</a>';
+  	$r .= '<a href="'.$args['return_page'].'" class="button">'.lang::get('Finish and return to walk list').'</a>';
   	if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') 
   		$r .= '<input type="button" class="button smp-finish" value="'.lang::get('Flag as finished and return to walk list').'"/>';
   	$r .= '</div>';
