@@ -872,7 +872,13 @@ class iform_ukbms_sectioned_transects_input_sample {
     foreach($attributes as $attrID => $attr){
       if(strcasecmp('Recorder Name', $attr["untranslatedCaption"]) == 0){
         $formOptions['recorderNameAttrID'] = $attrID; // will be undefined if not present.
-      }
+      } else if(strcasecmp('Start Time', $attr["untranslatedCaption"]) == 0 || strcasecmp('End Time', $attr["untranslatedCaption"]) == 0){
+      	// want to convert the time fields to html5 type=time: can't use JS to checnge type
+      	// Don't want to use the time control type  as doesn't meet customer requirements.
+      	// Am fully aware that functionality is very browser dependant.
+      	$safeId = str_replace(':','\\\\:',$attr["id"]);
+        data_entry_helper::$javascript .= "$('#".$safeId."').prop('type', 'time').prop('placeholder', '__:__');\n";
+      } 
     }
 
     // Extra form to delete sample.

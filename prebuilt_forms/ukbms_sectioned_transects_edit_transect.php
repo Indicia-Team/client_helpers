@@ -694,13 +694,16 @@ $('#delete-transect').click(deleteSurvey);
   	// $options['tabDiv']='your-route';
   	$options['gridRefHint']=true;
   	if ($settings['canEditBody']){
-  		$options['toolbarPrefix'] = parent::section_selector($settings, 'section-select-route');
-  		if($settings['canEditSections'] && count($settings['sections'])>1 && $settings['numSectionsAttr'] != "") // do not allow deletion of last section, or if the is no section number attribute
-  			$options['toolbarSuffix'] = '<input type="button" value="'.lang::get('Remove Section').'" class="remove-section form-button right" title="'.lang::get('Completely remove the highlighted section. The total number of sections will be reduced by one. The form will be reloaded after the section is deleted.').'">';
-  		else $options['toolbarSuffix'] = '';
-  		$options['toolbarSuffix'] .= '<input type="button" value="'.lang::get('Erase Route').'" class="erase-route form-button right" title="'.lang::get('If the Draw Line control is active, this will erase each drawn point one at a time. If not active, then this will erase the whole highlighted route. This keeps the Section, allowing you to redraw the route for it.').'">';
+  		$options['toolbarPrefix'] = parent::section_selector($settings, 'section-select-route') .
+  									'<br/>'.
+  									'<input class="save-route form-button" type="button" value="Save Route">'.
+  									'<input class="complete-route-details form-button" type="button" value="Complete section details">';
   		if($settings['canEditSections'] && count($settings['sections'])<$args['maxSectionCount'] && $settings['numSectionsAttr'] != "") // do not allow insertion of section if it exceeds max number, or if the is no section number attribute
-  			$options['toolbarSuffix'] .= '<input type="button" value="'.lang::get('Insert Section').'" class="insert-section form-button right" title="'.lang::get('This inserts an extra section after the currently selected section. All subsequent sections are renumbered, increasing by one. All associated occurrences are kept with the moved sections. This can be used to facilitate the splitting of this section.').'">';
+  			$options['toolbarPrefix'] .= '<input type="button" value="'.lang::get('Insert Section').'" class="insert-section form-button" title="'.lang::get('This inserts an extra section after the currently selected section. All subsequent sections are renumbered, increasing by one. All associated occurrences are kept with the moved sections. This can be used to facilitate the splitting of this section.').'">';
+  		$options['toolbarPrefix'] .= '<input type="button" value="'.lang::get('Erase Route').'" class="erase-route form-button" title="'.lang::get('If the Draw Line control is active, this will erase each drawn point one at a time. If not active, then this will erase the whole highlighted route. This keeps the Section, allowing you to redraw the route for it.').'">';
+  		if($settings['canEditSections'] && count($settings['sections'])>1 && $settings['numSectionsAttr'] != "") // do not allow deletion of last section, or if the is no section number attribute
+  			$options['toolbarPrefix'] .= '<input type="button" value="'.lang::get('Remove Section').'" class="remove-section form-button" title="'.lang::get('Completely remove the highlighted section. The total number of sections will be reduced by one. The form will be reloaded after the section is deleted.').'">';
+
   		// also let the user click on a feature to select it. The highlighter just makes it easier to select one.
   		// these controls are not present in read-only mode: all you can do is look at the map.
   		$options['standardControls'][] = 'selectFeature';
@@ -709,19 +712,22 @@ $('#delete-transect').click(deleteSurvey);
   		$options['standardControls'][] = 'modifyFeature';
   		$options['switchOffSrefRetrigger'] = true;
   		$help = lang::get('Select a section from the list then click on the map to draw the route and double click to finish. '.
-  				'You can also select a section using the query tool to click on the section lines. If you make a mistake in the middle '.
-  				'of drawing a route, then you can use the Erase Route button to remove the last point drawn. After a route has been '.
-  				'completed use the Modify a feature tool to correct the line shape (either by dragging one of the circles along the '.
-  				'line to form the correct shape, or by placing the mouse over a circle and pressing the Delete button on your keyboard '.
+  				'You can also select a section using the &quot;Query&quot; tool to click on the section lines. If you make a mistake in the middle '.
+  				'of drawing a route, then you can use the &quot;Erase Route&quot; button to remove the last point drawn. After a route has been '.
+  				'completed use the &quot;Modify feature&quot; tool to correct the line shape (either by dragging one of the circles along the '.
+  				'line to form the correct shape, or by placing the mouse over a circle and pressing the &quotDelete&quot button on your keyboard '.
   				'to remove that point). Alternatively you could just redraw the line - this new line will then replace the old one '.
-  				'completely. If you are not in the middle of drawing a line, the Erase Route button will erase the whole route for the '.
+  				'completely. If you are not in the middle of drawing a line, the &quot;Erase Route&quot; button will erase the whole route for the '.
   				'currently selected section.').
   				($settings['numSectionsAttr'] != "" ?
   						'<br />'.(count($settings['sections'])>1 ?
-  								lang::get('The Remove Section button will remove the section completely, reducing the number of sections by one.').' '
+  								lang::get('The &quot;Remove Section&quot; button will remove the section completely, reducing the number of sections by one.').' '
   								: '').
-  						lang::get('To increase the number of sections, return to the Site Details tab, and increase the value in the No. of sections field there.')
-  						: '');
+  						lang::get('To increase the number of sections, either return to the &quot;Site Details&quot; tab, and increase the value in the '.
+  								'&quot;No. of sections&quot; field there (which will add new sections to the end of the list), or use the '.
+  								'&quot;Insert Section&quot; button to add a new section immediately after the currently selected section.')
+  						: '').
+  				'<br />'.lang::get('Once all route sections are drawn, select the &quot;Section Details&quot; tab (or use the &quot;Complete section details&quot; button) to complete the route setup.');
   		$r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.$help.'</p>';
   	}
   	$options['clickForSpatialRef'] = false;

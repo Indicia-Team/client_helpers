@@ -53,6 +53,7 @@ loadSectionDetails = function(section) {
   clearSection();
   if (typeof indiciaData.sections[section]!=="undefined") { // previously existing section.
     $('#section-details-tab').show();
+	$('.complete-route-details').removeAttr('disabled');
     $('#section-location-id').val(indiciaData.sections[section].id);
     // if the systems on the section and main location do not match, copy the the system and sref from the main site.
     if(indiciaData.sections[section].system !== $('#imp-sref-system').val()) {
@@ -110,6 +111,7 @@ loadSectionDetails = function(section) {
     );
   } else {
 	  $('#section-details-tab').hide();
+	  $('.complete-route-details').attr('disabled','disabled');
   }
 };
 
@@ -395,13 +397,13 @@ insertSection = function(section) {
 var saveRouteDialog;
 
 saveRoute = function() {
-    var current, oldSection = [];
+    var current, oldSection = [], saveRouteDialogText;
 	// This saves the currently selected route aginst the currently selected section.
 	$('.save-route').addClass('waiting-button');
 
 	$('#section-details-tab').show();
     current = $('#section-select-route li.selected').html();          
-	saveRouteDialog = jQuery('<p>Saving the route data for section '+current+'.<br><span class="route-status">Saving Route...</span></p>').dialog({ title: "Save Route", buttons: { "Hide": function() { $(this).dialog('close'); }}});
+    saveRouteDialogText = 'Saving the route data for section '+current+'.<br/>';
     // Leave indiciaData.currentFeature selected
     // Prepare data to post the new or edited section to the db
     var data = {
@@ -415,8 +417,11 @@ saveRoute = function() {
     if (typeof indiciaData.sections[current]!=="undefined") {
       data['location:id']=indiciaData.sections[current].id;
     } else {
+      saveRouteDialogText = saveRouteDialogText + 'Don&apos;t forget to enter the data on the &quot;Section Details&quot; tab for this new route.<br/>';
       data['locations_website:website_id']=indiciaData.website_id;
     }
+	saveRouteDialog = jQuery('<p>'+saveRouteDialogText+'<span class="route-status">Saving Route...</span></p>').dialog({ title: "Saving Route", buttons: { "Hide": function() { $(this).dialog('close'); }}});
+
     // Setup centroid grid ref and centroid geometry of section.
     // Store this in the indiciaData
     if (indiciaData.defaultSectionGridRef==='parent') {
@@ -755,7 +760,7 @@ $(document).ready(function() {
       // select the first section
       selectSection('S1', true);
 
-      $('#map-toolbar-outer').append('<input class="save-route form-button right" type="button" value="Save Route">');
+      $('.olControlEditingToolbar').addClass('right');
       $('.save-route').click(function(evt) {
           var current, oldSection = [];
     	  // This saves the currently selected route aginst the currently selected section.
@@ -814,7 +819,11 @@ $(document).ready(function() {
         	    	        $(".ui-dialog-titlebar-close", $(this).parent()).remove();
         	    	    }});
       });
-      
+
+      $('.complete-route-details').click(function(evt) {
+    	    indiciaFns.activeTab($('#controls'), 'section-details');
+      });
+
       function featureAddedEvent(evt) {
           // Only handle lines - as things like the sref control also trigger feature change events
           if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
