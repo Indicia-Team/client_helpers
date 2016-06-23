@@ -60,7 +60,7 @@ class extension_notifications_centre {
     $options = array_merge(array(
       'id' => 'user-notifications',
       'title' => 'user message notifications',
-      'sourceType' => 'C,V,S,VT,AC',
+      'sourceType' => 'C,V,S,VT,M',
       'allowReply' => true,
       'allowEditRecord' => true,
     ), $options);
