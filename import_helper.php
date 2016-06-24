@@ -165,6 +165,7 @@ class import_helper extends helper_base {
       if (isset($options['presetSettings'])) {
         // The presets might contain some extra values to apply to every row - must be output as hiddens
         $extraHiddens = array_diff_key($options['presetSettings'], $formArray);
+        unset($extraHiddens['password']);
         foreach ($extraHiddens as $hidden=>$value)
           $r .= "<input type=\"hidden\" name=\"$hidden\" value=\"$value\" />\n";
       }
