@@ -2678,8 +2678,21 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     }
     $header_date=clone $consider_date;
     $r .= "<tr>".($options['includeWeekNumber'] ? "<td></td>" : "")."<td></td>";
+
+    global $language;
+    $lang = explode('-', $language->language);
+    switch ($lang[0]) {
+    	case 'en' : $lang =  'eng';
+    				break;
+    	case 'de' : $lang =  'deu';
+    				break;
+    	case 'fr' : $lang =  'fra';
+    				break;
+    }
+    setlocale (LC_TIME, $lang);
+
     for($i=0; $i<7; $i++){
-      $r .= "<td class=\"day\">".$header_date->format('D')."</td>"; // i8n
+      $r .= "<td class=\"day\">".utf8_encode(strftime("%a" , $header_date->getTimestamp()))."</td>"; // i8n
       $header_date->modify('+1 day');
     }
     $r .= "</tr>";
@@ -2718,7 +2731,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     while($consider_date->format('Y') <= $options["year"] && ($weeknumberfilter[1]=='' || $consider_date->format('N')!=$weekstart[1] || $weekno < $weeknumberfilter[1])){
       if($consider_date->format('N')==$weekstart[1]) {
         $weekno++;
-        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">".$consider_date->format('M')."</td>";
+        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">".utf8_encode(strftime("%b" , $consider_date->getTimestamp()))."</td>";
       }
       $cellContents=$consider_date->format('j');  // day in month.
       $cellclass="";
@@ -2788,7 +2801,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       $extraFooter .= '<div class="left">'.$footer.'</div>';
     }
     if (!empty($extraFooter))
-      $r .= '<tfoot><tr><td colspan="'.count($options['columns']).'">'.$extraFooter.'</td></tr></tfoot>';
+      $r .= '<tfoot><tr><td colspan="'.($options['includeWeekNumber'] ? 9 : 8).'">'.$extraFooter.'</td></tr></tfoot>';
     $r .= "</table>\n";
     return $warnings.$r;
   }
@@ -4250,9 +4263,12 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   		$extraParams['query'] = urlencode(json_encode(array('in'=>array('location_id', $options['branch_location_list']))));
   	else $extraParams['location_id'] = 'NULL';
   	$extraParams['columns'] = 'date_start,date_end,date_type,type,period_number,taxa_taxon_list_id,taxonomic_sort_order,taxon,preferred_taxon,default_common_name,taxon_meaning_id,count,estimate';
+  	if(!isset($options['caching']))
+  		$options['caching']=true;
   	$records = data_entry_helper::get_population_data(array(
   			'table'=>'summary_occurrence',
-  			'extraParams'=>$extraParams
+  			'extraParams'=>$extraParams,
+  			'caching'=> $options['caching']
   	));
   	if (isset($records['error'])) return $records['error'];
   	data_entry_helper::$javascript .= "

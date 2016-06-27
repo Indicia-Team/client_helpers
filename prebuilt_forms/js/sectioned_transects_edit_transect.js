@@ -250,8 +250,21 @@ deleteSection = function(section) {
   // update the attribute value for number of sections.
   data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
   data[indiciaData.numSectionsAttrName] = ''+(numSections-1);
-  // reload the form when all ajax done.
-  $('.remove-section').ajaxStop(function(event){    
+  // and finally update the total transect length on the transect.
+  if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
+		indiciaData.autocalcTransectLengthAttrId &&
+		indiciaData.autocalcSectionLengthAttrId) {
+	// add all sections lengths together
+	var transectLen = 0;
+	for(var i = 1; i <= numSections; i++){
+		if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
+			transectLen += indiciaData.sections['S'+i].sectionLen;
+		}
+	}
+    data[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
+  }
+  // reload the form when all ajax done. This will reload the new section list and total transect length into the form
+  $( document ).ajaxStop(function(event){    
     window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
   });
   $.post(indiciaData.ajaxFormPostUrl,
@@ -286,9 +299,13 @@ insertSection = function(section) {
   // update the attribute value for number of sections.
   data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
   data[indiciaData.numSectionsAttrName] = ''+(numSections+1);
+  // no need to calculate increase in transect length.
   // reload the form when all ajax done.
-  $('.insert-section').ajaxStop(function(event){    
-    window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
+  $( document ).ajaxStop(function(event){
+	  setTimeout(function(){
+		    window.location.reload(true);
+		},100); 
+//    window.location = window.location.href.split('#')[0]; // want to GET even if last was a POST. Plus don't want to go to the tab bookmark after #
   });
   $.post(indiciaData.ajaxFormPostUrl,
           data,
@@ -296,12 +313,49 @@ insertSection = function(section) {
           'json');
 };
 
+var numberOfSamples = 0;
+var numberOfSections = 0;
+var numberOfRecordsCompleted = 0;
+
+//insert a section
+reloadSection = function(section) {
+  var data;
+  // section comes in like "S1"
+  jQuery('.reload-section').addClass('waiting-button');
+  
+  numberOfSections = parseInt(jQuery('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10) - (parseInt(section.substr(1))+1);
+
+  var dialog = jQuery('<p>Please wait whilst the section is deleted (including the observations recorded against it), and the other sections are renumbered.<br/>' +
+		  			'After the records are updated, the page should reload.<br/>' +
+		  			'<span id="recordCounter">0 of '+(numberOfSections+1)+'</span></p>').dialog({ title: "Outside Site", buttons: { "OK": function() { dialog.dialog('close'); }}});
+		  // plus 1 is for delete
+	if(typeof indiciaData.sections[section] !== "undefined"){
+		jQuery.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
+	            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+	        function(sdata) {
+				numberOfSamples = sdata.length;
+				jQuery('#recordCounter').html(numberOfRecordsCompleted+' of '+(numberOfSamples+numberOfSections+1));
+	        	if (typeof sdata.error==="undefined") {
+	        		jQuery.each(sdata, function(idx, sample) {
+	        			numberOfRecordsCompleted++;
+	    				jQuery('#recordCounter').html(numberOfRecordsCompleted+' of '+(numberOfSamples+numberOfSections+1));
+	        			// Would post the delete here
+	        		});
+	        	}
+			});
+	}
+
+  window.onbeforeunload = null;
+  setTimeout(function(){
+		    window.location.reload(true);
+		},10000); 
+};
+
 $(document).ready(function() {
 
   var doingSelection=false; 
   
   $('#section-form').ajaxForm({
-    // must be synchronous, otherwise currentCell could change.
     async: false,
     dataType:  'json',
     complete: function() {
@@ -355,6 +409,10 @@ $(document).ready(function() {
         var current = $('#section-select-route li.selected').html();
         if(confirm(indiciaData.sectionInsertConfirm + ' ' + current + '?')) insertSection(current);
       });
+      $('.reload-section').click(function(evt) {
+          var current = $('#section-select-route li.selected').html();
+          reloadSection(current);
+        });
       $('.erase-route').click(function(evt) {
         var current = $('#section-select-route li.selected').html(),
             oldSection = [];
@@ -386,6 +444,7 @@ $(document).ready(function() {
         if (typeof indiciaData.sections[current]=="undefined") {
           return; // not currently stored in database
         }
+        indiciaData.sections[current].sectionLen = 0;
         // have to leave the location in the website (data may have been recorded against it), but can't just empty the geometry
         var data = {
           'location:boundary_geom':'',
@@ -405,6 +464,27 @@ $(document).ready(function() {
               $('#section-select-route-'+current).addClass('missing');
               $('#section-select-'+current).addClass('missing');
             }
+            // recalculate total transect length
+            if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
+            		indiciaData.autocalcTransectLengthAttrId &&
+            		indiciaData.autocalcSectionLengthAttrId) {
+            	// add all sections lengths together
+            	var transectLen = 0;
+                var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
+            	for(var i = 1; i <= numSections; i++){
+            		if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
+            			transectLen += indiciaData.sections['S'+i].sectionLen;
+            		}
+            	}
+            	// load into form.
+                $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
+                data[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
+                $.post(indiciaData.ajaxFormPostUrl,
+                        ldata,
+                        function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
+                        'json');
+              }
+
           },
           'json'
         );
@@ -577,7 +657,9 @@ $(document).ready(function() {
           data['location:centroid_sref_system']=indiciaData.sections[current].system;
           // autocalc section length
           if (indiciaData.autocalcSectionLengthAttrId) {
-            data[$('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).attr('name')] = Math.round(selectedFeature.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:27700').getLength());
+        	var sectionLen = Math.round(selectedFeature.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:27700').getLength());
+            data[$('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).attr('name')] = sectionLen;
+            indiciaData.sections[current].sectionLen = sectionLen;
           }
           $.post(
             indiciaData.ajaxFormPostUrl,
@@ -592,7 +674,29 @@ $(document).ready(function() {
                 $('#section-location-id').val(data.outer_id);
                 $('#section-select-route-'+current).removeClass('missing');
                 $('#section-select-'+current).removeClass('missing');
-                loadSectionDetails(current);
+                loadSectionDetails(current); // this will load the newly calculate section length into the form field.
+
+                if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
+                			indiciaData.autocalcTransectLengthAttrId &&
+                			indiciaData.autocalcSectionLengthAttrId) {
+                  // add all sections lengths together
+                  var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
+                  var transectLen = 0;
+                  for(var i = 1; i <= numSections; i++){
+                    if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
+                    	transectLen += indiciaData.sections['S'+i].sectionLen;
+                    }
+                  }
+              	  // set the transect length attribute on local form, in case the transect tab is saved
+                  $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
+              	  // save the attribute value into the warehouse, in case transect tab is not saved.
+                  data = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
+                  data[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
+                  $.post(indiciaData.ajaxFormPostUrl,
+                          data,
+                          function(data) { if (typeof(data.error)!=="undefined") { alert(data.error); }},
+                          'json');
+                }
               }
             },
             'json'
@@ -626,7 +730,5 @@ $(document).ready(function() {
           '<td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
     }
   });
-
 });
-
 }(jQuery));

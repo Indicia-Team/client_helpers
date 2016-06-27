@@ -52,7 +52,7 @@ table {
       margin: 2px;
       &.newLink {
         @include calendar-button;
-        background-image: url("../../../../media/images/add.png") !important;
+        background-image: url("../../../media/images/add.png") !important;
       }
     }
   }

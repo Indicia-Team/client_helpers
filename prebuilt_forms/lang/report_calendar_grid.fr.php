@@ -22,10 +22,16 @@
 global $custom_terms;
 
 /**
- * Language terms for  dynamic_sample_occurrence form.
+ * Language terms for the report_calendar_grid form.
+ * 		 è é à î ê û
  *
  * @package	Client
  */
 $custom_terms = array(
-	'LANG_Georef_Label' => 'Search for Place'
+	'Filter by site' => 'Filtrer par emplacement'
+	,'All sites' => 'Tous les emplacement'
+	,'Week Number' => 'Numéro de la semaine'
+	,'Create a new sample on %s'  => 'Créer un nouvel échantillon sur %s'
+	,' for the selected location.' => ' pour l\'emplacement sélectionné.'
+	,'View existing sample for %s on %s (ID=%d)' => 'Voir échantillon existant pour %s le %s (ID=%d)'
 );
