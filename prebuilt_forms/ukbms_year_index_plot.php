@@ -20,17 +20,6 @@
  * @link  http://code.google.com/p/indicia/
  */
 
-// TODO
-/*
- * Add control to pick between counts and index values 
- * Create reports for counts values, index values.
- * Add trendline
- * Different colour for index vs estimate?
- * set extra params Survey_id into report ?? Has to come from the location_type_id control.
- * Extend to allow sensitive sites to be displayed as italic.
- * Copy axes label jsonwidget change from section plot.
- */
-
 /*
  * Future enhancements:
  * Allow url arguments to set default values to controls.
@@ -55,7 +44,7 @@ class iform_ukbms_year_index_plot {
     return array(
       'title'=>'UKBMS Year by Year Index Plot',
       'category' => 'Reporting',
-      'description'=>'TODO',
+      'description'=>'This shows the year by year counts, and is able to show this for individual species as well as all-species.',
     );
   }
 
@@ -69,7 +58,15 @@ class iform_ukbms_year_index_plot {
   public static function get_parameters() {
     return
       array(
-
+      	array(
+      		'name'=>'nidvsnode',
+      		'caption'=>'nid interface',
+      		'description'=>'In the arguments for the get_form function, the second can be either nid or the node, depending on the client_helpers version. Check this field if nid.',
+      		'type'=>'boolean',
+      		'default' => false,
+      		'required' => false,
+        ),
+      		
       	array(
           'name'=>'manager_permission',
           'caption'=>'Drupal Permission for Manager mode',
@@ -131,23 +128,52 @@ class iform_ukbms_year_index_plot {
       	),
 
       	array(
-      		'name'=>'report_name',
-      		'caption'=>'Report Name',
-      		'description'=>'Select the report to provide the output for this page.',
+      		'name'=>'index_report_name',
+      		'caption'=>'Index Data Report',
+      		'description'=>'Select the report to provide the data when getting the index data.',
       		'type'=>'report_helper::report_picker',
       		'group'=>'Report Settings'
       	),
       	array(
-      		'name'=>'countOccAttrId',
-      		'caption'=>'Count Occurrence Attribute',
-      		'description'=>'An Occurrence attribute used as the count for the occurrence. If not provided, the default value is 1.',
-      		'type'=>'select',
-      		'table'=>'occurrence_attribute',
-      		'captionField'=>'caption',
-      		'valueField'=>'id',
-      		'siteSpecific'=>true,
-      		'required' => false,
+      		'name'=>'index_report_count_field',
+      		'caption'=>'Index Report Count Field',
+      		'description'=>'Name of the field in the index report which holds the count value.',
+      		'type'=>'string',
       		'group' => 'Report Settings'
+      	),
+      	array(
+      		'name' => 'index_param_presets',
+      		'caption' => 'Index Report Preset Parameter Values',
+      		'description' => 'Preset values for additional report parameters: will depened on report itself. '.
+      		'One per line. Each parameter is followed by an equals then the value, e.g. occattrs=6. You can use {user_id} as a value which will be replaced by the '.
+      		'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
+      		'type' => 'textarea',
+      		'required' => false,
+      		'group'=>'Report Settings'
+      	),
+      	array(
+      		'name'=>'count_report_name',
+      		'caption'=>'Count Data Report',
+      		'description'=>'Select the report to provide the data when getting the count data.',
+      		'type'=>'report_helper::report_picker',
+      		'group'=>'Report Settings'
+      	),
+      	array(
+      		'name'=>'count_report_count_field',
+      		'caption'=>'Count Report Count Field',
+      		'description'=>'Name of the field in the count report which holds the count value.',
+      		'type'=>'string',
+      		'group' => 'Report Settings'
+      	),
+      	array(
+      		'name' => 'count_param_presets',
+      		'caption' => 'Count Report Preset Parameter Values',
+      		'description' => 'Preset values for additional report parameters: will depened on report itself. '.
+      		'One per line. Each parameter is followed by an equals then the value, e.g. occattrs=6. You can use {user_id} as a value which will be replaced by the '.
+      		'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
+      		'type' => 'textarea',
+      		'required' => false,
+      		'group'=>'Report Settings'
       	),
       	array(
       		'name'=>'taxonList',
@@ -256,11 +282,7 @@ class iform_ukbms_year_index_plot {
           "fontSize":{"type":"str","desc":"CSS spec for the font-size css attribute."},
           "textColor":{"type":"str","desc":"CSS spec for the color attribute."},
         }},
-        "labelOptions":{"type":"map","mapping":{
-          "label":{"type":"str","desc":"Label for the axis."},
-          "show":{"type":"bool","desc":"Check to show the axis label."},
-          "escapeHTML":{"type":"bool","desc":"Check to escape HTML entities in the label."},
-        }},
+        "label":{"type":"str","desc":"Label for the axis."},
         "min":{"type":"number","desc":"minimum value of the axis (in data units, not pixels)."},
         "max":{"type":"number","desc":"maximum value of the axis (in data units, not pixels)."},
         "autoscale":{"type":"bool","desc":"Autoscale the axis min and max values to provide sensible tick spacing."},
@@ -299,11 +321,7 @@ class iform_ukbms_year_index_plot {
           "fontSize":{"type":"str","desc":"CSS spec for the font-size css attribute."},
           "textColor":{"type":"str","desc":"CSS spec for the color attribute."},
         }},
-        "labelOptions":{"type":"map","mapping":{
-          "label":{"type":"str","desc":"Label for the axis."},
-          "show":{"type":"bool","desc":"Check to show the axis label."},
-          "escapeHTML":{"type":"bool","desc":"Check to escape HTML entities in the label."},
-        }},
+        "label":{"type":"str","desc":"Label for the axis."},
         "min":{"type":"number","desc":"minimum value of the axis (in data units, not pixels)."},
         "max":{"type":"number","desc":"maximum value of the axis (in data units, not pixels)."},
         "autoscale":{"type":"bool","desc":"Autoscale the axis min and max values to provide sensible tick spacing."},
@@ -369,13 +387,14 @@ class iform_ukbms_year_index_plot {
     $userUID = $user->uid;
     $manager = (isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission']));
     	
-    $ctrl = '<label class="location-select-label">'.lang::get('Site').' : </label>';
+    $ctrl = '<label class="location-select-label">'.lang::get('Site').':</label>';
 
     $cmsAttr = $args['cmsLocAttrId'];
     $branchCmsAttr = $args['branchCmsLocAttrId'];
     
     $locationListArgs=array(// 'nocache'=>true,
-    		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '', 'locattrs'=>''),
+    		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '',
+    				'locattrs'=>(!empty($args['sensitivityLocAttrId']) ? $args['sensitivityLocAttrId'] : '')),
     				$readAuth),
             'readAuth' => $readAuth,
             'caching' => true,
@@ -431,6 +450,13 @@ class iform_ukbms_year_index_plot {
       			$locationIDList[] = $attr['location_id'];
       	}
       	$locationListArgs['extraParams']['idlist'] = implode(',', $locationIDList);
+      	
+      	if(isset($args['sensitivityAccessPermission']) && $args['sensitivityAccessPermission']!="" &&
+      			!hostsite_user_has_permission($args['sensitivityAccessPermission']) &&
+      			!empty($args['sensitivityLocAttrId'])) {
+      		$locationListArgs['extraParams']['attr_location_'.$args['sensitivityLocAttrId']] = '0';
+      	}
+      	
         if($locationListArgs['extraParams']['idlist'] != '') {
   	    	$locationList = report_helper::get_report_data($locationListArgs);
       	} else $locationList = array();
@@ -449,7 +475,7 @@ class iform_ukbms_year_index_plot {
       	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('Please select').' : '.$options['surveyMapping'][$location_type_id]['location_type_term'].'&gt;</option>';
       	foreach($sort as $id=>$name){
       		$ctrl .= '<option value='.$id.' class="location-select-option '.
-//      			(!empty($args['sensitivityLocAttrId']) && $locs[$id]['attr_location_'.$args['sensitivityLocAttrId']] === "1" ? 'sensitive' : '').
+      			(!empty($args['sensitivityLocAttrId']) && $locs[$id]['attr_location_'.$args['sensitivityLocAttrId']] === "1" ? 'sensitive' : '').
       			'" >'.
       			$name.($options['surveyMapping'][$location_type_id]['includeSref'] ? ' ('.$locs[$id]['centroid_sref'].')' : '').
       			'</option>';
@@ -478,7 +504,7 @@ class iform_ukbms_year_index_plot {
   {
   	// Species lists are populated when the data is loaded by the JS
   	// Just have blank selects.
-    return '<label for="'.$options['species1SelectID'].'" class="species1-select-label">'.lang::get('Species 1').': </label>' .
+    return '<label for="'.$options['species1SelectID'].'" class="species1-select-label">'.lang::get('Species 1').':</label>' .
     			'<select id="'.$options['species1SelectID'].'" class="species-select">' .
 					'<option value="" class="location-select-option" >&lt;'.lang::get('No data loaded yet').'&gt;</option>' .
 				'</select>';
@@ -488,7 +514,7 @@ class iform_ukbms_year_index_plot {
   {
   	// Species lists are populated when the data is loaded by the JS
   	// Just have blank selects.
-  	return '<label for="'.$options['species2SelectID'].'" class="species2-select-label">'.lang::get('Species 2').': </label>' .
+  	return '<label for="'.$options['species2SelectID'].'" class="species2-select-label">'.lang::get('Species 2').':</label>' .
   			'<select id="'.$options['species2SelectID'].'" class="species-select">' .
   			'<option value="" class="location-select-option" >&lt;'.lang::get('No data loaded yet').'&gt;</option>' .
   			'</select>';
@@ -501,6 +527,16 @@ class iform_ukbms_year_index_plot {
       else
         $options[$arg]="";
     }
+  }
+
+  private static function _data_type_control($args, $readAuth, $nid, $options)
+  {
+	$r = '<label for="'.$options['dataTypeSelectID'].'">'.lang::get("Data").':</label>'.
+		'<select id="'.$options['dataTypeSelectID'].'" name="data_type">'.
+		'<option value="index">'.lang::get("Index").'</option>'.
+		'<option value="count">'.lang::get("Count").'</option>'.
+		'</select>';
+    return $r;
   }
 
   private static function _get_sorted_termlist_terms($auth, $key, $filter){
@@ -519,11 +555,18 @@ class iform_ukbms_year_index_plot {
   	return '<input type="button" id="loadButton" class="loadButton" value="'.lang::get('Load Data').'"/>';
   }
   
+  private static function _trendline_control($args, $auth, $nid, $options)
+  {
+  	return '<label for="add-trendline" >'.lang::get("Add trendline").' </label>'.
+  			'<input type="checkbox" name="add-trendline" id="add-trendline" check="checked"/>';
+  }
+  
   private static function _build_primary_toolbar($args, $auth, $nid, &$options)
   {
   	/* NB only interested in complete data picture - not user specific */
   	return '<tr>' .
 		  	'<th>' . self::_location_control($args, $auth, $nid, $options) . '</th>' . // note this includes the location_type control if needed
+		  	'<th>' . self::_data_type_control($args, $auth, $nid, $options) . '</th>' .
 		  	'<th>' . self::_load_data_button($args, $auth, $nid, $options) . '</th>' .
 		  	'</tr>';
   }
@@ -533,6 +576,7 @@ class iform_ukbms_year_index_plot {
   	return '<tr>' .
   			'<th>' . self::_species1_control($args, $auth, $nid, $options) . '</th>' .
   			'<th>' . self::_species2_control($args, $auth, $nid, $options) . '</th>' .
+  			'<th>' . self::_trendline_control($args, $auth, $nid, $options) . '</th>' .
   			'</tr>';
   }
 
@@ -543,9 +587,13 @@ class iform_ukbms_year_index_plot {
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $nid, $response) {
+  public static function get_form($args, $arg2, $response) {
     global $user;
     $retVal = '';
+    
+    if(isset($args['nidvsnode']) && $args['nidvsnode'])
+    	$nid = $arg2;
+    else $nid = $arg2->nid;
     
     if($user->uid<=0) { // we are assuming Drupal.
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
@@ -565,7 +613,8 @@ class iform_ukbms_year_index_plot {
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
     
     $options = array(
-      'dataSource' => $args['report_name'],
+      'indexDataSource' => $args['index_report_name'],
+      'countDataSource' => $args['count_report_name'],
       'mode' => 'report',
       'readAuth' => $auth,
       'base_url' => data_entry_helper::$base_url,
@@ -574,46 +623,50 @@ class iform_ukbms_year_index_plot {
       'dataLoadedMsg' => lang::get('Data Currently Loaded'),
       'class' => 'ui-widget ui-widget-content report-grid',
       'extraParams' => array(),
-      'reportExtraParams' => '',
+      'countReportExtraParams' => '',
+      'indexReportExtraParams' => '',
       'seriesData' => array(),
-      'id' => 'usp-chart-'.$nid,
-      'yearSelectID' => 'usp-year-select-'.$nid,
-      'locationTypeSelectID' => 'usp-location-type-select-'.$nid,
-      'locationSelectIDPrefix' => 'usp-location-select-'.$nid,
-      'dataLoadButtonID' => 'usp-data-load-button-'.$nid,
-      'species1SelectID' => 'usp-species1-select-'.$nid,
-      'species2SelectID' => 'usp-species2-select-'.$nid,
+      'id' => 'uyip-chart-'.$nid,
+      'locationTypeSelectID' => 'uyip-location-type-select-'.$nid,
+      'locationSelectIDPrefix' => 'uyip-location-select-'.$nid,
+      'dataTypeSelectID' => 'uyip-data-type-select-'.$nid,
+      'dataLoadButtonID' => 'uyip-data-load-button-'.$nid,
+      'species1SelectID' => 'uyip-species1-select-'.$nid,
+      'species2SelectID' => 'uyip-species2-select-'.$nid,
       'allSpeciesMsg' => lang::get("All Species")
     );
 
     self::_set_up_survey_mapping($args, $auth, $options);
 
-    self::_copy_args($args, $options, array('width','height','dataCombining', 'dataRound'));
+    self::_copy_args($args, $options, array('width','height'));
 
-    if(isset($args['countOccAttrId']) && $args['countOccAttrId']!='') {
-      $options['countOccAttr']= 'attr_occurrence_'.str_replace(' ', '_', strtolower($args['countOccAttrId']));
-      $options['extraParams']['occattrs']=$args['countOccAttrId'];
-    } else
-    	$options['extraParams']['occattrs']='';
- 
+    $options['countCountField']  = $args['count_report_count_field'];
+    $options['countExtraParams'] = get_options_array_with_user_data($args['count_param_presets']);
+    $options['indexCountField']  = $args['index_report_count_field'];
+    $options['indexExtraParams'] = get_options_array_with_user_data($args['index_param_presets']);
+    
     if (function_exists('hostsite_get_user_field')) {
     	// If the host environment (e.g. Drupal module) can tell us which Indicia user is logged in, pass that
     	// to the report call as it might be required for filters.
-    	if (!isset($options['extraParams']['user_id']) && $indiciaUserId = hostsite_get_user_field('indicia_user_id'))
-    		$options['extraParams']['user_id'] = $indiciaUserId;
+    	if (!isset($options['extraParams']['user_id']) && $indiciaUserId = hostsite_get_user_field('indicia_user_id')) {
+    		$options['countExtraParams']['user_id'] = $indiciaUserId;
+    		$options['indexExtraParams']['user_id'] = $indiciaUserId;
+    	}
     }
     // taxon_list_id=51
-    if(isset($args['taxonList']) && $args['taxonList']!='')
-    	$options['extraParams']['taxon_list_id']=$args['taxonList'];
-    
-     // TODO set extra params Survey_id ?? Has to come from the location_type_id control.
-    foreach($options['extraParams'] as $key => $value) {
-    	$options['reportExtraParams'] .= '&'.$key.'='.$value;
+    if(isset($args['taxonList']) && $args['taxonList']!='') {
+    	$options['countExtraParams']['taxon_list_id']=$args['taxonList'];
+    	$options['indexExtraParams']['taxon_list_id']=$args['taxonList'];
     }
     
-    // This is specifically a bar type
-	//    		if (isset($series['trendline']))
-	//    			data_entry_helper::add_resource('jqplot_trendline');
+    foreach($options['countExtraParams'] as $key => $value) {
+    	$options['countReportExtraParams'] .= '&'.$key.'='.$value;
+    }
+    foreach($options['indexExtraParams'] as $key => $value) {
+    	$options['indexReportExtraParams'] .= '&'.$key.'='.$value;
+    }
+    
+	data_entry_helper::add_resource('jqplot_trendline');
     
     $opts = array();
     $rendererOptions = trim($args['renderer_options']);
@@ -640,15 +693,17 @@ class iform_ukbms_year_index_plot {
 
     $axesOptions['xaxis']['ticks'] = array();
     $now = new DateTime('now');
-    for($i = $args['first_year']; $i <= $now->format('Y'); $i++)
+    for($i = $args['first_year']; $i < $now->format('Y'); $i++) // only go up to last year
     	$axesOptions['xaxis']['ticks'][] = $i;
-
+    $options['first_year'] = $args['first_year'];
+    $options['last_year'] = $now->format('Y') - 1;
+    
     $opts['axes'] = $axesOptions;
     $options['opts'] = $opts;
     
     // We need to fudge the json so the renderer class is not a string
     data_entry_helper::$javascript .= "
-uspPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot.CanvasAxisLabelRenderer"','"$.jqplot.BarRenderer"'), array('$.jqplot.CategoryAxisRenderer','$.jqplot.CanvasAxisLabelRenderer','$.jqplot.BarRenderer'), json_encode($options)) . ");
+uyipPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot.CanvasAxisLabelRenderer"','"$.jqplot.BarRenderer"'), array('$.jqplot.CategoryAxisRenderer','$.jqplot.CanvasAxisLabelRenderer','$.jqplot.BarRenderer'), json_encode($options)) . ");
 ";
 
     $heightStyle = (!empty($options['height']) ? "height: $options[height]px;" : '');
