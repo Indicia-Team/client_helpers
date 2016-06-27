@@ -20,14 +20,6 @@
  * @link  http://code.google.com/p/indicia/
  */
 
-// TODO
-/*
- * set extra params Survey_id into report ?? Has to come from the location_type_id control.
- * Extend to allow sensitive sites to be displayed as italic.
- * Rotate Y -axis 90deg
- * Highlight title more.
- */
-
 /*
  * Future enhancements:
  * Allow url arguments to set default values to controls.
@@ -66,6 +58,14 @@ class iform_ukbms_section_plot {
   public static function get_parameters() {
     return
       array(
+      	array(
+      		'name'=>'nidvsnode',
+      		'caption'=>'nid interface',
+      		'description'=>'In the arguments for the get_form function, the second can be either nid or the node, depending on the client_helpers version. Check this field if nid.',
+      		'type'=>'boolean',
+      		'default' => false,
+      		'required' => false,
+      	),
 
       	array(
           'name'=>'manager_permission',
@@ -418,13 +418,14 @@ class iform_ukbms_section_plot {
     $userUID = $user->uid;
     $manager = (isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission']));
     	
-    $ctrl = '<label class="location-select-label">'.lang::get('Site').' : </label>';
+    $ctrl = '<label class="location-select-label">'.lang::get('Site').':</label>';
 
     $cmsAttr = $args['cmsLocAttrId'];
     $branchCmsAttr = $args['branchCmsLocAttrId'];
     
     $locationListArgs=array(// 'nocache'=>true,
-    		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '', 'locattrs'=>''),
+    		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '',
+    				'locattrs'=>(!empty($args['sensitivityLocAttrId']) ? $args['sensitivityLocAttrId'] : '')),
     				$readAuth),
             'readAuth' => $readAuth,
             'caching' => true,
@@ -480,6 +481,13 @@ class iform_ukbms_section_plot {
       			$locationIDList[] = $attr['location_id'];
       	}
       	$locationListArgs['extraParams']['idlist'] = implode(',', $locationIDList);
+      	
+      	if(isset($args['sensitivityAccessPermission']) && $args['sensitivityAccessPermission']!="" &&
+      			!hostsite_user_has_permission($args['sensitivityAccessPermission']) &&
+      			!empty($args['sensitivityLocAttrId'])) {
+      		$locationListArgs['extraParams']['attr_location_'.$args['sensitivityLocAttrId']] = '0';
+      	}
+      	
         if($locationListArgs['extraParams']['idlist'] != '') {
   	    	$locationList = report_helper::get_report_data($locationListArgs);
       	} else $locationList = array();
@@ -498,7 +506,7 @@ class iform_ukbms_section_plot {
       	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('Please select').' : '.$options['surveyMapping'][$location_type_id]['location_type_term'].'&gt;</option>';
       	foreach($sort as $id=>$name){
       		$ctrl .= '<option value='.$id.' class="location-select-option '.
-//      			(!empty($args['sensitivityLocAttrId']) && $locs[$id]['attr_location_'.$args['sensitivityLocAttrId']] === "1" ? 'sensitive' : '').
+      			(!empty($args['sensitivityLocAttrId']) && $locs[$id]['attr_location_'.$args['sensitivityLocAttrId']] === "1" ? 'sensitive' : '').
       			'" >'.
       			$name.($options['surveyMapping'][$location_type_id]['includeSref'] ? ' ('.$locs[$id]['centroid_sref'].')' : '').
       			'</option>';
@@ -527,7 +535,7 @@ class iform_ukbms_section_plot {
   {
   	// Species lists are populated when the data is loaded by the JS
   	// Just have blank selects.
-    return '<label for="'.$options['species1SelectID'].'" class="species1-select-label">'.lang::get('Species 1').': </label>' .
+    return '<label for="'.$options['species1SelectID'].'" class="species1-select-label">'.lang::get('Species 1').':</label>' .
     			'<select id="'.$options['species1SelectID'].'" class="species-select">' .
 					'<option value="" class="location-select-option" >&lt;'.lang::get('No data loaded yet').'&gt;</option>' .
 				'</select>';
@@ -537,7 +545,7 @@ class iform_ukbms_section_plot {
   {
   	// Species lists are populated when the data is loaded by the JS
   	// Just have blank selects.
-  	return '<label for="'.$options['species2SelectID'].'" class="species2-select-label">'.lang::get('Species 2').': </label>' .
+  	return '<label for="'.$options['species2SelectID'].'" class="species2-select-label">'.lang::get('Species 2').':</label>' .
   			'<select id="'.$options['species2SelectID'].'" class="species-select">' .
   			'<option value="" class="location-select-option" >&lt;'.lang::get('No data loaded yet').'&gt;</option>' .
   			'</select>';
@@ -555,7 +563,7 @@ class iform_ukbms_section_plot {
   private static function _year_control($args, $readAuth, $nid, $options)
   {
   	$now = new DateTime('now');
-	$r = '<label for="'.$options['yearSelectID'].'">'.lang::get("Year").' : </label><select id="'.$options['yearSelectID'].'" name="year">';
+	$r = '<label for="'.$options['yearSelectID'].'">'.lang::get("Year").':</label><select id="'.$options['yearSelectID'].'" name="year">';
 	for($i = $now->format('Y'); $i >= $args['first_year']; $i--){
 		$r .= '<option value="'.$i.'">'.$i.'</option>';
     }
@@ -567,7 +575,7 @@ class iform_ukbms_section_plot {
   {
   	$partsA=explode(':',$args['inSeasonWeeks']);
   	$partsB=explode(':',$args['allWeeks']);
-  	$r = '<label for="'.$options['weekNumSelectID'].'">'.lang::get("Week Number").' : </label><select id="'.$options['weekNumSelectID'].'" name="week">' .
+  	$r = '<label for="'.$options['weekNumSelectID'].'">'.lang::get("Week Number").':</label><select id="'.$options['weekNumSelectID'].'" name="week">' .
 			'<option value="season" class="week-select-option" >'.lang::get('All in-season weeks').' ('.$partsA[0].' '.lang::get('to').' '.$partsA[1].')</option>' .
 			'<option value="all" class="week-select-option" >'.lang::get('All weeks').' ('.$partsB[0].' '.lang::get('to').' '.$partsB[1].')</option>';
   	for($i = $partsB[0]; $i <= $partsB[1]; $i++){
@@ -619,9 +627,13 @@ class iform_ukbms_section_plot {
    * @param array $response Response from Indicia services after posting a verification.
    * @return HTML string
    */
-  public static function get_form($args, $nid, $response) {
+  public static function get_form($args, $arg2, $response) {
     global $user;
     $retVal = '';
+    
+    if(isset($args['nidvsnode']) && $args['nidvsnode'])
+    	$nid = $arg2;
+    else $nid = $arg2->nid;
     
     if($user->uid<=0) { // we are assuming Drupal.
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
@@ -707,7 +719,6 @@ class iform_ukbms_section_plot {
     if(isset($args['taxonList']) && $args['taxonList']!='')
     	$options['extraParams']['taxon_list_id']=$args['taxonList'];
     
-     // TODO set extra params Survey_id ?? Has to come from the location_type_id control.
     foreach($options['extraParams'] as $key => $value) {
     	$options['reportExtraParams'] .= '&'.$key.'='.$value;
     }

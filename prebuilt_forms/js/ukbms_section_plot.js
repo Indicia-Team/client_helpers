@@ -26,6 +26,7 @@ var reportOptions;
 
 			reportOptions.loadedYear = $('#'+ reportOptions.yearSelectID).val();
 			reportOptions.loadedLocationType = locationType;
+			reportOptions.loadedSurveyID = reportOptions.surveyMapping[locationType].survey_id;
 			reportOptions.loadedLocation = $('#'+ reportOptions.locationSelectIDPrefix+'-'+locationType+' option:selected').text();
 			$('#currentlyLoaded').empty().append('LOADING : ' + reportOptions.loadedYear + ' : ' + reportOptions.loadedLocation);
 
@@ -74,6 +75,8 @@ var reportOptions;
 		    			reportOptions.sectionIDMapping[reportOptions.sectionCodeMapping[lbl].id].idx = idx;
 		    		});
 		    		reportOptions.opts.axes.xaxis.ticks = chartLabels;
+		    		// convert the location_type into a survey_id
+		    		
 					jQuery.getJSON(reportOptions.base_url+'/index.php/services/report/requestReport?report='+reportOptions.dataSource+'.xml' +
 							'&reportSource=local&mode=json' +
 							'&auth_token='+indiciaData.read.auth_token+'&reset_timeout=true&nonce='+indiciaData.read.nonce + 
@@ -81,6 +84,7 @@ var reportOptions;
 							'&callback=?' +
 							'&year='+reportOptions.loadedYear+'&date_from='+reportOptions.loadedYear+'-01-01&date_to='+reportOptions.loadedYear+'-12-31' +
 							'&location_type_id='+reportOptions.loadedLocationType+'&location_id='+location+
+							'&survey_id='+reportOptions.loadedSurveyID+
 							'&locattrs=',
 						function(rdata){
 							reportOptions.values = []; // taxon->weeknumber->section

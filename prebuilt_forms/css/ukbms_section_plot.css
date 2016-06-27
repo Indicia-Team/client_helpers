@@ -26,3 +26,7 @@ div.report-summary-controls select {
   background: transparent url(/misc/throbber.gif) no-repeat 50% -18px !important;
 }
 
+div.jqplot-title {
+	line-height: 2em;
+	font-size: 2em;
+}
