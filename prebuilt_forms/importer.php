@@ -61,9 +61,16 @@ class iform_importer {
           'url' => 'Use setting in URL (&type=...)',
           'occurrence' => 'Species records',
           'sample' => 'Samples without records',
-          'location' => 'Locations'
+          'location' => 'Locations',
+          'other' => 'Other (specify below)'
         ),
         'required'=>true
+      ),
+      array('name'=>'otherModel',
+        'caption'=>'Other model',
+        'description'=>'If type of data to import is set to other, then specify the singular name of the model to import into here.',
+        'type'=>'text_input',
+        'required'=>FALSE
       ),
       array(
         'name'=>'presetSettings',
@@ -160,7 +167,9 @@ class iform_importer {
         return "This form is configured so that it must be called with a type parameter in the URL";
       $model = $_GET['type'];
     } else
-      $model = $args['model'];
+      $model = $args['model'] === 'other' ? $args['otherModel'] : $args['model'];
+    if (empty($model))
+      return "This form's import model is not properly configured.";
     if (isset($args['presetSettings'])) {
       $presets = get_options_array_with_user_data($args['presetSettings']);
       $presets = array_merge(array('website_id'=>$args['website_id'], 'password'=>$args['password']), $presets);
