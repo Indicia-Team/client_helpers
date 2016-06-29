@@ -98,7 +98,8 @@
         $gridTabShowing = false;
         //Find the value the user has set for Cetaceans Seen?
         foreach ($values as $key => $value) {
-          if (substr($key, 0, 10) == "smpAttr:".$args['cetaceans_seen']) {
+          if (substr($key, 0, 10) == "smpAttr:".$args['cetaceans_seen'] ||
+              substr($key, 0, 10) == "smpAttr:".$args['non_cetacean_marine_animals_seen']) {
             if ($value==$args['cetaceans_seen_yes']) {
               $gridTabShowing   = true;
             }
