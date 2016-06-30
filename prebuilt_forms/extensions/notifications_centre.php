@@ -282,7 +282,7 @@ class extension_notifications_centre {
       'website_id'=>$website_id);
     //Implode the source types so we can submit to the database in one text field.
     if (!empty($sourceType)) {
-      $extraParams['source_types'] = "'" . implode("' ,'", $sourceType) . "'";
+      $extraParams['source_types'] = "'" . implode("','", $sourceType) . "'";
       //If the user has supplied some config options for the different source types then we don't need the 
       // source filter drop down.
       $extraParams['source_filter'] = 'all';
