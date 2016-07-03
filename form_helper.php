@@ -261,7 +261,7 @@ function setCategoryAndPageVisibility() {
   $('#form-category-picker').change();
 }
 function changeGroupEnabledStatus() {
-  if ($('#available_for_groups').attr('checked')) {
+  if ($('#available_for_groups:checked').length) {
     $('#ctrl-wrap-limit_to_group_id').slideDown();
   } else {
     $('#ctrl-wrap-limit_to_group_id').slideUp();
@@ -286,8 +286,8 @@ $('#form-category-picker').change(function(e) {
           && $.inArray(form, prebuilt_group_forms[e.currentTarget.value])>-1;
       isRecommendedPageType = typeof prebuilt_recommended_forms[e.currentTarget.value]!=='undefined'
           && $.inArray(form, prebuilt_recommended_forms[e.currentTarget.value])>-1;
-      if ((!$('#available_for_groups').attr('checked') || isGroupPageType)
-          && (!$('#recommended').attr('checked') || isRecommendedPageType)) {
+      if ((!$('#available_for_groups:checked').length || isGroupPageType)
+          && (!$('#recommended:checked').length || isRecommendedPageType)) {
         opts += '<option value=\"'+form+'\">'+def.title+'</option>';
       }
     });
