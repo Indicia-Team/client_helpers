@@ -245,8 +245,8 @@ function setCategoryAndPageVisibility() {
   $.each($('#form-category-picker option'), function() {
     // Hide pages that are not recommended or not group pages, unless specifically allowed. Ignore the <please select> option.
     if ($(this).attr('value')!=='') {
-      if (($('#available_for_groups').attr('checked') && typeof prebuilt_group_forms[$(this).attr('value')]==='undefined')
-          || ($('#recommended').attr('checked') && typeof prebuilt_recommended_forms[$(this).attr('value')]==='undefined')) {
+      if (($('#available_for_groups:checked').length && typeof prebuilt_group_forms[$(this).attr('value')]==='undefined')
+          || ($('#recommended:checked').length && typeof prebuilt_recommended_forms[$(this).attr('value')]==='undefined')) {
         $(this).hide();
         $(this).attr('disabled', 'disabled');
         if ($(this).attr('selected')) {
