@@ -114,7 +114,7 @@ class filter_what extends filter_base {
         'captionFieldInEntity' => 'searchterm',
         'speciesIncludeBothNames' => true,
         'speciesIncludeTaxonGroup' => true,
-        'valueField' => 'id',
+        'valueField' => 'preferred_taxa_taxon_list_id',
         'extraParams' => $baseParams + array(
             'preferred' => 't',
             'query' => '{"where":["taxon_rank_sort_order<=' . $familySortOrder . '"]}'
