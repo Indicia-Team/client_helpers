@@ -308,7 +308,7 @@ class iform_dynamic {
       if (isset(data_entry_helper::$validated_form_id)) {
         data_entry_helper::$javascript .= "
 $('#".data_entry_helper::$validated_form_id."').submit(function() {
-  var tabinputs = $('#".data_entry_helper::$validated_form_id."').find('input,select,textarea').not(':disabled,[name=],.scTaxonCell,.inactive');
+  var tabinputs = $('#".data_entry_helper::$validated_form_id."').find('input,select,textarea').not(':disabled,[name=\"\"],.scTaxonCell,.inactive');
   var tabtaxoninputs = $('#".data_entry_helper::$validated_form_id." .scTaxonCell').find('input,select').not(':disabled');
   if ((tabinputs.length>0 && !tabinputs.valid()) || (tabtaxoninputs.length>0 && !tabtaxoninputs.valid())) {
     alert('".lang::get('Before you can save the data on this form, some of the values in the input boxes need checking. '.
