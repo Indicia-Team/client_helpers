@@ -65,12 +65,14 @@ $custom_terms = array(
   'LANG_From_Field_Instruct' => '',
   'LANG_To_Field_Instruct' => '',
   'LANG_Admins_Field_Instruct' => 'Search for additional users to make '
-    . 'administrators of this {1} by typing a few characters of their surname '
+    . 'administrators of this {1} by either entering their email address then '
+    . 'clicking add, or by typing a few characters of their surname '
     . 'then selecting their name from the list of suggestions and clicking the '
     . 'Add button. Administrators will need to register on this website before '
     . 'you can add them.',
   'LANG_Members_Field_Instruct' => 'Search for users to give membership to by '
-    . 'typing a few characters of their surname then selecting their name from '
+    . 'either entering their email address then clicking add, or typing a few '
+    . 'characters of their surname then selecting their name from '
     . 'the list of suggestions and clicking the Add button. Users will need '
     . 'register on this website before you can add them.',
 );

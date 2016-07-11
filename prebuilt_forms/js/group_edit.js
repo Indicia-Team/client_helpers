@@ -1,4 +1,5 @@
 jQuery(document).ready(function($) {
+
   $('#group\\:private_records').change(function() {
     if ($('#group\\:private_records').attr('checked')) {
       $('#release-warning').hide();
@@ -6,6 +7,59 @@ jQuery(document).ready(function($) {
       $('#release-warning').show();
     }
   });
+
+  /**
+   * Handler for add admin or member buttons to do email checking
+   */
+  var addMemberByEmail = function(field) {
+    var searchedValue = $('#groups_user\\:' + field + '\\:search\\:person_name').val();
+    if (searchedValue.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/)) {
+      var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
+      $.getJSON(
+        indiciaData.ajaxUrl + '/lookup_email/' + indiciaData.nid + urlSep + 'email=' + searchedValue,
+        null,
+        function (data) {
+          if (data.length===0) {
+            alert('The email address you searched for was not found');
+          } else if (data.length>1) {
+            alert('Error - duplicate email address found');
+          } else {
+            var user = data[0];
+            if ($('input[name="groups_user:' + field + '[]"][value="' + user.id + '"]').length > 0) {
+              alert('The email address you searched for is already in the list')
+            } else {
+              // add the user found by the email address to the list
+              $('#groups_user\\:' + field + '\\:sublist').append(
+                '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">' +
+                '&nbsp;</span>' + user.person_name + ' (' + user.email_address + ')' +
+                '<input type="hidden" name="groups_user:' + field + '[]" value="' + user.id + '"></li>'
+              );
+              $('#groups_user\\:' + field + '\\:search\\:person_name').val('');
+            }
+          }
+        }
+      );
+    }
+  }
+
+  /**
+   * Hook the email check handler to the member control add buttons
+   */
+  $('#groups_user\\:user_id\\:add, #groups_user\\:admin_user_id\\:add').click(function() {
+    var field = this.id==='groups_user:admin_user_id:add' ? 'admin_user_id' : 'user_id';
+    addMemberByEmail(field);
+  });
+
+  /**
+   * Hook the email check handler to the enter key on the search input box for members/admins
+   */
+  $('#groups_user\\:user_id\\:search\\:person_name, #groups_user\\admin_user_id\\:search\\:person_name').keyup(function(e) {
+    if ((e.keyCode || e.which) == 13) {
+      var field = this.id==='groups_user:admin_user_id:add' ? 'admin_user_id' : 'user_id';
+      addMemberByEmail(field);
+    }
+  });
+
   function checkViewSensitiveAllowed() {
     // Fully public groups can't allow sensitive data to be viewed. Also sensitive data viewing only available for groups
     // that expect all records to be posted via a group form.

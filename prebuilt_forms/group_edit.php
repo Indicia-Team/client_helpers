@@ -443,6 +443,8 @@ $('#entry_form').submit(function() {
     if (!empty(data_entry_helper::$entity_to_load['group:id'])) {
       data_entry_helper::$javascript .= "$('#groups_user\\\\:admin_user_id\\\\:sublist input[value=".hostsite_get_user_field('indicia_user_id')."]').closest('li').children('span').remove();\n";
     }
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/group_edit')."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     return $r;
   }
   
@@ -996,6 +998,28 @@ $('#entry_form').submit(function() {
       $breadcrumb[$node->title] = $args['groups_page_path'];
       hostsite_set_breadcrumb($breadcrumb);
     }
+  }
+
+  /**
+   * Ajax handler allowing the sub list controls for member lookup to be extended to
+   * search for people by email address.
+   * @param $website_id
+   * @param $password
+   * @param $nid
+   * @throws \Exception
+   */
+  public static function ajax_lookup_email($website_id, $password) {
+    if (empty($_GET['email'])) {
+      echo 'Email value not provided';
+      return;
+    }
+    iform_load_helpers(array('data_entry_helper'));
+    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    $data = data_entry_helper::get_population_data(array(
+      'table' => 'user',
+      'extraParams' => $readAuth + array('view' => 'detail', 'email_address' => $_GET['email'])
+    ));
+    echo json_encode($data);
   }
 
 }
