@@ -471,29 +471,16 @@ class extension_original_splash_extensions {
   }
   
   /*
-   * When the user clicks on the map on the plot details page, we calculate a plot square on the map where the south-west corner is the clicked point.
-   * The size of the plot square depends on the plot type but it extends north/east along the lat long grid system (as opposed to British National Grid which is at a slight angle).
-   * However we cannot calculate points a certain number of metres apart using lat/long because the unit is degrees, so to make the square calculation we need to use the British National Grid 
-   * to help as this is in metres. However the BNG is also at a slight angle which makes the situation complicated, the high level algorithm for calculating a grid square is as follows,
-   * 1. Get the lat/long value from the point the user clicked on.
-   * 2. Take any arbitrary point north of the original point as long as we know it is definitely more than the length of one of the plot square's sides.
-   * 3. Convert both these points into british national grid format
-   * 4. As the British National Grid is at an angle to lot/long we can make a right angle triangle by getting the 3rd point from the Y British National Grid value of the north point, and getting the 
-   * x value from X British National Grid value of the southern point.
-   * 5. Now we have the right angle triangle, the hypotenuse is the distance between the southern and northern points. As the third point we calculated has the same X BNG value as the southern point,
-   * and the same Y value as the top point and then by looking at the 3 points it is very easy to calculate the length of the adjacent and opposite sites of the triangle.
-   * 6. Once we have the adjacent and opposite sites of the triangle, we can calculate the hypotenuse of the triangle in metres. 
-   * 7. For the purposes of this explanation let us assume our square will be 10m. If we have calculated the length of the hypotenuse (the distance between our north and southern points) as 100m,
-   * then we know that 10m is just 10% of the length of this line.
-   * 8. Once we know the percentage, then we can look at the original lat long grid references and work out the number of degrees difference between the points and then find 10 percent of this to
-   * get the lat long value of the north-west point of the sqaure.
-   * 9. We repeat the above procedure to the east to get the lat long position of the south-east point of the plot square. Once we have 3 of the points, we can work out the lat long position of the north-east point by combining 
-   * the lat long grid ref values of the south-east and north-west points.
-   * 
-   * $options Options array with the following possibilities:<ul>
+   * When the user clicks on the map on the plot details page, for most plot types we calculate a plot square on the map where the south-west corner is the clicked point.
+   * For two of the plot types, the user draws a free shape using the polygon drawing tool
+   * $options Options array with the following possibilities:
+   * <ul>
    * <li><b>squareSizes</b><br/>
    * The length of the plot square associated with each plot type. Mandatory. Comma seperated list in the following format,
    * plot_location_type_id|length_in_metres,plot_location_type_id|length_in_metres.....e.g. 2543|10,2544|10,2545|20,2546|20</li>
+   * <li><b>freeDrawPlotTypeNames</b><br/>
+   * Comma separated list of plot names for which the user will use the polygon drawing tool for (rather than an auto-generated square).
+   * Note: for this option to work, the drawPolygon tool must be available on the map.</li>
    * </ul>
    * 
    */
@@ -502,6 +489,10 @@ class extension_original_splash_extensions {
       drupal_set_message('Please fill in the @squareSizes option for the draw_map_plot control');
       return '';
     }
+    iform_load_helpers(array('map_helper')); 
+    //Some Splash plot types use the polygon tool to draw the plot as any shape, specify the plot types and pass to Javascript.
+    if (!empty($options['freeDrawPlotTypeNames']))
+      map_helper::$javascript .= "indiciaData.freeDrawPlotTypeNames=".json_encode(explode(',',$options['freeDrawPlotTypeNames'])).";";
     //The user provides the square sizes associated with the various plot types as a comma seperated option list.
     $squareSizesOptionsSplit=explode(',',$options['squareSizes']);
     //Eash option consists of the following format <plot type id>|<square side lengh>
@@ -519,26 +510,104 @@ class extension_original_splash_extensions {
      else
         $squareSizesArray[$squareSizeSingleOptionSplit[0]]=array($squareSizeSingleOptionSplit[1],$squareSizeSingleOptionSplit[2]);
     }
-    iform_load_helpers(array('map_helper')); 
     $squareSizesForJavascript=json_encode($squareSizesArray);
     map_helper::$javascript .= "indiciaData.squareSizes=$squareSizesForJavascript;\n";
-    //If you change the location type then clear the features already on the map
     map_helper::$javascript .= "
+    $(window).load(function() {
+      setup_plot_type();
+    });
     $('#location\\\\:location_type_id').change(function() {
+       clear_map_features();
+       setup_plot_type();
+    });
+    
+    //When plot type is changed or screen is loaded then setup whether we are drawing square plots or manually drawing them to the screen.
+    function setup_plot_type() {
+      indiciaData.clickMiddleOfPlot=false;
+      if ($('#location\\\\:location_type_id').val()) {
+        indiciaData.plotWidthLength = indiciaData.squareSizes[$('#location\\\\:location_type_id').val()][0]+ ',' + indiciaData.squareSizes[$('#location\\\\:location_type_id').val()][1];
+      }
+      if ($('#location\\\\:location_type_id option:selected').text() && inArray($('#location\\\\:location_type_id option:selected').text(),indiciaData.freeDrawPlotTypeNames)) {  
+        free_draw_plot_select();
+      } else {
+        square_draw_plot_select();
+      }
+    };
+    
+    function free_draw_plot_select() {
+      show_polygon_line_tool(true);
+      indiciaData.mapdiv.settings.clickForPlot=false;
+      indiciaData.mapdiv.settings.click_zoom=false;  
+    }
+    
+    function square_draw_plot_select() {
+      show_polygon_line_tool(false);
+      indiciaData.mapdiv.settings.clickForPlot=true;
+      indiciaData.mapdiv.settings.click_zoom=true;  
+    }
+    
+    //When doing things like changing plot type, we need to clear the map
+    function clear_map_features() {
       var mapLayers = indiciaData.mapdiv.map.layers;
       for(var a = 0; a < mapLayers.length; a++ ){
         if (mapLayers[a].CLASS_NAME=='OpenLayers.Layer.Vector') {
-          mapLayers[a].removeAllFeatures();
+          destroyAllMapFeatures(mapLayers[a], 'zoomToBoundary', true);
         }
       };
       $('#imp-boundary-geom').val('');
-      indiciaData.clickMiddleOfPlot=false;
-      indiciaData.plotWidthLength = indiciaData.squareSizes[$('#location\\\\:location_type_id').val()][0]+ ',' + indiciaData.squareSizes[$('#location\\\\:location_type_id').val()][1];
-    });
-    $(window).load(function() {
-      indiciaData.clickMiddleOfPlot=false;
-      indiciaData.plotWidthLength = indiciaData.squareSizes[$('#location\\\\:location_type_id').val()][0]+ ',' + indiciaData.squareSizes[$('#location\\\\:location_type_id').val()][1];
-    });";
+    }
+    
+    //Show polygon tool in manual draw mode, else hide it
+    function show_polygon_line_tool(show) {
+      if (show===true) {
+        $('.olControlDrawFeaturePolygonItemActive').show();
+        $('.olControlDrawFeaturePathItemActive').show();
+        $('.olControlDrawFeaturePolygonItemInactive').show();
+        $('.olControlDrawFeaturePathItemInactive').show();
+      } else {
+        $('.olControlDrawFeaturePolygonItemActive').hide();
+        $('.olControlDrawFeaturePathItemActive').hide();
+        $('.olControlDrawFeaturePolygonItemInactive').hide();
+        $('.olControlDrawFeaturePathItemInactive').hide();
+      }
+     
+      //Activate/deactivate the map icons when changing plot type. For instance if the draw tool is selected and then hidden,
+      //it mkes sense to auto-select the point tool
+      $.each(indiciaData.mapdiv.map.controls, function(idx, control) {
+        if (control.CLASS_NAME==='OpenLayers.Control.DrawFeature'||control.CLASS_NAME==='OpenLayers.Control.Navigation') {
+          control.deactivate();
+        }
+        if (control.CLASS_NAME==='OpenLayers.Control') {
+          control.activate();
+        }
+      });
+    }
+    
+    /*
+     * Destroy features version of removeAllFeatures function. Once destroyed features cannot be added back to the layer.
+     */
+    function destroyAllMapFeatures(layer, type, inverse) {
+      var toRemove = [];
+      if (typeof inverse==='undefined') {
+        inverse=false;
+      }
+      $.each(layer.features, function() {
+        //Annotations is a special separate mode added after original code was written, so do not interfere with annotations even in inverse mode.
+        if ((!inverse && this.attributes.type===type) || (inverse && this.attributes.type!==type && this.attributes.type!=='annotation')) {
+          toRemove.push(this);
+        }
+      });
+      layer.destroyFeatures(toRemove, {});
+    }
+
+    //Javascript doesn't have inArray, so write our own function
+    function inArray(needle, haystack) {
+      var length = haystack.length;
+      for(var i = 0; i < length; i++) {
+          if(haystack[i] == needle) return true;
+      }
+      return false;
+    };\n";
     //Do not allow submission if there is no plot set
     data_entry_helper::$javascript .= "$('#entry_form').submit(function() { if (!$('#imp-boundary-geom').val()) {alert('Please use the map control to create a plot before continuing.'); return false; }});\n";
   }

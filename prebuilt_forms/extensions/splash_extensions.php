@@ -1329,8 +1329,22 @@ class extension_splash_extensions {
    * @allocatedLocationEmailSubject Optional, Provide a subject line if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailMessage option must also be provided. 
    * @allocatedLocationEmailMessage Optional, Provide the message if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailSubject option must also be provided. 
    * Put {location_name} or {username} into the text to replace with the location or username when message is sent.
+   * @overrideCurrentUserIdParam Optional, Force the page to only ever load for the current user, even if no user URL param is supplied. If an incorrect dynamic-the_user_id is specified in the URL, then draw a blank page, this is because
+   * by default the URL parameter overrides the Preset Report Parameters on the edit tab and we don't want users looking at the wrong user. 
+   * This option is useful if we want users to be only able to edit themselves.
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
+    if (!empty($options['overrideCurrentUserIdParam'])&&$options['overrideCurrentUserIdParam']==true) {
+      //If we only want to show the current user's locations, and a user has been supplied in the url, then if that user
+      //isn't the current user, draw a blank page.
+      if (!empty($_GET['dynamic-the_user_id']) && $_GET['dynamic-the_user_id']!=hostsite_get_user_field('indicia_user_id')) {
+        data_entry_helper::$javascript.="$('form').remove();";
+      } else {
+        //If nothing is supplied in the URL params, and we want to only show locations for the current user, then set the $_GET
+        //parameter to the current user so the rest of the control acts as if the user has been supplied in the URL
+        $_GET['dynamic-the_user_id']=hostsite_get_user_field('indicia_user_id');
+      }
+    }
     global $user;  
     //Need to call this so we can use indiciaData.read
     data_entry_helper::$js_read_tokens = $auth['read'];
