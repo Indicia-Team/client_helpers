@@ -352,7 +352,11 @@ class iform_sectioned_transects_edit_transect {
         // Check whether I am a normal user and it is allocated to me, and also if I am a branch manager and it is allocated to me.
         $settings['canEditBody'] = false;
         $settings['canEditSections'] = false;
-        if($args['allow_user_assignment'] &&
+        if(!$args['allow_user_assignment'] && count($settings['walks']) == 0) {
+          // when no sites assignments for this client, just allow editing for everyone if no samples recorded.
+          $settings['canEditBody'] = true;
+          $settings['canEditSections'] = true;
+        } else if($args['allow_user_assignment'] &&
             count($settings['walks']) == 0 &&
             isset($settings['cmsUserAttr']['default']) &&
             !empty($settings['cmsUserAttr']['default'])) {
