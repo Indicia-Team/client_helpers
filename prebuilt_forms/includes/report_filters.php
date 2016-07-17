@@ -288,7 +288,7 @@ class filter_where extends filter_base {
     $this->addProfileLocation($readAuth, 'location', $sitesLevel1);
     $this->addProfileLocation($readAuth, 'location_expertise', $sitesLevel1);
     $this->addProfileLocation($readAuth, 'location_collation', $sitesLevel1);
-    if (!empty($options['personSiteAttrId']) || $options['includeSitesCreatedByUser']) 
+    if (!empty($options['personSiteAttrId']) || $options['includeSitesCreatedByUser'])
       $sitesLevel1['my'] = lang::get('My sites').'...';
     // The JS needs to know which location types are indexed so it can build the correct filter.
     data_entry_helper::$javascript .= "indiciaData.indexedLocationTypeIds=".json_encode($options['indexedLocationTypeIds']).";\n";
@@ -299,7 +299,7 @@ class filter_where extends filter_base {
     ));
     foreach ($locTypes as $locType)
       $sitesLevel1[$locType['id']] = $locType['term'].'...';
-    $r .= '<div id="ctrl-wrap-imp-location" class="form-row ctrl-wrap">';
+    $r .= '<div id="ctrl-wrap-location_list" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select(array(
       'fieldname'=>'site-type',
       'label' => lang::get('Choose an existing site or location'),
@@ -307,11 +307,16 @@ class filter_where extends filter_base {
       'blankText' => '<'.lang::get('Please select').'>',
       'controlWrapTemplate' => 'justControl'
     ));
-    $r .= data_entry_helper::select(array(
-      'fieldname' => 'imp-location',
-      'lookupValues' => array(),
-      'controlWrapTemplate' => 'justControl'
+    $r .= data_entry_helper::sub_list(array(
+      'fieldname' => 'location_list',
+      'controlWrapTemplate' => 'justControl',
+      'table' => 'location',
+      'captionField' => 'name',
+      'valueField' => 'id',
+      'addToTable' => false,
+      'extraParams' => $readAuth
     ));
+
     $r .= '</div></fieldset>';
     $r .= '<fieldset class="exclusive">';
     $r .= data_entry_helper::text_input(array(
