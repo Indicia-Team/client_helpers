@@ -3399,7 +3399,13 @@ $('#$escaped').change(function(e) {
               if($existing_value=="1")
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
             } else {
-              if (is_array($existing_value))
+              if ($attributes[$attrId]['data_type']==='D') {
+                $d = new DateTime($existing_value);
+                $existing_value = $d->format(self::$date_format);
+              } elseif ($attributes[$attrId]['data_type']==='V') {
+                $d = new DateTime($existing_value);
+                $existing_value = $d->format(self::$date_format);
+              } elseif (is_array($existing_value))
                 $existing_value = implode('',$existing_value);
               $oc = str_replace('value=""', 'value="'.$existing_value.'"', $oc);
             }
