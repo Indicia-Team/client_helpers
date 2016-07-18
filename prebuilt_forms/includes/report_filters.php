@@ -51,20 +51,19 @@ class filter_what extends filter_base {
       $r .= "<p id=\"what-filter-instruct\">".lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), '.
           'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).')."</p>\n";
     $r .= '<div id="what-tabs">'."\n";
-    $tabs = array(
-      '#species-group-tab' => lang::get('Species groups')
-    );
+    // data_entry_helper::tab_header breaks inside fancybox. So output manually.
+    $r .= '<ul class="ui-helper-hidden">' .
+        '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>'.lang::get('Species groups').'</span></a></li>';
     if ($familySortOrder!=='off') {
-      $tabs['#families-tab'] = lang::get('Families and other higher taxa');
-      $tabs['#species-tab'] = lang::get('Species and lower taxa');
+      $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>'.lang::get('Families and other higher taxa').'</span></a></li>';
+      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>'.lang::get('Species and lower taxa').'</span></a></li>';
+    } else {
+      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>'.lang::get('Species').'</span></a></li>';
     }
-    else {
-      $tabs['#species-tab'] = lang::get('Species');
-    }
-    $tabs['#designations-tab'] = lang::get('Designations');
-    $tabs['#rank-tab'] = lang::get('Level');
-    $tabs['#flags-tab'] = lang::get('Other flags');
-    $r .= data_entry_helper::tab_header(array('tabs' => $tabs));
+    $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>'.lang::get('Designations').'</span></a></li>' .
+        '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>'.lang::get('Level').'</span></a></li>' .
+        '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>'.lang::get('Other flags').'</span></a></li>' .
+        '</ul>';
     $r .= '<div id="species-group-tab">' . "\n";
     if (function_exists('hostsite_get_user_field')) {
       $myGroupIds = hostsite_get_user_field('taxon_groups', array(), true);
