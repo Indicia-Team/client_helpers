@@ -617,7 +617,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
         indiciaData.popupTranslations.redetermine + '" />' +
     '</fieldset></form>';
     $.fancybox(html, {
-      "onCleanup" : function() {
+      "beforeClose" : function() {
         // hide the species dropdown if left in open state
         $('.ac_results').hide();
         $('#redet-dropdown').appendTo($('#redet-dropdown-ctnr'));
