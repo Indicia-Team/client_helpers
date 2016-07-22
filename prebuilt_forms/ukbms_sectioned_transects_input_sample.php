@@ -26,7 +26,7 @@ require_once 'includes/language_utils.php';
 require_once 'includes/form_generation.php';
 
 // HOWTO configure default species view to be selected from user field.
-// Home » Administration » Configuration » People » Account settings, Manage Fields
+// Home >> Administration >> Configuration >> People >> Account settings, Manage Fields
 // Add a new "Vertical Tab" Under "Recording settings", called "Preferences"/group_preferences beneath "Who you are"
 // Add a new field "Default species view" (field_default_species_view) under this, type "List (text)"
 // Set the allowed list to :
@@ -846,7 +846,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     		data_entry_helper::textarea(array(
       			'fieldname'=>'sample:comment',
       			'label'=>lang::get('Notes'),
-      			'helpText'=>"Use this space to input comments about this week's walk."
+      			'helpText'=>lang::get("Use this space to input comments about this week's walk.")
     			)) .
     		'<input type="submit" value="'.lang::get('Next').'" />' .
     		'<a href="'.$args['return_page'].'" class="button">'.lang::get('Cancel').'</a>' .
