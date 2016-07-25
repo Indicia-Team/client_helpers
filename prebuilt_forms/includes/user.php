@@ -116,9 +116,9 @@ function get_options_array_with_user_data($listData) {
  * overriden by appending :name to the field name - e.g. {profile_hub} will give hub tid, {profile_hub:name}
  * will give the hub text name.
  */
-function apply_user_replacements($text) {
-  if (!is_string($text))
-    return $text;
+function apply_user_replacements($original) {
+  if (!is_string($original))
+    return $original;
   $replace=array('{user_id}', '{username}', '{email}');
   $replaceWith=array(
       hostsite_get_user_field('id'),
@@ -126,7 +126,7 @@ function apply_user_replacements($text) {
       hostsite_get_user_field('mail'),
   );
   // Do basic replacements and trim the data
-  $text=trim(str_replace($replace, $replaceWith, $text));  
+  $text=trim(str_replace($replace, $replaceWith, $original));
   // Look for any profile field replacments
   if (preg_match_all('/{([a-zA-Z0-9\-_]+)}/', $text, $matches) && function_exists('hostsite_get_user_field')) {
     foreach($matches[1] as $profileField) {
@@ -164,7 +164,11 @@ function apply_user_replacements($text) {
   }
   // convert booleans to true booleans
   $text = ($text==='false') ? false : (($text==='true') ? true : $text);
-    
+  // if the text was changed but we are not logged in then the whole value should
+  // be cleared. Otherwise {profile_surname}, {profile_first_name} would result in just
+  // a comma
+  if ($text!==$original && !hostsite_get_user_field('id', false))
+    return '';
   return $text;
 }
 
