@@ -239,10 +239,9 @@ class extension_event_reports {
    */
   public static function groups_pie($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
-    $reportOptions = array_merge(      
+    $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
-        'dataSource' => 'library/taxon_groups/filterable_group_counts',
         'id' => 'groups-pie',
         'width'=> 340,
         'height'=> 340,
@@ -262,6 +261,8 @@ class extension_event_reports {
       ),
       $options
     );
+    $reportOptions['dataSource'] = empty($reportOptions['extraParams']['taxon_list_id']) ?
+      'library/taxon_groups/filterable_group_counts' : 'library/taxon_groups/filterable_group_counts_multi_checklist';
     $r = self::output_title($options);
     $r .= report_helper::report_chart($reportOptions);
     return $r;
