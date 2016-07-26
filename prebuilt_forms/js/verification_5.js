@@ -756,7 +756,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       $.fancybox(popupHtml);
       $('.quick-verify-popup .verify-button').click(function() {
         var params=indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords(),
-            radio=$('.quick-verify-popup input[name=quick-option]:checked'), request;
+            radio=$('.quick-verify-popup input[name=quick-option]:checked'), request, ignoreParams;
         if (radio.length===1) {
           if ($(radio).val().indexOf('recorder')!==-1) {
             params.created_by_id=currRec.extra.created_by_id;
@@ -767,9 +767,10 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
           // We now have parameters that can be applied to a report and we know the report, so we can ask the warehouse
           // to verify the occurrences provided by the report that match the filter.
           request = indiciaData.ajaxUrl + '/bulk_verify/'+indiciaData.nid;
+          ignoreParams = $('.quick-verify-popup input[name=ignore-checks]:checked').length>0 ? 'true' : 'false';
           $.post(request,
               'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
-                  '&user_id='+indiciaData.userId+'&ignore='+$('.quick-verify-popup input[name=ignore-checks]').attr('checked'),
+                  '&user_id='+indiciaData.userId+'&ignore='+ignoreParams,
               function(response) {
                 indiciaData.reports.verification.grid_verification_grid.reload();
                 alert(response + ' records processed');
