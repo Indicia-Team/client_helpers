@@ -733,7 +733,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     $r .= data_entry_helper::textarea(array(
       'fieldname'=>'sample:comment',
       'label'=>lang::get('Notes'),
-      'helpText'=>"Use this space to input comments about this week's walk."
+      'helpText'=>lang::get("Use this space to input comments about this week's walk.")
     ));    
     $r .= '<input type="submit" value="'.lang::get('Submit').'" id="save-button"/></form>';
     $r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div></div>';

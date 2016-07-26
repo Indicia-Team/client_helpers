@@ -399,7 +399,7 @@ class iform_sectioned_transects_input_sample {
     $r .= data_entry_helper::textarea(array(
       'fieldname'=>'sample:comment',
       'label'=>lang::get('Notes'),
-      'helpText'=>"Use this space to input comments about this week's walk."
+      'helpText'=>lang::get("Use this space to input comments about this week's walk.")
     ));
     $r .= '<input type="submit" value="'.lang::get('Save').'"/>';
     $r .= '</div></div></form>';

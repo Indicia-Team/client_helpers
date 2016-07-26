@@ -224,11 +224,15 @@ class iform_map_explorer {
     );
     $olOptions = iform_map_get_ol_options($args);
     $r .= map_helper::map_panel($options, $olOptions);
-    $allowDownload = !isset($args['downloadOwnDataOnly']) || !$args['downloadOwnDataOnly'] 
-      || (isset($reportOptions['extraParams']['ownData']) && $reportOptions['extraParams']['ownData']===1)
-      || (isset($_POST['explore-ownData']) && $_POST['explore-ownData']==='1')
-      || (!(isset($_POST['explore-ownData']) || $_POST['explore-ownData']==='0') 
-            && isset($reportOptions['paramDefaults']['ownData']) && $reportOptions['paramDefaults']['ownData']===1);
+    $downloadOwnDataOnlyInArgs = isset($args['downloadOwnDataOnly']) && $args['downloadOwnDataOnly'];
+    $ownDataValueInPost = isset($_POST['explore-ownData']);
+    $exploreOwnDataEnabledInPost = $ownDataValueInPost && $_POST['explore-ownData']==='1';
+    $reportParamPresetsSetToOwnData = isset($reportOptions['extraParams']['ownData']) && $reportOptions['extraParams']['ownData']==='1';
+    $reportParamDefautsSetToOwnData = isset($reportOptions['paramDefaults']['ownData']) && $reportOptions['paramDefaults']['ownData']==='1';
+    $allowDownload = !$downloadOwnDataOnlyInArgs
+      || $reportParamPresetsSetToOwnData
+      || $exploreOwnDataEnabledInPost
+      || (!$ownDataValueInPost && $reportParamDefautsSetToOwnData);
     $reportOptions = array_merge(
         $reportOptions,
         array(
