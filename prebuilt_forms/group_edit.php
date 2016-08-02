@@ -688,7 +688,8 @@ $('#entry_form').submit(function() {
         'table' => 'licence',
         'extraParams' => $auth['read'],
         'captionField' => 'title',
-        'valueField' => 'id'
+        'valueField' => 'id',
+        'validation' => array('required')
       ));
     }
     if (!empty(data_entry_helper::$validation_errors['groups_user:general'])) {
