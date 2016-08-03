@@ -83,17 +83,19 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			async: true,
 			dataType:  'json',
 			success:   function(data, status, form){
-				var selector = '#'+data.transaction_id.replace(/:/g, '\\:');
+				var deletion = data.transaction_id.match(/:deleted$/),
+					transaction_id = data.transaction_id.replace(/:deleted$/, ''),
+					selector = '#'+transaction_id.replace(/:/g, '\\:');
 				$(selector).removeClass('saving');
 				if (checkErrors(data)) {
-					if($(selector).val() != '') { // if the selector is blank, we are deleting the entry, so we do not want to add the id and attrValId fields (they will have just been removed!)
+					if(!deletion) { // if we are deleting the entry then we do not want to add the id and attrValId fields (they will have just been removed!)
 						if ($(selector +'\\:id').length===0) {
 							// this is a new occurrence, so keep a note of the id in a hidden input
-							$(selector).after('<input type="hidden" id="'+data.transaction_id +':id" value="'+data.outer_id+'"/>');
+							$(selector).after('<input type="hidden" id="'+transaction_id +':id" value="'+data.outer_id+'"/>');
 						}
 						if ($(selector +'\\:attrValId').length===0) {
 							// this is a new attribute, so keep a note of the id in a hidden input
-							$(selector).after('<input type="hidden" id="'+data.transaction_id +':attrValId" value="'+data.struct.children[0].id+'"/>');
+							$(selector).after('<input type="hidden" id="'+transaction_id +':attrValId" value="'+data.struct.children[0].id+'"/>');
 						}
 					}
 					$(selector).removeClass('edited');
@@ -211,8 +213,10 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		// by setting the attribute field name to occAttr:n where n is the occurrence attribute id, we will get a new one
 		// by setting the attribute field name to occAttr:n:m where m is the occurrence attribute value id, we will update the existing one
 		$('#occattr').attr('name', 'occAttr:' + $(selector +'\\:attrId').val() + ($(selector +'\\:attrValId').length===0 ? '' : ':' + $(selector +'\\:attrValId').val()));
-		// store the current cell's ID as a transaction ID, so we know which cell we were updating.
-		$('#transaction_id').val(targetID);
+		// Store the current cell's ID as a transaction ID, so we know which cell we were updating. Adds a tag if this is a deletion
+		// so we can handle deletion logic properly when the post returns
+		var transactionId =  targetID + ($(selector).val()==='0' ? ':deleted' : '');
+		$('#transaction_id').val(transactionId);
 		if ($(selector +'\\:id').length>0 || $('#occdeleted').val()==='f') {
 			$('#occ-form').submit();
 		}
