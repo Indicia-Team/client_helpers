@@ -672,7 +672,7 @@ class import_helper extends helper_base {
         * $labelListHeading is an array where the keys are each column we work with concatenated to the heading of the caption we
         * are currently working on. 
         */
-        $strippedScreenCaption = str_replace(" (lookup existing record)","",self::translate_field($field, $caption));
+        $strippedScreenCaption = str_replace(" (from controlled termlist)","",self::translate_field($field, $caption));
         $labelList[$labelListIndex] = strtolower($strippedScreenCaption);
         $labelListIndex++;
         if (isset ($labelListHeading[$column.$prefix]))
@@ -694,8 +694,8 @@ class import_helper extends helper_base {
       $defaultCaption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
       // Allow the default caption to be translated or overridden by language files.
       $translatedCaption=self::translate_field($field, $defaultCaption);
-      //need a version of the caption without "Lookup existing record" as we ignore that for matching.
-      $strippedScreenCaption = str_replace(" (lookup existing record)","",$translatedCaption);
+      //need a version of the caption without "from controlled termlist" as we ignore that for matching.
+      $strippedScreenCaption = str_replace(" (from controlled termlist)","",$translatedCaption);
       $fieldname=str_replace(array('fk_','_id'), array('',''), $fieldname);
       unset($option);
       // Skip the metadata fields
@@ -779,7 +779,7 @@ class import_helper extends helper_base {
   * 
   * @param string $column The CSV column we are currently working with from the import file.
   * @param string $defaultCaption The default, untranslated caption.
-  * @param string $strippedScreenCaption A version of an item in the column selection drop-down that has 'lookup existing record'stripped
+  * @param string $strippedScreenCaption A version of an item in the column selection drop-down that has 'from controlled termlist'stripped
   * @param string $prefix Caption prefix
   * each item having a list of regexes to match against
   * @param array $labelList A list of captions and the number of times they occur.
@@ -796,10 +796,10 @@ class import_helper extends helper_base {
     */
     $alternatives = array(
       "sample:entered sref"=>array("/(sample)?(spatial|grid)ref(erence)?/"),
-      "occurrence_2:taxa taxon list (lookup existing record)"=>array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
-      "occurrence:taxa taxon list (lookup existing record)"=>array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
+      "occurrence_2:taxa taxon list (from controlled termlist)"=>array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
+      "occurrence:taxa taxon list (from controlled termlist)"=>array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "sample:location name"=>array("/(site|location)(name)?/"),
-      "smpAttr:eunis habitat (lookup existing record)" => array("/(habitat|eunishabitat)/")
+      "smpAttr:eunis habitat (from controlled termlist)" => array("/(habitat|eunishabitat)/")
     );
     $selected=false;
     //handle situation where there is a unique exact match
@@ -879,7 +879,7 @@ class import_helper extends helper_base {
   
   
  /**
-  * Used by the get_column_options method to add "lookup existing record" to the appropriate captions
+  * Used by the get_column_options method to add "from controlled termlist" to the appropriate captions
   * in the drop-downs on the import page.
   * @param string $caption The drop-down item currently being worked on
   * @param string $prefix Caption prefix
@@ -892,7 +892,7 @@ class import_helper extends helper_base {
   						' (2)' : '');
     if (empty($caption)) {
       if (substr($fieldname,0,3)=='fk_') {
-        $captionSuffix .= ' ('.lang::get('lookup existing record').')';
+        $captionSuffix .= ' ('.lang::get('from controlled termlist').')';
       }   
       $fieldname=str_replace(array('fk_','_id'), array('',''), $fieldname);
       if ($prefix==$model || $prefix=="metaFields" || $prefix==substr($fieldname,0,strlen($prefix))) {
@@ -901,7 +901,7 @@ class import_helper extends helper_base {
         $caption = self::processLabel("$fieldname").$captionSuffix;
       }
     } else {
-        $caption .= (substr($fieldname,0,3)=='fk_' ? ' ('.lang::get('lookup existing record').')' : ''); 
+        $caption .= (substr($fieldname,0,3)=='fk_' ? ' ('.lang::get('from controlled termlist').')' : '');
     }
     return $caption;
   }
