@@ -159,16 +159,16 @@ var reportOptions;
 			  return;
           var scaling = 1;
           var shadow = true;
-          // var placement = 'outsideGrid'; always the case here
+          // leave placement as defined by form.
           var location = 'ne';
           var width = $(window).width()
           if (width < 480) {
             scaling = 0;
             shadow = false;
-            location = 's';
+            location = (reportOptions.opts.legend.placement == 'outsideGrid' ? 's' : 'n');
           } else if (width < 1024) {
             scaling = (width - 480) / (1024 - 480);
-            location = 's';
+            location = (reportOptions.opts.legend.placement == 'outsideGrid' ? 's' : 'n');
           }
           reportOptions.opts.legend.location = location;  
           reportOptions.opts.seriesDefaults.rendererOptions.shadow = shadow;

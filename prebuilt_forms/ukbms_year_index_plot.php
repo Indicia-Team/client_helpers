@@ -345,7 +345,41 @@ class iform_ukbms_year_index_plot {
     }
   }
 }'
-        )
+        ),
+      	array(
+      		'name' => 'legend_options',
+      		'caption' => 'Legend Options',
+      		'description' => 'Editor for the legend options to pass to the chart. For full details of the options available, '.
+      				'see <a href="http://www.jqplot.com/docs/files/jqplot-core-js.html#Legend">chart legend options</a>. '.
+      				'For example, set the value to <em>{"show":true,"location":"ne"}</em> to show the legend in the top-right '.
+      				'(north east) corner. Note some legend options are set by this form, so are not available in this list.',
+      		'type' => 'jsonwidget',
+            'required' => false,
+            'group'=>'Chart Options',
+      		'schema'=>'{
+  "type":"map",
+  "title":"Legend Options",
+  "mapping":{
+    "show":{"type":"bool","desc":"Check to show the legend."},
+    "location":{"type":"str","desc":"Placement of the legend (compass direction).","enum":["nw","n","ne","e","se","s","sw","w"]},
+    "showLabels":{"type":"bool","desc":"Check to show the label text on the legend."},
+    "showSwatch":{"type":"bool","desc":"Check to show the color swatches on the legend."},
+    "placement":{"type":"str","desc":"insideGrid places legend inside the grid area of the plot. OutsideGrid places the legend outside the grid but inside the plot container, shrinking the '.
+      				'grid to accomodate the legend. Outside places the legend ouside the grid area, but does not shrink the grid which can cause the legend to overflow the plot container.",
+        "enum":["insideGrid","outsideGrid","outside"]},
+    "border":{"type":"str","desc":"CSS spec for the border around the legend box."},
+    "background":{"type":"str","desc":"CSS spec for the background of the legend box."},
+    "textColor":{"type":"str","desc":"CSS color spec for the legend text."},
+    "fontFamily":{"type":"str","desc":"CSS font-family spec for the legend text."},
+    "fontSize":{"type":"str","desc":"CSS font-size spec for the legend text."},
+    "rowSpacing":{"type":"str","desc":"CSS padding-top spec for the rows in the legend."},
+    "marginTop":{"type":"str","desc":"CSS margin for the legend DOM element."},
+    "marginRight":{"type":"str","desc":"CSS margin for the legend DOM element."},
+    "marginBottom":{"type":"str","desc":"CSS margin for the legend DOM element."},
+    "marginLeft":{"type":"str","desc":"CSS margin for the legend DOM element."}
+  }
+}'
+      	)
     );
   }
 
@@ -674,7 +708,11 @@ class iform_ukbms_year_index_plot {
       $rendererOptions = json_decode($rendererOptions, true);
     else $rendererOptions = array();
     $opts['seriesDefaults'] = array("renderer"=>$renderer, "rendererOptions" => $rendererOptions);
-    $opts['legend'] = array("show"=>true, 'placement'=>'outsideGrid');
+    $legendOptions = trim($args['legend_options']);
+    if (!empty($legendOptions))
+    	$opts['legend'] = json_decode($legendOptions, true);
+    else
+    	$opts['legend'] = array("show"=>true, 'placement'=>'outsideGrid');
     $opts['series'] = array();
     $opts['title'] = array("text"=>"Title");
     $optsToCopyThrough = array('legend'=>'legendOptions', 'series'=>'seriesOptions', 'seriesColors'=>'seriesColors');
