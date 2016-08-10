@@ -92,7 +92,14 @@ class iform_group_edit {
           'then it is possible to attach the activity to multiple parents. The list of parents offered is the ' .
           'hierarchy of children and other descendants of the group pointed to by from_group_id.',
         'type'=>'boolean',
-        'required'=>false
+        'required'=>FALSE
+      ), array(
+        'name'=>'allowed_multiple_parent_group_types',
+        'caption'=>'Allowed multiple parent group types',
+        'description'=>'Comma separated list of group type IDs that are allowed to be set as one of the ' .
+            'multiple parents.',
+        'type'=>'text_input',
+        'required'=>FALSE
       ), array(
         'name'=>'join_methods',
         'caption'=>'Available joining methods',
@@ -488,10 +495,13 @@ $('#entry_form').submit(function() {
     }
     $r = '<fieldset><legend>' . lang::get('{1} parents', ucfirst(self::$groupType)) . ':</legend><ul>';
     // retrieve list of entire hierarchy
+    $params = array('parent_group_id' => $_GET['from_group_id']);
+    if (!empty($args['allowed_multiple_parent_group_types']))
+      $params['group_type_ids'] = $args['allowed_multiple_parent_group_types'];
     $groups = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
       'dataSource' => 'library/groups/groups_list_hierarchy',
-      'extraParams' => array('parent_group_id' => $_GET['from_group_id'])
+      'extraParams' => $params
     ));
     // output checkboxes
     $lastLevel = 0;
@@ -513,7 +523,7 @@ $('#entry_form').submit(function() {
         $existingGroupRelationId = array_key_exists($group['id'], $existing) ? $existing[$group['id']] : '';
         $r .= data_entry_helper::checkbox(array(
             'fieldname' => "parent_group:$existingGroupRelationId:$group[id]",
-            'afterControl' => "<label for=\"parent_group:$group[id]\">$group[title]</label>",
+            'afterControl' => "<label for=\"parent_group:$existingGroupRelationId:$group[id]\" class=\"auto\">$group[title]</label>",
             'default' => $existingGroupRelationId ? true : false
           ));
       }
