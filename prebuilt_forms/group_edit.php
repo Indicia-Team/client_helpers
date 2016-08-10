@@ -86,6 +86,14 @@ class iform_group_edit {
         'extraParams'=>array('termlist_external_key'=>'indicia:group_relationship_types'),
         'required'=>FALSE
       ), array(
+        'name'=>'can_attach_to_multiple_parents',
+        'caption'=>'Can attach to multiple parents',
+        'description'=>'If this option is set and the page loads with a from_group_id in the URL parameters, ' .
+          'then it is possible to attach the activity to multiple parents. The list of parents offered is the ' .
+          'hierarchy of children and other descendants of the group pointed to by from_group_id.',
+        'type'=>'boolean',
+        'required'=>false
+      ), array(
         'name'=>'join_methods',
         'caption'=>'Available joining methods',
         'description'=>'Which joining methods are available for created groups? Put one option per line, with the option code ' .
@@ -159,7 +167,7 @@ class iform_group_edit {
       array(
         'name'=>'include_private_records',
         'caption'=>'Include private records field',
-        'description'=>'Include the optional field for witholding records from release?',
+        'description'=>'Include the optional field for withholding records from release?',
         'type'=>'checkbox',
         'default'=>TRUE,
         'required'=>FALSE
@@ -282,6 +290,10 @@ class iform_group_edit {
   public static function get_form($args, $nid) {
     if (!hostsite_get_user_field('indicia_user_id'))
       return 'Please ensure that you\'ve filled in your surname on your user profile before creating or editing groups.';
+    // the following allows for different ways of setting the main parent group in URL params
+    // so this can tie into report filtering when required.
+    if (empty($_GET['from_group_id']) && !empty($_GET['dynamic-from_group_id']))
+      $_GET['from_group_id'] = $_GET['dynamic-from_group_id'];
     self::createBreadcrumb($args);
     iform_load_helpers(array('report_helper', 'map_helper'));
     $args=array_merge(array(
@@ -375,6 +387,9 @@ class iform_group_edit {
         'blankText' => lang::get('<please select>')
       ));
     }
+    if (!empty($args['can_attach_to_multiple_parents']) &&
+        (!empty($_REQUEST['from_group_id']) || !empty($_REQUEST['group_id'])))
+      $r .= self::chooseParentsFromHierarchyBlock($args, $auth);
     if (count($args['group_type'])!==1) {
       $params = array('termlist_external_key'=>'indicia:group_types','orderby'=>'sortorder,term');
       if (!empty($args['group_type']))
@@ -447,7 +462,70 @@ $('#entry_form').submit(function() {
     data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     return $r;
   }
-  
+
+  private static function loadExistingMultipleParents($auth) {
+    $r = [];
+    $parents = data_entry_helper::get_population_data(array(
+      'table' => 'group_relation',
+      'extraParams' => $auth['read'] + array('to_group_id' => $_GET['group_id']),
+      'caching' => false
+    ));
+    foreach ($parents as $parent)
+      $r[$parent['from_group_id']] = $parent['id'];
+    return $r;
+  }
+
+  /**
+   * @param $args
+   * @param $auth
+   * @return string
+   * @todo need to reload properly on edit
+   * @todo save to database
+   */
+  private static function chooseParentsFromHierarchyBlock($args, $auth) {
+    if (!empty($_GET['group_id'])) {
+      $existing = self::loadExistingMultipleParents($auth);
+    }
+    $r = '<fieldset><legend>' . lang::get('{1} parents', ucfirst(self::$groupType)) . ':</legend><ul>';
+    // retrieve list of entire hierarchy
+    $groups = report_helper::get_report_data(array(
+      'readAuth' => $auth['read'],
+      'dataSource' => 'library/groups/groups_list_hierarchy',
+      'extraParams' => array('parent_group_id' => $_GET['from_group_id'])
+    ));
+    // output checkboxes
+    $lastLevel = 0;
+    foreach ($groups as $group) {
+      while ($lastLevel < $group['level']) {
+        $r .= '<ul>';
+        $lastLevel++;
+      }
+      while ($lastLevel > $group['level']) {
+        $r .= '</ul>';
+        $lastLevel--;
+      }
+      if ($lastLevel===0) {
+        // link to top level group of hierarchy is mandatory
+        $r .= '<span>' . lang::get('This {1} is linked to <strong>{2}</strong>. ' .
+            'If you want to also link the {1} to other descendents of <strong>{2}</strong> ' .
+            'you can select them below.', self::$groupType, $group['title']) . '</span>';
+      } else {
+        $existingGroupRelationId = array_key_exists($group['id'], $existing) ? $existing[$group['id']] : '';
+        $r .= data_entry_helper::checkbox(array(
+            'fieldname' => "parent_group:$existingGroupRelationId:$group[id]",
+            'afterControl' => "<label for=\"parent_group:$group[id]\">$group[title]</label>",
+            'default' => $existingGroupRelationId ? true : false
+          ));
+      }
+    }
+    while ($lastLevel > 0) {
+      $r .= '</ul>';
+      $lastLevel--;
+    }
+    $r .= '</ul></fieldset>';
+    return $r;
+  }
+
   private static function formsBlock($args, $auth) {
     $r = '';
     if ($args['include_linked_pages']) {
@@ -488,11 +566,11 @@ $('#entry_form').submit(function() {
           'default' => 'f'
         )
       );
-      if ($args['include_page_access_levels'])
+      if ($args['include_page_access_levels']) {
         $values = array(
           '0' => lang::get('0 - no additional access level required')
         );
-        for ($i=1; $i<=10; $i++) {
+        for ($i = 1; $i <= 10; $i++) {
           $values[$i] = lang::get('Requires access level {1} or higher', $i);
         }
         $columns[] = array(
@@ -501,6 +579,7 @@ $('#entry_form').submit(function() {
           'lookupValues' => $values,
           'default' => '0'
         );
+      }
       $r .= data_entry_helper::complex_attr_grid(array(
         'fieldname' => 'group:pages[]',
         'columns' => $columns,
@@ -743,6 +822,7 @@ $('#entry_form').submit(function() {
    * @param array $values Form values
    * @param array $args Form configuration arguments
    * @return array Submission data
+   * @todo On resave, clear any unchecked multiple parents
    */
   public static function get_submission($values, $args) {
     $struct=array(
@@ -752,7 +832,9 @@ $('#entry_form').submit(function() {
       $struct['superModels'] = array(
         'filter' => array('fk' => 'filter_id')
       );
-    if (!empty($args['parent_group_relationship_type']) && !empty($_REQUEST['from_group_id'])) {
+    // for new group records, auto join to the parent identified by from_group_Id
+    if (!empty($args['parent_group_relationship_type']) && !empty($_REQUEST['from_group_id']) &&
+        empty($_GET['group_id'])) {
       // $from_group_id could be posted in the form if user selectable or provided in the URL if fixed.
       $from_group_id = empty($_GET['from_group_id'])
           ? $_POST['from_group_id']
@@ -764,6 +846,30 @@ $('#entry_form').submit(function() {
       $values['group_relation:relationship_type_id']=$args['parent_group_relationship_type'];
     }
     $s = submission_builder::build_submission($values, $struct);
+    // add in any additional parents (if multiple parents allowed)
+    if (!empty($args['parent_group_relationship_type']) && !empty($args['can_attach_to_multiple_parents'])) {
+      $parentKeys = preg_grep('/^parent_group:\d*:\d+$/', array_keys($values));
+      foreach ($parentKeys as $key) {
+        preg_match('/^parent_group:(?P<group_relation_id>\d*):(?P<parent_group_id>\d+)$/', $key, $matches);
+        if ($values[$key]==='1') {
+          $fields = array (
+            'website_id' => array ('value' => $args['website_id']),
+            'from_group_id' => array ('value' => $matches['parent_group_id']),
+            'relationship_type_id' => array ('value' => $args['parent_group_relationship_type']),
+          );
+          if (!empty($matches['group_relation_id']))
+            $fields['id'] = $matches['group_relation_id'];
+          $s['subModels'][] = array (
+            'fkId' => 'to_group_id',
+            'model' =>
+              array (
+                'id' => 'group_relation',
+                'fields' => $fields
+              )
+          );
+        }
+      }
+    }
     // scan the posted values for group pages. This search grabs the first column value keys, or if this
     // is disabled then the hidden deleted field.
     $pageKeys = preg_grep('/^group\+:pages:\d*:\d+:(0|deleted)$/', array_keys($values));
@@ -916,7 +1022,7 @@ $('#entry_form').submit(function() {
       'nocache'=>true
     ));
     if (empty($group)) {
-      drupal_set_message("The group with ID $id could not be found.");
+      hostsite_show_message("The group with ID $id could not be found.");
       return;
     }
     $group=$group[0];
