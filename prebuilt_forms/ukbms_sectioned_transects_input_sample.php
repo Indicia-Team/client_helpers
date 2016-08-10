@@ -918,6 +918,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     				'speciesListFilterField' => array(),
     				'speciesListFilterValues' => array(),
     				'duplicateTaxonMessage' => lang::get('LANG_Duplicate_Taxon'),
+    				'requiredMessage' => lang::get('This field is required'),
     				'existingOccurrences' => array(),
     				'occurrence_attribute' => array(),
     				'occurrence_attribute_ctrl' => array(),
