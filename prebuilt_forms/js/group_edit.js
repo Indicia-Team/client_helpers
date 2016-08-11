@@ -77,4 +77,33 @@ jQuery(document).ready(function($) {
   }
   $('input[name=group\\:joining_method],input[name=group\\:implicit_record_inclusion]').change(checkViewSensitiveAllowed);
   checkViewSensitiveAllowed();
+
+  // Check all checkbox functionality
+  function updateCheckallBoxState() {
+    var checkedCount = $('.parent-checkbox:checked').length,
+        uncheckedCount = $('.parent-checkbox:not(:checked)').length;
+    $('#ctrl-wrap-check-all-groups').css('opacity', 1);
+    if (checkedCount > 0 && uncheckedCount === 0) {
+      $('#check-all-groups').attr('checked', 'checked');
+    } else if (checkedCount > 0 && uncheckedCount > 0) {
+      // mixed
+      $('#check-all-groups').attr('checked', 'checked');
+      $('#ctrl-wrap-check-all-groups').css('opacity', 0.4);
+    } else {
+      $('#check-all-groups').removeAttr('checked');
+    }
+  }
+
+  updateCheckallBoxState();
+
+  $('.parent-checkbox').change(updateCheckallBoxState);
+
+  $('#check-all-groups').change(function() {
+    $('#ctrl-wrap-check-all-groups').css('opacity', 1);
+    if (this.checked) {
+      $('.parent-checkbox').attr('checked', 'checked');
+    } else {
+      $('.parent-checkbox').removeAttr('checked');
+    }
+  });
 });

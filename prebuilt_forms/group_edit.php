@@ -519,12 +519,17 @@ $('#entry_form').submit(function() {
         $r .= '<span>' . lang::get('This {1} is linked to <strong>{2}</strong>. ' .
             'If you want to also link the {1} to other descendents of <strong>{2}</strong> ' .
             'you can select them below.', self::$groupType, $group['title']) . '</span>';
+        $r .= data_entry_helper::checkbox(array(
+          'fieldname' => "check-all-groups",
+          'afterControl' => "<label for=\"check-all-groups\" class=\"auto\">Check/uncheck all</label>"
+        ));
       } else {
         $existingGroupRelationId = array_key_exists($group['id'], $existing) ? $existing[$group['id']] : '';
         $r .= data_entry_helper::checkbox(array(
             'fieldname' => "parent_group:$existingGroupRelationId:$group[id]",
             'afterControl' => "<label for=\"parent_group:$existingGroupRelationId:$group[id]\" class=\"auto\">$group[title]</label>",
-            'default' => $existingGroupRelationId ? true : false
+            'default' => $existingGroupRelationId ? true : false,
+            'class' => 'parent-checkbox'
           ));
       }
     }
