@@ -601,7 +601,7 @@ class report_helper extends helper_base {
             $classes[] = 'table-gallery';
           if (isset($field['actions'])) {
             $value = self::get_report_grid_actions($field['actions'],$row, $pathParam);
-            $classes[]='actions';
+            $classes[]='col-actions';
           } elseif (isset($field['template'])) {
             $value = self::mergeParamsIntoTemplate($row, $field['template'], true, true, true);
           } else if (isset($field['update']) &&(!isset($field['update']['permission']) || hostsite_user_has_permission($field['update']['permission']))){
@@ -634,7 +634,9 @@ jQuery('#updateform-".$updateformID."').ajaxForm({
             $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';
             // The verification_1 form depends on the tds in the grid having a class="data fieldname".
             $classes[]='data';
-            $classes[]=$field['fieldname'];
+          }
+          if (isset($field['fieldname'])) {
+            $classes[]="col-$field[fieldname]";
           }
           if (isset($field['class']))
             $classes[] = $field['class'];
