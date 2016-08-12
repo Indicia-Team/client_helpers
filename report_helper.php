@@ -730,6 +730,7 @@ $('.update-input').focus(function(evt) {
       if ($options['includeColumnsPicker']) {
         $icon = $imgPath."plus.gif";
         $r .='<img class="col-picker" style="position: absolute; right: 4px; top: 4px;" src="'.$icon.'"  >';
+        self::add_resource('jquery_cookie');
       }
       // Output a div to keep the grid and pager together
       $r = "<div id=\"".$options['id']."\" class=\"report-grid-container\">$r</div>\n";
