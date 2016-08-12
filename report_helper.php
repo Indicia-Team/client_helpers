@@ -352,6 +352,8 @@ class report_helper extends helper_base {
   * </li>
   * <li><b>includeColumnsPicker</b>
   * Adds a menu button to the header which allows the user to pick which columns are visible.
+  * When using this option you must set the id option as well to a unique identifier
+  * for the grid in order to enable saving of the settings in a cookie.
   * </li>
   * </ul>
   */
@@ -430,6 +432,10 @@ class report_helper extends helper_base {
             $fieldId = '';
             $captionLink=$caption;
           }
+          $colClass = isset($field['fieldname']) ? " col-$field[fieldname]" : '';
+          if (!$colClass && isset($field['actions'])) {
+            $colClass = ' col-actions';
+          }
           
           // Create a data-hide attribute for responsive tables.
           $datahide = '';
@@ -439,7 +445,7 @@ class report_helper extends helper_base {
               $datahide = " data-hide=\"$datahide\" data-editable=\"true\"";
             }
           }
-          $thead .= "<th$fieldId class=\"$thClass$orderStyle\"$datahide>$captionLink</th>\n";
+          $thead .= "<th$fieldId class=\"$thClass$colClass$orderStyle\"$datahide>$captionLink</th>\n";
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
               case 'text':
@@ -462,10 +468,10 @@ class report_helper extends helper_base {
             if (empty($popupFilterIconHtml))
               $popupFilterIconHtml='';
             //The filter's input id includes the grid id ($options['id']) in its id as there maybe more than one grid and we need to make the id unique.
-            $filterRow .= "<th><input title=\"$title\" type=\"text\" class=\"col-filter\" id=\"col-filter-".$field['fieldname']."-".$options['id']."\"/>$popupFilterIconHtml</th>";//Add a icon for the popup filter
+            $filterRow .= "<th class=\"$colClass\"><input title=\"$title\" type=\"text\" class=\"col-filter\" id=\"col-filter-".$field['fieldname']."-".$options['id']."\"/>$popupFilterIconHtml</th>";//Add a icon for the popup filter
             $wantFilterRow = true;
           } else
-            $filterRow .= '<th></th>';
+            $filterRow .= "<th class=\"$colClass\"></th>";
         }
       }
       $thead = str_replace(array('{class}','{title}','{content}'), array('','',$thead), $indicia_templates['report-thead-tr']);
