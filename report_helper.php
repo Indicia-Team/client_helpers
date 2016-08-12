@@ -350,6 +350,9 @@ class report_helper extends helper_base {
   *     width at which to apply the breakpoint. Footable defaults apply if
   *     omitted.
   * </li>
+  * <li><b>includeColumnsPicker</b>
+  * Adds a menu button to the header which allows the user to pick which columns are visible.
+  * </li>
   * </ul>
   */
   public static function report_grid($options) {
@@ -388,6 +391,7 @@ class report_helper extends helper_base {
       // Flag if we know any column data types and therefore can display a filter row
       $wantFilterRow=false;
       $filterRow='';
+      $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
         foreach ($options['columns'] as $field) {
@@ -435,7 +439,6 @@ class report_helper extends helper_base {
               $datahide = " data-hide=\"$datahide\" data-editable=\"true\"";
             }
           }
-          
           $thead .= "<th$fieldId class=\"$thClass$orderStyle\"$datahide>$captionLink</th>\n";
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
@@ -453,7 +456,6 @@ class report_helper extends helper_base {
             //The user can then deselect these checkboxes to remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
               data_entry_helper::$javascript.="indiciaData.includePopupFilter=true;";
-              $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
               $popupFilterIcon = $imgPath."desc.gif";
               $popupFilterIconHtml='<img class="col-popup-filter" id="col-popup-filter-'.$field['fieldname'].'-'.$options['id'].'" src="'.$popupFilterIcon.'"  >';
             }
@@ -717,8 +719,12 @@ $('.update-input').focus(function(evt) {
     // $r may be empty if a spatial report has put all its controls on the map toolbar, when using params form only mode.
     // In which case we don't need to output anything.
     if (!empty($r)) {
+      if ($options['includeColumnsPicker']) {
+        $icon = $imgPath."plus.gif";
+        $r .='<img class="col-picker" style="position: absolute; right: 4px; top: 4px;" src="'.$icon.'"  >';
+      }
       // Output a div to keep the grid and pager together
-      $r = "<div id=\"".$options['id']."\">$r</div>\n";
+      $r = "<div id=\"".$options['id']."\" class=\"report-grid-container\">$r</div>\n";
 
       // Add responsive behaviour to table if specified in options.
       // The table is made responsive with the footables plugin based on the
@@ -2425,7 +2431,8 @@ if (typeof mapSettingsHooks!=='undefined') {
       'autoloadAjax' => true,
       'linkFilterToMap' => true,
       'pager' => true,
-      'imageThumbPreset' => 'thumb'
+      'imageThumbPreset' => 'thumb',
+      'includeColumnsPicker' => false
     ), $options);
     // if using AJAX we are only loading parameters and columns, so may as well use local cache
     if ($options['ajax'])
