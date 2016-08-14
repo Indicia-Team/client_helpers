@@ -54,3 +54,6 @@ input.saving[type="text"], input.saving[type="password"], select.saving {
   background: url(../../../media/images/ajax-loader.gif) no-repeat right;
   font-style: italic;
 }
+select.saving {
+  background-position: right 16px center;
+}
