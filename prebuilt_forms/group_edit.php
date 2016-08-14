@@ -866,12 +866,15 @@ $('#entry_form').submit(function() {
       $parentKeys = preg_grep('/^parent_group:\d*:\d+$/', array_keys($values));
       foreach ($parentKeys as $key) {
         preg_match('/^parent_group:(?P<group_relation_id>\d*):(?P<parent_group_id>\d+)$/', $key, $matches);
-        if ($values[$key]==='1') {
+        // if a checked parent, or a previously existing one that is now unchecked
+        if ($values[$key]==='1' || !empty($matches['group_relation_id'])) {
           $fields = array (
             'website_id' => array ('value' => $args['website_id']),
             'from_group_id' => array ('value' => $matches['parent_group_id']),
             'relationship_type_id' => array ('value' => $args['parent_group_relationship_type']),
           );
+          if ($values[$key]==='0')
+            $fields['deleted'] = 't';
           if (!empty($matches['group_relation_id']))
             $fields['id'] = $matches['group_relation_id'];
           $s['subModels'][] = array (
