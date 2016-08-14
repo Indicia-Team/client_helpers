@@ -1035,7 +1035,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     		'survey_id'=>$args['survey_id'],
     		'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
     ));
-    $defAttrOptions = array('extraParams'=>self::$auth['read']+array('orderby'=>'id'));
+    $defAttrOptions = array('extraParams'=>self::$auth['read']);
     foreach(array($args['occurrence_attribute_id'],
               (isset($args['occurrence_attribute_id_2']) && $args['occurrence_attribute_id_2']!="" ? $args['occurrence_attribute_id_2'] : $args['occurrence_attribute_id']),
               (isset($args['occurrence_attribute_id_3']) && $args['occurrence_attribute_id_3']!="" ? $args['occurrence_attribute_id_3'] : $args['occurrence_attribute_id']),
