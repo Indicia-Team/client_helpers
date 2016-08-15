@@ -300,8 +300,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		if(isNumber) $('<td class="row-total first">'+rowTotal+'</td>').appendTo(row);
 		$(speciesTableSelector+' tbody.occs-body').append(row);
 		row.find('input.count-input').keydown(occ_keydown).focus(general_focus).change(input_change).blur(input_blur);
-		row.find('input.non-count-input').keydown(occ_keydown).focus(general_focus).change(input_change).blur(input_blur);
-		row.find('select.non-count-input').focus(general_focus).change(select_change);
+		row.find('input.non-count-input,select.non-count-input').keydown(occ_keydown).focus(general_focus).change(input_change).blur(input_blur);
 		formOptions.existingOccurrences[':' + species.taxon_meaning_id] = {'processed' : true, 'taxon_meaning_id' : ''+species.taxon_meaning_id};
 	}
 
@@ -515,11 +514,6 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 
 	input_change = function (evt) {
 		$(evt.target).addClass('edited');
-	}
-
-	select_change = function (evt) {
-		$(evt.target).addClass('edited');
-		input_blur(evt);
 	}
 
 	input_blur = function (evt) {
