@@ -391,8 +391,12 @@ class map_helper extends helper_base {
       // trigger a change event on the sref if it's set in case locking in use. This will draw the polygon on the map.
       $srefId = empty($options['srefId']) ? '$.fn.indiciaMapPanel.defaults.srefId' : "'{$options['srefId']}'";
       if(!(isset($options['switchOffSrefRetrigger']) && $options['switchOffSrefRetrigger'] == true)){
-        $mapSetupJs .= "      var srefId = $srefId;\n".
-                       "      if (srefId && $('#' + srefId).length && $('#' + srefId).val()!=='' && indiciaData.mapdiv.settings.initialBoundaryWkt===null) {jQuery('#'+srefId).change();}\n";
+        $mapSetupJs .= <<<JS
+var srefId = $srefId;
+if (srefId && $('#' + srefId).length && $('#' + srefId).val()!=='' && indiciaData.mapdiv.settings.initialBoundaryWkt===null) {
+  jQuery('#'+srefId).change();
+}
+JS;
       }
       // If the map is displayed on a tab, so we must only generate it when the tab is displayed as creating the 
       // map on a hidden div can cause problems. Also, the map must not be created until onload or later. So 
