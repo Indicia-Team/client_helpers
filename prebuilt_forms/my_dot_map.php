@@ -351,12 +351,20 @@ class iform_my_dot_map {
    * @todo: Implement this method
    */
   public static function get_form($args) {
-    $lang = iform_lang_iso_639_2(hostsite_get_user_field('language', 'en'));
+    if (function_exists('hostsite_get_user_field')) {
+      $lang = iform_lang_iso_639_2(hostsite_get_user_field('language', 'en'));
+    }
+    else {
+      $lang = 'eng';
+    }
+    
     if (function_exists('iform_load_helpers')) {
       iform_load_helpers(array('map_helper'));
-    } else {
+    } 
+    else {
       require_once dirname(dirname(__FILE__)) . '/map_helper.php';
     }
+    
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $r = '';
     // setup the map options
