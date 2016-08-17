@@ -3399,10 +3399,9 @@ $('#$escaped').change(function(e) {
               if($existing_value=="1")
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
             } else {
-              if ($attributes[$attrId]['data_type']==='D') {
-                $d = new DateTime($existing_value);
-                $existing_value = $d->format(self::$date_format);
-              } elseif ($attributes[$attrId]['data_type']==='V') {
+              // dates (including single day vague dates) need formatting to the local date format.
+              if ($attributes[$attrId]['data_type']==='D' || $attributes[$attrId]['data_type']==='V'
+                  && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existing_value)) {
                 $d = new DateTime($existing_value);
                 $existing_value = $d->format(self::$date_format);
               } elseif (is_array($existing_value))
@@ -4105,8 +4104,10 @@ $('#".$options['id']." .species-filter').click(function(evt) {
             'nocache' => true
           ));
           foreach($attrValues as $attrValue) {
+            // vague date controls need the processed vague date put back in, not the raw parts.
+            $valueField = $attrValue['data_type']==='Vague Date' ? 'value' : 'raw_value';
             self::$entity_to_load['sc:'.$occurrenceIds[$attrValue['occurrence_id']].':'.$attrValue['occurrence_id'].':occAttr:'.$attrValue['occurrence_attribute_id'].(isset($attrValue['id'])?':'.$attrValue['id']:'')]
-              = $attrValue['raw_value'];
+              = $attrValue[$valueField];
           }
           if (count($loadMedia)>0) {
             // @todo: Filter to the appropriate list of media types
