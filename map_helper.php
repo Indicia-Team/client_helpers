@@ -393,7 +393,8 @@ class map_helper extends helper_base {
       if(!(isset($options['switchOffSrefRetrigger']) && $options['switchOffSrefRetrigger'] == true)){
         $mapSetupJs .= <<<JS
 var srefId = $srefId;
-if (srefId && $('#' + srefId).length && $('#' + srefId).val()!=='' && indiciaData.mapdiv.settings.initialBoundaryWkt===null) {
+if (srefId && $('#' + srefId).length && $('#' + srefId).val()!==''
+    && indiciaData.mapdiv.settings.initialBoundaryWkt===null && indiciaData.mapdiv.settings.initialFeatureWkt===null) {
   jQuery('#'+srefId).change();
 }
 JS;
