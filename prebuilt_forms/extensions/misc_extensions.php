@@ -304,4 +304,104 @@ $('form#entry_form').tooltip({
   }
 });\n";
   }
+
+  /**
+   * Provides a way of linking a location ID passed in a URL parameter to a
+   * sample being recorded. Outputs hidden inputs containing values derived from
+   * the selected location.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param array $options Options array with the following possibilities:
+   *   * param - name of the parameter passed in the URL which should contain a
+   *     location ID.
+   *   * info_template - template for info to display when a location is found
+   *     and being linked to. Set to false to disable. Default is '<p>You are
+   *     submitting a record at {name} ({centroid_sref}).</p>'
+   *   * save_id_to_field - name of the field to save the location ID
+   *     into. Defaults to 'sample:location_id'. Set to false to disable saving
+   *     the location ID.
+   *   * save_centroid_sref_to_field - name of the field to save the location's
+   *     centroid_sref value to (the spatial reference of the centre of the
+   *     location). Defaults to 'sample:entered_sref'. Set to false to disable
+   *     saving the centroid spatial reference
+   *   * save_centroid_sref_system_to_field - name of the field to save the
+   *     location's centroid_sref_system value to (the system used for the
+   *     centroid). Defaults to 'sample:entered_sref_system'. Set to false to
+   *     disable saving the centroid spatial reference system.
+   *   * save_boundary_geom_to_field - name of the field to save the location's
+   *     boundary_geom value to. Set this to sample:geom to store the location
+   *     boundary in the sample. Defaults to false.
+   * @param $path
+   */
+  public static function location_from_url($auth, $args, $tabalias, $options, $path) {
+    $options = array_merge(array(
+      'param' => 'location_id',
+      'info_template' => lang::get('<p>You are submitting a record at {name} ({centroid_sref})</p>'),
+      'save_id_to_field' => 'sample:location_id',
+      'save_centroid_sref_to_field' => 'sample:entered_sref',
+      'save_centroid_sref_system_to_field' => 'sample:entered_sref_system',
+      'save_boundary_geom_to_field' => false
+    ), $options);
+    if (empty($_GET[$options['param']]))
+      return '';
+    $locations = data_entry_helper::get_population_data(array(
+      'table' => 'location',
+      'extraParams' => $auth['read'] + array(
+          'id' => $_GET[$options['param']],
+          'view' => 'detail'
+      )
+    ));
+    if (count($locations)===0)
+      return lang::get('<p>Location not found</p>');
+    $r = '';
+    $location = $locations[0];
+    if ($options['info_template'])
+      $r .= str_replace(
+        array('{name}', '{centroid_sref}'),
+        array($location['name'], $location['centroid_sref']),
+        $options['info_template']
+      );
+    if ($options['save_id_to_field'])
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => $options['save_id_to_field'],
+        'default' => $location['id']
+      ));
+    if ($options['save_centroid_sref_to_field'])
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => $options['save_centroid_sref_to_field'],
+        'default' => $location['centroid_sref']
+      ));
+    if ($options['save_centroid_sref_system_to_field'])
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => $options['save_centroid_sref_system_to_field'],
+        'default' => $location['centroid_sref_system']
+      ));
+    if ($options['save_boundary_geom_to_field'])
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => $options['save_boundary_geom_to_field'],
+        'default' => $location['boundary_geom']
+      ));
+    return $r;
+  }
+
+  /**
+   * Adds code to the page for a popup box that shows the link to a group join page.
+   *
+   * Creates a JavaScript function that shows a FancyBox popup containing the link required to view or join a group.
+   * This link can then be given out over social media etc. Having included this extension control on the page you will
+   * need to call the JS groupLinkPopup() function, for example by calling it from a report grid action, with the
+   * following parameters:
+   * * title of the group
+   * * title of the parent of this group (or empty string if group has no parent)
+   * * id of the group
+   * * rootFolder of the site to which the page path can be appended.
+   */
+  public static function group_link_popup() {
+    $r = '<div id="group-link-popup-container" style="display: none"><div id="group-link-popup">';
+    $r .= '<p>' . lang::get('Send this link to other people to allow them to view or join this group.') . '</p>';
+    $r .= '<textarea style="width: 100%;" id="share-link" rows="4"></textarea>';
+    $r .= '</div></div>';
+    return $r;
+  }
 }
