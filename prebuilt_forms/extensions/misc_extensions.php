@@ -390,8 +390,8 @@ $('form#entry_form').tooltip({
    *
    * Creates a JavaScript function that shows a FancyBox popup containing the link required to view or join a group.
    * This link can then be given out over social media etc. Having included this extension control on the page you will
-   * need to call the JS groupLinkPopup() function, for example by calling it from a report grid action, with the
-   * following parameters:
+   * need to call the JS indiciaFns.groupLinkPopup() function, for example by calling it from a report grid action, with
+   * the following parameters:
    * * title of the group
    * * title of the parent of this group (or empty string if group has no parent)
    * * id of the group
