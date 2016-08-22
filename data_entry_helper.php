@@ -6157,15 +6157,7 @@ if (errors$uniq.length>0) {
     } else {
       throw new Exception('Cannot find website id in POST array!');
     }
-    // determiner, training and record status can be defined globally for the whole list.
-    if (array_key_exists('occurrence:determiner_id', $arr))
-      $determiner_id = $arr['occurrence:determiner_id'];
-    if (array_key_exists('occurrence:training', $arr))
-      $training = $arr['occurrence:training'];
-    if (array_key_exists('occurrence:record_status', $arr))
-      $record_status = $arr['occurrence:record_status'];
-    if (array_key_exists('occurrence:release_status', $arr))
-      $release_status = $arr['occurrence:release_status'];
+    $fieldDefaults = self::speciesChecklistGetFieldDefaults($arr);
     // Set the default method of looking for rows to include - either using data, or the checkbox (which could be hidden)
     $include_if_any_data = $include_if_any_data || (isset($arr['rowInclusionCheck']) && $arr['rowInclusionCheck']=='hasData');
     // Species checklist entries take the following format.
@@ -6246,17 +6238,7 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
-        // don't overwrite settings for existing records.
-        if (empty($record['id'])) {
-          if (isset($determiner_id))
-            $record['determiner_id'] = $determiner_id;
-          if (isset($training))
-            $record['training'] = $training;
-          if (isset($record_status))
-            $record['record_status'] = $record_status;
-          if (isset($release_status))
-            $record['release_status'] = $release_status;
-        }
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
         $occ = data_entry_helper::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
@@ -6300,11 +6282,7 @@ if (errors$uniq.length>0) {
     } else {
       throw new Exception('Cannot find website id in POST array!');
     }
-    // determiner and record status can be defined globally for the whole list.
-    if (array_key_exists('occurrence:determiner_id', $arr))
-      $determiner_id = $arr['occurrence:determiner_id'];
-    if (array_key_exists('occurrence:record_status', $arr))
-      $record_status = $arr['occurrence:record_status'];
+    $fieldDefaults = self::speciesChecklistGetFieldDefaults($arr);
     // Set the default method of looking for rows to include - either using data, or the checkbox (which could be hidden)
     $include_if_any_data = $include_if_any_data || (isset($arr['rowInclusionCheck']) && $arr['rowInclusionCheck']=='hasData');
     // Species checklist entries take the following format.
@@ -6356,12 +6334,7 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
-        if (isset($determiner_id)) {
-          $record['determiner_id'] = $determiner_id;
-        }
-        if (isset($record_status)) {
-          $record['record_status'] = $record_status;
-        }
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
         $occ = data_entry_helper::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         $sampleRecords[$sampleIDX]['occurrences'][] = array('fkId' => 'sample_id','model' => $occ);
@@ -6468,6 +6441,34 @@ if (errors$uniq.length>0) {
     // return null if no record to create
     return $record ? true : null;
   }
+
+  /**
+   * Some occurrence values (e.g. record_status) can be supplied as if being supplied for a single occurrence record
+   * and these values will then be applied as defaults to the entire list of occurrences being created by the
+   * species_checklist control. This method finds the values to use as defaults in the array of input values.
+   * @param array $values List of form values
+   * @return array List of defaults to apply to every occurrence
+   */
+  private static function speciesChecklistGetFieldDefaults($values) {
+    // Determiner, training, sensitivity_precision and record status can have their defaults defined as occurrence:...
+    // values that get copied into every individual occurrence.
+    $fieldsThatAllowDefaults = array(
+      'determiner_id', 'training', 'record_status', 'release_status', 'sensitivity_precision'
+    );
+    $fieldDefaults = array();
+    foreach ($fieldsThatAllowDefaults as $field)
+      if (array_key_exists("occurrence:$field", $values))
+        $fieldDefaults[$field] = $values["occurrence:$field"];
+    return $fieldDefaults;
+  }
+
+  private static function speciesChecklistApplyFieldDefaults($fieldDefaults, &$record) {
+    // Apply default field values but don't overwrite settings for existing records.
+    if (empty($record['id'])) {
+      foreach ($fieldDefaults as $field => $value)
+        $record[$field] = $value;
+    }
+}
 
   private static function attachAssociationsToModel($id, &$occ, $assocData, $arr) {
     $assocs = preg_grep("/^$id$/", $assocData);
