@@ -256,7 +256,7 @@ class extension_misc_extensions {
       $caption = lang::get($caption);
       $breadcrumb[] = l($caption, $path, $itemOptions);
     }
-    if (empty($options['includeCurrentPage']) || $options['includeCurrentPage']!==false)
+    if (!isset($options['includeCurrentPage']) || $options['includeCurrentPage']!==false)
       $breadcrumb[] = drupal_get_title();
     drupal_set_breadcrumb($breadcrumb);
     return '';
