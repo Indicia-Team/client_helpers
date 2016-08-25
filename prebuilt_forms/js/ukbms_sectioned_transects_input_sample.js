@@ -621,7 +621,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 				$('#grid'+N+'-loading').hide();
 	    		break;
 	    	case 'mine':
-	    		if(typeof formOptions.myTaxonMeaningIds == 'undefined' || formOptions.myTaxonMeaningIds.length == 0) {
+	    		if(typeof formOptions.myTaxonMeaningIDs == 'undefined' || formOptions.myTaxonMeaningIDs.length == 0) {
     				removeTaggedRows('table#transect-input1');
 	    			$('#grid'+N+'-loading').hide();
     				break;
@@ -636,7 +636,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    			'view': 'cache',
 	    			'orderby': 'taxonomic_sort_order'
 	    		};
-	    		query = {"in":{"taxon_meaning_id":formOptions.myTaxonMeaningIds}};
+	    		query = {"in":{"taxon_meaning_id":formOptions.myTaxonMeaningIDs}};
 	    		if(typeof formOptions.speciesListFilterField[N] != "undefined") {
 	    			query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
 	    		}
