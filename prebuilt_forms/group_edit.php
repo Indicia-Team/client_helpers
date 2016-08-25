@@ -687,7 +687,7 @@ $('#entry_form').submit(function() {
         'label' => lang::get('Include records on reports if'),
         'lookupValues' => array(
           'f' => lang::get('they were posted by a group member and match the filter defined above ' .
-            'and they were submitted via a {1} data entry form', self::$groupType),
+            'and they were submitted via a data entry form for the {1}', self::$groupType),
           't' => lang::get('they were posted by a group member and match the filter defined above, ' .
             'but it doesn\'t matter which recording form was used', self::$groupType),
           '' => lang::get('they match the filter defined above but it doesn\'t matter who ' .
