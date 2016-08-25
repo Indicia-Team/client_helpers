@@ -663,18 +663,25 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       if (empty($args['location_boundary_id'])) {
         // Does the group filter define a site or boundary for the recording? If so and the form
         // is not locked to a boundary, we need to show it and limit the map extent.
-        $locationIDToLoad = empty($filterDef->location_id) ?
-          (empty($filterDef->indexed_location_id) ? FALSE : $filterDef->indexed_location_id) : $filterDef->location_id;
+        // This code grabs the first available value from the list of fields that could hold the value
+        $locationIDToLoad = @$filterDef->indexed_location_list ?: @$filterDef->indexed_location_id ?:
+            @$filterDef->location_list ?: @$filterDef->location_id;
+
         if ($locationIDToLoad) {
           $response = data_entry_helper::get_population_data(array(
             'table' => 'location',
             'extraParams' => $auth['read'] + array(
-                'id' => $locationIDToLoad,
+                'query' => json_encode(array('in'=>array('id'=>explode(',', $locationIDToLoad)))),
                 'view' => 'detail'
               )
           ));
-          $geom = $response[0]['boundary_geom'] ? $response[0]['boundary_geom'] : $response[0]['centroid_geom'];
-          iform_map_zoom_to_geom($geom, lang::get('Boundary of {1} for the {2} group', $response[0]['name'], self::$group['title']), TRUE);
+          $geoms = array();
+          foreach ($response as $loc) {
+            $geoms[] = $loc['boundary_geom'] ? $loc['boundary_geom'] : $loc['centroid_geom'];
+          }
+          $geom = count($geoms)>1 ? 'GEOMETRYCOLLECTION(' . implode(',', $geoms) . ')' : $geoms[0];
+          $layerName = count($geoms)>1 ? lang::get('Boundaries') : lang::get('Boundary of {1}', $response[0]['name']);
+          iform_map_zoom_to_geom($geom, lang::get('{1} for the {2} group', $layerName, self::$group['title']), TRUE);
           self::hide_other_boundaries($args);
         }
         elseif (!empty($filterDef->searchArea)) {

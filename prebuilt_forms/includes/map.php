@@ -373,17 +373,22 @@ indiciaFns.zoomToBounds = function(mapdiv, bounds) {
   }
 }
 mapInitialisationHooks.push(function(mapdiv) {
-  var parser, feature, loclayer = new OpenLayers.Layer.Vector(
+  var parser, features, loclayer = new OpenLayers.Layer.Vector(
     '$name',
     {'sphericalMercator': true, displayInLayerSwitcher: true}
   );
   parser = new OpenLayers.Format.WKT();
-  feature = parser.read('$geom');
-  feature.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
-  feature.style.fillOpacity=0;
-  loclayer.addFeatures([feature]);
+  features = parser.read('$geom');
+  if (!Array.isArray(features)) {
+    features = [features];
+  }
+  $.each(features, function() {
+    this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
+    this.style.fillOpacity=0;
+  });
+  loclayer.addFeatures(features);
   // Don't zoom to the locality if the map is set to remember last position
-  var bounds=feature.geometry.getBounds();
+  var bounds=loclayer.getDataExtent();
   mapdiv.map.updateSize();
   indiciaData.initialBounds = bounds;
   indiciaFns.zoomToBounds(mapdiv, bounds);
