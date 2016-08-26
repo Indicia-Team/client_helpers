@@ -1127,10 +1127,10 @@ class iform_ukbms_sectioned_transects_input_sample {
 	}
 	$formOptions['myTaxonMeaningIDs'] = array_keys($formOptions['myTaxonMeaningIDs']);
         
-   	$r .= self::_buildGrid ($formOptions, 1, $args, $sections, $occ_attributes, count($occurrences)>0, true, $attributes, $subSamplesByCode) .
-			($args['taxon_list_id_2'] !='' ? self::_buildGrid ($formOptions, 2, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
-			($args['taxon_list_id_3'] !='' ? self::_buildGrid ($formOptions, 3, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
-			($args['taxon_list_id_4'] !='' ? self::_buildGrid ($formOptions, 4, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+   	$r .= self::_buildGrid ($parentSampleId, $formOptions, 1, $args, $sections, $occ_attributes, count($occurrences)>0, true, $attributes, $subSamplesByCode) .
+			($args['taxon_list_id_2'] !='' ? self::_buildGrid ($parentSampleId, $formOptions, 2, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+			($args['taxon_list_id_3'] !='' ? self::_buildGrid ($parentSampleId, $formOptions, 3, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+			($args['taxon_list_id_4'] !='' ? self::_buildGrid ($parentSampleId, $formOptions, 4, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
 		  '</div>';
     
     // stub form to attach validation to.
@@ -1231,7 +1231,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     return $r;
   }
 
-  protected static function _buildGrid (&$formOptions, $tabNum, $args, $sections, $occ_attributes, $existing, $includeControl = false, $attributes = array(), $subSamplesByCode = array()) {
+  protected static function _buildGrid ($parentSampleId, &$formOptions, $tabNum, $args, $sections, $occ_attributes, $existing, $includeControl = false, $attributes = array(), $subSamplesByCode = array()) {
   	$isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
   			$args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
 
@@ -1317,6 +1317,7 @@ class iform_ukbms_sectioned_transects_input_sample {
   		$r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
   	$r .= '<br />';
   	$reloadUrl = data_entry_helper::get_reload_link_parts();
+    $reloadUrl['params']['sample_id'] = $parentSampleId;
   	// find the names of the params we must not include
   	foreach ($reloadUrl['params'] as $key => $value) {
   		$reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
