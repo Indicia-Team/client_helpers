@@ -2866,6 +2866,10 @@ $('#$escaped').change(function(e) {
   * Optional. If set to true, then an occurrence comment input field is included on each row.</li>
   * <li><b>occurrenceSensitivity</b><br/>
   * Optional. If set to true, then an occurrence sensitivity selector is included on each row.</li>
+  * <li><b>spatialRefPerRow</b><br/>
+  * Optional. If set to true, then a spatial reference column is included on each row. When submitted, each unique
+  * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
+  * defined for some records.</li>
   * <li><b>mediaTypes</b><br/>
   * Optional. Array of media types that can be uploaded. Choose from Audio:Local, Audio:SoundCloud, Image:Flickr,
   * Image:Instagram, Image:Local, Image:Twitpic, Pdf:Local, Social:Facebook, Social:Twitter, Video:Youtube,
@@ -3422,6 +3426,15 @@ $('#$escaped').change(function(e) {
             $indicia_templates[$options['attrCellTemplate']]);
           $idx++;
         }
+        if ($options['spatialRefPerRow']) {
+          $row .= "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
+          $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occurrence:spatialref";
+          $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:spatialref"]) ?
+            self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:spatialref"] : '';
+          // @todo Setting for existing values, including the linking to existing sample Ids
+          $row .= "<input class=\"scSpatialRef\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
+          $row .= "</td>";
+        }
         if ($options['occurrenceComment']) {
           $row .= "\n<td class=\"ui-widget-content scCommentCell\" headers=\"$options[id]-comment-$colIdx\">";
           $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occurrence:comment";
@@ -3488,8 +3501,9 @@ $('#$escaped').change(function(e) {
 
         // Add media in a following row when not in responsive mode.
         if ($options['mediaTypes'] && count($existingImages) > 0 && !$options['responsive']) {
-          $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls)
-            + ($options['occurrenceComment'] ? 1 : 0) + ($options['occurrenceSensitivity'] ? 1 : 0) + (count($options['mediaTypes']) ? 1 : 0);
+          $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls) +
+            ($options['spatialRefPerRow'] ? 1 : 0) + ($options['occurrenceComment'] ? 1 : 0) +
+            ($options['occurrenceSensitivity'] ? 1 : 0) + (count($options['mediaTypes']) ? 1 : 0);
           $rows[$rowIdx]='<td colspan="'.$totalCols.'">'.data_entry_helper::file_box(array(
               'table'=>"sc:$options[id]-$txIdx:$existing_record_id:occurrence_medium",
               'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existing_record_id:occurrence_medium",
@@ -4190,15 +4204,23 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         // the settings in the responsiveCols array.
         foreach ($occAttrs as $idx=>$a) {
           $attrs = self::get_species_checklist_col_responsive($options, "attr$idx");
-          $r .= self::get_species_checklist_col_header($options['id']."-attr$idx-$i", lang::get($a), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-attr$idx-$i", lang::get($a), $visibleColIdx, $options['colWidths'], $attrs);
+        }
+        if ($options['spatialRefPerRow']) {
+          $attrs = self::get_species_checklist_col_responsive($options, 'spatialref');
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-spatialref-$i", lang::get('Spatial ref'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceComment']) {
           $attrs = self::get_species_checklist_col_responsive($options, 'comment');
-          $r .= self::get_species_checklist_col_header($options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceSensitivity']) {
           $attrs = self::get_species_checklist_col_responsive($options, 'sensitive');
-          $r .= self::get_species_checklist_col_header($options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
         }
 
         // Non-responsive behaviour is to show an Add Media button in a column
@@ -4394,6 +4416,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       'PHPtaxonLabel' => false,
       'occurrenceComment' => false,
       'occurrenceSensitivity' => null,
+      'spatialRefPerRow' => false,
       'id' => 'species-grid-'.rand(0,1000),
       'colWidths' => array(),
       'taxonFilterField' => 'none',
@@ -4565,6 +4588,11 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         $indicia_templates['attribute_cell']
       );
       $idx++;
+    }
+    if ($options['spatialRefPerRow']) {
+      $r .= '<td class="ui-widget-content scSpatialRefCell" headers="'.$options['id'].'-spatialref-0">' .
+        '<input class="scSpatialRef" type="text" ' .
+        "id=\"$fieldname:occurrence:spatialref\" name=\"$fieldname:occurrence:spatialref\" value=\"\" /></td>";
     }
     if ($options['occurrenceComment']) {
       $r .= '<td class="ui-widget-content scCommentCell" headers="'.$options['id'].'-comment-0"><input class="scComment" type="text" ' .
@@ -6239,15 +6267,48 @@ if (errors$uniq.length>0) {
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
         self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
+        // Handle subsamples indicated by a row specific map ref
+        if (!empty($record['occurrence:spatialref'])) {
+          $sref = trim($record['occurrence:spatialref']);
+          unset($record['occurrence:spatialref']);
+        } else
+          $sref = null;
         $occ = data_entry_helper::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
-        $subModels[$id] = array(
-          'fkId' => 'sample_id',
-          'model' => $occ
-        );
+        // If we have a record-level spatial reference, then we need to attach the record to a subsample to capture the
+        // exact sref.
+        if ($sref) {
+          if (!isset($subModels[$sref])) {
+            $subSample = array(
+              'website_id' => $website_id,
+              'survey_id' => empty($arr['survey_id']) ? '' : $arr['survey_id'],
+              'date' => empty($arr['sample:date']) ? '' : $arr['sample:date'],
+              'entered_sref_system' => empty($arr['sample:entered_sref_system']) ? '' : $arr['sample:entered_sref_system'],
+              'location_name' => empty($arr['sample:location_name']) ? '' : $arr['sample:location_name'],
+              'input_form' => empty($arr['sample:input_form']) ? '' : $arr['sample:input_form'],
+              'entered_sref' => $sref
+            );
+            $subModels[$sref] = array(
+              'fkId' => 'parent_id',
+              'model' => data_entry_helper::wrap($subSample, 'sample'),
+            );
+            $subModels[$sref]['model']['subModels'] = array();
+          }
+          $subModels[$sref]['model']['subModels'][] = array(
+            'fkId' => 'sample_id',
+            'model' => $occ
+          );
+        } else {
+          $subModels[$id] = array(
+            'fkId' => 'sample_id',
+            'model' => $occ
+          );
+        }
       }
     }
+    // @todo Append the sample submodels.
+    drupal_set_message('<pre>' . var_export($subModels, true) . '</pre>');
     return $subModels;
   }
 
