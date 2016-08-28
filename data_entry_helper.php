@@ -6307,8 +6307,6 @@ if (errors$uniq.length>0) {
         }
       }
     }
-    // @todo Append the sample submodels.
-    drupal_set_message('<pre>' . var_export($subModels, true) . '</pre>');
     return $subModels;
   }
 
