@@ -3292,7 +3292,7 @@ $('#$escaped').change(function(e) {
         }
         $row .= str_replace(array('{content}','{colspan}','{editClass}','{tableId}','{idx}'),
           array($firstCell,$colspan,$editClass,$options['id'],$colIdx), $indicia_templates['taxon_label_cell']);
-        $row .= self::species_checklist_get_subsp_cell($taxon, $txIdx, $existingRecordId, $options);
+        $row .= self::speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options);
         $hidden = ($options['rowInclusionCheck']=='checkbox' ? '' : ' style="display:none"');
         // AlwaysFixed mode means all rows in the default checklist are included as occurrences. Same for
         // AlwayeRemovable except that the rows can be removed.
@@ -3422,7 +3422,7 @@ $('#$escaped').change(function(e) {
             $oc .= $error;
           }
           $headers = $options['id']."-attr$attrId-$colIdx";
-          $class = self::species_checklist_occ_attr_class($options, $idx, $attributes[$attrId]['untranslatedCaption']);
+          $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['untranslatedCaption']);
           $class = $class . 'Cell';
           $row .= str_replace(array('{label}', '{class}', '{content}', '{headers}'), array(lang::get($attributes[$attrId]['caption']), $class, $oc, $headers),
             $indicia_templates[$options['attrCellTemplate']]);
@@ -3713,7 +3713,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * @param array Options array for the species grid. Used to obtain the row inclusion check mode,
    * read authorisation and lookup list's ID.
    */
-  private static function species_checklist_get_subsp_cell($taxon, $txIdx, $existingRecordId, $options) {
+  private static function speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options) {
     if ($options['subSpeciesColumn']) {
       //Disable the sub-species drop-down if the row delete button is not displayed.
       //Also disable if we are preloading our data from a sample.
@@ -4496,7 +4496,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       }
 
       // Build array of attribute controls
-      $class = self::species_checklist_occ_attr_class($options, $idx, $attrDef['untranslatedCaption']);
+      $class = self::speciesChecklistOccAttrClass($options, $idx, $attrDef['untranslatedCaption']);
       $class .= (isset($attrDef['class']) ? ' ' . $attrDef['class'] : '');
       if (isset($attrOpts['class'])) {
         $class .=  ' ' . $attrOpts['class'];
@@ -4535,7 +4535,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
    * @param integer $idx Index of the custom attribute.
    * @param string $caption Caption of the attribute used to construct a suitable CSS class.
    */
-  private static function species_checklist_occ_attr_class($options, $idx, $caption) {
+  private static function speciesChecklistOccAttrClass($options, $idx, $caption) {
     return (array_key_exists('occAttrClasses', $options) && $idx < count($options['occAttrClasses'])) ?
       $options['occAttrClasses'][$idx] :
       'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($caption)); // provide a default class based on the control caption
@@ -4577,7 +4577,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         $fieldname.':occurrence:sampleIDX" id="'.$fieldname.':occurrence:sampleIDX" value="" /></td>';
     $idx = 0;
     foreach ($occAttrControls as $attrId=>$oc) {
-      $class = self::species_checklist_occ_attr_class($options, $idx, $attributes[$attrId]['caption']);
+      $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['caption']);
       $r .= str_replace(array('{content}', '{class}', '{headers}'),
         array(str_replace('{fieldname}', "$fieldname:occAttr:$attrId", $oc), $class.'Cell', $options['id']."-attr$attrId-0"),
         $indicia_templates['attribute_cell']
