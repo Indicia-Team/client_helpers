@@ -3147,7 +3147,8 @@ $('#$escaped').change(function(e) {
       self::preload_species_checklist_occurrences(self::$entity_to_load['sample:id'], $options['readAuth'],
           $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows,
           $options['speciesControlToUseSubSamples'] || $options['spatialRefPerRow'],
-          (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''));
+          (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),
+          $options['spatialRefPerRow']);
     }
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
@@ -4013,10 +4014,13 @@ $('#".$options['id']." .species-filter').click(function(evt) {
    * @param array $readAuth Read authorisation array
    * @param boolean $loadMedia Array of media type terms to load.
    * @param array $extraParams Extra params to pass to the web service call for filtering.
+   * @param boolean $useSubSamples Enable loading of records from subsamples of the main sample
+   * @param boolean $subSamplesOptional If using subsamples but they are optional, records are also loaded that are
+   * directly attached to the main sample.
    * @return array Array with key of occurrence_id and value of $taxonInstance.
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
-       &$subSamples, $useSubSamples, $subSampleMethodID='') {
+       &$subSamples, $useSubSamples, $subSampleMethodID='', $subSamplesOptional=false) {
     $occurrenceIds = array();
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
@@ -4029,7 +4033,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           unset(data_entry_helper::$entity_to_load[$key]);
         }
       }
-      if($useSubSamples){
+      if($useSubSamples) {
         $extraParams += $readAuth + array('view'=>'detail','parent_id'=>$sampleId,'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
         if($subSampleMethodID != '')
           $extraParams['sample_method_id'] = $subSampleMethodID;
@@ -4039,6 +4043,8 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           'nocache' => true
         ));
         $subSampleList = array();
+        if ($subSamplesOptional)
+          $subSampleList[] = $sampleId;
         foreach($subSamples as $idx => $subsample){
           $subSampleList[] = $subsample['id'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:id'] = $subsample['id'];
