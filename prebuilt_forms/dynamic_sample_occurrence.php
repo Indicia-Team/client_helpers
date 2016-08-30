@@ -801,7 +801,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
           $response = data_entry_helper::get_population_data(array(
               'table' => 'occurrence',
-              'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail')
+              'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
+              'caching' => false
           ));
           if (count($response) != 0) {
             //we found an occurrence so use it to detect the sample
@@ -817,7 +818,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       elseif (self::$loadedSampleId) {
         $response = data_entry_helper::get_population_data(array(
           'table' => 'occurrence',
-          'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail')          
+          'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail'),
+          'caching' => false
         ));
         self::$loadedOccurrenceId = $response[0]['id'];
         data_entry_helper::load_existing_record_from(
