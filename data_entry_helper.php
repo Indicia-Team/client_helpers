@@ -6223,6 +6223,7 @@ if (errors$uniq.length>0) {
         array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : array();
     $existingSampleIdsBySref = !empty($_POST['existingSampleIdsBySref']) ?
         json_decode($_POST['existingSampleIdsBySref'], true) : array();
+    $unusedExistingSampleIds = array_values($existingSampleIdsBySref);
     foreach ($records as $id => $record) {
       // determine the id of the grid this record is from
       // $id = <grid_id>-<rowIndex> but <grid_id> could contain a hyphen
@@ -6270,8 +6271,11 @@ if (errors$uniq.length>0) {
               'entered_sref' => $sref
             );
             // set an existing ID on the sample if editing
-            if (!empty($existingSampleIdsBySref[strtoupper(trim($sref))]))
+            if (!empty($existingSampleIdsBySref[strtoupper(trim($sref))])) {
               $subSample['id'] = $existingSampleIdsBySref[strtoupper(trim($sref))];
+              if ($key = array_search($subSample['id'], $unusedExistingSampleIds))
+                unset($unusedExistingSampleIds[$key]);
+            }
             $subModels[$sref] = array(
               'fkId' => 'parent_id',
               'model' => data_entry_helper::wrap($subSample, 'sample'),
@@ -6289,6 +6293,17 @@ if (errors$uniq.length>0) {
           );
         }
       }
+    }
+    // Flag any old samples for deletion that are now empty
+    foreach ($unusedExistingSampleIds as $id) {
+      $subModels[$sref]['model']['subModels'][] = array(
+        'fkId' => 'parent_id',
+        'model' => data_entry_helper::wrap(array(
+          'id' => $id,
+          'website_id' => $website_id,
+          'deleted' => 't'
+        ), 'sample'),
+      );
     }
     return $subModels;
   }
@@ -6596,7 +6611,7 @@ if (errors$uniq.length>0) {
   /**
    * When the species_checklist grid is in spatialRefPerRow mode and editing existing records, this method outputs any
    * existing subsample IDs into an array keyed by spatial ref, so they can be looked up and used in the submission
-   * later.
+   * later. It also outputs geoms into an array keyed by sample ID so they can be drawn on the map.
    * @param array $options Options passed to the species_checklist control.
    * @return string HTML for a hidden input containing the existing sample data.
    */
@@ -6605,13 +6620,19 @@ if (errors$uniq.length>0) {
     if ($options['spatialRefPerRow'] && !empty(self::$entity_to_load)) {
       $keys = preg_grep("/^sc:\d+:\d+:sample:id$/", array_keys(self::$entity_to_load));
       $data = array();
+      $geomsData = array();
       foreach ($keys as $key) {
         $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
         $sref = strtoupper(self::$entity_to_load[$srefKey]);
         $data[$sref] = self::$entity_to_load[$key];
+        $geomKey = preg_replace('/:id$/', ':geom', $key);
+        $geom = self::$entity_to_load[$geomKey];
+        $geomsData[$sref] = $geom;
       }
       $value = htmlspecialchars(json_encode($data));
       $r .= "<input type=\"hidden\" name=\"existingSampleIdsBySref\" value=\"$value\" />";
+      $geomsValue = htmlspecialchars(json_encode($geomsData));
+      $r .= "<input type=\"hidden\" id=\"existingSampleGeomsBySref\" value=\"$geomsValue\" />";
     }
     return $r;
   }
