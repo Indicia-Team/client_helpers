@@ -3429,26 +3429,8 @@ $('#$escaped').change(function(e) {
           $idx++;
         }
         $row .= self::speciesChecklistSpatialRefPerRowCell($options, $colIdx, $txIdx, $existingRecordId);
-        if ($options['occurrenceComment']) {
-          $row .= "\n<td class=\"ui-widget-content scCommentCell\" headers=\"$options[id]-comment-$colIdx\">";
-          $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:occurrence:comment";
-          $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"]) ?
-              self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"] : '';
-          $row .= "<input class=\"scComment\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
-          $row .= "</td>";
-        }
-        if ($options['occurrenceSensitivity']) {
-          $row .= "\n<td class=\"ui-widget-content scSensitivityCell\" headers=\"".$options['id']."-sensitivity-$colIdx\">";
-          $row .= self::select(array(
-            'fieldname'=>"sc:$options[id]-$txIdx:$existingRecordId:occurrence:sensitivity_precision",
-            'default'=>isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"])
-              ? self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"] : false,
-            'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
-              '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
-            'blankText' => 'Not sensitive'
-          ));
-          $row .= "</td>\n";
-        }
+        $row .= self::speciesChecklistCommentCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
+        $row .= self::speciesChecklistSensitivityCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
 
         // Add a cell for the Add Media button which is hidden if there is
         // existing media.
@@ -6535,17 +6517,19 @@ if (errors$uniq.length>0) {
    * species checklist grid.
    * @param $options array Options passed to the control
    * @param $colIdx integer Index of the column position allowing the td to be linked to its header
-   * @param $rowNumber integer
+   * @param $rowIdx integer Index of the grid row
    * @param $existingRecordId integer If an existing occurrence record, pass the ID
    * @return string HTML to insert into the grid
    */
-  private static function speciesChecklistSpatialRefPerRowCell($options, $colIdx, $rowNumber, $existingRecordId) {
+  private static function speciesChecklistSpatialRefPerRowCell($options, $colIdx, $rowIdx, $existingRecordId) {
+    $r = '';
     if ($options['spatialRefPerRow']) {
-      $r = "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
-      $fieldname = "sc:$options[id]-$rowNumber:$existingRecordId:occurrence:spatialref";
+      $r .= "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialref";
       $value = '';
-      if (isset(self::$entity_to_load['sample:id'])) {
-        $sampleIdx = data_entry_helper::$entity_to_load["sc:$rowNumber:$existingRecordId:occurrence:sampleIDX"];
+      if (isset(self::$entity_to_load['sample:id']) &&
+          isset(self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"])) {
+        $sampleIdx = self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"];
         $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
         if (count($keys)) {
           $key = array_pop($keys);
@@ -6557,9 +6541,56 @@ if (errors$uniq.length>0) {
       }
       $r .= "<input class=\"scSpatialRef\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
       $r .= "</td>";
-      return $r;
     }
-    return '';
+    return $r;
+  }
+
+  /**
+   * Return the HTML for the td element which allows a comment to be entered for each row in a species checklist grid.
+   * @param $options array Options passed to the control
+   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
+   * @param $rowIdx integer Index of the grid row
+   * @param $loadedTxIdx integer
+   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   * @return string HTML to insert into the grid
+   */
+  private static function speciesChecklistCommentCell($options, $colIdx, $rowIdx, $loadedTxIdx, $existingRecordId) {
+    $r = '';
+    if ($options['occurrenceComment']) {
+      $r .= "\n<td class=\"ui-widget-content scCommentCell\" headers=\"$options[id]-comment-$colIdx\">";
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:comment";
+      $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"]) ?
+        self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"] : '';
+      $r .= "<input class=\"scComment\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
+      $r .= "</td>";
+    }
+    return $r;
+  }
+
+  /**
+   * Return the HTML for the td element which allows sensitivity to be set for each row in a species checklist grid.
+   * @param $options array Options passed to the control
+   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
+   * @param $rowIdx integer Index of the grid row
+   * @param $loadedTxIdx integer
+   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   * @return string HTML to insert into the grid
+   */
+  private static function speciesChecklistSensitivityCell($options, $colIdx, $rowIdx, $loadedTxIdx, $existingRecordId) {
+    $r = '';
+    if ($options['occurrenceSensitivity']) {
+      $r .= "\n<td class=\"ui-widget-content scSensitivityCell\" headers=\"".$options['id']."-sensitivity-$colIdx\">";
+      $r .= self::select(array(
+        'fieldname'=>"sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision",
+        'default'=>isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"])
+          ? self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"] : false,
+        'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
+          '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
+        'blankText' => 'Not sensitive'
+      ));
+      $r .= "</td>\n";
+    }
+    return $r;
   }
 
   /**
