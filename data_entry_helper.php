@@ -3428,23 +3428,7 @@ $('#$escaped').change(function(e) {
             $indicia_templates[$options['attrCellTemplate']]);
           $idx++;
         }
-        if ($options['spatialRefPerRow']) {
-          $row .= "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
-          $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occurrence:spatialref";
-          $value = '';
-          if (isset(self::$entity_to_load['sample:id'])) {
-            $sampleIdx = data_entry_helper::$entity_to_load["sc:$txIdx:$existing_record_id:occurrence:sampleIDX"];
-            $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
-            if (count($keys)) {
-              $key = array_pop($keys);
-              $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
-              if (isset(self::$entity_to_load[$srefKey]))
-                $value = self::$entity_to_load[$srefKey];
-            }
-          }
-          $row .= "<input class=\"scSpatialRef\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
-          $row .= "</td>";
-        }
+        $row .= self::speciesChecklistSpatialRefPerRowCell($options, $colIdx, $txIdx, $existing_record_id);
         if ($options['occurrenceComment']) {
           $row .= "\n<td class=\"ui-widget-content scCommentCell\" headers=\"$options[id]-comment-$colIdx\">";
           $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occurrence:comment";
@@ -6544,6 +6528,38 @@ if (errors$uniq.length>0) {
       foreach ($fieldDefaults as $field => $value)
         $record[$field] = $value;
     }
+  }
+
+  /**
+   * Return the HTML for the td element which allows a spatial ref to be entered seperately for each row in a
+   * species checklist grid.
+   * @param $options array Options passed to the control
+   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
+   * @param $rowNumber integer
+   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   * @return string HTML to insert into the grid
+   */
+  private static function speciesChecklistSpatialRefPerRowCell($options, $colIdx, $rowNumber, $existingRecordId) {
+    if ($options['spatialRefPerRow']) {
+      $r = "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
+      $fieldname = "sc:$options[id]-$rowNumber:$existingRecordId:occurrence:spatialref";
+      $value = '';
+      if (isset(self::$entity_to_load['sample:id'])) {
+        $sampleIdx = data_entry_helper::$entity_to_load["sc:$rowNumber:$existingRecordId:occurrence:sampleIDX"];
+        $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
+        if (count($keys)) {
+          $key = array_pop($keys);
+          $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
+          if (isset(self::$entity_to_load[$srefKey])) {
+            $value = self::$entity_to_load[$srefKey];
+          }
+        }
+      }
+      $r .= "<input class=\"scSpatialRef\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
+      $r .= "</td>";
+      return $r;
+    }
+    return '';
   }
 
   /**
