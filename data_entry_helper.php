@@ -3143,10 +3143,12 @@ $('#$escaped').change(function(e) {
     $taxonRows = array();
     $subSampleRows = array();
     // Load any existing sample's occurrence data into $entity_to_load
-    if (isset(self::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords']===false)
+    if (isset(self::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords']===false) {
       self::preload_species_checklist_occurrences(self::$entity_to_load['sample:id'], $options['readAuth'],
-        $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows, $options['speciesControlToUseSubSamples'],
-        (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''));
+          $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows,
+          $options['speciesControlToUseSubSamples'] || $options['spatialRefPerRow'],
+          (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''));
+    }
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
@@ -3429,9 +3431,17 @@ $('#$escaped').change(function(e) {
         if ($options['spatialRefPerRow']) {
           $row .= "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
           $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occurrence:spatialref";
-          $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:spatialref"]) ?
-            self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:spatialref"] : '';
-          // @todo Setting for existing values, including the linking to existing sample Ids
+          $value = '';
+          if (isset(self::$entity_to_load['sample:id'])) {
+            $sampleIdx = data_entry_helper::$entity_to_load["sc:$txIdx:$existing_record_id:occurrence:sampleIDX"];
+            $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
+            if (count($keys)) {
+              $key = array_pop($keys);
+              $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
+              if (isset(self::$entity_to_load[$srefKey]))
+                $value = self::$entity_to_load[$srefKey];
+            }
+          }
           $row .= "<input class=\"scSpatialRef\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
           $row .= "</td>";
         }
@@ -4040,7 +4050,8 @@ $('#".$options['id']." .species-filter').click(function(evt) {
    * @param array $extraParams Extra params to pass to the web service call for filtering.
    * @return array Array with key of occurrence_id and value of $taxonInstance.
    */
-  public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='') {
+  public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
+       &$subSamples, $useSubSamples, $subSampleMethodID='') {
     $occurrenceIds = array();
     $taxonCounter = array();
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
@@ -4633,6 +4644,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     }
 
     $r .= "</tr></tbody></table>\n";
+    $r .= self::speciesChecklistSrefPerRowExistingIds($options);
     return $r;
   }
 
@@ -6243,6 +6255,8 @@ if (errors$uniq.length>0) {
     $assocDataKeys = preg_grep('/occurrence_association:\d+:(\d+)?:from_occurrence_id/', array_keys($arr));
     $assocData = count($assocDataKeys) ?
         array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : array();
+    $existingSampleIdsBySref = !empty($_POST['existingSampleIdsBySref']) ?
+        json_decode($_POST['existingSampleIdsBySref'], true) : array();
     foreach ($records as $id => $record) {
       // determine the id of the grid this record is from
       // $id = <grid_id>-<rowIndex> but <grid_id> could contain a hyphen
@@ -6289,6 +6303,9 @@ if (errors$uniq.length>0) {
               'input_form' => empty($arr['sample:input_form']) ? '' : $arr['sample:input_form'],
               'entered_sref' => $sref
             );
+            // set an existing ID on the sample if editing
+            if (!empty($existingSampleIdsBySref[strtoupper(trim($sref))]))
+              $subSample['id'] = $existingSampleIdsBySref[strtoupper(trim($sref))];
             $subModels[$sref] = array(
               'fkId' => 'parent_id',
               'model' => data_entry_helper::wrap($subSample, 'sample'),
@@ -6527,7 +6544,30 @@ if (errors$uniq.length>0) {
       foreach ($fieldDefaults as $field => $value)
         $record[$field] = $value;
     }
-}
+  }
+
+  /**
+   * When the species_checklist grid is in spatialRefPerRow mode and editing existing records, this method outputs any
+   * existing subsample IDs into an array keyed by spatial ref, so they can be looked up and used in the submission
+   * later.
+   * @param array $options Options passed to the species_checklist control.
+   * @return string HTML for a hidden input containing the existing sample data.
+   */
+  private static function speciesChecklistSrefPerRowExistingIds($options) {
+    $r = '';
+    if ($options['spatialRefPerRow'] && !empty(self::$entity_to_load)) {
+      $keys = preg_grep("/^sc:\d+:\d+:sample:id$/", array_keys(self::$entity_to_load));
+      $data = array();
+      foreach ($keys as $key) {
+        $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
+        $sref = strtoupper(self::$entity_to_load[$srefKey]);
+        $data[$sref] = self::$entity_to_load[$key];
+      }
+      $value = htmlspecialchars(json_encode($data));
+      $r .= "<input type=\"hidden\" name=\"existingSampleIdsBySref\" value=\"$value\" />";
+    }
+    return $r;
+  }
 
   private static function attachAssociationsToModel($id, &$occ, $assocData, $arr) {
     $assocs = preg_grep("/^$id$/", $assocData);
