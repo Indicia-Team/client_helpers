@@ -3192,7 +3192,6 @@ $('#$escaped').change(function(e) {
       $grid = self::get_species_checklist_header($options, $occAttrs, $onlyImages);
       $rows = array();
       $imageRowIdxs = array();
-      $taxonCounter = array();
       $rowIdx = 0;
       // tell the addTowToGrid javascript how many rows are already used, so it has a unique index for new rows
       self::$javascript .= "indiciaData['gridCounter-".$options['id']."'] = ".count($taxonRows).";\n";
@@ -4019,7 +4018,6 @@ $('#".$options['id']." .species-filter').click(function(evt) {
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
        &$subSamples, $useSubSamples, $subSampleMethodID='') {
     $occurrenceIds = array();
-    $taxonCounter = array();
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(self::$validation_errors)) {
