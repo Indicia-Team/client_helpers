@@ -70,6 +70,22 @@ var reportOptions;
 				function(rdata){
 					reportOptions.values = []; // taxon->year->value
 					reportOptions.species = [];
+					reportOptions.opts.axes.xaxis.ticks = [];
+
+					var first_year = null, last_year = null;
+					$.each(rdata, function(idx, occurrence){
+						if(first_year === null || occurrence.year <= first_year)
+							first_year = occurrence.year;
+						if(last_year === null || occurrence.year >= last_year)
+							last_year = occurrence.year;
+					});
+					if(first_year === null) {
+						var today = new Date();
+						first_year = last_year = today.getFullYear();
+					}
+					for(var j=first_year; j<=last_year; j++) {
+						reportOptions.opts.axes.xaxis.ticks.push(j);
+					}
 					$.each(rdata, function(idx, occurrence){
 						if(typeof reportOptions.values[occurrence.taxon_meaning_id] == 'undefined') {
 							reportOptions.species.push({'taxon': occurrence.taxon, 'preferred_taxon': occurrence.preferred_taxon, 'taxon_meaning_id':occurrence.taxon_meaning_id});
@@ -81,8 +97,7 @@ var reportOptions;
 						var val = parseInt(occurrence[reportOptions[reportOptions.loadedDataType+'CountField']]);
 						if(val != occurrence[reportOptions[reportOptions.loadedDataType+'CountField']])
 							val = 0;
-						if(occurrence.year >= reportOptions.first_year && occurrence.year <= reportOptions.last_year)
-							reportOptions.values[occurrence.taxon_meaning_id][occurrence.year-reportOptions.first_year] += val;
+						reportOptions.values[occurrence.taxon_meaning_id][occurrence.year-first_year] += val;
 					});
 							
 					// Next sort out the species list drop downs.
