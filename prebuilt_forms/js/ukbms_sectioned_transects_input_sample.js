@@ -16,7 +16,15 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
         $('#imp-location').change(function(evt) {
         	$('#entered_sref').val(formOptions.sites[evt.target.value].centroid_sref);
         	$('#entered_sref_system').val(formOptions.sites[evt.target.value].centroid_sref_system);
+        	if(formOptions['finishedAttrID'])
+        	  checkFinishedStatus();
         });
+        if(formOptions['finishedAttrID']) {
+        	$('[name=sample\\:date]').change(function(evt) {
+        	  checkFinishedStatus();
+        	});
+            checkFinishedStatus();
+        }
 
 		// allow deletes if delete button is present.
 		$('#delete-button').click(function(){
@@ -25,12 +33,43 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			} // else do nothing.
 		});
 
-		if(formOptions['finishedAttrID'] && $('#smpAttr\\:' + formOptions['finishedAttrID'] + ':checked').length == 0) { 
-			$('#smpAttr\\:' + formOptions['finishedAttrID']).parent().find('input').attr('disabled',true);
-		}
-
 	}
 	
+	checkFinishedStatus = function () {
+		$('#finishedMessage').hide();
+		if(formOptions['finishedAttrID'] && $('[name=sample\\:location_id]').val() !== "" && $('[name=sample\\:date]').val() !== "") {
+			$('#finishedMessageYear').html($('[name=sample\\:date]').val().substring(6,10));
+			// Look up all samples for the location
+			$.getJSON(indiciaData.warehouseUrl + "index.php/services/data/sample" +
+					"?mode=json&view=detail&location_id=" + $('[name=sample\\:location_id]').val() +
+					"&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce +
+					"&callback=?&columns=id,display_date", function(sdata) {
+				if(sdata.length === 0) return;
+				var thisYearsSamples = [];
+				var currentSampleYear = $('[name=sample\\:date]').val().substring(6,10);
+				$.each(sdata, function(idx, sample) {
+					if(sample.display_date.substring(0,4) == currentSampleYear)
+						thisYearsSamples.push(sample.id);
+				});
+				if(thisYearsSamples.length === 0) return;
+    			var query = {"in":{"sample_id":thisYearsSamples}};
+				$.getJSON(indiciaData.warehouseUrl + "index.php/services/data/sample_attribute_value" +
+						"?mode=json&view=list" +
+		    			"&query=" + JSON.stringify(query) +
+		    			"&sample_attribute_id=" + formOptions['finishedAttrID'] +
+						"&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce +
+						"&callback=?", function(adata) {
+					if(adata.length === 0) return;
+					$.each(adata, function(idx, attr) {
+						if(attr.id != null)
+							$('#finishedMessage').show();
+					});
+				});				
+			});
+
+		}
+	}
+
 	setUpOccurrencesForm = function (options) {
 		formOptions = options;
 		indiciaData.currentCell=null;
@@ -145,21 +184,15 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		});
 
 	    if(formOptions['finishedAttrID']) {
-	    	if(formOptions['hideFinished'] !== false && formOptions['hideFinished'] != 0) {
-	    		$('.smp-finish').remove(); // button to flag as finished. 
-	    		$('#ukbms_stis_header').append(' <i>' + formOptions['finished'] + '<i>');
-	    	} else {
-	    		$('.smp-finish').click(finishSample);
-	    	}
+    		$('.smp-finish').click(finishSample);
+    		$('#finished-form').ajaxForm({
+    			async: false,
+    			dataType:  'json',
+    			success: function(data){
+    				window.location.href = formOptions['return_page'];
+    			}
+    		});
 	    }
-
-		$('#finished-form').ajaxForm({
-			async: false,
-			dataType:  'json',
-			success: function(data){
-				window.location.href = formOptions['return_page'];
-			}
-		});
 	}
 
 	/**
@@ -673,7 +706,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    			};
 	    			query = {"in":{"taxon_meaning_id":formOptions.allTaxonMeaningIDsAtTransect}};
 	    			if(typeof formOptions.speciesListFilterField[N] != "undefined") {
-	    				query = {"in":{}};
+//???	    				query = {"in":{}};
 	    				query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
 	    			}
 	    			TaxonData.query = JSON.stringify(query);

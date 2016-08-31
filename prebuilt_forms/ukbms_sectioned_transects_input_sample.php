@@ -619,8 +619,8 @@ class iform_ukbms_sectioned_transects_input_sample {
         ),
         array(
           'name'=>'finishedAttrID',
-          'caption' => 'Sample attribute used to flag walk as finished',
-          'description' => 'A boolean sample attribute, which is set to true if data entry on the walk has been finished.',
+          'caption' => 'Sample attribute used to flag walk as finished.',
+          'description' => 'A boolean sample attribute, which is set to true if data entry on the walk has been finished. Should be flagged as applies_to_location, single value, integer. Cant flag integers attributes as hidden fields, so this is done by the form. This stores the year for which entry of walks for the location is finished.',
           'type'=>'select',
           'table'=>'sample_attribute',
           'captionField'=>'caption',
@@ -745,7 +745,14 @@ class iform_ukbms_sectioned_transects_input_sample {
 			(isset(data_entry_helper::$entity_to_load['sample:id']) ?
 				'<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' : '') .
 			'<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
-    		get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), self::$auth['read']);
+    		get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), self::$auth['read']).
+    		'<p id="finishedMessage" class="ui-state-highlight page-notice ui-corner-all" style="display: none;">' .
+    			lang::get('The Walks for this location have been flagged as finished for the year') . ' <span id="finishedMessageYear">X</span>. ' .
+    			// lang::get('This was done during the entry of the walk data for <date>. ') .
+    			lang::get('This is an information message only - you can continue to enter data') . '. ' .
+    			// lang::get('Alternatively you can click the following button to clear the finished flag for year <X>[ when you save this walk] ') .
+    			// lang::get('<Clear Finished flag>') .
+    			'</p>';
     
     if (self::$locationID) {
       $site = data_entry_helper::get_population_data(array(
@@ -840,6 +847,16 @@ class iform_ukbms_sectioned_transects_input_sample {
 	}
 
 	// remainder of form : sample attributes, comment, and buttons.
+	if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
+		$attributes[$args['finishedAttrID']]['handled'] = true;
+		$attrOptions = array(
+				'fieldname' => $attributes[$args['finishedAttrID']]['fieldname'],
+				'id' => $attributes[$args['finishedAttrID']]['id'],
+				'disabled' => '',
+				'default' => $attributes[$args['finishedAttrID']]['default'],
+				'controlWrapTemplate' => 'justControl');
+     	$r .= data_entry_helper::apply_template('hidden_text', $attrOptions);
+	}
     $r .= get_attribute_html($attributes, $args, array('extraParams'=>self::$auth['read']), null,
     			(isset($args['custom_attribute_options']) && $args['custom_attribute_options'] ?
 					get_attr_options_array_with_user_data($args['custom_attribute_options']) : array())) .
@@ -868,7 +885,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       		'</div>';
     }
 
-    // Find Recorder Name attribuute for use with autocomplete.
+    // Find Recorder Name attribute for use with autocomplete.
     foreach($attributes as $attrID => $attr){
       if(strcasecmp('Recorder Name', $attr["untranslatedCaption"]) == 0){
         $formOptions['recorderNameAttrID'] = $attrID; // will be undefined if not present.
@@ -878,7 +895,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       	// Am fully aware that functionality is very browser dependant.
       	$safeId = str_replace(':','\\\\:',$attr["id"]);
         data_entry_helper::$javascript .= "$('#".$safeId."').prop('type', 'time').prop('placeholder', '__:__');\n";
-      } 
+      }
     }
 
     // Extra form to delete sample.
@@ -961,7 +978,8 @@ class iform_ukbms_sectioned_transects_input_sample {
     
     $parentLocId = data_entry_helper::$entity_to_load['sample:location_id']; // TODO should already be in self::$locationID
     $date = data_entry_helper::$entity_to_load['sample:date_start'];
-
+    $formOptions['parentSampleDate'] = $date;
+    
     // find any attributes that apply to transect section samples.
     $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array('Transect Section'));
     $attributes = data_entry_helper::getAttributes(array(
@@ -1063,6 +1081,47 @@ class iform_ukbms_sectioned_transects_input_sample {
     ));
     $r = '<h2 id="ukbms_stis_header">'.$location[0]['name']." on ".$date."</h2><div id=\"tabs\">\n";
  
+    $formOptions['finishedAttrID'] = false;
+    if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
+    	// Get all the samples for this location for this year
+    	$samples = data_entry_helper::get_population_data(array(
+    			'table' => 'sample',
+    			'extraParams' => self::$auth['read'] + array('view'=>'detail','location_id'=>$parentLocId),
+      			'nocache' => true
+    	));
+    	$thisYearsSamples = array();
+    	$sampleDates = array();
+    	foreach($samples as $sample) {
+    		$sampleDates[$sample['id']] = $sample['display_date'];
+    		if(substr($sample['display_date'],0,4) == substr($date,0,4))
+    			$thisYearsSamples[] = $sample['id'];
+    	}
+    	$sample_finished_attributes = data_entry_helper::get_population_data(array(
+    			'table' => 'sample_attribute_value',
+    			'extraParams' => self::$auth['read'] + array('view'=>'list',
+    					'sample_id'=>$thisYearsSamples,
+    					'sample_attribute_id' => $args['finishedAttrID']),
+      			'nocache' => true
+    	));
+    	$displayMessage = false;
+    	foreach($sample_finished_attributes as $sample_finished_attribute) {
+    		if($sample_finished_attribute['id'] != null) {
+    			$displayMessage = $sample_finished_attribute['sample_id'];
+    			break;
+    		}
+    	}
+    	// Get all the finished flags for those samples.
+    	if($displayMessage)
+    		$r .= '<p id="finishedMessage" class="ui-state-highlight page-notice ui-corner-all">' .
+    			lang::get('The Walks for this location have been flagged as finished for the year') . ' ' .substr($date,0,4) . '. ' .
+    			// lang::get('This was done during the entry of the walk data for') . ' ' . $sampleDates[$displayMessage] . '. ' .
+    			lang::get('This is an information message only - you can continue to enter data.') .
+    			'</p>';
+    	else
+    	  $formOptions['finishedAttrID'] = $args['finishedAttrID'];
+    		
+    }
+    
     // bit of a bodge here but converts backwardly compatible args into useful ones.
     $args['taxon_list_id_1']		= $args['taxon_list_id'];
     $args['taxon_filter_field_1']	= (isset($args['main_taxon_filter_field']) ? $args['main_taxon_filter_field'] : '');
@@ -1126,7 +1185,7 @@ class iform_ukbms_sectioned_transects_input_sample {
 		$formOptions['myTaxonMeaningIDs'][$taxon['taxon_meaning_id']] = true;
 	}
 	$formOptions['myTaxonMeaningIDs'] = array_keys($formOptions['myTaxonMeaningIDs']);
-        
+	
    	$r .= self::_buildGrid ($formOptions, 1, $args, $sections, $occ_attributes, count($occurrences)>0, true, $attributes, $subSamplesByCode) .
 			($args['taxon_list_id_2'] !='' ? self::_buildGrid ($formOptions, 2, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
 			($args['taxon_list_id_3'] !='' ? self::_buildGrid ($formOptions, 3, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
@@ -1187,11 +1246,7 @@ class iform_ukbms_sectioned_transects_input_sample {
 			'<input name="user_id" value="'.self::$userId.'"/>' .
     	  '</form>';
 
-    $formOptions['finishedAttrID'] = false;
-    if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
-    	$formOptions['finishedAttrID'] = $args['finishedAttrID'];
-    	$formOptions['hideFinished'] = true;
-    	$formOptions['finished'] = lang::get('(Finished)');
+    if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '' && $displayMessage === false) {
     	// A stub form for posting when we need to flag a super sample as finished
     	$formOptions['return_page'] = $args['return_page'];
     	$sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));    	 
@@ -1205,6 +1260,10 @@ class iform_ukbms_sectioned_transects_input_sample {
             ,'survey_id'=>$args['survey_id']
             ,'id' => $parentSampleId
 	    ));
+    	// The finished attribute is a sample attribute that applies to the location.
+    	// If present, the attribute holds the year value, and is multi value: it is a finished_for_year flag.
+		// TODO Can they reset the finished flag? Not yet
+    	// At this point the date has been filled in, so can fill in the form
     	$r .= "\n".'<form style="display: none" id="finished-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">' .
     			'<input name="website_id" value="'.$args['website_id'].'"/>' .
     			'<input name="sample:id" value="'.$parentSampleId.'" />' .
@@ -1215,9 +1274,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     	// include a stub input for each transect sample attribute: need to include all as some will be mandatory
     	foreach ($finished_attributes as $attr) {
     		if($attr['attributeId'] == $args["finishedAttrID"]) {
-    			$r .= '<p>DEFAULT '.$attr['default'].'</p>';
-    			$formOptions['hideFinished'] = $attr['default'];
-    			$attr['default'] = 1;
+     			$attr['default'] = substr($date,0,4);
     		}
     		$r .= '<input name="'.$attr['fieldname'].'" value="'.$attr['default'].'"/>'; //TODO html safe for text?
 	    }
@@ -1323,8 +1380,8 @@ class iform_ukbms_sectioned_transects_input_sample {
   	}
   	$r .= '<a href="'.$reloadUrl['path'].'" class="button">'.lang::get('Back to visit details').'</a>';
   	$r .= '<a href="'.$args['return_page'].'" class="button">'.lang::get('Finish and return to walk list').'</a>';
-  	if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') 
-  		$r .= '<input type="button" class="button smp-finish" value="'.lang::get('Flag as finished and return to walk list').'"/>';
+  	if(isset($formOptions['finishedAttrID']) && $formOptions['finishedAttrID'] != '') 
+  		$r .= '<input type="button" class="button smp-finish" value="'. str_replace('%s',substr($formOptions['parentSampleDate'],0,4), lang::get('Flag walk entry for year %s as finished for this location, and return to walk list')) .'"/>';
   	$r .= '</div>';
   	// page is ajax so no submit button.
   	
