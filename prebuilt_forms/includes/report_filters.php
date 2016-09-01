@@ -317,7 +317,7 @@ class filter_where extends filter_base {
     ));
 
     $r .= '</div></fieldset>';
-    $r .= '<fieldset class="exclusive">';
+    $r .= '<br/><fieldset class="exclusive">';
     $r .= data_entry_helper::text_input(array(
       'label' => lang::get('Or, search for site names containing'),
       'fieldname' => 'location_name'
