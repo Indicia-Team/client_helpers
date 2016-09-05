@@ -2744,12 +2744,12 @@ $('#$escaped').change(function(e) {
    * check.
    *
    * @param $options
-   * * id
-   * * caption
-   * * class
-   * * valuesClass
-   * * contentClass
-   * * exclude - array of controls to exclude by ID
+   * * *id* - the ID of the outer element, defaults to review-input.
+   * * *caption* - the caption to display in the header.
+   * * *class* - the CSS class to apply to the outer element, defaults to ui-widget.
+   * * *headerClass* - the CSS class to apply to the header element, defaults to ui-widget-header.
+   * * *contentClass* - the CSS class to apply to the element containing the form values, defaults to ui-widget-content.
+   * * *exclude* - array of controls to exclude by ID, defaults to ["sample:entered_sref_system"].
    *
    */
   public static function review_input($options) {
@@ -2774,9 +2774,10 @@ RIJS;
     $class = empty($options['class']) ? '' : " class=\"$options[class]\"";
     $headerClass = empty($options['headerClass']) ? '' : " class=\"$options[headerClass]\"";
     $contentClass = empty($options['contentClass']) ? '' : " class=\"$options[contentClass]\"";
+    $caption = lang::get($options['caption']);
     return str_replace(
       array('{id}', '{contentId}', '{class}', '{headerClass}', '{contentClass}', '{caption}'),
-      array(" id=\"$options[id]\"", " id=\"$options[contentId]\"", $class, $headerClass, $contentClass, $options['caption']),
+      array(" id=\"$options[id]\"", " id=\"$options[contentId]\"", $class, $headerClass, $contentClass, $caption),
       $indicia_templates['review_input']
     );
   }
