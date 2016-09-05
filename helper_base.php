@@ -267,6 +267,9 @@ if ($("#{escapedId} option").length===0) {
   'report-tbody-tr' => '<tr{class}{rowId}{rowTitle}>{content}</tr>',
   'report-tbody-td' => '<td{class}>{content}</td>',
   'data-input-table' => '<table{class}{id}>{content}</table>',
+  'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
+<div{contentClass}{contentId}></div>
+</div>'
 );
 
 
@@ -593,6 +596,7 @@ class helper_base extends helper_config {
    * <li>footable</li>
    * <li>indiciaFootableReport</li>
    * <li>indiciaFootableChecklist</li>
+   * <li>review_input</li>
    * </ul>
    */
   public static function add_resource($resource)
@@ -708,6 +712,7 @@ class helper_base extends helper_config {
             'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'), 
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
             'deps' => array('footable')),
+        'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js'))
       );
     }
     return self::$resource_list;

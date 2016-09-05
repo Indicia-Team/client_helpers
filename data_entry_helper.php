@@ -2737,6 +2737,42 @@ $('#$escaped').change(function(e) {
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
 
+  /**
+   * Outputs a div which will be populated with a summary of the data entered into the form.
+   *
+   * Best used on a tab or wizard based data entry form on the last page so that the data entered can have a final
+   * check.
+   *
+   * @param $options
+   * * id
+   * * caption
+   * * class
+   * * valuesClass
+   * * contentClass
+   *
+   */
+  public static function review_input($options) {
+    global $indicia_templates;
+    self::add_resource('review_input');
+    $options = array_merge(array(
+      'id' => 'review-input',
+      'caption' => 'Review information',
+      'class' => 'ui-widget',
+      'headerClass' => 'ui-widget-header',
+      'contentClass' => 'ui-widget-content'
+    ), $options);
+    self::$javascript .= "$('#$options[id]').reviewInput({});\n";
+    $options['contentId'] = "$options[id]-content";
+    $class = empty($options['class']) ? '' : " class=\"$options[class]\"";
+    $headerClass = empty($options['headerClass']) ? '' : " class=\"$options[headerClass]\"";
+    $contentClass = empty($options['contentClass']) ? '' : " class=\"$options[contentClass]\"";
+    return str_replace(
+      array('{id}', '{contentId}', '{class}', '{headerClass}', '{contentClass}', '{caption}'),
+      array(" id=\"$options[id]\"", " id=\"$options[contentId]\"", $class, $headerClass, $contentClass, $options['caption']),
+      $indicia_templates['review_input']
+    );
+  }
+
  /**
   * Helper function to generate a species checklist from a given taxon list.
   *

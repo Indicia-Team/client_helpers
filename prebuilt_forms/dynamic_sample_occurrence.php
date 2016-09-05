@@ -1957,6 +1957,10 @@ else
     ), $options));
   }
 
+  protected static function get_control_reviewinput($auth, $args, $tabAlias, $options) {
+    return data_entry_helper::review_input($options);
+  }
+
   /**
    * Get the control for the record status.
    */
