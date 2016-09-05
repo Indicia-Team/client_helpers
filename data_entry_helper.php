@@ -2749,6 +2749,7 @@ $('#$escaped').change(function(e) {
    * * class
    * * valuesClass
    * * contentClass
+   * * exclude - array of controls to exclude by ID
    *
    */
   public static function review_input($options) {
@@ -2759,9 +2760,16 @@ $('#$escaped').change(function(e) {
       'caption' => 'Review information',
       'class' => 'ui-widget',
       'headerClass' => 'ui-widget-header',
-      'contentClass' => 'ui-widget-content'
+      'contentClass' => 'ui-widget-content',
+      'exclude' => array('sample:entered_sref_system')
     ), $options);
-    self::$javascript .= "$('#$options[id]').reviewInput({});\n";
+    $exclude = json_encode($options['exclude']);
+    self::$javascript .= <<<RIJS
+$('#$options[id]').reviewInput({
+  exclude: $exclude
+});
+
+RIJS;
     $options['contentId'] = "$options[id]-content";
     $class = empty($options['class']) ? '' : " class=\"$options[class]\"";
     $headerClass = empty($options['headerClass']) ? '' : " class=\"$options[headerClass]\"";
