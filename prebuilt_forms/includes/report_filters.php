@@ -52,7 +52,7 @@ class filter_what extends filter_base {
           'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).')."</p>\n";
     $r .= '<div id="what-tabs">'."\n";
     // data_entry_helper::tab_header breaks inside fancybox. So output manually.
-    $r .= '<ul class="ui-helper-hidden">' .
+    $r .= '<ul>' .
         '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>'.lang::get('Species groups').'</span></a></li>';
     if ($familySortOrder!=='off') {
       $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>'.lang::get('Families and other higher taxa').'</span></a></li>';
