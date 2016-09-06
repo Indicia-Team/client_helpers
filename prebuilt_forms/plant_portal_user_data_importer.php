@@ -575,8 +575,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //Most of this code matches the "normal" importer page.
     $fields = json_decode($response['output'], true);
     
-    
-    //To Do AVB clean up this bit to get the location group attribute
+    //To Do AVB. This bit can probably be optimised a bit
     $options['model']='location';
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
@@ -590,10 +589,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $response = self::http_post($request, array());
     //Most of this code matches the "normal" importer page.
     $locationfields = json_decode($response['output'], true);
-    $fields = array_merge($fields,$locationfields);
+    //We only want to include the location attribute that holds the plot group identifier name on the mappings drop-down lists
+    //as everything else can be found against the sample, even the plot location
+    $locationFieldsToUse['locAttr:'.$options['plot_group_identifier_name_attr_id']] = $locationfields['locAttr:'.$options['plot_group_identifier_name_attr_id']];
+
+    $fields = array_merge($fields,$locationFieldsToUse);
     
-    
-   
     if (!is_array($fields))
       return "curl request to $request failed. Response ".print_r($response, true);
     // Restrict the fields to ones relevant for the survey
@@ -1422,6 +1423,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @throws \exception
    */
   public static function importer($args,$options) {
+    //Include in the options so we don't have to keep passing the $args everywhere that $options have already been passed
+    $options['plot_group_identifier_name_attr_id']=$args['plot_group_identifier_name_attr_id'];
     if (isset($_GET['total'])) {
       return self::upload_result($options);
     } elseif (!isset($_POST['import_step'])) {
@@ -1664,6 +1667,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * Perform the upload when the user clicks on the import button
    */
   private static function get_upload_click_function($args,$fileArrayForImportRowsToProcess,$columnHeadingIndexPositions) {
+    // store the warehouse user ID if we know it.
+    if (function_exists('hostsite_get_user_field')) 
+      $currentUserId = hostsite_get_user_field('indicia_user_id');
     $plotNamesToProcess=array();
     $plotSrefsToProcess=array();
     $plotSrefSystemsToProcess=array();
@@ -1724,25 +1730,30 @@ class iform_plant_portal_user_data_importer extends helper_base {
           var plotSrefsToProcess = [];
           var plotSrefSystemsToProcess = [];";
     }
-      
+    
     if (!empty($sampleGroupDataToProcess) && !empty($sampleGroupTermlistId)) {
       data_entry_helper::$javascript .= "
         var sampleGroupNamesToProcess = ".json_encode($sampleGroupNamesToProcess).";
-        var sampleGroupTermlistId = ".$sampleGroupTermlistId.";";
+        var sampleGroupTermlistId = ".$sampleGroupTermlistId.";
+        var sampleGroupPersonAttributeId = ".$args['sample_group_permission_person_attr_id'].";";
+
     } else {
       data_entry_helper::$javascript .= "
         var sampleGroupNamesToProcess = [];
-        var sampleGroupTermlistId = [];";
+        var sampleGroupTermlistId = [];
+        var sampleGroupPersonAttributeId = []";
     }
     
     if (!empty($plotGroupDataToProcess) && !empty($plotGroupTermlistId)) {
       data_entry_helper::$javascript .= "
         var plotGroupNamesToProcess = ".json_encode($plotGroupNamesToProcess).";
-        var plotGroupTermlistId = ".$plotGroupTermlistId.";";
+        var plotGroupTermlistId = ".$plotGroupTermlistId.";
+        var plotGroupPersonAttributeId = ".$args['plot_group_permission_person_attr_id'].";";
     } else {
       data_entry_helper::$javascript .= "
         var plotGroupNamesToProcess = [];
-        var plotGroupTermlistId = [];";
+        var plotGroupTermlistId = [];
+        var plotGroupPersonAttributeId = [];";
     }
     
     $warehouseUrl = self::get_warehouse_url();
@@ -1754,10 +1765,10 @@ class iform_plant_portal_user_data_importer extends helper_base {
         send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess);
       }
       if (websiteId && sampleGroupNamesToProcess && sampleGroupTermlistId) {
-        send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,sampleGroupNamesToProcess,sampleGroupTermlistId);
+        send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,sampleGroupNamesToProcess,'sample_group',".$currentUserId.",sampleGroupPersonAttributeId);
       }
       if (websiteId && plotGroupNamesToProcess && plotGroupTermlistId) {
-        send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,plotGroupNamesToProcess,plotGroupTermlistId);
+        send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,plotGroupNamesToProcess,'plot_group',".$currentUserId.",plotGroupPersonAttributeId);
       }
       $('#submit-import').click();
     });";
