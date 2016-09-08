@@ -2490,6 +2490,9 @@ $('#$escaped').change(function(e) {
    * <li><b>minGridRef</b><br/>
    * Optional. Set to a number to enforce grid references to be a certain precision, e.g. provide the value 6
    * to enforce a minimum 6 figure grid reference.</li>
+   * <li><b>maxGridRef</b><br/>
+   * Optional. Set to a number to enforce grid references to less than a certain precision, e.g. provide the value 6
+   * to enforce a maximum 6 figure grid reference.</li>
    * </ul>
    *
    * @return string HTML to insert into the page for the spatial reference control.
@@ -2509,8 +2512,15 @@ $('#$escaped').change(function(e) {
       'splitLatLong'=>false,
       'findMeButton'=>true
     ), $options);
+    $rules = array();
+    if (!empty($options['validation']))
+      $rules[] = $options['validation'];
     if (!empty($options['minGridRef']))
-      $options['validation']='mingridref['.$options['minGridRef'].']';
+      $rules[] = 'mingridref['.$options['minGridRef'].']';
+    if (!empty($options['maxGridRef']))
+      $rules[] = 'maxgridref['.$options['maxGridRef'].']';
+    if (!empty($rules))
+      $options['validation'] = $rules;
     if (!isset($options['defaultGeom']))
       $options['defaultGeom']=self::check_default_value($options['geomFieldname']);
     $options = self::check_options($options);

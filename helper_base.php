@@ -2010,6 +2010,8 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         $converted[] = 'pattern:'. $matches['val'];
       } elseif (preg_match('/mingridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
         $converted[] = 'mingridref:'.$matches['val'];
+      } elseif (preg_match('/maxgridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
+        $converted[] = 'maxgridref:'.$matches['val'];
       }
     }
     if (count($converted) == 0) {
