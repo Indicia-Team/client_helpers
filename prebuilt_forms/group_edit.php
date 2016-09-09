@@ -92,7 +92,14 @@ class iform_group_edit {
           'then it is possible to attach the activity to multiple parents. The list of parents offered is the ' .
           'hierarchy of children and other descendants of the group pointed to by from_group_id.',
         'type'=>'boolean',
-        'required'=>false
+        'required'=>FALSE
+      ), array(
+        'name'=>'allowed_multiple_parent_group_types',
+        'caption'=>'Allowed multiple parent group types',
+        'description'=>'Comma separated list of group type IDs that are allowed to be set as one of the ' .
+            'multiple parents.',
+        'type'=>'text_input',
+        'required'=>FALSE
       ), array(
         'name'=>'join_methods',
         'caption'=>'Available joining methods',
@@ -488,10 +495,13 @@ $('#entry_form').submit(function() {
     }
     $r = '<fieldset><legend>' . lang::get('{1} parents', ucfirst(self::$groupType)) . ':</legend><ul>';
     // retrieve list of entire hierarchy
+    $params = array('parent_group_id' => $_GET['from_group_id']);
+    if (!empty($args['allowed_multiple_parent_group_types']))
+      $params['group_type_ids'] = $args['allowed_multiple_parent_group_types'];
     $groups = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
       'dataSource' => 'library/groups/groups_list_hierarchy',
-      'extraParams' => array('parent_group_id' => $_GET['from_group_id'])
+      'extraParams' => $params
     ));
     // output checkboxes
     $lastLevel = 0;
@@ -509,12 +519,17 @@ $('#entry_form').submit(function() {
         $r .= '<span>' . lang::get('This {1} is linked to <strong>{2}</strong>. ' .
             'If you want to also link the {1} to other descendents of <strong>{2}</strong> ' .
             'you can select them below.', self::$groupType, $group['title']) . '</span>';
+        $r .= data_entry_helper::checkbox(array(
+          'fieldname' => "check-all-groups",
+          'afterControl' => "<label for=\"check-all-groups\" class=\"auto\">Check/uncheck all</label>"
+        ));
       } else {
         $existingGroupRelationId = array_key_exists($group['id'], $existing) ? $existing[$group['id']] : '';
         $r .= data_entry_helper::checkbox(array(
             'fieldname' => "parent_group:$existingGroupRelationId:$group[id]",
-            'afterControl' => "<label for=\"parent_group:$group[id]\">$group[title]</label>",
-            'default' => $existingGroupRelationId ? true : false
+            'afterControl' => "<label for=\"parent_group:$existingGroupRelationId:$group[id]\" class=\"auto\">$group[title]</label>",
+            'default' => $existingGroupRelationId ? true : false,
+            'class' => 'parent-checkbox'
           ));
       }
     }
@@ -672,7 +687,7 @@ $('#entry_form').submit(function() {
         'label' => lang::get('Include records on reports if'),
         'lookupValues' => array(
           'f' => lang::get('they were posted by a group member and match the filter defined above ' .
-            'and they were submitted via a {1} data entry form', self::$groupType),
+            'and they were submitted via a data entry form for the {1}', self::$groupType),
           't' => lang::get('they were posted by a group member and match the filter defined above, ' .
             'but it doesn\'t matter which recording form was used', self::$groupType),
           '' => lang::get('they match the filter defined above but it doesn\'t matter who ' .
@@ -851,12 +866,15 @@ $('#entry_form').submit(function() {
       $parentKeys = preg_grep('/^parent_group:\d*:\d+$/', array_keys($values));
       foreach ($parentKeys as $key) {
         preg_match('/^parent_group:(?P<group_relation_id>\d*):(?P<parent_group_id>\d+)$/', $key, $matches);
-        if ($values[$key]==='1') {
+        // if a checked parent, or a previously existing one that is now unchecked
+        if ($values[$key]==='1' || !empty($matches['group_relation_id'])) {
           $fields = array (
             'website_id' => array ('value' => $args['website_id']),
             'from_group_id' => array ('value' => $matches['parent_group_id']),
             'relationship_type_id' => array ('value' => $args['parent_group_relationship_type']),
           );
+          if ($values[$key]==='0')
+            $fields['deleted'] = 't';
           if (!empty($matches['group_relation_id']))
             $fields['id'] = $matches['group_relation_id'];
           $s['subModels'][] = array (

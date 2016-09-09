@@ -1,0 +1,22 @@
+
+
+#controls-table,#downloads-table,#chartdiv-container {
+  margin-bottom: 3px;
+}
+.controls-table, .downloads-table {
+  width: 100%;
+}
+.controls-table label {
+  width: auto;
+}
+
+div.report-summary-controls select {
+  margin-top: 0px;
+}
+
+.waiting {
+  background: transparent url(/misc/throbber.gif) no-repeat 50% -12px !important;
+}
+
+
+

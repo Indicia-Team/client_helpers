@@ -194,13 +194,6 @@ class iform_ukbms_year_index_plot {
       		'type'=>'string',
       		'group' => 'Controls'
       	),
-      	array(
-      		'name'=>'first_year',
-      		'caption'=>'First Year of Data',
-      		'description'=>'Used to determine first year displayed in the year control. Final Year will be current year.',
-      		'type'=>'int',
-      		'group'=>'Controls'
-      	),
 
         array(
           'name' => 'width',
@@ -729,13 +722,7 @@ class iform_ukbms_year_index_plot {
     else $axesOptions = array();
     $axesOptions['xaxis']['renderer'] = '$.jqplot.CategoryAxisRenderer';
 
-    $axesOptions['xaxis']['ticks'] = array();
-    $now = new DateTime('now');
-    for($i = $args['first_year']; $i < $now->format('Y'); $i++) // only go up to last year
-    	$axesOptions['xaxis']['ticks'][] = $i;
-    $options['first_year'] = $args['first_year'];
-    $options['last_year'] = $now->format('Y') - 1;
-    
+    $axesOptions['xaxis']['ticks'] = array();    
     $opts['axes'] = $axesOptions;
     $options['opts'] = $opts;
     

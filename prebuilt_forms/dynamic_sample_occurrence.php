@@ -168,6 +168,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                 "&nbsp;&nbsp;<strong>[place search]</strong> - zooms the map to the entered location.<br/>".
                 "&nbsp;&nbsp;<strong>[recorder names]</strong> - a text box for names. The logged-in user's id is always stored with the record.<br/>".
                 "&nbsp;&nbsp;<strong>[record status]</strong> - allow recorder to mark record as in progress or complete<br/>".
+                "&nbsp;&nbsp;<strong>[review input]</strong>. - a panel showing all the currently input form values ' .
+                    'which can be placed on the last tab of the form to allow the submission to be reviewed<br/>".
                 "&nbsp;&nbsp;<strong>[sample comment]</strong> - a text box for sample level comment. (Each occurrence may also have a comment.) <br/>".
                 "&nbsp;&nbsp;<strong>[sample photo]</strong>. - a photo upload for sample level images. (Each occurrence may also have photos.) <br/>".
                 "&nbsp;&nbsp;<strong>[sensitivity]</strong> - outputs a control for setting record sensitivity and the public viewing precision. This control will also output ".
@@ -663,18 +665,25 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       if (empty($args['location_boundary_id'])) {
         // Does the group filter define a site or boundary for the recording? If so and the form
         // is not locked to a boundary, we need to show it and limit the map extent.
-        $locationIDToLoad = empty($filterDef->location_id) ?
-          (empty($filterDef->indexed_location_id) ? FALSE : $filterDef->indexed_location_id) : $filterDef->location_id;
+        // This code grabs the first available value from the list of fields that could hold the value
+        $locationIDToLoad = @$filterDef->indexed_location_list ?: @$filterDef->indexed_location_id ?:
+            @$filterDef->location_list ?: @$filterDef->location_id;
+
         if ($locationIDToLoad) {
           $response = data_entry_helper::get_population_data(array(
             'table' => 'location',
             'extraParams' => $auth['read'] + array(
-                'id' => $locationIDToLoad,
+                'query' => json_encode(array('in'=>array('id'=>explode(',', $locationIDToLoad)))),
                 'view' => 'detail'
               )
           ));
-          $geom = $response[0]['boundary_geom'] ? $response[0]['boundary_geom'] : $response[0]['centroid_geom'];
-          iform_map_zoom_to_geom($geom, lang::get('Boundary of {1} for the {2} group', $response[0]['name'], self::$group['title']), TRUE);
+          $geoms = array();
+          foreach ($response as $loc) {
+            $geoms[] = $loc['boundary_geom'] ? $loc['boundary_geom'] : $loc['centroid_geom'];
+          }
+          $geom = count($geoms)>1 ? 'GEOMETRYCOLLECTION(' . implode(',', $geoms) . ')' : $geoms[0];
+          $layerName = count($geoms)>1 ? lang::get('Boundaries') : lang::get('Boundary of {1}', $response[0]['name']);
+          iform_map_zoom_to_geom($geom, lang::get('{1} for the {2} group', $layerName, self::$group['title']), TRUE);
           self::hide_other_boundaries($args);
         }
         elseif (!empty($filterDef->searchArea)) {
@@ -751,7 +760,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
     // An option for derived classes to add in extra tabs
     if (method_exists(self::$called_class, 'getExtraGridModeTabs')) {
-      $extraTabs = call_user_func(array(self::$called_class, 'getExtraGridModeTabs'), false, $auth['read'], $args, $attributes);
+      $extraTabs = call_user_func(
+          array(self::$called_class, 'getExtraGridModeTabs'), false, $auth['read'], $args, $attributes);
       if(is_array($extraTabs))
         $tabs = $tabs + $extraTabs;
     }
@@ -765,7 +775,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
 
     // Here is where we get the table of samples
-    $r .= "<div id=\"sampleList\">".call_user_func(array(self::$called_class, 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
+    $r .= "<div id=\"sampleList\">".call_user_func(
+        array(self::$called_class, 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
 
     // Add content to extra tabs that derived classes may have added
     if (method_exists(self::$called_class, 'getExtraGridModeTabs')) {
@@ -792,7 +803,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
           $response = data_entry_helper::get_population_data(array(
               'table' => 'occurrence',
-              'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail')
+              'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
+              'caching' => false
           ));
           if (count($response) != 0) {
             //we found an occurrence so use it to detect the sample
@@ -802,15 +814,18 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       } else {
       // single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
-        data_entry_helper::load_existing_record($auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
+        data_entry_helper::load_existing_record(
+            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
       } 
       elseif (self::$loadedSampleId) {
         $response = data_entry_helper::get_population_data(array(
           'table' => 'occurrence',
-          'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail')          
+          'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail'),
+          'caching' => false
         ));
         self::$loadedOccurrenceId = $response[0]['id'];
-        data_entry_helper::load_existing_record_from($response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
+        data_entry_helper::load_existing_record_from(
+            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
       }
       self::$loadedSampleId = data_entry_helper::$entity_to_load['occurrence:sample_id'];
     }
@@ -820,13 +835,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', false, true);
       // If there is a parent sample - load it next so the details overwrite the child sample. 
       if (!empty(data_entry_helper::$entity_to_load['sample:parent_id'])) {
-        data_entry_helper::load_existing_record($auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id']);
+        data_entry_helper::load_existing_record(
+            $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id']);
         self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
       }
     }
     
-    // Ensure that if we are used to load a different survey's data, then we get the correct survey attributes. We can change args
-    // because the caller passes by reference.
+    // Ensure that if we are used to load a different survey's data, then we get the correct survey attributes. We can
+    // change args because the caller passes by reference.
     $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
     $args['sample_method_id']=data_entry_helper::$entity_to_load['sample:sample_method_id'];
     // enforce that people only access their own data, unless explicitly have permissions
@@ -1941,6 +1957,10 @@ else
       'fieldname'=>'sample:recorder_names',
       'label'=>lang::get('Recorder names')
     ), $options));
+  }
+
+  protected static function get_control_reviewinput($auth, $args, $tabAlias, $options) {
+    return data_entry_helper::review_input($options);
   }
 
   /**

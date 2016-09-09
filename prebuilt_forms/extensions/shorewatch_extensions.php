@@ -31,7 +31,7 @@ class extension_shorewatch_extensions {
    */
   public static function mapping_for_volunteers_guests($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('data_entry_helper'));
-    data_entry_helper::$javascript="
+    data_entry_helper::$javascript .= "
     if ($('#dynamic-my_own_locality').is(':checked')) {
       $('#tab-records').show();
     } else {

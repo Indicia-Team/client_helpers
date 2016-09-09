@@ -256,7 +256,7 @@ class extension_misc_extensions {
       $caption = lang::get($caption);
       $breadcrumb[] = l($caption, $path, $itemOptions);
     }
-    if (empty($options['includeCurrentPage']) || $options['includeCurrentPage']!==false)
+    if (!isset($options['includeCurrentPage']) || $options['includeCurrentPage']!==false)
       $breadcrumb[] = drupal_get_title();
     drupal_set_breadcrumb($breadcrumb);
     return '';
@@ -382,6 +382,26 @@ $('form#entry_form').tooltip({
         'fieldname' => $options['save_boundary_geom_to_field'],
         'default' => $location['boundary_geom']
       ));
+    return $r;
+  }
+
+  /**
+   * Adds code to the page for a popup box that shows the link to a group join page.
+   *
+   * Creates a JavaScript function that shows a FancyBox popup containing the link required to view or join a group.
+   * This link can then be given out over social media etc. Having included this extension control on the page you will
+   * need to call the JS indiciaFns.groupLinkPopup() function, for example by calling it from a report grid action, with
+   * the following parameters:
+   * * title of the group
+   * * title of the parent of this group (or empty string if group has no parent)
+   * * id of the group
+   * * rootFolder of the site to which the page path can be appended.
+   */
+  public static function group_link_popup() {
+    $r = '<div id="group-link-popup-container" style="display: none"><div id="group-link-popup">';
+    $r .= '<p>' . lang::get('Send this link to other people to allow them to view or join this group.') . '</p>';
+    $r .= '<textarea style="width: 100%;" id="share-link" rows="4"></textarea>';
+    $r .= '</div></div>';
     return $r;
   }
 }

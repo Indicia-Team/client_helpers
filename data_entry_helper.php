@@ -2490,6 +2490,9 @@ $('#$escaped').change(function(e) {
    * <li><b>minGridRef</b><br/>
    * Optional. Set to a number to enforce grid references to be a certain precision, e.g. provide the value 6
    * to enforce a minimum 6 figure grid reference.</li>
+   * <li><b>maxGridRef</b><br/>
+   * Optional. Set to a number to enforce grid references to less than a certain precision, e.g. provide the value 6
+   * to enforce a maximum 6 figure grid reference.</li>
    * </ul>
    *
    * @return string HTML to insert into the page for the spatial reference control.
@@ -2509,8 +2512,15 @@ $('#$escaped').change(function(e) {
       'splitLatLong'=>false,
       'findMeButton'=>true
     ), $options);
+    $rules = array();
+    if (!empty($options['validation']))
+      $rules[] = $options['validation'];
     if (!empty($options['minGridRef']))
-      $options['validation']='mingridref['.$options['minGridRef'].']';
+      $rules[] = 'mingridref['.$options['minGridRef'].']';
+    if (!empty($options['maxGridRef']))
+      $rules[] = 'maxgridref['.$options['maxGridRef'].']';
+    if (!empty($rules))
+      $options['validation'] = $rules;
     if (!isset($options['defaultGeom']))
       $options['defaultGeom']=self::check_default_value($options['geomFieldname']);
     $options = self::check_options($options);
@@ -2737,6 +2747,51 @@ $('#$escaped').change(function(e) {
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
 
+  /**
+   * Outputs a div which will be populated with a summary of the data entered into the form.
+   *
+   * Best used on a tab or wizard based data entry form on the last page so that the data entered can have a final
+   * check.
+   *
+   * @param $options
+   * * *id* - the ID of the outer element, defaults to review-input.
+   * * *caption* - the caption to display in the header.
+   * * *class* - the CSS class to apply to the outer element, defaults to ui-widget.
+   * * *headerClass* - the CSS class to apply to the header element, defaults to ui-widget-header.
+   * * *contentClass* - the CSS class to apply to the element containing the form values, defaults to ui-widget-content.
+   * * *exclude* - array of controls to exclude by ID, defaults to ["sample:entered_sref_system"].
+   *
+   */
+  public static function review_input($options) {
+    global $indicia_templates;
+    self::add_resource('review_input');
+    $options = array_merge(array(
+      'id' => 'review-input',
+      'caption' => 'Review information',
+      'class' => 'ui-widget',
+      'headerClass' => 'ui-widget-header',
+      'contentClass' => 'ui-widget-content',
+      'exclude' => array('sample:entered_sref_system')
+    ), $options);
+    $exclude = json_encode($options['exclude']);
+    self::$javascript .= <<<RIJS
+$('#$options[id]').reviewInput({
+  exclude: $exclude
+});
+
+RIJS;
+    $options['contentId'] = "$options[id]-content";
+    $class = empty($options['class']) ? '' : " class=\"$options[class]\"";
+    $headerClass = empty($options['headerClass']) ? '' : " class=\"$options[headerClass]\"";
+    $contentClass = empty($options['contentClass']) ? '' : " class=\"$options[contentClass]\"";
+    $caption = lang::get($options['caption']);
+    return str_replace(
+      array('{id}', '{contentId}', '{class}', '{headerClass}', '{contentClass}', '{caption}'),
+      array(" id=\"$options[id]\"", " id=\"$options[contentId]\"", $class, $headerClass, $contentClass, $caption),
+      $indicia_templates['review_input']
+    );
+  }
+
  /**
   * Helper function to generate a species checklist from a given taxon list.
   *
@@ -2866,6 +2921,10 @@ $('#$escaped').change(function(e) {
   * Optional. If set to true, then an occurrence comment input field is included on each row.</li>
   * <li><b>occurrenceSensitivity</b><br/>
   * Optional. If set to true, then an occurrence sensitivity selector is included on each row.</li>
+  * <li><b>spatialRefPerRow</b><br/>
+  * Optional. If set to true, then a spatial reference column is included on each row. When submitted, each unique
+  * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
+  * defined for some records.</li>
   * <li><b>mediaTypes</b><br/>
   * Optional. Array of media types that can be uploaded. Choose from Audio:Local, Audio:SoundCloud, Image:Flickr,
   * Image:Instagram, Image:Local, Image:Twitpic, Pdf:Local, Social:Facebook, Social:Twitter, Video:Youtube,
@@ -3139,10 +3198,13 @@ $('#$escaped').change(function(e) {
     $taxonRows = array();
     $subSampleRows = array();
     // Load any existing sample's occurrence data into $entity_to_load
-    if (isset(self::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords']===false)
+    if (isset(self::$entity_to_load['sample:id']) && $options['useLoadedExistingRecords']===false) {
       self::preload_species_checklist_occurrences(self::$entity_to_load['sample:id'], $options['readAuth'],
-        $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows, $options['speciesControlToUseSubSamples'],
-        (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''));
+          $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows,
+          $options['speciesControlToUseSubSamples'] || $options['spatialRefPerRow'],
+          (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),
+          $options['spatialRefPerRow']);
+    }
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
@@ -3186,7 +3248,6 @@ $('#$escaped').change(function(e) {
       $grid = self::get_species_checklist_header($options, $occAttrs, $onlyImages);
       $rows = array();
       $imageRowIdxs = array();
-      $taxonCounter = array();
       $rowIdx = 0;
       // tell the addTowToGrid javascript how many rows are already used, so it has a unique index for new rows
       self::$javascript .= "indiciaData['gridCounter-".$options['id']."'] = ".count($taxonRows).";\n";
@@ -3212,7 +3273,7 @@ $('#$escaped').change(function(e) {
       foreach ($taxonRows as $txIdx => $rowIds) {
         $ttlId = $rowIds['ttlId'];
         $loadedTxIdx = isset($rowIds['loadedTxIdx']) ? $rowIds['loadedTxIdx'] : -1;
-        $existing_record_id = isset($rowIds['occId']) ? $rowIds['occId'] : false;
+        $existingRecordId = isset($rowIds['occId']) ? $rowIds['occId'] : false;
         // Multi-column input does not work when image upload allowed
         $colIdx = count($options['mediaTypes']) ? 0 : (int)floor($rowIdx / (count($taxonRows)/$options['columns']));
         // Find the taxon in our preloaded list data that we want to output for this row
@@ -3263,13 +3324,13 @@ $('#$escaped').change(function(e) {
           }
         }
         // if editing a specific occurrence, mark it up
-        $editedRecord = isset($_GET['occurrence_id']) && $_GET['occurrence_id']==$existing_record_id;
+        $editedRecord = isset($_GET['occurrence_id']) && $_GET['occurrence_id']==$existingRecordId;
         $editClass = $editedRecord ? ' edited-record ui-state-highlight' : '';
         $hasEditedRecord = $hasEditedRecord || $editedRecord;
         // Verified records can be flagged with an icon
         //Do an isset check as the npms_paths form for example uses the species checklist, but doesn't use an entity_to_load
-        if (isset(self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:record_status"])) {
-          $status = self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:record_status"];
+        if (isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:record_status"])) {
+          $status = self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:record_status"];
           if (preg_match('/[VDR]/', $status)) {
             $img = false;
             switch ($status) {
@@ -3286,21 +3347,21 @@ $('#$escaped').change(function(e) {
         }
         $row .= str_replace(array('{content}','{colspan}','{editClass}','{tableId}','{idx}'),
           array($firstCell,$colspan,$editClass,$options['id'],$colIdx), $indicia_templates['taxon_label_cell']);
-        $row .= self::species_checklist_get_subsp_cell($taxon, $txIdx, $existing_record_id, $options);
+        $row .= self::speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options);
         $hidden = ($options['rowInclusionCheck']=='checkbox' ? '' : ' style="display:none"');
         // AlwaysFixed mode means all rows in the default checklist are included as occurrences. Same for
         // AlwayeRemovable except that the rows can be removed.
         // If we are reloading a record there will be an entity_to_load which will indicate whether present should be checked.
         // This has to be evaluated true or false if reloading a submission with errors.
         if ($options['rowInclusionCheck']=='alwaysFixed' || $options['rowInclusionCheck']=='alwaysRemovable' ||
-          (self::$entity_to_load!=null && array_key_exists("sc:$loadedTxIdx:$existing_record_id:present", self::$entity_to_load) &&
-            self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:present"] == true)) {
+          (self::$entity_to_load!=null && array_key_exists("sc:$loadedTxIdx:$existingRecordId:present", self::$entity_to_load) &&
+            self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:present"] == true)) {
           $checked = ' checked="checked"';
         } else {
           $checked='';
         }
         $row .= "\n<td class=\"scPresenceCell\" headers=\"$options[id]-present-$colIdx\"$hidden>";
-        $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:present";
+        $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:present";
         if ($options['rowInclusionCheck']==='hasData')
           $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[id]\"/>";
         else
@@ -3310,19 +3371,19 @@ $('#$escaped').change(function(e) {
         // If we have a grid ID attribute, output a hidden
         if (!empty($options['gridIdAttributeId'])) {
           $gridAttributeId = $options['gridIdAttributeId'];
-          if (empty($existing_record_id)) {
+          if (empty($existingRecordId)) {
             //If in add mode we don't need to include the occurrence attribute id
             $fieldname  = "sc:$options[id]-$txIdx::occAttr:$gridAttributeId";
             $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$options[id]\"/>";
           } else {
-            $search = preg_grep("/^sc:[0-9]*:$existing_record_id:occAttr:$gridAttributeId:".'[0-9]*$/', array_keys(self::$entity_to_load));
+            $search = preg_grep("/^sc:[0-9]*:$existingRecordId:occAttr:$gridAttributeId:".'[0-9]*$/', array_keys(self::$entity_to_load));
             if (!empty($search)) {
               $match = array_pop($search);
               $parts = explode(':',$match);
               //The id of the existing occurrence attribute value is at the end of the data
               $idxOfOccValId = count($parts) - 1;
               //$txIdx is row number in the grid. We cannot simply take the data from entity_to_load as it doesn't contain the row number.
-              $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occAttr:$gridAttributeId:$parts[$idxOfOccValId]";
+              $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:occAttr:$gridAttributeId:$parts[$idxOfOccValId]";
               $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$options[id]\"/>";
             }
           }
@@ -3330,7 +3391,7 @@ $('#$escaped').change(function(e) {
         $row .= "</td>";
         if ($options['speciesControlToUseSubSamples']) {
           $row .= "\n<td class=\"scSampleCell\" style=\"display:none\">";
-          $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occurrence:sampleIDX";
+          $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:occurrence:sampleIDX";
           $value = $options['subSamplePerRow'] ? $smpIdx : $rowIds['smpIdx'];
           $row .= "<input type=\"hidden\" class=\"scSample\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
           $row .= "</td>";
@@ -3344,7 +3405,7 @@ $('#$escaped').change(function(e) {
           $valId=false;
           if (!empty(data_entry_helper::$entity_to_load)) {
             // Search for the control in the data to load. It has a suffix containing the attr_value_id which we don't know, hence preg.
-            $search = preg_grep("/^sc:$loadedTxIdx:$existing_record_id:occAttr:$attrId:".'[0-9]*$/', array_keys(self::$entity_to_load));
+            $search = preg_grep("/^sc:$loadedTxIdx:$existingRecordId:occAttr:$attrId:".'[0-9]*$/', array_keys(self::$entity_to_load));
             // Does the control post an array of values? If so, we need to ensure that the existing values are handled properly.
             $isArrayControl = preg_match('/name="{?[a-z\-_]*}?\[\]"/', $control);
             if ($isArrayControl) {
@@ -3374,8 +3435,8 @@ $('#$escaped').change(function(e) {
             }
             else {
               // go for the default, which has no suffix.
-              $loadedCtrlFieldName = str_replace('-idx-:', $loadedTxIdx.':'.$existing_record_id, $attributes[$attrId]['fieldname']);
-              $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existing_record_id", $attributes[$attrId]['fieldname']);
+              $loadedCtrlFieldName = str_replace('-idx-:', $loadedTxIdx.':'.$existingRecordId, $attributes[$attrId]['fieldname']);
+              $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
             }
             if (isset(self::$entity_to_load[$loadedCtrlFieldName]))
               $existing_value = self::$entity_to_load[$loadedCtrlFieldName];
@@ -3384,7 +3445,7 @@ $('#$escaped').change(function(e) {
             $ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
             $loadedCtrlFieldName='-';
           }
-          if (!$existing_record_id && $existing_value==='' && array_key_exists('default', $attributes[$attrId])) {
+          if (!$existingRecordId && $existing_value==='' && array_key_exists('default', $attributes[$attrId])) {
             // this case happens when reloading an existing record
             $existing_value = $attributes[$attrId]['default'];
           }
@@ -3399,10 +3460,9 @@ $('#$escaped').change(function(e) {
               if($existing_value=="1")
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
             } else {
-              if ($attributes[$attrId]['data_type']==='D') {
-                $d = new DateTime($existing_value);
-                $existing_value = $d->format(self::$date_format);
-              } elseif ($attributes[$attrId]['data_type']==='V') {
+              // dates (including single day vague dates) need formatting to the local date format.
+              if ($attributes[$attrId]['data_type']==='D' || $attributes[$attrId]['data_type']==='V'
+                  && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existing_value)) {
                 $d = new DateTime($existing_value);
                 $existing_value = $d->format(self::$date_format);
               } elseif (is_array($existing_value))
@@ -3417,40 +3477,23 @@ $('#$escaped').change(function(e) {
             $oc .= $error;
           }
           $headers = $options['id']."-attr$attrId-$colIdx";
-          $class = self::species_checklist_occ_attr_class($options, $idx, $attributes[$attrId]['untranslatedCaption']);
+          $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['untranslatedCaption']);
           $class = $class . 'Cell';
           $row .= str_replace(array('{label}', '{class}', '{content}', '{headers}'), array(lang::get($attributes[$attrId]['caption']), $class, $oc, $headers),
             $indicia_templates[$options['attrCellTemplate']]);
           $idx++;
         }
-        if ($options['occurrenceComment']) {
-          $row .= "\n<td class=\"ui-widget-content scCommentCell\" headers=\"$options[id]-comment-$colIdx\">";
-          $fieldname = "sc:$options[id]-$txIdx:$existing_record_id:occurrence:comment";
-          $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:comment"]) ?
-              self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:comment"] : '';
-          $row .= "<input class=\"scComment\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
-          $row .= "</td>";
-        }
-        if ($options['occurrenceSensitivity']) {
-          $row .= "\n<td class=\"ui-widget-content scSensitivityCell\" headers=\"".$options['id']."-sensitivity-$colIdx\">";
-          $row .= self::select(array(
-            'fieldname'=>"sc:$options[id]-$txIdx:$existing_record_id:occurrence:sensitivity_precision",
-            'default'=>isset(self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:sensitivity_precision"])
-              ? self::$entity_to_load["sc:$loadedTxIdx:$existing_record_id:occurrence:sensitivity_precision"] : false,
-            'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
-              '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
-            'blankText' => 'Not sensitive'
-          ));
-          $row .= "</td>\n";
-        }
+        $row .= self::speciesChecklistSpatialRefPerRowCell($options, $colIdx, $txIdx, $existingRecordId);
+        $row .= self::speciesChecklistCommentCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
+        $row .= self::speciesChecklistSensitivityCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
 
         // Add a cell for the Add Media button which is hidden if there is
         // existing media.
         if ($options['mediaTypes']) {
-          $existingImages = is_array(self::$entity_to_load) ? preg_grep("/^sc:$loadedTxIdx:$existing_record_id:occurrence_medium:id:[a-z0-9]*$/", array_keys(self::$entity_to_load)) : array();
+          $existingImages = is_array(self::$entity_to_load) ? preg_grep("/^sc:$loadedTxIdx:$existingRecordId:occurrence_medium:id:[a-z0-9]*$/", array_keys(self::$entity_to_load)) : array();
           $row .= "\n<td class=\"ui-widget-content scAddMediaCell\">";
           $style = (count($existingImages)>0) ? ' style="display: none"' : '';
-          $fieldname = "add-media:$options[id]-$txIdx:$existing_record_id";
+          $fieldname = "add-media:$options[id]-$txIdx:$existingRecordId";
           $row .= "<a href=\"\"$style class=\"add-media-link button $mediaBtnClass\" id=\"$fieldname\">" .
             "$mediaBtnLabel</a>";
           $row .= "</td>";
@@ -3459,14 +3502,14 @@ $('#$escaped').change(function(e) {
           if ($options['responsive']) {
             if (count($existingImages) == 0) {
               // The cell is empty
-              $ctrlId = "container-sc:{$options['id']}-$txIdx:$existing_record_id:occurrence_medium-" . mt_rand();
+              $ctrlId = "container-sc:{$options['id']}-$txIdx:$existingRecordId:occurrence_medium-" . mt_rand();
               $row .= '<td class="scMediaCell"><div class="scMedia" id="' . $ctrlId . '"></div></td>';
             }
             else {
               // Create a cell containing the popula
               $row .= '<td class="scMediaCell">' . data_entry_helper::file_box(array(
-                'table'=>"sc:$options[id]-$txIdx:$existing_record_id:occurrence_medium",
-                'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existing_record_id:occurrence_medium",
+                'table'=>"sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
+                'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
                 'mediaTypes' => $options['mediaTypes'],
                 'readAuth' => $options['readAuth']
               )) . '</td>';
@@ -3489,11 +3532,12 @@ $('#$escaped').change(function(e) {
 
         // Add media in a following row when not in responsive mode.
         if ($options['mediaTypes'] && count($existingImages) > 0 && !$options['responsive']) {
-          $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls)
-            + ($options['occurrenceComment'] ? 1 : 0) + ($options['occurrenceSensitivity'] ? 1 : 0) + (count($options['mediaTypes']) ? 1 : 0);
+          $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls) +
+            ($options['spatialRefPerRow'] ? 1 : 0) + ($options['occurrenceComment'] ? 1 : 0) +
+            ($options['occurrenceSensitivity'] ? 1 : 0) + (count($options['mediaTypes']) ? 1 : 0);
           $rows[$rowIdx]='<td colspan="'.$totalCols.'">'.data_entry_helper::file_box(array(
-              'table'=>"sc:$options[id]-$txIdx:$existing_record_id:occurrence_medium",
-              'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existing_record_id:occurrence_medium",
+              'table'=>"sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
+              'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
               'mediaTypes' => $options['mediaTypes'],
               'readAuth' => $options['readAuth']
             )).'</td>';
@@ -3706,11 +3750,11 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * @param array Options array for the species grid. Used to obtain the row inclusion check mode,
    * read authorisation and lookup list's ID.
    */
-  private static function species_checklist_get_subsp_cell($taxon, $txIdx, $existing_record_id, $options) {
+  private static function speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options) {
     if ($options['subSpeciesColumn']) {
       //Disable the sub-species drop-down if the row delete button is not displayed.
       //Also disable if we are preloading our data from a sample.
-      $isDisabled=($options['rowInclusionCheck']!='alwaysRemovable' || (!empty($existing_record_id) && !empty($taxon))) ?
+      $isDisabled=($options['rowInclusionCheck']!='alwaysRemovable' || (!empty($existingRecordId) && !empty($taxon))) ?
         'disabled="disabled"' : '';
       //if the taxon has a parent then we need to setup both a child and parent
       if (!empty($taxon['parent_id'])) {
@@ -3729,12 +3773,12 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         , $selectedParentId
         , '$selectedParentName'
         , '".$options['lookupListId']."'
-        , 'sc:$txIdx:$existing_record_id::occurrence:subspecies'
+        , 'sc:$txIdx:$existingRecordId::occurrence:subspecies'
         , {'auth_token' : '".$options['readAuth']['auth_token']."', 'nonce' : '".$options['readAuth']['nonce']."'}
         , $selectedChildId
       );\n";
       return '<td class="ui-widget-content scSubSpeciesCell"><select class="scSubSpecies" ' .
-      "id=\"sc:$txIdx:$existing_record_id::occurrence:subspecies\" name=\"sc:$txIdx:$existing_record_id::occurrence:subspecies\" ".
+      "id=\"sc:$txIdx:$existingRecordId::occurrence:subspecies\" name=\"sc:$txIdx:$existingRecordId::occurrence:subspecies\" ".
       "$isDisabled onchange=\"SetHtmlIdsOnSubspeciesChange(this.id);\">" .
       '</select></td>';
     }
@@ -4025,11 +4069,14 @@ $('#".$options['id']." .species-filter').click(function(evt) {
    * @param array $readAuth Read authorisation array
    * @param boolean $loadMedia Array of media type terms to load.
    * @param array $extraParams Extra params to pass to the web service call for filtering.
+   * @param boolean $useSubSamples Enable loading of records from subsamples of the main sample
+   * @param boolean $subSamplesOptional If using subsamples but they are optional, records are also loaded that are
+   * directly attached to the main sample.
    * @return array Array with key of occurrence_id and value of $taxonInstance.
    */
-  public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='') {
+  public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
+       &$subSamples, $useSubSamples, $subSampleMethodID='', $subSamplesOptional=false) {
     $occurrenceIds = array();
-    $taxonCounter = array();
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
     if (is_null(self::$validation_errors)) {
@@ -4041,7 +4088,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           unset(data_entry_helper::$entity_to_load[$key]);
         }
       }
-      if($useSubSamples){
+      if($useSubSamples) {
         $extraParams += $readAuth + array('view'=>'detail','parent_id'=>$sampleId,'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
         if($subSampleMethodID != '')
           $extraParams['sample_method_id'] = $subSampleMethodID;
@@ -4051,6 +4098,8 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           'nocache' => true
         ));
         $subSampleList = array();
+        if ($subSamplesOptional)
+          $subSampleList[] = $sampleId;
         foreach($subSamples as $idx => $subsample){
           $subSampleList[] = $subsample['id'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:id'] = $subsample['id'];
@@ -4105,8 +4154,10 @@ $('#".$options['id']." .species-filter').click(function(evt) {
             'nocache' => true
           ));
           foreach($attrValues as $attrValue) {
+            // vague date controls need the processed vague date put back in, not the raw parts.
+            $valueField = $attrValue['data_type']==='Vague Date' ? 'value' : 'raw_value';
             self::$entity_to_load['sc:'.$occurrenceIds[$attrValue['occurrence_id']].':'.$attrValue['occurrence_id'].':occAttr:'.$attrValue['occurrence_attribute_id'].(isset($attrValue['id'])?':'.$attrValue['id']:'')]
-              = $attrValue['raw_value'];
+              = $attrValue[$valueField];
           }
           if (count($loadMedia)>0) {
             // @todo: Filter to the appropriate list of media types
@@ -4189,15 +4240,23 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         // the settings in the responsiveCols array.
         foreach ($occAttrs as $idx=>$a) {
           $attrs = self::get_species_checklist_col_responsive($options, "attr$idx");
-          $r .= self::get_species_checklist_col_header($options['id']."-attr$idx-$i", lang::get($a), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-attr$idx-$i", lang::get($a), $visibleColIdx, $options['colWidths'], $attrs);
+        }
+        if ($options['spatialRefPerRow']) {
+          $attrs = self::get_species_checklist_col_responsive($options, 'spatialref');
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-spatialref-$i", lang::get('Spatial ref'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceComment']) {
           $attrs = self::get_species_checklist_col_responsive($options, 'comment');
-          $r .= self::get_species_checklist_col_header($options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceSensitivity']) {
           $attrs = self::get_species_checklist_col_responsive($options, 'sensitive');
-          $r .= self::get_species_checklist_col_header($options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
         }
 
         // Non-responsive behaviour is to show an Add Media button in a column
@@ -4393,6 +4452,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       'PHPtaxonLabel' => false,
       'occurrenceComment' => false,
       'occurrenceSensitivity' => null,
+      'spatialRefPerRow' => false,
       'id' => 'species-grid-'.rand(0,1000),
       'colWidths' => array(),
       'taxonFilterField' => 'none',
@@ -4477,7 +4537,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       }
 
       // Build array of attribute controls
-      $class = self::species_checklist_occ_attr_class($options, $idx, $attrDef['untranslatedCaption']);
+      $class = self::speciesChecklistOccAttrClass($options, $idx, $attrDef['untranslatedCaption']);
       $class .= (isset($attrDef['class']) ? ' ' . $attrDef['class'] : '');
       if (isset($attrOpts['class'])) {
         $class .=  ' ' . $attrOpts['class'];
@@ -4516,7 +4576,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
    * @param integer $idx Index of the custom attribute.
    * @param string $caption Caption of the attribute used to construct a suitable CSS class.
    */
-  private static function species_checklist_occ_attr_class($options, $idx, $caption) {
+  private static function speciesChecklistOccAttrClass($options, $idx, $caption) {
     return (array_key_exists('occAttrClasses', $options) && $idx < count($options['occAttrClasses'])) ?
       $options['occAttrClasses'][$idx] :
       'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($caption)); // provide a default class based on the control caption
@@ -4558,12 +4618,17 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         $fieldname.':occurrence:sampleIDX" id="'.$fieldname.':occurrence:sampleIDX" value="" /></td>';
     $idx = 0;
     foreach ($occAttrControls as $attrId=>$oc) {
-      $class = self::species_checklist_occ_attr_class($options, $idx, $attributes[$attrId]['caption']);
+      $class = self::speciesChecklistOccAttrClass($options, $idx, $attributes[$attrId]['caption']);
       $r .= str_replace(array('{content}', '{class}', '{headers}'),
         array(str_replace('{fieldname}', "$fieldname:occAttr:$attrId", $oc), $class.'Cell', $options['id']."-attr$attrId-0"),
         $indicia_templates['attribute_cell']
       );
       $idx++;
+    }
+    if ($options['spatialRefPerRow']) {
+      $r .= '<td class="ui-widget-content scSpatialRefCell" headers="'.$options['id'].'-spatialref-0">' .
+        '<input class="scSpatialRef" type="text" ' .
+        "id=\"$fieldname:occurrence:spatialref\" name=\"$fieldname:occurrence:spatialref\" value=\"\" /></td>";
     }
     if ($options['occurrenceComment']) {
       $r .= '<td class="ui-widget-content scCommentCell" headers="'.$options['id'].'-comment-0"><input class="scComment" type="text" ' .
@@ -4588,8 +4653,9 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       }
       $label = $onlyImages ? 'Add images' : 'Add media';
       $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
-      $r .= '<td class="ui-widget-content scAddMediaCell"><a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'].'--idx-:">'.
-        lang::get($label).'</a><span class="species-checklist-select-species">'.lang::get('Select a species first').'</span></td>';
+      $r .= '<td class="ui-widget-content scAddMediaCell" headers="'.$options['id'].'-images-0">' .
+          '<a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'].'--idx-:">'.
+          lang::get($label).'</a><span class="species-checklist-select-species">'.lang::get('Select a species first').'</span></td>';
 
       // Extra columnn for photos in responsive mode.
       if ($options['responsive']) {
@@ -4604,6 +4670,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     }
 
     $r .= "</tr></tbody></table>\n";
+    $r .= self::speciesChecklistSrefPerRowExistingIds($options);
     return $r;
   }
 
@@ -6156,15 +6223,7 @@ if (errors$uniq.length>0) {
     } else {
       throw new Exception('Cannot find website id in POST array!');
     }
-    // determiner, training and record status can be defined globally for the whole list.
-    if (array_key_exists('occurrence:determiner_id', $arr))
-      $determiner_id = $arr['occurrence:determiner_id'];
-    if (array_key_exists('occurrence:training', $arr))
-      $training = $arr['occurrence:training'];
-    if (array_key_exists('occurrence:record_status', $arr))
-      $record_status = $arr['occurrence:record_status'];
-    if (array_key_exists('occurrence:release_status', $arr))
-      $release_status = $arr['occurrence:release_status'];
+    $fieldDefaults = self::speciesChecklistGetFieldDefaults($arr);
     // Set the default method of looking for rows to include - either using data, or the checkbox (which could be hidden)
     $include_if_any_data = $include_if_any_data || (isset($arr['rowInclusionCheck']) && $arr['rowInclusionCheck']=='hasData');
     // Species checklist entries take the following format.
@@ -6222,6 +6281,9 @@ if (errors$uniq.length>0) {
     $assocDataKeys = preg_grep('/occurrence_association:\d+:(\d+)?:from_occurrence_id/', array_keys($arr));
     $assocData = count($assocDataKeys) ?
         array_intersect_key($arr, array_combine($assocDataKeys, $assocDataKeys)) : array();
+    $existingSampleIdsBySref = !empty($_POST['existingSampleIdsBySref']) ?
+        json_decode($_POST['existingSampleIdsBySref'], true) : array();
+    $unusedExistingSampleIds = array_values($existingSampleIdsBySref);
     foreach ($records as $id => $record) {
       // determine the id of the grid this record is from
       // $id = <grid_id>-<rowIndex> but <grid_id> could contain a hyphen
@@ -6245,25 +6307,63 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
-        // don't overwrite settings for existing records.
-        if (empty($record['id'])) {
-          if (isset($determiner_id))
-            $record['determiner_id'] = $determiner_id;
-          if (isset($training))
-            $record['training'] = $training;
-          if (isset($record_status))
-            $record['record_status'] = $record_status;
-          if (isset($release_status))
-            $record['release_status'] = $release_status;
-        }
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
+        // Handle subsamples indicated by a row specific map ref
+        if (!empty($record['occurrence:spatialref'])) {
+          $sref = trim($record['occurrence:spatialref']);
+          unset($record['occurrence:spatialref']);
+        } else
+          $sref = null;
         $occ = data_entry_helper::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
-        $subModels[$id] = array(
-          'fkId' => 'sample_id',
-          'model' => $occ
-        );
+        // If we have a record-level spatial reference, then we need to attach the record to a subsample to capture the
+        // exact sref.
+        if ($sref) {
+          if (!isset($subModels[$sref])) {
+            $subSample = array(
+              'website_id' => $website_id,
+              'survey_id' => empty($arr['survey_id']) ? '' : $arr['survey_id'],
+              'date' => empty($arr['sample:date']) ? '' : $arr['sample:date'],
+              'entered_sref_system' => empty($arr['sample:entered_sref_system']) ? '' : $arr['sample:entered_sref_system'],
+              'location_name' => empty($arr['sample:location_name']) ? '' : $arr['sample:location_name'],
+              'input_form' => empty($arr['sample:input_form']) ? '' : $arr['sample:input_form'],
+              'entered_sref' => $sref
+            );
+            // set an existing ID on the sample if editing
+            if (!empty($existingSampleIdsBySref[strtoupper(trim($sref))])) {
+              $subSample['id'] = $existingSampleIdsBySref[strtoupper(trim($sref))];
+              if ($key = array_search($subSample['id'], $unusedExistingSampleIds))
+                unset($unusedExistingSampleIds[$key]);
+            }
+            $subModels[$sref] = array(
+              'fkId' => 'parent_id',
+              'model' => data_entry_helper::wrap($subSample, 'sample'),
+            );
+            $subModels[$sref]['model']['subModels'] = array();
+          }
+          $subModels[$sref]['model']['subModels'][] = array(
+            'fkId' => 'sample_id',
+            'model' => $occ
+          );
+        } else {
+          $subModels[$id] = array(
+            'fkId' => 'sample_id',
+            'model' => $occ
+          );
+        }
       }
+    }
+    // Flag any old samples for deletion that are now empty
+    foreach ($unusedExistingSampleIds as $id) {
+      $subModels[$sref]['model']['subModels'][] = array(
+        'fkId' => 'parent_id',
+        'model' => data_entry_helper::wrap(array(
+          'id' => $id,
+          'website_id' => $website_id,
+          'deleted' => 't'
+        ), 'sample'),
+      );
     }
     return $subModels;
   }
@@ -6299,11 +6399,7 @@ if (errors$uniq.length>0) {
     } else {
       throw new Exception('Cannot find website id in POST array!');
     }
-    // determiner and record status can be defined globally for the whole list.
-    if (array_key_exists('occurrence:determiner_id', $arr))
-      $determiner_id = $arr['occurrence:determiner_id'];
-    if (array_key_exists('occurrence:record_status', $arr))
-      $record_status = $arr['occurrence:record_status'];
+    $fieldDefaults = self::speciesChecklistGetFieldDefaults($arr);
     // Set the default method of looking for rows to include - either using data, or the checkbox (which could be hidden)
     $include_if_any_data = $include_if_any_data || (isset($arr['rowInclusionCheck']) && $arr['rowInclusionCheck']=='hasData');
     // Species checklist entries take the following format.
@@ -6355,12 +6451,7 @@ if (errors$uniq.length>0) {
           $record['zero_abundance']=$present ? 'f' : 't';
         $record['taxa_taxon_list_id'] = $record['present'];
         $record['website_id'] = $website_id;
-        if (isset($determiner_id)) {
-          $record['determiner_id'] = $determiner_id;
-        }
-        if (isset($record_status)) {
-          $record['record_status'] = $record_status;
-        }
+        self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
         $occ = data_entry_helper::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         $sampleRecords[$sampleIDX]['occurrences'][] = array('fkId' => 'sample_id','model' => $occ);
@@ -6466,6 +6557,144 @@ if (errors$uniq.length>0) {
       (!$includeIfAnyData && $gotTtlId); // inclusion of record detected from the presence checkbox
     // return null if no record to create
     return $record ? true : null;
+  }
+
+  /**
+   * Some occurrence values (e.g. record_status) can be supplied as if being supplied for a single occurrence record
+   * and these values will then be applied as defaults to the entire list of occurrences being created by the
+   * species_checklist control. This method finds the values to use as defaults in the array of input values.
+   * @param array $values List of form values
+   * @return array List of defaults to apply to every occurrence
+   */
+  private static function speciesChecklistGetFieldDefaults($values) {
+    // Determiner, training, sensitivity_precision and record status can have their defaults defined as occurrence:...
+    // values that get copied into every individual occurrence.
+    $fieldsThatAllowDefaults = array(
+      'determiner_id', 'training', 'record_status', 'release_status', 'sensitivity_precision'
+    );
+    $fieldDefaults = array();
+    foreach ($fieldsThatAllowDefaults as $field)
+      if (array_key_exists("occurrence:$field", $values))
+        $fieldDefaults[$field] = $values["occurrence:$field"];
+    return $fieldDefaults;
+  }
+
+  private static function speciesChecklistApplyFieldDefaults($fieldDefaults, &$record) {
+    // Apply default field values but don't overwrite settings for existing records.
+    if (empty($record['id'])) {
+      foreach ($fieldDefaults as $field => $value)
+        $record[$field] = $value;
+    }
+  }
+
+  /**
+   * Return the HTML for the td element which allows a spatial ref to be entered seperately for each row in a
+   * species checklist grid.
+   * @param $options array Options passed to the control
+   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
+   * @param $rowIdx integer Index of the grid row
+   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   * @return string HTML to insert into the grid
+   */
+  private static function speciesChecklistSpatialRefPerRowCell($options, $colIdx, $rowIdx, $existingRecordId) {
+    $r = '';
+    if ($options['spatialRefPerRow']) {
+      $r .= "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialref";
+      $value = '';
+      if (isset(self::$entity_to_load['sample:id']) &&
+          isset(self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"])) {
+        $sampleIdx = self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"];
+        $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
+        if (count($keys)) {
+          $key = array_pop($keys);
+          $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
+          if (isset(self::$entity_to_load[$srefKey])) {
+            $value = self::$entity_to_load[$srefKey];
+          }
+        }
+      }
+      $r .= "<input class=\"scSpatialRef\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
+      $r .= "</td>";
+    }
+    return $r;
+  }
+
+  /**
+   * Return the HTML for the td element which allows a comment to be entered for each row in a species checklist grid.
+   * @param $options array Options passed to the control
+   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
+   * @param $rowIdx integer Index of the grid row
+   * @param $loadedTxIdx integer
+   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   * @return string HTML to insert into the grid
+   */
+  private static function speciesChecklistCommentCell($options, $colIdx, $rowIdx, $loadedTxIdx, $existingRecordId) {
+    $r = '';
+    if ($options['occurrenceComment']) {
+      $r .= "\n<td class=\"ui-widget-content scCommentCell\" headers=\"$options[id]-comment-$colIdx\">";
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:comment";
+      $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"]) ?
+        self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"] : '';
+      $r .= "<input class=\"scComment\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
+      $r .= "</td>";
+    }
+    return $r;
+  }
+
+  /**
+   * Return the HTML for the td element which allows sensitivity to be set for each row in a species checklist grid.
+   * @param $options array Options passed to the control
+   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
+   * @param $rowIdx integer Index of the grid row
+   * @param $loadedTxIdx integer
+   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   * @return string HTML to insert into the grid
+   */
+  private static function speciesChecklistSensitivityCell($options, $colIdx, $rowIdx, $loadedTxIdx, $existingRecordId) {
+    $r = '';
+    if ($options['occurrenceSensitivity']) {
+      $r .= "\n<td class=\"ui-widget-content scSensitivityCell\" headers=\"".$options['id']."-sensitivity-$colIdx\">";
+      $r .= self::select(array(
+        'fieldname'=>"sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision",
+        'default'=>isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"])
+          ? self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"] : false,
+        'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
+          '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
+        'blankText' => 'Not sensitive'
+      ));
+      $r .= "</td>\n";
+    }
+    return $r;
+  }
+
+  /**
+   * When the species_checklist grid is in spatialRefPerRow mode and editing existing records, this method outputs any
+   * existing subsample IDs into an array keyed by spatial ref, so they can be looked up and used in the submission
+   * later. It also outputs geoms into an array keyed by sample ID so they can be drawn on the map.
+   * @param array $options Options passed to the species_checklist control.
+   * @return string HTML for a hidden input containing the existing sample data.
+   */
+  private static function speciesChecklistSrefPerRowExistingIds($options) {
+    $r = '';
+    if ($options['spatialRefPerRow'] && !empty(self::$entity_to_load)) {
+      $keys = preg_grep("/^sc:\d+:\d+:sample:id$/", array_keys(self::$entity_to_load));
+      $data = array();
+      $geomsData = array();
+      foreach ($keys as $key) {
+        $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
+        $sref = strtoupper(self::$entity_to_load[$srefKey]);
+        $data[$sref] = self::$entity_to_load[$key];
+        $geomKey = preg_replace('/:id$/', ':geom', $key);
+        $geom = self::$entity_to_load[$geomKey];
+        $geomsData[$sref] = $geom;
+      }
+      $value = htmlspecialchars(json_encode($data));
+      $r .= "<input type=\"hidden\" name=\"existingSampleIdsBySref\" value=\"$value\" />";
+      $geomsValue = htmlspecialchars(json_encode($geomsData));
+      $r .= "<input type=\"hidden\" id=\"existingSampleGeomsBySref\" value=\"$geomsValue\" />";
+    }
+    return $r;
   }
 
   private static function attachAssociationsToModel($id, &$occ, $assocData, $arr) {
