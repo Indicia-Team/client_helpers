@@ -209,13 +209,8 @@ class iform_group_admin {
       <!-- Allow form submission with keyboard without duplicating the dialog button -->
       <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
     </fieldset>
-<<<<<<< HEAD
   </form>
 </div></div>';
-=======
-  </form>
-</div></div>';
->>>>>>> master
     return $r;
   }
   
