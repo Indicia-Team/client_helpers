@@ -1740,8 +1740,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     } else {
       data_entry_helper::$javascript .= "
         var sampleGroupNamesToProcess = [];
-        var sampleGroupTermlistId = [];
-        var sampleGroupPersonAttributeId = []";
+        var sampleGroupTermlistId = 0;
+        var sampleGroupPersonAttributeId = 0";
     }
     
     if (!empty($plotGroupDataToProcess) && !empty($plotGroupTermlistId)) {
@@ -1752,22 +1752,21 @@ class iform_plant_portal_user_data_importer extends helper_base {
     } else {
       data_entry_helper::$javascript .= "
         var plotGroupNamesToProcess = [];
-        var plotGroupTermlistId = [];
-        var plotGroupPersonAttributeId = [];";
+        var plotGroupTermlistId = 0;
+        var plotGroupPersonAttributeId = 0;";
     }
-    
     $warehouseUrl = self::get_warehouse_url();
     
     data_entry_helper::$javascript .= "$('#create-import-data').click(function () {
       $('#create-import-data').attr('disabled','true');
       $('#import-loading-msg').show();
-      if (websiteId && plotNamesToProcess && plotSrefsToProcess && plotSrefSystemsToProcess) {
+      if (websiteId && plotNamesToProcess !== [] && plotSrefsToProcess !== [] && plotSrefSystemsToProcess !== [] ) {
         send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess);
       }
-      if (websiteId && sampleGroupNamesToProcess && sampleGroupTermlistId) {
+      if (websiteId && sampleGroupNamesToProcess !== [] && sampleGroupTermlistId !== 0 && sampleGroupPersonAttributeId !== 0) {
         send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,sampleGroupNamesToProcess,'sample_group',".$currentUserId.",sampleGroupPersonAttributeId);
       }
-      if (websiteId && plotGroupNamesToProcess && plotGroupTermlistId) {
+      if (websiteId && plotGroupNamesToProcess !=[] && plotGroupTermlistId!==0 && plotGroupPersonAttributeId!==0) {
         send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,plotGroupNamesToProcess,'plot_group',".$currentUserId.",plotGroupPersonAttributeId);
       }
       $('#submit-import').click();
