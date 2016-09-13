@@ -111,6 +111,16 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
           'group'=>'Transects Editor Settings'
         ),
         array(
+          'name'=>'main_type_term_2_manager_only',
+          'caption'=>'Second term manager only',
+          'description'=>'Check if Location type term 2 is only to be available to users with the ' .
+        		'Manager permission when creating a new site. Non managers will still be able to ' .
+        		'edit the sites.',
+          'type' => 'boolean',
+          'required' => false,
+          'group'=>'Transects Editor Settings'
+        ),
+      	array(
           'name'=>'can_change_section_number_2',
           'caption'=>'Change section number 2',
           'description'=>'Select if sites of type 2 can change the number of sections.',
@@ -139,6 +149,16 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
           'group'=>'Transects Editor Settings'
         ),
         array(
+          'name'=>'main_type_term_3_manager_only',
+          'caption'=>'Third term manager only',
+          'description'=>'Check if Location type term 3 is only to be available to users with the ' .
+        		'Manager permission when creating a new site. Non managers will still be able to ' .
+        		'edit the sites.',
+          'type' => 'boolean',
+          'required' => false,
+          'group'=>'Transects Editor Settings'
+        ),
+      	array(
           'name'=>'can_change_section_number_3',
           'caption'=>'Change section number 3',
           'description'=>'Select if sites of type 3 can change the number of sections.',
@@ -152,6 +172,14 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
           'caption'=>'Section number 3',
           'description'=>'If the user can not change the number of sections for site type 3, then enter the fixed number of sections.',
           'type' => 'int',
+          'required' => false,
+          'group'=>'Transects Editor Settings'
+        ),
+        array(
+          'name'=>'display_location_type',
+          'caption'=>'Display location type',
+          'description'=>'Where there is no location_type_id control displayed, check this to display the location type term.',
+          'type' => 'boolean',
           'required' => false,
           'group'=>'Transects Editor Settings'
         ),
@@ -470,8 +498,16 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     $r .= "<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
     $typeTerms = array();
     if(!empty($args['main_type_term_1'])) $typeTerms[] = $args['main_type_term_1'];
-    if(!empty($args['main_type_term_2'])) $typeTerms[] = $args['main_type_term_2'];
-    if(!empty($args['main_type_term_3'])) $typeTerms[] = $args['main_type_term_3'];
+    if(!empty($args['main_type_term_2']) && 
+    		(empty($args['main_type_term_2_manager_only']) ||
+    			!$args['main_type_term_2_manager_only'] ||
+    			(isset($args['managerPermission']) && $args['managerPermission']!="" && hostsite_user_has_permission($args['managerPermission']))))
+    	$typeTerms[] = $args['main_type_term_2'];
+    if(!empty($args['main_type_term_3']) && 
+    		(empty($args['main_type_term_3_manager_only']) ||
+    			!$args['main_type_term_3_manager_only'] ||
+    			(isset($args['managerPermission']) && $args['managerPermission']!="" && hostsite_user_has_permission($args['managerPermission']))))
+    	$typeTerms[] = $args['main_type_term_3'];
     $typeTermIDs = helper_base::get_termlist_terms($auth, 'indicia:location_types', $typeTerms);
     $lookUpValues = array('' => '<' . lang::get('please select') . '>');
     foreach($typeTermIDs as $termDetails){
@@ -480,6 +516,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     // if location is predefined, can not change unless a 'managerPermission'
     $canEditType = !$settings['locationId'] ||
                    (isset($args['managerPermission']) && $args['managerPermission']!= '' && hostsite_user_has_permission($args['managerPermission']));
+    $display_location_type_id = false;
     if($canEditType) {
       if(count($lookUpValues)>2) { // includes the "please select" empty option
         $r .= data_entry_helper::select(array(
@@ -517,9 +554,30 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
   };
   return true;
 });\n";
-      } else if(!$settings['locationId']) {
+      } else if(!$settings['locationId']) { // new site, only one possible value
       	$r .= '<input type="hidden" name="location:location_type_id" id="location:location_type_id" value="'.$typeTermIDs[0]['id'].'" />';
+      	$display_location_type_id = $typeTermIDs[0]['id'];
+      } else {
+      	// else user can edit the location type for an existing site but only one option -> just leave the location_type_id alone: don't even include in the data submitted.
+      	$display_location_type_id = data_entry_helper::$entity_to_load['location:location_type_id'];
       }
+    } else {
+    	// else user can't edit the location_type_id for an existing site -> just leave the location_type_id alone: don't even include in the data submitted.
+      	$display_location_type_id = data_entry_helper::$entity_to_load['location:location_type_id'];
+    }
+    if($display_location_type_id && !empty($args['display_location_type']) && $args['display_location_type']) {
+    	$list = data_entry_helper::get_population_data(array(
+    			'table' => 'termlist',
+    			'extraParams' => $auth['read'] + array('external_key' => 'indicia:location_types')
+    	));
+    	$terms = data_entry_helper::get_population_data(array(
+    			'table' => 'termlists_term',
+    			'extraParams' => $auth['read'] + array(
+    				'view' => 'detail',
+    				'termlist_id' => $list[0]['id'],
+    				'id' => $display_location_type_id)
+    	));
+    	$r .= str_replace('%s', $terms[0]['term'], '<h3>'.lang::get('This site is of type &quot;%s&quot;.').'</h3>');
     }
     if ($settings['locationId'])
       $r .= '<input type="hidden" name="location:id" id="location:id" value="'.$settings['locationId']."\" />\n";
