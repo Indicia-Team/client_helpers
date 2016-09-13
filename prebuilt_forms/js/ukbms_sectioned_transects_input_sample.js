@@ -114,7 +114,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	  								details.tabNum);
 	    });
 	    
-		$('#listSelect1').change(function() {listTypeChange($(this).val(), 'table#transect-input1', false); });
+		$('#listSelect1').change(function() {listTypeChange($(this).val(), 'table#transect-input1', 1); });
 
 		// TODO hide listSelect1 iff full
 		
@@ -597,136 +597,82 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	}
 
 	// Currently hardcoded for list 1 only
-	listTypeChange = function(val, table, initial) {
-		var N = 1;
-		$('#grid'+N+'-loading').show();
-		$('#taxonLookupControlContainer1').show();
-		$(table + ' .table-selected').removeClass('table-selected');
-		$(table + ' .ui-state-active').removeClass('ui-state-active');
-		
-		// first tag all blank rows.
-	    $(table + ' .occs-body tr').removeClass('possibleRemove').each(function(idx, row){
-	    	if($(row).find('input').not(':hidden').not('[value=]').length == 0)
-	    		$(row).addClass('possibleRemove');
-	    });
-	    switch(val){
-	    	case 'full':
-	    		$('#taxonLookupControlContainer1').hide();
-	    		$(table + ' .possibleRemove').removeClass('possibleRemove');
-	    		if(!initial) {
-	    			TaxonData = {
-	    					'taxon_list_id': formOptions.speciesList[N],
-	    					'preferred': 't',
-	    					'auth_token': indiciaData.read.auth_token,
-	    					'nonce': indiciaData.read.nonce,
-	    					'mode': 'json',
-	    					'allow_data_entry': 't',
-	    					'view': 'cache',
-	    					'orderby': 'taxonomic_sort_order'
-	    			};
-	    			if(typeof formOptions.speciesListFilterField[N] != "undefined") {
-	    				query = {"in":{}};
-	    				query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
-	    				TaxonData.query = JSON.stringify(query);
-	    			}
-	    			$.ajax({
-	    				'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
-	    				'data': TaxonData,
-	    				'dataType': 'jsonp',
-	    				'success': function(data) {
-	    					addSpeciesToGrid(data, 'table#transect-input'+N, N);
-	    					// at this point only adding empty rows, so no affect on totals.
-	    					removeTaggedRows('table#transect-input1'); // redoes row classes
-	    					$('#grid'+N+'-loading').hide();
-	    				}
-	    			});
-	    		} else {
-	    			$('#grid'+N+'-loading').hide();
-	    		}
-	    		break;
-	    	case 'common':
-	    		if(typeof formOptions.speciesList1SubsetList != 'undefined') {
-	    			for(var j=0; j<formOptions.speciesList1SubsetList.length; j++){
-	    				addGridRow(formOptions.speciesList1SubsetList[j], 'table#transect-input1', 1);
-	    			}
-	    		}
-	    		removeTaggedRows('table#transect-input1');
-				$('#grid'+N+'-loading').hide();
-	    		break;
-	    	case 'mine':
-	    		if(typeof formOptions.myTaxonMeaningIDs == 'undefined' || formOptions.myTaxonMeaningIDs.length == 0) {
-    				removeTaggedRows('table#transect-input1');
-	    			$('#grid'+N+'-loading').hide();
-    				break;
-	    		}
-	    		TaxonData = {
-	    			'taxon_list_id': formOptions.speciesList[N],
-	    			'preferred': 't',
-	    			'auth_token': indiciaData.read.auth_token,
-	    			'nonce': indiciaData.read.nonce,
-	    			'mode': 'json',
-	    			'allow_data_entry': 't',
-	    			'view': 'cache',
-	    			'orderby': 'taxonomic_sort_order'
-	    		};
-	    		query = {"in":{"taxon_meaning_id":formOptions.myTaxonMeaningIDs}};
-	    		if(typeof formOptions.speciesListFilterField[N] != "undefined") {
-	    			query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
-	    		}
-	    		TaxonData.query = JSON.stringify(query);
-	    		$.ajax({
-	    			'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
-	    			'data': TaxonData,
-	    			'dataType': 'jsonp',
-	    			'success': function(data) {
-	    				addSpeciesToGrid(data, 'table#transect-input'+N, N);
-	    				// at this point only adding empty rows, so no affect on totals.
-	    				removeTaggedRows('table#transect-input1');
-    					$('#grid'+N+'-loading').hide();
-	    			}
-	    		});
-	    		break;
-	    	case 'here':
-	    	default:
-	    		if(!initial) {
-		    		if(formOptions.allTaxonMeaningIDsAtTransect.length == 0) {
-	    				removeTaggedRows('table#transect-input1');
-		    			$('#grid'+N+'-loading').hide();
-	    				break;
-		    		}
-	    			TaxonData = {
-	    					'taxon_list_id': formOptions.speciesList[N],
-	    					'preferred': 't',
-	    					'auth_token': indiciaData.read.auth_token,
-	    					'nonce': indiciaData.read.nonce,
-	    					'mode': 'json',
-	    					'allow_data_entry': 't',
-	    					'view': 'cache',
-	    					'orderby': 'taxonomic_sort_order'
-	    			};
-	    			query = {"in":{"taxon_meaning_id":formOptions.allTaxonMeaningIDsAtTransect}};
-	    			if(typeof formOptions.speciesListFilterField[N] != "undefined") {
-//???	    				query = {"in":{}};
-	    				query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
-	    			}
-	    			TaxonData.query = JSON.stringify(query);
-	    			$.ajax({
-	    				'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
-	    				'data': TaxonData,
-	    				'dataType': 'jsonp',
-	    				'success': function(data) {
-	    					addSpeciesToGrid(data, 'table#transect-input'+N, N);
-	    					// at this point only adding empty rows, so no affect on totals.
-	    					removeTaggedRows('table#transect-input1');
-	    					$('#grid'+N+'-loading').hide();
-	    				}
-	    			});
-	    		} else {
-	    			$(table + ' .possibleRemove').removeClass('possibleRemove');
-	    		}
-	    		break;
-	    }
-	}
+  listTypeChange = function(val, table, N) {
+    var TaxonData = {
+        'taxon_list_id': formOptions.speciesList[N],
+        'preferred': 't',
+        'auth_token': indiciaData.read.auth_token,
+        'nonce': indiciaData.read.nonce,
+        'mode': 'json',
+        'allow_data_entry': 't',
+        'view': 'cache',
+        'orderby': 'taxonomic_sort_order'
+    };
+    var valid = false,
+        query = {"in":{}};
+
+    $('#grid'+N+'-loading').show();
+    $('#taxonLookupControlContainer1').show();
+    $(table + ' .table-selected').removeClass('table-selected');
+    $(table + ' .ui-state-active').removeClass('ui-state-active');
+
+    // first tag all blank rows.
+    $(table + ' .occs-body tr').removeClass('possibleRemove').each(function(idx, row){
+      if($(row).find('input').not(':hidden').not('[value=]').length == 0)
+        $(row).addClass('possibleRemove');
+    });
+
+    if(typeof formOptions.speciesListFilterField[N] != "undefined") {
+      query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
+      // TODO if filter field = taxon_meaning_id , potential clash
+    }
+
+    switch(val){
+      case 'full':
+        valid = true;
+        $('#taxonLookupControlContainer1').hide();
+        $(table + ' .possibleRemove').removeClass('possibleRemove');
+        break;
+      case 'common':
+        if(formOptions.commonTaxonMeaningIDs.length > 0) {
+          valid = true;
+          query["in"]["taxon_meaning_id"] = formOptions.commonTaxonMeaningIDs;
+        }
+        break;
+      case 'mine':
+        if(formOptions.myTaxonMeaningIDs.length > 0) {
+          valid = true;
+          query["in"]["taxon_meaning_id"] = formOptions.myTaxonMeaningIDs;
+        }
+        break;
+      case 'here':
+      default:
+        if(formOptions.allTaxonMeaningIDsAtTransect.length > 0) {
+          valid = true;
+          query["in"]["taxon_meaning_id"] = formOptions.allTaxonMeaningIDsAtTransect;
+        }
+        break;
+    }
+    if(valid) {
+      if(!$.isEmptyObject(query["in"])) {
+        TaxonData.query = JSON.stringify(query);
+      }
+      $.ajax({
+          'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
+          'data': TaxonData,
+          'dataType': 'jsonp',
+          'success': function(data) {
+              addSpeciesToGrid(data, 'table#transect-input'+N, N);
+              // at this point only adding empty rows, so no affect on totals.
+              removeTaggedRows('table#transect-input1'); // redoes row classes
+              $('#grid'+N+'-loading').hide();
+          }
+      });
+    } else {
+      removeTaggedRows(table);
+      $('#grid'+N+'-loading').hide();
+    }
+  }
 
 	//autocompletes assume ID
 	bindSpeciesAutocomplete = function (selectorID, tableSelectorID, url, lookupListId, lookupListFilterField, lookupListFilterValues, readAuth, duplicateMsg, max, tabIDX) {
