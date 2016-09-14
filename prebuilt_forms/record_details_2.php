@@ -352,7 +352,7 @@ Record ID',
   
 
   /**
-   * Draw Photes section of the page.
+   * Draw Photos section of the page.
    * @return string The output report grid.
    * 
    * @package    Client
@@ -360,24 +360,102 @@ Record ID',
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
-    data_entry_helper::add_resource('fancybox');
     $options = array_merge(array(
-      'itemsPerPage' => 20,
-      'imageSize' => 'thumb',
-      'class' => 'detail-gallery'
+        'itemsPerPage' => 20,
+        'imageSize' => 'thumb',
+        'class' => 'detail-gallery',
+        'title' => lang::get('Photos and Media')
     ), $options);
-    $media = data_entry_helper::get_population_data(array(
-      'table' => 'occurrence_image',
-      'extraParams' => $auth['read'] + array(
-        'occurrence_id'=>$_GET['occurrence_id'],
+    $settings = array(
+        'table' => 'occurrence_image',
+        'key' => 'occurrence_id',
+        'value' => $_GET['occurrence_id']
+    );
+    return self::common_control_photos($auth, $options, $settings);
+  }
+
+  /**
+   * Draw Sample Photos section of the page.
+   * @return string The output report grid.
+   *
+   * @package    Client
+   * @subpackage PrebuiltForms
+   */
+  protected static function get_control_samplephotos($auth, $args, $tabalias, $options) {
+    iform_load_helpers(array('data_entry_helper'));
+    $options = array_merge(array(
+        'itemsPerPage' => 20,
+        'imageSize' => 'thumb',
+        'class' => 'detail-gallery',
+        'title' => lang::get('Sample Photos and Media')
+    ), $options);
+    $occurrence = data_entry_helper::get_population_data(array(
+        'table' => 'occurrence',
+        'extraParams' => $auth['read'] + array('id'=>$_GET['occurrence_id'], 'view'=>'detail'),
+    ));
+    $settings = array(
+        'table' => 'sample_image',
+        'key' => 'sample_id',
+        'value' => $occurrence[0]['sample_id']
+    );
+    return self::common_control_photos($auth, $options, $settings);
+  }
+
+  /**
+   * Draw Parent Samples Photos section of the page.
+   * @return string The output report grid.
+   *
+   * @package    Client
+   * @subpackage PrebuiltForms
+   */
+  protected static function get_control_parentsamplephotos($auth, $args, $tabalias, $options) {
+    iform_load_helpers(array('data_entry_helper'));
+    $options = array_merge(array(
+        'itemsPerPage' => 20,
+        'imageSize' => 'thumb',
+        'class' => 'detail-gallery',
+        'title' => lang::get('Parent Sample Photos and Media')
+      ), $options);
+    $occurrence = data_entry_helper::get_population_data(array(
+        'table' => 'occurrence',
+        'extraParams' => $auth['read'] + array('id'=>$_GET['occurrence_id'], 'view'=>'detail'),
+    ));
+    $sample = data_entry_helper::get_population_data(array(
+        'table' => 'sample',
+        'extraParams' => $auth['read'] + array('id'=>$occurrence[0]['sample_id'], 'view'=>'detail'),
+    ));
+    $settings = array(
+        'table' => 'sample_image',
+        'key' => 'sample_id',
+        'value' => $sample[0]['parent_id']
+    );
+    return self::common_control_photos($auth, $options, $settings);
+  }
+
+  /**
+   * Draws a common control for all photos controls.
+   * @return string The output report grid.
+   *
+   * @package    Client
+   * @subpackage PrebuiltForms
+   */
+  private static function common_control_photos($auth, $options, $settings) {
+    data_entry_helper::add_resource('fancybox');
+    $extraParams = $auth['read'] + array(
         'sharing'=>'reporting',
         'limit' => $options['itemsPerPage']
-      ),
+    );
+    $extraParams[$settings['key']] = $settings['value'];
+    $media = data_entry_helper::get_population_data(array(
+        'table' => $settings['table'],
+        'extraParams' => $extraParams
     ));
-    $r = '<div class="detail-panel" id="detail-panel-photos"><h3>Photos and media</h3><div class="'.$options['class'].'">';
+    $r = '<div class="detail-panel" id="detail-panel-photos"><h3>'.$options['title'].'</h3><div class="'.$options['class'].'">';
     if (empty($media))
-      $r .= '<p>No photos or media files available</p>';
+      $r .= '<p>'.lang::get('No photos or media files available').'</p>';
     else {
+      if(isset($options['helpText']))
+        $r .= '<p>'.$options['helpText'].'</p>';
       $r .= '<ul>';
       $imageFolder = data_entry_helper::get_uploaded_image_folder();
       $firstImage = true;
@@ -392,17 +470,16 @@ Record ID',
         }
         if ($medium['media_type']==='Audio:Local')
           $r .= "<li class=\"gallery-item\"><audio controls " .
-              "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
+                "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
         else
           $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
-              "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
+                "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
       }
       $r .= '</ul>';
     }
     $r .= '</div></div>';
     return $r;
   }
-  
   
   /**
    * Draw Map section of the page.
