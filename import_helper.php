@@ -612,10 +612,12 @@ class import_helper extends helper_base {
     if (isset($response['output'])) {
       $output = json_decode($response['output'], true);
       if (!is_array($output) || !isset($output['problems']))
-        return 'An error occurred during the upload.<br/>'.print_r($response, true);
+        return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, true);
 
       if ($output['problems']!==0) {
-        $r = $output['problems'].' problems were detected during the import. <a href="'.$output['file'].'">Download the records that did not import.</a>';
+        $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
+          lang::get('download_error_file_instructions') .
+          " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
       } else {
         $r = 'The upload was successful.';
       }
