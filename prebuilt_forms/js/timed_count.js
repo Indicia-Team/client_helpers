@@ -13,7 +13,10 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  */
 
-function bindSpeciesAutocomplete(selectorID, target, url, lookupListId, lookupListFilterField, lookupListFilterValues, readAuth, max) {
+var bindSpeciesAutocomplete, initButtons, _getCentroid, getCentroid, processDeleted;
+
+(function ($) {
+bindSpeciesAutocomplete = function (selectorID, target, url, lookupListId, lookupListFilterField, lookupListFilterValues, readAuth, max) {
   // inner function to handle a selection of a taxon from the autocomplete
   var handleSelectedTaxon = function(event, data) {
     var name = $('#'+target).attr('name').split(':');
@@ -109,3 +112,6 @@ processDeleted=function(){
       $('.subSampleDelete').removeAttr('disabled');
   })
 }
+
+
+}) (jQuery);

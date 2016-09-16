@@ -52,7 +52,7 @@ class filter_what extends filter_base {
           'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).')."</p>\n";
     $r .= '<div id="what-tabs">'."\n";
     // data_entry_helper::tab_header breaks inside fancybox. So output manually.
-    $r .= '<ul class="ui-helper-hidden">' .
+    $r .= '<ul>' .
         '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>'.lang::get('Species groups').'</span></a></li>';
     if ($familySortOrder!=='off') {
       $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>'.lang::get('Families and other higher taxa').'</span></a></li>';
@@ -60,8 +60,8 @@ class filter_what extends filter_base {
     } else {
       $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>'.lang::get('Species').'</span></a></li>';
     }
-    $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>'.lang::get('Designations').'</span></a></li>';
-    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>'.lang::get('Level').'</span></a></li>' .
+    $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>'.lang::get('Designations').'</span></a></li>' .
+        '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>'.lang::get('Level').'</span></a></li>' .
         '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>'.lang::get('Other flags').'</span></a></li>' .
         '</ul>';
     $r .= '<div id="species-group-tab">' . "\n";
@@ -108,9 +108,12 @@ class filter_what extends filter_base {
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
       $subListOptions = array(
         'fieldname' => 'higher_taxa_taxon_list_list',
-        'table' => 'cache_taxa_taxon_list',
-        'captionField' => 'taxon',
-        'valueField' => 'id',
+        'autocompleteControl' => 'species_autocomplete',
+        'captionField' => 'searchterm',
+        'captionFieldInEntity' => 'searchterm',
+        'speciesIncludeBothNames' => true,
+        'speciesIncludeTaxonGroup' => true,
+        'valueField' => 'preferred_taxa_taxon_list_id',
         'extraParams' => $baseParams + array(
             'preferred' => 't',
             'query' => '{"where":["taxon_rank_sort_order<=' . $familySortOrder . '"]}'
@@ -126,8 +129,11 @@ class filter_what extends filter_base {
     $rankFilter = $familySortOrder==='off' ? array() : array('query' => '{"where":["(taxon_rank_sort_order>'.$familySortOrder.' or taxon_rank_sort_order is null)"]}');
     $subListOptions = array(
       'fieldname' => 'taxa_taxon_list_list',
-      'table' => 'cache_taxa_taxon_list',
-      'captionField' => 'taxon',
+      'autocompleteControl' => 'species_autocomplete',
+      'captionField' => 'searchterm',
+      'captionFieldInEntity' => 'searchterm',
+      'speciesIncludeBothNames' => true,
+      'speciesIncludeTaxonGroup' => true,
       'valueField' => 'preferred_taxa_taxon_list_id',
       'extraParams' => $baseParams + $rankFilter,
       'addToTable' => false
@@ -281,7 +287,7 @@ class filter_where extends filter_base {
     $this->addProfileLocation($readAuth, 'location', $sitesLevel1);
     $this->addProfileLocation($readAuth, 'location_expertise', $sitesLevel1);
     $this->addProfileLocation($readAuth, 'location_collation', $sitesLevel1);
-    if (!empty($options['personSiteAttrId']) || $options['includeSitesCreatedByUser']) 
+    if (!empty($options['personSiteAttrId']) || $options['includeSitesCreatedByUser'])
       $sitesLevel1['my'] = lang::get('My sites').'...';
     // The JS needs to know which location types are indexed so it can build the correct filter.
     data_entry_helper::$javascript .= "indiciaData.indexedLocationTypeIds=".json_encode($options['indexedLocationTypeIds']).";\n";
@@ -292,7 +298,7 @@ class filter_where extends filter_base {
     ));
     foreach ($locTypes as $locType)
       $sitesLevel1[$locType['id']] = $locType['term'].'...';
-    $r .= '<div id="ctrl-wrap-imp-location" class="form-row ctrl-wrap">';
+    $r .= '<div id="ctrl-wrap-location_list" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select(array(
       'fieldname'=>'site-type',
       'label' => lang::get('Choose an existing site or location'),
@@ -300,13 +306,18 @@ class filter_where extends filter_base {
       'blankText' => '<'.lang::get('Please select').'>',
       'controlWrapTemplate' => 'justControl'
     ));
-    $r .= data_entry_helper::select(array(
-      'fieldname' => 'imp-location',
-      'lookupValues' => array(),
-      'controlWrapTemplate' => 'justControl'
+    $r .= data_entry_helper::sub_list(array(
+      'fieldname' => 'location_list',
+      'controlWrapTemplate' => 'justControl',
+      'table' => 'location',
+      'captionField' => 'name',
+      'valueField' => 'id',
+      'addToTable' => false,
+      'extraParams' => $readAuth
     ));
+
     $r .= '</div></fieldset>';
-    $r .= '<fieldset class="exclusive">';
+    $r .= '<br/><fieldset class="exclusive">';
     $r .= data_entry_helper::text_input(array(
       'label' => lang::get('Or, search for site names containing'),
       'fieldname' => 'location_name'
@@ -690,6 +701,8 @@ class filter_source extends filter_base {
  *     your list of taxon groups in the user account), my-locality (uses your recording locality from the user account),
  *     my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records, queried-records,
  *     answered-records, accepted-records, not-accepted-records.
+ *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard filter
+ *     user interface.
  * @param integer $website_id The current website's warehouse ID.
  * @param string $hiddenStuff Output parameter which will contain the hidden popup HTML that will be shown
  * using fancybox during filter editing. Should be appended AFTER any form element on the page as nested forms are not allowed.
@@ -918,7 +931,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $r .= '<div id="filter-panes">';
   $filters = array();
-  if ($options['entity']==='occurrence') {
+  if(isset($options['generateFilterListCallback'])) {
+    $filters = call_user_func($options['generateFilterListCallback'], $options['entity']);
+  } else if ($options['entity']==='occurrence') {
     $filters = array(
       'filter_what'=>new filter_what(),
       'filter_where'=>new filter_where(),

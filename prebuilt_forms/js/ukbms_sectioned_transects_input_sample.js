@@ -1,842 +1,764 @@
-/**
- * Updates the sample for a section, including attributes.
- */
-function saveSample(code) {
-  var parts, id;
-  jQuery('#smpid').val(indiciaData.samples[code]);
-  jQuery.each(indiciaData.sections, function(idx, section) {
-    if (section.code==code) {
-      // copy the fieldname and value into the sample submission form for each sample custom attribute
-      jQuery.each(jQuery('.smpAttr-' + section.code), function(idx, src) {
-        parts=src.id.split(':');
-        parts.pop();
-        id=parts.join('\\:');
-        jQuery('#'+id).val(jQuery(src).val());
-        jQuery('#'+id).attr('name', jQuery(src).attr('name'));
-      });
-      jQuery('#smpsref').val(section.centroid_sref);
-      jQuery('#smpsref_system').val(section.centroid_sref_system);
-      jQuery('#smploc').val(section.id);
-      jQuery('#smp-form').submit();
-    }
-  });
-}
+//Javascript functions using jQuery now need to be defined inside a "(function ($) { }) (jQuery);" wrapper.
+//This means they cannot normally be seen by the outside world, so in order to make a call to one of these 
+//functions, we need to assign it to a global variable.
 
-jQuery(document).ready(function() {
-  jQuery('#imp-location').change(function(evt) {
-    jQuery('#entered_sref').val(indiciaData.sites[evt.target.value].centroid_sref);
-    jQuery('#entered_sref_system').val(indiciaData.sites[evt.target.value].centroid_sref_system);
-  });
-});
+var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
+	formOptions;
 
-function getTotal(cell) {
-  var row=jQuery(cell).parents('tr:first')[0];
-  var table=jQuery(cell).closest('table')[0];
-  // get the total for the row
-  var total=0, cellValue;
-  jQuery.each(jQuery(row).find('.count-input'), function(idx, cell) {
-    cellValue = parseInt(jQuery(cell).val());
-    if (!isNaN(cellValue)) {
-      total += cellValue;
-    }
-  });
-  jQuery(row).find('.row-total').html(total);
-  // get the total for the column
-  var matches = jQuery(cell).parents('td:first')[0].className.match(/col\-\d+/);
-  var colidx = matches[0].substr(4);
-  total = 0;
-  jQuery.each(jQuery(cell).closest('table').find('.occs-body').find('.col-'+colidx+' .count-input'), function(idx, collCell) {
-    cellValue = parseInt(jQuery(collCell).val());
-    if (!isNaN(cellValue)) {
-      total += cellValue;
-    }
-  });
-  jQuery(table).find('td.col-total.col-'+colidx).html(total);
-}
-
-function addSpeciesToGrid(taxonList, speciesTableSelector, force, tabIDX){
-  // this function is given a list of species from the occurrences and if they are in the taxon list
-  // adds them to a table in the order they are in that taxon list
-  // any that are left are swept up by another function.
-  jQuery.each(taxonList, function(idx, species) {
-    var include = force != 'none';
-    jQuery.each(indiciaData.existingOccurrences, function(idx, occ){
-    	// taxonList may or may not be preferred, Occ has both a ttl_id and a preferred
-    	if(occ['taxon_meaning_id'] === species['taxon_meaning_id'])
-    		include = !occ['processed'];
-    });
-    if (include)
-      addGridRow(species, speciesTableSelector, true, tabIDX);
-  });
-}
-
-function addGridRow(species, speciesTableSelector, end, tabIDX){
-  if(jQuery('#row-' + species.taxon_meaning_id).length>0) return;
-  var name, val;
-  if (species.default_common_name!==null) {
-    name = species.default_common_name;
-  } else if (species.preferred_language_iso==='lat') {
-    name = '<em>'+species.taxon+'</em>';
-  } else {
-    name = species.taxon;
-  }
-  var rowCount = jQuery(speciesTableSelector+' tbody').find('tr').length;
-  var rowclass = rowCount%2===0 ? '' : ' class="alt-row"';
-  var row = jQuery('<tr id="row-' + species.taxon_meaning_id + '"' + rowclass + '/>');
-  jQuery('<td'+(name != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '')+'>'+name+'</td>').appendTo(row);
-  var rowTotal = 0;
-  var isNumber = indiciaData.occurrence_attribute_ctrl[tabIDX].attr('class').indexOf('number:true')>=0; // TBD number:true
-  jQuery.each(indiciaData.sections, function(idx, section) {
-    if (typeof section.total==="undefined") {
-      section.total = [];
-    }
-    if (typeof section.total[speciesTableSelector]==="undefined") {
-        section.total[speciesTableSelector]=0;
-    }
-    // find current value if there is one - the key is the combination of sample id and ttl meaning id that an existing value would be stored as
-    var key=indiciaData.samples[section.code] + ':' + species.taxon_meaning_id;
-    var cell = jQuery('<td class="col-'+(idx+1)+(idx % 5 == 0 ? ' first' : '')+'"/>').appendTo(row);
-    // row += '<input class="count-input" id="value:'+species.id+':'+section.code+'" type="text" value="'+val+'" /></td>';
-    // actual control has to be first in cell for cursor keys to work.
-    var myCtrl = indiciaData.occurrence_attribute_ctrl[tabIDX].clone();
-    myCtrl.appendTo(cell);
-    if (typeof indiciaData.existingOccurrences[key]!=="undefined") {
-      indiciaData.existingOccurrences[key]['processed']=true;
-      val = indiciaData.existingOccurrences[key]['value_'+indiciaData.occurrence_attribute[tabIDX]] === null ? '' : indiciaData.existingOccurrences[key]['value_'+indiciaData.occurrence_attribute[tabIDX]];
-      if (isNumber && val!=='') {
-        rowTotal += parseInt(val);
-        section.total[speciesTableSelector] += parseInt(val);
-      }
-      // need to use existing species ttlid (which may or may not be preferred)
-      myCtrl.attr('id', 'value:'+indiciaData.existingOccurrences[key]['ttl_id']+':'+section.code).attr('name', '');
-      jQuery('<input type="hidden" id="value:'+indiciaData.existingOccurrences[key]['ttl_id']+':'+section.code+':attrId" value="'+indiciaData.occurrence_attribute[tabIDX]+'"/>').appendTo(cell);
-      // store the ids of the occurrence and attribute we loaded, so future changes to the cell can overwrite the existing records
-      jQuery('<input type="hidden" id="value:'+indiciaData.existingOccurrences[key]['ttl_id']+':'+section.code+':id" value="'+indiciaData.existingOccurrences[key]['o_id']+'"/>').appendTo(cell);
-      jQuery('<input type="hidden" id="value:'+indiciaData.existingOccurrences[key]['ttl_id']+':'+section.code+':attrValId" value="'+indiciaData.existingOccurrences[key]['a_id_'+indiciaData.occurrence_attribute[tabIDX]]+'"/>').appendTo(cell);
-    } else {
-      // this is always the preferred when generated from full list, may be either if from autocomplete.
-      myCtrl.attr('id', 'value:'+species.id+':'+section.code).attr('name', '');
-      jQuery('<input type="hidden" id="value:'+species.id+':'+section.code+':attrId" value="'+indiciaData.occurrence_attribute[tabIDX]+'"/>').appendTo(cell);
-      val='';
-    }
-    if(isNumber) myCtrl.addClass('count-input');
-    else myCtrl.addClass('non-count-input');
-    myCtrl.val(val);
-  });
-  if(isNumber) jQuery('<td class="row-total first">'+rowTotal+'</td>').appendTo(row);
-  if(end) {
-    jQuery(speciesTableSelector+' tbody.occs-body').append(row);
-  } else {
-    jQuery(speciesTableSelector+' tbody.occs-body').prepend(row);
-  }
-  row.find('.count-input').keydown(count_keydown).focus(count_focus).change(input_change).blur(input_blur);
-  row.find('input.non-count-input').keydown(count_keydown).focus(count_focus).change(input_change).blur(input_blur);
-  row.find('select.non-count-input').focus(count_focus).change(select_change);
-  indiciaData.existingOccurrences[':' + species.taxon_meaning_id] = {'processed' : true, 'taxon_meaning_id' : ''+species.taxon_meaning_id};
-}
-
-function smp_keydown(evt) {
-  var targetRow = [], targetInput=[], code, parts=evt.target.id.split(':'), type='smpAttr';
-  code=parts[2];
-  if (evt.keyCode===13 || evt.keyCode===40) {
-    targetRow = jQuery(evt.target).parents('tr').next('tr');
-    if (targetRow.length===0) {
-      // moving out of sample attributes area into next tbody for counts
-      targetRow = jQuery(evt.target).parents('tbody').next('tbody').find('tr:first');
-      type='value';
-    }
-    if (targetRow.length>0) {
-      targetInput = targetRow.find('input[id^='+type+'\\:][id$=\\:'+code+']');
-    }
-  }
-
-  if (evt.keyCode===39 && evt.target.selectionEnd >= evt.target.value.length) {
-    targetInput = jQuery(evt.target).parents('td').next('td').find('input');
-    if (targetInput.length===0) {
-      // end of row, so move down to next if there is one
-      targetRow = jQuery(evt.target).parents('tr').next('tr');
-      if (targetRow.length===0) {
-        // moving out of sample attributes area into next tbody for counts
-        targetRow = jQuery(evt.target).parents('tbody').next('tbody').find('tr:first');
-      }
-      if (targetRow.length>0) {
-        targetInput = targetRow.find('input:visible:first');
-      }
-    }
-  }
-  // left arrow - move to previous cell if at start of text
-  if (evt.keyCode===37 && evt.target.selectionStart === 0) {
-    targetInput = jQuery(evt.target).parents('td').prev('td').find('input');
-    if (targetInput.length===0) {
-      // before start of row, so move up to previous if there is one
-      targetRow = jQuery(evt.target).parents('tr').prev('tr');
-      if (targetRow.length>0) {
-        targetInput = targetRow.find('input:visible:last');
-      }
-    }
-  }
-  if (targetInput.length > 0) {
-    jQuery(targetInput).get()[0].focus();
-    return false;
-  }
-}
-
-// Not all events can be bound using live() - which is deprecated for later versions of jQuery anyway.
-// Define event handlers.
-// TBC this should be OK to use as is.
-function count_keydown (evt) {
-  var targetRow = [], targetInput=[], code, parts=evt.target.id.split(':'), type='value';
-  code=parts[2]; // holds the section code
-
-  // down arrow or enter key
-  if (evt.keyCode===13 || evt.keyCode===40) {
-    targetRow = jQuery(evt.target).parents('tr').next('tr');
-  }
-  // up arrow
-  if (evt.keyCode===38) {
-    targetRow = jQuery(evt.target).parents('tr').prev('tr');
-    if (targetRow.length===0) {
-      // moving out of counts area into previous tbody for sample attributes
-      targetRow = jQuery(evt.target).parents('tbody').prev('tbody').find('tr:last');
-      type='smpAttr';
-    }
-  }
-  if (targetRow.length>0) {
-    targetInput = targetRow.find('input[id^='+type+'\:][id$=\:'+code+']');
-  }
-  // right arrow - move to next cell if at end of text
-  if (evt.keyCode===39 && evt.target.selectionEnd >= evt.target.value.length) {
-    targetInput = jQuery(evt.target).parents('td').next('td').find('input');
-    if (targetInput.length===0) {
-      // end of row, so move down to next if there is one
-      targetRow = jQuery(evt.target).parents('tr').next('tr');
-      if (targetRow.length>0) {
-        targetInput = targetRow.find('input:visible:first');
-      }
-    }
-  }
-  // left arrow - move to previous cell if at start of text
-  if (evt.keyCode===37 && evt.target.selectionStart === 0) {
-    targetInput = jQuery(evt.target).parents('td').prev('td').find('input');
-    if (targetInput.length===0) {
-      // before start of row, so move up to previous if there is one
-      targetRow = jQuery(evt.target).parents('tr').prev('tr');
-      if (targetRow.length===0) {
-        // moving out of counts area into previous tbody for sample attributes
-        targetRow = jQuery(evt.target).parents('tbody').prev('tbody').find('tr:last');
-      }
-      if (targetRow.length>0) {
-        targetInput = targetRow.find('input:visible:last');
-      }
-    }
-  }
-  if (targetInput.length > 0) {
-    jQuery(targetInput).get()[0].focus();
-    return false;
-  }
-};
-
-function count_focus (evt) {
-  // select the row
-  var matches = jQuery(evt.target).parents('td:first')[0].className.match(/col\-\d+/);
-  var colidx = matches[0].substr(4);
-  jQuery(evt.target).parents('table:first').find('.table-selected').removeClass('table-selected');
-  jQuery(evt.target).parents('table:first').find('.ui-state-active').removeClass('ui-state-active');
-  jQuery(evt.target).parents('tr:first').addClass('table-selected');
-  jQuery(evt.target).parents('table:first').find('tbody .col-'+colidx).addClass('table-selected');
-  jQuery(evt.target).parents('table:first').find('thead .col-'+colidx).addClass('ui-state-active');
-};
-
-function input_change (evt) {
-  jQuery(evt.target).addClass('edited');
-};
-
-function select_change (evt) {
-  jQuery(evt.target).addClass('edited');
-  input_blur(evt);
-};
-
-function input_blur (evt) {
-  var selector = '#'+evt.target.id.replace(/:/g, '\\:');
-  indiciaData.currentCell = evt.target.id;
-  getTotal(evt.target);
-  if (jQuery(selector).hasClass('edited')) {
-    jQuery(selector).addClass('saving');
-    if (jQuery(selector).hasClass('count-input')) {
-      // check for number input - don't post if not a number
-      if (!jQuery(selector).val().match(/^[0-9]*$/)) {
-        alert('Please enter a valid number - '+evt.target.id);
-        // use a timer, as refocus during blur not reliable.
-        setTimeout("jQuery('#"+evt.target.id+"').focus(); jQuery('#"+evt.target.id+"').select()", 100);
-        return;
-      }
-    } else {
-      jQuery(selector).val(jQuery(selector).val().toUpperCase());
-    }
-    if (jQuery(selector).hasClass('count-input') || jQuery(selector).hasClass('non-count-input')) {
-      // need to save the occurrence for the current cell
-      // set the taxa_taxon_list_id, which we can extract from part of the id of the input.
-      var parts=evt.target.id.split(':');
-      jQuery('#ttlid').val(parts[1]);
-      if (typeof indiciaData.samples[parts[2]] !== "undefined") {
-        jQuery('#occ_sampleid').val(indiciaData.samples[parts[2]]);
-      } else {
-        alert('Occurrence could not be saved because of a missing sample ID');
-        return;
-      }
-
-      // store the actual abundance value we want to save.
-      jQuery('#occzero').val('f');
-      jQuery('#occdeleted').val('f');
-      if (jQuery(selector).val()==='0') {
-        jQuery('#occzero').val('t');
-      }
-      if (jQuery(selector).val()==='') {
-        jQuery('#occdeleted').val('t');
-        jQuery('#occattr').val('0');
-      } else {
-        jQuery('#occattr').val(jQuery(selector).val());
-      }
-      // does this cell already have an occurrence?
-      if (jQuery(selector +'\\:id').length>0) {
-        jQuery('#occid').val(jQuery(selector +'\\:id').val());
-        jQuery('#occid').attr('disabled', false);
-        jQuery('#occSensitive').attr('disabled', true); // existing ID - leave sensitivity as is
-      } else {
-        // if no existing occurrence, we must not post the occurrence:id field.
-        jQuery('#occid').attr('disabled', true);
-        jQuery('#occSensitive').attr('disabled', false); // new data - use location sensitivity
-      }
-      if (jQuery(selector +'\\:attrValId').length===0) {
-        // by setting the attribute field name to occAttr:n where n is the occurrence attribute id, we will get a new one
-        jQuery('#occattr').attr('name', 'occAttr:' + jQuery(selector +'\\:attrId').val());
-      } else {
-        // by setting the attribute field name to occAttr:n:m where m is the occurrence attribute value id, we will update the existing one
-        jQuery('#occattr').attr('name', 'occAttr:' + jQuery(selector +'\\:attrId').val() + ':' + jQuery(selector +'\\:attrValId').val());
-      }
-      // store the current cell's ID as a transaction ID, so we know which cell we were updating.
-      jQuery('#transaction_id').val(evt.target.id);
-      if (jQuery(selector +'\\:id').length>0 || jQuery('#occdeleted').val()==='f') {
-        jQuery('#occ-form').submit();
-      }
-      // if deleting, then must remove the occurrence ID
-      if (jQuery('#occdeleted').val()==='t') {
-        jQuery(selector +'\\:id').remove();
-        jQuery(selector +'\\:attrValId').remove();
-      }
-    } else if (jQuery(selector).hasClass('smp-input')) {
-      // change to just a sample attribute.
-      var parts=evt.target.id.split(':');
-      saveSample(parts[2]);
-    }
-  }
-};
-
-function loadSpeciesList() {
-  // redo alt-row classes
-  var redo_alt_row = function (table) {
-    var rowCount = 0;
-    jQuery(table + ' tbody').find('tr').each(function(){
-      if(rowCount%2===0)
-        jQuery(this).removeClass('alt-row');
-      else
-        jQuery(this).addClass('alt-row');
-      rowCount++;
-    });
-  }
-
-  indiciaData.currentCell=null;
-  // first add any data recorded, then populate the tables with any blank rows required. There is a hierarchy: if data is in more than one species list, it is added 
-  // to the first grid it appears in.
-  // note that when added from the list, the ttlid is the preferred one, but if added from the autocomplete it may/probably
-  // will not be.
-  addSpeciesToGrid(indiciaData.speciesList1List, 'table#transect-input1', true, 1); // need to populate all the entries on front: could have one not on common list
-  // get all taxon meanings recorded on this transect
-  var process2 = function () {
-    var process3 = function () {
-      var process4 = function () {
-        if(indiciaData.speciesList4>0){
-          var TaxonData = {
-                'taxon_list_id': indiciaData.speciesList4,
-                'preferred': 't',
-                'auth_token': indiciaData.readAuth.auth_token,
-                'nonce': indiciaData.readAuth.nonce,
-                'mode': 'json',
-                'allow_data_entry': 't',
-                'view': 'cache',
-                'orderby': 'taxonomic_sort_order'
-          };
-          var query = {};
-          if(indiciaData.speciesList4Force != 'full')
-            query = {"in":{"taxon_meaning_id":indiciaData.allTaxonMeaningIdsAtTransect}};
-          if(typeof indiciaData.speciesList4FilterField != "undefined") {
-            if(typeof query['in'] == 'undefined') query = {"in":{}};
-            query['in'][indiciaData.speciesList4FilterField] = indiciaData.speciesList4FilterValues;
-          }
-          TaxonData.query = JSON.stringify(query);
-          jQuery.ajax({
-                'url': indiciaData.indiciaSvc+'index.php/services/data/taxa_taxon_list',
-                'data': TaxonData,
-                'dataType': 'jsonp',
-                'success': function(data) {
-              addSpeciesToGrid(data, 'table#transect-input4', indiciaData.speciesList4Force, 4);
-              // copy across the col totals
-              jQuery.each(indiciaData.sections, function(idx, section) {
-                jQuery('table#transect-input4 tfoot .col-total.col-'+(idx+1)).html(typeof section.total['table#transect-input4']==="undefined" ? 0 : section.total['table#transect-input4']);
-              });
-              jQuery('#grid4-loading').remove();
-            }
-          });
+(function ($) {
+	setUpSamplesForm = function (options) {
+		formOptions = options;
+		
+        if(typeof formOptions.recorderNameAttrID != 'undefined') {
+        	bindRecorderNameAutocomplete(formOptions.recorderNameAttrID, formOptions.userID, indiciaData.warehouseUrl, formOptions.surveyID, indiciaData.read.auth_token, indiciaData.read.nonce);
         }
-      }; // end of function process4
-      if(indiciaData.speciesList3>0){
-        var TaxonData = {
-              'taxon_list_id': indiciaData.speciesList3,
-              'preferred': 't',
-              'auth_token': indiciaData.readAuth.auth_token,
-              'nonce': indiciaData.readAuth.nonce,
-              'mode': 'json',
-              'allow_data_entry': 't',
-              'view': 'cache',
-              'orderby': 'taxonomic_sort_order'
-        };
-        var query = {};
-        if(indiciaData.speciesList3Force != 'full')
-          query = {"in":{"taxon_meaning_id":indiciaData.allTaxonMeaningIdsAtTransect}};
-        if(typeof indiciaData.speciesList3FilterField != "undefined") {
-          if(typeof query['in'] == 'undefined') query = {"in":{}};
-          query['in'][indiciaData.speciesList3FilterField] = indiciaData.speciesList3FilterValues;
-        }
-        TaxonData.query = JSON.stringify(query);
-        jQuery.ajax({
-              'url': indiciaData.indiciaSvc+'index.php/services/data/taxa_taxon_list',
-              'data': TaxonData,
-              'dataType': 'jsonp',
-              'success': function(data) {
-            addSpeciesToGrid(data, 'table#transect-input3', indiciaData.speciesList3Force, 3);
-            // copy across the col totals
-            jQuery.each(indiciaData.sections, function(idx, section) {
-              jQuery('table#transect-input3 tfoot .col-total.col-'+(idx+1)).html(typeof section.total['table#transect-input3']==="undefined" ? 0 : section.total['table#transect-input3']);
-            });
-            jQuery('#grid3-loading').remove();
-            process4();
-          }
+
+        $('#imp-location').change(function(evt) {
+        	$('#entered_sref').val(formOptions.sites[evt.target.value].centroid_sref);
+        	$('#entered_sref_system').val(formOptions.sites[evt.target.value].centroid_sref_system);
+        	if(formOptions['finishedAttrID'])
+        	  checkFinishedStatus();
         });
-      } else process4();
-    }; // end of function process3
-    if(indiciaData.speciesList2>0){
-      var TaxonData = {
-            'taxon_list_id': indiciaData.speciesList2,
-            'preferred': 't',
-            'auth_token': indiciaData.readAuth.auth_token,
-            'nonce': indiciaData.readAuth.nonce,
-            'mode': 'json',
-            'allow_data_entry': 't',
-            'view': 'cache',
-            'orderby': 'taxonomic_sort_order'
-      };
-      var query = {};
-      if(indiciaData.speciesList2Force != 'full')
-        query = {"in":{"taxon_meaning_id":indiciaData.allTaxonMeaningIdsAtTransect}};
-      if(typeof indiciaData.speciesList2FilterField != "undefined") {
-        if(typeof query['in'] == 'undefined') query = {"in":{}};
-        query['in'][indiciaData.speciesList2FilterField] = indiciaData.speciesList2FilterValues;
-      }
-      TaxonData.query = JSON.stringify(query);
-      jQuery.ajax({
-            'url': indiciaData.indiciaSvc+'index.php/services/data/taxa_taxon_list',
-            'data': TaxonData,
-            'dataType': 'jsonp',
-            'success': function(data) {
-          addSpeciesToGrid(data, 'table#transect-input2', indiciaData.speciesList2Force, 2);
-          // copy across the col totals
-          jQuery.each(indiciaData.sections, function(idx, section) {
-            jQuery('table#transect-input2 tfoot .col-total.col-'+(idx+1)).html(typeof section.total['table#transect-input2']==="undefined" ? 0 : section.total['table#transect-input2']);
-          });
-          jQuery('#grid2-loading').remove();
-          process3();
+        if(formOptions['finishedAttrID']) {
+        	$('[name=sample\\:date]').change(function(evt) {
+        	  checkFinishedStatus();
+        	});
+            checkFinishedStatus();
         }
-      });
-    } else process3();
-  }; // end of function process2
 
-  // copy across the col totals
-  jQuery.each(indiciaData.sections, function(idx, section) {
-    jQuery('table#transect-input1 tfoot .col-total.col-'+(idx+1)).html(typeof section.total['table#transect-input1']==="undefined" ? 0 : section.total['table#transect-input1']);
-  });
-  // the main grid is populated with blank rows by the full list by default (the true in the addSpeciesToGrid call)
-  // the other 2 grids are to be populated with rows (blank or otherwise) by whatever has been recorded at this site previously.
-  // Have to have existing meaning ids rloaded and list 1 completed first.
-  process2();
-  jQuery('#listSelect').change(function(evt) {
-    jQuery('#taxonLookupControlContainer').show();
-    jQuery('#listSelectMsg').empty().append('Please Wait...');
-    jQuery('table#transect-input1 .table-selected').removeClass('table-selected');
-    jQuery('table#transect-input1 .ui-state-active').removeClass('ui-state-active');
-    // first remove all blank rows.
-    jQuery('table#transect-input1 .occs-body').find('tr').each(function(idx, row){
-      if(jQuery(row).find('input').not(':hidden').not('[value=]').length == 0)
-        jQuery(row).remove();
+		// allow deletes if delete button is present.
+		$('#delete-button').click(function(){
+			if(confirm(formOptions.deleteConfirm)){
+					$('#delete-form').submit();
+			} // else do nothing.
+		});
+
+	}
+	
+	checkFinishedStatus = function () {
+		$('#finishedMessage').hide();
+		if(formOptions['finishedAttrID'] && $('[name=sample\\:location_id]').val() !== "" && $('[name=sample\\:date]').val() !== "") {
+			$('#finishedMessageYear').html($('[name=sample\\:date]').val().substring(6,10));
+			// Look up all samples for the location
+			$.getJSON(indiciaData.warehouseUrl + "index.php/services/data/sample" +
+					"?mode=json&view=detail&location_id=" + $('[name=sample\\:location_id]').val() +
+					"&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce +
+					"&callback=?&columns=id,display_date", function(sdata) {
+				if(sdata.length === 0) return;
+				var thisYearsSamples = [];
+				var currentSampleYear = $('[name=sample\\:date]').val().substring(6,10);
+				$.each(sdata, function(idx, sample) {
+					if(sample.display_date.substring(0,4) == currentSampleYear)
+						thisYearsSamples.push(sample.id);
+				});
+				if(thisYearsSamples.length === 0) return;
+    			var query = {"in":{"sample_id":thisYearsSamples}};
+				$.getJSON(indiciaData.warehouseUrl + "index.php/services/data/sample_attribute_value" +
+						"?mode=json&view=list" +
+		    			"&query=" + JSON.stringify(query) +
+		    			"&sample_attribute_id=" + formOptions['finishedAttrID'] +
+						"&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce +
+						"&callback=?", function(adata) {
+					if(adata.length === 0) return;
+					$.each(adata, function(idx, attr) {
+						if(attr.id != null)
+							$('#finishedMessage').show();
+					});
+				});				
+			});
+
+		}
+	}
+
+	setUpOccurrencesForm = function (options) {
+		formOptions = options;
+		indiciaData.currentCell=null;
+		
+		$.each(formOptions.sections, function(idx, section) {
+			if (typeof section.total==="undefined") {
+				section.total = [];
+			}
+		});
+		
+	    // Do an AJAX population of the grid rows.
+		process(1);
+
+	    $('.smp-input').keydown(smp_keydown).change(input_change).blur(input_blur).focus(general_focus);
+
+	    indiciaFns.bindTabsActivate($('#tabs'), function(event, ui) {
+	    	var target = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];;
+	    	// first get rid of any previous tables
+	    	$('table.sticky-header').remove();
+	    	$('table.sticky-enabled thead.tableHeader-processed').removeClass('tableHeader-processed');
+	    	$('table.sticky-enabled.tableheader-processed').removeClass('tableheader-processed');
+	    	$('table.species-grid.sticky-enabled').removeClass('sticky-enabled');
+	    	var table = $('#'+target.id+' table.species-grid');
+	    	if(table.length > 0) {
+	    		table.addClass('sticky-enabled');
+	    		Drupal.behaviors.tableHeader.attach(table.parent()); // Drupal 7
+	    	}
+	    	// remove any hanging autocomplete select list.
+	    	$('.ac_results').hide();
+	    });
+	    
+	    $.each(formOptions.autoCompletes, function(idx, details){
+	  		bindSpeciesAutocomplete('taxonLookupControl'+details.tabNum,
+	  								'table#transect-input'+details.tabNum,
+	  								indiciaData.warehouseUrl+'index.php/services/data',
+	  								formOptions.speciesList[details.tabNum],
+	  								formOptions.speciesListFilterField[details.tabNum],
+	  								formOptions.speciesListFilterValues[details.tabNum],
+	  								{"auth_token" : indiciaData.read.auth_token, "nonce" : indiciaData.read.nonce},
+	  								formOptions.duplicateTaxonMessage,
+	  								25,
+	  								details.tabNum);
+	    });
+	    
+		$('#listSelect1').change(function() {listTypeChange($(this).val(), 'table#transect-input1', 1); });
+
+		// TODO hide listSelect1 iff full
+		
+		$('#occ-form').ajaxForm({
+			async: true,
+			dataType:  'json',
+			success:   function(data, status, form){
+				var deletion = data.transaction_id.match(/:deleted$/),
+					transaction_id = data.transaction_id.replace(/:deleted$/, ''),
+					selector = '#'+transaction_id.replace(/:/g, '\\:');
+				$(selector).removeClass('saving');
+				if (checkErrors(data)) {
+					if(!deletion) { // if we are deleting the entry then we do not want to add the id and attrValId fields (they will have just been removed!)
+						if ($(selector +'\\:id').length===0) {
+							// this is a new occurrence, so keep a note of the id in a hidden input
+							$(selector).after('<input type="hidden" id="'+transaction_id +':id" value="'+data.outer_id+'"/>');
+						}
+						if ($(selector +'\\:attrValId').length===0) {
+							// this is a new attribute, so keep a note of the id in a hidden input
+							$(selector).after('<input type="hidden" id="'+transaction_id +':attrValId" value="'+data.struct.children[0].id+'"/>');
+						}
+					}
+					$(selector).removeClass('edited');
+				}
+			}
+		});
+
+		$('#smp-form').ajaxForm({
+			async: false, // must be synchronous, otherwise currentCell could change.
+			dataType:  'json',
+			complete: function() {
+				var selector = '#'+indiciaData.currentCell.replace(/:/g, '\\:');
+				$(selector).removeClass('saving');
+			},
+			success: function(data){
+				if (checkErrors(data)) {
+					// get the sample code from the id of the cell we are editing.
+					var parts = indiciaData.currentCell.split(':');
+					// we cant just check if we are going to create new attributes and fetch in this case to get the attribute ids -
+					// there is a possibility we have actually deleted an existing attribute, in which the id must be removed. This can only be
+					// found out by going to the database. We can't keep using the deleted attribute as it stays deleted (ie does not undelete)
+					// if a new value is saved into it.
+					$.each($('.smpAttr-'+parts[2]), function(idx, input) {
+						// an attr value that is not saved yet is of form smpAttr:attrId, whereas one that is saved
+						// is of form smpAttr:attrId:attrValId. Wo we can count colons to know if it exists already.
+						if ($(input).attr('name').split(':').length<=2) {
+							$(input).removeClass('edited'); // deliberately left in place for changed old attributes.
+						}
+					});
+					// We need to copy over the information so that future changes update the existing record rather than
+					// create new ones, or creates a new one if we have deleted the attribute
+					// The response from the warehouse (data parameter) only includes the IDs of the attributes it created.
+					// We need all the attributes.
+					$.getJSON(indiciaData.warehouseUrl + "index.php/services/data/sample_attribute_value" +
+							"?mode=json&view=list&sample_id=" + data.outer_id + "&auth_token=" + indiciaData.read.auth_token + "&nonce=" + indiciaData.read.nonce + "&callback=?", function(data) {
+						// There is a possibility that we have just deleted an attribute (in which case it will not be in the data), so reset all the names first.
+						$.each(data, function(idx, attr) {
+							$('#smpAttr\\:'+attr.sample_attribute_id+'\\:'+parts[2]).attr('name', 'smpAttr:'+attr.sample_attribute_id+(parseInt(attr.id)==attr.id ? ':'+attr.id : ''));
+							// we know - parts[2] = S2
+							// attr.sample_attribute_id & attr.id
+							// src control id=smpAttr:1:S2 (smpAttr:sample_attribute_id:sectioncode)
+							// need to change src control name to
+						});
+					});
+				}
+			}
+		});
+
+	    if(formOptions['finishedAttrID']) {
+    		$('.smp-finish').click(finishSample);
+    		$('#finished-form').ajaxForm({
+    			async: false,
+    			dataType:  'json',
+    			success: function(data){
+    				window.location.href = formOptions['return_page'];
+    			}
+    		});
+	    }
+	}
+
+	/**
+	 * Updates the main supersample, setting the finished attribute to true.
+	 */
+	finishSample = function () {
+		$('#finished-form').submit();
+	}
+
+	/**
+	 * Updates the sample for a section, including attributes.
+	 */
+	saveSample = function (code) {
+		var parts, id;
+		$('#smpid').val(formOptions.subSamples[code]);
+		$.each(formOptions.sections, function(idx, section) {
+			if (section.code == code) {
+				// copy the fieldname and value into the sample submission form for each sample custom attribute
+				$('.smpAttr-' + section.code).each(function() {
+					parts=this.id.split(':');
+					parts.pop();
+					id=parts.join('\\:');
+					$('#'+id).val($(this).val());
+					$('#'+id).attr('name', $(this).attr('name'));
+					$(this).closest('td').find('.ui-state-error').removeClass('ui-state-error');
+					$(this).closest('td').find('.inline-error').remove();
+					if($(this).val()=='') {
+						$(this).addClass('ui-state-error').after('<p htmlfor="' + $(this).attr('id') + '" class="inline-error">' + formOptions.requiredMessage + '</p>');
+					}
+				});
+				$('#smpsref').val(section.centroid_sref);
+				$('#smpsref_system').val(section.centroid_sref_system);
+				$('#smploc').val(section.id);
+				if($('.smpAttr-' + section.code).closest('td').find('.ui-state-error').length == 0)
+					$('#smp-form').submit();
+			}
+		});
+	}
+
+	saveOccurrence = function (selector, ttlID, ssampleID, targetID) {
+		// fill in occurrence stub form
+		$('#ttlid').val(ttlID);
+		$('#occ_sampleid').val(ssampleID);
+		// store the actual abundance value we want to save.
+		$('#occattr').val($(selector).val()==='' ? 0 : $(selector).val());
+		$('#occzero').val($(selector).val()==='0' ? 't' : 'f');
+		$('#occdeleted').val($(selector).val()==='' ? 't' : 'f');
+		// does this cell already have an occurrence? if no existing occurrence, we must not post the occurrence:id field.
+		$('#occid').attr('disabled', ($(selector +'\\:id').length == 0)).val($(selector +'\\:id').length == 0 ? '' : $(selector +'\\:id').val());
+		$('#occSensitive').attr('disabled', $(selector +'\\:id').length>0); // existing ID - leave sensitivity as is, new data - use location sensitivity
+		// by setting the attribute field name to occAttr:n where n is the occurrence attribute id, we will get a new one
+		// by setting the attribute field name to occAttr:n:m where m is the occurrence attribute value id, we will update the existing one
+		$('#occattr').attr('name', 'occAttr:' + $(selector +'\\:attrId').val() + ($(selector +'\\:attrValId').length===0 ? '' : ':' + $(selector +'\\:attrValId').val()));
+		// Store the current cell's ID as a transaction ID, so we know which cell we were updating. Adds a tag if this is a deletion
+		// so we can handle deletion logic properly when the post returns
+		var transactionId =  targetID + ($(selector).val()==='0' ? ':deleted' : '');
+		$('#transaction_id').val(transactionId);
+		if ($(selector +'\\:id').length>0 || $('#occdeleted').val()==='f') {
+			$('#occ-form').submit();
+		}
+		// if deleting, then must remove the occurrence and value IDs
+		if ($('#occdeleted').val()==='t') {
+			$(selector +'\\:id,'+ selector +'\\:attrValId').remove();
+		}
+	}
+
+	getTotal = function (cell) {
+		var row = $(cell).parents('tr:first')[0];
+		var table = $(cell).closest('table')[0];
+		// get the total for the row
+		var total=0, cellValue;
+		$(row).find('.count-input').each(function() {
+			cellValue = parseInt($(this).val());
+			total += isNaN(cellValue) ? 0 : cellValue;
+		});
+		$(row).find('.row-total').html(total);
+
+		// get the total for the column
+		var matches = $(cell).parents('td:first')[0].className.match(/col\-\d+/);
+		var colidx = matches[0].substr(4);
+		total = 0;
+		$(cell).closest('table').find('.occs-body').find('.col-'+colidx+' .count-input').each(function() {
+			cellValue = parseInt($(this).val());
+			total += isNaN(cellValue) ? 0 : cellValue;
+		});
+		$(table).find('td.col-total.col-'+colidx).html(total);
+	}
+
+	addSpeciesToGrid  = function (taxonList, speciesTableSelector, tabIDX){
+		// this function is given a list of species from the occurrences and if they are in the taxon list
+		// adds them to a table in the order they are in that taxon list
+		// any that are left are swept up by another function.
+		$.each(taxonList, function(idx, species) {
+			addGridRow(species, speciesTableSelector, tabIDX);
+		});
+	}
+	
+	addGridRow = function (species, speciesTableSelector, tabIDX){
+		var name, row, isNumber, rowTotal = 0;
+
+		if($('#row-' + species.taxon_meaning_id).length>0) {
+			$('#row-' + species.taxon_meaning_id).removeClass('possibleRemove');
+			return;
+		}
+		
+		name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
+		row = $('<tr id="row-' + species.taxon_meaning_id + '"' + (($(speciesTableSelector+' tbody').find('tr').length)%2===0 ? '' : ' class="alt-row"') + '><td'+(name != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '')+'>'+name+'</td></tr>');
+		isNumber = formOptions.occurrence_attribute_ctrl[tabIDX].indexOf('number:true')>=0; // TBD number:true
+		$.each(formOptions.sections, function(idx, section) {
+			var key, cell, myCtrl, val = '';
+
+			if (typeof section.total[speciesTableSelector]==="undefined") {
+				section.total[speciesTableSelector]=0;
+			}
+			// find current value if there is one - the key is the combination of sample id and ttl meaning id that an existing value would be stored as
+			key=formOptions.subSamples[section.code] + ':' + species.taxon_meaning_id;
+			cell = $('<td class="col-'+(idx+1)+(idx % 5 == 0 ? ' first' : '')+'"/>').appendTo(row);
+			// actual control has to be first in cell for cursor keys to work.
+			myCtrl = $(formOptions.occurrence_attribute_ctrl[tabIDX]).attr('name', '').appendTo(cell);
+			if (typeof formOptions.existingOccurrences[key]!=="undefined") {
+				formOptions.existingOccurrences[key]['processed']=true;
+				val = formOptions.existingOccurrences[key]['value_'+formOptions.occurrence_attribute[tabIDX]] === null ? '' : formOptions.existingOccurrences[key]['value_'+formOptions.occurrence_attribute[tabIDX]];
+				rowTotal += (isNumber && val!=='' ? parseInt(val) : 0);
+				section.total[speciesTableSelector] += (isNumber && val!=='' ? parseInt(val) : 0);
+				// need to use existing species ttlid (which may or may not be preferred)
+				myCtrl.attr('id', 'value:'+formOptions.existingOccurrences[key]['ttl_id']+':'+section.code);
+				$('<input type="hidden" id="value:'+formOptions.existingOccurrences[key]['ttl_id']+':'+section.code+':attrId" value="'+formOptions.occurrence_attribute[tabIDX]+'"/>').appendTo(cell);
+				// store the ids of the occurrence and attribute we loaded, so future changes to the cell can overwrite the existing records
+				$('<input type="hidden" id="value:'+formOptions.existingOccurrences[key]['ttl_id']+':'+section.code+':id" value="'+formOptions.existingOccurrences[key]['o_id']+'"/>').appendTo(cell);
+				$('<input type="hidden" id="value:'+formOptions.existingOccurrences[key]['ttl_id']+':'+section.code+':attrValId" value="'+formOptions.existingOccurrences[key]['a_id_'+formOptions.occurrence_attribute[tabIDX]]+'"/>').appendTo(cell);
+			} else {
+				// this is always the preferred when generated from full list, may be either if from autocomplete.
+				myCtrl.attr('id', 'value:'+species.id+':'+section.code);
+				$('<input type="hidden" id="value:'+species.id+':'+section.code+':attrId" value="'+formOptions.occurrence_attribute[tabIDX]+'"/>').appendTo(cell);
+			}
+			myCtrl.addClass((isNumber ? 'count-input' : 'non-count-input')).val(val);
+		});
+		if(isNumber) $('<td class="row-total first">'+rowTotal+'</td>').appendTo(row);
+		$(speciesTableSelector+' tbody.occs-body').append(row);
+		row.find('input.count-input').keydown(occ_keydown).focus(general_focus).change(input_change).blur(input_blur);
+		row.find('input.non-count-input,select.non-count-input').keydown(occ_keydown).focus(general_focus).change(input_change).blur(input_blur);
+		formOptions.existingOccurrences[':' + species.taxon_meaning_id] = {'processed' : true, 'taxon_meaning_id' : ''+species.taxon_meaning_id};
+	}
+
+	process = function (N) {
+		var TaxonData, query = {};
+		
+		if (N > formOptions.maxTabs) return;
+		$('#taxonLookupControlContainer'+N).show();
+		$('#grid'+N+'-loading').show();
+		if(formOptions.speciesList[N]>0){
+			TaxonData = {
+					'taxon_list_id': formOptions.speciesList[N],
+					'preferred': 't',
+					'auth_token': indiciaData.read.auth_token,
+					'nonce': indiciaData.read.nonce,
+					'mode': 'json',
+					'allow_data_entry': 't',
+					'view': 'cache',
+					'orderby': 'taxonomic_sort_order'
+			};
+			switch(formOptions.speciesListForce[N]){
+				case 'full': // = all values in list: by definition will include all existing data on this sample.
+			    	$('#taxonLookupControlContainer'+N).hide();
+					break;
+				case 'common': // = all in commonlist, plus existing
+					query = {"in":{"taxon_meaning_id":formOptions.commonTaxonMeaningIDs.concat(formOptions.existingTaxonMeaningIDs)}};		
+					break;
+				case 'mine': // = all in mylist, plus existing
+					query = {"in":{"taxon_meaning_id":formOptions.myTaxonMeaningIDs.concat(formOptions.existingTaxonMeaningIDs)}};		
+					break;
+				case 'here': // = all values entered against this transect: by definition will include all existing data on this sample.
+				default:
+					query = {"in":{"taxon_meaning_id":formOptions.allTaxonMeaningIDsAtTransect}};		
+					break;
+			}
+			if(typeof formOptions.speciesListFilterField[N] != "undefined") {
+				if(typeof query['in'] == 'undefined') query = {"in":{}};
+				query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
+			}
+			TaxonData.query = JSON.stringify(query);
+			$.ajax({
+				'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
+				'data': TaxonData,
+				'dataType': 'jsonp',
+				'success': function(data) {
+					addSpeciesToGrid(data, 'table#transect-input'+N, N);
+					// copy across the col totals
+					$.each(formOptions.sections, function(idx, section) {
+						$('table#transect-input'+N+' tfoot .col-total.col-'+(idx+1)).html(typeof section.total['table#transect-input'+N]==="undefined" ? 0 : section.total['table#transect-input'+N]);
+					});
+					$('#grid'+N+'-loading').hide();
+					process(N+1);
+				}
+			});
+		} else {
+			$('#grid'+N+'-loading').hide();
+			process(N+1);
+		}
+	}
+
+	checkErrors = function (data) {
+		if (typeof data.error!=="undefined") {
+			if (typeof data.errors!=="undefined") {
+				$.each(data.errors, function(idx, error) {
+					alert(error);
+				});
+			} else {
+				alert('An error occured when trying to save the data');
+			}
+			// data.transaction_id stores the last cell at the time of the post.
+			var selector = '#'+data.transaction_id.replace(/:/g, '\\:');
+			$(selector).focus();
+			$(selector).select();
+			return false;
+		} else {
+			return true;
+		}
+	}
+
+	// Define event handlers.
+	// TBC this should be OK to use as is.
+
+	smp_keydown = function (evt) {
+		var targetRow, cell, targetInput=[], code, parts=evt.target.id.split(':'), type='smpAttr';
+
+		targetRow = $(evt.target).parents('tr');
+		cell = $(evt.target).parents('td');
+		code=parts[2];
+
+		// down arrow or enter key
+		if (evt.keyCode===13 || evt.keyCode===40) {
+			targetRow = targetRow.next('tr');
+			if (targetRow.length===0) {
+				// moving out of sample attributes area into next tbody for counts
+				targetRow = $(evt.target).parents('tbody').next('tbody').find('tr:first');
+				type='value';
+			}
+			if (targetRow.length>0) {
+				targetInput = targetRow.find('input[id^='+type+'\\:][id$=\\:'+code+']');
+			}
+		}
+
+		// TODO if needed : no up arrow yet
+
+		// right arrow - move to next cell if at end of text
+		if (evt.keyCode===39 && evt.target.selectionEnd >= evt.target.value.length) {
+			targetInput = cell.next('td').find('input:visible:first');
+			if (targetInput.length===0) {
+				// end of row, so move down to next if there is one
+				targetRow = targetRow.next('tr');
+				if (targetRow.length===0) {
+					// moving out of sample attributes area into next tbody for counts
+					targetRow = $(evt.target).parents('tbody').next('tbody').find('tr:first');
+				}
+				if (targetRow.length>0) {
+					targetInput = targetRow.find('input:visible:first');
+				}
+			}
+		}
+
+		// left arrow - move to previous cell if at start of text
+		if (evt.keyCode===37 && evt.target.selectionStart === 0) {
+			targetInput = cell.prev('td').find('input:visible:last');
+			if (targetInput.length===0) {
+				// before start of row, so move up to previous if there is one
+				targetRow = targetRow.prev('tr');
+				if (targetRow.length>0) {
+					targetInput = targetRow.find('input:visible:last');
+				}
+			}
+		}
+
+		if (targetInput.length > 0) {
+			$(targetInput).get()[0].focus();
+			return false;
+		}
+	}
+
+	occ_keydown = function (evt) {
+		var targetRow, targetInput=[], code, parts=evt.target.id.split(':'), type='value';
+
+		targetRow = $(evt.target).parents('tr');
+		cell = $(evt.target).parents('td');
+		code=parts[2]; // holds the section code
+
+		// down arrow or enter key
+		if (evt.keyCode===13 || evt.keyCode===40) {
+			targetRow = targetRow.next('tr');
+			if (targetRow.length>0) {
+				targetInput = targetRow.find('input[id^='+type+'\:][id$=\:'+code+']');
+			}
+		}
+		
+		// up arrow
+		if (evt.keyCode===38) {
+			targetRow = targetRow.prev('tr');
+			if (targetRow.length===0) {
+				// moving out of counts area into previous tbody for sample attributes
+				targetRow = $(evt.target).parents('tbody').prev('tbody').find('tr:last');
+				type='smpAttr';
+			}
+			if (targetRow.length>0) {
+				targetInput = targetRow.find('input[id^='+type+'\:][id$=\:'+code+']');
+			}
+		}
+
+		// right arrow - move to next cell if at end of text
+		if (evt.keyCode===39 && evt.target.selectionEnd >= evt.target.value.length) {
+			targetInput = cell.next('td').find('input:visible:first');
+			if (targetInput.length===0) {
+				// end of row, so move down to next if there is one
+				targetRow = targetRow.next('tr');
+				if (targetRow.length>0) {
+					targetInput = targetRow.find('input:visible:first');
+				}
+			}
+		}
+
+		// left arrow - move to previous cell if at start of text
+		if (evt.keyCode===37 && evt.target.selectionStart === 0) {
+			targetInput = cell.prev('td').find('input:visible:last');
+			if (targetInput.length===0) {
+				// before start of row, so move up to previous if there is one
+				targetRow = targetRow.prev('tr');
+				if (targetRow.length===0) {
+					// moving out of counts area into previous tbody for sample attributes
+					targetRow = $(evt.target).parents('tbody').prev('tbody').find('tr:last');
+				}
+				if (targetRow.length>0) {
+					targetInput = targetRow.find('input:visible:last');
+				}
+			}
+		}
+		
+		if (targetInput.length > 0) {
+			$(targetInput).get()[0].focus();
+			return false;
+		}
+	}
+
+	general_focus = function (evt) {
+		// select the row
+		var matches = $(evt.target).parents('td:first')[0].className.match(/col\-\d+/),
+			colidx = matches[0].substr(4);
+		$(evt.target).parents('table:first').find('.table-selected').removeClass('table-selected');
+		$(evt.target).parents('table:first').find('.ui-state-active').removeClass('ui-state-active');
+		$(evt.target).parents('tr:first').addClass('table-selected');
+		$(evt.target).parents('table:first').find('tbody .col-'+colidx).addClass('table-selected');
+		$(evt.target).parents('table:first').find('thead .col-'+colidx).addClass('ui-state-active');
+	}
+
+	input_change = function (evt) {
+		$(evt.target).addClass('edited');
+	}
+
+	input_blur = function (evt) {
+		var selector = '#'+evt.target.id.replace(/:/g, '\\:'),	
+			parts=evt.target.id.split(':');
+		indiciaData.currentCell = evt.target.id;
+		
+		if ($(selector).hasClass('edited')) {
+			$(selector).addClass('saving');
+			if ($(selector).hasClass('count-input')) {
+				// check for number input - don't post if not a number
+				if (!$(selector).val().match(/^[0-9]*$/)) {
+					alert('Please enter a valid number - '+evt.target.id);
+					// use a timer, as refocus during blur not reliable.
+					setTimeout("jQuery('#"+evt.target.id+"').focus(); jQuery('#"+evt.target.id+"').select()", 100);
+					return;
+				}
+			} else {
+				$(selector).val($(selector).val().toUpperCase());
+			}
+			if ($(selector).hasClass('count-input') || $(selector).hasClass('non-count-input')) {
+				getTotal(evt.target);
+
+				// need to save the occurrence for the current cell
+				// set the taxa_taxon_list_id, which we can extract from part of the id of the input.
+				if (typeof formOptions.subSamples[parts[2]] == "undefined") {
+					alert('Occurrence could not be saved because of a missing sample ID');
+					return;
+				}
+				saveOccurrence(selector, parts[1], formOptions.subSamples[parts[2]], evt.target.id);
+			} else if ($(selector).hasClass('smp-input')) {
+				// change to just a sample attribute.
+				saveSample(parts[2]);
+			}
+		}
+	}
+
+	removeTaggedRows = function(table) {
+		var rowCount = 0;
+		$(table + ' .possibleRemove').remove();
+		$(table + ' tbody').find('tr').each(function(){
+			if(rowCount%2===0)
+				$(this).removeClass('alt-row');
+			else
+				$(this).addClass('alt-row');
+			rowCount++;
+		});
+	}
+
+	// Currently hardcoded for list 1 only
+  listTypeChange = function(val, table, N) {
+    var TaxonData = {
+        'taxon_list_id': formOptions.speciesList[N],
+        'preferred': 't',
+        'auth_token': indiciaData.read.auth_token,
+        'nonce': indiciaData.read.nonce,
+        'mode': 'json',
+        'allow_data_entry': 't',
+        'view': 'cache',
+        'orderby': 'taxonomic_sort_order'
+    };
+    var valid = false,
+        query = {"in":{}};
+
+    $('#grid'+N+'-loading').show();
+    $('#taxonLookupControlContainer1').show();
+    $(table + ' .table-selected').removeClass('table-selected');
+    $(table + ' .ui-state-active').removeClass('ui-state-active');
+
+    // first tag all blank rows.
+    $(table + ' .occs-body tr').removeClass('possibleRemove').each(function(idx, row){
+      if($(row).find('input').not(':hidden').not('[value=]').length == 0)
+        $(row).addClass('possibleRemove');
     });
-    switch(jQuery(this).val()){
-      case 'filled':
-        redo_alt_row('table#transect-input1');
-        break;
+
+    if(typeof formOptions.speciesListFilterField[N] != "undefined") {
+      query['in'][formOptions.speciesListFilterField[N]] = formOptions.speciesListFilterValues[N];
+      // TODO if filter field = taxon_meaning_id , potential clash
+    }
+
+    switch(val){
       case 'full':
-        jQuery('#taxonLookupControlContainer').hide();
-        // want them in the order of speciesList1List: push onto top new or existing rows in reverse order.
-        // leaves any not on list at bottom.
-        for(var i=indiciaData.speciesList1List.length-1; i>=0; i--){
-          if(jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']).length==0)
-            addGridRow(indiciaData.speciesList1List[i], 'table#transect-input1', false, 1);
-          else
-            jQuery('table#transect-input1 tbody.occs-body').prepend(jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']));
-        }
-        redo_alt_row('table#transect-input1');
+        valid = true;
+        $('#taxonLookupControlContainer1').hide();
+        $(table + ' .possibleRemove').removeClass('possibleRemove');
         break;
       case 'common':
-        for(var i=indiciaData.speciesList1List.length-1; i>=0; i--){
-          if(jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']).length>0)
-            jQuery('table#transect-input1 tbody.occs-body').prepend(jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']));
-          else {
-            for(var j=0; j<indiciaData.speciesList1SubsetList.length; j++){
-              if(indiciaData.speciesList1List[i]['taxon_meaning_id'] == indiciaData.speciesList1SubsetList[j]['taxon_meaning_id']) {
-                addGridRow(indiciaData.speciesList1List[i], 'table#transect-input1', false, 1);
-                break;
-              }
-            }
-          }
+        if(formOptions.commonTaxonMeaningIDs.length > 0) {
+          valid = true;
+          query["in"]["taxon_meaning_id"] = formOptions.commonTaxonMeaningIDs;
         }
-        redo_alt_row('table#transect-input1');
-        break;
-      case 'here':
-        for(var j=0; j<indiciaData.allTaxonMeaningIdsAtTransect.length; j++){
-          var last = false, me;
-          // we assume that existing data in grid is in taxanomic order
-          if(jQuery('#row-'+indiciaData.allTaxonMeaningIdsAtTransect[j]).length==0){ // not on list already
-            for(var i=0; i<indiciaData.speciesList1List.length; i++){
-              if(indiciaData.allTaxonMeaningIdsAtTransect[j] == indiciaData.speciesList1List[i].taxon_meaning_id) {
-                addGridRow(indiciaData.speciesList1List[i], 'table#transect-input1', false, 1);
-                if(last) jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']).insertAfter(last)
-                break;
-              } else {
-                me = jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']);
-                if(me.length>0) last = me;
-              }
-            }
-          }
-        }
-        redo_alt_row('table#transect-input1');
         break;
       case 'mine':
-        // get all species on samples that I have recorded.
-        if(indiciaData.easyLogin === true){
-          // here we just get the occurrences I have created.
-          jQuery.ajax({
-               'url': indiciaData.indiciaSvc+'index.php/services/data/occurrence',
-               'data': {
-                 'created_by_id': indiciaData.UserID,
-                 'auth_token': indiciaData.readAuth.auth_token,
-                 'nonce': indiciaData.readAuth.nonce,
-                 'mode': 'json',
-                 'view': 'detail'
-               },
-               'dataType': 'jsonp',
-               'success': function(odata) {
-                   for(var j=0; j<odata.length; j++){
-                     var last = false, me;
-                     // we assume that existing data in grid is in taxanomic order
-                     if(jQuery('#row-'+odata[j]['taxon_meaning_id']).length==0){ // not on list already
-                       for(var i=0; i<indiciaData.speciesList1List.length; i++){
-                         if(odata[j].taxon_meaning_id == indiciaData.speciesList1List[i].taxon_meaning_id) {
-                           addGridRow(indiciaData.speciesList1List[i], 'table#transect-input1', false, 1);
-                           if(last)
-                             jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']).insertAfter(last);
-                           break;
-                         } else {
-                           me = jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']);
-                           if(me.length>0) last = me;
-                         }
-                       }
-                     }
-                   }
-                   redo_alt_row('table#transect-input1');
-               }});
-        } else {
-          jQuery.ajax({
-            'url': indiciaData.indiciaSvc+'index.php/services/data/sample_attribute_value',
-            'data': {
-              'sample_attribute_id': indiciaData.CMSUserAttrID,
-              'raw_value': indiciaData.CMSUserID,
-              'auth_token': indiciaData.readAuth.auth_token,
-              'nonce': indiciaData.readAuth.nonce,
-              'mode': 'json'
-            },
-            'dataType': 'jsonp',
-            'success': function(savdata) {
-                // next get all transect section subsamples
-                var sampleList = [];
-                for(var i=0; i<savdata.length; i++)
-                  sampleList.push(savdata[i].sample_id);
-                jQuery.ajax({
-                    'url': indiciaData.indiciaSvc+'index.php/services/data/sample',
-                    'data': {
-                      'query': JSON.stringify({'in': {'parent_id': sampleList}}),
-                      'auth_token': indiciaData.readAuth.auth_token,
-                      'nonce': indiciaData.readAuth.nonce,
-                      'mode': 'json',
-                      'view': 'detail'
-                    },
-                    'dataType': 'jsonp',
-                    'success': function(ssdata) {
-                    // finally get all occurrences
-                    var subSampleList = [];
-                    for(var i=0; i<ssdata.length; i++)
-                      subSampleList.push(ssdata[i].id);
-                      jQuery.ajax({
-                          'url': indiciaData.indiciaSvc+'index.php/services/data/occurrence',
-                          'data': {
-                              'query': JSON.stringify({'in': {'sample_id': subSampleList}}),
-                              'auth_token': indiciaData.readAuth.auth_token,
-                              'nonce': indiciaData.readAuth.nonce,
-                              'mode': 'json',
-                              'view': 'detail'
-                          },
-                          'dataType': 'jsonp',
-                          'success': function(odata) {
-                              for(var j=0; j<odata.length; j++){
-                                var last = false, me;
-                                // we assume that existing data in grid is in taxanomic order
-                                if(jQuery('#row-'+odata[j]['taxon_meaning_id']).length==0){ // not on list already
-                                  for(var i=0; i<indiciaData.speciesList1List.length; i++){
-                                    if(odata[j].taxon_meaning_id == indiciaData.speciesList1List[i].taxon_meaning_id) {
-                                      addGridRow(indiciaData.speciesList1List[i], 'table#transect-input1', false, 1);
-                                      if(last)
-                                        jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']).insertAfter(last)
-                                      break;
-                                    } else {
-                                      me = jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']);
-                                      if(me.length>0) last = me;
-                                    }
-                                  }
-                                }
-                              }
-                              redo_alt_row('table#transect-input1');
-                      }});
-                }});
-          }});
+        if(formOptions.myTaxonMeaningIDs.length > 0) {
+          valid = true;
+          query["in"]["taxon_meaning_id"] = formOptions.myTaxonMeaningIDs;
+        }
+        break;
+      case 'here':
+      default:
+        if(formOptions.allTaxonMeaningIDsAtTransect.length > 0) {
+          valid = true;
+          query["in"]["taxon_meaning_id"] = formOptions.allTaxonMeaningIDsAtTransect;
         }
         break;
     }
-    jQuery('#listSelectMsg').empty();
-  });
-  
-  switch(indiciaData.startList){
-    case 'full':
-        jQuery('#taxonLookupControlContainer').hide();
-        break;
-    case 'common':
-        for(var i=indiciaData.speciesList1List.length-1; i>=0; i--){
-          var row = jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']);
-          if(row.length > 0 && row.find('input').not(':hidden').not('[value=]').length == 0) { // first filter out rows with data filled in.
-            var foundInList = false;
-            for(var j=0; j<indiciaData.speciesList1SubsetList.length; j++)
-              if(indiciaData.speciesList1List[i]['taxon_meaning_id'] == indiciaData.speciesList1SubsetList[j]['taxon_meaning_id'])
-                foundInList = true;
-            if(!foundInList)
-              jQuery(row).remove();
-          }
-        }
-        redo_alt_row('table#transect-input1');
-        break;
-    case 'here':
-        for(var i=indiciaData.speciesList1List.length-1; i>=0; i--){
-          var row = jQuery('#row-'+indiciaData.speciesList1List[i]['taxon_meaning_id']);
-          if(row.length > 0 && row.find('input').not(':hidden').not('[value=]').length == 0) { // first filter out rows with data filled in.
-            var foundInList = false;
-            for(var j=0; j<indiciaData.allTaxonMeaningIdsAtTransect.length; j++)
-              if(indiciaData.speciesList1List[i]['taxon_meaning_id'] == indiciaData.allTaxonMeaningIdsAtTransect[j])
-                foundInList = true;
-            if(!foundInList)
-              jQuery(row).remove();
-          }
-        }
-        redo_alt_row('table#transect-input1');
-        break;
-    case 'mine':
-        jQuery('#listSelect').change();
-        break;
-  }
-
-  jQuery('.smp-input').keydown(smp_keydown).change(input_change).blur(input_blur).focus(count_focus);
-
-  function checkErrors(data) {
-    if (typeof data.error!=="undefined") {
-      if (typeof data.errors!=="undefined") {
-        jQuery.each(data.errors, function(idx, error) {
-          alert(error);
-        });
-      } else {
-        alert('An error occured when trying to save the data');
+    if(valid) {
+      if(!$.isEmptyObject(query["in"])) {
+        TaxonData.query = JSON.stringify(query);
       }
-      // data.transaction_id stores the last cell at the time of the post.
-      var selector = '#'+data.transaction_id.replace(/:/g, '\\:');
-      jQuery(selector).focus();
-      jQuery(selector).select();
-      return false;
+      $.ajax({
+          'url': indiciaData.warehouseUrl+'index.php/services/data/taxa_taxon_list',
+          'data': TaxonData,
+          'dataType': 'jsonp',
+          'success': function(data) {
+              addSpeciesToGrid(data, 'table#transect-input'+N, N);
+              // at this point only adding empty rows, so no affect on totals.
+              removeTaggedRows('table#transect-input1'); // redoes row classes
+              $('#grid'+N+'-loading').hide();
+          }
+      });
     } else {
-      return true;
+      removeTaggedRows(table);
+      $('#grid'+N+'-loading').hide();
     }
   }
 
-  jQuery('#occ-form').ajaxForm({
-    async: true,
-    dataType:  'json',
-    success:   function(data, status, form){
-      var selector = '#'+data.transaction_id.replace(/:/g, '\\:');
-      jQuery(selector).removeClass('saving');
-      if (checkErrors(data)) {
-        if(jQuery(selector).val() != '') { // if the selector is blank, we are deleting the entry, so we do not want to add the id and attrValId fields (they will have just been removed!)
-          if (jQuery(selector +'\\:id').length===0) {
-            // this is a new occurrence, so keep a note of the id in a hidden input
-            jQuery(selector).after('<input type="hidden" id="'+data.transaction_id +':id" value="'+data.outer_id+'"/>');
-          }
-          if (jQuery(selector +'\\:attrValId').length===0) {
-            // this is a new attribute, so keep a note of the id in a hidden input
-            jQuery(selector).after('<input type="hidden" id="'+data.transaction_id +':attrValId" value="'+data.struct.children[0].id+'"/>');
-          }
-        }
-        jQuery(selector).removeClass('edited');
-      }
-    }
-  });
+	//autocompletes assume ID
+	bindSpeciesAutocomplete = function (selectorID, tableSelectorID, url, lookupListId, lookupListFilterField, lookupListFilterValues, readAuth, duplicateMsg, max, tabIDX) {
+		// inner function to handle a selection of a taxon from the autocomplete
+		var handleSelectedTaxon = function(event, data) {
+			if($('#row-'+data.taxon_meaning_id).length>0){
+				alert(duplicateMsg);
+				$(event.target).val('');
+				return;
+			}
+			addGridRow(data, tableSelectorID, tabIDX);
+			$(event.target).val('');
+			var table = $(tableSelectorID);
+			table.parent().find('.sticky-header').remove();
+			table.find('thead.tableHeader-processed').removeClass('tableHeader-processed');
+			table.removeClass('tableheader-processed');
+			table.addClass('sticky-enabled');
+			Drupal.behaviors.tableHeader.attach(table.parent()); // Drupal 7
+		};
+		
+		var extra_params = {
+				view : 'cache',
+				orderby : 'taxon',
+				mode : 'json',
+				qfield : 'taxon',
+				auth_token: readAuth.auth_token,
+				nonce: readAuth.nonce,
+				taxon_list_id: lookupListId,
+				allow_data_entry: 't'
+		};
+		if(typeof lookupListFilterField != "undefined"){
+			extra_params.query = '{"in":{"'+lookupListFilterField+'":'+JSON.stringify(lookupListFilterValues)+"}}";
+		};
 
-  jQuery('#smp-form').ajaxForm({
-    // must be synchronous, otherwise currentCell could change.
-    async: false,
-    dataType:  'json',
-    complete: function() {
-      var selector = '#'+indiciaData.currentCell.replace(/:/g, '\\:');
-      jQuery(selector).removeClass('saving');
-    },
-    success: function(data){
-      if (checkErrors(data)) {
-        // get the sample code from the id of the cell we are editing.
-        var parts = indiciaData.currentCell.split(':');
-        // we cant just check if we are going to create new attributes and fetch in this case to get the attribute ids -
-        // there is a possibility we have actually deleted an existing attribute, in which the id must be removed. This can only be
-        // found out by going to the database. We can't keep using the deleted attribute as it stays deleted (ie does not undelete)
-        // if a new value is saved into it.
-        jQuery.each(jQuery('.smpAttr-'+parts[2]), function(idx, input) {
-          // an attr value that is not saved yet is of form smpAttr:attrId, whereas one that is saved
-          // is of form smpAttr:attrId:attrValId. Wo we can count colons to know if it exists already.
-          if (jQuery(input).attr('name').split(':').length<=2) {
-            jQuery(input).removeClass('edited'); // deliberately left in place for changed old attributes.
-          }
-        });
-        // We need to copy over the information so that future changes update the existing record rather than
-        // create new ones, or creates a new one if we have deleted the attribute
-        // The response from the warehouse (data parameter) only includes the IDs of the attributes it created.
-        // We need all the attributes.
-        jQuery.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample_attribute_value" +
-              "?mode=json&view=list&sample_id=" + data.outer_id + "&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce + "&callback=?", function(data) {
-              // There is a possibility that we have just deleted an attribute (in which case it will not be in the data), so reset all the names first.
-                jQuery.each(data, function(idx, attr) {
-                  jQuery('#smpAttr\\:'+attr.sample_attribute_id+'\\:'+parts[2]).attr('name', 'smpAttr:'+attr.sample_attribute_id+(parseInt(attr.id)==attr.id ? ':'+attr.id : ''));
-                  // we know - parts[2] = S2
-                  // attr.sample_attribute_id & attr.id
-                  // src control id=smpAttr:1:S2 (smpAttr:sample_attribute_id:sectioncode)
-                  // need to change src control name to
-                });
-              }
-        );
-      }
-    }
-  });
-};
-// autocompletes assume ID
-function bindSpeciesAutocomplete(selectorID, tableSelectorID, url, lookupListId, lookupListFilterField, lookupListFilterValues, readAuth, duplicateMsg, max, tabIDX) {
-  // inner function to handle a selection of a taxon from the autocomplete
-  var handleSelectedTaxon = function(event, data) {
-    if(jQuery('#row-'+data.taxon_meaning_id).length>0){
-      alert(duplicateMsg);
-      jQuery(event.target).val('');
-      return;
-    }
-    addGridRow(data, tableSelectorID, true, tabIDX);
-    jQuery(event.target).val('');
-    var table = jQuery(tableSelectorID);
-    table.parent().find('.sticky-header').remove();
-    table.find('thead.tableHeader-processed').removeClass('tableHeader-processed');
-    table.removeClass('tableheader-processed');
-    table.addClass('sticky-enabled');
-    if(typeof Drupal.behaviors.tableHeader == 'object') // Drupal 7
-      Drupal.behaviors.tableHeader.attach(table.parent());
-    else // Drupal6 : it is a function
-      Drupal.behaviors.tableHeader(table.parent());
-  };
-  var extra_params = {
-        view : 'cache',
-        orderby : 'taxon',
-        mode : 'json',
-        qfield : 'taxon',
-        auth_token: readAuth.auth_token,
-        nonce: readAuth.nonce,
-        taxon_list_id: lookupListId,
-        allow_data_entry: 't'
-  };
-  if(typeof lookupListFilterField != "undefined"){
-    extra_params.query = '{"in":{"'+lookupListFilterField+'":'+JSON.stringify(lookupListFilterValues)+"}}";
-  };
+		// Attach auto-complete code to the input
+		var ctrl = $('#' + selectorID).autocomplete(url+'/taxa_taxon_list', {
+			extraParams : extra_params,
+			max : max,
+			parse: function(data) {
+				var results = [];
+				$.each(data, function(i, item) {
+					results[results.length] =
+						{
+							'data' : item,
+							'result' : item.taxon,
+							'value' : item.id
+						};
+				});
+				return results;
+			},
+			formatItem: function(item) {
+				if(item.taxon == item.preferred_taxon)
+					return '<em>'+item.taxon+'</em>';
+				else
+					return item.taxon+' <em>&lt;'+item.preferred_taxon+'&gt;</em>';
+			}
+		});
+		ctrl.bind('result', handleSelectedTaxon);
+		setTimeout(function() { $('#' + ctrl.attr('id')).focus(); });
+	}
 
-  // Attach auto-complete code to the input
-  var ctrl = jQuery('#' + selectorID).autocomplete(url+'/taxa_taxon_list', {
-      extraParams : extra_params,
-      max : max,
-      parse: function(data) {
-        var results = [];
-        jQuery.each(data, function(i, item) {
-          results[results.length] =
-          {
-            'data' : item,
-            'result' : item.taxon,
-            'value' : item.id
-          };
-        });
-        return results;
-      },
-      formatItem: function(item) {
-        return item.taxon+' <em>&lt;'+item.preferred_taxon+'&gt;</em>';
-      }
-  });
-  ctrl.bind('result', handleSelectedTaxon);
-  setTimeout(function() { jQuery('#' + ctrl.attr('id')).focus(); });
-}
+	bindRecorderNameAutocomplete = function (attrID, userID, baseurl, surveyID, token, nonce) {
+		$('#smpAttr\\:'+attrID).autocomplete(baseurl+'/index.php/services/report/requestReport', {
+			extraParams : {
+				mode : 'json',
+				report : 'reports_for_prebuilt_forms/UKBMS/ukbms_recorder_names.xml',
+				reportSource : 'local',
+				qfield : 'name',
+				auth_token: token,
+				attr_id : attrID,
+				survey_id : surveyID,
+				user_id : userID,
+				nonce: nonce
+			},
+			max: 50,
+			mustMatch : false,
+			parse: function(data) {
+				var results = [];
+				$.each(data, function(i, item) {
+					results[results.length] = {'data' : item,'result' : item.name,'value' : item.name};
+				});
+				return results;
+			},
+			formatItem: function(item) {return item.name;}
+		});
+	}
 
-function bindRecorderNameAutocomplete(attrID, userID, baseurl, surveyID, token, nonce) {
-  jQuery('#smpAttr\\:'+attrID).autocomplete(baseurl+'/index.php/services/report/requestReport', {
-      extraParams : {
-        mode : 'json',
-        report : 'reports_for_prebuilt_forms/UKBMS/ukbms_recorder_names.xml',
-        reportSource : 'local',
-        qfield : 'name',
-        auth_token: token,
-        attr_id : attrID,
-        survey_id : surveyID,
-        user_id : userID,
-        nonce: nonce
-      },
-      max: 50,
-      mustMatch : false,
-      parse: function(data) {
-        var results = [];
-        jQuery.each(data, function(i, item) {
-          results[results.length] = {'data' : item,'result' : item.name,'value' : item.name};
-        });
-        return results;
-      },
-      formatItem: function(item) {return item.name;}
-  });
-};
-
+}) (jQuery);
 

@@ -46,6 +46,12 @@ class iform_my_dot_map {
       'survey_id' => 'Survey',
       'sample_id' => 'Submitted data'
     );
+    $statuses = array(
+      // Developer note - record_status should be in the report used for the grid.
+      'V' => 'Verified',
+      'C' => 'Awaiting verification',
+      'R' => 'Rejected',
+    );
     return array_merge(
       iform_map_get_map_parameters(),
       array(
@@ -62,7 +68,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_1_title',
           'caption' => 'Layer Caption',
-          'description' => 'Caption to display for the optional WMS full species distribution map layer. Can contain replacement strings {species} or {survey}.',
+          'description' => 'Caption to display for the optional WMS full species distribution map layer. Can contain '
+            . 'replacement strings {species} or {survey}.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 1' ,
           'required'=>false
@@ -87,8 +94,9 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_1_layer',
           'caption' => 'Layer Name',
-          'description' => 'Layer name of the WMS service layer. If using GeoServer to access this instance of Indicia, please ensure that the '.
-              'detail_occurrences view is exposed as a feature type and the name and prefix is given here.',
+          'description' => 'Layer name of the WMS service layer. If using GeoServer to access this instance of '
+            . 'Indicia, please ensure that the detail_occurrences view is exposed as a feature type and the name and '
+            . 'prefix is given here.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 1',
           'required'=>false
@@ -96,18 +104,29 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_1_filter_against',
           'caption' => 'What to Filter Against?',
-          'description' => 'Select what to match this layer against. The layer shown will be those points which match the previously saved record '.
-            'on the selected value.',
+          'description' => 'Select what to match this layer against. The layer shown will be those points which match '
+            . 'the previously saved record on the selected value.',
           'type' => 'select',
           'options' => $filters,
           'group'=>'Distribution Layer 1',
           'required'=>false
         ),
         array(
+          'name' => 'wms_dist_1_status_filter',
+          'caption' => 'Filter by Record Status?',
+          'description' => "Select the statuses of records you want to appear on the layer. Leave blank if you don't "
+            . "want to filter on record status",
+          'type' => 'list',
+          'options' => $statuses,
+          'group'=>'Distribution Layer 1',
+          'required'=>false
+        ),
+        array(
           'name' => 'wms_dist_1_filter_field',
           'caption' => 'Field in WMS Dataset to Filter Against (External Layers Only)',
-          'description' => 'If using an external layer, specify the name of the field in the database table underlying the WMS layer which you want to filter against. '.
-              'Leave blank for layers using the GeoServer set up for this instance of Indicia.',
+          'description' => 'If using an external layer, specify the name of the field in the database table underlying '
+            . 'the WMS layer which you want to filter against. Leave blank for layers using the GeoServer set up for '
+            . 'this instance of Indicia.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 1',
           'required'=>false
@@ -115,8 +134,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_1_style',
           'caption' => 'Style',
-          'description' => 'Name of the style to load for this layer (e.g. the style registered on GeoServer you want to use). This style must exist, '.
-              'and the setting is case sensitive.',
+          'description' => 'Name of the style to load for this layer (e.g. the style registered on GeoServer you want '
+            . 'to use). This style must exist, and the setting is case sensitive.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 1',
           'required'=>false
@@ -124,8 +143,9 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_1_opacity',
           'caption' => 'Opacity',
-          'description' => 'Opacity of layer 1, ranging from 0 (not visible) to 1 (fully opaque). If you want to print this map using Internet Explorer 8 or earlier it is recommended '.
-             'that you set this to 1 otherwise the printout may not render correctly.',
+          'description' => 'Opacity of layer 1, ranging from 0 (not visible) to 1 (fully opaque). If you want to print '
+            . 'this map using Internet Explorer 8 or earlier it is recommended that you set this to 1 otherwise the '
+            . 'printout may not render correctly.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 1',
           'required'=>false
@@ -134,7 +154,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_2_title',
           'caption' => 'Layer Caption',
-          'description' => 'Caption to display for the optional WMS full species distribution map layer. Can contain replacement strings {species} or {survey}.',
+          'description' => 'Caption to display for the optional WMS full species distribution map layer. Can contain '
+            . 'replacement strings {species} or {survey}.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 2' ,
           'required'=>false
@@ -159,8 +180,9 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_2_layer',
           'caption' => 'Layer Name',
-          'description' => 'Layer name of the WMS service layer. If using GeoServer to access this instance of Indicia, please ensure that the '.
-              'detail_occurrences view is exposed as a feature type and the name and prefix is given here.',
+          'description' => 'Layer name of the WMS service layer. If using GeoServer to access this instance of '
+            . 'Indicia, please ensure that the detail_occurrences view is exposed as a feature type and the name and '
+            . 'prefix is given here.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 2',
           'required'=>false
@@ -168,7 +190,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_2_filter_against',
           'caption' => 'What to Filter Against?',
-          'description' => 'Select what to match this layer against. The layer shown will be those points which match the previously saved record '.
+          'description' => 'Select what to match this layer against. The layer shown will be those points which match '
+            . 'the previously saved record '.
             'on the selected value.',
           'type' => 'select',
           'options' => $filters,
@@ -176,10 +199,21 @@ class iform_my_dot_map {
           'required'=>false
         ),
         array(
+          'name' => 'wms_dist_2_status_filter',
+          'caption' => 'Filter by Record Status?',
+          'description' => "Select the status of records you want to appear on the layer. Leave blank if you don't "
+            . "want to filter on record status",
+          'type' => 'list',
+          'options' => $statuses,
+          'group'=>'Distribution Layer 2',
+          'required'=>false
+        ),
+        array(
           'name' => 'wms_dist_2_filter_field',
           'caption' => 'Field in WMS Dataset to Filter Against  (External Layers Only)',
-          'description' => 'If using an external layer, specify the name of the field in the database table underlying the WMS layer which you want to filter against. '.
-              'Leave blank for layers using the GeoServer set up for this instance of Indicia.',
+          'description' => 'If using an external layer, specify the name of the field in the database table underlying '
+            . 'the WMS layer which you want to filter against. Leave blank for layers using the GeoServer set up for '
+            . 'this instance of Indicia.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 2',
           'required'=>false
@@ -187,8 +221,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_2_style',
           'caption' => 'Style',
-          'description' => 'Name of the style to load for this layer (e.g. the style registered on GeoServer you want to use). This style must exist, '.
-              'and the setting is case sensitive.',
+          'description' => 'Name of the style to load for this layer (e.g. the style registered on GeoServer you want '
+            . 'to use). This style must exist, and the setting is case sensitive.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 2',
           'required'=>false
@@ -196,8 +230,9 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_2_opacity',
           'caption' => 'Opacity',
-          'description' => 'Opacity of layer 2, ranging from 0 (not visible) to 1 (fully opaque). If you want to print this map using Internet Explorer 8 or earlier it is recommended '.
-             'that you set this to 1 otherwise the printout may not render correctly.',
+          'description' => 'Opacity of layer 2, ranging from 0 (not visible) to 1 (fully opaque). If you want to print '
+            . 'this map using Internet Explorer 8 or earlier it is recommended that you set this to 1 otherwise the '
+            . 'printout may not render correctly.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 2',
           'required'=>false
@@ -206,7 +241,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_3_title',
           'caption' => 'Layer Caption',
-          'description' => 'Caption to display for the optional WMS full species distribution map layer. Can contain replacement strings {species} or {survey}.',
+          'description' => 'Caption to display for the optional WMS full species distribution map layer. Can contain '
+            . 'replacement strings {species} or {survey}.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 3' ,
           'required'=>false
@@ -222,8 +258,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_3_url',
           'caption' => 'Service URL',
-          'description' => 'URL of the WMS service to display for this layer. Leave blank '.
-              'if using GeoServer to access this instance of Indicia.',
+          'description' => 'URL of the WMS service to display for this layer. Leave blank if using GeoServer to access '
+            . 'this instance of Indicia.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 3',
           'required'=>false
@@ -231,8 +267,9 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_3_layer',
           'caption' => 'Layer Name',
-          'description' => 'Layer name of the WMS service layer. If using GeoServer to access this instance of Indicia, please ensure that the '.
-              'detail_occurrences view is exposed as a feature type and the name and prefix is given here.',
+          'description' => 'Layer name of the WMS service layer. If using GeoServer to access this instance of '
+            . 'Indicia, please ensure that the detail_occurrences view is exposed as a feature type and the name and '
+            . 'prefix is given here.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 3',
           'required'=>false
@@ -240,18 +277,29 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_3_filter_against',
           'caption' => 'What to Filter Against?',
-          'description' => 'Select what to match this layer against. The layer shown will be those points which match the previously saved record '.
-            'on the selected value.',
+          'description' => 'Select what to match this layer against. The layer shown will be those points which match '
+            . 'the previously saved record on the selected value.',
           'type' => 'select',
           'options' => $filters,
           'group'=>'Distribution Layer 3',
           'required'=>false
         ),
         array(
+          'name' => 'wms_dist_3_status_filter',
+          'caption' => 'Filter by Record Status?',
+          'description' => "Select the status of records you want to appear on the layer. Leave blank if you don't "
+            . "want to filter on record status",
+          'type' => 'list',
+          'options' => $statuses,
+          'group'=>'Distribution Layer 3',
+          'required'=>false
+        ),
+        array(
           'name' => 'wms_dist_3_filter_field',
           'caption' => 'Field in WMS Dataset to Filter Against',
-          'description' => 'If using an external layer, specify the name of the field in the database table underlying the WMS layer which you want to filter against. '.
-              'Leave blank for layers using the GeoServer set up for this instance of Indicia.',
+          'description' => 'If using an external layer, specify the name of the field in the database table underlying '
+            . 'the WMS layer which you want to filter against. Leave blank for layers using the GeoServer set up for '
+            . 'this instance of Indicia.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 3',
           'required'=>false
@@ -259,7 +307,8 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_3_style',
           'caption' => 'Style',
-          'description' => 'Name of the style to load for this layer (e.g. the style registered on GeoServer you want to use).',
+          'description' => 'Name of the style to load for this layer (e.g. the style registered on GeoServer you want '
+            . 'to use).',
           'type' => 'textfield',
           'group'=>'Distribution Layer 3',
           'required'=>false
@@ -267,8 +316,9 @@ class iform_my_dot_map {
         array(
           'name' => 'wms_dist_3_opacity',
           'caption' => 'Opacity',
-          'description' => 'Opacity of layer 3, ranging from 0 (not visible) to 1 (fully opaque). If you want to print this map using Internet Explorer 8 or earlier it is recommended '.
-             'that set this to 1 otherwise the printout may not render correctly.',
+          'description' => 'Opacity of layer 3, ranging from 0 (not visible) to 1 (fully opaque). If you want to print '
+            . 'this map using Internet Explorer 8 or earlier it is recommended that set this to 1 otherwise the '
+            . 'printout may not render correctly.',
           'type' => 'textfield',
           'group'=>'Distribution Layer 3',
           'required'=>false
@@ -276,8 +326,9 @@ class iform_my_dot_map {
         array(
           'name' => 'add_another_link',
           'caption' => 'Add another link',
-          'description' => 'If populated, then an "Add another" button will be shown linking to this path. Use replacements #taxon_meaning_id# or ' .
-              '#external_key# to identify the recorded taxon, though note that these will only work if a single taxon was recorded.',
+          'description' => 'If populated, then an "Add another" button will be shown linking to this path. Use '
+            . 'replacements #taxon_meaning_id# or #external_key# to identify the recorded taxon, though note that '
+            . 'these will only work if a single taxon was recorded.',
           'type' => 'textfield',
           'required'=>false
         ),
@@ -300,12 +351,20 @@ class iform_my_dot_map {
    * @todo: Implement this method
    */
   public static function get_form($args) {
-    $lang = iform_lang_iso_639_2(hostsite_get_user_field('language', 'en'));
+    if (function_exists('hostsite_get_user_field')) {
+      $lang = iform_lang_iso_639_2(hostsite_get_user_field('language', 'en'));
+    }
+    else {
+      $lang = 'eng';
+    }
+    
     if (function_exists('iform_load_helpers')) {
       iform_load_helpers(array('map_helper'));
-    } else {
+    } 
+    else {
       require_once dirname(dirname(__FILE__)) . '/map_helper.php';
     }
+    
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $r = '';
     // setup the map options
@@ -407,43 +466,60 @@ class iform_my_dot_map {
    */
   private static function build_distribution_layer($layerId, $args, $occurrence) {
     $filter = '';
-    if ($args["wms_dist_$layerId"."_title"]) {
+    if ($args["wms_dist_{$layerId}_title"]) {
       // if we have a filter specified, then set it up. Note we can only do this if the sample id is passed in at the moment.
       // @todo support passing an occurrence ID.
-      if ($args["wms_dist_$layerId"."_filter_against"]!='none' && array_key_exists('table', $_GET) && $_GET['table']=='sample') {
+      if ($args["wms_dist_{$layerId}_filter_against"] != 'none' && array_key_exists('table', $_GET) && $_GET['table'] ==  'sample') {
         // Build a list of filters for each record. If there are multiple, then wrap in an OR filter.
         data_entry_helper::$onload_javascript .= "var filters = new Array();\n";
-        $filterField = $args["wms_dist_$layerId"."_internal"] ? $args["wms_dist_$layerId"."_filter_against"] : $args["wms_dist_$layerId"."_filter_field"];
+        $filterField = $args["wms_dist_{$layerId}_internal"] ? $args["wms_dist_{$layerId}_filter_against"] : $args["wms_dist_{$layerId}_filter_field"];
         // Use an array of handled values so we only build each distinct filter once
         $handled = array();        
         foreach($occurrence as $record) {
-          $filterValue = $record[$args["wms_dist_$layerId"."_filter_against"]];
+          $filterValue = $record[$args["wms_dist_{$layerId}_filter_against"]];
           if (!in_array($filterValue, $handled)) {
-            $filter .= ($filter==='' ? '' : ' OR ') . "$filterField=$filterValue";
+            $filter .= ($filter === '' ? '' : ' OR ') . "$filterField=$filterValue";
             $handled[] = $filterValue;
           }
         }
       }
+      // Set up the record_status filter if there is one
+      
+      if (isset($args["wms_dist_{$layerId}_status_filter"])) {
+        $status_filter = '';
+        foreach ($args["wms_dist_{$layerId}_status_filter"] as $key => $value) {
+          $status_filter .= ($status_filter === '' ? '' : ', ') . "'$value'";
+        }
+        if ($status_filter !== '') {
+          if ($filter !== '' ) {
+            $filter = "($filter) AND record_status IN ($status_filter)";
+          }
+          else {
+            $filter = "record_status IN ($status_filter)";
+          }
+        }
+      }
+      
       // force a filter on the website ID.
-      if ($filter!=='') 
+      if ($filter !== '') 
         $filter = "($filter) AND ";
-      $filter .= "website_id=".$args['website_id'];     
+      $filter .= "website_id=" . $args['website_id'];     
       // Get the url, either the external one specified, or our internally registered GeoServer
-      $url = $args["wms_dist_$layerId"."_internal"] ? data_entry_helper::$geoserver_url.'wms' : $args["wms_dist_$layerId"."_url"];
+      $url = $args["wms_dist_{$layerId}_internal"] ? data_entry_helper::$geoserver_url.'wms' : $args["wms_dist_{$layerId}_url"];
       // Get the style if there is one selected
-      $style = $args["wms_dist_$layerId"."_style"] ? ", styles: '".$args["wms_dist_$layerId"."_style"]."'" : '';
+      $style = $args["wms_dist_{$layerId}_style"] ? ", styles: '".$args["wms_dist_$layerId"."_style"]."'" : '';
       // and also the opacity
-      $opacity = $args["wms_dist_$layerId"."_opacity"] ? $args["wms_dist_$layerId"."_opacity"] : 1;
-      if ($opacity!=1) 
+      $opacity = $args["wms_dist_{$layerId}_opacity"] ? $args["wms_dist_{$layerId}_opacity"] : 1;
+      if ($opacity != 1) 
         $opacity = " opacity: $opacity,";
       else
         // don't set opacity if not required as it messes up printing in IE<=8
         $opacity = '';
-      $filter = ', CQL_FILTER: "'.$filter.'"';
+      $filter = ', CQL_FILTER: "' . $filter. '"';
       data_entry_helper::$onload_javascript .= "var distLayer$layerId = new OpenLayers.Layer.WMS(
-        '".str_replace("'", "\'", $args["wms_dist_$layerId"."_title"])."',
+        '" . str_replace("'", "\'", $args["wms_dist_{$layerId}_title"])."',
         '$url',
-        {layers: '".$args["wms_dist_$layerId"."_layer"]."', transparent: true $filter $style},
+        {layers: '".$args["wms_dist_{$layerId}_layer"]."', transparent: true $filter $style},
         {isBaseLayer: false,$opacity sphericalMercator: true, singleTile: true}
       );\n";
       return "distLayer$layerId";

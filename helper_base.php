@@ -40,7 +40,10 @@ $indicia_templates = array(
       "document.write('{content}');".
       "/* ]]> */</script>\n",
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
+  'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>', // label ends with another punctuation mark
+  'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>', // no colon
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
+  'toplabelNoColon' => '<label data-for="{id}"{labelClass}>{label}</label>',
   'suffix' => "\n",
   'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
@@ -264,6 +267,9 @@ if ($("#{escapedId} option").length===0) {
   'report-tbody-tr' => '<tr{class}{rowId}{rowTitle}>{content}</tr>',
   'report-tbody-td' => '<td{class}>{content}</td>',
   'data-input-table' => '<table{class}{id}>{content}</table>',
+  'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
+<div{contentClass}{contentId}></div>
+</div>'
 );
 
 
@@ -569,7 +575,6 @@ class helper_base extends helper_config {
    * <li>multimap</li>
    * <li>virtualearth</li>
    * <li>fancybox</li>
-   * <li>fancybox2</li>
    * <li>treeBrowser</li>
    * <li>defaultStylesheet</li>
    * <li>validation</li>
@@ -591,6 +596,7 @@ class helper_base extends helper_config {
    * <li>footable</li>
    * <li>indiciaFootableReport</li>
    * <li>indiciaFootableChecklist</li>
+   * <li>review_input</li>
    * </ul>
    */
   public static function add_resource($resource)
@@ -667,10 +673,9 @@ class helper_base extends helper_config {
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
-        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3&amp;sensor=false")),
+        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3&sensor=false")),
         'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
-        'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/jquery.fancybox.pack.js')),
-        'fancybox2' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox2/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox2/source/jquery.fancybox.pack.js')),
+        'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
         'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css"), 'javascript' => array()),
         'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
@@ -707,6 +712,7 @@ class helper_base extends helper_config {
             'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'), 
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
             'deps' => array('footable')),
+        'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js'))
       );
     }
     return self::$resource_list;
@@ -1755,19 +1761,27 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
     // Add a label only if specified in the options array. Link the label to the inputId if available,
     // otherwise the fieldname (as the fieldname control could be a hidden control).
     if (!empty($options['label'])) {
-      $r .= str_replace(
+      $labelTemplate = isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] :
+      	(substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
+      $label = str_replace(
           array('{label}', '{id}', '{labelClass}'),
           array(
               $options['label'],
               array_key_exists('inputId', $options) ? $options['inputId'] : $options['id'],
               array_key_exists('labelClass', $options) ? ' class="'.$options['labelClass'].'"' : '',
           ),
-          isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] : $indicia_templates['label']
+          $labelTemplate
       );
+    }
+    if (!empty($options['label']) && (!isset($options['labelPosition']) || $options['labelPosition'] != 'after')) {
+    	$r .= $label;
     }
     // Output the main control
     $r .= self::apply_replacements_to_template($indicia_templates[$template], $options);
-
+    if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
+    	$r .= $label;
+    }
+    
     // Add a lock icon to the control if the lockable option is set to true
     if (array_key_exists('lockable', $options) && $options['lockable']===true) {
       $r .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
@@ -1996,6 +2010,8 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         $converted[] = 'pattern:'. $matches['val'];
       } elseif (preg_match('/mingridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
         $converted[] = 'mingridref:'.$matches['val'];
+      } elseif (preg_match('/maxgridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
+        $converted[] = 'maxgridref:'.$matches['val'];
       }
     }
     if (count($converted) == 0) {
@@ -2117,7 +2133,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
       if ($options['caching']!=='store') {
-        $response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+      	$response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response!==FALSE)
           $cacheLoaded = TRUE;
       }
@@ -2130,8 +2146,9 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       throw new Exception('Invalid response received from Indicia Warehouse. '.print_r($response, TRUE));
     }
     // Only cache valid responses and when not already cached
-    if ($useCache && !isset($r['error']) && !$cacheLoaded)
-      self::_cacheResponse($cacheFile, $response, $cacheOpts);
+    if ($useCache && !isset($r['error']) && !$cacheLoaded) {
+      self::_cacheResponse($cacheFile, $response, $cacheOpts, $options['caching']==='store');
+    }
     self::_purgeCache();
     self::_purgeImages();
     return $r;
@@ -2232,10 +2249,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
    * @param array $response http_post return value
    * @param array $options Options array : contents used to tag what this data is.
    */
-  protected static function _cacheResponse($file, $response, $options)
+  protected static function _cacheResponse($file, $response, $options, $force=false)
   {
     // need to create the file as a binary event - so create a temp file and move across.
-    if ($file && !is_file($file) && isset($response['output'])) {
+    if ($file && (!is_file($file) || $force) && isset($response['output'])) {
       $handle = fopen($file.getmypid(), 'wb');
       fputs($handle, self::array_to_query_string($options)."\n");
       fwrite($handle, $response['output']);

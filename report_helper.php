@@ -350,6 +350,11 @@ class report_helper extends helper_base {
   *     width at which to apply the breakpoint. Footable defaults apply if
   *     omitted.
   * </li>
+  * <li><b>includeColumnsPicker</b>
+  * Adds a menu button to the header which allows the user to pick which columns are visible.
+  * When using this option you must set the id option as well to a unique identifier
+  * for the grid in order to enable saving of the settings in a cookie.
+  * </li>
   * </ul>
   */
   public static function report_grid($options) {
@@ -388,6 +393,7 @@ class report_helper extends helper_base {
       // Flag if we know any column data types and therefore can display a filter row
       $wantFilterRow=false;
       $filterRow='';
+      $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
         foreach ($options['columns'] as $field) {
@@ -426,6 +432,10 @@ class report_helper extends helper_base {
             $fieldId = '';
             $captionLink=$caption;
           }
+          $colClass = isset($field['fieldname']) ? " col-$field[fieldname]" : '';
+          if (!$colClass && isset($field['actions'])) {
+            $colClass = ' col-actions';
+          }
           
           // Create a data-hide attribute for responsive tables.
           $datahide = '';
@@ -435,8 +445,7 @@ class report_helper extends helper_base {
               $datahide = " data-hide=\"$datahide\" data-editable=\"true\"";
             }
           }
-          
-          $thead .= "<th$fieldId class=\"$thClass$orderStyle\"$datahide>$captionLink</th>\n";
+          $thead .= "<th$fieldId class=\"$thClass$colClass$orderStyle\"$datahide>$captionLink</th>\n";
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
               case 'text':
@@ -453,17 +462,16 @@ class report_helper extends helper_base {
             //The user can then deselect these checkboxes to remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
               data_entry_helper::$javascript.="indiciaData.includePopupFilter=true;";
-              $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
               $popupFilterIcon = $imgPath."desc.gif";
               $popupFilterIconHtml='<img class="col-popup-filter" id="col-popup-filter-'.$field['fieldname'].'-'.$options['id'].'" src="'.$popupFilterIcon.'"  >';
             }
             if (empty($popupFilterIconHtml))
               $popupFilterIconHtml='';
             //The filter's input id includes the grid id ($options['id']) in its id as there maybe more than one grid and we need to make the id unique.
-            $filterRow .= "<th><input title=\"$title\" type=\"text\" class=\"col-filter\" id=\"col-filter-".$field['fieldname']."-".$options['id']."\"/>$popupFilterIconHtml</th>";//Add a icon for the popup filter
+            $filterRow .= "<th class=\"$colClass\"><input title=\"$title\" type=\"text\" class=\"col-filter\" id=\"col-filter-".$field['fieldname']."-".$options['id']."\"/>$popupFilterIconHtml</th>";//Add a icon for the popup filter
             $wantFilterRow = true;
           } else
-            $filterRow .= '<th></th>';
+            $filterRow .= "<th class=\"$colClass\"></th>";
         }
       }
       $thead = str_replace(array('{class}','{title}','{content}'), array('','',$thead), $indicia_templates['report-thead-tr']);
@@ -593,7 +601,7 @@ class report_helper extends helper_base {
             $classes[] = 'table-gallery';
           if (isset($field['actions'])) {
             $value = self::get_report_grid_actions($field['actions'],$row, $pathParam);
-            $classes[]='actions';
+            $classes[]='col-actions';
           } elseif (isset($field['template'])) {
             $value = self::mergeParamsIntoTemplate($row, $field['template'], true, true, true);
           } else if (isset($field['update']) &&(!isset($field['update']['permission']) || hostsite_user_has_permission($field['update']['permission']))){
@@ -626,7 +634,9 @@ jQuery('#updateform-".$updateformID."').ajaxForm({
             $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';
             // The verification_1 form depends on the tds in the grid having a class="data fieldname".
             $classes[]='data';
-            $classes[]=$field['fieldname'];
+          }
+          if (isset($field['fieldname'])) {
+            $classes[]="col-$field[fieldname]";
           }
           if (isset($field['class']))
             $classes[] = $field['class'];
@@ -717,8 +727,13 @@ $('.update-input').focus(function(evt) {
     // $r may be empty if a spatial report has put all its controls on the map toolbar, when using params form only mode.
     // In which case we don't need to output anything.
     if (!empty($r)) {
+      if ($options['includeColumnsPicker']) {
+        $icon = $imgPath."plus.gif";
+        $r .='<img class="col-picker" style="position: absolute; right: 4px; top: 4px;" src="'.$icon.'"  >';
+        self::add_resource('jquery_cookie');
+      }
       // Output a div to keep the grid and pager together
-      $r = "<div id=\"".$options['id']."\">$r</div>\n";
+      $r = "<div id=\"".$options['id']."\" class=\"report-grid-container\">$r</div>\n";
 
       // Add responsive behaviour to table if specified in options.
       // The table is made responsive with the footables plugin based on the
@@ -790,7 +805,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       if (!empty($options['rowClass']))
         self::$javascript .= ",\n  rowClass: '".$options['rowClass']."'";
       if (isset($options['extraParams']))
-        self::$javascript .= ",\n  extraParams: ".json_encode(array_merge($options['extraParams'], $currentParamValues));
+        self::$javascript .= ",\n  extraParams: ".json_encode(array_merge($options['extraParams'], $currentParamValues), JSON_FORCE_OBJECT);
       if (isset($options['filters']))
         self::$javascript .= ",\n  filters: ".json_encode($options['filters']);
       if (isset($orderby))
@@ -2334,6 +2349,8 @@ if (typeof mapSettingsHooks!=='undefined') {
       // skip any actions which are marked as invisible for this row.
       if (isset($action['visibility_field']) && $row[$action['visibility_field']]==='f')
         continue;
+      if (isset($action['permission']) && !hostsite_user_has_permission($action['permission']))
+        continue;
       if (isset($action['url'])) {
         // Catch lazy cases where the URL does not contain the rootFolder so assumes a relative path
         if ( strcasecmp(substr($action['url'], 0, 12), '{rootfolder}') !== 0 && 
@@ -2423,7 +2440,8 @@ if (typeof mapSettingsHooks!=='undefined') {
       'autoloadAjax' => true,
       'linkFilterToMap' => true,
       'pager' => true,
-      'imageThumbPreset' => 'thumb'
+      'imageThumbPreset' => 'thumb',
+      'includeColumnsPicker' => false
     ), $options);
     // if using AJAX we are only loading parameters and columns, so may as well use local cache
     if ($options['ajax'])
@@ -2676,8 +2694,21 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     }
     $header_date=clone $consider_date;
     $r .= "<tr>".($options['includeWeekNumber'] ? "<td></td>" : "")."<td></td>";
+
+    global $language;
+    $lang = explode('-', $language->language);
+    switch ($lang[0]) {
+    	case 'en' : $lang =  'eng';
+    				break;
+    	case 'de' : $lang =  'deu';
+    				break;
+    	case 'fr' : $lang =  'fra';
+    				break;
+    }
+    setlocale (LC_TIME, $lang);
+
     for($i=0; $i<7; $i++){
-      $r .= "<td class=\"day\">".$header_date->format('D')."</td>"; // i8n
+      $r .= "<td class=\"day\">".utf8_encode(strftime("%a" , $header_date->getTimestamp()))."</td>"; // i8n
       $header_date->modify('+1 day');
     }
     $r .= "</tr>";
@@ -2716,7 +2747,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     while($consider_date->format('Y') <= $options["year"] && ($weeknumberfilter[1]=='' || $consider_date->format('N')!=$weekstart[1] || $weekno < $weeknumberfilter[1])){
       if($consider_date->format('N')==$weekstart[1]) {
         $weekno++;
-        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">".$consider_date->format('M')."</td>";
+        $r .= "<tr class=\"datarow\">".($options['includeWeekNumber'] ? "<td class=\"weeknum\">".$weekno."</td>" : "")."<td class\"month\">".utf8_encode(strftime("%b" , $consider_date->getTimestamp()))."</td>";
       }
       $cellContents=$consider_date->format('j');  // day in month.
       $cellclass="";
@@ -2786,7 +2817,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
       $extraFooter .= '<div class="left">'.$footer.'</div>';
     }
     if (!empty($extraFooter))
-      $r .= '<tfoot><tr><td colspan="'.count($options['columns']).'">'.$extraFooter.'</td></tr></tfoot>';
+      $r .= '<tfoot><tr><td colspan="'.($options['includeWeekNumber'] ? 9 : 8).'">'.$extraFooter.'</td></tr></tfoot>';
     $r .= "</table>\n";
     return $warnings.$r;
   }
@@ -4248,9 +4279,12 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   		$extraParams['query'] = urlencode(json_encode(array('in'=>array('location_id', $options['branch_location_list']))));
   	else $extraParams['location_id'] = 'NULL';
   	$extraParams['columns'] = 'date_start,date_end,date_type,type,period_number,taxa_taxon_list_id,taxonomic_sort_order,taxon,preferred_taxon,default_common_name,taxon_meaning_id,count,estimate';
+  	if(!isset($options['caching']))
+  		$options['caching']=true;
   	$records = data_entry_helper::get_population_data(array(
   			'table'=>'summary_occurrence',
-  			'extraParams'=>$extraParams
+  			'extraParams'=>$extraParams,
+  			'caching'=> $options['caching']
   	));
   	if (isset($records['error'])) return $records['error'];
   	data_entry_helper::$javascript .= "

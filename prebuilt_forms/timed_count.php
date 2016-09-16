@@ -181,6 +181,10 @@ class iform_timed_count {
         )
       )
     );
+    foreach($params as $param) {
+    	if($param['name']=='georefDriver')
+    		$param['required']=false; // method of georef detection is to see if driver specified: allows ommision of area preferences.
+    }
     return $params;
   }
 
@@ -594,7 +598,8 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     }
     unset(data_entry_helper::$default_validation_rules['sample:date']);
     $r .= data_entry_helper::text_input(array('label' => lang::get('Year'), 'fieldname' => 'sample:date', 'readonly'=>' readonly="readonly" ' ));
-
+    data_entry_helper::$javascript .= "$('#sample\\\\:date').css('color','graytext').css('background-color','#d0d0d0');\n";
+    
     // are there any option overrides for the custom attributes?
     if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) 
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
@@ -608,7 +613,7 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
 	      	  break;
       		case 'setArea':
       		  $parts = explode(',',$value); // 0=factor,1=number decimal places
-      		  data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr)."').attr('readonly','readonly');\nhook_setGeomFields.push(function(geom){\n$('#".str_replace(':','\\\\:',$attr)."').val(\n(geom.getArea()/".$parts[0].").toFixed(".$parts[1]."));\n});\n";
+      		  data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr)."').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\nhook_setGeomFields.push(function(geom){\n$('#".str_replace(':','\\\\:',$attr)."').val(\n(geom.getArea()/".$parts[0].").toFixed(".$parts[1]."));\n});\n";
       		  break;
       	}		 
       }
@@ -623,8 +628,8 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     $systems=array();
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) $systems[$system] = lang::get($system); 
-    $r .= "<label for=\"imp-sref\">".lang::get('Grid Reference').":</label> <input type=\"text\" id=\"imp-sref\" name=\"sample:entered_sref\" value=\"".data_entry_helper::$entity_to_load['sample:entered_sref']."\" readonly=\"readonly\" class=\"required\" />";
-    $r .= "<input type=\"hidden\" id=\"imp-geom\" name=\"sample:geom\" value=\"".data_entry_helper::$entity_to_load['sample:geom']."\" />";
+    $r .= "<label for=\"imp-sref\">".lang::get('Grid Reference').":</label> <input type=\"text\" id=\"imp-sref\" name=\"sample:entered_sref\" value=\"".(isset(data_entry_helper::$entity_to_load['sample:entered_sref']) ? data_entry_helper::$entity_to_load['sample:entered_sref'] : '')."\" readonly=\"readonly\" class=\"required\" />";
+    $r .= "<input type=\"hidden\" id=\"imp-geom\" name=\"sample:geom\" value=\"".(isset(data_entry_helper::$entity_to_load['sample:geom']) ? data_entry_helper::$entity_to_load['sample:geom'] : '')."\" />";
     if (count($systems) == 1) {
       // Hidden field for the system
       $keys = array_keys($systems);
@@ -633,7 +638,8 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
       $r .= self::sref_system_select(array('fieldname'=>'sample:entered_sref_system'));
     }
     
-    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
+    if(isset($args['georefDriver']) && $args['georefDriver']!='' && !isset(data_entry_helper::$entity_to_load['sample:id']))
+	    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
     $r .= data_entry_helper::map_panel($options, $olOptions);
 
     $r .= data_entry_helper::textarea(array('label'=>'Comment', 'fieldname'=>'sample:comment', 'class'=>'wide'));
@@ -719,7 +725,7 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
         foreach($subSamples[$i] as $field => $value){
           if(preg_match('/^attr_sample_/',  $field)){
             $parts=explode('_',$field);
-            if($subSamples[$i]['attr_id_sample_'.$parts[2]] != null)
+            if(isset($subSamples[$i]['attr_id_sample_'.$parts[2]]) && $subSamples[$i]['attr_id_sample_'.$parts[2]] != null)
               data_entry_helper::$entity_to_load['C'.($i+1).':smpAttr:'+$parts[2]+':'+$subSamples[$i]['attr_id_sample_'.$parts[2]]] = $value;
           }
         }
@@ -784,9 +790,12 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
         $dateValidation = array('required','date');
       else
         $dateValidation = array('date');
+      // The sample dates are restrained to the requisite year, but there is already a restriction on future dates, so only 
+      // change the upper limit if not this year. the date in data_entry_helper::$entity_to_load['sample:date'] is a vague date year
       $r .= data_entry_helper::date_picker(array('label' => lang::get('Date'), 'fieldname' => 'C'.($i+1).':sample:date', 'validation' => $dateValidation));
-      data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'minDate', new Date(".data_entry_helper::$entity_to_load['sample:date'].", 1 - 1, 1) );
-$('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date(".data_entry_helper::$entity_to_load['sample:date'].", 12 - 1, 31) );\n";
+      data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'minDate', new Date(".data_entry_helper::$entity_to_load['sample:date'].", 1 - 1, 1) );\n";
+      if(date('Y') > data_entry_helper::$entity_to_load['sample:date'])
+      	data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'maxDate', new Date(".data_entry_helper::$entity_to_load['sample:date'].", 12 - 1, 31) );\n";
       if(!$subSampleId && $i) {
         $r .= "<p>".lang::get('You must enter the date before you can enter any further information.').'</p>';
         data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).change(function(){

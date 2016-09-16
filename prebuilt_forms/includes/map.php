@@ -358,32 +358,39 @@ SCRIPT;
   // Note, since the following moves the map, we want it to be the first mapInitialisationHook
   data_entry_helper::$javascript .= <<<SCRIPT
 indiciaFns.zoomToBounds = function(mapdiv, bounds) {
-  // skip zoom to loaded bounds if already zoomed to a report output
-  if (typeof mapdiv.settings.zoomMapToOutput==="undefined" || mapdiv.settings.zoomMapToOutput===false) {
-    if (typeof $.cookie === 'undefined' || mapdiv.settings.rememberPos===false || $.cookie('maplon')===null) {
-      if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
-        // if showing something small, don't zoom in too far
-        mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
-      }
-      else {
-        // Set the default view to show the feature we are loading
-        mapdiv.map.zoomToExtent(bounds);
-      }
+  // Skip zoom to loaded bounds if already zoomed to a report output, remembering a position set in a cookie, or 
+  // loading an initial feature (e.g. viewing an edited record)
+  if (
+      (typeof mapdiv.settings.zoomMapToOutput==="undefined" || mapdiv.settings.zoomMapToOutput===false) &&
+      (typeof $.cookie === 'undefined' || $.cookie('maplon')===null || mapdiv.settings.rememberPos===false) && 
+      !mapdiv.settings.initialFeatureWkt
+      ) {
+    if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
+      // if showing something small, don't zoom in too far
+      mapdiv.map.setCenter(bounds.getCenterLonLat(), div.settings.maxZoom);
+    }
+    else {
+      // Set the default view to show the feature we are loading
+      mapdiv.map.zoomToExtent(bounds);
     }
   }
 }
 mapInitialisationHooks.push(function(mapdiv) {
-  var parser, feature, loclayer = new OpenLayers.Layer.Vector(
+  var parser, features, loclayer = new OpenLayers.Layer.Vector(
     '$name',
     {'sphericalMercator': true, displayInLayerSwitcher: true}
   );
   parser = new OpenLayers.Format.WKT();
-  feature = parser.read('$geom');
-  feature.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
-  feature.style.fillOpacity=0;
-  loclayer.addFeatures([feature]);
-  // Don't zoom to the locality if the map is set to remember last position
-  var bounds=feature.geometry.getBounds();
+  features = parser.read('$geom');
+  if (!Array.isArray(features)) {
+    features = [features];
+  }
+  $.each(features, function() {
+    this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
+    this.style.fillOpacity=0;
+  });
+  loclayer.addFeatures(features);
+  var bounds=loclayer.getDataExtent();
   mapdiv.map.updateSize();
   indiciaData.initialBounds = bounds;
   indiciaFns.zoomToBounds(mapdiv, bounds);

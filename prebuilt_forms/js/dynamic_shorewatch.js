@@ -3,7 +3,7 @@
 var setup_time_validation;
 var hide_wdcs_newsletter;
 var details_field_behaviour;
-var cetaceans_control_next_step;
+var animals_seen_controls_next_step;
 var adhoc_reticule_fields_validator;
 var adhoc_sightings_grid_species_validator;
 var empty_site_list_detect;
@@ -16,7 +16,7 @@ jQuery(document).ready(function($) {
   //If the page is locked then we don't run the logic on the Save/Next Step button
   //as this logic enables the button when we don't want it enabled.
   if (!indiciaData.dontRunCetaceanSaveButtonLogic) {
-    cetaceans_control_next_step();
+    animals_seen_controls_next_step();
   }
   $('[id$=\"comment-0\"]').text('Notes');
   adhoc_reticule_fields_validator();
@@ -189,31 +189,29 @@ jQuery(document).ready(function($) {
         }   
       }, indiciaData.emailPhoneMessage
     );
+
+    show_or_hide_next_step_button = function() {
+      //Need "\\:0" at the end of the selector as it is a pair of radio button options and we want the first one which is "Yes"
+      if ($('#smpAttr\\:' + indiciaData.cetaceans_seen_attr_id + '\\:0').is(':checked') ||
+          $('#smpAttr\\:' + indiciaData.non_cetacean_marine_animals_seen_attr_id + '\\:0').is(':checked')) {
+        $('[id=\"tab-next\"]').show();
+        $('[id=\"save-button\"]').hide();
+      } else {
+        $('[id=\"tab-next\"]').hide();
+        $('[id=\"save-button\"]').show();
+      }
+    };
     
     //Only on the normal (not adhoc) recording form, the "New Step" button is only displayed if the Cetaceans Seen option is yes.
-    cetaceans_control_next_step = function cetaceans_control_next_step() {
+    animals_seen_controls_next_step = function cetaceans_control_next_step() {
       //By default we show the save button
       $('[id=\"tab-next\"]').hide();
       $('.right.buttons').append('<input id=\"save-button\" class=\"indicia-button inline-control tab-submit\" type=\"submit\" value=\"Save\">');
       //Show Next Step button instead of save if Cetaceans Seen is yes. Do this on page load but also on change     
-      $('[name^=\"smpAttr\\:' + indiciaData.cetaceans_seen_attr_id + '\"]').change(function() {
-        //Need "\\:0" at the end of the selector as it is a pair of radio button options and we want the first one which is "Yes"
-        if ($('#smpAttr\\:' + indiciaData.cetaceans_seen_attr_id + '\\:0').is(':checked')) {
-          $('[id=\"tab-next\"]').show();
-          $('[id=\"save-button\"]').hide();
-        } else {     
-          $('[id=\"tab-next\"]').hide();
-          $('[id=\"save-button\"]').show();
-        }
-      });
-      //Need "\\:0" at the end of the selector as it is a pair of radio button options and we want the first one which is "Yes"
-      if ($('#smpAttr\\:' + indiciaData.cetaceans_seen_attr_id + '\\:0').is(':checked')) {
-        $('[id=\"tab-next\"]').show();
-        $('[id=\"save-button\"]').hide();
-      } else {     
-        $('[id=\"tab-next\"]').hide();
-        $('[id=\"save-button\"]').show();
-      }
+      $('[name^=\"smpAttr\\:' + indiciaData.cetaceans_seen_attr_id + '\"],'+
+        '[name^=\"smpAttr\\:' + indiciaData.non_cetacean_marine_animals_seen_attr_id + '\"]')
+        .change(show_or_hide_next_step_button);
+      show_or_hide_next_step_button();
     }
     
     //There are two Reticule drop-downs in the grid. If one is field is filled in then the other is becomes mandatory on the adhoc form (both are always mandatory

@@ -30,10 +30,11 @@ class extension_group_hierarchies {
         'table' => 'groups_user',
         'extraParams' => $auth['read'] + array(
             'user_id' => hostsite_get_user_field('indicia_user_id'),
-            'group_id' => $_GET[$options['parent_parameter']]
+            'group_id' => $_GET[$options['parent_parameter']],
+            'administrator' => 't'
           )
       ));
-      if (empty($data) || $data[0]['administrator']!=='t') {
+      if (empty($data)) {
         return '';
       }
     }

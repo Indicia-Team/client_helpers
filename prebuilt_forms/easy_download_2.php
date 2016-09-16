@@ -484,8 +484,12 @@ class iform_easy_download_2 {
             // load their profile settings for verification
             $location_id = hostsite_get_user_field('location_expertise');
             $taxon_group_ids = hostsite_get_user_field('taxon_groups_expertise');
+            if ($taxon_group_ids)
+              $taxon_group_ids = unserialize($taxon_group_ids);
             $survey_ids = hostsite_get_user_field('surveys_expertise');
-            if ($location_id || $taxon_group_ids || $survey_ids) {
+            if ($survey_ids)
+              $survey_ids = unserialize($survey_ids);
+            if ($location_id || !empty($taxon_group_ids) || !empty($survey_ids)) {
               $r['V profile'] = lang::get('Verification - my verification records');
             }
           }

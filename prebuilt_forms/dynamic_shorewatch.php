@@ -420,16 +420,6 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
       ));
     }
     $verifiedDataDetected=false;
-    //Check for sample id as we don't do this in add mode.
-    if (!empty($_GET['sample_id'])&&empty($sightingsData)) {
-      $r = '<div><i>This page is locked as it does not having any sightings.</i></div>'.$r;
-      data_entry_helper::$javascript .= "$('[id*=_lock]').remove();\n";
-      data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');\n"; 
-      data_entry_helper::$javascript .= "$('.species-grid, .page-notice, .indicia-button').hide();\n"; 
-      //If the page is locked then we don't run the logic on the Save/Next Step button
-      //as this logic enables the button when we don't want it enabled.
-      data_entry_helper::$javascript .= "indiciaData.dontRunCetaceanSaveButtonLogic=true;"; 
-    }
     if (!empty($sightingsData)) {
       //If any verified sightings are found then put page into read-only mode.
       foreach ($sightingsData as $sightingData) {

@@ -412,7 +412,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
               indiciaData.popupTranslations.save.replace('{1}', indiciaData.popupTranslations['verb' + status]) + '</button>' +
           '</fieldset>'
     $.fancybox(html, {
-      "onCleanup" : function() {
+      "beforeClose" : function() {
         $('#redet-dropdown').appendTo($('#redet-dropdown-ctnr'));
       }
     });

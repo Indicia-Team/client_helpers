@@ -352,7 +352,11 @@ class iform_sectioned_transects_edit_transect {
         // Check whether I am a normal user and it is allocated to me, and also if I am a branch manager and it is allocated to me.
         $settings['canEditBody'] = false;
         $settings['canEditSections'] = false;
-        if($args['allow_user_assignment'] &&
+        if(!$args['allow_user_assignment'] && count($settings['walks']) == 0) {
+          // when no sites assignments for this client, just allow editing for everyone if no samples recorded.
+          $settings['canEditBody'] = true;
+          $settings['canEditSections'] = true;
+        } else if($args['allow_user_assignment'] &&
             count($settings['walks']) == 0 &&
             isset($settings['cmsUserAttr']['default']) &&
             !empty($settings['cmsUserAttr']['default'])) {
@@ -703,7 +707,8 @@ $('#delete-transect').click(deleteSurvey);
     		'id' => 'section-location-system-select');
     // Output the hidden system control
     $r .= '<input type="hidden" id="section-location-system" name="location:centroid_sref_system" value="" />';
-    $r .= data_entry_helper::sref_system_select($options);
+    if(count($list)>1)
+    	$r .= data_entry_helper::sref_system_select($options);
     // force a blank centroid, so that the Warehouse will recalculate it from the boundary
     //$r .= "<input type=\"hidden\" name=\"location:centroid_geom\" value=\"\" />\n";   
     $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '));
@@ -717,7 +722,7 @@ $('#delete-transect').click(deleteSurvey);
   /**
    * Build a row of buttons for selecting the route.
    */
-  private static function section_selector($settings, $id) {
+  protected static function section_selector($settings, $id) {
     $sectionArr = array();
     foreach ($settings['sections'] as $code=>$section)
       $sectionArr[$code] = $code;
@@ -765,8 +770,8 @@ $('#delete-transect').click(deleteSurvey);
     if (isset($cmsUserAttr['default']) && !empty($cmsUserAttr['default'])) {
       foreach($cmsUserAttr['default'] as $value) {
         $rows .= '<tr><td id="user-'.$value['default'].'"><input type="hidden" name="'.$value['fieldname'].'" '.
-            'value="'.$value['default'].'"/>'.$users[$value['default']].
-            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>';
+            'value="'.$value['default'].'"/>'.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).
+            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close" title="Remove user '.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).'"></span></div></td></tr>';
         }
     }
     if (empty($rows))
@@ -800,8 +805,7 @@ $('#delete-transect').click(deleteSurvey);
     if($settings['canAllocBranch']){ // only check the users permissions if can change value - for performance reasons.
       $new_users = array();
       foreach ($users as $uid=>$name){
-        $account = user_load($uid);
-        if(hostsite_user_has_permission($args['branch_assignment_permission'], $account))
+        if(hostsite_user_has_permission($args['branch_assignment_permission'], $uid))
           $new_users[$uid]=$name;
       }
       $users = $new_users;
@@ -825,8 +829,8 @@ $('#delete-transect').click(deleteSurvey);
       foreach($branchCmsUserAttr['default'] as $value) {
         if($settings['canAllocBranch'])
           $rows .= '<tr><td id="branch-coord-'.$value['default'].'"><input type="hidden" name="'.$value['fieldname'].'" '.
-            'value="'.$value['default'].'"/>'.$users[$value['default']].
-            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>';
+            'value="'.$value['default'].'"/>'.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).
+            '</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close" title="Remove user '.(isset($users[$value['default']]) ? $users[$value['default']] : 'CMS User '.$value['default']).'"></span></div></td></tr>';
         else
           $rows .= '<tr><td>'.$users[$value['default']].'</td><td></td></tr>';
       }
