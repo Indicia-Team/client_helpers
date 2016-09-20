@@ -228,14 +228,16 @@ class extension_pantheon {
       if (isset($recordsByCat['1.bb'][$i])) {
         $record = $recordsByCat['1.bb'][$i];
         $color = $bbColors[$record['broad_biotope']];
-        $row .= "<td>$record[broad_biotope]</td><td style=\"background-color: #$color\"></td><td>$record[count]</td><td></td>";
+        $row .= "<td><span>$record[broad_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
+            "<td>$record[count]</td><td></td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
       if (isset($recordsByCat['2.sb'][$i])) {
         $record = $recordsByCat['2.sb'][$i];
         $color = $bbColors[$record['broad_biotope']];
-        $row .= "<td>$record[specific_biotope]</td><td style=\"background - color: #$color\"></td><td>$record[count]</td><td></td>";
+        $row .= "<td><span>$record[specific_biotope]</span></td><td style=\"background - color: #$color\"></td>" .
+            "<td>$record[count]</td><td></td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -245,14 +247,15 @@ class extension_pantheon {
         // indent children
         if (!empty($record['parent_r_id']))
           $record['resource'] = ' &gt;&gt; ' . $record['resource'];
-        $row .= "<td>$record[resource]</td><td style=\"background - color: #$color\"></td><td>$record[count]</td><td></td>";
+        $row .= "<td><span>$record[resource]</span></td><td style=\"background - color: #$color\"></td>" .
+            "<td>$record[count]</td><td></td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
       $rows[] = "<tr>$row</tr>";
       $i++;
     }
-    $r = '<table>' .
+    $r = '<table class="lexicon">' .
       '<thead><tr>' .
       '<th>Broad biotope</th><th>Type</th><th>No.</th><th>% rep.</th>' .
       '<th>Specific biotope</th><th>Type</th><th>No.</th><th>% rep.</th>' .
@@ -262,4 +265,16 @@ class extension_pantheon {
     return $r;
   }
 
+  public static function lexicon($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('report_helper'));
+    if (empty($options['vid']))
+      return 'The lexicon control needs an @vid parameter';
+    $terms = taxonomy_get_tree($options['vid']);
+    $list = [];
+    foreach ($terms as $term) {
+      $list[$term->name] = $term->description;
+    }
+    report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
+    report_helper::$javascript .= "applyLexicon();\n";
+  }
 }
