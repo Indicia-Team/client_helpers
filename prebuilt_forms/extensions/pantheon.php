@@ -236,7 +236,7 @@ class extension_pantheon {
       if (isset($recordsByCat['2.sb'][$i])) {
         $record = $recordsByCat['2.sb'][$i];
         $color = $bbColors[$record['broad_biotope']];
-        $row .= "<td><span>$record[specific_biotope]</span></td><td style=\"background - color: #$color\"></td>" .
+        $row .= "<td><span>$record[specific_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
             "<td>$record[count]</td><td></td>";
       } else {
         $row .= '<td colspan="4"></td>';
@@ -247,7 +247,7 @@ class extension_pantheon {
         // indent children
         if (!empty($record['parent_r_id']))
           $record['resource'] = ' &gt;&gt; ' . $record['resource'];
-        $row .= "<td><span>$record[resource]</span></td><td style=\"background - color: #$color\"></td>" .
+        $row .= "<td><span>$record[resource]</span></td><td style=\"background-color: #$color\"></td>" .
             "<td>$record[count]</td><td></td>";
       } else {
         $row .= '<td colspan="4"></td>';
