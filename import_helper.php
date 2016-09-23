@@ -706,8 +706,9 @@ class import_helper extends helper_base {
         //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
         //This means only the first occurrence for the needle is exploded which is desirable in the situation as the field caption
         //contains colons in some situations.
-        if (!empty($autoFieldMappings[$column]) && $autoFieldMappings[$column]!=='<Not imported>') {
-          $savedData = explode(':',$autoFieldMappings[$column],2);
+        $colKey = preg_replace('/[^A-Za-z0-9]/', ' ', $column);
+        if (!empty($autoFieldMappings[$colKey]) && $autoFieldMappings[$colKey]!=='<Not imported>') {
+          $savedData = explode(':',$autoFieldMappings[$colKey],2);
           $savedSectionHeading = $savedData[0];
           $savedMainCaption = $savedData[1];
         } else {
@@ -715,7 +716,8 @@ class import_helper extends helper_base {
           $savedMainCaption = '';
         }
         //Detect if the user has saved a column setting that is not 'not imported' then call the method that handles the auto-match rules.
-        if (strcasecmp($prefix,$savedSectionHeading)===0 && strcasecmp($field,$savedSectionHeading.':'.$savedMainCaption)===0) {
+        if (strcasecmp($prefix, $savedSectionHeading) === 0 &&
+            strcasecmp($field, $savedSectionHeading . ':' . $savedMainCaption) === 0) {
           $selected=true;
           $itWasSaved[$column] = 1;
           //even though we have already detected the user has a saved setting, we need to call the auto-detect rules as if it gives the same result then the system acts as if it wasn't saved.
@@ -723,7 +725,7 @@ class import_helper extends helper_base {
           $itWasSaved[$column] = $saveDetectRulesResult['itWasSaved'];
         } else {
           //only use the auto field selection rules to select the drop-down if there isn't a saved option
-          if (!isset($autoFieldMappings[$column])) {
+          if (!isset($autoFieldMappings[$colKey])) {
             $nonSaveDetectRulesResult = self::auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved[$column], false);
             $selected = $nonSaveDetectRulesResult['selected'];
           }
@@ -849,17 +851,21 @@ class import_helper extends helper_base {
   * @return string HTMl string 
   */
   private static function items_to_draw_once_per_import_column($r, $column, $itWasSaved, $rememberAll, $multiMatch) {
-    $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
     $optionID = str_replace(" ", "", $column).'Normal';
     $r = "<option value=\"&lt;Not imported&gt;\">&lt;".lang::get('Not imported').'&gt;</option>'.$r.'</optgroup>';
-    if (self::$rememberingMappings) 
-      $r .= "<td class=\"centre\"><input type='checkbox' name='$column.Remember' class='rememberField'id='$column.Remember' value='1'$checked onclick='
-      if (!this.checked) {
-        $(\"#RememberAll\").removeAttr(\"checked\");
-      }' 
-      title='If checked, your selection for this particular column will be saved and automatically selected during future imports. ".
-          "Any alterations you make to this default selection in the future will also be remembered until you deselect the checkbox.'></td>";
-
+    if (self::$rememberingMappings) {
+      $inputName = preg_replace('/[^A-Za-z0-9]/', '_', $column) . '.Remember';
+      $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
+      $r .= <<<TD
+<td class="centre">
+<input type="checkbox" name="$inputName" class="rememberField" id="$inputName" value="1"$checked 
+  onclick="if (!this.checked) { $('#RememberAll').removeAttr('checked'); }" 
+  title="If checked, your selection for this particular column will be saved and automatically selected during future 
+    imports. Any alterations you make to this default selection in the future will also be remembered until you deselect
+    the checkbox.">
+</td>
+TD;
+    }
     if ($itWasSaved[$column] == 1) {
       $r .= "<tr><td></td><td class=\"note\">Please check the suggested mapping above is correct.</td></tr>";
     }
