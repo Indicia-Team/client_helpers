@@ -267,12 +267,17 @@ class extension_pantheon {
 
   public static function lexicon($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
-    if (empty($options['vid']))
-      return 'The lexicon control needs an @vid parameter';
-    $terms = taxonomy_get_tree($options['vid']);
+    $query = new EntityFieldQuery();
+    $query
+        ->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'lexicon')
+        ->propertyCondition('status', 1);
+    $result = $query->execute();
+    $nids = array_keys($result['node']);
+    $nodes = node_load_multiple($nids);
     $list = [];
-    foreach ($terms as $term) {
-      $list[$term->name] = $term->description;
+    foreach ($nodes as $node) {
+      $list[$node->title] = $node->field_summary[LANGUAGE_NONE][0]['value'];
     }
     report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
     report_helper::$javascript .= "applyLexicon();\n";

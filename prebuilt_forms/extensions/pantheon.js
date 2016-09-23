@@ -21,11 +21,16 @@ jQuery(document).ready(function ($) {
   var join;
 
   applyLexicon = function () {
+    var termAlias;
     // apply the Lexicon
     $.each($('.lexicon span'), function () {
       if (typeof indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')] !== 'undefined') {
         $(this).attr('title', indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')]);
         $(this).addClass('lexicon-term');
+        termAlias = $(this).html().replace(/&amp;/g, '&')
+            .replace(/[^a-zA-Z0-9]+/g, '-')
+            .toLowerCase();
+        $(this).after('<a href="/pantheon/lexicon/' + termAlias + '">i</a>');
       }
     });
   };
