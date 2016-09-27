@@ -116,6 +116,9 @@ class iform_group_receive_invite_response {
   
   private static function logged_in_page($invite, $auth) {
     global $user;
+    if (self::existingUser($invite, $auth))
+      return lang::get('There is no need to accept this invitation as you are already a member of {1}.',
+          $invite['group_title']);
     $reloadPath = self::getReloadPath();
     $r = '<p>'.lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.',
         hostsite_get_config_value('site', 'name'), $user->name, $invite['group_title']) . '</p>';
@@ -127,7 +130,26 @@ class iform_group_receive_invite_response {
     hostsite_set_page_title(lang::get('Invitation to join {1}', $invite['group_title']));
     return $r;
   }
-  
+
+  /**
+   * Checks if the invite relates to a group the user already belongs to.
+   * @param $invite
+   * @param $auth
+   * @return bool
+   */
+  private static function existingUser($invite, $auth) {
+    // double check not already a member
+    $existing = data_entry_helper::get_population_data(array(
+      'table' => 'groups_user',
+      'extraParams' => $auth['read'] + array(
+          'user_id' => hostsite_get_user_field('indicia_user_id'),
+          'group_id' => $invite['group_id']
+        ),
+      'nocache'=>true
+    ));
+    return count($existing) > 0;
+  }
+
   /** 
    * Retrieve the path to the current page, so the form can submit to itself.
    * @return string 
@@ -186,7 +208,8 @@ class iform_group_receive_invite_response {
         watchdog('iform', 'An internal error occurred whilst trying to accept an invite: '.print_r($r, true));
       return self::fail_message('An internal error occurred whilst trying to accept the invite', $args);
     } elseif (isset($r['code']) && $r['code']===2004) {
-      hostsite_show_message(lang::get('You are already a member of the group!'));
+      hostsite_show_message(lang::get(
+          'There is no need to accept this invitation as you are already a member of {1}.', $invite['group_title']));
       hostsite_goto_page($args['groups_page_path']);
     } else {
       // delete the invitation

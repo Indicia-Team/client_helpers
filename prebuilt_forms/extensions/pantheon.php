@@ -160,4 +160,126 @@ class extension_pantheon {
     return $r;
   }
 
+  /**
+   * Tabular output by broad biotope, specific biotiope and resources for Osiris.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param $options
+   * @param $path
+   */
+  public static function osiris_tabular($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('report_helper'));
+    $r = '';
+    $data = report_helper::get_report_data(array(
+      'dataSource' => 'reports_for_prebuilt_forms/pantheon/osiris_tabular',
+      'readAuth' => $auth['read'],
+      'extraParams' => array(
+          'sample_id' => $_GET['dynamic-sample_id'],
+          'bb_attr_id' => $options['bb_attr_id'],
+          'sb_attr_id' => $options['sb_attr_id'],
+          'r_attr_id' => $options['r_attr_id']
+      ),
+      'caching' => true
+    ));
+    $recordsByCat = [];
+
+    foreach ($data as $record) {
+      if (!isset($recordsByCat[$record['category']]))
+        $recordsByCat[$record['category']] = [];
+      $recordsByCat[$record['category']][] = $record;
+    }
+    $i = 0;
+    $rows = [];
+    // assign colours
+    $kelly_sequence = [
+      "FFB300", # Vivid Yellow
+      "803E75", # Strong Purple
+      "FF6800", # Vivid Orange
+      "A6BDD7", # Very Light Blue
+      "C10020", # Vivid Red
+      "CEA262", # Grayish Yellow
+      "817066", # Medium Gray
+
+      # The following don't work well for people with defective color vision
+      "007D34", # Vivid Green
+      "F6768E", # Strong Purplish Pink
+      "00538A", # Strong Blue
+      "FF7A5C", # Strong Yellowish Pink
+      "53377A", # Strong Violet
+      "FF8E00", # Vivid Orange Yellow
+      "B32851", # Strong Purplish Red
+      "F4C800", # Vivid Greenish Yellow
+      "7F180D", # Strong Reddish Brown
+      "93AA00", # Vivid Yellowish Green
+      "593315", # Deep Yellowish Brown
+      "F13A13", # Vivid Reddish Orange
+      "232C16" # Dark Olive Green
+    ];
+    $bbColors = [];
+    foreach ($recordsByCat['1.bb'] as $idx => $bb) {
+      $bbColors[$bb['broad_biotope']] = $kelly_sequence[$idx % 22];
+    }
+    while (true) {
+      $row = '';
+      if (!(isset($recordsByCat['1.bb'][$i]) || isset($recordsByCat['2.sb'][$i]) || isset($recordsByCat['3.r'][$i]))) {
+        break; // if no rows left
+      }
+      if (isset($recordsByCat['1.bb'][$i])) {
+        $record = $recordsByCat['1.bb'][$i];
+        $color = $bbColors[$record['broad_biotope']];
+        $row .= "<td><span>$record[broad_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
+            "<td>$record[count]</td><td></td>";
+      } else {
+        $row .= '<td colspan="4"></td>';
+      }
+      if (isset($recordsByCat['2.sb'][$i])) {
+        $record = $recordsByCat['2.sb'][$i];
+        $color = $bbColors[$record['broad_biotope']];
+        $row .= "<td><span>$record[specific_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
+            "<td>$record[count]</td><td></td>";
+      } else {
+        $row .= '<td colspan="4"></td>';
+      }
+      if (isset($recordsByCat['3.r'][$i])) {
+        $record = $recordsByCat['3.r'][$i];
+        $color = $bbColors[$record['broad_biotope']];
+        // indent children
+        if (!empty($record['parent_r_id']))
+          $record['resource'] = ' &gt;&gt; ' . $record['resource'];
+        $row .= "<td><span>$record[resource]</span></td><td style=\"background-color: #$color\"></td>" .
+            "<td>$record[count]</td><td></td>";
+      } else {
+        $row .= '<td colspan="4"></td>';
+      }
+      $rows[] = "<tr>$row</tr>";
+      $i++;
+    }
+    $r = '<table class="lexicon">' .
+      '<thead><tr>' .
+      '<th>Broad biotope</th><th>Type</th><th>No.</th><th>% rep.</th>' .
+      '<th>Specific biotope</th><th>Type</th><th>No.</th><th>% rep.</th>' .
+      '<th>Resource</th><th>Type</th><th>No.</th><th>% rep.</th>' .
+      '</tr></thead>' .
+      '<tbody>' . implode("\n", $rows) . '</tbody></table>';
+    return $r;
+  }
+
+  public static function lexicon($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('report_helper'));
+    $query = new EntityFieldQuery();
+    $query
+        ->entityCondition('entity_type', 'node')
+        ->entityCondition('bundle', 'lexicon')
+        ->propertyCondition('status', 1);
+    $result = $query->execute();
+    $nids = array_keys($result['node']);
+    $nodes = node_load_multiple($nids);
+    $list = [];
+    foreach ($nodes as $node) {
+      $list[$node->title] = $node->field_summary[LANGUAGE_NONE][0]['value'];
+    }
+    report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
+    report_helper::$javascript .= "applyLexicon();\n";
+  }
 }

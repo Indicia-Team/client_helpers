@@ -1407,10 +1407,11 @@ class helper_base extends helper_config {
     if ($r===false) {
       $postargs = "website_id=$website_id";
       $response = self::http_post(self::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
-      if (array_key_exists('status', $response)) {
+      if (array_key_exists('status', $response))
         throw new Exception($response['output'], $response['status']);
-      }
       $nonce = $response['output'];
+      if (substr($nonce, 0, 9) === '<!DOCTYPE')
+        throw new Exception(lang::get('Could not authenticate against the warehouse. Is the server down?'));
       $r = array(
           'auth_token' => sha1("$nonce:$password"),
           'nonce' => $nonce
@@ -1418,7 +1419,7 @@ class helper_base extends helper_config {
       self::cache_set(array('readauth-wid'=>$website_id), json_encode($r));
     } 
     else
-      $r = json_decode($r, true);
+      $r = json_decode($r, TRUE);
     self::$js_read_tokens = $r;
     return $r;
   }
