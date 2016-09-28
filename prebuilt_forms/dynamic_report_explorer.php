@@ -312,9 +312,12 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'paramsOnly'=>true,
         'sharing'=>$sharing,
         'paramsFormButtonCaption'=>lang::get('Filter')
-      ),
-      $options
+      )
     );
+    // ensure supplied extraParams are merged, not overwritten
+    if (!empty($options['extraParams']))
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    $reportOptions = array_merge($reportOptions, $options);
     if (self::$applyUserPrefs)
       iform_report_apply_explore_user_own_preferences($reportOptions);
     return report_helper::report_grid($reportOptions);
@@ -345,9 +348,12 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'clickableLayersOutputMode'=>'report',
         'rowId'=>'occurrence_id',
         'ajax'=>TRUE
-      ),
-      $options
+      )
     );
+    // ensure supplied extraParams are merged, not overwritten
+    if (!empty($options['extraParams']))
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    $reportOptions = array_merge($reportOptions, $options);
     if (self::$applyUserPrefs)
       iform_report_apply_explore_user_own_preferences($reportOptions);
     $r = report_helper::report_map($reportOptions);
@@ -392,9 +398,12 @@ class iform_dynamic_report_explorer extends iform_dynamic {
             'tablet-landscape' => 1024,
           ),
         ),           
-      ),
-      $options
+      )
     );
+    // ensure supplied extraParams are merged, not overwritten
+    if (!empty($options['extraParams']))
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    $reportOptions = array_merge($reportOptions, $options);
     if (self::$applyUserPrefs)
       iform_report_apply_explore_user_own_preferences($reportOptions);
     self::$reportCount++;
@@ -416,9 +425,12 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'autoParamsForm'=>false,
         'sharing'=>$sharing,
         'id'=>'report-freeform-'.self::$reportCount
-      ),
-      $options
+      )
     );
+    // ensure supplied extraParams are merged, not overwritten
+    if (!empty($options['extraParams']))
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    $reportOptions = array_merge($reportOptions, $options);
     if (self::$applyUserPrefs)
       iform_report_apply_explore_user_own_preferences($reportOptions);
     self::$reportCount++;
@@ -440,7 +452,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     }
     iform_load_helpers(array('report_helper'));
     $args['report_name']='';
-    $options = array_merge(
+    $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
         'id' => 'chart-'.self::$reportCount,
@@ -448,18 +460,21 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'width'=> '100%',
         'height'=> 500,
         'autoParamsForm'=>false
-      ),
-      $options
+      )
     );
+    // ensure supplied extraParams are merged, not overwritten
+    if (!empty($options['extraParams']))
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    $reportOptions = array_merge($reportOptions, $options);
     // values and labels should be provided as a json array, but just in case it is a comma separated list
-    if (!is_array($options['yValues']))
-      $options['yValues']=explode(',', trim($options['yValues']));
-    if (!empty($options['xValues']) && !is_array($options['xValues']))
-      $options['xValues']=explode(',', $options['xValues']);
-    if (!empty($options['xLabels']) && !is_array($options['xLabels']))
-      $options['xLabels']=explode(',', $options['xLabels']);
+    if (!is_array($reportOptions['yValues']))
+      $reportOptions['yValues']=explode(',', trim($reportOptions['yValues']));
+    if (!empty($reportOptions['xValues']) && !is_array($reportOptions['xValues']))
+      $reportOptions['xValues']=explode(',', $reportOptions['xValues']);
+    if (!empty($reportOptions['xLabels']) && !is_array($reportOptions['xLabels']))
+      $reportOptions['xLabels']=explode(',', $reportOptions['xLabels']);
     
-    return report_helper::report_chart($options);
+    return report_helper::report_chart($reportOptions);
   }
   
   /*
@@ -487,7 +502,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'readAuth'=>$auth['read'],
         'dataSource'=>$options['dataSource'],
       )
-      
     );
     $r = '<br/>'.report_helper::report_chart($options);
     return $r;
