@@ -98,7 +98,7 @@ class extension_pantheon {
       $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('pantheon/summary') . '">Back to Summary</a></li>';
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
 <li><a id="assemblages-link" class="button" href="' . hostsite_get_url('assemblages/overview') . '">ISIS assemblage summary</a></li>
-<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris/ecological-divisions') . '">Osiris traits summary</a></li>
+<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris') . '">Osiris</a></li>
 <li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Horus indices summary</a></li>
 <li><a id="combined-summary" class="button" href="' . hostsite_get_url('pantheon/combined-summary') . '">Combined summary</a></li>
 </ul>';
@@ -172,7 +172,7 @@ class extension_pantheon {
     iform_load_helpers(array('report_helper'));
     $r = '';
     $data = report_helper::get_report_data(array(
-      'dataSource' => 'reports_for_prebuilt_forms/pantheon/osiris_tabular',
+      'dataSource' => 'reports_for_prebuilt_forms/pantheon/osiris_tabular_hierarchy',
       'readAuth' => $auth['read'],
       'extraParams' => array(
           'sample_id' => $_GET['dynamic-sample_id'],
@@ -229,7 +229,7 @@ class extension_pantheon {
         $record = $recordsByCat['1.bb'][$i];
         $color = $bbColors[$record['broad_biotope']];
         $row .= "<td><span>$record[broad_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td></td>";
+            "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -237,7 +237,7 @@ class extension_pantheon {
         $record = $recordsByCat['2.sb'][$i];
         $color = $bbColors[$record['broad_biotope']];
         $row .= "<td><span>$record[specific_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td></td>";
+            "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -248,7 +248,7 @@ class extension_pantheon {
         if (!empty($record['parent_r_id']))
           $record['resource'] = ' &gt;&gt; ' . $record['resource'];
         $row .= "<td><span>$record[resource]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td></td>";
+            "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
