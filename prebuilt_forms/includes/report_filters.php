@@ -613,8 +613,8 @@ class filter_source extends filter_base {
             '<select id="filter-websites-mode" name="website_list_op"><option value="in">'.lang::get('Include').'</option><option value="not in">'.lang::get('Exclude').'</option></select> '.
             lang::get('records from').':</p><ul id="website-list-checklist">';
         foreach ($sources as $source) {
-          $r .= '<li><input type="checkbox" value="'.$source['id'].'" id="check-'.$source['id'].'"/>' .
-              '<label for="check-'.$source['id'].'">'.$source['title'].'</label></li>';
+          $r .= '<li><input type="checkbox" value="'.$source['id'].'" id="check-website-'.$source['id'].'"/>' .
+              '<label for="check-website-'.$source['id'].'">'.$source['title'].'</label></li>';
         }
         $r .= '</ul></div>';
       }
