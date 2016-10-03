@@ -4635,7 +4635,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         "id=\"$fieldname:occurrence:comment\" name=\"$fieldname:occurrence:comment\" value=\"\" /></td>";
     }
     if (isset($options['occurrenceSensitivity']) && $options['occurrenceSensitivity']) {
-      $r .= '<td class="ui-widget-content scSCell" headers="'.$options['id'].'-sensitivity-0">'.
+      $r .= '<td class="ui-widget-content scSensitivityCell" headers="'.$options['id'].'-sensitivity-0">'.
         self::select(array('fieldname'=>"$fieldname:occurrence:sensitivity_precision", 'class'=>'scSensitivity',
           'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
             '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
