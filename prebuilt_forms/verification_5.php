@@ -642,6 +642,7 @@ idlist=';
       'dataSource'=>'library/occurrence_comments/filterable_explore_list',
       'id' => 'comments-log',
       'rowId' => 'occurrence_id',
+      'linkFilterToMap' => false,
       'reportGroup' => 'verification',
       'ajax'=>TRUE,
       'sharing'=>'verification',
