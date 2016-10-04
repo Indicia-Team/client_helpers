@@ -46,30 +46,32 @@ class extension_pantheon {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
       $nid = arg(1);
       $title = hostsite_get_page_title($nid);
-      if (!empty($_GET['dynamic-sample_id']))
-        $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
-      if (preg_match('/{term:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-        $terms = data_entry_helper::get_population_data(array(
-          'table' => 'termlists_term',
-          'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']], 'view' => 'cache'),
-          'columns' => 'term'
-        ));
-        if (count($terms))
-          $title = str_replace('{term:' . $matches['param'] . '}', $terms[0]['term'], $title);
-
-      }
-      if (preg_match('/{attr:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-        $attrs = data_entry_helper::get_population_data(array(
-          'table' => 'taxa_taxon_list_attribute',
-          'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']]),
-          'columns' => 'caption'
-        ));
-        if (count($attrs))
-          $title = str_replace('{attr:' . $matches['param'] . '}', $attrs[0]['caption'], $title);
-
-      }
-      hostsite_set_page_title($title);
+    } else {
+      $title = drupal_get_title();
     }
+    if (!empty($_GET['dynamic-sample_id']))
+      $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
+    if (preg_match('/{term:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
+      $terms = data_entry_helper::get_population_data(array(
+        'table' => 'termlists_term',
+        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']], 'view' => 'cache'),
+        'columns' => 'term'
+      ));
+      if (count($terms))
+        $title = str_replace('{term:' . $matches['param'] . '}', $terms[0]['term'], $title);
+
+    }
+    if (preg_match('/{attr:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
+      $attrs = data_entry_helper::get_population_data(array(
+        'table' => 'taxa_taxon_list_attribute',
+        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']]),
+        'columns' => 'caption'
+      ));
+      if (count($attrs))
+        $title = str_replace('{attr:' . $matches['param'] . '}', $attrs[0]['caption'], $title);
+
+    }
+    hostsite_set_page_title($title);
     return '';
   }
 
@@ -100,7 +102,7 @@ class extension_pantheon {
 <li><a id="assemblages-link" class="button" href="' . hostsite_get_url('assemblages/overview') . '">ISIS assemblage summary</a></li>
 <li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris') . '">Osiris</a></li>
 <li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Horus indices summary</a></li>
-<li><a id="combined-summary" class="button" href="' . hostsite_get_url('pantheon/combined-summary') . '">Combined summary</a></li>
+<li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
 </ul>';
     return $r;
   }
