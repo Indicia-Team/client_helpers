@@ -99,7 +99,7 @@ class extension_pantheon {
     if (!empty($options['back']))
       $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('pantheon/summary') . '">Back to Summary</a></li>';
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
-<li><a id="assemblages-link" class="button" href="' . hostsite_get_url('assemblages/overview') . '">ISIS assemblage summary</a></li>
+<li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Ecological guilds</a></li>
 <li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris') . '">Osiris</a></li>
 <li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Horus indices summary</a></li>
 <li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
@@ -144,13 +144,13 @@ class extension_pantheon {
           if (!empty($broad)) {
             $r .= "<div class=\"broad-assemblage trait\">" .
               "<span id=\"trait-$broad[trait_term_id]\">" .
-              "$broad[trait]</span><a href=\"$rootFolder/species-for-trait{$sep}dynamic-sample_id=$broad[sample_id]" .
+              "$broad[trait]</span><a href=\"{$rootFolder}species-for-trait{$sep}dynamic-sample_id=$broad[sample_id]" .
               "&dynamic-trait_term_id=$broad[trait_term_id]&dynamic-trait_attr_id=$broad[trait_attr_id]\">$broad[count]</a></div>";
           }
           $r .= "<div class=\"specific-assemblages\">";
           foreach ($broad_and_children['specific'] as $specific) {
             $r .= "<div class=\"specific-assemblage trait\"><span id=\"trait-$specific[trait_term_id]\">" .
-              "$specific[trait]</span><a href=\"$rootFolder/species-for-trait{$sep}dynamic-sample_id=$specific[sample_id]" .
+              "$specific[trait]</span><a href=\"{$rootFolder}species-for-trait{$sep}dynamic-sample_id=$specific[sample_id]" .
               "&dynamic-trait_term_id=$specific[trait_term_id]&dynamic-trait_attr_id=$specific[trait_attr_id]\">$specific[count]</a></div>";
           }
           $r .= "</div></div>";
@@ -282,6 +282,6 @@ class extension_pantheon {
       $list[$node->title] = $node->field_summary[LANGUAGE_NONE][0]['value'];
     }
     report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
-    report_helper::$javascript .= "applyLexicon();\n";
+    report_helper::$javascript .= "indiciaFns.applyLexicon();\n";
   }
 }
