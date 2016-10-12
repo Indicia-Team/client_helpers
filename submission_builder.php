@@ -95,9 +95,9 @@ class submission_builder extends helper_config {
     $modelWrapped = self::wrap_with_images($values, array_key_exists('fieldPrefix', $structure) ? $structure['fieldPrefix'] : $structure['model']);
     // Attach the specially handled fields to the model
     if (array_key_exists('metaFields', $structure)) {
-       // need to be careful merging metafields in the structure and those auto generated in wrap_with_attrs (ie sample/location/occurrence attributes)
+      // need to be careful merging metafields in the structure and those auto generated in wrap_with_attrs (ie sample/location/occurrence attributes)
       if(!array_key_exists('metaFields', $modelWrapped))
-	      $modelWrapped['metaFields']=array();
+        $modelWrapped['metaFields']=array();
       foreach ($metaFields as $key=>$value) {
         $modelWrapped['metaFields'][$key]=$value;
       }
@@ -109,7 +109,7 @@ class submission_builder extends helper_config {
     if (array_key_exists('subModels', $structure)) {
       // need to be careful merging submodels in the structure and those auto generated in wrap_with_attrs (ie images)
       if(!array_key_exists('subModels', $modelWrapped))
-	      $modelWrapped['subModels']=array();
+        $modelWrapped['subModels']=array();
       foreach ($structure['subModels'] as $name => $struct) {
         $submodelWrapped = self::wrap_with_images($values, array_key_exists('fieldPrefix', $struct) ? $struct['fieldPrefix'] : $name);
         // Join the parent and child models together
@@ -155,8 +155,8 @@ class submission_builder extends helper_config {
       self::create_personal_site($array);
     // Initialise the wrapped array
     $sa = array(
-        'id' => $entity,
-        'fields' => array()
+      'id' => $entity,
+      'fields' => array()
     );
     if ($field_prefix) {
       $sa['field_prefix']=$field_prefix;
@@ -187,8 +187,8 @@ class submission_builder extends helper_config {
               if (preg_match("/\d+:$attrEntity:\d+:\d+/", $arrayItem)) {
                 $tokens=explode(':', $arrayItem, 2);
                 $sa['fields'][$tokens[1]] = array('value' => $tokens[0]);
-              //Additional handling for multi-value controls such as easyselect lists in species grids where the selected items are displayed under
-              //the main control. These items have both the value itself and the attribute_value id in the value field
+                //Additional handling for multi-value controls such as easyselect lists in species grids where the selected items are displayed under
+                //the main control. These items have both the value itself and the attribute_value id in the value field
               } elseif (preg_match("/^\d+:\d+$/", $arrayItem)) {
                 $tokens=explode(':', $arrayItem);
                 $sa['fields']["$key:$tokens[1]:$idx"] = array('value' => $tokens[0]);
@@ -203,7 +203,7 @@ class submission_builder extends helper_config {
           if ($tokens[4]==='deleted') {
             if ($value==='t') {
               $complexAttrs[$key]='deleted';
-            } 
+            }
           } else {
             $attrKey = str_replace('+', '', $tokens[0]) . ':' . $tokens[1];
             if (!empty($tokens[2]))
@@ -216,14 +216,16 @@ class submission_builder extends helper_config {
             }
           }
         }
-      } 
+      }
     }
     foreach($complexAttrs as $attrKey=>$data) {
       if ($data==='deleted')
         $sa['fields'][$attrKey]=array('value'=>'');
       else {
         $sa['fields'][$attrKey]=array('value'=>array());
-        $exists = count(explode(':', $attrKey))===3;
+        $tokens = explode(':', $attrKey);
+        $exists = count($tokens)===3;
+        $encoding = $array["complex-attr-grid-encoding-$tokens[0]-$tokens[1]"];
         foreach (array_values($data) as $row) {
           // find any term submissions in form id:term, and split into 2 json fields. Also process checkbox groups into suitable array form.
           $terms=array();
@@ -249,12 +251,13 @@ class submission_builder extends helper_config {
           }
           $row += $terms;
           if (implode('', array_values($row))<>'') {
+            $encoded = $encoding === 'json' ? json_encode($row) : implode($encoding, $row);
             if ($exists)
               // existing value, so no need to send an array
-              $sa['fields'][$attrKey]['value'] = json_encode($row);
+              $sa['fields'][$attrKey]['value'] = $encoded;
             else
               // could be multiple new values, so send an array
-              $sa['fields'][$attrKey]['value'][] = json_encode($row);
+              $sa['fields'][$attrKey]['value'][] = $encoded;
           } elseif ($exists) {
             // submitting an empty set for existing row, so deleted
             $sa['fields'][$attrKey]=array('value'=>'');
@@ -262,32 +265,32 @@ class submission_builder extends helper_config {
         }
       }
     }
-    if ($entity==='occurrence' && function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) 
+    if ($entity==='occurrence' && function_exists('hostsite_get_user_field') && hostsite_get_user_field('training'))
       $sa['fields']['training'] = array('value' => 'on');
     // useLocationName is a special flag to indicate that an unmatched location can go
     // in the locaiton_name field.
     if (isset($array['useLocationName'])) {
       if ($entity==='sample') {
         if ((empty($sa['fields']['location_id']) || empty($sa['fields']['location_id']['value']))
-            && !empty($array['imp-location:name']))
+          && !empty($array['imp-location:name']))
           $sa['fields']['location_name']=array('value'=>$array['imp-location:name']);
-        else 
+        else
           $sa['fields']['location_name']=array('value'=>'');
       }
       unset($array['useLocationName']);
     }
     return $sa;
   }
-  
+
   /**
    * Creates a site using the form submission data and attaches the location_id to the
    * sample information in the submission.
-   * @param array Form submission data. 
+   * @param array Form submission data.
    */
   private static function create_personal_site(&$array) {
     // Check we don't already have a location ID, and have the other stuff we require
     if (!empty($array['sample:location_id']) || !array_key_exists('imp-location:name', $array)
-        || !array_key_exists('sample:entered_sref', $array) || !array_key_exists('sample:entered_sref_system', $array))
+      || !array_key_exists('sample:entered_sref', $array) || !array_key_exists('sample:entered_sref_system', $array))
       return;
     $loc = array(
       'location:name'=>$array['imp-location:name'],
@@ -298,13 +301,13 @@ class submission_builder extends helper_config {
     if (!empty($array['sample:geom']))
       $loc['location:centroid_geom']=$array['sample:geom'];
     $submission = self::build_submission($loc, array('model'=>'location',
-        'subModels'=>array('locations_website'=>array('fk'=>'location_id'))));
+      'subModels'=>array('locations_website'=>array('fk'=>'location_id'))));
     $request = parent::$base_url."index.php/services/data/save";
     $postargs = 'submission='.urlencode(json_encode($submission));
     // Setting persist_auth allows the write tokens to be re-used
     $postargs .= '&persist_auth=true&auth_token='.$array['auth_token'];
     $postargs .= '&nonce='.$array['nonce'];
-    if (function_exists('hostsite_get_user_field')) 
+    if (function_exists('hostsite_get_user_field'))
       $postargs .= '&user_id='.hostsite_get_user_field('indicia_user_id');
     $response = data_entry_helper::http_post($request, $postargs);
     // The response should be in JSON if it worked
@@ -324,7 +327,7 @@ class submission_builder extends helper_config {
   /**
    * Wraps a set of values for a model into JSON suitable for submission to the Indicia data services,
    * and also grabs the images and links them to the model. In previous versions of this method, this
-   * included wrapping the attributes but this is no longer necessary so this method just delegates to 
+   * included wrapping the attributes but this is no longer necessary so this method just delegates to
    * wrap_with_images and is here for backwards compatibility only.
    * @deprecated
    *
@@ -336,7 +339,7 @@ class submission_builder extends helper_config {
   public static function wrap_with_attrs($values, $modelName, $fieldPrefix=null) {
     return self::wrap_with_images($values, $modelName, $fieldPrefix);
   }
-  
+
   /**
    * Wraps a set of values for a model into JSON suitable for submission to the Indicia data services,
    * and also grabs the images and links them to the model.
@@ -385,26 +388,26 @@ class submission_builder extends helper_config {
     }
     // Get the parent model into JSON
     $modelWrapped = self::wrap($values, $modelName, $fieldPrefix);
-    
+
     // Build sub-models for the media files. Don't post to the warehouse until after validation success. This 
     // also moves any simple uploaded files to the interim image upload folder.
     $media = data_entry_helper::extract_media_data($values, $modelName.'_medium', true, true);
     foreach ($media as $item) {
-      $wrapped = self::wrap($item, $modelName.'_medium');      
+      $wrapped = self::wrap($item, $modelName.'_medium');
       $modelWrapped['subModels'][] = array(
-          'fkId' => $modelName.'_id',
-          'model' => $wrapped
+        'fkId' => $modelName.'_id',
+        'model' => $wrapped
       );
     }
     return $modelWrapped;
-  }  
- 
+  }
+
   /**
    * Returns a 3 character prefix representing an entity name that can have
    * custom attributes attached.
    * @param string $entity Entity name (location, sample, occurrence, taxa_taxon_list or person).
    * Also 3 entities from the Individuals and Associations module (known_subject, subject_observation and mark).
-   * @param boolean $except If true, raises an exception if the entity name does not have custom attributes. 
+   * @param boolean $except If true, raises an exception if the entity name does not have custom attributes.
    * Otherwise returns false. Default true.
    * @access private
    */
@@ -441,10 +444,10 @@ class submission_builder extends helper_config {
         $prefix = 'iso';
         break;
       default:
-        if ($except) 
-		  throw new Exception('Unknown attribute type. ');
-		else
-		  return false;
+        if ($except)
+          throw new Exception('Unknown attribute type. ');
+        else
+          return false;
     }
     return $prefix;
   }
