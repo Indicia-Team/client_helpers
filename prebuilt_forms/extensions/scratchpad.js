@@ -2,6 +2,7 @@ jQuery(document).ready(function ($) {
   'use strict';
 
   var processed = {};
+  var inputClean = [];
 
   /**
    * A case insensitive inArray function.
@@ -23,8 +24,8 @@ jQuery(document).ready(function ($) {
   function tidyInput() {
     var input = $('#scratchpad-input').html();
     var inputDirty;
-    var inputClean = [];
     var inputList;
+    inputClean = [];
     // clear out contenteditable divs (used for CRLF)
     inputDirty = input.replace(/<div>/g, '').replace(/<\/div>/g, '<br>');
     // HTML whitespace clean
@@ -48,7 +49,30 @@ jQuery(document).ready(function ($) {
     $('#scratchpad-input').html(inputClean.join('<br/>'));
   }
 
+  function matchToDb() {
+    var listForDb = [];
+    // convert the list of input values by adding quotes, so they can go into a report query
+    $.each(inputClean, function () {
+      listForDb.push("'" + this + "'");
+    });
+    $.ajax({
+      dataType: 'jsonp',
+      url: indiciaData.read.url + 'index.php/services/report/requestReport',
+      data: {
+        report: 'library/scratchpad/' + indiciaData.scratchpadSettings.match,
+        reportSource: 'local',
+        list: listForDb.join(','),
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce
+      },
+      success: function (data) {
+        alert('Got it');
+      }
+    });
+  }
+
   $('#scratchpad-check').click(function () {
     tidyInput();
+    matchToDb();
   });
 });
