@@ -30,15 +30,17 @@ class extension_scratchpad {
    * @param $path
    */
   public static function input_list($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('report_helper'));
     $options = array_merge(array(
       'match' => 'species',
       'extraParams' => array(),
-      'duplicates' => 'allow|highlight|warn|disallow|"'
+      'duplicates' => 'highlight' // 'allow|highlight|warn|disallow'
     ), $options);
     $r = '<div contenteditable="true" id="scratchpad-input" style="width: 200px; height: 200px; border: solid silver 1px;"></div>';
     $r .= '<div id="scratchpad-output"></div>';
     $r .= '<input name="scratchpad-list" />';
     $r .= '<button id="scratchpad-check">Check</button>';
+    report_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
     return $r;
   }
 
