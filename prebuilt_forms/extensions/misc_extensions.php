@@ -237,7 +237,7 @@ class extension_misc_extensions {
       $parts = explode('?', $path, 2);
       $itemOptions = array();
       if (count($parts)>1) {
-        foreach ($_REQUEST as $key=>$value) {
+        foreach ($_GET as $key=>$value) {
           // GET parameters can be used as replacements.
           $parts[1] = str_replace("#$key#", $value, $parts[1]);
         }

@@ -268,6 +268,7 @@ if ($("#{escapedId} option").length===0) {
   'report-tbody-td' => '<td{class}>{content}</td>',
   'data-input-table' => '<table{class}{id}>{content}</table>',
   'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
+<div id="review-map-container"></div>
 <div{contentClass}{contentId}></div>
 </div>'
 );
@@ -2295,7 +2296,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
   }
 
   /**
-   * Performs a periodic purge of cached files.
+   * Performs a periodic purge of cached or interim image upload files.
    * @param integer $chanceOfPurge Indicates the chance of a purge happening. 1 causes a purge
    * every time the function is called, 10 means there is a 1 in 10 chance, etc.
    * @param string $folder Path to the folder to purge cache files from.
@@ -2310,9 +2311,11 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       // First, get an array of files sorted by date
       $files = array();
       $dir =  opendir($folder);
+      // Skip certain file names
+      $exclude = array('.', '..', '.htaccess', 'web.config', '.gitignore');
       if ($dir) {
         while ($filename = readdir($dir)) {
-          if ($filename === '.' || $filename === '..' || is_dir($filename) || $filename === '.htaccess' || $filename === 'web.config')
+          if (is_dir($filename) || in_array($filename, $exclude))
             continue;
           $lastModified = filemtime($folder . $filename);
           $files[] = array($folder .$filename, $lastModified);

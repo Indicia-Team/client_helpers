@@ -30,13 +30,13 @@ jQuery(document).ready(function ($) {
         termAlias = $(this).html().replace(/&amp;/g, '&')
             .replace(/[^a-zA-Z0-9]+/g, '-')
             .toLowerCase();
-        $(this).after('<a href="/pantheon/lexicon/' + termAlias + '">i</a>');
+        $(this).after('<a class="lexicon-info" href="/pantheon/lexicon/' + termAlias + '">i</a>');
       }
     });
   };
 
   // Fix up all pantheon links
-  $.each($('.button-links a'), function () {
+  $.each($('.button-links a, .buttons-list a'), function () {
     join = ($(this).attr('href').match(/\?/) || q !== '') ? '&' : '?';
     $(this).attr('href', q + $(this).attr('href') + join + 'dynamic-sample_id=' + getParameterByName('dynamic-sample_id'));
   });

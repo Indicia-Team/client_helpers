@@ -101,6 +101,13 @@ class iform_group_edit {
         'type'=>'text_input',
         'required'=>FALSE
       ), array(
+        'name'=>'inherit_admin_privileges',
+        'caption'=>'Inherit admin privileges from parents',
+        'description'=>'If this option is set then you can edit the group if you are an admin of the group or any of ' .
+            'its parents.',
+        'type'=>'boolean',
+        'required'=>FALSE
+      ), array(
         'name'=>'join_methods',
         'caption'=>'Available joining methods',
         'description'=>'Which joining methods are available for created groups? Put one option per line, with the option code ' .
@@ -1044,26 +1051,7 @@ $('#entry_form').submit(function() {
       return;
     }
     $group=$group[0];
-    if ($group['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
-      if (!hostsite_user_has_permission('Iform groups admin')) {
-        // user did not create group. So, check they are an admin
-        $admins = data_entry_helper::get_population_data(array(
-          'table'=>'groups_user',
-          'extraParams'=>$auth['read']+array('group_id'=>$id, 'administrator'=>'t'),
-          'nocache'=>true
-        ));
-        $found=false;
-        foreach($admins as $admin) {
-          if ($admin['user_id']===hostsite_get_user_field('indicia_user_id')) {
-            $found=true;
-            break;
-          }
-        }
-        if (!$found)
-          throw new exception(lang::get('You are trying to edit a group you don\'t have admin rights to.'));
-      }
-    }
-      
+    self::checkAdminRights($group, $args, $auth);
     data_entry_helper::$entity_to_load = array(
       'group:id' => $group['id'],
       'group:title' => $group['title'],
@@ -1109,6 +1097,49 @@ $('#entry_form').submit(function() {
       }
       data_entry_helper::$entity_to_load['groups_user:admin_user_id']=$admins;
       data_entry_helper::$entity_to_load['groups_user:user_id']=$others;
+    }
+  }
+
+  /**
+   * Checks that the user is allowed to administer this group and throws an exception if not. The user can be granted
+   * admin rights either by explicitly setting the flag in their groups_users record, being the original creator of the
+   * group, having iform groups admin permissions, or being an admin of a parent group if the inherit_admin_privileges
+   * flag is set.
+   * @param $group
+   * @param $args
+   * @param $auth
+   * @throws \exception
+   */
+  private static function checkAdminRights($group, $args, $auth) {
+    // Check permissions. The group creator or people with global groups admin permissions get a pass.
+    if ($group['created_by_id']!==hostsite_get_user_field('indicia_user_id') &&
+      !hostsite_user_has_permission('Iform groups admin')) {
+      // User did not create group. So, check they are an admin, either in just this group, or if the option is
+      // enabled also look in the hierarchical parents.
+      if (!empty($args['inherit_admin_privileges']) && $args['inherit_admin_privileges']) {
+        $groupUsersCheck = report_helper::get_report_data(array(
+          'dataSource' => 'library/groups/group_membership_by_parents',
+          'readAuth' => $auth['read'],
+          'extraParams' => array(
+            'group_id' => $group['id'],
+            'user_id' => hostsite_get_user_field('indicia_user_id')
+          )
+        ));
+        $isAdmin = $groupUsersCheck[0]['admin'] === 't';
+      } else {
+        $groupUsersCheck = data_entry_helper::get_population_data(array(
+          'table' => 'groups_user',
+          'extraParams' => $auth['read'] + array(
+              'group_id' => $group['id'],
+              'administrator' => 't',
+              'user_id' => hostsite_get_user_field('indicia_user_id')
+            ),
+          'nocache' => TRUE
+        ));
+        $isAdmin = count($groupUsersCheck);
+      }
+      if (!$isAdmin)
+        throw new exception(lang::get('You are trying to edit a group you don\'t have admin rights to.'));
     }
   }
   

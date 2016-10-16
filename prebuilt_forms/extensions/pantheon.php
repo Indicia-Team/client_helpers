@@ -46,30 +46,32 @@ class extension_pantheon {
     if (arg(0) == 'node' && is_numeric(arg(1))) {
       $nid = arg(1);
       $title = hostsite_get_page_title($nid);
-      if (!empty($_GET['dynamic-sample_id']))
-        $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
-      if (preg_match('/{term:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-        $terms = data_entry_helper::get_population_data(array(
-          'table' => 'termlists_term',
-          'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']], 'view' => 'cache'),
-          'columns' => 'term'
-        ));
-        if (count($terms))
-          $title = str_replace('{term:' . $matches['param'] . '}', $terms[0]['term'], $title);
-
-      }
-      if (preg_match('/{attr:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
-        $attrs = data_entry_helper::get_population_data(array(
-          'table' => 'taxa_taxon_list_attribute',
-          'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']]),
-          'columns' => 'caption'
-        ));
-        if (count($attrs))
-          $title = str_replace('{attr:' . $matches['param'] . '}', $attrs[0]['caption'], $title);
-
-      }
-      hostsite_set_page_title($title);
+    } else {
+      $title = drupal_get_title();
     }
+    if (!empty($_GET['dynamic-sample_id']))
+      $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
+    if (preg_match('/{term:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
+      $terms = data_entry_helper::get_population_data(array(
+        'table' => 'termlists_term',
+        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']], 'view' => 'cache'),
+        'columns' => 'term'
+      ));
+      if (count($terms))
+        $title = str_replace('{term:' . $matches['param'] . '}', $terms[0]['term'], $title);
+
+    }
+    if (preg_match('/{attr:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
+      $attrs = data_entry_helper::get_population_data(array(
+        'table' => 'taxa_taxon_list_attribute',
+        'extraParams' => $auth['read'] + array('id' => $_GET[$matches['param']]),
+        'columns' => 'caption'
+      ));
+      if (count($attrs))
+        $title = str_replace('{attr:' . $matches['param'] . '}', $attrs[0]['caption'], $title);
+
+    }
+    hostsite_set_page_title($title);
     return '';
   }
 
@@ -98,9 +100,9 @@ class extension_pantheon {
       $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('pantheon/summary') . '">Back to Summary</a></li>';
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
 <li><a id="assemblages-link" class="button" href="' . hostsite_get_url('assemblages/overview') . '">ISIS assemblage summary</a></li>
-<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris/ecological-divisions') . '">Osiris traits summary</a></li>
+<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris') . '">Osiris</a></li>
 <li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Horus indices summary</a></li>
-<li><a id="combined-summary" class="button" href="' . hostsite_get_url('pantheon/combined-summary') . '">Combined summary</a></li>
+<li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
 </ul>';
     return $r;
   }
@@ -172,7 +174,7 @@ class extension_pantheon {
     iform_load_helpers(array('report_helper'));
     $r = '';
     $data = report_helper::get_report_data(array(
-      'dataSource' => 'reports_for_prebuilt_forms/pantheon/osiris_tabular',
+      'dataSource' => 'reports_for_prebuilt_forms/pantheon/osiris_tabular_hierarchy',
       'readAuth' => $auth['read'],
       'extraParams' => array(
           'sample_id' => $_GET['dynamic-sample_id'],
@@ -229,7 +231,7 @@ class extension_pantheon {
         $record = $recordsByCat['1.bb'][$i];
         $color = $bbColors[$record['broad_biotope']];
         $row .= "<td><span>$record[broad_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td></td>";
+            "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -237,7 +239,7 @@ class extension_pantheon {
         $record = $recordsByCat['2.sb'][$i];
         $color = $bbColors[$record['broad_biotope']];
         $row .= "<td><span>$record[specific_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td></td>";
+            "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -248,7 +250,7 @@ class extension_pantheon {
         if (!empty($record['parent_r_id']))
           $record['resource'] = ' &gt;&gt; ' . $record['resource'];
         $row .= "<td><span>$record[resource]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td></td>";
+            "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }

@@ -270,19 +270,22 @@ class data_entry_helper extends helper_base {
    * * **fieldname** - The fieldname of the attribute, e.g. smpAttr:10.
    * **defaultRows** - Number of rows to show in the grid by default. An Add Another button is available to add more.
    *   Defaults to 3.
-   * * **columns** - An array defining the columns available in the grid which map to fields in the JSON stored for each value.
-   *   The array key is the column name and the value is a sub-array with a column definition. The column definition can contain
-   *   the following:
+   * * **columns** - An array defining the columns available in the grid which map to fields in the JSON stored for each
+   *   value. The array key is the column name and the value is a sub-array with a column definition. The column
+   *   definition can contain the following:
    *   * label - The column label. Will be automatically translated.
    *   * class - A class given to the column label.
    *   * datatype - The column's data type. Currently only text and lookup is supported.
-   *   * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the control.
+   *   * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the
+   *     control.
    *   * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
    *   * regex - A regular expression which validates the controls input value.
    *   * default - default value for this control used for new rows
    * * **default** - An array of default values loaded for existing data, as obtained by a call to getAttributes.
-   * * **rowCountControl** - Pass the ID of an input control that will contain an integer value to define the number of rows in the
-   *   grid. If not set, then a button is shown allowing additional rows to be added.
+   * * **rowCountControl** - Pass the ID of an input control that will contain an integer value to define the number of
+   *   rows in the grid. If not set, then a button is shown allowing additional rows to be added.
+   * * **encoding** - encoding used when saving the array for a row to the database. Default is json. If not json then
+   *   the provided character acts as a separator used to join the value list together.
    */
   public static function complex_attr_grid($options) {
     self::add_resource('complexAttrGrid');
@@ -292,7 +295,8 @@ class data_entry_helper extends helper_base {
         'y'=>array('label'=>'y','datatype'=>'lookup','termlist_id'=>'5')),
       'default'=>array(),
       'deleteRows'=>false,
-      'rowCountControl'=>''
+      'rowCountControl'=>'',
+      'encoding'=>'json'
     ), $options);
     list($attrTypeTag, $attrId) = explode(':', $options['fieldname']);
     if (preg_match('/\[\]$/', $attrId))
@@ -355,7 +359,12 @@ class data_entry_helper extends helper_base {
     for ($i = 0; $i<=$rowCount-1; $i++) {
       $class=($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
-      $defaults=isset($options['default'][$i]) ? json_decode($options['default'][$i]['default'], true) : array();
+      if (isset($options['default'][$i]))
+        $defaults = $options['encoding'] === 'json'
+          ? json_decode($options['default'][$i]['default'], true)
+          : explode($options['encoding'], $options['default'][$i]['default']);
+      else
+        $defaults = array();
       foreach ($options['columns'] as $idx => $def) {
         if (isset($options['default'][$i]))
           $fieldnamePrefix = str_replace('Attr:', 'Attr+:', $options['default'][$i]['fieldname']);
@@ -415,7 +424,7 @@ $('#$escaped').change(function(e) {
       array('{class}', '{id}', '{content}'),
       array(' class="complex-attr-grid"', " id=\"complex-attr-grid-$attrTypeTag-$attrId\"", $r),
       $indicia_templates['data-input-table']);
-
+    $r .= "<input type=\"hidden\" name=\"complex-attr-grid-encoding-$attrTypeTag-$attrId\" value=\"$options[encoding]\" />\n";
     return $r;
   }
 
@@ -4635,7 +4644,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         "id=\"$fieldname:occurrence:comment\" name=\"$fieldname:occurrence:comment\" value=\"\" /></td>";
     }
     if (isset($options['occurrenceSensitivity']) && $options['occurrenceSensitivity']) {
-      $r .= '<td class="ui-widget-content scSCell" headers="'.$options['id'].'-sensitivity-0">'.
+      $r .= '<td class="ui-widget-content scSensitivityCell" headers="'.$options['id'].'-sensitivity-0">'.
         self::select(array('fieldname'=>"$fieldname:occurrence:sensitivity_precision", 'class'=>'scSensitivity',
           'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
             '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
