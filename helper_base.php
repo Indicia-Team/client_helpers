@@ -495,6 +495,11 @@ class helper_base extends helper_config {
    * @var string Google API key. Placed here rather than helper_config.php, as only recently introduced. 
    */
   public static $google_api_key = '';
+
+  /**
+   * @var string Google Maps API key. Placed here rather than helper_config.php, as only recently introduced.
+   */
+  public static $google_maps_api_key = '';
   
   /*
    * Global format for display of dates such as sample date, date attributes in Drupal.
@@ -674,7 +679,8 @@ class helper_base extends helper_config {
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
-        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3&sensor=false")),
+        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
+            (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key))),
         'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
