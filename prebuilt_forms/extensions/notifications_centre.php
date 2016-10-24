@@ -49,7 +49,8 @@ class extension_notifications_centre {
   
   /*
    * Draw the control that displays user notifications. These are notifications of
-   * source type 'C' or 'V' (comments and verifications), 'S' species alerts, 'VT' verification task, 'AC  by default - control this using the @sourceType option.
+   * source type 'C' or 'V' (comments and verifications), 'S' species alerts, 'VT' verification task, 'GU' pending
+   * members in groups you administer, 'AC  by default - control this using the @sourceType option.
    * Pass the following options:
    * @default_edit_page_path = path to the default page to load for record editing, where the input form used is unknown (normally 
    * this affects old records only). 
@@ -60,7 +61,7 @@ class extension_notifications_centre {
     $options = array_merge(array(
       'id' => 'user-notifications',
       'title' => 'user message notifications',
-      'sourceType' => 'C,V,S,VT,M',
+      'sourceType' => 'C,V,S,VT,GU,M',
       'allowReply' => true,
       'allowEditRecord' => true,
     ), $options);
