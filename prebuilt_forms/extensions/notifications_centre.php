@@ -69,8 +69,10 @@ class extension_notifications_centre {
   }
    
   /*
-   * Use options @sourceType=S,V to show specific source types on the grid, the "S,V" in this example can be replaced with any source_type letter comma separated list.
+   * Use options @sourceType=S,V to show specific source types on the grid, the "S,V" in this example can be replaced
+   * with any source_type letter comma separated list.
    * Removing the @sourceType option will display a filter drop-down that the user can select from.
+   * Set @manage_members_page_path to specify the path to a page for managing activity/group members.
    */
   public static function messages_grid($auth, $args, $tabalias, $options, $path) {
     if (empty($options['id']))
@@ -263,12 +265,19 @@ class extension_notifications_centre {
       $urlParams['group_id']=$_GET['group_id'];
     $availableActions = 
       array(
-        array('caption'=>lang::get('Edit this record'), 'class'=>'edit-notification', 'url'=>'{rootFolder}{editing_form}', 'urlParams'=>$urlParams,
-              'img'=>$imgPath.'nuvola/package_editors-22px.png', 'visibility_field'=>'editable_flag'),
-        array('caption'=>lang::get('View this record'), 'class'=>'view-notification', 'url'=>'{rootFolder}{viewing_form}', 'urlParams'=>$urlParams,
-              'img'=>$imgPath.'nuvola/find-22px.png', 'visibility_field'=>'viewable_flag' ),
+        array('caption'=>lang::get('Edit this record'), 'class'=>'edit-notification',
+            'url'=>'{rootFolder}{editing_form}', 'urlParams'=>$urlParams,
+            'img'=>$imgPath.'nuvola/package_editors-22px.png', 'visibility_field'=>'editable_flag'),
+        array('caption'=>lang::get('View this record'), 'class'=>'view-notification',
+            'url'=>'{rootFolder}{viewing_form}', 'urlParams'=>$urlParams,
+            'img'=>$imgPath.'nuvola/find-22px.png', 'visibility_field'=>'viewable_flag' ),
         array('caption'=>lang::get('Mark as read'), 'javascript'=>'remove_message({notification_id});',
-              'img'=>$imgPath.'nuvola/kmail-22px.png'));
+            'img'=>$imgPath.'nuvola/kmail-22px.png')
+      );
+    if (!empty($options['manage_members_page_path']))
+      $availableActions[] = array('caption'=>lang::get('Manage members'), 'class'=>'manage-members',
+        'visibility_field'=>'manage_members_flag', 'img'=>$imgPath.'nuvola/invite-22px.png',
+        'url'=>'{rootFolder}' . $options['manage_members_page_path'] . '{linked_id}');
     //Only allow replying for 'user' messages.
     if (isset($options['allowReply']) && $options['allowReply']===true)
       $availableActions = array_merge($availableActions,array(array('caption'=>lang::get('Reply to this message'), 'img'=>$imgPath.'nuvola/mail_reply-22px.png', 'visibility_field'=>'reply_flag',
