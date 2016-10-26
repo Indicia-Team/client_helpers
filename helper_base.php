@@ -495,6 +495,11 @@ class helper_base extends helper_config {
    * @var string Google API key. Placed here rather than helper_config.php, as only recently introduced. 
    */
   public static $google_api_key = '';
+
+  /**
+   * @var string Google Maps API key. Placed here rather than helper_config.php, as only recently introduced.
+   */
+  public static $google_maps_api_key = '';
   
   /*
    * Global format for display of dates such as sample date, date attributes in Drupal.
@@ -674,7 +679,8 @@ class helper_base extends helper_config {
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
-        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3&sensor=false")),
+        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
+            (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key))),
         'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
@@ -2296,7 +2302,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
   }
 
   /**
-   * Performs a periodic purge of cached files.
+   * Performs a periodic purge of cached or interim image upload files.
    * @param integer $chanceOfPurge Indicates the chance of a purge happening. 1 causes a purge
    * every time the function is called, 10 means there is a 1 in 10 chance, etc.
    * @param string $folder Path to the folder to purge cache files from.
@@ -2311,9 +2317,11 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       // First, get an array of files sorted by date
       $files = array();
       $dir =  opendir($folder);
+      // Skip certain file names
+      $exclude = array('.', '..', '.htaccess', 'web.config', '.gitignore');
       if ($dir) {
         while ($filename = readdir($dir)) {
-          if ($filename === '.' || $filename === '..' || is_dir($filename) || $filename === '.htaccess' || $filename === 'web.config')
+          if (is_dir($filename) || in_array($filename, $exclude))
             continue;
           $lastModified = filemtime($folder . $filename);
           $files[] = array($folder .$filename, $lastModified);
