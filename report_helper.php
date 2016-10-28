@@ -771,7 +771,7 @@ $callToCallback}";
       self::$javascript .= "
 if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
-simple_tooltip('input.col-filter','tooltip');
+indiciaFns.simpleTooltip('input.col-filter','tooltip');
 indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   id: '$options[id]',
   mode: '$options[mode]',
