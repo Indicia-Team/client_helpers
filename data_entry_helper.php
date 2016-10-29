@@ -2765,7 +2765,6 @@ $('#$escaped').change(function(e) {
     // Close the function
     $fn .= "  return r;\n".
       "}\n";
-    drupal_set_message($fn);
     // Set it into the indicia templates
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
