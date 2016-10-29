@@ -2640,6 +2640,7 @@ $('#$escaped').change(function(e) {
    * * **cacheLookup** - Defaults to true. If true, uses cache_taxon_searchterms for species name lookup
    *   rather than detail_taxa_taxon_lists. The former is faster and tolerates punctuation and spacing errors,
    *   but the available data to lookup against may not be up to date if the cache tables are not populated.
+   * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
    * * **speciesIncludeBothNames** - include both latin and common names. Default false.
    * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
    * * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
@@ -2707,6 +2708,7 @@ $('#$escaped').change(function(e) {
    *
    * @param array $options Options array with the following entries:
    * * **cacheLookup** - Used cached version of lookup tables for better performance. Default true.
+   * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
    * * **speciesIncludeBothNames** - include both latin and common names. Default false.
    * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
    * * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
