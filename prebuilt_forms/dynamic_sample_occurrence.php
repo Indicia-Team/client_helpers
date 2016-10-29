@@ -423,6 +423,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'group' => 'Species'
         ),
         array(
+          'name' => 'species_include_authorities',
+          'caption' => 'Include species authors in the search string',
+          'description' => 'Should species authors be shown in the search results when searching for a species name?',
+          'type' => 'boolean',
+          'required' => false,
+          'group' => 'Species'
+        ),
+        array(
           'name' => 'species_include_both_names',
           'caption' => 'Include both names in species controls and added rows',
           'description' => 'When using a species grid with the ability to add new rows, the autocomplete control by default shows just the searched taxon name in the drop down. '.
@@ -645,6 +653,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     else {
       $opts = array(
         'cacheLookup' => $args['cache_lookup'],
+        'speciesIncludeAuthorities' => isset($args['species_include_authorities']) ?
+            $args['species_include_authorities'] : false,
         'speciesIncludeBothNames' => $args['species_include_both_names'],
         'speciesIncludeTaxonGroup' => $args['species_include_taxon_group'],
         'speciesIncludeIdDiff' => $args['species_include_id_diff']
