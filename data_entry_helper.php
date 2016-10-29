@@ -2715,6 +2715,7 @@ $('#$escaped').change(function(e) {
     global $indicia_templates;
     $options = array_merge(array(
       'cacheLookup' => true,
+      'speciesIncludeAuthorities' => false,
       'speciesIncludeBothNames' => false,
       'speciesIncludeTaxonGroup' => false,
       'speciesIncludeIdDiff' => true
@@ -2732,13 +2733,23 @@ $('#$escaped').change(function(e) {
       "  } else {\n".
       "    r = '<span>'+item.$colTaxon+'</span>';\n".
       "  }\n";
+    if ($options['speciesIncludeAuthorities']) {
+      $fn .= " if (item.$colAuthority) {\n" .
+        "    r += ' ' + item.$colAuthority;\n" .
+        "  }\n";
+    }
     // This bit optionally adds '- common' or '- latin' depending on what was being searched
     if ($options['speciesIncludeBothNames']) {
-      $fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n".
-        "    r += ' - ' + item.$colCommon;\n".
-        "  } else if (item.preferred='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n".
-        "    r += ' - <em>' + item.$colPreferred + '</em>';\n".
-        "  }\n";
+      $fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n" .
+        "    r += ' - ' + item.$colCommon;\n" .
+        "  } else if (item.preferred==='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n" .
+        "    r += ' - <em>' + item.$colPreferred + '</em>';\n";
+      if ($options['speciesIncludeAuthorities']) {
+        $fn .= "    if (item.$colPreferredAuthority) {\n" .
+          "      r += ' ' + item.$colPreferredAuthority;\n" .
+          "    }\n";
+      }
+      $fn .= "  }\n";
     }
     // this bit optionally adds the taxon group
     if ($options['speciesIncludeTaxonGroup'])
@@ -2752,6 +2763,7 @@ $('#$escaped').change(function(e) {
     // Close the function
     $fn .= "  return r;\n".
       "}\n";
+    drupal_set_message($fn);
     // Set it into the indicia templates
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
@@ -5275,8 +5287,10 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         'colTaxon'=>'original',
         'colCommon'=>'default_common_name',
         'colPreferred'=>'preferred_taxon',
-        'valLatinLanguage'=>'lat',
-        'duplicateCheckFields'=>array('original','taxa_taxon_list_id')
+        'colAuthority' => 'authority',
+        'colPreferredAuthority' => 'preferred_authority',
+        'valLatinLanguage' => 'lat',
+        'duplicateCheckFields' => array('original','taxa_taxon_list_id')
       );
     } else {
       return array (
@@ -5287,6 +5301,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         'colTaxon'=>'taxon',
         'colCommon'=>'common',
         'colPreferred'=>'preferred_name',
+        'colAuthority' => 'authority',
+        'colPreferredAuthority' => 'preferred_authority',
         'valLatinLanguage'=>'lat'
       );
     }
