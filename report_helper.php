@@ -1749,7 +1749,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       $response = self::get_report_data($options, self::array_to_query_string($currentParamValues, true).'&wantRecords=0&wantParameters=1');
       $r = self::get_report_grid_parameters_form($response, $options, $currentParamValues);
     }
-    if (!isset($response['parameterRequest']) || count(array_intersect_key($currentParamValues, $response['parameterRequest']))==count($response['parameterRequest'])) {
+    if (isset($response['records']) ||
+        !isset($response['parameterRequest']) ||
+        count(array_intersect_key($currentParamValues, $response['parameterRequest']))==count($response['parameterRequest'])) {
       if (empty($options['geoserverLayer'])) {
         // we are doing vector reporting via indicia services
         // first we need to build a style object which respects columns in the report output that define style settings for each vector.
