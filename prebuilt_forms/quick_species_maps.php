@@ -127,6 +127,10 @@ class iform_quick_species_maps {
       'rememberParamsReportGroup' => 'explore',
       'paramsFormButtonCaption'=>lang::get('Filter')        
     ), $reportOptions);
+    // Disable own groups filter if nothing in your user profile
+    if (empty(hostsite_get_user_field('taxon_groups', false, true))) {
+      $reportOptions['extraParams']['ownGroups'] = 0;
+    }
     $reportOptions['rowId']='external_key';
     $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path()."../media/images/" : report_helper::$images_path;
     $actions = array(
