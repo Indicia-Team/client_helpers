@@ -82,7 +82,7 @@ var rowIdToReselect = false;
     $(tr).addClass('selected');
     var path = $(tr).find('.row-input-form').val(),
       sep = (path.indexOf('?') >= 0) ? '&' : '?';
-    $('#btn-edit-record').attr('href', path + sep + 'occurrenceId=' + occurrenceId);
+    $('#btn-edit-record').attr('href', path + sep + 'occurrence_id=' + occurrenceId);
     // make it clear things are loading
     $('#chart-div').css('opacity', 0.15);
     rowRequest = $.getJSON(
@@ -110,7 +110,7 @@ var rowIdToReselect = false;
         if ($row.parents('tbody').length !== 0) {
           // point the comments tabs to the correct AJAX call for the selected occurrence.
           indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('comments'), 'comments-tab-tab',
-            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrenceId=' + occurrenceId);
+            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrenceId);
           // reload current tabs
           $('#record-details-tabs').tabs('load', indiciaFns.activeTab($('#record-details-tabs')));
           $('#record-details-toolbar *').removeAttr('disabled');
@@ -379,7 +379,7 @@ var rowIdToReselect = false;
         // ensure media are loaded
         $.ajax({
           url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep +
-          'occurrenceId=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
+          'occurrence_id=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
           async: false,
           dataType: 'json',
           success: function (response) {
@@ -536,7 +536,7 @@ var rowIdToReselect = false;
         else {
           $.get(
             indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep +
-            'occurrenceId=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id,
+            'occurrence_id=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id,
             null,
             function (data) {
               $('#experience-div').html(data);
@@ -569,7 +569,7 @@ var rowIdToReselect = false;
       } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'media') {
         $.get(
           indiciaData.ajaxUrl + '/media/' + indiciaData.nid + urlSep +
-          'occurrenceId=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
+          'occurrence_id=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
           null,
           function (data) {
             $('#media-tab').html(data);
@@ -1161,7 +1161,7 @@ var rowIdToReselect = false;
       var $row = $('tr#row' + id),
         path = $row.find('.row-input-form').val(),
         sep = (path.indexOf('?') >= 0) ? '&' : '?';
-      window.location = path + sep + 'occurrenceId=' + id;
+      window.location = path + sep + 'occurrence_id=' + id;
     }
 
     /**
