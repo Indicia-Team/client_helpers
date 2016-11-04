@@ -915,7 +915,7 @@ $('#entry_form').submit(function() {
           $caption=empty($values[$base.'1']) ? $tokens[1] : $values[$base.'1'];
           $administrator=explode(':',$values[$base.'2']);
           $administrator = empty($administrator) ? null : $administrator[0];
-          $access_level=explode(':',$values[$base.'3']);
+          $access_level = isset($values[$base.'3']) ? explode(':',$values[$base.'3']) : null;
           $access_level = empty($access_level) ? null : $access_level[0];
           $page = array(
             'caption' => $caption,
