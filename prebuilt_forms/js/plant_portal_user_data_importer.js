@@ -1,11 +1,11 @@
 /*
  * Called from the php code to send any new plots to the warehouse
  */
-function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess) {
+function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess,plotGroupsToProcess,userId,attributeIdToHoldGroup) {
   //See comments in front of function code
-  var arrayOfChunkTypesToSend=create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess);
+  var arrayOfChunkTypesToSend=create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess,plotGroupsToProcess);
   //Some of the information to send are just individual values and aren't grouped (such as website ID).
-  var arrayOfAttributesToSend=create_array_of_new_plot_attributes_for_warehouse(websiteId);
+  var arrayOfAttributesToSend=create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup);
   create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,arrayOfAttributesToSend,'create_new_plots');
 }
 
@@ -16,7 +16,7 @@ function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotNamesToProcess,p
  *  So the params for one warehouse call might look a bit like ?plotNames=Plot 1, Plots 2&plotSrefs=AA11,AB12&plotSrefSystems=OSGB,OSGB
  *  (eventually->once the array created here is converted into a string)
  */
-function create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess) {
+function create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess,plotGroupsToProcess) {
   var chunks;
   var arrayOfChunkTypesToSend=[];
   //Create a group of data to send to the warehouse as a comma separated string, in this case Plot Names
@@ -30,6 +30,9 @@ function create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,
   chunks=create_chunks_groupings_for_warehouse('plotSrefSystems',plotSrefSystemsToProcess);
   arrayOfChunkTypesToSend[2]=[];
   arrayOfChunkTypesToSend[2]=chunks;
+  chunks=create_chunks_groupings_for_warehouse('plotGroups',plotGroupsToProcess);
+  arrayOfChunkTypesToSend[3]=[];
+  arrayOfChunkTypesToSend[3]=chunks;
   return arrayOfChunkTypesToSend;
 }
 
@@ -37,11 +40,17 @@ function create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,
  * Create an array of individual values (that don't need grouping) that get sent to the warehouse. In the case of new plots
  * this is very simple, but use a function to do this anyway, to be consistant with the creation of new groups
  */
-function create_array_of_new_plot_attributes_for_warehouse(websiteId) {
+function create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup) {
   var arrayOfAttributesToSend=[];
   arrayOfAttributesToSend[0]=[];
   arrayOfAttributesToSend[0][0]='websiteId';
   arrayOfAttributesToSend[0][1]=websiteId;
+  arrayOfAttributesToSend[1]=[];
+  arrayOfAttributesToSend[1][0]='userId';
+  arrayOfAttributesToSend[1][1]=userId;
+  arrayOfAttributesToSend[2]=[];
+  arrayOfAttributesToSend[2][0]='attributeIdToHoldGroup';
+  arrayOfAttributesToSend[2][1]=attributeIdToHoldGroup;
   return arrayOfAttributesToSend;
 }
 
