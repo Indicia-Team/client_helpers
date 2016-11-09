@@ -120,6 +120,8 @@ jQuery(document).ready(function ($) {
       var list = $(this).html().split('|');
       var countup = {};
       var output = [];
+      var display;
+      var countLink;
       $.each(list, function () {
         if (this.length) {
           if (typeof countup[this] === 'undefined') {
@@ -131,7 +133,12 @@ jQuery(document).ready(function ($) {
       $.each(countup, function (status, count) {
         output.push(count + ' ' + status);
       });
-      $(this).html(output.join('; '));
+      display = output.join('; ');
+      countLink = $(this).closest('tr').find('td.col-count a');
+      if (countLink.length) {
+        display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t' + '">' + display + '</a>';
+      }
+      $(this).html(display);
       $(this).removeClass('unprocessed');
     });
     if (typeof indiciaFns.applyLexicon !== 'undefined') {
