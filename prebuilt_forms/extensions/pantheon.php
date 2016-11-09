@@ -172,16 +172,18 @@ class extension_pantheon {
    */
   public static function osiris_tabular($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
-    $r = '';
+    $filter = array(
+      'sample_id' => $_GET['dynamic-sample_id'],
+      'bb_attr_id' => $options['bb_attr_id'],
+      'sb_attr_id' => $options['sb_attr_id'],
+      'r_attr_id' => $options['r_attr_id']
+    );
+    if (!empty($_GET['dynamic-conservation_group_id']))
+      $filter['conservation_group_id'] = $_GET['dynamic-conservation_group_id'];
     $data = report_helper::get_report_data(array(
       'dataSource' => 'reports_for_prebuilt_forms/pantheon/osiris_tabular_hierarchy',
       'readAuth' => $auth['read'],
-      'extraParams' => array(
-          'sample_id' => $_GET['dynamic-sample_id'],
-          'bb_attr_id' => $options['bb_attr_id'],
-          'sb_attr_id' => $options['sb_attr_id'],
-          'r_attr_id' => $options['r_attr_id']
-      ),
+      'extraParams' => $filter,
       'caching' => true
     ));
     $recordsByCat = [];
