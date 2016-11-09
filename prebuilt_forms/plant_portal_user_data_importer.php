@@ -133,6 +133,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'required'=>true,
         'group'=>'Database IDs Required By Form'
       ),
+      //AVB is this really needed as don't we create the group first anyway?
       array(
         'name'=>'sample_group_identifier_name_text_attr_id',
         'caption'=>'Sample group identifier name text sample attribute ID',
@@ -150,6 +151,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'required'=>true,
         'group'=>'Database IDs Required By Form'
       ),
+      //AVB is this really needed as don't we create the group first anyway?
       array(
         'name'=>'plot_group_identifier_name_text_attr_id',
         'caption'=>'Plot group identifier name text location attribute ID',
@@ -1589,11 +1591,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     
     //Collect the samples and groups the user has rights to, from here we can also work out which samples and plots they have rights to
-    $sampleGroupsAndPlotGroupsUserHasRightsTo = self::get_sample_groups_and_plot_groups_user_has_rights_to($auth,$args);
-    $fileArrayForImportRowsToProcess = self::check_user_samples_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
+    $sampleGroupsAndPlotGroupsUserHasRightsTo = self::get_samples_plot_and_groups_user_has_rights_to($auth,$args);
+    $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
     //The screen for displaying import details has two sections, one for warnings, and the other for problems that are is mandatory to correct before allowing continue
-    $r .= self::display_import_warnings($args,$fileArrayForImportRowsToProcess,$headerLineItems,$args['nonFatalImportTypes']);
-    $rFatal =self::display_import_warnings($args,$fileArrayForImportRowsToProcess,$headerLineItems,$args['fatalImportTypes']);
+    $r .= self::display_import_warnings($args,$fileArrayForImportRowsToProcessForImport,$headerLineItems,$args['nonFatalImportTypes']);
+    $rFatal =self::display_import_warnings($args,$fileArrayForImportRowsToProcessForImport,$headerLineItems,$args['fatalImportTypes']);
     if (empty($rFatal))
       $fatalErrorsFound=false;
     else 
@@ -1606,7 +1608,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $r .= $rFatal;
       //Display upload buttons and also code for clicking the actual upload button
       $r .=self::get_upload_reupload_buttons_when_no_fatal_errors($args);
-      $r .=self::get_upload_click_function($args,$fileArrayForImportRowsToProcess,$columnHeadingIndexPositions);
+      $r .=self::get_upload_click_function($args,$fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo);
     }
     return $r;
   }
@@ -1686,15 +1688,15 @@ class iform_plant_portal_user_data_importer extends helper_base {
   /*
    * Perform the upload when the user clicks on the import button
    */
-  private static function get_upload_click_function($args,$fileArrayForImportRowsToProcess,$columnHeadingIndexPositions) {
+  private static function get_upload_click_function($args,$fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo) {
     // store the warehouse user ID if we know it.
     if (function_exists('hostsite_get_user_field')) 
       $currentUserId = hostsite_get_user_field('indicia_user_id');
-    $plotNamesToProcess=array();
-    $plotSrefsToProcess=array();
-    $plotSrefSystemsToProcess=array();
-    $sampleGroupNamesToProcess=array();
-    $distinctPlotGroupNamesToProcess=array();
+    $plotsToCreateNames=array();
+    $plotsToCreateSrefs=array();
+    $plotsToCreateSrefSystems=array();
+    $sampleGroupNamesToCreate=array();
+    $distinctPlotGroupNamesToCreate=array();
     //If we are going to add plots groups and sample groups to those termlists then we need their termlist ID
     $sampleGroupTermlistId=$args['sample_group_termlist_id'];
     $plotGroupTermlistId=$args['plot_group_termlist_id'];
@@ -1711,26 +1713,35 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //or if an existing sample group and existing plot group is to be used (as the other elements will need to be new)
     //or if an existing plot group is to be used (as the other elements will need to be new)
     //To Do AVB - Double check this import types are correct
-    $importTypesToProcess=array('nS-nSG-nP-nPG','eSG','eSG-ePG','ePG');
-    $plotDataToProcess=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcess,$columnHeadingIndexPositions,'plot',$importTypesToProcess);
+    //When we create plots, sample groups, plot groups we only do so for rows which are in a category which is required to do so
+    $importTypesToCreate=array('nS-nSG-nP-nPG','eSG','eSG-ePG','ePG');
+    $plotDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'plot',$importTypesToCreate);
     //Do the same for both sample group and plot group data but using different import situations
-    $importTypesToProcess=array('nS-nSG-nP-nPG','eP-nSG','ePG');
-    $sampleGroupDataToProcess=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcess,$columnHeadingIndexPositions,'sample_group',$importTypesToProcess);
-    $importTypesToProcess=array('nS-nSG-nP-nPG','eSG');
-    $plotGroupDataToProcess=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcess,$columnHeadingIndexPositions,'plot_group',$importTypesToProcess);
+    $importTypesToCreate=array('nS-nSG-nP-nPG','eP-nSG','ePG');
+    $sampleGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'sample_group',$importTypesToCreate);
+    $importTypesToCreate=array('nS-nSG-nP-nPG','eSG');
+    $plotGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'plot_group',$importTypesToCreate);
+    
+    $plotGrouptoPlotAttachmentsToCreate=self::extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo);
+
     //Cycle through each plot we need to create and get its name and spatial reference and spatial reference system (if available,
-    //else we fall back on the sref system supplied on the Settings page
-    foreach ($plotDataToProcess as $plotDataToAdd) {
-      $plotNamesToProcess[]=$plotDataToAdd['name'];
-      $plotSrefsToProcess[]=$plotDataToAdd['sref'];
-      $plotSrefSystemsToProcess[]=$plotDataToAdd['sref_system'];
-      $plotGroupsToProcess[]=$plotDataToAdd['plot_group_name'];
+    //else we fall back on the sref system supplied on the Settings page)
+    foreach ($plotDataToCreate as $plotDataToAdd) {
+      $plotsToCreateNames[]=$plotDataToAdd['name'];
+      $plotsToCreateSrefs[]=$plotDataToAdd['sref'];
+      $plotsToCreateSrefSystems[]=$plotDataToAdd['sref_system'];
     }
-    foreach ($sampleGroupDataToProcess as $groupToAdd) {
-      $sampleGroupNamesToProcess[]=$groupToAdd['name'];
+    foreach ($sampleGroupDataToCreate as $groupToAdd) {
+      $sampleGroupNamesToCreate[]=$groupToAdd['name'];
     }
-    foreach ($plotGroupDataToProcess as $groupToAdd) {
-      $distinctPlotGroupNamesToProcess[]=$groupToAdd['name'];
+    foreach ($plotGroupDataToCreate as $groupToAdd) {
+      $distinctPlotGroupNamesToCreate[]=$groupToAdd['name'];
+    }
+    foreach ($plotGrouptoPlotAttachmentsToCreate as $plotGrouptoPlotAttachmentToCreate) {
+      $plotNamesForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['name'];
+      $plotSrefsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['sref'];
+      $plotSrefSystemsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['sref_system'];
+      $plotGroupsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['group'];
     }
     //When the import button is clicked do the following
     //- Disable the button to prevent double-clicking
@@ -1739,60 +1750,48 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //- Submit the import to the warehouse
     if (!empty($websiteId))
       data_entry_helper::$javascript .= "var websiteId = ".$websiteId.";";
-    //Plot groups are not mandatory, so no need to check for that
-    if (!empty($plotNamesToProcess) && !empty($plotSrefsToProcess) && !empty($plotSrefSystemsToProcess)) {
-      data_entry_helper::$javascript .= "
-          var plotNamesToProcess = ".json_encode($plotNamesToProcess).";
-          var plotSrefsToProcess = ".json_encode($plotSrefsToProcess).";
-          var plotSrefSystemsToProcess = ".json_encode($plotSrefSystemsToProcess).";
-          var plotGroupsToProcess = ".json_encode($plotGroupsToProcess).";";
-    } else {
-      data_entry_helper::$javascript .= "
-          var plotNamesToProcess = [];
-          var plotSrefsToProcess = [];
-          var plotSrefSystemsToProcess = [];
-          var plotGroupsToProcess = [];";
-    }
-    
-    if (!empty($sampleGroupDataToProcess) && !empty($sampleGroupTermlistId)) {
-      data_entry_helper::$javascript .= "
-        var sampleGroupNamesToProcess = ".json_encode($sampleGroupNamesToProcess).";
-        var sampleGroupTermlistId = ".$sampleGroupTermlistId.";
-        var sampleGroupPersonAttributeId = ".$args['sample_group_permission_person_attr_id'].";";
 
-    } else {
-      data_entry_helper::$javascript .= "
-        var sampleGroupNamesToProcess = [];
-        var sampleGroupTermlistId = 0;
-        var sampleGroupPersonAttributeId = 0";
-    }
-    if (!empty($plotGroupDataToProcess) && !empty($plotGroupTermlistId)) {
-      data_entry_helper::$javascript .= "
-        var distinctPlotGroupNamesToProcess = ".json_encode($distinctPlotGroupNamesToProcess).";
-        var plotGroupTermlistId = ".$plotGroupTermlistId.";
-        var plotGroupPersonAttributeId = ".$args['plot_group_permission_person_attr_id'].";";
-    } else {
-      data_entry_helper::$javascript .= "
-        var distinctPlotGroupNamesToProcess = [];
-        var plotGroupTermlistId = 0;
-        var plotGroupPersonAttributeId = 0;";
-    }
+
     $warehouseUrl = self::get_warehouse_url();
     
-    data_entry_helper::$javascript .= "$('#create-import-data').click(function () {
-      $('#create-import-data').attr('disabled','true');
-      $('#import-loading-msg').show();
-      if (websiteId && sampleGroupNamesToProcess !== [] && sampleGroupTermlistId !== 0 && sampleGroupPersonAttributeId !== 0) {
-        send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,sampleGroupNamesToProcess,'sample_group',".$currentUserId.",sampleGroupPersonAttributeId);
+    data_entry_helper::$javascript .= "
+    $('#create-import-data').click(function () {
+    $('#create-import-data').attr('disabled','true');
+    $('#import-loading-msg').show();";
+    //AVB why is the sample group termlist not even used here, is this needed. It is checked for and not passed to the function
+    if (!empty($websiteId)&&!empty($sampleGroupNamesToCreate) && !empty($sampleGroupTermlistId) && !empty($args['sample_group_permission_person_attr_id'])) {
+      data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($sampleGroupNamesToCreate).",'sample_group',".$currentUserId.",".$args['sample_group_permission_person_attr_id'].");";
+    }
+    //Again plotGroupTermlistId is unused
+    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($plotGroupTermlistId) && !empty($args['plot_group_permission_person_attr_id']))
+      data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",'plot_group',".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
+
+    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_attr_id']))
+      data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
+
+
+    if (!empty($websiteId)&&!empty($plotNamesForPlotGroupAttachment) && !empty($plotSrefsForPlotGroupAttachment) && !empty($plotSrefSystemsForPlotGroupAttachment) && !empty($plotGroupsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
+      data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotNamesForPlotGroupAttachment).",".json_encode($plotSrefsForPlotGroupAttachment).",".json_encode($plotSrefSystemsForPlotGroupAttachment).",".json_encode($plotGroupsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
+
+    data_entry_helper::$javascript .= "$('#submit-import').click();";
+    data_entry_helper::$javascript .= "});";
+    
+  }
+  
+  private static function extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo) {   
+    $plotGrouptoPlotAttachmentsToCreate=array();
+    //AVB this is just test code, create the first location group
+    foreach ($fileArrayForImportRowsToProcessForImport as $importSituationRows) {
+      foreach ($importSituationRows as $arrayImportRowToProcess) {
+        if (!empty($arrayImportRowToProcess[4])) {  
+          $plotGrouptoPlotAttachmentsToCreate[0]['name']=$arrayImportRowToProcess[3];
+          $plotGrouptoPlotAttachmentsToCreate[0]['sref']=$arrayImportRowToProcess[2];
+          $plotGrouptoPlotAttachmentsToCreate[0]['sref_system']=$arrayImportRowToProcess[7];
+          $plotGrouptoPlotAttachmentsToCreate[0]['group']=$arrayImportRowToProcess[4];
+        }
       }
-      if (websiteId && distinctPlotGroupNamesToProcess !=[] && plotGroupTermlistId!==0 && plotGroupPersonAttributeId!==0) {
-        send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,distinctPlotGroupNamesToProcess,'plot_group',".$currentUserId.",plotGroupPersonAttributeId);
-      }
-      if (websiteId && plotNamesToProcess !== [] && plotSrefsToProcess !== [] && plotSrefSystemsToProcess !== [] ) {
-        send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess,plotGroupsToProcess,".$currentUserId.",".$args['plot_group_identifier_name_lookup_attr_id'].");
-      }
-      $('#submit-import').click();
-    });";
+    }
+    return $plotGrouptoPlotAttachmentsToCreate;
   }
   
   //To Do AVB - Currently the mappings drop-down contains mappings we will probably not use
@@ -1802,45 +1801,45 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * e.g. ['Sample group 1','Sample group 2','Sample group 3']
    * The possibilities are plot, sample_group, plot_group
    */
-  private static function extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcess,$columnHeadingIndexPositions,$extractionType,$importTypesToProcess) {
-    $dataExtractedReadyToProcess=array();
-    foreach ($importTypesToProcess as $possibleImportTypeToProcess) {
+  private static function extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$extractionType,$importTypesToCreate) { 
+    $dataExtractedReadyToCreate=array();  
+    foreach ($importTypesToCreate as $possibleImportTypeToCreate) {
       $continue = false;    
-      foreach ($fileArrayForImportRowsToProcess as $key => $importRow) {
-        if (strpos($key, $possibleImportTypeToProcess) !== false) {
+      foreach ($fileArrayForImportRowsToProcessForImport as $key => $importRow) {
+        if (strpos($key, $possibleImportTypeToCreate) !== false) {
           $continue=true;
-          $importTypeToProcess = $key;
+          $importTypeToCreate = $key;
         }
       }
       //Don't need to proceed if there is no data for a particular import sitation
       if ($continue===true) {
         //Cycle through each data row in the import situations we need to create data for
-        foreach ($fileArrayForImportRowsToProcess[$importTypeToProcess] as $rowToExtractDataFrom) {
+        foreach ($fileArrayForImportRowsToProcessForImport[$importTypeToCreate] as $rowToExtractDataFrom) {
           $dataFromRow=array();
           if ($extractionType==='plot') {
-            $dataFromRow = self::extract_plot_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToProcess,$columnHeadingIndexPositions);
+            $dataFromRow = self::extract_plot_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions);
           }
           
           if ($extractionType==='sample_group'||$extractionType==='plot_group') {
-            $dataFromRow = self::extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToProcess,$columnHeadingIndexPositions,$extractionType);
+            $dataFromRow = self::extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions,$extractionType);
           }
           //If there is some data to create for the row then it can be stored in an array for processing.
           if (!empty($dataFromRow['name'])) {
-            $dataExtractedReadyToProcess[]=$dataFromRow;
+            $dataExtractedReadyToCreate[]=$dataFromRow;
           }
         }
       }
     }  
-    return $dataExtractedReadyToProcess;
+    return $dataExtractedReadyToCreate;
   }
   
   /* 
    * Extract the data relating to new plots so that they can be created before passing the import to the warehouse 
    * @param array $rowToExtractDataFrom Array of columns from row we want to extract data from
-   * @param array $dataExtractedReadyToProcess Array of data already extracted (so we can make sure the plot hasn't already been listed for creation)
+   * @param array $dataExtractedReadyToCreate Array of data already extracted (so we can make sure the plot hasn't already been listed for creation)
    * @param array $columnHeadingIndexPositions Array which contains the position of each of the columns relevant to the duplicate check.
    */
-  private static function extract_plot_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToProcess,$columnHeadingIndexPositions) {
+  private static function extract_plot_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions) {
     $doNotCreatePlotForRow=false;
     //Get spatial reference system from row if we can, else get from Settings page
     if ($columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']!=-1)
@@ -1850,9 +1849,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //If the index position is -1, it means that column does not appear in the data file
     //We can only create plots if there is a plot name, and a spatial reference (we know there is a spatial reference system as we set it above)
     if ($columnHeadingIndexPositions['plotNameHeaderIdx']!=-1&&$columnHeadingIndexPositions['sampleSrefHeaderIdx']!=-1) { 
-      if (!empty($dataExtractedReadyToProcess)) {
+      if (!empty($dataExtractedReadyToCreate)) {
         //Check the existing data that we have already extracted to see if the plot already exists, if it does, it doesn't need to be re-extracted
-        foreach ($dataExtractedReadyToProcess as $plotAlreadyMarkedForCreation) {
+        foreach ($dataExtractedReadyToCreate as $plotAlreadyMarkedForCreation) {
           //Only need to continue if not already true, otherwise we already have a true result and don't need further processing
           if ($doNotCreatePlotForRow==false) {
             if (!empty($rowToExtractDataFrom[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($rowToExtractDataFrom[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])) {
@@ -1926,11 +1925,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
   /* 
    * Extract the data relating to new groups so that they can be created before passing the import to the warehouse 
    * @param array $rowToExtractDataFrom Array of columns from row we want to extract data from
-   * @param array $dataExtractedReadyToProcess Array of data already extracted (so we can make sure the group hasn't already been listed for creation)
+   * @param array $dataExtractedReadyToCreate Array of data already extracted (so we can make sure the group hasn't already been listed for creation)
    * @param array $columnHeadingIndexPositions Array which contains the position of each of the columns relevant to the duplicate check.
    * @param string $extractionType String which tells us whether it is sample or plot groups we are dealing with
    */
-  private static function extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToProcess,$columnHeadingIndexPositions,$extractionType) {
+  private static function extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions,$extractionType) {
     $doNotCreateGroupForRow=false;
     if ($extractionType==='sample_group')
       $groupColoumnIdx=$columnHeadingIndexPositions['sampleGroupNameHeaderIdx'];
@@ -1939,8 +1938,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //If the index position is -1, it means that column does not appear in the data file
     //We can only create groups if there is a group name
     if ($groupColoumnIdx!=-1) { 
-      if (!empty($dataExtractedReadyToProcess)) {
-        foreach ($dataExtractedReadyToProcess as $groupAlreadyMarkedForCreation) {
+      if (!empty($dataExtractedReadyToCreate)) {
+        foreach ($dataExtractedReadyToCreate as $groupAlreadyMarkedForCreation) {
           //Only need to continue if not already true, otherwise we already have a true result and don't need further processing
           if ($doNotCreateGroupForRow==false) {
             //Do not create a plot if there is no group name on the row we are extracting
@@ -1972,38 +1971,38 @@ class iform_plant_portal_user_data_importer extends helper_base {
   /*
    * Display messages to the user describing how the import will proceed
    * @param Array $args Array of all the arguments from the edit tab
-   * @param Array $fileArrayForImportRowsToProcesss contains all the rows that we need to import
+   * @param Array $fileArrayForImportRowsToProcessForImports contains all the rows that we need to import
    * @param Array $headerLineItems Array of all headers in the first row of the file
    * @param Array $importTypes Array of all the import situations we want to display messages for
    */
-  private static function display_import_warnings($args,$fileArrayForImportRowsToProcess,$headerLineItems,$importTypes) {
+  private static function display_import_warnings($args,$fileArrayForImportRowsToProcessForImport,$headerLineItems,$importTypes) {
     $r='';    
     foreach ($importTypes as $importTypeCode=>$importTypeStates) {
       if (!empty($args[$importTypeCode.'_message']))
         $warningText=$args[$importTypeCode.'_message'];
-      $r .= self::display_individual_message($fileArrayForImportRowsToProcess,$warningText,$importTypeCode,$headerLineItems);
+      $r .= self::display_individual_message($fileArrayForImportRowsToProcessForImport,$warningText,$importTypeCode,$headerLineItems);
     }
     return $r;
   }
 
   /*
    * Display a warning of a particular type before the user continues with the import
-   * @param Array $fileArrayForImportRowsToProcess Array all the import rows applicable to the warning
+   * @param Array $fileArrayForImportRowsToProcessForImport Array all the import rows applicable to the warning
    * @param String $warningText Warning to display to the user
    * @param $warningCode The code for the import situation we are dealing with
    * @param $headerLineItems All the import headers so that the import rows we want to display can be listed
    * 
    */
-  private static function display_individual_message($fileArrayForImportRowsToProcess,$warningText,$warningCode,$headerLineItems) {
+  private static function display_individual_message($fileArrayForImportRowsToProcessForImport,$warningText,$warningCode,$headerLineItems) {
     $r='';
-    if (!empty($fileArrayForImportRowsToProcess[$warningCode])) {
+    if (!empty($fileArrayForImportRowsToProcessForImport[$warningCode])) {
       $r.='<div>'.$warningText.'</div>';
       $r .= '<table><tr>';
       foreach ($headerLineItems as $headerLineItem) {
         $r.='<th>'.$headerLineItem.'</th>';
       }
       $r .= '</tr>'; 
-      foreach ($fileArrayForImportRowsToProcess[$warningCode] as $theRow) { 
+      foreach ($fileArrayForImportRowsToProcessForImport[$warningCode] as $theRow) { 
         $r .= '<tr>';
         foreach ($theRow as $theRowCellNum => $theRowCell) {
           $r.='<td>'.$theRowCell.'</td>';
@@ -2097,9 +2096,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param Array $sampleGroupsAndPlotGroupsUserHasRightsTo Samples and plots the user has rights to
    * @param Array $columnHeadingIndexPositions The position from the left of some of the more important columns starting at position 0
    */
-  private static function check_user_samples_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions) {
+  private static function check_existing_user_data_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions) {
     //Store the rows into the different import categories ready to process
-    $fileArrayForImportRowsToProcess=array();  
+    $fileArrayForImportRowsToProcessForImport=array();  
     if (!empty($fileRowsAsArray)) {
       //Cycle through each row in the import data
       foreach ($fileRowsAsArray as $idx => &$fileRowsAsArrayLine) {
@@ -2107,19 +2106,19 @@ class iform_plant_portal_user_data_importer extends helper_base {
         //Check the data on each list to see if it falls into the category of existing sample, existing sample group, existing plot, existing plot group,
         //The $lineState is then altered by each function
         self::existing_sample_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['samplesUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);
-        self::existing_plot_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);
+        self::existing_plot_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);                
         //Only need to set newSampleExistingSampleGroup flag if existingSample is 0
         if ($lineState['existingSample']==0)
           self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'sample');
         //Only need to set newPlotExistingPlotGroup flag if existingPlot is 0
         if ($lineState['existingPlot']==0)
           self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'plot');
-        //Save rows into the import categories which are stored as keys in the $fileArrayForImportRowsToProcess array
-        self::assign_import_row_into_import_category($fileArrayForImportRowsToProcess,$fileRowsAsArrayLine,$lineState,$args['nonFatalImportTypes']);
-        self::assign_import_row_into_import_category($fileArrayForImportRowsToProcess,$fileRowsAsArrayLine,$lineState,$args['fatalImportTypes']);
+        //Save rows into the import categories which are stored as keys in the $fileArrayForImportRowsToProcessForImport array
+        self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['nonFatalImportTypes']);
+        self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['fatalImportTypes']);
       }
     }
-    return $fileArrayForImportRowsToProcess;
+    return $fileArrayForImportRowsToProcessForImport;
   }
   
   /*
@@ -2154,17 +2153,17 @@ class iform_plant_portal_user_data_importer extends helper_base {
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['plot_name'])) &&
           strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['plot_name']))) &&
               
-          //To DO AVB, we are going to need to convert any dates before comparisons are made
+          //To DO AVB, we are going to need to convert any dates before comparisons are made, plus I don't think the plot is even returning this
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&empty($aSampleUserHasRightsTo['sample_date']))||
               ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&!empty($aSampleUserHasRightsTo['sample_date'])) &&
-              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_date']))) &&
+              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_date']))) /*&&
               
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['sample_group_identifier_name']))||
               ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['sample_group_identifier_name']))&&
-              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_group_identifier_name']))) &&
+              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_group_identifier_name']))) /*&&
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['plot_group_identifier_name']))||
               ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['plot_group_identifier_name']))&&
-              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['plot_group_identifier_name'])))) {
+              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['plot_group_identifier_name'])))*/) {
         //Return the code 2 if there are duplicate samples (even if there are more than 2, this is just to indicate duplicates)
         if ($aSampleUserHasRightsTo['sample_count']>1)
           $lineState['existingSample']  = 2;
@@ -2232,11 +2231,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
           strtolower($spatialReferenceSystem)==strtolower($aPlotUserHasRightsTo['entered_sref_system']))) &&   
               
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&empty($aPlotUserHasRightsTo['plot_name']))||
-          ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($aPlotUserHasRightsTo['plot_name']))&&
-          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_name']))) &&
+          ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($aPlotUserHasRightsTo['plot_name'])) &&
+          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_name']))) /*&&
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&empty($aPlotUserHasRightsTo['plot_group_identifier_name']))||
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&!empty($aPlotUserHasRightsTo['plot_group_identifier_name']))&&
-          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_group_identifier_name'])))) {
+          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_group_identifier_name'])))*/) {
         //Return the code 2 if there are duplicate plots (even if there are more than 2, this is just to indicate duplicates)
         if ($aPlotUserHasRightsTo['plot_count']>1)
           $lineState['existingPlot']  = 2;
@@ -2250,16 +2249,16 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * Function is given a row for the import. The flags for the row (which have already been set to say whether it is an existing sample, plot, sample group, plot group) are
    * checked against the import situations. When we find a matching situation, we store it against that situation.
    */
-  private static function assign_import_row_into_import_category(&$fileArrayForImportRowsToProcess,$fileRowsAsArrayLine,$lineState,$importTypes) {
+  private static function assign_import_row_into_import_category(&$fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$importTypes) {
     foreach ($importTypes as $importTypeCode=>$importTypeStates) {
       if ($lineState==$importTypeStates) {
-        $fileArrayForImportRowsToProcess[$importTypeCode][]=$fileRowsAsArrayLine; 
+        $fileArrayForImportRowsToProcessForImport[$importTypeCode][]=$fileRowsAsArrayLine; 
       }
     }
-    return $fileArrayForImportRowsToProcess;
+    return $fileArrayForImportRowsToProcessForImport;
   }
   
-  private static function get_sample_groups_and_plot_groups_user_has_rights_to($auth,$args) {
+  private static function get_samples_plot_and_groups_user_has_rights_to($auth,$args) {
     $sampleGroupsAndPlotGroupsUserHasRightsTo=array();
     global $user;
     if (function_exists('hostsite_get_user_field'))
