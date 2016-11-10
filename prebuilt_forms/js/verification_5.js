@@ -82,7 +82,7 @@ var rowIdToReselect = false;
     $(tr).addClass('selected');
     var path = $(tr).find('.row-input-form').val(),
       sep = (path.indexOf('?') >= 0) ? '&' : '?';
-    $('#btn-edit-record').attr('href', path + sep + 'occurrenceId=' + occurrenceId);
+    $('#btn-edit-record').attr('href', path + sep + 'occurrence_id=' + occurrenceId);
     // make it clear things are loading
     $('#chart-div').css('opacity', 0.15);
     rowRequest = $.getJSON(
@@ -110,7 +110,7 @@ var rowIdToReselect = false;
         if ($row.parents('tbody').length !== 0) {
           // point the comments tabs to the correct AJAX call for the selected occurrence.
           indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('comments'), 'comments-tab-tab',
-            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrenceId=' + occurrenceId);
+            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrenceId);
           // reload current tabs
           $('#record-details-tabs').tabs('load', indiciaFns.activeTab($('#record-details-tabs')));
           $('#record-details-toolbar *').removeAttr('disabled');
@@ -212,7 +212,7 @@ var rowIdToReselect = false;
    * Build an email to send to a verifier or the original recorder, containing the record details.
    */
   function setupRecordCheckEmail(subject, body) {
-    //Form to create email of record details
+    // to create email of record details
     var record = '';
     $.each(currRec.data, function (idx, section) {
       $.each(section, function (idx, field) {
@@ -300,7 +300,8 @@ var rowIdToReselect = false;
   }
 
   function recorderQueryProbablyNeedsEmail(likelihoodOfReceivingNotification) {
-    var tab1, tab2;
+    var tab1;
+    var tab2;
     if (likelihoodOfReceivingNotification === 'no') {
       tab1 = '<p>' + indiciaData.popupTranslations.queryProbablyNeedsEmailNo + '</p>';
     }
@@ -314,8 +315,9 @@ var rowIdToReselect = false;
     $('#email-form').submit(processEmail);
   }
 
-  function recorderQueryProbablyWillGetNotified(likelihoodOfReceivingNotification) {
-    var tab1, tab2;
+  function recorderQueryProbablyWillGetNotified() {
+    var tab1;
+    var tab2;
     tab1 = '<p>' + indiciaData.popupTranslations.queryProbablyWillGetNotified + '</p>';
     tab1 += recorderQueryCommentForm();
     tab2 = recorderQueryEmailForm();
@@ -344,7 +346,7 @@ var rowIdToReselect = false;
         url: indiciaData.ajaxUrl + '/do_they_see_notifications/' + indiciaData.nid + urlSep + 'user_id=' + currRec.extra.created_by_id,
         success: function (response) {
           if (response === 'yes' || response === 'maybe') {
-            recorderQueryProbablyWillGetNotified(response);
+            recorderQueryProbablyWillGetNotified();
           }
           else if (response === 'no' || response === 'unknown') {
             recorderQueryProbablyNeedsEmail(response);
@@ -379,7 +381,7 @@ var rowIdToReselect = false;
         // ensure media are loaded
         $.ajax({
           url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep +
-          'occurrenceId=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
+          'occurrence_id=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
           async: false,
           dataType: 'json',
           success: function (response) {
@@ -397,9 +399,8 @@ var rowIdToReselect = false;
     return false;
   }
 
+  // Use an AJAX call to get the server to send the email
   function sendEmail() {
-    //Send an email
-    // use an AJAX call to get the server to send the email
     $.post(
       indiciaData.ajaxUrl + '/email/' + indiciaData.nid + urlSep,
       email,
@@ -433,7 +434,7 @@ var rowIdToReselect = false;
   }
 
   saveComment = function (text, query, reloadGridAfterSave) {
-    if (typeof query === "undefined") {
+    if (typeof query === 'undefined') {
       query = 'f';
     }
     var data = {
@@ -447,12 +448,12 @@ var rowIdToReselect = false;
       indiciaData.ajaxFormPostUrl.replace('occurrence', 'occ-comment'),
       data,
       function (data) {
-        if (typeof data.error === "undefined") {
+        if (typeof data.error === 'undefined') {
           showComment(text, query, indiciaData.username);
           if ($('#comment-text')) {
             $('#comment-text').val('');
           }
-          if (typeof reloadGridAfterSave !== "undefined" && reloadGridAfterSave === true) {
+          if (typeof reloadGridAfterSave !== 'undefined' && reloadGridAfterSave === true) {
             reloadGrid();
           }
         } else {
@@ -479,7 +480,7 @@ var rowIdToReselect = false;
 
   function statusLabel(status, substatus) {
     var labels = [];
-    if (typeof indiciaData.popupTranslations[status] !== "undefined" && (status !== 'C' || substatus !== 3)) {
+    if (typeof indiciaData.popupTranslations[status] !== 'undefined' && (status !== 'C' || substatus !== 3)) {
       labels.push(indiciaData.popupTranslations[status]);
     }
     if (indiciaData.popupTranslations['sub' + substatus]) {
@@ -536,7 +537,7 @@ var rowIdToReselect = false;
         else {
           $.get(
             indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep +
-            'occurrenceId=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id,
+            'occurrence_id=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id,
             null,
             function (data) {
               $('#experience-div').html(data);
@@ -552,15 +553,17 @@ var rowIdToReselect = false;
           function (data) {
             $('#chart-div').empty();
             $.jqplot('chart-div', [data], {
-              seriesDefaults: {renderer: $.jqplot.LineRenderer, rendererOptions: []}, legend: [], series: [],
+              seriesDefaults: { renderer: $.jqplot.LineRenderer, rendererOptions: [] },
+              legend: [],
+              series: [],
               axes: {
-                "xaxis": {
-                  "label": indiciaData.str_month,
-                  "showLabel": true,
-                  "renderer": $.jqplot.CategoryAxisRenderer,
-                  "ticks": ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"]
+                xaxis: {
+                  label: indiciaData.str_month,
+                  showLabel: true,
+                  renderer: $.jqplot.CategoryAxisRenderer,
+                  ticks: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12']
                 },
-                "yaxis": {"min": 0}
+                yaxis: { 'min': 0 }
               }
             });
             $('#chart-div').css('opacity', 1);
@@ -569,7 +572,7 @@ var rowIdToReselect = false;
       } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'media') {
         $.get(
           indiciaData.ajaxUrl + '/media/' + indiciaData.nid + urlSep +
-          'occurrenceId=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
+          'occurrence_id=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
           null,
           function (data) {
             $('#media-tab').html(data);
@@ -596,7 +599,7 @@ var rowIdToReselect = false;
       validator.showErrors({'redet:taxon': 'Please type a few characters then choose a name from the list of suggestions'});
     } else if (validator.numberOfInvalids() === 0) {
       var data = {
-        'website_id': indiciaData.website_id,
+        website_id: indiciaData.website_id,
         'occurrence:id': occurrenceId,
         'occurrence:taxa_taxon_list_id': $('#redet').val(),
         'user_id': indiciaData.userId
@@ -609,7 +612,7 @@ var rowIdToReselect = false;
         indiciaData.ajaxFormPostUrl,
         data,
         function (response) {
-          if (typeof response.error !== "undefined") {
+          if (typeof response.error !== 'undefined') {
             alert(response.error);
           } else {
             // reload current tab
@@ -647,7 +650,7 @@ var rowIdToReselect = false;
     $('#redet\\:taxon').val('');
     $('#redet-dropdown').appendTo($('#redet-dropdown-popup-ctnr'));
     // Hide the full list checkbox if same as current record or full list not known
-    if (typeof indiciaData.mainTaxonListId === "undefined" || parseInt(currRec.extra.taxon_list_id) === indiciaData.mainTaxonListId) {
+    if (typeof indiciaData.mainTaxonListId === 'undefined' || parseInt(currRec.extra.taxon_list_id) === indiciaData.mainTaxonListId) {
       $('#ctrl-wrap-redet-from-full-list').hide();
     } else {
       $('#ctrl-wrap-redet-from-full-list').show();
@@ -658,7 +661,7 @@ var rowIdToReselect = false;
   }
 
   function setStatus(status, substatus) {
-    if (typeof substatus === "undefined") {
+    if (typeof substatus === 'undefined') {
       substatus = '';
     }
     var helpText = '', html, verb;
@@ -696,7 +699,7 @@ var rowIdToReselect = false;
     var request, params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords(),
       substatus = $('#process-grid-substatus').length ? '&record_substatus=' + $('#process-grid-substatus').val() : '',
       ignoreRules = $('.grid-verify-popup input[name=ignore-checks-trusted]:checked').length > 0 ? 'true' : 'false';
-    //If doing trusted only, this through as a report parameter.
+    // If doing trusted only, this through as a report parameter.
     if (trusted) {
       params.quality_context = "T";
     }
@@ -713,8 +716,8 @@ var rowIdToReselect = false;
   }
 
   $(document).ready(function () {
-    //Use jQuery to add button to the top of the verification page. Use the first button to access the popup
-    //which allows you to verify all trusted records or all records. The second enabled multiple record verification checkboxes
+    // Use jQuery to add button to the top of the verification page. Use the first button to access the popup
+    // which allows you to verify all trusted records or all records. The second enabled multiple record verification checkboxes
     var verifyGridButtons = '<button type="button" class="default-button verify-grid-trusted tools-btn" id="verify-grid-trusted">Review grid</button>' +
         '<button type="button" id="btn-multiple" title="Select this tool to tick off a list of records and action all of the ticked records in one go">Review tick list</button>',
       trustedHtml;
@@ -735,7 +738,7 @@ var rowIdToReselect = false;
         trustedHtml += '<p class="warning">Remember that the following buttons will verify records from every page in the grid up to a maximum of ' +
           settings.recordCount + ' records, not just the current page.</p>';
       }
-      if (typeof $.cookie !== "undefined") {
+      if (typeof $.cookie !== 'undefined') {
         var show = $.cookie('verification-status-buttons');
         if (show === 'more') {
           trustedHtml += '<div><label class="auto">Accepted records will be flagged as:<select id="process-grid-substatus">' +
@@ -768,8 +771,7 @@ var rowIdToReselect = false;
         popupHtml += '<label><input type="radio" name="quick-option" value="recorder"/> Verify grid\'s records by <span class="quick-user">' + currRec.extra.recorder + '</span></label><br/>' +
           '<label><input type="radio" name="quick-option" value="species-recorder" /> Verify grid\'s records of <span class="quick-taxon">' + currRec.extra.taxon +
           '</span> by <span class="quick-user">' + currRec.extra.recorder + '</span></label><br/>';
-      }
-      else if (currRec.extra.recorder !== '' && currRec.extra.recorder !== null && currRec.extra.input_by_surname !== null && currRec.extra.created_by_id !== '1') {
+      } else if (currRec.extra.recorder !== '' && currRec.extra.recorder !== null && currRec.extra.input_by_surname !== null && currRec.extra.created_by_id !== '1') {
         popupHtml += '<p class="helpText">Because the recorder, ' + currRec.extra.recorder + ', is not linked to a logged in user, quick verification tools cannot filter to records by this recorder.</p>';
       }
       popupHtml += '<label><input type="checkbox" name="ignore-checks" /> Include failures?</label><p class="helpText">The records will only be accepted if they do not fail ' +
@@ -814,9 +816,9 @@ var rowIdToReselect = false;
         'that the recorder is trusted for the records will not be automatically accepted. However, you can filter the grid to show only "trusted" records and use the ... button at the top ' +
         'of the grid to accept all these records in bulk. If you want to trust records from <em>' + currRec.extra.recorder + '</em> in future, you can use the following options to select the ' +
         'criteria for when their records are to be treated as trusted.</p>';
-      //Call a function to draw all the existing trusts for a record.
+      // Call a function to draw all the existing trusts for a record.
       drawExistingTrusts();
-      //The html containing the trusts is later placed into this div using innerHtml
+      // The html containing the trusts is later placed into this div using innerHtml
       popupHtml += '<div id="existingTrusts"></div>';
       popupHtml += '<h3>Add new trust criteria</h3>';
       if (indiciaData.expertise_surveys) {
@@ -837,8 +839,7 @@ var rowIdToReselect = false;
         // verifier can only verify in a locality
         popupHtml += '<label>Trust will be applied to records from your verification area.</label><br/>'; // @todo VERIFIERs LOCALITY NAME
         popupHtml += '<input type="hidden" name="trust-location" value="' + indiciaData.expertise_location + '" />';
-      }
-      else {
+      } else {
         // verifier can verify anywhere
         if (currRec.extra.locality_ids !== '') {
           popupHtml += '<label>Trust will be applied to records from locality:</label>' +
@@ -849,8 +850,7 @@ var rowIdToReselect = false;
           $.each(locationIds, function (idx, id) {
             popupHtml += '<label><input type="radio" name="trust-location" value="' + id + '" checked>' + ' ' + locations[idx] + '</label><br/>';
           });
-        }
-        else {
+        } else {
           popupHtml += '<label>Trust will be applied to records from any locality.</label>';
           popupHtml += '<input type="hidden" name="trust-location" value="all" /><br/>';
         }
@@ -858,15 +858,15 @@ var rowIdToReselect = false;
       popupHtml += '<button type="button" id="trust-button" class="default-button trust-button">Set trust for ' + currRec.extra.recorder + '</button>' + "</div>\n";
       $.fancybox(popupHtml);
       $('.quick-verify-popup .trust-button').click(function () {
-        document.getElementById('trust-button').innerHTML = "Please Wait……";
-        //As soon as the Trust button is clicked we disable it so that the user can't keep clicking it.
-        $(".trust-button").attr('disabled', 'disabled');
+        document.getElementById('trust-button').innerHTML = 'Please Wait……';
+        // As soon as the Trust button is clicked we disable it so that the user can't keep clicking it.
+        $('.trust-button').attr('disabled', 'disabled');
         var theData = {
-          'website_id': indiciaData.website_id,
+          website_id: indiciaData.website_id,
           'user_trust:user_id': currRec.extra.created_by_id,
           'user_trust:deleted': false
         };
-        //Get the user's trust settings to put in the database
+        // Get the user's trust settings to put in the database
         surveyRadio = $('.quick-verify-popup input[name=trust-survey]:checked');
         if (!surveyRadio.length || $(surveyRadio).val().indexOf('specific') !== -1) {
           theData['user_trust:survey_id'] = currRec.extra.survey_id;
@@ -881,9 +881,9 @@ var rowIdToReselect = false;
         }
         if (!theData['user_trust:survey_id'] && !theData['user_trust:taxon_group_id'] && !theData['user_trust:location_id']) {
           alert("Please review the trust settings as unlimited trust is not allowed");
-          //The attempt to create the trust is over at this point.
-          //We re-enable the Trust button.
-          $(".trust-button").removeAttr('disabled');
+          // The attempt to create the trust is over at this point.
+          // We re-enable the Trust button.
+          $('.trust-button').removeAttr('disabled');
           document.getElementById('trust-button').innerHTML = "Trust";
         } else {
           var downgradeConfirmRequired = false,
@@ -892,63 +892,63 @@ var rowIdToReselect = false;
             trustNeedsRemoval = [],
             getTrustsReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&mode=json&callback=?',
             getTrustsReportParameters = {
-              'user_id': currRec.extra.created_by_id,
-              'survey_id': currRec.extra.survey_id,
-              'taxon_group_id': currRec.extra.taxon_group_id,
-              'location_ids': currRec.extra.locality_ids,
-              'auth_token': indiciaData.read.auth_token,
-              'nonce': indiciaData.read.nonce,
-              'reportSource': 'local'
+              user_id: currRec.extra.created_by_id,
+              survey_id: currRec.extra.survey_id,
+              taxon_group_id: currRec.extra.taxon_group_id,
+              location_ids: currRec.extra.locality_ids,
+              auth_token: indiciaData.read.auth_token,
+              nonce: indiciaData.read.nonce,
+              reportSource: 'local'
             };
-          //Collect the existing trust data associated with the record so we can compare the new trust data with it
+          // Collect the existing trust data associated with the record so we can compare the new trust data with it
           $.getJSON(
             getTrustsReport,
             getTrustsReportParameters,
             function (data) {
-              var downgradeDetect = 0,
-                upgradeDetect = 0,
-                trustNeedsRemovalIndex = 0,
-                trustNeedsDowngradeIndex = 0,
-                trustNeedsDowngrade = [];
-              //Cycle through the existing trust data we need for the record
+              var downgradeDetect = 0;
+              var upgradeDetect = 0;
+              var trustNeedsRemovalIndex = 0;
+              var trustNeedsDowngradeIndex = 0;
+              var trustNeedsDowngrade = [];
+              // Cycle through the existing trust data we need for the record
               for (i = 0; i < data.length; i++) {
-                //If the new selections match an existing record then we flag it as a duplicate not be be added
+                // If the new selections match an existing record then we flag it as a duplicate not be be added
                 if (theData['user_trust:survey_id'] === data[i].survey_id &&
                   theData['user_trust:taxon_group_id'] === data[i].taxon_group_id &&
                   theData['user_trust:location_id'] === data[i].location_id &&
                   currRec.extra.created_by_id === data[i].user_id) {
                   duplicateDetected = true;
                 }
-                //If any of the 3 trust items the user has entered are smaller than the existing trust item we are looking at,
-                //then we flag it as the existing row needs to be at least partially downgraded
+                // If any of the 3 trust items the user has entered are smaller than the existing trust item we are looking at,
+                // then we flag it as the existing row needs to be at least partially downgraded
                 if ((theData['user_trust:survey_id'] && !data[i].survey_id) ||
                   (theData['user_trust:taxon_group_id'] && !data[i].taxon_group_id) ||
                   (theData['user_trust:location_id'] && !data[i].location_id)) {
                   downgradeDetect++;
                 }
-                //If any of the 3 trust items the user has entered are bigger than the existing trust item we are looking at,
-                //then we flag it as the existing row needs to be at least partially upgraded
+                // If any of the 3 trust items the user has entered are bigger than the existing trust item we are
+                // looking at, then we flag it as the existing row needs to be at least partially upgraded
                 if ((!theData['user_trust:survey_id'] && data[i].survey_id) ||
                   (!theData['user_trust:taxon_group_id'] && data[i].taxon_group_id) ||
                   (!theData['user_trust:location_id'] && data[i].location_id)) {
                   upgradeDetect++;
                 }
-                //If we have detected that there are more items to be downgraded than upgraded for an existing trust then we flag it.
-                //We can then warn the user about the downgrade and remove the existing trust
-                //e.g. This means if we have a trust which is just a trust for location Dorset and the user upgrades the
-                //the location trust setting to "All" but downgrades the taxon_group trust from "All" to insects,
-                //then although a downgrade has been performed it is actually a completely seperate trust. In this case we don't want to
-                //warn the user or remove the existing trust. DowngradeDetect and upgradeDetect are both 1 so the following code
-                //wouldn't run.
+                // If we have detected that there are more items to be downgraded than upgraded for an existing trust
+                // then we flag it. We can then warn the user about the downgrade and remove the existing trust, e.g.
+                // This means if we have a trust which is just a trust for location Dorset and the user upgrades the
+                // location trust setting to "All" but downgrades the taxon_group trust from "All" to insects, then
+                // although a downgrade has been performed it is actually a completely seperate trust. In this case we
+                // don't want to warn the user or remove the existing trust. DowngradeDetect and upgradeDetect are both
+                // 1 so the following code wouldn't run.
                 if (downgradeDetect > upgradeDetect) {
-                  //Save the existing trust data to be downgraded for processing
+                  // Save the existing trust data to be downgraded for processing
                   trustNeedsDowngrade[trustNeedsDowngradeIndex] = data[i].trust_id;
                   trustNeedsRemoval[trustNeedsRemovalIndex] = data[i].trust_id;
                   trustNeedsDowngradeIndex++;
                   trustNeedsRemovalIndex++;
                 }
-                //Same logic as above but we are working out which existing trusts are being upgraded.
-                //The difference is that we don't warn the user about upgrades.
+                // Same logic as above but we are working out which existing trusts are being upgraded.
+                // The difference is that we don't warn the user about upgrades.
                 if (upgradeDetect > downgradeDetect) {
                   trustNeedsRemoval[trustNeedsRemovalIndex] = data[i].trust_id;
                   trustNeedsRemovalIndex++;
@@ -958,33 +958,33 @@ var rowIdToReselect = false;
               }
 
               if (duplicateDetected === true) {
-                alert("Your selected trust settings already exist in the database");
-                $(".trust-button").removeAttr('disabled');
-                document.getElementById('trust-button').innerHTML = "Trust";
+                alert('Your selected trust settings already exist in the database');
+                $('.trust-button').removeAttr('disabled');
+                document.getElementById('trust-button').innerHTML = 'Trust';
               }
 
               if (trustNeedsDowngrade.length !== 0 && duplicateDetected === false) {
                 downgradeConfirmRequired = true;
-                downgradeConfirmed = confirm("Your new trust settings will result in the existing trust rights for this recorder being lowered.\n" +
-                  "Are you sure you wish to continue?");
-                //Re-enable the Trust button if the user chooses the Cancel option.
+                downgradeConfirmed = confirm('Your new trust settings will result in the existing trust rights for ' +
+                  'this recorder being lowered.\n Are you sure you wish to continue?');
+                // Re-enable the Trust button if the user chooses the Cancel option.
                 if (downgradeConfirmed === false) {
-                  $(".trust-button").removeAttr('disabled');
-                  document.getElementById('trust-button').innerHTML = "Trust";
+                  $('.trust-button').removeAttr('disabled');
+                  document.getElementById('trust-button').innerHTML = 'Trust';
                 }
               }
-              //We are going to proceed if the user has clicked ok on the downgrade confirmation message or
-              //if the message was never displayed.
+              // We are going to proceed if the user has clicked ok on the downgrade confirmation message or
+              // if the message was never displayed.
               if (duplicateDetected === false && (downgradeConfirmRequired === false || downgradeConfirmed === true)) {
-                //Go through each trust item we need to remove from the database and do the removal
+                // Go through each trust item we need to remove from the database and do the removal
                 var handlePostResponse = function (data) {
-                  if (typeof data.error !== "undefined") {
+                  if (typeof data.error !== 'undefined') {
                     alert(data.error);
                   }
                 };
                 for (i = 0; i < trustNeedsRemovalIndex; i++) {
                   theDataToRemove = {
-                    'website_id': indiciaData.website_id,
+                    website_id: indiciaData.website_id,
                     'user_trust:id': trustNeedsRemoval[i],
                     'user_trust:deleted': true
                   };
@@ -995,21 +995,21 @@ var rowIdToReselect = false;
                   );
                 }
               }
-              //Now add the new trust settings
+              // Now add the new trust settings
               if (duplicateDetected === false && (downgradeConfirmRequired === false || downgradeConfirmed === true)) {
                 $.post(
                   indiciaData.ajaxFormPostUrl.replace('occurrence', 'user-trust'),
                   theData,
                   function (data) {
-                    if (typeof data.error === "undefined") {
+                    if (typeof data.error === 'undefined') {
                       drawExistingTrusts();
-                      alert("Trust settings successfully applied to the recorder");
-                      $(".trust-button").removeAttr('disabled');
-                      document.getElementById('trust-button').innerHTML = "Trust";
+                      alert('Trust settings successfully applied to the recorder');
+                      $('.trust-button').removeAttr('disabled');
+                      document.getElementById('trust-button').innerHTML = 'Trust';
                     } else {
                       alert(data.error);
-                      $(".trust-button").removeAttr('disabled');
-                      document.getElementById('trust-button').innerHTML = "Trust";
+                      $('.trust-button').removeAttr('disabled');
+                      document.getElementById('trust-button').innerHTML = 'Trust';
                     }
                   },
                   'json'
@@ -1023,8 +1023,8 @@ var rowIdToReselect = false;
 
     function quickVerifyMenu(row) {
       // can't use User Trusts if the recorder is not linked to a warehouse user.
-      if (typeof currRec !== "undefined" && currRec !== null) {
-        if (currRec.extra.created_by_id === "1") {
+      if (typeof currRec !== 'undefined' && currRec !== null) {
+        if (currRec.extra.created_by_id === '1') {
           $('.trust-tool').hide();
         } else {
           $('.trust-tool').show();
@@ -1056,16 +1056,13 @@ var rowIdToReselect = false;
       urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
       if ($(evt.target).hasClass('quick-verify')) {
         selectRow(row, quickVerifyMenu);
-      }
-      else if ($(evt.target).hasClass('quick-verify-tool')) {
+      } else if ($(evt.target).hasClass('quick-verify-tool')) {
         quickVerifyPopup(row);
-      }
-      else if ($(evt.target).hasClass('trust-tool')) {
+      } else if ($(evt.target).hasClass('trust-tool')) {
         trustsPopup(row);
       } else if ($(evt.target).hasClass('edit-record')) {
         editThisRecord($(row).find('.record-id').html());
-      }
-      else {
+      } else {
         selectRow(row);
       }
     });
@@ -1083,12 +1080,12 @@ var rowIdToReselect = false;
         $('#actions-less').show();
         $('#more-status-buttons').html('[' + indiciaData.langMore + ']');
       }
-      if (typeof $.cookie !== "undefined") {
+      if (typeof $.cookie !== 'undefined') {
         $.cookie('verification-status-buttons', showMore ? 'more' : 'less');
       }
     }
 
-    if (typeof $.cookie !== "undefined") {
+    if (typeof $.cookie !== 'undefined') {
       var show = $.cookie('verification-status-buttons');
       if (show === 'more') {
         showSetStatusButtons(show);
@@ -1158,10 +1155,10 @@ var rowIdToReselect = false;
     });
 
     function editThisRecord(id) {
-      var $row = $('tr#row' + id),
-        path = $row.find('.row-input-form').val(),
-        sep = (path.indexOf('?') >= 0) ? '&' : '?';
-      window.location = path + sep + 'occurrenceId=' + id;
+      var $row = $('tr#row' + id);
+      var path = $row.find('.row-input-form').val();
+      var sep = (path.indexOf('?') >= 0) ? '&' : '?';
+      window.location = path + sep + 'occurrence_id=' + id;
     }
 
     /**
@@ -1170,45 +1167,72 @@ var rowIdToReselect = false;
      */
     $('#redet-from-full-list').change(function () {
       if ($('#redet-from-full-list').attr('checked')) {
-        $('#redet\\:taxon').setExtraParams({"taxon_list_id": indiciaData.mainTaxonListId});
+        $('#redet\\:taxon').setExtraParams({ taxon_list_id: indiciaData.mainTaxonListId });
       } else {
-        $('#redet\\:taxon').setExtraParams({"taxon_list_id": currRec.extra.taxon_list_id});
+        $('#redet\\:taxon').setExtraParams({ taxon_list_id: currRec.extra.taxon_list_id });
       }
     });
-
   });
 
-  //Function to draw any existing trusts from the database
+  function removeTrust(RemoveTrustId) {
+    var removeItem = {
+      website_id: indiciaData.website_id,
+      'user_trust:id': RemoveTrustId,
+      'user_trust:deleted': true
+    };
+
+    $.post(
+      indiciaData.ajaxFormPostUrl.replace('occurrence', 'user-trust'),
+      removeItem,
+      function (data) {
+        if (typeof data.error !== 'undefined') {
+          alert(data.error);
+        } else {
+          // If there are several trusts we remove a row
+          // otherwise we remove the whole trust section
+          if (trustsCounter > 1) {
+            $('#trust-' + RemoveTrustId).hide();
+          } else {
+            $('.existingTrustSection').hide();
+          }
+          trustsCounter--;
+        }
+      }
+    );
+  }
+
+  // Function to draw any existing trusts from the database
   function drawExistingTrusts() {
-    var getTrustsReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&callback=?',
-      getTrustsReportParameters = {
-        'user_id': currRec.extra.created_by_id,
-        'survey_id': currRec.extra.survey_id,
-        'taxon_group_id': currRec.extra.taxon_group_id,
-        'location_ids': currRec.extra.locality_ids,
-        'auth_token': indiciaData.read.auth_token,
-        'nonce': indiciaData.read.nonce,
-        'reportSource': 'local'
-      }, i, idNum;
-    //variable holds our HTML
+    var getTrustsReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&callback=?';
+    var getTrustsReportParameters = {
+      user_id: currRec.extra.created_by_id,
+      survey_id: currRec.extra.survey_id,
+      taxon_group_id: currRec.extra.taxon_group_id,
+      location_ids: currRec.extra.locality_ids,
+      auth_token: indiciaData.read.auth_token,
+      nonce: indiciaData.read.nonce,
+      reportSource: 'local'
+    };
+    var i;
+    var idNum;
+    // Variable holds our HTML
     var textMessage;
     $.getJSON(
       getTrustsReport,
       getTrustsReportParameters,
       function (data) {
-        if (typeof data.error === "undefined") {
+        if (typeof data.error === 'undefined') {
           if (data.length > 0) {
             trustsCounter = data.length;
             textMessage = '<h3>Existing trust criteria</h3>';
-            //If there is only one trust we put the information into a sentence, else we put it in a bullet list
+            // If there is only one trust we put the information into a sentence, else we put it in a bullet list
             if (data.length === 1) {
               textMessage += '<div class="existingTrustSection existingTrustData">' + data[0].recorder_name + ' is trusted for the ';
-            }
-            else {
+            } else {
               textMessage += '<div class="existingTrustSection">This record is trusted as ' + data[0].recorder_name + ' has the following trust criteria:';
               textMessage += '<ul>';
             }
-            //for each trust we build the HTML
+            // for each trust we build the HTML
             for (i = 0; i < data.length; i++) {
               if (data.length > 1) {
                 textMessage += '<li class="existingTrustData" id="trust-' + data[i].trust_id + '">The ';
@@ -1222,7 +1246,8 @@ var rowIdToReselect = false;
               if (data[i].location_name) {
                 textMessage += '<strong> location</strong><em> ' + data[i].location_name + '</em>';
               }
-              //Remove comma from end of trust information if there is a dangling comma because location info isn't present
+              // Remove comma from end of trust information if there is a dangling comma because location info isn't
+              // present
               if (!data[i].location_name) {
                 textMessage = textMessage.substring(0, textMessage.length - 2);
               }
@@ -1237,11 +1262,11 @@ var rowIdToReselect = false;
               textMessage += '</ul>';
             }
             textMessage += '</div>';
-            //Apply the HTML to the HTML tag
+            // Apply the HTML to the HTML tag
             document.getElementById('existingTrusts').innerHTML = textMessage;
-            //Remove a trust if the user clicks the remove button
-            $(".existingTrustRemoveButton").click(function (evt) {
-              //We only want the number from the end of the id
+            // Remove a trust if the user clicks the remove button
+            $('.existingTrustRemoveButton').click(function (evt) {
+              // We only want the number from the end of the id
               var idNumArray = evt.target.id.match(/\d+$/);
 
               if (idNumArray) {
@@ -1252,33 +1277,6 @@ var rowIdToReselect = false;
           }
         } else {
           alert(data.error);
-        }
-      }
-    );
-  }
-
-  function removeTrust(RemoveTrustId) {
-    var removeItem = {
-      'website_id': indiciaData.website_id,
-      'user_trust:id': RemoveTrustId,
-      'user_trust:deleted': true
-    };
-
-    $.post(
-      indiciaData.ajaxFormPostUrl.replace('occurrence', 'user-trust'),
-      removeItem,
-      function (data) {
-        if (typeof data.error !== "undefined") {
-          alert(data.error);
-        } else {
-          //If there are several trusts we remove a row
-          //otherwise we remove the whole trust section
-          if (trustsCounter > 1) {
-            $("#trust-" + RemoveTrustId).hide();
-          } else {
-            $(".existingTrustSection").hide();
-          }
-          trustsCounter--;
         }
       }
     );

@@ -47,8 +47,8 @@ jQuery(document).ready(function ($) {
         $(this).attr('title', indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')]);
         $(this).addClass('lexicon-term');
         termAlias = $(this).html().replace(/&amp;/g, '&')
-            .replace(/[^a-zA-Z0-9]+/g, '-')
-            .toLowerCase();
+          .replace(/[^a-zA-Z0-9]+/g, '-')
+          .toLowerCase();
         $(this).after('<a class="lexicon-info" href="/pantheon/lexicon/' + termAlias + '">i</a>');
         $(this).addClass('processed');
       }
@@ -68,6 +68,7 @@ jQuery(document).ready(function ($) {
       nodes = [];
       toplevelNodes = [];
       lookupList = {};
+<<<<<<< HEAD
 
       for (i = 0; i < flat.length; i++) {
         n = {
@@ -115,11 +116,65 @@ jQuery(document).ready(function ($) {
     }
   };
 
+=======
+
+      for (i = 0; i < flat.length; i++) {
+        n = {
+          id: flat[i][0],
+          name: flat[i][2],
+          parent_id: ((flat[i][1] === 0) ? null : flat[i][1]),
+          children: []
+        };
+        lookupList[n.id] = n;
+        nodes.push(n);
+        if (n.parent_id == null) {
+          toplevelNodes.push(n);
+        }
+      }
+
+      $.each(nodes, function () {
+        if (!(this.parent_id == null)) {
+          if (typeof lookupList[this.parent_id] === 'undefined') {
+            lookupList[this.parent_id] = {
+              id: this.parent_id,
+              name: '<em>unknown</em>',
+              parent_id: null,
+              children: []
+            };
+            toplevelNodes.push(lookupList[this.parent_id]);
+          }
+          lookupList[this.parent_id].children = lookupList[this.parent_id].children.concat([this]);
+        }
+      });
+      html = '<ul>';
+      $.each(toplevelNodes, function () {
+        html += '<li><span>' + this.name + '</span>';
+        if (this.children.length > 0) {
+          html += '<ul>';
+          html += recurseNodes(this.children);
+          html += '</ul>';
+        }
+        html += '</li>';
+      });
+      html += '</ul>';
+      $(this).html(html);
+    });
+    if (typeof indiciaFns.applyLexicon !== 'undefined') {
+      indiciaFns.applyLexicon();
+    }
+  };
+
+>>>>>>> develop
   window.formatConservation = function () {
     $.each($('.conservation-status.unprocessed'), function () {
       var list = $(this).html().split('|');
       var countup = {};
       var output = [];
+<<<<<<< HEAD
+=======
+      var display;
+      var countLink;
+>>>>>>> develop
       $.each(list, function () {
         if (this.length) {
           if (typeof countup[this] === 'undefined') {
@@ -131,7 +186,16 @@ jQuery(document).ready(function ($) {
       $.each(countup, function (status, count) {
         output.push(count + ' ' + status);
       });
+<<<<<<< HEAD
       $(this).html(output.join('; '));
+=======
+      display = output.join('; ');
+      countLink = $(this).closest('tr').find('td.col-count a');
+      if (countLink.length) {
+        display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t' + '">' + display + '</a>';
+      }
+      $(this).html(display);
+>>>>>>> develop
       $(this).removeClass('unprocessed');
     });
     if (typeof indiciaFns.applyLexicon !== 'undefined') {

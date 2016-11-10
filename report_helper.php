@@ -771,7 +771,7 @@ $callToCallback}";
       self::$javascript .= "
 if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
-simple_tooltip('input.col-filter','tooltip');
+indiciaFns.simpleTooltip('input.col-filter','tooltip');
 indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   id: '$options[id]',
   mode: '$options[mode]',
@@ -1749,7 +1749,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       $response = self::get_report_data($options, self::array_to_query_string($currentParamValues, true).'&wantRecords=0&wantParameters=1');
       $r = self::get_report_grid_parameters_form($response, $options, $currentParamValues);
     }
-    if (!isset($response['parameterRequest']) || count(array_intersect_key($currentParamValues, $response['parameterRequest']))==count($response['parameterRequest'])) {
+    if (isset($response['records']) ||
+        !isset($response['parameterRequest']) ||
+        count(array_intersect_key($currentParamValues, $response['parameterRequest']))==count($response['parameterRequest'])) {
       if (empty($options['geoserverLayer'])) {
         // we are doing vector reporting via indicia services
         // first we need to build a style object which respects columns in the report output that define style settings for each vector.

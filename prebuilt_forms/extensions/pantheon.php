@@ -172,16 +172,18 @@ class extension_pantheon {
    */
   public static function osiris_tabular($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
-    $r = '';
+    $filter = array(
+      'sample_id' => $_GET['dynamic-sample_id'],
+      'bb_attr_id' => $options['bb_attr_id'],
+      'sb_attr_id' => $options['sb_attr_id'],
+      'r_attr_id' => $options['r_attr_id']
+    );
+    if (!empty($_GET['dynamic-conservation_group_id']))
+      $filter['conservation_group_id'] = $_GET['dynamic-conservation_group_id'];
     $data = report_helper::get_report_data(array(
       'dataSource' => 'reports_for_prebuilt_forms/pantheon/osiris_tabular_hierarchy',
       'readAuth' => $auth['read'],
-      'extraParams' => array(
-          'sample_id' => $_GET['dynamic-sample_id'],
-          'bb_attr_id' => $options['bb_attr_id'],
-          'sb_attr_id' => $options['sb_attr_id'],
-          'r_attr_id' => $options['r_attr_id']
-      ),
+      'extraParams' => $filter,
       'caching' => true
     ));
     $recordsByCat = [];
@@ -231,7 +233,7 @@ class extension_pantheon {
         $record = $recordsByCat['1.bb'][$i];
         $color = $bbColors[$record['broad_biotope']];
         $row .= "<td><span>$record[broad_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td>$record[return]</td>";
+          "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -239,7 +241,7 @@ class extension_pantheon {
         $record = $recordsByCat['2.sb'][$i];
         $color = $bbColors[$record['broad_biotope']];
         $row .= "<td><span>$record[specific_biotope]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td>$record[return]</td>";
+          "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -250,7 +252,7 @@ class extension_pantheon {
         if (!empty($record['parent_r_id']))
           $record['resource'] = ' &gt;&gt; ' . $record['resource'];
         $row .= "<td><span>$record[resource]</span></td><td style=\"background-color: #$color\"></td>" .
-            "<td>$record[count]</td><td>$record[return]</td>";
+          "<td>$record[count]</td><td>$record[return]</td>";
       } else {
         $row .= '<td colspan="4"></td>';
       }
@@ -271,9 +273,9 @@ class extension_pantheon {
     iform_load_helpers(array('report_helper'));
     $query = new EntityFieldQuery();
     $query
-        ->entityCondition('entity_type', 'node')
-        ->entityCondition('bundle', 'lexicon')
-        ->propertyCondition('status', 1);
+      ->entityCondition('entity_type', 'node')
+      ->entityCondition('bundle', 'lexicon')
+      ->propertyCondition('status', 1);
     $result = $query->execute();
     $nids = array_keys($result['node']);
     $nodes = node_load_multiple($nids);
