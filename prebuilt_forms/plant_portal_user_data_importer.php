@@ -143,7 +143,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
-        'name'=>'sample_group_identifier_name_lookup_attr_id',
+        'name'=>'sample_group_identifier_name_lookup_smp_attr_id',
         'caption'=>'Sample group identifier name lookup sample attribute ID',
         'description'=>'ID of the attribute that stores the sample group identifier name as a lookup ID. This is needed in additional to the text attribute '
           . 'as the lookup id is unknown during the import itself as the group has not been created yet',
@@ -161,7 +161,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
-        'name'=>'plot_group_identifier_name_lookup_attr_id',
+        'name'=>'plot_group_identifier_name_lookup_loc_attr_id',
         'caption'=>'Plot group identifier name lookup location attribute ID',
         'description'=>'ID of the attribute that stores the plot group identifier name as a lookup ID. This is needed in additional to the text attribute '
           . 'as the lookup id is unknown during the import itself as the group has not been created yet',
@@ -398,8 +398,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //be able to grab quite a lot of code from there.
     $args['model']='occurrence';
     if (empty($args['override_survey_id'])||empty($args['override_taxon_list_id'])||
-            empty($args['sample_group_identifier_name_text_attr_id'])||empty($args['sample_group_identifier_name_lookup_attr_id'])||
-            empty($args['plot_group_identifier_name_text_attr_id'])||empty($args['plot_group_identifier_name_lookup_attr_id'])||
+            empty($args['sample_group_identifier_name_text_attr_id'])||empty($args['sample_group_identifier_name_lookup_smp_attr_id'])||
+            empty($args['plot_group_identifier_name_text_attr_id'])||empty($args['plot_group_identifier_name_lookup_loc_attr_id'])||
             empty($args['sample_group_permission_person_attr_id'])||empty($args['plot_group_permission_person_attr_id'])||
             empty($args['sample_group_termlist_id'])||empty($args['plot_group_termlist_id']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
@@ -1766,12 +1766,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
     if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($plotGroupTermlistId) && !empty($args['plot_group_permission_person_attr_id']))
       data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",'plot_group',".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
 
-    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_attr_id']))
+    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']))
       data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
 
 
-    if (!empty($websiteId)&&!empty($plotNamesForPlotGroupAttachment) && !empty($plotSrefsForPlotGroupAttachment) && !empty($plotSrefSystemsForPlotGroupAttachment) && !empty($plotGroupsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
-      data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotNamesForPlotGroupAttachment).",".json_encode($plotSrefsForPlotGroupAttachment).",".json_encode($plotSrefSystemsForPlotGroupAttachment).",".json_encode($plotGroupsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
+    if (!empty($websiteId)&&!empty($plotNamesForPlotGroupAttachment) && !empty($plotSrefsForPlotGroupAttachment) && !empty($plotSrefSystemsForPlotGroupAttachment) && !empty($plotGroupsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
+      data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotNamesForPlotGroupAttachment).",".json_encode($plotSrefsForPlotGroupAttachment).",".json_encode($plotSrefSystemsForPlotGroupAttachment).",".json_encode($plotGroupsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
 
     data_entry_helper::$javascript .= "$('#submit-import').click();";
     data_entry_helper::$javascript .= "});";
@@ -1806,7 +1806,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     foreach ($importTypesToCreate as $possibleImportTypeToCreate) {
       $continue = false;    
       foreach ($fileArrayForImportRowsToProcessForImport as $key => $importRow) {
-        if (strpos($key, $possibleImportTypeToCreate) !== false) {
+        if ($key==$possibleImportTypeToCreate) {
+        //if (strpos($key, $possibleImportTypeToCreate) !== false) {
           $continue=true;
           $importTypeToCreate = $key;
         }
@@ -2035,7 +2036,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $chosenColumnHeadings['sampleSrefHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
       if ($chosenField==='sample:entered_sref_system')
         $chosenColumnHeadings['sampleSrefSystemHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
-      if ($chosenField==='smpAttr:'.$args['sample_group_identifier_name_text_attr_id'])
+      if ($chosenField==='smpAttr:fk_'.$args['sample_group_identifier_name_lookup_smp_attr_id'])
         $chosenColumnHeadings['sampleGroupNameHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
       if ($chosenField==='sample:fk_location')
         $chosenColumnHeadings['plotNameHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
@@ -2110,8 +2111,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
         //Only need to set newSampleExistingSampleGroup flag if existingSample is 0
         if ($lineState['existingSample']==0)
           self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'sample');
-        //Only need to set newPlotExistingPlotGroup flag if existingPlot is 0
-        if ($lineState['existingPlot']==0)
+        //Only need to set newPlotExistingPlotGroup flag if existingSample is 0 AND existingPlot is 0
+        if ($lineState['existingSample']==0 && $lineState['existingPlot']==0)
           self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'plot');
         //Save rows into the import categories which are stored as keys in the $fileArrayForImportRowsToProcessForImport array
         self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['nonFatalImportTypes']);
@@ -2154,9 +2155,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
           strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['plot_name']))) &&
               
           //To DO AVB, we are going to need to convert any dates before comparisons are made, plus I don't think the plot is even returning this
-          ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&empty($aSampleUserHasRightsTo['sample_date']))||
-              ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&!empty($aSampleUserHasRightsTo['sample_date'])) &&
-              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_date']))) /*&&
+          /*((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&empty($aSampleUserHasRightsTo['date_start']))||
+              ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&!empty($aSampleUserHasRightsTo['date_start'])) &&
+              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])==strtolower($aSampleUserHasRightsTo['date_start']))) &&*/
               
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['sample_group_identifier_name']))||
               ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['sample_group_identifier_name']))&&
@@ -2268,7 +2269,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       'readAuth'=>$auth['read'],
       'extraParams'=>array(
                           'sample_group_permission_person_attr_id'=>$args['sample_group_permission_person_attr_id'],
-                          'plot_group_permission_person_attr_id'=>$args['plot_group_permission_person_attr_id'],
+                          'sample_group_identifier_name_lookup_smp_attr_id'=>$args['sample_group_identifier_name_lookup_smp_attr_id'],
                           'plot_group_attr_id'=>$args['plot_group_identifier_name_text_attr_id'],
                           'user_id'=>$currentUserId)
     ));
