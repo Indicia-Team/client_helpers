@@ -1567,10 +1567,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r .= self::get_hidden_upload_mappings_form($options);
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
     $fileArray = file($_SESSION['uploaded_file']);
-    if (empty($_SESSION['chosen_column_headings'])) {
+    if (empty($_SESSION['chosen_column_headings']))
       $_SESSION['chosen_column_headings']=self::store_column_header_names_for_existing_match_checks($args);
-      $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
-    }
+    $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
     $headerLineItems = explode(',',$fileArray[0]);
     //Remove the header row from the file
     unset($fileArray[0]);
