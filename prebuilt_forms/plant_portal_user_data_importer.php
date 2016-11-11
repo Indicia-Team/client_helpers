@@ -1721,8 +1721,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $sampleGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'sample_group',$importTypesToCreate);
     $importTypesToCreate=array('nS-nSG-nP-nPG','eSG');
     $plotGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'plot_group',$importTypesToCreate);
-    
-    $plotGrouptoPlotAttachmentsToCreate=self::extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo);
+    //To DO AVB - This code needs completing
+    //$plotGrouptoPlotAttachmentsToCreate=self::extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo);
 
     //Cycle through each plot we need to create and get its name and spatial reference and spatial reference system (if available,
     //else we fall back on the sref system supplied on the Settings page)
@@ -1737,12 +1737,13 @@ class iform_plant_portal_user_data_importer extends helper_base {
     foreach ($plotGroupDataToCreate as $groupToAdd) {
       $distinctPlotGroupNamesToCreate[]=$groupToAdd['name'];
     }
-    foreach ($plotGrouptoPlotAttachmentsToCreate as $plotGrouptoPlotAttachmentToCreate) {
+    //To Do AVB, this can be uncommented once the Plog Group to Plot attachment code is complete
+    /*foreach ($plotGrouptoPlotAttachmentsToCreate as $plotGrouptoPlotAttachmentToCreate) {
       $plotNamesForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['name'];
       $plotSrefsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['sref'];
       $plotSrefSystemsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['sref_system'];
       $plotGroupsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['group'];
-    }
+    }*/
     //When the import button is clicked do the following
     //- Disable the button to prevent double-clicking
     //- Show a Please Wait message to the user
@@ -1780,15 +1781,15 @@ class iform_plant_portal_user_data_importer extends helper_base {
   
   private static function extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo) {   
     $plotGrouptoPlotAttachmentsToCreate=array();
-    //AVB this is just test code, create the first location group
+    //AVB this is just test code, needs rewrite
     foreach ($fileArrayForImportRowsToProcessForImport as $importSituationRows) {
       foreach ($importSituationRows as $arrayImportRowToProcess) {
-        if (!empty($arrayImportRowToProcess[4])) {  
-          $plotGrouptoPlotAttachmentsToCreate[0]['name']=$arrayImportRowToProcess[3];
-          $plotGrouptoPlotAttachmentsToCreate[0]['sref']=$arrayImportRowToProcess[2];
-          $plotGrouptoPlotAttachmentsToCreate[0]['sref_system']=$arrayImportRowToProcess[7];
-          $plotGrouptoPlotAttachmentsToCreate[0]['group']=$arrayImportRowToProcess[4];
-        }
+        //if (!empty($arrayImportRowToProcess[4])) {  
+        //  $plotGrouptoPlotAttachmentsToCreate[0]['name']=$arrayImportRowToProcess[3];
+        //  $plotGrouptoPlotAttachmentsToCreate[0]['sref']=$arrayImportRowToProcess[2];
+        //  $plotGrouptoPlotAttachmentsToCreate[0]['sref_system']=$arrayImportRowToProcess[7];
+        //  $plotGrouptoPlotAttachmentsToCreate[0]['group']=$arrayImportRowToProcess[4];
+        //}
       }
     }
     return $plotGrouptoPlotAttachmentsToCreate;
