@@ -27,9 +27,11 @@ jQuery(document).ready(function ($) {
     var inputList;
     inputClean = [];
     // clear out contenteditable divs (used for CRLF)
-    inputDirty = input.replace(/<div>/g, '').replace(/<\/div>/g, '<br>');
+    inputDirty = input.replace(/<div>/g, '<br>').replace(/<\/div>/g, '<br>');
     // HTML whitespace clean
-    inputDirty = input.replace(/&nbsp;/g, ' ');
+    inputDirty = inputDirty.replace(/&nbsp;/g, ' ');
+    // Remove error spans
+    inputDirty = inputDirty.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '');
     // The user might have pasted a comma-separated list
     inputDirty = inputDirty.replace(/,/g, '<br>');
     inputList = inputDirty.split(/<br(\/)?>/);
@@ -40,7 +42,7 @@ jQuery(document).ready(function ($) {
         token = this.trim();
         if (token !== '' && inArrayCaseInsensitive(token, inputClean) === -1) {
           if (token === 'bob') {
-            token = '<span style="color: red">' + token + '</span>';
+            token = '<span style="color:red">bob</span>';
           }
           inputClean.push(token);
         }
@@ -51,22 +53,31 @@ jQuery(document).ready(function ($) {
 
   function matchToDb() {
     var listForDb = [];
+    var reportParams = {
+      report: 'library/scratchpad/match_' + indiciaData.scratchpadSettings.match + '.xml',
+      reportSource: 'local',
+      auth_token: indiciaData.read.auth_token,
+      nonce: indiciaData.read.nonce
+    };
     // convert the list of input values by adding quotes, so they can go into a report query
     $.each(inputClean, function () {
-      listForDb.push("'" + this + "'");
+      listForDb.push("'" + this.toLowerCase() + "'");
     });
+    reportParams.list = listForDb.join(',');
+    $.extend(reportParams, indiciaData.scratchpadSettings.filters);
     $.ajax({
       dataType: 'jsonp',
       url: indiciaData.read.url + 'index.php/services/report/requestReport',
-      data: {
-        report: 'library/scratchpad/' + indiciaData.scratchpadSettings.match,
-        reportSource: 'local',
-        list: listForDb.join(','),
-        auth_token: indiciaData.read.auth_token,
-        nonce: indiciaData.read.nonce
-      },
+      data: reportParams,
       success: function (data) {
-        alert('Got it');
+        if (typeof data.error !== 'undefined') {
+          alert(data.error);
+        } else {
+          $('#scratchpad-output').html('');
+          $.each(data, function () {
+            $('#scratchpad-output').append('<div data-id="' + this.id + '">' + this.label + '</div>');
+          });
+        }
       }
     });
   }
