@@ -522,10 +522,31 @@ class filter_quality extends filter_base {
       'label'=>lang::get('Automated checks'),
       'fieldname'=>'autochecks',
       'lookupValues'=>array(
-        ''=>lang::get('Not filtered'),
-        'P'=>lang::get('Only include records that pass all automated checks'),
-        'F'=>lang::get('Only include records that fail at least one automated check')
+        '' => lang::get('Not filtered'),
+        'P' => lang::get('Only include records that pass all automated checks'),
+        'F' => lang::get('Only include records that fail at least one automated check')
       )
+    ));
+    $r .= data_entry_helper::select(array(
+      'label'=>lang::get('Identification difficulty'),
+      'fieldname'=>'identification_difficulty_op',
+      'lookupValues'=>array(
+        '=' => lang::get('is'),
+        '>=' => lang::get('is at least'),
+        '<=' => lang::get('is at most')
+      ),
+      'afterControl' => data_entry_helper::select(array(
+        'fieldname'=>'identification_difficulty',
+        'lookupValues'=>array(
+          '' => lang::get('Not filtered'),
+          1 => 1,
+          2 => 2,
+          3 => 3,
+          4 => 4,
+          5 => 5
+        ),
+        'controlWrapTemplate' => 'justControl'
+      ))
     ));
     $r .= data_entry_helper::checkbox(array(
       'label' => lang::get('Only include records which have photos available'),
