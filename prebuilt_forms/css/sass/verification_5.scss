@@ -130,9 +130,9 @@ ul.gallery li {
 }
 
 .popup-form {
-  width: 500px;
+  width: 580px;
   @include blueprint-form;
-  @include blueprint-form-sizes(475px, 475px);
+  @include blueprint-form-sizes(555px, 555px);
 
   label {
     display: block;
@@ -154,6 +154,31 @@ ul.gallery li {
     @include border-radius(4px);
     padding: 1em;
     margin: 1em;
+  }
+  &.status-form legend {
+    font-weight: normal;
+    .icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-right: 8px;
+      background: url(../../../media/images/statuses-sprite.png) no-repeat left center;
+      &.status-V1 {
+        background-position: 0px 0px;
+      }
+      &.status-V2, &.status-V {
+        background-position: 0px -16px;
+      }
+      &.status-C3 {
+        background-position: 0px -32px;
+      }
+      &.status-R4, &.status-R {
+        background-position: 0px -96px;
+      }
+      &.status-R5 {
+        background-position: 0px -112px;
+      }
+    }
   }
 }
 

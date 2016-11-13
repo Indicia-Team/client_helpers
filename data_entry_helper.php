@@ -1681,11 +1681,12 @@ $('#$escaped').change(function(e) {
             'location_id': $('#imp-location').attr('value'),
             'created_by_id': $createdById
           }
-          //fill in the sample attributes based on what is returned by the report
+          // Fill in the sample attributes based on what is returned by the report
           $.getJSON(reportingURL, reportOptions,
             function(data) {
               jQuery.each(data, function(i, item) {
-                var selector=\"smpAttr:\"+item.id, input=$('[id=' + selector + ']');
+                var selector=\"smpAttr\\:\"+item.id;
+                var input=$('[id=' + selector + ']');
                 if (item.value !== null && item.data_type !== 'Boolean') {
                   input.val(item.value);
                   if (input.is('select') && input.val()==='') {
@@ -2640,6 +2641,7 @@ $('#$escaped').change(function(e) {
    * * **cacheLookup** - Defaults to true. If true, uses cache_taxon_searchterms for species name lookup
    *   rather than detail_taxa_taxon_lists. The former is faster and tolerates punctuation and spacing errors,
    *   but the available data to lookup against may not be up to date if the cache tables are not populated.
+   * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
    * * **speciesIncludeBothNames** - include both latin and common names. Default false.
    * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
    * * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
@@ -2707,6 +2709,7 @@ $('#$escaped').change(function(e) {
    *
    * @param array $options Options array with the following entries:
    * * **cacheLookup** - Used cached version of lookup tables for better performance. Default true.
+   * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
    * * **speciesIncludeBothNames** - include both latin and common names. Default false.
    * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
    * * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
@@ -2715,6 +2718,7 @@ $('#$escaped').change(function(e) {
     global $indicia_templates;
     $options = array_merge(array(
       'cacheLookup' => true,
+      'speciesIncludeAuthorities' => false,
       'speciesIncludeBothNames' => false,
       'speciesIncludeTaxonGroup' => false,
       'speciesIncludeIdDiff' => true
@@ -2732,13 +2736,23 @@ $('#$escaped').change(function(e) {
       "  } else {\n".
       "    r = '<span>'+item.$colTaxon+'</span>';\n".
       "  }\n";
+    if ($options['speciesIncludeAuthorities']) {
+      $fn .= " if (item.$colAuthority) {\n" .
+        "    r += ' ' + item.$colAuthority;\n" .
+        "  }\n";
+    }
     // This bit optionally adds '- common' or '- latin' depending on what was being searched
     if ($options['speciesIncludeBothNames']) {
-      $fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n".
-        "    r += ' - ' + item.$colCommon;\n".
-        "  } else if (item.preferred='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n".
-        "    r += ' - <em>' + item.$colPreferred + '</em>';\n".
-        "  }\n";
+      $fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n" .
+        "    r += ' - ' + item.$colCommon;\n" .
+        "  } else if (item.preferred==='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n" .
+        "    r += ' - <em>' + item.$colPreferred + '</em>';\n";
+      if ($options['speciesIncludeAuthorities']) {
+        $fn .= "    if (item.$colPreferredAuthority) {\n" .
+          "      r += ' ' + item.$colPreferredAuthority;\n" .
+          "    }\n";
+      }
+      $fn .= "  }\n";
     }
     // this bit optionally adds the taxon group
     if ($options['speciesIncludeTaxonGroup'])
@@ -5275,8 +5289,10 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         'colTaxon'=>'original',
         'colCommon'=>'default_common_name',
         'colPreferred'=>'preferred_taxon',
-        'valLatinLanguage'=>'lat',
-        'duplicateCheckFields'=>array('original','taxa_taxon_list_id')
+        'colAuthority' => 'authority',
+        'colPreferredAuthority' => 'preferred_authority',
+        'valLatinLanguage' => 'lat',
+        'duplicateCheckFields' => array('original','taxa_taxon_list_id')
       );
     } else {
       return array (
@@ -5287,6 +5303,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         'colTaxon'=>'taxon',
         'colCommon'=>'common',
         'colPreferred'=>'preferred_name',
+        'colAuthority' => 'authority',
+        'colPreferredAuthority' => 'preferred_authority',
         'valLatinLanguage'=>'lat'
       );
     }

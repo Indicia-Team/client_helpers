@@ -187,10 +187,10 @@ class iform_group_send_invites {
         );
         $mimeheaders = array();
         foreach ($message['headers'] as $name => $value) {
-          $mimeheaders[] = $name . ': ' . mime_header_encode($value);
+          $mimeheaders[] = $name . ': ' . hostsite_mime_header_encode($value);
         }
         $thismailsuccess = mail(
-          $message['to'], mime_header_encode($message['subject']), 
+          $message['to'], hostsite_mime_header_encode($message['subject']),
           // Note: e-mail uses CRLF for line-endings, but PHP's API requires LF.
           // They will appear correctly in the actual e-mail that is sent.
           str_replace("\r", '', $message['body']), 

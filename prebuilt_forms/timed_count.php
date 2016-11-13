@@ -81,6 +81,16 @@ class iform_timed_count {
           'siteSpecific'=>true
         ),
         array(
+          'name'=>'defaults',
+          'caption'=>'Default Values',
+          'description'=>'Supply default values for each field as required. On each line, enter fieldname=value, e.g. occurrence:record_status. '.
+              'NOTE, currently only supports occurrence:record_status, but will be extended in future.',
+          'type'=>'textarea',
+          'default'=>'occurrence:record_status=C',
+          'siteSpecific'=>true,
+          'required'=>false
+        ),
+        array(
           'name'=>'occurrence_attribute_id',
           'caption'=>'Occurrence Attribute',
           'description'=>'The attribute (typically an abundance attribute) that will be presented in the grid for input. Entry of an attribute value will create '.
@@ -777,6 +787,10 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
 <input type='hidden' name='sample:entered_sref_system' value='".data_entry_helper::$entity_to_load['sample:entered_sref_system']."'/>
 <input type='hidden' name='sample:geom' value='".data_entry_helper::$entity_to_load['sample:geom']."'/>
 ";
+
+    $defaults = isset($args['defaults']) ? helper_base::explode_lines_key_value_pairs($args['defaults']): array();
+    $record_status = (isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C');
+    $r .= '<input type="hidden" name="occurrence:record_status" value="'.$record_status.'">'."\n";
 
     if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) 
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);

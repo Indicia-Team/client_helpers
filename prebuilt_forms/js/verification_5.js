@@ -661,16 +661,18 @@ var rowIdToReselect = false;
   }
 
   function setStatus(status, substatus) {
+    var helpText = '';
+    var html;
+    var verb = status === 'C' ? indiciaData.popupTranslations.verbC3 : indiciaData.popupTranslations['verb' + status];
     if (typeof substatus === 'undefined') {
       substatus = '';
     }
-    var helpText = '', html, verb;
     if (multimode && $('.check-row:checked').length > 1) {
       helpText = '<p class="warning">' + indiciaData.popupTranslations.multipleWarning + '</p>';
     }
-    verb = status === 'C' ? indiciaData.popupTranslations['verbC3'] : indiciaData.popupTranslations['verb' + status];
-    html = '<fieldset class="popup-form">' +
-      '<legend>' + indiciaData.popupTranslations.title.replace('{1}', statusLabel(status, substatus)) + '</legend>';
+    html = '<fieldset class="popup-form status-form">' +
+      '<legend><span class="icon status-' + status + substatus + '"></span>' +
+      indiciaData.popupTranslations.title.replace('{1}', '<strong>' + statusLabel(status, substatus)) + '</strong></legend>';
     html += '<label class="auto">Comment:</label><textarea id="verify-comment" rows="5" cols="80"></textarea><br />' +
       helpText +
       '<input type="hidden" id="set-status" value="' + status + '"/>' +
