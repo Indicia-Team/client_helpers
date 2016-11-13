@@ -1681,11 +1681,12 @@ $('#$escaped').change(function(e) {
             'location_id': $('#imp-location').attr('value'),
             'created_by_id': $createdById
           }
-          //fill in the sample attributes based on what is returned by the report
+          // Fill in the sample attributes based on what is returned by the report
           $.getJSON(reportingURL, reportOptions,
             function(data) {
               jQuery.each(data, function(i, item) {
-                var selector=\"smpAttr:\"+item.id, input=$('[id=' + selector + ']');
+                var selector=\"smpAttr\\:\"+item.id;
+                var input=$('[id=' + selector + ']');
                 if (item.value !== null && item.data_type !== 'Boolean') {
                   input.val(item.value);
                   if (input.is('select') && input.val()==='') {
