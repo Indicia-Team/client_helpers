@@ -1065,6 +1065,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   report_helper::$javascript .= "indiciaData.lang.FilterExistsOverwrite='".lang::get('A filter with that name already exists. Would you like to overwrite it?')."';\n";
   report_helper::$javascript .= "indiciaData.lang.AutochecksFailed='".lang::get('Automated checks failed')."';\n";
   report_helper::$javascript .= "indiciaData.lang.AutochecksPassed='".lang::get('Automated checks passed')."';\n";
+  report_helper::$javascript .= "indiciaData.lang.IdentificationDifficulty='".lang::get('Identification difficulty')."';\n";
   report_helper::$javascript .= "indiciaData.lang.HasPhotos='".lang::get('Records which have photos')."';\n";
   report_helper::$javascript .= "indiciaData.lang.ConfirmFilterDelete='".lang::get('Are you sure you want to permanently delete the {title} filter?')."';\n";
   report_helper::$javascript .= "indiciaData.lang.MyRecords='".lang::get('My records only')."';\n";
