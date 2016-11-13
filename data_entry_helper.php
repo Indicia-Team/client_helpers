@@ -1685,7 +1685,7 @@ $('#$escaped').change(function(e) {
           $.getJSON(reportingURL, reportOptions,
             function(data) {
               jQuery.each(data, function(i, item) {
-                var selector=\"smpAttr\\:\"+item.id;
+                var selector=\"smpAttr\\\\:\"+item.id;
                 var input=$('[id=' + selector + ']');
                 if (item.value !== null && item.data_type !== 'Boolean') {
                   input.val(item.value);
