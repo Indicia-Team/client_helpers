@@ -41,6 +41,9 @@ var rowIdToReselect = false;
       }
       rowIdToReselect = false;
     }
+    if (multimode) {
+      showTickList();
+    }
   };
 
   mapInitialisationHooks.push(function (div) {
