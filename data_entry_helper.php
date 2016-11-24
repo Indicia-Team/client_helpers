@@ -4277,7 +4277,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
             $options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceSensitivity']) {
-          $attrs = self::get_species_checklist_col_responsive($options, 'sensitive');
+          $attrs = self::get_species_checklist_col_responsive($options, 'sensitivity');
           $r .= self::get_species_checklist_col_header(
             $options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
         }
