@@ -4292,7 +4292,6 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           // always hidden so it appears in a row below.
           if ($options['responsive']) {
             $attrs = ' data-hide="all" data-editable="true"';
-//            $attrs = '';
             $r .= self::get_species_checklist_col_header($options['id']."-files-$i", lang::get($onlyImages ? 'Photos' : 'Media'), $visibleColIdx, $options['colWidths'], $attrs);
           }
         }
