@@ -17,6 +17,17 @@ var rowIdToReselect = false;
   var multimode = false
   var email = { to: '', subject: '', body: '', type: '' };
 
+  /**
+   * Resets to the state where no grid row is shown
+   */
+  function clearRow() {
+    $('table.report-grid tr').removeClass('selected');
+    $('#instructions').show();
+    $('#record-details-content').hide();
+    occurrenceId = null;
+    currRec = null;
+  }
+
   reselectRow = function () {
     var row;
     if (rowIdToReselect) {
@@ -30,18 +41,10 @@ var rowIdToReselect = false;
       }
       rowIdToReselect = false;
     }
+    if (multimode) {
+      showTickList();
+    }
   };
-
-  /**
-   * Resets to the state where no grid row is shown
-   */
-  function clearRow() {
-    $('table.report-grid tr').removeClass('selected');
-    $('#instructions').show();
-    $('#record-details-content').hide();
-    occurrenceId = null;
-    currRec = null;
-  }
 
   mapInitialisationHooks.push(function (div) {
     // nasty hack to fix a problem where these layers get stuck and won't reload after pan/zoom on IE & Chrome
@@ -91,6 +94,9 @@ var rowIdToReselect = false;
       function (data) {
         // refind the row, as $(tr) sometimes gets obliterated.
         var $row = $('#row' + data.data.Record[0].value);
+        var layer;
+        var thisSpLyrSettings;
+        var filter;
         rowRequest = null;
         currRec = data;
         if (currRec.extra.created_by_id === '1') {
@@ -121,7 +127,6 @@ var rowIdToReselect = false;
             layer.destroy();
           });
           speciesLayers = [];
-          var layer, thisSpLyrSettings, filter;
           if (typeof indiciaData.wmsSpeciesLayers !== 'undefined' && data.extra.taxon_external_key !== null) {
             $.each(indiciaData.wmsSpeciesLayers, function (idx, layerDef) {
               thisSpLyrSettings = $.extend({}, layerDef.settings);
@@ -173,19 +178,22 @@ var rowIdToReselect = false;
    * visual indicators of the record's status.
    */
   function postVerification(occ) {
-    var status = occ['occurrence:record_status'], id = occ['occurrence:id'],
-      substatus = typeof occ['occurrence:record_substatus'] === 'undefined' ? null : occ['occurrence:record_substatus'];
+    var status = occ['occurrence:record_status'];
+    var id = occ['occurrence:id'];
+    var substatus = typeof occ['occurrence:record_substatus'] === 'undefined' ? null : occ['occurrence:record_substatus'];
     $.post(
       indiciaData.ajaxFormPostUrl.replace('occurrence', 'single_verify'),
       occ,
       function () {
+        var text;
+        var nextRow;
         removeStatusClasses('#row' + id + ' td:first div, #details-tab td', 'status', ['V', 'C', 'R', 'I', 'T']);
         removeStatusClasses('#row' + id + ' td:first div, #details-tab td', 'substatus', [1, 2, 3, 4, 5]);
         $('#row' + id + ' td:first div, #details-tab td.status').addClass('status-' + status);
         if (substatus) {
           $('#row' + id + ' td:first div, #details-tab td.status').addClass('substatus-' + substatus);
         }
-        var text = indiciaData.statusTranslations[status], nextRow;
+        text = indiciaData.statusTranslations[status];
         $('#details-tab td.status').html(text);
         if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'details' ||
           indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'comments') {
@@ -215,9 +223,9 @@ var rowIdToReselect = false;
     // to create email of record details
     var record = '';
     $.each(currRec.data, function (idx, section) {
-      $.each(section, function (idx, field) {
-        if (field.value !== null && field.value !== '') {
-          record += field.caption + ': ' + field.value + '\n';
+      $.each(section, function () {
+        if (this.value !== null && this.value !== '') {
+          record += this.caption + ': ' + this.value + '\n';
         }
       });
     });
@@ -265,8 +273,9 @@ var rowIdToReselect = false;
   }
 
   function popupTabs(tabs) {
-    var r = '<div id="popup-tabs"><ul>', title;
-    $.each(tabs, function (id, tab) {
+    var r = '<div id="popup-tabs"><ul>';
+    var title;
+    $.each(tabs, function (id) {
       title = indiciaData.popupTranslations['tab_' + id];
       r += '<li id="tab-' + id + '-tab"><a href="#tab-' + id + '">' + title + '</a></li>';
     });
@@ -347,8 +356,7 @@ var rowIdToReselect = false;
         success: function (response) {
           if (response === 'yes' || response === 'maybe') {
             recorderQueryProbablyWillGetNotified();
-          }
-          else if (response === 'no' || response === 'unknown') {
+          } else if (response === 'no' || response === 'unknown') {
             recorderQueryProbablyNeedsEmail(response);
           }
         }
@@ -356,18 +364,24 @@ var rowIdToReselect = false;
     }
   }
 
-  function popupEmailExpert() {
-    $.fancybox('<form id="email-form"><fieldset class="popup-form">' +
-      '<legend>' + indiciaData.popupTranslations.emailTitle + '</legend>' +
-      '<p>' + indiciaData.popupTranslations.emailInstruction + '</p>' +
-      '<label>To:</label><input type="text" id="email-to" class="email required" value="' + email.to + '"/><br />' +
-      '<label>Subject:</label><input type="text" id="email-subject" class="require" value="' + email.subject + '"/><br />' +
-      '<label>Body:</label><textarea id="email-body" class="required">' + email.body + '</textarea><br />' +
-      '<input type="submit" class="default-button" ' +
-      'value="' + indiciaData.popupTranslations.sendEmail + '" />' +
-      '</fieldset></form>');
-    validator = $('#email-form').validate({});
-    $('#email-form').submit(processEmail);
+  // Use an AJAX call to get the server to send the email
+  function sendEmail() {
+    $.post(
+      indiciaData.ajaxUrl + '/email/' + indiciaData.nid + urlSep,
+      email,
+      function (response) {
+        if (response === 'OK') {
+          $.fancybox.close();
+          alert(indiciaData.popupTranslations.emailSent);
+        } else {
+          $.fancybox('<div class="manual-email">' + indiciaData.popupTranslations.requestManualEmail +
+            '<div class="ui-helper-clearfix"><span class="left">To:</span><div class="right">' + email.to + '</div></div>' +
+            '<div class="ui-helper-clearfix"><span class="left">Subject:</span><div class="right">' + email.subject + '</div></div>' +
+            '<div class="ui-helper-clearfix"><span class="left">Content:</span><div class="right">' + email.body.replace(/\n/g, '<br/>') + '</div></div>' +
+            '</div>');
+        }
+      }
+    );
   }
 
   function processEmail() {
@@ -399,30 +413,24 @@ var rowIdToReselect = false;
     return false;
   }
 
-  // Use an AJAX call to get the server to send the email
-  function sendEmail() {
-    $.post(
-      indiciaData.ajaxUrl + '/email/' + indiciaData.nid + urlSep,
-      email,
-      function (response) {
-        if (response === 'OK') {
-          $.fancybox.close();
-          alert(indiciaData.popupTranslations.emailSent);
-        } else {
-          $.fancybox('<div class="manual-email">' + indiciaData.popupTranslations.requestManualEmail +
-            '<div class="ui-helper-clearfix"><span class="left">To:</span><div class="right">' + email.to + '</div></div>' +
-            '<div class="ui-helper-clearfix"><span class="left">Subject:</span><div class="right">' + email.subject + '</div></div>' +
-            '<div class="ui-helper-clearfix"><span class="left">Content:</span><div class="right">' + email.body.replace(/\n/g, '<br/>') + '</div></div>' +
-            '</div>');
-        }
-      }
-    );
+  function popupEmailExpert() {
+    $.fancybox('<form id="email-form"><fieldset class="popup-form">' +
+      '<legend>' + indiciaData.popupTranslations.emailTitle + '</legend>' +
+      '<p>' + indiciaData.popupTranslations.emailInstruction + '</p>' +
+      '<label>To:</label><input type="text" id="email-to" class="email required" value="' + email.to + '"/><br />' +
+      '<label>Subject:</label><input type="text" id="email-subject" class="require" value="' + email.subject + '"/><br />' +
+      '<label>Body:</label><textarea id="email-body" class="required">' + email.body + '</textarea><br />' +
+      '<input type="submit" class="default-button" ' +
+      'value="' + indiciaData.popupTranslations.sendEmail + '" />' +
+      '</fieldset></form>');
+    validator = $('#email-form').validate({});
+    $('#email-form').submit(processEmail);
   }
 
   function showComment(comment, query, username) {
+    var html = '<div class="comment"><div class="header">';
     // Remove message that there are no comments
     $('#no-comments').hide();
-    var html = '<div class="comment"><div class="header">';
     if (query === 't') {
       html += '<img width="12" height="12" src="' + indiciaData.imgPath + 'nuvola/dubious-16px.png"/>';
     }
@@ -434,11 +442,12 @@ var rowIdToReselect = false;
   }
 
   saveComment = function (text, query, reloadGridAfterSave) {
+    var data;
     if (typeof query === 'undefined') {
       query = 'f';
     }
-    var data = {
-      'website_id': indiciaData.website_id,
+    data = {
+      website_id: indiciaData.website_id,
       'occurrence_comment:occurrence_id': occurrenceId,
       'occurrence_comment:comment': text,
       'occurrence_comment:person_name': indiciaData.username,
@@ -447,8 +456,8 @@ var rowIdToReselect = false;
     $.post(
       indiciaData.ajaxFormPostUrl.replace('occurrence', 'occ-comment'),
       data,
-      function (data) {
-        if (typeof data.error === 'undefined') {
+      function (response) {
+        if (typeof response.error === 'undefined') {
           showComment(text, query, indiciaData.username);
           if ($('#comment-text')) {
             $('#comment-text').val('');
@@ -457,7 +466,7 @@ var rowIdToReselect = false;
             reloadGrid();
           }
         } else {
-          alert(data.error);
+          alert(response.error);
         }
       }
     );
@@ -465,9 +474,9 @@ var rowIdToReselect = false;
 
   function postStatusComment(occId, status, substatus, comment) {
     var data = {
-      'website_id': indiciaData.website_id,
+      website_id: indiciaData.website_id,
       'occurrence:id': occId,
-      'user_id': indiciaData.userId,
+      user_id: indiciaData.userId,
       'occurrence:record_status': status,
       'occurrence_comment:comment': comment,
       'occurrence:record_decision_source': 'H'
@@ -490,13 +499,13 @@ var rowIdToReselect = false;
   }
 
   saveVerifyComment = function () {
-    var status = $('#set-status').val(),
-      substatus = $('#set-substatus').val(),
-      comment = statusLabel(status, substatus);
+    var status = $('#set-status').val();
+    var substatus = $('#set-substatus').val();
+    var comment = statusLabel(status, substatus);
     // capitalise status label
     comment = comment.charAt(0).toUpperCase() + comment.slice(1);
     if ($('#verify-comment').val() !== '') {
-      comment += ".\n" + $('#verify-comment').val();
+      comment += '.\n' + $('#verify-comment').val();
     }
     $.fancybox.close();
     if (multimode) {
@@ -595,14 +604,15 @@ var rowIdToReselect = false;
   }
 
   function saveRedetComment() {
+    var data;
     if ($('#redet').val() === '') {
-      validator.showErrors({'redet:taxon': 'Please type a few characters then choose a name from the list of suggestions'});
+      validator.showErrors({ 'redet:taxon': 'Please type a few characters then choose a name from the list of suggestions' });
     } else if (validator.numberOfInvalids() === 0) {
-      var data = {
+      data = {
         website_id: indiciaData.website_id,
         'occurrence:id': occurrenceId,
         'occurrence:taxa_taxon_list_id': $('#redet').val(),
-        'user_id': indiciaData.userId
+        user_id: indiciaData.userId
       };
       if ($('#verify-comment').val()) {
         data['occurrence_comment:comment'] = $('#verify-comment').val();
@@ -686,11 +696,11 @@ var rowIdToReselect = false;
   mapInitialisationHooks.push(function (div) {
     div.map.editLayer.style = null;
     div.map.editLayer.styleMap = new OpenLayers.StyleMap({
-      'default': {
+      default: {
         pointRadius: 5,
-        strokeColor: "#0000FF",
+        strokeColor: '#0000FF',
         strokeWidth: 3,
-        fillColor: "#0000FF",
+        fillColor: '#0000FF',
         fillOpacity: 0.4
       }
     });
@@ -698,12 +708,13 @@ var rowIdToReselect = false;
   });
 
   function verifyRecordSet(trusted) {
-    var request, params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords(),
-      substatus = $('#process-grid-substatus').length ? '&record_substatus=' + $('#process-grid-substatus').val() : '',
-      ignoreRules = $('.grid-verify-popup input[name=ignore-checks-trusted]:checked').length > 0 ? 'true' : 'false';
+    var request;
+    var params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords();
+    var substatus = $('#process-grid-substatus').length ? '&record_substatus=' + $('#process-grid-substatus').val() : '';
+    var ignoreRules = $('.grid-verify-popup input[name=ignore-checks-trusted]:checked').length > 0 ? 'true' : 'false';
     // If doing trusted only, this through as a report parameter.
     if (trusted) {
-      params.quality_context = "T";
+      params.quality_context = 'T';
     }
     request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
     $.post(request,
@@ -782,8 +793,10 @@ var rowIdToReselect = false;
         '<button type="button" class="default-button cancel-button">Cancel</button></p></div>';
       $.fancybox(popupHtml);
       $('.quick-verify-popup .verify-button').click(function () {
-        var params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords(),
-          radio = $('.quick-verify-popup input[name=quick-option]:checked'), request, ignoreParams;
+        var params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords();
+        var radio = $('.quick-verify-popup input[name=quick-option]:checked');
+        var request;
+        var ignoreParams;
         if (radio.length === 1) {
           if ($(radio).val().indexOf('recorder') !== -1) {
             params.created_by_id = currRec.extra.created_by_id;
@@ -812,7 +825,12 @@ var rowIdToReselect = false;
     }
 
     function trustsPopup() {
-      var popupHtml, surveyRadio, taxonGroupRadio, locationInput, i, theDataToRemove;
+      var popupHtml;
+      var surveyRadio;
+      var taxonGroupRadio;
+      var locationInput;
+      var i;
+      var theDataToRemove;
       popupHtml = '<div class="quick-verify-popup" style="width: 550px"><h2>Recorder\'s trust settings</h2>';
       popupHtml += '<p>Recorders can be trusted for records from a selected region, species group or survey combination. When they add records which meet the criteria ' +
         'that the recorder is trusted for the records will not be automatically accepted. However, you can filter the grid to show only "trusted" records and use the ... button at the top ' +
@@ -860,14 +878,14 @@ var rowIdToReselect = false;
       popupHtml += '<button type="button" id="trust-button" class="default-button trust-button">Set trust for ' + currRec.extra.recorder + '</button>' + "</div>\n";
       $.fancybox(popupHtml);
       $('.quick-verify-popup .trust-button').click(function () {
-        document.getElementById('trust-button').innerHTML = 'Please Wait……';
-        // As soon as the Trust button is clicked we disable it so that the user can't keep clicking it.
-        $('.trust-button').attr('disabled', 'disabled');
         var theData = {
           website_id: indiciaData.website_id,
           'user_trust:user_id': currRec.extra.created_by_id,
           'user_trust:deleted': false
         };
+        document.getElementById('trust-button').innerHTML = 'Please Wait……';
+        // As soon as the Trust button is clicked we disable it so that the user can't keep clicking it.
+        $('.trust-button').attr('disabled', 'disabled');
         // Get the user's trust settings to put in the database
         surveyRadio = $('.quick-verify-popup input[name=trust-survey]:checked');
         if (!surveyRadio.length || $(surveyRadio).val().indexOf('specific') !== -1) {
@@ -882,11 +900,11 @@ var rowIdToReselect = false;
           theData['user_trust:location_id'] = $(locationInput).val();
         }
         if (!theData['user_trust:survey_id'] && !theData['user_trust:taxon_group_id'] && !theData['user_trust:location_id']) {
-          alert("Please review the trust settings as unlimited trust is not allowed");
+          alert('Please review the trust settings as unlimited trust is not allowed');
           // The attempt to create the trust is over at this point.
           // We re-enable the Trust button.
           $('.trust-button').removeAttr('disabled');
-          document.getElementById('trust-button').innerHTML = "Trust";
+          document.getElementById('trust-button').innerHTML = 'Trust';
         } else {
           var downgradeConfirmRequired = false,
             downgradeConfirmed = false,

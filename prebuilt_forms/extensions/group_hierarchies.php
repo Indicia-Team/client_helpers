@@ -60,8 +60,13 @@ class extension_group_hierarchies {
       return 'group_hierarchies.set_page_title control requires a numeric parent_parameter option ' .
       'which matches to a URL parameter of the same name.';
     }
-    if (arg(0) == 'node' && is_numeric(arg(1))) {
+    if (function_exists(arg) && arg(0) == 'node' && is_numeric(arg(1))) {
+      // Drupal 7
       $nid = arg(1);
+    } elseif (defined('DRUPAL_ROOT')) {
+      $nid = \Drupal::routeMatch()->getParameter('node')->id();
+    }
+    if (isset($nid)) {
       $data = data_entry_helper::get_population_data(array(
         'table' => 'groups_user',
         'extraParams' => $auth['read'] + array(
