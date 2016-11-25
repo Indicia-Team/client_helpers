@@ -1623,6 +1623,13 @@ $('#$escaped').change(function(e) {
    * a habitat sample attribute and expect it to default to the previously entered value when a repeat visit to a
    * site occurs.
    * </li>
+   * <li><b>autofillFromLocationTypeId</b>
+   * If a location type term's ID is provided here (from the termlists_terms table) then when a map reference is input
+   * either by clicking on a map or direct entry into the sref_input control, attempts to find a matching boundary
+   * from the locaitons of this type on the warehouse by intersecting with the boundaries then fills in this control
+   * from the matching location details. If more than one are found the user is asked to resolve it, e.g. if a grid
+   * ref overlays a boundary.
+   * </li>
    * </ul>
    *
    * @return string HTML to insert into the page for the location select control.
@@ -1666,12 +1673,26 @@ $('#$escaped').change(function(e) {
       if ($options['searchUpdatesSref'])
         self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
     }
+    $escapedId = str_replace(':', '\\\\:', $options['id']);
     // If using Easy Login, then this enables auto-population of the site related fields.
     if ($options['fetchLocationAttributesIntoSample'] &&
         function_exists('hostsite_get_user_field') && ($createdById=hostsite_get_user_field('indicia_user_id'))) {
       self::$javascript .= <<<JS
-indiciaData.warehouseUserId = $createdById;
-$('#imp-location').change(indiciaFns.fetchLocationAttributesIntoSample);
+$('#$escapedId').change(function() {
+  indiciaFns.locationControl.fetchLocationAttributesIntoSample('$options[id]', $createdById);
+});
+
+JS;
+    }
+    if (!empty($options['autofillFromLocationTypeId'])) {
+      $langMoreThanOneLocationMatch = lang::get(
+        'When trying to find the {1} more than one possibility was found. Please select the correct one below.',
+        strtolower($options['label']));
+      self::$javascript .= <<<JS
+indiciaData.langMoreThanOneLocationMatch = '$langMoreThanOneLocationMatch';
+$('#imp-geom').change(function() { 
+  indiciaFns.locationControl.autoFillLocationFromLocationTypeId('$options[id]', $options[autofillFromLocationTypeId]);
+});
 
 JS;
     }
