@@ -1635,15 +1635,16 @@ $('#$escaped').change(function(e) {
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
       $caption = self::$entity_to_load['sample:location_name'];
     $options = array_merge(array(
-      'table'=>'location',
-      'fieldname'=>'sample:location_id',
-      'valueField'=>'id',
-      'captionField'=>'name',
-      'defaultCaption'=>$caption,
-      'useLocationName'=>false,
-      'allowCreate'=>false,
-      'searchUpdatesSref'=>false,
-      'fetchLocationAttributesIntoSample'=>true
+      'table' => 'location',
+      'fieldname' => 'sample:location_id',
+      'valueField' => 'id',
+      'captionField' => 'name',
+      'defaultCaption' => $caption,
+      'useLocationName' => false,
+      'allowCreate' => false,
+      'searchUpdatesSref' => false,
+      'fetchLocationAttributesIntoSample' =>
+          !isset($options['fieldname']) || $options['fieldname'] === 'sample:location_id'
     ), $options);
     // Disable warnings for no matches if the user is allowed to input a vague unmatched location name.
     $options['warnIfNoMatch']=!$options['useLocationName'];
@@ -1666,48 +1667,13 @@ $('#$escaped').change(function(e) {
         self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
     }
     // If using Easy Login, then this enables auto-population of the site related fields.
-    if (function_exists('hostsite_get_user_field') && ($createdById=hostsite_get_user_field('indicia_user_id')) && $options['fetchLocationAttributesIntoSample']) {
-      self::$javascript .= "$('#imp-location').change(function() {
-        if ($('#imp-location').attr('value')!=='') {
-          var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport' +
-              '?report=library/sample_attribute_values/get_latest_values_for_site_and_user.xml&callback=?';
-          var reportOptions={
-            'mode': 'json',
-            'nonce': indiciaData.read.nonce,
-            'auth_token': indiciaData.read.auth_token,
-            'reportSource': 'local',
-            'location_id': $('#imp-location').attr('value'),
-            'created_by_id': $createdById
-          }
-          // Fill in the sample attributes based on what is returned by the report
-          $.getJSON(reportingURL, reportOptions,
-            function(data) {
-              jQuery.each(data, function(i, item) {
-                var selector=\"smpAttr\\\\:\"+item.id;
-                var input=$('[id=' + selector + ']');
-                if (item.value !== null && item.data_type !== 'Boolean') {
-                  input.val(item.value);
-                  if (input.is('select') && input.val()==='') {
-                    // not in select list, so have to add it
-                    input.append('<option value=\"'+item.value+'\">'+item.term+'</option>');
-                    input.val(item.value);
-                  }
-                }
-                //If there is a date value then we use the date field instead.
-                //This is because the vague date engine returns to this special field
-                if (typeof item.value_date !== 'undefined' && item.value_date !== null)
-                  input.val(item.value_date);
-                //booleans need special treatment because checkboxes rely on using the
-                //'checked' attribute instead of using the value.
-                if (item.value_int === '1' && item.data_type === 'Boolean')
-                  input.attr('checked', 'checked');
-                if (item.value_int === '0' && item.data_type === 'Boolean')
-                  input.removeAttr('checked');
-              });
-            }
-          );
-        }
-      });\n";
+    if ($options['fetchLocationAttributesIntoSample'] &&
+        function_exists('hostsite_get_user_field') && ($createdById=hostsite_get_user_field('indicia_user_id'))) {
+      self::$javascript .= <<<JS
+indiciaData.warehouseUserId = $createdById;
+$('#imp-location').change(indiciaFns.fetchLocationAttributesIntoSample);
+
+JS;
     }
     return $r;
   }
