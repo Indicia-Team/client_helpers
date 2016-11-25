@@ -1667,16 +1667,14 @@ $('#$escaped').change(function(e) {
     }
     // If using Easy Login, then this enables auto-population of the site related fields.
     if (function_exists('hostsite_get_user_field') && ($createdById=hostsite_get_user_field('indicia_user_id')) && $options['fetchLocationAttributesIntoSample']) {
-      $nonce=$options['extraParams']['nonce'];
-      $authToken=$options['extraParams']['auth_token'];
-      $resportingServerURL = (!empty(data_entry_helper::$warehouse_proxy))?data_entry_helper::$warehouse_proxy:data_entry_helper::$base_url.'index.php/services/report/requestReport?report=library/sample_attribute_values/get_latest_values_for_site_and_user.xml&callback=?';
       self::$javascript .= "$('#imp-location').change(function() {
         if ($('#imp-location').attr('value')!=='') {
-          var reportingURL = '$resportingServerURL';
+          var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport' +
+              '?report=library/sample_attribute_values/get_latest_values_for_site_and_user.xml&callback=?';
           var reportOptions={
             'mode': 'json',
-            'nonce': '$nonce',
-            'auth_token': '$authToken',
+            'nonce': indiciaData.read.nonce,
+            'auth_token': indiciaData.read.auth_token,
             'reportSource': 'local',
             'location_id': $('#imp-location').attr('value'),
             'created_by_id': $createdById
