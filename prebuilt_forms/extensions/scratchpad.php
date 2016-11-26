@@ -38,7 +38,6 @@ class extension_scratchpad {
       'filters' => array()
     ), $options);
     $r = '<div contenteditable="true" id="scratchpad-input" style="width: 200px; height: 200px; border: solid silver 1px;"></div>';
-    $r .= '<div id="scratchpad-output"></div>';
     $r .= '<button id="scratchpad-check">Check</button>';
     report_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
     return $r;

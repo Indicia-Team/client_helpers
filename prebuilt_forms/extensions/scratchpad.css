@@ -1,0 +1,6 @@
+span.matched {
+  color: green;
+}
+span.unmatched {
+  color: red;
+}
