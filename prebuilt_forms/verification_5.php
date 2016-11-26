@@ -649,7 +649,7 @@ idlist=';
       'mode' => 'report',
       'readAuth' => $auth['read'],
       'itemsPerPage' => 20,
-      'extraParams' => array('smpattrs' => '', 'occattrs' => ''),
+      'extraParams' => array('smpattrs' => '', 'occattrs' => '', 'data_cleaner_filter' => 'f'),
       'columns' => array(
         array(
           'display'=>'',

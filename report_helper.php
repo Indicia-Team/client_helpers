@@ -367,6 +367,10 @@ class report_helper extends helper_base {
     if ($options['ajax'])
       $options['extraParams']['limit']=0;
     self::request_report($response, $options, $currentParamValues, $options['pager'], $extras);
+    if (isset($response['count'])) {
+      // Pass knownCount into any subsequent AJAX calls as this allows better performance
+      $options['extraParams']['knownCount'] = $response['count'];
+    }
     if ($options['ajax'])
       unset($options['extraParams']['limit']);
     if (isset($response['error'])) return $response['error']; 

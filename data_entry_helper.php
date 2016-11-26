@@ -1623,6 +1623,13 @@ $('#$escaped').change(function(e) {
    * a habitat sample attribute and expect it to default to the previously entered value when a repeat visit to a
    * site occurs.
    * </li>
+   * <li><b>autofillFromLocationTypeId</b>
+   * If a location type term's ID is provided here (from the termlists_terms table) then when a map reference is input
+   * either by clicking on a map or direct entry into the sref_input control, attempts to find a matching boundary
+   * from the locaitons of this type on the warehouse by intersecting with the boundaries then fills in this control
+   * from the matching location details. If more than one are found the user is asked to resolve it, e.g. if a grid
+   * ref overlays a boundary.
+   * </li>
    * </ul>
    *
    * @return string HTML to insert into the page for the location select control.
@@ -1635,15 +1642,16 @@ $('#$escaped').change(function(e) {
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
       $caption = self::$entity_to_load['sample:location_name'];
     $options = array_merge(array(
-      'table'=>'location',
-      'fieldname'=>'sample:location_id',
-      'valueField'=>'id',
-      'captionField'=>'name',
-      'defaultCaption'=>$caption,
-      'useLocationName'=>false,
-      'allowCreate'=>false,
-      'searchUpdatesSref'=>false,
-      'fetchLocationAttributesIntoSample'=>true
+      'table' => 'location',
+      'fieldname' => 'sample:location_id',
+      'valueField' => 'id',
+      'captionField' => 'name',
+      'defaultCaption' => $caption,
+      'useLocationName' => false,
+      'allowCreate' => false,
+      'searchUpdatesSref' => false,
+      'fetchLocationAttributesIntoSample' =>
+          !isset($options['fieldname']) || $options['fieldname'] === 'sample:location_id'
     ), $options);
     // Disable warnings for no matches if the user is allowed to input a vague unmatched location name.
     $options['warnIfNoMatch']=!$options['useLocationName'];
@@ -1665,50 +1673,28 @@ $('#$escaped').change(function(e) {
       if ($options['searchUpdatesSref'])
         self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
     }
+    $escapedId = str_replace(':', '\\\\:', $options['id']);
     // If using Easy Login, then this enables auto-population of the site related fields.
-    if (function_exists('hostsite_get_user_field') && ($createdById=hostsite_get_user_field('indicia_user_id')) && $options['fetchLocationAttributesIntoSample']) {
-      $nonce=$options['extraParams']['nonce'];
-      $authToken=$options['extraParams']['auth_token'];
-      $resportingServerURL = (!empty(data_entry_helper::$warehouse_proxy))?data_entry_helper::$warehouse_proxy:data_entry_helper::$base_url.'index.php/services/report/requestReport?report=library/sample_attribute_values/get_latest_values_for_site_and_user.xml&callback=?';
-      self::$javascript .= "$('#imp-location').change(function() {
-        if ($('#imp-location').attr('value')!=='') {
-          var reportingURL = '$resportingServerURL';
-          var reportOptions={
-            'mode': 'json',
-            'nonce': '$nonce',
-            'auth_token': '$authToken',
-            'reportSource': 'local',
-            'location_id': $('#imp-location').attr('value'),
-            'created_by_id': $createdById
-          }
-          //fill in the sample attributes based on what is returned by the report
-          $.getJSON(reportingURL, reportOptions,
-            function(data) {
-              jQuery.each(data, function(i, item) {
-                var selector=\"smpAttr:\"+item.id, input=$('[id=' + selector + ']');
-                if (item.value !== null && item.data_type !== 'Boolean') {
-                  input.val(item.value);
-                  if (input.is('select') && input.val()==='') {
-                    // not in select list, so have to add it
-                    input.append('<option value=\"'+item.value+'\">'+item.term+'</option>');
-                    input.val(item.value);
-                  }
-                }
-                //If there is a date value then we use the date field instead.
-                //This is because the vague date engine returns to this special field
-                if (typeof item.value_date !== 'undefined' && item.value_date !== null)
-                  input.val(item.value_date);
-                //booleans need special treatment because checkboxes rely on using the
-                //'checked' attribute instead of using the value.
-                if (item.value_int === '1' && item.data_type === 'Boolean')
-                  input.attr('checked', 'checked');
-                if (item.value_int === '0' && item.data_type === 'Boolean')
-                  input.removeAttr('checked');
-              });
-            }
-          );
-        }
-      });\n";
+    if ($options['fetchLocationAttributesIntoSample'] &&
+        function_exists('hostsite_get_user_field') && ($createdById=hostsite_get_user_field('indicia_user_id'))) {
+      self::$javascript .= <<<JS
+$('#$escapedId').change(function() {
+  indiciaFns.locationControl.fetchLocationAttributesIntoSample('$options[id]', $createdById);
+});
+
+JS;
+    }
+    if (!empty($options['autofillFromLocationTypeId'])) {
+      $langMoreThanOneLocationMatch = lang::get(
+        'When trying to find the {1} more than one possibility was found. Please select the correct one below.',
+        strtolower($options['label']));
+      self::$javascript .= <<<JS
+indiciaData.langMoreThanOneLocationMatch = '$langMoreThanOneLocationMatch';
+$('#imp-geom').change(function() { 
+  indiciaFns.locationControl.autoFillLocationFromLocationTypeId('$options[id]', $options[autofillFromLocationTypeId]);
+});
+
+JS;
     }
     return $r;
   }
@@ -4276,7 +4262,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
             $options['id']."-comment-$i", lang::get('Comment'), $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['occurrenceSensitivity']) {
-          $attrs = self::get_species_checklist_col_responsive($options, 'sensitive');
+          $attrs = self::get_species_checklist_col_responsive($options, 'sensitivity');
           $r .= self::get_species_checklist_col_header(
             $options['id']."-sensitivity-$i", lang::get('Sensitivity'), $visibleColIdx, $options['colWidths'], $attrs);
         }
@@ -4291,7 +4277,6 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           // always hidden so it appears in a row below.
           if ($options['responsive']) {
             $attrs = ' data-hide="all" data-editable="true"';
-//            $attrs = '';
             $r .= self::get_species_checklist_col_header($options['id']."-files-$i", lang::get($onlyImages ? 'Photos' : 'Media'), $visibleColIdx, $options['colWidths'], $attrs);
           }
         }

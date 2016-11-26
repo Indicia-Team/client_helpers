@@ -194,6 +194,9 @@ class iform_importer {
           $presets['survey_id'] = $surveys[0];
       }
     }
+    // If in training mode, set the flag on the imported records
+    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training'))
+      $presets['occurrence:training'] = 't';
     try {
       $options = array(
         'model' => $model,
