@@ -1,12 +1,12 @@
 /*
  * Called from the php code to send any new plots to the warehouse
  */
-function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotsToCreateNames,plotsToCreateSrefs,plotsToCreateSrefSystems,userId,attributeIdToHoldGroup) {
+function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotsToCreateNames,plotsToCreateSrefs,plotsToCreateSrefSystems,userId,attributeIdToHoldGroup,plotLocationType) {
   //See comments in front of function code
   var arrayOfChunkTypesToSend=create_array_of_different_plot_chunks_for_warehouse(plotsToCreateNames,plotsToCreateSrefs,plotsToCreateSrefSystems);
   //Some of the information to send are just individual values and aren't grouped (such as website ID).
   //AV To Do, do we even need to send the attribute to hold the group?
-  var arrayOfAttributesToSend=create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup);
+  var arrayOfAttributesToSend=create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup,plotLocationType);
   create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,arrayOfAttributesToSend,'create_new_plots');
 }
 
@@ -38,7 +38,7 @@ function create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,
  * Create an array of individual values (that don't need grouping) that get sent to the warehouse. In the case of new plots
  * this is very simple, but use a function to do this anyway, to be consistant with the creation of new groups
  */
-function create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup) {
+function create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup,plotLocationType) {
   var arrayOfAttributesToSend=[];
   arrayOfAttributesToSend[0]=[];
   arrayOfAttributesToSend[0][0]='websiteId';
@@ -49,6 +49,9 @@ function create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attr
   arrayOfAttributesToSend[2]=[];
   arrayOfAttributesToSend[2][0]='attributeIdToHoldGroup';
   arrayOfAttributesToSend[2][1]=attributeIdToHoldGroup;
+  arrayOfAttributesToSend[3]=[];
+  arrayOfAttributesToSend[3][0]='plotLocationType';
+  arrayOfAttributesToSend[3][1]=plotLocationType;
   return arrayOfAttributesToSend;
 }
 
