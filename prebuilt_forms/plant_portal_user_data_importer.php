@@ -392,10 +392,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
             'ePwD-eSGwD'=>array('existingSample'=>0,'existingPlot'=>2,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
             'ePGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>2),
             'eSGwD-ePGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>2));
-
-    //AVB To DO - At the moment the importer will only support occurrences with samples, but we might need to open this up to
-    //allow location (plot) only data to be imported. Location import is already supported by the standard importer, so we might
-    //be able to grab quite a lot of code from there.
     $args['model']='occurrence';
     if (empty($args['override_survey_id'])||empty($args['override_taxon_list_id'])||
             empty($args['sample_group_identifier_name_text_attr_id'])||empty($args['sample_group_identifier_name_lookup_smp_attr_id'])||
@@ -1462,7 +1458,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     } elseif ($_POST['import_step']==2) {
       return self::plant_portal_import_logic($args,$options);
     } elseif ($_POST['import_step']==3) {
-      // To Do AVB, this might need to change if we are going to support plot-only upload
       $options['model']='occurrence';
       return self::run_plant_portal_upload($options, $_POST);
     }
@@ -1720,9 +1715,10 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $sampleGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'sample_group',$importTypesToCreate);
     $importTypesToCreate=array('nS-nSG-nP-nPG','eSG');
     $plotGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'plot_group',$importTypesToCreate);
-    //To DO AVB - This code needs completing
-    //$plotGrouptoPlotAttachmentsToCreate=self::extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo);
-
+    //To Do AVB - Check the logic of this, I don't think this is right, as we are not checking the group
+    //to find existing plots (as they might have many groups), so code like 'eP' MIGHT need including here....double check
+    $importTypesToCreate=array('nS-nSG-nP-nPG','eSG','eSG-ePG','ePG');
+    $plotGrouptoPlotAttachmentsToCreate=self::extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$importTypesToCreate,$plotDataToCreate,$plotGroupDataToCreate);
     //Cycle through each plot we need to create and get its name and spatial reference and spatial reference system (if available,
     //else we fall back on the sref system supplied on the Settings page)
     foreach ($plotDataToCreate as $plotDataToAdd) {
@@ -1736,13 +1732,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     foreach ($plotGroupDataToCreate as $groupToAdd) {
       $distinctPlotGroupNamesToCreate[]=$groupToAdd['name'];
     }
-    //To Do AVB, this can be uncommented once the Plog Group to Plot attachment code is complete
-    /*foreach ($plotGrouptoPlotAttachmentsToCreate as $plotGrouptoPlotAttachmentToCreate) {
-      $plotNamesForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['name'];
-      $plotSrefsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['sref'];
-      $plotSrefSystemsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['sref_system'];
-      $plotGroupsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate['group'];
-    }*/
+    foreach ($plotGrouptoPlotAttachmentsToCreate as $plotGrouptoPlotAttachmentToCreate) {
+      $plotPairsForPlotGroupAttachment[]=$plotGrouptoPlotAttachmentToCreate;
+    }
     //When the import button is clicked do the following
     //- Disable the button to prevent double-clicking
     //- Show a Please Wait message to the user
@@ -1767,34 +1759,42 @@ class iform_plant_portal_user_data_importer extends helper_base {
       data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",'plot_group',".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
 
     if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']))
-      data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
-
-
-    if (!empty($websiteId)&&!empty($plotNamesForPlotGroupAttachment) && !empty($plotSrefsForPlotGroupAttachment) && !empty($plotSrefSystemsForPlotGroupAttachment) && !empty($plotGroupsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
-      data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotNamesForPlotGroupAttachment).",".json_encode($plotSrefsForPlotGroupAttachment).",".json_encode($plotSrefSystemsForPlotGroupAttachment).",".json_encode($plotGroupsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
+      data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].");";
+    if (!empty($websiteId)&&!empty($plotPairsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
+      data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotPairsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
 
     data_entry_helper::$javascript .= "$('#submit-import').click();";
     data_entry_helper::$javascript .= "});";
     
   }
   
-  private static function extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo) {   
+  //To Do AVB, I think this may have a lot in common with the other extract functions, make one function
+  private static function extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$importTypesToCreate,$plotDataToCreate,$plotGroupDataToCreate) {    
+    $arrayIdx=0;
     $plotGrouptoPlotAttachmentsToCreate=array();
-    //AVB this is just test code, needs rewrite
+    $plotNamesToCheck=array();
+    $plotGroupNamesToCheck=array();
+    foreach ($plotDataToCreate as $plotDataItemToCreate)
+      $plotNamesToCheck[]=$plotDataItemToCreate['name'];
+    foreach ($plotGroupDataToCreate as $plotGroupDataItemToCreate)
+      $plotGroupNamesToCheck[]=$plotGroupDataItemToCreate['name'];
     foreach ($fileArrayForImportRowsToProcessForImport as $importSituationRows) {
       foreach ($importSituationRows as $arrayImportRowToProcess) {
-        //if (!empty($arrayImportRowToProcess[4])) {  
-        //  $plotGrouptoPlotAttachmentsToCreate[0]['name']=$arrayImportRowToProcess[3];
-        //  $plotGrouptoPlotAttachmentsToCreate[0]['sref']=$arrayImportRowToProcess[2];
-        //  $plotGrouptoPlotAttachmentsToCreate[0]['sref_system']=$arrayImportRowToProcess[7];
-        //  $plotGrouptoPlotAttachmentsToCreate[0]['group']=$arrayImportRowToProcess[4];
-        //}
+        if (!empty($columnHeadingIndexPositions['plotNameHeaderIdx'])&&!empty($columnHeadingIndexPositions['sampleSrefHeaderIdx'])&&!empty($columnHeadingIndexPositions['sampleSrefSystemHeaderIdx'])&&!empty($columnHeadingIndexPositions['plotGroupNameHeaderIdx'])) {  
+          if (in_array($arrayImportRowToProcess[$columnHeadingIndexPositions['plotNameHeaderIdx']],$plotNamesToCheck)||
+              in_array($arrayImportRowToProcess[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']],$plotGroupNamesToCheck)) {
+            $nameGroupPair=$arrayImportRowToProcess[$columnHeadingIndexPositions['plotNameHeaderIdx']].'|'.$arrayImportRowToProcess[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']];
+            if (!in_array($nameGroupPair,$plotGrouptoPlotAttachmentsToCreate))
+              $plotGrouptoPlotAttachmentsToCreate[$arrayIdx]=$arrayImportRowToProcess[$columnHeadingIndexPositions['plotNameHeaderIdx']].'|'.$arrayImportRowToProcess[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']];
+          }
+          $arrayIdx++;
+        }
       }
     }
     return $plotGrouptoPlotAttachmentsToCreate;
   }
   
-  //To Do AVB - Currently the mappings drop-down contains mappings we will probably not use
+  //To Do AVB - Currently the mappings drop-down contains mappings we will probably not be use
   
   /*
    * Function looks at all the rows in the import, and returns an array of data of a particular type that needs to be created.
@@ -1817,13 +1817,14 @@ class iform_plant_portal_user_data_importer extends helper_base {
         //Cycle through each data row in the import situations we need to create data for
         foreach ($fileArrayForImportRowsToProcessForImport[$importTypeToCreate] as $rowToExtractDataFrom) {
           $dataFromRow=array();
-          if ($extractionType==='plot') {
+          if ($extractionType==='plot')
             $dataFromRow = self::extract_plot_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions);
-          }
-          
-          if ($extractionType==='sample_group'||$extractionType==='plot_group') {
-            $dataFromRow = self::extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions,$extractionType);
-          }
+          if ($extractionType==='sample_group')
+            $dataFromRow = self::extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions['sampleGroupNameHeaderIdx'],$extractionType);
+          if ($extractionType==='plot_group')
+            $dataFromRow = self::extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions['plotGroupNameHeaderIdx'],$extractionType);
+          if ($extractionType==='plot_group_attachment')
+            $dataFromRow = self::extract_plot_group_attachment_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions);
           //If there is some data to create for the row then it can be stored in an array for processing.
           if (!empty($dataFromRow['name'])) {
             $dataExtractedReadyToCreate[]=$dataFromRow;
@@ -1882,7 +1883,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $dataFromRow;
   }
-  
+ 
   /*
    * Function detects if a plot in the existing data has already be stored so that it can be created, if it has, we don't have to store it again
    * @param array $rowToExtractDataFrom Array of columns from row we want to extract data from
@@ -1927,15 +1928,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * Extract the data relating to new groups so that they can be created before passing the import to the warehouse 
    * @param array $rowToExtractDataFrom Array of columns from row we want to extract data from
    * @param array $dataExtractedReadyToCreate Array of data already extracted (so we can make sure the group hasn't already been listed for creation)
-   * @param array $columnHeadingIndexPositions Array which contains the position of each of the columns relevant to the duplicate check.
+   * @param array $groupColoumnIdx Integer Position from left of file of the column we want to work with.
    * @param string $extractionType String which tells us whether it is sample or plot groups we are dealing with
    */
-  private static function extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions,$extractionType) {
+  private static function extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$groupColoumnIdx,$extractionType) {
     $doNotCreateGroupForRow=false;
-    if ($extractionType==='sample_group')
-      $groupColoumnIdx=$columnHeadingIndexPositions['sampleGroupNameHeaderIdx'];
-    if ($extractionType==='plot_group')
-      $groupColoumnIdx=$columnHeadingIndexPositions['plotGroupNameHeaderIdx'];
     //If the index position is -1, it means that column does not appear in the data file
     //We can only create groups if there is a group name
     if ($groupColoumnIdx!=-1) { 
