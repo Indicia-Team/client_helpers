@@ -198,11 +198,10 @@ function create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteI
   for (var i=0; i<otherAttributes.length;i++) {
     params=params+'&'+otherAttributes[i][0]+'='+otherAttributes[i][1];
   }
- //To DO AVB remove this but is currently required as there are asynchronous issues with the code and need a delay for now
-  alert('Running '+warehouseFunctionToCall);
   jQuery.ajax({
     url: warehouseUrl+'index.php/services/plant_portal_import/'+warehouseFunctionToCall+'?'+params,
     dataType: 'jsonp',
+    async:false,
     success: function(response) {
     }
   });
