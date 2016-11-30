@@ -266,14 +266,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'required'=>true,
         'group'=>'Custom import warnings'
       ),
-       array(
-        'name'=>'eS_message',
-        'caption'=>'Custom message for eS import situation',
-        'description'=>'The message shown to the user for rows where an existing sample is to have occurrences attached to it.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom import warnings'
-      ),
       array(
         'name'=>'eP-nSG_message',
         'caption'=>'Custom message for eP-nSG import situation',
@@ -313,15 +305,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'type'=>'textarea',
         'required'=>true,
         'group'=>'Custom import warnings'
-      ),
-      array(
-        'name'=>'eSwD_message',
-        'caption'=>'Custom message for eSwD import situation',
-        'description'=>'The message shown to the user for rows where multiple matching existing samples have been detected and therefore the import cannot continue until '
-          . 'this has been resolved.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom fatal import errors'
       ),
       array(
         'name'=>'ePwD_message',
@@ -385,21 +368,19 @@ class iform_plant_portal_user_data_importer extends helper_base {
    */
   public static function get_form($args, $nid, $response) {
     $args['nonFatalImportTypes'] = array(
-            'nS-nSG-nP-nPG'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eS'=>array('existingSample'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eP-nSG'=>array('existingSample'=>0,'existingPlot'=>1,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eP-eSG'=>array('existingSample'=>0,'existingPlot'=>1,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
-            'eSG'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
-            'eSG-ePG'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>1),
-            'ePG'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>1));
+            'nS-nSG-nP-nPG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
+            'eP-nSG'=>array('existingPlot'=>1,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
+            'eP-eSG'=>array('existingPlot'=>1,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
+            'eSG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
+            'eSG-ePG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>1),
+            'ePG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>1));
     
     $args['fatalImportTypes'] = array(
-            'eSwD'=>array('existingSample'=>2,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eSGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
-            'ePwD'=>array('existingSample'=>0,'existingPlot'=>2,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'ePwD-eSGwD'=>array('existingSample'=>0,'existingPlot'=>2,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
-            'ePGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>2),
-            'eSGwD-ePGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>2));
+            'eSGwD'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
+            'ePwD'=>array('existingPlot'=>2,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
+            'ePwD-eSGwD'=>array('existingPlot'=>2,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
+            'ePGwD'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>2),
+            'eSGwD-ePGwD'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>2));
     $args['model']='occurrence';
     if (empty($args['override_survey_id'])||empty($args['override_taxon_list_id'])||empty($args['plot_location_type_id'])||
             empty($args['sample_group_identifier_name_text_attr_id'])||empty($args['sample_group_identifier_name_lookup_smp_attr_id'])||
@@ -2108,16 +2089,13 @@ class iform_plant_portal_user_data_importer extends helper_base {
     if (!empty($fileRowsAsArray)) {
       //Cycle through each row in the import data
       foreach ($fileRowsAsArray as $idx => &$fileRowsAsArrayLine) {
-        $lineState=array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0);
-        //Check the data on each list to see if it falls into the category of existing sample, existing sample group, existing plot, existing plot group,
+        $lineState=array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0);
+        //Check the data on each list to see if it falls into the category of existing sample group, existing plot, existing plot group,
         //The $lineState is then altered by each function
-        self::existing_sample_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['samplesUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);
         self::existing_plot_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);                
-        //Only need to set newSampleExistingSampleGroup flag if existingSample is 0
-        if ($lineState['existingSample']==0)
-          self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'sample');
-        //Only need to set newPlotExistingPlotGroup flag if existingSample is 0 AND existingPlot is 0
-        if ($lineState['existingSample']==0 && $lineState['existingPlot']==0)
+        self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'sample');
+        //Only need to set newPlotExistingPlotGroup flag if existingPlot is 0
+        if ($lineState['existingPlot']==0)
           self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'plot');
         //Save rows into the import categories which are stored as keys in the $fileArrayForImportRowsToProcessForImport array
         self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['nonFatalImportTypes']);
@@ -2125,58 +2103,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
     }
     return $fileArrayForImportRowsToProcessForImport;
-  }
-  
-  /*
-   * Return whether a particular import row matches an existing sample.
-   * If there is more that one match, then 2 is return instead of 1.
-   * @param Array $fileRowsAsArrayLine Line was are looking at from the import file
-   * @param Array $samplesUserHasRightsTo The samples the user has rights to use
-   * @param Array @lineState The array to return the result to
-   * @param Array $columnHeadingIndexPositions The positions from the left of the most important columns in the import file, starting with 0 at the left
-   * 
-   */
-  private static function existing_sample_check_for_line(&$fileRowsAsArrayLine,$samplesUserHasRightsTo,&$lineState,$columnHeadingIndexPositions) {
-    //Only interested in the samples the user has rights to, if they don't have any anyway, we don't need to return anything from this function
-    foreach ($samplesUserHasRightsTo as $aSampleUserHasRightsTo) {
-      //If spatial reference system isn't on a import row, then get it from the mappings page
-      if ($columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']!=-1)
-         $spatialReferenceSystem=$fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']];
-       else
-        $spatialReferenceSystem=$_SESSION['sample:entered_sref_system'];
-      //Only indicate existing sample, if the sample the user has rights to matches the row we are using from the import file.
-      //Here we can pass the test if both comparison columns are empty, the other pass scenario is if the columns are both filled in and they match as well.
-      //All comparisons using the relevant columns must match for sample to count as existing
-      if (((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&empty($aSampleUserHasRightsTo['entered_sref']))||
-          ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&!empty($aSampleUserHasRightsTo['entered_sref'])) &&
-          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])==strtolower($aSampleUserHasRightsTo['entered_sref']))) &&
-              
-          ((empty($spatialReferenceSystem)&&empty($aSampleUserHasRightsTo['entered_sref_system']))||
-          ((!empty($spatialReferenceSystem)&&!empty($aSampleUserHasRightsTo['entered_sref_system'])) &&
-          strtolower($spatialReferenceSystem)==strtolower($aSampleUserHasRightsTo['entered_sref_system']))) &&   
-              
-          ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['plot_name']))||
-          ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['plot_name'])) &&
-          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['plot_name']))) &&
-              
-          //To DO AVB, we are going to need to convert any dates before comparisons are made, plus I don't think the plot is even returning this
-          /*((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&empty($aSampleUserHasRightsTo['date_start']))||
-              ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&!empty($aSampleUserHasRightsTo['date_start'])) &&
-              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])==strtolower($aSampleUserHasRightsTo['date_start']))) &&*/
-              
-          ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['sample_group_identifier_name']))||
-              ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['sample_group_identifier_name']))&&
-              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_group_identifier_name']))) /*&&
-          ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['plot_group_identifier_name']))||
-              ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['plot_group_identifier_name']))&&
-              strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['plot_group_identifier_name'])))*/) {
-        //Return the code 2 if there are duplicate samples (even if there are more than 2, this is just to indicate duplicates)
-        if ($aSampleUserHasRightsTo['sample_count']>1)
-          $lineState['existingSample']  = 2;
-        else 
-          $lineState['existingSample']  = 1;
-      } 
-    }
   }
   
   /*
@@ -2269,15 +2195,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     global $user;
     if (function_exists('hostsite_get_user_field'))
       $currentUserId = hostsite_get_user_field('indicia_user_id');
-    $sampleGroupsAndPlotGroupsUserHasRightsTo['samplesUserHasRightsTo']= data_entry_helper::get_report_data(array(
-      'dataSource'=>'reports_for_prebuilt_forms/plant_portal/get_samples_from_groups_for_user',
-      'readAuth'=>$auth['read'],
-      'extraParams'=>array(
-                          'sample_group_permission_person_attr_id'=>$args['sample_group_permission_person_attr_id'],
-                          'sample_group_identifier_name_lookup_smp_attr_id'=>$args['sample_group_identifier_name_lookup_smp_attr_id'],
-                          'plot_group_attr_id'=>$args['plot_group_identifier_name_text_attr_id'],
-                          'user_id'=>$currentUserId)
-    ));
     $sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo']= data_entry_helper::get_report_data(array(
       'dataSource'=>'reports_for_prebuilt_forms/plant_portal/get_plots_from_groups_for_user',
       'readAuth'=>$auth['read'],
