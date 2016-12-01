@@ -790,6 +790,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $existing = '';
   $contexts = '';
   $contextDefs = array();
+  if (!empty($_GET['context_id'])) $options['context_id']=$_GET['context_id'];
+  if (!empty($_GET['filter_id'])) $options['filter_id']=$_GET['filter_id'];
+  if (!empty($_GET['filters_user_id'])) $options['filters_user_id']=$_GET['filters_user_id'];
   // add some preset filters in
   //If in the warehouse we don't need to worry about user specific preferences when setting up milestones.
   if (function_exists('hostsite_get_user_field')) {
@@ -884,18 +887,21 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       }
     }
   }
-  if (!empty($_GET['context_id'])) $options['context_id']=$_GET['context_id'];
-  if (!empty($_GET['filter_id'])) $options['filter_id']=$_GET['filter_id'];
-  if (!empty($_GET['filters_user_id'])) $options['filters_user_id']=$_GET['filters_user_id'];
   foreach($filterData as $filter) {
     if ($filter['defines_permissions']==='t') {
       $selected = (!empty($options['context_id']) && $options['context_id']==$filter['id']) ? 'selected="selected" ' : '';
       $contexts .= "<option value=\"$filter[id]\" $selected>$filter[title]</option>";
-      $contextDefs[$filter['id']] = json_decode($filter['definition']);
+      $contextDefs[$filter['id']] = json_decode($filter['definition'], true);
     }
     else {
       $selected = (!empty($options['filter_id']) && $options['filter_id']==$filter['id']) ? 'selected="selected" ' : '';
       $existing .= "<option value=\"$filter[id]\" $selected>$filter[title]</option>";
+      if ($selected) {
+        // Ensure the initially selected filter gets applied across all reports on the page
+        report_helper::$filterParamsToApply = array_merge(
+          report_helper::$filterParamsToApply, json_decode($filter['definition'], true)
+        );
+      }
     }
   }
   $r = '<div id="standard-params" class="ui-widget">';
@@ -933,6 +939,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
         $keys = array_keys($contextDefs);
         $r .= '<input type="hidden" id="context-filter" value="'.$keys[0].'" />';
       }
+      // Ensure the initially selected context filter gets applied across all reports on the page
+      $contextFilter = empty($options['context_id']) ? array_values($contextDefs)[0] : $contextDefs[$options['context_id']];
+      report_helper::$filterParamsToApply = array_merge(report_helper::$filterParamsToApply, $contextFilter);
     }
     $r .= '<label for="select-filter">'.lang::get('Filter:').'</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";

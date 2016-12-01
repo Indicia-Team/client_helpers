@@ -32,6 +32,11 @@ require_once('helper_base.php');
  */
 class report_helper extends helper_base {
 
+  /**
+   * @var array Allows parameters to be applied globally to all reports on a page.
+   */
+  public static $filterParamsToApply = array();
+
  /**
   * Control which outputs a treeview of the reports available on the warehouse, with
   * radio buttons for selecting a report. The title and description of the currently selected
@@ -829,7 +834,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       self::$javascript .= "});\n";
     }
     if ($options['ajax'] && $options['autoloadAjax'])
-      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload();\n";
+      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(false);\n";
     return $r;
   }
 
@@ -2464,6 +2469,11 @@ if (typeof mapSettingsHooks!=='undefined') {
       if (hostsite_get_user_field('training')) 
         $options['extraParams']['training'] = 'true';
     }
+    if (!empty(self::$filterParamsToApply))
+      $options['extraParams'] = array_merge(
+        $options['extraParams'],
+        self::$filterParamsToApply
+      );
     return $options;
   }
 
