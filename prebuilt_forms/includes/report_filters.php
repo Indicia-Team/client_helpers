@@ -1109,8 +1109,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $allParams = array_merge($optionParams, $getParams);
   if (!empty($allParams)) {
-    $allParams = json_encode($allParams);
-    report_helper::$onload_javascript .= "var params = $allParams;\n";
+    report_helper::$filterParamsToApply = array_merge(report_helper::$filterParamsToApply, $allParams);
+    $json = json_encode($allParams);
+    report_helper::$onload_javascript .= "var params = $json;\n";
     report_helper::$onload_javascript .= "indiciaData.filter.def=$.extend(indiciaData.filter.def, params);\n";
     report_helper::$onload_javascript .= "indiciaData.filter.orig=$.extend({}, params);\n";
   }
