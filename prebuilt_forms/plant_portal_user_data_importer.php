@@ -1769,7 +1769,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $plotGroupNamesToCheck[]=$plotGroupDataItemToCreate['name'];
     foreach ($fileArrayForImportRowsToProcessForImport as $importSituationRows) {
       foreach ($importSituationRows as $arrayImportRowToProcess) {
-        if (!empty($columnHeadingIndexPositions['plotNameHeaderIdx'])&&!empty($columnHeadingIndexPositions['sampleSrefHeaderIdx'])&&!empty($columnHeadingIndexPositions['sampleSrefSystemHeaderIdx'])&&!empty($columnHeadingIndexPositions['plotGroupNameHeaderIdx'])) {  
+        if (!empty($arrayImportRowToProcess[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($arrayImportRowToProcess[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])) {  
           if (in_array($arrayImportRowToProcess[$columnHeadingIndexPositions['plotNameHeaderIdx']],$plotNamesToCheck)||
               in_array($arrayImportRowToProcess[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']],$plotGroupNamesToCheck)) {
             $nameGroupPair=$arrayImportRowToProcess[$columnHeadingIndexPositions['plotNameHeaderIdx']].'|'.$arrayImportRowToProcess[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']];

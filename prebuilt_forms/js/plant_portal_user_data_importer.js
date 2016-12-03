@@ -179,33 +179,34 @@ function create_chunks_groupings_for_warehouse(paramName,chunkPartsToProcess) {
  */
 function create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,otherAttributes,warehouseFunctionToCall) {
   var params='';
-  //Cycle through each param to send for a given grouping (for instance Plot Name, Plot Srefs, Plot Sref Systems
-  for (var i=0; i<arrayOfChunkTypesToSend.length;i++) {
-    //The param name is held in index 0, then put an =
-    //If it is not the first param in the string, then it needs an & first e.g. plotNames=Plot 1,Plot 2&plotSrefs=AA10,AB12
-    if (params==='') {
-      params=params+arrayOfChunkTypesToSend[i][0]+'=';
-    } else {
-      params=params+'&'+arrayOfChunkTypesToSend[i][0]+'=';
-    }
-    //Cycle through each of the data items e.g. Plot 1 Plot 2 etc and add them to the string (it doesn't have to be plot names, the groups use the same code
-    for (var i2=1; i2<arrayOfChunkTypesToSend[i].length;i2++) {
-      if (i2==arrayOfChunkTypesToSend[i].length-1) {
-        params=params+arrayOfChunkTypesToSend[i][i2];
+  //Add any extra attributes such as website id
+  var otherAttributesString='';
+  for (var i=0; i<otherAttributes.length;i++) {
+    otherAttributesString=otherAttributesString+'&'+otherAttributes[i][0]+'='+otherAttributes[i][1];
+  }
+  //Each type of data to send is sent as a separate parameter (e.g. plot names and plot srefs). These are sent in comma separated groups e.g. plot names ["Plot 1", "Plot 2","Plot 3"], ["Plot 4", "Plot 5","Plot 6"] 
+  //& sRefs ["AB10", "AB11", "AB12"],["AB13", "AB14", "AB15"]. The first element (0) holds the parameter name, so we cycle through index 1 onwards to get the values, these are held
+  //as comma separated groups so we don't send too many to the warehouse at once. 
+  //As all these params must have same number of items, we can just cycle through the first one of these to get the "i" index.
+  for (var i=1; i<arrayOfChunkTypesToSend[0].length;i++) {
+    params='';
+    //Cycle through each param type (e.g. plot name, plot sref)
+    for (var i2=0; i2<arrayOfChunkTypesToSend.length;i2++) {
+      //If first param, then we don't need "&"
+      if (params==='') {
+        //For each param type, get the param name at element 0 and set it to the value group held at index i. 
+        params=params+arrayOfChunkTypesToSend[i2][0]+'='+arrayOfChunkTypesToSend[i2][i];
       } else {
-        params=params+arrayOfChunkTypesToSend[i][i2]+'&';
+        params=params+'&'+arrayOfChunkTypesToSend[i2][0]+'='+arrayOfChunkTypesToSend[i2][i];
       }
     }
+    params=params+otherAttributesString;
+    jQuery.ajax({
+      url: warehouseUrl+'index.php/services/plant_portal_import/'+warehouseFunctionToCall+'?'+params,
+      dataType: 'jsonp',
+      async:false,
+      success: function(response) {
+      }
+    });
   }
-  //Add any extra attributes such as website id
-  for (var i=0; i<otherAttributes.length;i++) {
-    params=params+'&'+otherAttributes[i][0]+'='+otherAttributes[i][1];
-  }
-  jQuery.ajax({
-    url: warehouseUrl+'index.php/services/plant_portal_import/'+warehouseFunctionToCall+'?'+params,
-    dataType: 'jsonp',
-    async:false,
-    success: function(response) {
-    }
-  });
 }
