@@ -624,7 +624,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     
     // only use the required fields that are available for selection - the rest are handled somehow else
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
-
     $handle = fopen($_SESSION['uploaded_file'], "r");
     $columns = fgetcsv($handle, 1000, ",");
     $reload = self::get_reload_link_parts();
@@ -791,6 +790,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param array $options Options array passed to the import control.
    */
   private static function get_hidden_upload_mappings_form($options) {
+    ini_set("auto_detect_line_endings",true);
     if (isset($options['presetSettings'])) {
       $settings = array_merge(
         $options['presetSettings'],
@@ -835,7 +835,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $unlinked_fields = $fields;
     // only use the required fields that are available for selection - the rest are handled somehow else
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
-
     $handle = fopen($_SESSION['uploaded_file'], "r");
     $columns = fgetcsv($handle, 1000, ",");
     $reload = self::get_reload_link_parts();
@@ -1550,6 +1549,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //As we have an extra import step, create a hidden version of the settings and mappings form otherwise the $_POST data used for mappings gets lost because of the extra wizard step
     $r .= self::get_hidden_upload_mappings_form($options);
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
+    ini_set('auto_detect_line_endings',TRUE);
     $fileArray = file($_SESSION['uploaded_file']);
     if (empty($_SESSION['chosen_column_headings']))
       $_SESSION['chosen_column_headings']=self::store_column_header_names_for_existing_match_checks($args);
@@ -1559,7 +1559,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     unset($fileArray[0]);
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
     $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItems,$chosenColumnHeadings);
-
     //Cycle through each row excluding the header row and convert into an array
     foreach ($fileArray as $fileLine) {
       //Trim first otherwise we will attempt to process rows which might be just whitespace
