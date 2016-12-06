@@ -1555,10 +1555,15 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $_SESSION['chosen_column_headings']=self::store_column_header_names_for_existing_match_checks($args);
     $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
     $headerLineItems = explode(',',$fileArray[0]);
+    //Put underscore into the headers so they match the $_POST which includes underscores
+    $headerLineItemsWithUnderscores=array();
+    foreach ($headerLineItems as $idx=>$headerLineItem) {
+      $headerLineItemsWithUnderscores[$idx]=str_replace(' ','_',$headerLineItem);
+    }
     //Remove the header row from the file
     unset($fileArray[0]);
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
-    $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItems,$chosenColumnHeadings);
+    $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithUnderscores,$chosenColumnHeadings);
     //Cycle through each row excluding the header row and convert into an array
     foreach ($fileArray as $fileLine) {
       //Trim first otherwise we will attempt to process rows which might be just whitespace
@@ -2011,22 +2016,23 @@ class iform_plant_portal_user_data_importer extends helper_base {
    */
   private static function store_column_header_names_for_existing_match_checks($args) {   
     $chosenColumnHeadings=array();
+    //The header names in the post have underscores
     foreach ($_POST as $amendedTableHeaderWith_ => $chosenField) {
       if ($chosenField==='sample:date') {
         //As all the column headings in the post have underscores, we need to replace these with spaces to get back to the original
         //column heading
-        $chosenColumnHeadings['sampleDateHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
+        $chosenColumnHeadings['sampleDateHeaderName'] = $amendedTableHeaderWith_;
       }
       if ($chosenField==='sample:entered_sref')
-        $chosenColumnHeadings['sampleSrefHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
+        $chosenColumnHeadings['sampleSrefHeaderName'] = $amendedTableHeaderWith_;
       if ($chosenField==='sample:entered_sref_system')
-        $chosenColumnHeadings['sampleSrefSystemHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
+        $chosenColumnHeadings['sampleSrefSystemHeaderName'] = $amendedTableHeaderWith_;
       if ($chosenField==='smpAttr:fk_'.$args['sample_group_identifier_name_lookup_smp_attr_id'])
-        $chosenColumnHeadings['sampleGroupNameHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
+        $chosenColumnHeadings['sampleGroupNameHeaderName'] = $amendedTableHeaderWith_;
       if ($chosenField==='sample:fk_location')
-        $chosenColumnHeadings['plotNameHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
+        $chosenColumnHeadings['plotNameHeaderName'] = $amendedTableHeaderWith_;
       if ($chosenField==='locAttr:'.$args['plot_group_identifier_name_text_attr_id'])
-        $chosenColumnHeadings['plotGroupNameHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
+        $chosenColumnHeadings['plotGroupNameHeaderName'] = $amendedTableHeaderWith_;
     }
     return $chosenColumnHeadings;
   }  
@@ -2037,11 +2043,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * This allows us to count along a data row and know what we are looking at without re-examining the headings.
    * Headings are saved as an index from zero.
    * 
-   * @param Array $headerLineItems Array of header names from first line of import file
+   * @param Array $headerLineItemsWithUnderscores Array of header names from first line of import file
    * @param Array $chosenColumnHeadings The actual header names used in the file stored with their meaning
    * as the array key
    */
-  private static function get_column_heading_index_positions($headerLineItems,$chosenColumnHeadings) {   
+  private static function get_column_heading_index_positions($headerLineItemsWithUnderscores,$chosenColumnHeadings) {  
     $columnHeadingIndexPositions=array();
      //We can't leave these uninitialised as we will get loads of not initialised errors.
     //Overcome this by setting to -1, which is an index we will never actually use.
@@ -2054,7 +2060,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //Cycle through all the names from the header line, then check to see if there is a match in the array holding the 
     //header names meanings. If there is a match, it means we have identified the header and can save its position as
     //and index starting from zero.
-    foreach ($headerLineItems as $idx=>$header) {
+    foreach ($headerLineItemsWithUnderscores as $idx=>$header) {
       //Remove white space from the ends of the headers
       $header=trim($header);
       if (!empty($chosenColumnHeadings['sampleDateHeaderName']) && $header == $chosenColumnHeadings['sampleDateHeaderName']) 
