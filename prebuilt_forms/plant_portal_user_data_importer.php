@@ -178,6 +178,54 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
+        'name'=>'plot_width_attr_id',
+        'caption'=>'Plot width location attribute ID',
+        'description'=>'ID of the attribute that stores the plot width.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
+        'name'=>'plot_length_attr_id',
+        'caption'=>'Plot length location attribute ID',
+        'description'=>'ID of the attribute that stores the plot length.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
+        'name'=>'plot_radius_attr_id',
+        'caption'=>'Plot radius location attribute ID',
+        'description'=>'ID of the attribute that stores the plot radius.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
+        'name'=>'plot_shape_attr_id',
+        'caption'=>'Plot shape location attribute ID',
+        'description'=>'ID of the attribute that stores the plot shape.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
+        'name'=>'vice_county_attr_id',
+        'caption'=>'Vice county location attribute ID',
+        'description'=>'ID of the attribute that stores the vice county name.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
+        'name'=>'country_attr_id',
+        'caption'=>'Country location attribute ID',
+        'description'=>'ID of the attribute that stores the country.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
         'name'=>'sample_group_permission_person_attr_id',
         'caption'=>'Sample group permissions person attribute ID',
         'description'=>'ID of person attribute that holds a user\'s sample group permissions.',
@@ -385,6 +433,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     if (empty($args['override_survey_id'])||empty($args['override_taxon_list_id'])||empty($args['plot_location_type_id'])||
             empty($args['sample_group_identifier_name_text_attr_id'])||empty($args['sample_group_identifier_name_lookup_smp_attr_id'])||
             empty($args['plot_group_identifier_name_text_attr_id'])||empty($args['plot_group_identifier_name_lookup_loc_attr_id'])||
+            empty($args['plot_width_attr_id'])||empty($args['plot_length_attr_id'])||
+            empty($args['plot_radius_attr_id'])||empty($args['plot_shape_attr_id'])||
+            empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||
             empty($args['sample_group_permission_person_attr_id'])||empty($args['plot_group_permission_person_attr_id'])||
             empty($args['sample_group_termlist_id'])||empty($args['plot_group_termlist_id']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
@@ -596,10 +647,15 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $response = self::http_post($request, array());
     //Most of this code matches the "normal" importer page.
     $locationfields = json_decode($response['output'], true);
-    //We only want to include the location attribute that holds the plot group identifier name on the mappings drop-down lists
-    //as everything else can be found against the sample, even the plot location
+    //We only want to include some of the location attributes
     $locationFieldsToUse['locAttr:'.$options['plot_group_identifier_name_text_attr_id']] = $locationfields['locAttr:'.$options['plot_group_identifier_name_text_attr_id']];
-
+    $locationFieldsToUse['locAttr:'.$options['plot_width_attr_id']] = $locationfields['locAttr:'.$options['plot_width_attr_id']];
+    $locationFieldsToUse['locAttr:'.$options['plot_length_attr_id']] = $locationfields['locAttr:'.$options['plot_length_attr_id']];
+    $locationFieldsToUse['locAttr:'.$options['plot_radius_attr_id']] = $locationfields['locAttr:'.$options['plot_radius_attr_id']];
+    //fk for foreigh key lookup list
+    $locationFieldsToUse['locAttr:fk_'.$options['plot_shape_attr_id']] = $locationfields['locAttr:fk_'.$options['plot_shape_attr_id']];
+    $locationFieldsToUse['locAttr:'.$options['vice_county_attr_id']] = $locationfields['locAttr:'.$options['vice_county_attr_id']];
+    $locationFieldsToUse['locAttr:'.$options['country_attr_id']] = $locationfields['locAttr:'.$options['country_attr_id']];
     $fields = array_merge($fields,$locationFieldsToUse);
     
     if (!is_array($fields))
@@ -1431,6 +1487,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
   public static function importer($args,$options) {
     //Include in the options so we don't have to keep passing the $args everywhere that $options have already been passed
     $options['plot_group_identifier_name_text_attr_id']=$args['plot_group_identifier_name_text_attr_id'];
+    $options['plot_width_attr_id']=$args['plot_width_attr_id'];
+    $options['plot_length_attr_id']=$args['plot_length_attr_id'];
+    $options['plot_radius_attr_id']=$args['plot_radius_attr_id'];
+    $options['plot_shape_attr_id']=$args['plot_shape_attr_id'];
+    $options['vice_county_attr_id']=$args['vice_county_attr_id'];
+    $options['country_attr_id']=$args['country_attr_id'];
     if (isset($_GET['total'])) {
       return self::upload_result($options);
     } elseif (!isset($_POST['import_step'])) {
