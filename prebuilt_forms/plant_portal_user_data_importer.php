@@ -226,6 +226,22 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
+        'name'=>'spatial_reference_type_attr_id',
+        'caption'=>'Spatial reference type attribute ID',
+        'description'=>'ID of the attribute that holds the spatial reference type (e.g. vague).',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
+        'name'=>'sample_name_attr_id',
+        'caption'=>'Sample Name/ID attribute ID',
+        'description'=>'ID of the attribute that holds the sample name/ID.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
         'name'=>'sample_group_permission_person_attr_id',
         'caption'=>'Sample group permissions person attribute ID',
         'description'=>'ID of person attribute that holds a user\'s sample group permissions.',
@@ -436,6 +452,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
             empty($args['plot_width_attr_id'])||empty($args['plot_length_attr_id'])||
             empty($args['plot_radius_attr_id'])||empty($args['plot_shape_attr_id'])||
             empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||
+            empty($args['spatial_reference_type_attr_id'])||empty($args['sample_name_attr_id'])||
             empty($args['sample_group_permission_person_attr_id'])||empty($args['plot_group_permission_person_attr_id'])||
             empty($args['sample_group_termlist_id'])||empty($args['plot_group_termlist_id']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
@@ -632,7 +649,21 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $response = self::http_post($request, array());
     //Most of this code matches the "normal" importer page.
     $fields = json_decode($response['output'], true);
-    
+    //Limit fields that can be selected from to ones we are interested in for this project
+    foreach ($fields as $key=>$data) {
+      //Fields with "fk_" in name are foreign key lookups
+      if ($key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_website'&&
+              $key!=='occurrence:id'&&$key!=='occurrence:sensitivity_precision'&&$key!=='occurrence:sensitivity_precision'
+              &&$key!=='occurrence:zero_abundance'&&$key!=='sample:comment'&&$key!=='sample:date'/*&&$key!=='sample:date:day'
+              &&$key!=='sample:date:month'&&$key!=='sample:date:year'&&$key!=='sample:date_end'&&$key!=='sample:date_start'
+              &&$key!=='sample:date_type'*/&&$key!=='sample:entered_sref'&&$key!=='sample:entered_sref_system'
+              &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'&&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
+              &&$key!=='smpAttr:'.$options['sample_name_attr_id']
+              &&$key!=='smpAttr:fk_'.$options['sample_group_identifier_name_lookup_smp_attr_id']
+              ) {
+        unset($fields[$key]);
+      }
+    }
     //To Do AVB. This bit can probably be optimised a bit
     $options['model']='location';
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
@@ -1493,6 +1524,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $options['plot_shape_attr_id']=$args['plot_shape_attr_id'];
     $options['vice_county_attr_id']=$args['vice_county_attr_id'];
     $options['country_attr_id']=$args['country_attr_id'];
+    $options['spatial_reference_type_attr_id']=$args['spatial_reference_type_attr_id'];
+    $options['sample_name_attr_id']=$args['sample_name_attr_id'];
+    $options['sample_group_identifier_name_lookup_smp_attr_id']=$args['sample_group_identifier_name_lookup_smp_attr_id'];
     if (isset($_GET['total'])) {
       return self::upload_result($options);
     } elseif (!isset($_POST['import_step'])) {
