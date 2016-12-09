@@ -419,6 +419,24 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'type'=>'textarea',
         'required'=>true,
         'group'=>'Custom fatal import errors'
+      ),
+      array(
+        'name'=>'vice_counties_list',
+        'caption'=>'Vice counties list',
+        'description'=>'A list of vice counties and associated grid references to use, format is name|grid ref,name|grid ref,name|grid ref,name|grid ref e.g.'
+          . 'Shetland|60.38951N 1.21625W,Orkney|59.06504N 2.92039W,Caithness|58.45297N 3.41048W',
+        'type'=>'textarea',
+        'required'=>true,
+        'group'=>'Vice counties list'
+      ),
+      array(
+        'name'=>'countries_list',
+        'caption'=>'Countries list',
+        'description'=>'A list of countries and associated grid references to use, format is name|grid ref,name|grid ref,name|grid ref,name|grid ref e.g.'
+          . 'England|52.62865N 1.46538W,Wales|52.35471N 3.86321W',
+        'type'=>'textarea',
+        'required'=>true,
+        'group'=>'Countries list'
       )  
     );
   }
@@ -454,7 +472,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
             empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||
             empty($args['spatial_reference_type_attr_id'])||empty($args['sample_name_attr_id'])||
             empty($args['sample_group_permission_person_attr_id'])||empty($args['plot_group_permission_person_attr_id'])||
-            empty($args['sample_group_termlist_id'])||empty($args['plot_group_termlist_id']))
+            empty($args['sample_group_termlist_id'])||empty($args['plot_group_termlist_id'])||
+            empty($args['vice_counties_list'])||empty($args['countries_list']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
     
     foreach ($args['nonFatalImportTypes'] as $importTypeCode=>$importTypeStates) {
@@ -1651,15 +1670,16 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $_SESSION['chosen_column_headings']=self::store_column_header_names_for_existing_match_checks($args);
     $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
     $headerLineItems = explode(',',$fileArray[0]);
-    //Put underscore into the headers so they match the $_POST which includes underscores
-    $headerLineItemsWithUnderscores=array();
+    //If we are going to compare the headers with the $_POST we need to remove the spaces and underscores as they are inconsistent between the two
+    $headerLineItemsWithoutSpacesOrUnderscores=array();
     foreach ($headerLineItems as $idx=>$headerLineItem) {
-      $headerLineItemsWithUnderscores[$idx]=str_replace(' ','_',$headerLineItem);
+      $headerLineItemsWithoutSpacesOrUnderscores[$idx]=str_replace(' ','',$headerLineItem);
+      $headerLineItemsWithoutSpacesOrUnderscores[$idx] = str_replace('_','',$headerLineItemsWithoutSpacesOrUnderscores[$idx]);
     }
     //Remove the header row from the file
     unset($fileArray[0]);
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
-    $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithUnderscores,$chosenColumnHeadings);
+    $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
     //Cycle through each row excluding the header row and convert into an array
     foreach ($fileArray as $fileLine) {
       //Trim first otherwise we will attempt to process rows which might be just whitespace
@@ -1672,7 +1692,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $fileRowsAsArray[]=$explodedLine;
       }
     }
-    
+    $fileRowsAsArray=self::auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$args['vice_counties_list'],$args['countries_list']);
     //Collect the samples and groups the user has rights to, from here we can also work out which samples and plots they have rights to
     $sampleGroupsAndPlotGroupsUserHasRightsTo = self::get_samples_plot_and_groups_user_has_rights_to($auth,$args);
     $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
@@ -2106,29 +2126,43 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * key names (e.g. so we know that $chosenColumnHeadings['sampleDateHeaderName'] will always hold the
    * sample data column header).
    * This can only be done after the user has mapped the columns.
-   * This is only required for columns we are going to use for matching samples, plots, sample groups
+   * This is only required for columns we are going to use for matching plots, sample groups
    * and plot groups against existing ones.
    * @param Array $args Arguments from Edit Tab
    */
   private static function store_column_header_names_for_existing_match_checks($args) {   
     $chosenColumnHeadings=array();
-    //The header names in the post have underscores
-    foreach ($_POST as $amendedTableHeaderWith_ => $chosenField) {
+    $postWithoutSpacesUnderscoresInKeys=array();
+    //When storing the user defined column headers in the $_POST data, we want to remove
+    //the underscores and spaces as they are not consistant with the actual header names in 
+    //this regard as the system modifies them (e.g. a column called "spatial ref"  in the file 
+    //might appear as spatial_ref in the post)
+    foreach ($_POST as $amendedTableHeaderWith_ => $fieldData) {
+      $newKey = str_replace(' ','',$amendedTableHeaderWith_);
+      $newKey = str_replace('_','',$newKey);
+      $postWithoutSpacesUnderscoresInKeys[$newKey]=$fieldData;
+    }
+    //Cycle through the mappings that has been posted and store the header against its meaning.
+    //We need to do this as the names the user chooses as column titles can be anything,
+    //so we need to store their meaning
+    foreach ($postWithoutSpacesUnderscoresInKeys as $newKey => $chosenField) {
       if ($chosenField==='sample:date') {
-        //As all the column headings in the post have underscores, we need to replace these with spaces to get back to the original
-        //column heading
-        $chosenColumnHeadings['sampleDateHeaderName'] = $amendedTableHeaderWith_;
+        $chosenColumnHeadings['sampleDateHeaderName'] = $newKey;
       }
       if ($chosenField==='sample:entered_sref')
-        $chosenColumnHeadings['sampleSrefHeaderName'] = $amendedTableHeaderWith_;
+        $chosenColumnHeadings['sampleSrefHeaderName'] = $newKey;
       if ($chosenField==='sample:entered_sref_system')
-        $chosenColumnHeadings['sampleSrefSystemHeaderName'] = $amendedTableHeaderWith_;
+        $chosenColumnHeadings['sampleSrefSystemHeaderName'] = $newKey;
       if ($chosenField==='smpAttr:fk_'.$args['sample_group_identifier_name_lookup_smp_attr_id'])
-        $chosenColumnHeadings['sampleGroupNameHeaderName'] = $amendedTableHeaderWith_;
+        $chosenColumnHeadings['sampleGroupNameHeaderName'] = $newKey;
       if ($chosenField==='sample:fk_location')
-        $chosenColumnHeadings['plotNameHeaderName'] = $amendedTableHeaderWith_;
+        $chosenColumnHeadings['plotNameHeaderName'] = $newKey;
       if ($chosenField==='locAttr:'.$args['plot_group_identifier_name_text_attr_id'])
-        $chosenColumnHeadings['plotGroupNameHeaderName'] = $amendedTableHeaderWith_;
+        $chosenColumnHeadings['plotGroupNameHeaderName'] = $newKey;
+      if ($chosenField==='locAttr:'.$args['vice_county_attr_id'])
+        $chosenColumnHeadings['plotViceCountyHeaderName'] = $newKey;
+      if ($chosenField==='locAttr:'.$args['country_attr_id'])
+        $chosenColumnHeadings['plotCountryHeaderName'] = $newKey;
     }
     return $chosenColumnHeadings;
   }  
@@ -2139,11 +2173,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * This allows us to count along a data row and know what we are looking at without re-examining the headings.
    * Headings are saved as an index from zero.
    * 
-   * @param Array $headerLineItemsWithUnderscores Array of header names from first line of import file
+   * @param Array $headerLineItemsWithoutSpacesOrUnderscores Array of header names without spaces or underscores so we can match the $_Post data
    * @param Array $chosenColumnHeadings The actual header names used in the file stored with their meaning
    * as the array key
    */
-  private static function get_column_heading_index_positions($headerLineItemsWithUnderscores,$chosenColumnHeadings) {  
+  private static function get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings) {  
     $columnHeadingIndexPositions=array();
      //We can't leave these uninitialised as we will get loads of not initialised errors.
     //Overcome this by setting to -1, which is an index we will never actually use.
@@ -2156,7 +2190,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //Cycle through all the names from the header line, then check to see if there is a match in the array holding the 
     //header names meanings. If there is a match, it means we have identified the header and can save its position as
     //and index starting from zero.
-    foreach ($headerLineItemsWithUnderscores as $idx=>$header) {
+    foreach ($headerLineItemsWithoutSpacesOrUnderscores as $idx=>$header) {
       //Remove white space from the ends of the headers
       $header=trim($header);
       if (!empty($chosenColumnHeadings['sampleDateHeaderName']) && $header == $chosenColumnHeadings['sampleDateHeaderName']) 
@@ -2170,7 +2204,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
       if (!empty($chosenColumnHeadings['plotNameHeaderName']) && $header == $chosenColumnHeadings['plotNameHeaderName'])
         $columnHeadingIndexPositions['plotNameHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['plotGroupNameHeaderName']) && $header == $chosenColumnHeadings['plotGroupNameHeaderName'])
-       $columnHeadingIndexPositions['plotGroupNameHeaderIdx'] = $idx;
+        $columnHeadingIndexPositions['plotGroupNameHeaderIdx'] = $idx;
+      if (!empty($chosenColumnHeadings['plotViceCountyHeaderName']) && $header == $chosenColumnHeadings['plotViceCountyHeaderName'])
+        $columnHeadingIndexPositions['plotViceCountyHeaderIdx'] = $idx;
+      if (!empty($chosenColumnHeadings['plotCountryHeaderName']) && $header == $chosenColumnHeadings['plotCountryHeaderName'])
+        $columnHeadingIndexPositions['plotCountryHeaderIdx'] = $idx;
     }
     return $columnHeadingIndexPositions;
   }
@@ -2289,6 +2327,46 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
     }
     return $fileArrayForImportRowsToProcessForImport;
+  }
+  
+  /* 
+   * If spatial reference is missing then automatically generate one using the vice county name or country name 
+   */
+  private static function auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$viceCountiesList,$countriesList) {
+    $viceCountyPairs = explode(',',$viceCountiesList);
+    $countryPairs = explode(',',$countriesList);
+    //Cycle through all the data rows
+    foreach ($fileRowsAsArray as &$fileRowToProcess) {
+      //If the spatial reference is empty we need to do some work to try and get it from the vice county
+      if (empty($fileRowToProcess[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])) {
+        //All the stored vice counties are a name with a grid reference (separated by a |)
+        foreach ($viceCountyPairs as $viceCountyNameGridRefPair) {
+          $viceCountyNameGridRefPairExploded=explode('|',$viceCountyNameGridRefPair);
+          //If we find a match for the vice county then we can set the spatial reference and spatial reference system from the vice county
+          if (!empty($columnHeadingIndexPositions['plotViceCountyHeaderIdx'])&&
+                  !empty($fileRowToProcess[$columnHeadingIndexPositions['plotViceCountyHeaderIdx']])&& 
+                  !empty($viceCountyNameGridRefPairExploded[0]) && 
+                  $fileRowToProcess[$columnHeadingIndexPositions['plotViceCountyHeaderIdx']]==$viceCountyNameGridRefPairExploded[0]) {
+            $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]=$viceCountyNameGridRefPairExploded[1];
+            $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']]='4326';
+          }
+        }
+      }
+      //If spatial reference is still empty we can do the same with countries
+      if (empty($fileRowToProcess[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])) {
+        foreach ($countryPairs as $countryNameGridRefPair) {
+          $countryNameGridRefPairExploded=explode('|',$countryNameGridRefPair);
+          if (!empty($columnHeadingIndexPositions['plotCountryHeaderIdx'])&&
+                  !empty($fileRowToProcess[$columnHeadingIndexPositions['plotCountryHeaderIdx']])&& 
+                  !empty($countryNameGridRefPairExploded[0]) && 
+                  $fileRowToProcess[$columnHeadingIndexPositions['plotCountryHeaderIdx']]==$countryNameGridRefPairExploded[0]) {
+            $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]=$countryNameGridRefPairExploded[1];
+            $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']]='4326';
+          }
+        }
+      }
+    }
+    return $fileRowsAsArray;
   }
   
   private static function get_samples_plot_and_groups_user_has_rights_to($auth,$args) {
