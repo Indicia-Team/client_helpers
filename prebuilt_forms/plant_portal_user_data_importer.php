@@ -212,7 +212,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'vice_county_attr_id',
         'caption'=>'Vice county location attribute ID',
-        'description'=>'ID of the attribute that stores the vice county name.',
+        'description'=>'ID of the sample attribute that stores the vice county name.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -220,7 +220,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'country_attr_id',
         'caption'=>'Country location attribute ID',
-        'description'=>'ID of the attribute that stores the country.',
+        'description'=>'ID of the sample attribute that stores the country.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -676,9 +676,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
               &&$key!=='occurrence:zero_abundance'&&$key!=='sample:comment'&&$key!=='sample:date'/*&&$key!=='sample:date:day'
               &&$key!=='sample:date:month'&&$key!=='sample:date:year'&&$key!=='sample:date_end'&&$key!=='sample:date_start'
               &&$key!=='sample:date_type'*/&&$key!=='sample:entered_sref'&&$key!=='sample:entered_sref_system'
-              &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'&&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
-              &&$key!=='smpAttr:'.$options['sample_name_attr_id']
-              &&$key!=='smpAttr:fk_'.$options['sample_group_identifier_name_lookup_smp_attr_id']
+              &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'&&$key!=='smpAttr:fk_'.$options['sample_group_identifier_name_lookup_smp_attr_id']
+              &&$key!=='smpAttr:'.$options['sample_name_attr_id']&&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
+              //Note that these need to be sample attributes as they need to be passed to the
+              //warehouse as part of the sample so that the spatial reference can be calculated
+              &&$key!=='smpAttr:'.$options['vice_county_attr_id']
+              &&$key!=='smpAttr:'.$options['country_attr_id']
               ) {
         unset($fields[$key]);
       }
@@ -704,8 +707,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $locationFieldsToUse['locAttr:'.$options['plot_radius_attr_id']] = $locationfields['locAttr:'.$options['plot_radius_attr_id']];
     //fk for foreigh key lookup list
     $locationFieldsToUse['locAttr:fk_'.$options['plot_shape_attr_id']] = $locationfields['locAttr:fk_'.$options['plot_shape_attr_id']];
-    $locationFieldsToUse['locAttr:'.$options['vice_county_attr_id']] = $locationfields['locAttr:'.$options['vice_county_attr_id']];
-    $locationFieldsToUse['locAttr:'.$options['country_attr_id']] = $locationfields['locAttr:'.$options['country_attr_id']];
     $fields = array_merge($fields,$locationFieldsToUse);
     
     if (!is_array($fields))
@@ -2159,9 +2160,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $chosenColumnHeadings['plotNameHeaderName'] = $newKey;
       if ($chosenField==='locAttr:'.$args['plot_group_identifier_name_text_attr_id'])
         $chosenColumnHeadings['plotGroupNameHeaderName'] = $newKey;
-      if ($chosenField==='locAttr:'.$args['vice_county_attr_id'])
+      //Note that these need to be sample attributes as they need to be passed to the
+      //warehouse as part of the sample so that the spatial reference can be calculate
+      if ($chosenField==='smpAttr:'.$args['vice_county_attr_id'])
         $chosenColumnHeadings['plotViceCountyHeaderName'] = $newKey;
-      if ($chosenField==='locAttr:'.$args['country_attr_id'])
+      if ($chosenField==='smpAttr:'.$args['country_attr_id'])
         $chosenColumnHeadings['plotCountryHeaderName'] = $newKey;
     }
     return $chosenColumnHeadings;
@@ -2330,7 +2333,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
   }
   
   /* 
-   * If spatial reference is missing then automatically generate one using the vice county name or country name 
+   * If spatial reference is missing then automatically generate one using the vice county name or country name.
+   * Note this has an equivalent function with the same name in the Plant Portal Warehouse module.
+   * Changes to the logic here should also occur in that function 
    */
   private static function auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$viceCountiesList,$countriesList) {
     $viceCountyPairs = explode(',',$viceCountiesList);
