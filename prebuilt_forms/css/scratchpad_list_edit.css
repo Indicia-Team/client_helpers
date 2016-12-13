@@ -1,0 +1,25 @@
+span.matched {
+  color: green;
+}
+span.unmatched {
+  color: red;
+}
+#scratchpad-input {
+  min-width: 200px;
+  min-height: 200px;
+  border: solid silver 1px;
+}
+#scratchpad-save-form div {
+  width: 450px;
+}
+#scratchpad-save-form label {
+  display: block;
+}
+#scratchpad-save-form input[type=text], #scratchpad-save-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+#scratchpad-save-form input[type=button], #scratchpad-save-form input[type=submit] {
+  padding: 4px;
+  margin: 0.5em;
+}
