@@ -371,6 +371,15 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Custom import warnings'
       ),
       array(
+        'name'=>'spref_message',
+        'caption'=>'Custom message for spref import situation',
+        'description'=>'The message shown to the user for rows where the spatial reference is missing and cannot be '
+          . 'generated from the Vice County or Country.',
+        'type'=>'textarea',
+        'required'=>true,
+        'group'=>'Custom fatal import errors'
+      ),  
+      array(
         'name'=>'ePwD_message',
         'caption'=>'Custom message for ePwD import situation',
         'description'=>'The message shown to the user for rows where a new sample is required but there are '
@@ -450,19 +459,23 @@ class iform_plant_portal_user_data_importer extends helper_base {
    */
   public static function get_form($args, $nid, $response) {
     $args['nonFatalImportTypes'] = array(
-            'nS-nSG-nP-nPG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eP-nSG'=>array('existingPlot'=>1,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eP-eSG'=>array('existingPlot'=>1,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
-            'eSG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
-            'eSG-ePG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>1),
-            'ePG'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>1));
+            'nS-nSG-nP-nPG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
+            'eP-nSG'=>array('spatialRefPresent'=>1,'existingPlot'=>1,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
+            'eP-eSG'=>array('spatialRefPresent'=>1,'existingPlot'=>1,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
+            'eSG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
+            'eSG-ePG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>1),
+            'ePG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>1));
     
     $args['fatalImportTypes'] = array(
-            'eSGwD'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
-            'ePwD'=>array('existingPlot'=>2,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'ePwD-eSGwD'=>array('existingPlot'=>2,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
-            'ePGwD'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>2),
-            'eSGwD-ePGwD'=>array('existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>2));
+            //Note for this error type, the existingPlot, newSampleExistingSampleGroup, newPlotExistingPlotGroup flags are redundant,
+            //they are always 0 even if they shouldn't be. This means we always trap any row with a missing grid reference into this 
+            //category regardless of whether existingPlot, newSampleExistingSampleGroup, newPlotExistingPlotGroup should of been set as 1 or 2
+            'spref'=>array('spatialRefPresent'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
+            'eSGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
+            'ePwD'=>array('spatialRefPresent'=>1,'existingPlot'=>2,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
+            'ePwD-eSGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>2,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
+            'ePGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>2),
+            'eSGwD-ePGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>2));
     $args['model']='occurrence';
     if (empty($args['override_survey_id'])||empty($args['override_taxon_list_id'])||empty($args['plot_location_type_id'])||
             empty($args['sample_group_identifier_name_text_attr_id'])||empty($args['sample_group_identifier_name_lookup_smp_attr_id'])||
@@ -2231,17 +2244,24 @@ class iform_plant_portal_user_data_importer extends helper_base {
     if (!empty($fileRowsAsArray)) {
       //Cycle through each row in the import data
       foreach ($fileRowsAsArray as $idx => &$fileRowsAsArrayLine) {
-        $lineState=array('existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0);
-        //Check the data on each list to see if it falls into the category of existing sample group, existing plot, existing plot group,
-        //The $lineState is then altered by each function
-        self::existing_plot_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);                
-        self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'sample');
-        //Only need to set newPlotExistingPlotGroup flag if existingPlot is 0
-        if ($lineState['existingPlot']==0)
-          self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'plot');
-        //Save rows into the import categories which are stored as keys in the $fileArrayForImportRowsToProcessForImport array
+        $lineState=array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0);
+        //If a spatial reference is missing or cannot be generated, always through a fatal error
+        if (empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])) {
+          $lineState['spatialRefPresent']=0;
+        }
+        //Only need to continue if there is a spatial reference detected for the line, otherwise we have a no spatial reference fatal failure
+        if ($lineState['spatialRefPresent']===1) {
+          //Check the data on each list to see if it falls into the category of existing sample group, existing plot, existing plot group,
+          //The $lineState is then altered by each function
+          self::existing_plot_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);                
+          self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'sample');
+          //Only need to set newPlotExistingPlotGroup flag if existingPlot is 0
+          if ($lineState['existingPlot']==0)
+            self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'plot');
+          //Save rows into the import categories which are stored as keys in the $fileArrayForImportRowsToProcessForImport array
+        }
         self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['nonFatalImportTypes']);
-        self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['fatalImportTypes']);
+        self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['fatalImportTypes']);    
       }
     }
     return $fileArrayForImportRowsToProcessForImport;
