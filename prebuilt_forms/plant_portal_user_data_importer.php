@@ -2316,20 +2316,21 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $spatialReferenceSystem=$_SESSION['sample:entered_sref_system'];
       //Only indicate existing plot if the plot the user has rights to matches the row we are using from the import file.
       //Here we can pass the test if both comparison columns are empty, the other pass scenario is if the columns are both filled in and they match as well.
-      if (((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&empty($aPlotUserHasRightsTo['entered_sref']))||
-          ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&!empty($aPlotUserHasRightsTo['entered_sref'])) &&
-          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])==strtolower($aPlotUserHasRightsTo['entered_sref']))) &&
+      if (((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&empty($aPlotUserHasRightsTo['centroid_sref']))||
+          ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&!empty($aPlotUserHasRightsTo['centroid_sref'])) &&
+          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])==strtolower($aPlotUserHasRightsTo['centroid_sref']))) &&
               
-          ((empty($spatialReferenceSystem)&&empty($aPlotUserHasRightsTo['entered_sref_system']))||
-          ((!empty($spatialReferenceSystem)&&!empty($aPlotUserHasRightsTo['entered_sref_system'])) &&
-          strtolower($spatialReferenceSystem)==strtolower($aPlotUserHasRightsTo['entered_sref_system']))) &&   
+          ((empty($spatialReferenceSystem)&&empty($aPlotUserHasRightsTo['centroid_sref_system']))||
+          ((!empty($spatialReferenceSystem)&&!empty($aPlotUserHasRightsTo['centroid_sref_system'])) &&
+          strtolower($spatialReferenceSystem)==strtolower($aPlotUserHasRightsTo['centroid_sref_system']))) &&   
               
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&empty($aPlotUserHasRightsTo['plot_name']))||
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($aPlotUserHasRightsTo['plot_name'])) &&
-          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_name']))) /*&&
+          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_name']))) &&
+              
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&empty($aPlotUserHasRightsTo['plot_group_identifier_name']))||
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])&&!empty($aPlotUserHasRightsTo['plot_group_identifier_name']))&&
-          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_group_identifier_name'])))*/) {
+          strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_group_identifier_name'])))) {
         //Return the code 2 if there are duplicate plots (even if there are more than 2, this is just to indicate duplicates)
         if ($aPlotUserHasRightsTo['plot_count']>1)
           $lineState['existingPlot']  = 2;
