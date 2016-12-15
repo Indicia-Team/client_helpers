@@ -1680,20 +1680,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
     ini_set('auto_detect_line_endings',TRUE);
     $fileArray = file($_SESSION['uploaded_file']);
-    if (empty($_SESSION['chosen_column_headings']))
-      $_SESSION['chosen_column_headings']=self::store_column_header_names_for_existing_match_checks($args);
-    $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
     $headerLineItems = explode(',',$fileArray[0]);
-    //If we are going to compare the headers with the $_POST we need to remove the spaces and underscores as they are inconsistent between the two
-    $headerLineItemsWithoutSpacesOrUnderscores=array();
-    foreach ($headerLineItems as $idx=>$headerLineItem) {
-      $headerLineItemsWithoutSpacesOrUnderscores[$idx]=str_replace(' ','',$headerLineItem);
-      $headerLineItemsWithoutSpacesOrUnderscores[$idx] = str_replace('_','',$headerLineItemsWithoutSpacesOrUnderscores[$idx]);
-    }
     //Remove the header row from the file
     unset($fileArray[0]);
-    //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
-    $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
     //Cycle through each row excluding the header row and convert into an array
     foreach ($fileArray as $fileLine) {
       //Trim first otherwise we will attempt to process rows which might be just whitespace
@@ -1706,6 +1695,45 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $fileRowsAsArray[]=$explodedLine;
       }
     }
+    
+    //If we are going to compare the headers with the $_POST we need to remove the spaces and underscores as they are inconsistent between the two
+    $headerLineItemsWithoutSpacesOrUnderscores=array();
+    foreach ($headerLineItems as $idx=>$headerLineItem) {
+      $headerLineItemsWithoutSpacesOrUnderscores[$idx]=str_replace(' ','',$headerLineItem);
+      $headerLineItemsWithoutSpacesOrUnderscores[$idx] = str_replace('_','',$headerLineItemsWithoutSpacesOrUnderscores[$idx]);
+    }
+    
+    //Do the same with the post
+    $postWithoutSpacesUnderscoresInKeys=array();
+    foreach ($_POST as $amendedTableHeaderWith_ => $fieldData) {
+      $newKey = str_replace(' ','',$amendedTableHeaderWith_);
+      $newKey = str_replace('_','',$newKey);
+      $postWithoutSpacesUnderscoresInKeys[$newKey]=$fieldData;
+    }
+    //Remove any columns the user hasn't mapped on the column mappings page
+    foreach ($headerLineItemsWithoutSpacesOrUnderscores as $idx => $headerToCheck) {
+      //Unmapped columns include html to say they haven't been mapped, so
+      //we need to remove this html so we can check they are empty
+      if (isset($postWithoutSpacesUnderscoresInKeys[$headerToCheck]))
+        $postWithoutSpacesUnderscoresInKeys[$headerToCheck]=strip_tags($postWithoutSpacesUnderscoresInKeys[$headerToCheck]);
+      //If a header hasn't been posted by the mappings page, 
+      //or is an empty string or hasn't been set we can safely remove it from the columns we are working with.
+      //Remove from headers and also the column from the file data array
+      if (!array_key_exists($headerToCheck,$postWithoutSpacesUnderscoresInKeys)||
+              $postWithoutSpacesUnderscoresInKeys[$headerToCheck]==''||
+              !isset($postWithoutSpacesUnderscoresInKeys[$headerToCheck])) {
+        unset($headerLineItems[$idx]);
+        unset($headerLineItemsWithoutSpacesOrUnderscores[$idx]);
+        foreach ($fileRowsAsArray AS &$fileLineArray) {
+          unset($fileLineArray[$idx]);
+        }
+      }
+    }
+    if (empty($_SESSION['chosen_column_headings']))
+      $_SESSION['chosen_column_headings']=self::store_column_header_names_for_existing_match_checks($args,$postWithoutSpacesUnderscoresInKeys);
+    $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
+    //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
+    $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
     $fileRowsAsArray=self::auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$args['vice_counties_list'],$args['countries_list']);
     //Collect the samples and groups the user has rights to, from here we can also work out which samples and plots they have rights to
     $sampleGroupsAndPlotGroupsUserHasRightsTo = self::get_samples_plot_and_groups_user_has_rights_to($auth,$args);
@@ -2144,18 +2172,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * and plot groups against existing ones.
    * @param Array $args Arguments from Edit Tab
    */
-  private static function store_column_header_names_for_existing_match_checks($args) {   
+  private static function store_column_header_names_for_existing_match_checks($args,$postWithoutSpacesUnderscoresInKeys) {   
     $chosenColumnHeadings=array();
-    $postWithoutSpacesUnderscoresInKeys=array();
-    //When storing the user defined column headers in the $_POST data, we want to remove
-    //the underscores and spaces as they are not consistant with the actual header names in 
-    //this regard as the system modifies them (e.g. a column called "spatial ref"  in the file 
-    //might appear as spatial_ref in the post)
-    foreach ($_POST as $amendedTableHeaderWith_ => $fieldData) {
-      $newKey = str_replace(' ','',$amendedTableHeaderWith_);
-      $newKey = str_replace('_','',$newKey);
-      $postWithoutSpacesUnderscoresInKeys[$newKey]=$fieldData;
-    }
     //Cycle through the mappings that has been posted and store the header against its meaning.
     //We need to do this as the names the user chooses as column titles can be anything,
     //so we need to store their meaning
