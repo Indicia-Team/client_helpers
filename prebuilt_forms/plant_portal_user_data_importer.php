@@ -1681,6 +1681,15 @@ class iform_plant_portal_user_data_importer extends helper_base {
     ini_set('auto_detect_line_endings',TRUE);
     $fileArray = file($_SESSION['uploaded_file']);
     $headerLineItems = explode(',',$fileArray[0]);
+    //If the user has selected a spatial reference system from the drop-down
+    //at the start, we need to create an extra column to put the spatial
+    //reference system into. We could do without this apart from the auto
+    //spatial reference creation functionality which means that
+    //each row can still have a separate spatial reference system.
+    if (!empty($_SESSION['sample:entered_sref_system'])) {
+      $last_key = key(array_slice($headerLineItems, -1, 1, TRUE ));
+      $headerLineItems[$last_key+1]='Spatial reference system';
+    }
     //Remove the header row from the file
     unset($fileArray[0]);
     //Cycle through each row excluding the header row and convert into an array
@@ -1716,12 +1725,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
       //we need to remove this html so we can check they are empty
       if (isset($postWithoutSpacesUnderscoresInKeys[$headerToCheck]))
         $postWithoutSpacesUnderscoresInKeys[$headerToCheck]=strip_tags($postWithoutSpacesUnderscoresInKeys[$headerToCheck]);
-      //If a header hasn't been posted by the mappings page, 
-      //or is an empty string or hasn't been set we can safely remove it from the columns we are working with.
+      //If a header isn't in use then we can safely remove it from the columns we are working with.
       //Remove from headers and also the column from the file data array
-      if (!array_key_exists($headerToCheck,$postWithoutSpacesUnderscoresInKeys)||
+      if ((!array_key_exists($headerToCheck,$postWithoutSpacesUnderscoresInKeys)||
               $postWithoutSpacesUnderscoresInKeys[$headerToCheck]==''||
-              !isset($postWithoutSpacesUnderscoresInKeys[$headerToCheck])) {
+              !isset($postWithoutSpacesUnderscoresInKeys[$headerToCheck]))
+              && $headerToCheck!='Spatialreferencesystem') {
         unset($headerLineItems[$idx]);
         unset($headerLineItemsWithoutSpacesOrUnderscores[$idx]);
         foreach ($fileRowsAsArray AS &$fileLineArray) {
@@ -1908,12 +1917,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //Again plotGroupTermlistId is unused
     if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($plotGroupTermlistId) && !empty($args['plot_group_permission_person_attr_id']))
       data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",'plot_group',".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
-
+    
     if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']))
       data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_location_type_id'].");";
     if (!empty($websiteId)&&!empty($plotPairsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
       data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotPairsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
-
+    
     data_entry_helper::$javascript .= "$('#submit-import').click();";
     data_entry_helper::$javascript .= "});";
     
@@ -2231,8 +2240,19 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $columnHeadingIndexPositions['sampleDateHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['sampleSrefHeaderName']) && $header == $chosenColumnHeadings['sampleSrefHeaderName']) 
         $columnHeadingIndexPositions['sampleSrefHeaderIdx'] = $idx;
-      if (!empty($chosenColumnHeadings['sampleSrefSystemHeaderName']) && $header == $chosenColumnHeadings['sampleSrefSystemHeaderName']) 
-        $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx'] = $idx;
+      //If column is the user selected spatial reference system column, or the spatial reference system column
+      //automatically created by the computer (when the user selects a spatial reference system
+      //as the very start of the wizard) then save the position of the column
+      if ((!empty($chosenColumnHeadings['sampleSrefSystemHeaderName'])&&$header == $chosenColumnHeadings['sampleSrefSystemHeaderName'])
+              ||$header=='Spatialreferencesystem') {
+        if (!empty($_SESSION['sample:entered_sref_system'])) {
+          //If automatically created column save the position as one after the last existing column
+          $last_key = key(array_slice($headerLineItemsWithoutSpacesOrUnderscores, -1, 1, TRUE ));
+          $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx'] = $last_key+1;
+        } else {
+          $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=$idx;
+        }
+      }
       if (!empty($chosenColumnHeadings['sampleGroupNameHeaderName']) && $header == $chosenColumnHeadings['sampleGroupNameHeaderName'])
         $columnHeadingIndexPositions['sampleGroupNameHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['plotNameHeaderName']) && $header == $chosenColumnHeadings['plotNameHeaderName'])
@@ -2407,6 +2427,13 @@ class iform_plant_portal_user_data_importer extends helper_base {
             $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]=$countryNameGridRefPairExploded[1];
             $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']]='4326';
           }
+        }
+      }
+      ////If the spatial reference has not been filled in by some kind of override then as a last resort
+      //collect it from the drop-down at the start of the wizard.
+      if (empty($fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']])) {
+        if (!empty($_SESSION['sample:entered_sref_system'])) {
+          $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']]=$_SESSION['sample:entered_sref_system'];
         }
       }
     }
