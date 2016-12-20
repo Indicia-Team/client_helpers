@@ -98,7 +98,7 @@ class iform_scratchpad_list_edit {
     data_entry_helper::add_resource('fancybox');
     data_entry_helper::add_resource('jquery_form');
     $conn = iform_get_connection_details($nid);
-    data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
+    $auth = data_entry_helper::get_read_write_auth($conn['website_id'], $conn['password']);
     $filters = data_entry_helper::explode_lines_key_value_pairs($args['filters']);
     $options = array(
       'entity' => $args['entity'],
@@ -109,19 +109,34 @@ class iform_scratchpad_list_edit {
       'websiteId' => $args['website_id']
     );
     $saveLabel = lang::get('Save');
-    $r = data_entry_helper::text_input(array(
+    $reloadPath = self::getReloadPath();
+    $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
+    data_entry_helper::enable_validation('entry_form');
+    $r .= data_entry_helper::hidden_text(array(
+      'fieldname' => 'website_id',
+      'default' => $conn['website_id']
+    ));
+    $r .= $auth['write'];
+    $r .= data_entry_helper::text_input(array(
       'fieldname' => 'scratchpad_list:title',
-      'label' => lang::get('List title')
+      'label' => lang::get('List title'),
+      'helpText' => lang::get(
+          'Provide a title that will help you remember what the list is for when you access it in future'),
+      'class' => 'control-width-6',
+      'validation' => array('required')
     ));
     $r .= data_entry_helper::textarea(array(
       'fieldname' => 'scratchpad_list:description',
-      'label' => lang::get('List description')
+      'label' => lang::get('List description'),
+      'class' => 'control-width-6'
     ));
     global $indicia_templates;
-    $indicia_templates['scratchpad_input'] = '<div contenteditable="true" id="{id}"></div>';
+    $indicia_templates['scratchpad_input'] = '<div contenteditable="true" id="{id}"{class}></div>';
     $r .= data_entry_helper::apply_template('scratchpad_input', array(
       'id' => 'scratchpad-input',
-      'label' => lang::get('Enter the list of items below')
+      'label' => lang::get('Enter the list of items'),
+      'helpText' => lang::get('Type in or paste items separated by commas or on separate lines.'),
+      'class' => 'control-width-6'
     ));
     $r .= data_entry_helper::hidden_text(array(
       'id' => 'hidden-entries-list',
@@ -132,9 +147,10 @@ class iform_scratchpad_list_edit {
       'default' => $args['entity']
     ));
     $r .= <<<HTML
-<button id="scratchpad-check">Check</button>
-<button id="scratchpad-remove-duplicates" disabled="disabled">Remove duplicates</button>
+<button id="scratchpad-check" type="button">Check</button>
+<button id="scratchpad-remove-duplicates" type="button" disabled="disabled">Remove duplicates</button>
 <input type="submit" id="scratchpad-save" disabled="disabled" value="$saveLabel" />
+</form>
 HTML;
     data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
     return $r;
@@ -148,6 +164,25 @@ HTML;
    */
   public static function get_submission($values, $args) {
     $structure = array('model' => 'scratchpad_list', 'metaFields' => array('entries'));
+    drupal_set_message('here');
     return data_entry_helper::build_submission($values, $structure);
+  }
+
+  protected static function getReloadPath() {
+    $reload = data_entry_helper::get_reload_link_parts();
+    unset($reload['params']['sample_id']);
+    unset($reload['params']['occurrence_id']);
+    unset($reload['params']['location_id']);
+    unset($reload['params']['new']);
+    unset($reload['params']['newLocation']);
+    $reloadPath = $reload['path'];
+    if(count($reload['params'])) {
+      // decode params prior to encoding to prevent double encoding.
+      foreach ($reload['params'] as $key => $param) {
+        $reload['params'][$key] = urldecode($param);
+      }
+      $reloadPath .= '?'.http_build_query($reload['params']);
+    }
+    return $reloadPath;
   }
 }

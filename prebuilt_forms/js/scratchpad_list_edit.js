@@ -132,7 +132,7 @@ jQuery(document).ready(function ($) {
   /**
    * Convert the actual matched values into a data list to store.
    */
-  $('#scratchpad-save').click(function () {
+  $('#entry_form').submit(function () {
     var entries = [];
     $.each($('span.matched'), function () {
       entries.push($(this).attr('data-id'));

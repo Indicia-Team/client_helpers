@@ -4,8 +4,11 @@ span.matched {
 span.unmatched {
   color: red;
 }
+#scratchpad-input, textarea {
+//  width: 400px;
+}
 #scratchpad-input {
-  min-width: 200px;
+  display: inline-block;
   min-height: 200px;
   border: solid silver 1px;
 }
