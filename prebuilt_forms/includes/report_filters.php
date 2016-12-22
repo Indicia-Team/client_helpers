@@ -944,8 +944,11 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       $contextFilterOrig = empty($options['context_id']) ?
           array_values($contextDefs)[0] : $contextDefs[$options['context_id']];
       $contextFilter = array();
-      foreach ($contextFilterOrig as $key => $value)
-        $contextFilter["{$key}_context"] = $value;
+      foreach ($contextFilterOrig as $key => $value) {
+        if ($value !== '') {
+          $contextFilter["{$key}_context"] = $value;
+        }
+      }
       report_helper::$filterParamsToApply = array_merge(report_helper::$filterParamsToApply, $contextFilter);
     }
     $r .= '<label for="select-filter">'.lang::get('Filter:').'</label><select id="select-filter"><option value="" selected="selected">' .
