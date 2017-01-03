@@ -108,7 +108,10 @@ class iform_scratchpad_list_edit {
       'ajaxProxyUrl' => iform_ajaxproxy_url(null, 'scratchpad_list'),
       'websiteId' => $args['website_id']
     );
+    $checkLabel = lang::get('Check');
+    $removeDuplicatesLabel = lang::get('Remove duplicate');
     $saveLabel = lang::get('Save');
+    $cancelLabel = lang::get('Cancel');
     $reloadPath = self::getReloadPath();
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
@@ -147,9 +150,10 @@ class iform_scratchpad_list_edit {
       'default' => $args['entity']
     ));
     $r .= <<<HTML
-<button id="scratchpad-check" type="button">Check</button>
-<button id="scratchpad-remove-duplicates" type="button" disabled="disabled">Remove duplicates</button>
-<input type="submit" id="scratchpad-save" disabled="disabled" value="$saveLabel" />
+<button id="scratchpad-check" type="button">$checkLabel</button>
+<button id="scratchpad-remove-duplicates" type="button" disabled="disabled">$removeDuplicatesLabel</button>
+<button id="scratchpad-save" type="submit" disabled="disabled">$saveLabel</button>
+<button id="scratchpad-cancel" type="button">$cancelLabel</button>
 </form>
 HTML;
     data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
