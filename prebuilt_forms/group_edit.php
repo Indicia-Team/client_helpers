@@ -308,7 +308,8 @@ class iform_group_edit {
     // so this can tie into report filtering when required.
     if (empty($_GET['from_group_id']) && !empty($_GET['dynamic-from_group_id']))
       $_GET['from_group_id'] = $_GET['dynamic-from_group_id'];
-    self::createBreadcrumb($args);
+    $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
+    self::createBreadcrumb($args, $auth);
     iform_load_helpers(array('report_helper', 'map_helper'));
     $args=array_merge(array(
       'include_code'=>false,
@@ -330,7 +331,6 @@ class iform_group_edit {
     $args['filter_types']=json_decode($args['filter_types'], true);
     $reloadPath = self::getReloadPath();   
     data_entry_helper::$website_id=$args['website_id'];
-    $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     // maintain compatibility with form settings from before group type became multiselect.
     if (empty($args['group_type']))
       $args['group_type'] = array();
@@ -1147,11 +1147,21 @@ $('#entry_form').submit(function() {
     return array('IForm groups admin');
   }
   
-  private static function createBreadcrumb($args) {
+  private static function createBreadcrumb($args, $auth) {
     if (!empty($args['groups_page_path']) && function_exists('hostsite_set_breadcrumb') && function_exists('drupal_get_normal_path')) {
       $path = drupal_get_normal_path($args['groups_page_path']);
       $node = menu_get_object('node', 1, $path);
-      $breadcrumb[$node->title] = $args['groups_page_path'];
+      $parentPageTitle = $node->title;
+      if (strpos($parentPageTitle, '{group}')!==false && !empty($_GET['dynamic-from_group_id'])) {
+        // parent page title has a token in it that should be replaced by the group's title
+        $data = data_entry_helper::get_population_data(array(
+          'table' => 'group',
+          'extraParams' => $auth['read'] + array('id' => $_GET['dynamic-from_group_id'])
+        ));
+        if (count($data))
+          $parentPageTitle = str_replace('{group}', $data[0]['title'], $parentPageTitle);
+      }
+      $breadcrumb[$parentPageTitle] = $args['groups_page_path'];
       hostsite_set_breadcrumb($breadcrumb);
     }
   }

@@ -131,7 +131,7 @@ jQuery(document).ready(function ($) {
         }
       });
       $.each(countup, function (status, count) {
-        output.push(count + ' ' + status);
+        output.push(count + ' <span>' + status + '</span>');
       });
       display = output.join('; ');
       countLink = $(this).closest('tr').find('td.col-count a');

@@ -2244,12 +2244,14 @@ else
    * By maintaining a single list of attributes we can track which have already been output.
    * @param array $readAuth Read authorisation tokens.
    * @param integer $surveyId ID of the survey to load occurrence attributes for.
+   * @return array List of occurrence attribute definitions.
    */
   protected static function load_custom_occattrs($readAuth, $surveyId) {
     if (!isset(self::$occAttrs)) {
       self::$occAttrs = self::getAttributesForEntity('occurrence', array('survey_id'=>$surveyId), $readAuth,
         isset(data_entry_helper::$entity_to_load['occurrence:id']) ? data_entry_helper::$entity_to_load['occurrence:id'] : '');
     }
+    return self::$occAttrs;
   }
   
   /**

@@ -99,9 +99,10 @@ class extension_pantheon {
     if (!empty($options['back']))
       $r .= '<li><a id="summary-link" class="button" href="' . hostsite_get_url('pantheon/summary') . '">Back to Summary</a></li>';
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
-<li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Ecological guilds</a></li>
-<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris') . '">Osiris</a></li>
-<li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Horus indices summary</a></li>
+<li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Feeding guilds</a></li>
+<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris') . '">Habitats &amp; resources</a></li>
+<li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Habitat scores</a></li>
+<li><a id="associations-link" class="button" href="' . hostsite_get_url('associations') . '">Associations</a></li>
 <li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
 </ul>';
     return $r;

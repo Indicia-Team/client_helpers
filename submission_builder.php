@@ -405,7 +405,7 @@ class submission_builder extends helper_config {
   /**
    * Returns a 3 character prefix representing an entity name that can have
    * custom attributes attached.
-   * @param string $entity Entity name (location, sample, occurrence, taxa_taxon_list or person).
+   * @param string $entity Entity name (location, sample, occurrence, taxa_taxon_list, termlists_term or person).
    * Also 3 entities from the Individuals and Associations module (known_subject, subject_observation and mark).
    * @param boolean $except If true, raises an exception if the entity name does not have custom attributes.
    * Otherwise returns false. Default true.
@@ -427,6 +427,9 @@ class submission_builder extends helper_config {
         break;
       case 'taxa_taxon_list':
         $prefix = 'tax';
+        break;
+      case 'termlists_term':
+        $prefix = 'trm';
         break;
       case 'person':
         $prefix = 'psn';
