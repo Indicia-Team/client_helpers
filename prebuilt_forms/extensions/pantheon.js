@@ -114,14 +114,14 @@ jQuery(document).ready(function ($) {
       indiciaFns.applyLexicon();
     }
   };
-  
+
   function formatSqiWarning() {
-    $.each($('tbody .col-sqi').not('.processed'), function() {
+    $.each($('tbody .col-sqi').not('.processed'), function () {
       if ($(this).closest('tr').find('.col-count').text() < 15) {
         $(this).prepend(
           '<img title="Warning, this index was calculated from less than 15 species so may not be accurate." ' +
           'alt="Warning icon" src="/pantheon/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
-        );          
+        );
       }
       $(this).addClass('processed');
     });
@@ -143,12 +143,12 @@ jQuery(document).ready(function ($) {
         }
       });
       $.each(countup, function (status, count) {
-        output.push(count + ' ' + status);
+        output.push(count + ' <span>' + status + '</span>');
       });
       display = output.join('; ');
       countLink = $(this).closest('tr').find('td.col-count a');
       if (countLink.length) {
-        display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t' + '">' + display + '</a>';
+        display = '<a href="' + countLink.attr('href') + '&dynamic-has_any_designation=t">' + display + '</a>';
       }
       $(this).html(display);
       $(this).removeClass('unprocessed');
@@ -158,5 +158,4 @@ jQuery(document).ready(function ($) {
     }
     formatSqiWarning();
   };
-  
 });
