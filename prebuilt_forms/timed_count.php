@@ -645,7 +645,7 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
       $keys = array_keys($systems);
       $r .= "<input type=\"hidden\" id=\"imp-sref-system\" name=\"sample:entered_sref_system\" value=\"".$keys[0]."\" />\n";
     } else {
-      $r .= self::sref_system_select(array('fieldname'=>'sample:entered_sref_system'));
+      $r .= data_entry_helper::sref_system_select(array('fieldname'=>'sample:entered_sref_system'));
     }
     
     if(isset($args['georefDriver']) && $args['georefDriver']!='' && !isset(data_entry_helper::$entity_to_load['sample:id']))
