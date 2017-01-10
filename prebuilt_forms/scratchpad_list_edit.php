@@ -81,7 +81,7 @@ class iform_scratchpad_list_edit {
             'single list. Key=value pairs, one per line',
         'type'=>'textarea',
         'required'=>false
-      ),
+      )
     );
   }
   
@@ -106,7 +106,8 @@ class iform_scratchpad_list_edit {
       'duplicates' => $args['duplicates'],
       'filters' => $filters,
       'ajaxProxyUrl' => iform_ajaxproxy_url(null, 'scratchpad_list'),
-      'websiteId' => $args['website_id']
+      'websiteId' => $args['website_id'],
+      'returnPath' => hostsite_get_url($args['redirect_on_success'])
     );
     $checkLabel = lang::get('Check');
     $removeDuplicatesLabel = lang::get('Remove duplicate');
@@ -153,9 +154,10 @@ class iform_scratchpad_list_edit {
 <button id="scratchpad-check" type="button">$checkLabel</button>
 <button id="scratchpad-remove-duplicates" type="button" disabled="disabled">$removeDuplicatesLabel</button>
 <button id="scratchpad-save" type="submit" disabled="disabled">$saveLabel</button>
-<button id="scratchpad-cancel" type="button">$cancelLabel</button>
-</form>
 HTML;
+    if (!empty($args['redirect_on_success']))
+      $r .= "<button id=\"scratchpad-cancel\" type=\"button\">$cancelLabel</button>\n";
+    $r .= "</form>\n";
     data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
     return $r;
   }

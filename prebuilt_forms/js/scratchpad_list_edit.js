@@ -139,52 +139,8 @@ jQuery(document).ready(function ($) {
     });
     $('#hidden-entries-list').val(entries.join(';'));
   });
-  /*
-  $('#scratchpad-save').click(function () {
-    var entries = [];
-    var form;
-    $.each($('span.matched'), function () {
-      entries.push($(this).attr('data-id'));
-    });
-    form = '<form id="scratchpad-save-form" action="' + indiciaData.scratchpadSettings.ajaxProxyUrl + '" method="post">';
-    form += '<input type="hidden" name="website_id" value="' + indiciaData.scratchpadSettings.websiteId + '" />';
 
-
-    form += '<input type="hidden" name="scratchpad_list:entity" value="' + indiciaData.scratchpadSettings.entity + '" />';
-
-
-    form += '<input type="hidden" name="metaFields:entries" value="' + entries.join(';') + '" />';
-    form += '<div><label>Title:</label><input type="text" name="scratchpad_list:title" /></div>';
-    form += '<div><label>Description:</label><textarea id="scratchpad_list:description" /></div>';
-    form += '<input type="button" value="Cancel" id="scratchpad-save-cancel"/>';
-    form += '<input type="button" value="Save" id="scratchpad-save-ok"/>';
-    form += '</form>';
-    $.fancybox(form);
-    $('#scratchpad-save-form').ajaxForm({
-      async: true,
-      dataType: 'json',
-      success: function (data) {
-        if (typeof data.success === 'undefined') {
-          if (data.indexOf("Class 'Scratchpad_list_Model' not found") > -1) {
-            alert('Please ensure the scratchpad module is enabled on the warehouse.');
-          } else {
-            alert('An error occurred whilst saving the list');
-          }
-          $.fancybox.close();
-          return;
-        }
-        $.fancybox.close();
-        alert('The scratchpad list has been saved');
-      }
-    });
+  $('#scratchpad-cancel').click(function() {
+    window.location = indiciaData.scratchpadSettings.returnPath;
   });
-
-  indiciaFns.on('click', '#scratchpad-save-cancel', null, function () {
-    $.fancybox.close();
-  });
-
-  indiciaFns.on('click', '#scratchpad-save-ok', null, function () {
-    $('#scratchpad-save-form').submit();
-  });
-  */
 });
