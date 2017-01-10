@@ -114,6 +114,18 @@ jQuery(document).ready(function ($) {
       indiciaFns.applyLexicon();
     }
   };
+  
+  function formatSqiWarning() {
+    $.each($('tbody .col-sqi').not('.processed'), function() {
+      if ($(this).closest('tr').find('.col-count').text() < 15) {
+        $(this).prepend(
+          '<img title="Warning, this index was calculated from less than 15 species so may not be accurate." ' +
+          'alt="Warning icon" src="/pantheon/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
+        );          
+      }
+      $(this).addClass('processed');
+    });
+  }
 
   window.formatConservation = function () {
     $.each($('.conservation-status.unprocessed'), function () {
@@ -131,7 +143,7 @@ jQuery(document).ready(function ($) {
         }
       });
       $.each(countup, function (status, count) {
-        output.push(count + ' <span>' + status + '</span>');
+        output.push(count + ' ' + status);
       });
       display = output.join('; ');
       countLink = $(this).closest('tr').find('td.col-count a');
@@ -144,5 +156,7 @@ jQuery(document).ready(function ($) {
     if (typeof indiciaFns.applyLexicon !== 'undefined') {
       indiciaFns.applyLexicon();
     }
+    formatSqiWarning();
   };
+  
 });
