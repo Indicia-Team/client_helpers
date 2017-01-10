@@ -183,6 +183,29 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			}
 		});
 
+		$('.species-sort-order input').change(function(){
+			var table = $(this).closest('div').find('.species-grid');
+			var rows = table.find('tbody.occs-body tr').removeClass('alt-row');
+			var col = $(this).val();
+			$(this).closest('li').find('label').addClass('working');
+			rows.sort(function(a, b) {
+				if(typeof $(a).data('species') == 'undefined' || typeof $(b).data('species') == 'undefined')
+					return 0;
+			    var A = $(a).data('species')[col].toUpperCase();
+			    var B = $(b).data('species')[col].toUpperCase();
+			    if(A=='' || B=='' || A==null || B==null) return 0;
+			    if(A < B) return -1;
+			    if(A > B) return 1;
+			    return 0;
+			});
+			$.each(rows, function(index, row) {
+				// this takes the rows out and inserts at the end.
+				if((index+table.find('tbody:not(.occs-body) tr').length)%2 == 1) $(row).addClass('alt-row');
+				table.children('tbody.occs-body').append(row);
+			});
+			$(this).closest('ul').find('.working').removeClass('working');
+		});
+		
 	    if(formOptions['finishedAttrID']) {
     		$('.smp-finish').click(finishSample);
     		$('#finished-form').ajaxForm({
@@ -211,23 +234,38 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		$.each(formOptions.sections, function(idx, section) {
 			if (section.code == code) {
 				// copy the fieldname and value into the sample submission form for each sample custom attribute
+				// by default all sample attributes are mandatory. Can be overridden.
 				$('.smpAttr-' + section.code).each(function() {
+					var mandatory = true;
 					parts=this.id.split(':');
 					parts.pop();
 					id=parts.join('\\:');
 					$('#'+id).val($(this).val());
 					$('#'+id).attr('name', $(this).attr('name'));
+					// remove existing error checks results.
 					$(this).closest('td').find('.ui-state-error').removeClass('ui-state-error');
 					$(this).closest('td').find('.inline-error').remove();
-					if($(this).val()=='') {
-						$(this).addClass('ui-state-error').after('<p htmlfor="' + $(this).attr('id') + '" class="inline-error">' + formOptions.requiredMessage + '</p>');
+					for(var i = 0; i < formOptions.attribute_configuration.length; i++) {
+						if(formOptions.attribute_configuration[i].id == parts[1] &&
+								typeof formOptions.attribute_configuration[i].required != "undefined" &&
+								typeof formOptions.attribute_configuration[i].required.species_grid != "undefined" &&
+								formOptions.attribute_configuration[i].required.species_grid == false)
+							mandatory = false;
+					}
+					if(mandatory && $(this).val()=='') {
+						$(this).after('<p htmlfor="' + $(this).attr('id') + '" class="inline-error">' + formOptions.requiredMessage + '</p>');
 					}
 				});
 				$('#smpsref').val(section.centroid_sref);
 				$('#smpsref_system').val(section.centroid_sref_system);
 				$('#smploc').val(section.id);
-				if($('.smpAttr-' + section.code).closest('td').find('.ui-state-error').length == 0)
+				// only submit if no sample errors
+				if($('.smpAttr-' + section.code).closest('td').find('.inline-error').length == 0)
 					$('#smp-form').submit();
+				else {
+					$('.smpAttr-' + section.code).addClass('ui-state-error');
+					$('.smpAttr-' + section.code).closest('td').find('.saving').removeClass('saving');
+				}
 			}
 		});
 	}
@@ -294,12 +332,19 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		var name, row, isNumber, rowTotal = 0;
 
 		if($('#row-' + species.taxon_meaning_id).length>0) {
-			$('#row-' + species.taxon_meaning_id).removeClass('possibleRemove');
+			row = $('#row-' + species.taxon_meaning_id).removeClass('possibleRemove');
+			$(speciesTableSelector+' tbody.occs-body').append(row);
+			$(speciesTableSelector+' tbody.occs-body tr').each(function(index, elem){
+				if((index+$(speciesTableSelector+' tbody:not(.occs-body) tr').length)%2 == 1) $(elem).addClass('alt-row');
+				else $(elem).removeClass('alt-row');
+			});
 			return;
 		}
-		
+
 		name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
-		row = $('<tr id="row-' + species.taxon_meaning_id + '"' + (($(speciesTableSelector+' tbody').find('tr').length)%2===0 ? '' : ' class="alt-row"') + '><td'+(name != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '')+'>'+name+'</td></tr>');
+		row = $('<tr id="row-' + species.taxon_meaning_id + '"><td'+(name.replace(/<em>/,'').replace(/<\/em>/,'') != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '')+'>'+name+'</td></tr>')
+		   .data( 'species', species);
+		if($(speciesTableSelector+ ' tbody tr').length % 2 == 1) row.addClass('alt-row');
 		isNumber = formOptions.occurrence_attribute_ctrl[tabIDX].indexOf('number:true')>=0; // TBD number:true
 		$.each(formOptions.sections, function(idx, section) {
 			var key, cell, myCtrl, val = '';
@@ -352,7 +397,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 					'mode': 'json',
 					'allow_data_entry': 't',
 					'view': 'cache',
-					'orderby': 'taxonomic_sort_order'
+					'orderby': $('[name=species-sort-order-'+N+']:checked').val()
 			};
 			switch(formOptions.speciesListForce[N]){
 				case 'full': // = all values in list: by definition will include all existing data on this sample.
@@ -606,13 +651,15 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
         'mode': 'json',
         'allow_data_entry': 't',
         'view': 'cache',
-        'orderby': 'taxonomic_sort_order'
+        'orderby': $('[name=species-sort-order-'+N+']:checked').val()
     };
+    
     var valid = false,
         query = {"in":{}};
 
     $('#grid'+N+'-loading').show();
     $('#taxonLookupControlContainer1').show();
+    $('#listSelect'+N).addClass('working');
     $(table + ' .table-selected').removeClass('table-selected');
     $(table + ' .ui-state-active').removeClass('ui-state-active');
 
@@ -666,11 +713,13 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
               // at this point only adding empty rows, so no affect on totals.
               removeTaggedRows('table#transect-input1'); // redoes row classes
               $('#grid'+N+'-loading').hide();
+              $('#listSelect'+N).removeClass('working');
           }
       });
     } else {
       removeTaggedRows(table);
       $('#grid'+N+'-loading').hide();
+      $('#listSelect'+N).removeClass('working');
     }
   }
 
