@@ -5985,7 +5985,7 @@ if (errors$uniq.length>0) {
   }
 }\n";
       if (array_key_exists('active', $options)) {
-        self::$late_javascript .= "else {indiciaFns.activeTab(tabs$uniq.tabs,'".$options['active']."');}\n";
+        self::$late_javascript .= "else {indiciaFns.activeTab(tabs$uniq,'".$options['active']."');}\n";
       }
       if (array_key_exists('style', $options) && $options['style']=='wizard') {
         self::$late_javascript .= "$('#$divId .ui-tabs-nav').hide();\n";
