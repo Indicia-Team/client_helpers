@@ -187,7 +187,7 @@ class iform_group_admin {
       'columns'=>$columns
     ));
     $r .= '<div style="display: none"><div id="dialog-form" title="Change access level">
-  <p>The user will be able to access pages with the folloing access level or lower.</p>
+  <p>The user will be able to access pages with the following access level or lower.</p>
   <form>
     <fieldset>
       <label for="update_access_level_to">Update access level to</label>
