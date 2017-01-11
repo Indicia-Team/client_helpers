@@ -244,7 +244,7 @@ class iform_group_admin {
         ));
         $found=false;
         foreach($admins as $admin) {
-          if ($admin['user_id']===hostsite_get_user_field('indicia_user_id')) {
+          if ($admin['user_id']==hostsite_get_user_field('indicia_user_id')) {
             $found=true;
             break;
           }
