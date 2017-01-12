@@ -519,7 +519,7 @@ class iform_sectioned_transects_edit_transect {
     }
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) {
-      $systems[$system] = lang::get($system);
+      $systems[$system] = lang::get("sref:$system");
     }
     $r .= data_entry_helper::sref_and_system(array(
       'fieldname' => 'location:centroid_sref',
