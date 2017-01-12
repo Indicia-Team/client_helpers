@@ -18,21 +18,6 @@ jQuery(document).ready(function ($) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
   }
 
-
-  function recurseNodes(nodes) {
-    var html = '';
-    $.each(nodes, function () {
-      html += '<li><span>' + this.name + '</span>';
-      if (this.children.length > 0) {
-        html += '<ul>';
-        html += recurseNodes(this.children);
-        html += '</ul>';
-      }
-      html += '</li>';
-    });
-    return html;
-  }
-
   // Fix up all pantheon links
   $.each($('.button-links a, .buttons-list a'), function () {
     join = ($(this).attr('href').match(/\?/) || q !== '') ? '&' : '?';
@@ -55,56 +40,52 @@ jQuery(document).ready(function ($) {
     });
   };
 
-  window.formatOsirisResources = function () {
-    var flat;
-    var nodes;
-    var toplevelNodes;
-    var lookupList;
-    var n;
-    var i;
-    var html;
-    $.each($('td.col-resource'), function () {
-      flat = JSON.parse($(this).html());
-      nodes = [];
-      toplevelNodes = [];
-      lookupList = {};
+  function recurseNodes(node, lookupListById) {
+    var html = '';
+    var parent = '';
+    if (node.parent_id && typeof lookupListById[node.parent_id] !== 'undefined') {
+      parent = lookupListById[node.parent_id];
+      html = recurseNodes(parent, lookupListById);
+      html += '<span>' + parent.name + '</span> &gt;&gt; ';
+    }
+    return html;
+  }
 
+  window.formatOsirisResources = function () {
+    $.each($('td.col-resource'), function () {
+      var flat = JSON.parse($(this).html());
+      var n;
+      var i;
+      var lookupListById = {};
+      var allParentIds = [];
+      var leafList = [];
+      var html = '<ul>';
+
+      // Convert the list of nodes in the report output to lists we can easily lookup against
       for (i = 0; i < flat.length; i++) {
         n = {
           id: flat[i][0],
           name: flat[i][2],
-          parent_id: ((flat[i][1] === 0) ? null : flat[i][1]),
+          parent_id: (flat[i][1] === 0) ? null : flat[i][1],
           children: []
         };
-        lookupList[n.id] = n;
-        nodes.push(n);
-        if (n.parent_id == null) {
-          toplevelNodes.push(n);
+        lookupListById[n.id] = n;
+        // Need a list of all parents so we can easily detect leaf nodes
+        if (n.parent_id !== null) {
+          allParentIds.push(n.parent_id);
         }
       }
-
-      $.each(nodes, function () {
-        if (!(this.parent_id == null)) {
-          if (typeof lookupList[this.parent_id] === 'undefined') {
-            lookupList[this.parent_id] = {
-              id: this.parent_id,
-              name: '<em>unknown</em>',
-              parent_id: null,
-              children: []
-            };
-            toplevelNodes.push(lookupList[this.parent_id]);
-          }
-          lookupList[this.parent_id].children = lookupList[this.parent_id].children.concat([this]);
+      // Find the leaf nodes
+      $.each(lookupListById, function () {
+        if ($.inArray(this.id, allParentIds) === -1) {
+          leafList.push(this);
         }
       });
-      html = '<ul>';
-      $.each(toplevelNodes, function () {
-        html += '<li><span>' + this.name + '</span>';
-        if (this.children.length > 0) {
-          html += '<ul>';
-          html += recurseNodes(this.children);
-          html += '</ul>';
-        }
+      // output each leaf and its chain of parents
+      $.each(leafList, function () {
+        html += '<li>';
+        html += recurseNodes(this, lookupListById);
+        html += '<span>' + this.name + '</span>';
         html += '</li>';
       });
       html += '</ul>';
