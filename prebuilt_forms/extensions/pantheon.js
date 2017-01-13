@@ -27,7 +27,7 @@ jQuery(document).ready(function ($) {
   indiciaFns.applyLexicon = function () {
     var termAlias;
     // apply the Lexicon
-    $.each($('.lexicon span').not('.processed'), function () {
+    $.each($('.lexicon span, .lexicon th a').not('.processed'), function () {
       if (typeof indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')] !== 'undefined') {
         $(this).attr('title', indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')]);
         $(this).addClass('lexicon-term');
@@ -37,6 +37,10 @@ jQuery(document).ready(function ($) {
         $(this).after('<a class="lexicon-info" href="/pantheon/lexicon/' + termAlias + '">i</a>');
         $(this).addClass('processed');
       }
+    });
+    // Forces sorting click handlers added to grid column th to not override the link on lexicon items
+    $('.lexicon th a.lexicon-info').click(function () {
+      window.location = $(this).attr('href');
     });
   };
 
