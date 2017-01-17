@@ -114,8 +114,38 @@ class iform_scratchpad_list_edit {
     $saveLabel = lang::get('Save');
     $cancelLabel = lang::get('Cancel');
     $reloadPath = self::getReloadPath();
+    $defaultList = '';
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
+    if (!empty($_GET['scratchpad_list_id'])) {
+      $list = data_entry_helper::get_population_data(array(
+        'table' => 'scratchpad_list',
+        'extraParams' => $auth['read'] + array('id' => $_GET['scratchpad_list_id'])
+      ));
+      $entries = data_entry_helper::get_population_data(array(
+        'table' => 'scratchpad_list_entry',
+        'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET['scratchpad_list_id'])
+      ));
+      $entryIds = [];
+      foreach ($entries as $entry) {
+        $entryIds[] = $entry['entry_id'];
+      };
+      $taxa = data_entry_helper::get_population_data(array(
+        'table' => 'taxa_taxon_list',
+        'extraParams' => $auth['read'] + array(
+          'view' => 'cache',
+          'query' => json_encode(array('in'=>array('id' => $entryIds)))
+        )
+      ));
+
+      data_entry_helper::$entity_to_load = array(
+        'scratchpad_list:title' => $list[0]['title'],
+        'scratchpad_list:description' => $list[0]['description']
+      );
+      foreach ($taxa as $taxonInList) {
+        $defaultList .= "<span class=\"matched\" data-id=\"$taxonInList[id]\">$taxonInList[taxon]</span><br/>";
+      }
+    }
     $r .= data_entry_helper::hidden_text(array(
       'fieldname' => 'website_id',
       'default' => $conn['website_id']
@@ -135,12 +165,13 @@ class iform_scratchpad_list_edit {
       'class' => 'control-width-6'
     ));
     global $indicia_templates;
-    $indicia_templates['scratchpad_input'] = '<div contenteditable="true" id="{id}"{class}></div>';
+    $indicia_templates['scratchpad_input'] = '<div contenteditable="true" id="{id}"{class}>{default}</div>';
     $r .= data_entry_helper::apply_template('scratchpad_input', array(
       'id' => 'scratchpad-input',
       'label' => lang::get('Enter the list of items'),
       'helpText' => lang::get('Type in or paste items separated by commas or on separate lines.'),
-      'class' => 'control-width-6'
+      'class' => 'control-width-6',
+      'default' => $defaultList
     ));
     $r .= data_entry_helper::hidden_text(array(
       'id' => 'hidden-entries-list',
@@ -170,7 +201,6 @@ HTML;
    */
   public static function get_submission($values, $args) {
     $structure = array('model' => 'scratchpad_list', 'metaFields' => array('entries'));
-    drupal_set_message('here');
     return data_entry_helper::build_submission($values, $structure);
   }
 

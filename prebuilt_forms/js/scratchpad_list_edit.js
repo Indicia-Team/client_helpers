@@ -10,27 +10,23 @@ jQuery(document).ready(function ($) {
   }
 
   function tidyInput() {
-    var input = $('#scratchpad-input').html();
+    var input = $('#scratchpad-input')[0].innerText;
     var inputDirty;
     var inputList;
     inputClean = [];
-    // clear out contenteditable divs (used for CRLF)
-    inputDirty = input.replace(/<div>/g, '<br>').replace(/<\/div>/g, '<br>');
     // HTML whitespace clean
-    inputDirty = inputDirty.replace(/&nbsp;/g, ' ');
-    // Remove error spans
-    inputDirty = inputDirty.replace(/<span[^>]*>/g, '').replace(/<\/span>/g, '');
-    // Remove stuff in parenthesis - left from a previous scan results?
+    inputDirty = input.replace(/&nbsp;/g, ' ');
+    // Remove stuff in parenthesis - left from a previous scan result, or subgenera, both are not needed.
     inputDirty = inputDirty.replace(/\([^\)]*\)/g, '');
     // The user might have pasted a comma-separated list
-    inputDirty = inputDirty.replace(/,/g, '<br>');
-    inputList = inputDirty.split(/<br(\/)?>/);
+    inputDirty = inputDirty.replace(/,/g, '\n');
+    inputList = inputDirty.split('\n');
 
     $.each(inputList, function () {
       var token;
-      if (typeof this !== 'undefined') {
+      if (this) {
         token = this.trim();
-        if (token !== '' /*  && inArrayCaseInsensitive(token, inputClean) === -1 */) {
+        if (token !== '') {
           inputClean.push(token);
         }
       }
