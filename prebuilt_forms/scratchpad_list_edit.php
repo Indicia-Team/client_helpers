@@ -143,7 +143,8 @@ class iform_scratchpad_list_edit {
         'scratchpad_list:description' => $list[0]['description']
       );
       foreach ($taxa as $taxonInList) {
-        $defaultList .= "<span class=\"matched\" data-id=\"$taxonInList[id]\">$taxonInList[taxon]</span><br/>";
+        $defaultList .= "<span class=\"matched\" data-id=\"$taxonInList[id]\">" .
+          "$taxonInList[taxon]</span><br/>";
       }
     }
     $r .= data_entry_helper::hidden_text(array(

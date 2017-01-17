@@ -10,7 +10,7 @@ jQuery(document).ready(function ($) {
   }
 
   function tidyInput() {
-    var input = $('#scratchpad-input')[0].innerText;
+    var input = $('#scratchpad-input').html();
     var inputDirty;
     var inputList;
     inputClean = [];
@@ -18,16 +18,25 @@ jQuery(document).ready(function ($) {
     inputDirty = input.replace(/&nbsp;/g, ' ');
     // Remove stuff in parenthesis - left from a previous scan result, or subgenera, both are not needed.
     inputDirty = inputDirty.replace(/\([^\)]*\)/g, '');
-    // The user might have pasted a comma-separated list
-    inputDirty = inputDirty.replace(/,/g, '\n');
-    inputList = inputDirty.split('\n');
-
+    // Comma separated or line separated should both work
+    inputDirty = inputDirty.replace(/,/g, '<br>');
+    inputList = inputDirty.split(/<br(\\)?>/g);
     $.each(inputList, function () {
       var token;
+      var $el;
+      var tokenText;
       if (this) {
         token = this.trim();
-        if (token !== '') {
-          inputClean.push(token);
+        // simple way to strip HTML, even if unbalanced
+        tokenText = token.replace(/<(.+?)>/g, '');
+        if (tokenText) {
+          $el = $(token);
+          if ($el.length && $el[0].localName === 'span' && $el.hasClass('matched')) {
+            // matched strings are kept as they are and not changed
+            inputClean.push(token);
+          } else {
+            inputClean.push(tokenText);
+          }
         }
       }
     });
@@ -53,6 +62,10 @@ jQuery(document).ready(function ($) {
     } else {
       $.each(inputClean, function (idx, rowInput) {
         matches = [];
+        if ($(rowInput).length && $(rowInput)[0].localName === 'span' && $(rowInput).hasClass('matched')) {
+          output.push(rowInput);
+          return true; // to continue $.each
+        }
         $.each(data, function () {
           if (rowInput.toLowerCase() === this.external_key.toLowerCase()) {
             matches.push({ type: 'key', record: this });
@@ -98,22 +111,48 @@ jQuery(document).ready(function ($) {
       auth_token: indiciaData.read.auth_token,
       nonce: indiciaData.read.nonce
     };
+    var token;
+    var $el;
     // convert the list of input values by adding quotes, so they can go into a report query. Also create a version of
     // the list with search term simplification applied to ensure things like spacing and quotes are ignored.
     $.each(inputClean, function () {
-      listForDb.push("'" + this.toLowerCase() + "'");
-      simplifiedListForDb.push(simplify(this));
+      token = this.trim();
+      if (token) {
+        $el = $(token);
+        if (!$el.length || $el[0].localName !== 'span') {
+          listForDb.push("'" + token.toLowerCase() + "'");
+          simplifiedListForDb.push(simplify(token));
+        }
+      }
     });
-    reportParams.list = listForDb.join(',');
-    reportParams.simplified_list = simplifiedListForDb.join(',');
-    $.extend(reportParams, indiciaData.scratchpadSettings.filters);
-    $.ajax({
-      dataType: 'jsonp',
-      url: indiciaData.read.url + 'index.php/services/report/requestReport',
-      data: reportParams,
-      success: matchResponse
-    });
+    // Check there is something to do
+    if (listForDb.length) {
+      reportParams.list = listForDb.join(',');
+      reportParams.simplified_list = simplifiedListForDb.join(',');
+      $.extend(reportParams, indiciaData.scratchpadSettings.filters);
+      $.ajax({
+        dataType: 'jsonp',
+        url: indiciaData.read.url + 'index.php/services/report/requestReport',
+        data: reportParams,
+        success: matchResponse
+      });
+    }
   }
+  /*
+  If click key inside a span.matched, remove the matched class -OK
+  If return at last char of span.matched, put cursor after the span first so the span is not affected -CAN"T DO
+  When matching against db, skip the matched spans
+   */
+
+  indiciaFns.on('keypress', '#scratchpad-input', {}, function () {
+    // Find where the cursor is
+    var el = getSelection().getRangeAt(0).commonAncestorContainer.parentNode;
+    if (el.localName === 'span' && ($(el).hasClass('matched') || $(el).hasClass('ummatched'))) {
+      $(el).removeClass('matched');
+      $(el).removeClass('unmatched');
+      $(el).removeAttr('data-id');
+    }
+  });
 
   $('#scratchpad-check').click(function () {
     tidyInput();
@@ -136,7 +175,7 @@ jQuery(document).ready(function ($) {
     $('#hidden-entries-list').val(entries.join(';'));
   });
 
-  $('#scratchpad-cancel').click(function() {
+  $('#scratchpad-cancel').click(function () {
     window.location = indiciaData.scratchpadSettings.returnPath;
   });
 });
