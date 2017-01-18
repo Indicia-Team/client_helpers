@@ -26,7 +26,7 @@ require_once('includes/user.php');
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  *
  * @package	Client
  * @subpackage PrebuiltForms
@@ -37,7 +37,6 @@ class iform_mnhnl_bird_transect_walks {
   /* TODO
    * Future Enhancements
    * 	General
-   * 		Rename superuser to manager permission
    *      Separate the loading of the OCCList grid view from the population of the map.
    *      Change onShow for tabs to zoom into relevant area: eg location for survey, occlist extent for occlist
    * 	Survey List
@@ -74,7 +73,6 @@ class iform_mnhnl_bird_transect_walks {
 
   public static function get_perms($nid, $args) {
   	$perms = array();
-  	if(isset($args['permission_name']) && $args['permission_name']!='') $perms[] = $args['permission_name'];
   	if(isset($args['edit_permission']) && $args['edit_permission']!='') $perms[] = $args['edit_permission'];
   	return $perms;
   }
@@ -103,6 +101,32 @@ class iform_mnhnl_bird_transect_walks {
         'description'=>'The Indicia ID of the survey that data will be posted into.',
         'type'=>'int'
       ),
+      		array(
+      				'name'=>'location_assignment_type',
+      				'caption'=>'Location Assignment Type',
+      				'description'=>'Choose the method by which locations are assigned to users. The Indicia User ID option requires easy_login.',
+      				'type'=>'select',
+      				'options' => array(
+      						'indicia' => 'Indicia Warehouse User ID recorded in a location attribute',
+      						'cms' => 'CMS User ID recorded in a location attribute'
+      				),
+      				'group' => 'User Interface',
+      				'default' => 'indicia',
+      				'required' => false
+      		),
+      		array(
+      				'name'=>'location_assignment_attr_id',
+      				'caption'=>'Location Assignment Attribute',
+      				'description'=>'The Location attribute that stores the user ID (as defined in the type above). ' .
+      				'Depending on the exact configuration, this may need to be a multi-value one.',
+      				'type'=>'select',
+      				'table'=>'location_attribute',
+      				'valueField'=>'id',
+      				'captionField'=>'caption',
+      				'group' => 'User Interface',
+      				'required' => false
+      		),
+      		
       array(
         'name'=>'locationLayer',
         'caption'=>'Location Layer Definition',
@@ -270,17 +294,7 @@ class iform_mnhnl_bird_transect_walks {
     if(!$occurrence_atlas_code_id)
       return '<p>This form must be used with a survey which has the "'.self::ATTR_ATLAS_CODE.'" occurrence attribute allocated to it. Survey_id = '.$args['survey_id'];
     if ($_POST) {
-      if(!array_key_exists('website_id', $_POST)) { // non Indicia POST, in this case must be the location allocations. add check to ensure we don't corrept the data by accident
-        if(iform_loctools_checkaccess($nid,'admin') && array_key_exists('mnhnlbtw', $_POST)){
-          iform_loctools_deletelocations($nid);
-          foreach($_POST as $key => $value){
-            $parts = explode(':', $key);
-            if($parts[0] == 'location' && $value){
-              iform_loctools_insertlocation($nid, $value, $parts[1]);
-            }
-          }
-        }
-      }
+      // Do nothing special
     } else {
       if (array_key_exists('merge_sample_id1', $_GET) && array_key_exists('merge_sample_id2', $_GET) &&
           hostsite_user_has_permission($args['edit_permission'])){
@@ -357,15 +371,13 @@ class iform_mnhnl_bird_transect_walks {
       $optionsArray_Location[$optionName] = implode(':', $parts);
     }
     // Work out list of locations this user can see.
-    $locations = iform_loctools_listlocations($nid);
+    $locations = iform_mnhnl_listLocations($auth, $args);
     if($locations != 'all'){
         data_entry_helper::$javascript .= "var locationList = [".implode(',', $locations)."];\n";
     }
     drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/hasharray.js', 'module');
     drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.datagrid.js', 'module');
     if (method_exists(get_called_class(), 'getHeaderHTML')) $r .= call_user_func(array(get_called_class(), 'getHeaderHTML'), $args);
-    // Work out list of locations this user can see.
-    // $locations = iform_loctools_listlocations($nid);
     ///////////////////////////////////////////////////////////////////
     // default mode 0 : display a page with tabs for survey selector,
     // locations allocator and reports (last two require permissions)
@@ -374,10 +386,7 @@ class iform_mnhnl_bird_transect_walks {
       // If the user has permissions, add tabs so can choose to see
       // locations allocator
       $tabs = array('#surveyList'=>lang::get('LANG_Surveys'));
-      if(iform_loctools_checkaccess($nid,'admin')){
-        $tabs['#setLocations'] = lang::get('LANG_Allocate_Locations');
-      }
-      if(iform_loctools_checkaccess($nid,'superuser')){
+      if(hostsite_user_has_permission($args['edit_permission'])){
         $tabs['#downloads'] = lang::get('LANG_Download');
       }
       if(count($tabs) > 1){
@@ -452,36 +461,9 @@ mapInitialisationHooks.push(function (div) {
       $r .= '
   <div id="surveyList" class="mnhnl-btw-datapanel"><div id="smp_grid"></div>
     <form><input type="button" value="'.lang::get('LANG_Add_Survey').'" onclick="window.location.href=\''.url('node/'.($nid), array('query' => 'new')).'\'"></form></div>';
-      // Add the locations allocator if user has admin rights.
-      if(iform_loctools_checkaccess($nid,'admin')){
-        $r .= '
-  <div id="setLocations" class="mnhnl-btw-datapanel">
-    <form method="post">
-      <input type="hidden" id="mnhnlbtw" name="mnhnlbtw" value="mnhnlbtw" />';
-        $url = $svcUrl.'/data/location?mode=json&view=detail&auth_token='.$readAuth['auth_token']."&nonce=".$readAuth["nonce"]."&parent_id=NULL&orderby=name&columns=id,name,parent_id";
-        $session = curl_init($url);
-        curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
-        $entities = json_decode(curl_exec($session), true);
-        $userlist = iform_loctools_listusers($nid);
-        if(!empty($entities)){
-          foreach($entities as $entity){
-            if(!$entity["parent_id"]){ // only assign parent locations.
-              $r .= "\n<label for=\"location:".$entity["id"]."\">".$entity["name"].":</label><select id=\"location:".$entity["id"]."\" name=\"location:".$entity["id"]."\"><option value=\"\" >&lt;".lang::get('LANG_Not_Allocated')."&gt;</option>";
-              $defaultuserid = iform_loctools_getuser($nid, $entity["id"]);
-              foreach($userlist as $uid => $a_user){
-                $r .= "<option value=\"".$uid."\" ".($uid == $defaultuserid ? 'selected="selected" ' : '').">".$a_user->name."</option>";
-              }
-              $r .= "</select>";
-            }
-          }
-        }
-        $r .= "
-      <input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"".lang::get('Save Location Allocations')."\" />
-    </form>
-  </div>";
-      }
-      // Add the downloader if user has manager (superuser) rights.
-      if(iform_loctools_checkaccess($nid,'superuser')){
+      // the locations allocator is now a separate form.
+      // Add the downloader if user has manager rights.
+      if(hostsite_user_has_permission($args['edit_permission'])){
         $r .= '
   <div id="downloads" class="mnhnl-btw-datapanel">
     <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/mnhnl_btw_transect_direction_report.xml&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv">

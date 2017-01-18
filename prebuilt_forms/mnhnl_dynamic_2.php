@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * 
  * @package	Client
  * @subpackage PrebuiltForms
@@ -193,7 +193,6 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           $param['fieldname'] != 'cache_lookup' &&
           $param['fieldname'] != 'user_controls_taxon_filter')
         $retVal[] = $param;
-      // Note the includeLocTools is left in in case any child forms use it 
     }
     return $retVal;
   }
@@ -215,7 +214,7 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
     if(!hostsite_user_has_permission($args['edit_permission'])) return('');
     if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));
-    if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
+    if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
     $primary = iform_mnhnl_getTermID(array('read'=>$readAuth), 'indicia:location_types',$args['LocationTypeTerm']);
     $r= '<div id="downloads" >';
     $r .= '<p>'.lang::get('LANG_Data_Download').'</p>';
