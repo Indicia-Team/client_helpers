@@ -637,17 +637,15 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     
     $systems=array();
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
-    foreach($list as $system) $systems[$system] = lang::get($system); 
-    $r .= "<label for=\"imp-sref\">".lang::get('Grid Reference').":</label> <input type=\"text\" id=\"imp-sref\" name=\"sample:entered_sref\" value=\"".(isset(data_entry_helper::$entity_to_load['sample:entered_sref']) ? data_entry_helper::$entity_to_load['sample:entered_sref'] : '')."\" readonly=\"readonly\" class=\"required\" />";
-    $r .= "<input type=\"hidden\" id=\"imp-geom\" name=\"sample:geom\" value=\"".(isset(data_entry_helper::$entity_to_load['sample:geom']) ? data_entry_helper::$entity_to_load['sample:geom'] : '')."\" />";
-    if (count($systems) == 1) {
-      // Hidden field for the system
-      $keys = array_keys($systems);
-      $r .= "<input type=\"hidden\" id=\"imp-sref-system\" name=\"sample:entered_sref_system\" value=\"".$keys[0]."\" />\n";
-    } else {
-      $r .= data_entry_helper::sref_system_select(array('fieldname'=>'sample:entered_sref_system'));
-    }
-    
+    foreach($list as $system) $systems[$system] = lang::get('sref:'.$system) == 'sref:'.$system ? lang::get($system) : lang::get('sref:'.$system); 
+    $r .= data_entry_helper::sref_and_system(array(
+      'label' => lang::get('Grid Reference'),
+      'fieldname'=>'sample:entered_sref',
+      'findMeButton' => false,
+      'systems' => $systems
+    ));
+    data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
+
     if(isset($args['georefDriver']) && $args['georefDriver']!='' && !isset(data_entry_helper::$entity_to_load['sample:id']))
 	    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
     $r .= data_entry_helper::map_panel($options, $olOptions);

@@ -1180,7 +1180,8 @@ $(document).ready(function() {
       $('#location_type_id').change();
       if($('#location_type_id option:not([value=]):enabled').length == 0)
         alert('You do not have permission to create locations for this country');
-    }
+    } else // but may still need adjust max number of sections etc
+      locTypeChange(null);
   });
 
     locTypeChange = function(evt){
@@ -1245,7 +1246,7 @@ $(document).ready(function() {
         $('.insert-section').hide();
     };
 
-    locTypeChange();
+    locTypeChange(null);
     $('#location_type_id').change(locTypeChange);
   });
 }(jQuery));

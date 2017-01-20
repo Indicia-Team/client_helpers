@@ -813,6 +813,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     if (!empty($args['attribute_configuration'])) {
     	$attribute_configuration = json_decode($args['attribute_configuration'], true);
     	foreach ($attribute_configuration as $attrConfig) {
+    		if(empty($attributes[$attrConfig['id']])) continue; // may be a section only attribute
     		$rules = explode("\n", $attributes[$attrConfig['id']]['validation_rules']);
     		$req = array_search('required', $rules);
     	  if($req !== false) { // required validation must be switched off on the warehouse

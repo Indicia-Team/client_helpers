@@ -71,13 +71,13 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
   "title":"Country Configuration List",
   "sequence":
   [{"type":"map",
-    "title":"Location Type",
+    "title":"Country Configuration",
     "mapping": {
       "country_names":{
         "type":"seq",
-        "title":"Countries",
+        "title":"Country List",
         "sequence": [{"type":"map",
-                     "title":"Location Type",
+                     "title":"Countries",
                      "mapping": {"country":{"type":"str","desc":"Name of country this configuration applies to. Use &quot;Default&quot; for all/default"}}}]},
       "location_types":{
         "type":"seq",
@@ -609,10 +609,10 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
             'lookupValues' => $lookUpValues
         ));
       } else if(!$settings['locationId']) { // new site, only one possible value
-      	$r .= '<input type="hidden" name="location:location_type_id" id="location:location_type_id" value="'.$typeTermIDs[0]['id'].'" />';
+      	$r .= '<input type="hidden" name="location:location_type_id" id="location_type_id" value="'.$typeTermIDs[0]['id'].'" />';
       	$display_location_type_id = $typeTermIDs[0]['id'];
-      } else {
-      	// else user can edit the location type for an existing site but only one option -> just leave the location_type_id alone: don't even include in the data submitted.
+      } else { // else user can edit the location type for an existing site but only one option
+      	$r .= '<input type="hidden" name="location:location_type_id" id="location_type_id" value="'.data_entry_helper::$entity_to_load['location:location_type_id'].'" />';
       	$display_location_type_id = data_entry_helper::$entity_to_load['location:location_type_id'];
       }
     } else {
