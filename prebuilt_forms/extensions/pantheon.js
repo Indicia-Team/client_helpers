@@ -1,7 +1,5 @@
 jQuery(document).ready(function ($) {
-  var dirty = window.location.href.match(/\?q=/);
-  var q = dirty ? '?q=' : '';
-  var join;
+  var typeParam;
 
   // retrieve a query string parameter
   function getParameterByName(name) {
@@ -18,10 +16,18 @@ jQuery(document).ready(function ($) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
   }
 
+  typeParam = getParameterByName('dynamic-sample_id');
+
   // Fix up all pantheon links
   $.each($('.button-links a, .buttons-list a'), function () {
-    join = ($(this).attr('href').match(/\?/) || q !== '') ? '&' : '?';
-    $(this).attr('href', q + $(this).attr('href') + join + 'dynamic-sample_id=' + getParameterByName('dynamic-sample_id'));
+    // grab the URL, excluding the query parameters, but including the ?q= if dirty URLs under D7.
+    var join = ($(this).attr('href').match(/\?/)) ? '&' : '?';
+    var parts = $(this).attr('href').split(join);
+    var href = parts[0] + join + 'dynamic-sample_id=' + getParameterByName('dynamic-sample_id');
+    if (typeParam) {
+      href += '&dynamic-sample_type=' + typeParam;
+    }
+    $(this).attr('href', href);
   });
 
   indiciaFns.applyLexicon = function () {
