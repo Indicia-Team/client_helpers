@@ -4,13 +4,19 @@ span.matched {
 span.unmatched {
   color: red;
 }
+button.non-unique-name {
+  margin-left: 2em;
+}
 #scratchpad-input, textarea {
 //  width: 400px;
 }
 #scratchpad-input {
   display: inline-block;
   min-height: 200px;
-  border: solid silver 1px;
+  -moz-appearance: textfield-multiline;
+  -webkit-appearance: textarea;
+  border: 1px solid gray;
+  background: white;
 }
 #scratchpad-save-form div {
   width: 450px;

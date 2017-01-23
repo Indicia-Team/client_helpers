@@ -34,6 +34,8 @@ jQuery(document).ready(function ($) {
           if ($el.length && $el[0].localName === 'span' && $el.hasClass('matched')) {
             // matched strings are kept as they are and not changed
             inputClean.push(token);
+          } else if ($el.length && $el[0].localName === 'button' && $el.hasClass('non-unique-name')) {
+            // skip the matching options for a taxon that could not match a unique name
           } else {
             inputClean.push(tokenText);
           }
@@ -55,6 +57,7 @@ jQuery(document).ready(function ($) {
     var matches;
     var output = [];
     var foundIds = [];
+    var nonUniqueBatchIdx = 0;
     $('#scratchpad-remove-duplicates').attr('disabled', 'disabled');
     $('#scratchpad-save').attr('disabled', 'disabled');
     if (typeof data.error !== 'undefined') {
@@ -75,7 +78,7 @@ jQuery(document).ready(function ($) {
         });
         if (matches.length === 0) {
           // Input item was not matched
-          output.push('<span class="unmatched" data-state="unmatched">' + rowInput + ' (unmatched)</span>');
+          output.push('<span class="unmatched" data-state="unmatched">' + rowInput + ' (match not found)</span>');
         } else if (matches.length === 1 && $.inArray(matches[0].record.id, foundIds) > -1) {
           // Input matched but this is the 2nd instance of same matched taxon
           output.push('<span class="unmatched" data-state="duplicate">' + rowInput + ' (duplicate species)</span>');
@@ -87,12 +90,17 @@ jQuery(document).ready(function ($) {
               matches[0].record.external_key + ' (' + matches[0].record.taxon + ')' +
               '</span>');
           } else {
-            // @todo Check this works and is handled properly (case where a name does not give a unique match)
             output.push('<span class="matched" data-id="' + matches[0].record.id + '">' + matches[0].record.taxon + '</span>');
           }
         } else {
-          output.push('<span class="unmatched" data-state="non-unique">' + rowInput +
-            ' (name not specific enough - unique match could not be found)</span>');
+          // Name does not give a unique match
+          output.push('<span class="unmatched" data-state="non-unique" data-batch="' + nonUniqueBatchIdx + '">' +
+              rowInput + ' (unique match could not be found - click on the correct option below)</span>');
+          $.each(matches, function () {
+            output.push('<button type="button" class="non-unique-name" data-batch="' + nonUniqueBatchIdx +
+              '" data-id="' + this.record.id + '">' + this.record.unambiguous + '</button>');
+          });
+          nonUniqueBatchIdx++;
         }
         if (foundIds.length) {
           $('#scratchpad-save').removeAttr('disabled');
@@ -152,6 +160,17 @@ jQuery(document).ready(function ($) {
       $(el).removeClass('unmatched');
       $(el).removeAttr('data-id');
     }
+  });
+
+  indiciaFns.on('click', 'button.non-unique-name', {}, function (e) {
+    var button = e.currentTarget;
+    var speciesName = $(button).text();
+    var nonUniqueBatchIdx = $(button).attr('data-batch');
+    var elementsToRemove = $('[data-batch=' + nonUniqueBatchIdx + '],[data-batch=' + nonUniqueBatchIdx + '] + br');
+    $(button).after('<span class="matched" data-id="' + $(button).attr('data-id') + '">' + speciesName + '</span><br/>');
+    $.each(elementsToRemove, function () {
+      $(this).remove();
+    });
   });
 
   $('#scratchpad-check').click(function () {
