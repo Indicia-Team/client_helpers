@@ -18,9 +18,11 @@ jQuery(document).ready(function ($) {
     inputDirty = input.replace(/&nbsp;/g, ' ');
     // Remove stuff in parenthesis - left from a previous scan result, or subgenera, both are not needed.
     inputDirty = inputDirty.replace(/\([^\)]*\)/g, '');
+    // Remove stuff in square brackets - normally common names left from a previous scan result.
+    inputDirty = inputDirty.replace(/\[[^\]]*\]/g, '');
     // Comma separated or line separated should both work
-    inputDirty = inputDirty.replace(/,/g, '<br>');
-    inputList = inputDirty.split(/<br(\\)?>/g);
+    inputDirty = inputDirty.replace(/,/g, '<br>').replace(/<\/p>/g, '</p><br/>');
+    inputList = inputDirty.split(/<br\/?>/g);
     $.each(inputList, function () {
       var token;
       var $el;
@@ -28,14 +30,14 @@ jQuery(document).ready(function ($) {
       if (this) {
         token = this.trim();
         // simple way to strip HTML, even if unbalanced
-        tokenText = token.replace(/<(.+?)>/g, '');
+        tokenText = token.replace(/<(.+?)>/g, '').trim();
         if (tokenText) {
           $el = $(token);
           if ($el.length && $el[0].localName === 'span' && $el.hasClass('matched')) {
             // matched strings are kept as they are and not changed
             inputClean.push(token);
-          } else if ($el.length && $el[0].localName === 'button' && $el.hasClass('non-unique-name')) {
-            // skip the matching options for a taxon that could not match a unique name
+          } else if ($el.length && $el[0].localName === 'a' && $el.hasClass('non-unique-name')) {
+            // skip the matching option buttons for a list item that that could not match a unique name
           } else {
             inputClean.push(tokenText);
           }
@@ -57,48 +59,69 @@ jQuery(document).ready(function ($) {
     var matches;
     var output = [];
     var foundIds = [];
+    var foundPreferredMatches = [];
     var nonUniqueBatchIdx = 0;
-    $('#scratchpad-remove-duplicates').attr('disabled', 'disabled');
+    var preferred;
+
+    $('#scratchpad-remove-duplicates').hide();
     $('#scratchpad-save').attr('disabled', 'disabled');
     if (typeof data.error !== 'undefined') {
       alert(data.error);
     } else {
+      // Loop through the input rows so we can check against the results from the db to see which are matched
       $.each(inputClean, function (idx, rowInput) {
         matches = [];
+        // Stuff that's already matched can just go straight into the output
         if ($(rowInput).length && $(rowInput)[0].localName === 'span' && $(rowInput).hasClass('matched')) {
+          foundIds.push($(rowInput).attr('data-id'));
           output.push(rowInput);
           return true; // to continue $.each
         }
+        // Find if the current row in the input matches either the external key or term of a match in the db.
         $.each(data, function () {
           if (rowInput.toLowerCase() === this.external_key.toLowerCase()) {
+            // there is a match against the input external key
             matches.push({ type: 'key', record: this });
           } else if (simplify(rowInput) === this.simplified) {
-            matches.push({ type: 'term', record: this });
+            // there is a match against an input name
+            if (this.preferred === 't') {
+              foundPreferredMatches.push(this.external_key + '|' + this.name);
+            }
+            // The next line skips non-preferred matches that look identical to their preferred names, e.g. taxa
+            // with minor author variations
+            if (this.preferred === 't' || $.inArray(this.external_key + '|' + this.name, foundPreferredMatches) === -1) {
+              matches.push({ type: 'term', record: this });
+            }
           }
         });
         if (matches.length === 0) {
           // Input item was not matched
           output.push('<span class="unmatched" data-state="unmatched">' + rowInput + ' (match not found)</span>');
         } else if (matches.length === 1 && $.inArray(matches[0].record.id, foundIds) > -1) {
-          // Input matched but this is the 2nd instance of same matched taxon
+          // Input matched but this is the 2nd instance of same matched name
           output.push('<span class="unmatched" data-state="duplicate">' + rowInput + ' (duplicate species)</span>');
-          $('#scratchpad-remove-duplicates').removeAttr('disabled');
+          $('#scratchpad-remove-duplicates').show();
         } else if (matches.length === 1) {
           foundIds.push(matches[0].record.id);
           if (matches[0].type === 'key') {
             output.push('<span class="matched" data-id="' + matches[0].record.id + '">' +
-              matches[0].record.external_key + ' (' + matches[0].record.taxon + ')' +
+              matches[0].record.external_key + ' (' + matches[0].record.name + ')' +
               '</span>');
           } else {
-            output.push('<span class="matched" data-id="' + matches[0].record.id + '">' + matches[0].record.taxon + '</span>');
+            output.push('<span class="matched" data-id="' + matches[0].record.id + '">' + matches[0].record.name + '</span>');
           }
         } else {
           // Name does not give a unique match
           output.push('<span class="unmatched" data-state="non-unique" data-batch="' + nonUniqueBatchIdx + '">' +
               rowInput + ' (unique match could not be found - click on the correct option below)</span>');
           $.each(matches, function () {
-            output.push('<button type="button" class="non-unique-name" data-batch="' + nonUniqueBatchIdx +
-              '" data-id="' + this.record.id + '">' + this.record.unambiguous + '</button>');
+            preferred = typeof this.record.preferred !== 'undefined' && this.record.preferred === 't';
+            output.push('<a contenteditable="false" class="non-unique-name' +
+                (preferred ? ' preferred' : '') +
+                '" data-batch="' + nonUniqueBatchIdx +
+                '" data-id="' + this.record.id + '">' +
+                this.record.unambiguous +
+              '</a>');
           });
           nonUniqueBatchIdx++;
         }
@@ -146,11 +169,6 @@ jQuery(document).ready(function ($) {
       });
     }
   }
-  /*
-  If click key inside a span.matched, remove the matched class -OK
-  If return at last char of span.matched, put cursor after the span first so the span is not affected -CAN"T DO
-  When matching against db, skip the matched spans
-   */
 
   indiciaFns.on('keypress', '#scratchpad-input', {}, function () {
     // Find where the cursor is
@@ -162,7 +180,10 @@ jQuery(document).ready(function ($) {
     }
   });
 
-  indiciaFns.on('click', 'button.non-unique-name', {}, function (e) {
+  /**
+   * Click on an option provided when a non-unique name found, selects that name and removes the other options.
+   */
+  indiciaFns.on('click', 'a.non-unique-name', {}, function (e) {
     var button = e.currentTarget;
     var speciesName = $(button).text();
     var nonUniqueBatchIdx = $(button).attr('data-batch');
@@ -171,6 +192,7 @@ jQuery(document).ready(function ($) {
     $.each(elementsToRemove, function () {
       $(this).remove();
     });
+    $('#scratchpad-save').removeAttr('disabled');
   });
 
   $('#scratchpad-check').click(function () {

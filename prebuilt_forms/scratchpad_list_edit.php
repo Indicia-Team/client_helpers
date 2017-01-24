@@ -110,7 +110,7 @@ class iform_scratchpad_list_edit {
       'returnPath' => hostsite_get_url($args['redirect_on_success'])
     );
     $checkLabel = lang::get('Check');
-    $removeDuplicatesLabel = lang::get('Remove duplicate');
+    $removeDuplicatesLabel = lang::get('Remove duplicates');
     $saveLabel = lang::get('Save');
     $cancelLabel = lang::get('Cancel');
     $reloadPath = self::getReloadPath();
@@ -120,11 +120,13 @@ class iform_scratchpad_list_edit {
     if (!empty($_GET['scratchpad_list_id'])) {
       $list = data_entry_helper::get_population_data(array(
         'table' => 'scratchpad_list',
-        'extraParams' => $auth['read'] + array('id' => $_GET['scratchpad_list_id'])
+        'extraParams' => $auth['read'] + array('id' => $_GET['scratchpad_list_id']),
+        'caching' => false
       ));
       $entries = data_entry_helper::get_population_data(array(
         'table' => 'scratchpad_list_entry',
-        'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET['scratchpad_list_id'])
+        'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET['scratchpad_list_id']),
+        'caching' => false
       ));
       $entryIds = [];
       foreach ($entries as $entry) {
@@ -146,6 +148,10 @@ class iform_scratchpad_list_edit {
         $defaultList .= "<span class=\"matched\" data-id=\"$taxonInList[id]\">" .
           "$taxonInList[taxon]</span><br/>";
       }
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => 'scratchpad_list:id',
+        'default' => $_GET['scratchpad_list_id']
+      ));
     }
     $r .= data_entry_helper::hidden_text(array(
       'fieldname' => 'website_id',
@@ -171,7 +177,6 @@ class iform_scratchpad_list_edit {
       'id' => 'scratchpad-input',
       'label' => lang::get('Enter the list of items'),
       'helpText' => lang::get('Type in or paste items separated by commas or on separate lines.'),
-      'class' => 'control-width-6',
       'default' => $defaultList
     ));
     $r .= data_entry_helper::hidden_text(array(
@@ -184,11 +189,11 @@ class iform_scratchpad_list_edit {
     ));
     $r .= <<<HTML
 <button id="scratchpad-check" type="button">$checkLabel</button>
-<button id="scratchpad-remove-duplicates" type="button" disabled="disabled">$removeDuplicatesLabel</button>
+<button id="scratchpad-remove-duplicates" type="button" style="display: none">$removeDuplicatesLabel</button>
 <button id="scratchpad-save" type="submit" disabled="disabled">$saveLabel</button>
 HTML;
     if (!empty($args['redirect_on_success']))
-      $r .= "<button id=\"scratchpad-cancel\" type=\"button\">$cancelLabel</button>\n";
+      $r .= "\n<button id=\"scratchpad-cancel\" type=\"button\">$cancelLabel</button>\n";
     $r .= "</form>\n";
     data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
     return $r;
@@ -203,6 +208,7 @@ HTML;
   public static function get_submission($values, $args) {
     $structure = array('model' => 'scratchpad_list', 'metaFields' => array('entries'));
     return data_entry_helper::build_submission($values, $structure);
+
   }
 
   protected static function getReloadPath() {

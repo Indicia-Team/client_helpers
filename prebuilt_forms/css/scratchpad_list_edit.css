@@ -4,19 +4,26 @@ span.matched {
 span.unmatched {
   color: red;
 }
-button.non-unique-name {
+a.non-unique-name {
   margin-left: 2em;
+  text-align: left;
 }
-#scratchpad-input, textarea {
-//  width: 400px;
+a.non-unique-name.preferred {
+  background: url(../images/nuvola/ok-16px.png) right center no-repeat;
+  padding-right: 20px;
 }
 #scratchpad-input {
   display: inline-block;
-  min-height: 200px;
+  min-height: 400px;
+  width: 75%;
   -moz-appearance: textfield-multiline;
   -webkit-appearance: textarea;
   border: 1px solid gray;
   background: white;
+}
+/* IE */
+#scratchpad-input p {
+  margin: 0;
 }
 #scratchpad-save-form div {
   width: 450px;
