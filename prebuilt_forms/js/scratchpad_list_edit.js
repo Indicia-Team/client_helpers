@@ -53,9 +53,6 @@ jQuery(document).ready(function ($) {
    * @param data
    */
   function matchResponse(data) {
-    // @todo Case where a species is duplicated in the search list
-    // @todo Editing a row should clear the matched flag
-    // @todo Running a match should only check the rows that don't have a results flag
     var matches;
     var output = [];
     var foundIds = [];
@@ -128,6 +125,7 @@ jQuery(document).ready(function ($) {
         if (foundIds.length) {
           $('#scratchpad-save').removeAttr('disabled');
         }
+        return true;
       });
       $('#scratchpad-input').html(output.join('<br/>'));
     }
@@ -142,6 +140,7 @@ jQuery(document).ready(function ($) {
       auth_token: indiciaData.read.auth_token,
       nonce: indiciaData.read.nonce
     };
+    var postParams = {};
     var token;
     var $el;
     // convert the list of input values by adding quotes, so they can go into a report query. Also create a version of
@@ -158,15 +157,14 @@ jQuery(document).ready(function ($) {
     });
     // Check there is something to do
     if (listForDb.length) {
-      reportParams.list = listForDb.join(',');
-      reportParams.simplified_list = simplifiedListForDb.join(',');
-      $.extend(reportParams, indiciaData.scratchpadSettings.filters);
-      $.ajax({
-        dataType: 'jsonp',
-        url: indiciaData.read.url + 'index.php/services/report/requestReport',
-        data: reportParams,
-        success: matchResponse
-      });
+      postParams.list = listForDb.join(',');
+      postParams.simplified_list = simplifiedListForDb.join(',');
+      $.extend(postParams, indiciaData.scratchpadSettings.filters);
+      $.post(indiciaData.read.url + 'index.php/services/report/requestReport?' + $.param(reportParams),
+        { params: JSON.stringify(postParams) },
+        matchResponse,
+        'jsonp'
+      );
     }
   }
 
