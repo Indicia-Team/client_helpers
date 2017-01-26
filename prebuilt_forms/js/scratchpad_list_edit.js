@@ -20,8 +20,12 @@ jQuery(document).ready(function ($) {
     inputDirty = inputDirty.replace(/\([^\)]*\)/g, '');
     // Remove stuff in square brackets - normally common names left from a previous scan result.
     inputDirty = inputDirty.replace(/\[[^\]]*\]/g, '');
-    // Comma separated or line separated should both work
-    inputDirty = inputDirty.replace(/,/g, '<br>').replace(/<\/p>/g, '</p><br/>');
+    // Comma separated, line separated or table rows should both work. Convert all to a <br> element so we can split
+    // each name into a separate token.
+    inputDirty = inputDirty
+      .replace(/,/g, '<br>')
+      .replace(/<\/p>/g, '</p><br>')
+      .replace(/<\/td>(\s)*<\/tr>/g, '<br></td></tr>');
     inputList = inputDirty.split(/<br\/?>/g);
     $.each(inputList, function () {
       var token;
