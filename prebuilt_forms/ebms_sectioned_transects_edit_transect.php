@@ -142,6 +142,14 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
           'group'=>'Transects Editor Settings'
         ),
         array(
+          'name'=>'countries',
+          'caption'=>'Valid Countries',
+          'description'=>'A bar (&#124;) separated list of countries to be included as options in the country control. Leave black for all. These can be either names or Indicia location IDs.',
+          'type'=>'string',
+          'required' => false,
+          'group'=>'Transects Editor Settings'
+        ),
+        array(
       		'name'=>'country_attr',
       		'caption'=>'Country Location attribute',
       		'description'=>'Location attribute that stores the Country. Single value integer.',
@@ -152,6 +160,16 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       		'group'=>'Transects Editor Settings',
       		'required'=>true
       	),
+        array(
+          'name'=>'country_layer_lookup',
+          'caption'=>'WFS Layer specification for Country Lookup',
+          'description'=>'Comma separated: proxiedurl,featurePrefix,featureType,featureNS,srsName. Leave blank for no lookup.',
+          // http://biomonitor.mnhn.lu/?q=proxy&url=http://biomonitor.mnhn.lu:8080/geoserver/wfs,indicia,locations,http://dbtest.dyndns.info/indicia/,EPSG:2169
+          'type'=>'textarea',
+          'required' => false,
+          'group'=>'Transects Editor Settings',
+        ),
+      			
         array(
           'name'=>'autogenerateCode',
           'caption'=>'Autogenerate Code',
@@ -308,7 +326,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       // Allocations of Users are done by a person holding the managerPermission or the allocate Country Manager permission.
       // The extra check on this for Country managers is done later
       'canAllocUser' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission']),
-      'country_configurations' => $country_configurations
+      'country_configurations' => $country_configurations,
+      'country_location_type_id' => $args['country_location_type_id'],
+      'country_layer_lookup' => explode(',', $args['country_layer_lookup'])
     );
 
     // WARNING!!!! we are making the assumption that the attributes are defined to be the same for all the location_types.
@@ -548,17 +568,28 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     // as a drop down from the location list, location_type_id=Country.
     $r .= '<fieldset><legend>'.$settings['countryAttr']['caption'].'</legend>';
     if($canEditFields) {
+      $extraParams = $auth['read'] + array('view'=>'detail', 'deleted'=>'f', 'location_type_id'=>$args['country_location_type_id'],'orderby'=>'name');
+      $locations = data_entry_helper::get_population_data(array(
+              'table' => 'location',
+              'extraParams' => $extraParams,
+              'columns'=>'id,name'
+          ));
+    	$values = array();
+      if(isset($args['countries']) && $args['countries']!='') {
+        $countries = explode('|', $args['countries']);
+        foreach($locations as $location)
+          if(in_array($location['id'], $countries) || in_array($location['name'], $countries))
+            $values[$location['id']] = lang::get($location['name']);
+      } else {
+        foreach($locations as $location)
+          $values[$location['id']] = lang::get($location['name']);
+      }
       $r .= data_entry_helper::select(array(
     		'id'=>$settings['countryAttr']['id'],
     		'fieldname'=>$settings['countryAttr']['fieldname'],
     		'label'=>$settings['countryAttr']['caption'], // already translated
-    		'table'=>'location',
-    		'valueField'=>'id',
-    		'captionField'=>'name',
+    		'lookupValues' => $values,
     		'blankText'=>lang::get('<Please select>'),
-    		'extraParams'=>$auth['read']+array('view'=>'list',
-    				'orderby'=>'name',
-    				'location_type_id'=>$args['country_location_type_id']),
     		'validation'=>array('required'),
     		'default'=>$settings['countryAttr']['default']
       ));
@@ -576,9 +607,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
                 'captionField'=>'name',
                 'blankText'=>lang::get('<Please select>'),
                 'extraParams'=>$auth['read']+array('view'=>'list',
-                'location_type_id'=>$args['country_location_type_id']),
+                  'location_type_id'=>$args['country_location_type_id']),
                 'default'=>$settings['countryAttr']['default'],
-                'disabled'=>'disabled="disabled"'
+                'disabled'=>'disabled="disabled"' // so doesn't need the valid countries restriction
               ));
     }
     $r .= '</fieldset>';

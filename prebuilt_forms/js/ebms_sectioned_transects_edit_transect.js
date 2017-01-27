@@ -964,7 +964,7 @@ $(document).ready(function() {
 
       $('.olControlEditingToolbar').addClass('right');
 
-      function featureAddedEvent(evt) {
+      function featureRouteAddedEvent(evt) {
           // Only handle lines - as things like the sref control also trigger feature change events
           if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
             var current, oldSection = [];
@@ -998,7 +998,7 @@ $(document).ready(function() {
           }
       }
 
-      div.map.editLayer.events.on({'featureadded': featureAddedEvent}); 
+      div.map.editLayer.events.on({'featureadded': featureRouteAddedEvent}); 
       div.map.editLayer.events.on({'afterfeaturemodified': function() {indiciaData.routeChanged = true;}}); 
 
       resetMap(div, true, false);
@@ -1008,6 +1008,51 @@ $(document).ready(function() {
 
     } else {
       // main map
+      function featureSiteAddedEvent(evt) { // check that the country is OK.
+        // get country that centroid is in: requires geoserver.
+        // proxiedurl,featurePrefix,featureType,[geometryName],featureNS,srsName[,propertyNames]
+        if(indiciaData.settings.country_layer_lookup.length != 5)
+          return;
+        if(typeof(evt.feature) == 'undefined' ||
+            typeof(evt.feature.attributes) == 'undefined' ||
+            (typeof(evt.feature.attributes.temp) !== 'undefined' &&
+              typeof(evt.feature.attributes.temp=== true)))
+          return;
+        protocol = indiciaData.settings.country_layer_lookup;
+
+        var protocol = new OpenLayers.Protocol.WFS({
+            url: protocol[0],featurePrefix: protocol[1],featureType: protocol[2], geometryName:'boundary_geom',featureNS: protocol[3],srsName: protocol[4],version: '1.1.0',propertyNames: ['boundary_geom','name']
+           ,callback: function(a1){
+             // here we don't zoom
+
+            if(a1.error && (typeof a1.error.success == 'undefined' || a1.error.success == false)){
+              alert('Country lookup failed.'); // TODO i18n
+              return;
+            }
+            if(a1.features.length > 0) {
+              var id = a1.features[0].fid.slice(1);
+              if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == id) // country is the same
+                return;
+              if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == '') { // not set yet.
+                $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(id).change();
+                return;
+              }
+              var dialog = $('<p>A change in country has been detected. Do you wish to set the country to the new value? This may lead to changes in the acceptable number of sections, and/or a different set on maps.</p>').dialog(
+                      {title: "Change Country?",
+                       buttons: { 
+                           "No":  function() { $(this).dialog('close'); },
+                           "Yes": function() { $(this).dialog('close');
+                               $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(id).change(); }}});
+            } // else no country - just leave alone
+          }
+        });
+        alert('TODO change hardcoded');
+        filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[
+                     new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: evt.feature.geometry}),
+                     new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: indiciaData.settings.country_location_type_id})]});
+        protocol.read({filter: filter});
+      };
+
       div.map.infoLayer = new OpenLayers.Layer.Vector('Country',
           {style: { // a combination of georef, boundary and ghost. No Fill
               fillOpacity : 0,
@@ -1020,7 +1065,12 @@ $(document).ready(function() {
            displayInLayerSwitcher: true});
       div.map.addLayer(div.map.infoLayer);
       $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).change();
+
+      div.map.editLayer.events.on({'featureadded': featureSiteAddedEvent}); 
+
       resetMap(div, false, true);
+      
+
     }
   });
   
@@ -1101,7 +1151,6 @@ $(document).ready(function() {
               var parser = new OpenLayers.Format.WKT(),
                   features;
               features = parser.read(country.boundary_geom);
-//              features.geometry.move(600000, -600000);
               if (mainMapDiv.map.infoLayer.projection.projCode!='EPSG:900913' && mainMapDiv.map.infoLayer.projection.projCode!='EPSG:3857') { 
                 var cloned = features.geometry.clone();
                 features.geometry = cloned.transform(new OpenLayers.Projection('EPSG:900913'), mainMapDiv.map.infoLayer.projection.projCode);
