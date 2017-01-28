@@ -415,12 +415,15 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
   }
   
   /*
-   * Display the pit number is a label. Note you maybe wish to wrap the control with further HTML to change text type.
+   * Display the pit number is a label, also hide the pit distance question for pit 1.
+   * Note you may wish to wrap the control with further HTML to change text type.
    * @param array $options additional options for the control with the following possibilities
    * <li><b>label</b><br/>
    * Text to use to the left of the display pit number</li>
+   * <li><b>distanceQuestionAttrId</b><br/>
+   * Text to use to the left of the display pit number</li>
    */
-  protected static function get_control_pitnumberlabel($auth, $args, $tabAlias, $options) {
+  protected static function get_control_pitspecificlabelandquestions($auth, $args, $tabAlias, $options) {
     if (!empty($options['label']))
       $displayLabel=$options['label'].' ';
     else
@@ -439,6 +442,9 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       $displayLabel=$displayLabel.'2';
     } else {
       $displayLabel=$displayLabel.'1';
+      if (!empty($options['distanceQuestionAttrId'])) {
+        data_entry_helper::$javascript .= "$('#ctrl-wrap-smpAttr-".$options['distanceQuestionAttrId']."').hide();\n";
+      }
     } 
     return $displayLabel;
   }
