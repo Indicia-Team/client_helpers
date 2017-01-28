@@ -34,13 +34,16 @@ jQuery(document).ready(function ($) {
     var termAlias;
     // apply the Lexicon
     $.each($('.lexicon span, .lexicon th a').not('.processed'), function () {
+      var summary;
       if (typeof indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')] !== 'undefined') {
-        $(this).attr('title', indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')]);
+        summary = indiciaData.lexicon[$(this).html().replace(/&amp;/g, '&')];
+        $(this).attr('title', summary);
         $(this).addClass('lexicon-term');
         termAlias = $(this).html().replace(/&amp;/g, '&')
           .replace(/[^a-zA-Z0-9]+/g, '-')
           .toLowerCase();
-        $(this).after('<a class="lexicon-info" href="/pantheon/lexicon/' + termAlias + '">i</a>');
+        $(this).after('<a class="lexicon-info" target="_blank" title="' + summary + '" ' +
+            'href="/pantheon/lexicon/' + termAlias + '">i</a>');
         $(this).addClass('processed');
       }
     });
