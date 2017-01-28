@@ -16,7 +16,7 @@ jQuery(document).ready(function ($) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
   }
 
-  typeParam = getParameterByName('dynamic-sample_id');
+  typeParam = getParameterByName('dynamic-sample_type');
 
   // Fix up all pantheon links
   $.each($('.button-links a, .buttons-list a'), function () {
