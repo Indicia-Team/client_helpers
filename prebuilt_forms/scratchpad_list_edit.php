@@ -196,6 +196,8 @@ HTML;
       $r .= "\n<button id=\"scratchpad-cancel\" type=\"button\">$cancelLabel</button>\n";
     $r .= "</form>\n";
     data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/scratchpad_list_edit')."\";\n";
     return $r;
   }
   
@@ -227,5 +229,25 @@ HTML;
       $reloadPath .= '?'.http_build_query($reload['params']);
     }
     return $reloadPath;
+  }
+
+  /**
+   * AJAX handler for the Check button's web request. Proxies to the warehouse and requests the list of provided names
+   * is checked against the database.
+   * @param $website_id
+   * @param $password
+   * @return string
+   */
+  public static function ajax_check($website_id, $password) {
+    iform_load_helpers(array('data_entry_helper'));
+    if (empty($_POST['params'])) {
+      return 'Report parameters not provided';
+    }
+    $auth = data_entry_helper::get_read_auth($website_id, $password);
+    $url = data_entry_helper::$base_url.'index.php/services/report/requestReport?' .
+      data_entry_helper::array_to_query_string($_GET);
+    $params = array_merge($_POST, $auth);
+    $response = data_entry_helper::http_post($url, $params);
+    echo $response['output'];
   }
 }

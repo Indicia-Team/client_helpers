@@ -147,6 +147,7 @@ jQuery(document).ready(function ($) {
     var postParams = {};
     var token;
     var $el;
+    var sep;
     // convert the list of input values by adding quotes, so they can go into a report query. Also create a version of
     // the list with search term simplification applied to ensure things like spacing and quotes are ignored.
     $.each(inputClean, function () {
@@ -164,7 +165,8 @@ jQuery(document).ready(function ($) {
       postParams.list = listForDb.join(',');
       postParams.simplified_list = simplifiedListForDb.join(',');
       $.extend(postParams, indiciaData.scratchpadSettings.filters);
-      $.post(indiciaData.read.url + 'index.php/services/report/requestReport?' + $.param(reportParams),
+      sep = indiciaData.ajaxUrl.match(/\?/) ? '&' : '?';
+      $.post(indiciaData.ajaxUrl + '/check/' + indiciaData.nid + sep + $.param(reportParams),
         { params: JSON.stringify(postParams) },
         matchResponse,
         'jsonp'
