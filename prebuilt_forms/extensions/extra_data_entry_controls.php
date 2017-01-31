@@ -157,6 +157,7 @@ class extension_extra_data_entry_controls {
     if (!empty($values["association_copy_attributes:$index"]))
       $copiedAttrs = explode(',', $values["association_copy_attributes:$index"]);
     $assoc = array_merge($s_array[0]['subModels'][0]);
+    unset($assoc['model']['fields']['comment']);
     foreach ($assoc['model']['fields'] as $field => $value) {
       if (substr($field, 0, 8)==='occAttr:' && !in_array(substr($field, 8), $copiedAttrs))
         unset($assoc['model']['fields'][$field]);
