@@ -66,6 +66,9 @@ jQuery(document).ready(function ($) {
 
   window.formatOsirisResources = function () {
     $.each($('td.col-resource'), function () {
+      if ($(this).html().trim === '' || $(this).html().substr(0, 1) !== '[') {
+        return;
+      }
       var flat = JSON.parse($(this).html());
       var n;
       var i;
