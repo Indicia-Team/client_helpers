@@ -116,7 +116,7 @@ jQuery(document).ready(function ($) {
     $.each($('tbody .col-sqi').not('.processed'), function () {
       if ($(this).closest('tr').find('.col-count').text() < 15) {
         $(this).prepend(
-          '<img title="Warning, this index was calculated from less than 15 species so may not be accurate." ' +
+          '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
           'alt="Warning icon" src="/pantheon/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
         );
       }
