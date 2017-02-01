@@ -10,9 +10,9 @@ a.non-unique-name {
   margin-left: 2em;
   text-align: left;
 }
-a.non-unique-name.preferred {
-  background: url(../images/nuvola/ok-16px.png) right center no-repeat;
-  padding-right: 20px;
+a.non-unique-name.preferred:after {
+  content: '[accepted name]';
+  font-size: 9px;
 }
 #scratchpad-container {
   display: inline-block;
@@ -79,4 +79,8 @@ a.non-unique-name.preferred {
   border-radius: 4px;
   font-size: 0.8em;
   font-weight: bold;
+}
+button.checking {
+  padding-right: 24px;
+  background: url(../../../media/images/ajax-loader.gif) right center no-repeat;
 }

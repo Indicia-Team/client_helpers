@@ -55,11 +55,15 @@ jQuery(document).ready(function ($) {
         // simple way to strip HTML, even if unbalanced
         tokenText = token.replace(/<(.+?)>/g, '').trim();
         if (tokenText) {
-          $el = $(token);
-          if ($el.length && $el[0].localName === 'span' && $el.hasClass('matched')) {
+          try {
+            $el = $(token);
+          } catch (e) {
+            $el = null;
+          }
+          if ($el && $el.length && $el[0].localName === 'span' && $el.hasClass('matched')) {
             // matched strings are kept as they are and not changed
             inputClean.push(token);
-          } else if ($el.length && $el[0].localName === 'a' && $el.hasClass('non-unique-name')) {
+          } else if ($el && $el.length && $el[0].localName === 'a' && $el.hasClass('non-unique-name')) {
             // skip the matching option buttons for a list item that that could not match a unique name
           } else {
             inputClean.push(tokenText);
@@ -83,6 +87,7 @@ jQuery(document).ready(function ($) {
     var foundPreferredMatches = [];
     var nonUniqueBatchIdx = 0;
     var preferred;
+    var $el;
 
     $('#scratchpad-remove-duplicates').hide();
     $('#scratchpad-save').attr('disabled', 'disabled');
@@ -92,8 +97,13 @@ jQuery(document).ready(function ($) {
       // Loop through the input rows so we can check against the results from the db to see which are matched
       $.each(inputClean, function (idx, rowInput) {
         matches = [];
+        try {
+          $el = $(rowInput);
+        } catch (e) {
+          $el = null;
+        }
         // Stuff that's already matched can just go straight into the output
-        if ($(rowInput).length && $(rowInput)[0].localName === 'span' && $(rowInput).hasClass('matched')) {
+        if ($el && $el.length && $(rowInput)[0].localName === 'span' && $(rowInput).hasClass('matched')) {
           foundIds.push($(rowInput).attr('data-id'));
           output.push(rowInput);
           return true; // to continue $.each
@@ -153,6 +163,8 @@ jQuery(document).ready(function ($) {
       });
       $('#scratchpad-input').html(output.join('<br/>'));
       recalculateStats();
+      $('#scratchpad-check').removeClass('checking');
+      $('#scratchpad-stats')[0].scrollIntoView();
     }
   }
 
@@ -174,8 +186,12 @@ jQuery(document).ready(function ($) {
     $.each(inputClean, function () {
       token = this.trim();
       if (token) {
-        $el = $(token);
-        if (!$el.length || $el[0].localName !== 'span') {
+        try {
+          $el = $(token);
+        } catch (e) {
+          $el = null;
+        }
+        if (!$el || !$el.length || $el[0].localName !== 'span') {
           listForDb.push("'" + token.toLowerCase() + "'");
           simplifiedListForDb.push(simplify(token));
         }
@@ -222,6 +238,7 @@ jQuery(document).ready(function ($) {
   });
 
   $('#scratchpad-check').click(function () {
+    $('#scratchpad-check').addClass('checking');
     tidyInput();
     matchToDb();
   });
