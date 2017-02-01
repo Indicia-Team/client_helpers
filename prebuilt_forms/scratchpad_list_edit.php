@@ -172,7 +172,22 @@ class iform_scratchpad_list_edit {
       'class' => 'control-width-6'
     ));
     global $indicia_templates;
-    $indicia_templates['scratchpad_input'] = '<div contenteditable="true" id="{id}"{class}>{default}</div>';
+    $langListOk = lang::get('List OK');
+    $langTotal = lang::get('Total');
+    $langMatched = lang::get('Matched');
+    $langQueried = lang::get('Queried');
+    $langUnmatched = lang::get('Unmatched');
+    $indicia_templates['scratchpad_input'] = <<<DIV
+  <div id="scratchpad-container">
+  <div contenteditable="true" id="{id}"{class}>{default}</div>
+  <div id="scratchpad-stats" class="ui-helper-clearfix ui-helper-hidden">
+    <div id="scratchpad-stats-total"><span class="all-done">$langListOk</span> $langTotal: <span class="stat">0</span></div>
+    <div id="scratchpad-stats-matched">$langMatched: <span class="stat">0</span></div>
+    <div id="scratchpad-stats-queried">$langQueried: <span class="stat">0</span></div>
+    <div id="scratchpad-stats-unmatched">$langUnmatched: <span class="stat">0</span></div>
+  </div>
+</div>
+DIV;
     $r .= data_entry_helper::apply_template('scratchpad_input', array(
       'id' => 'scratchpad-input',
       'label' => lang::get('Enter the list of items'),

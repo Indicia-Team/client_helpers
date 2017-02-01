@@ -2,11 +2,28 @@ jQuery(document).ready(function ($) {
   'use strict';
 
   var inputClean = [];
+  var totalCount = 0;
 
   function simplify(text) {
     return text.toLowerCase().replace(/\(.+\)/g, '')
       .replace(/ae/g, 'e').replace(/\. /g, '* ')
       .replace(/[^a-zA-Z0-9\+\?*]/g, '');
+  }
+
+  function recalculateStats() {
+    var matched = $('span.matched').length;
+    var queried = $('span.unmatched[data-state="non-unique"]').length;
+    var unmatched = $('span.unmatched[data-state="unmatched"],span.unmatched[data-state="duplicate"]').length;
+    $('#scratchpad-stats-total span.stat').html(totalCount);
+    $('#scratchpad-stats-matched span.stat').html(matched);
+    $('#scratchpad-stats-queried span.stat').html(queried);
+    $('#scratchpad-stats-unmatched span.stat').html(unmatched);
+    $('#scratchpad-stats').show();
+    if (totalCount === matched) {
+      $('#scratchpad-stats-total span.all-done').show();
+    } else {
+      $('#scratchpad-stats-total span.all-done').hide();
+    }
   }
 
   function tidyInput() {
@@ -25,6 +42,8 @@ jQuery(document).ready(function ($) {
     inputDirty = inputDirty
       .replace(/,/g, '<br>')
       .replace(/<\/p>/g, '</p><br>')
+      .replace(/<\/div>/g, '</div><br>')
+      .replace(/<div>/g, '<br><div>')
       .replace(/<\/td>(\s)*<\/tr>/g, '<br></td></tr>');
     inputList = inputDirty.split(/<br\/?>/g);
     $.each(inputList, function () {
@@ -48,6 +67,7 @@ jQuery(document).ready(function ($) {
         }
       }
     });
+    totalCount = inputClean.length;
     $('#scratchpad-input').html(inputClean.join('<br/>'));
   }
 
@@ -132,6 +152,7 @@ jQuery(document).ready(function ($) {
         return true;
       });
       $('#scratchpad-input').html(output.join('<br/>'));
+      recalculateStats();
     }
   }
 
@@ -197,6 +218,7 @@ jQuery(document).ready(function ($) {
       $(this).remove();
     });
     $('#scratchpad-save').removeAttr('disabled');
+    recalculateStats();
   });
 
   $('#scratchpad-check').click(function () {
@@ -205,8 +227,10 @@ jQuery(document).ready(function ($) {
   });
 
   $('#scratchpad-remove-duplicates').click(function () {
+    totalCount -= $('[data-state="duplicate"]').length;
     $('[data-state="duplicate"]').next('br').remove();
     $('[data-state="duplicate"]').remove();
+    recalculateStats();
   });
 
   /**
