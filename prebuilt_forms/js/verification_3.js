@@ -548,7 +548,7 @@ if(!Array.indexOf){
       }
       else {
         // verifier can verify anywhere
-        if (currRec.extra.locality_ids!=='') {
+        if (currRec.extra.locality_ids!=='' && currRec.extra.locality_ids!==null) {
           popupHtml += '<label>Trust will be applied to records from locality:</label><br/>'+
               '<label><input type="radio" name="trust-location" value="all"> All </label><br/>';
           // the record could intersect multiple locality boundaries. So can choose which...
