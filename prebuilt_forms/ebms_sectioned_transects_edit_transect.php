@@ -590,7 +590,8 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     		'label'=>$settings['countryAttr']['caption'], // already translated
     		'lookupValues' => $values,
     		'blankText'=>lang::get('<Please select>'),
-    		'validation'=>array('required'),
+    		'helpText'=>lang::get('Although you can set this field yourself, it will be filled in automatically when you draw the site on the map.'),
+      	'validation'=>array('required'),
     		'default'=>$settings['countryAttr']['default']
       ));
     } else {
