@@ -460,14 +460,14 @@ $('form#entry_form').tooltip({
       'id' => 'sample',
       'submission_list' => array(
         'entries' => array(
-          $s_array[0],
           array (
             'id' => 'scratchpad_list',
             'fields' => array (
               'id' => array('value' => $values['scratchpad_list_id']),
               'deleted' => array('value' => 't')
             )
-          )
+          ),
+          $s_array[0]
         )
       )
     );
