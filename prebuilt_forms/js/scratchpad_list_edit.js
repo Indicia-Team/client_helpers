@@ -75,6 +75,10 @@ jQuery(document).ready(function ($) {
     $('#scratchpad-input').html(inputClean.join('<br/>'));
   }
 
+  function removeSubgenus(name) {
+    return name.replace(/ \(.+\)/, '');
+  }
+
   /**
    * Handles the response from the warehouse for a request to match the list of species provided against the species
    * listed in the database.
@@ -116,11 +120,12 @@ jQuery(document).ready(function ($) {
           } else if (simplify(rowInput) === this.simplified) {
             // there is a match against an input name
             if (this.preferred === 't') {
-              foundPreferredMatches.push(this.external_key + '|' + this.name);
+              foundPreferredMatches.push(this.external_key + '|' + removeSubgenus(this.name));
             }
             // The next line skips non-preferred matches that look identical to their preferred names, e.g. taxa
             // with minor author variations
-            if (this.preferred === 't' || $.inArray(this.external_key + '|' + this.name, foundPreferredMatches) === -1) {
+            if (this.preferred === 't' ||
+                $.inArray(this.external_key + '|' + removeSubgenus(this.name), foundPreferredMatches) === -1) {
               matches.push({ type: 'term', record: this });
             }
           }
@@ -229,7 +234,12 @@ jQuery(document).ready(function ($) {
     var speciesName = $(button).text();
     var nonUniqueBatchIdx = $(button).attr('data-batch');
     var elementsToRemove = $('[data-batch=' + nonUniqueBatchIdx + '],[data-batch=' + nonUniqueBatchIdx + '] + br');
-    $(button).after('<span class="matched" data-id="' + $(button).attr('data-id') + '">' + speciesName + '</span><br/>');
+    if ($('span[data-id="' + $(button).attr('data-id') + '"]').length) {
+      $(button).after('<span class="unmatched" data-state="duplicate">' + speciesName + ' (duplicate species)</span><br/>');
+      $('#scratchpad-remove-duplicates').show();
+    } else {
+      $(button).after('<span class="matched" data-id="' + $(button).attr('data-id') + '">' + speciesName + '</span><br/>');
+    }
     $.each(elementsToRemove, function () {
       $(this).remove();
     });
