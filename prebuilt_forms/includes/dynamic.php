@@ -548,10 +548,24 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
           if (method_exists('extension_' . $parts[0], $parts[1])) {
             if (!empty($options['fieldname'])) {
               // If reloading an existing attribute, set the default and fieldname to contain the value ID.
-              $attribKey = array_search($options['fieldname'], $attribNames);
-              if ($attribKey!==false) {
-                $options['fieldname'] = $attributes[$attribKey]['fieldname'];
-                $options['default'] = $attributes[$attribKey]['default'];
+              // First, if this is an occurrence attribute then the list of attributes might not be loaded.
+              if (substr($options['fieldname'], 0, 7) === 'occAttr'
+                && method_exists(self::$called_class, 'load_custom_occattrs')
+                && !empty(data_entry_helper::$entity_to_load['occurrence:id'])) {
+                $occAttrs = call_user_func(
+                  array(self::$called_class, 'load_custom_occattrs'), $auth['read'], $args['survey_id']);
+                foreach ($occAttrs as $attr) {
+                  if ($options['fieldname'] === $attr['id']) {
+                    $options['fieldname'] = $attr['fieldname'];
+                    $options['default'] = $attr['default'];
+                  }
+                }
+              } else {
+                $attribKey = array_search($options['fieldname'], $attribNames);
+                if ($attribKey !== FALSE) {
+                  $options['fieldname'] = $attributes[$attribKey]['fieldname'];
+                  $options['default'] = $attributes[$attribKey]['default'];
+                }
               }
             }
             //outputs a control for which a specific extension function has been written.

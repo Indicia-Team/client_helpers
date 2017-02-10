@@ -10,7 +10,11 @@ table#transect-input1,table#transect-input2,table#transect-input3,table#transect
   width: auto;
 }
 
-table#transect-input1 td, table#transect-input1 input, table#transect-input2 td, table#transect-input2 input, table#transect-input3 td, table#transect-input3 input, table#transect-input4 td, table#transect-input4 input{
+table#transect-input1 td, table#transect-input1 input, table#transect-input1 select,
+table#transect-input2 td, table#transect-input2 input, table#transect-input2 select,
+table#transect-input3 td, table#transect-input3 input, table#transect-input3 select,
+table#transect-input4 td, table#transect-input4 input, table#transect-input4 select
+{
   margin: 1px;
   padding: 1px;
 }
@@ -18,6 +22,11 @@ table#transect-input1 td, table#transect-input1 input, table#transect-input2 td,
 table#transect-input1 input,table#transect-input2 input,table#transect-input3 input,table#transect-input4 input {
   width: 50px;
   border: solid silver 1px;
+}
+
+table#transect-input1 input.ui-state-error,table#transect-input2 input.ui-state-error,table#transect-input3 input.ui-state-error,table#transect-input4 input.ui-state-error {
+  width: 50px;
+  border: solid #cd0a0a 1px;
 }
 
 table th, table td {
@@ -50,10 +59,14 @@ input.edited[type="text"], input.edited[type="password"], select.edited {
   border: solid green 1px;
 }
 
-input.saving[type="text"], input.saving[type="password"], select.saving {
+input.saving[type="text"], input.saving[type="password"], select.saving, select.working {
   background: url(../../../media/images/ajax-loader.gif) no-repeat right;
   font-style: italic;
 }
-select.saving {
+select.saving, select.working {
   background-position: right 16px center;
+}
+label.working {
+  background: url(../../../media/images/ajax-loader.gif) no-repeat right;
+  font-style: italic;
 }

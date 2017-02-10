@@ -111,7 +111,8 @@ class iform_ukbms_sectioned_transects_input_sample {
           'captionField'=>'caption',
           'valueField'=>'id',
           'required' => true,
-          'siteSpecific'=>true
+          'siteSpecific'=>true,
+          'group'=>'Transects Editor Settings'
         ),
         array(
           'name'=>'transect_type_term',
@@ -134,7 +135,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'captionField'=>'term',
           'valueField'=>'term',
           'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
-          'required' => true,            
+          'required' => true,
           'group'=>'Transects Editor Settings'
         ), 
         array(
@@ -160,8 +161,88 @@ class iform_ukbms_sectioned_transects_input_sample {
           'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
           'required' => true,            
           'group'=>'Transects Editor Settings'
-        ), 
-      	array(
+        ),
+        array(
+          'name' => 'attribute_configuration',
+          'caption' => 'Custom configuration for attributes',
+          'description' => 'Custom configuration for attributes',
+          'type' => 'jsonwidget',
+          'required' => false,
+          'group'=>'Transects Editor Settings',
+          'schema' => '{
+  "type":"seq",
+  "title":"Attribute Custom Configuration List",
+  "sequence":
+  [
+    {
+      "type":"map",
+      "title":"Attribute",
+      "mapping": {
+        "id": {"type":"str","desc":"ID of the Sample Attribute."},
+        "required": {
+              "type":"map",
+              "title":"Required",
+              "desc":"Provide overrides as to whether the attribute is set (client side) mandatory in the main page or species grid. This allows this to be controlled separately for the two areas, something not possible through the normal functionality. Required validation must be switched off on the warehouse.",
+              "mapping": {
+                "main_page": {"type":"bool","title":"Main page"},
+                "species_grid": {"type":"bool","title":"Species Grid"}
+              }},
+        "filter": {
+              "type":"map",
+              "title":"Presence Filter",
+              "desc":"Provides ability to control whether the attribute appears in the Species grids, dependant on value(s) of an attribute on the Site.",
+              "mapping": {
+                "id": {"type":"str","desc":"ID of the Location Attribute."},
+                "values": {
+                  "type":"seq",
+                  "title":"Values to enable",
+                  "sequence": [{"type":"str","title":"Value"}]
+                }
+              }
+            }
+          }
+    }
+  ]
+}'
+      		),
+        array(
+          'name' => 'species_sort',
+          'caption' => 'Species Grid Sort',
+          'description' => 'Select options for Species Grid Sort',
+          'type' => 'jsonwidget',
+          'required' => false,
+          'group'=>'Transects Editor Settings',
+          'schema' => '{
+  "type":"map",
+  "title":"Sort Order Options",
+  "mapping": {
+    "taxonomic": {
+      "type":"map",
+      "title":"Taxonomic Sort Order",
+      "mapping": {
+        "enabled": {"type":"bool","title":"Enabled"}
+      }
+    },
+    "preferred": {
+      "type":"map",
+      "title":"Sort by preferred taxon name",
+      "mapping": {
+        "enabled": {"type":"bool","title":"Enabled"},
+        "default": {"type":"bool","title":"Default"}
+      }
+    },
+    "common": {
+      "type":"map",
+      "title":"Sort by taxon common name",
+      "mapping": {
+        "enabled": {"type":"bool","title":"Enabled"},
+        "default": {"type":"bool","title":"Default"}
+      }
+    },
+  }
+}'
+      		),
+      		array(
           'name'=>'species_tab_1',
           'caption'=>'Species Tab 1 Title',
           'description'=>'The title to be used on the species checklist for the main tab.',
@@ -728,6 +809,22 @@ class iform_ukbms_sectioned_transects_input_sample {
     		'survey_id'=>$args['survey_id'],
     		'sample_method_id'=>$sampleMethods[0]['id']
     ));
+
+    if (!empty($args['attribute_configuration'])) {
+    	$attribute_configuration = json_decode($args['attribute_configuration'], true);
+    	foreach ($attribute_configuration as $attrConfig) {
+    		if(empty($attributes[$attrConfig['id']])) continue; // may be a section only attribute
+    		$rules = explode("\n", $attributes[$attrConfig['id']]['validation_rules']);
+    		$req = array_search('required', $rules);
+    	  if($req !== false) { // required validation must be switched off on the warehouse
+    			throw new exception("Form Config error: warehouse enabled required validation detected on sample attribute ".$attrConfig['id']);
+    		}
+    		if(isset($attrConfig['required']['main_page']) && $attrConfig['required']['main_page'] && $req === false) {
+    			$rules[] = 'required';
+    			$attributes[$attrConfig['id']]['validation_rules'] = implode("\n", $rules);
+    		} // required validation must be switched off on the warehouse so don't check reverse.
+    	}
+    }
     
     if(isset($args['include_map_samples_form']) && $args['include_map_samples_form'])
     	$r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: '.(98-(isset($args['percent_width']) ? $args['percent_width'] : 50)).'%">';
@@ -939,11 +1036,13 @@ class iform_ukbms_sectioned_transects_input_sample {
     				'existingOccurrences' => array(),
     				'occurrence_attribute' => array(),
     				'occurrence_attribute_ctrl' => array(),
-					'maxTabs' => 4,
+    				'maxTabs' => 4,
     				'commonTaxonMeaningIDs' => array(),
-					'allTaxonMeaningIDsAtTransect' => array(),
-					'existingTaxonMeaningIDs' => array(),
-    				'myTaxonMeaningIDs' => array()
+    				'allTaxonMeaningIDsAtTransect' => array(),
+    				'existingTaxonMeaningIDs' => array(),
+    				'myTaxonMeaningIDs' => array(),
+    				'attribute_configuration' => (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array()),
+    				'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : array())
     );
     
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
@@ -1288,6 +1387,44 @@ class iform_ukbms_sectioned_transects_input_sample {
     return $r;
   }
 
+  private static function _buildSortControl ($tabNum, $args) {
+    $default = "taxonomic_sort_order";
+    $r = '<input name="species-sort-order-'.$tabNum.'" type="hidden" value="'.$default.'">';
+    if(isset($args['species_sort'])) {
+      $configuration = json_decode($args['species_sort'], true);
+      $options = array();
+      if(isset($configuration['taxonomic'])) {
+        if(isset($configuration['taxonomic']['enabled']) && $configuration['taxonomic']['enabled'])
+          $options['taxonomic_sort_order'] = lang::get('Taxonomic Sort Order');
+        else $default = false;
+      } else $default = false;
+      if(isset($configuration['preferred']))
+        if(isset($configuration['preferred']['enabled']) && $configuration['preferred']['enabled']) {
+          $options['preferred_taxon'] = lang::get('Species name');
+          if($default == false || (isset($configuration['preferred']['default']) && $configuration['preferred']['default']))
+            $default = 'preferred_taxon';
+        }
+      if(isset($configuration['common']))
+        if(isset($configuration['common']['enabled']) && $configuration['common']['enabled']) {
+          $options['taxon'] = lang::get('Common name');
+          if($default == false || (isset($configuration['common']['default']) && $configuration['common']['default']))
+            $default = 'taxon';
+        }
+      if(count($options) == 1) {
+        $r = '<input type="hidden" value="'.$default.'">';
+      } else if (count($options) > 1) {
+        $r = '<br/>'.data_entry_helper::radio_group(array(
+              'label'=>lang::get('Species Sort Order'),
+              'fieldname'=>'species-sort-order-'.$tabNum,
+              'lookupValues' => $options,
+              'default'=>$default,
+        		  'class'=>'species-sort-order'
+        ));
+      }
+    }
+    return $r;
+  }
+  
   protected static function _buildGrid (&$formOptions, $tabNum, $args, $sections, $occ_attributes, $existing, $includeControl = false, $attributes = array(), $subSamplesByCode = array()) {
   	$isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
   			$args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
@@ -1319,6 +1456,7 @@ class iform_ukbms_sectioned_transects_input_sample {
   				:
   					(isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>')
   			) .
+  			self::_buildSortControl($tabNum, $args) .
   			'<table id="transect-input'.$tabNum.'" class="ui-widget species-grid"><thead class="table-header">' .
   			'<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
   	foreach ($sections as $idx=>$section) {
@@ -1328,7 +1466,30 @@ class iform_ukbms_sectioned_transects_input_sample {
   	// output rows at the top for any transect section level sample attributes
   	$rowClass='';
   	$r .= '<tbody class="ui-widget-content">';
-  	foreach ($attributes as $attr) {
+    $attribute_configuration = (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array());
+//  	var_dump($attributes);
+  	foreach ($attributes as $attrID => $attr) {
+      $inc = true;
+      $mandatory = true;
+      foreach ($attribute_configuration as $attrConfig) {
+        if($attrID != $attrConfig['id']) continue;
+        if(!empty($attrConfig['required']) &&
+            isset($attrConfig['required']['species_grid']) &&
+            $attrConfig['required']['species_grid'] == false)
+          $mandatory = false;
+        if(empty($attrConfig['filter'])) continue;
+        $inc = false;
+        $locAttrs = data_entry_helper::get_population_data(array(
+        		'table' => 'location_attribute_value',
+        		'extraParams' => self::$auth['read'] + array('location_id' => data_entry_helper::$entity_to_load['sample:location_id'],
+        				'location_attribute_id' => $attrConfig['filter']['id']),
+        		'caching' => false
+        ));
+        foreach($locAttrs as $locAttr) {
+          $inc |= (in_array($locAttr['value'], $attrConfig['filter']['values']));
+        }
+      }
+      if(!$inc) continue;
   		$r .= '<tr '.$rowClass.' id="smp-'.$attr['attributeId'].'"><td>'.$attr['caption'].'</td>';
   		$rowClass=$rowClass=='' ? 'class="alt-row"':'';
   		unset($attr['caption']);
@@ -1350,11 +1511,11 @@ class iform_ukbms_sectioned_transects_input_sample {
   			} else {
   				$attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
   			}
-  			if($attr['default']=='')
+  			if($mandatory && $attr['default']=='')
   				$attrOpts['class'] .= ' ui-state-error';
   			$r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').'">' .
   					data_entry_helper::outputAttribute($attr, $attrOpts) .
-  					($attr['default']=='' ? '<p htmlfor="'.$attrOpts['id'].'" class="inline-error">' . lang::get('This field is required') . '</p>' : '') .
+  					($mandatory && $attr['default']=='' ? '<p htmlfor="'.$attrOpts['id'].'" class="inline-error">' . lang::get('This field is required') . '</p>' : '') .
   					'</td>';
   		}
   		$r .= ($isNumber ? '<td class="ui-state-disabled first"></td>' : '').'</tr>';
