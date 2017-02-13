@@ -41,6 +41,7 @@ jQuery(document).ready(function ($) {
     // each name into a separate token.
     inputDirty = inputDirty
       .replace(/,/g, '<br>')
+      .replace(/<(\/)?font[^>]*>/g, '')
       .replace(/<\/p>/g, '</p><br>')
       .replace(/<\/div>/g, '</div><br>')
       .replace(/<div>/g, '<br><div>')
