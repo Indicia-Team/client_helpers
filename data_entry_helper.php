@@ -2656,7 +2656,8 @@ JS;
     $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
     // get local vars for the array
     extract($db);
-    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred_taxon' : 'taxon';
+    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred,preferred_taxon' : 'taxon';
+    $options['extraParams']['sortdir'] = $options['cacheLookup'] ? 'ASC,DESC,ASC' : 'ASC';
     $options = array_merge(array(
       'fieldname'=>'occurrence:taxa_taxon_list_id',
       'table'=>$tblTaxon,
@@ -2728,16 +2729,22 @@ JS;
     }
     // This bit optionally adds '- common' or '- latin' depending on what was being searched
     if ($options['speciesIncludeBothNames']) {
-      $fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n" .
-        "    r += ' - ' + item.$colCommon;\n" .
-        "  } else if (item.preferred==='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n" .
-        "    r += ' - <em>' + item.$colPreferred + '</em>';\n";
+      if ($options['speciesIncludeAuthorities']) {
+        $nameTest = "(item.$colPreferred!==item.$colTaxon || item.$colPreferredAuthority!==item.$colAuthority)";
+      } else {
+        $nameTest = "item.$colPreferred!==item.$colTaxon";
+      }
+      $fn .= "  if (item.preferred==='t' && item.$colCommon!==item.$colTaxon && item.$colCommon) {\n" .
+        "    r += '<br/>' + item.$colCommon;\n" .
+        "  } else if (item.preferred==='f' && $nameTest && item.$colPreferred) {\n" .
+        "    r += '<br/>[synonym of <em>' + item.$colPreferred + '</em>';\n";
       if ($options['speciesIncludeAuthorities']) {
         $fn .= "    if (item.$colPreferredAuthority) {\n" .
           "      r += ' ' + item.$colPreferredAuthority;\n" .
           "    }\n";
       }
-      $fn .= "  }\n";
+      $fn .= "    r += ']';\n" .
+          "  }\n";
     }
     // this bit optionally adds the taxon group
     if ($options['speciesIncludeTaxonGroup'])
