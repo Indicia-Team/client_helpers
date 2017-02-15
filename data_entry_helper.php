@@ -4422,9 +4422,14 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           // store the id of the taxon in the array, so we can load them all in one go later
           $extraTaxonOptions['extraParams']['id'][]=$ttlId;
         }
+        // Ensure the load of taxa is batched if there are lots to load
+        if (count($extraTaxonOptions['extraParams']['id'])>=50 && !empty($options['lookupListId'])) {
+          $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
+          $extraTaxonOptions['extraParams']['id'] = array();
+        }
       }
-      // load and append the additional taxa to our list of taxa to use in the grid
-      if (!empty($options['lookupListId']))
+      // Load and append the remaining additional taxa to our list of taxa to use in the grid
+      if (count($extraTaxonOptions['extraParams']['id']) && !empty($options['lookupListId']))
         $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
     }
     return $taxalist;
