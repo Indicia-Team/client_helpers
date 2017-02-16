@@ -1149,7 +1149,7 @@ idlist=';
    */
   public static function ajax_experience($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
-    $params = hostsite_get_node_field_value($url, 'params');
+    $params = hostsite_get_node_field_value($nid, 'params');
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $filter = array('occurrence_id'=>$_GET['occurrence_id']);
     if (!empty($params['min_taxon_rank_sort_order']))
@@ -1251,8 +1251,9 @@ idlist=';
       $tokens = explode('_', $value);
       $params = array(
           'filter-date_age' => '', 
-          'filter-indexed_location_list' => '', 
-          'filter-taxon_group_list' => '', 
+          'filter-indexed_location_list' => '',
+          'filter-indexed_location_id' => '',
+          'filter-taxon_group_list' => '',
           'filter-user_id' => $_GET['user_id'], 
           'filter-my_records' => 1
       );
@@ -1266,10 +1267,10 @@ idlist=';
       }
       switch ($tokens[1]) {
         case '3months' :
-          $params['filter-date_age'] = '3 months';
+          $params['filter-input_date_age'] = '3 months';
           break;
         case '1year' :
-          $params['filter-date_age'] = '1 year';
+          $params['filter-input_date_age'] = '1 year';
           break;
       }
       if ($row['type']==='species')

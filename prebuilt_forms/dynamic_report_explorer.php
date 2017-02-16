@@ -33,8 +33,14 @@ require_once('includes/report_filters.php');
 class iform_dynamic_report_explorer extends iform_dynamic {
   
   /**
-   * Count the reports, to generate unique ids
+   * Count the total number of reports for this page request so we can generate unique ids.
    * @var integer
+   */
+  private static $requestReportCount=0;
+
+  /**
+   * Count the reports on this node instance to link reports to the correct set of column configurations.
+   * * @var integer
    */
   private static $reportCount=0;
   
@@ -286,6 +292,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    * which makes the tokens cachable therefore faster. It does mean that $auth['write'] will not be available.
    */
   public static function get_form($args, $nid) {
+    // Count of reports for this node instance. If multiple nodes on 1 page then this counter gets reset for each.
+    self::$reportCount = 0;
     $conn = iform_get_connection_details($nid);
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
     return parent::get_form($args, $nid);
@@ -390,7 +398,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'autoParamsForm'=>false,
         'sharing'=>$sharing,
         'ajax'=>true,
-        'id'=>'report-grid-'.self::$reportCount,
+        'id'=>'report-grid-'.self::$requestReportCount,
         'responsiveOpts' => array(
           'breakpoints' => array(
             'phone' => 480,
@@ -406,6 +414,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $reportOptions = array_merge($reportOptions, $options);
     if (self::$applyUserPrefs)
       iform_report_apply_explore_user_own_preferences($reportOptions);
+    self::$requestReportCount++;
     self::$reportCount++;
     return report_helper::report_grid($reportOptions);
   }

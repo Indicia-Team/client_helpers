@@ -1,5 +1,5 @@
 var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncPost, deleteWalks,
-    deleteLocation, deleteSections, deleteSection, updateTransectDetails;
+    deleteLocation, deleteSections, deleteSection, updateTransectDetails, countryChange;
 var defaultLayers = null,
     defaultRouteLayers = null;
 
@@ -530,49 +530,66 @@ $(document).ready(function() {
       return bounds;
     }
 
-    function _setBaseLayers(countryVal, div) {
-      var found = false;
+    function _setBaseLayers(div) {
+      // div.map.state holds the index in the country definitions array
+      var retVal = {index: false, mapChanged: false, reproject: false},
+          found = false,
+          countryVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val();
+
       if(countryVal!==''){
         for(i=0; i < indiciaData.settings.country_configurations.length && !found; i++) {
           if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined' ||
-              typeof indiciaData.settings.country_configurations[i].map === 'undefined') continue;
+              typeof indiciaData.settings.country_configurations[i].map === 'undefined') continue; // skip this entry if no map defined.
           for(j=0, found=false; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
             if(indiciaData.settings.country_configurations[i].country_names[j].country !== "Default" &&
-                indiciaData.settings.country_configurations[i].country_names[j].id == countryVal) found = true;
+                indiciaData.settings.country_configurations[i].country_names[j].id == countryVal)
+              found = true;
           if(!found) continue;
-          if(div.map.state == countryVal) return i;
+          retVal.index = i;
+          if(div.map.state == i) return retVal; // country map has same configuration index as previous value, don't flag changed.
           _removeLayers(div);
-          div.map.state = countryVal;
-          $.each(indiciaData.settings.country_configurations[i].map.tilecacheLayers, function(i, item) {
-            if(item.settings.isBaseLayer) {
-              div.map.projection = new OpenLayers.Projection(item.settings.srs);
-              div.map.infoLayer.projection = new OpenLayers.Projection(item.settings.srs);
-              div.map.editLayer.projection = new OpenLayers.Projection(item.settings.srs);
-            }
-          });
-          $.each(indiciaData.settings.country_configurations[i].map.tilecacheLayers, function(i, item) {
-              item.settings.maxResolution = "auto";
-              item.settings.minResolution = "auto";
-//            item.settings.units = "meters"; TODO ???
-              var tcLayer = new OpenLayers.Layer.TileCache(item.caption, item.servers, item.layerName, item.settings);
-              div.map.addLayer(tcLayer);
-              if(item.settings.isBaseLayer) {
-                
-                div.map.setBaseLayer(tcLayer);
-                div.map.maxExtent = tcLayer.maxExtent;
+          div.map.state = i;
+          retVal.mapChanged = true;
+          $.each(indiciaData.settings.country_configurations[i].map.tilecacheLayers, function(i, layer) {
+            var tcLayer;
+
+            layer.settings.maxResolution = "auto";
+            layer.settings.minResolution = "auto";
+//            layer.settings.units = "meters"; TODO ???
+//            layer.settings.displayInLayerSwitcher = true; TODO ???
+            tcLayer = new OpenLayers.Layer.TileCache(layer.caption, layer.servers, layer.layerName, layer.settings);
+
+            if(layer.settings.isBaseLayer) {
+              if(div.map.projection.projCode != layer.settings.srs) {
+                retVal.reproject = true;
+                div.map.projection = new OpenLayers.Projection(layer.settings.srs);
+                div.map.infoLayer.projection = new OpenLayers.Projection(layer.settings.srs);
+                div.map.editLayer.projection = new OpenLayers.Projection(layer.settings.srs);
               }
-              if(typeof item.setInitialVisibility != 'undefined')
-                tcLayer.setVisibility(item.setInitialVisibility);
+              div.map.addLayer(tcLayer);
+              div.map.setBaseLayer(tcLayer);
+              div.map.maxExtent = tcLayer.maxExtent;
+            } else
+              div.map.addLayer(tcLayer);
+
+            if(typeof layer.setInitialVisibility != 'undefined')
+              tcLayer.setVisibility(layer.setInitialVisibility);
           });
-          return i;
+          return retVal;
         }
       }
-      if(!found && div.map.state != "Default") {
+      // at this point will have returned if found in list
+      retVal.index = false;
+      if(div.map.state != "Default") {
+        retVal.mapChanged = true;
         _removeLayers(div);
         div.map.state = "Default";
-        div.map.projection = div.map.defaultLayers.mapProjection;
-        div.map.infoLayer.projection = div.map.defaultLayers.infoLayerProjection;
-        div.map.editLayer.projection = div.map.defaultLayers.editLayerProjection;
+        if(div.map.projection.projCode != div.map.defaultLayers.mapProjection.projCode) {
+          retVal.reproject = true;
+          div.map.projection = div.map.defaultLayers.mapProjection;
+          div.map.infoLayer.projection = div.map.defaultLayers.infoLayerProjection;
+          div.map.editLayer.projection = div.map.defaultLayers.editLayerProjection;
+        }
         $.each(div.map.defaultLayers.layers, function(idx, layer){
           layer.displayInLayerSwitcher = true;
           div.map.addLayer(layer);
@@ -580,24 +597,28 @@ $(document).ready(function() {
           div.map.maxExtent = layer.maxExtent;
         });
       }
-      return false;
+      return retVal;
     }
 
     function _convertGeometries(projCode, layer) {
+      // Switch off any feature added functionality
+      var eventHandler;
       if(projCode != layer.projection.projCode) {
         $.each(layer.features, function(idx, feature){
           var cloned = feature.geometry.clone();
           layer.removeFeatures([feature]);
           feature.geometry = cloned.transform(projCode, layer.projection.projCode);
+          feature.attributes.converted = true;
           layer.addFeatures([feature]);
         });
       }
     }
 
-    function _resetMap(div, incInfo, initBounds) {
+    function _resetMap(div, incInfo, initBounds, zoom) {
       var bounds = null;
 
       div.map.updateSize();
+      if(!zoom) return;
       if (div.map.editLayer.features.length>0) // Transect or Sections.
         bounds = div.map.editLayer.getDataExtent();
       if (incInfo && div.map.infoLayer.features.length>0) {
@@ -606,7 +627,6 @@ $(document).ready(function() {
         else
           bounds.extend(div.map.infoLayer.getDataExtent());
       }
-      div.map.updateSize();
       if (initBounds && typeof indiciaData.initialBounds !== "undefined") {
         indiciaFns.zoomToBounds(div, indiciaData.initialBounds);
         delete indiciaData.initialBounds;
@@ -714,10 +734,10 @@ $(document).ready(function() {
       routeMapDiv.map.infoLayer.addFeatures(oldFeatures);
   }
 
-    function resetMap(div, incInfo, initBounds) {
-      var countryVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(),
-          editLayerProj,
-          infoLayerProj;
+    function resetMap(div, incInfo, initBounds, zoom) {
+      var editLayerProj,
+          infoLayerProj,
+          details;
 
       if(typeof div.map == 'undefined') return;
       if ($(div).filter(':visible').length == 0) return;
@@ -725,14 +745,17 @@ $(document).ready(function() {
       editLayerProj = div.map.editLayer.projection;
       infoLayerProj = div.map.infoLayer.projection;
 
-      if(_setDefaultLayers(div))
-        _setBaseLayers(countryVal, div);
-      _convertGeometries(editLayerProj.projCode, div.map.editLayer);
-      _convertGeometries(infoLayerProj.projCode, div.map.infoLayer);
+      if(_setDefaultLayers(div)) {
+        details = _setBaseLayers(div);
+        if(details.reproject) {
+          _convertGeometries(editLayerProj.projCode, div.map.editLayer);
+          _convertGeometries(infoLayerProj.projCode, div.map.infoLayer);
+        }
+      }
       // when the route map is initially created it is hidden, so is not rendered, and the calculations of the map size are wrong
       // (Width is 100 rather than 100%), so any initial zoom in to the transect by the map panel is wrong.
       // Not only that but the layers may have changed.
-      _resetMap(div, incInfo, initBounds);
+      _resetMap(div, incInfo, initBounds, zoom);
     }
 
   // Need to work around issue where standard mapTabHandler can only handle one map
@@ -742,10 +765,10 @@ $(document).ready(function() {
       if((div = $('#'+target.id+' #route-map')).length > 0){ // Your Route map is being displayed on this tab
         copy_over_transects();
         div = div[0]; // equivalent of indiciaData.mapdiv
-        resetMap(div, true, false)
+        resetMap(div, true, false, true) // when redisplaying route map, include the transect itself.
       } else if ((div = $('#'+target.id+' #map')).length > 0){ // Main map is being displayed on this tab
         div = div[0]; // equivalent of indiciaData.mapdiv
-        resetMap(div, false, true);
+        resetMap(div, false, true, true); // when redisplaying route map, dont include the country.
       }
     });
 
@@ -964,7 +987,8 @@ $(document).ready(function() {
 
       $('.olControlEditingToolbar').addClass('right');
 
-      function featureAddedEvent(evt) {
+      function featureRouteAddedEvent(evt) {
+          if(typeof evt.feature.attributes.converted != 'undefined') return;
           // Only handle lines - as things like the sref control also trigger feature change events
           if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
             var current, oldSection = [];
@@ -998,16 +1022,63 @@ $(document).ready(function() {
           }
       }
 
-      div.map.editLayer.events.on({'featureadded': featureAddedEvent}); 
+      div.map.editLayer.events.on({'featureadded': featureRouteAddedEvent}); 
       div.map.editLayer.events.on({'afterfeaturemodified': function() {indiciaData.routeChanged = true;}}); 
 
-      resetMap(div, true, false);
+      resetMap(div, true, false, true);
       // select the first section
       locTypeChange();
       selectSection('S1', true);
 
     } else {
       // main map
+      function featureSiteAddedEvent(evt) { // check that the country is OK.
+        if(typeof evt.feature.attributes.converted != 'undefined') return;
+        // get country that centroid is in: requires geoserver.
+        // proxiedurl,featurePrefix,featureType,[geometryName],featureNS,srsName[,propertyNames]
+        if(indiciaData.settings.country_layer_lookup.length != 5)
+          return;
+        if(typeof(evt.feature) == 'undefined' ||
+            typeof(evt.feature.attributes) == 'undefined' ||
+            (typeof(evt.feature.attributes.temp) !== 'undefined' &&
+              typeof(evt.feature.attributes.temp=== true)))
+          return;
+        protocolSpec = indiciaData.settings.country_layer_lookup;
+
+        var protocol = new OpenLayers.Protocol.WFS({
+            url: protocolSpec[0],featurePrefix: protocolSpec[1],featureType: protocolSpec[2], geometryName:'boundary_geom',featureNS: protocolSpec[3],srsName: protocolSpec[4],version: '1.1.0',propertyNames: ['boundary_geom','name']
+           ,callback: function(a1){
+             // here we don't zoom
+
+            if(a1.error && (typeof a1.error.success == 'undefined' || a1.error.success == false)){
+              alert('Country lookup failed.'); // TODO NTH i18n
+              return;
+            }
+            if(a1.features.length > 0) {
+              var id = a1.features[0].fid.split('.');
+              id=id[1];
+              if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == id) // country is the same
+                return;
+              if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == '') { // not set yet.
+                $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(id).change();
+                return;
+              }
+              var dialog = $('<p>A change in country has been detected. Do you wish to set the country to the new value? This may lead to changes in the acceptable number of sections, and/or a different set of maps.</p>').dialog(
+                      {title: "Change Country?",
+                       buttons: { 
+                           "No":  function() { $(this).dialog('close'); },
+                           "Yes": function() { $(this).dialog('close');
+                               $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(id);
+                               countryChange(false); }}});
+            } // else no country - just leave alone
+          }
+        });
+        filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[
+                     new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: evt.feature.geometry.getCentroid()}),
+                     new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: indiciaData.settings.country_location_type_id})]});
+        protocol.read({filter: filter});
+      };
+
       div.map.infoLayer = new OpenLayers.Layer.Vector('Country',
           {style: { // a combination of georef, boundary and ghost. No Fill
               fillOpacity : 0,
@@ -1019,8 +1090,12 @@ $(document).ready(function() {
            sphericalMercator: true,
            displayInLayerSwitcher: true});
       div.map.addLayer(div.map.infoLayer);
-      $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).change();
-      resetMap(div, false, true);
+      countryChange(false);
+
+      div.map.editLayer.events.on({'featureadded': featureSiteAddedEvent}); 
+
+      resetMap(div, false, true, false);
+
     }
   });
   
@@ -1049,51 +1124,118 @@ $(document).ready(function() {
     }
   });
 
-  $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).change(function(evt){
-    var lt = $('#location_type_id').val(),
-        myVal = $(this).val(),
-        found = false,
-        mainMapDiv = $('#map'),
-        toRemove = [],
-        editLayerProj;
+    $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).change(function(evt){countryChange(true);});
 
-    mainMapDiv = mainMapDiv[0];
-    // only do option restriction if control is a select.
-    mainMapDiv.map.infoLayer.destroyFeatures();
-    editLayerProj = mainMapDiv.map.editLayer.projection;
-    // Before we do anything further with the map:
-    if(_setDefaultLayers(mainMapDiv))
-      found = _setBaseLayers(myVal, mainMapDiv);
+    countryChange = function(checkOutside) { // changeCountry
+      var lt = $('#location_type_id').val(),
+          myVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(),
+          found = false,
+          details,
+          mainMapDiv = $('#map'),
+          toRemove = [],
+          mapExtent,
+          reproject = false,
+          list,
+          oldEditLayerProj,
+          _countryChangeEnd;
 
-    system = $('#imp-sref-system').val();
-    $('#imp-sref-system option').addClass('working').attr('disabled',false);
-    if (found !== false) {
-        list = indiciaData.settings.country_configurations[found].map.sref_systems.split(',');
-        $.each(list, function(idx, system){
-          $('#imp-sref-system option[value='+system+']').removeClass('working');
-        });
-        // don't zoom as definitely adding a country
-    } else {
-      $.each(indiciaData.settings.defaultSystems, function(idx, system){
-        $('#imp-sref-system option[value='+system+']').removeClass('working');
-      });
-      if(myVal=='' && $('#site-details:visible').length>0) // only zoom at this point if not putting a country on the map
-        mainMapDiv.map.setCenter(mainMapDiv.map.defaultLayers.centre, mainMapDiv.map.defaultLayers.zoom, false, true);
-    }
-    $('#imp-sref-system option.working').removeClass('working').attr('disabled','disabled');
-    if($('#imp-sref-system option[value='+system+']:enabled').length == 0)
-      $('#imp-sref-system').val('');
+      mainMapDiv = mainMapDiv[0];
 
-    _convertGeometries(editLayerProj.projCode, mainMapDiv.map.editLayer); // country infoLayer is empty
-    _resetMap(mainMapDiv, $('#location-id').length==0, false);
+      _countryChangeEnd = function(div, oldMapExtent, reproject, oldProjection) {
+        var infoExtent = div.map.infoLayer.getDataExtent(),
+            bounds, dialog, protocol;
 
-    if (myVal != ''){
-      // first put the country on the map
-      $(this).addClass("working1");
-      $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location/" + myVal +
-              '?mode=json&view=detail' +
-              '&auth_token='+indiciaData.readAuth.auth_token+
-              '&reset_timeout=true&nonce='+indiciaData.readAuth.nonce,
+        if(div.map.editLayer.features.length > 0) {
+          // keep map extent the same if a site already entered.
+          if(reproject) {
+            bounds = oldMapExtent.transform(oldProjection, div.map.projection);
+            div.map.zoomToExtent(bounds, true);
+            if(!mainMapDiv.map.getExtent().intersectsBounds(mainMapDiv.map.baseLayer.maxExtent))
+              div.map.zoomToExtent(mainMapDiv.map.baseLayer.maxExtent, true);
+          }
+          if (myVal=='')
+            dialog = $('<p>Warning: you are clearing the country, after the site has been created and a country allocated.</p>').dialog(
+                      {title: "Country Cleared",
+                       buttons: { "OK":  function() { $(this).dialog('close'); }}});
+          else if (checkOutside && indiciaData.settings.country_layer_lookup.length == 5) {
+            protocolSpec = indiciaData.settings.country_layer_lookup;
+
+            protocol = new OpenLayers.Protocol.WFS({
+                url: protocolSpec[0],featurePrefix: protocolSpec[1],featureType: protocolSpec[2], geometryName:'boundary_geom',featureNS: protocolSpec[3],srsName: protocolSpec[4],version: '1.1.0',propertyNames: ['boundary_geom','name']
+               ,callback: function(a1){
+                  if(a1.error && (typeof a1.error.success == 'undefined' || a1.error.success == false)){
+                    return;
+                  }
+                  if(a1.features.length > 0) {
+                    var id = a1.features[0].fid.split('.');
+                    id=id[1];
+                    if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == id) // country is the same
+                      return;
+                    var dialog = $('<p>Warning: the site you have previously entered is outside the country you have just selected.</p>').dialog(
+                            {title: "Outside Country",
+                             buttons: { "OK":  function() { $(this).dialog('close'); }}});
+                  }
+                }
+              });
+            filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[
+                           new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: div.map.editLayer.features[0].geometry.getCentroid()}),
+                           new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: indiciaData.settings.country_location_type_id})]});
+            protocol.read({filter: filter});
+          }
+        } else if(infoExtent !== null)
+          div.map.zoomToExtent(infoExtent);
+        else
+          mainMapDiv.map.setCenter(div.map.defaultLayers.centre, div.map.defaultLayers.zoom, false, true);
+      }
+
+      // record the extent of the edit layer on the main map. The route map is not being displayed and that is re-zoomed on change of tab. Possibly empty.
+      mapExtent = mainMapDiv.map.getExtent();
+      oldEditLayerProj = mainMapDiv.map.editLayer.projection;
+
+      // scan config to get new maps.
+      if(_setDefaultLayers(mainMapDiv)) { // returns false if no valid baselayer.
+        details = _setBaseLayers(mainMapDiv); // returns object : index into country array for map data, or false if default.
+        // reproject any edit layer geometries: main map.
+        if(details.reproject)
+          _convertGeometries(oldEditLayerProj.projCode, mainMapDiv.map.editLayer); // country infoLayer is empty
+        _resetMap(mainMapDiv, true, false, mainMapDiv.map.editLayer.features.length == 0);
+      } else return;
+
+      // set up sref system options
+      system = $('#imp-sref-system').val();
+      $('#imp-sref-system option').addClass('working').attr('disabled',false);
+      list = (details.index !== false ? indiciaData.settings.country_configurations[details.index].map.sref_systems.split(',') : indiciaData.settings.defaultSystems);
+      $.each(list, function(idx, system){ $('#imp-sref-system option[value='+system+']').removeClass('working'); });
+      $('#imp-sref-system option.working').removeClass('working').attr('disabled','disabled');
+      if($('#imp-sref-system option[value='+system+']:enabled').length == 0) {
+        $('#imp-sref-system').val('');
+      }
+      if($('#imp-sref-system').val() != system && mainMapDiv.map.editLayer.features.length > 0)
+        $.getJSON(indiciaData.indiciaSvc +
+        		  'index.php/services/spatial/wkt_to_sref&wkt=' + 
+        		  $('#imp-geom').val() +
+        		  '&system='+$('#imp-sref-system').val()+
+        		  '&precision=8&callback=?',
+      	      function(data){
+      	        if(typeof data.error != 'undefined')
+      	          alert(data.error);
+      	        else {
+      	          $('#imp-sref').val(data.sref);
+      	        }
+      	      });
+
+
+      // empty info layer on main map
+      mainMapDiv.map.infoLayer.destroyFeatures();
+
+      // If country specified, add to info layer on main map 
+      if (myVal != ''){
+        // first put the country on the map
+        $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).addClass("working1");
+        $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location/" + myVal +
+                    '?mode=json&view=detail' +
+                    '&auth_token='+indiciaData.readAuth.auth_token+
+                    '&reset_timeout=true&nonce='+indiciaData.readAuth.nonce,
           function(ldata) {
             var mainMapDiv = $('#map');
             mainMapDiv = mainMapDiv[0];
@@ -1101,7 +1243,6 @@ $(document).ready(function() {
               var parser = new OpenLayers.Format.WKT(),
                   features;
               features = parser.read(country.boundary_geom);
-//              features.geometry.move(600000, -600000);
               if (mainMapDiv.map.infoLayer.projection.projCode!='EPSG:900913' && mainMapDiv.map.infoLayer.projection.projCode!='EPSG:3857') { 
                 var cloned = features.geometry.clone();
                 features.geometry = cloned.transform(new OpenLayers.Projection('EPSG:900913'), mainMapDiv.map.infoLayer.projection.projCode);
@@ -1109,80 +1250,74 @@ $(document).ready(function() {
               if (!Array.isArray(features)) features = [features];
               mainMapDiv.map.infoLayer.addFeatures(features);
             });
-            if(mainMapDiv.map.infoLayer.features.length>0 && $('#location-id').length==0) {
-              var countryLayerBounds = mainMapDiv.map.infoLayer.getDataExtent().clone(); // use a clone
-              if(mainMapDiv.map.editLayer.features.length>0) {
-                var editLayerBounds = mainMapDiv.map.editLayer.getDataExtent();
-                if(countryLayerBounds.left   > editLayerBounds.left)   countryLayerBounds.left = editLayerBounds.left;
-                if(countryLayerBounds.right  < editLayerBounds.right)  countryLayerBounds.right = editLayerBounds.right;
-                if(countryLayerBounds.bottom > editLayerBounds.bottom) countryLayerBounds.bottom = editLayerBounds.bottom;
-                if(countryLayerBounds.top    < editLayerBounds.top)    countryLayerBounds.top = editLayerBounds.top;
-              }
-              mainMapDiv.map.zoomToExtent(countryLayerBounds);
-            }
             $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).removeClass("working1");
+            _countryChangeEnd(mainMapDiv, mapExtent, details.reproject, oldEditLayerProj);
           }
         );
-      // Next recalculate the code: only do this if the site is new
-      if($('#location-id').length==0) {
-        $(this).addClass("working2");
-        $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location" +
-                  '?mode=json&view=detail&columns=code&parent_id=NULL' +
-                  '&auth_token='+indiciaData.readAuth.auth_token+
-                  '&reset_timeout=true&nonce='+indiciaData.readAuth.nonce,
-              function(ldata) {
-                  var code = 1, thisCode,
-                      prefix = indiciaData.autogeneratePrefix +
-                          $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')+' option:selected').text() +
-                          indiciaData.autogeneratePrefix.substring(indiciaData.autogeneratePrefix.length-1);
-                  $.each(ldata, function(idx, country){
-                    if(country.code !== null &&
-                        country.code.substring(0, prefix.length) == prefix) {
-                      thisCode = parseInt(country.code.substring(prefix.length));
-                      if(code <= thisCode) { code = thisCode + 1; }
-                    }});
-                  $('#location-code').val(prefix+code);
-                  $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).removeClass("working2");
-              }
-            );
-      }
-    }
-    if($('select#location_type_id').length) { // if not a select then it is fixed and hidden, so no need to set options.
-      $('#location_type_id option[value=]').attr('disabled',false);
-      $('#location_type_id option:not([value=])').attr('disabled','disabled');
-      for(i=0, found=false; i < indiciaData.settings.country_configurations.length; i++) {
+        // Update Code
+        // Next recalculate the code: only do this if the site is new
+        if($('#location-id').length==0) {
+            $(this).addClass("working2");
+            $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location" +
+                      '?mode=json&view=detail&columns=code&parent_id=NULL' +
+                      '&auth_token='+indiciaData.readAuth.auth_token+
+                      '&reset_timeout=true&nonce='+indiciaData.readAuth.nonce,
+                  function(ldata) {
+                      var code = 1, thisCode,
+                          prefix = indiciaData.autogeneratePrefix +
+                              $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')+' option:selected').text() +
+                              indiciaData.autogeneratePrefix.substring(indiciaData.autogeneratePrefix.length-1);
+                      $.each(ldata, function(idx, country){
+                        if(country.code !== null &&
+                            country.code.substring(0, prefix.length) == prefix) {
+                          thisCode = parseInt(country.code.substring(prefix.length));
+                          if(code <= thisCode) { code = thisCode + 1; }
+                        }});
+                      $('#location-code').val(prefix+code);
+                      $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).removeClass("working2");
+                  }
+                );
+          }
+      } else
+        _countryChangeEnd(mainMapDiv, mapExtent, details.reproject, oldEditLayerProj);
+
+      // update location types to match new country definition
+      if($('select#location_type_id').length) { // if not a select then it is fixed and hidden - only 1 possible value, so no need to set options.
+        $('#location_type_id option[value=]').attr('disabled',false);
+        $('#location_type_id option:not([value=])').attr('disabled','disabled');
+        for(i=0, found=false; i < indiciaData.settings.country_configurations.length; i++) {
           if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined') continue; // find country definition
           for(j=0; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
             if(indiciaData.settings.country_configurations[i].country_names[j].country !== "Default" &&
-                indiciaData.settings.country_configurations[i].country_names[j].id == myVal) found = true;
+               indiciaData.settings.country_configurations[i].country_names[j].id == myVal) found = true;
           if(!found) continue;
           for(j=0; j < indiciaData.settings.country_configurations[i].location_types.length; j++)
             if(indiciaData.settings.country_configurations[i].location_types[j].can_create)
               $('#location_type_id option[value='+indiciaData.settings.country_configurations[i].location_types[j].id+']').attr('disabled',false);
           break;
-      }
-      if(!found) // no country specific 
+        }
+        if(!found) // no country specific, set default 
           for(i=0; i < indiciaData.settings.country_configurations.length; i++) {
-              if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined') continue; // find country definition
-              for(j=0, found=false; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
-                if(indiciaData.settings.country_configurations[i].country_names[j].country == "Default") found = true;
+            if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined') continue; // find country definition
+            for(j=0, found=false; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
+              if(indiciaData.settings.country_configurations[i].country_names[j].country == "Default") found = true;
               if(!found) continue;
               for(j=0; j < indiciaData.settings.country_configurations[i].location_types.length; j++)
                 if(indiciaData.settings.country_configurations[i].location_types[j].can_create)
                   $('#location_type_id option[value='+indiciaData.settings.country_configurations[i].location_types[j].id+']').attr('disabled',false);
           }
-      if($('#location_type_id option:not([value=]):enabled').length == 1)
-        $('#location_type_id').val($('#location_type_id option:not([value=]):enabled').val());
-      else if(lt!='' && $('#location_type_id option[value='+lt+']:enabled').length == 1)
+        if($('#location_type_id option:not([value=]):enabled').length == 1)
+          $('#location_type_id').val($('#location_type_id option:not([value=]):enabled').val());
+        else if(lt!='' && $('#location_type_id option[value='+lt+']:enabled').length == 1)
           $('#location_type_id').val(lt);
-      else
+        else
           $('#location_type_id').val('');
+        if($('#location_type_id option:not([value=]):enabled').length == 0)
+          alert('You do not have permission to create locations for this country');
+      }
+      // trigger a location_type update: this deals with the number of sections functionality
       $('#location_type_id').change();
-      if($('#location_type_id option:not([value=]):enabled').length == 0)
-        alert('You do not have permission to create locations for this country');
-    } else // but may still need adjust max number of sections etc
-      locTypeChange(null);
-  });
+    }
 
     locTypeChange = function(evt){
       var countryVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(),
@@ -1225,7 +1360,7 @@ $(document).ready(function() {
               (indiciaData.settings.country_configurations[i].location_types[j].can_change_num_sections ? 1 : indiciaData.settings.country_configurations[i].location_types[j].num_sections));
       value = Math.min(max, Math.max($('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').val(), min));
       $('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']')
-          .val(value).attr('max',max).attr('min',max).removeClass('ui-state-error')
+          .val(value).attr('max',max).attr('min',min).removeClass('ui-state-error')
           .closest('div').find('.inline-error').remove();
       if(min==max)
         $('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');

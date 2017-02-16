@@ -1,7 +1,5 @@
 jQuery(document).ready(function ($) {
-  var dirty = window.location.href.match(/\?q=/);
-  var q = dirty ? '?q=' : '';
-  var join;
+  var typeParam;
 
   // retrieve a query string parameter
   function getParameterByName(name) {
@@ -18,10 +16,18 @@ jQuery(document).ready(function ($) {
     return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
   }
 
+  typeParam = getParameterByName('dynamic-sample_type');
+
   // Fix up all pantheon links
   $.each($('.button-links a, .buttons-list a'), function () {
-    join = ($(this).attr('href').match(/\?/) || q !== '') ? '&' : '?';
-    $(this).attr('href', q + $(this).attr('href') + join + 'dynamic-sample_id=' + getParameterByName('dynamic-sample_id'));
+    // grab the URL, excluding the query parameters, but including the ?q= if dirty URLs under D7.
+    var join = ($(this).attr('href').match(/\?/)) ? '&' : '?';
+    var parts = $(this).attr('href').split(join);
+    var href = parts[0] + join + 'dynamic-sample_id=' + getParameterByName('dynamic-sample_id');
+    if (typeParam) {
+      href += '&dynamic-sample_type=' + typeParam;
+    }
+    $(this).attr('href', href);
   });
 
   indiciaFns.applyLexicon = function () {
@@ -60,6 +66,9 @@ jQuery(document).ready(function ($) {
 
   window.formatOsirisResources = function () {
     $.each($('td.col-resource'), function () {
+      if ($(this).html().trim === '' || $(this).html().substr(0, 1) !== '[') {
+        return;
+      }
       var flat = JSON.parse($(this).html());
       var n;
       var i;
@@ -107,7 +116,7 @@ jQuery(document).ready(function ($) {
     $.each($('tbody .col-sqi').not('.processed'), function () {
       if ($(this).closest('tr').find('.col-count').text() < 15) {
         $(this).prepend(
-          '<img title="Warning, this index was calculated from less than 15 species so may not be accurate." ' +
+          '<img title="Warning, this index was calculated from less than 15 species so may not be reliable." ' +
           'alt="Warning icon" src="/pantheon/sites/www.brc.ac.uk.pantheon/modules/iform/media/images/warning.png"/>'
         );
       }
