@@ -55,7 +55,7 @@ loadSectionDetails = function(section) {
   clearSection();
   if (typeof indiciaData.sections[section]!=="undefined") { // previously existing section.
     $('#section-details-tab').show();
-	$('.complete-route-details').removeAttr('disabled');
+    $('.complete-route-details').removeAttr('disabled');
     $('#section-location-id').val(indiciaData.sections[section].id);
     // if the systems on the section and main location do not match, copy the the system and sref from the main site.
     if(indiciaData.sections[section].system !== $('#imp-sref-system').val()) {
@@ -404,8 +404,9 @@ saveRoute = function() {
 	// This saves the currently selected route aginst the currently selected section.
 	$('.save-route').addClass('waiting-button');
 
-	$('#section-details-tab').show();
-    current = $('#section-select-route li.selected').html();          
+    $('#section-details-tab').show();
+    $('.complete-route-details').removeAttr('disabled');
+    current = $('#section-select-route li.selected').html();
     saveRouteDialogText = 'Saving the route data for section '+current+'.<br/>';
     // Leave indiciaData.currentFeature selected
     // Prepare data to post the new or edited section to the db
@@ -444,9 +445,10 @@ saveRoute = function() {
       }
     }
     // Store in POST data
-    // TODO ??? store geometries etc into section details form
     data['location:centroid_sref']=indiciaData.sections[current].sref; // centroid_geom not provided, so automatically created by warehouse from sref
     data['location:centroid_sref_system']=indiciaData.sections[current].system;
+    $('#section-location-sref').val(data['location:centroid_sref']);
+    $('#section-location-system,#section-location-system-select').val(indiciaData.sections[current].system);
     // Store boundary geometry in the indiciaData
     indiciaData.sections[current].geom = indiciaData.currentFeature.geometry.toString();
 
@@ -458,6 +460,7 @@ saveRoute = function() {
       indiciaData.sections[current].sectionLen = sectionLen;
     }
     indiciaData.routeChanged = false;
+
     // POST the new section details. Synchronous due to current in success function
     $.ajax({
         type: 'POST',
@@ -772,144 +775,7 @@ $(document).ready(function() {
       }
     });
 
-  // following are for the route and detail tabs: not always present
-  $('#section-select-route li').click(function(evt) {
-    var parts = evt.target.id.split('-');
-    confirmSelectSection(parts[parts.length-1], true, true);
-  });
-  $('.remove-section').click(function(evt) {
-    var current = $('#section-select-route li.selected').html();
-    if(confirm(indiciaData.sectionDeleteConfirm + ' ' + current + '?')) deleteSection(current);
-  });
-  $('.insert-section').click(function(evt) {
-    var current = $('#section-select-route li.selected').html();
-    if(confirm(indiciaData.sectionInsertConfirm + ' ' + current + '?')) insertSection(current);
-  });
-  $('.erase-route').click(function(evt) {
-    var current = $('#section-select-route li.selected').html(),
-        oldSection = [],
-        div = $('#route-map');
-    div = div[0];
-    // If the draw feature control is active unwind it one point at a time, starting at the end.
-    for(var i = div.map.controls.length-1; i>=0; i--)
-      if(div.map.controls[i].CLASS_NAME == 'OpenLayers.Control.DrawFeature' && div.map.controls[i].active) {
-        if(div.map.controls[i].handler.line){
-          if(div.map.controls[i].handler.line.geometry.components.length == 2) // start point plus current unselected position)
-            div.map.controls[i].cancel();
-          else 
-            div.map.controls[i].undo();
-          return;
-        }
-      }
-    $.each(div.map.editLayer.features, function(idx, feature) {
-      if (feature.attributes.section===current) {
-        oldSection.push(feature);
-      }
-    });
-    if (oldSection.length>0 && oldSection[0].geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
-      if (!confirm('Do you wish to erase the route for this section?')) {
-        return;
-      }
-    } else return; // no existing route to clear
-    indiciaData.navControl.deactivate();
-    indiciaData.modifyFeature.deactivate();
-    indiciaData.drawFeature.deactivate();
-    indiciaData.selectFeature.deactivate();
-    indiciaData.currentFeature = null;
-    div.map.editLayer.removeFeatures(oldSection, {});
-    if (typeof indiciaData.sections[current]=="undefined") {
-      return; // not currently stored in database
-    }
-    indiciaData.drawFeature.activate();
-    indiciaData.sections[current].sectionLen = 0;
-    // have to leave the location in the website (data may have been recorded against it), but can't just empty the geometry as will fail validation
-    var data = {
-        'location:boundary_geom':'',
-        'location:centroid_geom':oldSection[0].geometry.getCentroid().toString(),
-        'location:id':indiciaData.sections[current].id,
-        'website_id':indiciaData.website_id
-    };
-    indiciaData.routeChanged = false;
-    $.post(
-      indiciaData.ajaxFormPostUrl,
-      data,
-      function(data) {
-        if (typeof(data.error)!=="undefined") {
-          alert(data.error);
-        } else {
-          // Better way of doing this?
-          var current = $('#section-select-route li.selected').html();
-          $('#section-select-route-'+current).addClass('missing');
-          $('#section-select-'+current).addClass('missing');
-        }
-        // recalculate total transect length
-        updateTransectDetails(false);
-      },
-      'json'
-    );
-  }); // End function for erase route click
-  $('.save-route').click(function(evt) {
-    var current, oldSection = [];
-    // This saves the currently selected route aginst the currently selected section.
-    // We assume that user has pressed button deliberately, so no confirmation.
-    if(indiciaData.currentFeature === null) return; // no feature selected so don't save
-    if($('.save-route').hasClass('waiting-button')) return; // prevents double clicking.
-    $('.save-route').addClass('waiting-button');
 
-    var buttons =  { 
-      "Abort changes" : function() {
-        $(this).dialog('close');
-        // replace the route with the previous one for this section.
-        // At this point, indiciaData.currentSection should point to existing, previously selected section.
-        var removeSections = [];
-        var oldSection = [];
-        var div = $('#route-map');
-        div = div[0];
-        if(typeof indiciaData.modifyFeature !== "undefined")
-          indiciaData.modifyFeature.deactivate();
-    		if(typeof indiciaData.drawFeature !== "undefined")
-    		    indiciaData.drawFeature.deactivate();
-		        indiciaData.navControl.activate(); // Nav control always exists
-    	    $.each(div.map.editLayer.features, function(idx, feature) {
-    	        if (feature.attributes.section===indiciaData.currentSection) {
-    	            removeSections.push(feature);
-    	        }
-    	    });
-    	    if (removeSections.length>0) {
-    	        div.map.editLayer.removeFeatures(removeSections, {});
-    	    }
-    	    if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined' &&
-    	    		typeof indiciaData.sections[indiciaData.currentSection].geom !== 'undefined') {
-    	        oldSection.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom),
-    	            		            {section:indiciaData.currentSection, type:"boundary"}));
-    	        div.map.editLayer.addFeatures(oldSection);
-    	    } // dont worry about selection.
-    	    indiciaData.routeChanged = false;
-    	    $('.save-route').removeClass('waiting-button');
-    	  },
-    	"Don't save":  function() {
-    	    $('.save-route').removeClass('waiting-button');
-    	    $(this).dialog('close');
-    	  },
-      	"Yes": function() {
-    		$(this).dialog('close');
-    	    saveRoute();
-    	  }
-      };
-      // display dialog and drive from its button events.
-      var dialog = $('<p>Are you sure you wish to save this route now? Choose &quot;Yes&quot; to save the changes; &quot;Don&apos;t save&quot; to leave the route as is, but not save it just yet; and &quot;Abort changes&quot; to wind back the changes, and (if applicable) replace the new route with the previously saved version.</p>')
-    	    	.dialog({ title: "Save Route Data?",
-    	    		buttons: buttons,
-    	    		width: 400,
-    	    	    closeOnEscape: false,
-    	    	    open: function(event, ui) {
-    	    	        $(".ui-dialog-titlebar-close", $(this).parent()).remove();
-    	    	    }});
-  });
-
-  $('.complete-route-details').click(function(evt) {
-      indiciaFns.activeTab($('#controls'), 'section-details');
-  });
 
   mapInitialisationHooks.push(function(div) {
     var defaultStyle = new OpenLayers.Style(),
@@ -1029,6 +895,146 @@ $(document).ready(function() {
       // select the first section
       locTypeChange();
       selectSection('S1', true);
+
+      // following are for the route and detail tabs: not always present
+      $('#section-select-route li').click(function(evt) {
+        var parts = evt.target.id.split('-');
+        confirmSelectSection(parts[parts.length-1], true, true);
+      });
+      $('.insert-section').click(function(evt) {
+        var current = $('#section-select-route li.selected').html();
+        if(confirm(indiciaData.sectionInsertConfirm + ' ' + current + '?')) insertSection(current);
+      });
+      $('.erase-route').click(function(evt) {
+        var current = $('#section-select-route li.selected').html(),
+            oldSection = [],
+            div = $('#route-map');
+        div = div[0];
+        // If the draw feature control is active unwind it one point at a time, starting at the end.
+        for(var i = div.map.controls.length-1; i>=0; i--)
+          if(div.map.controls[i].CLASS_NAME == 'OpenLayers.Control.DrawFeature' && div.map.controls[i].active) {
+            if(div.map.controls[i].handler.line){
+              if(div.map.controls[i].handler.line.geometry.components.length == 2) // start point plus current unselected position)
+                div.map.controls[i].cancel();
+              else 
+                div.map.controls[i].undo();
+              return;
+            }
+          }
+        $.each(div.map.editLayer.features, function(idx, feature) {
+          if (feature.attributes.section===current) {
+            oldSection.push(feature);
+          }
+        });
+        if (oldSection.length>0 && oldSection[0].geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
+          if (!confirm('Do you wish to erase the route for this section?')) {
+            return;
+          }
+        } else return; // no existing route to clear
+        indiciaData.navControl.deactivate();
+        indiciaData.modifyFeature.deactivate();
+        indiciaData.drawFeature.deactivate();
+        indiciaData.selectFeature.deactivate();
+        indiciaData.currentFeature = null;
+        div.map.editLayer.removeFeatures(oldSection, {});
+        if (typeof indiciaData.sections[current]=="undefined") {
+          return; // not currently stored in database
+        }
+        indiciaData.drawFeature.activate();
+        indiciaData.sections[current].sectionLen = 0;
+        // have to leave the location in the website (data may have been recorded against it), but can't just empty the geometry as will fail validation
+        var data = {
+            'location:boundary_geom':'',
+            'location:centroid_geom':oldSection[0].geometry.getCentroid().toString(),
+            'location:id':indiciaData.sections[current].id,
+            'website_id':indiciaData.website_id
+        };
+        indiciaData.routeChanged = false;
+        $.post(
+          indiciaData.ajaxFormPostUrl,
+          data,
+          function(data) {
+            if (typeof(data.error)!=="undefined") {
+              alert(data.error);
+            } else {
+              // Better way of doing this?
+              var current = $('#section-select-route li.selected').html();
+              $('#section-select-route-'+current).addClass('missing');
+              $('#section-select-'+current).addClass('missing');
+            }
+            // recalculate total transect length
+            updateTransectDetails(false);
+          },
+          'json'
+        );
+      }); // End function for erase route click
+      $('.save-route').click(function(evt) {
+        var current, oldSection = [];
+        // This saves the currently selected route aginst the currently selected section.
+        // We assume that user has pressed button deliberately, so no confirmation.
+        if(indiciaData.currentFeature === null) return; // no feature selected so don't save
+        if($('.save-route').hasClass('waiting-button')) return; // prevents double clicking.
+        $('.save-route').addClass('waiting-button');
+
+        var buttons =  { 
+          "Abort changes" : function() {
+            $(this).dialog('close');
+            // replace the route with the previous one for this section.
+            // At this point, indiciaData.currentSection should point to existing, previously selected section.
+            var removeSections = [];
+            var oldSection = [];
+            var div = $('#route-map');
+            div = div[0];
+            if(typeof indiciaData.modifyFeature !== "undefined")
+              indiciaData.modifyFeature.deactivate();
+        		if(typeof indiciaData.drawFeature !== "undefined")
+        		    indiciaData.drawFeature.deactivate();
+    		        indiciaData.navControl.activate(); // Nav control always exists
+        	    $.each(div.map.editLayer.features, function(idx, feature) {
+        	        if (feature.attributes.section===indiciaData.currentSection) {
+        	            removeSections.push(feature);
+        	        }
+        	    });
+        	    if (removeSections.length>0) {
+        	        div.map.editLayer.removeFeatures(removeSections, {});
+        	    }
+        	    if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined' &&
+        	    		typeof indiciaData.sections[indiciaData.currentSection].geom !== 'undefined') {
+        	        oldSection.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom),
+        	            		            {section:indiciaData.currentSection, type:"boundary"}));
+        	        div.map.editLayer.addFeatures(oldSection);
+        	    } // dont worry about selection.
+        	    indiciaData.routeChanged = false;
+        	    $('.save-route').removeClass('waiting-button');
+        	  },
+        	"Don't save":  function() {
+        	    $('.save-route').removeClass('waiting-button');
+        	    $(this).dialog('close');
+        	  },
+          	"Yes": function() {
+        		$(this).dialog('close');
+        	    saveRoute();
+        	  }
+          };
+          // display dialog and drive from its button events.
+          var dialog = $('<p>Are you sure you wish to save this route now? Choose &quot;Yes&quot; to save the changes; &quot;Don&apos;t save&quot; to leave the route as is, but not save it just yet; and &quot;Abort changes&quot; to wind back the changes, and (if applicable) replace the new route with the previously saved version.</p>')
+        	    	.dialog({ title: "Save Route Data?",
+        	    		buttons: buttons,
+        	    		width: 400,
+        	    	    closeOnEscape: false,
+        	    	    open: function(event, ui) {
+        	    	        $(".ui-dialog-titlebar-close", $(this).parent()).remove();
+        	    	    }});
+      });
+      $('.complete-route-details').click(function(evt) {
+          indiciaFns.activeTab($('#controls'), 'section-details');
+      });
+      $('.remove-section').click(function(evt) {
+        var current = $('#section-select-route li.selected').html();
+        if(confirm(indiciaData.sectionDeleteConfirm + ' ' + current + '?')) deleteSection(current);
+      });
+      if($('#section-location-id').val() == '')
+        $('.complete-route-details').attr('disabled','disabled');
 
     } else {
       // main map
