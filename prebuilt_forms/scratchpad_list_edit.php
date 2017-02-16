@@ -129,16 +129,31 @@ class iform_scratchpad_list_edit {
         'caching' => false
       ));
       $entryIds = [];
+      $taxa = [];
       foreach ($entries as $entry) {
         $entryIds[] = $entry['entry_id'];
+        // grab the taxon list in batches of 50
+        if (count($entryIds) > 50) {
+          $taxa = array_merge($taxa, data_entry_helper::get_population_data(array(
+            'table' => 'taxa_taxon_list',
+            'extraParams' => $auth['read'] + array(
+                'view' => 'cache',
+                'query' => json_encode(array('in'=>array('id' => $entryIds)))
+              )
+          )));
+          $entryIds = [];
+        }
       };
-      $taxa = data_entry_helper::get_population_data(array(
-        'table' => 'taxa_taxon_list',
-        'extraParams' => $auth['read'] + array(
-          'view' => 'cache',
-          'query' => json_encode(array('in'=>array('id' => $entryIds)))
-        )
-      ));
+      // grab the final batch
+      if (count($entryIds)) {
+        $taxa = array_merge($taxa, data_entry_helper::get_population_data(array(
+          'table' => 'taxa_taxon_list',
+          'extraParams' => $auth['read'] + array(
+              'view' => 'cache',
+              'query' => json_encode(array('in' => array('id' => $entryIds)))
+            )
+        )));
+      }
 
       data_entry_helper::$entity_to_load = array(
         'scratchpad_list:title' => $list[0]['title'],

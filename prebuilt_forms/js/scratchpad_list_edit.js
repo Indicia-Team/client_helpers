@@ -283,4 +283,6 @@ jQuery(document).ready(function ($) {
   $('#scratchpad-cancel').click(function () {
     window.location = indiciaData.scratchpadSettings.returnPath;
   });
+
+  recalculateStats();
 });
