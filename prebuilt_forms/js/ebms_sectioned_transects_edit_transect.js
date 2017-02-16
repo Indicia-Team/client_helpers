@@ -163,12 +163,11 @@ confirmSelectSection = function(section, doFeature, withCancel) {
 	  indiciaData.routeChanged = true;
   if(indiciaData.routeChanged === true) {
     var buttons =  { 
-        "No":  function() { $(this).dialog('close');
+        "No":  function() { 
         	// replace the route with the previous one for this section.
         	// At his point, indiciaData.currentSection should point to existing, previously selected section.
-        	var removeSections = [];
-        	var oldSection = [];
-        	var div = $('#route-map');
+        	var removeSections = [], oldSection = [], div = $('#route-map'), geom;
+        	$(this).dialog('close');
         	div = div[0];
     		if(typeof indiciaData.modifyFeature !== "undefined")
     		    indiciaData.modifyFeature.deactivate();
@@ -184,9 +183,13 @@ confirmSelectSection = function(section, doFeature, withCancel) {
         		div.map.editLayer.removeFeatures(removeSections, {});
         	}
         	if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined') {
-        		oldSection.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom),
-            		            {section:indiciaData.currentSection, type:"boundary"}));
-        		div.map.editLayer.addFeatures(oldSection);
+              // .geom is stored in 3857: convert to map projection.
+              geom = OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom);
+              if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
+                geom = geom.transform(new OpenLayers.Projection('EPSG:3857'), indiciaData.mapdiv.map.projection);
+              }
+              oldSection.push(new OpenLayers.Feature.Vector(geom, {section:indiciaData.currentSection, type:"boundary"}));
+              div.map.editLayer.addFeatures(oldSection);
         	} // dont worry about selection.
         	indiciaData.routeChanged = false;
         	checkIfSectionChanged(section, doFeature, withCancel);
@@ -400,7 +403,7 @@ insertSection = function(section) {
 var saveRouteDialog;
 
 saveRoute = function() {
-    var current, oldSection = [], saveRouteDialogText;
+    var current, oldSection = [], saveRouteDialogText, geom = indiciaData.currentFeature.geometry.clone();
 	// This saves the currently selected route aginst the currently selected section.
 	$('.save-route').addClass('waiting-button');
 
@@ -410,11 +413,15 @@ saveRoute = function() {
     saveRouteDialogText = 'Saving the route data for section '+current+'.<br/>';
     // Leave indiciaData.currentFeature selected
     // Prepare data to post the new or edited section to the db
+    if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
+      geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
+    }
+
     var data = {
       'location:code':current,
       'location:name':$('#location-name').val() + ' - ' + current,
       'location:parent_id':$('#location-id').val(),
-      'location:boundary_geom':indiciaData.currentFeature.geometry.toString(),
+      'location:boundary_geom':geom.toString(), // in 3857
       'location:location_type_id':indiciaData.sectionTypeId,
       'website_id':indiciaData.website_id
     };
@@ -428,21 +435,19 @@ saveRoute = function() {
 
     // Setup centroid grid ref and centroid geometry of section.
     // Store this in the indiciaData
-    if (indiciaData.defaultSectionGridRef==='parent') {
-      // initially set the section Sref etc to match the parent. Geom will be auto generated on the server
-      indiciaData.sections[current] = {sref : $('#imp-sref').val(), system : $('#imp-sref-system').val()};
-    } else if (indiciaData.defaultSectionGridRef.match(/^section(Centroid|Start)100$/)) {
-      if (typeof indiciaData.srefHandlers!=="undefined" &&
-          typeof indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()]!=="undefined") {
-        var handler = indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()], pt, sref;
-        if (indiciaData.defaultSectionGridRef==='sectionCentroid100') {
-          pt = indiciaData.currentFeature.geometry.getCentroid(true); // must use weighted to accurately calculate
-        } else {
-          pt = jQuery.extend({}, indiciaData.currentFeature.geometry.components[0]);
-        }
-        sref=handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
-        indiciaData.sections[current] = {sref : sref,	system : $('#imp-sref-system').val()};
+    if (indiciaData.defaultSectionGridRef.match(/^section(Centroid|Start)100$/) &&
+        typeof indiciaData.srefHandlers!=="undefined" &&
+        typeof indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()]!=="undefined") {
+      var handler = indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()], pt, sref;
+      if (indiciaData.defaultSectionGridRef==='sectionCentroid100') {
+        pt = indiciaData.currentFeature.geometry.getCentroid(true); // must use weighted to accurately calculate
+      } else {
+        pt = jQuery.extend({}, indiciaData.currentFeature.geometry.components[0]);
       }
+      sref=handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
+      indiciaData.sections[current] = {sref : sref,	system : $('#imp-sref-system').val()};
+    } else { // default : initially set the section Sref etc to match the parent. centroid_geom will be auto generated on the server
+      indiciaData.sections[current] = {sref : $('#imp-sref').val(), system : $('#imp-sref-system').val()};
     }
     // Store in POST data
     data['location:centroid_sref']=indiciaData.sections[current].sref; // centroid_geom not provided, so automatically created by warehouse from sref
@@ -450,7 +455,7 @@ saveRoute = function() {
     $('#section-location-sref').val(data['location:centroid_sref']);
     $('#section-location-system,#section-location-system-select').val(indiciaData.sections[current].system);
     // Store boundary geometry in the indiciaData
-    indiciaData.sections[current].geom = indiciaData.currentFeature.geometry.toString();
+    indiciaData.sections[current].geom = geom.toString(); // in 3857.
 
     // autocalc the section length and store in the section POST data and indiciaData and the Section Form
     if (indiciaData.autocalcSectionLengthAttrId) {
@@ -493,7 +498,9 @@ $(document).ready(function() {
   function _removeLayers(div) {
     var toRemove = [];
     $.each(div.map.layers, function(idx, layer){
-      if(layer !== div.map.editLayer && layer !== div.map.infoLayer) {
+      if(layer !== div.map.editLayer &&
+          layer !== div.map.infoLayer &&
+          layer.name !== 'OpenLayers.Handler.Path') {
         toRemove.push(layer);
       }
     });
@@ -605,11 +612,14 @@ $(document).ready(function() {
 
     function _convertGeometries(projCode, layer) {
       // Switch off any feature added functionality
-      var eventHandler;
+      var eventHandler, toRemove = [];
       if(projCode != layer.projection.projCode) {
         $.each(layer.features, function(idx, feature){
+          toRemove.push(feature);
+        });
+        layer.removeFeatures(toRemove);
+        $.each(toRemove, function(idx, feature){
           var cloned = feature.geometry.clone();
-          layer.removeFeatures([feature]);
           feature.geometry = cloned.transform(projCode, layer.projection.projCode);
           feature.attributes.converted = true;
           layer.addFeatures([feature]);
@@ -764,11 +774,15 @@ $(document).ready(function() {
   // Need to work around issue where standard mapTabHandler can only handle one map
   indiciaFns.bindTabsActivate($('.ui-tabs'), function(event, ui) {
       var div,
-          target = (typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0]);
+          target = (typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0]),
+          mod = false;
       if((div = $('#'+target.id+' #route-map')).length > 0){ // Your Route map is being displayed on this tab
+        mod = typeof indiciaData.modifyFeature !== "undefined" && indiciaData.modifyFeature.active;
+        if(mod) indiciaData.modifyFeature.deactivate();
         copy_over_transects();
         div = div[0]; // equivalent of indiciaData.mapdiv
         resetMap(div, true, false, true) // when redisplaying route map, include the transect itself.
+        if(mod) indiciaData.modifyFeature.activate();
       } else if ((div = $('#'+target.id+' #map')).length > 0){ // Main map is being displayed on this tab
         div = div[0]; // equivalent of indiciaData.mapdiv
         resetMap(div, false, true, true); // when redisplaying route map, dont include the country.
@@ -846,7 +860,7 @@ $(document).ready(function() {
 
       // add the loaded section geoms to the map. Do this before hooking up to the featureadded event.
       $.each(indiciaData.sections, function(idx, section) {
-        if(section.geom != '')
+        if(section.geom != '') // at this point in the initialisation, the projection is the 3857: base layers not swapped.
           f.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(section.geom), {section:'S'+idx.substr(1), type:"boundary"}));
       });
       div.map.editLayer.addFeatures(f);
@@ -908,13 +922,14 @@ $(document).ready(function() {
       $('.erase-route').click(function(evt) {
         var current = $('#section-select-route li.selected').html(),
             oldSection = [],
-            div = $('#route-map');
+            div = $('#route-map'),
+            geom;
         div = div[0];
         // If the draw feature control is active unwind it one point at a time, starting at the end.
         for(var i = div.map.controls.length-1; i>=0; i--)
           if(div.map.controls[i].CLASS_NAME == 'OpenLayers.Control.DrawFeature' && div.map.controls[i].active) {
             if(div.map.controls[i].handler.line){
-              if(div.map.controls[i].handler.line.geometry.components.length == 2) // start point plus current unselected position)
+              if(div.map.controls[i].handler.line.geometry.components.length <= 2) // start point plus current unselected position)
                 div.map.controls[i].cancel();
               else 
                 div.map.controls[i].undo();
@@ -943,9 +958,13 @@ $(document).ready(function() {
         indiciaData.drawFeature.activate();
         indiciaData.sections[current].sectionLen = 0;
         // have to leave the location in the website (data may have been recorded against it), but can't just empty the geometry as will fail validation
+        geom = oldSection[0].geometry.clone();
+        if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
+          geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
+        }
         var data = {
             'location:boundary_geom':'',
-            'location:centroid_geom':oldSection[0].geometry.getCentroid().toString(),
+            'location:centroid_geom':geom.getCentroid().toString(),
             'location:id':indiciaData.sections[current].id,
             'website_id':indiciaData.website_id
         };
@@ -981,9 +1000,7 @@ $(document).ready(function() {
             $(this).dialog('close');
             // replace the route with the previous one for this section.
             // At this point, indiciaData.currentSection should point to existing, previously selected section.
-            var removeSections = [];
-            var oldSection = [];
-            var div = $('#route-map');
+            var removeSections = [], oldSection = [], div = $('#route-map'), geom;
             div = div[0];
             if(typeof indiciaData.modifyFeature !== "undefined")
               indiciaData.modifyFeature.deactivate();
@@ -1000,8 +1017,11 @@ $(document).ready(function() {
         	    }
         	    if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined' &&
         	    		typeof indiciaData.sections[indiciaData.currentSection].geom !== 'undefined') {
-        	        oldSection.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom),
-        	            		            {section:indiciaData.currentSection, type:"boundary"}));
+                    geom = OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom);
+                    if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
+                      geom = geom.transform(new OpenLayers.Projection('EPSG:3857'), indiciaData.mapdiv.map.projection);
+                    }
+        	        oldSection.push(new OpenLayers.Feature.Vector(geom, {section:indiciaData.currentSection, type:"boundary"}));
         	        div.map.editLayer.addFeatures(oldSection);
         	    } // dont worry about selection.
         	    indiciaData.routeChanged = false;
@@ -1049,7 +1069,7 @@ $(document).ready(function() {
             (typeof(evt.feature.attributes.temp) !== 'undefined' &&
               typeof(evt.feature.attributes.temp=== true)))
           return;
-        protocolSpec = indiciaData.settings.country_layer_lookup;
+        var protocolSpec = indiciaData.settings.country_layer_lookup, geom;
 
         var protocol = new OpenLayers.Protocol.WFS({
             url: protocolSpec[0],featurePrefix: protocolSpec[1],featureType: protocolSpec[2], geometryName:'boundary_geom',featureNS: protocolSpec[3],srsName: protocolSpec[4],version: '1.1.0',propertyNames: ['boundary_geom','name']
@@ -1079,8 +1099,13 @@ $(document).ready(function() {
             } // else no country - just leave alone
           }
         });
+        // convert geometry to 3857 as this is what the geoserver uses.
+        geom = evt.feature.geometry.clone();
+        if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
+          geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
+        }
         filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[
-                     new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: evt.feature.geometry.getCentroid()}),
+                     new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: geom.getCentroid()}),
                      new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: indiciaData.settings.country_location_type_id})]});
         protocol.read({filter: filter});
       };
@@ -1149,7 +1174,7 @@ $(document).ready(function() {
 
       _countryChangeEnd = function(div, oldMapExtent, reproject, oldProjection) {
         var infoExtent = div.map.infoLayer.getDataExtent(),
-            bounds, dialog, protocol;
+            bounds, dialog, protocol, geom, protocolSpec;
 
         if(div.map.editLayer.features.length > 0) {
           // keep map extent the same if a site already entered.
@@ -1183,8 +1208,14 @@ $(document).ready(function() {
                   }
                 }
               });
+            // convert to 3857 as this is what the geoserver uses.
+            geom = div.map.editLayer.features[0].geometry.clone();
+            if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
+              geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
+            }
+
             filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[
-                           new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: div.map.editLayer.features[0].geometry.getCentroid()}),
+                           new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: geom.getCentroid()}),
                            new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: indiciaData.settings.country_location_type_id})]});
             protocol.read({filter: filter});
           }
@@ -1251,7 +1282,7 @@ $(document).ready(function() {
               features = parser.read(country.boundary_geom);
               if (mainMapDiv.map.infoLayer.projection.projCode!='EPSG:900913' && mainMapDiv.map.infoLayer.projection.projCode!='EPSG:3857') { 
                 var cloned = features.geometry.clone();
-                features.geometry = cloned.transform(new OpenLayers.Projection('EPSG:900913'), mainMapDiv.map.infoLayer.projection.projCode);
+                features.geometry = cloned.transform(new OpenLayers.Projection('EPSG:3857'), mainMapDiv.map.infoLayer.projection.projCode);
               }
               if (!Array.isArray(features)) features = [features];
               mainMapDiv.map.infoLayer.addFeatures(features);
