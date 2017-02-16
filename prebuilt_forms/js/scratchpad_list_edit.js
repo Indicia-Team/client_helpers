@@ -11,9 +11,14 @@ jQuery(document).ready(function ($) {
   }
 
   function recalculateStats() {
-    var matched = $('span.matched').length;
-    var queried = $('span.unmatched[data-state="non-unique"]').length;
-    var unmatched = $('span.unmatched[data-state="unmatched"],span.unmatched[data-state="duplicate"]').length;
+    var matched = $('span.matched')
+        .not(':empty').length;
+    var queried = $('span.unmatched[data-state="non-unique"]')
+        .not(':empty').length;
+    var unmatched = $('span.unmatched[data-state="unmatched"],span.unmatched[data-state="duplicate"]')
+        .not(':empty').length;
+
+    // Cleanup code should remove empty spans? Or should above filter out :empty
     $('#scratchpad-stats-total span.stat').html(totalCount);
     $('#scratchpad-stats-matched span.stat').html(matched);
     $('#scratchpad-stats-queried span.stat').html(queried);
@@ -27,9 +32,12 @@ jQuery(document).ready(function ($) {
   }
 
   function tidyInput() {
-    var input = $('#scratchpad-input').html();
+    var input;
     var inputDirty;
     var inputList;
+    // Tidy up and remove the options available for non-unique name resolution.
+    $('#scratchpad-input a.non-unique-name,#scratchpad-input span:empty').remove();
+    input = $('#scratchpad-input').html();
     inputClean = [];
     // HTML whitespace clean
     inputDirty = input.replace(/&nbsp;/g, ' ');
@@ -64,8 +72,6 @@ jQuery(document).ready(function ($) {
           if ($el && $el.length && $el[0].localName === 'span' && $el.hasClass('matched')) {
             // matched strings are kept as they are and not changed
             inputClean.push(token);
-          } else if ($el && $el.length && $el[0].localName === 'a' && $el.hasClass('non-unique-name')) {
-            // skip the matching option buttons for a list item that that could not match a unique name
           } else {
             inputClean.push(tokenText);
           }
@@ -156,7 +162,7 @@ jQuery(document).ready(function ($) {
             output.push('<a contenteditable="false" class="non-unique-name' +
                 (preferred ? ' preferred' : '') +
                 '" data-batch="' + nonUniqueBatchIdx +
-                '" data-id="' + this.record.id + '">' +
+                '" data-id="' + this.record.id + '" data-name="' + this.record.name + '">' +
                 this.record.unambiguous +
               '</a>');
           });
@@ -214,6 +220,8 @@ jQuery(document).ready(function ($) {
         matchResponse,
         'jsonp'
       );
+    } else {
+      $('#scratchpad-check').removeClass('checking');
     }
   }
 
@@ -232,7 +240,7 @@ jQuery(document).ready(function ($) {
    */
   indiciaFns.on('click', 'a.non-unique-name', {}, function (e) {
     var button = e.currentTarget;
-    var speciesName = $(button).text();
+    var speciesName = $(button).attr('data-name');
     var nonUniqueBatchIdx = $(button).attr('data-batch');
     var elementsToRemove = $('[data-batch=' + nonUniqueBatchIdx + '],[data-batch=' + nonUniqueBatchIdx + '] + br');
     if ($('span[data-id="' + $(button).attr('data-id') + '"]').length) {
