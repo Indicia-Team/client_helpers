@@ -1,4 +1,3 @@
-alert('loaded');
 indiciaData.areaPickerMapAreaData = {
   England: { bounds: [-729000, 6410000, 208000, 7516000], system: 'OSGB', projection: 27700 },
   "Channel Islands": { bounds: [-314000, 6293000, -220400, 6418000], system: 'utm30ed50', projection: 23030 },
