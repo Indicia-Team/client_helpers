@@ -141,7 +141,6 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
   }
 
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
-  	// TBD add check for loctools 
     global $indicia_templates;
   	$isAdmin = hostsite_user_has_permission($args['edit_permission']);
   	if(!$isAdmin) return('');
@@ -194,7 +193,7 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
       'extraParams' => array(
         'survey_id'=>$args['survey_id'], 
         'userID_attr_id'=>$userIdAttr,
-        'userID'=>(iform_loctools_checkaccess($nid,'superuser') ? -1 :  $user->uid), // use -1 if superuser - non logged in will not get this far.
+        'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid), // use -1 if manager - non logged in will not get this far.
         'userName_attr_id'=>$userNameAttr
        ,'passage_attr_id'=>$passageAttr
         )));	
@@ -1096,7 +1095,7 @@ hook_new_site_added = function(feature) {
   
   protected static function getSampleListGridPreamble() {
     global $user;
-    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(iform_loctools_checkaccess(parent::$node,'superuser') ? lang::get('LANG_All_Users') : $user->name).'</p>';
+    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
     return $r;
   }
 

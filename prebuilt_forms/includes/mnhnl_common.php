@@ -21,7 +21,7 @@
  */
 /*
  * Options: includeParentLookUp
- * 			loctoolsLocTypeID
+ * 			location_assignment_location_type_id
  * 			usePolygons
  * 			includeLocationComment
  * 			includeLocationCode
@@ -356,7 +356,7 @@ function iform_mnhnl_locModTool($auth, $args, $node) {
   $retVal = "<div id=\"locations\">";
   if($args['shpFileDownloadURL']!=""){
     $request= $args['shpFileDownloadURL']."/geoserver/wfs?request=GetFeature&service=wfs&version=1.0.0&outputformat=SHAPE-ZIP&srsName=EPSG:2169";
-    if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
+    if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
     $primary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['LocationTypeTerm']);
     $request.="&cql_filter=website_id=".$args['website_id']." AND ";
     if($args['SecondaryLocationTypeTerm'] != ''){
@@ -600,13 +600,14 @@ precisionAttr.insertAfter(precisionLabel).addClass('precision');
     if(isset(data_entry_helper::$entity_to_load["sample:updated_by_id"])) // only set if data loaded from db, not error condition
       data_entry_helper::load_existing_record($auth['read'], 'location', data_entry_helper::$entity_to_load["sample:location_id"]);
     $retVal = '<div id="clickableLayersOutputDiv" style="display:none;"></div>';
-    if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
+    if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
     $primary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['LocationTypeTerm']);
     if($args['SecondaryLocationTypeTerm'] != ''){
       $secondary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['SecondaryLocationTypeTerm']);
       $loctypequery="\"&query=\"+escape(JSON.stringify({'in': ['location_type_id', [$primary, $secondary]]}))";
       $loctypeParam=array($primary,$secondary);
     } else {
+      $secondary = false;
       $loctypequery="\"&location_type_id=".$primary."\"";
       $loctypeParam=$primary;
     }
@@ -652,15 +653,13 @@ var SiteNum = 0;\n";
     if(isset($args['locationLayerWMS']) && $args['locationLayerWMS'] != ''){
       // define Parent WMS Layer
       $WMSoptions = explode(',', $args['locationLayerWMS']);
-      if($args['includeLocTools'] && function_exists('iform_loctools_listlocations')){
-        $squares = iform_loctools_listlocations($node);
-        if(is_array($squares) && count($squares)==0)
+      $squares = iform_mnhnl_listLocations($auth, $args);
+      if(is_array($squares) && count($squares)==0)
           $squares = array("-1"); // put in dummy value (all ids are > 0) to allow CQL filter to work on a blank list.
-      } else $squares = 'all';
       // can't use the column name id in the cql_filter as this has a special (fid) meaning.
       data_entry_helper::$javascript .= "
 WMSoptions = {SERVICE: 'WMS', VERSION: '1.1.0', STYLES: '', SRS: '".$WMSoptions[2]."', FORMAT: 'image/png', TRANSPARENT: 'true', LAYERS: '".$WMSoptions[1]."',
-  CQL_FILTER: \"location_type_id=".$args['loctoolsLocTypeID']." AND website_id=".$args['website_id'].($squares != 'all' ? " AND location_id IN (".implode(',', $squares).")" : '')."\"
+  CQL_FILTER: \"location_type_id=".$args['location_assignment_location_type_id']." AND website_id=".$args['website_id'].($squares != 'all' ? " AND location_id IN (".implode(',', $squares).")" : '')."\"
     };
 ParentWMSLayer = new OpenLayers.Layer.WMS('Parent Grid',
   '".(function_exists(iform_proxy_url) ? iform_proxy_url($WMSoptions[0]) : $WMSoptions[0])."',
@@ -2576,11 +2575,9 @@ jQuery('#".$options['MainFieldID']."').change(function(){mainFieldChange(true)})
             'extraParams' => $auth['read'] + array('termlist_id'=>$args['siteNameTermListID'], 'orderby'=>'id'))));
     }
     $retVal .= "<input type='hidden' id=\"sample-location-name\" name=\"sample:location_name\" value=\"".htmlspecialchars(data_entry_helper::$entity_to_load['sample:location_name'])."\" />";
-    if($args['includeLocTools'] && function_exists('iform_loctools_listlocations')){
-      $locations = iform_loctools_listlocations($node);
-    } else $locations = 'all';
+    $locations = iform_mnhnl_listLocations($auth, $args);
     if($args['locationMode'] == 'parent' || $args['locationMode'] == 'multi'){
-      if (!isset($args['loctoolsLocTypeID'])) return "locationMode == parent, loctoolsLocTypeID not set.";
+      if (!isset($args['location_assignment_location_type_id'])) return "locationMode == parent, location_assignment_location_type_id not set.";
       iform_mnhnl_set_editable($auth, $args, $node, array(), $args['locationMode'] == 'parent' ? "conditional" : $options['AdminMode'], $loctypeParam);
       $locOptions = array('validation' => array('required'), // assume as parents they don't change, so cache data
     					'label'=>$options['ChooseParentLabel'],
@@ -2596,7 +2593,7 @@ jQuery('#".$options['MainFieldID']."').change(function(){mainFieldChange(true)})
     						array('parent_id'=>'NULL',
     								'view'=>'detail',
     								'orderby'=>'name',
-    								'location_type_id'=>$args['loctoolsLocTypeID'],
+    								'location_type_id'=>$args['location_assignment_location_type_id'],
     								'deleted'=>'f')));
       $locResponse = data_entry_helper::get_population_data($locOptions); 
       if (isset($locResponse['error'])) return "PARENT LOOKUP ERROR:  ".$locResponse['error'];
@@ -2861,7 +2858,7 @@ jQuery(\"#".$options['ChooseParentFieldID']."\").change(function(){
         $attrArgs['id'] = data_entry_helper::$entity_to_load['location:id'];
       }
       $locationAttributes = data_entry_helper::getAttributes($attrArgs, false);
-      if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
+      if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
       $primary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['LocationTypeTerm']);
       $filterAttrs[]="Name"; // always add the location name special case to the filter list.
       $defaultsFunction="";
@@ -3863,7 +3860,7 @@ clearPGrid= function(){jQuery('.pgDataRow').remove();}
 }
 
 function iform_mnhnl_SrefFields($auth, $args, $incLocTypeDropDown=false) {
-  if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
+  if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
   $primary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['LocationTypeTerm']);	
   data_entry_helper::$javascript .= "
 // functions for iform_mnhnl_SrefFields
@@ -4155,4 +4152,63 @@ function iform_mnhnl_addCancelButton($interface = 'tabs'){
         data_entry_helper::$javascript .= "\njQuery('<a href=\"".iform_mnhnl_getReloadPath()."\"><input type=\"button\" name=\"cancel\" value=\"".lang::get('LANG_Cancel')."\" /></a>').appendTo('#controls > div');\n";
         break;
   }
+}
+
+/**
+ * iform_mnhnl_listLocations : Rework of original loctools iform_loctools_listlocations
+ * Provides a list of the locations the currently logged-in user has been assigned
+ * @param $auth : authorisation object, containing a read authorisation.
+ * @param $args : list to of form parameters: provides the users permissions.
+ * @return array of location IDs or 'all'
+ */
+function iform_mnhnl_listLocations($auth, $args) {
+  global $user;
+
+  if(!empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']))
+    return 'all';
+
+  if(empty($args['uses_location_assignment']) || !$args['uses_location_assignment']) // no user location assignment so access to all.
+    return 'all';
+
+  if(empty($args['location_assignment_attr_id']))
+    throw new exception('Form Configuration Error: User Location assignment is switched on, but no assignment attribute has been provided');
+
+  if(empty($args['location_assignment_location_type_id']))
+    throw new exception('Form Configuration Error: User Location assignment is switched on, but no assignment location type has been provided');
+
+  $location_list = data_entry_helper::get_population_data(array(
+      'report' => 'library/locations/locations_list',
+      'extraParams' => $auth['read'] + array('location_type_id' => $args['location_assignment_location_type_id'],
+              'locattrs' => $args['location_assignment_attr_id'],
+              'attr_location_'.$args['location_assignment_attr_id'] =>
+                  hostsite_get_user_field((empty($args['location_assignment_type']) || $args['location_assignment_type']==='indicia') ?
+                                            'indicia_user_id' : 'uid')),
+      'nocache'=>true
+  ));
+  
+  $ret_val = array();
+  foreach($location_list as $location)
+    $ret_val[] = $location['location_id'];
+
+  return array_unique($ret_val);
+}
+
+/**
+ * iform_mnhnl_listUsers : Rework of original loctools iform_loctools_listusers
+ * Provides a list of the users: only provides a list of names, so id is not relevant.
+ * @param $auth : authorisation object, containing a read authorisation.
+ * @param $args : list to of form parameters: provides the users permissions.
+ * @return array of users IDs or 'all'
+ */
+function iform_mnhnl_listUsers($auth, $args) {
+
+  $user_list = db_query('SELECT uid, name FROM {users}');
+  while($user = db_fetch_object($user_list)){
+    if($user->uid > 1 && hostsite_user_has_permssion('permission_name', $user->uid)) {
+      $account = user_load($user->uid);
+      $retVal[] = $account->name;
+    }
+  }
+  
+  return array_unique($ret_val);
 }

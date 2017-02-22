@@ -26,13 +26,14 @@
 class extension_extra_data_entry_controls {
 
   /**
-   * A conttrol which provides autocomplete functionality to lookup against the list of
+   * A control which provides autocomplete functionality to lookup against the list of
    * people who are users of this website.
    * @return string THML
    */
   public static function person_autocomplete($auth, $args, $tabalias, $options, $path) {
     if (empty($options['fieldname']))
-      return 'A @fieldname option is required for the [extra_data_entry_controls.person_autocomplete] control.';
+      return 'A @fieldname option is required for the ' .
+          '[extra_data_entry_controls.person_autocomplete] control.';
     if (!empty($options['default']) && empty($options['defaultCaption']))
       $options['defaultCaption'] = $options['default'];
     $options = array_merge(array(

@@ -34,7 +34,6 @@ $custom_terms = array(
 	'LANG_Location_Layer' => 'Location Layer',
 	'LANG_Occurrence_List_Layer'=> 'Occurrence List Layer',
 	'LANG_Surveys' => 'Surveys',
-	'LANG_Allocate_Locations' => 'Allocate Locations',
 	'LANG_Transect' => 'Transect',
 	'LANG_Date' => 'Date',
 	'LANG_Visit_No' => 'Visit No',
