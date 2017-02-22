@@ -6105,7 +6105,7 @@ if (errors$uniq.length>0) {
    * @param array $writeTokens Array containing auth_token and nonce for the write operation, plus optionally persist_auth=true
    * to prevent the authentication tokens from expiring after use. If null then the values are read from $_POST.
    */
-  public static function forward_post_to($entity, $submission = null, $writeTokens = null) {
+  public static function forward_post_to($entity, $submission = null, $writeTokens = null, $output_errors = null) {
     if (self::$validation_errors==null) {
       $remembered_fields = self::get_remembered_fields();
 
@@ -6159,7 +6159,7 @@ if (errors$uniq.length>0) {
       // if there are images, we will send them after the main post, so we need to persist the write nonce
       if (count($media)>0)
         $postargs .= '&persist_auth=true';
-      $response = self::http_post($request, $postargs);
+      $response = self::http_post($request, $postargs, $output_errors);
       // The response should be in JSON if it worked
       $output = json_decode($response['output'], true);
       // If this is not JSON, it is an error, so just return it as is.
