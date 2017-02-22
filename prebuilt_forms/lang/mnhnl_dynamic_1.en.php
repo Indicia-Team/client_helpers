@@ -32,7 +32,5 @@ $custom_terms = array_merge($custom_terms, array(
 	'MNHNL Collaborators 1 Biotope' => 'Biotope',
 	'Voucher' => 'Voucher Specimen taken?',
 	// Can also add entries for 'Yes' and 'No' for the voucher attribute
-        'LANG_Trailer_Text' => 'Define trailer text in mnhnl_dynamic_1.en.php'
-    
-  )
-);
+  'LANG_Trailer_Text' => 'Define trailer text in mnhnl_dynamic_1.en.php'
+));
