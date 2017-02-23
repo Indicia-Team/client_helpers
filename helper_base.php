@@ -1328,7 +1328,7 @@ class helper_base extends helper_config {
    * @param string $service Path to the service URL used. Default is data/handle_media, but could be import/upload_csv.
    * @return string Error message, or true if successful.
    */
-  static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
+  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
     if ($readAuth==null) $readAuth=$_POST;
     $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
     $interim_path = dirname(__FILE__).'/'.$interim_image_folder;
