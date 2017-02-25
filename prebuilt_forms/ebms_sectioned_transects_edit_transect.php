@@ -585,28 +585,29 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
           $values[$location['id']] = lang::get($location['name']);
       }
       $r .= data_entry_helper::select(array(
-    		'id'=>$settings['countryAttr']['id'],
-    		'fieldname'=>$settings['countryAttr']['fieldname'],
-    		'label'=>$settings['countryAttr']['caption'], // already translated
-    		'lookupValues' => $values,
-    		'blankText'=>lang::get('<Please select>'),
-    		'helpText'=>lang::get('Although you can set this field yourself, it will be filled in automatically when you draw the site on the map.'),
-      	'validation'=>array('required'),
-    		'default'=>$settings['countryAttr']['default']
+        'id'=>$settings['countryAttr']['id'],
+        'fieldname'=>$settings['countryAttr']['fieldname'],
+        'label'=>$settings['countryAttr']['caption'], // already translated
+        'lookupValues' => $values,
+        'blankText'=>lang::get('<Please select>'),
+        'helpText'=>lang::get('Although you can set this field yourself, it will be filled in automatically when you draw the site on the map.'),
+        'validation'=>array('required'),
+        'default'=>$settings['countryAttr']['default']
       ));
     } else {
-    	// Put in a dummy select
+      // Put in a dummy select
       $r .= data_entry_helper::hidden_text(array(
+                'id'=>$settings['countryAttr']['id'],
                 'fieldname'=>$settings['countryAttr']['fieldname'],
                 'default'=>$settings['countryAttr']['default']
               )).
-            data_entry_helper::select(array(
+      data_entry_helper::select(array(
                 'fieldname'=>'dummy-country',
                 'label'=>$settings['countryAttr']['caption'], // already translated
                 'table'=>'location',
-                'valueField'=>'name',
+                'valueField'=>'id',
                 'captionField'=>'name',
-                'blankText'=>lang::get('<Please select>'),
+                'blankText'=>'', // shouldn't really be used
                 'extraParams'=>$auth['read']+array('view'=>'list',
                   'location_type_id'=>$args['country_location_type_id']),
                 'default'=>$settings['countryAttr']['default'],

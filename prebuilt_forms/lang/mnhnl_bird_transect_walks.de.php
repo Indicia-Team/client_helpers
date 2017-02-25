@@ -32,7 +32,6 @@ $custom_terms = array(
 	'LANG_Location_Layer' => 'Ebene der Erfassungsquadrate',
 	'LANG_Occurrence_List_Layer'=> 'Ebene der Feststellungen',
 	'LANG_Surveys' => 'Erfassung',
-	'LANG_Allocate_Locations' => 'Allocate Locations',
 	'LANG_Transect' => 'Transekt',
 	'LANG_Date' => 'Datum',
 	'LANG_Visit_No' => 'Begehung No',

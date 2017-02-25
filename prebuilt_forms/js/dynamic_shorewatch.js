@@ -114,6 +114,9 @@ jQuery(document).ready(function($) {
   //Implement these behaviours.
   details_field_behaviour = function details_field_behaviour() {
     $('#entry_form').validate();
+    // save the name of the actual attribute field: this will include the value record id if editting an existing record.
+    var name = $('#smpAttr\\:' + indiciaData.observer_name_attr_id).attr('name');
+
     switch (indiciaData.roleType) {
       case 'data manager':
       //Data manager to have same rights as staff here, so we 'fall through' the case statement without breaking
@@ -123,9 +126,9 @@ jQuery(document).ready(function($) {
         $('#smpAttr\\:' + indiciaData.observer_name_attr_id + '_lock').remove();
         $('[for=\"smpAttr\\:' + indiciaData.observer_name_attr_id + '\"]').remove();
         //Give the autocomplete user control the same name as the sample attribute so that indicia recognises it.
-        $('#obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first').attr('name', 'smpAttr:' + indiciaData.observer_name_attr_id);
+        $('#obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first').attr('name', name);
         //Make the observer name mandatory.
-        $('#obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first').rules('add', {required:true});       
+        $('#obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first').rules('add', {required:true});
         $('<span class=\"deh-required\">*</span>').insertAfter($('#obSelect\\:' + indiciaData.observer_name_attr_id + '\\:fullname_surname_first'));
         //Auto-fill these fields if we can if not already filled in and not in edit mode.
         if (indiciaData.user_email && !$('#smpAttr\\:'+ indiciaData.observer_email_attr_id).val() && !indiciaData.sample_id) {

@@ -32,7 +32,6 @@ $custom_terms = array(
 	'LANG_Location_Layer' => 'Couche des transects',
 	'LANG_Occurrence_List_Layer'=> 'Couche des contacts',
 	'LANG_Surveys' => 'Inventaires',
-	'LANG_Allocate_Locations' => 'Allocate Locations',
 	'LANG_Transect' => 'Transect',
 	'LANG_Date' => 'Date',
 	'LANG_Visit_No' => 'Passage No',

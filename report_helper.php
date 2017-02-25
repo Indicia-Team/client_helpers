@@ -458,6 +458,7 @@ class report_helper extends helper_base {
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
               case 'text':
+              case 'species':
                 $title=lang::get("{1} text begins with ... search. Use * as a wildcard.", $caption);
                 break;
               case 'date':

@@ -28,8 +28,8 @@ include_once 'dynamic.en.php';
  */
 $custom_terms = array_merge($custom_terms, array(
 	'LANG_Add_Sample' => 'Add New Sample',
-        'LANG_Add_Sample_Single' => 'Add Single Occurrence',
-        'LANG_Add_Sample_Grid' => 'Add List of Occurrences',
+  'LANG_Add_Sample_Single' => 'Add Single Occurrence',
+  'LANG_Add_Sample_Grid' => 'Add List of Occurrences',
 
 	'LANG_Tab_aboutyou' => 'About You',      
 	'LANG_Tab_Instructions_aboutyou' => '<strong>About You</strong><br/>Please tell us about yourself first.',

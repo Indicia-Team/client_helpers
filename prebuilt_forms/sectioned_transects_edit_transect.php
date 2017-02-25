@@ -710,8 +710,21 @@ $('#delete-transect').click(deleteSurvey);
     if(count($list)>1)
     	$r .= data_entry_helper::sref_system_select($options);
     // force a blank centroid, so that the Warehouse will recalculate it from the boundary
-    //$r .= "<input type=\"hidden\" name=\"location:centroid_geom\" value=\"\" />\n";   
-    $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '));
+    //$r .= "<input type=\"hidden\" name=\"location:centroid_geom\" value=\"\" />\n";
+
+    $blockOptions = array();
+    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) {
+      $blockOptionList = explode("\n", $args['custom_attribute_options']);
+      foreach($blockOptionList as $opt) {
+        $tokens = explode('|', $opt);
+        $optvalue = explode('=', $tokens[1]);
+        // validation is a special case: the option is expected to be an array of validation rules
+        if($optvalue[0] === 'validation') $optvalue[1] = explode(',', $optvalue[1]);
+        $blockOptions[$tokens[0]][$optvalue[0]] = $optvalue[1];
+      }
+    }
+    
+    $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), null, $blockOptions);
     if ($settings['canEditBody'])
       $r .= '<input type="submit" value="'.lang::get('Save').'" class="form-button right" id="submit-section" />';    
     $r .= '</fieldset></form>';

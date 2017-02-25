@@ -19,7 +19,7 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-include_once 'dynamic.en.php';
+include_once 'dynamic.lb.php';
 
 /**
  * Additional language terms or overrides for dynamic_sample_occurrence form.

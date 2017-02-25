@@ -33,10 +33,11 @@ $custom_terms = array(
 	'LANG_Location_Name' => 'Site Name',
 	'LANG_Georef_Label' => 'Search for Place on Map',
 	// The search button may be changed by adding an entry for 'search'
-	'LANG_Date' => 'Date',
+	'LANG_Date' => 'Datum',
 	'LANG_Image_Label' => 'Upload Image',
         'LANG_Comment' => 'Comment',
 	'LANG_Save' => 'Save',
         'LANG_Blank_Text' => 'Select...',
-	'validation_required' => 'Please enter a value for this field'
+	'validation_required' => 'Please enter a value for this field',
+  'Click here' => 'Hei klicken',
 );

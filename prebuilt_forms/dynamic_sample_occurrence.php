@@ -778,7 +778,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
     // Only actually need to show tabs if there is more than one
     if(count($tabs) > 1){
-      $active = isset($_GET['page']) ? '#setLocations' : '#sampleList';
+      $active = isset($_GET['page']) ? '#setLocations' : '#sampleList'; // ??? setLocations
       data_entry_helper::enable_tabs(array('divId'=>'controls','active'=>$active));
       $r .= '<div id="controls"><div id="temp"></div>';
       $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
