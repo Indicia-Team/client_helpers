@@ -48,9 +48,9 @@ jQuery(document).ready(function ($) {
     // Comma separated, line separated or table rows should both work. Convert all to a <br> element so we can split
     // each name into a separate token.
     inputDirty = inputDirty
-      .replace(/,/g, '<br>')
+      .replace(/(,)(?!([^<]+?)>)/g, '<br>')
       .replace(/<(\/)?font[^>]*>/g, '')
-      .replace(/<!--(.+?)-->/g, '')
+      .replace(/<!--([\s\S]+?)-->/g, '')
       .replace(/<\/p>/g, '</p><br>')
       .replace(/<\/div>/g, '</div><br>')
       .replace(/<div>/g, '<br><div>')
@@ -63,7 +63,7 @@ jQuery(document).ready(function ($) {
       if (this) {
         token = this.trim();
         // simple way to strip HTML, even if unbalanced
-        tokenText = token.replace(/<(.+?)>/g, '').trim();
+        tokenText = token.replace(/<([\s\S]+?)>/g, '').trim();
         if (tokenText) {
           try {
             $el = $(token);
