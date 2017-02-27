@@ -220,8 +220,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
    
   $hiddens = '';
   foreach($attributes as &$attribute) {
-    $value = hostsite_get_user_field(strtolower(str_replace(' ', '_', $attribute['caption'])));
-
+    $value = hostsite_get_user_field(strtolower(str_replace(' ', '_', $attribute['untranslatedCaption'])));
     if ($value && isset($args['copyFromProfile']) && $args['copyFromProfile'] == true) {
       // lookups need to be translated to the termlist_term_id, unless they are already IDs
       if ($attribute['data_type'] === 'L' && !preg_match('/^[\d]+$/', $value)) {
@@ -242,15 +241,15 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
         $attribute['value'] = $value;
       }
     }
-    elseif (strcasecmp($attribute['caption'], 'cms user id') == 0) {
+    elseif (strcasecmp($attribute['untranslatedCaption'], 'cms user id') == 0) {
       $attribute['value'] = hostsite_get_user_field('id');
       $attribute['handled']=true; // user id attribute is never displayed
     }
-    elseif (strcasecmp($attribute['caption'], 'cms username') == 0) {
+    elseif (strcasecmp($attribute['untranslatedCaption'], 'cms username') == 0) {
       $attribute['value'] = hostsite_get_user_field('name');
       $attribute['handled']=true; // username attribute is never displayed
     }
-    elseif (strcasecmp($attribute['caption'], 'email') == 0) {
+    elseif (strcasecmp($attribute['untranslatedCaption'], 'email') == 0) {
       if (isset($args['emailShow']) && $args['emailShow'] == true) {
         // Show the email attribute with default value.
         $attribute['default'] = hostsite_get_user_field('mail');

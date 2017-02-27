@@ -275,7 +275,7 @@ class iform_dynamic {
     $tabs = self::get_all_tabs($args['structure'], $customAttributeTabs);
     if (isset($tabs['-'])) {
       $hasControls=false;
-      $r .= self::get_tab_content($auth, $args, '$tab'-'', $tabs['-'], 'above-tabs', $attributes, $hasControls);
+      $r .= self::get_tab_content($auth, $args, '-', $tabs['-'], 'above-tabs', $attributes, $hasControls);
       unset($tabs['-']);
     }
       

@@ -35,9 +35,12 @@ class iform_ebms_transects_allocation {
     return array(
       'title'=>'EBMS Location allocator',
       'category' => 'UKBMS Specific forms',
-      'description'=>'Form assigning locations to normal users or country controllers.'
+      'description'=>'Form assigning locations to normal users or region/country controllers.'
     );
   }
+
+  // TODO add allocation be person attribute functionality
+  //      need to check if ajaxProxy can handle people attributes.
   
   /**
    * Get the list of parameters for this form.
@@ -46,60 +49,40 @@ class iform_ebms_transects_allocation {
   public static function get_parameters() {
     $retVal = array_merge(
       array(
-      	array(
-          'name'=>'country_type_term',
-          'caption'=>'Country type term',
-          'description'=>'Select the term used for the country location type.',
-          'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
-          'required' => true,
-          'group'=>'Settings'
-        ),
         array(
-          'name'=>'site_type_term',
-          'caption'=>'Site type term',
-          'description'=>'Select the term used for the location type for the locations which are being allocated.',
-          'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
-          'required' => true,
-          'group'=>'Settings'
-        ),
-        array(
-          'name'=>'assignment_attr_id',
-          'caption'=>'Assignment Location attribute',
-          'description'=>'Location attribute used to assign users to the location.',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Settings',
-          'required'=>true
-        ),
-        array(
-          'name'=>'manager_assignment_attr_id',
-          'caption'=>'Manager Assignment Location attribute',
-          'description'=>'Location attribute used to assign managers to the location. Optional',
-          'type'=>'select',
-          'table'=>'location_attribute',
-          'valueField'=>'id',
-          'captionField'=>'caption',
-          'group'=>'Settings',
-          'required'=>false
-        ),
-        array(
-          'name' => 'editLinkPath',
-          'caption' => 'Path to page used for editing Locations',
-          'description' => 'The path to the page used for editing Locations. This is just the site relative path, e.g. http://www.example.com/index.php?q=enter-records needs '.
-              'to be input as just enter-records. The path is called with the id of the location in a parameter called location_id.',
-          'type' => 'text_input',
-          'default' => ''
-        )
+          'name' => 'allocation_config_list',
+          'caption' => 'Allocation Configuration List',
+          'description' => 'Definitions of how people are assigned to locations.',
+          'type' => 'jsonwidget',
+          'schema' => '{
+"type":"seq",
+"title":"Allocation Configuration List",
+"desc":"A list of definitions for the allocation type, seen by the user as a select control.",
+"sequence":
+[ { "type":"map",
+      "title":"Allocation Definition",
+      "desc":"A definition of the relationship between users and locations, and how they are assigned to each other.",
+      "mapping": {
+        "permission":       {"type":"str",  "title": "Permission", "desc":"The hostsite permission name required to be able to select this option. If omitted, defaults to available."},
+        "website_id":       {"type":"str",  "title": "Website ID", "desc":"Warehouse Website ID, when overriding the default form configuration."},
+        "website_password": {"type":"str",  "title": "Password",   "desc":"Warehouse Website password, when overriding the default form configuration."},
+        "label":            {"type":"str",  "title": "Label",      "desc":"Label used for this option in the type dropdown box."},
+        "indicia_location": {"type":"bool", "title": "Indicia User ID", "desc":"Is the assignment stored as the Indicia User ID in an attribute against the location?"},
+        "cms_location":     {"type":"bool", "title": "CMS User ID", "desc":"Is the assignment stored as the CMS User ID in an attribute against the location?"},
+        "indicia_person":   {"type":"bool", "title": "Location ID", "desc":"Is the assignment stored as the Indicia Location ID in an attribute against the person?"},
+        "attr_id":          {"type":"str",  "title": "Attribute ID", "desc":"The attribute id (location or person as appropriate) in which the assignment is stored."},
+        "multiple_people":  {"type":"bool", "title": "Multiple People", "desc":"Can each location be assigned to more than one person?"},
+        "location_types" :  {"type":"seq",  "title": "Location Types", "desc":"List of the location types included in the grid when vieewing this option. If omitted, no filter applied.",
+          "sequence": [ {"type":"str", "title": "Location Type", "desc":"Location Type Term: this will be translated to the appropriate ID."} ] },
+        "edit_link_path":   {"type":"str",  "title": "Edit Path", "desc":"Path to page used for editing Locations. If omitted, link not provided." },
+        "regional_control_location_type" : {"type":"str", "title": "Regional Control Location Type", "desc":"Location Type Term used to provide a regional filter control. If omitted then no regional control will be displayed. This will be translated to the appropriate ID."}
+      }
+    }
+]
+}',
+      				'required' => true,
+      				'group'=>'Report Settings'
+      		)
     ));
     return $retVal;
   }
@@ -116,194 +99,265 @@ class iform_ebms_transects_allocation {
   public static function get_form($args, $nid, $response=null) {
     global $user;
 
-    // TODO? data drive the report name ebms_country_locations.
-    // TODO? allow extension to choose location type of lookup: initially for EBMS, only 1 site location type. May
-    //       require multiple edit paths.
-    // TODO? allow the choice (in form config) of whether to store CMS or Indicia ID in attribute. EBMS initially is CMS attribute
-    // TODO? Add map and allow filtering by displayed area.
+    // FutureDev: data drive the report name ebms_country_locations. May need to be replaced as a report - is there a library report I can use?
+    // FutureDev? Add map and allow filtering by displayed area.
 
     if (!function_exists('iform_ajaxproxy_url'))
     	return 'The IForm AJAX Proxy module must be enabled for this form to work.';
-    
+    $auth = array();
+    $current = self::_identify_current_type($args, $auth); // config object
+
   	data_entry_helper::add_resource('jquery_ui');
-    $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $settings = array(
-    	'gridID' => 'site-allocation-grid-'.$nid,
-    	'countrySelectID' => 'country-control-'.$nid,
-    	'siteSelectID' => 'location-control-'.$nid,
-    	'userSelectID' => 'user-control-'.$nid,
-    	'allocationSelectID' => 'allocation-control-'.$nid,
-    	'searchID' => 'search-button-'.$nid,
-    	'selectAllClass' => 'select-all-button',
-    	'deselectAllClass' => 'deselect-all-button',
+    	'grid_id' => 'site-allocation-grid-'.$nid,
+    	'region_select_id' => 'region-control-'.$nid,
+    	'site_select_id' => 'location-control-'.$nid,
+    	'user_select_id' => 'user-control-'.$nid,
+    	'allocation_select_id' => 'allocation-control-'.$nid,
+    	'search_id' => 'search-button-'.$nid,
+    	'select_all_class' => 'select-all-button',
+    	'deselect_all_class' => 'deselect-all-button',
     	'auth' => $auth,
     	'base_url' => data_entry_helper::$base_url,
-    	'site_location_type_id' => $args['site_type_term'],
-    	'country_location_type_id' => $args['country_type_term'],
-    	'assignment_attr_id' => $args['assignment_attr_id'],
-      'manager_assignment_attr_id' => (isset($args['manager_assignment_attr_id']) && $args['manager_assignment_attr_id'] != "" ?
-          $args['manager_assignment_attr_id'] : 0),
-    	'altRowClass' => 'odd',
-    	'ajaxFormPostUrl' => iform_ajaxproxy_url($nid, 'location_attribute_value'),
+    	'config' => $current,
+    	'alt_row_class' => 'odd',
+    	'ajax_location_post_URL' => iform_ajaxproxy_url($nid, 'location_attribute_value'),
+    	'ajax_person_post_URL' => iform_ajaxproxy_url($nid, 'person_attribute_value'),
     	'website_id' => $args['website_id'],
-    	'editLinkPath' => url($args['editLinkPath']),
-    	'selectAllButton' => lang::get('Select All'),
-    	'deselectAllButton' => lang::get('Deselect All')
+    	'select_all_button' => lang::get('Select All'),
+    	'deselect_all_button' => lang::get('Deselect All')
     );
-    
-    $r = self::get_control_bar($auth, $args, $nid, $settings) .
-    	self::grid($auth, $args, $nid, $settings);
-    
-    data_entry_helper::$javascript .= 'etaPrep('.json_encode($settings).");\n";
+
+    $r = self::_get_control_bar($auth, $args, $nid, $settings) .
+      self::_grid($auth, $args, $nid, $settings);
+
+    data_entry_helper::$javascript .= 'eta_prep('.json_encode($settings).");\n";
 
     return $r;
   }
 
-  private static function get_control_bar($auth, $args, $nid, $settings) {
+  private static function _identify_current_type(&$args, &$auth) {
+    $config = json_decode($args['allocation_config_list']);
+    $selected = false;
+    foreach($config as $idx=>$config_entry) {
+      if((empty($config_entry->permission) || hostsite_user_has_permission($config_entry->permission)) &&
+      		($selected === false || (!empty($_GET['type']) && $_GET['type'] == $idx)))
+        $selected = $idx;
+    }
+    if($selected === false)
+      throw new exception("You do not have sufficient privileges to assign any locations. You can't use this form.");
+
+    if((!empty($config[$selected]->website_id) && empty($config[$selected]->website_password)) ||
+       (empty($config[$selected]->website_id) && !empty($config[$selected]->website_password)))
+      throw new exception("Form configuration error: both website ID and website password must be provided when overriding: allocation index ".$selected);
+    if(!empty($config[$selected]->website_id) && !empty($config[$selected]->website_password)) {
+      $args['website_id'] = $config[$selected]->website_id;
+      $args['password'] = $config[$selected]->website_password;
+    }
+       
+    $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
+    $config[$selected]->index = $selected;
+    if(!empty($config[$selected]->regional_control_location_type)) {
+      $terms = helper_base::get_termlist_terms($auth, 'indicia:location_types', array($config[$selected]->regional_control_location_type));
+      if(count($terms) == 0)
+        throw new exception("Form configuration error: could not find region location type ".$config[$selected]->regional_control_location_type." for allocation index ".$selected);
+      $config[$selected]->regional_control_location_type_id = $terms[0]['id'];
+    }
+    if(empty($config[$selected]->location_types) || count($config[$selected]->location_types) == 0)
+      throw new exception("Form configuration error: missing location_types for allocation index ".$selected);
+    $terms = helper_base::get_termlist_terms($auth, 'indicia:location_types', $config[$selected]->location_types);
+    if(count($terms) == 0)
+      throw new exception("Form configuration error: could not find location types ".print_r($config[$selected]->location_types, true)." for allocation index ".$selected);
+    $config[$selected]->location_type_ids = array();
+    foreach($terms as $term)
+      $config[$selected]->location_type_ids[] = $term['id'];
+    if(empty($config[$selected]->attr_id) || count($config[$selected]->location_types) == 0)
+      throw new exception("Form configuration error: missing attr_id for allocation index ".$selected);
+    
+    return $config[$selected];
+  }
+
+  private static function _get_control_bar($auth, $args, $nid, $settings) {
 	return '<table id="controls-table" class="ui-widget ui-widget-content ui-corner-all controls-table">' .
-				'<thead class="ui-widget-header"><tr>' .
-				self::allocation_type_control($auth, $args, $nid, $settings).
-				self::location_type_control($auth, $args, $nid, $settings).
-				self::country_control($auth, $args, $nid, $settings).
-				self::location_control($auth, $args, $nid, $settings).
-				self::user_control($auth, $args, $nid, $settings).
-				self::search_button($auth, $args, $nid, $settings).
+				'<thead class="ui-widget-header">' .
+				self::_allocation_type_control($auth, $args, $nid, $settings).
+				'<tr>' .
+				self::_region_control($auth, $args, $nid, $settings).
+				self::_location_control($auth, $args, $nid, $settings).
+				self::_user_control($auth, $args, $nid, $settings).
+				self::_search_button($auth, $args, $nid, $settings).
 				'</tr></thead></table>';
   }
 
-  private static function allocation_type_control($auth, $args, $nid, $settings) {
-    if($settings['manager_assignment_attr_id'])
-      return '<th>' .
+  private static function _allocation_type_control($auth, $args, $nid, $settings) {
+    $config = json_decode($args['allocation_config_list']);
+    $lookup_values = array();
+    foreach($config as $idx=>$config_entry) {
+      if(empty($config_entry->permission) || hostsite_user_has_permission($config_entry->permission))
+        $lookup_values[$idx] = empty($config_entry->label) ? $idx : $config_entry->label;
+    }
+    if(count($lookup_values) > 1)
+      return '<tr><th colspan='.(empty($settings['config']->regional_control_location_type) ? '3' : '4').'>' .
           data_entry_helper::select(array(
-              'fieldname'=>$settings['allocationSelectID'],
-              'lookupValues' => array(
-                  $settings['assignment_attr_id'] => lang::get('Normal User'),
-                  $settings['manager_assignment_attr_id'] => lang::get('Country Manager')
-              )
+              'label'=>lang::get('Allocation Type'),
+              'fieldname'=>$settings['allocation_select_id'],
+              'lookupValues' => $lookup_values,
+              'default' => $settings['config']->index
           )) .
-          '</th>';
-    else
-      return '<th style="display:none;">' .
-          '<input type="hidden" id="'.$settings['allocationSelectID'].'" value="'.$settings['assignment_attr_id'].'" />' .
-          '</th>';
+          '</th></tr>';
+    else {
+      $lookup_values = array_keys($lookup_values);
+      return '<tr style="display:none;"><th>' .
+          '<input type="hidden" id="'.$settings['allocation_select_id'].'" value="'.$lookup_values[0].'" />' .
+          '</th></tr>';
+    }
   }
 
-  private static function location_type_control($auth, $args, $nid, $settings) {
-  	return '<th style="display:none;">' .
-  			'[location_type_control TBD]' .
-  			'</th>';
-  }
-
-  private static function country_control($auth, $args, $nid, $settings) {
-  	return '<th>' .
+  private static function _region_control($auth, $args, $nid, $settings) {
+    if(empty($settings['config']->regional_control_location_type)) return '';
+    // ? perhaps use the regional_control_location_type as a label ?
+    return '<th>' .
     		data_entry_helper::select(array(
-    			'fieldname'=>$settings['countrySelectID'],
+    			'fieldname'=>$settings['region_select_id'],
+  				'label'=>lang::get($settings['config']->regional_control_location_type),
     			'table'=>'location',
     			'valueField'=>'id',
     			'captionField'=>'name',
-    			'blankText'=>lang::get('<Please select country>'),
+    			'blankText'=>lang::get('<Please select '.($settings['config']->regional_control_location_type).'>'),
     			'extraParams'=>$auth['read'] +
     						array('view'=>'detail',
-  									'location_type_id'=>$args['country_type_term'],
-  									'deleted'=>'f',
+  									'location_type_id'=>$settings['config']->regional_control_location_type_id,
   									'orderby'=>'name'),
   				'caching'=>false
            	)) .
     		'</th>';
   }
   
-  private static function location_control($auth, $args, $nid, $settings) {
-  	return '<th>' .
+  private static function _location_control($auth, $args, $nid, $settings) {
+    if(empty($settings['config']->regional_control_location_type))
+      return '<th>' .
+    		data_entry_helper::select(array(
+    			'fieldname'=>$settings['site_select_id'],
+  				'label' => lang::get('Site'),
+    			'table'=>'location',
+    			'valueField'=>'id',
+    			'captionField'=>'name',
+    			'blankText'=>lang::get('<Please select Site>'),
+    			'extraParams'=>$auth['read'] +
+    						array('view'=>'detail',
+  									'location_type_id'=>$settings['config']->location_type_ids,
+  									'orderby'=>'name'),
+  				'caching'=>false
+           	)) .
+    		'</th>';
+    else
+      return '<th>' .
   			data_entry_helper::select(array(
-  					'fieldname' => $settings['siteSelectID'],
+  					'fieldname' => $settings['site_select_id'],
   					'label' => lang::get('Site'),
-  					'report' => 'reports_for_prebuilt_forms/UKBMS/ebms_country_locations',
+  					'report' => 'reports_for_prebuilt_forms/UKBMS/ebms_region_locations',
   					'valueField' => 'location_id',
   					'captionField' => 'name',
-  					'parentControlId' => 'country-control-'.$nid,
-  					'parentControlLabel' => lang::get('Country'),
-  					'filterField' => 'country_location_id',
-  					'extraParams' => $auth['read'] +
-  									array('country_type_id'=>$args['country_type_term'],
-  											'location_type_id'=>$args['site_type_term']),
+  					'parentControlId' => 'region-control-'.$nid,
+  					'parentControlLabel' => lang::get($settings['config']->regional_control_location_type),
+  					'filterField' => 'region_location_id',
+    				'blankText'=>lang::get('<Please select Site>'),
+  					'extraParams' => array_merge($auth['read'],
+  					    array('location_type_ids' => implode(',', $settings['config']->location_type_ids),
+  					          'region_type_id'=>$settings['config']->regional_control_location_type_id
+  					    )),
   					'caching' => false
   			)) .
   			'</th>';
   }
 
-  private static function user_control($auth, $args, $nid, $settings) {
-    // The option values are CMS User ID, not Indicia ID. Want users avaiable as soon as they are created.
-    $ctrl = '';
-    $userList=array();
-    $userListArr = array();
-
+  private static function _user_control($auth, $args, $nid, &$settings) {
     // user is assumed to be a manager, and has access to the full list of users. Do not cache.
-    $userList=array(); // make sure I'm on list
+  	// Want users available as soon as they are created.
+    $ctrl = '';
+    $user_list=array();
+    $user_list_arr = array();
+
+    if((empty($settings['config']->indicia_location) || !$settings['config']->indicia_location) &&
+    		(empty($settings['config']->cms_location) || !$settings['config']->cms_location))
+    	throw new exception('Form configuration error: A attribute assignment methodology must be defined for allocation index '.$settings['config']->index);
+
+    if(!empty($settings['config']->indicia_location) && $settings['config']->indicia_location)
+    	$settings['config']->user_prefix = lang::get("Indicia User ");
+    else
+    	$settings['config']->user_prefix = lang::get("CMS User ");
+
     // look up all users, not just those that have entered data.
-    $results = db_query('SELECT uid, name FROM {users}');
-    // assume drupal7
+    $results = db_query('SELECT uid, name FROM {users}'); // assume drupal7
     foreach ($results as $result) {
       if($result->uid){ // ignore unauthorised user, uid zero
         $account = user_load($result->uid);
-        // TODO confirm they have data entry permission
-        $userList[$account->uid] = array('name'=>$account->name);
+        // FutureDev: confirm they have data entry permission
+        // FutureDev: use first/surname rather than account name
+        if(!empty($settings['config']->indicia_location) && $settings['config']->indicia_location) {
+          // for Indicia id allocation, can't add users if they don't have a indicia user id (yet).
+          $indicia_user_id = hostsite_get_user_field('indicia_user_id', 0, false, $result->uid);
+          if($indicia_user_id>0)
+          	$user_list[$indicia_user_id] = array('name'=>$account->name);
+        } else
+          $user_list[$account->uid] = array('name'=>$account->name);
       }
     }
-    foreach($userList as $id => $account) {
-      $userListArr[$id] = $account['name'];
-    }
-    data_entry_helper::$javascript .= "indiciaData.fullUserList = ".json_encode(array_keys($userList)).";\n";
+    foreach($user_list as $id => $account)
+      $user_list_arr[$id] = $account['name'];
 
-    natcasesort($userListArr);
+    data_entry_helper::$javascript .= "indiciaData.full_user_list = ".json_encode(array_keys($user_list)).";\n";
+
+    natcasesort($user_list_arr);
 
     return '<th>' .
       data_entry_helper::select(array(
-        'fieldname' => $settings['userSelectID'],
-        'lookupValues' => $userListArr,
+        'fieldname' => $settings['user_select_id'],
+        'label' => lang::get('User'),
+        'lookupValues' => $user_list_arr,
         'blankText' => lang::get('<Please select user>')
       )) .
       '</th>';
   }
 
-  private static function search_button($auth, $args, $nid, $settings) {
+  private static function _search_button($auth, $args, $nid, $settings) {
   	return '<th>' .
-  			'<input type="button" id="'.$settings['searchID'].'" class="ui-corner-all ui-widget-content" value="'.lang::get('search').'" />' .
+  			'<input type="button" id="'.$settings['search_id'].'" class="ui-corner-all ui-widget-content" value="'.lang::get('search').'" />' .
   			'</th>';
   }
 
-  private static function grid($auth, $args, $nid, $settings) {
-  	return '<table class="ui-widget ui-widget-content reallocate-grid" id="'.$settings['gridID'].'">' .
+  private static function _grid($auth, $args, $nid, $settings) {
+  	return '<table class="ui-widget ui-widget-content reallocate-grid" id="'.$settings['grid_id'].'">' .
   			'<thead class="ui-widget-header">' .
-  			'<tr>' .
-  			'<td colspan=6>'.
-  			'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['selectAllClass'].'" value="'.lang::get('Select All').'" />' .
-  			'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselectAllClass'].'" value="'.lang::get('Deselect All').'" />' .
-  			'</td>' .
-  			'</tr>' .
-  			'<tr>' .
-  			'<th>'.lang::get('Allocated?').'</th>' .
-  			'<th>'.lang::get('Country').'</th>' .
-  			'<th>'.lang::get('Site').'</th>' .
-  			'<th>'.lang::get('SRef').'</th>' .
-  			'<th>'.lang::get('User').'</th>' .
-  			'<th></th>' .
-  			'</tr>' .
+  				'<tr>' .
+  					'<td colspan=6>'.
+  						'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['select_all_class'].'" value="'.lang::get('Select All').'" />' .
+  						'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselect_all_class'].'" value="'.lang::get('Deselect All').'" />' .
+  					'</td>' .
+  				'</tr>' .
+  				'<tr>' .
+  					'<th>'.lang::get('Allocated?').'</th>' .
+  					(empty($settings['config']->regional_control_location_type) ? '' : '<th>'.lang::get($settings['config']->regional_control_location_type).'</th>') .
+  					'<th>'.lang::get('Site').'</th>' .
+  					'<th>'.lang::get('SRef').'</th>' .
+  					'<th>'.lang::get('User').'</th>' .
+  					'<th></th>' .
+  				'</tr>' .
   			'</thead>' .
   			'<tbody>' .
-  			'<tr>' .
-  			'<td colspan=6>'.lang::get('Use Search button to populate grid').'</td>' .
-  			'</tr>' .
+	  			'<tr>' .
+		  			'<td colspan=6>'.lang::get('Use Search button to populate grid').'</td>' .
+	  			'</tr>' .
   			'</tbody>' .
   			'<tfoot>' .
-  			'<tr>' .
-  			'<td colspan=6>'.
-  			'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['selectAllClass'].'" value="'.$settings['selectAllButton'].'" />' .
-  			'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselectAllClass'].'" value="'.$settings['deselectAllButton'].'" />' .
-  			'</td>' .
-  			'</tr>' .
+	  			'<tr>' .
+		  			'<td colspan=6>'.
+			  			'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['select_all_class'].'" value="'.$settings['select_all_button'].'" />' .
+  						'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselect_all_class'].'" value="'.$settings['deselect_all_button'].'" />' .
+  					'</td>' .
+  				'</tr>' .
   			'</tfoot>' .
-  			'</table>';
+  		'</table>';
   }
-  		 
   
 }
