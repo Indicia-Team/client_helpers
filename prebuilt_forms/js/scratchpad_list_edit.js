@@ -50,6 +50,7 @@ jQuery(document).ready(function ($) {
     inputDirty = inputDirty
       .replace(/,/g, '<br>')
       .replace(/<(\/)?font[^>]*>/g, '')
+      .replace(/<!--(.+?)-->/g, '')
       .replace(/<\/p>/g, '</p><br>')
       .replace(/<\/div>/g, '</div><br>')
       .replace(/<div>/g, '<br><div>')
