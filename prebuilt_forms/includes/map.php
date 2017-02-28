@@ -335,19 +335,40 @@ function iform_map_get_map_options($args, $readAuth) {
 
 /**
  * Adds a vector to the map for a particular location, and zooms into it.
+ * @param integer|array $locationId Either a single location ID or an array of
+ * location IDs.
+ * @param array $readAuth Read authorisation tokens
  */
 function iform_map_zoom_to_location($locationId, $readAuth) {
+  $locationIds = explode(',', $locationId);
   $getPopDataOpts = array(
     'table' => 'location',
-    'extraParams' => $readAuth + array('id'=>$locationId,'view' => 'detail')
+    'extraParams' => $readAuth + array(
+        'query' => json_encode(array('in' => array('id'=>$locationIds))),
+        'view' => 'detail'
+      )
   );
   $response = data_entry_helper::get_population_data($getPopDataOpts);
-  $geom = $response[0]['boundary_geom'] ? $response[0]['boundary_geom'] : $response[0]['centroid_geom'];
-  iform_map_zoom_to_geom($geom, lang::get('{1} boundary', $response[0]['name']));
+  $geoms = array();
+  foreach ($response as $location)
+    $geoms[] = $location['boundary_geom'] ?
+        $location['boundary_geom'] : $location['centroid_geom'];
+  $layerTitle = count($geoms) === 1 ?
+      lang::get('{1} boundary', $response[0]['name']) : lang::get('Boundaries');
+  iform_map_zoom_to_geom($geoms, $layerTitle);
 }
 
+/**
+ * Draws and zooms the map into a geometry or list of geometries.
+ * @param string|array $geom WKT string for the geom to zoom to, or an array of
+ * WKT strings.
+ * @param $name Layer name to add
+ * @param bool $restrict Set true to limit the map to the area covering the geoms.
+ */
 function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
   $name = str_replace("'", "\\'", $name);
+  $geoms = is_array($geom) ? $geom : [$geom];
+  $geomJson = json_encode($geoms);
   // Create code to restrict extent and zoom in if being asked to do so, will add to JS in a moment
   $restrictExtentCode = !$restrict ? '' : <<<SCRIPT
   mapdiv.map.setOptions({restrictedExtent: bounds});
@@ -376,15 +397,23 @@ indiciaFns.zoomToBounds = function(mapdiv, bounds) {
   }
 }
 mapInitialisationHooks.push(function(mapdiv) {
-  var parser, features, loclayer = new OpenLayers.Layer.Vector(
+  var parser;
+  var feature;
+  var features=[];
+  var loclayer = new OpenLayers.Layer.Vector(
     '$name',
     {'sphericalMercator': true, displayInLayerSwitcher: true}
   );
+  var geoms = $geomJson;
   parser = new OpenLayers.Format.WKT();
-  features = parser.read('$geom');
-  if (!Array.isArray(features)) {
-    features = [features];
-  }
+  $.each(geoms, function(idx, geom) {
+    feature = parser.read(geom);
+    if (Array.isArray(feature)) {
+      $.merge(features, feature);
+    } else {
+      features.push(feature);
+    }
+  });
   $.each(features, function() {
     this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
     this.style.fillOpacity=0;
