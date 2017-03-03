@@ -436,7 +436,7 @@ $('form#entry_form').tooltip({
           data_entry_helper::$entity_to_load["sc:$idx::present"] = $entry['entry_id'];
         }
       }
-      hostsite_show_message(lang::get('The list of species from your scratchpad has been loaded into the form for you. ' .
+      hostsite_show_message(lang::get('The list of species has been loaded into the form for you. ' .
         'Please fill in the other form values before saving the form.'));
       $r = data_entry_helper::hidden_text(array(
         'fieldname' => 'scratchpad_list_id',
