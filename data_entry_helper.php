@@ -7644,19 +7644,24 @@ if (errors$uniq.length>0) {
           $thisMediaTypeId=isset($values[$prefix.':media_type_id'.$uniqueId]) ? utf8_encode($values[$prefix.':media_type_id'.$uniqueId]) : '';
           //Only extract the media if we are extracting media of any type or the data matches the type we are wanting to extract
           if ($thisMediaTypeId==$mediaTypeIdToExtract||$mediaTypeIdToExtract===null) {
-            $r[] = array(
+            $mediaValues = array(
               // Id is set only when saving over an existing record.
               'id' => array_key_exists($prefix.':id'.$uniqueId, $values) ?
-                $values[$prefix.':id'.$uniqueId] : '',
+                  $values[$prefix.':id'.$uniqueId] : '',
               'path' => $value,
-              'caption' => isset($values[$prefix.':caption'.$uniqueId]) ? utf8_encode($values[$prefix.':caption'.$uniqueId]) : '',
-              'media_type_id' => $thisMediaTypeId,
-              'media_type' => isset($values[$prefix.':media_type'.$uniqueId]) ? utf8_encode($values[$prefix.':media_type'.$uniqueId]) : ''
+              'caption' => isset($values[$prefix.':caption'.$uniqueId]) ?
+                  utf8_encode($values[$prefix.':caption'.$uniqueId]) : ''
             );
+            if (!empty($thisMediaTypeId)) {
+              $mediaValues['media_type_id'] = $thisMediaTypeId;
+              $mediaValues['media_type'] = isset($values[$prefix . ':media_type' . $uniqueId]) ?
+                utf8_encode($values[$prefix . ':media_type' . $uniqueId]) : '';
+            }
             // if deleted = 't', add it to array so image is marked deleted
             if (isset($values[$prefix.':deleted'.$uniqueId]) && $values[$prefix.':deleted'.$uniqueId]==='t') {
-              $r[count($r)-1]['deleted'] = 't';
+              $mediaValues['deleted'] = 't';
             }
+            $r[] = $mediaValues;
           }
         }
       }
