@@ -83,7 +83,7 @@ class iform_tree_sample_occurrence extends iform_dynamic_sample_occurrence {
    * will load the occurrences.
    * When displaying just one occurrence we must load the sample and the occurrence
    */
-  protected static function getEntity($args, $auth) {
+  protected static function getEntity(&$args, $auth) {
   	data_entry_helper::$entity_to_load = array();
   
   	// If we know the occurrence ID but not the sample, we must look it up

@@ -144,7 +144,7 @@ class iform_big_sea_survey extends iform_dynamic_sample_occurrence {
     return parent::get_form_html($args, $auth, $attributes);
   }
   
-  protected static function getEntity($args, $auth) {
+  protected static function getEntity(&$args, $auth) {
     self::$parentSample =  data_entry_helper::get_population_data(array(
       'table' => 'sample',
       'extraParams' => $auth['read'] + array('id' => $_GET['id'], 'view' => 'detail'),
