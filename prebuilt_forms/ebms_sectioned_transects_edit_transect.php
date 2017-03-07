@@ -585,28 +585,29 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
           $values[$location['id']] = lang::get($location['name']);
       }
       $r .= data_entry_helper::select(array(
-    		'id'=>$settings['countryAttr']['id'],
-    		'fieldname'=>$settings['countryAttr']['fieldname'],
-    		'label'=>$settings['countryAttr']['caption'], // already translated
-    		'lookupValues' => $values,
-    		'blankText'=>lang::get('<Please select>'),
-    		'helpText'=>lang::get('Although you can set this field yourself, it will be filled in automatically when you draw the site on the map.'),
-      	'validation'=>array('required'),
-    		'default'=>$settings['countryAttr']['default']
+        'id'=>$settings['countryAttr']['id'],
+        'fieldname'=>$settings['countryAttr']['fieldname'],
+        'label'=>$settings['countryAttr']['caption'], // already translated
+        'lookupValues' => $values,
+        'blankText'=>lang::get('<Please select>'),
+        'helpText'=>lang::get('Although you can set this field yourself, it will be filled in automatically when you draw the site on the map.'),
+        'validation'=>array('required'),
+        'default'=>$settings['countryAttr']['default']
       ));
     } else {
-    	// Put in a dummy select
+      // Put in a dummy select
       $r .= data_entry_helper::hidden_text(array(
+                'id'=>$settings['countryAttr']['id'],
                 'fieldname'=>$settings['countryAttr']['fieldname'],
                 'default'=>$settings['countryAttr']['default']
               )).
-            data_entry_helper::select(array(
+      data_entry_helper::select(array(
                 'fieldname'=>'dummy-country',
                 'label'=>$settings['countryAttr']['caption'], // already translated
                 'table'=>'location',
-                'valueField'=>'name',
+                'valueField'=>'id',
                 'captionField'=>'name',
-                'blankText'=>lang::get('<Please select>'),
+                'blankText'=>'', // shouldn't really be used
                 'extraParams'=>$auth['read']+array('view'=>'list',
                   'location_type_id'=>$args['country_location_type_id']),
                 'default'=>$settings['countryAttr']['default'],
@@ -802,14 +803,13 @@ $('#delete-transect').click(deleteSurvey);
   	$options['toolbarDiv'] = 'top';
   	// $options['tabDiv']='your-route';
   	$options['gridRefHint']=true;
-  	if ($settings['canEditBody']){
-  		$options['toolbarPrefix'] = parent::section_selector($settings, 'section-select-route') .
-  									'<br/>'.
-  									'<input class="save-route form-button" type="button" value="Save Route">'.
-  									'<input class="complete-route-details form-button" type="button" value="Complete section details">';
-      $options['toolbarPrefix'] .= '<input type="button" value="'.lang::get('Insert Section').'" class="insert-section form-button" title="'.lang::get('This inserts an extra section after the currently selected section. All subsequent sections are renumbered, increasing by one. All associated occurrences are kept with the moved sections. This can be used to facilitate the splitting of this section.').'">';
-      $options['toolbarPrefix'] .= '<input type="button" value="'.lang::get('Erase Route').'" class="erase-route form-button" title="'.lang::get('If the Draw Line control is active, this will erase each drawn point one at a time. If not active, then this will erase the whole highlighted route. This keeps the Section, allowing you to redraw the route for it.').'">';
-      $options['toolbarPrefix'] .= '<input type="button" value="'.lang::get('Remove Section').'" class="remove-section form-button" title="'.lang::get('Completely remove the highlighted section. The total number of sections will be reduced by one. The form will be reloaded after the section is deleted.').'">';
+    if ($settings['canEditBody']){
+      $options['toolbarPrefix'] = parent::section_selector($settings, 'section-select-route') . '<br/>' .
+                    '<input type="button" value="'.lang::get('Save Route').'" class="save-route form-button" >' .
+                    '<input type="button" value="'.lang::get('Complete section details').'" class="complete-route-details form-button" title="'.lang::get('Jump to the Route Details Tab. The route must have been saved first.').'">' .
+                    '<input type="button" value="'.lang::get('Insert Section').'" class="insert-section form-button" title="'.lang::get('This inserts an extra section after the currently selected section. All subsequent sections are renumbered, increasing by one. All associated occurrences are kept with the moved sections. This can be used to facilitate the splitting of this section.').'">' .
+                    '<input type="button" value="'.lang::get('Erase Route').'" class="erase-route form-button" title="'.lang::get('If the Draw Line control is active, this will erase each drawn point one at a time. If not active, then this will erase the whole highlighted route. This keeps the Section, allowing you to redraw the route for it.').'">' .
+                    '<input type="button" value="'.lang::get('Remove Section').'" class="remove-section form-button" title="'.lang::get('Completely remove the highlighted section. The total number of sections will be reduced by one. The form will be reloaded after the section is deleted.').'">';
 
   		// also let the user click on a feature to select it. The highlighter just makes it easier to select one.
   		// these controls are not present in read-only mode: all you can do is look at the map.

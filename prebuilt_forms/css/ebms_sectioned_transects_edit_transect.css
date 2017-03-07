@@ -185,4 +185,6 @@ select.working1, select.working2 {
   font-style: italic;
   background-position: right 16px center;
 }
-
+.ui-dialog {
+  z-index: 1000;
+}

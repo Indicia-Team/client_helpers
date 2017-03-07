@@ -19,7 +19,7 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-include_once 'dynamic_sample_occurrence.en.php';
+include_once 'dynamic_sample_occurrence.lb.php';
 
 /**
  * Additional language terms or overrides for mnhnl_dynamic_1 form.
@@ -27,10 +27,5 @@ include_once 'dynamic_sample_occurrence.en.php';
  * @package	Client
  */
 $custom_terms = array_merge($custom_terms, array(
-	// Below gives an example of setting the biotope and voucher attribute captions used in this tab.
-	// Note these do not have LANG_ prefixes.
-	'MNHNL Collaborators 1 Biotope' => 'Biotope',
-	'Voucher' => 'Voucher Specimen taken?',
-	// Can also add entries for 'Yes' and 'No' for the voucher attribute
-  'LANG_Trailer_Text' => 'Define trailer text in mnhnl_dynamic_1.en.php'
+
 ));

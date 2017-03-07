@@ -20,4 +20,26 @@ jQuery(document).ready(function ($) {
     $.fancybox.close();
     $.fancybox($('#group-link-popup'));
   };
+
+  $('#area-picker').change(function() {
+    var bounds;
+    var data;
+    var placeDef;
+    data = indiciaData.areaPickerMapAreaData;
+    var map = indiciaData.mapdiv.map;
+    if (typeof data[$('#area-picker').val()] !== 'undefined') {
+      placeDef = data[$('#area-picker').val()];
+      bounds = new OpenLayers.Bounds(placeDef.bounds);
+      map.zoomToExtent(bounds);
+      if ($('#imp-sref-system').val() !== placeDef.system) {
+        $('#imp-sref-system').val(data[$('#area-picker').val()].system);
+        $('#imp-sref').val('');
+        $.each(map.controls, function() {
+          if (this.CLASS_NAME === 'OpenLayers.Control.Graticule') {
+            this.gratLayer.setVisibility(this.projection === 'EPSG:' + placeDef.projection);
+          }
+        });
+      }
+    }
+  });
 });

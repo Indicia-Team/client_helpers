@@ -458,6 +458,7 @@ class report_helper extends helper_base {
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
               case 'text':
+              case 'species':
                 $title=lang::get("{1} text begins with ... search. Use * as a wildcard.", $caption);
                 break;
               case 'date':
@@ -616,8 +617,19 @@ class report_helper extends helper_base {
           } else if (isset($field['update']) &&(!isset($field['update']['permission']) || hostsite_user_has_permission($field['update']['permission']))){
           	// TODO include checks to ensure method etc are included in structure -
           	$updateformID++;
-          	$value="<form id=\"updateform-".$updateformID."\" method=\"post\" action=\"".iform_ajaxproxy_url(null, $field['update']['method'])."\"><input type=\"hidden\" name=\"website_id\" value=\"".$field['update']['website_id']."\"><input type=\"hidden\" name=\"transaction_id\" value=\"updateform-".$updateformID."-field\"><input id=\"updateform-".$updateformID."-field\" name=\"".$field['update']['tablename'].":".$field['update']['fieldname']."\" class=\"update-input ".(isset($field['update']['class']) ? $field['update']['class'] : "")."\" value=\"".(isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '')."\">";
-          	if(isset($field['update']['parameters'])){
+            $update = $field['update'];
+            $url = iform_ajaxproxy_url(null, $update['method']);
+            $class = isset($field['update']['class']) ? $field['update']['class'] : '';
+            $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';
+          	$value = <<<FORM
+<form id="updateform-$updateformID" method="post" action="$url">
+<input type="hidden" name="website_id" value="$update[website_id]">
+<input type="hidden" name="transaction_id" value="updateform-$updateformID-field">
+<input id="updateform-$updateformID-field" name="$update[tablename]:$update][fieldname]" 
+  class="update-input $class" value="$value">
+FORM;
+
+            if(isset($field['update']['parameters'])){
               foreach($field['update']['parameters'] as $pkey=>$pvalue){
                 $value.="<input type=\"hidden\" name=\"".$field['update']['tablename'].":".$pkey."\" value=\"".$pvalue."\">";
               }
@@ -625,8 +637,8 @@ class report_helper extends helper_base {
             $value.="</form>";
           	$value=self::mergeParamsIntoTemplate($row, $value, true);
           	$haveUpdates = true;
-            self::$javascript .= "
-jQuery('#updateform-".$updateformID."').ajaxForm({
+            self::$javascript .= <<<JS
+$('#updateform-$updateformID').ajaxForm({
     async: true,
     dataType:  'json',
     success:   function(data, status, form){
@@ -637,7 +649,7 @@ jQuery('#updateform-".$updateformID."').ajaxForm({
       }
     }
   });
-";
+JS;
           }
           else {
             $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';

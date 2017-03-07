@@ -2656,7 +2656,8 @@ JS;
     $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
     // get local vars for the array
     extract($db);
-    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred_taxon' : 'taxon';
+    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred,preferred_taxon' : 'taxon';
+    $options['extraParams']['sortdir'] = $options['cacheLookup'] ? 'ASC,DESC,ASC' : 'ASC';
     $options = array_merge(array(
       'fieldname'=>'occurrence:taxa_taxon_list_id',
       'table'=>$tblTaxon,
@@ -2702,55 +2703,84 @@ JS;
   public static function build_species_autocomplete_item_function($options) {
     global $indicia_templates;
     $options = array_merge(array(
-      'cacheLookup' => true,
-      'speciesIncludeAuthorities' => false,
-      'speciesIncludeBothNames' => false,
-      'speciesIncludeTaxonGroup' => false,
-      'speciesIncludeIdDiff' => true
+      'cacheLookup' => TRUE,
+      'speciesIncludeAuthorities' => FALSE,
+      'speciesIncludeBothNames' => FALSE,
+      'speciesIncludeTaxonGroup' => FALSE,
+      'speciesIncludeIdDiff' => TRUE
     ), $options);
+    // Need bools as strings
+    $options['speciesIncludeAuthorities'] =
+      $options['speciesIncludeAuthorities'] ? 'true' : 'false';
+    $options['speciesIncludeBothNames'] =
+      $options['speciesIncludeBothNames'] ? 'true' : 'false';
+    $options['speciesIncludeTaxonGroup'] =
+      $options['speciesIncludeTaxonGroup'] ? 'true' : 'false';
+    $options['speciesIncludeIdDiff'] =
+      $options['speciesIncludeIdDiff'] ? 'true' : 'false';
     // always include the searched name. In this JavaScript we need to behave slightly differently
     // if using the cached as opposed to the standard versions of taxa_taxon_list.
-    $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
-    // get local vars for the array
-    extract($db);
+    $db = json_encode(data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']));
+    $fn = <<<JS
+function(item) {
+  var r;
+  var synText;
+  var nameTest;
+  var db = $db;
+  var speciesIncludeAuthorities = $options[speciesIncludeAuthorities];
+  var speciesIncludeBothNames = $options[speciesIncludeBothNames];
+  var speciesIncludeTaxonGroup = $options[speciesIncludeTaxonGroup];
+  var speciesIncludeIdDiff = $options[speciesIncludeIdDiff];
 
-    $fn = "function(item) { \n".
-      "  var r;\n".
-      "  if (item.$colLanguage!==null && item.$colLanguage.toLowerCase()==='$valLatinLanguage') {\n".
-      "    r = '<em>'+item.$colTaxon+'</em>';\n".
-      "  } else {\n".
-      "    r = '<span>'+item.$colTaxon+'</span>';\n".
-      "  }\n";
-    if ($options['speciesIncludeAuthorities']) {
-      $fn .= " if (item.$colAuthority) {\n" .
-        "    r += ' ' + item.$colAuthority;\n" .
-        "  }\n";
+  if (item[db.colLanguage]!==null && item[db.colLanguage].toLowerCase()===db.valLatinLanguage) {
+    r = '<em>' + item[db.colTaxon] + '</em>';
+  } else {
+    r = '<span>' + item[db.colTaxon] + '</span>';
+  }
+  if (speciesIncludeAuthorities) {
+    if (item[db.colAuthority]) {
+      r += ' ' + item[db.colAuthority];
     }
-    // This bit optionally adds '- common' or '- latin' depending on what was being searched
-    if ($options['speciesIncludeBothNames']) {
-      $fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n" .
-        "    r += ' - ' + item.$colCommon;\n" .
-        "  } else if (item.preferred==='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n" .
-        "    r += ' - <em>' + item.$colPreferred + '</em>';\n";
-      if ($options['speciesIncludeAuthorities']) {
-        $fn .= "    if (item.$colPreferredAuthority) {\n" .
-          "      r += ' ' + item.$colPreferredAuthority;\n" .
-          "    }\n";
+  }
+  // This bit optionally adds '- common' or '- latin' depending on what was being searched
+  if (speciesIncludeBothNames) {
+    nameTest = (speciesIncludeAuthorities && 
+      (item[db.colPreferred] !== item[db.colTaxon] || item[db.colPreferredAuthority] !==item[db.colAuthority]))
+      || (!speciesIncludeAuthorities &&
+      item[db.colPreferred] !== item[db.colTaxon])
+      
+    if (item.preferred === 't' && item[db.colCommon] !== item[db.colTaxon] && item[db.colCommon]) {
+      r += '<br/>' + item[db.colCommon];
+    } else if (item.preferred==='f' && nameTest && item[db.colPreferred]) {
+      synText = item.language_iso==='lat' ? 'syn. of' : '';
+      r += '<br/>[';
+      if (item.language_iso==='lat') {
+        r += 'syn. of ';
       }
-      $fn .= "  }\n";
+      r += '<em>' + item[db.colPreferred] + '</em>';
+      if (speciesIncludeAuthorities) {
+        if (item[db.PreferredAuthority]) {
+          r += ' ' + item[db.colPreferredAuthority];
+        }
+      }
+      r += ']';
     }
-    // this bit optionally adds the taxon group
-    if ($options['speciesIncludeTaxonGroup'])
-      $fn .= "  r += '<br/><strong>' + item.taxon_group + '</strong>'\n";
-    if ($options['speciesIncludeIdDiff'])
-      $fn .= "  if (item.identification_difficulty && item.identification_difficulty>1) {\n" .
-        "    item.icon = ' <span class=\"item-icon id-diff id-diff-'+item.identification_difficulty+" .
-        "      '\" data-diff=\"'+item.identification_difficulty+'\" data-rule=\"'+item.id_diff_verification_rule_id+'\"></span>';\n" .
-        "    r += item.icon;\n" .
-        "  }\n";
-    // Close the function
-    $fn .= "  return r;\n".
-      "}\n";
+  }
+  if (speciesIncludeTaxonGroup) {
+    r += '<br/><strong>' + item.taxon_group + '</strong>';
+  }
+  if (speciesIncludeIdDiff &&
+      item.identification_difficulty && item.identification_difficulty>1) {
+    item.icon = ' <span ' +
+        'class="item-icon id-diff id-diff-' + item.identification_difficulty + '" ' +
+        'data-diff="' + item.identification_difficulty + '" ' +
+        'data-rule="' + item.id_diff_verification_rule_id + '"></span>';
+    r += item.icon;
+  }
+  return r;
+}
+
+JS;
     // Set it into the indicia templates
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
@@ -4422,9 +4452,14 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           // store the id of the taxon in the array, so we can load them all in one go later
           $extraTaxonOptions['extraParams']['id'][]=$ttlId;
         }
+        // Ensure the load of taxa is batched if there are lots to load
+        if (count($extraTaxonOptions['extraParams']['id'])>=50 && !empty($options['lookupListId'])) {
+          $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
+          $extraTaxonOptions['extraParams']['id'] = array();
+        }
       }
-      // load and append the additional taxa to our list of taxa to use in the grid
-      if (!empty($options['lookupListId']))
+      // Load and append the remaining additional taxa to our list of taxa to use in the grid
+      if (count($extraTaxonOptions['extraParams']['id']) && !empty($options['lookupListId']))
         $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
     }
     return $taxalist;

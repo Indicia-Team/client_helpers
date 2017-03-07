@@ -248,13 +248,13 @@ Record ID',
     $fields=helper_base::explode_lines($args['fields']);
     $fieldsLower=helper_base::explode_lines(strtolower($args['fields']));
     //Draw the Record Details, but only if they aren't requested as hidden by the administrator
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}</span>{anchorfrom}<span{class}>{value}</span>{anchorto}</div>';
+    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span>{anchorfrom}<span{class}>{value}</span>{anchorto}</div>';
     $test=$args['operator']==='in';
     $availableFields = array(
       'sensitive'=>'Sensitive',
       'occurrence_id'=>'Record ID',
       'taxon'=>'Species',
-      'preferred_taxon'=>'Preferred species name',
+      'preferred_taxon'=>'Recommended name',
       'taxonomy'=>'Taxonomy',
       'survey_title'=>'Survey',
       'recorder'=>'Recorder',
@@ -276,7 +276,6 @@ Record ID',
       unset($availableFields['location_name']);
       unset($availableFields['sample_comment']);
     }
-    
     self::load_record($auth, $args);
     
     $details_report = '<div class="record-details-fields ui-helper-clearfix">';
@@ -288,7 +287,7 @@ Record ID',
       if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
         // special case, sensitive icon
         $class = self::$record[$field] === 'This record is sensitive' ? ' class="ui-state-error"' : '';
-        $caption = self::$record[$field] === 'This record is sensitive' ? '' : "$caption:";
+        $caption = self::$record[$field] === 'This record is sensitive' ? '' : "$caption";
         // special case, licence
         $class = $field==='licence_code' ? ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"' : $class;
         $anchorfrom = $field==='licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
@@ -655,6 +654,7 @@ Record ID',
 
   protected static function get_control_block($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
+    drupal_set_message($options['module'] . '::' .  $options['hook']);
     $block = module_invoke($options['module'], $options['hook'], $options['args']);
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
