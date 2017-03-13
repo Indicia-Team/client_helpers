@@ -220,6 +220,14 @@ class extension_misc_extensions {
       $options['extraParams'] = $auth['read'] + $options['extraParams'];
     return data_entry_helper::$ctrl($options);
   }
+
+  public static function map_helper_control($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('map_helper'));
+    $ctrl = $options['control'];
+    if (isset($options['extraParams']))
+      $options['extraParams'] = $auth['read'] + $options['extraParams'];
+    return map_helper::$ctrl($options);
+  }
   
   /**
    * Adds a Drupal breadcrumb to the page.
