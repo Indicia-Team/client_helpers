@@ -1157,7 +1157,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $olOptions = iform_map_get_ol_options($args);
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
-    return data_entry_helper::map_panel($options, $olOptions);
+    iform_load_helpers(array('map_helper'));
+    return map_helper::map_panel($options, $olOptions);
   }
 
   /**
