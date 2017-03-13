@@ -617,8 +617,19 @@ class report_helper extends helper_base {
           } else if (isset($field['update']) &&(!isset($field['update']['permission']) || hostsite_user_has_permission($field['update']['permission']))){
           	// TODO include checks to ensure method etc are included in structure -
           	$updateformID++;
-          	$value="<form id=\"updateform-".$updateformID."\" method=\"post\" action=\"".iform_ajaxproxy_url(null, $field['update']['method'])."\"><input type=\"hidden\" name=\"website_id\" value=\"".$field['update']['website_id']."\"><input type=\"hidden\" name=\"transaction_id\" value=\"updateform-".$updateformID."-field\"><input id=\"updateform-".$updateformID."-field\" name=\"".$field['update']['tablename'].":".$field['update']['fieldname']."\" class=\"update-input ".(isset($field['update']['class']) ? $field['update']['class'] : "")."\" value=\"".(isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '')."\">";
-          	if(isset($field['update']['parameters'])){
+            $update = $field['update'];
+            $url = iform_ajaxproxy_url(null, $update['method']);
+            $class = isset($field['update']['class']) ? $field['update']['class'] : '';
+            $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';
+          	$value = <<<FORM
+<form id="updateform-$updateformID" method="post" action="$url">
+<input type="hidden" name="website_id" value="$update[website_id]">
+<input type="hidden" name="transaction_id" value="updateform-$updateformID-field">
+<input id="updateform-$updateformID-field" name="$update[tablename]:$update][fieldname]" 
+  class="update-input $class" value="$value">
+FORM;
+
+            if(isset($field['update']['parameters'])){
               foreach($field['update']['parameters'] as $pkey=>$pvalue){
                 $value.="<input type=\"hidden\" name=\"".$field['update']['tablename'].":".$pkey."\" value=\"".$pvalue."\">";
               }
@@ -626,8 +637,8 @@ class report_helper extends helper_base {
             $value.="</form>";
           	$value=self::mergeParamsIntoTemplate($row, $value, true);
           	$haveUpdates = true;
-            self::$javascript .= "
-jQuery('#updateform-".$updateformID."').ajaxForm({
+            self::$javascript .= <<<JS
+$('#updateform-$updateformID').ajaxForm({
     async: true,
     dataType:  'json',
     success:   function(data, status, form){
@@ -638,7 +649,7 @@ jQuery('#updateform-".$updateformID."').ajaxForm({
       }
     }
   });
-";
+JS;
           }
           else {
             $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';
@@ -4817,32 +4828,37 @@ jQuery('#estimateChart .disable-button').click(function(){
 	$downloadTab="";
   	$timestamp = (isset($options['includeReportTimeStamp']) && $options['includeReportTimeStamp'] ? '_'.date('YmdHis') : '');
   	unset($options['extraParams']['orderby']); // may have been set for raw data
-  	// No need for saved reports to be atomic events. Will be purged automatically.
-  	global $base_url;
-  	// need to use cache under the module to ensure files can be accessed from outside. Using the data_entry_helper::$cache_folder
-  	// could lead to location being unaccessible (i.e. outside the htdocs)
-  	$cacheFolder = data_entry_helper::relative_client_helper_path() . 'cache/';
-  	if($hasData && $options['includeSummaryGridDownload']) {
-  		$cacheFile = $options['downloadFilePrefix'].'summaryDataGrid'.$timestamp.'.csv';
-  		$handle = fopen($cacheFolder.$cacheFile, 'wb');
-  		fwrite($handle, $summaryDataDownloadGrid);
-  		fclose($handle);
-  		$downloadTab .= '<tr><td>'.lang::get('Download Summary Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.drupal_get_path('module', 'iform').'/client_helpers/cache/'.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
-  	}
-  	if($hasData && $options['includeEstimatesGridDownload']) {
-  		$cacheFile = $options['downloadFilePrefix'].'estimateDataGrid'.$timestamp.'.csv';
-  		$handle = fopen($cacheFolder.$cacheFile, 'wb');
-  		fwrite($handle, $estimateDataDownloadGrid);
-  		fclose($handle);
-  		$downloadTab .= '<tr><td>'.lang::get('Download Estimates Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.drupal_get_path('module', 'iform').'/client_helpers/cache/'.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
-  	}
-    if($hasRawData && $options['includeRawGridDownload']) {
-		$cacheFile = $options['downloadFilePrefix'].'rawDataGrid'.$timestamp.'.csv';
-		$handle = fopen($cacheFolder.$cacheFile, 'wb');
-  		fwrite($handle, $rawDataDownloadGrid);
-  		fclose($handle);
-  		$downloadTab .= '<tr><td>'.lang::get('Download Raw Data Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.drupal_get_path('module', 'iform').'/client_helpers/cache/'.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
-  	}
+    // No need for saved reports to be atomic events.
+    // purging??
+    global $base_url;
+    $downloadsFolder = hostsite_get_public_file_path(). '/reportsDownloads/';
+    if (!is_dir($downloadsFolder))
+      $downloadTab .= '<tr><td>'.lang::get('Internal Config error: directory does not exist '.$downloadsFolder).'</td></tr>'."\n";
+    else if (!is_writable($downloadsFolder))
+      $downloadTab .= '<tr><td>'.lang::get('Internal Config error: directory not writeable '.$downloadsFolder).'</td></tr>'."\n";
+    else {
+      if($hasData && $options['includeSummaryGridDownload']) {
+        $cacheFile = $options['downloadFilePrefix'].'summaryDataGrid'.$timestamp.'.csv';
+        $handle = fopen($downloadsFolder.$cacheFile, 'wb');
+        fwrite($handle, $summaryDataDownloadGrid);
+        fclose($handle);
+        $downloadTab .= '<tr><td>'.lang::get('Download Summary Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.$downloadsFolder.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
+      }
+      if($hasData && $options['includeEstimatesGridDownload']) {
+        $cacheFile = $options['downloadFilePrefix'].'estimateDataGrid'.$timestamp.'.csv';
+        $handle = fopen($downloadsFolder.$cacheFile, 'wb');
+        fwrite($handle, $estimateDataDownloadGrid);
+        fclose($handle);
+        $downloadTab .= '<tr><td>'.lang::get('Download Estimates Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.$downloadsFolder.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
+      }
+      if($hasRawData && $options['includeRawGridDownload']) {
+        $cacheFile = $options['downloadFilePrefix'].'rawDataGrid'.$timestamp.'.csv';
+        $handle = fopen($downloadsFolder.$cacheFile, 'wb');
+        fwrite($handle, $rawDataDownloadGrid);
+        fclose($handle);
+        $downloadTab .= '<tr><td>'.lang::get('Download Raw Data Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.$downloadsFolder.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
+      }
+    }
 
   	if($hasData && count($options['downloads'])>0) {
   		// format is assumed to be CSV
