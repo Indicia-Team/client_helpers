@@ -313,7 +313,7 @@ class iform_mnhnl_citizen_science_1 {
         'fieldname'=>'smpAttr:'.$args['email_attr_id'],
         'helpText'=>lang::get('email_explain'),
         'class'=>'control-width-4',
-        'validation'=>'required'
+        'validation'=>array('required','email')
       ));
       $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('phone number'),
