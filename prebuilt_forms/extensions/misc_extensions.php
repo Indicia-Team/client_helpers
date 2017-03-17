@@ -220,6 +220,14 @@ class extension_misc_extensions {
       $options['extraParams'] = $auth['read'] + $options['extraParams'];
     return data_entry_helper::$ctrl($options);
   }
+
+  public static function map_helper_control($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('map_helper'));
+    $ctrl = $options['control'];
+    if (isset($options['extraParams']))
+      $options['extraParams'] = $auth['read'] + $options['extraParams'];
+    return map_helper::$ctrl($options);
+  }
   
   /**
    * Adds a Drupal breadcrumb to the page.
@@ -406,7 +414,75 @@ $('form#entry_form').tooltip({
   }
 
   /**
-   * Adds a drop down box to the page which lists areas on the maps (e.g. a list
+<<<<<<< HEAD
+   * An extension control that takes a scratchpad_list_id parameter in the URL and uses it to load the list onto a
+   * species grid on the page. This allows a scratchpad to be used as the first step in data entry.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param $options Array of options. Set parameter to the name of the URL parameter for the scratchpad_list_id, if you
+   * want to override the default.
+   * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
+   */
+  public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
+    $options = array_merge(
+      array(
+        'parameter' => 'scratchpad_list_id'
+      ), $options
+    );
+    if (empty($_GET[$options['parameter']]))
+      return ''; // no list to load
+    $entries = data_entry_helper::get_population_data(array(
+      'table' => 'scratchpad_list_entry',
+      'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET[$options['parameter']]),
+      'caching' => false
+    ));
+    $r = '';
+    if (count($entries)) {
+      foreach ($entries as $idx => $entry) {
+        if ($entry['entity'] === 'taxa_taxon_list') {
+          data_entry_helper::$entity_to_load["sc:$idx::present"] = $entry['entry_id'];
+        }
+      }
+      hostsite_show_message(lang::get('The list of species has been loaded into the form for you. ' .
+        'Please fill in the other form values before saving the form.'));
+      $r = data_entry_helper::hidden_text(array(
+        'fieldname' => 'scratchpad_list_id',
+        'default' => $_GET[$options['parameter']]
+      ));
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => 'submission_extensions[]',
+        'default' => 'misc_extensions.remove_scratchpad'
+      ));
+    }
+    return $r;
+  }
+
+  /**
+   * An extension for the submission building code that adds a deletion request for a scratchpad that has now been
+   * converted into a list of records. Automatically called when the load_species_list_from_scratchpad control is
+   * used.
+   */
+  public static function remove_scratchpad($values, $s_array) {
+    // Convert to a list submission so we can send a scratchpad list deletion as well as the main submission.
+    $s_array[0] = array(
+      'id' => 'sample',
+      'submission_list' => array(
+        'entries' => array(
+          array(
+            'id' => 'scratchpad_list',
+            'fields' => array(
+              'id' => array('value' => $values['scratchpad_list_id']),
+              'deleted' => array('value' => 't')
+            )
+          ),
+          $s_array[0]
+        )
+      )
+    );
+  }
+
+  /* Adds a drop down box to the page which lists areas on the maps (e.g. a list
    * of countries). When you choose an area in the drop down, the map on the
    * page can automatically pan and zoom to that area and the spatial reference
    * system control, if present, can automatically pick the best system for the
