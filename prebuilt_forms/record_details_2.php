@@ -877,6 +877,10 @@ Record ID';
         'extraParams'=>$params,
       ));
       self::$record = $records[0];
+      if (isset(self::$record['confidential']) && self::$record['confidential']==='t') {
+        hostsite_show_message(lang::get('This record is confidential so cannot be displayed', 'warning'));
+        throw new exception('');
+      }
       // set the page metadata
       global $iform_page_metadata;
       if (!isset($iform_page_metadata))
