@@ -143,24 +143,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       ),
       //AVB is this really needed as don't we create the group first anyway?
       array(
-        'name'=>'sample_group_identifier_name_text_attr_id',
-        'caption'=>'Sample group identifier name text sample attribute ID',
-        'description'=>'ID of the attribute that stores the sample group identifier name as text to assist with the import process.',
-        'type'=>'string',
-        'required'=>true,
-        'group'=>'Database IDs Required By Form'
-      ),
-      array(
-        'name'=>'sample_group_identifier_name_lookup_smp_attr_id',
-        'caption'=>'Sample group identifier name lookup sample attribute ID',
-        'description'=>'ID of the attribute that stores the sample group identifier name as a lookup ID. This is needed in additional to the text attribute '
-          . 'as the lookup id is unknown during the import itself as the group has not been created yet',
-        'type'=>'string',
-        'required'=>true,
-        'group'=>'Database IDs Required By Form'
-      ),
-      //AVB is this really needed as don't we create the group first anyway?
-      array(
         'name'=>'plot_group_identifier_name_text_attr_id',
         'caption'=>'Plot group identifier name text location attribute ID',
         'description'=>'ID of the attribute that stores the plot group identifier name as text to assist with the import process.',
@@ -242,25 +224,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
-        'name'=>'sample_group_permission_person_attr_id',
-        'caption'=>'Sample group permissions person attribute ID',
-        'description'=>'ID of person attribute that holds a user\'s sample group permissions.',
-        'type'=>'string',
-        'required'=>true,
-        'group'=>'Database IDs Required By Form'
-      ),
-      array(
         'name'=>'plot_group_permission_person_attr_id',
         'caption'=>'Plot group permissions person attribute ID',
         'description'=>'ID of person attribute that holds a user\'s plot group permissions.',
-        'type'=>'string',
-        'required'=>true,
-        'group'=>'Database IDs Required By Form'
-      ),
-      array(
-        'name'=>'sample_group_termlist_id',
-        'caption'=>'Id of the sample group termlist',
-        'description'=>'ID of termlist used to store sample groups.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -323,41 +289,17 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Customisable form text'
       ),
       array(
-        'name'=>'nS-nSG-nP-nPG_message',
-        'caption'=>'Custom message for nS-nSG-nP-nPG import situation',
-        'description'=>'The message shown to the user for rows where new samples, news sample groups (where applicable), new plots and new plot groups (where applicable) are all required.',
+        'name'=>'nP-nPG_message',
+        'caption'=>'Custom message for nP-nPG import situation',
+        'description'=>'The message shown to the user for rows where new plots and new plot groups are both required.',
         'type'=>'textarea',
         'required'=>true,
         'group'=>'Custom import warnings'
       ),
       array(
-        'name'=>'eP-nSG_message',
-        'caption'=>'Custom message for eP-nSG import situation',
-        'description'=>'The message shown to the user for rows where a new sample with a new sample group (where applicable) and existing plot are required.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom import warnings'
-      ),
-      array(
-        'name'=>'eP-eSG_message',
-        'caption'=>'Custom message for eP-eSG import situation',
-        'description'=>'The message shown to the user for rows where a new sample with a existing sample group and existing plot are required.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom import warnings'
-      ),
-      array(
-        'name'=>'eSG_message',
-        'caption'=>'Custom message for eSG import situation',
-        'description'=>'The message shown to the user for rows where a new sample with existing sample group and new plot is required.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom import warnings'
-      ),
-      array(
-        'name'=>'eSG-ePG_message',
-        'caption'=>'Custom message for eSG-ePG import situation',
-        'description'=>'The message shown to the user for rows where a new sample with existing sample group and new plot with existing plot group is required.',
+        'name'=>'eP_message',
+        'caption'=>'Custom message for eP import situation',
+        'description'=>'The message shown to the user for rows where an existing plot is required.',
         'type'=>'textarea',
         'required'=>true,
         'group'=>'Custom import warnings'
@@ -365,7 +307,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'ePG_message',
         'caption'=>'Custom message for ePG import situation',
-        'description'=>'The message shown to the user for rows where a new sample with new sample group (where applicable) and new plot with existing plot group is required.',
+        'description'=>'The message shown to the user for rows where a new plot within an existing plot group is required.',
         'type'=>'textarea',
         'required'=>true,
         'group'=>'Custom import warnings'
@@ -390,40 +332,10 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Custom fatal import errors'
       ),
       array(
-        'name'=>'ePwD-eSGwD_message',
-        'caption'=>'Custom message for ePwD-eSGwD import situation',
-        'description'=>'The message shown to the user for rows where a new sample is required but there are '
-          . ' both multiple matching existing sample groups as well as multiple matching existing plots available to use'
-          . ' and therefore the import cannot continue until this has been resolved.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom fatal import errors'
-      ),
-      array(
-        'name'=>'eSGwD_message',
-        'caption'=>'Custom message for eSGwD import situation',
-        'description'=>'The message shown to the user for rows where a new sample is required but there are '
-          . ' multiple matching existing sample groups available to use'
-          . ' and therefore the import cannot continue until this has been resolved.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom fatal import errors'
-      ),
-      array(
         'name'=>'ePGwD_message',
         'caption'=>'Custom message for ePGwD import situation',
         'description'=>'The message shown to the user for rows where a new sample and plot is required but there are '
           . ' multiple matching existing plot groups available to use'
-          . ' and therefore the import cannot continue until this has been resolved.',
-        'type'=>'textarea',
-        'required'=>true,
-        'group'=>'Custom fatal import errors'
-      ),
-      array(
-        'name'=>'eSGwD-ePGwD_message',
-        'caption'=>'Custom message for eSGwD-ePGwD import situation',
-        'description'=>'The message shown to the user for rows where a new sample and plot is required but there are '
-          . ' multiple matching existing sample groups and plot groups available to use'
           . ' and therefore the import cannot continue until this has been resolved.',
         'type'=>'textarea',
         'required'=>true,
@@ -459,33 +371,25 @@ class iform_plant_portal_user_data_importer extends helper_base {
    */
   public static function get_form($args, $nid, $response) {
     $args['nonFatalImportTypes'] = array(
-            'nS-nSG-nP-nPG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eP-nSG'=>array('spatialRefPresent'=>1,'existingPlot'=>1,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eP-eSG'=>array('spatialRefPresent'=>1,'existingPlot'=>1,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
-            'eSG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
-            'eSG-ePG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>1),
-            'ePG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>1));
+            'nP-nPG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newPlotExistingPlotGroup'=>0),
+            'eP'=>array('spatialRefPresent'=>1,'existingPlot'=>1,'newPlotExistingPlotGroup'=>0),
+            'ePG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newPlotExistingPlotGroup'=>1));
     
     $args['fatalImportTypes'] = array(
-            //Note for this error type, the existingPlot, newSampleExistingSampleGroup, newPlotExistingPlotGroup flags are redundant,
+            //Note for this error type, the existingPlot, newPlotExistingPlotGroup flags are redundant,
             //they are always 0 even if they shouldn't be. This means we always trap any row with a missing grid reference into this 
-            //category regardless of whether existingPlot, newSampleExistingSampleGroup, newPlotExistingPlotGroup should of been set as 1 or 2
-            'spref'=>array('spatialRefPresent'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'eSGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
-            'ePwD'=>array('spatialRefPresent'=>1,'existingPlot'=>2,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
-            'ePwD-eSGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>2,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
-            'ePGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>2),
-            'eSGwD-ePGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>2));
+            //category regardless of whether existingPlot, newPlotExistingPlotGroup should of been set as 1 or 2
+            'spref'=>array('spatialRefPresent'=>0,'existingPlot'=>0,'newPlotExistingPlotGroup'=>0),
+            'ePwD'=>array('spatialRefPresent'=>1,'existingPlot'=>2,'newPlotExistingPlotGroup'=>0),
+            'ePGwD'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newPlotExistingPlotGroup'=>2));
     $args['model']='occurrence';
     if (empty($args['override_survey_id'])||empty($args['override_taxon_list_id'])||empty($args['plot_location_type_id'])||
-            empty($args['sample_group_identifier_name_text_attr_id'])||empty($args['sample_group_identifier_name_lookup_smp_attr_id'])||
             empty($args['plot_group_identifier_name_text_attr_id'])||empty($args['plot_group_identifier_name_lookup_loc_attr_id'])||
             empty($args['plot_width_attr_id'])||empty($args['plot_length_attr_id'])||
             empty($args['plot_radius_attr_id'])||empty($args['plot_shape_attr_id'])||
             empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||
             empty($args['spatial_reference_type_attr_id'])||empty($args['sample_name_attr_id'])||
-            empty($args['sample_group_permission_person_attr_id'])||empty($args['plot_group_permission_person_attr_id'])||
-            empty($args['sample_group_termlist_id'])||empty($args['plot_group_termlist_id'])||
+            empty($args['plot_group_permission_person_attr_id'])||empty($args['plot_group_termlist_id'])||
             empty($args['vice_counties_list'])||empty($args['countries_list']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
     
@@ -689,7 +593,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
               &&$key!=='occurrence:zero_abundance'&&$key!=='sample:comment'&&$key!=='sample:date'/*&&$key!=='sample:date:day'
               &&$key!=='sample:date:month'&&$key!=='sample:date:year'&&$key!=='sample:date_end'&&$key!=='sample:date_start'
               &&$key!=='sample:date_type'*/&&$key!=='sample:entered_sref'&&$key!=='sample:entered_sref_system'
-              &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'&&$key!=='smpAttr:fk_'.$options['sample_group_identifier_name_lookup_smp_attr_id']
+              &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'
               &&$key!=='smpAttr:'.$options['sample_name_attr_id']&&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
               //Note that these need to be sample attributes as they need to be passed to the
               //warehouse as part of the sample so that the spatial reference can be calculated
@@ -1559,7 +1463,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $options['country_attr_id']=$args['country_attr_id'];
     $options['spatial_reference_type_attr_id']=$args['spatial_reference_type_attr_id'];
     $options['sample_name_attr_id']=$args['sample_name_attr_id'];
-    $options['sample_group_identifier_name_lookup_smp_attr_id']=$args['sample_group_identifier_name_lookup_smp_attr_id'];
     if (isset($_GET['total'])) {
       return self::upload_result($options);
     } elseif (!isset($_POST['import_step'])) {
@@ -1746,8 +1649,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
     $fileRowsAsArray=self::auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$args['vice_counties_list'],$args['countries_list']);
     //Collect the samples and groups the user has rights to, from here we can also work out which samples and plots they have rights to
-    $sampleGroupsAndPlotGroupsUserHasRightsTo = self::get_samples_plot_and_groups_user_has_rights_to($auth,$args);
-    $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
+    $plotsAndPlotGroupsUserHasRightsTo = self::get_samples_plot_and_groups_user_has_rights_to($auth,$args);
+    $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$plotsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
     //The screen for displaying import details has two sections, one for warnings, and the other for problems that are is mandatory to correct before allowing continue
     $r .= self::display_import_warnings($args,$fileArrayForImportRowsToProcessForImport,$headerLineItems,$args['nonFatalImportTypes']);
     $rFatal =self::display_import_warnings($args,$fileArrayForImportRowsToProcessForImport,$headerLineItems,$args['fatalImportTypes']);
@@ -1763,7 +1666,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $r .= $rFatal;
       //Display upload buttons and also code for clicking the actual upload button
       $r .=self::get_upload_reupload_buttons_when_no_fatal_errors($args);
-      $r .=self::get_upload_click_function($args,$fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo);
+      $r .=self::get_upload_click_function($args,$fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$plotsAndPlotGroupsUserHasRightsTo);
     }
     return $r;
   }
@@ -1843,42 +1746,26 @@ class iform_plant_portal_user_data_importer extends helper_base {
   /*
    * Perform the upload when the user clicks on the import button
    */
-  private static function get_upload_click_function($args,$fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$sampleGroupsAndPlotGroupsUserHasRightsTo) {
+  private static function get_upload_click_function($args,$fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$plotsAndPlotGroupsUserHasRightsTo) {
     // store the warehouse user ID if we know it.
     if (function_exists('hostsite_get_user_field')) 
       $currentUserId = hostsite_get_user_field('indicia_user_id');
     $plotsToCreateNames=array();
     $plotsToCreateSrefs=array();
     $plotsToCreateSrefSystems=array();
-    $sampleGroupNamesToCreate=array();
     $distinctPlotGroupNamesToCreate=array();
-    //If we are going to add plots groups and sample groups to those termlists then we need their termlist ID
-    $sampleGroupTermlistId=$args['sample_group_termlist_id'];
+    //If we are going to add plots groups we need its termlist ID
     $plotGroupTermlistId=$args['plot_group_termlist_id'];
 
     $websiteId=$args['website_id'];
-    //If we create the plots before we upload to the warehouse, then the new plots will already be available for the warehouse to use.
-    //Extract the data we are going to need to create, keeping in mind it needs to be distinct.
-    //The data is split into different sections to be treated in different ways.
-    //We may need to create data in certain situations before sending to the warehouse.
-    //This is because the warehouse will do things like lookup locations for the sample, but not create them.
-    //For plots situations are:
-    //If a new sample and new sample group and new plot and new plot group is required, as all these need creating apart from the sample (which is created by the warehouse)
-    //or if an existing sample group is to be used (as the other elements will need to be new)
-    //or if an existing sample group and existing plot group is to be used (as the other elements will need to be new)
-    //or if an existing plot group is to be used (as the other elements will need to be new)
-    //To Do AVB - Double check this import types are correct
-    //When we create plots, sample groups, plot groups we only do so for rows which are in a category which is required to do so
-    $importTypesToCreate=array('nS-nSG-nP-nPG','eSG','eSG-ePG','ePG');
+    //If we create the plots, plot groups before we upload to the warehouse, then the new plots will already be available for the warehouse to use.
+    $importTypesToCreate=array('nP-nPG','ePG');
     $plotDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'plot',$importTypesToCreate);
-    //Do the same for both sample group and plot group data but using different import situations
-    $importTypesToCreate=array('nS-nSG-nP-nPG','eP-nSG','ePG');
-    $sampleGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'sample_group',$importTypesToCreate);
-    $importTypesToCreate=array('nS-nSG-nP-nPG','eSG');
+    $importTypesToCreate=array('nP-nPG');
     $plotGroupDataToCreate=self::extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,'plot_group',$importTypesToCreate);
     //To Do AVB - Check the logic of this, I don't think this is right, as we are not checking the group
     //to find existing plots (as they might have many groups), so code like 'eP' MIGHT need including here....double check
-    $importTypesToCreate=array('nS-nSG-nP-nPG','eSG','eSG-ePG','ePG');
+    $importTypesToCreate=array('nP-nPG','ePG');
     $plotGrouptoPlotAttachmentsToCreate=self::extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$importTypesToCreate,$plotDataToCreate,$plotGroupDataToCreate);
     //Cycle through each plot we need to create and get its name and spatial reference and spatial reference system (if available,
     //else we fall back on the sref system supplied on the Settings page)
@@ -1886,9 +1773,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $plotsToCreateNames[]=$plotDataToAdd['name'];
       $plotsToCreateSrefs[]=$plotDataToAdd['sref'];
       $plotsToCreateSrefSystems[]=$plotDataToAdd['sref_system'];
-    }
-    foreach ($sampleGroupDataToCreate as $groupToAdd) {
-      $sampleGroupNamesToCreate[]=$groupToAdd['name'];
     }
     foreach ($plotGroupDataToCreate as $groupToAdd) {
       $distinctPlotGroupNamesToCreate[]=$groupToAdd['name'];
@@ -1899,7 +1783,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //When the import button is clicked do the following
     //- Disable the button to prevent double-clicking
     //- Show a Please Wait message to the user
-    //- Create any new plots, sample groups, plot groups that are required.
+    //- Create any new plots, plot groups that are required.
     //- Submit the import to the warehouse
     if (!empty($websiteId))
       data_entry_helper::$javascript .= "var websiteId = ".$websiteId.";";
@@ -1911,13 +1795,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $('#create-import-data').click(function () {
     $('#create-import-data').attr('disabled','true');
     $('#import-loading-msg').show();";
-    //AVB why is the sample group termlist not even used here, is this needed. It is checked for and not passed to the function
-    if (!empty($websiteId)&&!empty($sampleGroupNamesToCreate) && !empty($sampleGroupTermlistId) && !empty($args['sample_group_permission_person_attr_id'])) {
-      data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($sampleGroupNamesToCreate).",'sample_group',".$currentUserId.",".$args['sample_group_permission_person_attr_id'].");";
-    }
-    //Again plotGroupTermlistId is unused
+    //AVB plotGroupTermlistId is unused - need to correct?
     if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($plotGroupTermlistId) && !empty($args['plot_group_permission_person_attr_id']))
-      data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",'plot_group',".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
+      data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
     
     if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']))
       data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_location_type_id'].");";
@@ -1959,8 +1839,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
   
   /*
    * Function looks at all the rows in the import, and returns an array of data of a particular type that needs to be created.
-   * e.g. ['Sample group 1','Sample group 2','Sample group 3']
-   * The possibilities are plot, sample_group, plot_group
+   * e.g. ['Plot group 1','Plot group 2','Plot group 3']
+   * The possibilities are plot, plot_group
    */
   private static function extract_data_to_create_from_import_rows($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$extractionType,$importTypesToCreate) { 
     $dataExtractedReadyToCreate=array();  
@@ -1968,7 +1848,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $continue = false;    
       foreach ($fileArrayForImportRowsToProcessForImport as $key => $importRow) {
         if ($key==$possibleImportTypeToCreate) {
-        //if (strpos($key, $possibleImportTypeToCreate) !== false) {
           $continue=true;
           $importTypeToCreate = $key;
         }
@@ -1980,8 +1859,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
           $dataFromRow=array();
           if ($extractionType==='plot')
             $dataFromRow = self::extract_plot_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions);
-          if ($extractionType==='sample_group')
-            $dataFromRow = self::extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions['sampleGroupNameHeaderIdx'],$extractionType);
           if ($extractionType==='plot_group')
             $dataFromRow = self::extract_group_to_create_from_import_row_if_we_need_to($rowToExtractDataFrom,$dataExtractedReadyToCreate,$columnHeadingIndexPositions['plotGroupNameHeaderIdx'],$extractionType);
           if ($extractionType==='plot_group_attachment')
@@ -2178,8 +2055,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * key names (e.g. so we know that $chosenColumnHeadings['sampleDateHeaderName'] will always hold the
    * sample data column header).
    * This can only be done after the user has mapped the columns.
-   * This is only required for columns we are going to use for matching plots, sample groups
-   * and plot groups against existing ones.
+   * This is only required for columns we are going to use for matching plots and plot groups against existing ones.
    * @param Array $args Arguments from Edit Tab
    */
   private static function store_column_header_names_for_existing_match_checks($args,$postWithoutSpacesUnderscoresInKeys) {   
@@ -2195,8 +2071,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $chosenColumnHeadings['sampleSrefHeaderName'] = $newKey;
       if ($chosenField==='sample:entered_sref_system')
         $chosenColumnHeadings['sampleSrefSystemHeaderName'] = $newKey;
-      if ($chosenField==='smpAttr:fk_'.$args['sample_group_identifier_name_lookup_smp_attr_id'])
-        $chosenColumnHeadings['sampleGroupNameHeaderName'] = $newKey;
       if ($chosenField==='sample:fk_location')
         $chosenColumnHeadings['plotNameHeaderName'] = $newKey;
       if ($chosenField==='locAttr:'.$args['plot_group_identifier_name_text_attr_id'])
@@ -2228,7 +2102,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $columnHeadingIndexPositions['sampleDateHeaderIdx']=-1;
     $columnHeadingIndexPositions['sampleSrefHeaderIdx']=-1;
     $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=-1;
-    $columnHeadingIndexPositions['sampleGroupNameHeaderIdx']=-1;
     $columnHeadingIndexPositions['plotNameHeaderIdx']=-1;
     $columnHeadingIndexPositions['plotGroupNameHeaderIdx']=-1;
     //Cycle through all the names from the header line, then check to see if there is a match in the array holding the 
@@ -2254,8 +2127,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
           $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=$idx;
         }
       }
-      if (!empty($chosenColumnHeadings['sampleGroupNameHeaderName']) && $header == $chosenColumnHeadings['sampleGroupNameHeaderName'])
-        $columnHeadingIndexPositions['sampleGroupNameHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['plotNameHeaderName']) && $header == $chosenColumnHeadings['plotNameHeaderName'])
         $columnHeadingIndexPositions['plotNameHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['plotGroupNameHeaderName']) && $header == $chosenColumnHeadings['plotGroupNameHeaderName'])
@@ -2274,29 +2145,28 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * e.g. (will we use new samples, existing examples etc)
    * @param Array $args Arguments from the Edit Tab
    * @param Array $fileRowsAsArray Rows from import file
-   * @param Array $sampleGroupsAndPlotGroupsUserHasRightsTo Samples and plots the user has rights to
+   * @param Array $plotsAndPlotGroupsUserHasRightsTo Plots and Plot Groups the user has rights to
    * @param Array $columnHeadingIndexPositions The position from the left of some of the more important columns starting at position 0
    */
-  private static function check_existing_user_data_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions) {
+  private static function check_existing_user_data_against_import_data($args,$fileRowsAsArray,$plotsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions) {
     //Store the rows into the different import categories ready to process
     $fileArrayForImportRowsToProcessForImport=array();  
     if (!empty($fileRowsAsArray)) {
       //Cycle through each row in the import data
       foreach ($fileRowsAsArray as $idx => &$fileRowsAsArrayLine) {
-        $lineState=array('spatialRefPresent'=>1,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0);
+        $lineState=array('spatialRefPresent'=>1,'existingPlot'=>0,'newPlotExistingPlotGroup'=>0);
         //If a spatial reference is missing or cannot be generated, always through a fatal error
         if (empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])) {
           $lineState['spatialRefPresent']=0;
         }
         //Only need to continue if there is a spatial reference detected for the line, otherwise we have a no spatial reference fatal failure
         if ($lineState['spatialRefPresent']===1) {
-          //Check the data on each list to see if it falls into the category of existing sample group, existing plot, existing plot group,
+          //Check the data on each list to see if it falls into the category of existing plot or existing plot group,
           //The $lineState is then altered by each function
-          self::existing_plot_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);                
-          self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'sample');
+          self::existing_plot_check_for_line($fileRowsAsArrayLine,$plotsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions);                
           //Only need to set newPlotExistingPlotGroup flag if existingPlot is 0
           if ($lineState['existingPlot']==0)
-            self::existing_group_check_for_line($fileRowsAsArrayLine,$sampleGroupsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'plot');
+            self::existing_group_check_for_line($fileRowsAsArrayLine,$plotsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo'],$lineState,$columnHeadingIndexPositions,'plot');
           //Save rows into the import categories which are stored as keys in the $fileArrayForImportRowsToProcessForImport array
         }
         self::assign_import_row_into_import_category($fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$args['nonFatalImportTypes']);
@@ -2316,8 +2186,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * 
    */
   private static function existing_group_check_for_line(&$fileRowsAsArrayLine,$groupsUserHasRightsTo,&$lineState,$columnHeadingIndexPositions,$groupType) {
-    if ($groupType==='sample')
-      $lineStateArrayKey='newSampleExistingSampleGroup';
     if ($groupType==='plot')
       $lineStateArrayKey='newPlotExistingPlotGroup';
     //Only interested in the groups the user has rights to, if they don't have any anyway, we don't need to return anything from this function
@@ -2380,7 +2248,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
   }
   
   /*
-   * Function is given a row for the import. The flags for the row (which have already been set to say whether it is an existing sample, plot, sample group, plot group) are
+   * Function is given a row for the import. The flags for the row (which have already been set to say whether it is an existing sample, plot, or plot group) are
    * checked against the import situations. When we find a matching situation, we store it against that situation.
    */
   private static function assign_import_row_into_import_category(&$fileArrayForImportRowsToProcessForImport,$fileRowsAsArrayLine,$lineState,$importTypes) {
@@ -2442,32 +2310,25 @@ class iform_plant_portal_user_data_importer extends helper_base {
   }
   
   private static function get_samples_plot_and_groups_user_has_rights_to($auth,$args) {
-    $sampleGroupsAndPlotGroupsUserHasRightsTo=array();
+    $plotsAndPlotGroupsUserHasRightsTo=array();
     global $user;
     if (function_exists('hostsite_get_user_field'))
       $currentUserId = hostsite_get_user_field('indicia_user_id');
-    $sampleGroupsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo']= data_entry_helper::get_report_data(array(
+    $plotsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo']= data_entry_helper::get_report_data(array(
       'dataSource'=>'reports_for_prebuilt_forms/plant_portal/get_plots_from_groups_for_user',
       'readAuth'=>$auth['read'],
       'extraParams'=>array(
                           'plot_group_permission_person_attr_id'=>$args['plot_group_permission_person_attr_id'],
                           'user_id'=>$currentUserId)
     ));
-    $sampleGroupsAndPlotGroupsUserHasRightsTo['sampleGroupsUserHasRightsTo']= data_entry_helper::get_report_data(array(
-      'dataSource'=>'reports_for_prebuilt_forms/plant_portal/get_groups_for_user',
-      'readAuth'=>$auth['read'],
-      'extraParams'=>array(
-                          'group_permission_person_attr_id'=>$args['sample_group_permission_person_attr_id'],
-                          'user_id'=>$currentUserId)
-    ));
-    $sampleGroupsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo']= data_entry_helper::get_report_data(array(
+    $plotsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo']= data_entry_helper::get_report_data(array(
       'dataSource'=>'reports_for_prebuilt_forms/plant_portal/get_groups_for_user',
       'readAuth'=>$auth['read'],
       'extraParams'=>array(
                           'group_permission_person_attr_id'=>$args['plot_group_permission_person_attr_id'],
                           'user_id'=>$currentUserId)
     ));
-    return $sampleGroupsAndPlotGroupsUserHasRightsTo;
+    return $plotsAndPlotGroupsUserHasRightsTo;
   }
   
   private static function get_warehouse_url() {

@@ -58,10 +58,10 @@ function create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attr
 /*
  * Called from the php code to send any new groups to the warehouse
  */
-function send_new_groups_to_warehouse(warehouseUrl,websiteId,groupNamesToCreate,groupType,userId,personAttributeIdThatHoldsGroupsForUser) {
+function send_new_groups_to_warehouse(warehouseUrl,websiteId,groupNamesToCreate,userId,personAttributeIdThatHoldsGroupsForUser) {
   //See notes in send_new_plots_to_warehouse for warehouse, as this works in sames way but for groups
   var arrayOfChunkTypesToSend=create_array_of_different_group_chunks_for_warehouse(groupNamesToCreate);
-  var arrayOfAttributesToSend=create_array_of_new_group_attributes_for_warehouse(groupType,userId,personAttributeIdThatHoldsGroupsForUser);
+  var arrayOfAttributesToSend=create_array_of_new_group_attributes_for_warehouse(userId,personAttributeIdThatHoldsGroupsForUser);
   create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,arrayOfAttributesToSend,'create_new_groups');
 }
 
@@ -82,17 +82,14 @@ function create_array_of_different_group_chunks_for_warehouse(groupNamesToProces
 /*
  * Create an array of individual values (that don't need grouping) to the warehouse.
  */
-function create_array_of_new_group_attributes_for_warehouse(groupType,userId,personAttributeIdThatHoldsGroupsForUser) {
+function create_array_of_new_group_attributes_for_warehouse(userId,personAttributeIdThatHoldsGroupsForUser) {
   var arrayOfAttributesToSend=[];
   arrayOfAttributesToSend[0]=[];
-  arrayOfAttributesToSend[0][0]='groupType';
-  arrayOfAttributesToSend[0][1]=groupType;
+  arrayOfAttributesToSend[0][0]='userId';
+  arrayOfAttributesToSend[0][1]=userId;
   arrayOfAttributesToSend[1]=[];
-  arrayOfAttributesToSend[1][0]='userId';
-  arrayOfAttributesToSend[1][1]=userId;
-  arrayOfAttributesToSend[2]=[];
-  arrayOfAttributesToSend[2][0]='personAttributeId';
-  arrayOfAttributesToSend[2][1]=personAttributeIdThatHoldsGroupsForUser;
+  arrayOfAttributesToSend[1][0]='personAttributeId';
+  arrayOfAttributesToSend[1][1]=personAttributeIdThatHoldsGroupsForUser;
   return arrayOfAttributesToSend;
 }
 
