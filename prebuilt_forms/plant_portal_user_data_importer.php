@@ -1710,6 +1710,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     foreach ($headerLineItems as $idx=>$headerLineItem) {
       $headerLineItemsWithoutSpacesOrUnderscores[$idx]=str_replace(' ','',$headerLineItem);
       $headerLineItemsWithoutSpacesOrUnderscores[$idx] = str_replace('_','',$headerLineItemsWithoutSpacesOrUnderscores[$idx]);
+      $headerLineItemsWithoutSpacesOrUnderscores[$idx] = trim($headerLineItemsWithoutSpacesOrUnderscores[$idx]);
     }
     
     //Do the same with the post
