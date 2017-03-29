@@ -106,7 +106,7 @@ class iform_ebms_transects_allocation {
     	return 'The IForm AJAX Proxy module must be enabled for this form to work.';
     $auth = array();
     $current = self::_identify_current_type($args, $auth); // config object
-
+    
   	data_entry_helper::add_resource('jquery_ui');
     $settings = array(
     	'grid_id' => 'site-allocation-grid-'.$nid,
@@ -118,10 +118,10 @@ class iform_ebms_transects_allocation {
     	'select_all_class' => 'select-all-button',
     	'deselect_all_class' => 'deselect-all-button',
     	'auth' => $auth,
-    	'base_url' => data_entry_helper::$base_url,
+    	'base_url' => !empty(data_entry_helper::$warehouse_proxy) ? data_entry_helper::$warehouse_proxy : data_entry_helper::$base_url,
     	'config' => $current,
     	'alt_row_class' => 'odd',
-    	'ajax_location_post_URL' => iform_ajaxproxy_url($nid, 'location_attribute_value'),
+    	'ajax_location_post_URL' => url('iform/ajax/ebms_transects_allocation') . '/saveLocationAttribute/' . $nid,
     	'ajax_person_post_URL' => iform_ajaxproxy_url($nid, 'person_attribute_value'),
     	'website_id' => $args['website_id'],
     	'select_all_button' => lang::get('Select All'),
@@ -215,7 +215,6 @@ class iform_ebms_transects_allocation {
 
   private static function _region_control($auth, $args, $nid, $settings) {
     if(empty($settings['config']->regional_control_location_type)) return '';
-    // ? perhaps use the regional_control_location_type as a label ?
     return '<th>' .
     		data_entry_helper::select(array(
     			'fieldname'=>$settings['region_select_id'],
@@ -227,8 +226,7 @@ class iform_ebms_transects_allocation {
     			'extraParams'=>$auth['read'] +
     						array('view'=>'detail',
   									'location_type_id'=>$settings['config']->regional_control_location_type_id,
-  									'orderby'=>'name'),
-  				'caching'=>false
+  									'orderby'=>'name')
            	)) .
     		'</th>';
   }
@@ -298,9 +296,9 @@ class iform_ebms_transects_allocation {
           // for Indicia id allocation, can't add users if they don't have a indicia user id (yet).
           $indicia_user_id = hostsite_get_user_field('indicia_user_id', 0, false, $result->uid);
           if($indicia_user_id>0)
-          	$user_list[$indicia_user_id] = array('name'=>$account->name);
+          	$user_list[$indicia_user_id] = array('name'=>$account->name.' ('.$indicia_user_id.')');
         } else
-          $user_list[$account->uid] = array('name'=>$account->name);
+          $user_list[$account->uid] = array('name'=>$account->name.' ('.$account->uid.')');
       }
     }
     foreach($user_list as $id => $account)
@@ -358,6 +356,22 @@ class iform_ebms_transects_allocation {
   				'</tr>' .
   			'</tfoot>' .
   		'</table>';
+  }
+
+  public static function ajax_saveLocationAttribute($website_id, $password, $nid) {
+  	$params = hostsite_get_node_field_value($nid, 'params');
+  	iform_load_helpers(array('data_entry_helper'));
+  	data_entry_helper::$base_url = $params['base_url'];
+  	$auth = data_entry_helper::get_read_write_auth($website_id, $password);
+  	$writeTokens = $auth['write_tokens'];
+  	 
+  	$Model = data_entry_helper::wrap($_POST, 'location_attribute_value');
+  	// pass through the user ID as this can then be used to set created_by and updated_by_ids
+  	//if (isset($_REQUEST['user_id'])) $writeTokens['user_id'] = $_REQUEST['user_id'];
+  	//if (isset($_REQUEST['sharing'])) $writeTokens['sharing'] = $_REQUEST['sharing'];
+  	$response = data_entry_helper::forward_post_to('save', $Model, $writeTokens);
+  	header('Content-type: application/json');
+  	echo json_encode(array('response' => $response));
   }
   
 }
