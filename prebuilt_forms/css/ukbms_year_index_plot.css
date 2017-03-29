@@ -30,3 +30,15 @@ div.jqplot-title {
 	line-height: 2em;
 	font-size: 2em;
 }
+h2#currentlyLoaded {
+	text-align: center;
+}
+p.graph-body-warning {
+	margin-top: 2em;
+  line-height: 2em;
+  font-size: 1.5em;
+  text-align: center;
+}
+option.italic-option {
+  font-style: italic;
+}
