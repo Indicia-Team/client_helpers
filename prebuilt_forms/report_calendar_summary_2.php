@@ -46,7 +46,7 @@ class iform_report_calendar_summary_2 {
   private static $locationKey = 'locationID';
   
   /* This is the URL parameter used to pass the location_type_id filter through */
-  private static $locationTypeKey = 'locationType';
+  private static $locationTypeKey = 'location_type_id';
   
   /* This is the URL parameter used to pass the year filter through */
   private static $yearKey = 'year';
@@ -225,7 +225,28 @@ class iform_report_calendar_summary_2 {
           'required' => false,
           'group'=>'Controls'
         ),
-          
+      		array(
+      				'name' => 'report_group',
+      				'caption' => 'Report group',
+      				'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
+      				'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
+      				'type' => 'text_input',
+      				'default' => 'report',
+      				'group' => 'Controls'
+      		),
+      		array(
+      				'name' => 'remember_params_report_group',
+      				'caption' => 'Remember report parameters group',
+      				'description' => 'Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded. '.
+      				'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
+      				'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
+      				'requires cookies to be enabled on the browser.',
+      				'type'=>'text_input',
+      				'required'=>false,
+      				'default' => '',
+      				'group'=>'Controls'
+      		),
+      		
         array(
           'name' => 'sampleFields',
           'caption' => 'Sample Fields',
@@ -750,7 +771,11 @@ class iform_report_calendar_summary_2 {
       'mode' => 'report',
       'readAuth' => $readAuth,
       'extraParams' => $presets, // needed for download reports
-      'downloadFilePrefix' => ''
+      'downloadFilePrefix' => '',
+      'reportGroup' => isset($args['report_group']) ? $args['report_group'] : '',
+      'rememberParamsReportGroup' => isset($args['remember_params_report_group']) ? $args['remember_params_report_group'] : '',
+      'paramsToExclude' => array(),
+      'paramDefaults' => array()
     ) + $presets;
     $reportOptions['extraParams']['survey_id'] = self::$siteUrlParams[self::$SurveyKey]; // catch if not in presets: location_type control
     return $reportOptions;
@@ -766,7 +791,7 @@ class iform_report_calendar_summary_2 {
 
   private static function set_up_survey($args, $readAuth)
   {
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     $presets = get_options_array_with_user_data($args['param_presets']);
     if(isset($presets['survey_id']))
       self::$siteUrlParams[self::$SurveyKey]=$presets['survey_id'];
@@ -800,7 +825,7 @@ class iform_report_calendar_summary_2 {
     // locations which the user previously recorded data against, but is no longer allocated to.
     global $user;
     $ctrl = '';
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     if(!isset($args['includeLocationFilter']) || !$args['includeLocationFilter'])
       return '';
     // this is user specific: when no user selection control, or all users selected then default to all locations
@@ -850,11 +875,11 @@ class iform_report_calendar_summary_2 {
         $ctrl .= data_entry_helper::select(array(
                  'label' => lang::get('Site Type'),
                  'id' => $ctrlid,
-                 'fieldname' => 'location_type_id',
+                 'fieldname' => $siteUrlParams[self::$locationTypeKey]['name'],
                  'lookupValues' => $lookUpValues,
                  'default' => $siteUrlParams[self::$locationTypeKey]['value']
         )).'</th><th>';
-        self::set_up_control_change($ctrlid, self::$locationTypeKey, array());
+        self::set_up_control_change($ctrlid, $siteUrlParams[self::$locationTypeKey]['name'], array());
         $options['downloadFilePrefix'] .= preg_replace('/[^A-Za-z0-9]/i', '', $lookUpValues[$siteUrlParams[self::$locationTypeKey]['value']]).'_';
       }
     }
@@ -1037,7 +1062,7 @@ class iform_report_calendar_summary_2 {
     if(!isset($args['includeUserFilter']) || !$args['includeUserFilter'])
       return '';
     // if the user is changed then we must reset the location
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     $options['user_id'] = $siteUrlParams[self::$userKey]['value'] == "branch" ? '' : $siteUrlParams[self::$userKey]['value'];
     $options['extraParams']['user_id'] = $options['user_id'];
     $userList=array();
@@ -1226,9 +1251,10 @@ class iform_report_calendar_summary_2 {
   /**
    * Get the parameters required for the current filter.
    */
-  private static function get_site_url_params() {
+  private static function get_site_url_params($args) {
     global $user;
     if (!self::$siteUrlParams) {
+      $locationTypeKey = (isset($args['report_group']) ? $args['report_group'].'-' : '').self::$locationTypeKey;
       self::$siteUrlParams = array(
         self::$userKey => array(
           'name' => self::$userKey,
@@ -1240,8 +1266,8 @@ class iform_report_calendar_summary_2 {
           'value' => isset($_GET[self::$locationKey]) ? $_GET[self::$locationKey] : ''
         ),
         self::$locationTypeKey => array(
-          'name' => self::$locationTypeKey,
-          'value' => isset($_GET[self::$locationTypeKey]) ? $_GET[self::$locationTypeKey] : ''
+          'name' => $locationTypeKey,
+          'value' => isset($_GET[$locationTypeKey]) ? $_GET[$locationTypeKey] : ''
         ),
         self::$yearKey => array(
           'name' => self::$yearKey,
@@ -1252,11 +1278,27 @@ class iform_report_calendar_summary_2 {
           'value' => (isset($_GET[self::$cacheKey]) && $_GET[self::$cacheKey] == 'false')  ? 'store' : true // cache by default
         )
       );
+      if(self::$siteUrlParams[self::$userKey]['value']=="branch" &&
+          (!isset($args['branch_manager_permission']) ||
+           $args['branch_manager_permission']=="" ||
+           !hostsite_user_has_permission($args['branch_manager_permission'])))
+        self::$siteUrlParams[self::$userKey]['value']=$user->uid;
+      
       foreach (self::$removableParams as $param=>$caption) {
         self::$siteUrlParams[$param] = array(
           'name' => $param,
           'value' => isset($_GET[$param]) ? $_GET[$param] : ''
         );
+      }
+      if (isset($_COOKIE['providedParams']) && !empty($args['remember_params_report_group'])) {
+        $cookieData = json_decode($_COOKIE['providedParams'], true);
+        // guard against a corrupt cookie
+        if (is_array($cookieData) && !empty($cookieData[$args['remember_params_report_group']])) {
+          $cookieParams = $cookieData[$args['remember_params_report_group']];
+          if (is_array($cookieParams) && isset($cookieParams[$locationTypeKey]) && self::$siteUrlParams[self::$locationTypeKey]['value'] == '') {
+            self::$siteUrlParams[self::$locationTypeKey]['value'] = $cookieParams[$locationTypeKey];
+          }
+        }
       }
     }
     return self::$siteUrlParams;
@@ -1306,7 +1348,7 @@ jQuery('#".$ctrlid."').change(function(){
       case 'none': return '';
       default: // case year
         // Add year paginator where it can have an impact for both tables and plots.
-        $siteUrlParams = self::get_site_url_params();
+        $siteUrlParams = self::get_site_url_params($args);
         $reloadUrl = data_entry_helper::get_reload_link_parts();
         // find the names of the params we must not include
         foreach ($reloadUrl['params'] as $key => $value) {
@@ -1438,7 +1480,7 @@ jQuery('#".$ctrlid."').change(function(){
     $retVal .= self::year_control($args, $auth, $nid, $reportOptions);
     $retVal .= '<th>'.self::user_control($args, $auth, $nid, $reportOptions).'</th>';
     $retVal .= '<th>'.self::location_control($args, $auth, $nid, $reportOptions).'</th>'; // note this includes the location_type control if needed
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     if (!empty($args['removable_params'])) {      
       foreach(self::$removableParams as $param=>$caption) {
         $checked=(isset($_GET[$param]) && $_GET[$param]==='true') ? ' checked="checked"' : '';
@@ -1465,16 +1507,17 @@ jQuery('#".$ctrlid."').change(function(){
       if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!="" ){
         $types = explode(',',$args['locationTypesFilter']);
         $terms = self::get_sorted_termlist_terms(array('read'=>$auth), 'indicia:location_types', array($types[0]));
-        $reportOptions['extraParams']['location_type_id'] = $terms[0]['id'];
+        $reportOptions['paramDefaults'][self::$locationTypeKey] = $terms[0]['id'];
+        $reportOptions['extraParams'][self::$locationTypeKey] = $terms[0]['id'];
       }
-    } else
-      $reportOptions['extraParams']['location_type_id'] = self::$siteUrlParams[self::$locationTypeKey]['value'];
-    
+    } else {
+      $reportOptions['paramDefaults'][self::$locationTypeKey] = self::$siteUrlParams[self::$locationTypeKey]['value'];
+      $reportOptions['extraParams'][self::$locationTypeKey] = self::$siteUrlParams[self::$locationTypeKey]['value'];
+    }
     if(isset($args['linkURL'])) {
       $reportOptions['linkURL'] = $args['linkURL'] . (isset($siteUrlParams[self::$URLExtensionKey]) ? $siteUrlParams[self::$URLExtensionKey] : '');
       $reportOptions['linkURL'] .= (strpos($reportOptions['linkURL'], '?') !== FALSE ? '&' : '?').'sample_id=';
     }
-
     $reportOptions['includeReportTimeStamp']=isset($args['includeFilenameTimestamps']) && $args['includeFilenameTimestamps'];
     
     $retVal.= '</tr></thead></table>';
