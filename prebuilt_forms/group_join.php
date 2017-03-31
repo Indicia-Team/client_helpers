@@ -135,6 +135,6 @@ class iform_group_join {
   
   private static function success($auth, $group, $args) {
     module_load_include('inc', 'iform', 'iform.groups');
-    return iform_show_group_join_success($group, $auth, true, $args['group_home_path'], $args['groups_page_path']);
+    return iform_show_group_join_success($group, $auth, false, $args['group_home_path'], $args['groups_page_path']);
   }
 }
