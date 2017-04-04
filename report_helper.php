@@ -817,6 +817,12 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   linkFilterToMap: ".(!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false').",
   msgRowLinkedToMapHint: '".lang::get('Click the row to highlight the record on the map. Double click to zoom in.')."',
   msgNoInformation: '".lang::get('No information available')."',
+  langFirst: '".lang::get('first')."',
+  langPrev: '".lang::get('prev')."',
+  langNext: '".lang::get('next')."',
+  langLast: '".lang::get('last')."',
+  langShowing: '".lang::get('Showing records {1} to {2} of {3}')."',
+  noRecords: 'No records',
   altRowClass: '$options[altRowClass]'";
       if (isset($options['sharing'])) {
         if (!isset($options['extraParams']))
