@@ -1324,9 +1324,14 @@ $('#$escaped').change(function(e) {
    */
   public static function hierarchical_select($options) {
     $options = array_merge(array(
-      'id'=>'select-'.rand(0,10000),
-      'blankText'=>'<please select>'
+      'id' => 'select-'.rand(0,10000),
+      'blankText' => '<please select>',
+      'extraParams' => array()
     ), $options);
+    // If not language filtered, then limit to preferred, otherwise we could get
+    // multiple children.
+    // @todo This should probably be set by the caller, not here.
+    if (!isset($options['extraParams']['iso']))
     $options['extraParams']['preferred']='t';
     // Get the data for the control. Not Ajax populated at the moment. We either populate the lookupValues for the top level control
     // or store in the childData for output into JavaScript
@@ -6521,7 +6526,7 @@ if (errors$uniq.length>0) {
       $subSample = data_entry_helper::wrap($sampleRecord, 'sample');
       // Add the subsample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
-        $subSample['subModels'] = array_merge($sampleMod['subModels'], $occs);
+        $subSample['subModels'] = array_merge($subSample['subModels'], $occs);
       } else {
         $subSample['subModels'] = $occs;
       }
