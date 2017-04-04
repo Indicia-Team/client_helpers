@@ -1332,7 +1332,7 @@ $('#$escaped').change(function(e) {
     // multiple children.
     // @todo This should probably be set by the caller, not here.
     if (!isset($options['extraParams']['iso']))
-    $options['extraParams']['preferred']='t';
+      $options['extraParams']['preferred']='t';
     // Get the data for the control. Not Ajax populated at the moment. We either populate the lookupValues for the top level control
     // or store in the childData for output into JavaScript
     $items = self::get_population_data($options);
