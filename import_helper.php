@@ -540,15 +540,6 @@ class import_helper extends helper_base {
       }
     }
   }
-
-  //If we are preventing commits if there are any errors at all, then jump to results screen upon error
-  private static function skip_to_results_if_error($options,$filename) {
-    $errors=false;
-    $output=self::collect_errors($options,$filename);
-    if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
-      return self::display_result_as_error_check_stage_failed($options,$output);
-    } 
-  }
   
   /**
    * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
@@ -575,11 +566,14 @@ class import_helper extends helper_base {
       $r .= self::preserve_fields($options,$filename,null,$_POST,self::$automaticMappings);
     }
     if ((isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) &&
-          (isset($_POST['import_step']) && $_POST['import_step']!=3)) {
+          (isset($_POST['import_step']) && $_POST['import_step']==3)) {
       //If we have reached this line, it means the previous step was the error check stage and we are
       //about to attempt to upload, however we need to skip straight to results if we detected any errors
-      self::skip_to_results_if_error($options,$filename);
-    }
+      $output=self::collect_errors($options,$filename);
+      if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
+        return self::display_result_as_error_check_stage_failed($options,$output);
+      } 
+    }  
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
     if ($transferFileDataToWarehouseSuccess===true) {
       //Progress message depends if we are uploading or simply checking for errors
@@ -665,15 +659,15 @@ class import_helper extends helper_base {
   //This only applies if we are preventing all commits if any errors are detected.
   //(otherwise upload_result function is called instead)
   private static function display_result_as_error_check_stage_failed($options,$output) {
-    $r='';
     // get the path back to the same page
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
+
     $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
-      $downloadInstructions .
-      " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
-    $r = "<p>$r</p><p>".lang::get('Once you have finished making corrections ')."<a href=\"$reloadpath\">".lang::get('please reupload the file.')."</a></p>";
+        $downloadInstructions .
+        " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
+    $r .= "<p>".lang::get('Once you have finished making corrections ')."<a href=\"$reloadpath\">".lang::get('please reupload the file.')."</a></p>";
     return $r;
   }
   
