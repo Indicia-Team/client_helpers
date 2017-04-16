@@ -91,11 +91,12 @@ class import_helper extends helper_base {
       if (count($_FILES)==1)
         return self::import_settings_form($options);
       else
-        return self::upload_form();
+        return self::upload_form($options);
     } elseif (isset($_POST['import_step']) && $_POST['import_step']==1) {
       //If we have the Prevent Commits On Any Error option on, then the first pass of the upload
       //process will always be to check errors and not commit to DB, so indicate this with option
-      if (isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) {
+      if ((isset($_POST['preventCommitsOnError'])&&$_POST['preventCommitsOnError']==true)||
+         (isset($_POST['setting']['preventCommitsOnError'])&&$_POST['setting']['preventCommitsOnError']==true)) {
         $options['allowCommitToDB']=false;
       } else {
         $options['allowCommitToDB']=true;
@@ -119,10 +120,24 @@ class import_helper extends helper_base {
   /**
    * Returns the HTML for a simple file upload form.
    */
-  private static function upload_form() {
+  private static function upload_form($options) {
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = '<form action="'.$reloadpath.'" method="post" enctype="multipart/form-data">';
+    //Import has two modes, only commit if no errors, or commit valid rows.
+    //This can be user controlled, or provided by the administrator as an argument
+    if ($options['importBehaviour']==='prevent')
+      $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" checked>';
+    if ($options['importBehaviour']==='partial_import')
+      $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" >';
+    if ($options['importBehaviour']==='user_defined') {
+      $r .= data_entry_helper::checkbox(array(
+        'label' => lang::get('Prevent commits on error'),
+        'fieldname' => 'preventCommitsOnError',
+        'helpText'=>'Select this checkbox to prevent the importing of any rows '
+          . 'if there are any errors at all. Leave this checkbox switched off to import valid rows.'
+      ));
+    }
     $r .= '<label for="upload">'.lang::get('Select *.csv (comma separated values) file to upload').':</label>';
     $r .= '<input type="file" name="upload" id="upload"/>';
     $r .= '<input type="Submit" value="'.lang::get('Upload').'"></form>';
@@ -565,7 +580,8 @@ class import_helper extends helper_base {
       //The next step is the results step which does not have an import_step number
       $r .= self::preserve_fields($options,$filename,null,$_POST,self::$automaticMappings);
     }
-    if ((isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) &&
+    if (((isset($_POST['preventCommitsOnError'])&&$_POST['preventCommitsOnError']==true)||
+         (isset($_POST['setting']['preventCommitsOnError'])&&$_POST['setting']['preventCommitsOnError']==true))&&
           (isset($_POST['import_step']) && $_POST['import_step']==3)) {
       //If we have reached this line, it means the previous step was the error check stage and we are
       //about to attempt to upload, however we need to skip straight to results if we detected any errors

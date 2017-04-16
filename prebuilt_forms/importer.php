@@ -66,6 +66,20 @@ class iform_importer {
         ),
         'required'=>true
       ),
+      array(
+        'name'=>'importBehaviour',
+        'caption'=>'Import behaviour',
+        'description'=>'<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. '
+        . '<em>Only commit valid rows</em> - Import rows which do not error. '
+        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+        'type'=>'select',
+        'options'=>array(
+          'prevent' => 'Prevent all commits on error',
+          'partial_import' => 'Only commit valid rows',
+          'user_defined' => 'Allow user to choose'
+        ),
+        'required'=>true
+      ),
       array('name'=>'otherModel',
         'caption'=>'Other model',
         'description'=>'If type of data to import is set to other, then specify the singular name of the model to import into here.',
@@ -140,15 +154,7 @@ class iform_importer {
           'simplified.',
         'type'=>'boolean',
         'default'=>false
-      ),
-      array(
-        'name'=>'preventCommitsOnError',
-        'caption'=>'Prevent commits on error',
-        'description'=>'If selected, we only import rows if no errors are detected at all,'
-        . ' otherwise any row that doesn\'t have an error is committed to the database.',
-        'type'=>'boolean',
-        'default'=>false
-      ),
+      )
     );
   }
 
@@ -214,7 +220,7 @@ class iform_importer {
         'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], true),
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
         'skipMappingIfPossible' => $args['skipMappingIfPossible'],
-        'preventCommitsOnError' => $args['preventCommitsOnError']      
+        'importBehaviour' => $args['importBehaviour']      
       );
       $r = import_helper::importer($options);
     } catch (Exception $e) {
