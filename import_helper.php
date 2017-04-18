@@ -589,6 +589,9 @@ class import_helper extends helper_base {
         if (!empty($r))
           return self::display_sample_external_key_data_mismatches($failedRows);
       }
+      $options['useSmpExtKeyToMatchOccs']=true;
+    } else {
+      $options['useSmpExtKeyToMatchOccs']=false;
     }
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
@@ -652,7 +655,8 @@ class import_helper extends helper_base {
       $.ajax({
         url: '".$warehouseUrl."index.php/services/import/upload?offset='+total+'&limit='+limit+'"
               . "&filepos='+filepos+'&uploaded_csv=$filename"
-              . "&model=".$options['model']."&allow_commit_to_db=".$options['allowCommitToDB']."',
+              . "&model=".$options['model']."&allow_commit_to_db=".$options['allowCommitToDB']
+              . "&use_smp_ext_key_to_match_occs=".$options['useSmpExtKeyToMatchOccs']."',
         dataType: 'jsonp',
         success: function(response) {
           var allowCommitToDB = '".$options['allowCommitToDB']."';
