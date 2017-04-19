@@ -1196,10 +1196,14 @@ TD;
   //rows which share the same external key, if not, warn the user
   private static function sample_external_key_data_mismatch_checks($rows) {
     $columnIdx=0;
+    $columnIdxsToCheck=array();
     //Cycle through each of the column mappings and get the position of the sample external key column
     foreach ($_POST['mapping'] as $columnName=>$mapping) {
       if ($mapping==='sample:external_key') {
         $sampleKeyIdx=$columnIdx;
+      }
+      if ((substr($mapping,0,7) === 'sample:'||substr($mapping,0,8) === 'smpAttr:')&&$mapping!=='sample:external_key') {
+        array_push($columnIdxsToCheck,$columnIdx);
       }
       $columnIdx++;
     }
@@ -1220,9 +1224,8 @@ TD;
         if (array_key_exists($rowArray[$sampleKeyIdx],$firstRowForEachSampleKey)) {
           //Cycle through each colum on the row
           foreach ($rowArray as $dataCellIdx=>$dataCell) {
-            //AVB to do -> Need to limit to only columns related to sample
-            //If any of the row columns mismatches an earlier row that has same external key, then flag failure
-            if ($dataCell!==$firstRowForEachSampleKey[$rowArray[$sampleKeyIdx]][$dataCellIdx]) {
+            //If any of the row sample columns mismatches an earlier row that has same external key, then flag failure
+            if (in_array($dataCellIdx,$columnIdxsToCheck)&&$dataCell!==$firstRowForEachSampleKey[$rowArray[$sampleKeyIdx]][$dataCellIdx]) {
               $rowFailed=true;
             }
           }
