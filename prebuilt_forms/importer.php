@@ -83,7 +83,7 @@ class iform_importer {
       ),
       array(
         'name'=>'importOccurrenceIntoSampleLogic',
-        'caption'=>'Importer Occurrence Into Sample Logic',
+        'caption'=>'Importer Occurrence Into Sample Logic (only applicable when using the Species Records import type)',
         'description'=>'<em>Match on sample external key</em> - Rows are placed into the same sample based on sample external key. '
         . '<em>Place similar consecutive rows into the same sample</em> - Rows are placed into the same sample based on comparison of '
           . 'sample related columns of consecutive rows. '

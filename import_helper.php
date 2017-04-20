@@ -142,7 +142,7 @@ class import_helper extends helper_base {
       $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" checked>';
     if ($options['importOccurrenceIntoSampleLogic']==='consecutive_rows')
       $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" >';
-    if ($options['importOccurrenceIntoSampleLogic']==='user_defined') {
+    if ($options['importOccurrenceIntoSampleLogic']==='user_defined' && $options['model']==='occurrence') {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Use sample external key to match occurrences into sample'),
         'fieldname' => 'importOccurrenceIntoSampleUsingExternalKey', 
@@ -581,19 +581,18 @@ class import_helper extends helper_base {
     //the occurrences go into, then we need to check the sample data is consistant between the
     //rows which share the same external key, if not, warn the user.
     //If not using that mode we can just continue without the warning screen.
-    if ((!empty($_POST['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['importOccurrenceIntoSampleUsingExternalKey']==true)||
-          (!empty($_POST['setting']['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['setting']['importOccurrenceIntoSampleUsingExternalKey']==true)) {
-      $checkArrays = self::sample_external_key_issue_checks($rows);
-      $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
-      $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
-      if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
-        $r.= self::display_sample_external_key_data_mismatches($inconsistencyFailureRows,$clusteringFailureRows);
-        if (!empty($r))
-          return $r;
+    if ($options['model']==='occurrence') {
+      if ((!empty($_POST['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['importOccurrenceIntoSampleUsingExternalKey']==true)||
+            (!empty($_POST['setting']['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['setting']['importOccurrenceIntoSampleUsingExternalKey']==true)) {
+        $checkArrays = self::sample_external_key_issue_checks($rows);
+        $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
+        $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
+        if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
+          $r.= self::display_sample_external_key_data_mismatches($inconsistencyFailureRows,$clusteringFailureRows);
+          if (!empty($r))
+            return $r;
+        }
       }
-      $options['useSmpExtKeyToMatchOccs']=true;
-    } else {
-      $options['useSmpExtKeyToMatchOccs']=false;
     }
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
@@ -657,8 +656,7 @@ class import_helper extends helper_base {
       $.ajax({
         url: '".$warehouseUrl."index.php/services/import/upload?offset='+total+'&limit='+limit+'"
               . "&filepos='+filepos+'&uploaded_csv=$filename"
-              . "&model=".$options['model']."&allow_commit_to_db=".$options['allowCommitToDB']
-              . "&use_smp_ext_key_to_match_occs=".$options['useSmpExtKeyToMatchOccs']."',
+              . "&model=".$options['model']."&allow_commit_to_db=".$options['allowCommitToDB']."',
         dataType: 'jsonp',
         success: function(response) {
           var allowCommitToDB = '".$options['allowCommitToDB']."';
