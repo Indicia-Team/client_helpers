@@ -583,11 +583,13 @@ class import_helper extends helper_base {
     //If not using that mode we can just continue without the warning screen.
     if ((!empty($_POST['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['importOccurrenceIntoSampleUsingExternalKey']==true)||
           (!empty($_POST['setting']['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['setting']['importOccurrenceIntoSampleUsingExternalKey']==true)) {
-      $failedRows = self::sample_external_key_data_mismatch_checks($rows);
-      if (!empty($failedRows)) {
-        $r.= self::display_sample_external_key_data_mismatches($failedRows);
+      $checkArrays = self::sample_external_key_issue_checks($rows);
+      $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
+      $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
+      if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
+        $r.= self::display_sample_external_key_data_mismatches($inconsistencyFailureRows,$clusteringFailureRows);
         if (!empty($r))
-          return self::display_sample_external_key_data_mismatches($failedRows);
+          return $r;
       }
       $options['useSmpExtKeyToMatchOccs']=true;
     } else {
@@ -1193,8 +1195,10 @@ TD;
   
   //If we are using the sample external key as the indicator of which samples
   //the occurrences go into, then we need to check the sample data is consistant between the
-  //rows which share the same external key, if not, warn the user
-  private static function sample_external_key_data_mismatch_checks($rows) {
+  //rows which share the same external key, if not, warn the user.
+  //We also need to check that rows with the same sample external key appear on consecutive
+  //rows (otherwise the importer would create separate samples)
+  private static function sample_external_key_issue_checks($rows) {
     $columnIdx=0;
     $columnIdxsToCheck=array();
     //Cycle through each of the column mappings and get the position of the sample external key column
@@ -1207,58 +1211,91 @@ TD;
       }
       $columnIdx++;
     }
-    //Hold the first row which has a given sample external key. All rows with matching external keys must have consistant
-    //sample data, so we only need to hold one for exmination
-    $firstRowForEachSampleKey=array();
+    //Hold the latest row which has a given sample external key. All rows with matching external keys must have consistant
+    //sample data, so we only need to hold one for examination
+    $latestRowForEachSampleKey=array();
     //Rows which have inconsistancies
-    $failedRows=array();
-    //Flag individual rows
-    $rowFailed=false;
+    $inconsistencyFailureRows=array();
+    $clusteringFailureRows=array();
+    //Flag individual rows which have the same sample external key but the sample data such as the date is inconsistent
+    $rowInconsistencyFailure=false;
+    //Flag individual rows which have the same sample external key but are not on consecutive rows as this would cause
+    //two separate samples which would not be intended (note this flag is only used in the Sample External Key matching mode)
+    $rowClusteringFailure=false;
+    $rowNumber=0;
     foreach ($rows as $rowNum=>$fileRow) {
+      //Reset flags for each row
+      $rowInconsistencyFailure=false;
+      $rowClusteringFailure=false;
       //Explode individual columns
       $rowArray=explode(',',$fileRow);
       //If the sample key isn't empty on the row continue to work on the row
       if (!empty($rowArray[$sampleKeyIdx])) {
         //If the row we are working on has the same sample external key as one of the previous rows then
-        //continue, else save it to the array holding rows with sample keys
-        if (array_key_exists($rowArray[$sampleKeyIdx],$firstRowForEachSampleKey)) {
+        //continue
+        if (array_key_exists($rowArray[$sampleKeyIdx],$latestRowForEachSampleKey)) {
           //Cycle through each colum on the row
           foreach ($rowArray as $dataCellIdx=>$dataCell) {
             //If any of the row sample columns mismatches an earlier row that has same external key, then flag failure
-            if (in_array($dataCellIdx,$columnIdxsToCheck)&&$dataCell!==$firstRowForEachSampleKey[$rowArray[$sampleKeyIdx]][$dataCellIdx]) {
-              $rowFailed=true;
+            if (in_array($dataCellIdx,$columnIdxsToCheck)&&$dataCell!==$latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]][$dataCellIdx]) {
+              $rowInconsistencyFailure=true;
+            }
+            //If the current row number minus the row number of the last row with the same sample external key is bigger
+            //than 1 then we know the rows are not consecutive so we can flag a clustering failure to warn the user about
+            if ((integer)$rowNumber-(integer)$latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]]['row_number']>1) {
+              $rowClusteringFailure=true;
             }
           }
-          if ($rowFailed===true) {
-            array_push($failedRows,$fileRow);
-            $rowFailed===false;
-          }
-        } else {
-          //Ignore header row
-          if ($rowNum!==0)
-            $firstRowForEachSampleKey[$rowArray[$sampleKeyIdx]]=$rowArray;
+        }
+        //Ignore header row
+        //Save the most recent row for each Sample External Key
+        if ($rowNum!==0) {
+          $latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]]=$rowArray;
+          $latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]]['row_number']=$rowNumber;
         }
       }
+      //Flag rows with the same sample external key but different sample data such as dates
+      if ($rowInconsistencyFailure===true) {
+        array_push($inconsistencyFailureRows,$fileRow);   
+      }
+      //Flag rows with same sample external key which are not on consecutive rows
+      if ($rowClusteringFailure===true) {
+        array_push($clusteringFailureRows,$fileRow);      
+      } 
+      $rowNumber++;
     }
-    return $failedRows;
+    $returnArray=array();
+    $returnArray['inconsistencyFailureRows']=$inconsistencyFailureRows;
+    $returnArray['clusteringFailureRows']=$clusteringFailureRows;
+    return $returnArray;
   }
   
   /*
-   * Show results of any sample data mismatches between rows with the same sample external key
+   * Show results of any sample issues between rows with the same sample external key
    * if using that import mode
    */
-  private static function display_sample_external_key_data_mismatches($failedRows=array()) {
+  private static function display_sample_external_key_data_mismatches($inconsistencyFailureRows=array(),$clusteringFailureRows=array()) {
     $r='';
     $r.='<div><p>You have selected to use the Sample External Key to determine which samples '
-            . 'your occurrences are placed into. A scan has been made of your data and '
-            . 'inconsistancies have been found in the sample data on your rows which '
-            . 'have a matching external key. Please correct your original file and select the '
-            . 're-upload option.</p><p>The following rows have been found to have inconsistancies:</p></div>';
-    foreach ($failedRows as $failedRow) {
-      $r.= $failedRow.'<br>';
+            . 'your occurrences are placed into. A scan has been made of your data and problems have been found.</p></div>';
+    if (!empty($inconsistencyFailureRows)) {
+      $r.='<div><p><b>Inconsistancies have been found in the sample data on your rows which '
+              . 'have a matching external key. Please correct your original file and select the '
+              . 're-upload option.</b></p><p>The following rows have been found to have inconsistancies:</p></div>';
+      foreach ($inconsistencyFailureRows as $inconsistencyFailureRow) {
+        $r.= '<em>'.$inconsistencyFailureRow.'</em><br>';
+      }
+      $r.= '<div><p>A row is considered to be inconsistant if the sample key matches an earlier row but some of the sample '
+              . 'data (such as the date) is different.</p></div>';
     }
-    $r.= '<div><p>A row is considered to be inconsistant if the sample key matches an earlier row but some of the sample '
-            . 'data (such as the date) is different.</p></div>';
+    if (!empty($clusteringFailureRows)) {
+      $r.='<div><p><b>The following rows have been found to have matching sample external keys but are separated inside the import file. '
+              . 'Rows which you need to go into the same sample should be placed on consecutive rows.</b></p></div>';
+      foreach ($clusteringFailureRows as $clusteringFailureRow) {
+        $r.= '<em>'.$clusteringFailureRow.'</em><br>';
+      }
+    }
+    
     $reload = self::get_reload_link_parts();
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
