@@ -563,6 +563,17 @@ class import_helper extends helper_base {
    * @param array $settings List of settings for the import
    */
   private static function run_upload($options, $mappings=array(),$settings=array()) {
+    $rows=file($_SESSION['uploaded_file']);
+    $r = '';
+    //If we are using the sample external key as the indicator of which samples
+    //the occurrences go into, then we need to check the sample data is consistant between the
+    //rows which share the same external key, if not, warn the user
+    $failedRows = self::sample_external_key_data_mismatch_checks($rows);
+    if (!empty($failedRows)) {
+      $r.= self::display_sample_external_key_data_mismatches($failedRows);
+      if (!empty($r))
+        return self::display_sample_external_key_data_mismatches($failedRows);
+    }
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
@@ -570,7 +581,7 @@ class import_helper extends helper_base {
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $r = '';
+    
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
       //If we hit this line it means we are doing the error checking step and the next step
       //is step 3 which is the actual upload. Preserve the fields from previous steps in the post
@@ -1158,5 +1169,78 @@ TD;
         unset($userSettings[$column]);
     }
     hostsite_set_user_field("import_field_mappings", json_encode($userSettings));
+  }
+  
+  //If we are using the sample external key as the indicator of which samples
+  //the occurrences go into, then we need to check the sample data is consistant between the
+  //rows which share the same external key, if not, warn the user
+  private static function sample_external_key_data_mismatch_checks($rows) {
+    $columnIdx=0;
+    //Cycle through each of the column mappings and get the position of the sample external key column
+    foreach ($_POST['mapping'] as $columnName=>$mapping) {
+      if ($mapping==='sample:external_key') {
+        $sampleKeyIdx=$columnIdx;
+      }
+      $columnIdx++;
+    }
+    //Hold the first row which has a given sample external key. All rows with matching external keys must have consistant
+    //sample data, so we only need to hold one for exmination
+    $firstRowForEachSampleKey=array();
+    //Rows which have inconsistancies
+    $failedRows=array();
+    //Flag individual rows
+    $rowFailed=false;
+    foreach ($rows as $rowNum=>$fileRow) {
+      //Explode individual columns
+      $rowArray=explode(',',$fileRow);
+      //If the sample key isn't empty on the row continue to work on the row
+      if (!empty($rowArray[$sampleKeyIdx])) {
+        //If the row we are working on has the same sample external key as one of the previous rows then
+        //continue, else save it to the array holding rows with sample keys
+        if (array_key_exists($rowArray[$sampleKeyIdx],$firstRowForEachSampleKey)) {
+          //Cycle through each colum on the row
+          foreach ($rowArray as $dataCellIdx=>$dataCell) {
+            //AVB to do -> Need to limit to only columns related to sample
+            //If any of the row columns mismatches an earlier row that has same external key, then flag failure
+            if ($dataCell!==$firstRowForEachSampleKey[$rowArray[$sampleKeyIdx]][$dataCellIdx]) {
+              $rowFailed=true;
+            }
+          }
+          if ($rowFailed===true) {
+            array_push($failedRows,$fileRow);
+            $rowFailed===false;
+          }
+        } else {
+          //Ignore header row
+          if ($rowNum!==0)
+            $firstRowForEachSampleKey[$rowArray[$sampleKeyIdx]]=$rowArray;
+        }
+      }
+    }
+    return $failedRows;
+  }
+  
+  /*
+   * Show results of any sample data mismatches between rows with the same sample external key
+   * if using that import mode
+   */
+  private static function display_sample_external_key_data_mismatches($failedRows=array()) {
+    $r='';
+    $r.='<div><p>You have selected to use the Sample External Key to determine which samples '
+            . 'your occurrences are placed into. A scan has been made of your data and '
+            . 'inconsistancies have been found in the sample data on your rows which '
+            . 'have a matching external key. Please correct your original file and select the '
+            . 're-upload option.</p><p>The following rows have been found to have inconsistancies:</p></div>';
+    foreach ($failedRows as $failedRow) {
+      $r.= $failedRow.'<br>';
+    }
+    $r.= '<div><p>A row is considered to be inconsistant if the sample key matches an earlier row but some of the sample '
+            . 'data (such as date) is different</p></div>';
+    $reload = self::get_reload_link_parts();
+    unset($reload['params']['total']);
+    unset($reload['params']['uploaded_csv']);
+    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    $r .= "<p>".lang::get('Once you have finished making corrections to the original file ')."<a href=\"$reloadpath\">".lang::get('please reupload the file.')."</a></p>";
+    return $r;
   }
 }
