@@ -106,11 +106,11 @@ class import_helper extends helper_base {
     //an extra error checking step
     } elseif ((isset($_POST['import_step']) && $_POST['import_step']==2)) {  
       $options['allowCommitToDB']=false;
-      return self::run_upload($options, $_POST);
+      return self::run_upload($options, $_POST['mapping'], $_POST['setting']);
     //Step 3 is the actual upload and is shown whichever mode we are in
     } elseif ((isset($_POST['import_step']) && $_POST['import_step']==3)) {
       $options['allowCommitToDB']=true;
-      return self::run_upload($options, $_POST);
+      return self::run_upload($options, $_POST['mapping'], $_POST['setting']);
     } elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
       return self::upload_result($options);
     } else throw new exception('Invalid importer state');
@@ -197,49 +197,16 @@ class import_helper extends helper_base {
       return self::upload_mappings_form($options);
     }
   }
-
+  
   /**
    * Outputs the form for mapping columns to the import fields.
    * @param array $options Options array passed to the import control.
    */
   private static function upload_mappings_form($options) {
     ini_set('auto_detect_line_endings',1);
-    if (!file_exists($_SESSION['uploaded_file']))
-      return lang::get('upload_not_available');
     self::add_resource('jquery_ui');
     $filename=basename($_SESSION['uploaded_file']);
-    // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
-    // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
-    if (isset($options['presetSettings'])) {
-      $settings = array_merge(
-        $options['presetSettings'],
-        $_POST
-      );
-    } else 
-      $settings = $_POST;
-    if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
-    	// when not using associations make sure that the association fields are not passed through.
-    	// These fields would confuse the association detection logic.
-    	foreach($settings as $key => $value){
-    		$parts = explode(':', $key);
-    		if($parts[0]==$options['model'].'_association' || $parts[0]==$options['model'].'_2')
-    			unset($settings[$key]);
-    	}
-    }
-    // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
-    foreach ($settings as $key => $value) {
-      if (empty($value)) {
-        unset($settings[$key]);
-      }
-    }
-    // cache the mappings
-    $metadata = array('settings' => json_encode($settings));
-    $post = array_merge($options['auth']['write_tokens'], $metadata);
-    $request = parent::$base_url."index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
-    $response = self::http_post($request, $post);
-    if (!isset($response['output']) || $response['output'] != 'OK')
-      return "Could not upload the settings metadata. <br/>".print_r($response, true);
-
+    $settings=self::get_settings_and_send_settings_to_warehouse($filename,$options);
     $request = parent::$base_url."index.php/services/import/get_import_fields/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
     // include survey and website information in the request if available, as this limits the availability of custom attributes
@@ -446,10 +413,16 @@ class import_helper extends helper_base {
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r =  "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n";
-    foreach ($postFields as $field=>$value) {
-      if (!empty($postFields[$field])) {
+    if (!empty($postFields['setting']))
+      $settingFields=$postFields['setting'];
+    else
+      $settingFields=$postFields;
+    if (!empty($postFields['mapping']))
+      $automaticMappings=$postFields['mapping'];
+    foreach ($settingFields as $field=>$value) {
+      if (!empty($settingFields[$field])) {
         if (!empty($value) && $field!=='import_step' && $field !=='submit') {
-          $r .= '<input type="hidden" name="'.$field.'" id="'.$field.'" value="'.$value.'"/>'."\n";
+          $r .= '<input type="hidden" name="setting['.$field.']" id="setting['.$field.']" value="'.$value.'"/>'."\n";
         }
       } 
     }
@@ -457,7 +430,7 @@ class import_helper extends helper_base {
       foreach ($automaticMappings as $field=>$value) {
         if (!empty($automaticMappings[$field])) {
           if (!empty($value) && $field!=='import_step' && $field !=='submit') {
-            $r .= '<input type="hidden" name="'.$field.'" id="'.$field.'" value="'.$value.'"/>'."\n";
+            $r .= '<input type="hidden" name="mapping['.$field.']" id="mapping['.$field.']" value="'.$value.'"/>'."\n";
           }
         }
       }
@@ -580,8 +553,9 @@ class import_helper extends helper_base {
    * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
    * @param array $options Array of options passed to the import control.
    * @param array $mappings List of column title to field mappings
+   * @param array $settings List of settings for the import
    */
-  private static function run_upload($options, $mappings) {
+  private static function run_upload($options, $mappings=array(),$settings=array()) {
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
@@ -599,7 +573,7 @@ class import_helper extends helper_base {
       //The next step is the results step which does not have an import_step number
       $r .= self::preserve_fields($options,$filename,null,$_POST,self::$automaticMappings);
     }
-    if ((isset($options['allowCommitToDB'])&&$options['allowCommitToDB']==false) &&
+    if ((isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) &&
           (isset($_POST['import_step']) && $_POST['import_step']==3)) {
       //If we have reached this line, it means the previous step was the error check stage and we are
       //about to attempt to upload, however we need to skip straight to results if we detected any errors
@@ -626,30 +600,8 @@ class import_helper extends helper_base {
   }
   $r .= "<div id='progress-text'>$actionMessage.</div>
   </div>
-  ";
-      $metadata = array('mappings' => json_encode($mappings));
-      // cache the mappings
-      if (function_exists('hostsite_set_user_field')) {
-        $userSettings = array();
-        foreach ($mappings as $column => $setting) {
-          $userSettings[str_replace("_", " ", $column)] = $setting;
-        }
-        //if the user has not selected the Remember checkbox for a column setting and the Remember All checkbox is not selected
-        //then forget the user's saved setting for that column.
-        foreach ($userSettings as $column => $setting) {
-          if (!isset($userSettings[$column.' '.'Remember']) && $column!='RememberAll')
-            unset($userSettings[$column]);
-        }
-        hostsite_set_user_field("import_field_mappings", json_encode($userSettings));
-      }
-      $post = array_merge($options['auth']['write_tokens'], $metadata);
-      // store the warehouse user ID if we know it.
-      if (function_exists('hostsite_get_user_field')) 
-        $post['user_id'] = hostsite_get_user_field('indicia_user_id');
-      $request = parent::$base_url."index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
-      $response = self::http_post($request, $post);
-      if (!isset($response['output']) || $response['output'] != 'OK')
-        return "Could not upload the mappings metadata. <br/>".print_r($response, true);
+  ";  
+      self::get_settings_and_send_settings_to_warehouse($filename,$options,$mappings,$settings);
       if (!empty(parent::$warehouse_proxy))
         $warehouseUrl = parent::$warehouse_proxy;
       else
@@ -1119,4 +1071,89 @@ TD;
     }
   }
 
+  private static function get_settings_and_send_settings_to_warehouse($filename,$options,$mappings=array(),$settings=array()) {
+    // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
+    // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
+    //AVB lose settings variable here need fix
+    if (isset($options['presetSettings'])) {
+      $settings = array_merge(
+        $options['presetSettings'],
+        $_POST
+      );
+    } else {
+      $settings = $_POST;
+    }
+    if (!empty($_POST['mapping'])) {
+      $mappings = array_merge($mappings,$_POST['mapping']);
+    }
+    if (!empty($_POST['setting'])) {
+      $settings = array_merge($settings,$_POST['setting']);
+    }
+    if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
+      $settings=self::remove_unused_associations($options,$settings);
+    }
+    
+    $settings=self::remove_unused_settings($settings);
+    
+    $metadata=self::create_metadata_array($mappings,$settings);
+
+    if (function_exists('hostsite_set_user_field')) {
+      self::save_user_import_mappings($mappings);
+    }
+    $post = array_merge($options['auth']['write_tokens'], $metadata);
+    $request = parent::$base_url."index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
+    $response = self::http_post($request, $post);
+    if (!isset($response['output']) || $response['output'] != 'OK')
+      return "Could not upload the settings metadata. <br/>".print_r($response, true);
+    else
+      return $settings;
+  }
+  
+  // when not using associations make sure that the association fields are not passed through.
+  // These fields would confuse the association detection logic.
+  private static function remove_unused_associations($options,$settings) {
+    foreach($settings as $key => $value) {
+        $parts = explode(':', $key);
+        if($parts[0]==$options['model'].'_association' || $parts[0]==$options['model'].'_2')
+          unset($settings[$key]);
+    }
+    return $settings;
+  }
+  
+  // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
+  private static function remove_unused_settings($settings) {
+    foreach ($settings as $key => $value) {
+      if (empty($value)) {
+        unset($settings[$key]);
+      }
+    }
+    return $settings;
+  }
+  
+  private static function create_metadata_array($mappings,$settings) {
+    $metadata=array();
+    if (!empty($mappings)) {
+      $mappingsArray = array('mappings' => json_encode($mappings));
+      $metadata=array_merge($metadata,$mappingsArray);
+    }
+    if (!empty($settings)) {
+      $settingsArray = array('settings' => json_encode($settings));
+      $metadata=array_merge($metadata,$settingsArray);
+    }
+    return $metadata;
+  }
+  
+  private static function save_user_import_mappings($mappings) {
+    $userSettings = array();
+    foreach ($mappings as $column => $setting) {
+      $userSettings[str_replace("_", " ", $column)] = $setting;
+    }
+    //if the user has not selected the Remember checkbox for a column setting and the Remember All checkbox is not selected
+    //then forget the user's saved setting for that column.
+    foreach ($userSettings as $column => $setting) {
+      if (!isset($userSettings[$column.' '.'Remember']) && $column!='RememberAll')
+        unset($userSettings[$column]);
+    }
+    hostsite_set_user_field("import_field_mappings", json_encode($userSettings));
+  }
 }
