@@ -107,11 +107,11 @@ class import_helper extends helper_base {
     //an extra error checking step
     } elseif ((isset($_POST['import_step']) && $_POST['import_step']==2)) {  
       $options['allowCommitToDB']=false;
-      return self::run_upload($options, $_POST['mapping'], $_POST['setting']);
+      return self::run_upload($options);
     //Step 3 is the actual upload and is shown whichever mode we are in
     } elseif ((isset($_POST['import_step']) && $_POST['import_step']==3)) {
       $options['allowCommitToDB']=true;
-      return self::run_upload($options, $_POST['mapping'], $_POST['setting']);
+      return self::run_upload($options);
     } elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
       return self::upload_result($options);
     } else throw new exception('Invalid importer state');
@@ -233,7 +233,8 @@ class import_helper extends helper_base {
     ini_set('auto_detect_line_endings',1);
     self::add_resource('jquery_ui');
     $filename=basename($_SESSION['uploaded_file']);
-    $settings=self::get_settings_and_send_settings_to_warehouse($filename,$options);
+    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $settings=$mappingsAndSettings['settings'];
     $request = parent::$base_url."index.php/services/import/get_import_fields/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
     // include survey and website information in the request if available, as this limits the availability of custom attributes
@@ -318,17 +319,23 @@ class import_helper extends helper_base {
       lang::get('The following database attributes must be matched to a column in your import file before you can continue').':</span><ul></ul><br/></div>';
     $r .= '<div id="duplicate-instructions" class="import-mappings-instructions"><span id="duplicate-instruct">'.
       lang::get('There are currently two or more drop-downs allocated to the same value.').'</span><ul></ul><br/></div></div>';
+    //We need to rerun this even though we run this earlier in this function
+    //The earlier call wouldn't have retrieved any mappings as get_column_options wouldn't have been run yet
+    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     //If skip mapping is on, then we don't actually need to show this page and can skip straight to the 
     //upload or error checking stage (which will be determined by run_upload using the allowCommitToDB option)
-    if (!empty($options['skipMappingIfPossible']) && count(self::$automaticMappings) === $colCount) {
-      return self::run_upload($options, self::$automaticMappings);
+    if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible']==true && count(self::$automaticMappings) === $colCount) {
+      //Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function 
+      //as we have already done that here
+      return self::run_upload($options,true);
     }
     //Preserve the post from the website/survey selection screen
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
       //If we are error checking before upload we do an extra step, which is import step 2
-      $r .= self::preserve_fields($options,$filename,2,$_POST,self::$automaticMappings);
+      $r .= self::preserve_fields($options,$filename,2);
     } else {
-      $r .= self::preserve_fields($options,$filename,3,$_POST,self::$automaticMappings);
+      $r .= self::preserve_fields($options,$filename,3);
     }
     $r .= '<input type="submit" name="submit" id="submit" value="'.lang::get('Upload').'" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
@@ -435,17 +442,15 @@ class import_helper extends helper_base {
   
   /* Function used to preserve the post from previous stages as we move through the importer otherwise values are lost from
      2 steps ago. Also preserves the automatic mappings used to skip the mapping stage by saving it to the post */
-  private static function preserve_fields($options,$filename,$importStep,$postFields,$automaticMappings=array()) {
+  private static function preserve_fields($options,$filename,$importStep) {
+    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $settingFields=$mappingsAndSettings['settings'];
+    $mappingFields=$mappingsAndSettings['mappings'];   
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r =  "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n";
-    if (!empty($postFields['setting']))
-      $settingFields=$postFields['setting'];
-    else
-      $settingFields=$postFields;
-    if (!empty($postFields['mapping']))
-      $automaticMappings=$postFields['mapping'];
+
     foreach ($settingFields as $field=>$value) {
       if (!empty($settingFields[$field])) {
         if (!empty($value) && $field!=='import_step' && $field !=='submit') {
@@ -453,12 +458,11 @@ class import_helper extends helper_base {
         }
       } 
     }
-    if (!empty($automaticMappings)) {
-      foreach ($automaticMappings as $field=>$value) {
-        if (!empty($automaticMappings[$field])) {
-          if (!empty($value) && $field!=='import_step' && $field !=='submit') {
-            $r .= '<input type="hidden" name="mapping['.$field.']" id="mapping['.$field.']" value="'.$value.'"/>'."\n";
-          }
+    
+    foreach ($mappingFields as $field=>$value) {
+      if (!empty($mappingFields[$field])) {
+        if (is_string($field)&&is_string($value)&&!empty($value) && $field!=='import_step' && $field !=='submit') {
+          $r .= '<input type="hidden" name="mapping['.$field.']" id="mapping['.$field.']" value="'.$value.'"/>'."\n";
         }
       }
     }
@@ -571,10 +575,22 @@ class import_helper extends helper_base {
   /**
    * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
    * @param array $options Array of options passed to the import control.
-   * @param array $mappings List of column title to field mappings
-   * @param array $settings List of settings for the import
+   * @param boolean $calledFromSkippedMappingsPage Indicates if this function was call by the mappings page if that stage is
+   * being skipped on screen. That function will have already sent the settings and mappings to the warehouse so we don't need
+   * to again.
    */
-  private static function run_upload($options, $mappings=array(),$settings=array()) {
+  private static function run_upload($options,$calledFromSkippedMappingsPage=false) {
+    self::add_resource('jquery_ui');
+    if (!file_exists($_SESSION['uploaded_file']))
+      return lang::get('upload_not_available');
+    $filename=basename($_SESSION['uploaded_file']);
+    $reload = self::get_reload_link_parts();
+    $reload['params']['uploaded_csv']=$filename;
+    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    if ($calledFromSkippedMappingsPage===false) {
+      $mappingsAndSettings=self::get_mappings_and_settings($options);
+      self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
+    }
     $rows=file($_SESSION['uploaded_file']);
     $r = '';
     //If we are using the sample external key as the indicator of which samples
@@ -584,7 +600,7 @@ class import_helper extends helper_base {
     if ($options['model']==='occurrence') {
       if ((!empty($_POST['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['importOccurrenceIntoSampleUsingExternalKey']==true)||
             (!empty($_POST['setting']['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['setting']['importOccurrenceIntoSampleUsingExternalKey']==true)) {
-        $checkArrays = self::sample_external_key_issue_checks($rows);
+        $checkArrays = self::sample_external_key_issue_checks($options,$rows);
         $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
         $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
         if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
@@ -594,22 +610,14 @@ class import_helper extends helper_base {
         }
       }
     }
-    self::add_resource('jquery_ui');
-    if (!file_exists($_SESSION['uploaded_file']))
-      return lang::get('upload_not_available');
-    $filename=basename($_SESSION['uploaded_file']);
-    $reload = self::get_reload_link_parts();
-    $reload['params']['uploaded_csv']=$filename;
-    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
       //If we hit this line it means we are doing the error checking step and the next step
       //is step 3 which is the actual upload. Preserve the fields from previous steps in the post
-      $r .= self::preserve_fields($options,$filename,3,$_POST,self::$automaticMappings);
+      $r .= self::preserve_fields($options,$filename,3);
     } else {
       //This line is hit if we are doing the actual upload now (rather than error check).
       //The next step is the results step which does not have an import_step number
-      $r .= self::preserve_fields($options,$filename,null,$_POST,self::$automaticMappings);
+      $r .= self::preserve_fields($options,$filename,null);
     }
     if (((isset($_POST['preventCommitsOnError'])&&$_POST['preventCommitsOnError']==true)||
          (isset($_POST['setting']['preventCommitsOnError'])&&$_POST['setting']['preventCommitsOnError']==true))&&
@@ -641,7 +649,6 @@ class import_helper extends helper_base {
   $r .= "<div id='progress-text'>$actionMessage.</div>
   </div>
   ";  
-      self::get_settings_and_send_settings_to_warehouse($filename,$options,$mappings,$settings);
       if (!empty(parent::$warehouse_proxy))
         $warehouseUrl = parent::$warehouse_proxy;
       else
@@ -856,8 +863,7 @@ class import_helper extends helper_base {
         $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
         if ($selected)
           self::$automaticMappings[$column] = $field;
-      }
-      
+      } 
       // if we have got an option for this field, add to the list
       if (isset($option)) {
         // first check if we need a new heading
@@ -1107,22 +1113,9 @@ TD;
     }
   }
 
-  private static function get_settings_and_send_settings_to_warehouse($filename,$options,$mappings=array(),$settings=array()) {
-    // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
-    // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
-    //AVB lose settings variable here need fix
-    if (isset($options['presetSettings'])) {
-      $settings = array_merge(
-        $options['presetSettings'],
-        $_POST
-      );
-    } else {
-      $settings = $_POST;
-    }
-    if (!empty($_POST['mapping'])) 
-      $mappings = $_POST['mapping'];
-    if (!empty($_POST['setting'])) 
-      $settings = $_POST['setting'];
+  private static function send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings) {
+    $mappings=$mappingsAndSettings['mappings'];
+    $settings=$mappingsAndSettings['settings'];
     if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
       $settings=self::remove_unused_associations($options,$settings);
     }
@@ -1130,7 +1123,7 @@ TD;
     $settings=self::remove_unused_settings($settings);
     
     $metadata=self::create_metadata_array($mappings,$settings);
-
+    
     if (function_exists('hostsite_set_user_field')) {
       self::save_user_import_mappings($mappings);
     }
@@ -1140,7 +1133,55 @@ TD;
     if (!isset($response['output']) || $response['output'] != 'OK')
       return "Could not upload the settings metadata. <br/>".print_r($response, true);
     else
-      return $settings;
+      return $mappingsAndSettings;
+  }
+  
+  //Collect the mappings and settings from various places depending on importer mode, wizard stage.
+  //These can be held in variables, option variable, or the post. Collect as appropriate
+  private static function get_mappings_and_settings($options) {
+    $mappingsAndSettings=array();
+    $mappingsAndSettings['mappings']=array();
+    $mappingsAndSettings['settings']=array();
+    // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
+    // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
+    if (isset($options['presetSettings']))
+      $mappingsAndSettings['settings'] = $options['presetSettings'];
+    //Collect settings from a designated array in the post if available
+    if (!empty($_POST['setting']))
+      $mappingsAndSettings['settings']=array_unique(array_merge($mappingsAndSettings['settings'],$_POST['setting']),SORT_REGULAR);
+    //If the post does not contain a specific array for settings, then just ge the settings as the general post fields
+    if (!isset($_POST['setting']))
+      $mappingsAndSettings['settings']=array_unique(array_merge($mappingsAndSettings['settings'],$_POST),SORT_REGULAR);
+    //The settings should simply be the settings, so remove any mappings or settings sub-arrays if these have become jumbled
+    //up inside our settings array
+    if (!empty($mappingsAndSettings['settings']['mapping']))
+      unset($mappingsAndSettings['settings']['mapping']);
+    if (!empty($mappingsAndSettings['settings']['setting']))
+      unset($mappingsAndSettings['settings']['setting']);
+    //If we are skipping the mappings page, then the mapping will be in the automatic mappings variable
+    //Change the keys in this array so that spaces are replaced with underscores so the mappings are the same
+    //as if they had been stored in the post
+    if (!empty(self::$automaticMappings) && !empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible']==true ) {
+      $adjustedAutomaticMappings=array();
+      foreach (self::$automaticMappings as $key=>$automaticMap) {
+        $adjustedAutomaticMappings[str_replace(" ", "_", $key)]=$automaticMap;
+      }
+      $mappingsAndSettings['mappings']=$adjustedAutomaticMappings;
+    }
+    //Collect mappings from a designated array in the post if available
+    if (!empty($_POST['mapping']))
+      $mappingsAndSettings['mappings']=array_unique(array_merge($mappingsAndSettings['mappings'],$_POST['mapping']),SORT_REGULAR);
+    //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
+    //so we can cleanup any remaining fields in the post as they will be mappings not settings
+    if (isset($_POST['setting']))
+      $mappingsAndSettings['mappings']=array_unique(array_merge($mappingsAndSettings['mappings'],$_POST),SORT_REGULAR);
+    //The mappings should simply be the mappings, so remove any mappings or settings sub-arrays if these have become jumbled
+    //up inside our mappings array
+    if (!empty($mappingsAndSettings['mappings']['mapping']))
+      unset($mappingsAndSettings['mappings']['mapping']);
+    if (!empty($mappingsAndSettings['mappings']['setting']))
+      unset($mappingsAndSettings['mappings']['setting']);
+    return $mappingsAndSettings;
   }
   
   // when not using associations make sure that the association fields are not passed through.
@@ -1196,11 +1237,12 @@ TD;
   //rows which share the same external key, if not, warn the user.
   //We also need to check that rows with the same sample external key appear on consecutive
   //rows (otherwise the importer would create separate samples)
-  private static function sample_external_key_issue_checks($rows) {
+  private static function sample_external_key_issue_checks($options,$rows) {
+    $mappingsAndSettings=self::get_mappings_and_settings($options);
     $columnIdx=0;
     $columnIdxsToCheck=array();
     //Cycle through each of the column mappings and get the position of the sample external key column
-    foreach ($_POST['mapping'] as $columnName=>$mapping) {
+    foreach ($mappingsAndSettings['mappings'] as $columnName=>$mapping) {
       if ($mapping==='sample:external_key') {
         $sampleKeyIdx=$columnIdx;
       }
@@ -1228,7 +1270,7 @@ TD;
       //Explode individual columns
       $rowArray=explode(',',$fileRow);
       //If the sample key isn't empty on the row continue to work on the row
-      if (!empty($rowArray[$sampleKeyIdx])) {
+      if (!empty($sampleKeyIdx)&&!empty($rowArray[$sampleKeyIdx])) {
         //If the row we are working on has the same sample external key as one of the previous rows then
         //continue
         if (array_key_exists($rowArray[$sampleKeyIdx],$latestRowForEachSampleKey)) {
