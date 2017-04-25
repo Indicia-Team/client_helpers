@@ -233,7 +233,7 @@ class import_helper extends helper_base {
     ini_set('auto_detect_line_endings',1);
     self::add_resource('jquery_ui');
     $filename=basename($_SESSION['uploaded_file']);
-    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $mappingsAndSettings=self::get_mappings_and_settings($options); 
     $settings=$mappingsAndSettings['settings'];
     $request = parent::$base_url."index.php/services/import/get_import_fields/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
@@ -321,7 +321,7 @@ class import_helper extends helper_base {
       lang::get('There are currently two or more drop-downs allocated to the same value.').'</span><ul></ul><br/></div></div>';
     //We need to rerun this even though we run this earlier in this function
     //The earlier call wouldn't have retrieved any mappings as get_column_options wouldn't have been run yet
-    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $mappingsAndSettings=self::get_mappings_and_settings($options); 
     self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     //If skip mapping is on, then we don't actually need to show this page and can skip straight to the 
     //upload or error checking stage (which will be determined by run_upload using the allowCommitToDB option)
@@ -444,6 +444,8 @@ class import_helper extends helper_base {
      2 steps ago. Also preserves the automatic mappings used to skip the mapping stage by saving it to the post */
   private static function preserve_fields($options,$filename,$importStep) {
     $mappingsAndSettings=self::get_mappings_and_settings($options);
+    //AVB To Do - Am not sure why we would need to unset this here, but it breaks if we don't - investigate
+    unset($mappingsAndSettings['settings']['preventCommitsOnError']);
     $settingFields=$mappingsAndSettings['settings'];
     $mappingFields=$mappingsAndSettings['mappings'];   
     $reload = self::get_reload_link_parts();
@@ -598,8 +600,7 @@ class import_helper extends helper_base {
     //rows which share the same external key, if not, warn the user.
     //If not using that mode we can just continue without the warning screen.
     if ($options['model']==='occurrence') {
-      if ((!empty($_POST['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['importOccurrenceIntoSampleUsingExternalKey']==true)||
-            (!empty($_POST['setting']['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['setting']['importOccurrenceIntoSampleUsingExternalKey']==true)) {
+      if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
         $checkArrays = self::sample_external_key_issue_checks($options,$rows);
         $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
         $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
@@ -619,9 +620,8 @@ class import_helper extends helper_base {
       //The next step is the results step which does not have an import_step number
       $r .= self::preserve_fields($options,$filename,null);
     }
-    if (((isset($_POST['preventCommitsOnError'])&&$_POST['preventCommitsOnError']==true)||
-         (isset($_POST['setting']['preventCommitsOnError'])&&$_POST['setting']['preventCommitsOnError']==true))&&
-          (isset($_POST['import_step']) && $_POST['import_step']==3)) {
+    if (isset($mappingsAndSettings['settings']['preventCommitsOnError'])&&$mappingsAndSettings['settings']['preventCommitsOnError']==true&&
+        isset($_POST['import_step']) && $_POST['import_step']==3) {
       //If we have reached this line, it means the previous step was the error check stage and we are
       //about to attempt to upload, however we need to skip straight to results if we detected any errors
       $output=self::collect_errors($options,$filename);
@@ -1148,10 +1148,11 @@ TD;
       $mappingsAndSettings['settings'] = $options['presetSettings'];
     //Collect settings from a designated array in the post if available
     if (!empty($_POST['setting']))
-      $mappingsAndSettings['settings']=array_unique(array_merge($mappingsAndSettings['settings'],$_POST['setting']),SORT_REGULAR);
+      $mappingsAndSettings['settings']=array_merge($mappingsAndSettings['settings'],$_POST['setting']);
     //If the post does not contain a specific array for settings, then just ge the settings as the general post fields
     if (!isset($_POST['setting']))
-      $mappingsAndSettings['settings']=array_unique(array_merge($mappingsAndSettings['settings'],$_POST),SORT_REGULAR);
+      $mappingsAndSettings['settings']=array_merge($mappingsAndSettings['settings'],$_POST);
+
     //The settings should simply be the settings, so remove any mappings or settings sub-arrays if these have become jumbled
     //up inside our settings array
     if (!empty($mappingsAndSettings['settings']['mapping']))
@@ -1170,11 +1171,11 @@ TD;
     }
     //Collect mappings from a designated array in the post if available
     if (!empty($_POST['mapping']))
-      $mappingsAndSettings['mappings']=array_unique(array_merge($mappingsAndSettings['mappings'],$_POST['mapping']),SORT_REGULAR);
+      $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST['mapping']);
     //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
     if (isset($_POST['setting']))
-      $mappingsAndSettings['mappings']=array_unique(array_merge($mappingsAndSettings['mappings'],$_POST),SORT_REGULAR);
+      $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST);
     //The mappings should simply be the mappings, so remove any mappings or settings sub-arrays if these have become jumbled
     //up inside our mappings array
     if (!empty($mappingsAndSettings['mappings']['mapping']))
@@ -1264,6 +1265,7 @@ TD;
     $rowClusteringFailure=false;
     $rowNumber=0;
     foreach ($rows as $rowNum=>$fileRow) {
+      $fileRow=trim($fileRow);
       //Reset flags for each row
       $rowInconsistencyFailure=false;
       $rowClusteringFailure=false;
