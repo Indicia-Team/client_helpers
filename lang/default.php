@@ -83,11 +83,15 @@ $default_terms = array(
       'match your columns to the available attributes where possible so check any automatically selected attributes in the <strong>Maps to attribute</strong> '.
       'column before proceeding. If you plan to repeat imports from similar spreadsheets in future you can use the tickboxes to remember your choices.',
   'upload_not_available' => 'The uploaded file is no longer available. Please try uploading again.',
-  'download_error_file_instructions' => 'As part of your upload was unsuccessful, download the generated CSV file ' .
+  'partial_commits_download_error_file_instructions' => 'As part of your upload was unsuccessful, download the generated CSV file ' .
     'which holds the rows of data that did not upload. Find the column called "Problem" which lists the associated ' .
     'error for each row. Correct the error, and then re-upload the CSV file containing <strong>only</strong> the ' .
     'rows of data which did not upload correctly. Please do not re-upload the whole dataset again.',
-
+  'no_commits_download_error_file_instructions' => 'Problems have been found in your upload file. Please download the generated CSV file ' .
+    'which holds the rows of data that did not upload and find the column called "Problem" which lists the associated ' .
+    'error for each row. Once you have corrected all the errors in the <strong>original file</strong>, please re-upload the original file again. ' .
+    'No rows will be uploaded to the database until all errors have been corrected.',
+    
   // define the captions for fields in the data dictionary
   'dd:occurrence:fk_taxa_taxon_list' => 'Species or taxon name',
   'dd:occurrence:all_info_in_determinations' => 'Use determinations table for identification information (Y/N)',

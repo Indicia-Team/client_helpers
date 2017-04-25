@@ -31,7 +31,7 @@ require_once('helper_base.php');
  * @package Client
  */
 class import_helper extends helper_base {
-
+  
   /**
    * @var boolean Flag set to true if the host system is capable of storing our user's remembered import mappings
    * for future imports.
@@ -86,19 +86,26 @@ class import_helper extends helper_base {
    * @throws \exception
    */
   public static function importer($options) {
-    if (isset($_GET['total'])) {
-      return self::upload_result($options);
-    } elseif (!isset($_POST['import_step'])) {
+    //If there is no upload total yet and no import step we know to show the very first screen
+    if (!isset($_POST['import_step'])&&!isset($_GET['total'])) {  
       if (count($_FILES)==1)
         return self::import_settings_form($options);
       else
         return self::upload_form();
-    } elseif ($_POST['import_step']==1) {
-      return self::upload_mappings_form($options);
-    } elseif ($_POST['import_step']==2) {
-      return self::run_upload($options, $_POST);
-    }
-    else throw new exception('Invalid importer state');
+    } elseif (isset($_POST['import_step']) && $_POST['import_step']==1) {
+      return self::upload_mappings_form($options); 
+    //Import step 2 is only shown if the preventCommitsOnError option has been set.
+    //This means we don't commit any rows at all if any errors are found, therefore we need 
+    //an extra error checking step
+    } elseif ((isset($_POST['import_step']) && $_POST['import_step']==2)) {  
+      $options['allowCommitToDB']=false;
+      return self::run_upload($options, $_POST,true);
+    } elseif ((isset($_POST['import_step']) && $_POST['import_step']==3)) {
+        $options['allowCommitToDB']=true;
+        return self::run_upload($options, $_POST);
+    } elseif (isset($_GET['total']) && empty($_POST['import_step'])) {
+      return self::upload_result($options);
+    } else throw new exception('Invalid importer state');
   }
 
   /**
@@ -309,12 +316,23 @@ class import_helper extends helper_base {
       lang::get('The following database attributes must be matched to a column in your import file before you can continue').':</span><ul></ul><br/></div>';
     $r .= '<div id="duplicate-instructions" class="import-mappings-instructions"><span id="duplicate-instruct">'.
       lang::get('There are currently two or more drop-downs allocated to the same value.').'</span><ul></ul><br/></div></div>';
-    $r .= '<input type="hidden" name="import_step" value="2" />';
+    //Preserve the post from the website/survey selection screen
+    if (isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) {
+      $r .= self::preserve_post($options,$filename,2);
+    } else {
+      $r .= self::preserve_post($options,$filename,3);
+    }
     $r .= '<input type="submit" name="submit" id="submit" value="'.lang::get('Upload').'" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
     if (!empty($options['skipMappingIfPossible']) && count(self::$automaticMappings) === $colCount) {
-       // Abort the mappings page as we don't need it
-      return self::run_upload($options, self::$automaticMappings);
+      if (isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) {
+        $options['allowCommitToDB']=false;
+        return self::run_upload($options, self::$automaticMappings);
+      } else {
+        // Abort the mappings page as we don't need it
+        $options['allowCommitToDB']=true;
+        return self::run_upload($options, self::$automaticMappings);
+      }
     }
     
     self::$javascript .= "function detect_duplicate_fields() {
@@ -417,6 +435,27 @@ class import_helper extends helper_base {
     self::$javascript .= "$('#entry_form select').change(function() {detect_duplicate_fields(); update_required_fields();});\n";
     return $r;
   }
+  
+  /* Function used to preserve the post from previous stages as we move through the importer otherwise values are lost from
+     2 steps ago */
+  private static function preserve_post($options,$filename,$importStep) {
+    $reload = self::get_reload_link_parts();
+    $reload['params']['uploaded_csv']=$filename;
+    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    $r =  "<div><form method=\"post\" id=\"post_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n";
+    foreach ($_POST as $field=>$value) {
+        if (!empty($_POST[$field])) {
+          if (!empty($value) && $field!=='import_step' && $field !=='submit') {
+            $r .= '<input type="hidden" name="'.$field.'" id="'.$field.'" value="'.$value.'"/>'."\n";
+          }
+        }
+    }
+    if (!empty($importStep))
+      $r .= '<input type="hidden" name="import_step" value="'.$importStep.'" />';
+    $r .= '<input id="hidden_submit" type="submit" style="display: none" value="'.lang::get('Upload').'"></form>';
+    $r .=  "</form><div>\n";
+    return $r;
+  }
 
   /**
    * Returns an array of field to column title mappings that were previously stored in the user profile,
@@ -516,30 +555,62 @@ class import_helper extends helper_base {
     }
   }
 
+  //If we are preventing commits if there are any errors at all, then jump to results screen upon error
+  private static function skip_to_results_if_error($options) {
+    $errors=false;
+    $output=self::collect_errors($options);
+    if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
+      return self::display_result_as_error_check_stage_failed($options,$output);
+    } 
+  }
+  
   /**
    * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
    * @param array $options Array of options passed to the import control.
    * @param array $mappings List of column title to field mappings
    */
   private static function run_upload($options, $mappings) {
+    if ((isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) &&
+          (isset($_POST['import_step']) && $_POST['import_step']==3)) {
+      //If we have reach this line, it means the previous step was the error check stage and we are
+      //about to attempt to upload, however we need to skip straight to results if we detected any errors
+      self::skip_to_results_if_error($options);
+      //If no errors we can proceed to commit
+      $options['allowCommitToDB']=true;
+    }
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
     $filename=basename($_SESSION['uploaded_file']);
-    // move file to server
-    $r = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv');
-    if ($r===true) {
+    $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
+    if ($transferFileDataToWarehouseSuccess===true) {
       $reload = self::get_reload_link_parts();
       $reload['params']['uploaded_csv']=$filename;
-      $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-
+      //Progress message depends if we are uploading or simply checking for errors
+      if ($options['allowCommitToDB']==true) {
+        $progressMessage = ' records uploaded.'; 
+      } else {
+        $progressMessage = ' records checked.';
+      }
+    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    $r = '';
+    //If we are only checking for errors and not committing to the database there is an extra wizard stage for this
+    //so we need to preserve the posts from earlier steps
+    if ($options['allowCommitToDB']==false) {
+      $r .= self::preserve_post($options,$filename,3);
+    }
       // initiate local javascript to do the upload with a progress feedback
-      $r = '
+      $r .= '
   <div id="progress" class="ui-widget ui-widget-content ui-corner-all">
-  <div id="progress-bar" style="width: 400px"></div>
-  <div id="progress-text">Preparing to upload.</div>
+  <div id="progress-bar" style="width: 400px"></div>';
+  if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']==true) {
+    $actionMessage='Preparing to upload.';
+  } else {
+    $actionMessage='Checking file for errors..';
+  }
+  $r .= "<div id='progress-text'>$actionMessage.</div>
   </div>
-  ';
+  ";
       $metadata = array('mappings' => json_encode($mappings));
       // cache the mappings
       if (function_exists('hostsite_set_user_field')) {
@@ -575,31 +646,75 @@ class import_helper extends helper_base {
     uploadChunk = function() {
       var limit=50;
       $.ajax({
-        url: '".$warehouseUrl."index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=".$options['model']."',
+        url: '".$warehouseUrl."index.php/services/import/upload?offset='+total+'&limit='+limit+'"
+              . "&filepos='+filepos+'&uploaded_csv=$filename"
+              . "&model=".$options['model']."&allow_commit_to_db=".$options['allowCommitToDB']."',
         dataType: 'jsonp',
         success: function(response) {
+          var allowCommitToDB = '".$options['allowCommitToDB']."';
           total = total + response.uploaded;
           filepos = response.filepos;
-          jQuery('#progress-text').html(total + ' records uploaded.');
+          jQuery('#progress-text').html(total + '$progressMessage');
           $('#progress-bar').progressbar ('option', 'value', response.progress);
           if (response.uploaded>=limit) {
             uploadChunk();
           } else {
-            jQuery('#progress-text').html('Upload complete.');
-            window.location = '$reloadpath&total='+total;
+            if (allowCommitToDB==1) {
+              jQuery('#progress-text').html('Upload complete.');
+              //We only need total at end of wizard, so we can just refresh page with total as param to use in the GET of next step
+              window.location = '$reloadpath&total='+total;
+            } else {
+              jQuery('#progress-text').html('Checks complete.');
+              //If we are checking for errors we need to do a submit to keep the same post data which we have hidden on the form
+              //as there is a further wizard stage to come
+              $('#post_to_retain_form').submit();
+            }
           }
         }
       });
     };
-
+    
     var total=0, filepos=0;
     jQuery('#progress-bar').progressbar ({value: 0});
     uploadChunk();
-    ";
-    }
+    "; 
+    }  
     return $r;
   }
+  
+  //Collect errors from error checking stage
+  private static function collect_errors($options) {
+    $errorsDetected=false;
+    $request = parent::$base_url."index.php/services/import/get_upload_result?uploaded_csv=".$_GET['uploaded_csv'];
+    $request .= '&'.self::array_to_query_string($options['auth']['read']);
+    $response = self::http_post($request, array());
+    if (isset($response['output'])) {
+      $output = json_decode($response['output'], true);
+    } else {
+      $output = array();
+    }
+    return $output;
+  }
+  
+  //Jump to the results screen if errors have been detected during the error checking stage
+  //This only applies if we are preventing all commits if any errors are detected.
+  //(otherwise upload_result function is called instead)
+  private static function display_result_as_error_check_stage_failed($options,$output) {
+    $r='';
+    // get the path back to the same page
+    $reload = self::get_reload_link_parts();
+    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    if ($output['problems']>0) {
+        $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
+        $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
+          $downloadInstructions .
+          " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
+       $r = "<p>$r</p><p>".lang::get('Once you have finished making corrections ')."<a href=\"$reloadpath\">".lang::get('please reupload the file.')."</a></p>";
 
+     }
+     return $r;
+  }
+  
   /**
    * Displays the upload result page.
    * @param array $options Array of options passed to the import control.
@@ -613,10 +728,10 @@ class import_helper extends helper_base {
       $output = json_decode($response['output'], true);
       if (!is_array($output) || !isset($output['problems']))
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, true);
-
-      if ($output['problems']!==0) {
+      if ($output['problems']>0) {
+        $downloadInstructions=lang::get('partial_commits_download_error_file_instructions');
         $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
-          lang::get('download_error_file_instructions') .
+          $downloadInstructions .
           " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
       } else {
         $r = 'The upload was successful.';
