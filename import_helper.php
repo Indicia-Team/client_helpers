@@ -444,8 +444,6 @@ class import_helper extends helper_base {
      2 steps ago. Also preserves the automatic mappings used to skip the mapping stage by saving it to the post */
   private static function preserve_fields($options,$filename,$importStep) {
     $mappingsAndSettings=self::get_mappings_and_settings($options);
-    //AVB To Do - Am not sure why we would need to unset this here, but it breaks if we don't - investigate
-    unset($mappingsAndSettings['settings']['preventCommitsOnError']);
     $settingFields=$mappingsAndSettings['settings'];
     $mappingFields=$mappingsAndSettings['mappings'];   
     $reload = self::get_reload_link_parts();
@@ -589,8 +587,8 @@ class import_helper extends helper_base {
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    $mappingsAndSettings=self::get_mappings_and_settings($options);
     if ($calledFromSkippedMappingsPage===false) {
-      $mappingsAndSettings=self::get_mappings_and_settings($options);
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
     $rows=file($_SESSION['uploaded_file']);
@@ -620,14 +618,18 @@ class import_helper extends helper_base {
       //The next step is the results step which does not have an import_step number
       $r .= self::preserve_fields($options,$filename,null);
     }
-    if (isset($mappingsAndSettings['settings']['preventCommitsOnError'])&&$mappingsAndSettings['settings']['preventCommitsOnError']==true&&
-        isset($_POST['import_step']) && $_POST['import_step']==3) {
+    //If there is an upload total as this point, it means an error check stage must of just been run, so we
+    //need to check for errors in the response
+    if (isset($_POST['total'])) {
       //If we have reached this line, it means the previous step was the error check stage and we are
       //about to attempt to upload, however we need to skip straight to results if we detected any errors
       $output=self::collect_errors($options,$filename);
       if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
         return self::display_result_as_error_check_stage_failed($options,$output);
       } 
+      //Need to resend metadata as we need to call warehouse again for upload (rather than error check)
+      $mappingsAndSettings=self::get_mappings_and_settings($options); 
+      self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }  
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
     if ($transferFileDataToWarehouseSuccess===true) {
@@ -677,10 +679,10 @@ class import_helper extends helper_base {
             if (allowCommitToDB==1) {
               jQuery('#progress-text').html('Upload complete.');
               //We only need total at end of wizard, so we can just refresh page with total as param to use in the post of next step
-              $('#fields_to_retain_form').append('<input type=\"hidden\" name=\"total\" id=\"total\" value=\"'+total+'\"/>');
             } else {
               jQuery('#progress-text').html('Checks complete.');
             }
+            $('#fields_to_retain_form').append('<input type=\"hidden\" name=\"total\" id=\"total\" value=\"'+total+'\"/>');
             $('#fields_to_retain_form').submit();
           }
         }
