@@ -142,7 +142,7 @@ class import_helper extends helper_base {
       $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" checked>';
     if ($options['importOccurrenceIntoSampleLogic']==='consecutive_rows')
       $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" >';
-    if ($options['importOccurrenceIntoSampleLogic']==='user_defined' && $options['model']==='occurrence') {
+    if ($options['importOccurrenceIntoSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Use sample external key to match occurrences into sample'),
         'fieldname' => 'importOccurrenceIntoSampleUsingExternalKey', 
@@ -597,7 +597,7 @@ class import_helper extends helper_base {
     //the occurrences go into, then we need to check the sample data is consistant between the
     //rows which share the same external key, if not, warn the user.
     //If not using that mode we can just continue without the warning screen.
-    if ($options['model']==='occurrence') {
+    if ($options['model']==='occurrence'||$options['model']==='sample') {
       if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
         $checkArrays = self::sample_external_key_issue_checks($options,$rows);
         $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
