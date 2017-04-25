@@ -126,16 +126,28 @@ class import_helper extends helper_base {
     $r = '<form action="'.$reloadpath.'" method="post" enctype="multipart/form-data">';
     //Import has two modes, only commit if no errors, or commit valid rows.
     //This can be user controlled, or provided by the administrator as an argument
-    if ($options['importBehaviour']==='prevent')
+    if ($options['importPreventCommitBehaviour']==='prevent')
       $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" checked>';
-    if ($options['importBehaviour']==='partial_import')
+    if ($options['importPreventCommitBehaviour']==='partial_import')
       $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" >';
-    if ($options['importBehaviour']==='user_defined') {
+    if ($options['importPreventCommitBehaviour']==='user_defined') {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Prevent commits on error'),
         'fieldname' => 'preventCommitsOnError',
         'helpText'=>'Select this checkbox to prevent the importing of any rows '
           . 'if there are any errors at all. Leave this checkbox switched off to import valid rows.'
+      ));
+    }
+    if ($options['importOccurrenceIntoSampleLogic']==='sample_ext_key')
+      $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" checked>';
+    if ($options['importOccurrenceIntoSampleLogic']==='consecutive_rows')
+      $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" >';
+    if ($options['importOccurrenceIntoSampleLogic']==='user_defined') {
+      $r .= data_entry_helper::checkbox(array(
+        'label' => lang::get('Use sample external key to match occurrences into sample'),
+        'fieldname' => 'importOccurrenceIntoSampleUsingExternalKey', 
+        'helpText'=>'Select this checkbox to import occurrences onto samples using the sample external key to match between rows. '
+          . 'Leave this checkbox off to import similar consecutive rows in the import file onto the same sample.'
       ));
     }
     $r .= '<label for="upload">'.lang::get('Select *.csv (comma separated values) file to upload').':</label>';
@@ -567,12 +579,16 @@ class import_helper extends helper_base {
     $r = '';
     //If we are using the sample external key as the indicator of which samples
     //the occurrences go into, then we need to check the sample data is consistant between the
-    //rows which share the same external key, if not, warn the user
-    $failedRows = self::sample_external_key_data_mismatch_checks($rows);
-    if (!empty($failedRows)) {
-      $r.= self::display_sample_external_key_data_mismatches($failedRows);
-      if (!empty($r))
-        return self::display_sample_external_key_data_mismatches($failedRows);
+    //rows which share the same external key, if not, warn the user.
+    //If not using that mode we can just continue without the warning screen.
+    if ((!empty($_POST['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['importOccurrenceIntoSampleUsingExternalKey']==true)||
+          (!empty($_POST['setting']['importOccurrenceIntoSampleUsingExternalKey'])&&$_POST['setting']['importOccurrenceIntoSampleUsingExternalKey']==true)) {
+      $failedRows = self::sample_external_key_data_mismatch_checks($rows);
+      if (!empty($failedRows)) {
+        $r.= self::display_sample_external_key_data_mismatches($failedRows);
+        if (!empty($r))
+          return self::display_sample_external_key_data_mismatches($failedRows);
+      }
     }
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
@@ -1235,7 +1251,7 @@ TD;
       $r.= $failedRow.'<br>';
     }
     $r.= '<div><p>A row is considered to be inconsistant if the sample key matches an earlier row but some of the sample '
-            . 'data (such as date) is different</p></div>';
+            . 'data (such as the date) is different.</p></div>';
     $reload = self::get_reload_link_parts();
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
