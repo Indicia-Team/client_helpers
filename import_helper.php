@@ -435,8 +435,9 @@ class import_helper extends helper_base {
         }
       }
     }
-    if (!empty($importStep)&&$importStep!==null)
+    if (!empty($importStep)&&$importStep!==null) {
       $r .= '<input type="hidden" name="import_step" value="'.$importStep.'" />';
+    }
     $r .= '<input id="hidden_submit" type="submit" style="display: none" value="'.lang::get('Upload').'"></form>';
     $r .=  "</form><div>\n";
     return $r;
@@ -541,9 +542,9 @@ class import_helper extends helper_base {
   }
 
   //If we are preventing commits if there are any errors at all, then jump to results screen upon error
-  private static function skip_to_results_if_error($options) {
+  private static function skip_to_results_if_error($options,$filename) {
     $errors=false;
-    $output=self::collect_errors($options);
+    $output=self::collect_errors($options,$filename);
     if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
       return self::display_result_as_error_check_stage_failed($options,$output);
     } 
@@ -574,12 +575,10 @@ class import_helper extends helper_base {
       $r .= self::preserve_fields($options,$filename,null,$_POST,self::$automaticMappings);
     }
     if ((isset($options['preventCommitsOnError'])&&$options['preventCommitsOnError']==true) &&
-          (isset($_POST['import_step']) && $_POST['import_step']==3)) {
+          (isset($_POST['import_step']) && $_POST['import_step']!=3)) {
       //If we have reached this line, it means the previous step was the error check stage and we are
       //about to attempt to upload, however we need to skip straight to results if we detected any errors
-      self::skip_to_results_if_error($options);
-      //If no errors we can proceed to commit
-      $options['allowCommitToDB']=true;
+      self::skip_to_results_if_error($options,$filename);
     }
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
     if ($transferFileDataToWarehouseSuccess===true) {
@@ -649,9 +648,9 @@ class import_helper extends helper_base {
   }
   
   //Collect errors from error checking stage
-  private static function collect_errors($options) {
+  private static function collect_errors($options,$filename) {
     $errorsDetected=false;
-    $request = parent::$base_url."index.php/services/import/get_upload_result?uploaded_csv=".$_GET['uploaded_csv'];
+    $request = parent::$base_url."index.php/services/import/get_upload_result?uploaded_csv=".$filename;
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
     if (isset($response['output'])) {
@@ -670,15 +669,12 @@ class import_helper extends helper_base {
     // get the path back to the same page
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    if ($output['problems']>0) {
-        $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
-        $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
-          $downloadInstructions .
-          " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
-       $r = "<p>$r</p><p>".lang::get('Once you have finished making corrections ')."<a href=\"$reloadpath\">".lang::get('please reupload the file.')."</a></p>";
-
-     }
-     return $r;
+    $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
+    $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
+      $downloadInstructions .
+      " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
+    $r = "<p>$r</p><p>".lang::get('Once you have finished making corrections ')."<a href=\"$reloadpath\">".lang::get('please reupload the file.')."</a></p>";
+    return $r;
   }
   
   /**
@@ -689,7 +685,6 @@ class import_helper extends helper_base {
     $request = parent::$base_url."index.php/services/import/get_upload_result?uploaded_csv=".$_GET['uploaded_csv'];
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
-
     if (isset($response['output'])) {
       $output = json_decode($response['output'], true);
       if (!is_array($output) || !isset($output['problems']))
@@ -1083,12 +1078,10 @@ TD;
     } else {
       $settings = $_POST;
     }
-    if (!empty($_POST['mapping'])) {
-      $mappings = array_merge($mappings,$_POST['mapping']);
-    }
-    if (!empty($_POST['setting'])) {
-      $settings = array_merge($settings,$_POST['setting']);
-    }
+    if (!empty($_POST['mapping'])) 
+      $mappings = $_POST['mapping'];
+    if (!empty($_POST['setting'])) 
+      $settings = $_POST['setting'];
     if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
       $settings=self::remove_unused_associations($options,$settings);
     }
