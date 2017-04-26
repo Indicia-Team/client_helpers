@@ -430,7 +430,9 @@ class report_helper extends helper_base {
             }
             $sortLink=htmlspecialchars($sortLink);
             // store the field in a hidden input field
-            $captionLink = "<input type=\"hidden\" value=\"" . $field['orderby'] . "\"/><a href=\"$sortLink\" rel=\"nofollow\" title=\"Sort by $caption\">$caption</a>";
+            $sortBy = lang::get("Sort by {1}", $caption);
+            $captionLink = "<input type=\"hidden\" value=\"$field[orderby]\"/>" .
+                "<a href=\"$sortLink\" rel=\"nofollow\" title=\"$sortBy\">$caption</a>";
             // set a style for the sort order
             $orderStyle = ($sortAndPageUrlParams['orderby']['value'] == $field['orderby']) ? ' '.$sortdirval : '';
             $orderStyle .= ' sortable';
