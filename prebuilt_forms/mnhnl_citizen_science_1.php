@@ -441,10 +441,8 @@ class iform_mnhnl_citizen_science_1 {
                 'attrtable'=>'occurrence_attribute',
                 'key'=>'occurrence_id',
                 'fieldprefix'=>"occAttr",
-                'extraParams'=>$readAuth + array('query' => urlencode(json_encode(array(
-                  'in'=>array('id', $attrIds)
-                )))),
-              'survey_id'=>$args['survey_id']
+                'extraParams'=>$readAuth + array('query' => json_encode(array('in'=>array('id', $attrIds)))),
+                'survey_id'=>$args['survey_id']
             ));
             foreach ($attributes as $attribute) {
               $r .= data_entry_helper::outputAttribute($attribute, array('language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), 'booleanCtrl' => 'checkbox'));
