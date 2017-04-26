@@ -66,6 +66,37 @@ class iform_importer {
         ),
         'required'=>true
       ),
+      array(
+        'name'=>'importPreventCommitBehaviour',
+        'caption'=>'Importer Prevent Commit Behaviour',
+        'description'=>'<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. '
+        . '<em>Only commit valid rows</em> - Import rows which do not error. '
+        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+        'type'=>'select',
+        'options'=>array(
+          'prevent' => 'Prevent all commits on error',
+          'partial_import' => 'Only commit valid rows',
+          'user_defined' => 'Allow user to choose'
+        ),
+        'required'=>true,
+        'group' => 'Import Behaviour'
+      ),
+      array(
+        'name'=>'importOccurrenceIntoSampleLogic',
+        'caption'=>'Importer Occurrence Into Sample Logic (only applicable when using the Species Records import type)',
+        'description'=>'<em>Match on sample external key</em> - Rows are placed into the same sample based on sample external key. '
+        . '<em>Place similar consecutive rows into the same sample</em> - Rows are placed into the same sample based on comparison of '
+          . 'sample related columns of consecutive rows. '
+        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+        'type'=>'select',
+        'options'=>array(
+          'sample_ext_key' => 'Match on sample external key',
+          'consecutive_rows' => 'Place similar consecutive rows into the same sample',
+          'user_defined' => 'Allow user to choose'
+        ),
+        'required'=>true,
+        'group' => 'Import Behaviour'
+      ),
       array('name'=>'otherModel',
         'caption'=>'Other model',
         'description'=>'If type of data to import is set to other, then specify the singular name of the model to import into here.',
@@ -140,7 +171,7 @@ class iform_importer {
           'simplified.',
         'type'=>'boolean',
         'default'=>false
-      ),
+      )
     );
   }
 
@@ -205,7 +236,9 @@ class iform_importer {
         'occurrenceAssociations' => $args['occurrenceAssociations'],
         'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], true),
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
-        'skipMappingIfPossible' => $args['skipMappingIfPossible']
+        'skipMappingIfPossible' => $args['skipMappingIfPossible'],
+        'importPreventCommitBehaviour' => $args['importPreventCommitBehaviour'],
+        'importOccurrenceIntoSampleLogic' => $args['importOccurrenceIntoSampleLogic'] 
       );
       $r = import_helper::importer($options);
     } catch (Exception $e) {
