@@ -405,12 +405,13 @@ class report_helper extends helper_base {
       $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
-        foreach ($options['columns'] as $field) {
+        foreach ($options['columns'] as &$field) {
           if (isset($field['visible']) && ($field['visible'] === 'false' || $field['visible'] === false)) {
              // skip this column as marked invisible 
             continue;           
           }
-          
+          if (isset($field['actions']))
+            report_helper::translateActions($field['actions']);
           // allow the display caption to be overriden in the column specification
           if (empty($field['display']) && empty($field['fieldname'])) {
             $caption = '';
@@ -856,6 +857,17 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
     if ($options['ajax'] && $options['autoloadAjax'])
       self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(false);\n";
     return $r;
+  }
+
+  /**
+   * Loops through the actions defined in a report column configuration and passes the captions through translation.
+   * @param array $actions List of actions defined for the column in the config.
+   */
+  private static function translateActions(&$actions) {
+    foreach ($actions as &$action) {
+      if (!empty($action['caption']))
+        $action['caption'] = lang::get($action['caption']);
+    }
   }
 
  /**
