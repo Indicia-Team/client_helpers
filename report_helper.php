@@ -486,6 +486,8 @@ class report_helper extends helper_base {
           } else
             $filterRow .= "<th class=\"$colClass\"></th>";
         }
+        // Clean up dangling reference variable
+        unset($field);
       }
       $thead = str_replace(array('{class}','{title}','{content}'), array('','',$thead), $indicia_templates['report-thead-tr']);
       if ($wantFilterRow && (!isset($options["forceNoFilterRow"]) || !$options["forceNoFilterRow"]))
