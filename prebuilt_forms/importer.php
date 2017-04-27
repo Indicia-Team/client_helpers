@@ -195,9 +195,7 @@ class iform_importer {
       'occurrenceAssociations' => false,
       'fieldMap' => array(),
       'onlyAllowMappedFields' => true,
-      'skipMappingIfPossible' => false,
-      'importPreventCommitBehaviour' => $args['importPreventCommitBehaviour'],
-      'importOccurrenceIntoSampleLogic' => $args['importOccurrenceIntoSampleLogic'] 
+      'skipMappingIfPossible' => false
     ), $args);
     $auth = import_helper::get_read_write_auth($args['website_id'], $args['password']);
     group_authorise_form($args, $auth['read']);
