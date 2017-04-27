@@ -121,6 +121,10 @@ class import_helper extends helper_base {
    * Returns the HTML for a simple file upload form.
    */
   private static function upload_form($options) {
+    if (empty($options['importPreventCommitBehaviour']))
+      $options['importPreventCommitBehaviour']='partial_import';
+    if (empty($options['importOccurrenceIntoSampleLogic']))
+      $options['importOccurrenceIntoSampleLogic']='consecutive_rows';   
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = '<form action="'.$reloadpath.'" method="post" enctype="multipart/form-data">';
