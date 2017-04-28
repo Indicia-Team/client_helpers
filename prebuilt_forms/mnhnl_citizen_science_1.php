@@ -476,7 +476,7 @@ class iform_mnhnl_citizen_science_1 {
         'page'=>'last'
       ));
     } else {
-      $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";
+      $r .= '<input type="submit" class="ui-state-default ui-corner-all" value="' . lang::get('Save') . "\" />\n";
     }
     $r .= "</fieldset>\n";
     $r .= "</div>\n";
