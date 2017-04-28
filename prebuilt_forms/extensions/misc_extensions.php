@@ -523,4 +523,21 @@ $('form#entry_form').tooltip({
     data_entry_helper::$javascript .= "$.getScript('$path$options[mapDataFile]');\n";
     return data_entry_helper::select($options);
   }
+
+  /**
+   * An extension that simply takes an @text option and passes it through lang::get. Allows free text embedded in forms
+   * to be localised.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param $options
+   * @return string Translated text.
+   */
+  public static function localised_text($auth, $args, $tabalias, $options) {
+    $options = array_merge(
+      array('text' => 'The misc_extensions.localised_text control needs a @text parameter'),
+      $options
+    );
+    return lang::get($options['text']);
+  }
 }
