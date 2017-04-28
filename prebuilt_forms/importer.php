@@ -66,37 +66,6 @@ class iform_importer {
         ),
         'required'=>true
       ),
-      array(
-        'name'=>'importPreventCommitBehaviour',
-        'caption'=>'Importer Prevent Commit Behaviour',
-        'description'=>'<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. '
-        . '<em>Only commit valid rows</em> - Import rows which do not error. '
-        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
-        'type'=>'select',
-        'options'=>array(
-          'prevent' => 'Prevent all commits on error',
-          'partial_import' => 'Only commit valid rows',
-          'user_defined' => 'Allow user to choose'
-        ),
-        'required'=>true,
-        'group' => 'Import Behaviour'
-      ),
-      array(
-        'name'=>'importOccurrenceIntoSampleLogic',
-        'caption'=>'Importer Occurrence Into Sample Logic (only applicable when using the Species Records import type)',
-        'description'=>'<em>Match on sample external key</em> - Rows are placed into the same sample based on sample external key. '
-        . '<em>Place similar consecutive rows into the same sample</em> - Rows are placed into the same sample based on comparison of '
-          . 'sample related columns of consecutive rows. '
-        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
-        'type'=>'select',
-        'options'=>array(
-          'sample_ext_key' => 'Match on sample external key',
-          'consecutive_rows' => 'Place similar consecutive rows into the same sample',
-          'user_defined' => 'Allow user to choose'
-        ),
-        'required'=>true,
-        'group' => 'Import Behaviour'
-      ),
       array('name'=>'otherModel',
         'caption'=>'Other model',
         'description'=>'If type of data to import is set to other, then specify the singular name of the model to import into here.',
@@ -171,6 +140,39 @@ class iform_importer {
           'simplified.',
         'type'=>'boolean',
         'default'=>false
+      ),
+      array(
+        'name'=>'importPreventCommitBehaviour',
+        'caption'=>'Importer Prevent Commit Behaviour',
+        'description'=>'<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. '
+        . '<em>Only commit valid rows</em> - Import rows which do not error. '
+        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+        'type'=>'select',
+        'options'=>array(
+          'prevent' => 'Prevent all commits on error',
+          'partial_import' => 'Only commit valid rows',
+          'user_defined' => 'Allow user to choose'
+        ),
+        'required'=>true,
+        'default'=>'partial_import',
+        'group' => 'Import Behaviour'
+      ),
+      array(
+        'name'=>'importOccurrenceIntoSampleLogic',
+        'caption'=>'Importer Occurrence Into Sample Logic (only applicable when using the Species Records import type)',
+        'description'=>'<em>Match on sample external key</em> - Rows are placed into the same sample based on sample external key. '
+        . '<em>Place similar consecutive rows into the same sample</em> - Rows are placed into the same sample based on comparison of '
+          . 'sample related columns of consecutive rows. '
+        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+        'type'=>'select',
+        'options'=>array(
+          'sample_ext_key' => 'Match on sample external key',
+          'consecutive_rows' => 'Place similar consecutive rows into the same sample',
+          'user_defined' => 'Allow user to choose'
+        ),
+        'required'=>true,
+        'default'=>'consecutive_rows',
+        'group' => 'Import Behaviour'
       )
     );
   }
@@ -183,6 +185,10 @@ class iform_importer {
    * @return HTML string
    */
   public static function get_form($args, $nid, $response) {
+    if (empty($args['importPreventCommitBehaviour']))
+      $args['importPreventCommitBehaviour']='partial_import';
+    if (empty($args['importOccurrenceIntoSampleLogic']))
+      $args['importOccurrenceIntoSampleLogic']='consecutive_rows';   
     iform_load_helpers(array('import_helper'));
     // apply defaults
     $args = array_merge(array(

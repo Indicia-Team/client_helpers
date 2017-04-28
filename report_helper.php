@@ -402,7 +402,7 @@ class report_helper extends helper_base {
       // Flag if we know any column data types and therefore can display a filter row
       $wantFilterRow=false;
       $filterRow='';
-      $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
+      $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
         foreach ($options['columns'] as &$field) {
@@ -486,6 +486,8 @@ class report_helper extends helper_base {
           } else
             $filterRow .= "<th class=\"$colClass\"></th>";
         }
+        // Clean up dangling reference variable
+        unset($field);
       }
       $thead = str_replace(array('{class}','{title}','{content}'), array('','',$thead), $indicia_templates['report-thead-tr']);
       if ($wantFilterRow && (!isset($options["forceNoFilterRow"]) || !$options["forceNoFilterRow"]))
