@@ -1572,18 +1572,6 @@ TD;
     //the occurrences go into, then we need to check the sample data is consistant between the
     //rows which share the same external key, if not, warn the user.
     //If not using that mode we can just continue without the warning screen.
-    if ($options['model']==='occurrence'||$options['model']==='sample') {
-      if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
-        $checkArrays = self::sample_external_key_issue_checks($options,$rows);
-        $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
-        $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
-        if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
-          $r.= self::display_sample_external_key_data_mismatches($inconsistencyFailureRows,$clusteringFailureRows);
-          if (!empty($r))
-            return $r;
-        }
-      }
-    }
     $reload = self::get_reload_link_parts();
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
@@ -1657,6 +1645,18 @@ TD;
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
     $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
     $fileRowsAsArray=self::auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$args['vice_counties_list'],$args['countries_list']);
+    if ($options['model']==='occurrence'||$options['model']==='sample') {
+      if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
+        $checkArrays = self::sample_external_key_issue_checks($options,$fileRowsAsArray);
+        $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
+        $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
+        if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
+          $r.= self::display_sample_external_key_data_mismatches($inconsistencyFailureRows,$clusteringFailureRows);
+          if (!empty($r))
+            return $r;
+        }
+      }
+    }
     //Collect the plots and groups the user has rights to so we can use existing ones where needed
     $plotsAndPlotGroupsUserHasRightsTo = self::get_plots_and_groups_user_has_rights_to($auth,$args);
     $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$plotsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
@@ -1813,7 +1813,6 @@ TD;
       data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_location_type_id'].");";
     if (!empty($websiteId)&&!empty($plotPairsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
       data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotPairsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
-    //data_entry_helper::$javascript .= "$('#fields_to_retain_form').submit();";
     data_entry_helper::$javascript .= "$('#submit-import').click(); });";
     
   }
@@ -2481,6 +2480,19 @@ TD;
       unset($mappingsAndSettings['mappings']['mapping']);
     if (!empty($mappingsAndSettings['mappings']['setting']))
       unset($mappingsAndSettings['mappings']['setting']);
+    //Remove any unused mappings or settings
+    foreach ($mappingsAndSettings as $key=>$mappingsOrSetting) {
+      if (empty($mappingsOrSetting)&&$key!=='mappings'&&$key!=='settings')
+        unset($mappingsAndSettings[$key]);
+    }
+    foreach ($mappingsAndSettings['mappings'] as $key=>$mapping) {
+      if (empty($mapping))
+        unset($mappingsAndSettings['mappings'][$key]);
+    }
+    foreach ($mappingsAndSettings['settings'] as $key=>$setting) {
+      if (empty($setting))
+        unset($mappingsAndSettings['settings'][$key]);
+    }
     return $mappingsAndSettings;
   }
   
@@ -2542,13 +2554,11 @@ TD;
     //two separate samples which would not be intended (note this flag is only used in the Sample External Key matching mode)
     $rowClusteringFailure=false;
     $rowNumber=0;
-    foreach ($rows as $rowNum=>$fileRow) {
-      $fileRow=trim($fileRow);
+    foreach ($rows as $rowNum=>$rowArray) {
       //Reset flags for each row
       $rowInconsistencyFailure=false;
       $rowClusteringFailure=false;
       //Explode individual columns
-      $rowArray=explode(',',$fileRow);
       //If the sample key isn't empty on the row continue to work on the row
       if (!empty($sampleKeyIdx)&&!empty($rowArray[$sampleKeyIdx])) {
         //If the row we are working on has the same sample external key as one of the previous rows then
@@ -2576,10 +2586,12 @@ TD;
       }
       //Flag rows with the same sample external key but different sample data such as dates
       if ($rowInconsistencyFailure===true) {
+        $fileRow=implode(',',$rowArray);
         $inconsistencyFailureRows[$rowNumber]=$fileRow;
       }
       //Flag rows with same sample external key which are not on consecutive rows
       if ($rowClusteringFailure===true) {
+        $fileRow=implode(',',$rowArray);
         $clusteringFailureRows[$rowNumber]=$fileRow;  
       } 
       $rowNumber++;
