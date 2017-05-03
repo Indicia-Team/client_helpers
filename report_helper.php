@@ -402,7 +402,7 @@ class report_helper extends helper_base {
       // Flag if we know any column data types and therefore can display a filter row
       $wantFilterRow=false;
       $filterRow='';
-      $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
+      $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
         foreach ($options['columns'] as $field) {
@@ -470,7 +470,7 @@ class report_helper extends helper_base {
             //Filter, which when clicked, displays a popup with a series of checkboxes representing a distinct set of data from a column on the report.
             //The user can then deselect these checkboxes to remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
-              data_entry_helper::$javascript.="indiciaData.includePopupFilter=true;";
+              self::$javascript.="indiciaData.includePopupFilter=true;";
               $popupFilterIcon = $imgPath."desc.gif";
               $popupFilterIconHtml='<img class="col-popup-filter" id="col-popup-filter-'.$field['fieldname'].'-'.$options['id'].'" src="'.$popupFilterIcon.'"  >';
             }
@@ -2272,7 +2272,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       foreach($response['parameterRequest'] as $key=>$param)
         if (!empty($param['alias']) && $param['datatype']=='idlist') {
           $alias = $param['alias'];
-          data_entry_helper::$javascript .= "
+          self::$javascript .= "
 if (typeof mapSettingsHooks!=='undefined') {
   mapSettingsHooks.push(function(opts) {
     opts.featureIdField='$alias';
@@ -2281,8 +2281,8 @@ if (typeof mapSettingsHooks!=='undefined') {
         }
       if ($options['paramsInMapToolbar']) {
         $toolbarControls = str_replace(array('<br/>', "\n", "'"), array('', '', "\'"), $r);
-        data_entry_helper::$javascript .= "$.fn.indiciaMapPanel.defaults.toolbarPrefix+='$toolbarControls';\n";
-        data_entry_helper::$javascript .= "$.fn.indiciaMapPanel.defaults.toolbarSuffix+='$suffix';\n";
+        self::$javascript .= "$.fn.indiciaMapPanel.defaults.toolbarPrefix+='$toolbarControls';\n";
+        self::$javascript .= "$.fn.indiciaMapPanel.defaults.toolbarSuffix+='$suffix';\n";
         return '';
       } else
         return "$r$suffix\n";
@@ -2606,7 +2606,7 @@ if (typeof mapSettingsHooks!=='undefined') {
     // We support back to PHP 5.2
     // TODO : i8n
     $warnings="";
-    data_entry_helper::add_resource('jquery_ui');
+    self::add_resource('jquery_ui');
     // there are some report parameters that we can assume for a calendar based request...
     // the report must have a date field, a user_id field if set in the configuration, and a location_id.
     // default is samples_list_for_cms_user.xml
@@ -2621,7 +2621,7 @@ if (typeof mapSettingsHooks!=='undefined') {
     if (isset($response['parameterRequest'])) {
       return '<p>Internal Error: Report request parameters not set up correctly.<br />'.(print_r($response,true)).'<p>';
     }
-    data_entry_helper::$javascript .= "
+    self::$javascript .= "
 var pageURI = \"".$_SERVER['REQUEST_URI']."\";
 function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
   var parts = oldURL.split('?');
@@ -2905,7 +2905,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     // get the url parameters. Don't use $_GET, because it contains any parameters that are not in the
     // URL when search friendly URLs are used (e.g. a Drupal path node/123 is mapped to index.php?q=node/123
     // using Apache mod_alias but we don't want to know about that)
-    $reloadUrl = data_entry_helper::get_reload_link_parts();
+    $reloadUrl = self::get_reload_link_parts();
     // find the names of the params we must not include
     $excludedParams = array();
     foreach($pageUrlParams as $param) {
@@ -3040,7 +3040,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     // TODO invariant IDs and names prevents more than one on a page.
     // TODO convert to tabs when switching between chart and table.
     $warnings = '<span style="display:none;">Starting report_calendar_summary : '.date(DATE_ATOM).'</span>'."\n";
-    data_entry_helper::add_resource('jquery_ui');
+    self::add_resource('jquery_ui');
     // there are some report parameters that we can assume for a calendar based request...
     // the report must have a date field, a user_id field if set in the configuration, and a location_id.
     // default is samples_list_for_cms_user.xml
@@ -3057,7 +3057,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     // convert records to a date based array so it can be used when generating the grid.
     $warnings .= '<span style="display:none;">Report request finish : '.date(DATE_ATOM).'</span>'."\n";
     $records = $response['records'];
-    data_entry_helper::$javascript .= "
+    self::$javascript .= "
 var pageURI = \"".$_SERVER['REQUEST_URI']."\";
 function rebuild_page_url(oldURL, overrideparam, overridevalue) {
   var parts = oldURL.split('?');
@@ -3326,7 +3326,7 @@ update_controls();
     if(isset($options['outputChart']) && $options['outputChart']){
       $format['chart'] = array('include'=>true,
           'display'=>(isset($options['simultaneousOutput']) && $options['simultaneousOutput'])||(isset($options['outputFormat']) && $options['outputFormat']=='chart'));
-      data_entry_helper::add_resource('jqplot');
+      self::add_resource('jqplot');
       switch ($options['chartType']) {
         case 'bar' :
           self::add_resource('jqplot_bar');
@@ -3382,7 +3382,7 @@ update_controls();
     				($options['includeSummaryData'] ? '<option id="viewSummaryData" value="summary"/>'.lang::get('summary data').'</option>' : '').
     				($options['includeEstimatesData'] ? '<option id="viewDataEstimates" value="estimates"/>'.lang::get('summary data with estimates').'</option>' : '').
     				'</select>';
-    		data_entry_helper::$javascript .= "jQuery('#outputSource').change(function(){
+    		self::$javascript .= "jQuery('#outputSource').change(function(){
   pageURI = rebuild_page_url(pageURI, \"outputSource\", jQuery(this).val());
   update_controls();
   switch(jQuery(this).val()){
@@ -3411,7 +3411,7 @@ update_controls();
                   '<option '.($defaultTable?'selected="selected"':'').' value="table"/>'.lang::get('table').'</option>'.
                   '<option '.(!$defaultTable?'selected="selected"':'').' value="chart"/>'.lang::get('chart').'</option>'.
                   '</select>'; // not providing option for both at moment
-            data_entry_helper::$javascript .= "jQuery('[name=outputFormat]').change(function(){
+            self::$javascript .= "jQuery('[name=outputFormat]').change(function(){
   pageURI = rebuild_page_url(pageURI, \"outputFormat\", jQuery(this).val());
   update_controls();
   switch($(this).val()) {
@@ -3514,10 +3514,10 @@ update_controls();
       $axesOpts = str_replace('"$.jqplot.CategoryAxisRenderer"', '$.jqplot.CategoryAxisRenderer',
         'axes:'.json_encode($options['axesOptions']));
       $opts[] = $axesOpts;
-      data_entry_helper::$javascript .= "var seriesData = {ids: [".implode(',', $seriesIDs)."], raw: [".implode(',', $rawSeriesData)."], summary: [".implode(',', $summarySeriesData)."], estimates: [".implode(',', $estimatesSeriesData)."]};\n";
+      self::$javascript .= "var seriesData = {ids: [".implode(',', $seriesIDs)."], raw: [".implode(',', $rawSeriesData)."], summary: [".implode(',', $summarySeriesData)."], estimates: [".implode(',', $estimatesSeriesData)."]};\n";
       // Finally, dump out the Javascript with our constructed parameters.
       // width stuff is a bit weird, but jqplot requires a fixed width, so this just stretches it to fill the space.
-      data_entry_helper::$javascript .= "\nvar plots = [];
+      self::$javascript .= "\nvar plots = [];
 var replotActive = true;
 function replot(){
   if(!replotActive) return;
@@ -3526,8 +3526,8 @@ function replot(){
   var type = jQuery('#outputSource').val();
   jQuery('#".$options['chartID']."-'+type).empty();";
       if(!isset($options['width']) || $options['width'] == '')
-        data_entry_helper::$javascript .= "\n  jQuery('#".$options['chartID']."-'+type).width(jQuery('#".$options['chartID']."-'+type).width());";
-      data_entry_helper::$javascript .= "
+        self::$javascript .= "\n  jQuery('#".$options['chartID']."-'+type).width(jQuery('#".$options['chartID']."-'+type).width());";
+      self::$javascript .= "
   var opts = {".implode(",\n", $opts)."};
   if(type == 'raw') opts.axes.xaxis.ticks = [".implode(',',$rawTicks)."];
   // copy series from checkboxes.
@@ -3567,19 +3567,19 @@ function replot(){
           // use value = 0 for Total
           $r .= '<span class="chart-series-span"><input type="checkbox" checked="checked" id="'.$options['chartID'].'-series-'.$idx.'" name="'.$options['chartID'].'-series" value="'.$idx.'"/><label for="'.$options['chartID'].'-series-'.$idx.'">'.lang::get('Total')."</label></span>\n";
           $idx++;
-          data_entry_helper::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=0]').".($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
+          self::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=0]').".($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
         }
         $r .= '<input type="button" class="disable-button" id="'.$options['chartID'].'-series-disable" value="'.lang::get('Hide all ').$options['rowGroupColumn']."\"/>\n";
         foreach($summaryArray as $seriesID => $summaryRow){
           if (empty($seriesLabels[$seriesID])) continue;
           $r .= '<span class="chart-series-span"><input type="checkbox" checked="checked" id="'.$options['chartID'].'-series-'.$idx.'" name="'.$options['chartID'].'-series" value="'.$seriesID.'"/><label for="'.$options['chartID'].'-series-'.$idx.'">'.$seriesLabels[$seriesID]."</label></span>\n";
           $idx++;
-          data_entry_helper::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=".$seriesID."]').".($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
+          self::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=".$seriesID."]').".($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
         }
         $r .= "</span></fieldset>\n";
         // Known issue: jqplot considers the min and max of all series when drawing on the screen, even those which are not displayed
         // so replotting doesn't scale to the displayed series!
-        data_entry_helper::$javascript .= "
+        self::$javascript .= "
 // above done due to need to ensure get around field caching on browser refresh.
 setSeriesURLParam = function(){
   var activeSeries = [],
@@ -3885,7 +3885,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       $timestamp = (isset($options['includeReportTimeStamp']) && $options['includeReportTimeStamp'] ? '_'.date('YmdHis') : '');
       // No need for saved reports to be atomic events. Will be purged automatically.
       global $base_url;
-      $cacheFolder = data_entry_helper::$cache_folder ? data_entry_helper::$cache_folder : data_entry_helper::relative_client_helper_path() . 'cache/';
+      $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
       if($options['includeRawData']){
         if($options['includeRawGridDownload']) {
           $cacheFile = $options['downloadFilePrefix'].'rawDataGrid'.$timestamp.'.csv';
@@ -3929,20 +3929,20 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
       $warnings .= '<span style="display:none;">Output table complete : '.date(DATE_ATOM).'</span>'."\n";
     }
     // Set up initial view: only want to replot once as that can be very intensive.
-    data_entry_helper::$javascript .= "replotActive = false;\n";
+    self::$javascript .= "replotActive = false;\n";
     if($userPicksSource) {
-      data_entry_helper::$javascript .= (isset($options['outputSource']) ?
+      self::$javascript .= (isset($options['outputSource']) ?
           "$('#outputSource').val('".$options['outputSource']."').change();\n" :
           "if($('#viewDataEstimates').length > 0){\n  $('#outputSource').val('estimates').change();\n".
           "} else if($('#viewSummaryData').length > 0){\n  $('#outputSource').val('summary').change();\n".
           "} else {\n  $('#outputSource').val('raw').change();\n}\n");
     }
     if($userPicksFormat) {
-      data_entry_helper::$javascript .= "jQuery('[name=outputFormat]').change();\n";
+      self::$javascript .= "jQuery('[name=outputFormat]').change();\n";
     }
-    data_entry_helper::$javascript .= "replotActive = true;\n";
+    self::$javascript .= "replotActive = true;\n";
     if($format['chart']['display']){
-    	data_entry_helper::$javascript .= "replot();\n";
+    	self::$javascript .= "replot();\n";
     }
     
     if(count($summaryArray)==0)
@@ -4279,7 +4279,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   	// TODO put following JS into a control JS file.
   	 
   	$warnings = '<span style="display:none;">Starting report_calendar_summary2 : '.date(DATE_ATOM).'</span>'."\n";
-  	data_entry_helper::add_resource('jquery_ui');
+  	self::add_resource('jquery_ui');
   	$options = self::get_report_calendar_summary_options($options); // don't use all of these now, eg. extraParams: this is used later for raw data
   	$extraParams = $options['readAuth'] + array('year'=>$options['year'], 'survey_id'=>$options['survey_id']);
   	// at the moment the summary_builder module indexes the user_id on the created_by_id field on the parent sample.
@@ -4303,7 +4303,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   			'caching'=> $options['caching']
   	));
   	if (isset($records['error'])) return $records['error'];
-  	data_entry_helper::$javascript .= "
+  	self::$javascript .= "
 var pageURI = \"".$_SERVER['REQUEST_URI']."\";
 function rebuild_page_url(oldURL, overrideparam, overridevalue) {
   var parts = oldURL.split('?');
@@ -4467,7 +4467,7 @@ update_controls();
   	usort($sortData, array('report_helper', 'report_calendar_summary_sort1'));
   	$warnings .= '<span style="display:none;">Estimate processing finished : '.date(DATE_ATOM).'</span>'."\n";
   	// will storedata in an array[Y][X]
-  	data_entry_helper::add_resource('jqplot');
+  	self::add_resource('jqplot');
   	switch ($options['chartType']) {
   		case 'bar' :
   			self::add_resource('jqplot_bar');
@@ -4601,8 +4601,8 @@ update_controls();
 	$estimateDataDownloadGrid .= ','.$estimatesGrandTotal."\n";
   	$summaryTab .= "</tbody></table>\n";
   	$estimateTab .= "</tbody></table>\n";
-  	data_entry_helper::$javascript .= "var seriesData = {ids: [".implode(',', $seriesIDs)."], summary: [".implode(',', $summarySeriesData)."], estimates: [".implode(',', $estimatesSeriesData)."]};\n";
-  	data_entry_helper::$javascript .= "
+  	self::$javascript .= "var seriesData = {ids: [".implode(',', $seriesIDs)."], summary: [".implode(',', $summarySeriesData)."], estimates: [".implode(',', $estimatesSeriesData)."]};\n";
+  	self::$javascript .= "
 function replot(type){
   // there are problems with the coloring of series when added to a plot: easiest just to completely redraw.
   var max=0;
@@ -4652,20 +4652,20 @@ indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
   			// use series ID = 0 for Total
   			$summarySeriesPanel .= '<span class="chart-series-span"><input type="checkbox" checked="checked" id="'.$options['chartID'].'-series-'.$idx.'" name="'.$options['chartID'].'-series" value="'.$idx.'"/><label for="'.$options['chartID'].'-series-'.$idx.'">'.lang::get('Total')."</label></span>\n";
   			$idx++;
-  			data_entry_helper::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=0]').".($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
+  			self::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=0]').".($seriesToDisplay == 'all' || in_array(0, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
   		}
   		foreach($sortData as $sortedTaxon){
   			$seriesID=$sortedTaxon[1];
   			$summaryRow=$summaryArray[$seriesID];
   			$summarySeriesPanel .= '<span class="chart-series-span"><input type="checkbox" checked="checked" id="'.$options['chartID'].'-series-'.$idx.'" name="'.$options['chartID'].'-series" value="'.$seriesID.'"/><label for="'.$options['chartID'].'-series-'.$idx.'"'.(isset($seriesLabels[$seriesID]['preferred']) ? ' title="'.$seriesLabels[$seriesID]['preferred'].'"' : '').'>'.$seriesLabels[$seriesID]['label']."</label></span>\n";
   			$idx++;
-  			data_entry_helper::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=".$seriesID."]').".($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
+  			self::$javascript .= "\njQuery('[name=".$options['chartID']."-series]').filter('[value=".$seriesID."]').".($seriesToDisplay == 'all' || in_array($seriesID, $seriesToDisplay) ? 'attr("checked","checked");' : 'removeAttr("checked");');
   		}
   		$summarySeriesPanel .= "</span></fieldset>\n";
   		// Known issue: jqplot considers the min and max of all series when drawing on the screen, even those which are not displayed
   		// so replotting doesn't scale to the displayed series!
   		// Note we are keeping the 2 charts in sync.
-  		data_entry_helper::$javascript .= "
+  		self::$javascript .= "
 jQuery('#summaryChart [name=".$options['chartID']."-series]').change(function(){
   $('#estimateChart [name=".$options['chartID']."-series]').filter('[value='+$(this).val()+']').attr('checked',$(this).attr('checked'));
   replot('summary');
@@ -4785,7 +4785,7 @@ jQuery('#estimateChart .disable-button').click(function(){
 	  					$rawDataDownloadGrid .= "\n";
   						$altRow=!$altRow;
   					}
-  					data_entry_helper::$javascript .= "var sampleDatarows = $('#rawData .sample-datarow').length;\n$('#rawData .sample-datarow').eq(sampleDatarows-1).addClass('last-sample-datarow');\n";
+  					self::$javascript .= "var sampleDatarows = $('#rawData .sample-datarow').length;\n$('#rawData .sample-datarow').eq(sampleDatarows-1).addClass('last-sample-datarow');\n";
 	  			}
   				foreach($sortData as $sortedTaxon){
   					$seriesID=$sortedTaxon[1]; // this is the meaning id
@@ -4818,9 +4818,9 @@ jQuery('#estimateChart .disable-button').click(function(){
   	unset($options['extraParams']['orderby']); // may have been set for raw data
   	// No need for saved reports to be atomic events. Will be purged automatically.
   	global $base_url;
-  	// need to use cache under the module to ensure files can be accessed from outside. Using the data_entry_helper::$cache_folder
+  	// need to use cache under the module to ensure files can be accessed from outside. Using the self::$cache_folder
   	// could lead to location being unaccessible (i.e. outside the htdocs)
-  	$cacheFolder = data_entry_helper::relative_client_helper_path() . 'cache/';
+  	$cacheFolder = self::relative_client_helper_path() . 'cache/';
   	if($hasData && $options['includeSummaryGridDownload']) {
   		$cacheFile = $options['downloadFilePrefix'].'summaryDataGrid'.$timestamp.'.csv';
   		$handle = fopen($cacheFolder.$cacheFile, 'wb');
