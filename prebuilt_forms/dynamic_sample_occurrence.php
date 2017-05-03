@@ -701,7 +701,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           self::hide_other_boundaries($args);
         }
       }
-      if (!empty($filterDef->taxon_group_names) && empty((array)$filterDef->taxon_group_names)) {
+      if (!empty($filterDef->taxon_group_names) && !empty((array)$filterDef->taxon_group_names)) {
         $args['taxon_filter'] = implode("\n", array_values((array)$filterDef->taxon_group_names));
         $args['taxon_filter_field']='taxon_group';
       }
