@@ -32,13 +32,9 @@ require_once('includes/groups.php');
  */
 
 //AVB To Do - Need to test import file with a mixture of spatial reference systems
-//AVB To DO  - Test importer with various attributes
 
-
-//Importer changed to extend helper_base as the plant portal importer needs customer versions of many of the functions
-//that were previously in the import_helper (and the import_helper extends helper_base)
 class iform_plant_portal_user_data_importer extends helper_base {  
-  //AVB To Do - This variable's functionality comes from the standard importer, needs testing if it works with Plant Portal importer
+  //AVB To Do - Currently unknown if remember mappings will work, not currently supported until tested
   /**
    * @var boolean Flag set to true if the host system is capable of storing our user's remembered import mappings
    * for future imports.
@@ -106,16 +102,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
             }
           }]
         }'
-      ),
-     //AVB To DO - Need to test if this functionality still works with the Plant Portal importer
-      array(
-        'name'=>'onlyAllowMappedFields',
-        'caption'=>'Only allow mapped fields',
-        'description'=>'If this box is ticked and a survey is chosen which has fields defined above ' .
-            'then only fields which are listed will be available for selection. All other fields will '.
-            'be hidden from the mapping stage.',
-        'type'=>'boolean',
-        'default'=>true
       ),
       array(
         'name'=>'override_survey_id',
@@ -216,14 +202,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
-        'name'=>'sample_name_attr_id',
-        'caption'=>'Sample Name/ID attribute ID',
-        'description'=>'ID of the attribute that holds the sample name/ID.',
-        'type'=>'string',
-        'required'=>true,
-        'group'=>'Database IDs Required By Form'
-      ),
-      array(
         'name'=>'plot_group_permission_person_attr_id',
         'caption'=>'Plot group permissions person attribute ID',
         'description'=>'ID of person attribute that holds a user\'s plot group permissions.',
@@ -270,7 +248,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'reupload_link_text',
         'caption'=>'Upload file again text',
-        'description'=>'Text here precedes the "reupload" link e.g If you wish the link to say "Click here to reupload". then, '
+        'description'=>'Text here precedes the "reupload" link e.g If you wish the link to say "Click here to reupload" then '
           . 'you just need to type "Click here to" in this box.',
         'type'=>'string',
         'group'=>'Customisable form text'
@@ -285,7 +263,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'loading_import_wait_text',
         'caption'=>'Loading import wait text',
-        'description'=>'Text shown next to button while the import loads.',
+        'description'=>'Text shown next to button while the importer reloads the page to show the main progress bar.',
         'type'=>'string',
         'group'=>'Customisable form text'
       ),
@@ -359,40 +337,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'type'=>'textarea',
         'required'=>true,
         'group'=>'Countries list'
-      ),
-      array(
-        'name'=>'importPreventCommitBehaviour',
-        'caption'=>'Importer Prevent Commit Behaviour',
-        'description'=>'<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. '
-        . '<em>Only commit valid rows</em> - Import rows which do not error. '
-        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
-        'type'=>'select',
-        'options'=>array(
-          'prevent' => 'Prevent all commits on error',
-          'partial_import' => 'Only commit valid rows',
-          'user_defined' => 'Allow user to choose'
-        ),
-        'required'=>true,
-        'default'=>'partial_import',
-        'group' => 'Import Behaviour'
-      ),
-      array(
-        'name'=>'importOccurrenceIntoSampleLogic',
-        'caption'=>'Importer Occurrence Into Sample Logic (only applicable when using the Species Records import type)',
-        'description'=>'<em>Match on sample external key</em> - Rows are placed into the same sample based on sample external key. '
-        . '<em>Place similar consecutive rows into the same sample</em> - Rows are placed into the same sample based on comparison of '
-          . 'sample related columns of consecutive rows. '
-        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
-        'type'=>'select',
-        'options'=>array(
-          'sample_ext_key' => 'Match on sample external key',
-          'consecutive_rows' => 'Place similar consecutive rows into the same sample',
-          'user_defined' => 'Allow user to choose'
-        ),
-        'required'=>true,
-        'default'=>'consecutive_rows',
-        'group' => 'Import Behaviour'
-      ),
+      )
     );
   }
   
@@ -402,7 +347,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param array $options Options array with the following possibilities:
    *
    * * **model** - Required. The name of the model data is being imported into.
-   // To Do AVB - Do we need the existing file option for Plant Portal?
    * * **existing_file** - Optional. The full path on the server to an already uploaded file to import.
    * * **auth** - Read and write authorisation tokens.
    * * **fieldMap** - array of configurations of the fields available to import, one per survey.
@@ -418,27 +362,19 @@ class iform_plant_portal_user_data_importer extends helper_base {
    *   database fields you are defining for this dataset, one per line. If you want to link this field
    *   to a column title then follow the database field name with an equals, then the column title,
    *   e.g. sample:date=Record date.
-   * * **onlyAllowMappedFields** - set to true and supply field mappings in the fieldMap parameter
-   *   to ensure that only the fields you have specified for the selected survey will be available for
-   *   selection. This allows you to hide all the import fields that you don't want to be used for
-   *   importing into a given survey dataset, thus tidying up the list of options to improve ease of
-   *   use. Default true.
    * @return string
    * @throws \exception
    */
   public static function importer($args,$options) {
     //Include in the options so we don't have to keep passing the $args everywhere that $options have already been passed
-    $options['plot_group_identifier_name_text_attr_id']=$args['plot_group_identifier_name_text_attr_id'];
-    $options['plot_width_attr_id']=$args['plot_width_attr_id'];
-    $options['plot_length_attr_id']=$args['plot_length_attr_id'];
-    $options['plot_radius_attr_id']=$args['plot_radius_attr_id'];
-    $options['plot_shape_attr_id']=$args['plot_shape_attr_id'];
-    $options['vice_county_attr_id']=$args['vice_county_attr_id'];
-    $options['country_attr_id']=$args['country_attr_id'];
-    $options['spatial_reference_type_attr_id']=$args['spatial_reference_type_attr_id'];
-    $options['sample_name_attr_id']=$args['sample_name_attr_id'];
+    $options=self::set_options_from_args($args, $options);
+    //For plant portal we know the import logic we want to use, so these don't need setting in the $args
+    //We prevent any commits if there are any errors at all. We also use the sample external key to match
+    //the sample to put occurrences into
+    $options['importOccurrenceIntoSampleLogic']='sample_ext_key';
+    $options['importPreventCommitBehaviour']='prevent';
     if (isset($_POST['total']) && empty($_POST['import_step'])) {
-      return self::upload_result($options);
+      return self::display_result_if_success_or_failure_when_error_check_stage_was_not_run($options);
     } elseif (!isset($_POST['import_step'])) {
       //Need to set these to null at first step of wizard otherwise it persists even after restarting import process
       $_SESSION['chosen_column_headings']=null;
@@ -451,7 +387,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       //If we have the Prevent Commits On Any Error option on, then the first pass of the upload
       //process will always be to check errors and not commit to DB, so indicate this with option.
       //We still need to apply this at the mappings form stage even through it isn't used by this screen,
-      //this is because the mappings form can be auto-skipped at it needs to pass the flag to the next stage
+      //this is because the mappings form can be auto-skipped so needs to pass the flag to the next stage
       if ((isset($_POST['preventCommitsOnError'])&&$_POST['preventCommitsOnError']==true)||
          (isset($_POST['setting']['preventCommitsOnError'])&&$_POST['setting']['preventCommitsOnError']==true)) {
         $options['allowCommitToDB']=false;
@@ -459,9 +395,14 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $options['allowCommitToDB']=true;
       }
       return self::upload_mappings_form($options); 
+      //We only ever go to step 2 if we are going to do an error checking stage
+      //We call plant_portal_import_logic as seperate steps (2 and 3) even though they
+      //are really just the same step, however depending on whether it is step 2 or 3
+      //then steps 4 or 5 are run (error checking and upload)
     } elseif (isset($_POST['import_step']) && $_POST['import_step']==2) {
       $options['allowCommitToDB']=false;
       return self::plant_portal_import_logic($args,$options);
+      //Stage 3 is always present and is the upload to the database itself
     } elseif (isset($_POST['import_step']) && $_POST['import_step']==3) {
       $options['allowCommitToDB']=true;
       return self::plant_portal_import_logic($args,$options);
@@ -476,6 +417,23 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     else throw new exception('Invalid importer state');
   }
+  
+  /*
+   * Function adds some of the args to the options array so we don't have to keep passing both arrays
+   * @param array $args Arguments from the edit tab.
+   * @param array $args $options passed to the function.
+   */
+  private static function set_options_from_args($args, $options) {
+    $options['plot_group_identifier_name_text_attr_id']=$args['plot_group_identifier_name_text_attr_id'];
+    $options['plot_width_attr_id']=$args['plot_width_attr_id'];
+    $options['plot_length_attr_id']=$args['plot_length_attr_id'];
+    $options['plot_radius_attr_id']=$args['plot_radius_attr_id'];
+    $options['plot_shape_attr_id']=$args['plot_shape_attr_id'];
+    $options['vice_county_attr_id']=$args['vice_county_attr_id'];
+    $options['country_attr_id']=$args['country_attr_id'];
+    $options['spatial_reference_type_attr_id']=$args['spatial_reference_type_attr_id'];
+    return $options;
+  }
 
   /**
    * Return the Indicia form code
@@ -485,14 +443,19 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @return HTML string
    */
   public static function get_form($args, $nid, $response) {
+    //Array of arrays. Array of codes to indicate the various error types that can be encountered.
+    //The flags indicate the states required to end up in the error situation. The number 2 indicates
+    //multiples. For intance 'existingPlot'=>1 indicates multiple existing plots, whilst 'existingPlot'=>2
+    //indicates multiple matching existing plots. For definitions of the different error codes see the 
+    //get_parameters function at the top of this form.
     $args['nonFatalImportTypes'] = array(
             'nP-nPG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newPlotExistingPlotGroup'=>0),
             'eP'=>array('spatialRefPresent'=>1,'existingPlot'=>1,'newPlotExistingPlotGroup'=>0),
             'ePG'=>array('spatialRefPresent'=>1,'existingPlot'=>0,'newPlotExistingPlotGroup'=>1));
     
     $args['fatalImportTypes'] = array(
-            //Note for this error type, the existingPlot, newPlotExistingPlotGroup flags are redundant,
-            //they are always 0 even if they shouldn't be. This means we always trap any row with a missing grid reference into this 
+            //Note for spref error type, we never use the existingPlot, newPlotExistingPlotGroup flags in the code,
+            //This means we always trap any row with a missing grid reference into this 
             //category regardless of whether existingPlot, newPlotExistingPlotGroup should of been set as 1 or 2
             'spref'=>array('spatialRefPresent'=>0,'existingPlot'=>0,'newPlotExistingPlotGroup'=>0),
             'ePwD'=>array('spatialRefPresent'=>1,'existingPlot'=>2,'newPlotExistingPlotGroup'=>0),
@@ -503,7 +466,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
             empty($args['plot_width_attr_id'])||empty($args['plot_length_attr_id'])||
             empty($args['plot_radius_attr_id'])||empty($args['plot_shape_attr_id'])||
             empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||
-            empty($args['spatial_reference_type_attr_id'])||empty($args['sample_name_attr_id'])||
+            empty($args['spatial_reference_type_attr_id'])||
             empty($args['plot_group_permission_person_attr_id'])||empty($args['plot_group_termlist_id'])||
             empty($args['vice_counties_list'])||empty($args['countries_list']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
@@ -524,7 +487,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $args = array_merge(array(
       'occurrenceAssociations' => false,
       'fieldMap' => array(),
-      'onlyAllowMappedFields' => true,
       'skipMappingIfPossible' => false
     ), $args);
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
@@ -541,10 +503,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'presetSettings' => $presets,
         'occurrenceAssociations' => $args['occurrenceAssociations'],
         'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], true),
-        'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
-        'skipMappingIfPossible' => $args['skipMappingIfPossible'],
-        'importPreventCommitBehaviour' => $args['importPreventCommitBehaviour'],
-        'importOccurrenceIntoSampleLogic' => $args['importOccurrenceIntoSampleLogic']   
+        'skipMappingIfPossible' => $args['skipMappingIfPossible']  
       );
       
       $r = self::importer($args,$options);
@@ -563,6 +522,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * Returns the HTML for a simple file upload form.
    */
   private static function upload_form($options) {
+    //Default the behaviour types to the old form behaviours if the new options are not set
     if (empty($options['importPreventCommitBehaviour']))
       $options['importPreventCommitBehaviour']='partial_import';
     if (empty($options['importOccurrenceIntoSampleLogic']))
@@ -576,6 +536,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" checked>';
     if ($options['importPreventCommitBehaviour']==='partial_import')
       $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" >';
+    //Only show the prevent commits on error import option on screen if the administrator has set this
+    //option to be user defined. This option can be used for any model (e.g. locations) so we don't
+    //need to check the model.
     if ($options['importPreventCommitBehaviour']==='user_defined') {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Prevent commits on error'),
@@ -586,8 +549,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     if ($options['importOccurrenceIntoSampleLogic']==='sample_ext_key')
       $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" checked>';
+    //If we are not using the import using the new sample external key option then we still need to place this hidden onto the page,
+    //but leave it unchecked
     if ($options['importOccurrenceIntoSampleLogic']==='consecutive_rows')
       $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" >';
+    //Only show sample external key import option on screen for occurrence or sample imports and if the administrator has set this
+    //option to be user defined.
     if ($options['importOccurrenceIntoSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Use sample external key to match occurrences into sample'),
@@ -699,67 +666,18 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $filename=basename($_SESSION['uploaded_file']);
     $mappingsAndSettings=self::get_mappings_and_settings($options); 
     $settings=$mappingsAndSettings['settings'];
+    //Request the columsn we are going to map
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
-    // include survey and website information in the request if available, as this limits the availability of custom attributes
-    if (!empty($settings['website_id']))
-      $request .= '&website_id='.trim($settings['website_id']);
-    if (!empty($settings['survey_id']))
-      $request .= '&survey_id='.trim($settings['survey_id']);
-    if (!empty($settings['useAssociations']) && $settings['useAssociations'])
-    	$request .= '&use_associations=true';
-    if($options['model'] == 'sample' && isset($settings['sample:sample_method_id']) && trim($settings['sample:sample_method_id']) != '')
-    	$request .= '&sample_method_id='.trim($settings['sample:sample_method_id']);
-    else if($options['model'] == 'location' && isset($settings['location:location_type_id']) && trim($settings['location:location_type_id']) != '')
-    	$request .= '&location_type_id='.trim($settings['location:location_type_id']);
-
-    $response = self::http_post($request, array());
-    $fields = json_decode($response['output'], true);
-    //Limit fields that can be selected from to ones we are interested in for this project
-    foreach ($fields as $key=>$data) {
-      //Fields with "fk_" in name are foreign key lookups
-      if ($key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_website'&&
-              $key!=='occurrence:id'&&$key!=='occurrence:sensitivity_precision'&&$key!=='occurrence:sensitivity_precision'
-              &&$key!=='occurrence:zero_abundance'&&$key!=='sample:comment'&&$key!=='sample:date'/*&&$key!=='sample:date:day'
-              &&$key!=='sample:date:month'&&$key!=='sample:date:year'&&$key!=='sample:date_end'&&$key!=='sample:date_start'
-              &&$key!=='sample:date_type'*/&&$key!=='sample:entered_sref'&&$key!=='sample:entered_sref_system'&&$key!=='sample:external_key'
-              &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'
-              &&$key!=='smpAttr:'.$options['sample_name_attr_id']&&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
-              //Note that these need to be sample attributes as they need to be passed to the
-              //warehouse as part of the sample so that the spatial reference can be calculated
-              &&$key!=='smpAttr:'.$options['vice_county_attr_id']
-              &&$key!=='smpAttr:'.$options['country_attr_id']
-              ) {
-        unset($fields[$key]);
-      }
-    }
-    //To Do AVB. This bit can probably be optimised a bit
+    $fields = self::upload_mappings_form_get_smp_occ_fields($options,$settings,$request);
+    //For Plant Portal we need to show some of the location fields on the mappings form even though we might be using another model
     $options['model']='location';
-    $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
+    $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];  
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
-    // include survey and website information in the request if available, as this limits the availability of custom attributes
-    if (!empty($settings['website_id']))
-      $request .= '&website_id='.trim($settings['website_id']);
-    if (!empty($settings['survey_id']))
-      $request .= '&survey_id='.trim($settings['survey_id']);
-    if(isset($settings['sample:sample_method_id']) && trim($settings['sample:sample_method_id']) != '')
-    	$request .= '&sample_method_id='.trim($settings['sample:sample_method_id']);
-    $response = self::http_post($request, array());
-    $locationfields = json_decode($response['output'], true);
-    //We only want to include some of the location attributes
-    $locationFieldsToUse['locAttr:'.$options['plot_group_identifier_name_text_attr_id']] = $locationfields['locAttr:'.$options['plot_group_identifier_name_text_attr_id']];
-    $locationFieldsToUse['locAttr:'.$options['plot_width_attr_id']] = $locationfields['locAttr:'.$options['plot_width_attr_id']];
-    $locationFieldsToUse['locAttr:'.$options['plot_length_attr_id']] = $locationfields['locAttr:'.$options['plot_length_attr_id']];
-    $locationFieldsToUse['locAttr:'.$options['plot_radius_attr_id']] = $locationfields['locAttr:'.$options['plot_radius_attr_id']];
-    //fk for foreigh key lookup list
-    $locationFieldsToUse['locAttr:fk_'.$options['plot_shape_attr_id']] = $locationfields['locAttr:fk_'.$options['plot_shape_attr_id']];
-    $fields = array_merge($fields,$locationFieldsToUse);
+    $fields=self::upload_mappings_form_get_location_fields($options,$settings,$fields,$request);
       
     if (!is_array($fields))
       return "curl request to $request failed. Response ".print_r($response, true);
-    // Restrict the fields if there is a setting for this survey Id
-    if (!empty($settings['survey_id']))
-      self::limitFields($fields, $options, $settings['survey_id']);
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], true);
@@ -824,7 +742,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r .= '<div id="duplicate-instructions" class="import-mappings-instructions"><span id="duplicate-instruct">'.
       lang::get('There are currently two or more drop-downs allocated to the same value.').'</span><ul></ul><br/></div></div>';
     //We need to rerun this even though we run this earlier in this function
-    //The earlier call wouldn't have retrieved any mappings as get_column_options wouldn't have been run yet
+    //The earlier call wouldn't have retrieved any mappings as get_column_options wouldn't have been run yet, however
+    //we still need to get the settings at that earlier point
     $mappingsAndSettings=self::get_mappings_and_settings($options); 
     self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     //If skip mapping is on, then we don't actually need to show this page and can skip straight to the 
@@ -843,7 +762,86 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     $r .= '<input type="submit" name="submit" id="submit" value="'.lang::get('Upload').'" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
-    self::$javascript .= "function detect_duplicate_fields() {
+    self::$javascript .= self::upload_mappings_form_javascript_detect_duplicate_fields_function();
+    self::$javascript .= self::upload_mappings_form_javascript_update_required_fields_function();
+    self::$javascript .= "required_fields={};\n";
+    foreach ($unlinked_required_fields as $field) {
+      $caption = $unlinked_fields[$field];
+      if (empty($caption)) {
+        $tokens = explode(':', $field);
+        $fieldname = $tokens[count($tokens)-1];
+        $caption = lang::get(self::processLabel(preg_replace(array('/^fk_/', '/_id$/'), array('', ''), $fieldname)));
+      }
+      $caption = self::translate_field($field, $caption);
+      self::$javascript .= "required_fields['$field']='$caption';\n";
+    }
+    self::$javascript .= "detect_duplicate_fields();\n";
+    self::$javascript .= "update_required_fields();\n";
+    self::$javascript .= "$('#entry_form select').change(function() {detect_duplicate_fields(); update_required_fields();});\n";
+    return $r;
+  }
+  
+  private static function upload_mappings_form_get_smp_occ_fields($options,$settings,$request) {
+    // include survey and website information in the request if available, as this limits the availability of custom attributes
+    if (!empty($settings['website_id']))
+      $request .= '&website_id='.trim($settings['website_id']);
+    if (!empty($settings['survey_id']))
+      $request .= '&survey_id='.trim($settings['survey_id']);
+    if (!empty($settings['useAssociations']) && $settings['useAssociations'])
+    	$request .= '&use_associations=true';
+    if($options['model'] == 'sample' && isset($settings['sample:sample_method_id']) && trim($settings['sample:sample_method_id']) != '')
+    	$request .= '&sample_method_id='.trim($settings['sample:sample_method_id']);
+    else if($options['model'] == 'location' && isset($settings['location:location_type_id']) && trim($settings['location:location_type_id']) != '')
+    	$request .= '&location_type_id='.trim($settings['location:location_type_id']);
+
+    $response = self::http_post($request, array());
+    $fields = json_decode($response['output'], true);
+    //Limit fields that can be selected from to ones we are interested in for this project
+    foreach ($fields as $key=>$data) {
+      //Fields with "fk_" in name are foreign key lookups
+      if ($key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_website'&&
+              $key!=='occurrence:id'&&$key!=='occurrence:sensitivity_precision'&&$key!=='occurrence:sensitivity_precision'
+              &&$key!=='occurrence:zero_abundance'&&$key!=='sample:comment'&&$key!=='sample:date'&&$key!=='sample:entered_sref'
+              &&$key!=='sample:entered_sref_system'&&$key!=='sample:external_key'
+              &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'
+              &&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
+              //Note that these need to be sample attributes as they need to be passed to the
+              //warehouse as part of the sample so that the spatial reference can be calculated
+              &&$key!=='smpAttr:'.$options['vice_county_attr_id']
+              &&$key!=='smpAttr:'.$options['country_attr_id']
+              ) {
+        unset($fields[$key]);
+      }
+    }
+    return $fields;
+  }
+  
+  private static function upload_mappings_form_get_location_fields($options,$settings,$fields,$request) {
+    // include survey and website information in the request if available, as this limits the availability of custom attributes
+    if (!empty($settings['website_id']))
+      $request .= '&website_id='.trim($settings['website_id']);
+    if (!empty($settings['survey_id']))
+      $request .= '&survey_id='.trim($settings['survey_id']);
+    if(isset($settings['sample:sample_method_id']) && trim($settings['sample:sample_method_id']) != '')
+    	$request .= '&sample_method_id='.trim($settings['sample:sample_method_id']);
+    $response = self::http_post($request, array());
+    $locationfields = json_decode($response['output'], true);
+    //We only want to include some of the location attributes
+    $locationFieldsToUse['locAttr:'.$options['plot_group_identifier_name_text_attr_id']] = $locationfields['locAttr:'.$options['plot_group_identifier_name_text_attr_id']];
+    $locationFieldsToUse['locAttr:'.$options['plot_width_attr_id']] = $locationfields['locAttr:'.$options['plot_width_attr_id']];
+    $locationFieldsToUse['locAttr:'.$options['plot_length_attr_id']] = $locationfields['locAttr:'.$options['plot_length_attr_id']];
+    $locationFieldsToUse['locAttr:'.$options['plot_radius_attr_id']] = $locationfields['locAttr:'.$options['plot_radius_attr_id']];
+    //fk for foreigh key lookup list
+    $locationFieldsToUse['locAttr:fk_'.$options['plot_shape_attr_id']] = $locationfields['locAttr:fk_'.$options['plot_shape_attr_id']];
+    $fields = array_merge($fields,$locationFieldsToUse);
+    return $fields;
+  }
+  
+  /*
+   * Javascript function that were in the upload_mappings_form function but I have moved out of that function as it was too long
+   */
+  private static function upload_mappings_form_javascript_detect_duplicate_fields_function() {
+    return "function detect_duplicate_fields() {
       var valueStore = [];
       var duplicateStore = [];
       var valueStoreIndex = 0;
@@ -871,8 +869,14 @@ class iform_plant_portal_user_data_importer extends helper_base {
         DuplicateAllowsUpload = 0;
         $('#duplicate-instruct').css('display', 'inline');
       }
-    }\n";  
-    self::$javascript .= "function update_required_fields() {
+    }\n";
+  }
+  
+    /*
+   * Javascript function that were in the upload_mappings_form function in the normal importer but I have moved out of thatfunction as it was too long
+   */
+  private static function upload_mappings_form_javascript_update_required_fields_function() {
+    return "function update_required_fields() {
       // copy the list of required fields
       var fields = $.extend(true, {}, required_fields),
           sampleVagueDates = [],
@@ -927,24 +931,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
       $('#required-instructions ul').html(output);
     }\n";
-    self::$javascript .= "required_fields={};\n";
-    foreach ($unlinked_required_fields as $field) {
-      $caption = $unlinked_fields[$field];
-      if (empty($caption)) {
-        $tokens = explode(':', $field);
-        $fieldname = $tokens[count($tokens)-1];
-        $caption = lang::get(self::processLabel(preg_replace(array('/^fk_/', '/_id$/'), array('', ''), $fieldname)));
-      }
-      $caption = self::translate_field($field, $caption);
-      self::$javascript .= "required_fields['$field']='$caption';\n";
-    }
-    self::$javascript .= "detect_duplicate_fields();\n";
-    self::$javascript .= "update_required_fields();\n";
-    self::$javascript .= "$('#entry_form select').change(function() {detect_duplicate_fields(); update_required_fields();});\n";
-    return $r;
   }
-  
-  //AVB To DO - If the Plant Portal importer is found not to work with Remember Mappings after testing, then we can remove this function
+ 
   /**
    * Returns an array of field to column title mappings that were previously stored in the user profile,
    * or mappings that were provided via the page's configuration form.
@@ -956,7 +944,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
   private static function getAutoFieldMappings($options, $settings) {
     $autoFieldMappings=array();
     //get the user's checked preference for the import page
-    if (function_exists('hostsite_get_user_field')) {
+    //AVB To Do - Unknown if remember mappings works with the plant portal importer - test as low priority, comment out until test
+    /*if (function_exists('hostsite_get_user_field')) {
       $json = hostsite_get_user_field('import_field_mappings');
       if ($json===false) {
         if (!hostsite_set_user_field('import_field_mappings', '[]'))
@@ -965,7 +954,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $json=trim($json);
         $autoFieldMappings=json_decode(trim($json), true);
       }
-    } else
+    } else */
       // host does not support user profiles, so we can't remember mappings
       self::$rememberingMappings=false;
     if (!empty($settings['survey_id']) && !empty($options['fieldMap'])) {
@@ -984,28 +973,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
     }
     return $autoFieldMappings;
-  }
-
-  //To Do AVB - This function can be removed if onlyAllowMappedFields is not found to work with the Plant Portal importer
-  /**
-   * List of available fields retrieve from the warehouse to ones for this survey.
-   * @param array $fields Field list obtained from the warehouse for this survey. Disallowed fields
-   * will be removed.
-   * @param array $options Import helper options array
-   * @param integer $survey_id ID of the survey being imported
-   */
-  private static function limitFields(&$fields, $options, $survey_id) {
-    if (isset($options['onlyAllowMappedFields']) && $options['onlyAllowMappedFields'] && isset($options['fieldMap'])) {
-      foreach($options['fieldMap'] as $surveyFieldMap) {
-        if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
-            $surveyFieldMap['survey_id']==$survey_id) {
-          $allowedFields = self::explode_lines($surveyFieldMap['fields']);
-          $trimEqualsValue = create_function('&$val', '$tokens = explode("=",$val); $val=$tokens[0];');
-          array_walk($allowedFields, $trimEqualsValue);
-          $fields = array_intersect_key($fields, array_combine($allowedFields, $allowedFields));
-        }
-      }
-    }
   }
 
   /**
@@ -1044,10 +1011,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
   }
   
   /**
-   * Displays the upload result page.
+   * Displays the upload result page in the following situations
+   * -If the import was a success
+   * -If there was a failure but the error check stage was never used
    * @param array $options Array of options passed to the import control.
    */
-  private static function upload_result($options) {
+  private static function display_result_if_success_or_failure_when_error_check_stage_was_not_run($options) {
     $request = parent::$base_url."index.php/services/plant_portal_import/get_upload_result?uploaded_csv=".$_GET['uploaded_csv'];
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
@@ -1440,6 +1409,8 @@ TD;
    * are being uploaded.
    * @param array $readAuth Read authorisation tokens, if not supplied then the $_POST array should contain them.
    * @param string $service Path to the service URL used. Default is data/handle_media, but could be import/upload_csv.
+   * @param boolean $removeLocalCopy Do we want to remove the local copy after sending to warehouse. This will be off for the error check
+   * stage as we will still need the file for the upload stage
    * @return string Error message, or true if successful.
    */
   protected static function send_file_to_warehouse_plant_portal_importer($path, $persist_auth=false, $readAuth = null, $service='data/handle_media',$removeLocalCopy=true) {
@@ -1487,8 +1458,8 @@ TD;
    * @param array $options Array of options passed to the import control.
    * @param array $mappings List of column title to field mappings
    */
-  //AVB check $calledFromSkippedMappingsPage is passed to this function
   private static function run_plant_portal_upload($options, $calledFromSkippedMappingsPage=false) {
+    $r='';
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
@@ -1499,28 +1470,10 @@ TD;
     $mappingsAndSettings=self::get_mappings_and_settings($options);
     if ($calledFromSkippedMappingsPage===false) {
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
-    }
-    $rows=file($_SESSION['uploaded_file']);
-    $r = '';
-    //If we are using the sample external key as the indicator of which samples
-    //the occurrences go into, then we need to check the sample data is consistant between the
-    //rows which share the same external key, if not, warn the user.
-    //If not using that mode we can just continue without the warning screen.
-    if ($options['model']==='occurrence'||$options['model']==='sample') {
-      if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
-        $checkArrays = self::sample_external_key_issue_checks($options,$rows);
-        $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
-        $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
-        if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
-          $r.= self::display_sample_external_key_data_mismatches($inconsistencyFailureRows,$clusteringFailureRows);
-          if (!empty($r))
-            return $r;
-        }
-      }
-    }
+    }  
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
       //If we hit this line it means we are doing the error checking step and the next step
-      //is step 3 which is the actual upload. Preserve the fields from previous steps in the post
+      //is step 5 which is the actual upload. Preserve the fields from previous steps in the post
       $r .= self::preserve_fields($options,$filename,5);
     } else {
       //This line is hit if we are doing the actual upload now (rather than error check).
@@ -1540,7 +1493,7 @@ TD;
       $mappingsAndSettings=self::get_mappings_and_settings($options); 
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }  
-    //AVB this return $r so might be wrong
+    //AVB To Do - If a warning is returned in $r it is currently unhandled
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse_plant_portal_importer($filename, false, $options['auth']['write_tokens'], 'plant_portal_import/upload_csv',$options['allowCommitToDB']);
     if ($transferFileDataToWarehouseSuccess===true) {
       //Progress message depends if we are uploading or simply checking for errors
@@ -1607,29 +1560,44 @@ TD;
     return $r;
   }
   
-  /* Plant Portal has quite a lot of extra logic that the "normal" importer doesn't have, and this is handled here. For instance, it creates groups and trys to attach occurrences to existing samples.
+  /* Plant Portal has quite a lot of extra logic that the "normal" importer doesn't have, and this is handled here. For instance, it creates groups and trys to attach occurrences to existing plots.
    * @param array $args Array of arguments passed from the Edit Tab.
    * @param array $options Array of options passed to the import control.
    */
   private static function plant_portal_import_logic($args,$options) {
+    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $rows=file($_SESSION['uploaded_file']);
+    $r = '';
+    //If we are using the sample external key as the indicator of which samples
+    //the occurrences go into, then we need to check the sample data is consistant between the
+    //rows which share the same external key, if not, warn the user.
+    //If not using that mode we can just continue without the warning screen.
+    if ($options['model']==='occurrence'||$options['model']==='sample') {
+      if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
+        $checkArrays = self::sample_external_key_issue_checks($options,$rows);
+        $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
+        $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
+        if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
+          $r.= self::display_sample_external_key_data_mismatches($inconsistencyFailureRows,$clusteringFailureRows);
+          if (!empty($r))
+            return $r;
+        }
+      }
+    }
     $reload = self::get_reload_link_parts();
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r =  "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
           "<fieldset><legend>".lang::get('Import allocations')."</legend><br>\n";
-    //As we have an extra import step, create a hidden version of the settings and mappings form otherwise the $_POST data used for mappings gets lost because of the extra wizard step
-    //$r .= self::get_hidden_upload_mappings_form($options);
     $filename=basename($_SESSION['uploaded_file']);
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
     ini_set('auto_detect_line_endings',TRUE);
     $fileArray = file($_SESSION['uploaded_file']);
     $headerLineItems = explode(',',$fileArray[0]);
     //If the user has selected a spatial reference system from the drop-down
-    //at the start, we need to create an extra column to put the spatial
-    //reference system into. We could do without this apart from the auto
-    //spatial reference creation functionality which means that
-    //each row can still have a separate spatial reference system.
+    //at the start, we need to create an extra column on the grid to put the spatial
+    //reference system into. 
     if (!empty($_SESSION['sample:entered_sref_system'])) {
       $last_key = key(array_slice($headerLineItems, -1, 1, TRUE ));
       $headerLineItems[$last_key+1]='Spatial reference system';
@@ -1689,8 +1657,8 @@ TD;
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
     $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
     $fileRowsAsArray=self::auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$args['vice_counties_list'],$args['countries_list']);
-    //Collect the samples and groups the user has rights to, from here we can also work out which samples and plots they have rights to
-    $plotsAndPlotGroupsUserHasRightsTo = self::get_samples_plot_and_groups_user_has_rights_to($auth,$args);
+    //Collect the plots and groups the user has rights to so we can use existing ones where needed
+    $plotsAndPlotGroupsUserHasRightsTo = self::get_plots_and_groups_user_has_rights_to($auth,$args);
     $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$plotsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
     //The screen for displaying import details has two sections, one for warnings, and the other for problems that are is mandatory to correct before allowing continue
     $r .= self::display_import_warnings($args,$fileArrayForImportRowsToProcessForImport,$headerLineItems,$args['nonFatalImportTypes']);
@@ -1698,7 +1666,7 @@ TD;
     if (empty($rFatal))
       $fatalErrorsFound=false;
     else 
-    $fatalErrorsFound=true;
+      $fatalErrorsFound=true;
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
       $r .= self::preserve_fields($options,$filename,4);
     } else {
@@ -1763,7 +1731,6 @@ TD;
     if (empty($args['loading_import_wait_text']))
       $args['loading_import_wait_text']='Please wait while we import your data...';
     $r = '';
-    //$r .= '<input type="hidden" id="import_step" name="import_step" value="4" />';
     $r .= '<div>'.$args['import_warnings_screen_instructions'].'<br><br></div>';
     $r.='<form action="">
       <input type="radio" id="reupload" name="reupload-choice" value="reupload"> '.$args['reupload_label'].'<br>
@@ -1782,9 +1749,8 @@ TD;
         $('#create-import-data').show();
       });\n";
     $r .= "<p id='re-upload-import'>".$args['reupload_link_text']."<a href=\"$reloadpath\">".lang::get(' reupload')."</a></p>";
-    //$r .= '<input type="submit" name="submit" id="re-upload-import" value="'.$args['reupload_link_text'].'" class="ui-corner-all ui-state-default button" style="display:none"/>';
     //If we use a normal button here (Rather than submit). We can use a click function to do some processing logic before forcing the submit using the same function.
-    $r .= '<input type="submit" name="submit" id="create-import-data" value="'.$args['continue_button'].'" class="ui-corner-all ui-state-default button" style="display:none"/>';
+    $r .= '<input type="button" name="submit" id="create-import-data" value="'.$args['continue_button'].'" class="ui-corner-all ui-state-default button" style="display:none"/>';
     $r .= '<input type="submit" name="submit" id="submit-import" style="display:none"/>';
     $r .= '<div id="import-loading-msg" style="display:none"/> '.$args['loading_import_wait_text'].'</div>';
     $r .= '</fieldset></form>';
@@ -1802,9 +1768,6 @@ TD;
     $plotsToCreateSrefs=array();
     $plotsToCreateSrefSystems=array();
     $distinctPlotGroupNamesToCreate=array();
-    //If we are going to add plots groups we need its termlist ID
-    $plotGroupTermlistId=$args['plot_group_termlist_id'];
-
     $websiteId=$args['website_id'];
     //If we create the plots, plot groups before we upload to the warehouse, then the new plots will already be available for the warehouse to use.
     $importTypesToCreate=array('nP-nPG','ePG');
@@ -1843,8 +1806,7 @@ TD;
     $('#create-import-data').click(function () {
     $('#create-import-data').attr('disabled','true');
     $('#import-loading-msg').show();";
-    //AVB plotGroupTermlistId is unused - need to correct?
-    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($plotGroupTermlistId) && !empty($args['plot_group_permission_person_attr_id']))
+    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($args['plot_group_permission_person_attr_id']))
       data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
     
     if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']))
@@ -1852,11 +1814,10 @@ TD;
     if (!empty($websiteId)&&!empty($plotPairsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
       data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotPairsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
     //data_entry_helper::$javascript .= "$('#fields_to_retain_form').submit();";
-    data_entry_helper::$javascript .= "});";
+    data_entry_helper::$javascript .= "$('#submit-import').click(); });";
     
   }
   
-  //To Do AVB, I think this may have a lot in common with the other extract functions, make one function
   private static function extract_plot_group_to_plot_attachments_to_create($fileArrayForImportRowsToProcessForImport,$columnHeadingIndexPositions,$importTypesToCreate,$plotDataToCreate,$plotGroupDataToCreate) {    
     $arrayIdx=0;
     $plotGrouptoPlotAttachmentsToCreate=array();
@@ -1881,9 +1842,7 @@ TD;
     }
     return $plotGrouptoPlotAttachmentsToCreate;
   }
-  
-  //To Do AVB - Currently the mappings drop-down contains mappings we will probably not be use
-  
+    
   /*
    * Function looks at all the rows in the import, and returns an array of data of a particular type that needs to be created.
    * e.g. ['Plot group 1','Plot group 2','Plot group 3']
@@ -2189,7 +2148,7 @@ TD;
   /*
    * Check the samples/plots the user has permission to use against the import data.
    * Once that is done, we are able to determine and report to the user how the data will be imported
-   * e.g. (will we use new samples, existing examples etc)
+   * e.g. (will we use new samples, existing plots etc)
    * @param Array $args Arguments from the Edit Tab
    * @param Array $fileRowsAsArray Rows from import file
    * @param Array $plotsAndPlotGroupsUserHasRightsTo Plots and Plot Groups the user has rights to
@@ -2356,7 +2315,10 @@ TD;
     return $fileRowsAsArray;
   }
   
-  private static function get_samples_plot_and_groups_user_has_rights_to($auth,$args) {
+  /*
+   * Get plots and plot groups user has rights to so we can check for existing ones
+   */
+  private static function get_plots_and_groups_user_has_rights_to($auth,$args) {
     $plotsAndPlotGroupsUserHasRightsTo=array();
     global $user;
     if (function_exists('hostsite_get_user_field'))
