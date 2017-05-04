@@ -2537,7 +2537,8 @@ TD;
       if ($mapping==='sample:external_key') {
         $sampleKeyIdx=$columnIdx;
       }
-      if ((substr($mapping,0,7) === 'sample:'||substr($mapping,0,8) === 'smpAttr:')&&$mapping!=='sample:external_key') {
+      //Need to check the plot group also, as the same plot name with different plot group would be considered as a different plot
+      if ((substr($mapping,0,7) === 'sample:'||substr($mapping,0,8) === 'smpAttr:'||$mapping==='locAttr:'.$options['plot_group_identifier_name_text_attr_id'])&&$mapping!=='sample:external_key') {
         array_push($columnIdxsToCheck,$columnIdx);
       }
       $columnIdx++;
@@ -2553,14 +2554,14 @@ TD;
     //Flag individual rows which have the same sample external key but are not on consecutive rows as this would cause
     //two separate samples which would not be intended (note this flag is only used in the Sample External Key matching mode)
     $rowClusteringFailure=false;
-    $rowNumber=0;
+    $rowNumber=1;
     foreach ($rows as $rowNum=>$rowArray) {
       //Reset flags for each row
       $rowInconsistencyFailure=false;
       $rowClusteringFailure=false;
       //Explode individual columns
       //If the sample key isn't empty on the row continue to work on the row
-      if (!empty($sampleKeyIdx)&&!empty($rowArray[$sampleKeyIdx])) {
+      if (!empty($sampleKeyIdx)) {
         //If the row we are working on has the same sample external key as one of the previous rows then
         //continue
         if (array_key_exists($rowArray[$sampleKeyIdx],$latestRowForEachSampleKey)) {
@@ -2610,7 +2611,7 @@ TD;
     $r='';
     $r.='<div><p>You have selected to use the Sample External Key to determine which samples '
             . 'your occurrences are placed into. A scan has been made of your data and problems have been found. '
-            . '<em>Note that the listed row numbers exclude the header row.</em></p></div>';
+            . '<b><i>Note that the listed row numbers start with 0 being the header row and the first data row being row 1.</i></b></p></div>';
     if (!empty($inconsistencyFailureRows)) {
       $r.='<div><p><b>Inconsistancies have been found in the sample data on your rows which '
               . 'have a matching external key. Please correct your original file and select the '
@@ -2619,11 +2620,12 @@ TD;
         $r.= '<em>'.$inconsistencyFailureRow.' (row number '.$rowNum.')</em><br>';
       }
       $r.= '<div><p>A row is considered to be inconsistant if the sample key matches an earlier row but some of the sample '
-              . 'data (such as the date) is different.</p></div>';
+              . 'data (such as the date) is different. Note that rows without a sample external key at all are considered to have the same sample external key as each other.</p></div>';
     }
     if (!empty($clusteringFailureRows)) {
-      $r.='<div><p><b>The following rows have been found to have matching sample external keys but are separated inside the import file. '
-              . 'Rows which you need to go into the same sample should be placed on consecutive rows.</b></p></div>';
+      $r.='<div><p><b>The following rows have been found to have matching sample external keys but are separated from earlier rows with the same external key inside the import file. '
+              . 'Rows which you need to go into the same sample should be placed on consecutive rows. If the sample external key is not present for the row, then the row '
+              . 'needs to be placed next to other rows that also don\'t have a sample external key.</b></p></div>';
       foreach ($clusteringFailureRows as $rowNum=>$clusteringFailureRow) {
         $r.= '<em>'.$clusteringFailureRow.' (row number '.$rowNum.')</em><br>';
       }
