@@ -2586,12 +2586,9 @@ TD;
             }
           }
         }
-        //Ignore header row
         //Save the most recent row for each Sample External Key
-        if ($rowNum!==0) {
-          $latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]]=$rowArray;
-          $latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]]['row_number']=$rowNumber;
-        }
+        $latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]]=$rowArray;
+        $latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]]['row_number']=$rowNumber;
       }
       //Flag rows with the same sample external key but different sample data such as dates
       if ($rowInconsistencyFailure===true) {
