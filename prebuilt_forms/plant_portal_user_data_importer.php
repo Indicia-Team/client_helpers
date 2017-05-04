@@ -1566,7 +1566,6 @@ TD;
    */
   private static function plant_portal_import_logic($args,$options) {
     $mappingsAndSettings=self::get_mappings_and_settings($options);
-    $rows=file($_SESSION['uploaded_file']);
     $r = '';
     //If we are using the sample external key as the indicator of which samples
     //the occurrences go into, then we need to check the sample data is consistant between the
@@ -1582,6 +1581,8 @@ TD;
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
     ini_set('auto_detect_line_endings',TRUE);
     $fileArray = file($_SESSION['uploaded_file']);
+    //Keep a copy of the header as we will be removing it in a minute
+    $originalHeader=$fileArray[0];
     $headerLineItems = explode(',',$fileArray[0]);
     //If the user has selected a spatial reference system from the drop-down
     //at the start, we need to create an extra column on the grid to put the spatial
@@ -1595,11 +1596,11 @@ TD;
     //Cycle through each row excluding the header row and convert into an array
     foreach ($fileArray as $fileLine) {
       //Trim first otherwise we will attempt to process rows which might be just whitespace
-      if (!empty(trim($fileLine))) {
+      if (!empty($fileLine)) {
         $explodedLine = explode(',',$fileLine);
         //Remove white space start and end of items
         foreach ($explodedLine as $lineItemIdx => $lineItem) {
-          $explodedLine[$lineItemIdx]=trim($lineItem);
+          $explodedLine[$lineItemIdx]=$lineItem;
         }
         $fileRowsAsArray[]=$explodedLine;
       }
@@ -1657,6 +1658,13 @@ TD;
         }
       }
     }
+    //As we have applied processing to the file (such as auto spatial reference generation), we need to store the changes to send to the warehouse. Note the doesn't affect the file on the disc
+    $implodedFileArray[0]=$originalHeader;
+    foreach ($fileRowsAsArray as $fileRowsAsArrayLine) {
+      $implodedLine = implode(',',$fileRowsAsArrayLine);
+      $implodedFileArray[]=$implodedLine;
+    }
+    file_put_contents ($_SESSION['uploaded_file'],$implodedFileArray);
     //Collect the plots and groups the user has rights to so we can use existing ones where needed
     $plotsAndPlotGroupsUserHasRightsTo = self::get_plots_and_groups_user_has_rights_to($auth,$args);
     $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$plotsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
@@ -2568,7 +2576,7 @@ TD;
           //Cycle through each colum on the row
           foreach ($rowArray as $dataCellIdx=>$dataCell) {
             //If any of the row sample columns mismatches an earlier row that has same external key, then flag failure
-            if (in_array($dataCellIdx,$columnIdxsToCheck)&&$dataCell!==$latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]][$dataCellIdx]) {
+            if (in_array($dataCellIdx,$columnIdxsToCheck)&&trim($dataCell)!==trim($latestRowForEachSampleKey[$rowArray[$sampleKeyIdx]][$dataCellIdx])) {
               $rowInconsistencyFailure=true;
             }
             //If the current row number minus the row number of the last row with the same sample external key is bigger
