@@ -2226,7 +2226,10 @@ TD;
    * @param Array $columnHeadingIndexPositions The positions from the left of the most important columns in the import file, starting with 0 at the left
    * 
    */
-  private static function existing_plot_check_for_line(&$fileRowsAsArrayLine,$plotsUserHasRightsTo,&$lineState,$columnHeadingIndexPositions) {
+  private static function existing_plot_check_for_line(&$fileRowsAsArrayLine,$plotsUserHasRightsTo,&$lineState,$columnHeadingIndexPositions) {   
+    $fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]=trim($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]);    
+    $fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']]=trim($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']]);
+    $fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]=trim($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]);
     //Only interested in the plots the user has rights to, if they don't have any anyway, we don't need to return anything from this function
     foreach ($plotsUserHasRightsTo as $aPlotUserHasRightsTo) {
       //If spatial reference system isn't on a import row, then get it from the mappings page
@@ -2234,6 +2237,7 @@ TD;
          $spatialReferenceSystem=$fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']];
       else
         $spatialReferenceSystem=$_SESSION['sample:entered_sref_system'];
+      $spatialReferenceSystem=trim($spatialReferenceSystem);
       //Only indicate existing plot if the plot the user has rights to matches the row we are using from the import file.
       //Here we can pass the test if both comparison columns are empty, the other pass scenario is if the columns are both filled in and they match as well.
       if (((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&empty($aPlotUserHasRightsTo['centroid_sref']))||
