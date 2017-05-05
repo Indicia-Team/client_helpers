@@ -394,24 +394,6 @@ if($.browser.msie && $.browser.version < 9)
       }
     }
     data_entry_helper::$javascript .= "\nindiciaData.resizeSpeciesRadioGroup = ".(isset($options['resizeRadioGroupSelector']) && (in_array('*',$selectors) || in_array('species',$selectors)) ? 'true' : 'false').";\n";
-    if(lang::get('validation_required') != 'validation_required')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";";
-    if(lang::get('validation_max') != 'validation_max')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
-    if(lang::get('validation_min') != 'validation_min')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
-    if(lang::get('validation_number') != 'validation_number')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
-    if(lang::get('validation_digits') != 'validation_digits')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
-    if(lang::get('validation_integer') != 'validation_integer')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
     // possible clash with link_species_popups, so latter disabled.
     iform_mnhnl_addCancelButton($args['interface']);
     $attrOpts = array(

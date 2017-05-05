@@ -372,21 +372,6 @@ deleteSurvey = function(sampleID){
   }
   
   protected static function get_control_customJS($auth, $args, $tabalias, $options) {
-    if(lang::get('validation_required') != 'validation_required')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";";
-    if(lang::get('validation_max') != 'validation_max')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
-    if(lang::get('validation_min') != 'validation_min')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
-    if(lang::get('validation_number') != 'validation_number')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
-    if(lang::get('validation_digits') != 'validation_digits')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
   	// possible clash with link_species_popups, so latter disabled.
     iform_mnhnl_addCancelButton($args['interface']);
     data_entry_helper::$javascript .= "

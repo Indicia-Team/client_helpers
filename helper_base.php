@@ -1860,6 +1860,25 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
   }
 });\n";
     self::add_resource('validation');
+    // Allow i18n on validation messages
+    if(lang::get('validation_required') != 'validation_required')
+      data_entry_helper::$late_javascript .= "
+$.validator.messages.required = \"".lang::get('validation_required')."\";";
+    if(lang::get('validation_max') != 'validation_max')
+      data_entry_helper::$late_javascript .= "
+$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
+    if(lang::get('validation_min') != 'validation_min')
+      data_entry_helper::$late_javascript .= "
+$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
+    if(lang::get('validation_number') != 'validation_number')
+      data_entry_helper::$late_javascript .= "
+$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
+    if(lang::get('validation_digits') != 'validation_digits')
+      data_entry_helper::$late_javascript .= "
+$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
+    if(lang::get('validation_integer') != 'validation_integer')
+      data_entry_helper::$late_javascript .= "
+$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
   }
   
   /**

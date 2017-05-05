@@ -1255,7 +1255,6 @@ alertIndiciaError = function(data){
 };
 
 jQuery('#imp-georef-search-btn').removeClass('indicia-button').addClass('search-button');
-$.validator.messages.required = \"".lang::get('validation_required')."\";
 
 // remove the (don't know) entry from flower type filter.
 jQuery('[name=occAttr\\:".$flowerTypeAttrID."]').filter('[value=".$args['flower_type_dont_know']."]').parent().remove();
