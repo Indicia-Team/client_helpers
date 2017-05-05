@@ -200,6 +200,8 @@ var rowIdToReselect = false;
           $('#record-details-tabs').tabs('load', indiciaFns.activeTab($('#record-details-tabs')));
         }
         if (indiciaData.autoDiscard) {
+          // remove any following footable detail row first
+          $('#row' + id).next('.footable-row-detail').remove();
           nextRow = $('#row' + id).next();
           $('#row' + id).remove();
           if (nextRow.length > 0) {
