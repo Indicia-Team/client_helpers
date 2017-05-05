@@ -589,6 +589,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
 
       $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
       $r = '<div class="page-notice ui-state-highlight ui-corner-all">'.lang::get('import_settings_instructions')."</div>\n".
+           "<div class=\"page-notice ui-state-highlight ui-corner-all\"><em>Important: If you have missing spatial references in your data, please leave this option off.</em></div>\n".   
           "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
           "<fieldset><legend>".lang::get('Import Settings')."</legend>\n";
       $formArray = json_decode($response['output'], true);
@@ -1664,7 +1665,11 @@ TD;
       $implodedLine = implode(',',$fileRowsAsArrayLine);
       $implodedFileArray[]=$implodedLine;
     }
-    file_put_contents ($_SESSION['uploaded_file'],$implodedFileArray);
+    //As we have auto generated spatial references, we need to put them back for the warehouse to use (note this does not affect the original file)
+    //AVB To DO: Auto generation is currently only supported when a general spatial reference system isn't supplied.
+    if (empty($_SESSION['sample:entered_sref_system'])) {
+      file_put_contents ($_SESSION['uploaded_file'],$implodedFileArray);
+    }
     //Collect the plots and groups the user has rights to so we can use existing ones where needed
     $plotsAndPlotGroupsUserHasRightsTo = self::get_plots_and_groups_user_has_rights_to($auth,$args);
     $fileArrayForImportRowsToProcessForImport = self::check_existing_user_data_against_import_data($args,$fileRowsAsArray,$plotsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
