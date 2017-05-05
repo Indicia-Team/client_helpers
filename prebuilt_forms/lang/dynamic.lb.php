@@ -38,6 +38,6 @@ $custom_terms = array(
         'LANG_Comment' => 'Comment',
 	'LANG_Save' => 'Save',
         'LANG_Blank_Text' => 'Select...',
-	'validation_required' => 'Please enter a value for this field',
+	'validation_required' => 'Dieses Feld ist erforderlich.',
   'Click here' => 'Hei klicken',
 );
