@@ -68,16 +68,12 @@ class extension_group_hierarchies {
     }
     if (isset($nid)) {
       $data = data_entry_helper::get_population_data(array(
-        'table' => 'groups_user',
-        'extraParams' => $auth['read'] + array(
-            'user_id' => hostsite_get_user_field('indicia_user_id'),
-            'group_id' => $_GET[$options['parent_parameter']],
-            'view' => 'detail'
-          )
+        'table' => 'group',
+        'extraParams' => $auth['read'] + array('id' => $_GET[$options['parent_parameter']])
       ));
       if (count($data)) {
         $title = hostsite_get_page_title($nid);
-        $title = str_replace('{group}', $data[0]['group_title'], $title);
+        $title = str_replace('{group}', $data[0]['title'], $title);
         hostsite_set_page_title($title);
       }
       return '';
