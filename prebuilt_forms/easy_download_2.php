@@ -367,7 +367,9 @@ class iform_easy_download_2 {
         'label'=>lang::get('Download type'),
         'lookupValues'=>$types,
         'class'=>'control-width-5',
-        'helpText'=>'Select the type of download you require, i.e. the purpose for the data. This defines which records are available to download.'
+        'helpText'=>lang::get('Select the type of download you require, i.e. ' .
+            'the purpose for the data. This defines which records are ' .
+            'available to download.')
       ));
     }
     $r .= data_entry_helper::select(array(
@@ -375,7 +377,8 @@ class iform_easy_download_2 {
       'label'=>lang::get('Filter to apply'),
       'lookupValues'=>array(),
       'class'=>'control-width-5',
-      'helpText'=>lang::get('Optionally select from the available filters. Filters you create on the Explore pages will be available here.')
+      'helpText'=>lang::get('Optionally select from the available filters. ' .
+          'Filters you create on the Explore pages will be available here.')
     ));
     $r .= "</fieldset>\n";
     $r .= '<fieldset><legend>'.lang::get('Limit the records').'</legend>';
@@ -384,7 +387,7 @@ class iform_easy_download_2 {
       $r .= data_entry_helper::select(array(
         'fieldname' => 'survey_id',
         'label' => lang::get('Survey to include'),
-        'helpText' => 'Choose a survey, or <all> to not filter by survey.',
+        'helpText' => lang::get('Choose a survey, or &lt;all&gt; to not filter by survey.'),
         'lookupValues' => array(),
         'class' => 'control-width-5'
       ));
@@ -393,21 +396,22 @@ class iform_easy_download_2 {
     // Let the user pick the date range to download.
     $r .= data_entry_helper::select(array(
       'label'=>lang::get('Date field'),
-      'fieldname'=>'date_type',
-      'lookupValues'=>array('recorded'=>lang::get('Field record date'),'input'=>lang::get('Input date'),
-            'edited'=>lang::get('Last changed date'), 'verified'=>'Verification status change date'),
-      'helpText'=>'If filtering on date, which date field would you like to filter on?'
+      'fieldname' => 'date_type',
+      'lookupValues' => array('recorded'=>lang::get('Field record date'),'input'=>lang::get('Input date'),
+            'edited' => lang::get('Last changed date'), 'verified'=>'Verification status change date'),
+      'helpText' => lang::get('If filtering on date, which date field would you ' .
+          'like to filter on?')
     ));
     $r .= data_entry_helper::date_picker(array(
       'fieldname' => 'date_from',
       'label' => lang::get('Start Date'),
-      'helpText' => 'Leave blank for no start date filter',
+      'helpText' => lang::get('Leave blank for no start date filter'),
       'class' => 'control-width-4'
     ));
     $r .= data_entry_helper::date_picker(array(
       'fieldname' => 'date_to',
       'label' => lang::get('End Date'),
-      'helpText' => 'Leave blank for no end date filter',
+      'helpText' => lang::get('Leave blank for no end date filter'),
       'class' => 'control-width-4'
     ));
     $r .= '</fieldset>';

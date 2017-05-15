@@ -668,7 +668,6 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
 ';
 
     data_entry_helper::$javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";
 var sessionCounter = 0;
 jQuery('#imp-georef-search-btn').removeClass('indicia-button').addClass('search-button');
 // can't use shuffle to side as dynamic generated code does like it in IE7

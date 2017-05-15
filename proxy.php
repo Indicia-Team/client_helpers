@@ -92,7 +92,8 @@ if (curl_errno($session) || strpos($response, 'HTTP/1.1 200 OK')===false) {
     if($fileType == 'comma-separated-values') {
       $fileType = 'csv';
     }
-    header('Content-Disposition: attachment; filename="download.' . $fileType . '"');
+    // if a 'filename' is specified in the original URL params, then the client is expecting the attachement to have this name.
+    header('Content-Disposition: attachment; filename="'.(isset($_GET['filename']) ? $_GET['filename'] : 'download'). '.' . $fileType . '"');
 
     if ($fileType == 'csv') {
       // output a byte order mark for proper CSV UTF-8

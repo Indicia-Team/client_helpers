@@ -26,13 +26,14 @@
 class extension_extra_data_entry_controls {
 
   /**
-   * A conttrol which provides autocomplete functionality to lookup against the list of
+   * A control which provides autocomplete functionality to lookup against the list of
    * people who are users of this website.
    * @return string THML
    */
   public static function person_autocomplete($auth, $args, $tabalias, $options, $path) {
     if (empty($options['fieldname']))
-      return 'A @fieldname option is required for the [extra_data_entry_controls.person_autocomplete] control.';
+      return 'A @fieldname option is required for the ' .
+          '[extra_data_entry_controls.person_autocomplete] control.';
     if (!empty($options['default']) && empty($options['defaultCaption']))
       $options['defaultCaption'] = $options['default'];
     $options = array_merge(array(
@@ -157,6 +158,7 @@ class extension_extra_data_entry_controls {
     if (!empty($values["association_copy_attributes:$index"]))
       $copiedAttrs = explode(',', $values["association_copy_attributes:$index"]);
     $assoc = array_merge($s_array[0]['subModels'][0]);
+    unset($assoc['model']['fields']['id']);
     unset($assoc['model']['fields']['comment']);
     foreach ($assoc['model']['fields'] as $field => $value) {
       if (substr($field, 0, 8)==='occAttr:' && !in_array(substr($field, 8), $copiedAttrs))

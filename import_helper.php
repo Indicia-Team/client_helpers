@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -19,30 +18,25 @@
  * @license  http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link     http://code.google.com/p/indicia/
  */
-
 /**
  * Link in other required php files.
  */
 require_once('lang.php');
 require_once('helper_base.php');
-
 /**
  * Static helper class that provides methods for dealing with imports.
  * @package Client
  */
 class import_helper extends helper_base {
-
   /**
    * @var boolean Flag set to true if the host system is capable of storing our user's remembered import mappings
    * for future imports.
    */
   private static $rememberingMappings=true;
-
   /**
    * @var array List of field to column mappings that we managed to set automatically
    */
   private static $automaticMappings=array();
-
   /**
    * Outputs an import wizard. The csv file to be imported should be available in the $_POST data, unless
    * the existing_file option is specified.
@@ -100,7 +94,6 @@ class import_helper extends helper_base {
     }
     else throw new exception('Invalid importer state');
   }
-
   /**
    * Returns the HTML for a simple file upload form.
    */
@@ -113,19 +106,16 @@ class import_helper extends helper_base {
     $r .= '<input type="Submit" value="'.lang::get('Upload').'"></form>';
     return $r;
   }
-
   /**
    * Generates the import settings form. If none available, then outputs the upload mappings form.
    * @param array $options Options array passed to the import control.
    */
   private static function import_settings_form($options) {
     $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
-
     // by this time, we should always have an existing file
     if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
     $request = parent::$base_url."index.php/services/import/get_import_settings/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
-
     $switches = isset($options['switches']) && is_array($options['switches']) ? $options['switches'] : array();
     if (!empty($options['occurrenceAssociations']))
       $switches['occurrence_associations']='t';
@@ -182,7 +172,6 @@ class import_helper extends helper_base {
       return self::upload_mappings_form($options);
     }
   }
-
   /**
    * Outputs the form for mapping columns to the import fields.
    * @param array $options Options array passed to the import control.
@@ -224,7 +213,6 @@ class import_helper extends helper_base {
     $response = self::http_post($request, $post);
     if (!isset($response['output']) || $response['output'] != 'OK')
       return "Could not upload the settings metadata. <br/>".print_r($response, true);
-
     $request = parent::$base_url."index.php/services/import/get_import_fields/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
     // include survey and website information in the request if available, as this limits the availability of custom attributes
@@ -238,7 +226,6 @@ class import_helper extends helper_base {
     	$request .= '&sample_method_id='.trim($settings['sample:sample_method_id']);
     else if($options['model'] == 'location' && isset($settings['location:location_type_id']) && trim($settings['location:location_type_id']) != '')
     	$request .= '&location_type_id='.trim($settings['location:location_type_id']);
-
     $response = self::http_post($request, array());
     $fields = json_decode($response['output'], true);
     if (!is_array($fields))
@@ -262,18 +249,15 @@ class import_helper extends helper_base {
       $unlinked_fields = $fields;
     // only use the required fields that are available for selection - the rest are handled somehow else
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
-
     $handle = fopen($_SESSION['uploaded_file'], "r");
     $columns = fgetcsv($handle, 1000, ",");
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     //  if the user checked the Remember All checkbox need to remember this setting
     $checkedRememberAll=isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
-
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
       '<p>'.lang::get('column_mapping_instructions').'</p>'.
       '<div class="ui-helper-clearfix import-mappings-table"><table class="ui-widget ui-widget-content">'.
@@ -417,7 +401,6 @@ class import_helper extends helper_base {
     self::$javascript .= "$('#entry_form select').change(function() {detect_duplicate_fields(); update_required_fields();});\n";
     return $r;
   }
-
   /**
    * Returns an array of field to column title mappings that were previously stored in the user profile,
    * or mappings that were provided via the page's configuration form.
@@ -458,7 +441,6 @@ class import_helper extends helper_base {
     }
     return $autoFieldMappings;
   }
-
   /**
    * If the configuration only allows the supplied fields for a given survey ID, then limits the
    * list of available fields retrieve from the warehouse for this survey to that configured list.
@@ -480,7 +462,6 @@ class import_helper extends helper_base {
       }
     }
   }
-
   /**
    * When an array (e.g. $_POST containing preset import values) has values with actual ids in it, we need to
    * convert these to fk_* so we can compare the array of preset data with other arrays of expected data.
@@ -497,7 +478,6 @@ class import_helper extends helper_base {
     }
     return array_merge($arr, $ids);
   }
-
   /**
    * Takes an array of fields, and removes the website ID or survey ID fields within the arrays if
    * the website and/or survey id are set in the $settings data.
@@ -515,7 +495,6 @@ class import_helper extends helper_base {
       }
     }
   }
-
   /**
    * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
    * @param array $options Array of options passed to the import control.
@@ -532,7 +511,6 @@ class import_helper extends helper_base {
       $reload = self::get_reload_link_parts();
       $reload['params']['uploaded_csv']=$filename;
       $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-
       // initiate local javascript to do the upload with a progress feedback
       $r = '
   <div id="progress" class="ui-widget ui-widget-content ui-corner-all">
@@ -591,7 +569,6 @@ class import_helper extends helper_base {
         }
       });
     };
-
     var total=0, filepos=0;
     jQuery('#progress-bar').progressbar ({value: 0});
     uploadChunk();
@@ -599,7 +576,6 @@ class import_helper extends helper_base {
     }
     return $r;
   }
-
   /**
    * Displays the upload result page.
    * @param array $options Array of options passed to the import control.
@@ -608,12 +584,10 @@ class import_helper extends helper_base {
     $request = parent::$base_url."index.php/services/import/get_upload_result?uploaded_csv=".$_GET['uploaded_csv'];
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
-
     if (isset($response['output'])) {
       $output = json_decode($response['output'], true);
       if (!is_array($output) || !isset($output['problems']))
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, true);
-
       if ($output['problems']!==0) {
         $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
           lang::get('download_error_file_instructions') .
@@ -631,8 +605,6 @@ class import_helper extends helper_base {
     $r = "<p>$r</p><p>".lang::get('Would you like to ')."<a href=\"$reloadpath\">".lang::get('import another file?')."</a></p>";
     return $r;
   }
-
-
  /**
   * Returns a list of columns as an list of <options> for inclusion in an HTML drop down,
   * loading the columns from a model that are available to import data into
@@ -655,7 +627,6 @@ class import_helper extends helper_base {
     $labelListIndex = 0;
     $labelList = array();
     $itWasSaved[$column] = 0;
-
     foreach ($fields as $field=>$caption) {
       if (strpos($field,":"))
         list($prefix,$fieldname)=explode(':',$field);
@@ -770,7 +741,6 @@ class import_helper extends helper_base {
     $r = self::items_to_draw_once_per_import_column($r, $column, $itWasSaved, isset($autoFieldMappings['RememberAll']), $multiMatch);
     return $r;
   }
-
   
  /**
   * This method is used by the mode_field_options method.
@@ -913,8 +883,6 @@ TD;
     }
     return $caption;
   }
-
-
   /**
    * Method to upload the file in the $_FILES array, or return the existing file if already uploaded.
    * @param array $options Options array passed to the import control.
@@ -943,7 +911,6 @@ TD;
       return $options['existing_file'];
     return isset($_POST['existing_file']) ? $_POST['existing_file'] : '';
   }
-
   /**
    * Humanize a piece of text by inserting spaces instead of underscores, and making first letter
    * of each phrase a capital.
@@ -954,7 +921,6 @@ TD;
   private static function processLabel($text) {
     return ucFirst(preg_replace('/[\s_]+/', ' ', $text));
   }
-
   /**
    * Private method to build a single select option for the model field options.
    * Option is selected if selected=caption (case insensitive).
@@ -971,7 +937,6 @@ TD;
     $r .= ' value="'.htmlspecialchars($field)."\"$selHtml>".htmlspecialchars($caption).'</option>';
     return $r;
   }
-
   /**
    * Provides optional translation of field captions by looking for a translation code dd:model:fieldname. If not
    * found returns the original caption.
@@ -989,5 +954,4 @@ TD;
       return $caption;
     }
   }
-
 }

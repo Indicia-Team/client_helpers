@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * 
  * @package	Client
  * @subpackage PrebuiltForms
@@ -193,7 +193,6 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           $param['fieldname'] != 'cache_lookup' &&
           $param['fieldname'] != 'user_controls_taxon_filter')
         $retVal[] = $param;
-      // Note the includeLocTools is left in in case any child forms use it 
     }
     return $retVal;
   }
@@ -215,7 +214,7 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
   protected static function getExtraGridModeTabs($retTabs, $readAuth, $args, $attributes) {
     if(!hostsite_user_has_permission($args['edit_permission'])) return('');
     if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));
-    if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
+    if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
     $primary = iform_mnhnl_getTermID(array('read'=>$readAuth), 'indicia:location_types',$args['LocationTypeTerm']);
     $r= '<div id="downloads" >';
     $r .= '<p>'.lang::get('LANG_Data_Download').'</p>';
@@ -395,24 +394,6 @@ if($.browser.msie && $.browser.version < 9)
       }
     }
     data_entry_helper::$javascript .= "\nindiciaData.resizeSpeciesRadioGroup = ".(isset($options['resizeRadioGroupSelector']) && (in_array('*',$selectors) || in_array('species',$selectors)) ? 'true' : 'false').";\n";
-    if(lang::get('validation_required') != 'validation_required')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";";
-    if(lang::get('validation_max') != 'validation_max')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
-    if(lang::get('validation_min') != 'validation_min')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
-    if(lang::get('validation_number') != 'validation_number')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
-    if(lang::get('validation_digits') != 'validation_digits')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
-    if(lang::get('validation_integer') != 'validation_integer')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
     // possible clash with link_species_popups, so latter disabled.
     iform_mnhnl_addCancelButton($args['interface']);
     $attrOpts = array(

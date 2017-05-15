@@ -22,7 +22,6 @@
  
 require_once('includes/user.php');
 require_once('includes/groups.php');
-
 /**
  * Prebuilt Indicia data form that provides an import wizard
  *
@@ -143,7 +142,6 @@ class iform_importer {
       ),
     );
   }
-
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
@@ -218,5 +216,4 @@ class iform_importer {
     }
     return $r;
   }
-
 }

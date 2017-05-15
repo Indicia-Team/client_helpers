@@ -19,7 +19,7 @@
  * @link 	http://code.google.com/p/indicia/
  */
 
-include_once 'dynamic.en.php';
+include_once 'dynamic.de.php';
 
 /**
  * Additional language terms or overrides for dynamic_sample_occurrence form.
@@ -48,12 +48,12 @@ $custom_terms = array_merge($custom_terms, array(
 	'LANG_Other_Information_Tab' => 'Other Information',
 	'LANG_Tab_Instructions _otherinformation'=>'<strong>Other Information</strong><br/>Please tell us when the observation took place, the biotope, whether a voucher specimen was taken (in the case where identification was difficult, to allow verification), and whether the observation details have been completed.',
 
-        'LANG_Record_Status_Label' => 'Record Status',
+  'LANG_Record_Status_Label' => 'Record Status',
 	'LANG_Record_Status_I' => 'In Progress',
 	'LANG_Record_Status_C' => 'Completed',
 	'LANG_Record_Status_V' => 'Verified', // NB not used
 
-        'LANG_No_User_Id'=> 'This form is configured to show the user a grid of their existing records which they can add to or edit. ' .
+  'LANG_No_User_Id'=> 'This form is configured to show the user a grid of their existing records which they can add to or edit. ' .
           'To do this, the form requires that either it must be used with a survey that includes the CMS User ID attribute in the '.
           'list of attributes configured for the survey on the warehouse or that a function hostsite_get_user_field exists and returns' .
           'their Indicia User ID. This allows records to be tagged against the user. ' .

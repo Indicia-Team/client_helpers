@@ -1,5 +1,4 @@
 <?php
-
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -21,7 +20,6 @@
  */
  
 global $default_terms;
-
 /**
  * Provides a list of default localisable terms used by the lang class.
  *
@@ -63,7 +61,6 @@ $default_terms = array(
   'validation_time' => 'Please enter a valid 24Hr Time in HH:MM format',
   'validation_digit' => 'Please enter only digits',
   'validation_integer' => 'Please enter an integer, positive or negative',
-
   // Default labels for various database fields
   'occurrence:taxa_taxon_list_id' => 'Species',
   'sample:date' => 'Date',
@@ -87,7 +84,6 @@ $default_terms = array(
     'which holds the rows of data that did not upload. Find the column called "Problem" which lists the associated ' .
     'error for each row. Correct the error, and then re-upload the CSV file containing <strong>only</strong> the ' .
     'rows of data which did not upload correctly. Please do not re-upload the whole dataset again.',
-
   // define the captions for fields in the data dictionary
   'dd:occurrence:fk_taxa_taxon_list' => 'Species or taxon name',
   'dd:occurrence:all_info_in_determinations' => 'Use determinations table for identification information (Y/N)',

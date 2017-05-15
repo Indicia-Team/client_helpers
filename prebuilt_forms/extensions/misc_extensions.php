@@ -220,6 +220,14 @@ class extension_misc_extensions {
       $options['extraParams'] = $auth['read'] + $options['extraParams'];
     return data_entry_helper::$ctrl($options);
   }
+
+  public static function map_helper_control($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('map_helper'));
+    $ctrl = $options['control'];
+    if (isset($options['extraParams']))
+      $options['extraParams'] = $auth['read'] + $options['extraParams'];
+    return map_helper::$ctrl($options);
+  }
   
   /**
    * Adds a Drupal breadcrumb to the page.
@@ -403,5 +411,132 @@ $('form#entry_form').tooltip({
     $r .= '<textarea style="width: 100%;" id="share-link" rows="4"></textarea>';
     $r .= '</div></div>';
     return $r;
+  }
+
+  /**
+   * An extension control that takes a scratchpad_list_id parameter in the URL and uses it to load the list onto a
+   * species grid on the page. This allows a scratchpad to be used as the first step in data entry.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param $options Array of options. Set parameter to the name of the URL parameter for the scratchpad_list_id, if you
+   * want to override the default.
+   * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
+   */
+  public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
+    $options = array_merge(
+      array(
+        'parameter' => 'scratchpad_list_id'
+      ), $options
+    );
+    if (empty($_GET[$options['parameter']]))
+      return ''; // no list to load
+    $entries = data_entry_helper::get_population_data(array(
+      'table' => 'scratchpad_list_entry',
+      'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET[$options['parameter']]),
+      'caching' => false
+    ));
+    $r = '';
+    if (count($entries)) {
+      foreach ($entries as $idx => $entry) {
+        if ($entry['entity'] === 'taxa_taxon_list') {
+          data_entry_helper::$entity_to_load["sc:$idx::present"] = $entry['entry_id'];
+        }
+      }
+      hostsite_show_message(lang::get('The list of species has been loaded into the form for you. ' .
+        'Please fill in the other form values before saving the form.'));
+      $r = data_entry_helper::hidden_text(array(
+        'fieldname' => 'scratchpad_list_id',
+        'default' => $_GET[$options['parameter']]
+      ));
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => 'submission_extensions[]',
+        'default' => 'misc_extensions.remove_scratchpad'
+      ));
+    }
+    return $r;
+  }
+
+  /**
+   * An extension for the submission building code that adds a deletion request for a scratchpad that has now been
+   * converted into a list of records. Automatically called when the load_species_list_from_scratchpad control is
+   * used.
+   */
+  public static function remove_scratchpad($values, $s_array) {
+    // Convert to a list submission so we can send a scratchpad list deletion as well as the main submission.
+    $s_array[0] = array(
+      'id' => 'sample',
+      'submission_list' => array(
+        'entries' => array(
+          array(
+            'id' => 'scratchpad_list',
+            'fields' => array(
+              'id' => array('value' => $values['scratchpad_list_id']),
+              'deleted' => array('value' => 't')
+            )
+          ),
+          $s_array[0]
+        )
+      )
+    );
+  }
+
+  /* Adds a drop down box to the page which lists areas on the maps (e.g. a list
+   * of countries). When you choose an area in the drop down, the map on the
+   * page can automatically pan and zoom to that area and the spatial reference
+   * system control, if present, can automatically pick the best system for the
+   * chosen map area.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param $options Array of control options. Pass an array of area names to
+   * include in the drop down list in the @areas option. Optionally override
+   * the @mapDataFile option to specify a different file defining the map areas.
+   * If you use this option, copy the file mapAreaData.js from the extensions
+   * folder to files/indicia/js rename and edit it there. Other options
+   * available are the same as for data_entry_helper::select controls, e.g. use
+   * the @label option to define the control's label.
+   * @return string
+   */
+  public static function area_picker($auth, $args, $tabalias, $options) {
+    if (empty($options['areas']) || !is_array($options['areas']))
+      return 'Please specify the list of areas for the area_picker control.';
+    if (isset($options['mapDataFile'])) {
+      $filepath = PrivateStream::basePath();
+      if (!$filepath) {
+        $filepath = PublicStream::basePath();
+      }
+      $path = "$filepath/indicia/js/";
+    } else
+      $path = data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path()
+      . 'prebuilt_forms/extensions/';
+    $options = array_merge($options, array(
+      'label' => 'Area',
+      'mapDataFile' => 'mapAreaData.js',
+      'id' => 'area-picker',
+      'lookupValues' => array_merge(array(
+        '' => lang::get('<select area>')
+      ), array_combine($options['areas'], $options['areas']))
+    ));
+    // load the data file.
+    data_entry_helper::$javascript .= "$.getScript('$path$options[mapDataFile]');\n";
+    return data_entry_helper::select($options);
+  }
+
+  /**
+   * An extension that simply takes an @text option and passes it through lang::get. Allows free text embedded in forms
+   * to be localised.
+   * @param $auth
+   * @param $args
+   * @param $tabalias
+   * @param $options
+   * @return string Translated text.
+   */
+  public static function localised_text($auth, $args, $tabalias, $options) {
+    $options = array_merge(
+      array('text' => 'The misc_extensions.localised_text control needs a @text parameter'),
+      $options
+    );
+    return lang::get($options['text']);
   }
 }

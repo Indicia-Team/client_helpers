@@ -591,8 +591,6 @@ mapInitialisationHooks.push(function(mapdiv) {
         data_entry_helper::text_input(array('label' => lang::get('Site Name'), 'fieldname' => 'sample:location_name', 'validation' => array('required') /*, 'class' => 'control-width-5' */ ))
         // .data_entry_helper::textarea(array('label'=>lang::get('Recorder names'), 'fieldname'=>'sample:recorder_names'))
         ;
-    $help = lang::get('The Year field is read-only, and is calculated automatically from the date(s) of the Counts.');
-    $r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.$help.'</p>';
     if ($sampleId == null){
       if(isset($_GET['date'])) data_entry_helper::$entity_to_load['C1:sample:date'] = $_GET['date'];
       $r .= data_entry_helper::date_picker(array('label' => lang::get('Date of first count'), 'fieldname' => 'C1:sample:date', 'validation' => array('required','date')));
@@ -607,7 +605,8 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
       data_entry_helper::$entity_to_load['sample:date'] = $d->format('Y');
     }
     unset(data_entry_helper::$default_validation_rules['sample:date']);
-    $r .= data_entry_helper::text_input(array('label' => lang::get('Year'), 'fieldname' => 'sample:date', 'readonly'=>' readonly="readonly" ' ));
+    $help = lang::get('The Year field is read-only, and is calculated automatically from the date(s) of the Counts.');
+    $r .= data_entry_helper::text_input(array('label' => lang::get('Year'), 'fieldname' => 'sample:date', 'readonly'=>' readonly="readonly" ', 'helpText'=>$help));
     data_entry_helper::$javascript .= "$('#sample\\\\:date').css('color','graytext').css('background-color','#d0d0d0');\n";
     
     // are there any option overrides for the custom attributes?

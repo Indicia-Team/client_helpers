@@ -36,7 +36,8 @@ class iform_report_calendar_grid {
   private static $locationKey = 'locationID';
   
   /* This is the URL parameter used to pass the location_type_id filter through */
-  private static $locationTypeKey = 'locationType';
+  /* This may be prefixed by the report group */
+  private static $locationTypeKey = 'location_type_id';
   
   /* This is the URL parameter used to pass the year filter through */
   private static $yearKey = 'year';
@@ -85,6 +86,27 @@ class iform_report_calendar_grid {
               'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
           'type' => 'textarea',
           'required' => false,
+          'group'=>'Report Settings'
+        ),
+        array(
+          'name' => 'report_group',
+          'caption' => 'Report group',
+          'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
+            'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
+          'type' => 'text_input',
+          'default' => 'report',
+          'group' => 'Report Settings'
+        ),
+        array(
+          'name' => 'remember_params_report_group',
+          'caption' => 'Remember report parameters group',
+          'description' => 'Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded. '.
+            'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
+            'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
+            'requires cookies to be enabled on the browser.',
+          'type'=>'text_input',
+          'required'=>false,
+          'default' => '',
           'group'=>'Report Settings'
         ),
         array(
@@ -234,36 +256,53 @@ class iform_report_calendar_grid {
    * @return string
    */
   private static function get_report_calendar_options($args, $readAuth) {
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     $presets = get_options_array_with_user_data($args['param_presets']);
     $reportOptions = array(
       'id' => 'report-grid',
       'dataSource' => $args['report_name'],
       'mode' => 'report',
       'readAuth' => $readAuth,
-      'extraParams' => $presets);
+      'extraParams' => $presets,
+      'reportGroup' => isset($args['report_group']) ? $args['report_group'] : '',
+      'rememberParamsReportGroup' => isset($args['remember_params_report_group']) ? $args['remember_params_report_group'] : '',
+      'paramsToExclude' => array(),
+      'paramDefaults' => array()
+    );
     $reportOptions['extraParams']['survey_id'] = $siteUrlParams[self::$SurveyKey]['value']; // location_type mapping overrides preset
     if ($siteUrlParams[self::$locationKey]['value'] != null)
       $reportOptions['extraParams']['location_id'] = $siteUrlParams[self::$locationKey]['value'];
     if ($siteUrlParams[self::$locationTypeKey]['value'] != null)
-      $reportOptions['extraParams']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
+      $reportOptions['paramDefaults']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
     return $reportOptions;
   }
 
   /**
    * Get the parameters required for the current filter.
    */
-  private static function get_site_url_params() {
+  private static function get_site_url_params($args) {
     if (!self::$siteUrlParams) {
+      // Allow the location type to be shared with other reports
+      $locationTypeKey = (isset($args['report_group']) ? $args['report_group'].'-' : '').self::$locationTypeKey;
       self::$siteUrlParams = array(
         self::$locationKey => array('name' => self::$locationKey,'value' => isset($_GET[self::$locationKey]) ? $_GET[self::$locationKey] : ''),
-        self::$locationTypeKey => array('name' => self::$locationTypeKey,'value' => isset($_GET[self::$locationTypeKey]) ? $_GET[self::$locationTypeKey] : ''),
+        self::$locationTypeKey => array('name' => $locationTypeKey,'value' => isset($_GET[$locationTypeKey]) ? $_GET[$locationTypeKey] : ''),
         self::$yearKey => array('name' => self::$yearKey,'value' => isset($_GET[self::$yearKey]) ? $_GET[self::$yearKey] : date('Y')),
         self::$SurveyKey => array('name' => self::$SurveyKey,'value' => ''),
         self::$URLExtensionKey => array('name' => self::$URLExtensionKey,'value' => '')
       );
-  	}
-  	return self::$siteUrlParams;
+      if (isset($_COOKIE['providedParams']) && !empty($args['remember_params_report_group'])) {
+        $cookieData = json_decode($_COOKIE['providedParams'], true);
+        // guard against a corrupt cookie
+        if (is_array($cookieData) && !empty($cookieData[$args['remember_params_report_group']])) {
+          $cookieParams = $cookieData[$args['remember_params_report_group']];
+          if (is_array($cookieParams) && isset($cookieParams[$locationTypeKey]) && self::$siteUrlParams[self::$locationTypeKey]['value'] == '') {
+            self::$siteUrlParams[self::$locationTypeKey]['value'] = $cookieParams[$locationTypeKey];
+          }
+        }
+      }
+    }
+    return self::$siteUrlParams;
   }
   
   public static function get_sorted_termlist_terms($auth, $key, $filter){
@@ -293,7 +332,7 @@ jQuery('#".$ctrlid."').change(function(){
 
   private static function location_type_control($args, $readAuth, $nid)
   {
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     $presets = get_options_array_with_user_data($args['param_presets']);
     if(isset($presets['survey_id'])) {
       self::$siteUrlParams[self::$SurveyKey]['value'] = $presets['survey_id'];
@@ -326,11 +365,11 @@ jQuery('#".$ctrlid."').change(function(){
         }
         // if location is predefined, can not change unless a 'managerPermission'
         $ctrlid='calendar-location-type-'.$nid;
-        self::set_up_control_change($ctrlid, self::$locationTypeKey, array(self::$locationKey));
+        self::set_up_control_change($ctrlid, $siteUrlParams[self::$locationTypeKey]['name'], array(self::$locationKey));
         return data_entry_helper::select(array(
             'label' => lang::get('Site Type'),
             'id' => $ctrlid,
-            'fieldname' => 'location_type_id',
+            'fieldname' => $siteUrlParams[self::$locationTypeKey]['name'],
             'lookupValues' => $lookUpValues,
             'default' => $default
         ));
@@ -342,7 +381,7 @@ jQuery('#".$ctrlid."').change(function(){
   private static function location_control($args, $readAuth, $nid)
   {
     global $user;
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     $ctrl = '';
     // survey_id either comes from the location_type control, or from presets; in that order.
     // need to scan param_presets for survey_id..
@@ -461,7 +500,7 @@ jQuery('#".$ctrlid."').change(function(){
     }
     $reportOptions['buildLinkFunc']=array('iform_report_calendar_grid', 'build_link');
     
-    $siteUrlParams = self::get_site_url_params();
+    $siteUrlParams = self::get_site_url_params($args);
     $extensions = array($siteUrlParams[self::$URLExtensionKey]['value']);
     $reportOptions['existingURL'] = self::get_url($args['existingURL'], $extensions);
     if($siteUrlParams[self::$locationKey]['value'] != null){

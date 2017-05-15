@@ -22,19 +22,14 @@
  
 require_once('includes/user.php');
 require_once('includes/groups.php');
-
-
 /**
  * Prebuilt Indicia data form that provides an import wizard for the Plant Portal project.
  *
  * @package Client
  * @subpackage PrebuiltForms
  */
-
 //AVB To Do - Need to test import file with a mixture of spatial reference systems
 //AVB To DO  - Test importer with various attributes
-
-
 //Importer changed to extend helper_base as the plant portal importer needs customer versions of many of the functions
 //that were previously in the import_helper (and the import_helper extends helper_base)
 class iform_plant_portal_user_data_importer extends helper_base {  
@@ -44,7 +39,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * for future imports.
    */
   private static $rememberingMappings=true;
-
   /**
    * @var array List of field to column mappings that we managed to set automatically
    */
@@ -347,7 +341,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       )  
     );
   }
-
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
@@ -372,7 +365,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
             'ePwD-eSGwD'=>array('existingSample'=>0,'existingPlot'=>2,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
             'ePGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>2),
             'eSGwD-ePGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>2));
-
     //AVB To DO - At the moment the importer will only support occurrences with samples, but we might need to open this up to
     //allow location (plot) only data to be imported. Location import is already supported by the standard importer, so we might
     //be able to grab quite a lot of code from there.
@@ -393,7 +385,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
         return '<div>Please make sure all the fatal import error messages have been specified on the Edit Tab.</div>';
       }
     }
-
     // apply defaults
     $args = array_merge(array(
       'occurrenceAssociations' => false,
@@ -403,11 +394,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     ), $args);
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
     group_authorise_form($args, $auth['read']);
-
     $model = $args['model'];
-
     $presets = array('website_id'=>$args['website_id'], 'password'=>$args['password']);
-
     try {
       $options = array(
         'model' => $model,
@@ -443,25 +431,20 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r .= '<input type="Submit" value="'.lang::get('Upload').'"></form>';
     return $r;
   }
-
   /**
    * Generates the import settings form. If none available, then outputs the upload mappings form.
    * @param array $options Options array passed to the import control.
    */
   private static function import_settings_form($args,$options) {
     $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
-
     // by this time, we should always have an existing file
     if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_settings/".$options['model'];
-
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
-
     $response = self::http_post($request, array());
     if (!empty($response['output'])) {
       // get the path back to the same page
       $reload = self::get_reload_link_parts();
-
       $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
       $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
           "<fieldset><legend>".lang::get('Import Settings')."</legend>\n";
@@ -525,7 +508,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
   }
   
-
   /**
    * Outputs the form for mapping columns to the import fields.
    * @param array $options Options array passed to the import control.
@@ -562,7 +544,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     if (!isset($response['output']) || $response['output'] != 'OK')
       return "Could not upload the settings metadata. <br/>".print_r($response, true);
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
-
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
     // include survey and website information in the request if available, as this limits the availability of custom attributes
     if (!empty($settings['website_id']))
@@ -592,7 +573,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //We only want to include the location attribute that holds the plot group identifier name on the mappings drop-down lists
     //as everything else can be found against the sample, even the plot location
     $locationFieldsToUse['locAttr:'.$options['plot_group_identifier_name_attr_id']] = $locationfields['locAttr:'.$options['plot_group_identifier_name_attr_id']];
-
     $fields = array_merge($fields,$locationFieldsToUse);
     
     if (!is_array($fields))
@@ -617,20 +597,16 @@ class iform_plant_portal_user_data_importer extends helper_base {
     
     // only use the required fields that are available for selection - the rest are handled somehow else
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
-
     $handle = fopen($_SESSION['uploaded_file'], "r");
     $columns = fgetcsv($handle, 1000, ",");
     $reload = self::get_reload_link_parts();
-
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     //AVB To Do, need to test if Remember All works with Plant Portal importer.
     //  if the user checked the Remember All checkbox need to remember this setting
     $checkedRememberAll=isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
-
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
       '<p>'.lang::get('column_mapping_instructions').'</p>'.
       '<div class="ui-helper-clearfix import-mappings-table"><table class="ui-widget ui-widget-content">'.
@@ -791,22 +767,17 @@ class iform_plant_portal_user_data_importer extends helper_base {
       );
     } else 
       $settings = $_POST;
-
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
-
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
     // include survey and website information in the request if available, as this limits the availability of custom attributes
     if (!empty($settings['website_id']))
       $request .= '&website_id='.trim($settings['website_id']);
     if (!empty($settings['survey_id']))
       $request .= '&survey_id='.trim($settings['survey_id']);
-
     if(isset($settings['sample:sample_method_id']) && trim($settings['sample:sample_method_id']) != '')
     	$request .= '&sample_method_id='.trim($settings['sample:sample_method_id']);
     $response = self::http_post($request, array());
-
     $fields = json_decode($response['output'], true);
-
     if (!is_array($fields))
       return "curl request to $request failed. Response ".print_r($response, true);
     // Restrict the fields if there is a setting for this survey Id
@@ -828,15 +799,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $unlinked_fields = $fields;
     // only use the required fields that are available for selection - the rest are handled somehow else
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
-
     $handle = fopen($_SESSION['uploaded_file'], "r");
     $columns = fgetcsv($handle, 1000, ",");
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
-
     //Place the inputs from the mappings page (hidden) onto the page
     $r = '<div>';
     $colCount = 0;
@@ -851,7 +819,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r .= '</div>';
     return $r;
   }
-
   //AVB To DO - If the Plant Portal importer is found not to work with Remember Mappings after testing, then we can remove this function
   /**
    * Returns an array of field to column title mappings that were previously stored in the user profile,
@@ -893,7 +860,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $autoFieldMappings;
   }
-
   //To Do AVB - This function can be removed if onlyAllowMappedFields is not found to work with the Plant Portal importer
   /**
    * List of available fields retrieve from the warehouse to ones for this survey.
@@ -915,7 +881,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
     }
   }
-
   /**
    * When an array (e.g. $_POST containing preset import values) has values with actual ids in it, we need to
    * convert these to fk_* so we can compare the array of preset data with other arrays of expected data.
@@ -932,7 +897,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return array_merge($arr, $ids);
   }
-
   /**
    * Takes an array of fields, and removes the website ID or survey ID fields within the arrays if
    * the website and/or survey id are set in the $settings data.
@@ -957,15 +921,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
    */
   private static function upload_result($options) {
     $request = parent::$base_url."index.php/services/plant_portal_import/get_upload_result?uploaded_csv=".$_GET['uploaded_csv'];
-
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
-
     if (isset($response['output'])) {
       $output = json_decode($response['output'], true);
       if (!is_array($output) || !isset($output['problems']))
         return 'An error occurred during the upload.<br/>'.print_r($response, true);
-
       if ($output['problems']!==0) {
         $r = $output['problems'].' problems were detected during the import. <a href="'.$output['file'].'">Download the records that did not import.</a>';
       } else {
@@ -977,12 +938,10 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $reload = self::get_reload_link_parts();
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
-
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = "<p>$r</p><p>".lang::get('Would you like to ')."<a href=\"$reloadpath\">".lang::get('import another file?')."</a></p>";
     return $r;
   }
-
  /**
   * Returns a list of columns as an list of <options> for inclusion in an HTML drop down,
   * loading the columns from a model that are available to import data into
@@ -1005,7 +964,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $labelListIndex = 0;
     $labelList = array();
     $itWasSaved[$column] = 0;
-
     foreach ($fields as $field=>$caption) {
       if (strpos($field,":"))
         list($prefix,$fieldname)=explode(':',$field);
@@ -1119,7 +1077,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r = self::items_to_draw_once_per_import_column($r, $column, $itWasSaved, isset($autoFieldMappings['RememberAll']), $multiMatch);
     return $r;
   }
-
   
  /**
   * This method is used by the mode_field_options method.
@@ -1211,7 +1168,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }' 
       title='If checked, your selection for this particular column will be saved and automatically selected during future imports. ".
           "Any alterations you make to this default selection in the future will also be remembered until you deselect the checkbox.'></td>";
-
     if ($itWasSaved[$column] == 1) {
       $r .= "<tr><td></td><td class=\"note\">Please check the suggested mapping above is correct.</td></tr>";
     }
@@ -1259,8 +1215,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $caption;
   }
-
-
   /**
    * Method to upload the file in the $_FILES array, or return the existing file if already uploaded.
    * @param array $options Options array passed to the import control.
@@ -1293,7 +1247,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return isset($_POST['existing_file']) ? $_POST['existing_file'] : '';
   }
-
   /**
    * Humanize a piece of text by inserting spaces instead of underscores, and making first letter
    * of each phrase a capital.
@@ -1304,7 +1257,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
   private static function processLabel($text) {
     return ucFirst(preg_replace('/[\s_]+/', ' ', $text));
   }
-
   /**
    * Private method to build a single select option for the model field options.
    * Option is selected if selected=caption (case insensitive).
@@ -1321,7 +1273,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r .= ' value="'.htmlspecialchars($field)."\"$selHtml>".htmlspecialchars($caption).'</option>';
     return $r;
   }
-
   /**
    * Provides optional translation of field captions by looking for a translation code dd:model:fieldname. If not
    * found returns the original caption.
@@ -1390,8 +1341,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     return $r;
   }
   
-
-
   /**
    * Outputs the import wizard steps. 
    *
@@ -1462,9 +1411,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     if ($r===true) {
       $reload = self::get_reload_link_parts();
       $reload['params']['uploaded_csv']=$filename;
-
       $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-
       // initiate local javascript to do the upload with a progress feedback
       $r = '
   <div id="progress" class="ui-widget ui-widget-content ui-corner-all">
@@ -1554,7 +1501,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     unset($fileArray[0]);
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
     $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItems,$chosenColumnHeadings);
-
     //Cycle through each row excluding the header row and convert into an array
     foreach ($fileArray as $fileLine) {
       //Trim first otherwise we will attempt to process rows which might be just whitespace
@@ -1605,7 +1551,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $args['reupload_label']='Upload again with corrections made';
     if (empty($args['reupload_button']))
       $args['reupload_button']='Upload file';
-
     $r = '';
     //Need import step one to return to mappings page
     $r .= '<input type="hidden" id="import_step" name="import_step" value="1" />';
@@ -1678,7 +1623,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //If we are going to add plots groups and sample groups to those termlists then we need their termlist ID
     $sampleGroupTermlistId=$args['sample_group_termlist_id'];
     $plotGroupTermlistId=$args['plot_group_termlist_id'];
-
     $websiteId=$args['website_id'];
     //If we create the plots before we upload to the warehouse, then the new plots will already be available for the warehouse to use.
     //Extract the data we are going to need to create, keeping in mind it needs to be distinct.
@@ -1736,7 +1680,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
         var sampleGroupNamesToProcess = ".json_encode($sampleGroupNamesToProcess).";
         var sampleGroupTermlistId = ".$sampleGroupTermlistId.";
         var sampleGroupPersonAttributeId = ".$args['sample_group_permission_person_attr_id'].";";
-
     } else {
       data_entry_helper::$javascript .= "
         var sampleGroupNamesToProcess = [];
@@ -1955,7 +1898,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $r;
   }
-
   /*
    * Display a warning of a particular type before the user continues with the import
    * @param Array $fileArrayForImportRowsToProcess Array all the import rows applicable to the warning
@@ -1984,7 +1926,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
       return $r;
     }
   }
-
   /*
    * Store the custom header names in the CSV file to an array with standardised array
    * key names (e.g. so we know that $chosenColumnHeadings['sampleDateHeaderName'] will always hold the

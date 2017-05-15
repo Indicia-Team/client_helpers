@@ -1,12 +1,12 @@
 
 // Functions
-var etaPrep, syncPost, valueChanged, _valueChanged;
+var eta_prep, sync_post, value_changed, _value_changed;
 // Global Data
-var formOptions;
+var form_options;
 
 (function ($) {
 	
-  syncPost = function(url, data) {
+  sync_post = function(url, data) {
     $.ajax({
       type: 'POST',
 	  url: url,
@@ -20,11 +20,11 @@ var formOptions;
     });
   };
 
-	valueChanged = function() {
-		_valueChanged(this);
+	value_changed = function() {
+		_value_changed(this);
 	}
 	
-	_valueChanged = function(elem) {
+	_value_changed = function(elem) {
 		$(elem).attr('disabled','disabled');
 		$(elem).parent().addClass('waiting');
 		// checkbox name : "TAC:<location id>:<attribute (CMS ID or Branch CMS ID)>:<value for attribute (CMS ID)>'
@@ -32,8 +32,8 @@ var formOptions;
 		var parts = name.split(':');
 		if($(elem).filter(':checked').length) // we have just assigned the user: previously unassigned.
 			// If the person was flagged as unassigned, then there is no existing attribute, so just create a new one.
-			syncPost(formOptions.ajaxFormPostUrl,
-					{'website_id' : formOptions.website_id,
+			sync_post(form_options.ajax_location_post_URL,
+					{'website_id' : form_options.website_id,
 					 'location_id' : parts[1],
 					 'location_attribute_id' : parts[2],
 					 'int_value' : parts[3]});
@@ -43,20 +43,20 @@ var formOptions;
 			// We can't add an order by to the subqueries which return the attribute value and attribute IDs
 			// (for some reason postgres doesn't like it) so can't guarantee id and value match positions in array
 			// Thus we have to look up attribute when we click.
-			var attrURL = formOptions.base_url+'/index.php/services/data/location_attribute_value' +
+			var attr_URL = form_options.base_url+'/index.php/services/data/location_attribute_value' +
 					'?mode=json' +
-					'&auth_token='+formOptions.auth.read.auth_token+'&reset_timeout=true&nonce='+formOptions.auth.read.nonce + 
+					'&auth_token='+form_options.auth.read.auth_token+'&reset_timeout=true&nonce='+form_options.auth.read.nonce + 
 					'&location_id=' + parts[1] +
 					'&location_attribute_id=' + parts[2] +
 					'&value=' + parts[3];
 
 		    $.ajax({
 		        type: 'GET',
-		        url: attrURL,
+		        url: attr_URL,
 		        success: function(adata){
 					$.each(adata, function(idx, attribute){
-						syncPost(formOptions.ajaxFormPostUrl,
-								{'website_id' : formOptions.website_id,
+						sync_post(form_options.ajax_location_post_URL,
+								{'website_id' : form_options.website_id,
 								 'id' : attribute.id,
 								 'location_id' : attribute.location_id,
 								 'location_attribute_id' : attribute.location_attribute_d,
@@ -72,58 +72,72 @@ var formOptions;
 		$(elem).removeAttr('disabled');
 	}
 	
-	etaPrep = function(options) {
+	eta_prep = function(options) {
 		
-		formOptions = options;
+		form_options = options;
 	    
-		$('#'+ formOptions.siteSelectID+',#'+ formOptions.userSelectID).change(function(){
-			if(($('#'+ formOptions.siteSelectID).val()=='' || isNaN(parseInt($('#'+ formOptions.siteSelectID).val()))) &&
-					$('#'+ formOptions.userSelectID).val()=='')
-				$('#'+ formOptions.searchID).attr('disabled',true);
+		$('#'+ form_options.allocation_select_id).change(function(){
+			var found = false,
+			    i,
+			    dialog = $('<p>Please wait whilst this page is reloaded for the new allocation type.</p>').dialog({ title: 'Please Wait...', buttons: {"OK": function() { $(this).dialog('close'); } } }); // TODO i18n
+			    query = window.location.search.substr(1).split('&'); // cut off question mark before splitting
+			if(window.location.search !== '')
+				for(i = 0; i< query.length; i++) {
+					if(query[i].substr(0,5) == 'type=') {
+						found = true;
+						query[i] = 'type='+$(this).val();
+					}
+				}
+			if(!found)
+				window.location.search += (window.location.search == '' ? '?' : '&')+'type='+$(this).val();
 			else
-				$('#'+ formOptions.searchID).removeAttr('disabled');
+				window.location.search = '?' + query.join('&');
 		})
-		$('#'+ formOptions.siteSelectID).change();
 
-		$('.'+formOptions.selectAllClass).click(function(){
-			$('.'+formOptions.selectAllClass).addClass('waiting'); // attach to all buttons, as more than one.
-			var x  = $('#'+formOptions.gridID+' input[name^=TAC]').not(':checked');
+		$('#'+ form_options.site_select_id+',#'+ form_options.user_select_id).change(function(){
+			if(($('#'+ form_options.site_select_id).val()=='' || isNaN(parseInt($('#'+ form_options.site_select_id).val()))) &&
+					$('#'+ form_options.user_select_id).val()=='')
+				$('#'+ form_options.search_id).attr('disabled',true);
+			else
+				$('#'+ form_options.search_id).removeAttr('disabled');
+		})
+		$('#'+ form_options.site_select_id).change();
+
+		$('.'+form_options.select_all_class).click(function(){
+			$('.'+form_options.select_all_class).addClass('waiting'); // attach to all buttons, as more than one.
+			var x  = $('#'+form_options.grid_id+' input[name^=TAC]').not(':checked');
 			if(x.length>0)
 				x.each(function(idx,elem){
-					$('.'+formOptions.selectAllClass).val(formOptions.selectAllButton + ' : ' + (idx+1)  + '/' + x.length);
+					$('.'+form_options.select_all_class).val(form_options.select_all_button + ' : ' + (idx+1)  + '/' + x.length);
 					$(elem).attr('checked','checked');
-					_valueChanged(elem);
+					_value_changed(elem);
 				});
-			$('.'+formOptions.selectAllClass).removeClass('waiting').val(formOptions.deselectAllButton);
+			$('.'+form_options.select_all_class).removeClass('waiting').val(form_options.deselect_all_button);
 		});
 
-		$('.'+formOptions.deselectAllClass).click(function(){
-			var x  = $('#'+formOptions.gridID+' input[name^=TAC]').filter(':checked'); // attach to all buttons, as more than one.
-			$('.'+formOptions.deselectAllClass).addClass('waiting');
+		$('.'+form_options.deselect_all_class).click(function(){
+			var x  = $('#'+form_options.grid_id+' input[name^=TAC]').filter(':checked'); // attach to all buttons, as more than one.
+			$('.'+form_options.deselect_all_class).addClass('waiting');
 			if(x.length>0)
 				x.each(function(idx,elem){
-					$('.'+formOptions.deselectAllClass).val(formOptions.deselectAllButton + ' : ' + (idx+1)  + '/' + x.length);
+					$('.'+form_options.deselect_all_class).val(form_options.deselect_all_button + ' : ' + (idx+1)  + '/' + x.length);
 					$(elem).removeAttr('checked');
-					_valueChanged(elem);
+					_value_changed(elem);
 				});
-			$('.'+formOptions.deselectAllClass).removeClass('waiting').val(formOptions.deselectAllButton);
+			$('.'+form_options.deselect_all_class).removeClass('waiting').val(form_options.deselect_all_button);
 		});
 
-		$('#'+ formOptions.searchID).click(function(){
-			var type = $('#'+ formOptions.allocationSelectID).val();
-			var typetext = $('#'+ formOptions.allocationSelectID).find('option[value='+type+']').text();
-			if(typetext != "") typetext = '<label>'+typetext+'</label>';
-			var country = $('#'+ formOptions.countrySelectID).val();
-			var location = $('#'+ formOptions.siteSelectID).val();
-			var user = $('#'+ formOptions.userSelectID).val();
-
-			var reportURL = formOptions.base_url+'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/UKBMS/ebms_country_locations.xml' +
+		$('#'+ form_options.search_id).click(function(){
+			var type = form_options.config.attr_id,
+			    region = $('#'+ form_options.region_select_id).val(), // This may not exist
+			    location = $('#'+ form_options.site_select_id).val(),
+			    user = $('#'+ form_options.user_select_id).val(),
+			    report_URL = form_options.base_url+'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/UKBMS/ebms_region_locations.xml' +
 						'&reportSource=local' +
 						'&mode=json' +
-						'&auth_token='+formOptions.auth.read.auth_token+'&reset_timeout=true&nonce='+formOptions.auth.read.nonce + 
+						'&auth_token='+form_options.auth.read.auth_token+'&reset_timeout=true&nonce='+form_options.auth.read.nonce + 
 						'&callback=?' +
-						'&location_type_id='+formOptions.site_location_type_id +
-						'&country_type_id='+formOptions.country_location_type_id +
+						'&location_type_ids='+form_options.config.location_type_ids.join(',') +
 						'&locattrs=' + type +
 						'&orderby=name';
 
@@ -131,58 +145,72 @@ var formOptions;
 			$(this).addClass('waiting');
 
 			// either the site is filled in, or the user, or both
-			// get all the locations which match the country/site filters.
+			// get all the locations which match the region/site filters.
 			if(location !== '' && !isNaN(parseInt(location)))
-				reportURL += '&location_id=' + location;
-			if(country !== '' && !isNaN(parseInt(country)))
-				reportURL += '&country_location_id='+country;
+				report_URL += '&location_id=' + location;
+			if($('#'+ form_options.region_select_id).length > 0)
+				report_URL += '&region_type_id='+form_options.config.regional_control_location_type_id;
+			else
+				report_URL += '&region_type_id=0';
+			if(region !== '' && !isNaN(parseInt(region)))
+				report_URL += '&region_location_id='+region;
 
-			$('#'+formOptions.gridID+' tbody').empty();
+			$('#'+form_options.grid_id+' tbody').empty();
 
-			if(country !== '' && !isNaN(parseInt(country)) && user !== '' && !isNaN(parseInt(user))) {
-				$('.'+formOptions.selectAllClass+',.'+formOptions.deselectAllClass).removeAttr('disabled');
+			if(region !== '' && !isNaN(parseInt(region)) && user !== '' && !isNaN(parseInt(user))) {
+				$('.'+form_options.select_all_class+',.'+form_options.deselect_all_class).removeAttr('disabled');
 			} else {
-				$('.'+formOptions.selectAllClass+',.'+formOptions.deselectAllClass).attr('disabled','disabled');
+				$('.'+form_options.select_all_class+',.'+form_options.deselect_all_class).attr('disabled','disabled');
 			}
 
-			jQuery.getJSON(reportURL,
+			jQuery.getJSON(report_URL,
 				function(rdata){
-					var user = $('#'+ formOptions.userSelectID).val();
-					var userList = [];
-					if(user !== '' && !isNaN(parseInt(user)))
-						userList.push(user);
-					else
-						// userList = indiciaData.fullUserList;
-						userList = ["1","2"];
-					var altRow = false;
-					$.each(rdata, function(idx, location){
-						var allocatedUsers = location['attr_location_'+type]
-						allocatedUsers = (allocatedUsers !== null ? allocatedUsers.replace(/\s+/g, '').split(',') : []);
-						// extend the userList for this site to include all users returned as allocated
-						var myList = (userList.length>1 ? userList.concat(allocatedUsers) : userList);
-						var myListUnique = [];
-					    $.each(myList, function(i, e) {
-					        if ($.inArray(e, myListUnique) == -1) myListUnique.push(e);
-					    });
-						$.each(myListUnique, function(uidx, user){
-							var row = $('<tr class="'+(altRow ? formOptions.altRowClass : '')+'"/>');
-							var userName = $('#'+ formOptions.userSelectID+" option").filter('[value='+user+']');
+					var user = $('#'+ form_options.user_select_id).val(),
+					    user_list = [],
+					    has_region = $('#'+ form_options.region_select_id).length>0,
+					    alt_row = false,
+					    user_list_names = [];
 
-							userName = (userName.length > 0 ? userName.text() : "CMS User "+user);
-							row.append('<td>' + typetext + '<input name="TAC:' +
-									location.location_id + ':' + type + ':' + user +
-									'" type="checkbox" '+(allocatedUsers.indexOf(user)>=0 ? 'checked="checked"' : '')+'></td>');
-							row.append('<td>'+location.country+'</td>');
-							row.append('<td>'+location.name+'</td>');
-							row.append('<td>'+location.centroid_sref+'</td>');
-							row.append('<td>'+userName+'</td>');
-							row.append('<td><a href="' + formOptions.editLinkPath + '?location_id=' + location.location_id + '">Edit</a></td>');
-							$('#'+formOptions.gridID+' tbody').append(row);
-							row.find('input').click(valueChanged)
-							altRow = !altRow;
+					if(user !== '' && !isNaN(parseInt(user)))
+						user_list.push(user);
+					else
+						$.each(indiciaData.full_user_list, function(i, e) {user_list.push(e.toString())});
+
+				    $.each(user_list, function(i, e) { // don't need to check for uniqueness here
+						var user_name = $('#'+ form_options.user_select_id+" option").filter('[value='+e+']').text();
+						// all users from either the control or the full list are CMS users, and have their name filled in, even if looking at the Indicia User ID
+						user_list_names.push(user_name);
+				    });
+
+					$.each(rdata, function(idx, location){
+						// extend the myList for this site to include all users returned as allocated
+						var allocated_users = (location['attr_location_'+type] !== null ? location['attr_location_'+type].replace(/\s+/g, '').split(',') : []),
+						    my_list_unique = user_list.concat([]),
+						    my_list_names = user_list_names.concat([]);
+						if(my_list_unique.length > 1) // user filter field not specified
+						  $.each(allocated_users, function(i, e) {
+					        if ($.inArray(e, my_list_unique) == -1) {
+					        	// at this point any additional people do not match with a CMS user, so have no name.
+					        	my_list_unique.push(e); // the index into these two match for a given user
+					        	my_list_names.push(form_options.config.user_prefix + +e);
+					        }
+					    });
+						$.each(my_list_unique, function(uidx, user){
+							var row = $('<tr class="'+(alt_row ? form_options.alt_row_class : '')+'">' +
+										'<td>' + '<input name="TAC:' + location.location_id + ':' + type + ':' + user +
+											'" type="checkbox" '+(allocated_users.indexOf(user)>=0 ? 'checked="checked"' : '')+'></td>' +
+										(has_region ? '<td>'+location.region+'</td>' : '') +
+										'<td>'+location.name+'</td>' +
+										'<td>'+location.centroid_sref+'</td>' +
+										'<td>'+my_list_names[uidx]+'</td>' +
+										'<td><a href="' + form_options.config.edit_link_path + '?location_id=' + location.location_id + '">Edit</a></td>' +
+										'</tr>');
+							$('#'+form_options.grid_id+' tbody').append(row);
+							row.find('input').click(value_changed)
+							alt_row = !alt_row;
 						});						
 					});						
-					$('#'+ formOptions.searchID).removeClass('waiting');
+					$('#'+ form_options.search_id).removeClass('waiting');
 				}
 			);
 		});

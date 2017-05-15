@@ -1,0 +1,86 @@
+span.matched {
+  color: green;
+  padding-right: 24px;
+  background: url(../images/nuvola/ok-16px.png) right center no-repeat;
+}
+span.unmatched {
+  color: red;
+}
+a.non-unique-name {
+  margin-left: 2em;
+  text-align: left;
+}
+a.non-unique-name.preferred:after {
+  content: '[accepted name]';
+  font-size: 9px;
+}
+#scratchpad-container {
+  display: inline-block;
+  width: 75%;
+}
+#scratchpad-input {
+  min-height: 400px;
+  -moz-appearance: textfield-multiline;
+  -webkit-appearance: textarea;
+  border: 1px solid gray;
+  background: white;
+}
+/* IE */
+#scratchpad-input p {
+  margin: 0;
+}
+#scratchpad-save-form div {
+  width: 450px;
+}
+#scratchpad-save-form label {
+  display: block;
+}
+#scratchpad-save-form input[type=text], #scratchpad-save-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+#scratchpad-save-form input[type=button], #scratchpad-save-form input[type=submit] {
+  padding: 4px;
+  margin: 0.5em;
+}
+#scratchpad-stats {
+  margin: 0;
+  padding: 0;
+}
+
+#scratchpad-stats div {
+  float: left;
+  width: 24.85%;
+  box-sizing: border-box;
+  margin-right: 0.2%;
+  padding: 0 4px;
+  border: solid grey 1px;
+}
+#scratchpad-stats div:last-child {
+  margin-right: 0;
+}
+#scratchpad-stats-total {
+  background: #a0c9fe;
+}
+#scratchpad-stats-matched {
+  background: #b2fea0;
+}
+#scratchpad-stats-queried {
+  background: #fed8a0;
+}
+#scratchpad-stats-unmatched {
+  background: #fea9a0;
+}
+#scratchpad-stats span.all-done {
+  border: solid grey 1px;
+  background: #b2fea0;
+  margin-right: 10px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  font-weight: bold;
+}
+button.checking {
+  padding-right: 24px;
+  background: url(../../../media/images/ajax-loader.gif) right center no-repeat;
+}

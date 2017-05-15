@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * 
  * @package	Client
  * @subpackage PrebuiltForms
@@ -38,14 +38,6 @@ require_once('mnhnl_dynamic_1.php');
 require_once('includes/mnhnl_common.php');
 
 class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
-
-  public static function get_perms($nid, $args) {
-    $perms = array();
-    if(isset($args['permission_name'])) $perms[] = $args['permission_name'];
-    if(isset($args['edit_permission'])) $perms[] = $args['edit_permission'];
-    if(isset($args['ro_permission']))   $perms[] = $args['ro_permission'];
-    return $perms;
-  }
 
   /** 
    * Return the form metadata.
@@ -193,9 +185,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
         
       if($param['name'] != 'species_include_taxon_group' &&
           $param['name'] != 'link_species_popups' &&
-          $param['name'] != 'species_include_both_names' &&
-          $param['name'] != 'includeLocTools' &&
-          $param['name'] != 'loctoolsLocTypeID')
+          $param['name'] != 'species_include_both_names')
         $retVal[] = $param;
     }
     return $retVal;
@@ -382,24 +372,6 @@ other.removeClass('wide').remove(); // remove Other field, then bolt in after th
 jQuery('[name^=smpAttr]').filter(':checkbox').filter('[value=".$args['disturbanceOtherTermID']."],[value^=".$args['disturbanceOtherTermID']."\\:]').parent().append(other);\n";
 
     if (self::$mode != self::MODE_EXISTING_RO) {
-      if(lang::get('validation_required') != 'validation_required')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.required = \"".lang::get('validation_required')."\";";
-      if(lang::get('validation_max') != 'validation_max')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
-      if(lang::get('validation_min') != 'validation_min')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
-      if(lang::get('validation_number') != 'validation_number')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
-      if(lang::get('validation_digits') != 'validation_digits')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
-      if(lang::get('validation_integer') != 'validation_integer')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
       data_entry_helper::$late_javascript .= "
     $.validator.addMethod('fillgroup', function(value, element){
     var valid = jQuery(element).closest('tr').find(':text').not('[value=]').length > 0 ||
@@ -589,7 +561,7 @@ jQuery('#smpAttr\\\\:$attrId').next().after(\"<span class='extra-text'>".lang::g
 
   private static function set_code_functionality($auth, $args, $isAdmin) {
     if(self::$mode === self::MODE_EXISTING_RO) return;
-    if($args['LocationTypeTerm']=='' && isset($args['loctoolsLocTypeID'])) $args['LocationTypeTerm']=$args['loctoolsLocTypeID'];
+    if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
     $primary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['LocationTypeTerm']);
     if($args['SecondaryLocationTypeTerm'] != ''){
       $secondary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['SecondaryLocationTypeTerm']);
@@ -1153,16 +1125,6 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     return array('mnhnl_bats.css');
   }
   
-  /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
-   * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
-   * working.
-   */
-  protected static function getArgDefaults($args) {
-    $args['includeLocTools'] == false; 
-    return $args;      
-  }
-
   protected static function getReportActions() {
     return
       array(array('display' => lang::get('Actions'),

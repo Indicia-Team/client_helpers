@@ -186,6 +186,26 @@ class iform_ukbms_year_index_plot {
       		'required' => false,
       		'group' => 'Report Settings'
       	),
+      		array(
+      		'name' => 'report_group',
+      		'caption' => 'Report group',
+      		'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
+      		'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
+      		'type' => 'text_input',
+      		'default' => 'report',
+      		'group' => 'Report Settings'
+      				), array(
+      						'name' => 'remember_params_report_group',
+      						'caption' => 'Remember report parameters group',
+      						'description' => 'Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded. '.
+      						'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
+      						'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
+      						'requires cookies to be enabled on the browser.',
+      						'type'=>'text_input',
+      						'required'=>false,
+      						'default' => '',
+      						'group'=>'Report Settings'
+      				),
       		
       	array(
       		'name'=>'locationTypesFilter',
@@ -437,6 +457,18 @@ class iform_ukbms_year_index_plot {
     // loop through all entries in the locationTypesFilter, and build an array of locations.
     $locationTypeLookUpValues = array();
     $default = false;
+    if (isset($_COOKIE['providedParams']) && !empty($args['remember_params_report_group'])) {
+    	$cookieData = json_decode($_COOKIE['providedParams'], true);
+    	// guard against a corrupt cookie
+    	if (is_array($cookieData) && !empty($cookieData[$args['remember_params_report_group']])) {
+    		$cookieParams = $cookieData[$args['remember_params_report_group']];
+    		$locationTypeKey = (isset($args['report_group']) ? $args['report_group'].'-' : '').'location_type_id';
+    		if (is_array($cookieParams) && isset($cookieParams[$locationTypeKey])) {
+    			$default = $cookieParams[$locationTypeKey];
+    		}
+    	}
+    }
+
     foreach(array_keys($options['surveyMapping']) as $location_type_id) {
       if(!$default)
       	$default = $location_type_id;
@@ -499,7 +531,7 @@ class iform_ukbms_year_index_plot {
       natcasesort($sort);
       $ctrl .='<select id="'.$options['locationSelectIDPrefix'].'-'.$location_type_id.'" class="location-select">';
       if(count($locs)>0) {
-      	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('Please select').' : '.$options['surveyMapping'][$location_type_id]['location_type_term'].'&gt;</option>';
+      	$ctrl .= '<option value="" class="location-select-option italic-option" >&lt;'.lang::get('Please select').' : '.$options['surveyMapping'][$location_type_id]['location_type_term'].'&gt;</option>';
       	foreach($sort as $id=>$name){
       		$ctrl .= '<option value='.$id.' class="location-select-option '.
       			(!empty($args['sensitivityLocAttrId']) && $locs[$id]['attr_location_'.$args['sensitivityLocAttrId']] === "1" ? 'sensitive' : '').
@@ -508,7 +540,7 @@ class iform_ukbms_year_index_plot {
       			'</option>';
       	}
       } else 
-      	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('No locations available').'&gt;</option>';
+      	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('No sites available').'&gt;</option>';
       $ctrl .='</select>';
     }
     // default location type is the first in the list, so populate its locations as default as well.
@@ -518,13 +550,14 @@ class iform_ukbms_year_index_plot {
     			'id' => $options['locationTypeSelectID'],
     			'fieldname' => 'location_type_id',
     			'lookupValues' => $locationTypeLookUpValues,
-    			'default' => $default
+    			'default' => $default,
+    			'validation' => array('required')
     	)).'</th><th>'.$ctrl;
     } else {
     	$ctrl .= '<input type="hidden" id="'.$options['locationTypeSelectID'].'" name="location_type_id" value="'.$default.'" />';
     }
 
-    return $ctrl;
+    return $ctrl.'<span class="deh-required">*</span>';
   }
 
   private static function _species1_control($args, $readAuth, $nid, $options)
@@ -562,7 +595,7 @@ class iform_ukbms_year_index_plot {
 		'<select id="'.$options['dataTypeSelectID'].'" name="data_type">'.
 		'<option value="index">'.lang::get("Index").'</option>'.
 		'<option value="count">'.lang::get("Count").'</option>'.
-		'</select>';
+		'</select><span class="deh-required">*</span>';
     return $r;
   }
 
@@ -579,7 +612,10 @@ class iform_ukbms_year_index_plot {
 
   private static function _load_data_button($args, $auth, $nid, $options)
   {
-  	return '<input type="button" id="loadButton" class="loadButton" value="'.lang::get('Load Data').'"/>';
+    return '<input type="button" id="loadButton" class="loadButton" '.
+           'value="'.lang::get('Fetch Data').'" '.
+           'title="'.lang::get('Click this button to fetch the data from the database in order to display the graph. You must specify a site before you can fetch the data.').'" '.
+           '/>';
   }
   
   private static function _trendline_control($args, $auth, $nid, $options)
@@ -635,6 +671,7 @@ class iform_ukbms_year_index_plot {
     data_entry_helper::add_resource('jqplot');
     data_entry_helper::add_resource('jqplot_bar');
     data_entry_helper::add_resource('jqplot_category_axis_renderer');
+    data_entry_helper::add_resource('jquery_cookie');
     $renderer='$.jqplot.BarRenderer';
     
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
@@ -647,7 +684,9 @@ class iform_ukbms_year_index_plot {
       'base_url' => data_entry_helper::$base_url,
       'pleaseSelectMsg' => lang::get('Please select...'),
       'noDataMsg' => lang::get('No data available'),
-      'dataLoadedMsg' => lang::get('Data Currently Loaded'),
+      'noDataLoadedMsg' => lang::get('There is no data available for'),
+      'selectPrompt' => lang::get('Select at least one species in the toolbar above in order to display the graph here.'),
+      'bodyWarning' => lang::get('Please fetch the data for a different site in order to display a graph.'),
       'class' => 'ui-widget ui-widget-content report-grid',
       'extraParams' => array(),
       'countReportExtraParams' => '',
@@ -660,7 +699,9 @@ class iform_ukbms_year_index_plot {
       'dataLoadButtonID' => 'uyip-data-load-button-'.$nid,
       'species1SelectID' => 'uyip-species1-select-'.$nid,
       'species2SelectID' => 'uyip-species2-select-'.$nid,
-      'allSpeciesMsg' => lang::get("All Species")
+      'allSpeciesMsg' => lang::get("All Species"),
+      'reportGroup' => isset($args['report_group']) ? $args['report_group'] : '',
+      'rememberParamsReportGroup' => isset($args['remember_params_report_group']) ? $args['remember_params_report_group'] : ''
     );
 
     self::_set_up_survey_mapping($args, $auth, $options);
@@ -693,7 +734,7 @@ class iform_ukbms_year_index_plot {
     	$options['indexReportExtraParams'] .= '&'.$key.'='.$value;
     }
     
-	data_entry_helper::add_resource('jqplot_trendline');
+    data_entry_helper::add_resource('jqplot_trendline');
     
     $opts = array();
     $rendererOptions = trim($args['renderer_options']);
@@ -707,7 +748,7 @@ class iform_ukbms_year_index_plot {
     else
     	$opts['legend'] = array("show"=>true, 'placement'=>'outsideGrid');
     $opts['series'] = array();
-    $opts['title'] = array("text"=>"Title");
+//    $opts['title'] = array("text"=>"Title");
     $optsToCopyThrough = array('legend'=>'legendOptions', 'series'=>'seriesOptions', 'seriesColors'=>'seriesColors');
     foreach ($optsToCopyThrough as $key=>$settings) {
     	if (!empty($options[$settings]))
@@ -740,14 +781,16 @@ uyipPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot
 	    				self::_build_primary_toolbar($args, $auth, $nid, $options) .
     				'</thead>' .
     			'</table>'."\n".
-    			'<h2 id="currentlyLoaded">'.lang::get('No data currently loaded.').'</h2>' .
     			'<table id="secondary-controls-table" class="ui-widget ui-widget-content ui-corner-all controls-table">' .
     				'<thead class="ui-widget-header">' .
+    			    '<tr><th colspan=3><h2 id="currentlyLoaded">'.lang::get('Please fetch the data for a site.').'</h2></th></tr>' .
     					self::_build_secondary_toolbar($args, $auth, $nid, $options) .
     				'</thead>' .
     			'</table>'.
     			'<div class="'.$options['class'].'" style="'.$widthStyle.'">' .
-    				'<div id="'.$options['id'].'" style="'.$heightStyle.' '.$widthStyle.'" class="jqplot-target"></div>' .
+    				'<div id="'.$options['id'].'" style="'.$heightStyle.' '.$widthStyle.'" class="jqplot-target">'.
+    				  '<p class="graph-body-warning">'.lang::get('You must fetch the data for a site before you can display a graph.').'</p>'.
+    				'</div>' .
     			"</div>\n";
 
 	return $retVal;

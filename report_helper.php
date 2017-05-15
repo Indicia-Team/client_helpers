@@ -405,12 +405,13 @@ class report_helper extends helper_base {
       $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
       // Output the headers. Repeat if galleryColCount>1;
       for ($i=0; $i<$options['galleryColCount']; $i++) {
-        foreach ($options['columns'] as $field) {
+        foreach ($options['columns'] as &$field) {
           if (isset($field['visible']) && ($field['visible'] === 'false' || $field['visible'] === false)) {
              // skip this column as marked invisible 
             continue;           
           }
-          
+          if (isset($field['actions']))
+            report_helper::translateActions($field['actions']);
           // allow the display caption to be overriden in the column specification
           if (empty($field['display']) && empty($field['fieldname'])) {
             $caption = '';
@@ -430,7 +431,9 @@ class report_helper extends helper_base {
             }
             $sortLink=htmlspecialchars($sortLink);
             // store the field in a hidden input field
-            $captionLink = "<input type=\"hidden\" value=\"" . $field['orderby'] . "\"/><a href=\"$sortLink\" rel=\"nofollow\" title=\"Sort by $caption\">$caption</a>";
+            $sortBy = lang::get("Sort by {1}", $caption);
+            $captionLink = "<input type=\"hidden\" value=\"$field[orderby]\"/>" .
+                "<a href=\"$sortLink\" rel=\"nofollow\" title=\"$sortBy\">$caption</a>";
             // set a style for the sort order
             $orderStyle = ($sortAndPageUrlParams['orderby']['value'] == $field['orderby']) ? ' '.$sortdirval : '';
             $orderStyle .= ' sortable';
@@ -458,6 +461,7 @@ class report_helper extends helper_base {
           if (isset($field['datatype']) && !empty($caption)) {
             switch ($field['datatype']) {
               case 'text':
+              case 'species':
                 $title=lang::get("{1} text begins with ... search. Use * as a wildcard.", $caption);
                 break;
               case 'date':
@@ -482,6 +486,8 @@ class report_helper extends helper_base {
           } else
             $filterRow .= "<th class=\"$colClass\"></th>";
         }
+        // Clean up dangling reference variable
+        unset($field);
       }
       $thead = str_replace(array('{class}','{title}','{content}'), array('','',$thead), $indicia_templates['report-thead-tr']);
       if ($wantFilterRow && (!isset($options["forceNoFilterRow"]) || !$options["forceNoFilterRow"]))
@@ -616,8 +622,19 @@ class report_helper extends helper_base {
           } else if (isset($field['update']) &&(!isset($field['update']['permission']) || hostsite_user_has_permission($field['update']['permission']))){
           	// TODO include checks to ensure method etc are included in structure -
           	$updateformID++;
-          	$value="<form id=\"updateform-".$updateformID."\" method=\"post\" action=\"".iform_ajaxproxy_url(null, $field['update']['method'])."\"><input type=\"hidden\" name=\"website_id\" value=\"".$field['update']['website_id']."\"><input type=\"hidden\" name=\"transaction_id\" value=\"updateform-".$updateformID."-field\"><input id=\"updateform-".$updateformID."-field\" name=\"".$field['update']['tablename'].":".$field['update']['fieldname']."\" class=\"update-input ".(isset($field['update']['class']) ? $field['update']['class'] : "")."\" value=\"".(isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '')."\">";
-          	if(isset($field['update']['parameters'])){
+            $update = $field['update'];
+            $url = iform_ajaxproxy_url(null, $update['method']);
+            $class = isset($field['update']['class']) ? $field['update']['class'] : '';
+            $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';
+          	$value = <<<FORM
+<form id="updateform-$updateformID" method="post" action="$url">
+<input type="hidden" name="website_id" value="$update[website_id]">
+<input type="hidden" name="transaction_id" value="updateform-$updateformID-field">
+<input id="updateform-$updateformID-field" name="$update[tablename]:$update][fieldname]" 
+  class="update-input $class" value="$value">
+FORM;
+
+            if(isset($field['update']['parameters'])){
               foreach($field['update']['parameters'] as $pkey=>$pvalue){
                 $value.="<input type=\"hidden\" name=\"".$field['update']['tablename'].":".$pkey."\" value=\"".$pvalue."\">";
               }
@@ -625,8 +642,8 @@ class report_helper extends helper_base {
             $value.="</form>";
           	$value=self::mergeParamsIntoTemplate($row, $value, true);
           	$haveUpdates = true;
-            self::$javascript .= "
-jQuery('#updateform-".$updateformID."').ajaxForm({
+            self::$javascript .= <<<JS
+$('#updateform-$updateformID').ajaxForm({
     async: true,
     dataType:  'json',
     success:   function(data, status, form){
@@ -637,7 +654,7 @@ jQuery('#updateform-".$updateformID."').ajaxForm({
       }
     }
   });
-";
+JS;
           }
           else {
             $value = isset($field['fieldname']) && isset($row[$field['fieldname']]) ? $row[$field['fieldname']] : '';
@@ -803,8 +820,14 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   pathParam: '$pathParam',
   sendOutputToMap: ".((isset($options['sendOutputToMap']) && $options['sendOutputToMap']) ? 'true' : 'false').",
   linkFilterToMap: ".(!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false').",
-  msgRowLinkedToMapHint: '".lang::get('Click the row to highlight the record on the map. Double click to zoom in.')."',
-  msgNoInformation: '".lang::get('No information available')."',
+  msgRowLinkedToMapHint: '" . addslashes(lang::get('Click the row to highlight the record on the map. Double click to zoom in.')) . "',
+  msgNoInformation: '" . addslashes(lang::get('No information available')) . "',
+  langFirst: '".lang::get('first')."',
+  langPrev: '".lang::get('prev')."',
+  langNext: '".lang::get('next')."',
+  langLast: '".lang::get('last')."',
+  langShowing: '".lang::get('Showing records {1} to {2} of {3}')."',
+  noRecords: 'No records',
   altRowClass: '$options[altRowClass]'";
       if (isset($options['sharing'])) {
         if (!isset($options['extraParams']))
@@ -836,6 +859,17 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
     if ($options['ajax'] && $options['autoloadAjax'])
       self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(false);\n";
     return $r;
+  }
+
+  /**
+   * Loops through the actions defined in a report column configuration and passes the captions through translation.
+   * @param array $actions List of actions defined for the column in the config.
+   */
+  private static function translateActions(&$actions) {
+    foreach ($actions as &$action) {
+      if (!empty($action['caption']))
+        $action['caption'] = lang::get($action['caption']);
+    }
   }
 
  /**
@@ -4842,7 +4876,6 @@ jQuery('#estimateChart .disable-button').click(function(){
   		fclose($handle);
   		$downloadTab .= '<tr><td>'.lang::get('Download Raw Data Grid (CSV Format)').' : </td><td><a target="_blank" href="'.$base_url.'/'.drupal_get_path('module', 'iform').'/client_helpers/cache/'.$cacheFile.'" download type="text/csv"><button type="button">'.lang::get('Download').'</button></a></td></tr>'."\n";
   	}
-
   	if($hasData && count($options['downloads'])>0) {
   		// format is assumed to be CSV
   		global $indicia_templates;

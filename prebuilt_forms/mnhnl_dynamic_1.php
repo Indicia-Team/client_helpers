@@ -22,24 +22,16 @@
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * 
  * @package    Client
  * @subpackage PrebuiltForms
  */
 
 require_once('dynamic_sample_occurrence.php');
+require_once('includes/mnhnl_common.php');
 
 class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
-
-  public static function get_perms($nid, $args) {
-    $perms = array();
-    if(isset($args['permission_name']) && $args['permission_name']!='') $perms[] = $args['permission_name'];
-    if(isset($args['edit_permission']) && $args['edit_permission']!='') $perms[] = $args['edit_permission'];
-    if(isset($args['ro_permission'])   && $args['ro_permission']!='')   $perms[] = $args['ro_permission'];
-    $perms += parent::get_perms($nid, $args);
-    return $perms;
-  }
 
   /** 
    * Return the form metadata.
@@ -72,17 +64,62 @@ class iform_mnhnl_dynamic_1 extends iform_dynamic_sample_occurrence {
           'default' => false,
           'required' => false
         ),
+        array(
+          'name'=>'uses_location_assignment',
+          'caption'=>'Uses Location Assignment',
+          'description'=>'Does the form use locations assigned to users?',
+          'type'=>'boolean',
+          'group' => 'User Interface',
+          'default' => false,
+          'required' => false
+        ),
+        array(
+          'name'=>'location_assignment_type',
+          'caption'=>'Location Assignment Type',
+          'description'=>'Choose the method by which locations are assigned to users. The Indicia User ID option requires easy_login.',
+          'type'=>'select',
+          'options' => array(
+            'indicia' => 'Indicia Warehouse User ID recorded in a location attribute',
+            'cms' => 'CMS User ID recorded in a location attribute'
+          ),
+          'group' => 'User Interface',
+          'default' => 'indicia',
+          'required' => false
+        ),
+        array(
+          'name'=>'location_assignment_attr_id',
+          'caption'=>'Location Assignment Attribute',
+          'description'=>'The Location attribute that stores the user ID (as defined in the type above). ' .
+                         'Depending on the exact configuration, this may need to be a multi-value one.',
+          'type'=>'select',
+          'table'=>'location_attribute',
+          'valueField'=>'id',
+          'captionField'=>'caption',
+          'group' => 'User Interface',
+          'required' => false
+        ),
+        array(
+          'name'=>'location_assignment_location_type_id',
+          'caption'=>'Location Assignment Location Type',
+          'description'=>'When performing location assignment to users, filter available locations by this location type',
+          'type' => 'select',
+          'table'=>'termlists_term',
+          'captionField'=>'term',
+          'valueField'=>'id',
+          'extraParams' => array('view'=>'list', 'termlist_external_key'=>'indicia:location_types'),
+          'required' => false,
+          'group'=>'User Interface'
+        )
       )
     );
     return $retVal;
  }
   
   protected static function get_form_html($args, $auth, $attributes) {
-    if (isset($args['includeLocTools']) && $args['includeLocTools'] && function_exists('iform_loctools_listlocations')) {
-  		$squares = iform_loctools_listlocations(self::$node);
-  		if($squares != "all" && count($squares)==0)
-  			return lang::get('Error: You do not have any squares allocated to you. Please contact your manager.');
-  	}
+    $squares = iform_mnhnl_listLocations($auth, $args);
+    if($squares != "all" && count($squares)==0)
+      return lang::get('Error: You do not have any squares allocated to you. Please contact your manager.');
+
     $r = call_user_func(array(self::$called_class, 'getHeaderHTML'), $args);
     $r .= parent::get_form_html($args, $auth, $attributes);
     $r .= call_user_func(array(self::$called_class, 'getTrailerHTML'), $args);

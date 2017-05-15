@@ -1324,10 +1324,15 @@ $('#$escaped').change(function(e) {
    */
   public static function hierarchical_select($options) {
     $options = array_merge(array(
-      'id'=>'select-'.rand(0,10000),
-      'blankText'=>'<please select>'
+      'id' => 'select-'.rand(0,10000),
+      'blankText' => '<please select>',
+      'extraParams' => array()
     ), $options);
-    $options['extraParams']['preferred']='t';
+    // If not language filtered, then limit to preferred, otherwise we could get
+    // multiple children.
+    // @todo This should probably be set by the caller, not here.
+    if (!isset($options['extraParams']['iso']))
+      $options['extraParams']['preferred']='t';
     // Get the data for the control. Not Ajax populated at the moment. We either populate the lookupValues for the top level control
     // or store in the childData for output into JavaScript
     $items = self::get_population_data($options);
@@ -2656,7 +2661,8 @@ JS;
     $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
     // get local vars for the array
     extract($db);
-    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred_taxon' : 'taxon';
+    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred,preferred_taxon' : 'taxon';
+    $options['extraParams']['sortdir'] = $options['cacheLookup'] ? 'ASC,DESC,ASC' : 'ASC';
     $options = array_merge(array(
       'fieldname'=>'occurrence:taxa_taxon_list_id',
       'table'=>$tblTaxon,
@@ -2702,55 +2708,84 @@ JS;
   public static function build_species_autocomplete_item_function($options) {
     global $indicia_templates;
     $options = array_merge(array(
-      'cacheLookup' => true,
-      'speciesIncludeAuthorities' => false,
-      'speciesIncludeBothNames' => false,
-      'speciesIncludeTaxonGroup' => false,
-      'speciesIncludeIdDiff' => true
+      'cacheLookup' => TRUE,
+      'speciesIncludeAuthorities' => FALSE,
+      'speciesIncludeBothNames' => FALSE,
+      'speciesIncludeTaxonGroup' => FALSE,
+      'speciesIncludeIdDiff' => TRUE
     ), $options);
+    // Need bools as strings
+    $options['speciesIncludeAuthorities'] =
+      $options['speciesIncludeAuthorities'] ? 'true' : 'false';
+    $options['speciesIncludeBothNames'] =
+      $options['speciesIncludeBothNames'] ? 'true' : 'false';
+    $options['speciesIncludeTaxonGroup'] =
+      $options['speciesIncludeTaxonGroup'] ? 'true' : 'false';
+    $options['speciesIncludeIdDiff'] =
+      $options['speciesIncludeIdDiff'] ? 'true' : 'false';
     // always include the searched name. In this JavaScript we need to behave slightly differently
     // if using the cached as opposed to the standard versions of taxa_taxon_list.
-    $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
-    // get local vars for the array
-    extract($db);
+    $db = json_encode(data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']));
+    $fn = <<<JS
+function(item) {
+  var r;
+  var synText;
+  var nameTest;
+  var db = $db;
+  var speciesIncludeAuthorities = $options[speciesIncludeAuthorities];
+  var speciesIncludeBothNames = $options[speciesIncludeBothNames];
+  var speciesIncludeTaxonGroup = $options[speciesIncludeTaxonGroup];
+  var speciesIncludeIdDiff = $options[speciesIncludeIdDiff];
 
-    $fn = "function(item) { \n".
-      "  var r;\n".
-      "  if (item.$colLanguage!==null && item.$colLanguage.toLowerCase()==='$valLatinLanguage') {\n".
-      "    r = '<em>'+item.$colTaxon+'</em>';\n".
-      "  } else {\n".
-      "    r = '<span>'+item.$colTaxon+'</span>';\n".
-      "  }\n";
-    if ($options['speciesIncludeAuthorities']) {
-      $fn .= " if (item.$colAuthority) {\n" .
-        "    r += ' ' + item.$colAuthority;\n" .
-        "  }\n";
+  if (item[db.colLanguage]!==null && item[db.colLanguage].toLowerCase()===db.valLatinLanguage) {
+    r = '<em>' + item[db.colTaxon] + '</em>';
+  } else {
+    r = '<span>' + item[db.colTaxon] + '</span>';
+  }
+  if (speciesIncludeAuthorities) {
+    if (item[db.colAuthority]) {
+      r += ' ' + item[db.colAuthority];
     }
-    // This bit optionally adds '- common' or '- latin' depending on what was being searched
-    if ($options['speciesIncludeBothNames']) {
-      $fn .= "  if (item.preferred==='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n" .
-        "    r += ' - ' + item.$colCommon;\n" .
-        "  } else if (item.preferred==='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n" .
-        "    r += ' - <em>' + item.$colPreferred + '</em>';\n";
-      if ($options['speciesIncludeAuthorities']) {
-        $fn .= "    if (item.$colPreferredAuthority) {\n" .
-          "      r += ' ' + item.$colPreferredAuthority;\n" .
-          "    }\n";
+  }
+  // This bit optionally adds '- common' or '- latin' depending on what was being searched
+  if (speciesIncludeBothNames) {
+    nameTest = (speciesIncludeAuthorities && 
+      (item[db.colPreferred] !== item[db.colTaxon] || item[db.colPreferredAuthority] !==item[db.colAuthority]))
+      || (!speciesIncludeAuthorities &&
+      item[db.colPreferred] !== item[db.colTaxon])
+      
+    if (item.preferred === 't' && item[db.colCommon] !== item[db.colTaxon] && item[db.colCommon]) {
+      r += '<br/>' + item[db.colCommon];
+    } else if (item.preferred==='f' && nameTest && item[db.colPreferred]) {
+      synText = item.language_iso==='lat' ? 'syn. of' : '';
+      r += '<br/>[';
+      if (item.language_iso==='lat') {
+        r += 'syn. of ';
       }
-      $fn .= "  }\n";
+      r += '<em>' + item[db.colPreferred] + '</em>';
+      if (speciesIncludeAuthorities) {
+        if (item[db.PreferredAuthority]) {
+          r += ' ' + item[db.colPreferredAuthority];
+        }
+      }
+      r += ']';
     }
-    // this bit optionally adds the taxon group
-    if ($options['speciesIncludeTaxonGroup'])
-      $fn .= "  r += '<br/><strong>' + item.taxon_group + '</strong>'\n";
-    if ($options['speciesIncludeIdDiff'])
-      $fn .= "  if (item.identification_difficulty && item.identification_difficulty>1) {\n" .
-        "    item.icon = ' <span class=\"item-icon id-diff id-diff-'+item.identification_difficulty+" .
-        "      '\" data-diff=\"'+item.identification_difficulty+'\" data-rule=\"'+item.id_diff_verification_rule_id+'\"></span>';\n" .
-        "    r += item.icon;\n" .
-        "  }\n";
-    // Close the function
-    $fn .= "  return r;\n".
-      "}\n";
+  }
+  if (speciesIncludeTaxonGroup) {
+    r += '<br/><strong>' + item.taxon_group + '</strong>';
+  }
+  if (speciesIncludeIdDiff &&
+      item.identification_difficulty && item.identification_difficulty>1) {
+    item.icon = ' <span ' +
+        'class="item-icon id-diff id-diff-' + item.identification_difficulty + '" ' +
+        'data-diff="' + item.identification_difficulty + '" ' +
+        'data-rule="' + item.id_diff_verification_rule_id + '"></span>';
+    r += item.icon;
+  }
+  return r;
+}
+
+JS;
     // Set it into the indicia templates
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
@@ -2928,7 +2963,9 @@ RIJS;
   * <li><b>occurrenceComment</b><br/>
   * Optional. If set to true, then an occurrence comment input field is included on each row.</li>
   * <li><b>occurrenceSensitivity</b><br/>
-  * Optional. If set to true, then an occurrence sensitivity selector is included on each row.</li>
+  * Optional. If set to true, then an occurrence sensitivity drop-down selector is included on each row. Can also be set
+  * to the size of a grid square as an integer and a checkbox will be made available for enabling this level of blur.
+  * Options for the grid square size are in metres, e.g. 100, 1000, 2000, 10000, 100000.</li>
   * <li><b>spatialRefPerRow</b><br/>
   * Optional. If set to true, then a spatial reference column is included on each row. When submitted, each unique
   * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
@@ -3493,7 +3530,7 @@ RIJS;
         }
         $row .= self::speciesChecklistSpatialRefPerRowCell($options, $colIdx, $txIdx, $existingRecordId);
         $row .= self::speciesChecklistCommentCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
-        $row .= self::speciesChecklistSensitivityCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
+        $row .= self::speciesChecklistSensitivityCell($options, $colIdx, $txIdx, $existingRecordId);
 
         // Add a cell for the Add Media button which is hidden if there is
         // existing media.
@@ -4422,9 +4459,14 @@ $('#".$options['id']." .species-filter').click(function(evt) {
           // store the id of the taxon in the array, so we can load them all in one go later
           $extraTaxonOptions['extraParams']['id'][]=$ttlId;
         }
+        // Ensure the load of taxa is batched if there are lots to load
+        if (count($extraTaxonOptions['extraParams']['id'])>=50 && !empty($options['lookupListId'])) {
+          $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
+          $extraTaxonOptions['extraParams']['id'] = array();
+        }
       }
-      // load and append the additional taxa to our list of taxa to use in the grid
-      if (!empty($options['lookupListId']))
+      // Load and append the remaining additional taxa to our list of taxa to use in the grid
+      if (count($extraTaxonOptions['extraParams']['id']) && !empty($options['lookupListId']))
         $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
     }
     return $taxalist;
@@ -4641,14 +4683,8 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       $r .= '<td class="ui-widget-content scCommentCell" headers="'.$options['id'].'-comment-0"><input class="scComment" type="text" ' .
         "id=\"$fieldname:occurrence:comment\" name=\"$fieldname:occurrence:comment\" value=\"\" /></td>";
     }
-    if (isset($options['occurrenceSensitivity']) && $options['occurrenceSensitivity']) {
-      $r .= '<td class="ui-widget-content scSensitivityCell" headers="'.$options['id'].'-sensitivity-0">'.
-        self::select(array('fieldname'=>"$fieldname:occurrence:sensitivity_precision", 'class'=>'scSensitivity',
-          'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
-            '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
-          'blankText' => 'Not sensitive')).
-        '</td>';
-    }
+    if (isset($options['occurrenceSensitivity']))
+      $r .= self::speciesChecklistSensitivityCell($options, 0, '-idx-', '');
     if ($options['mediaTypes']) {
       $onlyLocal = true;
       $onlyImages = true;
@@ -6486,7 +6522,7 @@ if (errors$uniq.length>0) {
       $subSample = data_entry_helper::wrap($sampleRecord, 'sample');
       // Add the subsample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
-        $subSample['subModels'] = array_merge($sampleMod['subModels'], $occs);
+        $subSample['subModels'] = array_merge($subSample['subModels'], $occs);
       } else {
         $subSample['subModels'] = $occs;
       }
@@ -6658,24 +6694,32 @@ if (errors$uniq.length>0) {
    * @param $options array Options passed to the control
    * @param $colIdx integer Index of the column position allowing the td to be linked to its header
    * @param $rowIdx integer Index of the grid row
-   * @param $loadedTxIdx integer
    * @param $existingRecordId integer If an existing occurrence record, pass the ID
    * @return string HTML to insert into the grid
    */
-  private static function speciesChecklistSensitivityCell($options, $colIdx, $rowIdx, $loadedTxIdx, $existingRecordId) {
+  private static function speciesChecklistSensitivityCell($options, $colIdx, $rowIdx, $existingRecordId) {
     $r = '';
-    if ($options['occurrenceSensitivity']) {
-      $r .= "\n<td class=\"ui-widget-content scSensitivityCell\" headers=\"".$options['id']."-sensitivity-$colIdx\">";
-      $r .= self::select(array(
-        'fieldname'=>"sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision",
-        'default'=>isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"])
-          ? self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:sensitivity_precision"] : false,
-        'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
-          '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
-        'blankText' => 'Not sensitive'
+    $sensitivityCtrl = '';
+    $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
+    $fieldnameInEntity = "sc:$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
+    $value = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : self::$entity_to_load[$fieldnameInEntity];
+    if ($options['occurrenceSensitivity'] === true) {
+      $sensitivityCtrl = self::select(array(
+          'fieldname' => $fieldname,
+          'class' => 'scSensitivity',
+          'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
+            '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
+          'blankText' => 'Not sensitive',
+          'default' => $value ? $value : false
       ));
-      $r .= "</td>\n";
+    } elseif  (preg_match('/\d+/', $options['occurrenceSensitivity'])) {
+      // If outputting a checkbox, an existing value overrides the chosen precision for the checkbox.
+      $blur = empty($value) ? $options['occurrenceSensitivity'] : $value;
+      $checked = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : ' checked="checked"';
+      $sensitivityCtrl = "<input type=\"checkbox\" name=\"$fieldname\" value=\"$blur\"$checked>";
     }
+    $r .= '<td class="ui-widget-content scSensitivityCell" headers="'.$options['id']."-sensitivity-$colIdx\">" .
+      $sensitivityCtrl . '</td>';
     return $r;
   }
 

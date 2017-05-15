@@ -168,13 +168,11 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
     data_entry_helper::add_resource('openlayers');
     $indicia_templates['label'] = '<label for="{id}"{labelClass}>{label}:</label>'; // can't have the CR on the end
     $indicia_templates['zilch'] = ''; // can't have the CR on the end
-    self::$locations = iform_loctools_listlocations($nid);
+    self::$locations = iform_mnhnl_listLocations($auth, $args);
     $retVal = parent::get_form($args, $nid, $response);
     if(parent::$mode != self::MODE_GRID){
       iform_mnhnl_addCancelButton($args['interface']);
-      data_entry_helper::$javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";";
-      if(!iform_loctools_checkaccess($nid,'superuser')){
+      if(!hostsite_user_has_permission($args['edit_permission'])){
         data_entry_helper::$javascript .= "
 jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args['observer_attr_id']."\\:]').attr('readonly',true)";
         if(parent::$mode == self::MODE_NEW){
@@ -183,12 +181,12 @@ jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args[
           data_entry_helper::$javascript .= ";";
         }
       } else {
-        $userlist = iform_loctools_listusers($nid);
+        $userlist = iform_mnhnl_listUsers($auth, $args);
         data_entry_helper::$javascript .= "
 existing = jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args['observer_attr_id']."\\:]');
 replacement = '<select name=\"'+existing.attr('name')+'\" >";
-        foreach($userlist as $uid => $a_user){
-          data_entry_helper::$javascript .= "<option value=\"".$a_user->name."\">".$a_user->name."&nbsp;</option>";
+        foreach($userlist as $a_user_name){
+          data_entry_helper::$javascript .= "<option value=\"".$a_user_name."\">".$a_user_name."&nbsp;</option>";
         }
         data_entry_helper::$javascript .= "</select>';
 jQuery(replacement).insertBefore(existing).val(existing.val());
@@ -360,7 +358,7 @@ deleteSurvey = function(sampleID){
       'extraParams' => array(
         'survey_id'=>$args['survey_id'], 
         'userID_attr_id'=>$userIdAttr,
-        'userID'=>(iform_loctools_checkaccess($nid,'superuser') ? -1 :  $user->uid), // use -1 if superuser - non logged in will not get this far.
+        'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid), // use -1 if manager - non logged in will not get this far.
         'userName_attr_id'=>$userNameAttr,
         'userName'=>($user->name),
         'observer_attr_id'=>$observerAttr
@@ -912,7 +910,7 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
 
   protected static function getSampleListGridPreamble() {
     global $user;
-    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(iform_loctools_checkaccess(parent::$node,'superuser') ? lang::get('LANG_All_Users') : $user->name).'</p>';
+    $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
     return $r;
   }
   

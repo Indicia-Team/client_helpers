@@ -313,7 +313,7 @@ class iform_mnhnl_citizen_science_1 {
         'fieldname'=>'smpAttr:'.$args['email_attr_id'],
         'helpText'=>lang::get('email_explain'),
         'class'=>'control-width-4',
-        'validation'=>'required'
+        'validation'=>array('required','email')
       ));
       $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('phone number'),
@@ -441,10 +441,8 @@ class iform_mnhnl_citizen_science_1 {
                 'attrtable'=>'occurrence_attribute',
                 'key'=>'occurrence_id',
                 'fieldprefix'=>"occAttr",
-                'extraParams'=>$readAuth + array('query' => urlencode(json_encode(array(
-                  'in'=>array('id', $attrIds)
-                )))),
-              'survey_id'=>$args['survey_id']
+                'extraParams'=>$readAuth + array('query' => json_encode(array('in'=>array('id', $attrIds)))),
+                'survey_id'=>$args['survey_id']
             ));
             foreach ($attributes as $attribute) {
               $r .= data_entry_helper::outputAttribute($attribute, array('language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), 'booleanCtrl' => 'checkbox'));
@@ -478,7 +476,7 @@ class iform_mnhnl_citizen_science_1 {
         'page'=>'last'
       ));
     } else {
-      $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"Save\" />\n";
+      $r .= '<input type="submit" class="ui-state-default ui-corner-all" value="' . lang::get('Save') . "\" />\n";
     }
     $r .= "</fieldset>\n";
     $r .= "</div>\n";

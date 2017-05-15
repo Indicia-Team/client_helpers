@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt Indicia data entry form.
- * NB has Drupal specific code. Relies on presence of IForm loctools and IForm Proxy.
+ * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * 
  * @package	Client
  * @subpackage PrebuiltForms
@@ -144,8 +144,6 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
       if($param['name'] != 'species_include_taxon_group' &&
           $param['name'] != 'link_species_popups' &&
           $param['name'] != 'species_include_both_names' &&
-          $param['name'] != 'includeLocTools' &&
-          $param['name'] != 'loctoolsLocTypeID' &&
           $param['name'] != 'entranceDefectiveTermID' &&
           $param['name'] != 'entranceDefectiveCommentAttrID' &&
           $param['name'] != 'disturbanceOtherTermID' &&
@@ -184,27 +182,9 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
    * Does not include any HTML.
    */
   protected static function get_control_customJS($auth, $args, $tabalias, $options) {
-    if(lang::get('validation_required') != 'validation_required')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";";
-    if(lang::get('validation_max') != 'validation_max')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
-    if(lang::get('validation_min') != 'validation_min')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
-    if(lang::get('validation_number') != 'validation_number')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
-    if(lang::get('validation_digits') != 'validation_digits')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
-    if(lang::get('validation_integer') != 'validation_integer')
-      data_entry_helper::$late_javascript .= "
-$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
     iform_mnhnl_addCancelButton($args['interface']);
     
-    $r .= self::getSiteTypeJS(parent::$auth, $args);
+    $r = self::getSiteTypeJS(parent::$auth, $args);
     data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
   $('input[type=radio],[type=checkbox]').live('click', function(){
@@ -1099,26 +1079,5 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     unset($record['present']);
     $recordData=implode('',$record);// this implodes the values only, not the keys
     return ($recordData!='');
-  }
-  
-  
-  /**
-   * Retrieves a list of the css files that this form requires in addition to the standard
-   * Drupal, theme or Indicia ones.
-   * 
-   * @return array List of css files to include for this form.
-   */
-  public static function get_css() {
-    return array('mnhnl_bats2.css');
-  }
-  
-  /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
-   * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
-   * working.
-   */
-  protected static function getArgDefaults($args) {
-    $args['includeLocTools'] == false; 
-    return $args;      
   }
 } 
