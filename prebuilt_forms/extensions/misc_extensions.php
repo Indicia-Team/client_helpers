@@ -414,7 +414,6 @@ $('form#entry_form').tooltip({
   }
 
   /**
-<<<<<<< HEAD
    * An extension control that takes a scratchpad_list_id parameter in the URL and uses it to load the list onto a
    * species grid on the page. This allows a scratchpad to be used as the first step in data entry.
    * @param $auth
