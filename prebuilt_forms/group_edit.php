@@ -1103,7 +1103,7 @@ $('#entry_form').submit(function() {
   /**
    * Checks that the user is allowed to administer this group and throws an exception if not. The user can be granted
    * admin rights either by explicitly setting the flag in their groups_users record, being the original creator of the
-   * group, having iform groups admin permissions, or being an admin of a parent group if the inherit_admin_privileges
+   * group, having 'IForm groups admin' permissions, or being an admin of a parent group if the inherit_admin_privileges
    * flag is set.
    * @param $group
    * @param $args
@@ -1113,7 +1113,7 @@ $('#entry_form').submit(function() {
   private static function checkAdminRights($group, $args, $auth) {
     // Check permissions. The group creator or people with global groups admin permissions get a pass.
     if ($group['created_by_id']!==hostsite_get_user_field('indicia_user_id') &&
-      !hostsite_user_has_permission('Iform groups admin')) {
+      !hostsite_user_has_permission('IForm groups admin')) {
       // User did not create group. So, check they are an admin, either in just this group, or if the option is
       // enabled also look in the hierarchical parents.
       if (!empty($args['inherit_admin_privileges']) && $args['inherit_admin_privileges']) {
