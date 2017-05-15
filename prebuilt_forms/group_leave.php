@@ -96,7 +96,7 @@ class iform_group_leave {
       $wrap = submission_builder::wrap($data, 'groups_user');
       $response = data_entry_helper::forward_post_to('groups_user', $wrap, $auth['write_tokens']);
       if (isset($response['success'])) {
-        hostsite_show_message("You are no longer participating in $group[title]!");
+        hostsite_show_message(lang::get('You are no longer participating in {!}!', $group['title']);
         hostsite_goto_page($args['groups_page_path']);
       } 
       else {
