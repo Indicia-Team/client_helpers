@@ -28,7 +28,7 @@ global $custom_terms;
  */
 
 $custom_terms = array(
-  'Are you sure you want to stop participating in {1}?' => 'Sind Sie sicher, dass {1}?',
+  'Are you sure you want to stop participating in {1}?' => 'Sind Sie sicher, dass Sie sich nicht länger an {1} beteiligen wollen?',
   'Cancel' => 'Abbrechen',
   'Confirm' => 'Bestätigen',
   'Confirmation' => 'Bestätigung',

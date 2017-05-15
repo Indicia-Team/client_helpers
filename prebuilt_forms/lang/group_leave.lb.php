@@ -28,7 +28,7 @@ global $custom_terms;
  */
 
 $custom_terms = array(
-  'Are you sure you want to stop participating in {1}?' => '[translation missing]',
+  'Are you sure you want to stop participating in {1}?' => 'Sidd Dir sécher, dass Dir net méi wëllt un {1} deelhuelen?',
   'Cancel' => 'Annuléieren',
   'Confirm' => 'Bestätegen',
   'Confirmation' => 'Confirmatioun',
