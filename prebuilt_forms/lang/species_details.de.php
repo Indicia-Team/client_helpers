@@ -28,11 +28,11 @@ global $custom_terms;
  */
 
 $custom_terms = array(
-  'Explore records of {1}' => '',
-  'Map' => '',
-  'Photos and media' => '',
-  'Species Details' => '',
-  'Species name' => '',
-  'Summary details for {1}' => '',
-  'Taxonomy' => ''
+  'Explore records of {1}' => 'Ansehen der Beobachtungen von {1}',
+  'Map' => 'Karte',
+  'Photos and media' => 'Fotos und Medien',
+  'Species Details' => 'Einzelheit zur Art',
+  'Species name' => 'Artname',
+  'Summary details for {1}' => 'Zusammenfassende Details zu {1}',
+  'Taxonomy' => 'Taxonomie'
 );
