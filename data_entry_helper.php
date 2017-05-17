@@ -6699,27 +6699,35 @@ if (errors$uniq.length>0) {
    */
   private static function speciesChecklistSensitivityCell($options, $colIdx, $rowIdx, $existingRecordId) {
     $r = '';
-    $sensitivityCtrl = '';
-    $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
-    $fieldnameInEntity = "sc:$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
-    $value = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : self::$entity_to_load[$fieldnameInEntity];
-    if ($options['occurrenceSensitivity'] === true) {
-      $sensitivityCtrl = self::select(array(
+    if (!empty($options['occurrenceSensitivity'])) {
+      $sensitivityCtrl = '';
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
+      $fieldnameInEntity = "sc:$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
+      $value = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : self::$entity_to_load[$fieldnameInEntity];
+      if ($options['occurrenceSensitivity'] === TRUE) {
+        $sensitivityCtrl = self::select(array(
           'fieldname' => $fieldname,
           'class' => 'scSensitivity',
-          'lookupValues' => array('100'=>lang::get('Blur to 100m'), '1000'=>lang::get('Blur to 1km'), '2000'=>lang::get('Blur to 2km'),
-            '10000'=>lang::get('Blur to 10km'), '100000'=>lang::get('Blur to 100km')),
+          'lookupValues' => array(
+            '100' => lang::get('Blur to 100m'),
+            '1000' => lang::get('Blur to 1km'),
+            '2000' => lang::get('Blur to 2km'),
+            '10000' => lang::get('Blur to 10km'),
+            '100000' => lang::get('Blur to 100km')
+          ),
           'blankText' => 'Not sensitive',
-          'default' => $value ? $value : false
-      ));
-    } elseif  (preg_match('/\d+/', $options['occurrenceSensitivity'])) {
-      // If outputting a checkbox, an existing value overrides the chosen precision for the checkbox.
-      $blur = empty($value) ? $options['occurrenceSensitivity'] : $value;
-      $checked = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : ' checked="checked"';
-      $sensitivityCtrl = "<input type=\"checkbox\" name=\"$fieldname\" value=\"$blur\"$checked>";
+          'default' => $value ? $value : FALSE
+        ));
+      }
+      elseif (preg_match('/\d+/', $options['occurrenceSensitivity'])) {
+        // If outputting a checkbox, an existing value overrides the chosen precision for the checkbox.
+        $blur = empty($value) ? $options['occurrenceSensitivity'] : $value;
+        $checked = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : ' checked="checked"';
+        $sensitivityCtrl = "<input type=\"checkbox\" name=\"$fieldname\" value=\"$blur\"$checked>";
+      }
+      $r .= '<td class="ui-widget-content scSensitivityCell" headers="' . $options['id'] . "-sensitivity-$colIdx\">" .
+        $sensitivityCtrl . '</td>';
     }
-    $r .= '<td class="ui-widget-content scSensitivityCell" headers="'.$options['id']."-sensitivity-$colIdx\">" .
-      $sensitivityCtrl . '</td>';
     return $r;
   }
 
