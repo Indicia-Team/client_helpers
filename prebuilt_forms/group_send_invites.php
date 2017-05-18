@@ -172,31 +172,19 @@ class iform_group_send_invites {
         $acceptUrl = $protocol . $_SERVER['HTTP_HOST'] . $rootFolder . $args['accept_invite_path'] . ($clean ? '?' : '&') . 'token=' . $base . $idx;
         $body = $_POST['invite_message'] . "<br/><br/>" .
             '<a href="' . $acceptUrl . '">' . lang::get('Accept this invitation') . '</a>';
-        $message = array(
-            'id' => 'iform_group_invite', 
-            'to' => trim($email), 
-            'subject' => lang::get('Invitation to join a recording group'), 
-            'body' => $body, 
-            'headers' => array(
-              'MIME-Version' => '1.0',
-              'Content-type' => 'text/html; charset=iso-8859-1',
-              // prefer site's mail account in from, otherwise looks like spam
-              'From' => hostsite_get_config_value('site', 'mail'),
-              'Reply-To' => $user->mail
-            )
-        );
-        $mimeheaders = array();
-        foreach ($message['headers'] as $name => $value) {
-          $mimeheaders[] = $name . ': ' . hostsite_mime_header_encode($value);
-        }
+        $headers = array();
+        $headers[] = 'MIME-Version: 1.0';
+        $headers[] = 'Content-type: text/html; charset=UTF-8;';
+        $headers[] = 'From: '. hostsite_get_config_value('site', 'mail');
+        $headers[] = 'Reply-To: '. $user->mail;
+        $headers[] = 'Return-Path: '. hostsite_get_config_value('site', 'mail');
+        $headers = implode("\r\n", $headers) . PHP_EOL;
+        // Send email. Depends upon settings in php.ini being correct
         $thismailsuccess = mail(
-          $message['to'], hostsite_mime_header_encode($message['subject']),
-          // Note: e-mail uses CRLF for line-endings, but PHP's API requires LF.
-          // They will appear correctly in the actual e-mail that is sent.
-          str_replace("\r", '', $message['body']), 
-          // For headers, PHP's API suggests that we use CRLF normally,
-          // but some MTAs incorrecly replace LF with CRLF. See #234403.
-          join("\n", $mimeheaders)
+          trim($email),
+          lang::get('Invitation to join a recording group'),
+          wordwrap($body, 80),
+          $headers
         );
         if (!$thismailsuccess)
           $failedRecipients[$message['to']]=$acceptUrl;
