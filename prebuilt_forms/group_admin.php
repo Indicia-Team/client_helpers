@@ -257,7 +257,7 @@ class iform_group_admin {
   }
 
   public static function get_perms() {
-  	return array('IForm groups admin');
+    return array('IForm groups admin');
   }
 
 }
