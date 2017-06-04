@@ -361,7 +361,6 @@ class iform_ebms_transects_allocation {
   public static function ajax_saveLocationAttribute($website_id, $password, $nid) {
   	$params = hostsite_get_node_field_value($nid, 'params');
   	iform_load_helpers(array('data_entry_helper'));
-  	data_entry_helper::$base_url = $params['base_url'];
   	$auth = data_entry_helper::get_read_write_auth($website_id, $password);
   	$writeTokens = $auth['write_tokens'];
   	 
