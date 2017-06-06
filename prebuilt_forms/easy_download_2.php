@@ -76,7 +76,8 @@ class iform_easy_download_2 {
       array(
         'name'=>'download_administered_groups',
         'caption'=>'Download administered group records permission',
-        'description'=>'Provide the name of the permission required to allow download of records from recording groups you are an administrator of.',
+        'description'=>'Provide the name of the permission required to allow download of records contributed ' .
+            'to recording groups you are an administrator of using a group recording form.',
         'type'=>'text_input',
         'required'=>false,
         'default'=>'indicia data admin'
@@ -84,7 +85,8 @@ class iform_easy_download_2 {
       array(
         'name'=>'download_member_groups',
         'caption'=>'Download any group records permission',
-        'description'=>'Provide the name of the permission required to allow download of records from recording groups you are a member of.',
+        'description'=>'Provide the name of the permission required to allow download of records contributed ' .
+            'to recording groups you are a member of using a group recording form.',
         'type'=>'text_input',
         'required'=>false,
         'default'=>''
@@ -527,9 +529,11 @@ class iform_easy_download_2 {
     ));
     foreach ($groups as $group) {
       if (($canDownloadAdministeredGroups && $group['administrator']==='t') || $canDownloadMemberGroups)
-        $r["R group $group[group_id]"] = lang::get('All records for {1}', $group['group_title']);
+        $r["R group $group[group_id]"] = lang::get(
+            'All records added using a recording form for {1}', $group['group_title']);
       if ($args['download_my_records'])
-        $r["R group my $group[group_id]"] = lang::get('My records contributed to {1}', $group['group_title']);
+        $r["R group my $group[group_id]"] = lang::get(
+            'My records added using a recording form for {1}', $group['group_title']);
     }
     return $r;
   }
@@ -697,14 +701,9 @@ class iform_easy_download_2 {
           $params["{$field}_context"]=$value;
         }
       }
-      if ($group['implicit_record_inclusion']==='t')
-        $params['implicit_group_id'] = $matches['id'];
-      elseif ($group['implicit_record_inclusion']==='f')
-        $params['group_id'] = $matches['id'];
-      // implicit record inclusion might also be blank, in which case we don't need to filter by
-      // group users
-      if ($matches['my'])
-        $params['my_records_context']=1;
+      // Force explicitly contributed records only - otherwise easy to create a "download all" group overriding
+      // intended permissions.
+      $params['group_id'] = $matches['id'];
     }
     // if not doing a group download then we might need to apply one of the user's filters
     if (!preg_match('/^R group/', $_POST['download-type']) &&
