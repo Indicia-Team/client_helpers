@@ -528,7 +528,6 @@ class iform_easy_download_2 {
       'extraParams'=>data_entry_helper::$js_read_tokens + $params
     ));
     foreach ($groups as $group) {
-      drupal_Set_message(var_export($group, true));
       $title = $group['group_title'] .
           (isset($group['group_expired']) && $group['group_expired'] === 't' ? ' (' . lang::get('finished') . ')' : '');
       if (($canDownloadAdministeredGroups && $group['administrator']==='t') || $canDownloadMemberGroups)
