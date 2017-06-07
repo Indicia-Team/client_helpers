@@ -528,12 +528,15 @@ class iform_easy_download_2 {
       'extraParams'=>data_entry_helper::$js_read_tokens + $params
     ));
     foreach ($groups as $group) {
+      drupal_Set_message(var_export($group, true));
+      $title = $group['group_title'] .
+          (isset($group['group_expired']) && $group['group_expired'] === 't' ? ' (' . lang::get('finished') . ')' : '');
       if (($canDownloadAdministeredGroups && $group['administrator']==='t') || $canDownloadMemberGroups)
         $r["R group $group[group_id]"] = lang::get(
-            'All records added using a recording form for {1}', $group['group_title']);
+            'All records added using a recording form for {1}', $title);
       if ($args['download_my_records'])
         $r["R group my $group[group_id]"] = lang::get(
-            'My records added using a recording form for {1}', $group['group_title']);
+            'My records added using a recording form for {1}', $title);
     }
     return $r;
   }
