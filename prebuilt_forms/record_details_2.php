@@ -531,10 +531,10 @@ Record ID',
       'nocache'=>true,
       'sharing'=>'reporting'
     ));
+    $r .= '<div id="comment-list">';
     if (count($comments)===0) 
       $r .= '<p id="no-comments">'.lang::get('No comments have been made.').'</p>';
     else {
-      $r .= '<div id="comment-list">';
       foreach($comments as $comment) {
         $r .= '<div class="comment">';
         $r .= '<div class="header">';
@@ -548,8 +548,8 @@ Record ID',
         $r .= "<div>$c</div>";
         $r .= '</div>';
       }
-      $r .= '</div>';
     }
+    $r .= '</div>';
     global $user;
     $r .= '<form><fieldset><legend>'.lang::get('Add new comment').'</legend>';
     $r .= '<input type="hidden" id="comment-by" value="'.$user->name.'"/>';
