@@ -595,7 +595,6 @@ class iform_species_details extends iform_dynamic {
     // This is not a map used for input
     $options['editLayer'] = false;
     // if in Drupal, and IForm proxy is installed, then use this path as OpenLayers proxy
-    // @todo Refactor for Drupal 8.
     if (function_exists('hostsite_module_exists') && hostsite_module_exists('iform_proxy')) {
       $options['proxy'] = data_entry_helper::getRootFolder(true) .
           hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
