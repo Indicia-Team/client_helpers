@@ -289,20 +289,6 @@ class iform_species_details extends iform_dynamic {
    * @subpackage PrebuiltForms
    */ 
   protected static function get_form_html($args, $auth, $attributes) {
-    if (isset($_POST['enable'])) {
-      module_enable(array('iform_ajaxproxy'));
-      hostsite_show_message(lang::get('The Indicia AJAX Proxy module has been enabled.'));
-    }
-    if (!defined('IFORM_AJAXPROXY_PATH')) {
-      $r = '<p>'.lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
-        'Indicia Warehouse without having to reload the page.').'</p>';
-      $r .= '<form method="post">';
-      $r .= '<input type="hidden" name="enable" value="t"/>';
-      $r .= '<input type="submit" value="'.lang::get('Enable Indicia AJAX Proxy').'"/>';
-      $r .= '</form>';
-      return $r;
-    }  
-      
     if (empty($_GET['taxa_taxon_list_id']) && empty($_GET['taxon_meaning_id'])) {
       return 'This form requires a taxa_taxon_list_id or taxon_meaning_id parameter in the URL.';
     }
