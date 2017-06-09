@@ -417,6 +417,9 @@ mapInitialisationHooks.push(function(mapdiv) {
   $.each(features, function() {
     this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
     this.style.fillOpacity=0;
+    if (mapdiv.map.projection.getCode() != mapdiv.indiciaProjection.getCode()) {
+      feature.geometry.transform(mapdiv.indiciaProjection, mapdiv.map.projection);
+    }
   });
   loclayer.addFeatures(features);
   var bounds=loclayer.getDataExtent();
