@@ -266,6 +266,7 @@ if ($("#{escapedId} option").length===0) {
   'report-tbody' => '<tbody>{content}</tbody>',
   'report-tbody-tr' => '<tr{class}{rowId}{rowTitle}>{content}</tr>',
   'report-tbody-td' => '<td{class}>{content}</td>',
+  'report-action-button' => '<a{class}{href}{onclick}>{content}</a>',
   'data-input-table' => '<table{class}{id}>{content}</table>',
   'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
 <div id="review-map-container"></div>

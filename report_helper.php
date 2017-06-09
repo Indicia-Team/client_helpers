@@ -828,7 +828,8 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langLast: '".lang::get('last')."',
   langShowing: '".lang::get('Showing records {1} to {2} of {3}')."',
   noRecords: 'No records',
-  altRowClass: '$options[altRowClass]'";
+  altRowClass: '$options[altRowClass]',
+  actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
       if (isset($options['sharing'])) {
         if (!isset($options['extraParams']))
           $options['extraParams']=array();
@@ -2441,7 +2442,10 @@ if (typeof mapSettingsHooks!=='undefined') {
       } else {
         $onclick = '';
       }
-      $class=(isset($action['class'])) ? ' '.$action['class'] : '';
+      $classes = array('action-button');
+      if (!empty($action['class']))
+        $classes[] = $action['class'];
+      $class = ' class="' . implode(' ', $classes) . '"';
       if (isset($action['img'])) {
         $rootFolder = self::getRootfolder();
         $img=str_replace(array('{rootFolder}', '{sep}'), array($rootFolder, strpos($rootFolder, '?')===FALSE ? '?' : '&'), $action['img']);
@@ -2449,7 +2453,11 @@ if (typeof mapSettingsHooks!=='undefined') {
         $content = "<img src=\"$img\" title=\"$title\" />";
       } elseif (isset($action['caption']))
         $content = $action['caption'];
-      $links[] = "<a class=\"action-button$class\"$href$onclick>".$content.'</a>';
+      global $indicia_templates;
+      $links[] = str_replace(
+          array('{class}', '{href}', '{onclick}', '{content}'),
+          array($class, $href, $onclick, $content),
+          $indicia_templates['report-action-button']);
     }
     return implode('', $links);
   }
