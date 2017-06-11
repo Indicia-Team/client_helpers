@@ -486,10 +486,6 @@ $('#$escaped').change(function(e) {
    * Defines hidden inputs to insert onto the page which contain the items to add to the
    * sublist, when loading existing records.
    * </li>
-   * <li><b>sub_list_javascript</b></br>
-   * Defines the JavaScript added to the page to implement the click handling for the various
-   * butons.
-   * </li>
    * <li><b>autocompleteControl</b></br>
    * Defines the name of the data entry helper control function used to provide the autocomplete
    * control. Defaults to autocomplete but can be swapped to species_autocomplete for species name
@@ -502,6 +498,7 @@ $('#$escaped').change(function(e) {
    */
   public static function sub_list($options) {
     global $indicia_templates;
+    self::add_resource('sub_list');
     static $sub_list_idx=0; // unique ID for all sublists
     // checks essential options, uses fieldname as id default and
     // loads defaults if error or edit
@@ -576,13 +573,12 @@ $('#$escaped').change(function(e) {
       'escaped_id' => self::jq_esc($options['id']),
       'escaped_captionField' => self::jq_esc($options['captionField'])
     ), $options);
-
-    // set up javascript
-    $options['subListItem'] = str_replace(array('{caption}', '{value}', '{fieldname}'),
-      array('\'+caption+\'', '\'+value+\'', $options['fieldname']),
-      $indicia_templates['sub_list_item']);
     $options['idx']=$sub_list_idx;
-    self::$javascript .= self::apply_replacements_to_template($indicia_templates['sub_list_javascript'], $options);
+    // set up javascript
+    self::$javascript .= <<<JS
+indiciaFns.initSubList('$options[escaped_id]', '$options[escaped_captionField]', 
+  '$options[fieldname]', '$indicia_templates[sub_list_item]');
+JS;
     // load any default values for list items into display and hidden lists
     $items = "";
     $r = '';
