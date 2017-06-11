@@ -150,7 +150,8 @@ class filter_what extends filter_base {
       'valueField' => 'id',
       'extraParams' => $readAuth,
       'addToTable' => FALSE,
-      'autocompleteControl' => 'select'
+      'autocompleteControl' => 'select',
+      'extraParams' => $readAuth + array('orderby' => 'title')
     );
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
