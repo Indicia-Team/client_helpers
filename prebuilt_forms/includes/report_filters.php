@@ -149,7 +149,8 @@ class filter_what extends filter_base {
       'captionField' => 'title',
       'valueField' => 'id',
       'extraParams' => $readAuth,
-      'addToTable' => FALSE
+      'addToTable' => FALSE,
+      'autocompleteControl' => 'select'
     );
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
