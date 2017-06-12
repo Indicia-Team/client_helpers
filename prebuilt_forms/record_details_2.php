@@ -652,7 +652,6 @@ Record ID',
 
   protected static function get_control_block($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
-    drupal_set_message($options['module'] . '::' .  $options['hook']);
     $block = module_invoke($options['module'], $options['hook'], $options['args']);
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
