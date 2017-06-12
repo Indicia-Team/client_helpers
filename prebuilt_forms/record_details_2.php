@@ -550,9 +550,8 @@ Record ID',
       }
     }
     $r .= '</div>';
-    global $user;
     $r .= '<form><fieldset><legend>'.lang::get('Add new comment').'</legend>';
-    $r .= '<input type="hidden" id="comment-by" value="'.$user->name.'"/>';
+    $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
     $r .= '<textarea id="comment-text"></textarea><br/>';
     $r .= '<button type="button" class="default-button" onclick="saveComment(';
     $r .= $_GET['occurrence_id'].');">'.lang::get('Save').'</button>';
@@ -635,11 +634,10 @@ Record ID',
    * @return string
    */
   protected static function get_control_login($auth, $args, $tabalias, $options) {
-    global $user;
     $options = array_merge(array(
       'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.'
     ), $options);
-    if ($user->uid===0) {
+    if (hostsite_get_user_field('id') === 0) {
       $form_state = array('noredirect' => TRUE);
       $form = drupal_build_form('user_login', $form_state);
       return '<div class="detail-panel" id="detail-panel-login">' .
