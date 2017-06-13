@@ -58,6 +58,6 @@ $custom_terms = array_merge($custom_terms, array(
           'list of attributes configured for the survey on the warehouse or that a function hostsite_get_user_field exists and returns' .
           'their Indicia User ID. This allows records to be tagged against the user. ' .
           'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.',
-  'This records you enter using this form will be added to the <strong>{1}</strong> group.' =>
-      'Die Beobachtungen die Sie eingeben werden zu {1} Gruppe hinzugefügt.'
+  'The records you enter using this form will be added to the <strong>{1}</strong> group.' =>
+      'Die Beobachtungen die Sie mit Hilfe dieses Formulars eingeben haben, werden sur {1} Gruppe hinzugefügt.'
 ));

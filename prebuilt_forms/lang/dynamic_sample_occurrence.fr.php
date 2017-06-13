@@ -57,5 +57,7 @@ $custom_terms = array_merge($custom_terms, array(
       'To do this, the form requires that either it must be used with a survey that includes the CMS User ID attribute in the '.
       'list of attributes configured for the survey on the warehouse or that a function hostsite_get_user_field exists and returns' .
       'their Indicia User ID. This allows records to be tagged against the user. ' .
-      'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.'
+      'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.',
+  'The records you enter using this form will be added to the <strong>{1}</strong> group.' =>
+      'Les observations que vous avez saisi, utilisant ce formulaire seront ajouté au groupe {1}.'
 ));
