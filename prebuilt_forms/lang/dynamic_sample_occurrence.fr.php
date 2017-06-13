@@ -42,7 +42,7 @@ $custom_terms = array_merge($custom_terms, array(
 	// and 'species_checklist.present'. All the others are not translated, but taken directly from the attribute caption.
 	'LANG_Sample_Comment_Label' => 'Description of Others field',
 
-	'LANG_Tab_place' => 'Where Was It?',
+	'LANG_Tab_place' => "C'était où?",
 	'LANG_Tab_Instructions_place' => '<strong>Place Selection</strong><br/>Please either enter the spatial reference of the observation if you know it, or click on the map to specify the place as accurately as you can.',
 	
 	'LANG_Other_Information_Tab' => 'Other Information',
