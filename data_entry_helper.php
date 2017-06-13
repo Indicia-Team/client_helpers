@@ -4696,15 +4696,12 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     if (isset($options['occurrenceSensitivity']))
       $r .= self::speciesChecklistSensitivityCell($options, 0, '-idx-', '');
     if ($options['mediaTypes']) {
-      $onlyLocal = true;
       $onlyImages = true;
       foreach ($options['mediaTypes'] as $mediaType) {
-        if (!preg_match('/:Local$/', $mediaType))
-          $onlyLocal=false;
         if (!preg_match('/^Image:/', $mediaType))
           $onlyImages=false;
       }
-      $label = $onlyImages ? 'Add images' : 'Add media';
+      $label = lang::get($onlyImages ? 'Add images' : 'Add media');
       $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
       $r .= '<td class="ui-widget-content scAddMediaCell" headers="'.$options['id'].'-images-0">' .
           '<a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'].'--idx-:">'.
