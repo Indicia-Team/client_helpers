@@ -6052,8 +6052,6 @@ if (errors$uniq.length>0) {
       } else {
         $address = (substr($link, 0, 1) == '#') ? substr($link, 1) : $link;
       }
-      // safe single quotes to render into JS
-      $caption = str_replace("'","\'",$caption);
       $tabs .= "<li id=\"$tabId\"><a href=\"$link\" rel=\"address:/$address\"><span>$caption</span></a></li>";
     }
     $options['tabs'] = $tabs;
