@@ -3323,7 +3323,7 @@ JS;
       $hasEditedRecord = false;
       if ($options['mediaTypes']) {
         $mediaBtnLabel = lang::get($onlyImages ? 'Add images' : 'Add media');
-        $mediaBtnClass = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
+        $mediaBtnClass = 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       }
       foreach ($taxonRows as $txIdx => $rowIds) {
         $ttlId = $rowIds['ttlId'];
@@ -4045,17 +4045,17 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     defaultChecked = ' checked=\"checked\"';
   }
   $.fancybox('<div id=\"filter-form\"><fieldset class=\"popup-form\">' +
-    '<legend>".lang::get('Configure the filter applied to species names you are searching for').":</legend>' +
+    '<legend>" . str_replace("'", "\'", lang::get('Configure the filter applied to species names you are searching for')) . ":</legend>' +
     '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-default\"'+defaultChecked+'/>$defaultOptionLabel</label>' + \n";
       if (!empty($options['usersPreferredGroups'])) {
         self::$javascript .= "        '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-user\"'+userChecked+'/>".
-          lang::get('Input species from the preferred list of species groups from your user account.')."</label>' + \n";
+          str_replace("'", "\'", lang::get('Input species from the preferred list of species groups from your user account.')) . "</label>' + \n";
       }
       self::$javascript .= "        '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-selected\"'+selectedChecked+'/>".
-        lang::get('Input species from the following species group:')."</label>' +
+        str_replace("'", "\'", lang::get('Input species from the following species group:')) . "</label>' +
       '<select name=\"filter-group\" id=\"filter-group\"></select>' +
       '<label class=\"auto\" for=\"filter-name\">".
-        lang::get('Choose species names available for selection:')."</label>' +
+        str_replace("'", "\'", lang::get('Choose species names available for selection:')) . "</label>' +
       '<select name=\"filter-name\" id=\"filter-name\">' +
          '<option id=\"filter-all\" value=\"all\">".lang::get('All names including common names and synonyms')."</option>' +
          '<option id=\"filter-common\" value=\"currentLanguage\">".lang::get('Common names only')."</option>' +
