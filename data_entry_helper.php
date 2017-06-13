@@ -3212,10 +3212,24 @@ RIJS;
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
       $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      self::$javascript .= "indiciaData.uploadSettings = {\n";
-      self::$javascript .= "  uploadScript: '" . $relpath . "upload.php',\n";
-      self::$javascript .= "  destinationFolder: '" . $relpath . $interim_image_folder."',\n";
-      self::$javascript .= "  jsPath: '".self::$js_path."'";
+      $js_path = self::$js_path;
+      self::$javascript .= <<<JS
+indiciaData.uploadSettings = {
+  uploadScript: '{$relpath}upload.php',
+  destinationFolder: '{$relpath}{$interim_image_folder}',
+  jsPath: '$js_path'
+JS;
+      $langStrings = array(
+        'addBtnCaption' => 'Add {1}',
+        'msgPhoto' => 'photo',
+        'msgFile' => 'file',
+        'msgLink' => 'link',
+        'msgNewImage' => 'New {1}',
+        'msgDelete' => 'Delete this item'
+      );
+      foreach ($langStrings as $key => $string) {
+        self::$javascript .= ",\n  $key: '" . lang::get($string) . "'";
+      }
       if (isset($options['resizeWidth'])) {
         self::$javascript .= ",\n  resizeWidth: ".$options['resizeWidth'];
       }
