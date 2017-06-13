@@ -1052,6 +1052,7 @@ JS;
       'mediaTypes' => !empty($options['subType']) ? array($options['subType']) : array('Image:Local'),
       'fileTypes' => (object)self::$upload_file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path,
+      'caption' => lang::get('Files'),
       'addBtnCaption' => lang::get('Add {1}'),
       'msgPhoto' => lang::get('photo'),
       'msgFile' => lang::get('file'),
@@ -3220,6 +3221,7 @@ indiciaData.uploadSettings = {
   jsPath: '$js_path'
 JS;
       $langStrings = array(
+        'caption' => 'Files',
         'addBtnCaption' => 'Add {1}',
         'msgPhoto' => 'photo',
         'msgFile' => 'file',
