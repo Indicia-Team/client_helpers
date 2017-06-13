@@ -13,10 +13,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @package Client
+ * @author  Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link  http://code.google.com/p/indicia/
  */
 
 /**
@@ -73,7 +73,7 @@ require_once('submission_builder.php');
  * work for password controls.</li>
  * </ul>
  *
- * @package	Client
+ * @package Client
  */
 class data_entry_helper extends helper_base {
 
@@ -1148,7 +1148,7 @@ $('#$escaped').change(function(e) {
         // Insert this script at the beginning, because it must be done before the tabs are initialised or the
         // first tab cannot fire the event
         self::$javascript = $javascript . self::$javascript;
-      }	else
+      } else
         self::$onload_javascript .= $javascript;
     }
     // Output a placeholder div for the jQuery plugin. Also output a normal file input for the noscripts
@@ -1197,7 +1197,7 @@ $('#$escaped').change(function(e) {
    * <li><b>driver</b><br/>
    * Optional. Driver to use for the georeferencing operation. Supported options are:<br/>
    *   geoplanet - uses the Yahoo! GeoPlanet place search. This is the default.<br/>
-   *   google_places_api - uses the Google Places API text search service.<br/>
+   *   google_places - uses the Google Places API text search service.<br/>
    *   geoportal_lu - Use the Luxembourg specific place name search provided by geoportal.lu.
    *   indicia_locations - Use the list of locations available to the current website in Indicia as a search list.
    * </li>
@@ -1998,7 +1998,8 @@ JS;
     }
     if ($options['locate']) {
       $r .= self::georeference_lookup(array(
-        'label'=>lang::get('search for place on map')
+        'label'=>(!empty($options['locateLabel'])?$options['locateLabel']:lang::get('search for place on map')),
+        'driver'=>$options['locateDriver']
       ));
     }
     $mapPanelOptions = array('initialFeatureWkt' => $options['wkt']);
@@ -4785,6 +4786,18 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     ), self::check_options($options));
     return self::apply_template('text_input', $options);
   }
+  public static function email_input($options) {
+    $options = array_merge(array(
+      'default'=>''
+    ), self::check_options($options));
+    return self::apply_template('email_input', $options);
+  }
+  public static function number_input($options) {
+    $options = array_merge(array(
+      'default'=>''
+    ), self::check_options($options));
+    return self::apply_template('number_input', $options);
+  }
 
   /**
    * Helper function to output an HTML hidden text input. This includes re-loading of existing values.
@@ -5366,7 +5379,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   /**
    * Removes any data entry values persisted into the $_SESSION by Indicia.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link  http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
    */
   public static function clear_session() {
     foreach ($_SESSION as $name=>$value) {
@@ -5380,7 +5393,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * Adds the data from the $_POST array into the session. Call this method when arriving at the second
    * and subsequent pages of a data entry wizard to keep the previous page's data available for saving later.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link  http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
    */
   public static function add_post_to_session () {
     foreach ($_POST as $name=>$value) {
@@ -5392,7 +5405,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * Returns an array constructed from all the indicia variables that have previously been stored
    * in the session.
    *
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link  http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
    */
   public static function extract_session_array () {
     $result = array();
@@ -5409,7 +5422,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    *
    * @param string $name Name of the session value to retrieve
    * @param string $default Default value to return if not set or empty
-   * @link	http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
+   * @link  http://code.google.com/p/indicia/wiki/TutorialDataEntryWizard
    */
   public static function get_from_session($name, $default='') {
     $result = '';
