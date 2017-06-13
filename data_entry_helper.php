@@ -4701,7 +4701,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         if (!preg_match('/^Image:/', $mediaType))
           $onlyImages=false;
       }
-      $label = lang::get($onlyImages ? 'Add images' : 'Add media');
+      $label = $onlyImages ? 'Add images' : 'Add media';
       $class = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
       $r .= '<td class="ui-widget-content scAddMediaCell" headers="'.$options['id'].'-images-0">' .
           '<a href="" class="add-media-link button '.$class.'" style="display: none" id="add-media:'.$options['id'].'--idx-:">'.
