@@ -14,10 +14,10 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @package Client
+ * @author  Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link  http://code.google.com/p/indicia/
  */
 
 require_once('helper_config.php');
@@ -29,7 +29,7 @@ global $indicia_templates;
 /**
  * Provides control templates to define the output of the data entry helper class.
  *
- * @package	Client
+ * @package Client
  */
 $indicia_templates = array(
   'blank' => '',
@@ -78,12 +78,15 @@ $indicia_templates = array(
   'image_upload' => '<input type="file" id="{id}" name="{fieldname}" accept="png|jpg|gif|jpeg|mp3|wav" {title}/>'."\n".
       '<input type="hidden" id="{pathFieldName}" name="{pathFieldName}" value="{pathFieldValue}"/>'."\n",
   'text_input' => '<input type="text" id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default}" {title} {maxlength} />'."\n",
+  'email_input' => '<input type="email" id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default}" {title} {maxlength} />'."\n",
+  'number_input' => '<input type="number" id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default}" {title} {maxlength} />'."\n",
   'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default}" />',
   'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" {title}/>'."\n",
+  'date_picker' => '<input type="text" placeholder="{placeholder}" {class} id="{id}" name="{fieldname}" value="{default}" {title}/>'."\n",
+  'native_date_picker' => '<input type="date" placeholder="{placeholder}" {class} id="{id}" name="{fieldname}" value="{default}" {title}/>'."\n",
   'select' => '<select id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
   'select_item' => '<option value="{value}" {selected} >{caption}</option>',
   'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
@@ -490,17 +493,7 @@ class helper_base extends helper_config {
    * @var array A place to keep data and settings for Indicia code, to avoid using globals.
    */
   public static $data = array();
-  
-  /**
-   * @var string Google API key. Placed here rather than helper_config.php, as only recently introduced. 
-   */
-  public static $google_api_key = '';
 
-  /**
-   * @var string Google Maps API key. Placed here rather than helper_config.php, as only recently introduced.
-   */
-  public static $google_maps_api_key = '';
-  
   /*
    * Global format for display of dates such as sample date, date attributes in Drupal.
    * Note this only affects the loading of the date itself when a form in edit mode loads, the format displayed as soon as the 
@@ -679,8 +672,8 @@ class helper_base extends helper_config {
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
-        'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
-            (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key))),
+        'googlemaps' => (!empty($disable_indicia_gmaps_inclusion)?'':array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
+            (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key)))),
         'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
@@ -1538,7 +1531,7 @@ class helper_base extends helper_config {
               }
               // look out for a condition that this script is IE only.
               if (substr($j, 0, 4)=='[IE]'){
-              	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"".substr($j, 4)."\"></script><![endif]-->\n";
+                $libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"".substr($j, 4)."\"></script><![endif]-->\n";
               } 
               else { 
                 $libraries .= "<script type=\"text/javascript\" src=\"$j\"></script>\n";
@@ -1770,7 +1763,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
     // otherwise the fieldname (as the fieldname control could be a hidden control).
     if (!empty($options['label'])) {
       $labelTemplate = isset($options['labelTemplate']) ? $indicia_templates[$options['labelTemplate']] :
-      	(substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
+        (substr($options['label'], -1) == '?' ? $indicia_templates['labelNoColon'] : $indicia_templates['label']);
       $label = str_replace(
           array('{label}', '{id}', '{labelClass}'),
           array(
@@ -1782,12 +1775,12 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       );
     }
     if (!empty($options['label']) && (!isset($options['labelPosition']) || $options['labelPosition'] != 'after')) {
-    	$r .= $label;
+      $r .= $label;
     }
     // Output the main control
     $r .= self::apply_replacements_to_template($indicia_templates[$template], $options);
     if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
-    	$r .= $label;
+      $r .= $label;
     }
     
     // Add a lock icon to the control if the lockable option is set to true
@@ -2160,7 +2153,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
       if ($options['caching']!=='store') {
-      	$response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        $response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response!==FALSE)
           $cacheLoaded = TRUE;
       }
