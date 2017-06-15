@@ -652,7 +652,6 @@ Record ID',
 
   protected static function get_control_block($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
-    $block = module_invoke($options['module'], $options['hook'], $options['args']);
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
       // lets not promote sharing of sensitive stuff
@@ -662,7 +661,15 @@ Record ID',
       $title = 'Check out this record of '.self::$record['taxon'];
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
     }
-    return render($block['content']);
+    if (function_exists('module_invoke')) {
+      $block = module_invoke($options['module'], $options['hook'], $options['args']);
+      return render($block['content']);
+    } else {
+      $block_manager = \Drupal::service('plugin.manager.block');
+      $plugin_block = $block_manager->createInstance($options['block'], $options['args']);
+      $render = $plugin_block->build();
+      return $render[$options['rendered_item_key']];
+    }
   }
   
   /**
@@ -885,6 +892,7 @@ Record ID';
       $species = self::$record['taxon'];
       if (!empty(self::$record['preferred_taxon']) && $species !== self::$record['preferred_taxon'])
         $species .= ' (' . self::$record['preferred_taxon'] . ')';
+      $iform_page_metadata['title'] = lang::get('Record of {1}', $species);
       $iform_page_metadata['description'] = lang::get('Record of {1} on {2}', $species, self::$record['date']);
       if (!empty(self::$record['sample_comment']))
         $iform_page_metadata['description'] .= '. ' . trim(self::$record['sample_comment'], '. \t\n\r\0\x0B') . '.';
