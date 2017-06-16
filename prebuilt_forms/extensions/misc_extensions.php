@@ -150,9 +150,9 @@ class extension_misc_extensions {
           $button .= "  <a  ";
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
-          $button .= "href=\"".url($options['linkPath'], array('query'=>$paramToPass))."\">";
+          $button .= "href=\"" . hostsite_get_url($options['linkPath'], $paramToPass) . "\">";
         } else { 
-          $button .= "href=\"".url($options['linkPath'])."\">";
+          $button .= "href=\"" . url($options['linkPath']) . "\">";
         }
         $button .= $options['label'];
         $button .= '  </a>';
