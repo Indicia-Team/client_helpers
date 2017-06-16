@@ -77,9 +77,9 @@ class extension_misc_extensions {
         $button .= "    <INPUT TYPE=\"button\" VALUE=\"".$options['buttonLabel']."\"";
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
-          $button .= "ONCLICK=\"window.location.href='".url($options['buttonLinkPath'], array('query'=>$paramToPass))."'\">";
+          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath'], $paramToPass) . "'\">";
         } else { 
-          $button .= "ONCLICK=\"window.location.href='".url($options['buttonLinkPath'])."'\">";
+          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath']) . "'\">";
         }
         $button .= '  </FORM>';
         $button .= '</div><br>';
