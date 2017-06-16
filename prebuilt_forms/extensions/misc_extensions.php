@@ -152,7 +152,7 @@ class extension_misc_extensions {
         if (!empty($paramToPass)) {
           $button .= "href=\"" . hostsite_get_url($options['linkPath'], $paramToPass) . "\">";
         } else { 
-          $button .= "href=\"" . url($options['linkPath']) . "\">";
+          $button .= "href=\"" . hostsite_get_url($options['linkPath']) . "\">";
         }
         $button .= $options['label'];
         $button .= '  </a>';
