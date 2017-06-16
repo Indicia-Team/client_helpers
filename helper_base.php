@@ -168,45 +168,7 @@ $indicia_templates = array(
     '<input type="hidden" name="{mainEntity}:insert_captions_to_create" value="{table}" />',
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
-  'sub_list_javascript' => "  var addSublistItem{idx} = function(escapedId, escapedCaptionField, fieldname){
-    // transfer caption and value from search control to the displayed and hidden lists
-    var search$ = $('#'+escapedId+'\\\\:search\\\\:'+escapedCaptionField);
-    var hiddenSearch$ = $('#'+escapedId+'\\\\:search');
-    var caption = $.trim(search$.val());
-    if ($('#'+escapedId+'\\\\:addToTable').length==0) {
-      // not addToTable mode, so pass IDs
-      var value = $.trim(hiddenSearch$.val());
-    } else {
-      // addToTable mode, so pass text captions
-      var value = caption;
-    }
-    if (value!=='' && caption!=='') {
-      var sublist$ = $('#'+escapedId+'\\\\:sublist'), item='{subListItem}';      
-      sublist$.append(item.replace('#fieldname#', fieldname));
-      search$.val('');
-      hiddenSearch$.val('');
-      search$.focus();
-    }
-  };
-  $('#{escaped_id}\\\\:search\\\\:{escaped_captionField}').keypress(function(e) {
-    if (e.which===13) {
-      addSublistItem{idx}('{escaped_id}', '{escaped_captionField}', '{fieldname}');
-    }
-  });
-  $('#{escaped_id}\\\\:add').click(function() {addSublistItem{idx}('{escaped_id}', '{escaped_captionField}', '{fieldname}');});  
-  indiciaFns.on('click', '#{escaped_id}\\\\:sublist span.ind-delete-icon', null, function(event){
-    // remove the value from the displayed list and the hidden list
-    var li$ = $(this).closest('li');
-    li$.remove();
-  });
-  $('form:has(#{escaped_id}\\\\:search)').submit(
-    function(event) {
-      // select autocomplete search controls in this sub_list and disable them to prevent submitting values
-      $('#{escaped_id}\\\\:search, #{escaped_id}\\\\:search\\\\:{escaped_captionField}')
-        .attr('disabled', 'disabled');
-    });\n",
-    
-    'linked_list_javascript' => '
+  'linked_list_javascript' => '
 {fn} = function() {
 var placeHolder=" Loading... ";
   $("#{escapedId}").addClass("ui-state-disabled").html("<option>"+placeHolder+"</option>");
@@ -236,7 +198,7 @@ if ($("#{escapedId} option").length===0) {
 }'."\n",
     
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
-        'onblur="javascript:decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
+        'onblur="javascript:indiciaFns.decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
   'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
         '<input type="hidden" id="{geomid}" name="{geomFieldname}" value="{defaultGeom}" />'."\n",
   'sref_textbox_latlong' => '<label for="{idLat}">{labelLat}:</label>'.
@@ -266,6 +228,7 @@ if ($("#{escapedId} option").length===0) {
   'report-tbody' => '<tbody>{content}</tbody>',
   'report-tbody-tr' => '<tr{class}{rowId}{rowTitle}>{content}</tr>',
   'report-tbody-td' => '<td{class}>{content}</td>',
+  'report-action-button' => '<a{class}{href}{onclick}>{content}</a>',
   'data-input-table' => '<table{class}{id}>{content}</table>',
   'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
 <div id="review-map-container"></div>
@@ -603,6 +566,7 @@ class helper_base extends helper_config {
    * <li>indiciaFootableReport</li>
    * <li>indiciaFootableChecklist</li>
    * <li>review_input</li>
+   * <li>sub_list</li>
    * </ul>
    */
   public static function add_resource($resource)
@@ -720,7 +684,8 @@ class helper_base extends helper_config {
             'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'), 
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
             'deps' => array('footable')),
-        'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js'))
+        'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
+        'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js'))
       );
     }
     return self::$resource_list;

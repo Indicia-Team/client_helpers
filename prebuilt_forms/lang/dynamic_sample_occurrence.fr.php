@@ -42,7 +42,7 @@ $custom_terms = array_merge($custom_terms, array(
 	// and 'species_checklist.present'. All the others are not translated, but taken directly from the attribute caption.
 	'LANG_Sample_Comment_Label' => 'Description of Others field',
 
-	'LANG_Tab_place' => 'Where Was It?',
+	'LANG_Tab_place' => "C'était où?",
 	'LANG_Tab_Instructions_place' => '<strong>Place Selection</strong><br/>Please either enter the spatial reference of the observation if you know it, or click on the map to specify the place as accurately as you can.',
 	
 	'LANG_Other_Information_Tab' => 'Other Information',
@@ -57,5 +57,7 @@ $custom_terms = array_merge($custom_terms, array(
       'To do this, the form requires that either it must be used with a survey that includes the CMS User ID attribute in the '.
       'list of attributes configured for the survey on the warehouse or that a function hostsite_get_user_field exists and returns' .
       'their Indicia User ID. This allows records to be tagged against the user. ' .
-      'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.'
+      'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.',
+  'The records you enter using this form will be added to the <strong>{1}</strong> group.' =>
+      'Les observations que vous avez saisi, utilisant ce formulaire seront ajouté au groupe {1}.'
 ));
