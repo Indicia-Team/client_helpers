@@ -6711,7 +6711,8 @@ if (errors$uniq.length>0) {
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
       $fieldnameInEntity = "sc:$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
       $value = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : self::$entity_to_load[$fieldnameInEntity];
-      if ($options['occurrenceSensitivity'] === TRUE) {
+      // note string '1' can result from config form...
+      if ($options['occurrenceSensitivity'] === TRUE || $options['occurrenceSensitivity'] === '1') {
         $sensitivityCtrl = self::select(array(
           'fieldname' => $fieldname,
           'class' => 'scSensitivity',
