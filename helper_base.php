@@ -1535,7 +1535,6 @@ class helper_base extends helper_config {
       $script .= "
 indiciaData.imagesPath='" . self::$images_path . "';
 indiciaData.warehouseUrl='" . self::$base_url . "';
-indiciaData.windowLoaded=false;
 indiciaData.protocol='$protocol';
 indiciaData.jQuery = jQuery; //saving the current version of jQuery
 ";
@@ -1550,26 +1549,46 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         if (!self::$is_ajax) {
           $script .= "$(document).ready(function() {\n";
         }
-        $script .= "$javascript\n$late_javascript\n";
+        $script .= <<<JS
+indiciaData.documentReady = 'started';
+$javascript
+$late_javascript
+// if window.onload already happened before document.ready, ensure any hooks are still run.
+if (indiciaData.windowLoaded === 'done') {
+  $.each(indiciaData.onloadFns, function(idx, fn) {
+    fn();
+  });
+}
+indiciaData.documentReady = 'done';
+
+JS;
         if (!self::$is_ajax) {
           $script .= "});\n";
         }
       }
       if (!empty($onload_javascript)) {
-        if (self::$is_ajax)
-          // ajax requests are simple - page has already loaded so just return the javascript
+        if (self::$is_ajax) // ajax requests are simple - page has already loaded so just return the javascript
           $script .= "$onload_javascript\n";
         else {
           // create a function that can be called from window.onLoad. Don't put it directly in the onload
           // in case another form is added to the same page which overwrites onload.
-          $script .= "indiciaData.onloadFns.push(function() {\n$onload_javascript\n});\n";
-          $script .= "window.onload = function() {\n".
-              "  $.each(indiciaData.onloadFns, function(idx, fn) {\n".
-              "    fn();\n".
-              "  });\n".
-              "  indiciaData.windowLoaded=true;\n".              
-              "};\n";
-          }              
+          $script .= <<<JS
+indiciaData.onloadFns.push(function() {
+  $onload_javascript
+});
+window.onload = function() {
+  indiciaData.windowLoad = 'started';
+  // ensure this is only run after document.ready
+  if (indiciaData.documentReady === 'done') {
+    $.each(indiciaData.onloadFns, function(idx, fn) {
+      fn();
+    });
+  }
+  indiciaData.windowLoaded = 'done';
+}
+
+JS;
+        }
       }
       $script .= $closure ? "})(jQuery);\n" : "";
       $script .= $includeWrapper ? "/* ]]> */</script>\n" : "";
