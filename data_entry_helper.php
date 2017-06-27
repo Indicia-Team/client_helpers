@@ -7903,12 +7903,8 @@ if (errors$uniq.length>0) {
     $handlers = array_intersect($systems, array('osgb','osie','4326'));
     self::get_resources();
     foreach ($handlers as $code) {
-      $file = self::$js_path.strtolower("drivers/sref/$code.js");
-      // dynamically build a resource to link us to the handler js file.
+      // dynamically find a resource to link us to the handler js file.
       self::$required_resources[] = 'sref_handlers_'.$code;
-      self::$resource_list['sref_handlers_'.$code] = array(
-        'javascript' => array($file)
-      );
     }
   }
 

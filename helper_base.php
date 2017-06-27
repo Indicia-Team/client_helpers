@@ -567,6 +567,12 @@ class helper_base extends helper_config {
    * <li>indiciaFootableChecklist</li>
    * <li>review_input</li>
    * <li>sub_list</li>
+   * <li>georeference_default_geoportal_lu</li>
+   * <li>georeference_defaultgoogle_places</li>
+   * <li>georeference_default_indicia_locations</li>
+   * <li>sref_handlers_4326</li>
+   * <li>sref_handlers_osgb</li>
+   * <li>sref_handlers_osie</li>
    * </ul>
    */
   public static function add_resource($resource)
@@ -687,11 +693,17 @@ class helper_base extends helper_config {
         'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
         'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
         'georeference_default_geoportal_lu' => array(
-          'javascript' => array(self::$js_path.'drivers/georeference/geoportal_lu.js')),
+            'javascript' => array(self::$js_path.'drivers/georeference/geoportal_lu.js')),
         'georeference_default_google_places' => array(
-          'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
+            'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
         'georeference_default_indicia_locations' => array(
-          'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
+            'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
+        'sref_handlers_4326' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/4326.js')),
+        'sref_handlers_osgb' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/osgb.js')),
+        'sref_handlers_osie' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/osie.js')),
       );
     }
     return self::$resource_list;
