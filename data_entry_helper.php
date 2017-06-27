@@ -1193,8 +1193,7 @@ JS;
    * Optional. Read authentication tokens for the Indicia warehouse if using the indicia_locations driver setting.</li>
    * <li><b>driver</b><br/>
    * Optional. Driver to use for the georeferencing operation. Supported options are:<br/>
-   *   geoplanet - uses the Yahoo! GeoPlanet place search. This is the default.<br/>
-   *   google_places_api - uses the Google Places API text search service.<br/>
+   *   google_places - uses the Google Places API text search service. Default.<br/>
    *   geoportal_lu - Use the Luxembourg specific place name search provided by geoportal.lu.
    *   indicia_locations - Use the list of locations available to the current website in Indicia as a search list.
    * </li>
@@ -1216,23 +1215,22 @@ JS;
     global $indicia_templates;
     $options = array_merge(array(
       'id' => 'imp-georef-search',
-      'driver' => 'geoplanet',
+      'driver' => 'google_places',
       'searchButton' => self::apply_replacements_to_template($indicia_templates['button'],
         array('href'=>'#', 'id'=>'imp-georef-search-btn', 'class' => 'class="indicia-button"', 'caption'=>lang::get('Search'), 'title'=>'')),
       'public' => false,
       'autoCollapseResults' => false
     ), $options);
-    if (($options['driver']==='geoplanet' && empty(self::$geoplanet_api_key)) ||
-      ($options['driver']==='google_places' && empty(self::$google_api_key))) {
+    if ($options['driver']==='geoplanet') {
+      return 'The GeoPlanet place search service is no longer supported';
+    }
+    if (($options['driver']==='google_places' && empty(self::$google_api_key))) {
       // can't use place search without the driver API key
       return 'The georeference lookup control requires an API key configured for the place search API in use.<br/>';
     }
     self::add_resource('indiciaMapPanel');
     // dynamically build a resource to link us to the driver js file.
     self::$required_resources[] = 'georeference_default_'.$options['driver'];
-    self::$resource_list['georeference_default_'.$options['driver']] = array(
-      'javascript' => array(self::$js_path.'drivers/georeference/'.$options['driver'].'.js')
-    );
     // We need to see if there is a resource in the resource list for any special files required by this driver. This
     // will do nothing if the resource is absent.
     self::add_resource('georeference_'.$options['driver']);
@@ -1242,8 +1240,6 @@ JS;
         self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.$key='$value';\n";
       }
     }
-    if ($options['driver']==='geoplanet')
-      self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings.geoplanet_api_key=\''.self::$geoplanet_api_key."';\n";
     if ($options['driver']==='google_places')
       self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings.google_api_key=\''.self::$google_api_key."';\n";
     // If the lookup service driver uses cross domain JavaScript, this setting provides
@@ -7180,7 +7176,6 @@ if (errors$uniq.length>0) {
       if (substr(self::$geoserver_url, 0, 4) != 'http') {
         $r .= '<li class="ui-widget ui-state-error">Warning: The $geoserver_url setting in helper_config.php should include the protocol (e.g. http://).</li>';
       }
-      self::check_config('$geoplanet_api_key', isset(self::$geoplanet_api_key), empty(self::$geoplanet_api_key), $missing_configs, $blank_configs);
       self::check_config('$google_api_key', isset(self::$google_api_key), empty(self::$google_api_key), $missing_configs, $blank_configs);
       self::check_config('$bing_api_key', isset(self::$bing_api_key), empty(self::$bing_api_key), $missing_configs, $blank_configs);
       // Warn the user of the missing ones - the important bit.

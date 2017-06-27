@@ -685,7 +685,13 @@ class helper_base extends helper_config {
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
             'deps' => array('footable')),
         'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
-        'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js'))
+        'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
+        'georeference_default_geoportal_lu' => array(
+          'javascript' => array(self::$js_path.'drivers/georeference/geoportal_lu.js')),
+        'georeference_default_google_places' => array(
+          'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
+        'georeference_default_indicia_locations' => array(
+          'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
       );
     }
     return self::$resource_list;

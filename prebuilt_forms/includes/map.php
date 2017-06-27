@@ -223,12 +223,10 @@ function iform_map_get_georef_parameters() {
       'name'=>'georefDriver',
       'caption'=>'Web service used for georeferencing',
       'description'=>'Choose the web service used for resolving place names to points on the map. Each web-service has a '.
-           'different set of characteristics. If you are unsure which to use, the Yahoo! GeoPlanet service is a good starting point, ' .
-           'though note that this service will not work if your site is running on https.',
+           'different set of characteristics.',
       'type'=>'select',
-      'default'=>'geoplanet',
+      'default'=>'google_places',
       'options' => array(
-        'geoplanet' => 'Yahoo! GeoPlanet (all round place search)',
         'google_places' => 'Google Places API text search.',
         'geoportal_lu' => 'ACT Geoportal Luxembourg (for places in Luxumbourg)',
         'indicia_locations' => 'Search the Indicia locations list.'
