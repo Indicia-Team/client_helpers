@@ -476,7 +476,7 @@ class iform_easy_download_2 {
               $gotPermissionsFilterForThisType = TRUE;
             }
             else {
-              data_entry_helper::$javascript .= "indiciaData.optionalFilters.$sharingTypeCode.filter_$filter[id]='$filter[title]';\n";
+              data_entry_helper::$javascript .= "indiciaData.optionalFilters.$sharingTypeCode.filter_$filter[id]=\"$filter[title]\";\n";
             }
           }
           if ($sharingTypeCode === 'R') {
