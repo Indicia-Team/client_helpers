@@ -138,8 +138,9 @@ class extension_extra_data_entry_controls {
    */
   public static function build_submission_associations($values, $s_array) {
     $index = 0;
-    // @todo Not as simple as the following, as could be deleting?
-    while (!empty($values["occurrence:associated_taxa_taxon_list_id:$index"])) {
+    // If a species name given in the row, or an existing association that's been blanked out, need to submit it.
+    while (!empty($values["occurrence:associated_taxa_taxon_list_id:$index"])
+        || !empty($values["occurrence_association:to_occurrence_id:$index"])) {
       self::build_submission_association($values, $s_array, $index);
       $index++;
     }
@@ -165,9 +166,12 @@ class extension_extra_data_entry_controls {
         unset($assoc['model']['fields'][$field]);
     }
     unset ($assoc['model']['subModels']);
-    // convert this to a record of the associated species
-    $assoc['model']['fields']['taxa_taxon_list_id'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index"]);
-    $assoc['model']['fields']['taxa_taxon_list_id:taxon'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index:taxon"]);
+    // convert this to a record of the associated species, or a deletion if the user has blanked out an existing name
+    if (empty($values["occurrence:associated_taxa_taxon_list_id:$index"])) {
+      $assoc['model']['fields']['deleted'] = array('value' => 't');
+    } else {
+      $assoc['model']['fields']['taxa_taxon_list_id'] = array('value' => $values["occurrence:associated_taxa_taxon_list_id:$index"]);
+    }
     // overwrite existing if resaving
     if (!empty($values["occurrence_association:to_occurrence_id:$index"]))
       $assoc['model']['fields']['id'] = array('value' => $values["occurrence_association:to_occurrence_id:$index"]);
@@ -182,6 +186,10 @@ class extension_extra_data_entry_controls {
           ? "||assoc:$index||" : $values["occurrence_association:to_occurrence_id:$index"]),
       'association_type_id' => array('value' => $values["occurrence_association:occurrence_type_id:$index"])
     );
+    // If blanking out an existing occurrence association, delete it
+    if (empty($values["occurrence:associated_taxa_taxon_list_id:$index"])) {
+      $fields['deleted'] = array('value' => 't');
+    }
     if (!empty($values["occurrence_association:id:$index"]))
       $fields['id'] = array('value' => $values["occurrence_association:id:$index"]);
     $s_array[0]['subModels'][0]['model']['subModels'][] = array(
