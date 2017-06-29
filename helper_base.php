@@ -2167,8 +2167,42 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           $cacheLoaded = TRUE;
       }
     }
-    if (!isset($response) || $response===FALSE)
-      $response = self::http_post(parent::$base_url . $request, NULL);
+    if (!isset($response) || $response===FALSE) {
+      $postArgs = null;
+      $parsedURL=parse_url(parent::$base_url.$request);
+      parse_str($parsedURL["query"], $postArgs);
+      $url = explode('?', parent::$base_url . $request);
+      $newURL = array($url[0]);
+
+      $getArgs = array();
+      if(isset($postArgs['report'])) { // using the reports rather than direct. If this is case report params go into speial params postarg
+        // There is a place in the data services report handling that uses a $_GET on the
+        // report parameter, so separate that out from the postargs
+        $getArgs[] = 'report=' . $postArgs['report'];
+        unset($postArgs['report']);
+        // move other REQUESTED fields into POST.
+        $postArgs = array('params'=> $postArgs);
+        $fieldsToCopyUp = array('reportSource', 'mode', 'auth_token', 'nonce', 'persist_auth', 'filename', 'callback', 'xsl',
+              'wantRecords', 'wantColumns', 'wantCount', 'wantParameters', 'knownCount');
+        foreach($fieldsToCopyUp as $field) {
+          if(isset($postArgs['params'][$field])) {
+            $postArgs[$field] = $postArgs['params'][$field];
+            unset($postArgs['params'][$field]);
+          }
+        }
+        if(isset($postArgs['params']['user_id'])) {
+          // user_id is different as this is used in an explicit _REQUEST in the service_base but
+          // also can be proper param to the report - so don't unset.
+          $postArgs['user_id'] = $postArgs['params']['user_id'];
+        }
+        $postArgs['params'] = json_encode((object)$postArgs['params']);
+      }
+      
+      if(count($getArgs)>0) $newURL[] = implode('&', $getArgs);
+      $newURL = implode('?', $newURL);
+      
+      $response = self::http_post($newURL, $postArgs);
+    }
     $r = json_decode($response['output'], TRUE);
     if (!is_array($r)) {
       $response['request'] = $request;
