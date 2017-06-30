@@ -652,6 +652,11 @@ Record ID',
 
   protected static function get_control_block($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
+    if (!empty($options['accepted'])) {
+      self::load_record($auth, $args);
+      if (!preg_match('/^Accepted/', self::$record['record_status']))
+        return '';
+    }
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
       // lets not promote sharing of sensitive stuff
@@ -661,15 +666,23 @@ Record ID',
       $title = 'Check out this record of '.self::$record['taxon'];
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
     }
+    $r = '';
+    if (!empty($options['title'])) {
+      $r .= "<fieldset><legend>$options[title]</legend>";
+    }
     if (function_exists('module_invoke')) {
       $block = module_invoke($options['module'], $options['hook'], $options['args']);
-      return render($block['content']);
+      $r .= render($block['content']);
     } else {
       $block_manager = \Drupal::service('plugin.manager.block');
       $plugin_block = $block_manager->createInstance($options['block'], $options['args']);
       $render = $plugin_block->build();
-      return $render[$options['rendered_item_key']];
+      $r .= $render[$options['rendered_item_key']];
     }
+    if (!empty($options['title'])) {
+      $r .= "</fieldset>";
+    }
+    return $r;
   }
   
   /**
