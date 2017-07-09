@@ -2200,7 +2200,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       
       if(count($getArgs)>0) $newURL[] = implode('&', $getArgs);
       $newURL = implode('?', $newURL);
-      
+
       $response = self::http_post($newURL, $postArgs);
     }
     $r = json_decode($response['output'], TRUE);

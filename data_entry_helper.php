@@ -4107,7 +4107,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       self::$javascript .= "\n    $.fancybox.close();
   });
   $('#filter-popup-cancel').click(function() {
-    $.fancybox.close();
+    jQuery.fancybox.close();
   });
 });\n";
     }

@@ -1124,7 +1124,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         else
           throw new Exception('The link species popups form argument contains an invalid value');
         // insert a save button into the fancyboxed fieldset, since the normal close X looks like it cancels changes
-        data_entry_helper::$javascript .= "$('#$fieldset').append('<input type=\"button\" value=\"".lang::get('Close')."\" onclick=\"$.fancybox.close();\" ?>');\n";
+        data_entry_helper::$javascript .= "$('#$fieldset').append('<input type=\"button\" value=\"".lang::get('Close')."\" onclick=\"jQuery.fancybox.close();\" ?>');\n";
         // create an empty link that we can fire to fancybox the popup fieldset
         $r .= "<a href=\"#$fieldset\" id=\"click-$fieldset\"></a>\n";
         // add a hidden div to the page so we can put the popup fieldset into it when not popped up
