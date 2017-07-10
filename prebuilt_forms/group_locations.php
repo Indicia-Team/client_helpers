@@ -37,8 +37,8 @@ class iform_group_locations {
     return array(
       'title'=>'Group locations',
       'category' => 'Recording groups',
-      'description'=>'A page listing the locations that are linked to a recording group, with links to allow '.
-          'this list of locations to be configured.',
+      'description'=>'A page listing the locations that are linked to a recording group. Can be configured to allow ' .
+          'group admins to manage the list of group locations or for group users to view the locations.',
       'supportsGroups'=>true,
       'recommended' => true
     );
@@ -53,12 +53,27 @@ class iform_group_locations {
     require_once('includes/map.php');
     $r = array_merge(array(
       array(
-        'name'=>'edit_location_path',
-        'caption'=>'Path to edit location page',
-        'description'=>'Path to a page allowing locations to be edited and created. Should be a page built using the '.
+        'name' => 'edit_location_path',
+        'caption' => 'Path to edit location page',
+        'description' => 'Path to a page allowing locations to be edited and created. Should be a page built using the '.
             'Dynamic Locaiton prebuilt form.',
-        'type'=>'string',
-        'required'=>false
+        'type' => 'string',
+        'required' => false
+      ),
+      array(
+        'name' => 'explore_path',
+        'caption' => 'Path to explore records page',
+        'description' => '',
+        'type' => 'string',
+        'required' => false
+      ),
+      array(
+        'name' => 'allow_edit',
+        'caption' => 'Allow editing',
+        'description' => 'Enable or disable addition/deletion/editing of locations. If unticked this page is view only.',
+        'type' => 'boolean',
+        'required' => false,
+        'default' => true
       ),
     ), iform_map_get_map_parameters());
     return $r;
@@ -80,12 +95,17 @@ class iform_group_locations {
     require_once('includes/map.php');
     require_once('includes/groups.php');
     global $indicia_templates;
+    global $base_url;
     iform_load_helpers(array('report_helper', 'map_helper'));
     $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
-    report_helper::$javascript .= "indiciaData.website_id=$conn[website_id];\n";
-    report_helper::$javascript .= "indiciaData.nodeId=$nid;\n";
+    report_helper::$javascript .= "indiciaData.website_id = $conn[website_id];\n";
+    report_helper::$javascript .= "indiciaData.nodeId = $nid;\n";
+    data_entry_helper::$javascript .= "indiciaData.baseUrl = '".$base_url."';\n";
     group_authorise_form($args, $readAuth);
+    $args = array_merge(array(
+      'allow_edit' => true
+    ), $args);
     $group = data_entry_helper::get_population_data(array(
       'table'=>'group',
       'extraParams'=>$readAuth + array('id'=>$_GET['group_id'], 'view'=>'detail')
@@ -94,16 +114,30 @@ class iform_group_locations {
     $title = hostsite_get_page_title($nid);
     hostsite_set_page_title("$group[title]: $title");
     $actions = array();
-    if (!empty($args['edit_location_path']))
+    if ($args['allow_edit']) {
+      if (!empty($args['edit_location_path'])) {
+        $actions[] = array(
+          'caption' => 'edit',
+          'url' => '{rootFolder}' . $args['edit_location_path'],
+          'urlParams' => array('group_id' => $_GET['group_id'], 'location_id' => '{location_id}')
+        );
+      }
       $actions[] = array(
-        'caption'=>'edit',
-        'url'=>'{rootFolder}' . $args['edit_location_path'],
-        'urlParams'=>array('group_id'=>$_GET['group_id'], 'location_id'=>'{location_id}')
+        'caption' => 'remove',
+        'javascript' => "indiciaFns.removeLocationFromGroup({groups_location_id});"
       );
-    $actions[] = array(
-      'caption'=>'remove',
-      'javascript'=>"remove_location_from_group({groups_location_id});"
-    );
+    }
+    if (!empty($args['explore_path']))
+      $actions[] = array(
+        'caption' => 'explore records',
+        'url' => '{rootFolder}' . $args['explore_path'],
+        'urlParams' => array(
+          'group_id' => $_GET['group_id'],
+          'filter-location_id' => '{location_id}',
+          'filter-date-age' => ''
+        )
+      );
+
     $leftcol = report_helper::report_grid(array(
       'readAuth' => $readAuth, 
       'dataSource' => 'library/locations/locations_for_groups',
@@ -119,24 +153,30 @@ class iform_group_locations {
         )
       )
     ));
-    $leftcol .= '<fieldset><legend>' . lang::Get('Add sites to the group') . '</legend>';
-    $leftcol .= '<p>' . lang::get('LANG_Add_Sites_Instruct') . '</p>';
-    if (!empty($args['edit_location_path']))
-      $leftcol .= lang::get('Either') .
-        ' <a class="button" href="' . hostsite_get_url($args['edit_location_path'], array('group_id'=>$_GET['group_id'])) .
-        '">' . lang::get('enter details of a new site') .'</a><br/>';
-    $leftcol .= data_entry_helper::select(array(
-      'label' => lang::get('Or, add an existing site'),
-      'fieldname' => 'add_existing_location_id',
-      'report' => 'library/locations/locations_available_for_group',
-      'caching' => false,
-      'blankText' => lang::get('<please select>'),
-      'valueField' => 'location_id',
-      'captionField' => 'name',
-      'extraParams' => $readAuth + array('group_id' => $_GET['group_id'], 'user_id'=>hostsite_get_user_field('indicia_user_id', 0)),
-      'afterControl' => '<button id="add-existing">Add</button>'
-    ));
-    $leftcol .= '</fieldset>';
+    if ($args['allow_edit']) {
+      $leftcol .= '<fieldset><legend>' . lang::Get('Add sites to the group') . '</legend>';
+      $leftcol .= '<p>' . lang::get('LANG_Add_Sites_Instruct') . '</p>';
+      if (!empty($args['edit_location_path'])) {
+        $leftcol .= lang::get('Either') .
+          ' <a class="button" href="' . hostsite_get_url($args['edit_location_path'], array('group_id' => $_GET['group_id'])) .
+          '">' . lang::get('enter details of a new site') . '</a><br/>';
+      }
+      $leftcol .= data_entry_helper::select(array(
+        'label' => lang::get('Or, add an existing site'),
+        'fieldname' => 'add_existing_location_id',
+        'report' => 'library/locations/locations_available_for_group',
+        'caching' => FALSE,
+        'blankText' => lang::get('<please select>'),
+        'valueField' => 'location_id',
+        'captionField' => 'name',
+        'extraParams' => $readAuth + array(
+            'group_id' => $_GET['group_id'],
+            'user_id' => hostsite_get_user_field('indicia_user_id', 0)
+          ),
+        'afterControl' => '<button id="add-existing">Add</button>'
+      ));
+      $leftcol .= '</fieldset>';
+    }
     // @todo Link existing My Site to group. Need a new report to list sites I created, with sites already in the group
     // removed. Show in a drop down with an add button. Adding must create the groups_locations record, plus refresh
     // the grid and refresh the drop down.
