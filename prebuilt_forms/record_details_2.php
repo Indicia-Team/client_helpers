@@ -531,10 +531,10 @@ Record ID',
       'nocache'=>true,
       'sharing'=>'reporting'
     ));
+    $r .= '<div id="comment-list">';
     if (count($comments)===0) 
       $r .= '<p id="no-comments">'.lang::get('No comments have been made.').'</p>';
     else {
-      $r .= '<div id="comment-list">';
       foreach($comments as $comment) {
         $r .= '<div class="comment">';
         $r .= '<div class="header">';
@@ -548,11 +548,10 @@ Record ID',
         $r .= "<div>$c</div>";
         $r .= '</div>';
       }
-      $r .= '</div>';
     }
-    global $user;
+    $r .= '</div>';
     $r .= '<form><fieldset><legend>'.lang::get('Add new comment').'</legend>';
-    $r .= '<input type="hidden" id="comment-by" value="'.$user->name.'"/>';
+    $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
     $r .= '<textarea id="comment-text"></textarea><br/>';
     $r .= '<button type="button" class="default-button" onclick="saveComment(';
     $r .= $_GET['occurrence_id'].');">'.lang::get('Save').'</button>';
@@ -635,11 +634,10 @@ Record ID',
    * @return string
    */
   protected static function get_control_login($auth, $args, $tabalias, $options) {
-    global $user;
     $options = array_merge(array(
       'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.'
     ), $options);
-    if ($user->uid===0) {
+    if (hostsite_get_user_field('id') === 0) {
       $form_state = array('noredirect' => TRUE);
       $form = drupal_build_form('user_login', $form_state);
       return '<div class="detail-panel" id="detail-panel-login">' .
@@ -654,8 +652,11 @@ Record ID',
 
   protected static function get_control_block($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
-    drupal_set_message($options['module'] . '::' .  $options['hook']);
-    $block = module_invoke($options['module'], $options['hook'], $options['args']);
+    if (!empty($options['accepted'])) {
+      self::load_record($auth, $args);
+      if (!preg_match('/^Accepted/', self::$record['record_status']))
+        return '';
+    }
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
       // lets not promote sharing of sensitive stuff
@@ -665,7 +666,23 @@ Record ID',
       $title = 'Check out this record of '.self::$record['taxon'];
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
     }
-    return render($block['content']);
+    $r = '';
+    if (!empty($options['title'])) {
+      $r .= "<fieldset><legend>$options[title]</legend>";
+    }
+    if (function_exists('module_invoke')) {
+      $block = module_invoke($options['module'], $options['hook'], $options['args']);
+      $r .= render($block['content']);
+    } else {
+      $block_manager = \Drupal::service('plugin.manager.block');
+      $plugin_block = $block_manager->createInstance($options['block'], $options['args']);
+      $render = $plugin_block->build();
+      $r .= $render[$options['rendered_item_key']];
+    }
+    if (!empty($options['title'])) {
+      $r .= "</fieldset>";
+    }
+    return $r;
   }
   
   /**
@@ -888,6 +905,7 @@ Record ID';
       $species = self::$record['taxon'];
       if (!empty(self::$record['preferred_taxon']) && $species !== self::$record['preferred_taxon'])
         $species .= ' (' . self::$record['preferred_taxon'] . ')';
+      $iform_page_metadata['title'] = lang::get('Record of {1}', $species);
       $iform_page_metadata['description'] = lang::get('Record of {1} on {2}', $species, self::$record['date']);
       if (!empty(self::$record['sample_comment']))
         $iform_page_metadata['description'] .= '. ' . trim(self::$record['sample_comment'], '. \t\n\r\0\x0B') . '.';

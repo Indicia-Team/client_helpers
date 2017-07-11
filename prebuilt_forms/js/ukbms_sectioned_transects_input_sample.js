@@ -191,9 +191,13 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			rows.sort(function(a, b) {
 				if(typeof $(a).data('species') == 'undefined' || typeof $(b).data('species') == 'undefined')
 					return 0;
-			    var A = $(a).data('species')[col].toUpperCase();
-			    var B = $(b).data('species')[col].toUpperCase();
+			    var A = $(a).data('species')[col];
+			    var B = $(b).data('species')[col];
+			    if(A == null) A = $(a).data('species')['taxon'];
+			    if(B == null) B = $(b).data('species')['taxon'];
 			    if(A=='' || B=='' || A==null || B==null) return 0;
+			    A = A.toUpperCase();
+			    B = B.toUpperCase();
 			    if(A < B) return -1;
 			    if(A > B) return 1;
 			    return 0;
@@ -333,6 +337,8 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 
 		if($('#row-' + species.taxon_meaning_id).length>0) {
 			row = $('#row-' + species.taxon_meaning_id).removeClass('possibleRemove');
+			if($(speciesTableSelector+' #row-' + species.taxon_meaning_id).length == 0) // check if on another page: if so ignore
+				return;
 			$(speciesTableSelector+' tbody.occs-body').append(row);
 			$(speciesTableSelector+' tbody.occs-body tr').each(function(index, elem){
 				if((index+$(speciesTableSelector+' tbody:not(.occs-body) tr').length)%2 == 1) $(elem).addClass('alt-row');
@@ -383,12 +389,17 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	}
 
 	process = function (N) {
-		var TaxonData, query = {};
+		var TaxonData, query = {}, sortCol;
 		
 		if (N > formOptions.maxTabs) return;
 		$('#taxonLookupControlContainer'+N).show();
 		$('#grid'+N+'-loading').show();
 		if(formOptions.speciesList[N]>0){
+			sortCol = $('[name=species-sort-order-'+N+']:checked'); // radiobutton
+			if(sortCol.length == 0)
+				sortCol = $('[name=species-sort-order-'+N+']'); // hidden field - single option
+			sortCol = sortCol.val();
+			if (sortCol == '') sortCol='taxon';
 			TaxonData = {
 					'taxon_list_id': formOptions.speciesList[N],
 					'preferred': 't',
@@ -397,7 +408,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 					'mode': 'json',
 					'allow_data_entry': 't',
 					'view': 'cache',
-					'orderby': $('[name=species-sort-order-'+N+']:checked').val()
+					'orderby': sortCol
 			};
 			switch(formOptions.speciesListForce[N]){
 				case 'full': // = all values in list: by definition will include all existing data on this sample.
@@ -477,11 +488,17 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 				type='value';
 			}
 			if (targetRow.length>0) {
-				targetInput = targetRow.find('input[id^='+type+'\\:][id$=\\:'+code+']');
+				targetInput = targetRow.find("input[id^='"+type+"\:'][id$='\:"+code+"']");
 			}
 		}
 
-		// TODO if needed : no up arrow yet
+		// up arrow to another smp attr row.
+		if (evt.keyCode===38) {
+			targetRow = targetRow.prev('tr');
+			if (targetRow.length>0) {
+				targetInput = targetRow.find("input[id^='"+type+"\:'][id$='\:"+code+"']");
+			}
+		}
 
 		// right arrow - move to next cell if at end of text
 		if (evt.keyCode===39 && evt.target.selectionEnd >= evt.target.value.length) {
@@ -528,7 +545,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		if (evt.keyCode===13 || evt.keyCode===40) {
 			targetRow = targetRow.next('tr');
 			if (targetRow.length>0) {
-				targetInput = targetRow.find('input[id^='+type+'\:][id$=\:'+code+']');
+				targetInput = targetRow.find("input[id^='"+type+"\:'][id$='\:"+code+"']");
 			}
 		}
 		
@@ -541,7 +558,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 				type='smpAttr';
 			}
 			if (targetRow.length>0) {
-				targetInput = targetRow.find('input[id^='+type+'\:][id$=\:'+code+']');
+				targetInput = targetRow.find("input[id^='"+type+"\:'][id$='\:"+code+"']");
 			}
 		}
 

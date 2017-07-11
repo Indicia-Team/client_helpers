@@ -1010,7 +1010,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       // if a possibility of confusion when using this form, add info to clarify which group you are posting to
       if (empty(self::$limitToGroupId)) {
         $msg = empty(self::$loadedSampleId) ?
-            'This records you enter using this form will be added to the <strong>{1}</strong> group.' :
+            'The records you enter using this form will be added to the <strong>{1}</strong> group.' :
             'The records on this form are part of the <strong>{1}</strong> group.';
         $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
       }
@@ -1082,7 +1082,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $licence_id = data_entry_helper::$entity_to_load['sample:licence_id'];
         $code = data_entry_helper::$entity_to_load['sample:licence_code'];
       } else {
-        $msg = 'This records you enter using this form will be licenced as <strong>{1}</strong>.';
+        $msg = 'The records you enter using this form will be licenced as <strong>{1}</strong>.';
         $licence_id = self::$group['licence_id'];
         $code =  self::$group['licence_code'];
       }
@@ -1124,7 +1124,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         else
           throw new Exception('The link species popups form argument contains an invalid value');
         // insert a save button into the fancyboxed fieldset, since the normal close X looks like it cancels changes
-        data_entry_helper::$javascript .= "$('#$fieldset').append('<input type=\"button\" value=\"".lang::get('Close')."\" onclick=\"$.fancybox.close();\" ?>');\n";
+        data_entry_helper::$javascript .= "$('#$fieldset').append('<input type=\"button\" value=\"".lang::get('Close')."\" onclick=\"jQuery.fancybox.close();\" ?>');\n";
         // create an empty link that we can fire to fancybox the popup fieldset
         $r .= "<a href=\"#$fieldset\" id=\"click-$fieldset\"></a>\n";
         // add a hidden div to the page so we can put the popup fieldset into it when not popped up

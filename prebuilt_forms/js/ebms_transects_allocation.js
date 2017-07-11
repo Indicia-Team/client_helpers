@@ -203,7 +203,7 @@ var form_options;
 										'<td>'+location.name+'</td>' +
 										'<td>'+location.centroid_sref+'</td>' +
 										'<td>'+my_list_names[uidx]+'</td>' +
-										'<td><a href="' + form_options.config.edit_link_path + '?location_id=' + location.location_id + '">Edit</a></td>' +
+										'<td><a href="' + form_options.config.edit_link_path + location.location_id + '">Edit</a></td>' +
 										'</tr>');
 							$('#'+form_options.grid_id+' tbody').append(row);
 							row.find('input').click(value_changed)

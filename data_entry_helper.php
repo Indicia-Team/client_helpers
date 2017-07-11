@@ -486,10 +486,6 @@ $('#$escaped').change(function(e) {
    * Defines hidden inputs to insert onto the page which contain the items to add to the
    * sublist, when loading existing records.
    * </li>
-   * <li><b>sub_list_javascript</b></br>
-   * Defines the JavaScript added to the page to implement the click handling for the various
-   * butons.
-   * </li>
    * <li><b>autocompleteControl</b></br>
    * Defines the name of the data entry helper control function used to provide the autocomplete
    * control. Defaults to autocomplete but can be swapped to species_autocomplete for species name
@@ -502,6 +498,7 @@ $('#$escaped').change(function(e) {
    */
   public static function sub_list($options) {
     global $indicia_templates;
+    self::add_resource('sub_list');
     static $sub_list_idx=0; // unique ID for all sublists
     // checks essential options, uses fieldname as id default and
     // loads defaults if error or edit
@@ -576,13 +573,12 @@ $('#$escaped').change(function(e) {
       'escaped_id' => self::jq_esc($options['id']),
       'escaped_captionField' => self::jq_esc($options['captionField'])
     ), $options);
-
-    // set up javascript
-    $options['subListItem'] = str_replace(array('{caption}', '{value}', '{fieldname}'),
-      array('\'+caption+\'', '\'+value+\'', $options['fieldname']),
-      $indicia_templates['sub_list_item']);
     $options['idx']=$sub_list_idx;
-    self::$javascript .= self::apply_replacements_to_template($indicia_templates['sub_list_javascript'], $options);
+    // set up javascript
+    self::$javascript .= <<<JS
+indiciaFns.initSubList('$options[escaped_id]', '$options[escaped_captionField]', 
+  '$options[fieldname]', '$indicia_templates[sub_list_item]');
+JS;
     // load any default values for list items into display and hidden lists
     $items = "";
     $r = '';
@@ -1056,6 +1052,7 @@ $('#$escaped').change(function(e) {
       'mediaTypes' => !empty($options['subType']) ? array($options['subType']) : array('Image:Local'),
       'fileTypes' => (object)self::$upload_file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path,
+      'caption' => lang::get('Files'),
       'addBtnCaption' => lang::get('Add {1}'),
       'msgPhoto' => lang::get('photo'),
       'msgFile' => lang::get('file'),
@@ -1196,8 +1193,7 @@ $('#$escaped').change(function(e) {
    * Optional. Read authentication tokens for the Indicia warehouse if using the indicia_locations driver setting.</li>
    * <li><b>driver</b><br/>
    * Optional. Driver to use for the georeferencing operation. Supported options are:<br/>
-   *   geoplanet - uses the Yahoo! GeoPlanet place search. This is the default.<br/>
-   *   google_places_api - uses the Google Places API text search service.<br/>
+   *   google_places - uses the Google Places API text search service. Default.<br/>
    *   geoportal_lu - Use the Luxembourg specific place name search provided by geoportal.lu.
    *   indicia_locations - Use the list of locations available to the current website in Indicia as a search list.
    * </li>
@@ -1219,23 +1215,22 @@ $('#$escaped').change(function(e) {
     global $indicia_templates;
     $options = array_merge(array(
       'id' => 'imp-georef-search',
-      'driver' => 'geoplanet',
+      'driver' => 'google_places',
       'searchButton' => self::apply_replacements_to_template($indicia_templates['button'],
         array('href'=>'#', 'id'=>'imp-georef-search-btn', 'class' => 'class="indicia-button"', 'caption'=>lang::get('Search'), 'title'=>'')),
       'public' => false,
       'autoCollapseResults' => false
     ), $options);
-    if (($options['driver']==='geoplanet' && empty(self::$geoplanet_api_key)) ||
-      ($options['driver']==='google_places' && empty(self::$google_api_key))) {
+    if ($options['driver']==='geoplanet') {
+      return 'The GeoPlanet place search service is no longer supported';
+    }
+    if (($options['driver']==='google_places' && empty(self::$google_api_key))) {
       // can't use place search without the driver API key
       return 'The georeference lookup control requires an API key configured for the place search API in use.<br/>';
     }
     self::add_resource('indiciaMapPanel');
     // dynamically build a resource to link us to the driver js file.
     self::$required_resources[] = 'georeference_default_'.$options['driver'];
-    self::$resource_list['georeference_default_'.$options['driver']] = array(
-      'javascript' => array(self::$js_path.'drivers/georeference/'.$options['driver'].'.js')
-    );
     // We need to see if there is a resource in the resource list for any special files required by this driver. This
     // will do nothing if the resource is absent.
     self::add_resource('georeference_'.$options['driver']);
@@ -1245,8 +1240,6 @@ $('#$escaped').change(function(e) {
         self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.$key='$value';\n";
       }
     }
-    if ($options['driver']==='geoplanet')
-      self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings.geoplanet_api_key=\''.self::$geoplanet_api_key."';\n";
     if ($options['driver']==='google_places')
       self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings.google_api_key=\''.self::$google_api_key."';\n";
     // If the lookup service driver uses cross domain JavaScript, this setting provides
@@ -3216,10 +3209,25 @@ RIJS;
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
       $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      self::$javascript .= "indiciaData.uploadSettings = {\n";
-      self::$javascript .= "  uploadScript: '" . $relpath . "upload.php',\n";
-      self::$javascript .= "  destinationFolder: '" . $relpath . $interim_image_folder."',\n";
-      self::$javascript .= "  jsPath: '".self::$js_path."'";
+      $js_path = self::$js_path;
+      self::$javascript .= <<<JS
+indiciaData.uploadSettings = {
+  uploadScript: '{$relpath}upload.php',
+  destinationFolder: '{$relpath}{$interim_image_folder}',
+  jsPath: '$js_path'
+JS;
+      $langStrings = array(
+        'caption' => 'Files',
+        'addBtnCaption' => 'Add {1}',
+        'msgPhoto' => 'photo',
+        'msgFile' => 'file',
+        'msgLink' => 'link',
+        'msgNewImage' => 'New {1}',
+        'msgDelete' => 'Delete this item'
+      );
+      foreach ($langStrings as $key => $string) {
+        self::$javascript .= ",\n  $key: '" . lang::get($string) . "'";
+      }
       if (isset($options['resizeWidth'])) {
         self::$javascript .= ",\n  resizeWidth: ".$options['resizeWidth'];
       }
@@ -3313,7 +3321,7 @@ RIJS;
       $hasEditedRecord = false;
       if ($options['mediaTypes']) {
         $mediaBtnLabel = lang::get($onlyImages ? 'Add images' : 'Add media');
-        $mediaBtnClass = 'sc' . $onlyImages ? 'Image' : 'Media' . 'Link';
+        $mediaBtnClass = 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       }
       foreach ($taxonRows as $txIdx => $rowIds) {
         $ttlId = $rowIds['ttlId'];
@@ -4035,17 +4043,17 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     defaultChecked = ' checked=\"checked\"';
   }
   $.fancybox('<div id=\"filter-form\"><fieldset class=\"popup-form\">' +
-    '<legend>".lang::get('Configure the filter applied to species names you are searching for').":</legend>' +
+    '<legend>" . str_replace("'", "\'", lang::get('Configure the filter applied to species names you are searching for')) . ":</legend>' +
     '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-default\"'+defaultChecked+'/>$defaultOptionLabel</label>' + \n";
       if (!empty($options['usersPreferredGroups'])) {
         self::$javascript .= "        '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-user\"'+userChecked+'/>".
-          lang::get('Input species from the preferred list of species groups from your user account.')."</label>' + \n";
+          str_replace("'", "\'", lang::get('Input species from the preferred list of species groups from your user account.')) . "</label>' + \n";
       }
       self::$javascript .= "        '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-selected\"'+selectedChecked+'/>".
-        lang::get('Input species from the following species group:')."</label>' +
+        str_replace("'", "\'", lang::get('Input species from the following species group:')) . "</label>' +
       '<select name=\"filter-group\" id=\"filter-group\"></select>' +
       '<label class=\"auto\" for=\"filter-name\">".
-        lang::get('Choose species names available for selection:')."</label>' +
+        str_replace("'", "\'", lang::get('Choose species names available for selection:')) . "</label>' +
       '<select name=\"filter-name\" id=\"filter-name\">' +
          '<option id=\"filter-all\" value=\"all\">".lang::get('All names including common names and synonyms')."</option>' +
          '<option id=\"filter-common\" value=\"currentLanguage\">".lang::get('Common names only')."</option>' +
@@ -4099,7 +4107,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       self::$javascript .= "\n    $.fancybox.close();
   });
   $('#filter-popup-cancel').click(function() {
-    $.fancybox.close();
+    jQuery.fancybox.close();
   });
 });\n";
     }
@@ -4686,11 +4694,8 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     if (isset($options['occurrenceSensitivity']))
       $r .= self::speciesChecklistSensitivityCell($options, 0, '-idx-', '');
     if ($options['mediaTypes']) {
-      $onlyLocal = true;
       $onlyImages = true;
       foreach ($options['mediaTypes'] as $mediaType) {
-        if (!preg_match('/:Local$/', $mediaType))
-          $onlyLocal=false;
         if (!preg_match('/^Image:/', $mediaType))
           $onlyImages=false;
       }
@@ -6056,8 +6061,6 @@ if (errors$uniq.length>0) {
       } else {
         $address = (substr($link, 0, 1) == '#') ? substr($link, 1) : $link;
       }
-      // safe single quotes to render into JS
-      $caption = str_replace("'","\'",$caption);
       $tabs .= "<li id=\"$tabId\"><a href=\"$link\" rel=\"address:/$address\"><span>$caption</span></a></li>";
     }
     $options['tabs'] = $tabs;
@@ -6704,7 +6707,8 @@ if (errors$uniq.length>0) {
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
       $fieldnameInEntity = "sc:$rowIdx:$existingRecordId:occurrence:sensitivity_precision";
       $value = empty(self::$entity_to_load[$fieldnameInEntity]) ? '' : self::$entity_to_load[$fieldnameInEntity];
-      if ($options['occurrenceSensitivity'] === TRUE) {
+      // note string '1' can result from config form...
+      if ($options['occurrenceSensitivity'] === TRUE || $options['occurrenceSensitivity'] === '1') {
         $sensitivityCtrl = self::select(array(
           'fieldname' => $fieldname,
           'class' => 'scSensitivity',
@@ -7172,7 +7176,6 @@ if (errors$uniq.length>0) {
       if (substr(self::$geoserver_url, 0, 4) != 'http') {
         $r .= '<li class="ui-widget ui-state-error">Warning: The $geoserver_url setting in helper_config.php should include the protocol (e.g. http://).</li>';
       }
-      self::check_config('$geoplanet_api_key', isset(self::$geoplanet_api_key), empty(self::$geoplanet_api_key), $missing_configs, $blank_configs);
       self::check_config('$google_api_key', isset(self::$google_api_key), empty(self::$google_api_key), $missing_configs, $blank_configs);
       self::check_config('$bing_api_key', isset(self::$bing_api_key), empty(self::$bing_api_key), $missing_configs, $blank_configs);
       // Warn the user of the missing ones - the important bit.
@@ -7900,12 +7903,8 @@ if (errors$uniq.length>0) {
     $handlers = array_intersect($systems, array('osgb','osie','4326'));
     self::get_resources();
     foreach ($handlers as $code) {
-      $file = self::$js_path.strtolower("drivers/sref/$code.js");
-      // dynamically build a resource to link us to the handler js file.
+      // dynamically find a resource to link us to the handler js file.
       self::$required_resources[] = 'sref_handlers_'.$code;
-      self::$resource_list['sref_handlers_'.$code] = array(
-        'javascript' => array($file)
-      );
     }
   }
 

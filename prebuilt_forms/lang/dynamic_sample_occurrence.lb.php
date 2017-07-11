@@ -53,10 +53,12 @@ $custom_terms = array_merge($custom_terms, array(
 	'LANG_Record_Status_C' => 'Completed',
 	'LANG_Record_Status_V' => 'Verified', // NB not used
 
-        'LANG_No_User_Id'=> 'This form is configured to show the user a grid of their existing records which they can add to or edit. ' .
-          'To do this, the form requires that either it must be used with a survey that includes the CMS User ID attribute in the '.
-          'list of attributes configured for the survey on the warehouse or that a function hostsite_get_user_field exists and returns' .
-          'their Indicia User ID. This allows records to be tagged against the user. ' .
-          'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.'
+  'LANG_No_User_Id'=> 'This form is configured to show the user a grid of their existing records which they can add to or edit. ' .
+    'To do this, the form requires that either it must be used with a survey that includes the CMS User ID attribute in the '.
+    'list of attributes configured for the survey on the warehouse or that a function hostsite_get_user_field exists and returns' .
+    'their Indicia User ID. This allows records to be tagged against the user. ' .
+    'Alternatively you can tick the box "Skip initial grid of data" in the "User Interface" section of the Edit page for the form.',
+  'The records you enter using this form will be added to the <strong>{1}</strong> group.' =>
+      'D\'Beobachtungen déi Dir mat dëser Mask aginn hutt, ginn zu der {1} Grupp bäigesat.'
 )
 );

@@ -168,45 +168,7 @@ $indicia_templates = array(
     '<input type="hidden" name="{mainEntity}:insert_captions_to_create" value="{table}" />',
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
-  'sub_list_javascript' => "  var addSublistItem{idx} = function(escapedId, escapedCaptionField, fieldname){
-    // transfer caption and value from search control to the displayed and hidden lists
-    var search$ = $('#'+escapedId+'\\\\:search\\\\:'+escapedCaptionField);
-    var hiddenSearch$ = $('#'+escapedId+'\\\\:search');
-    var caption = $.trim(search$.val());
-    if ($('#'+escapedId+'\\\\:addToTable').length==0) {
-      // not addToTable mode, so pass IDs
-      var value = $.trim(hiddenSearch$.val());
-    } else {
-      // addToTable mode, so pass text captions
-      var value = caption;
-    }
-    if (value!=='' && caption!=='') {
-      var sublist$ = $('#'+escapedId+'\\\\:sublist'), item='{subListItem}';      
-      sublist$.append(item.replace('#fieldname#', fieldname));
-      search$.val('');
-      hiddenSearch$.val('');
-      search$.focus();
-    }
-  };
-  $('#{escaped_id}\\\\:search\\\\:{escaped_captionField}').keypress(function(e) {
-    if (e.which===13) {
-      addSublistItem{idx}('{escaped_id}', '{escaped_captionField}', '{fieldname}');
-    }
-  });
-  $('#{escaped_id}\\\\:add').click(function() {addSublistItem{idx}('{escaped_id}', '{escaped_captionField}', '{fieldname}');});  
-  indiciaFns.on('click', '#{escaped_id}\\\\:sublist span.ind-delete-icon', null, function(event){
-    // remove the value from the displayed list and the hidden list
-    var li$ = $(this).closest('li');
-    li$.remove();
-  });
-  $('form:has(#{escaped_id}\\\\:search)').submit(
-    function(event) {
-      // select autocomplete search controls in this sub_list and disable them to prevent submitting values
-      $('#{escaped_id}\\\\:search, #{escaped_id}\\\\:search\\\\:{escaped_captionField}')
-        .attr('disabled', 'disabled');
-    });\n",
-    
-    'linked_list_javascript' => '
+  'linked_list_javascript' => '
 {fn} = function() {
 var placeHolder=" Loading... ";
   $("#{escapedId}").addClass("ui-state-disabled").html("<option>"+placeHolder+"</option>");
@@ -266,6 +228,7 @@ if ($("#{escapedId} option").length===0) {
   'report-tbody' => '<tbody>{content}</tbody>',
   'report-tbody-tr' => '<tr{class}{rowId}{rowTitle}>{content}</tr>',
   'report-tbody-td' => '<td{class}>{content}</td>',
+  'report-action-button' => '<a{class}{href}{onclick}>{content}</a>',
   'data-input-table' => '<table{class}{id}>{content}</table>',
   'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
 <div id="review-map-container"></div>
@@ -603,6 +566,13 @@ class helper_base extends helper_config {
    * <li>indiciaFootableReport</li>
    * <li>indiciaFootableChecklist</li>
    * <li>review_input</li>
+   * <li>sub_list</li>
+   * <li>georeference_default_geoportal_lu</li>
+   * <li>georeference_defaultgoogle_places</li>
+   * <li>georeference_default_indicia_locations</li>
+   * <li>sref_handlers_4326</li>
+   * <li>sref_handlers_osgb</li>
+   * <li>sref_handlers_osie</li>
    * </ul>
    */
   public static function add_resource($resource)
@@ -720,7 +690,20 @@ class helper_base extends helper_config {
             'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'), 
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
             'deps' => array('footable')),
-        'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js'))
+        'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
+        'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
+        'georeference_default_geoportal_lu' => array(
+            'javascript' => array(self::$js_path.'drivers/georeference/geoportal_lu.js')),
+        'georeference_default_google_places' => array(
+            'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
+        'georeference_default_indicia_locations' => array(
+            'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
+        'sref_handlers_4326' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/4326.js')),
+        'sref_handlers_osgb' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/osgb.js')),
+        'sref_handlers_osie' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/osie.js')),
       );
     }
     return self::$resource_list;
@@ -1570,7 +1553,6 @@ class helper_base extends helper_config {
       $script .= "
 indiciaData.imagesPath='" . self::$images_path . "';
 indiciaData.warehouseUrl='" . self::$base_url . "';
-indiciaData.windowLoaded=false;
 indiciaData.protocol='$protocol';
 indiciaData.jQuery = jQuery; //saving the current version of jQuery
 ";
@@ -1585,26 +1567,46 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         if (!self::$is_ajax) {
           $script .= "$(document).ready(function() {\n";
         }
-        $script .= "$javascript\n$late_javascript\n";
+        $script .= <<<JS
+indiciaData.documentReady = 'started';
+$javascript
+$late_javascript
+// if window.onload already happened before document.ready, ensure any hooks are still run.
+if (indiciaData.windowLoaded === 'done') {
+  $.each(indiciaData.onloadFns, function(idx, fn) {
+    fn();
+  });
+}
+indiciaData.documentReady = 'done';
+
+JS;
         if (!self::$is_ajax) {
           $script .= "});\n";
         }
       }
       if (!empty($onload_javascript)) {
-        if (self::$is_ajax)
-          // ajax requests are simple - page has already loaded so just return the javascript
+        if (self::$is_ajax) // ajax requests are simple - page has already loaded so just return the javascript
           $script .= "$onload_javascript\n";
         else {
           // create a function that can be called from window.onLoad. Don't put it directly in the onload
           // in case another form is added to the same page which overwrites onload.
-          $script .= "indiciaData.onloadFns.push(function() {\n$onload_javascript\n});\n";
-          $script .= "window.onload = function() {\n".
-              "  $.each(indiciaData.onloadFns, function(idx, fn) {\n".
-              "    fn();\n".
-              "  });\n".
-              "  indiciaData.windowLoaded=true;\n".              
-              "};\n";
-          }              
+          $script .= <<<JS
+indiciaData.onloadFns.push(function() {
+  $onload_javascript
+});
+window.onload = function() {
+  indiciaData.windowLoad = 'started';
+  // ensure this is only run after document.ready
+  if (indiciaData.documentReady === 'done') {
+    $.each(indiciaData.onloadFns, function(idx, fn) {
+      fn();
+    });
+  }
+  indiciaData.windowLoaded = 'done';
+}
+
+JS;
+        }
       }
       $script .= $closure ? "})(jQuery);\n" : "";
       $script .= $includeWrapper ? "/* ]]> */</script>\n" : "";
@@ -2165,8 +2167,42 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           $cacheLoaded = TRUE;
       }
     }
-    if (!isset($response) || $response===FALSE)
-      $response = self::http_post(parent::$base_url . $request, NULL);
+    if (!isset($response) || $response===FALSE) {
+      $postArgs = null;
+      $parsedURL=parse_url(parent::$base_url.$request);
+      parse_str($parsedURL["query"], $postArgs);
+      $url = explode('?', parent::$base_url . $request);
+      $newURL = array($url[0]);
+
+      $getArgs = array();
+      if(isset($postArgs['report'])) { // using the reports rather than direct. If this is case report params go into speial params postarg
+        // There is a place in the data services report handling that uses a $_GET on the
+        // report parameter, so separate that out from the postargs
+        $getArgs[] = 'report=' . $postArgs['report'];
+        unset($postArgs['report']);
+        // move other REQUESTED fields into POST.
+        $postArgs = array('params'=> $postArgs);
+        $fieldsToCopyUp = array('reportSource', 'mode', 'auth_token', 'nonce', 'persist_auth', 'filename', 'callback', 'xsl',
+              'wantRecords', 'wantColumns', 'wantCount', 'wantParameters', 'knownCount');
+        foreach($fieldsToCopyUp as $field) {
+          if(isset($postArgs['params'][$field])) {
+            $postArgs[$field] = $postArgs['params'][$field];
+            unset($postArgs['params'][$field]);
+          }
+        }
+        if(isset($postArgs['params']['user_id'])) {
+          // user_id is different as this is used in an explicit _REQUEST in the service_base but
+          // also can be proper param to the report - so don't unset.
+          $postArgs['user_id'] = $postArgs['params']['user_id'];
+        }
+        $postArgs['params'] = json_encode((object)$postArgs['params']);
+      }
+      
+      if(count($getArgs)>0) $newURL[] = implode('&', $getArgs);
+      $newURL = implode('?', $newURL);
+
+      $response = self::http_post($newURL, $postArgs);
+    }
     $r = json_decode($response['output'], TRUE);
     if (!is_array($r)) {
       $response['request'] = $request;

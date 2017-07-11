@@ -94,8 +94,7 @@ class iform_group_receive_invite_response {
       return self::reject($args, $invite, $auth);
     elseif ($_POST && !empty($_POST['maybe'])) 
       return self::maybe($args, $invite, $auth);
-    global $user;
-    if ($user->uid) 
+    if (hostsite_get_user_field('id'))
       return self::logged_in_page($invite, $auth);
     else 
       return self::logged_out_page($invite, $auth);
@@ -115,13 +114,12 @@ class iform_group_receive_invite_response {
   }
   
   private static function logged_in_page($invite, $auth) {
-    global $user;
     if (self::existingUser($invite, $auth))
       return lang::get('There is no need to accept this invitation as you are already a member of {1}.',
           $invite['group_title']);
     $reloadPath = self::getReloadPath();
     $r = '<p>'.lang::get('You are logged in to {1} as {2} and have been invited to join the recording group {3}.',
-        hostsite_get_config_value('site', 'name'), $user->name, $invite['group_title']) . '</p>';
+        hostsite_get_config_value('site', 'name'), hostsite_get_user_field('name'), $invite['group_title']) . '</p>';
     $r .= '<form id="entry_form" action="'.$reloadPath.'" method="POST">';
     $r .= '<input type="hidden" name="token" value="'.$_GET['token'].'"/>';
     $r .= '<input type="submit" id="btn-accept" name="accept" value="'.lang::get('Accept invitation').'"/>';

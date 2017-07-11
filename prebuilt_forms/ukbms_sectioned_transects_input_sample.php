@@ -239,6 +239,14 @@ class iform_ukbms_sectioned_transects_input_sample {
         "default": {"type":"bool","title":"Default"}
       }
     },
+    "taxon": {
+      "type":"map",
+      "title":"Sort by taxon",
+      "mapping": {
+        "enabled": {"type":"bool","title":"Enabled"},
+        "default": {"type":"bool","title":"Default"}
+      }
+    }
   }
 }'
       		),
@@ -349,6 +357,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species'
         ),
+        array(
+          'name' => 'disable_tso_1',
+          'caption' => 'Disable Taxonomic Sort Order',
+          'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species'
+        ),
       	array(
           'name'=>'species_tab_2',
           'caption'=>'Species Tab 2 Title',
@@ -430,6 +447,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Species 2'
         ),
         array(
+          'name' => 'disable_tso_2',
+          'caption' => 'Disable Taxonomic Sort Order',
+          'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species 2'
+        ),
+      	array(
           'name'=>'species_tab_3',
           'caption'=>'Species Tab 3 Title',
           'description'=>'The title to be used on the species checklist for the third tab.',
@@ -510,6 +536,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Species 3'
         ),
         array(
+          'name' => 'disable_tso_3',
+          'caption' => 'Disable Taxonomic Sort Order',
+          'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species 3'
+        ),
+      	array(
           'name'=>'species_tab_4',
           'caption'=>'Fourth Species Tab Title',
           'description'=>'The title to be used on the species checklist for the fourth tab.',
@@ -590,6 +625,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Species 4'
         ),
         array(
+          'name' => 'disable_tso_4',
+          'caption' => 'Disable Taxonomic Sort Order',
+          'description' => 'Some lists (e.g. the full UK Species List) may not have the taxonomic sort order filled in. In this case, there is no point in sorting by the TSO. The default will be the next available SO from the list common name, preferred taxon, taxon.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false,
+          'group' => 'Species 4'
+        ),
+      	array(
           'fieldname'=>'cache_lookup',
           'label'=>'Cache lookups',
           'helpText'=>'Tick this box to select to use a cached version of the lookup list when '.
@@ -1393,25 +1437,31 @@ class iform_ukbms_sectioned_transects_input_sample {
     if(isset($args['species_sort'])) {
       $configuration = json_decode($args['species_sort'], true);
       $options = array();
-      if(isset($configuration['taxonomic'])) {
+      if(isset($configuration['taxonomic']) && (!isset($args['disable_tso_'.$tabNum]) || $args['disable_tso_'.$tabNum] == false)) {
         if(isset($configuration['taxonomic']['enabled']) && $configuration['taxonomic']['enabled'])
           $options['taxonomic_sort_order'] = lang::get('Taxonomic Sort Order');
         else $default = false;
       } else $default = false;
+      if(isset($configuration['common']))
+        if(isset($configuration['common']['enabled']) && $configuration['common']['enabled']) {
+          $options['default_common_name'] = lang::get('Common name');
+          if($default == false || (isset($configuration['common']['default']) && $configuration['common']['default']))
+            $default = 'default_common_name';
+        }
       if(isset($configuration['preferred']))
         if(isset($configuration['preferred']['enabled']) && $configuration['preferred']['enabled']) {
           $options['preferred_taxon'] = lang::get('Species name');
           if($default == false || (isset($configuration['preferred']['default']) && $configuration['preferred']['default']))
             $default = 'preferred_taxon';
         }
-      if(isset($configuration['common']))
-        if(isset($configuration['common']['enabled']) && $configuration['common']['enabled']) {
-          $options['taxon'] = lang::get('Common name');
-          if($default == false || (isset($configuration['common']['default']) && $configuration['common']['default']))
+      if(isset($configuration['taxon']))
+        if(isset($configuration['taxon']['enabled']) && $configuration['taxon']['enabled']) {
+          $options['taxon'] = lang::get('Taxon');
+          if($default == false || (isset($configuration['taxon']['default']) && $configuration['taxon']['default']))
             $default = 'taxon';
         }
       if(count($options) == 1) {
-        $r = '<input type="hidden" value="'.$default.'">';
+        $r = '<input name="species-sort-order-'.$tabNum.'" type="hidden" value="'.$default.'">';
       } else if (count($options) > 1) {
         $r = '<br/>'.data_entry_helper::radio_group(array(
               'label'=>lang::get('Species Sort Order'),
@@ -1420,7 +1470,7 @@ class iform_ukbms_sectioned_transects_input_sample {
               'default'=>$default,
         		  'class'=>'species-sort-order'
         ));
-      }
+      } // count=0 -> defaults to initial value of $r, i.e. taxonomic sort order. 
     }
     return $r;
   }
