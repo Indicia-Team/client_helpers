@@ -616,7 +616,7 @@ idlist=';
           'paramSuffix'=>'</div>',
           'sharing'=>'verification',
           'ajax'=>TRUE,
-          'callback' => 'verificationGridLoaded',
+          'callback' => 'indiciaFns.verificationGridLoaded',
           'rowClass' => 'zero-{zero_abundance}',
           'responsiveOpts' => array(
             'breakpoints' => array(
@@ -1094,7 +1094,7 @@ idlist=';
     if ($includeAddNew) {
       $r .= '<form><fieldset><legend>'.lang::get('Add new comment').'</legend>';
       $r .= '<textarea id="comment-text"></textarea><br/>';
-      $r .= '<button type="button" class="default-button" onclick="saveComment(jQuery(\'#comment-text\').val());">'.lang::get('Save').'</button>';
+      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val());">'.lang::get('Save').'</button>';
       $r .= '</fieldset></form>';
     }
     return $r;
