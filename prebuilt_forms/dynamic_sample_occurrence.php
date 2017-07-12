@@ -1089,6 +1089,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $licence = self::licence_code_to_text($code);
       $r .= '<p class="licence licence-' . strtolower($code) . '">' . lang::get($msg, $licence) . '</p>';
       $r .= "<input type=\"hidden\" name=\"sample:licence_id\" value=\"$licence_id\" />";
+      $r .= "<input type=\"hidden\" name=\"sample:licence_code\" value=\"licence_code\" />";
     }
     return $r;
   }
