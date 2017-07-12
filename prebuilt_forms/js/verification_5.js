@@ -527,7 +527,7 @@ indiciaData.rowIdToReselect = false;
   }
 
   // Callback for the report grid. Use to fill in the tickboxes if in multiple mode.
-  indiciaFns.verificationGridLoaded = function () {
+  window.verificationGridLoaded = function () {
     if (multimode) {
       showTickList();
     }
@@ -1105,9 +1105,8 @@ indiciaData.rowIdToReselect = false;
     }
 
     if (typeof $.cookie !== 'undefined') {
-      var show = $.cookie('verification-status-buttons');
-      if (show === 'more') {
-        showSetStatusButtons(show);
+      if ($.cookie('verification-status-buttons') === 'less') {
+        showSetStatusButtons(false);
       }
     }
 

@@ -421,7 +421,7 @@ idlist=';
     $r .= '<div id="record-details-toolbar">';
     $r .= '<div id="action-buttons">';
     $r .= '<div id="action-buttons-status" class="action-buttons-row">';
-    $r .= '<div class="col-1"><label>' . lang::get('Set status:'). '</label> <a id="more-status-buttons">[' . lang::get('more') .']</a></div>';
+    $r .= '<div class="col-1"><label>' . lang::get('Set status:'). '</label> <a id="more-status-buttons">[' . lang::get('less') .']</a></div>';
     data_entry_helper::$javascript .= "indiciaData.langLess='".lang::get('less')."';\n";
     data_entry_helper::$javascript .= "indiciaData.langMore='".lang::get('more')."';\n";
     $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;
@@ -485,7 +485,7 @@ idlist=';
   }
 
   private static function status_buttons_less($imgPath) {
-    $r = '<div id="actions-less" class="buttons-row">';
+    $r = '<div id="actions-less" class="buttons-row" style="display: none;">';
     $r .= '<button type="button" id="btn-accepted" title="'.lang::get('Set to accepted').'"><img width="18" height="18" src="'.$imgPath.'nuvola/ok-16px.png"/></button>';
     $r .= '<button type="button" id="btn-notaccepted" title="'.lang::get('Set to not accepted').'"><img width="18" height="18" src="'.$imgPath.'nuvola/cancel-16px.png"/></button>';
     $r .= '</div>'; // action-less
@@ -493,7 +493,7 @@ idlist=';
   }
 
   private static function status_buttons_more($imgPath) {
-    $r = '<div id="actions-more" class="buttons-row" style="display: none;">';
+    $r = '<div id="actions-more" class="buttons-row">';
     $r .= '<button type="button" id="btn-accepted-correct" title="'.lang::get('Set to accepted::correct').'">' .
         '<img width="18" height="18" src="'.$imgPath.'nuvola/ok-16px.png"/><img width="18" height="18" src="'.$imgPath.'nuvola/ok-16px.png"/></button>';
     $r .= '<button type="button" id="btn-accepted-considered-correct" title="'.lang::get('Set to accepted::considered correct').'">' .
@@ -616,7 +616,7 @@ idlist=';
           'paramSuffix'=>'</div>',
           'sharing'=>'verification',
           'ajax'=>TRUE,
-          'callback' => 'indiciaFns.verificationGridLoaded',
+          'callback' => 'verificationGridLoaded',
           'rowClass' => 'zero-{zero_abundance}',
           'responsiveOpts' => array(
             'breakpoints' => array(
