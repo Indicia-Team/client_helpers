@@ -272,8 +272,10 @@ class iform_report_calendar_grid {
     $reportOptions['extraParams']['survey_id'] = $siteUrlParams[self::$SurveyKey]['value']; // location_type mapping overrides preset
     if ($siteUrlParams[self::$locationKey]['value'] != null)
       $reportOptions['extraParams']['location_id'] = $siteUrlParams[self::$locationKey]['value'];
-    if ($siteUrlParams[self::$locationTypeKey]['value'] != null)
-      $reportOptions['paramDefaults']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
+    if ($siteUrlParams[self::$locationTypeKey]['value'] != null) {
+      $reportOptions['extraParams']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
+    	$reportOptions['paramDefaults']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
+    }
     return $reportOptions;
   }
 

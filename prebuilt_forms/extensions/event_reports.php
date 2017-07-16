@@ -126,6 +126,7 @@ class extension_event_reports {
    */
   public static function photos_block($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
+    report_helper::add_resource('fancybox');
     $reportOptions = array_merge(      
       iform_report_get_report_options($args, $auth['read']),
       array(

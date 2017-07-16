@@ -359,12 +359,11 @@ class iform_ebms_transects_allocation {
   }
 
   public static function ajax_saveLocationAttribute($website_id, $password, $nid) {
-  	$params = hostsite_get_node_field_value($nid, 'params');
+  	$conn = iform_get_connection_details($nid);
   	iform_load_helpers(array('data_entry_helper'));
-  	data_entry_helper::$base_url = $params['base_url'];
+  	data_entry_helper::$base_url = $conn['base_url'];
   	$auth = data_entry_helper::get_read_write_auth($website_id, $password);
   	$writeTokens = $auth['write_tokens'];
-  	 
   	$Model = data_entry_helper::wrap($_POST, 'location_attribute_value');
   	// pass through the user ID as this can then be used to set created_by and updated_by_ids
   	//if (isset($_REQUEST['user_id'])) $writeTokens['user_id'] = $_REQUEST['user_id'];

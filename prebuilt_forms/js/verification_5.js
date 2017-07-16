@@ -1,8 +1,4 @@
-var saveComment;
-var saveVerifyComment;
-var verificationGridLoaded;
-var reselectRow;
-var rowIdToReselect = false;
+indiciaData.rowIdToReselect = false;
 
 (function ($) {
   'use strict';
@@ -28,18 +24,18 @@ var rowIdToReselect = false;
     currRec = null;
   }
 
-  reselectRow = function () {
+  indiciaFns.reselectRow = function () {
     var row;
-    if (rowIdToReselect) {
+    if (indiciaData.rowIdToReselect) {
       // Reselect current record if still in the grid
-      row = $('tr#row' + rowIdToReselect);
+      row = $('tr#row' + indiciaData.rowIdToReselect);
       if (row.length) {
         occurrenceId = null;
         selectRow(row[0]);
       } else {
         clearRow();
       }
-      rowIdToReselect = false;
+      indiciaData.rowIdToReselect = false;
     }
     if (multimode) {
       showTickList();
@@ -270,7 +266,7 @@ var rowIdToReselect = false;
   function recorderQueryCommentForm() {
     return '<form class="popup-form"><fieldset><legend>Add new query</legend>' +
       '<textarea id="query-comment-text" rows="30"></textarea><br>' +
-      '<button type="button" class="default-button" onclick="saveComment(jQuery(\'#query-comment-text\').val(), \'t\', true); jQuery.fancybox.close();">' +
+      '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), \'t\', true); jQuery.fancybox.close();">' +
       'Add query to comments log</button></fieldset></form>';
   }
 
@@ -406,7 +402,7 @@ var rowIdToReselect = false;
           }
         });
         // save a comment to indicate that the mail was sent
-        saveComment(indiciaData.commentTranslations.emailed.replace('{1}', email.subtype === 'R' ?
+        indiciaFns.saveComment(indiciaData.commentTranslations.emailed.replace('{1}', email.subtype === 'R' ?
           indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert), 't', true);
       }
 
@@ -443,7 +439,7 @@ var rowIdToReselect = false;
     $('#comment-list').prepend(html);
   }
 
-  saveComment = function (text, query, reloadGridAfterSave) {
+  indiciaFns.saveComment = function (text, query, reloadGridAfterSave) {
     var data;
     if (typeof query === 'undefined') {
       query = 'f';
@@ -500,7 +496,7 @@ var rowIdToReselect = false;
     return labels.join(' as ');
   }
 
-  saveVerifyComment = function () {
+  indiciaFns.saveVerifyComment = function () {
     var status = $('#set-status').val();
     var substatus = $('#set-substatus').val();
     var comment = statusLabel(status, substatus);
@@ -531,7 +527,7 @@ var rowIdToReselect = false;
   }
 
   // Callback for the report grid. Use to fill in the tickboxes if in multiple mode.
-  verificationGridLoaded = function () {
+  window.verificationGridLoaded = function () {
     if (multimode) {
       showTickList();
     }
@@ -599,8 +595,8 @@ var rowIdToReselect = false;
   }
 
   function reloadGrid() {
-    rowIdToReselect = occurrenceId;
-    indiciaData.reports.verification.grid_verification_grid[0].settings.callback = 'reselectRow';
+    indiciaData.rowIdToReselect = occurrenceId;
+    indiciaData.reports.verification.grid_verification_grid[0].settings.callback = 'indiciaFns.reselectRow';
     // Reload grid to remove row if not in your current verification set
     indiciaData.reports.verification.grid_verification_grid.reload(true);
   }
@@ -689,7 +685,7 @@ var rowIdToReselect = false;
       helpText +
       '<input type="hidden" id="set-status" value="' + status + '"/>' +
       '<input type="hidden" id="set-substatus" value="' + substatus + '"/>' +
-      '<button type="button" class="default-button" onclick="saveVerifyComment();">' +
+      '<button type="button" class="default-button" onclick="indiciaFns.saveVerifyComment();">' +
       indiciaData.popupTranslations.save.replace('{1}', verb) + '</button>' +
       '</fieldset>';
     $.fancybox(html);
@@ -738,6 +734,8 @@ var rowIdToReselect = false;
       trustedHtml;
     $('#filter-build').after(verifyGridButtons);
     $('#verify-grid-trusted').click(function () {
+      var settings = indiciaData.reports.verification.grid_verification_grid[0].settings;
+      var show;
       trustedHtml = '<div class="grid-verify-popup" style="width: 550px"><h2>Review all grid data</h2>' +
         '<p>This facility allows you to set the status of entire sets of records in one step. Before using this ' +
         'facility, you should filter the grid so that only the records you want to process are listed. ' +
@@ -748,13 +746,12 @@ var rowIdToReselect = false;
       trustedHtml += '<p>The records will only be accepted if they have been through automated checks without any rule violations. If you <em>really</em>' +
         ' trust the records are correct then you can verify them even if they fail some checks by ticking the following box.</p>' +
         '<label class="auto"><input type="checkbox" name="ignore-checks-trusted" /> Include records which fail automated checks?</label><br/>';
-      var settings = indiciaData.reports.verification.grid_verification_grid[0].settings;
       if (settings.recordCount > settings.itemsPerPage) {
         trustedHtml += '<p class="warning">Remember that the following buttons will verify records from every page in the grid up to a maximum of ' +
           settings.recordCount + ' records, not just the current page.</p>';
       }
       if (typeof $.cookie !== 'undefined') {
-        var show = $.cookie('verification-status-buttons');
+        show = $.cookie('verification-status-buttons');
         if (show === 'more') {
           trustedHtml += '<div><label class="auto">Accepted records will be flagged as:<select id="process-grid-substatus">' +
             '<option selected="selected" value="2">considered correct</option><option value="1">correct</option></select></label></div>';
@@ -867,10 +864,11 @@ var rowIdToReselect = false;
           popupHtml += '<label>Trust will be applied to records from locality:</label>' +
             '<label><input type="radio" name="trust-location" value="all"> All </label>';
           // the record could intersect multiple locality boundaries. So can choose which...
-          var locationIds = currRec.extra.locality_ids.split('|'), locations = currRec.extra.localities.split('|');
+          var locationIds = currRec.extra.locality_ids.split('|');
+          var locations = currRec.extra.localities.split('|');
           // can choose to trust all localities or record's location
           $.each(locationIds, function (idx, id) {
-            popupHtml += '<label><input type="radio" name="trust-location" value="' + id + '" checked>' + ' ' + locations[idx] + '</label><br/>';
+            popupHtml += '<label><input type="radio" name="trust-location" value="' + id + '" checked> ' + locations[idx] + '</label><br/>';
           });
         } else {
           popupHtml += '<label>Trust will be applied to records from any locality.</label>';
@@ -999,9 +997,9 @@ var rowIdToReselect = false;
               // if the message was never displayed.
               if (duplicateDetected === false && (downgradeConfirmRequired === false || downgradeConfirmed === true)) {
                 // Go through each trust item we need to remove from the database and do the removal
-                var handlePostResponse = function (data) {
-                  if (typeof data.error !== 'undefined') {
-                    alert(data.error);
+                var handlePostResponse = function (postResponse) {
+                  if (typeof postResponse.error !== 'undefined') {
+                    alert(postResponse.error);
                   }
                 };
                 for (i = 0; i < trustNeedsRemovalIndex; i++) {
@@ -1022,14 +1020,14 @@ var rowIdToReselect = false;
                 $.post(
                   indiciaData.ajaxFormPostUrl.replace('occurrence', 'user-trust'),
                   theData,
-                  function (data) {
-                    if (typeof data.error === 'undefined') {
+                  function (trustResponse) {
+                    if (typeof trustResponse.error === 'undefined') {
                       drawExistingTrusts();
                       alert('Trust settings successfully applied to the recorder');
                       $('.trust-button').removeAttr('disabled');
                       document.getElementById('trust-button').innerHTML = 'Trust';
                     } else {
-                      alert(data.error);
+                      alert(trustResponse.error);
                       $('.trust-button').removeAttr('disabled');
                       document.getElementById('trust-button').innerHTML = 'Trust';
                     }
@@ -1096,8 +1094,7 @@ var rowIdToReselect = false;
         $('#actions-less').hide();
         $('#actions-more').show();
         $('#more-status-buttons').html('[' + indiciaData.langLess + ']');
-      }
-      else {
+      } else {
         $('#actions-more').hide();
         $('#actions-less').show();
         $('#more-status-buttons').html('[' + indiciaData.langMore + ']');
@@ -1108,9 +1105,8 @@ var rowIdToReselect = false;
     }
 
     if (typeof $.cookie !== 'undefined') {
-      var show = $.cookie('verification-status-buttons');
-      if (show === 'more') {
-        showSetStatusButtons(show);
+      if ($.cookie('verification-status-buttons') === 'less') {
+        showSetStatusButtons(false);
       }
     }
 

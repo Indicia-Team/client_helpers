@@ -235,7 +235,7 @@ class iform_group_admin {
       'nocache'=>true
     ));
     if ($group[0]['created_by_id']!==hostsite_get_user_field('indicia_user_id')) {
-      if (!hostsite_user_has_permission('Iform groups admin')) {
+      if (!hostsite_user_has_permission('IForm groups admin')) {
         // user did not create group. So, check they are an admin
         $admins = data_entry_helper::get_population_data(array(
           'table'=>'groups_user',
@@ -255,5 +255,9 @@ class iform_group_admin {
     }
     return $group[0];
   }
-  
+
+  public static function get_perms() {
+    return array('IForm groups admin');
+  }
+
 }

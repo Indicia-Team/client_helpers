@@ -372,24 +372,6 @@ other.removeClass('wide').remove(); // remove Other field, then bolt in after th
 jQuery('[name^=smpAttr]').filter(':checkbox').filter('[value=".$args['disturbanceOtherTermID']."],[value^=".$args['disturbanceOtherTermID']."\\:]').parent().append(other);\n";
 
     if (self::$mode != self::MODE_EXISTING_RO) {
-      if(lang::get('validation_required') != 'validation_required')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.required = \"".lang::get('validation_required')."\";";
-      if(lang::get('validation_max') != 'validation_max')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.max = $.validator.format(\"".lang::get('validation_max')."\");";
-      if(lang::get('validation_min') != 'validation_min')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.min = $.validator.format(\"".lang::get('validation_min')."\");";
-      if(lang::get('validation_number') != 'validation_number')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.number = $.validator.format(\"".lang::get('validation_number')."\");";
-      if(lang::get('validation_digits') != 'validation_digits')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.digits = $.validator.format(\"".lang::get('validation_digits')."\");";
-      if(lang::get('validation_integer') != 'validation_integer')
-    	data_entry_helper::$late_javascript .= "
-    	$.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
       data_entry_helper::$late_javascript .= "
     $.validator.addMethod('fillgroup', function(value, element){
     var valid = jQuery(element).closest('tr').find(':text').not('[value=]').length > 0 ||

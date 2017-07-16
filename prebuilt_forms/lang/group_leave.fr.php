@@ -22,22 +22,15 @@
 global $custom_terms;
 
 /**
- * Language terms for  dynamic_sample_occurrence form.
+ * Language terms for the group_leave form.
  *
  * @package	Client
  */
+
 $custom_terms = array(
-	'LANG_Edit' => 'Edit',
-	'LANG_SRef_Label' => 'Spatial Ref',
-	'LANG_Location_Label' => 'Location',
-	'LANG_Location_Name' => 'Site Name',
-	'LANG_Georef_Label' => 'Search for Place on Map',
-	// The search button may be changed by adding an entry for 'search'
-	'LANG_Date' => 'Datum',
-	'LANG_Image_Label' => 'Upload Image',
-        'LANG_Comment' => 'Comment',
-	'LANG_Save' => 'Save',
-        'LANG_Blank_Text' => 'Select...',
-	'validation_required' => 'Dest Feld ass obligatoresch.',
-  'Click here' => 'Hei klicken',
+  'Are you sure you want to stop participating in {1}?' => 'Êtes-vous sûr d\'arrêter de participer à {1}?',
+  'Cancel' => 'Annuler',
+  'Confirm' => 'Confirmer',
+  'Confirmation' => 'Confirmation',
+  'You are no longer participating in {!}!' => 'Vous ne participez plus à {1}!'
 );

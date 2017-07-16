@@ -22,22 +22,17 @@
 global $custom_terms;
 
 /**
- * Language terms for  dynamic_sample_occurrence form.
+ * Language terms for the species_details form.
  *
  * @package	Client
  */
+
 $custom_terms = array(
-	'LANG_Edit' => 'Edit',
-	'LANG_SRef_Label' => 'Spatial Ref',
-	'LANG_Location_Label' => 'Location',
-	'LANG_Location_Name' => 'Site Name',
-	'LANG_Georef_Label' => 'Search for Place on Map',
-	// The search button may be changed by adding an entry for 'search'
-	'LANG_Date' => 'Datum',
-	'LANG_Image_Label' => 'Upload Image',
-        'LANG_Comment' => 'Comment',
-	'LANG_Save' => 'Save',
-        'LANG_Blank_Text' => 'Select...',
-	'validation_required' => 'Dest Feld ass obligatoresch.',
-  'Click here' => 'Hei klicken',
+  'Explore records of {1}' => 'Explorez les observations de {1}',
+  'Map' => 'Carte',
+  'Photos and media' => 'Photos et média',
+  'Species Details' => 'Détails de espèce',
+  'Species name' => 'Nom de l\'espèce',
+  'Summary details for {1}' => 'Détails récapitulatifs pour {1}',
+  'Taxonomy' => 'Taxonomie'
 );

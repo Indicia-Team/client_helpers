@@ -172,8 +172,6 @@ class iform_mnhnl_butterflies extends iform_mnhnl_dynamic_1 {
     $retVal = parent::get_form($args, $nid, $response);
     if(parent::$mode != self::MODE_GRID){
       iform_mnhnl_addCancelButton($args['interface']);
-      data_entry_helper::$javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";";
       if(!hostsite_user_has_permission($args['edit_permission'])){
         data_entry_helper::$javascript .= "
 jQuery('[name=smpAttr\\:".$args['observer_attr_id']."],[name^=smpAttr\\:".$args['observer_attr_id']."\\:]').attr('readonly',true)";

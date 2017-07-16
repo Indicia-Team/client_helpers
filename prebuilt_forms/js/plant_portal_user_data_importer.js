@@ -1,12 +1,11 @@
 /*
  * Called from the php code to send any new plots to the warehouse
  */
-function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotsToCreateNames,plotsToCreateSrefs,plotsToCreateSrefSystems,userId,attributeIdToHoldGroup,plotLocationType) {
+function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess) {
   //See comments in front of function code
-  var arrayOfChunkTypesToSend=create_array_of_different_plot_chunks_for_warehouse(plotsToCreateNames,plotsToCreateSrefs,plotsToCreateSrefSystems);
+  var arrayOfChunkTypesToSend=create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,plotSrefsToProcess,plotSrefSystemsToProcess);
   //Some of the information to send are just individual values and aren't grouped (such as website ID).
-  //AV To Do, do we even need to send the attribute to hold the group?
-  var arrayOfAttributesToSend=create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup,plotLocationType);
+  var arrayOfAttributesToSend=create_array_of_new_plot_attributes_for_warehouse(websiteId);
   create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,arrayOfAttributesToSend,'create_new_plots');
 }
 
@@ -38,30 +37,21 @@ function create_array_of_different_plot_chunks_for_warehouse(plotNamesToProcess,
  * Create an array of individual values (that don't need grouping) that get sent to the warehouse. In the case of new plots
  * this is very simple, but use a function to do this anyway, to be consistant with the creation of new groups
  */
-function create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup,plotLocationType) {
+function create_array_of_new_plot_attributes_for_warehouse(websiteId) {
   var arrayOfAttributesToSend=[];
   arrayOfAttributesToSend[0]=[];
   arrayOfAttributesToSend[0][0]='websiteId';
   arrayOfAttributesToSend[0][1]=websiteId;
-  arrayOfAttributesToSend[1]=[];
-  arrayOfAttributesToSend[1][0]='userId';
-  arrayOfAttributesToSend[1][1]=userId;
-  arrayOfAttributesToSend[2]=[];
-  arrayOfAttributesToSend[2][0]='attributeIdToHoldGroup';
-  arrayOfAttributesToSend[2][1]=attributeIdToHoldGroup;
-  arrayOfAttributesToSend[3]=[];
-  arrayOfAttributesToSend[3][0]='plotLocationType';
-  arrayOfAttributesToSend[3][1]=plotLocationType;
   return arrayOfAttributesToSend;
 }
 
 /*
  * Called from the php code to send any new groups to the warehouse
  */
-function send_new_groups_to_warehouse(warehouseUrl,websiteId,groupNamesToCreate,userId,personAttributeIdThatHoldsGroupsForUser) {
+function send_new_groups_to_warehouse(warehouseUrl,websiteId,groupNamesToProcess,groupType,userId,personAttributeIdThatHoldsGroupsForUser) {
   //See notes in send_new_plots_to_warehouse for warehouse, as this works in sames way but for groups
-  var arrayOfChunkTypesToSend=create_array_of_different_group_chunks_for_warehouse(groupNamesToCreate);
-  var arrayOfAttributesToSend=create_array_of_new_group_attributes_for_warehouse(userId,personAttributeIdThatHoldsGroupsForUser);
+  var arrayOfChunkTypesToSend=create_array_of_different_group_chunks_for_warehouse(groupNamesToProcess);
+  var arrayOfAttributesToSend=create_array_of_new_group_attributes_for_warehouse(groupType,userId,personAttributeIdThatHoldsGroupsForUser);
   create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,arrayOfAttributesToSend,'create_new_groups');
 }
 
@@ -82,51 +72,17 @@ function create_array_of_different_group_chunks_for_warehouse(groupNamesToProces
 /*
  * Create an array of individual values (that don't need grouping) to the warehouse.
  */
-function create_array_of_new_group_attributes_for_warehouse(userId,personAttributeIdThatHoldsGroupsForUser) {
+function create_array_of_new_group_attributes_for_warehouse(groupType,userId,personAttributeIdThatHoldsGroupsForUser) {
   var arrayOfAttributesToSend=[];
   arrayOfAttributesToSend[0]=[];
-  arrayOfAttributesToSend[0][0]='userId';
-  arrayOfAttributesToSend[0][1]=userId;
+  arrayOfAttributesToSend[0][0]='groupType';
+  arrayOfAttributesToSend[0][1]=groupType;
   arrayOfAttributesToSend[1]=[];
-  arrayOfAttributesToSend[1][0]='personAttributeId';
-  arrayOfAttributesToSend[1][1]=personAttributeIdThatHoldsGroupsForUser;
-  return arrayOfAttributesToSend;
-}
-
-function send_new_group_to_plot_attachments_to_warehouse(warehouseUrl,websiteId,plotPairsForPlotGroupAttachment,userId,attributeIdToHoldPlotGroupForPlot,attributeIdHoldsPlotGroupForPerson) {
-  //We can re-use this function as we are sending plots and groups in the same way are if we are creating plots
-  var arrayOfChunkTypesToSend=create_array_of_new_group_to_plot_attachment_chunks_for_warehouse(plotPairsForPlotGroupAttachment);
-  var arrayOfAttributesToSend=create_array_of_new_group_to_plot_attachment_attributes_for_warehouse(attributeIdToHoldPlotGroupForPlot,attributeIdHoldsPlotGroupForPerson,userId,websiteId);
-  create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,arrayOfAttributesToSend,'create_new_plot_to_group_attachments');
-}
-
-function  create_array_of_new_group_to_plot_attachment_chunks_for_warehouse(plotNamesForPlotGroupAttachment,plotSrefsForPlotGroupAttachment,plotSrefSystemsForPlotGroupAttachment,plotGroupsForPlotGroupAttachment) {
-  var chunks;
-  var arrayOfChunkTypesToSend=[];
-  //Create a group of data to send to the warehouse as a comma separated string
-  chunks = create_chunks_groupings_for_warehouse('plotPairsForPlotGroupAttachment',plotNamesForPlotGroupAttachment);
-  arrayOfChunkTypesToSend[0]=[];
-  arrayOfChunkTypesToSend[0]=chunks;
-  return arrayOfChunkTypesToSend;
-}
-
-/*
- * Create an array of individual values (that don't need grouping) to the warehouse.
- */
-function create_array_of_new_group_to_plot_attachment_attributes_for_warehouse(locationAttributeIdThatHoldsPlotGroup,personAttributeIdThatHoldsPlotGroup,userId,websiteId) {
-  var arrayOfAttributesToSend=[];
-  arrayOfAttributesToSend[0]=[];
-  arrayOfAttributesToSend[0][0]='locationAttributeIdThatHoldsPlotGroup';
-  arrayOfAttributesToSend[0][1]=locationAttributeIdThatHoldsPlotGroup;
-  arrayOfAttributesToSend[1]=[];
-  arrayOfAttributesToSend[1][0]='personAttributeIdThatHoldsPlotGroup';
-  arrayOfAttributesToSend[1][1]=personAttributeIdThatHoldsPlotGroup;
+  arrayOfAttributesToSend[1][0]='userId';
+  arrayOfAttributesToSend[1][1]=userId;
   arrayOfAttributesToSend[2]=[];
-  arrayOfAttributesToSend[2][0]='userId';
-  arrayOfAttributesToSend[2][1]=userId;
-  arrayOfAttributesToSend[3]=[];
-  arrayOfAttributesToSend[3][0]='websiteId';
-  arrayOfAttributesToSend[3][1]=websiteId;
+  arrayOfAttributesToSend[2][0]='personAttributeId';
+  arrayOfAttributesToSend[2][1]=personAttributeIdThatHoldsGroupsForUser;
   return arrayOfAttributesToSend;
 }
 
@@ -176,34 +132,32 @@ function create_chunks_groupings_for_warehouse(paramName,chunkPartsToProcess) {
  */
 function create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,otherAttributes,warehouseFunctionToCall) {
   var params='';
-  //Add any extra attributes such as website id
-  var otherAttributesString='';
-  for (var i=0; i<otherAttributes.length;i++) {
-    otherAttributesString=otherAttributesString+'&'+otherAttributes[i][0]+'='+otherAttributes[i][1];
-  }
-  //Each type of data to send is sent as a separate parameter (e.g. plot names and plot srefs). These are sent in comma separated groups e.g. plot names ["Plot 1", "Plot 2","Plot 3"], ["Plot 4", "Plot 5","Plot 6"] 
-  //& sRefs ["AB10", "AB11", "AB12"],["AB13", "AB14", "AB15"]. The first element (0) holds the parameter name, so we cycle through index 1 onwards to get the values, these are held
-  //as comma separated groups so we don't send too many to the warehouse at once. 
-  //As all these params must have same number of items, we can just cycle through the first one of these to get the "i" index.
-  for (var i=1; i<arrayOfChunkTypesToSend[0].length;i++) {
-    params='';
-    //Cycle through each param type (e.g. plot name, plot sref)
-    for (var i2=0; i2<arrayOfChunkTypesToSend.length;i2++) {
-      //If first param, then we don't need "&"
-      if (params==='') {
-        //For each param type, get the param name at element 0 and set it to the value group held at index i. 
-        params=params+arrayOfChunkTypesToSend[i2][0]+'='+arrayOfChunkTypesToSend[i2][i];
+  //Cycle through each param to send for a given grouping (for instance Plot Name, Plot Srefs, Plot Sref Systems
+  for (var i=0; i<arrayOfChunkTypesToSend.length;i++) {
+    //The param name is held in index 0, then put an =
+    //If it is not the first param in the string, then it needs an & first e.g. plotNames=Plot 1,Plot 2&plotSrefs=AA10,AB12
+    if (params==='') {
+      params=params+arrayOfChunkTypesToSend[i][0]+'=';
+    } else {
+      params=params+'&'+arrayOfChunkTypesToSend[i][0]+'=';
+    }
+    //Cycle through each of the data items e.g. Plot 1 Plot 2 etc and add them to the string (it doesn't have to be plot names, the groups use the same code
+    for (var i2=1; i2<arrayOfChunkTypesToSend[i].length;i2++) {
+      if (i2==arrayOfChunkTypesToSend[i].length-1) {
+        params=params+arrayOfChunkTypesToSend[i][i2];
       } else {
-        params=params+'&'+arrayOfChunkTypesToSend[i2][0]+'='+arrayOfChunkTypesToSend[i2][i];
+        params=params+arrayOfChunkTypesToSend[i][i2]+'&';
       }
     }
-    params=params+otherAttributesString;
-    jQuery.ajax({
-      url: warehouseUrl+'index.php/services/plant_portal_import/'+warehouseFunctionToCall+'?'+params,
-      dataType: 'jsonp',
-      async:false,
-      success: function(response) {
-      }
-    });
   }
+  //Add any extra attributes such as website id
+  for (var i=0; i<otherAttributes.length;i++) {
+    params=params+'&'+otherAttributes[i][0]+'='+otherAttributes[i][1];
+  }
+  jQuery.ajax({
+    url: warehouseUrl+'index.php/services/plant_portal_import/'+warehouseFunctionToCall+'?'+params,
+    dataType: 'jsonp',
+    success: function(response) {
+    }
+  });
 }

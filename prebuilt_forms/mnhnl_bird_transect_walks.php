@@ -805,7 +805,6 @@ jQuery('.attr-trailer').prev('br').remove();
       $r .= "<input type=\"hidden\" id=\"main-sample-closed\" name=\"".$closedFieldName."\" value=\"".$closedFieldValue."\" />\n";
     }
 	data_entry_helper::$javascript .= "
-$.validator.messages.required = \"".lang::get('validation_required')."\";
 $.validator.defaults.onsubmit = false; // override default - so that we handle all submission validation.
 ";
 
