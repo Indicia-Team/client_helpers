@@ -404,7 +404,10 @@ var mapTabHandler = function(event, ui) {
   panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
   if (typeof indiciaData.mapdiv !== 'undefined' && $(indiciaData.mapdiv).parents('#'+panel.id).length) {
     indiciaData.mapdiv.map.updateSize();
-    if (typeof indiciaData.initialBounds !== "undefined") {
+    if (typeof indiciaData.zoomedBounds !== "undefined") {
+      indiciaData.mapdiv.map.zoomToExtent(indiciaData.zoomedBounds);
+      delete indiciaData.zoomedBounds;
+    } else if (typeof indiciaData.initialBounds !== "undefined") {
       indiciaFns.zoomToBounds(indiciaData.mapdiv, indiciaData.initialBounds);
       delete indiciaData.initialBounds;
     } else
