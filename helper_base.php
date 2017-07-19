@@ -782,8 +782,8 @@ class helper_base extends helper_config {
       if (is_array($postargs) && version_compare(phpversion(), '5.5.0') >= 0) {
         // posting a file using @ prefix is deprecated as of version 5.5.0
         foreach ($postargs as $key => $value) {
-          // loop through postargs to find files
-          if ($value[0] == '@') {
+          // loop through postargs to find files where the value is prefixed @
+          if (strpos($value, '@') === 0) {
             // found a file - could be in form @path/to/file;type=mimetype
             $fileparts = explode(';', substr($value, 1));
             $filename = $fileparts[0];

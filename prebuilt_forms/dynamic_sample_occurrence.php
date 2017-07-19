@@ -1089,6 +1089,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $licence = self::licence_code_to_text($code);
       $r .= '<p class="licence licence-' . strtolower($code) . '">' . lang::get($msg, $licence) . '</p>';
       $r .= "<input type=\"hidden\" name=\"sample:licence_id\" value=\"$licence_id\" />";
+      $r .= "<input type=\"hidden\" name=\"sample:licence_code\" value=\"licence_code\" />";
     }
     return $r;
   }
@@ -1771,14 +1772,16 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if ((isset($args['users_manage_own_sites']) && $args['users_manage_own_sites'])
         || (!empty($_GET['group_id']))) {
       $userId = hostsite_get_user_field('indicia_user_id');
-      if (!empty($userId)) {
-        if (!empty($options['personSiteAttrId'])) {
-          $location_list_args['extraParams']['user_id']=$userId;
-          $location_list_args['extraParams']['person_site_attr_id']=$options['personSiteAttrId'];
-          if(!isset($options['report'])) $location_list_args['report'] = 'library/locations/my_sites_lookup';
-        } else 
-          $location_list_args['extraParams']['created_by_id']=$userId;
+      if (empty($userId)) {
+        $location_list_args['fieldname'] = 'sample:location_name';
+        return data_entry_helper::text_input($location_list_args);
       }
+      if (!empty($options['personSiteAttrId'])) {
+        $location_list_args['extraParams']['user_id']=$userId;
+        $location_list_args['extraParams']['person_site_attr_id']=$options['personSiteAttrId'];
+        if(!isset($options['report'])) $location_list_args['report'] = 'library/locations/my_sites_lookup';
+      } else
+        $location_list_args['extraParams']['created_by_id']=$userId;
       $location_list_args['extraParams']['view']='detail';
       $location_list_args['allowCreate']=true;
       // pass through the group we are recording in plus its parent, if any, so we can show group sites
