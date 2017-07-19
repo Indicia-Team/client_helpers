@@ -253,8 +253,9 @@ Record ID',
     $availableFields = array(
       'sensitive'=>'Sensitive',
       'occurrence_id'=>'Record ID',
-      'taxon'=>'Species',
       'preferred_taxon'=>'Recommended name',
+      'common_name'=>'Common name',
+      'taxon'=>'Name as entered',
       'taxonomy'=>'Taxonomy',
       'survey_title'=>'Survey',
       'recorder'=>'Recorder',
@@ -279,11 +280,12 @@ Record ID',
     self::load_record($auth, $args);
     
     $details_report = '<div class="record-details-fields ui-helper-clearfix">';
+    $nameLabel = self::$record['taxon'];
+    if (self::$record['taxon'] !== self::$record['preferred_taxon'])
+      $nameLabel .= ' (' . self::$record['preferred_taxon'] . ')';
+    $title = lang::get('Record of {1}', $nameLabel);
+    hostsite_set_page_title($title);
     foreach($availableFields as $field=>$caption) {
-      if ($caption === 'Species') {
-        $title = lang::get('Record of {1}', self::$record[$field]);
-        hostsite_set_page_title($title);
-      }
       if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
         // special case, sensitive icon
         $class = self::$record[$field] === 'This record is sensitive' ? ' class="ui-state-error"' : '';
@@ -292,9 +294,16 @@ Record ID',
         $class = $field==='licence_code' ? ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"' : $class;
         $anchorfrom = $field==='licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
         $anchorto = $field==='licence_code' ? '</a>' : '';
+        $value = lang::get(self::$record[$field]);
+        // italices latin names
+        if (($field === 'taxon' && self::$record['language_iso'] === 'lat')
+            || ($field === 'preferred_taxon' && self::$record['preferred_language_iso'] === 'lat'))
+          $value = "<em>$value</em>";
+        if ($field === 'preferred_taxon' && !empty(self::$record['preferred_authority']))
+          $value = "$value " . self::$record['preferred_authority'];
         $details_report .= str_replace(
           array('{caption}', '{value}', '{class}', '{anchorfrom}', '{anchorto}'),
-          array(lang::get($caption), lang::get(self::$record[$field]), $class, $anchorfrom, $anchorto),
+          array(lang::get($caption), $value, $class, $anchorfrom, $anchorto),
           $attrsTemplate
         );
       }
