@@ -4928,6 +4928,8 @@ $('#sensitive-blur').change(function() {
    * <li><b>timeSteps</b><br/>
    * Optional. An array containing 3 values for the allowable increments in time for hours, minutes and seconds respectively. Defaults to
    * 1, 15, 0 meaning that the increments allowed are in 15 minute steps and seconds are ignored.</li>
+   * <li><b>show24Hours</b><br/>
+   * Optional. True to use 24 hour time, false for 12 hour (AM/PM)</li>
    * </ul>
    * The output of this control can be configured using the following templates:
    * <ul>
@@ -4941,15 +4943,18 @@ $('#sensitive-blur').change(function() {
     $options = array_merge(array(
       'id' => $options['fieldname'],
       'default' => '',
-      'timeSteps' => array(1,15,0)
+      'timeSteps' => array(1,15,0),
+      'show24Hours' => false,
     ), $options);
     self::add_resource('timeentry');
     $steps = implode(', ', $options['timeSteps']);
     $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
+    $show24Hours = ($options['show24Hours'] === true) ? 'true' : 'false';
     // build a list of options to pass through to the jQuery widget
     $jsOpts = array(
       "timeSteps: [$steps]",
-      "spinnerImage: '".$imgPath."/spinnerGreen.png'"
+      "spinnerImage: '".$imgPath."/spinnerGreen.png'",
+      "show24Hours: $show24Hours",
     );
     if (isset($options['beforeSetTime']))
       $jsOpts[] = "beforeSetTime: ".$options['beforeSetTime'];
