@@ -506,6 +506,7 @@ class filter_quality extends filter_base {
         'V1' => lang::get('Accepted as correct records only'),
         'V' => lang::get('Accepted records only'),
         '-3' => lang::get('Reviewer agreed at least plausible'),
+        'C3' => lang::get('Plausible records only'),
         'C' => lang::get('Recorder was certain'),
         'L' => lang::get('Recorder thought the record was at least likely'),
         'P' => lang::get('Not reviewed'),
