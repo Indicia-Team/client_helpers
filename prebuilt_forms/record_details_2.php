@@ -248,7 +248,7 @@ Record ID',
     $fields=helper_base::explode_lines($args['fields']);
     $fieldsLower=helper_base::explode_lines(strtolower($args['fields']));
     //Draw the Record Details, but only if they aren't requested as hidden by the administrator
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span>{anchorfrom}<span{class}>{value}</span>{anchorto}</div>';
+    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span>{anchorfrom}<span{class}>{value|escape}</span>{anchorto}</div>';
     $test=$args['operator']==='in';
     $availableFields = array(
       'sensitive'=>'Sensitive',
@@ -302,8 +302,8 @@ Record ID',
         if ($field === 'preferred_taxon' && !empty(self::$record['preferred_authority']))
           $value = "$value " . self::$record['preferred_authority'];
         $details_report .= str_replace(
-          array('{caption}', '{value}', '{class}', '{anchorfrom}', '{anchorto}'),
-          array(lang::get($caption), $value, $class, $anchorfrom, $anchorto),
+          array('{caption}', '{value|escape}', '{class}', '{anchorfrom}', '{anchorto}'),
+          array(lang::get($caption), htmlspecialchars($value), $class, $anchorfrom, $anchorto),
           $attrsTemplate
         );
       }
