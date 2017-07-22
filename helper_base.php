@@ -1588,9 +1588,12 @@ JS;
         if (self::$is_ajax) // ajax requests are simple - page has already loaded so just return the javascript
           $script .= "$onload_javascript\n";
         else {
+          // If no code running on docReady, can proceed with onload without testing.
+          $documentReadyDone = empty($javascript) && empty($late_javascript) ? "indiciaData.documentReady = 'done';" : '';
           // create a function that can be called from window.onLoad. Don't put it directly in the onload
           // in case another form is added to the same page which overwrites onload.
           $script .= <<<JS
+$documentReadyDone
 indiciaData.onloadFns.push(function() {
   $onload_javascript
 });
