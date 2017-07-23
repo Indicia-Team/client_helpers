@@ -301,9 +301,11 @@ Record ID',
           $value = "<em>$value</em>";
         if ($field === 'preferred_taxon' && !empty(self::$record['preferred_authority']))
           $value = "$value " . self::$record['preferred_authority'];
+        if ($field !== 'taxon' && $field !== 'preferred_taxon')
+          $value = htmlspecialchars($value);
         $details_report .= str_replace(
           array('{caption}', '{value|escape}', '{class}', '{anchorfrom}', '{anchorto}'),
-          array(lang::get($caption), htmlspecialchars($value), $class, $anchorfrom, $anchorto),
+          array(lang::get($caption), $value, $class, $anchorfrom, $anchorto),
           $attrsTemplate
         );
       }
@@ -314,7 +316,7 @@ Record ID',
     if ($created!==$updated)
       $dateInfo .= lang::get(' and last updated on {1}', $updated);
     if ($test===in_array('submission date', $fieldsLower))
-      $details_report .= str_replace(array('{caption}','{value}','{class}', '{anchorfrom}', '{anchorto}'),
+      $details_report .= str_replace(array('{caption}','{value|escape}','{class}', '{anchorfrom}', '{anchorto}'),
           array(lang::get('Submission date'), $dateInfo, '', '', ''), $attrsTemplate);
     $details_report .= '</div>';
     
