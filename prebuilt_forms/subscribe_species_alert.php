@@ -56,8 +56,8 @@ class iform_subscribe_species_alert {
         array(
           'fieldname'=>'list_id',
           'label'=>'Species list ',
-          'helpText'=>'The species list that species can be selected from.',
-          'type'=>'select',
+          'helpText'=>'The species list that individual species can be picked from to receive alerts for.',
+          'type'=>'checkbox_group',
           'table'=>'taxon_list',
           'valueField'=>'id',
           'captionField'=>'title',
@@ -189,7 +189,9 @@ class iform_subscribe_species_alert {
           'relation to if you want to receive alerts on a single species.'),
       'fieldname' => 'taxa_taxon_list_id',
       'cacheLookup' => true,
-      'extraParams' => $auth['read'] + array('taxon_list_id' => $args['list_id']),
+      'extraParams' => $auth['read'] + array('query' => json_encode(
+              array('in' => array('taxon_list_id' => $args['list_id']))
+      )),
       'class' => 'control-width-4',
       'default' => $default,
       'defaultCaption' => $defaultCaption
