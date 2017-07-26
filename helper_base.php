@@ -674,7 +674,7 @@ class helper_base extends helper_config {
         'spatialReports' => array('javascript'=>array(self::$js_path.'spatialReports.js')),
         'jsonwidget' => array('deps' => array('jquery'), 'javascript'=>array(self::$js_path."jsonwidget/json.js", self::$js_path."jsonwidget/jsonedit.js",
             self::$js_path."jquery.jsonwidget.js"), 'stylesheets'=>array(self::$css_path."jsonwidget.css")),
-        'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.pack.js")),
+        'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.min.js")),
         'verification' => array('javascript'=>array(self::$js_path."verification.js")),
         'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
         'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
