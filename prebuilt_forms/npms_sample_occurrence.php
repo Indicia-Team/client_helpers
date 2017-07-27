@@ -52,6 +52,14 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'required'=>false
         ),
         array(
+          'name'=>'override_locking_date_text',
+          'caption'=>'Override locked form text',
+          'description'=>'Override the warning text shown to the user when the form is locked from editing.',
+          'type'=>'string',
+          'group'=>'Other IForm Parameters',
+          'required'=>false
+        ),  
+        array(
           'name'=>'plot_number_attr_id',
           'caption'=>'Plot number/label attribute id',
           'description'=>'The attribute which holds the plot number/label.',
@@ -69,7 +77,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'type'=>'string',
           'group'=>'Other IForm Parameters',
           'required'=>false
-        ),  
+        )
       )
     ); 
   }
@@ -90,6 +98,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
   }
 
   protected static function get_form_html($args, $auth, $attributes) {
+    
     global $user;
     data_entry_helper::$javascript .= "
       var sampleCreatedOn;
@@ -98,6 +107,13 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
       $(document).ready(function($) {
         $('#imp-sref-system').hide();
         $('#tab-submit').val('Submit');
+        $('#tab-delete').click(function(){
+          if (confirm('Are you sure you wish to delete this survey?')) {
+            $('#tab-delete').trigger();
+          } else {
+            return false;
+          }
+        });
       });
     ";
     //Test if the sample date is less than the locking date, if it is then lock the form.
@@ -116,6 +132,13 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
         ";
       }
     }
+    $r='';
+    if (!empty($sampleCreatedOn) && !empty($args['locking_date']) && $sampleCreatedOn<$args['locking_date']) {
+      if (!empty($args['override_locking_date_text']))
+        $r .= '<em style="color: red;">'.$args['override_locking_date_text'].'</em>';
+      else
+        $r .= '<em style="color: red;">This form can no longer be edited as it was created before the data locking date specified by the administrator.</em>';
+    }
     //If the date the sample was created is less than the threshold date set by the user, then
     //lock the form (put simply, old data cannot be edited by the user).
     data_entry_helper::$javascript .= "
@@ -128,7 +151,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     //remove default validation mode of 'message' as species grid goes spazzy
     data_entry_helper::$validation_mode = array('colour');
     //Div that can be used to disable page when required
-    $r = '<div id = "disableDiv">';
+    $r .= '<div id = "disableDiv">';
     $r .= parent::get_form_html($args, $auth, $attributes);
     $r .= '</div>';
     return $r;
@@ -211,12 +234,12 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
    * Override function to add the report parameter for the ID of the custom attribute which holds the linked sample.
    * Depends upon a report existing that uses the parameter e.g. npms_sample_occurrence_samples
    */
-  protected static function getSampleListGrid($args, $node, $auth, $attributes) {
+  protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     // User must be logged in before we can access their records.
     if ($user->uid===0) {
       // Return a login link that takes you back to this form when done.
-      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.($node->nid)))).'">login</a> to the website.');
+      return lang::get('Before using this facility, please <a href="'.url('user/login', array('query'=>array('destination=node/'.$nid))).'">login</a> to the website.');
     }
 
     // Get the Indicia User ID to filter on.
@@ -258,10 +281,10 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     ));
     $r .= '<form>';
     if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'))).'\'">';
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new&gridmode'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new'))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new&gridmode'))).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => array('new'=>''))).'\'">';
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => array('new'=>''))).'\'">';
     }
     $r .= '</form>';
     return $r;
@@ -331,8 +354,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
    * Override preload_species_checklist_occurrences so we remove elements that would cause occurrence
    * attributes to be loaded into survey 2.
    */
-  public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
-      &$subSamples, $useSubSamples, $subSampleMethodID='', $subSamplesOptional=false) {
+  public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams, &$subSamples, $useSubSamples, $subSampleMethodID='') {
     $occurrenceIds = array();
     $taxonCounter = array();
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
