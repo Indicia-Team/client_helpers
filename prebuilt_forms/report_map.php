@@ -211,9 +211,12 @@ class iform_report_map {
       );
       if ($args['layer_picker']=='before')
         $r .= map_helper::layer_list($picker);
-      // as we have a layer picker, we can drop the layerSwitcher from the OL map.
-      if (array_search('layerSwitcher', $options['standardControls'])!==false)
+      // As we have a layer picker, we can drop the layerSwitcher from the OL map.
+      if (in_array('layerSwitcher', $options['standardControls']) !== false) {
         unset($options['standardControls'][array_search('layerSwitcher', $options['standardControls'])]);
+        // Ensure array is sequential so it remains an array when json encoded.
+        $options['standardControls'] = array_values($options['standardControls']);
+      }
     }
     if ($args['legend']!='none') {
       $legend = array(
