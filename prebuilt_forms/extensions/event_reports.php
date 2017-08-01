@@ -262,7 +262,7 @@ class extension_event_reports {
       ),
       $options
     );
-    $reportOptions['dataSource'] = empty($reportOptions['extraParams']['taxon_list_id']) ?
+    $reportOptions['dataSource'] = empty($reportOptions['extraParams']['master_taxon_list_id']) ?
       'library/taxon_groups/filterable_group_counts' : 'library/taxon_groups/filterable_group_counts_multi_checklist';
     $r = self::output_title($options);
     $r .= report_helper::report_chart($reportOptions);
