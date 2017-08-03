@@ -730,7 +730,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     self::$loadedSampleId = null;
     self::$loadedOccurrenceId = null;
     self::$availableForGroups = $args['available_for_groups'];
-    self::$limitToGroupId = $args['limit_to_group_id'];
+    self::$limitToGroupId = isset($args['limit_to_group_id']) ? $args['limit_to_group_id'] : 0;
     if ($_POST && array_key_exists('website_id', $_POST) && !is_null(data_entry_helper::$entity_to_load)) {
       // errors with new sample or entity populated with post, so display this data.
       $mode = self::MODE_EXISTING;
