@@ -475,6 +475,13 @@ class helper_base extends helper_config {
   public static $date_format='d/m/Y';
   
   /**
+   * @var integer maximum warehouse url length. Placed here rather than helper_config.php, as only recently introduced.
+   * Initially set this for just before the default apache limit of ~ 8190 characters.
+   * Can be changed for other servers.
+   */
+  public static $max_warehouse_url_length = 8100;
+
+  /**
    * @var Boolean indicates if any form controls have specified the lockable option.
    * If so, we will need to output some javascript.
    */
@@ -2174,40 +2181,22 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       }
     }
     if (!isset($response) || $response===FALSE) {
+      $URL = parent::$base_url . $request;
       $postArgs = null;
-      $parsedURL=parse_url(parent::$base_url.$request);
-      parse_str($parsedURL["query"], $postArgs);
-      $url = explode('?', parent::$base_url . $request);
-      $newURL = array($url[0]);
 
-      $getArgs = array();
-      if(isset($postArgs['report'])) { // using the reports rather than direct. If this is case report params go into speial params postarg
-        // There is a place in the data services report handling that uses a $_GET on the
-        // report parameter, so separate that out from the postargs
-        $getArgs[] = 'report=' . $postArgs['report'];
-        unset($postArgs['report']);
-        // move other REQUESTED fields into POST.
-        $postArgs = array('params'=> $postArgs);
-        $fieldsToCopyUp = array('reportSource', 'mode', 'auth_token', 'nonce', 'persist_auth', 'filename', 'callback', 'xsl',
-              'wantRecords', 'wantColumns', 'wantCount', 'wantParameters', 'knownCount');
-        foreach($fieldsToCopyUp as $field) {
-          if(isset($postArgs['params'][$field])) {
-            $postArgs[$field] = $postArgs['params'][$field];
-            unset($postArgs['params'][$field]);
-          }
-        }
-        if(isset($postArgs['params']['user_id'])) {
-          // user_id is different as this is used in an explicit _REQUEST in the service_base but
-          // also can be proper param to the report - so don't unset.
-          $postArgs['user_id'] = $postArgs['params']['user_id'];
-        }
-        $postArgs['params'] = json_encode((object)$postArgs['params']);
+      // In certain circumstances, idlists are provided to reports: these can get very large, to the point
+      // where it exceeds the URL size limits of the server, especially when url encoded.
+      // The code should perhaps be redesigned, but in the meantime convert the call to use the existing POST functionality
+      // for the request. NB this is a fall back, and is not RESTful, so only do this in extremis for report requests.
+      // Initially set this for just before the default apache limit of ~ 8190 characters. Could be reduced in the future 
+      // if other servers have a lower limit.
+      $parsedURL = parse_url($URL);
+      $path = explode('/', $parsedURL["path"]);
+      if(count($path) && $path[count($path)-1] === 'requestReport' && strlen($URL) > self::$max_warehouse_url_length ) {
+        self::_convertLongReportRequestURL($URL, $postArgs);
       }
-      
-      if(count($getArgs)>0) $newURL[] = implode('&', $getArgs);
-      $newURL = implode('?', $newURL);
 
-      $response = self::http_post($newURL, $postArgs);
+      $response = self::http_post($URL, $postArgs);
     }
     $r = json_decode($response['output'], TRUE);
     if (!is_array($r)) {
@@ -2221,6 +2210,47 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     self::_purgeCache();
     self::_purgeImages();
     return $r;
+  }
+  
+  /**
+   * Private function to convert a long URL into a shorter one plus postargs.
+   * This is not generic, but is specific to URLs for the report requests to the warehouse
+   * as the report parameters are moved to a json encoded object in the POST, rather than
+   * their own URL parameters.
+   *
+   * @param string $URL : input/output : passes in the URL to be converted, and returns
+   *                      the reduced size URL
+   * @param array $postArgs : output : the associative POST argument array, mode up of
+   *                          the URL parameters
+   * @return None
+   */
+  private static function _convertLongReportRequestURL(&$URL /* in/output */, &$postArgs /* output */)
+  {
+    $parsedURL = parse_url($URL);
+    parse_str($parsedURL["query"], $postArgs);
+
+    // There is a place in the data services report handling that uses a $_GET on the
+    // report parameter, so separate that out from the postargs
+    $newURL = explode('?', $URL);
+    $URL = implode('?', array($newURL[0], http_build_query(array('report' => $postArgs['report']))));
+    unset($postArgs['report']);
+    
+    // move other fields that are accessed using _REQUESTED into POST from the params field. 
+    $postArgs = array('params'=> $postArgs);
+    $fieldsToCopyUp = array('reportSource', 'mode', 'auth_token', 'nonce', 'persist_auth', 'filename', 'callback', 'xsl',
+        'wantRecords', 'wantColumns', 'wantCount', 'wantParameters', 'knownCount');
+    foreach($fieldsToCopyUp as $field) {
+      if(isset($postArgs['params'][$field])) {
+        $postArgs[$field] = $postArgs['params'][$field];
+        unset($postArgs['params'][$field]);
+      }
+    }
+    // user_id is different as this is used in an explicit _REQUEST in the service_base but
+    // also can be proper param to the report - so don't unset.
+    if(isset($postArgs['params']['user_id']) && $postArgs['params']['user_id']) {
+      $postArgs['user_id'] = $postArgs['params']['user_id'];
+    }
+    $postArgs['params'] = json_encode((object)$postArgs['params']);
   }
   
   /**
