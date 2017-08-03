@@ -498,20 +498,9 @@ HTML
       'mode' => 'report',
       'autoParamsForm' => false,
       'extraParams' => array(
-        'taxon_meaning_id'=> self::$taxon_meaning_id,
+        'taxon_meaning_list'=> self::$taxon_meaning_id,
         'smpattrs'=>'',
         'occattrs'=>'',
-        'searchArea'=>'',
-        'idlist'=>'',
-        'currentUser'=>'',
-        'ownData'=>0,
-        'location_id'=>'',
-        'ownLocality'=>0,
-        'taxon_groups'=>'',
-        'ownGroups'=>0,
-        'survey_id'=>'',
-        'date_from'=>'',
-        'date_to'=>'',
         'sharing'=>'reporting',
         'status' => '!R'
       )
