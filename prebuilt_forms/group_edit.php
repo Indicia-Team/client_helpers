@@ -756,7 +756,7 @@ $('#entry_form').submit(function() {
         'fieldname'=>'groups_user:admin_user_id',
         'label' => ucfirst(lang::get('{1} administrators', self::$groupType)),
         'table'=>'user',
-        'captionField'=>'person_name',
+        'captionField'=>'person_name_unique',
         'valueField'=>'id',
         'extraParams'=>$auth['read']+array('view'=>'detail'),
         'helpText'=>lang::get('LANG_Admins_Field_Instruct', self::$groupType),
@@ -772,7 +772,7 @@ $('#entry_form').submit(function() {
         'fieldname'=>'groups_user:user_id',
         'label' => lang::get('Other {1} members', self::$groupType),
         'table'=>'user',
-        'captionField'=>'person_name',
+        'captionField'=>'person_name_unique',
         'valueField'=>'id',
         'extraParams'=>$auth['read']+array('view'=>'detail'),
         'helpText'=>lang::get('LANG_Members_Field_Instruct'),
@@ -1085,13 +1085,13 @@ $('#entry_form').submit(function() {
         if ($member['administrator']==='t')
           $admins[]=array(
               'fieldname'=>'groups_user:user_id:'.$member['id'],
-              'caption'=>$member['person_name'],
+              'caption'=>$member['person_name_unique'],
               'default'=>$member['user_id']
           );
         else
           $others[]=array(
               'fieldname'=>'groups_user:user_id:'.$member['id'],
-              'caption'=>$member['person_name'],
+              'caption'=>$member['person_name_unique'],
               'default'=>$member['user_id']
           );
       }

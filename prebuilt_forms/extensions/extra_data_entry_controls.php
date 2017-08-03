@@ -28,6 +28,10 @@ class extension_extra_data_entry_controls {
   /**
    * A control which provides autocomplete functionality to lookup against the list of
    * people who are users of this website.
+   * Options include:
+   * * includePeopleInAttrs - set to true to also include people only identified in a full_name custom attribute in the
+   *   search results.
+   * * Other option overrides as for an autocomplete control.
    * @return string THML
    */
   public static function person_autocomplete($auth, $args, $tabalias, $options, $path) {
@@ -38,14 +42,18 @@ class extension_extra_data_entry_controls {
       $options['defaultCaption'] = $options['default'];
     $options = array_merge(array(
       'label' => 'Person',
-      'table'=>'user',
       'valueField' => 'id',
       'captionField' => 'person_name',
-      'formatFunction'=>"format_person_autocomplete",
+      'formatFunction'=>"indiciaFns.formatPersonAutocomplete",
       'extraParams' => $auth['read'] + array('view'=>'detail'),
       'class'=>'control-width-5',
       'inputId' => $options['fieldname']
     ), $options);
+    if (empty($options['includePeopleInAttrs'])) {
+      $options['table'] ='user';
+    } else {
+      $options['report'] ='library/people/people_names_lookup';
+    }
     // we swap the input ID for the fieldname so that the visible control contains the text value to save
     // if not looking up a known person. The fieldname gets assigned to the hidden control which only
     // gets used after a lookup operation.

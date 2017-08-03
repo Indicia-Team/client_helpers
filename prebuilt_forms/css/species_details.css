@@ -6,3 +6,11 @@
   display: inline-block;
   padding: 0.5em;
 }
+li.gallery-item {
+  position: relative;
+}
+li.gallery-item .status-icon {
+  position: absolute;
+  right: 0;
+  top: 8px;
+}

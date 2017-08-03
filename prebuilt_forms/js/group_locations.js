@@ -19,19 +19,18 @@
  * @link    http://code.google.com/p/indicia/
  */
 
-var remove_location_from_group;
-
-jQuery(document).ready(function($) {
+jQuery(document).ready(function ($) {
   // Function to be called when removing a location from a group. Uses AJAX to delete the
-  // groups_locations record. 
-  remove_location_from_group = function(groups_location_id) {
+  // groups_locations record.
+  indiciaFns.removeLocationFromGroup = function (groupsLocationId) {
+    var s;
     if (confirm('Are you sure you want to remove this location from use by the group?')) {
-      var s = {
-        "website_id":indiciaData.website_id,
-        "groups_location:id":groups_location_id,
-        "groups_location:deleted":"t"
+      s = {
+        website_id: indiciaData.website_id,
+        'groups_location:id': groupsLocationId,
+        'groups_location:deleted': 't'
       };
-      $.post(indiciaData.baseUrl+'/?q=ajaxproxy&node='+indiciaData.nodeId+'&index=groups_location', 
+      $.post(indiciaData.baseUrl + '/?q=ajaxproxy&node=' + indiciaData.nodeId + '&index=groups_location',
         s,
         function (data) {
           if (typeof data.error === 'undefined') {
@@ -44,16 +43,17 @@ jQuery(document).ready(function($) {
       );
     }
   };
-  
-  $('#add-existing').click(function() {
-    var location_id=$('#add_existing_location_id').val();
-    if (location_id) {
-      var s = {
-        "website_id":indiciaData.website_id,
-        "groups_location:group_id":indiciaData.group_id,
-        "groups_location:location_id":location_id
+
+  $('#add-existing').click(function () {
+    var locationId = $('#add_existing_location_id').val();
+    var s;
+    if (locationId) {
+      s = {
+        website_id: indiciaData.website_id,
+        'groups_location:group_id': indiciaData.group_id,
+        'groups_location:location_id': locationId
       };
-      $.post(indiciaData.baseUrl+'/?q=ajaxproxy&node='+indiciaData.nodeId+'&index=groups_location', 
+      $.post(indiciaData.baseUrl + '/?q=ajaxproxy&node=' + indiciaData.nodeId+'&index=groups_location',
         s,
         function (data) {
           if (typeof data.error === 'undefined') {

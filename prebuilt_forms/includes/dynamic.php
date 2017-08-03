@@ -446,6 +446,9 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     unset($reload['params']['location_id']);
     unset($reload['params']['new']);
     unset($reload['params']['newLocation']);
+    // if editing a group record, ensure group in URL on form post so it carries on to the next record input.
+    if (!empty(data_entry_helper::$entity_to_load['sample:group_id']))
+      $reload['params']['group_id'] = data_entry_helper::$entity_to_load['sample:group_id'];
     $reloadPath = $reload['path'];
     if(count($reload['params'])) {
       // decode params prior to encoding to prevent double encoding.

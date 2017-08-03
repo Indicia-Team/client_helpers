@@ -126,6 +126,7 @@ class extension_event_reports {
    */
   public static function photos_block($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
+    report_helper::add_resource('fancybox');
     $reportOptions = array_merge(      
       iform_report_get_report_options($args, $auth['read']),
       array(
@@ -261,7 +262,7 @@ class extension_event_reports {
       ),
       $options
     );
-    $reportOptions['dataSource'] = empty($reportOptions['extraParams']['taxon_list_id']) ?
+    $reportOptions['dataSource'] = empty($reportOptions['extraParams']['master_taxon_list_id']) ?
       'library/taxon_groups/filterable_group_counts' : 'library/taxon_groups/filterable_group_counts_multi_checklist';
     $r = self::output_title($options);
     $r .= report_helper::report_chart($reportOptions);

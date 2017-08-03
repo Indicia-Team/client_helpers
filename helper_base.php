@@ -661,11 +661,11 @@ class helper_base extends helper_config {
         'jqplot' => array('stylesheets' => array(self::$js_path.'jqplot/jquery.jqplot.min.css'), 'javascript' => array(
                 self::$js_path.'jqplot/jquery.jqplot.min.js',
                 '[IE]'.self::$js_path.'jqplot/excanvas.js')),
-        'jqplot_bar' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.barRenderer.min.js')),
-        'jqplot_pie' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.pieRenderer.min.js')),
-        'jqplot_category_axis_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.categoryAxisRenderer.min.js')),
-        'jqplot_canvas_axis_label_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.canvasTextRenderer.min.js', self::$js_path.'jqplot/plugins/jqplot.canvasAxisLabelRenderer.min.js')),
-        'jqplot_trendline' => array('javascript'=>array(self::$js_path.'jqplot/plugins/jqplot.trendline.min.js')),
+        'jqplot_bar' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.barRenderer.js')),
+        'jqplot_pie' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.pieRenderer.js')),
+        'jqplot_category_axis_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.categoryAxisRenderer.js')),
+        'jqplot_canvas_axis_label_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.canvasTextRenderer.js', self::$js_path.'jqplot/plugins/jqplot.canvasAxisLabelRenderer.js')),
+        'jqplot_trendline' => array('javascript'=>array(self::$js_path.'jqplot/plugins/jqplot.trendline.js')),
         'reportgrid' => array('deps' => array('jquery_ui', 'jquery_cookie'),
             'javascript' => array(self::$js_path.'jquery.reportgrid.js', self::$js_path.'json2.js')),
         'reportfilters' => array('deps' => array('reportgrid'), 'stylesheets' => array(self::$css_path."report-filters.css"), 'javascript' => array(self::$js_path.'reportFilters.js')),
@@ -674,7 +674,7 @@ class helper_base extends helper_config {
         'spatialReports' => array('javascript'=>array(self::$js_path.'spatialReports.js')),
         'jsonwidget' => array('deps' => array('jquery'), 'javascript'=>array(self::$js_path."jsonwidget/json.js", self::$js_path."jsonwidget/jsonedit.js",
             self::$js_path."jquery.jsonwidget.js"), 'stylesheets'=>array(self::$css_path."jsonwidget.css")),
-        'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.pack.js")),
+        'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.min.js")),
         'verification' => array('javascript'=>array(self::$js_path."verification.js")),
         'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
         'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
@@ -782,8 +782,8 @@ class helper_base extends helper_config {
       if (is_array($postargs) && version_compare(phpversion(), '5.5.0') >= 0) {
         // posting a file using @ prefix is deprecated as of version 5.5.0
         foreach ($postargs as $key => $value) {
-          // loop through postargs to find files
-          if ($value[0] == '@') {
+          // loop through postargs to find files where the value is prefixed @
+          if (strpos($value, '@') === 0) {
             // found a file - could be in form @path/to/file;type=mimetype
             $fileparts = explode(';', substr($value, 1));
             $filename = $fileparts[0];
@@ -1588,9 +1588,12 @@ JS;
         if (self::$is_ajax) // ajax requests are simple - page has already loaded so just return the javascript
           $script .= "$onload_javascript\n";
         else {
+          // If no code running on docReady, can proceed with onload without testing.
+          $documentReadyDone = empty($javascript) && empty($late_javascript) ? "indiciaData.documentReady = 'done';" : '';
           // create a function that can be called from window.onLoad. Don't put it directly in the onload
           // in case another form is added to the same page which overwrites onload.
           $script .= <<<JS
+$documentReadyDone
 indiciaData.onloadFns.push(function() {
   $onload_javascript
 });
@@ -1984,7 +1987,8 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
   /**
-   * Takes a template string (e.g. <div id="{id}">) and replaces the tokens with the equivalent values looked up from the $options array.
+   * Takes a template string (e.g. <div id="{id}">) and replaces the tokens with the equivalent values looked up from 
+   * the $options array. Tokens suffixed |escape have HTML escaping applied, e.g. <div id="{id}">{value|escape}</div>
    * @param string $template The templatable string.
    * @param string $options The array of items which can be merged into the template.
    */
@@ -1996,6 +2000,8 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       if (!is_array($options[$option]) && !is_object($options[$option])) {
         array_push($replaceTags, '{'.$option.'}');
         array_push($replaceValues, $options[$option]);
+        array_push($replaceTags, '{'.$option.'|escape}');
+        array_push($replaceValues, htmlspecialchars($options[$option]));
       }
     }
     return str_replace($replaceTags, $replaceValues, $template);
