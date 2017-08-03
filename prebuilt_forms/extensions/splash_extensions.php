@@ -247,21 +247,75 @@ class extension_splash_extensions {
       data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly');";
     }
     $rawData = data_entry_helper::get_report_data($reportOptions);
-    if (empty($rawData)) {
-      //If the user doesn't have any plots, then hide the map and disable the Spatial Ref field so they can't continue
-      if (!empty($options['noPlotMessageInAlert']))
-        data_entry_helper::$javascript .= "alert('".$options['noPlotMessageInAlert']."');";
-      else
-        drupal_set_message('Note: You have not been allocated any squares to input data for, or the squares you have been allocated do not have plots.');
-      drupal_set_message('You cannot enter data without having a plot to select.');
-      data_entry_helper::$javascript .= "$('#map').hide();";
-      data_entry_helper::$javascript .= "$('#imp-sref').attr('disabled','disabled');";
-      if (!empty($options['noPlotMessageInAlert']))
-        return '<b>'.$options['noPlotMessageInAlert'].'</b></br>';
-      else
-        return '<b>You have not been allocated any Squares that contain plots</b></br>';      
+    if (empty($rawData) && empty($_GET['sample_id'])) {
+        //If the user doesn't have any plots and is in add mode, then hide the map and disable the Spatial Ref field so they can't continue
+        if (!empty($options['noPlotMessageInAlert']))
+          data_entry_helper::$javascript .= "alert('".$options['noPlotMessageInAlert']."');";
+        else
+          drupal_set_message('Note: You have not been allocated any squares to input data for, or the squares you have been allocated do not have plots.');
+        drupal_set_message('You cannot enter data without having a plot to select.');
+        data_entry_helper::$javascript .= "$('#map').hide();";
+        data_entry_helper::$javascript .= "$('#imp-sref').attr('disabled','disabled');";
+        if (!empty($options['noPlotMessageInAlert']))
+          return '<b>'.$options['noPlotMessageInAlert'].'</b></br>';
+        else
+          return '<b>You have not been allocated any Squares that contain plots</b></br>';
     } else {
+      //If the user does have plots and is in edit mode then doing following
+      if (!empty($_GET['sample_id'])) {
+        //Get square and plot data for sample
+        $sampleData = data_entry_helper::get_report_data(
+          array(
+            'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_for_sample',
+            'readAuth'=>$auth['read'],
+            'mode'=>'report',
+            'extraParams' => array('sample_id'=>$_GET['sample_id'])
+          )
+        );
+        $extraParamForSquarePlotReports=array(
+            'core_square_location_type_id'=>$coreSquareLocationTypeId,
+            'additional_square_location_type_id'=>$additionalSquareLocationTypeId,
+            'current_user_id'=>$currentUserId,
+            'vice_county_location_attribute_id'=>$viceCountyLocationAttributeId,
+            'no_vice_county_found_message'=>$noViceCountyFoundMessage,
+            'user_square_attr_id'=>$userSquareAttrId,
+            'only_show_my_useable_plots_squares'=>true);
+        $squareAndPlotData = data_entry_helper::get_report_data(
+          array(
+            'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
+            'readAuth'=>$auth['read'],
+            'mode'=>'report',
+            'extraParams' => $extraParamForSquarePlotReports
+          )
+        );
+        //Assume the user doesn't own a plot until we find that they do
+        $ownsPlot=false;
+        //Cycle through the plots (the report also returns squares but those are redundant for this test)
+        foreach ($squareAndPlotData as $squareOrPlot) {
+          //If we find a matching one, and it has been approved then the user owns the plot
+          if ($sampleData[0]['plot_id']==$squareOrPlot['id'] && ($squareOrPlot['allocation_updater']!=$squareOrPlot['allocated_to'])) {
+            $ownsPlot=true;  
+          }
+        }
+        //If the plot is still marked as not owned by the user after tests, then warn the user that we are locking the plot
+        if ($ownsPlot===false) {
+            if (empty($options['noSquareRightsMessage'])) {    
+              $options['noSquareRightsMessage']= "This plot sample is locked. This is because you are no longer the owner of this plot, or you are the owner of the plot and it is pending approval.";
+            }
+            $options['noSquareRightsMessage']=$options['noSquareRightsMessage'].
+                    '<br><br>The square is <b>'.$sampleData[0]['square_name'].'</b> and the plot is <b>'.$sampleData[0]['plot_name'].'.</b><br><br>';
+            data_entry_helper::$javascript="
+              $(window).load(function() {
+                $('[id*=_lock]').remove();\n $('.remove-row').remove();\n
+                $('.scImageLink,.scClonableRow').hide();
+                $('.edit-taxon-name,.remove-row').hide();
+                $('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');
+              });";
+            return '<em>'.$options['noSquareRightsMessage'].'</em>'; 
+        }
+      }
       //Convert the raw data in the report into array format suitable for the Select drop-down to user (an array of ID=>Name pairs)
+      $squaresData=array();
       foreach($rawData as $rawRow) {
           $squaresData[$rawRow['id']]=$rawRow['name'];        
       }
