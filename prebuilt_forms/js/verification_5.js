@@ -24,24 +24,6 @@ indiciaData.rowIdToReselect = false;
     currRec = null;
   }
 
-  indiciaFns.reselectRow = function () {
-    var row;
-    if (indiciaData.rowIdToReselect) {
-      // Reselect current record if still in the grid
-      row = $('tr#row' + indiciaData.rowIdToReselect);
-      if (row.length) {
-        occurrenceId = null;
-        selectRow(row[0]);
-      } else {
-        clearRow();
-      }
-      indiciaData.rowIdToReselect = false;
-    }
-    if (multimode) {
-      showTickList();
-    }
-  };
-
   mapInitialisationHooks.push(function (div) {
     // nasty hack to fix a problem where these layers get stuck and won't reload after pan/zoom on IE & Chrome
     div.map.events.register('moveend', null, function () {
@@ -526,8 +508,21 @@ indiciaData.rowIdToReselect = false;
     $('#action-buttons-status button').removeAttr('disabled');
   }
 
-  // Callback for the report grid. Use to fill in the tickboxes if in multiple mode.
+  // Callback for the report grid. Use to fill in the tickboxes if in multiple mode. Also reselects the previously
+  // selected row where relevant.
   window.verificationGridLoaded = function () {
+    var row;
+    if (indiciaData.rowIdToReselect) {
+      // Reselect current record if still in the grid
+      row = $('tr#row' + indiciaData.rowIdToReselect);
+      if (row.length) {
+        occurrenceId = null;
+        selectRow(row[0]);
+      } else {
+        clearRow();
+      }
+      indiciaData.rowIdToReselect = false;
+    }
     if (multimode) {
       showTickList();
     }
@@ -596,7 +591,6 @@ indiciaData.rowIdToReselect = false;
 
   function reloadGrid() {
     indiciaData.rowIdToReselect = occurrenceId;
-    indiciaData.reports.verification.grid_verification_grid[0].settings.callback = 'indiciaFns.reselectRow';
     // Reload grid to remove row if not in your current verification set
     indiciaData.reports.verification.grid_verification_grid.reload(true);
   }
