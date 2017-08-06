@@ -1,13 +1,14 @@
 var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, limit_to_post_code,context_sensitive_instructions;
 
 (function($) {
-  //If the use selects a private plot, then we need to set the sensitivity precision
+  //If the use selects a private plot, then we need to set the privacy precision
   //Switch off input form Occurrence Sensitivity option as this may end up overriding this code.
   private_plots_set_precision = function (privatePlots) {
     $("#tab-submit").click(function() {
       if (inArray($("#imp-location").val(),privatePlots)) {
-        $('#entry_form').append('<input type="hidden" name="sensitive" value="1">');
-        $('#entry_form').append('<input type="hidden" id="sensitive-blur" class=" " name="occurrence:sensitivity_precision" value="10000">');
+        $('#entry_form').append('<input name="sample:privacy_precision" value="10000" type="hidden" />');
+      } else {
+        $('#entry_form').append('<input name="sample:privacy_precision" value="" type="hidden" />');  
       }
       $("#entry_form").submit();      
     });

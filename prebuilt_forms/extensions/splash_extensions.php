@@ -119,7 +119,7 @@ class extension_splash_extensions {
    * The location type id of an additional square</li>
    * <li><b>privatePlotAttrId</b><br/>
    * Optional attribute for the location attribute id which holds whether a plot is private. If supplied then when a private plot is selected
-   * as the location then all occurrences are set to have a sensitivity_precision=10000</li>
+   * as the location then all occurrences are set to have a privacy_precision=10000</li>
    * </ul>
    */
   public static function extra_species_page_set_private_plot_precision($auth, $args, $tabAlias, $options) {
@@ -148,7 +148,7 @@ class extension_splash_extensions {
   }
   
   /*
-   * When a private/sensitive plot is selected by the user, we need to set a sensitivity_precision
+   * When a private plot is selected by the user, we need to set a privacy precision
    * on the occurrences
    */
   public static function set_private_plot_precision($auth, $args, $tabAlias, $options, $reportOptions,$extraParamForSquarePlotReports) {
@@ -194,7 +194,7 @@ class extension_splash_extensions {
    * The location attribute id that holds a plot's % Ash Coverage</li>
    * <li><b>privatePlotAttrId</b><br/>
    * Optional attribute for the location attribute id which holds whether a plot is private. If supplied then when a private plot is selected
-   * as the location then all occurrences are set to have a sensitivity_precision=10000</li>
+   * as the location then the sample is set to have a privacy precision=10000</li>
    * <li><b>rowInclusionCheckModeHasData</b><br/>
    * Optional. Supply this as true if the species grid is in rowInclusionCheck=hasData mode and you are using the privatePlotAttrId option.
    * <li><b>noPlotMessageInAlert</b><br/>
@@ -370,7 +370,7 @@ class extension_splash_extensions {
       if (empty($options['pssMode']))
         $r .= self::plot_report_panel($auth,$options);
       //If an attribute holding whether plots are private is supplied, then we want to return
-      //whether the selected plot is private and set the occurrence sensitivity_precision appropriately
+      //whether the selected plot is private and set the sample privacy precision appropriately
       if (!empty($options['privatePlotAttrId'])) {
         $reportOptions = array(
           'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
