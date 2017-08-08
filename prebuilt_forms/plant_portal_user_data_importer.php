@@ -781,8 +781,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     foreach ($fields as $key=>$data) {
       //Fields with "fk_" in name are foreign key lookups
       if ($key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_website'&&
-              $key!=='occurrence:id'&&$key!=='occurrence:sensitivity_precision'&&$key!=='occurrence:sensitivity_precision'
-              &&$key!=='occurrence:zero_abundance'&&$key!=='sample:comment'&&$key!=='sample:date'&&$key!=='sample:entered_sref'
+              $key!=='occurrence:id'&&$key!=='sample:comment'&&$key!=='sample:date'&&$key!=='sample:entered_sref'
               &&$key!=='sample:entered_sref_system'&&$key!=='sample:external_key'
               &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'
               &&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
