@@ -1122,6 +1122,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
           $optionID = $idColumn.'Duplicate';  
         } else 
           $optionID = $idColumn.'Normal';
+        //Change captions based on requirements of Plant Portal project
+        if ($defaultCaption==='Location (from controlled termlist)')
+          $defaultCaption='Unique plot ID';
+        if ($defaultCaption==='External key')
+          $defaultCaption='Unique sample ID';
         $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
         if ($selected)
           self::$automaticMappings[$column] = $field;
