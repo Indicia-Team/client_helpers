@@ -1564,10 +1564,13 @@ TD;
     //If the user has selected a spatial reference system from the drop-down
     //at the start, we need to create an extra column on the grid to put the spatial
     //reference system into. 
+    $last_key = key(array_slice($headerLineItems, -1, 1, TRUE ));
     if (!empty($_SESSION['sample:entered_sref_system'])) {
-      $last_key = key(array_slice($headerLineItems, -1, 1, TRUE ));
       $headerLineItems[$last_key+1]='Spatial reference system';
+      $last_key=$last_key+1;
     }
+    //Always needs an extra column for the spatial reference type which is always set automatically
+    $headerLineItems[$last_key+1]='Spatial reference type';
     //Remove the header row from the file
     unset($fileArray[0]);
     //Cycle through each row excluding the header row and convert into an array
@@ -1609,7 +1612,8 @@ TD;
       if ((!array_key_exists($headerToCheck,$postWithoutSpacesUnderscoresInKeys)||
               $postWithoutSpacesUnderscoresInKeys[$headerToCheck]==''||
               !isset($postWithoutSpacesUnderscoresInKeys[$headerToCheck]))
-              && $headerToCheck!='Spatialreferencesystem') {
+              && $headerToCheck!='Spatialreferencesystem'
+              && $headerToCheck!='Spatialreferencetype') {
         unset($headerLineItems[$idx]);
         unset($headerLineItemsWithoutSpacesOrUnderscores[$idx]);
         foreach ($fileRowsAsArray AS &$fileLineArray) {
@@ -1622,9 +1626,6 @@ TD;
     $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
     $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
-    if ($columnHeadingIndexPositions['spatialReferenceTypeIdx']!==-1) {
-      $headerLineItems[$columnHeadingIndexPositions['spatialReferenceTypeIdx']]='Spatial reference type';
-    }
     $fileRowsAsArray=self::auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$args['vice_counties_list'],$args['countries_list']);
     if ($options['model']==='occurrence'||$options['model']==='sample') {
       if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
@@ -2087,6 +2088,7 @@ TD;
    * as the array key
    */
   private static function get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings) {  
+    $last_key = key(array_slice($headerLineItemsWithoutSpacesOrUnderscores, -1, 1, TRUE ));
     $columnHeadingIndexPositions=array();
      //We can't leave these uninitialised as we will get loads of not initialised errors.
     //Overcome this by setting to -1, which is an index we will never actually use.
@@ -2113,8 +2115,8 @@ TD;
               ||$header=='Spatialreferencesystem') {
         if (!empty($_SESSION['sample:entered_sref_system'])) {
           //If automatically created column save the position as one after the last existing column
-          $last_key = key(array_slice($headerLineItemsWithoutSpacesOrUnderscores, -1, 1, TRUE ));
           $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx'] = $last_key+1;
+          $last_key=$last_key+1;
         } else {
           $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=$idx;
         }
@@ -2128,10 +2130,10 @@ TD;
       if (!empty($chosenColumnHeadings['plotCountryHeaderName']) && $header == $chosenColumnHeadings['plotCountryHeaderName'])
         $columnHeadingIndexPositions['plotCountryHeaderIdx'] = $idx;
     }
-    if ($columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']===-1)
-      $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=count($columnHeadingIndexPositions);
+    //Spatial reference type is not set by user, so set to last column so we have a place to show
+    //it when it is set automatically
     if ($columnHeadingIndexPositions['spatialReferenceTypeIdx']===-1)
-      $columnHeadingIndexPositions['spatialReferenceTypeIdx']=count($columnHeadingIndexPositions)+1;
+      $columnHeadingIndexPositions['spatialReferenceTypeIdx']=$last_key+1;
     return $columnHeadingIndexPositions;
   }
     
