@@ -784,7 +784,6 @@ class iform_plant_portal_user_data_importer extends helper_base {
               $key!=='occurrence:id'&&$key!=='sample:comment'&&$key!=='sample:date'&&$key!=='sample:entered_sref'
               &&$key!=='sample:entered_sref_system'&&$key!=='sample:external_key'
               &&$key!=='sample:fk_location'&&$key!=='website_id'&&$key!=='survey_id'
-              &&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
               //Note that these need to be sample attributes as they need to be passed to the
               //warehouse as part of the sample so that the spatial reference can be calculated
               &&$key!=='smpAttr:'.$options['vice_county_attr_id']
@@ -1152,7 +1151,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
           if (!empty($r)) 
             $r .= '</optgroup>';
           $r .= "<optgroup class=\"$class\" label=\"";
-          $r .= self::processLabel(lang::get($heading)).'">';
+          $r .= self::processLabel(lang::get($heading)).'">';         
         }
         $r .= $option;
       }
@@ -1553,6 +1552,7 @@ TD;
     unset($reload['params']['uploaded_csv']);
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r =  "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n".
+          "<div style='width: 700px; overflow: auto;'>".
           "<fieldset><legend>".lang::get('Import allocations')."</legend><br>\n";
     $filename=basename($_SESSION['uploaded_file']);
     $auth = self::get_read_write_auth($args['website_id'], $args['password']);
@@ -1622,6 +1622,9 @@ TD;
     $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
     //Get the position of each of the columns required for existing match checks. For instance we can know that the Plot Group is in column 3
     $columnHeadingIndexPositions=self::get_column_heading_index_positions($headerLineItemsWithoutSpacesOrUnderscores,$chosenColumnHeadings);
+    if ($columnHeadingIndexPositions['spatialReferenceTypeIdx']!==-1) {
+      $headerLineItems[$columnHeadingIndexPositions['spatialReferenceTypeIdx']]='Spatial reference type';
+    }
     $fileRowsAsArray=self::auto_generate_grid_references($fileRowsAsArray,$columnHeadingIndexPositions,$args['vice_counties_list'],$args['countries_list']);
     if ($options['model']==='occurrence'||$options['model']==='sample') {
       if (!empty($mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey'])&&$mappingsAndSettings['settings']['importOccurrenceIntoSampleUsingExternalKey']==true) {
@@ -1695,7 +1698,7 @@ TD;
     $r .= "<p id='re-upload-import'>".$args['reupload_link_text']."<a href=\"$reloadpath\">".lang::get(' reupload')."</a></p>";
     //$r .= '<input type="submit" name="submit" id="re-upload-import" value="'.$args['reupload_link_text'].'" class="ui-corner-all ui-state-default button" />';
     $r .= '<div id="import-loading-msg" style="display:none"/> '.$args['loading_import_wait_text'].'</div>';
-    $r .= '</fieldset></form>';
+    $r .= '</fieldset></div></form>';
     return $r;
   }
   
@@ -1740,7 +1743,7 @@ TD;
     $r .= '<input type="button" name="submit" id="create-import-data" value="'.$args['continue_button'].'" class="ui-corner-all ui-state-default button" style="display:none"/>';
     $r .= '<input type="submit" name="submit" id="submit-import" style="display:none"/>';
     $r .= '<div id="import-loading-msg" style="display:none"/> '.$args['loading_import_wait_text'].'</div>';
-    $r .= '</fieldset></form>';
+    $r .= '</fieldset></div></form>';
     return $r;
   }
   
@@ -2092,6 +2095,7 @@ TD;
     $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=-1;
     $columnHeadingIndexPositions['plotNameHeaderIdx']=-1;
     $columnHeadingIndexPositions['plotGroupNameHeaderIdx']=-1;
+    $columnHeadingIndexPositions['spatialReferenceTypeIdx']=-1;
     //Cycle through all the names from the header line, then check to see if there is a match in the array holding the 
     //header names meanings. If there is a match, it means we have identified the header and can save its position as
     //and index starting from zero.
@@ -2124,6 +2128,10 @@ TD;
       if (!empty($chosenColumnHeadings['plotCountryHeaderName']) && $header == $chosenColumnHeadings['plotCountryHeaderName'])
         $columnHeadingIndexPositions['plotCountryHeaderIdx'] = $idx;
     }
+    if ($columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']===-1)
+      $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=count($columnHeadingIndexPositions);
+    if ($columnHeadingIndexPositions['spatialReferenceTypeIdx']===-1)
+      $columnHeadingIndexPositions['spatialReferenceTypeIdx']=count($columnHeadingIndexPositions)+1;
     return $columnHeadingIndexPositions;
   }
     
@@ -2271,9 +2279,10 @@ TD;
           if (!empty($columnHeadingIndexPositions['plotViceCountyHeaderIdx'])&&
                   !empty($fileRowToProcess[$columnHeadingIndexPositions['plotViceCountyHeaderIdx']])&& 
                   !empty($viceCountyNameGridRefPairExploded[0]) && 
-                  $fileRowToProcess[$columnHeadingIndexPositions['plotViceCountyHeaderIdx']]==$viceCountyNameGridRefPairExploded[0]) {
+                  trim($fileRowToProcess[$columnHeadingIndexPositions['plotViceCountyHeaderIdx']])==trim($viceCountyNameGridRefPairExploded[0])) {
             $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]=$viceCountyNameGridRefPairExploded[1];
             $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']]='4326';
+            $fileRowToProcess[$columnHeadingIndexPositions['spatialReferenceTypeIdx']]='boundary';
           }
         }
       }
@@ -2284,9 +2293,10 @@ TD;
           if (!empty($columnHeadingIndexPositions['plotCountryHeaderIdx'])&&
                   !empty($fileRowToProcess[$columnHeadingIndexPositions['plotCountryHeaderIdx']])&& 
                   !empty($countryNameGridRefPairExploded[0]) && 
-                  $fileRowToProcess[$columnHeadingIndexPositions['plotCountryHeaderIdx']]==$countryNameGridRefPairExploded[0]) {
+                  trim($fileRowToProcess[$columnHeadingIndexPositions['plotCountryHeaderIdx']])==trim($countryNameGridRefPairExploded[0])) {
             $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]=$countryNameGridRefPairExploded[1];
             $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']]='4326';
+            $fileRowToProcess[$columnHeadingIndexPositions['spatialReferenceTypeIdx']]='boundary';
           }
         }
       }
@@ -2297,6 +2307,8 @@ TD;
           $fileRowToProcess[$columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']]=$_SESSION['sample:entered_sref_system'];
         }
       }
+      if (empty($fileRowToProcess[$columnHeadingIndexPositions['spatialReferenceTypeIdx']]))
+       $fileRowToProcess[$columnHeadingIndexPositions['spatialReferenceTypeIdx']]='grided';
     }
     return $fileRowsAsArray;
   }
