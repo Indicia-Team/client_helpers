@@ -169,7 +169,8 @@ class data_entry_helper extends helper_base {
    * based  values from this list of fields will not be added to the output.</li>
    * <li><b>simplify</b><br/>
    * Set to true to simplify the search term by removing punctuation and spaces. Use when the field
-   * being searched against is also simplified.</li>
+   * being searched against is also simplified.
+   * Deprecated, use taxa_search service instead.</li>
    * <li><b>warnIfNoMatch</b>
    * Should the autocomplete control warn the user if they leave the control whilst searching
    * and then nothing is matched? Default true.</li>
@@ -2621,7 +2622,7 @@ JS;
    *   activate the autocomplete control.
    *
    * @param type $options Array of configuration options with the following possible entries.
-   * * **cacheLookup** - Defaults to true. If true, uses cache_taxon_searchterms for species name lookup
+   * * **cacheLookup** - Defaults to true. If true, uses the taxa_search service for species name lookup
    *   rather than detail_taxa_taxon_lists. The former is faster and tolerates punctuation and spacing errors,
    *   but the available data to lookup against may not be up to date if the cache tables are not populated.
    * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
@@ -2663,7 +2664,6 @@ JS;
       'captionFieldInEntity'=>'taxon',
       'valueField'=>$colId,
       'formatFunction'=>empty($indicia_templates['format_species_autocomplete_fn']) ? $indicia_templates['taxon_label'] : $indicia_templates['format_species_autocomplete_fn'],
-      'simplify'=>$options['cacheLookup'] ? 'true' : 'false',
       'outputPreferredNameToSelector' => false
     ), $options);
     if (isset($duplicateCheckFields))
@@ -3955,6 +3955,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    */
   public static function species_checklist_filter_popup($options, $nameFilter) {
     self::add_resource('fancybox');
+    
+    /* Need to test this still works */
+    
+    
     $db=self::get_species_lookup_db_definition(isset($options['cacheLookup']) && $options['cacheLookup']);
     extract($db);
     $defaultFilterMode = (isset($options['speciesNameFilterMode'])) ? $options['speciesNameFilterMode'] : 'all';
@@ -5312,17 +5316,17 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   public static function get_species_lookup_db_definition($cached) {
     if ($cached) {
       return array (
-        'tblTaxon'=>'cache_taxon_searchterm',
+        'tblTaxon'=>'taxa_search',
         'colId'=>'taxa_taxon_list_id',
         'colLanguage'=>'language_iso',
         'colSearch'=>'searchterm',
-        'colTaxon'=>'original',
-        'colCommon'=>'default_common_name',
-        'colPreferred'=>'preferred_taxon',
+        'colTaxon'=>'taxon',
+        'colCommon'=>'common_name',
+        'colPreferred'=>'preferred_name',
         'colAuthority' => 'authority',
-        'colPreferredAuthority' => 'preferred_authority',
+        'colPreferredAuthority' => 'preferred_name_authority',
         'valLatinLanguage' => 'lat',
-        'duplicateCheckFields' => array('original','taxa_taxon_list_id')
+        'duplicateCheckFields' => array('taxon', 'taxa_taxon_list_id')
       );
     } else {
       return array (

@@ -469,6 +469,7 @@ jQuery(window).load(function($) {
       autocompleteSettings.width = 200;
     }
     // Attach auto-complete code to the input
+    // @todo Update to use taxa_search service
     ctrl = $('#' + selectorId).autocomplete(url+'/'+(indiciaData.speciesGrid[gridId].cacheLookup ? 'cache_taxon_searchterm' : 'taxa_taxon_list'), autocompleteSettings);
     ctrl.bind('result', handleSelectedTaxon);
     ctrl.bind('return', returnPressedInAutocomplete);
