@@ -189,6 +189,22 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
+        'name'=>'cover_occ_attr_id',
+        'caption'=>'Cover occurrence attribute ID',
+        'description'=>'ID of the attribute that holds the occurrence cover.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
+        'name'=>'stratum_occ_attr_id',
+        'caption'=>'Stratum occurrence attribute ID',
+        'description'=>'ID of the attribute that holds the occurrence stratum.',
+        'type'=>'string',
+        'required'=>true,
+        'group'=>'Database IDs Required By Form'
+      ),
+      array(
         'name'=>'spatial_reference_type_attr_id',
         'caption'=>'Spatial reference type attribute ID',
         'description'=>'ID of the attribute that holds the spatial reference type (e.g. vague).',
@@ -426,6 +442,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $options['plot_shape_attr_id']=$args['plot_shape_attr_id'];
     $options['vice_county_attr_id']=$args['vice_county_attr_id'];
     $options['country_attr_id']=$args['country_attr_id'];
+    $options['cover_occ_attr_id']=$args['cover_occ_attr_id'];
+    $options['stratum_occ_attr_id']=$args['stratum_occ_attr_id'];
     $options['spatial_reference_type_attr_id']=$args['spatial_reference_type_attr_id'];
     return $options;
   }
@@ -459,8 +477,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
             empty($args['plot_group_identifier_name_text_attr_id'])||empty($args['plot_group_identifier_name_lookup_loc_attr_id'])||
             empty($args['plot_width_attr_id'])||empty($args['plot_length_attr_id'])||
             empty($args['plot_radius_attr_id'])||empty($args['plot_shape_attr_id'])||
-            empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||
-            empty($args['spatial_reference_type_attr_id'])||
+            empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||empty($args['cover_occ_attr_id'])||
+            empty($args['stratum_occ_attr_id'])||empty($args['spatial_reference_type_attr_id'])||
             empty($args['plot_group_permission_person_attr_id'])||empty($args['plot_group_termlist_id'])||
             empty($args['vice_counties_list'])||empty($args['countries_list']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
@@ -788,6 +806,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
               //warehouse as part of the sample so that the spatial reference can be calculated
               &&$key!=='smpAttr:'.$options['vice_county_attr_id']
               &&$key!=='smpAttr:'.$options['country_attr_id']
+              &&$key!=='occAttr:'.$options['cover_occ_attr_id']
+              &&$key!=='occAttr:fk_'.$options['stratum_occ_attr_id']            
               ) {
         unset($fields[$key]);
       }
