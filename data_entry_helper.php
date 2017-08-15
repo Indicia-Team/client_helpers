@@ -7331,6 +7331,7 @@ if (errors$uniq.length>0) {
       unset($options['extraParams']['id']);
       unset($options['extraParams']['query']);
       $options['extraParams'][$options['key']] = $options['id'];
+      $options['extraParams']['orderby'] = 'weight,id';
       $existingValuesOptions = array(
         'table'=>$options['valuetable'],
         'cachetimeout' => 0, // can't cache
