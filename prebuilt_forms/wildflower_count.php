@@ -656,30 +656,25 @@ class iform_wildflower_count {
    */
   protected static function build_grid_autocomplete_function($args) {
     global $indicia_templates;  
-    // always include the searched name. In this JavaScript we need to behave slightly differently
-    // if using the cached as opposed to the standard versions of taxa_taxon_list.
-    $db = data_entry_helper::get_species_lookup_db_definition(isset($args['cache_lookup']) && $args['cache_lookup']);
-    // get local vars for the array
-    extract($db);
-
     $fn = "function(item) { \n".
         "  var r;\n".
-        "  if (item.$colLanguage.toLowerCase()==='$valLatinLanguage') {\n".
-        "    r = '<em>'+item.$colTaxon+'</em>';\n".
+        "  if (item.language_iso.toLowerCase()==='lat') {\n".
+        "    r = '<em>'+item.taxon+'</em>';\n".
         "  } else {\n".
-        "    r = item.$colTaxon;\n".
+        "    r = item.taxon;\n".
         "  }\n";
     // This bit optionally adds '- common' or '- latin' depending on what was being searched
     if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-      $fn .= "  if (item.preferred='t' && item.$colCommon!=item.$colTaxon && item.$colCommon) {\n".
-        "    r += ' - ' + item.$colCommon;\n".
-        "  } else if (item.preferred='f' && item.$colPreferred!=item.$colTaxon && item.$colPreferred) {\n".
-        "    r += ' - <em>' + item.$colPreferred + '</em>';\n".
+      $fn .= "  if (item.preferred='t' && item.common_name!=item.taxon && item.common_name) {\n".
+        "    r += ' - ' + item.common_name;\n".
+        "  } else if (item.preferred='f' && item.preferred_name!=item.taxon && item.preferred_name) {\n".
+        "    r += ' - <em>' + item.preferred_name + '</em>';\n".
         "  }\n";
     }
     // this bit optionally adds the taxon group
-    if (isset($args['species_include_taxon_group']) && $args['species_include_taxon_group'])
+    if (isset($args['species_include_taxon_group']) && $args['species_include_taxon_group']) {
       $fn .= "  r += '<br/><strong>' + item.taxon_group + '</strong>'\n";
+    }
     // Close the function
     $fn .= " return r;\n".
         "}\n";

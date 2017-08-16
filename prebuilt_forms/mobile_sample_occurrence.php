@@ -1244,11 +1244,6 @@ EOD
       $species_ctrl_opts['taxonFilter'] =
               helper_base::explode_lines($args['taxon_filter']);
     }
-
-    // obtain table to query and hence fields to use
-    $db = data_entry_helper::get_species_lookup_db_definition($args['cache_lookup']);
-
-
     if ($ctrl!=='species_autocomplete') {
       // The species autocomplete has built in support for the species name
       // filter. For other controls we need to apply the species name filter to
@@ -1262,9 +1257,9 @@ EOD
 
       // for controls which don't know how to do the lookup, we need to tell them
       $species_ctrl_opts = array_merge(array(
-        'table' => $db['tblTaxon'],
-        'captionField' => $db['colTaxon'],
-        'valueField' => $db['colId'],
+        'table' => 'taxa_search',
+        'captionField' => 'taxon',
+        'valueField' => 'taxa_taxon_list_id',
       ), $species_ctrl_opts);
     }
     // if using something other than an autocomplete, then set the caption
@@ -1275,11 +1270,11 @@ EOD
             isset($args['species_include_both_names']) &&
             $args['species_include_both_names']) {
       if ($args['species_names_filter'] === 'all')
-        $indicia_templates['species_caption'] = "{{$db['colTaxon']}}";
+        $indicia_templates['species_caption'] = "{{taxon}}";
       elseif ($args['species_names_filter'] === 'language')
-        $indicia_templates['species_caption'] = "{{$db['colTaxon']}} - {{$db['colPreferred']}}";
+        $indicia_templates['species_caption'] = "{{taxon}} - {{preferred_name}}";
       else
-        $indicia_templates['species_caption'] = "{{$db['colTaxon']}} - {{$db['colCommon']}}";
+        $indicia_templates['species_caption'] = "{{taxon}} - {{common_name}}";
       $species_ctrl_opts['captionTemplate'] = 'species_caption';
     }
 

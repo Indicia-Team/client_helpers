@@ -2617,16 +2617,17 @@ JS;
 
   /**
    * A version of the autocomplete control preconfigured for species lookups.
+   * 
+   * Lookup is performed against the cache_taxon_searchterms table so allows for full-text search behaviour on latin and
+   * vernacular species names, as well as lookup against abbreviated or coded versions of species names.
+   * 
    * The output of this control can be configured using the following templates:
-   * * **autocomplete** - Defines a hidden input and a visible input, to hold the underlying database ID and to
-   *   allow input and display of the text search string respectively.
-   * * **autocomplete_javascript** - Defines the JavaScript which will be inserted onto the page in order to
-   *   activate the autocomplete control.
+   * * **autocomplete** - Defines a hidden input and a visible input, to hold the underlying database ID and to allow 
+   *   input and display of the text search string respectively.
+   * * **autocomplete_javascript** - Defines the JavaScript which will be inserted onto the page in order to activate
+   *   the autocomplete control.
    *
    * @param type $options Array of configuration options with the following possible entries.
-   * * **cacheLookup** - Defaults to true. If true, uses the taxa_search service for species name lookup
-   *   rather than detail_taxa_taxon_lists. The former is faster and tolerates punctuation and spacing errors,
-   *   but the available data to lookup against may not be up to date if the cache tables are not populated.
    * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
    * * **speciesIncludeBothNames** - include both latin and common names. Default false.
    * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
@@ -2649,34 +2650,28 @@ JS;
   public static function species_autocomplete($options) {
     global $indicia_templates;
     $options = array_merge(array(
-      'cacheLookup' => true,
       'selectMode' => false
     ), $options);
-    if (empty($indicia_templates['format_species_autocomplete_fn']))
+    if (empty($indicia_templates['format_species_autocomplete_fn'])) {
       self::build_species_autocomplete_item_function($options);
-    $db = data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']);
-    // get local vars for the array
-    extract($db);
-    $options['extraParams']['orderby'] = $options['cacheLookup'] ? 'original,preferred,preferred_taxon' : 'taxon';
-    $options['extraParams']['sortdir'] = $options['cacheLookup'] ? 'ASC,DESC,ASC' : 'ASC';
+    }
     $options = array_merge(array(
-      'fieldname'=>'occurrence:taxa_taxon_list_id',
-      'table'=>$tblTaxon,
-      'captionField'=>$colSearch,
-      'captionFieldInEntity'=>'taxon',
-      'valueField'=>$colId,
+      'fieldname' => 'occurrence:taxa_taxon_list_id',
+      'table' => 'taxa_search',
+      'captionField' => 'searchterm',
+      'captionFieldInEntity' => 'taxon',
+      'valueField' => 'taxa_taxon_list_id',
       'formatFunction'=>empty($indicia_templates['format_species_autocomplete_fn']) ? $indicia_templates['taxon_label'] : $indicia_templates['format_species_autocomplete_fn'],
-      'outputPreferredNameToSelector' => false
+      'outputPreferredNameToSelector' => false,
+      'duplicateCheckFields' => array('taxon', 'taxa_taxon_list_id')
     ), $options);
-    if (isset($duplicateCheckFields))
-      $options['duplicateCheckFields']=$duplicateCheckFields;
     $options['extraParams'] += self::get_species_names_filter($options);
     if (!empty($options['default']) && empty($options['defaultCaption'])) {
       // We've been given an attribute value but no caption for the species name in the data to load for an existing record. So look it up.
       $r = self::get_population_data(array(
-        'table'=>'cache_taxa_taxon_list',
-        'extraParams'=>array('nonce'=>$options['extraParams']['nonce'],'auth_token'=>$options['extraParams']['auth_token'])+
-          array('id'=>$options['default'],'columns'=>"taxon")
+        'table' => 'cache_taxa_taxon_list',
+        'extraParams' => array('nonce'=>$options['extraParams']['nonce'],'auth_token'=>$options['extraParams']['auth_token'])+
+          array('id' => $options['default'],'columns'=>"taxon")
       ));
       $options['defaultCaption']=$r[0]['taxon'];
     }
@@ -2718,49 +2713,45 @@ JS;
       $options['speciesIncludeTaxonGroup'] ? 'true' : 'false';
     $options['speciesIncludeIdDiff'] =
       $options['speciesIncludeIdDiff'] ? 'true' : 'false';
-    // always include the searched name. In this JavaScript we need to behave slightly differently
-    // if using the cached as opposed to the standard versions of taxa_taxon_list.
-    $db = json_encode(data_entry_helper::get_species_lookup_db_definition($options['cacheLookup']));
     $fn = <<<JS
 function(item) {
   var r;
   var synText;
   var nameTest;
-  var db = $db;
   var speciesIncludeAuthorities = $options[speciesIncludeAuthorities];
   var speciesIncludeBothNames = $options[speciesIncludeBothNames];
   var speciesIncludeTaxonGroup = $options[speciesIncludeTaxonGroup];
   var speciesIncludeIdDiff = $options[speciesIncludeIdDiff];
 
-  if (item[db.colLanguage]!==null && item[db.colLanguage].toLowerCase()===db.valLatinLanguage) {
-    r = '<em>' + item[db.colTaxon] + '</em>';
+  if (item.language_iso!==null && item.language_iso.toLowerCase() === 'lat') {
+    r = '<em>' + item.taxon + '</em>';
   } else {
-    r = '<span>' + item[db.colTaxon] + '</span>';
+    r = '<span>' + item.taxon + '</span>';
   }
   if (speciesIncludeAuthorities) {
-    if (item[db.colAuthority]) {
-      r += ' ' + item[db.colAuthority];
+    if (item.authority) {
+      r += ' ' + item.authority;
     }
   }
   // This bit optionally adds '- common' or '- latin' depending on what was being searched
   if (speciesIncludeBothNames) {
     nameTest = (speciesIncludeAuthorities && 
-      (item[db.colPreferred] !== item[db.colTaxon] || item[db.colPreferredAuthority] !==item[db.colAuthority]))
+      (item.preferred_name !== item.taxon || item.preferred_name_authority !==item.authority))
       || (!speciesIncludeAuthorities &&
-      item[db.colPreferred] !== item[db.colTaxon])
+      item.preferred_name !== item.taxon)
       
-    if (item.preferred === 't' && item[db.colCommon] !== item[db.colTaxon] && item[db.colCommon]) {
-      r += '<br/>' + item[db.colCommon];
-    } else if (item.preferred==='f' && nameTest && item[db.colPreferred]) {
+    if (item.preferred === 't' && item.common_name !== item.taxon && item.common_name) {
+      r += '<br/>' + item.common_name;
+    } else if (item.preferred==='f' && nameTest && item.preferred_name) {
       synText = item.language_iso==='lat' ? 'syn. of' : '';
       r += '<br/>[';
       if (item.language_iso==='lat') {
         r += 'syn. of ';
       }
-      r += '<em>' + item[db.colPreferred] + '</em>';
+      r += '<em>' + item.preferred_name + '</em>';
       if (speciesIncludeAuthorities) {
         if (item[db.PreferredAuthority]) {
-          r += ' ' + item[db.colPreferredAuthority];
+          r += ' ' + item.preferred_name_authority;
         }
       }
       r += ']';
@@ -3957,12 +3948,6 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    */
   public static function species_checklist_filter_popup($options, $nameFilter) {
     self::add_resource('fancybox');
-    
-    /* Need to test this still works */
-    
-    
-    $db=self::get_species_lookup_db_definition(isset($options['cacheLookup']) && $options['cacheLookup']);
-    extract($db);
     $defaultFilterMode = (isset($options['speciesNameFilterMode'])) ? $options['speciesNameFilterMode'] : 'all';
     self::$javascript .= "var mode,  nameFilter=[];\n";
     //convert the nameFilter php array into a Javascript one
@@ -4014,10 +3999,10 @@ var applyFilterMode = function(type, group_id, nameFilterMode) {
   // Unset previous filters which are no longer wanted
   switch (nameFilterMode) {
     case 'preferred':
-      $('.scTaxonCell input').unsetExtraParams(\"$colLanguage\");
+      $('.scTaxonCell input').unsetExtraParams(\"language_iso\");
       break;
     case 'all':
-      $('.scTaxonCell input').unsetExtraParams(\"$colLanguage\");
+      $('.scTaxonCell input').unsetExtraParams(\"language_iso\");
     case 'currentLanguage':
     default:
       $('.scTaxonCell input').unsetExtraParams(\"name_type\");
@@ -5307,45 +5292,6 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   /********************************/
   /* End of main controls section */
   /********************************/
-
-  /**
-   * Returns an array defining various database object names and values required for the species
-   * lookup filtering, depending on whether this is a cached lookup or a standard lookup. Used for
-   * both species checklist and species autocompletes.
-   * @param boolean $cached Set to true to use the cached taxon search tables rather than
-   * standard taxa in taxon list views.
-   */
-  public static function get_species_lookup_db_definition($cached) {
-    if ($cached) {
-      return array (
-        'tblTaxon'=>'taxa_search',
-        'colId'=>'taxa_taxon_list_id',
-        'colLanguage'=>'language_iso',
-        'colSearch'=>'searchterm',
-        'colTaxon'=>'taxon',
-        'colCommon'=>'common_name',
-        'colPreferred'=>'preferred_name',
-        'colAuthority' => 'authority',
-        'colPreferredAuthority' => 'preferred_name_authority',
-        'valLatinLanguage' => 'lat',
-        'duplicateCheckFields' => array('taxon', 'taxa_taxon_list_id')
-      );
-    } else {
-      return array (
-        'tblTaxon'=>'taxa_taxon_list',
-        'colId'=>'id',
-        'colLanguage'=>'language',
-        'colSearch'=>'taxon',
-        'colTaxon'=>'taxon',
-        'colCommon'=>'common',
-        'colPreferred'=>'preferred_name',
-        'colAuthority' => 'authority',
-        'colPreferredAuthority' => 'preferred_authority',
-        'valLatinLanguage'=>'lat'
-      );
-    }
-  }
-
 
   /**
    * Returns the browser name and version information
