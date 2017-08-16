@@ -359,12 +359,13 @@ class data_entry_helper extends helper_base {
     for ($i = 0; $i<=$rowCount-1; $i++) {
       $class=($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
-      if (isset($options['default'][$i]))
+      if (isset($options['default'][$i])) {
         $defaults = $options['encoding'] === 'json'
           ? json_decode($options['default'][$i]['default'], true)
           : explode($options['encoding'], $options['default'][$i]['default']);
-      else
+      } else {
         $defaults = array();
+      }
       foreach ($options['columns'] as $idx => $def) {
         if (isset($options['default'][$i]))
           $fieldnamePrefix = str_replace('Attr:', 'Attr+:', $options['default'][$i]['fieldname']);
@@ -394,6 +395,7 @@ class data_entry_helper extends helper_base {
           $r .= "</select>";
         } else {
           $class = empty($def['regex']) ? '' : ' class="{pattern:'.$def['regex'].'}"';
+          $default = htmlspecialchars($default);
           $r .= "<input type=\"text\" name=\"$fieldname\" value=\"$default\"$class/>";
         }
         if (!empty($def['unit']))
