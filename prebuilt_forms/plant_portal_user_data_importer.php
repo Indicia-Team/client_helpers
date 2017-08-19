@@ -189,17 +189,10 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'group'=>'Database IDs Required By Form'
       ),
       array(
-        'name'=>'cover_occ_attr_id',
-        'caption'=>'Cover occurrence attribute ID',
-        'description'=>'ID of the attribute that holds the occurrence cover.',
-        'type'=>'string',
-        'required'=>true,
-        'group'=>'Database IDs Required By Form'
-      ),
-      array(
-        'name'=>'stratum_occ_attr_id',
-        'caption'=>'Stratum occurrence attribute ID',
-        'description'=>'ID of the attribute that holds the occurrence stratum.',
+        'name'=>'general_occ_attr_ids',
+        'caption'=>'General occurrence attribute IDS',
+        'description'=>'Comma separated list of general occurrence attributes IDS to use with the importer.'
+          . 'These attributes should not have any custom functionality associated with them.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -442,8 +435,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $options['plot_shape_attr_id']=$args['plot_shape_attr_id'];
     $options['vice_county_attr_id']=$args['vice_county_attr_id'];
     $options['country_attr_id']=$args['country_attr_id'];
-    $options['cover_occ_attr_id']=$args['cover_occ_attr_id'];
-    $options['stratum_occ_attr_id']=$args['stratum_occ_attr_id'];
+    $options['general_occ_attr_ids']=$args['general_occ_attr_ids'];
     $options['spatial_reference_type_attr_id']=$args['spatial_reference_type_attr_id'];
     return $options;
   }
@@ -477,8 +469,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
             empty($args['plot_group_identifier_name_text_attr_id'])||empty($args['plot_group_identifier_name_lookup_loc_attr_id'])||
             empty($args['plot_width_attr_id'])||empty($args['plot_length_attr_id'])||
             empty($args['plot_radius_attr_id'])||empty($args['plot_shape_attr_id'])||
-            empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||empty($args['cover_occ_attr_id'])||
-            empty($args['stratum_occ_attr_id'])||empty($args['spatial_reference_type_attr_id'])||
+            empty($args['vice_county_attr_id'])||empty($args['country_attr_id'])||
+            empty($args['general_occ_attr_ids'])||empty($args['spatial_reference_type_attr_id'])||
             empty($args['plot_group_permission_person_attr_id'])||empty($args['plot_group_termlist_id'])||
             empty($args['vice_counties_list'])||empty($args['countries_list']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
@@ -796,7 +788,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $response = self::http_post($request, array());
     $fields = json_decode($response['output'], true);
     //Limit fields that can be selected from to ones we are interested in for this project
+    //Firstly explode a list of all occurrence attributes
+    $explodedOccAttrIds=explode(',',$options['general_occ_attr_ids']);
+    //Cycle through all the fields
     foreach ($fields as $key=>$data) {
+      //Assume we are going to use the field unless we field otherwise
+      $canUnset=false;
       //Fields with "fk_" in name are foreign key lookups
       if ($key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_taxa_taxon_list'&&$key!=='occurrence:fk_website'&&
               $key!=='occurrence:id'&&$key!=='sample:comment'&&$key!=='sample:date'&&$key!=='sample:entered_sref'
@@ -806,11 +803,22 @@ class iform_plant_portal_user_data_importer extends helper_base {
               //warehouse as part of the sample so that the spatial reference can be calculated
               &&$key!=='smpAttr:'.$options['vice_county_attr_id']
               &&$key!=='smpAttr:'.$options['country_attr_id']
-              &&$key!=='occAttr:'.$options['cover_occ_attr_id']
-              &&$key!=='occAttr:fk_'.$options['stratum_occ_attr_id']            
               ) {
-        unset($fields[$key]);
+          //If the field isn't in the list of what we want to keep we are probably not going to use it
+          $canUnset=true;
+      } else {
+        $canUnset=false;    
       }
+      //Cycle through the occurrence attributes we are going to use
+      //and if the field is in the list, we mark it for keeping
+      foreach ($explodedOccAttrIds as $occAttrId) {
+        if ($key==='occAttr:'.$occAttrId)
+          $canUnset=false;
+        if ($key==='occAttr:fk_'.$occAttrId)
+          $canUnset=false;
+      }
+      if ($canUnset===true)
+        unset($fields[$key]);    
     }
     return $fields;
   }
@@ -1581,6 +1589,10 @@ TD;
     //Keep a copy of the header as we will be removing it in a minute
     $originalHeader=$fileArray[0];
     $headerLineItems = explode(',',$fileArray[0]);
+    //Keep a count of the number of headers there are the file, before we
+    //process the file which could include adding further headers such as
+    //spatial reference system
+    $originalHeaderLineCount=count($headerLineItems);
     //If the user has selected a spatial reference system from the drop-down
     //at the start, we need to create an extra column on the grid to put the spatial
     //reference system into. 
@@ -1602,10 +1614,22 @@ TD;
         foreach ($explodedLine as $lineItemIdx => $lineItem) {
           $explodedLine[$lineItemIdx]=$lineItem;
         }
+        //Sometimes the CSV file we are processing might have rows which don't have anything
+        //at the end of the line at all instead of commas indicating empty cells like this ,,,
+        //To avoid errors we can add these in. If we find the line has fewer cells than the number
+        //off headers in the file.
+        if (count($explodedLine)<$originalHeaderLineCount) {
+          //Then find how many cells are missing
+          $rowDescrepancyCount=$originalHeaderLineCount-count($explodedLine);
+          //Add the required number of empty cells
+          for ($i=0;$i<$rowDescrepancyCount;$i++) {
+            $explodedLine[]=null;  
+          }
+        }
         $fileRowsAsArray[]=$explodedLine;
       }
     }
-    
+
     //If we are going to compare the headers with the $_POST we need to remove the spaces and underscores as they are inconsistent between the two
     $headerLineItemsWithoutSpacesOrUnderscores=array();
     foreach ($headerLineItems as $idx=>$headerLineItem) {
@@ -1613,7 +1637,7 @@ TD;
       $headerLineItemsWithoutSpacesOrUnderscores[$idx] = str_replace('_','',$headerLineItemsWithoutSpacesOrUnderscores[$idx]);
       $headerLineItemsWithoutSpacesOrUnderscores[$idx] = trim($headerLineItemsWithoutSpacesOrUnderscores[$idx]);
     }
-    
+
     //Do the same with the post
     $postWithoutSpacesUnderscoresInKeys=array();
     foreach ($_POST as $amendedTableHeaderWith_ => $fieldData) {
@@ -2141,8 +2165,13 @@ TD;
           $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=$idx;
         }
       }
+      //If a plot name has been specified (Unique Plot ID) we can use that.
+      //Otherwise we just put the spatial reference into the plot name which allows import 
+      //without the required location name being missing
       if (!empty($chosenColumnHeadings['plotNameHeaderName']) && $header == $chosenColumnHeadings['plotNameHeaderName'])
         $columnHeadingIndexPositions['plotNameHeaderIdx'] = $idx;
+      else 
+        $columnHeadingIndexPositions['plotNameHeaderIdx']=$columnHeadingIndexPositions['sampleSrefHeaderIdx']; 
       if (!empty($chosenColumnHeadings['plotGroupNameHeaderName']) && $header == $chosenColumnHeadings['plotGroupNameHeaderName'])
         $columnHeadingIndexPositions['plotGroupNameHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['plotViceCountyHeaderName']) && $header == $chosenColumnHeadings['plotViceCountyHeaderName'])
