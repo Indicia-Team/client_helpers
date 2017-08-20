@@ -2165,13 +2165,8 @@ TD;
           $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx']=$idx;
         }
       }
-      //If a plot name has been specified (Unique Plot ID) we can use that.
-      //Otherwise we just put the spatial reference into the plot name which allows import 
-      //without the required location name being missing
       if (!empty($chosenColumnHeadings['plotNameHeaderName']) && $header == $chosenColumnHeadings['plotNameHeaderName'])
         $columnHeadingIndexPositions['plotNameHeaderIdx'] = $idx;
-      else 
-        $columnHeadingIndexPositions['plotNameHeaderIdx']=$columnHeadingIndexPositions['sampleSrefHeaderIdx']; 
       if (!empty($chosenColumnHeadings['plotGroupNameHeaderName']) && $header == $chosenColumnHeadings['plotGroupNameHeaderName'])
         $columnHeadingIndexPositions['plotGroupNameHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['plotViceCountyHeaderName']) && $header == $chosenColumnHeadings['plotViceCountyHeaderName'])
@@ -2179,6 +2174,11 @@ TD;
       if (!empty($chosenColumnHeadings['plotCountryHeaderName']) && $header == $chosenColumnHeadings['plotCountryHeaderName'])
         $columnHeadingIndexPositions['plotCountryHeaderIdx'] = $idx;
     }
+    //If a plot name has been specified (Unique Plot ID) we can use that.
+    //Otherwise we just put the spatial reference into the plot name which allows import 
+    //without the required location name being missing
+    if ($columnHeadingIndexPositions['plotNameHeaderIdx']===-1)
+      $columnHeadingIndexPositions['plotNameHeaderIdx']=$columnHeadingIndexPositions['sampleSrefHeaderIdx']; 
     //Spatial reference type is not set by user, so set to last column so we have a place to show
     //it when it is set automatically
     if ($columnHeadingIndexPositions['spatialReferenceTypeIdx']===-1)
