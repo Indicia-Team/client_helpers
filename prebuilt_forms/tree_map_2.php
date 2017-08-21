@@ -157,6 +157,7 @@ class iform_tree_map_2 {
     $year = (isset($_REQUEST['year']) ? $_REQUEST['year'] : $year = $now->format('Y'));
 
     iform_load_helpers(array('report_helper','map_helper'));
+    $args['param_defaults'] = '';
     $options = iform_report_get_report_options($args, $readAuth);
     
     $currentParamValues = array();
