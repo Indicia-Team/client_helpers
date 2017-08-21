@@ -722,14 +722,14 @@ $('#imp-sref-tree').attr('title',
     if ($ctrl!=='species_autocomplete') {
       
       // @todo Look for cases of $ctrl!=='species_autocomplete' as these may need different table name and params,
-      // and get_species_names_filter
+      // and getSpeciesNamesFilter
       
       // The species autocomplete has built in support for the species name filter.
       // For other controls we need to apply the species name filter to the params used for population
       if (!empty($species_ctrl_opts['taxonFilter']) || $options['speciesNameFilterMode']) {
         $species_ctrl_opts['extraParams'] = array_merge(
             $species_ctrl_opts['extraParams'],
-            data_entry_helper::get_species_names_filter($species_ctrl_opts)
+            data_entry_helper::getSpeciesNamesFilter($species_ctrl_opts)
         );
       }
       // for controls which don't know how to do the lookup, we need to tell them

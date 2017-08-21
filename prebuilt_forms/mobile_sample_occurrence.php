@@ -1229,7 +1229,7 @@ EOD
               $options['speciesNameFilterMode']) {
         $species_ctrl_opts['extraParams'] = array_merge(
             $species_ctrl_opts['extraParams'],
-            data_entry_helper::get_species_names_filter($species_ctrl_opts));
+            data_entry_helper::getSpeciesNamesFilter($species_ctrl_opts));
       }
 
       // for controls which don't know how to do the lookup, we need to tell them

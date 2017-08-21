@@ -2665,7 +2665,7 @@ JS;
       'outputPreferredNameToSelector' => false,
       'duplicateCheckFields' => array('taxon', 'taxa_taxon_list_id')
     ), $options);
-    $options['extraParams'] += self::get_species_names_filter($options);
+    $options['extraParams'] += self::getSpeciesNamesFilter($options);
     if (!empty($options['default']) && empty($options['defaultCaption'])) {
       // We've been given an attribute value but no caption for the species name in the data to load for an existing record. So look it up.
       $r = self::get_population_data(array(
@@ -3148,7 +3148,7 @@ RIJS;
         'at the same time has having the mediaTypes option in use.');
     self::add_resource('json');
     self::add_resource('autocomplete');
-    $filterArray = self::get_species_names_filter($options);
+    $filterArray = self::getSpeciesNamesFilter($options);
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
     //make a copy of the options so that we can maipulate it
     $overrideOptions = $options;
@@ -3157,8 +3157,7 @@ RIJS;
     //that the Javascript can quickly access the required parameters
     foreach ($filterNameTypes as $filterType) {
       $overrideOptions['speciesNameFilterMode'] = $filterType;
-      $nameFilter[$filterType] = self::get_species_names_filter($overrideOptions);
-      $nameFilter[$filterType] = json_encode($nameFilter[$filterType]);
+      $nameFilter[$filterType] = self::getSpeciesNamesFilter($overrideOptions);
     }
     if (count($filterArray)) {
       $filterParam = json_encode($filterArray);
@@ -3846,7 +3845,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * common names and synonyms.
    * @param array $options Options array as passed to the species grid.
    */
-  public static function get_species_names_filter(&$options) {
+  public static function getSpeciesNamesFilter(&$options) {
     $filterFields = self::parseSpeciesNameFilterMode($options);
     if (isset($options['subSpeciesColumn']) && $options['subSpeciesColumn']) {
       $filterFields['parent_id'] = "null";
