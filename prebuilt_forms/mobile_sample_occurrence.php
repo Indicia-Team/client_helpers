@@ -1247,11 +1247,11 @@ EOD
             isset($args['species_include_both_names']) &&
             $args['species_include_both_names']) {
       if ($args['species_names_filter'] === 'all')
-        $indicia_templates['species_caption'] = "{{taxon}}";
+        $indicia_templates['species_caption'] = "{taxon}";
       elseif ($args['species_names_filter'] === 'language')
-        $indicia_templates['species_caption'] = "{{taxon}} - {{preferred_name}}";
+        $indicia_templates['species_caption'] = "{taxon} - {preferred_taxon}";
       else
-        $indicia_templates['species_caption'] = "{{taxon}} - {{common_name}}";
+        $indicia_templates['species_caption'] = "{taxon} - {default_common_name}";
       $species_ctrl_opts['captionTemplate'] = 'species_caption';
     }
 

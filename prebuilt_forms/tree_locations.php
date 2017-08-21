@@ -720,10 +720,6 @@ $('#imp-sref-tree').attr('title',
       $species_ctrl_opts['taxonFilter']=helper_base::explode_lines($args['taxon_filter']); // applies to autocompletes
     }
     if ($ctrl!=='species_autocomplete') {
-      
-      // @todo Look for cases of $ctrl!=='species_autocomplete' as these may need different table name and params,
-      // and getSpeciesNamesFilter
-      
       // The species autocomplete has built in support for the species name filter.
       // For other controls we need to apply the species name filter to the params used for population
       if (!empty($species_ctrl_opts['taxonFilter']) || $options['speciesNameFilterMode']) {
@@ -743,11 +739,11 @@ $('#imp-sref-tree').attr('title',
     // use a JS function instead.
     if ($ctrl!=='autocomplete' && isset($args['species_include_both_names']) && $args['species_include_both_names']) {
       if ($args['speciesNameFilterMode']==='all') {
-        $indicia_templates['species_caption'] = "{{taxon}}";
+        $indicia_templates['species_caption'] = "{taxon}";
       } elseif ($args['speciesNameFilterMode']==='language') {
-        $indicia_templates['species_caption'] = "{{taxon}} - {{preferred_name}}";
+        $indicia_templates['species_caption'] = "{taxon} - {preferred_taxon}";
       } else {
-        $indicia_templates['species_caption'] = "{{taxon}} - {{common_name}}";
+        $indicia_templates['species_caption'] = "{taxon} - {default_common_name}";
       }
       $species_ctrl_opts['captionTemplate'] = 'species_caption';
     }
