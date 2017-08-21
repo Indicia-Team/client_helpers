@@ -381,22 +381,6 @@ EOD
 EOD
         ),
         array(
-          'fieldname' => 'cache_lookup',
-          'label' => 'Cache lookups',
-          'type' => 'checkbox',
-          'required' => false,
-          'group' => 'Species',
-          'siteSpecific' => false,
-          'helpText' => <<<'EOD'
-            Tick this box to select to use a cached version of the
-            lookup list when searching for extra species names to add to the
-            grid, or set to false to use the live version (default). The latter
-            is slower and places more load on the warehouse so should only be
-            used during development or when there is a specific need to reflect
-            taxa that have only just been added to the list.
-EOD
-        ),
-        array(
           'name' => 'species_ctrl',
           'caption' => 'Single Species Selection Control Type',
           'type' => 'select',
@@ -1142,13 +1126,7 @@ EOD
    * @param $options
    * @return string
    */
-  protected static function get_control_species(
-    $auth, $args, $tabAlias, $options) {
-    if (!isset($args['cache_lookup']) ||
-      ($args['species_ctrl'] !== 'autocomplete')) {
-      // Default for old form configurations or when not using an autocomplete
-      $args['cache_lookup']=false;
-    }
+  protected static function get_control_species($auth, $args, $tabAlias, $options) {
     // The filter can be a URL or on the edit tab, so do the processing to work
     // out the filter to use.
     $filterLines = self::get_species_filter($args);
@@ -1222,8 +1200,7 @@ EOD
         'columns'=>2, // applies to radio buttons
         'parentField' => 'parent_id', // applies to tree browsers
         'view' => 'detail', // required for tree browsers to get parent id
-        'blankText'=>lang::get('Please select'), // applies to selects
-        'cacheLookup'=>$args['cache_lookup']
+        'blankText'=>lang::get('Please select')
     ), $options);
     if (isset($species_ctrl_opts['extraParams'])) {
       $species_ctrl_opts['extraParams'] =

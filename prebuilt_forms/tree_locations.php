@@ -709,8 +709,7 @@ $('#imp-sref-tree').attr('title',
         'label'=>lang::get('Tree Species'),
         'columns'=>1, // applies to radio buttons
         'parentField'=>'parent_id', // applies to tree browsers
-        'blankText'=>lang::get('Please select'), // applies to selects
-        'cacheLookup'=>/* TODO $args['cache_lookup']*/ false
+        'blankText'=>lang::get('Please select') // applies to selects
     ), $options);
     if (isset($species_ctrl_opts['extraParams']))
       $species_ctrl_opts['extraParams']=array_merge($extraParams, $species_ctrl_opts['extraParams']);
@@ -721,6 +720,10 @@ $('#imp-sref-tree').attr('title',
       $species_ctrl_opts['taxonFilter']=helper_base::explode_lines($args['taxon_filter']); // applies to autocompletes
     }
     if ($ctrl!=='species_autocomplete') {
+      
+      // @todo Look for cases of $ctrl!=='species_autocomplete' as these may need different table name and params,
+      // and get_species_names_filter
+      
       // The species autocomplete has built in support for the species name filter.
       // For other controls we need to apply the species name filter to the params used for population
       if (!empty($species_ctrl_opts['taxonFilter']) || $options['speciesNameFilterMode']) {
@@ -739,12 +742,13 @@ $('#imp-sref-tree').attr('title',
     // if using something other than an autocomplete, then set the caption template to include the appropriate names. Autocompletes
     // use a JS function instead.
     if ($ctrl!=='autocomplete' && isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-      if ($args['speciesNameFilterMode']==='all')
+      if ($args['speciesNameFilterMode']==='all') {
         $indicia_templates['species_caption'] = "{{taxon}}";
-      elseif ($args['speciesNameFilterMode']==='language')
+      } elseif ($args['speciesNameFilterMode']==='language') {
         $indicia_templates['species_caption'] = "{{taxon}} - {{preferred_name}}";
-      else
+      } else {
         $indicia_templates['species_caption'] = "{{taxon}} - {{common_name}}";
+      }
       $species_ctrl_opts['captionTemplate'] = 'species_caption';
     }
     if ($ctrl=='tree_browser') {

@@ -377,20 +377,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'group'=>'Species'
         ),
         array(
-          'fieldname'=>'cache_lookup',
-          'label'=>'Cache lookups',
-          'helpText'=>'Tick this box to select to use a cached version of the lookup list when '.
-              'searching for extra species names to add to the grid, or set to false to use the '.
-              'live version (default). The latter is slower and places more load on the warehouse so should only be '.
-              'used during development or when there is a specific need to reflect taxa that have only '.
-              'just been added to the list.',
-          'type'=>'checkbox',
-          'default' => true,
-          'required'=>false,
-          'group'=>'Species',
-          'siteSpecific'=>false
-        ),
-        array(
           'name'=>'species_ctrl',
           'caption'=>'Single Species Selection Control Type',
           'description'=>'The type of control that will be available to select a single species.',
@@ -650,7 +636,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       call_user_func(array(self::$called_class, 'build_grid_autocomplete_function'), $args);
     else {
       $opts = array(
-        'cacheLookup' => $args['cache_lookup'],
         'speciesIncludeAuthorities' => isset($args['species_include_authorities']) ?
             $args['species_include_authorities'] : false,
         'speciesIncludeBothNames' => $args['species_include_both_names'],
@@ -1468,7 +1453,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         'occurrenceImages' => $args['occurrence_images'],
         'PHPtaxonLabel' => true,
         'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), // used for termlists in attributes
-        'cacheLookup' => $args['cache_lookup'],
         'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),
         'userControlsTaxonFilter' => isset($args['user_controls_taxon_filter']) ? $args['user_controls_taxon_filter'] : false,
         'subSpeciesColumn' => $args['sub_species_column'],
@@ -1506,6 +1490,15 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * @param array $extraParams Extra parameters pre-configured with taxon and taxon name type filters.
    * @param array $options additional options for the control, e.g. those configured in the form structure.
    * @return string HTML for the control.
+   * 
+   * 
+   * 
+   * 
+   * @todo Does this work with a drop down species lookup control? Apply changes to mobile version of form.
+   * 
+   * 
+   * 
+   * 
    */
   protected static function get_control_species_single($auth, $args, $extraParams, $options) {
     $r = '';
@@ -1516,7 +1509,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     elseif ($args['extra_list_id'] !== '' && $args['list_id'] !== '')
       $extraParams['query'] = json_encode(array('in' => array('taxon_list_id' => array($args['list_id'],$args['extra_list_id']))));
 
-    // Add a txon group selector if that option was chosen
+    // Add a taxon group selector if that option was chosen
     if (isset($options['taxonGroupSelect']) && $options['taxonGroupSelect']) {
       $label = isset($options['taxonGroupSelectLabel']) ? $options['taxonGroupSelectLabel'] : 'Species Group';
       $helpText = isset($options['taxonGroupSelectHelpText']) ? $options['taxonGroupSelectHelpText'] : 'Choose which species group you want to pick a species from.';
@@ -1553,8 +1546,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         'columns' => 2, // applies to radio buttons
         'parentField' => 'parent_id', // applies to tree browsers
         'view' => 'detail', // required for tree browsers to get parent id
-        'blankText' => lang::get('Please select'), // applies to selects
-        'cacheLookup' => $args['cache_lookup']
+        'blankText' => lang::get('Please select') // applies to selects
     ), $options);
     if (isset($species_ctrl_opts['extraParams'])) {
       $species_ctrl_opts['extraParams'] = array_merge($extraParams, $species_ctrl_opts['extraParams']);
@@ -1643,7 +1635,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     // Set up the indicia templates for taxon labels according to options, as long as the template has been left at it's default state
     if ($indicia_templates['taxon_label'] == '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
-        '<span class="nobreak vernacular">{common}</span></div>') {
+        '<span class="nobreak vernacular">{default_common_name}</span></div>') {
       // always include the searched name
       $php = '$r="";'."\n".
           'if ("{language}"=="lat" || "{language_iso}"=="lat") {'."\n".
@@ -1653,15 +1645,16 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           '}'."\n";
       // This bit optionally adds '- common' or '- latin' depending on what was being searched
       if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-        $php .= "\n\n".'if ("{preferred}"=="t" && "{common}"!="{taxon}" && "{common}"!="") {'."\n\n\n".
-          '  $r .= " - {common}";'."\n".
-          '} else if ("{preferred}"=="f" && "{preferred_name}"!="{taxon}" && "{preferred_name}"!="") {'."\n".
-          '  $r .= " - <em>{preferred_name}</em>";'."\n".
+        $php .= "\n\n".'if ("{preferred}"=="t" && "{default_common_name}"!="{taxon}" && "{default_common_name}"!="") {'."\n\n\n".
+          '  $r .= " - {default_common_name}";'."\n".
+          '} else if ("{preferred}"=="f" && "{preferred_taxon}"!="{taxon}" && "{preferred_taxon}"!="") {'."\n".
+          '  $r .= " - <em>{preferred_taxon}</em>";'."\n".
           '}'."\n";
       }
       // this bit optionally adds the taxon group
-      if (isset($args['species_include_taxon_group']) && $args['species_include_taxon_group'])
+      if (isset($args['species_include_taxon_group']) && $args['species_include_taxon_group']) {
         $php .= '$r .= "<br/><strong>{taxon_group}</strong>";'."\n";
+      }
       // Close the function
       $php .= 'return $r;'."\n";
       $indicia_templates['taxon_label'] = $php;

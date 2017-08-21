@@ -447,15 +447,11 @@ jQuery(window).load(function($) {
     newRow.appendTo('table#' + gridId +' > tbody').removeAttr('id');
     extraParams = {
       mode : 'json',
-      qfield : indiciaData.speciesGrid[gridId].cacheLookup ? 'searchterm' : 'taxon',
+      qfield : 'searchterm',
       auth_token: readAuth.auth_token,
       nonce: readAuth.nonce,
       taxon_list_id: lookupListId
     };
-    if (indiciaData.speciesGrid[gridId].cacheLookup)
-      extraParams.orderby = indiciaData.speciesGrid[gridId].selectMode ? 'original,preferred_taxon' : 'searchterm_length,original,preferred_taxon';
-    else
-      extraParams.orderby = 'taxon';
     if (typeof indiciaData['taxonExtraParams-'+gridId]!=="undefined") { 
       $.extend(extraParams, indiciaData['taxonExtraParams-'+gridId]);
       // a custom query on the list id overrides the standard filter..
@@ -470,7 +466,7 @@ jQuery(window).load(function($) {
     }
     // Attach auto-complete code to the input
     // @todo Update to use taxa_search service
-    ctrl = $('#' + selectorId).autocomplete(url+'/'+(indiciaData.speciesGrid[gridId].cacheLookup ? 'cache_taxon_searchterm' : 'taxa_taxon_list'), autocompleteSettings);
+    ctrl = $('#' + selectorId).autocomplete(url+'/cache_taxon_searchterm', autocompleteSettings);
     ctrl.bind('result', handleSelectedTaxon);
     ctrl.bind('return', returnPressedInAutocomplete);
     // Check that the new entry control for taxa will remain in view with enough space for the autocomplete drop down

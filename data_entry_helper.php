@@ -13,14 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @package Client
+ * @author  Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link    http://code.google.com/p/indicia/
  */
 
 /**
- * Link in other required php files.
+ * Link in other required php files. 
  */
 require_once('helper_config.php');
 require_once('helper_base.php');
@@ -2689,7 +2689,6 @@ JS;
    * Builds a JavaScript function to format the species shown in the species autocomplete.
    *
    * @param array $options Options array with the following entries:
-   * * **cacheLookup** - Used cached version of lookup tables for better performance. Default true.
    * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
    * * **speciesIncludeBothNames** - include both latin and common names. Default false.
    * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
@@ -2698,7 +2697,6 @@ JS;
   public static function build_species_autocomplete_item_function($options) {
     global $indicia_templates;
     $options = array_merge(array(
-      'cacheLookup' => TRUE,
       'speciesIncludeAuthorities' => FALSE,
       'speciesIncludeBothNames' => FALSE,
       'speciesIncludeTaxonGroup' => FALSE,
@@ -2736,22 +2734,22 @@ function(item) {
   // This bit optionally adds '- common' or '- latin' depending on what was being searched
   if (speciesIncludeBothNames) {
     nameTest = (speciesIncludeAuthorities && 
-      (item.preferred_name !== item.taxon || item.preferred_name_authority !==item.authority))
+      (item.preferred_taxon !== item.taxon || item.preferred_authority !==item.authority))
       || (!speciesIncludeAuthorities &&
-      item.preferred_name !== item.taxon)
+      item.preferred_taxon !== item.taxon)
       
-    if (item.preferred === 't' && item.common_name !== item.taxon && item.common_name) {
-      r += '<br/>' + item.common_name;
-    } else if (item.preferred==='f' && nameTest && item.preferred_name) {
+    if (item.preferred === 't' && item.default_common_name !== item.taxon && item.default_common_name) {
+      r += '<br/>' + item.default_common_name;
+    } else if (item.preferred==='f' && nameTest && item.preferred_taxon) {
       synText = item.language_iso==='lat' ? 'syn. of' : '';
       r += '<br/>[';
       if (item.language_iso==='lat') {
         r += 'syn. of ';
       }
-      r += '<em>' + item.preferred_name + '</em>';
+      r += '<em>' + item.preferred_taxon+ '</em>';
       if (speciesIncludeAuthorities) {
         if (item[db.PreferredAuthority]) {
-          r += ' ' + item.preferred_name_authority;
+          r += ' ' + item.preferred_authority;
         }
       }
       r += ']';
@@ -2836,7 +2834,7 @@ RIJS;
   * <p>To change the format of the label displayed for each taxon in the grid
   * rows that are pre-loaded into the grid, use the global $indicia_templates
   * variable to set the value for the entry 'taxon_label'. The tags available in
-  * the template are {taxon}, {preferred_name}, {authority} and {common}. This
+  * the template are {taxon}, {preferred_taxon}, {authority} and {default_common_name}. This
   * can be a PHP snippet if PHPtaxonLabel is set to true.</p>
   *
   * <p>To change the format of the label displayed for each taxon in the
@@ -2844,8 +2842,8 @@ RIJS;
   * global $indicia_templates variable to set the value for the entry
   * 'format_species_autocomplete_fn'. This must be a JavaScript function which
   * takes a single parameter. The parameter is the item returned from the
-  * database with attributes taxon, preferred ('t' or 'f'), preferred_name,
-  * common, authority, taxon_group, language. The function must return the
+  * database with attributes taxon, preferred ('t' or 'f'), preferred_taxon,
+  * default_common_name, authority, taxon_group, language. The function must return the
   * string to display in the autocomplete list.</p>
   *
   * <p>To perform an action on the event of a new row being added to the grid,
@@ -2874,12 +2872,6 @@ RIJS;
   * Optional. The ID of the taxon_lists record which is to be used to select taxa from when adding
   * rows to the grid. If specified, then an autocomplete text box and Add Row button are generated
   * automatically allowing the user to pick a species to add as an extra row.</li>
-  * <li><b>cacheLookup</b></li>
-  * Optional. Set to true to select to use a cached version of the lookup list when
-  * searching for species names using the autocomplete control, or set to false to use the
-  * live version (default). The latter is slower and places more load on the warehouse so should only be
-  * used during development or when there is a specific need to reflect taxa that have only
-  * just been added to the list.
   * <li><b>taxonFilterField</b><br/>
   * If the list of species to be made available for recording is to be limited
   * (either by species or taxon group), allows selection of the field to filter
@@ -3004,10 +2996,7 @@ RIJS;
   * the recorder to add species they choose to the bottom of the grid,
   * subspecies will be displayed in a separate column so the recorder picks the
   * species first then the subspecies. The species checklist must be configured
-  * as a simple 2 level list so that species are parents of the subspecies. For
-  * performance reasons, this option forces the cacheLookup option to be set to
-  * true therefore it requires the cache_builder module to be running on the
-  * warehouse. Defaults to false.</li>
+  * as a simple 2 level list so that species are parents of the subspecies. Defaults to false.</li>
   * <li><b>subSpeciesRemoveSspRank</b>
   * Set to true to force the displayed subspecies names to remove the rank
   * (var., forma, ssp) etc. Useful if all subspecies are the same rank.
@@ -3176,12 +3165,7 @@ RIJS;
       self::$javascript .= "indiciaData['taxonExtraParams-".$options['id']."'] = $filterParam;\n";
       // Apply a filter to extraParams that can be used when loading the initial species list, to get just the correct names.
       if (isset($options['speciesNameFilterMode']) && !empty($options['listId'])) {
-        $filterFields = array();
-        $filterWheres = array();
-        self::parse_species_name_filter_mode($options, $filterFields, $filterWheres);
-        if (count($filterWheres))
-          $options['extraParams'] += array('query' => json_encode(array('where' => $filterWheres)));
-        $options['extraParams'] += $filterFields;
+        $options['extraParams'] += self::parseSpeciesNameFilterMode($options);
       }
     }
     self::$javascript .= "indiciaData['rowInclusionCheck-".$options['id']."'] = '".$options['rowInclusionCheck']."';\n";
@@ -3324,7 +3308,7 @@ JS;
         $colIdx = count($options['mediaTypes']) ? 0 : (int)floor($rowIdx / (count($taxonRows)/$options['columns']));
         // Find the taxon in our preloaded list data that we want to output for this row
         $taxonIdx = 0;
-        while ($taxonIdx < count($taxalist) && $taxalist[$taxonIdx]['id'] != $ttlId) {
+        while ($taxonIdx < count($taxalist) && $taxalist[$taxonIdx]['taxa_taxon_list_id'] != $ttlId) {
           $taxonIdx += 1;
         }
         if ($taxonIdx >= count($taxalist))
@@ -3336,12 +3320,6 @@ JS;
           $firstColumnTaxon=$taxon['parent'];
         else
           $firstColumnTaxon=$taxon;
-        // map field names if using a cached lookup
-        if ($options['cacheLookup'])
-          $firstColumnTaxon = $firstColumnTaxon + array(
-              'preferred_name' => $firstColumnTaxon['preferred_taxon'],
-              'common' => $firstColumnTaxon['default_common_name']
-            );
         // Get the cell content from the taxon_label template
         $firstCell = self::mergeParamsIntoTemplate($firstColumnTaxon, 'taxon_label');
         // If the taxon label template is PHP, evaluate it.
@@ -3409,11 +3387,11 @@ JS;
         $row .= "\n<td class=\"scPresenceCell\" headers=\"$options[id]-present-$colIdx\"$hidden>";
         $fieldname = "sc:$options[id]-$txIdx:$existingRecordId:present";
         if ($options['rowInclusionCheck']==='hasData')
-          $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[id]\"/>";
+          $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\"/>";
         else
           // this includes a control to force out a 0 value when the checkbox is unchecked.
           $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" value=\"0\"/>".
-            "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[id]\" $checked />";
+            "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\" $checked />";
         // If we have a grid ID attribute, output a hidden
         if (!empty($options['gridIdAttributeId'])) {
           $gridAttributeId = $options['gridIdAttributeId'];
@@ -3625,7 +3603,6 @@ JS;
           $url = parent::$base_url."index.php/services/data";
         self::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
-        self::$javascript .= "indiciaData.speciesGrid['$options[id]'].cacheLookup=".($options['cacheLookup'] ? 'true' : 'false').";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20).";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=".(!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false').";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].matchContains=".(!empty($options['matchContains']) && $options['matchContains'] ? 'true' : 'false').";\n";
@@ -3804,7 +3781,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         'disabled="disabled"' : '';
       //if the taxon has a parent then we need to setup both a child and parent
       if (!empty($taxon['parent_id'])) {
-        $selectedChildId=$taxon['id'];
+        $selectedChildId=$taxon['taxa_taxon_list_id'];
         $selectedParentId=$taxon['parent']['id'];
         $selectedParentName=$taxon['parent']['taxon'];
       } else {
@@ -3870,38 +3847,24 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * @param array $options Options array as passed to the species grid.
    */
   public static function get_species_names_filter(&$options) {
-    // $wheres is an array for building of the filter query
-    $wheres = array();
-    $r = array();
-    // If we are showing sub-species in a seperate column the then main species column should not include any sub-species.
-    // If we had a rank field for each taxon, then this would be replaced by a rank=species filter.
-    if (isset($options['subSpeciesColumn']) && $options['subSpeciesColumn'])
-      $wheres[] = "(parent_id is null)";
-    if (isset($options['cacheLookup']) && $options['cacheLookup'])
-      $wheres[] = "(simplified='t' or simplified is null)";
-    self::parse_species_name_filter_mode($options, $r, $wheres);
-    if (isset($options['extraParams']))
+    $filterFields = self::parseSpeciesNameFilterMode($options);
+    if (isset($options['subSpeciesColumn']) && $options['subSpeciesColumn']) {
+      $filterFields['parent_id'] = "null";
+    }
+    if (isset($options['extraParams'])) {
       foreach ($options['extraParams'] as $key=>$value) {
         if ($key!=='nonce' && $key!=='auth_token')
-          $r[$key] = $value;
+          $filterFields[$key] = $value;
       }
-    $query=array();
-    if (isset($r['query'])) {
-      $query = json_decode($r['query'], true);
-      unset($r['query']);
     }
     if (!empty($options['taxonFilterField']) && $options['taxonFilterField']!=='none' && !empty($options['taxonFilter'])) {
+      if ($options['taxonFilterField'] === 'preferred_name') {
+        $options['taxonFilterField'] = 'preferred_taxon';
+      }
       // filter the taxa available to record
-      // switch field to filter by if using cached lookup
-      if ($options['cacheLookup'] && $options['taxonFilterField']==='preferred_name')
-        $options['taxonFilterField']='preferred_taxon';
-      $query = array('in'=>array($options['taxonFilterField'], $options['taxonFilter']));
+      $filterFields[$options['taxonFilterField']] = json_encode($options['taxonFilter']);
     }
-    if (!empty($wheres))
-      $query['where']=array(implode(' AND ', $wheres));
-    if (!empty($query))
-      $r['query']=json_encode($query);
-    return $r;
+    return $filterFields;
   }
 
   /**
@@ -3909,198 +3872,79 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    * SQL where clauses, required to do a species name filter according to the current mode (e.g.
    * preferred names only, all names etc).
    * @param array $options Species_checklist options array.
-   * @param array $filterFields Pass an array in - this will be populated with the keys and values
-   * of any fields than need to be filtered.
-   * @param array $filterWheres Pass an array in - this will be populated with a list of any complex
-   * where clauses (to put into a service request's query parameter).
+   * @return array Will be populated with the keys and values of any fields than need to be filtered.
    */
-  private static function parse_species_name_filter_mode($options, &$filterFields, &$filterWheres) {
+  private static function parseSpeciesNameFilterMode($options) {
+    $filterFields = [];
     if (isset($options['speciesNameFilterMode'])) {
-      $colLanguage = $options['cacheLookup'] || (!empty($options['extraParams']['view']) && $options['extraParams']['view']==='detail')
-          ? 'language_iso' : 'language';
       switch($options['speciesNameFilterMode']) {
         case 'preferred' :
-          $filterFields += array('preferred'=>'t');
+          $filterFields['preferred'] = 'true';
           break;
         case 'currentLanguage' :
           // look for Drupal user variable. Will degrade gracefully if it doesn't exist
           global $user;
           if (isset($options['language'])) {
-            $filterFields += array($colLanguage => $options['language']);
+            $filterFields['language'] = $options['language'];
           } elseif (isset($user) && function_exists('hostsite_get_user_field')) {
             // if in Drupal we can use the user's language
             require_once('prebuilt_forms/includes/language_utils.php');
-            $filterFields += array($colLanguage => iform_lang_iso_639_2(hostsite_get_user_field('language')));
+            $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
           }
           break;
         case 'excludeSynonyms':
-          $filterWheres[] = "(preferred='t' or $colLanguage<>'lat')";
+          $filterFields['synonyms'] = 'false';
           break;
       }
     }
+    return $filterFields;
   }
 
   /**
-   * Adds javascript to popup a config box for the current filter on the species you can add to the grid.
+   * Adds JavaScript to popup a config box for the current filter on the species you can add to the grid.
    * @param array $options Options array as passed to the species checklist grid.
    * @param array $nameFilter array of optional name filtering modes, with the actual filter to apply
    * as the value.
    */
   public static function species_checklist_filter_popup($options, $nameFilter) {
     self::add_resource('fancybox');
+    self::add_resource('speciesFilterPopup');
     $defaultFilterMode = (isset($options['speciesNameFilterMode'])) ? $options['speciesNameFilterMode'] : 'all';
-    self::$javascript .= "var mode,  nameFilter=[];\n";
-    //convert the nameFilter php array into a Javascript one
-    foreach ($nameFilter as $key=>$theFilter) {
-      self::$javascript .= "nameFilter['".$key."'] = ".$theFilter.";\n";
-    }
+    $filtersJson = json_encode($nameFilter);
     if ($options['userControlsTaxonFilter'] && !empty($options['lookupListId'])) {
       if ($options['taxonFilterField']==='none') {
         $defaultOptionLabel=lang::get('Input any species from the list available for this form');
       } else {
         $type = $options['taxonFilterField'] == 'taxon_group' ? 'species groups' : 'species';
-        $defaultOptionLabel=lang::get('Input species from the form\\\'s default {1}.', lang::get($type));
+        $defaultOptionLabel=lang::get("Input species from the form's default {1}.", lang::get($type));
       }
-      self::$javascript .= "
-var applyFilterMode = function(type, group_id, nameFilterMode) {
-  var currentFilter;
-  //get the filter we are going to use. Use a) the provided parameter, when loading from a cookie,
-  // b) the default name filter, when not in cookie and loading for first time, or c) the one selected on the form.
-  if (typeof nameFilterMode==='undefined') {
-    nameFilterMode = $('#filter-name').length===0 ? '$defaultFilterMode' : $('#filter-name').val();
-  }
-  currentFilter=$.extend({}, nameFilter[nameFilterMode]);
-  // decode the query part, so we can modify it
-  if (typeof currentFilter.query!==\"undefined\") {
-    currentFilter.query=JSON.parse(currentFilter.query);
-  } else {
-    currentFilter.query={};
-  }
-  //Extend the current query with any taxon group selections the user has made
-  switch (type) {\n";
-      if (!empty($options['usersPreferredGroups']))
-        self::$javascript .= "    case 'user':
-        currentFilter.query['in']={\"taxon_group_id\":[".implode(',', $options['usersPreferredGroups'])."]};
-        break;\n";
-      self::$javascript .= "    case 'selected':
-      currentFilter.query['in']={\"taxon_group_id\":[group_id]};
-  }
-  // re-encode the query part
-  currentFilter.query=JSON.stringify(currentFilter.query);
-  if (type==='default') {
-    $('#".$options['id']." .species-filter').removeClass('button-active');
-  } else {
-    $('#".$options['id']." .species-filter').addClass('button-active');
-  }
-
-  //Tell the system to use the current filter.
-  indiciaData['taxonExtraParams-".$options['id']."']=currentFilter;
-  $('.scTaxonCell input').setExtraParams(currentFilter);
-  // Unset previous filters which are no longer wanted
-  switch (nameFilterMode) {
-    case 'preferred':
-      $('.scTaxonCell input').unsetExtraParams(\"language_iso\");
-      break;
-    case 'all':
-      $('.scTaxonCell input').unsetExtraParams(\"language_iso\");
-    case 'currentLanguage':
-    default:
-      $('.scTaxonCell input').unsetExtraParams(\"name_type\");
-  }
-  // store in cookie
-  $.cookie('user_selected_taxon_filter', JSON.stringify({\"type\":type,\"group_id\":group_id,\"name_filter\":nameFilterMode}));
+      $defaultOptionLabel = str_replace("'", "\'", $defaultOptionLabel);
+      if (count($options['usersPreferredGroups'])) {
+        self::$javascript .= 'indiciaData.usersPreferredTaxonGroups = [' . implode(',', $options['usersPreferredGroups']) . "];\n";
+      }
+      self::addLanguageStringsToJs('speciesChecklistFilter', array(
+          'configureFilter' => 'Configure the filter applied to species names you are searching for',
+          'preferredGroupsOptionLabel' => 'Input species from the preferred list of species groups from your user account.',
+          'singleGroupOptionLabel' => 'Input species from the following species group:',
+          'chooseSpeciesLabel' => 'Choose species names available for selection',
+          'namesOptionAllNamesLabel' => 'All names including common names and synonyms',
+          'namesOptionCommonNamesLabel' => 'Common names only',
+          'namesOptionCommonPrefLatinNamesLabel' => 'Common names and preferred latin names only',
+          'namesOptionPrefLatinNamesLabel' => 'Preferred latin names only',
+          'apply' => 'Apply',
+          'cancel' => 'Cancel'
+      ));
+      self::$javascript .= <<<JS
+indiciaData.speciesChecklistFilterOpts = {
+  nameFilter: $filtersJson,
+  defaultFilterMode : '$defaultFilterMode',
+  defaultOptionLabel : '$defaultOptionLabel',
+  taxon_list_id: $options[lookupListId]        
 };
-// load the filter mode from a cookie
-var userFilter=$.cookie('user_selected_taxon_filter');
-if (userFilter) {
-  userFilter = JSON.parse(userFilter);
-  applyFilterMode(userFilter.type, userFilter.group_id, userFilter.name_filter);
-}\n";
-      self::$javascript .= "
-$('#".$options['id']." .species-filter').click(function(evt) {
-  var userFilter=$.cookie('user_selected_taxon_filter'), defaultChecked='', userChecked='', selectedChecked='', nameChecked='';
+indiciaFns.applyInitialSpeciesFilterMode('$options[id]');
+indiciaFns.setupSpeciesFilterPopup('$options[id]');
 
-  //Select the radio button on the form depending on what is set in the cookie
-  if (userFilter) {
-    userFilter = JSON.parse(userFilter);
-    if (userFilter.type==='user') {
-      userChecked = ' checked=\"checked\"';
-    } else if (userFilter.type==='selected') {
-      selectedChecked = ' checked=\"checked\"';
-    } else {
-      defaultChecked = ' checked=\"checked\"';
-    }
-  } else {
-    defaultChecked = ' checked=\"checked\"';
-  }
-  $.fancybox('<div id=\"filter-form\"><fieldset class=\"popup-form\">' +
-    '<legend>" . str_replace("'", "\'", lang::get('Configure the filter applied to species names you are searching for')) . ":</legend>' +
-    '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-default\"'+defaultChecked+'/>$defaultOptionLabel</label>' + \n";
-      if (!empty($options['usersPreferredGroups'])) {
-        self::$javascript .= "        '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-user\"'+userChecked+'/>".
-          str_replace("'", "\'", lang::get('Input species from the preferred list of species groups from your user account.')) . "</label>' + \n";
-      }
-      self::$javascript .= "        '<label class=\"auto\"><input type=\"radio\" name=\"filter-mode\" id=\"filter-mode-selected\"'+selectedChecked+'/>".
-        str_replace("'", "\'", lang::get('Input species from the following species group:')) . "</label>' +
-      '<select name=\"filter-group\" id=\"filter-group\"></select>' +
-      '<label class=\"auto\" for=\"filter-name\">".
-        str_replace("'", "\'", lang::get('Choose species names available for selection:')) . "</label>' +
-      '<select name=\"filter-name\" id=\"filter-name\">' +
-         '<option id=\"filter-all\" value=\"all\">".lang::get('All names including common names and synonyms')."</option>' +
-         '<option id=\"filter-common\" value=\"currentLanguage\">".lang::get('Common names only')."</option>' +
-         '<option id=\"filter-common-preferred\" value=\"excludeSynonyms\">".lang::get('Common names and preferred latin names only')."</option>' +
-         '<option id=\"filter-preferred\" value=\"preferred\">".lang::get('Preferred latin names only')."</option>' +
-      '</select>' +
-      '</fieldset><button type=\"button\" class=\"default-button\" id=\"filter-popup-apply\">".lang::get('Apply')."</button><button type=\"button\" class=\"default-button\" id=\"filter-popup-cancel\">".lang::get('Cancel')."</button></div>');
-    $.getJSON(\"".self::$base_url."index.php/services/report/requestReport?report=library/taxon_groups/taxon_groups_used_in_checklist.xml&reportSource=local&mode=json".
-        "&taxon_list_id=".$options['lookupListId']."&auth_token=".$options['readAuth']['auth_token']."&nonce=".$options['readAuth']['nonce']."&callback=?\", function(data) {
-    var checked;
-    $.each(data, function(idx, item) {
-      selected = userFilter!==null && (item.id===userFilter.group_id) ? ' selected=\"selected\"' : '';
-      $('#filter-group').append('<option value=\"'+item.id+'\"' + selected + '>'+item.title+'</option>');
-    });
-  });
-  //By defult assume that the filter mode is the default one
-  var filterMode = '$defaultFilterMode';
-  //if the cookie is present and it holds one of the name type filters
-  //it  means the last time the user used the screen they selected
-  //to filter for a particular name type, so auto-select those previous
-  //settings when the user opens the popup (overriding the defaultFilterMode)
-  if(userFilter) {
-    if (nameFilter.indexOf(userFilter.name_filter)) {
-      filterMode = userFilter.name_filter;
-      $('#filter-mode-name').attr('selected','selected');
-    }
-  }
-  if (filterMode=='all')
-    $('#filter-all').attr('selected','selected');
-  if (filterMode=='currentLanguage')
-    $('#filter-common').attr('selected','selected');
-  if (filterMode=='preferred')
-    $('#filter-preferred').attr('selected','selected');
-  if (filterMode=='excludeSynonyms')
-    $('#filter-common-preferred').attr('selected','selected');
-  $('#filter-group').focus(function() {
-    $('#filter-mode-selected').attr('checked','checked');
-  });
-
-  $('#filter-popup-apply').click(function() {
-    if ($('#filter-mode-default:checked').length>0) {
-      applyFilterMode('default');
-    } else if ($('#filter-mode-selected:checked').length>0) {
-      applyFilterMode('selected', $('#filter-group').val());
-    }
-    ";
-      if (!empty($options['usersPreferredGroups']))
-        self::$javascript .= " else if ($('#filter-mode-user').is(':checked')) {
-      applyFilterMode('user');
-    }";
-      self::$javascript .= "\n    $.fancybox.close();
-  });
-  $('#filter-popup-cancel').click(function() {
-    jQuery.fancybox.close();
-  });
-});\n";
+JS;
     }
   }
 
@@ -4373,18 +4217,15 @@ $('#".$options['id']." .species-filter').click(function(evt) {
   public static function get_species_checklist_taxa_list($options, &$taxonRows) {
     // Get the list of species that are always added to the grid, by first building a filter
     if (preg_match('/^(preferred_name|preferred_taxon|taxon_meaning_id|taxa_taxon_list_id|taxon_group|external_key|id)$/', $options['taxonFilterField']))  {
-      if ($options['table']==='cache_taxa_taxon_list' && $options['taxonFilterField']==='taxa_taxon_list_id')
-        $options['taxonFilterField']='id';
-      $qry = array('in'=>array($options['taxonFilterField'], $options['taxonFilter']));
-      $options['extraParams']['query']=json_encode($qry);
+      if ($options['taxonFilterField'] === 'preferred_name') {
+        $options['taxonFilterField'] = 'preferred_taxon';
+      }
+      $options['extraParams'][$options['taxonFilterField']] = json_encode($options['taxonFilter']);
     }
     // load the species names that should be initially included in the grid
     if (isset($options['listId']) && !empty($options['listId'])) {
       // Apply the species list to the filter
       $options['extraParams']['taxon_list_id']=$options['listId'];
-      // list in taxonomic sort order if order not already specified
-      if( !isset($options['extraParams']['orderby']) )
-        $options['extraParams']['orderby'] = 'taxonomic_sort_order';
       $taxalist = self::get_population_data($options);
     } else {
       $taxalist = array();
@@ -4393,14 +4234,14 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       foreach ($options['taxonFilter'] as $taxonFilter) {
         foreach ($taxalist as $taxon) {
           // create a list of the rows we are going to add to the grid, with the preloaded species names linked to them
-          if($taxonFilter == $taxon['id'])
-            $taxonRows[] = array('ttlId'=>$taxon['id']);
+          if($taxonFilter == $taxon['taxa_taxon_list_id'])
+            $taxonRows[] = array('ttlId'=>$taxon['taxa_taxon_list_id']);
         }
       }
     } else {
       foreach ($taxalist as $taxon) {
         // create a list of the rows we are going to add to the grid, with the preloaded species names linked to them
-        $taxonRows[] = array('ttlId'=>$taxon['id']);
+        $taxonRows[] = array('ttlId'=>$taxon['taxa_taxon_list_id']);
       }
     }
     // If there are any existing records to add to the list from the lookup list/add rows feature, get their details
@@ -4504,7 +4345,6 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       'id' => 'species-grid-'.rand(0,1000),
       'colWidths' => array(),
       'taxonFilterField' => 'none',
-      'cacheLookup' => false,
       'reloadExtraParams' => array(),
       'useLoadedExistingRecords' => false,
       'subSpeciesColumn' => false,
@@ -4519,6 +4359,7 @@ $('#".$options['id']." .species-filter').click(function(evt) {
       'speciesGridPageLinkUrl' => '',
       'speciesGridPageLinkParameter' => '',
       'speciesGridPageLinkTooltip' => '',
+      'table' => 'taxa_search',
       // legacy - occurrenceImages means just local image support
       'mediaTypes' => !empty($options['occurrenceImages']) && $options['occurrenceImages'] ?
         array('Image:Local') : array(),
@@ -4526,8 +4367,6 @@ $('#".$options['id']." .species-filter').click(function(evt) {
     ), $options);
     // subSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
-    // subspecies columns require cached lookups to be enabled.
-    $options['cacheLookup'] = $options['cacheLookup'] || $options['subSpeciesColumn'];
     if (array_key_exists('readAuth', $options)) {
       $options['extraParams'] += $options['readAuth'];
     } else {
@@ -4536,7 +4375,6 @@ $('#".$options['id']." .species-filter').click(function(evt) {
         'nonce' => $options['extraParams']['nonce']
       );
     }
-    $options['table'] = $options['cacheLookup'] ? 'cache_taxa_taxon_list' : 'taxa_taxon_list';
     // colWidths are disabled for responsive checklists
     if ($options['responsive']) {
       $options['colWidths'] = array();
