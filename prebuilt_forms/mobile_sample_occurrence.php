@@ -381,22 +381,6 @@ EOD
 EOD
         ),
         array(
-          'fieldname' => 'cache_lookup',
-          'label' => 'Cache lookups',
-          'type' => 'checkbox',
-          'required' => false,
-          'group' => 'Species',
-          'siteSpecific' => false,
-          'helpText' => <<<'EOD'
-            Tick this box to select to use a cached version of the
-            lookup list when searching for extra species names to add to the
-            grid, or set to false to use the live version (default). The latter
-            is slower and places more load on the warehouse so should only be
-            used during development or when there is a specific need to reflect
-            taxa that have only just been added to the list.
-EOD
-        ),
-        array(
           'name' => 'species_ctrl',
           'caption' => 'Single Species Selection Control Type',
           'type' => 'select',
@@ -1142,13 +1126,7 @@ EOD
    * @param $options
    * @return string
    */
-  protected static function get_control_species(
-    $auth, $args, $tabAlias, $options) {
-    if (!isset($args['cache_lookup']) ||
-      ($args['species_ctrl'] !== 'autocomplete')) {
-      // Default for old form configurations or when not using an autocomplete
-      $args['cache_lookup']=false;
-    }
+  protected static function get_control_species($auth, $args, $tabAlias, $options) {
     // The filter can be a URL or on the edit tab, so do the processing to work
     // out the filter to use.
     $filterLines = self::get_species_filter($args);
@@ -1222,8 +1200,7 @@ EOD
         'columns'=>2, // applies to radio buttons
         'parentField' => 'parent_id', // applies to tree browsers
         'view' => 'detail', // required for tree browsers to get parent id
-        'blankText'=>lang::get('Please select'), // applies to selects
-        'cacheLookup'=>$args['cache_lookup']
+        'blankText'=>lang::get('Please select')
     ), $options);
     if (isset($species_ctrl_opts['extraParams'])) {
       $species_ctrl_opts['extraParams'] =
@@ -1244,11 +1221,6 @@ EOD
       $species_ctrl_opts['taxonFilter'] =
               helper_base::explode_lines($args['taxon_filter']);
     }
-
-    // obtain table to query and hence fields to use
-    $db = data_entry_helper::get_species_lookup_db_definition($args['cache_lookup']);
-
-
     if ($ctrl!=='species_autocomplete') {
       // The species autocomplete has built in support for the species name
       // filter. For other controls we need to apply the species name filter to
@@ -1257,14 +1229,14 @@ EOD
               $options['speciesNameFilterMode']) {
         $species_ctrl_opts['extraParams'] = array_merge(
             $species_ctrl_opts['extraParams'],
-            data_entry_helper::get_species_names_filter($species_ctrl_opts));
+            data_entry_helper::getSpeciesNamesFilter($species_ctrl_opts));
       }
 
       // for controls which don't know how to do the lookup, we need to tell them
       $species_ctrl_opts = array_merge(array(
-        'table' => $db['tblTaxon'],
-        'captionField' => $db['colTaxon'],
-        'valueField' => $db['colId'],
+        'table' => 'taxa_search',
+        'captionField' => 'taxon',
+        'valueField' => 'taxa_taxon_list_id',
       ), $species_ctrl_opts);
     }
     // if using something other than an autocomplete, then set the caption
@@ -1275,11 +1247,11 @@ EOD
             isset($args['species_include_both_names']) &&
             $args['species_include_both_names']) {
       if ($args['species_names_filter'] === 'all')
-        $indicia_templates['species_caption'] = "{{$db['colTaxon']}}";
+        $indicia_templates['species_caption'] = "{taxon}";
       elseif ($args['species_names_filter'] === 'language')
-        $indicia_templates['species_caption'] = "{{$db['colTaxon']}} - {{$db['colPreferred']}}";
+        $indicia_templates['species_caption'] = "{taxon} - {preferred_taxon}";
       else
-        $indicia_templates['species_caption'] = "{{$db['colTaxon']}} - {{$db['colCommon']}}";
+        $indicia_templates['species_caption'] = "{taxon} - {default_common_name}";
       $species_ctrl_opts['captionTemplate'] = 'species_caption';
     }
 

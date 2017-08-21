@@ -1407,7 +1407,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         'occurrenceImages' => $args['occurrence_images'],
         'PHPtaxonLabel' => true,
         'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), // used for termlists in attributes
-        'cacheLookup' => $args['cache_lookup'],
         'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),
         'userControlsTaxonFilter' => isset($args['user_controls_taxon_filter']) ? $args['user_controls_taxon_filter'] : false,
         'subSpeciesColumn' => $args['sub_species_column'],
@@ -1461,7 +1460,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
           'at the same time has having the mediaTypes option in use.');
     data_entry_helper::add_resource('json');
     data_entry_helper::add_resource('autocomplete');
-    $filterArray = data_entry_helper::get_species_names_filter($options);
+    $filterArray = data_entry_helper::getSpeciesNamesFilter($options);
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
     //make a copy of the options so that we can maipulate it
     $overrideOptions = $options;
@@ -1470,8 +1469,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     //that the Javascript can quickly access the required parameters
     foreach ($filterNameTypes as $filterType) {
       $overrideOptions['speciesNameFilterMode'] = $filterType;
-      $nameFilter[$filterType] = data_entry_helper::get_species_names_filter($overrideOptions);
-      $nameFilter[$filterType] = json_encode($nameFilter[$filterType]);
+      $nameFilter[$filterType] = data_entry_helper::getSpeciesNamesFilter($overrideOptions);
     }
     if (count($filterArray)) {
       $filterParam = json_encode($filterArray);
@@ -1824,7 +1822,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
           $url = helper_base::$base_url."index.php/services/data";
         data_entry_helper::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
         data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
-        data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]'].cacheLookup=".($options['cacheLookup'] ? 'true' : 'false').";\n";
         data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20).";\n";
         data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=".(!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false').";\n";
         //encoded media array is just and array of media items that has been json_encoded.
