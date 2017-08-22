@@ -142,14 +142,7 @@ class iform_tree_map_2 {
     $r = "";
     data_entry_helper::add_resource('jquery_ui');
     if(isset($args['advancedUI']) && $args['advancedUI']) {
-    	// TODO Sort out
-//    	data_entry_helper::$resource_list['jquery_ui_slider'] =
-//    		array('deps' => array('jquery_ui'), 'javascript' => array('/misc/ui/jquery.ui.slider.js'));
-//    	data_entry_helper::add_resource('jquery_ui_slider');
-//      drupal_add_js(drupal_get_path('module', 'jquery_update') .'/replace/ui/ui/jquery.ui.slider.js');
-//      drupal_add_js('/misc/ui/jquery.ui.slider.min.js');
-		drupal_add_js('/misc/ui/jquery.ui.slider.js');
-//      drupal_add_js('/misc/ui/jquery.ui.button.min.js');
+    	hostsite_add_library('jquery-ui-slider');
     }
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     
