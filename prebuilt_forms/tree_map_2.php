@@ -167,7 +167,7 @@ class iform_tree_map_2 {
     $extras = '&wantColumns=1&wantParameters=1&'.report_helper::array_to_query_string($currentParamValues, true);
     $canIDuser = false;
     
-    // Report record should have location_id, sample_id, occurrence_id, sample_date, species ttl_id, attributes, geometry. created_by_id is optional
+    // Report record should have location_id, sample_date, species ttl_id, attributes, geometry. created_by_id is optional
     // Event definition: Name|attribute_id|attribute_values
     // Loop through event definitions
 /*    $events = array(array('type'=>'arrayVal', 'name'=>'Budburst', 'attr'=>'289', 'values'=>array(3904,3961,3905,3906,3962,3907)),

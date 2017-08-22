@@ -492,7 +492,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         dialog.dialog('close');
       }}
     });
-    // Report record should have location_id, sample_id, occurrence_id, sample_date, species ttl_id, attributes, geometry.
+    // Report record should have location_id, sample_date, species ttl_id, attributes, geometry.
     jQuery.getJSON(iTM2Opts.base_url + '/index.php/services/report/requestReport?report=' + iTM2Opts.report_name + '.xml&reportSource=local&mode=json' +
         '&auth_token=' + iTM2Opts.auth_token + '&reset_timeout=true&nonce=' + iTM2Opts.nonce + iTM2Opts.reportExtraParams +
         '&callback=?&year=' + year + '&date_from=' + year + '-01-01&date_to=' + year + '-12-31',
