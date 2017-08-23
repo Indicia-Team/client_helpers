@@ -701,7 +701,6 @@ Record ID',
       }
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-url', window.location.href);\n";
       $title = str_replace("'", "\'", 'Check out this record of ' . self::$record['taxon']);
-      $title = self::$record['taxon'];
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
     }
     $r = '';
