@@ -27,7 +27,7 @@ require_once('includes/report.php');
 // picture of species in corner.
 // Add speed control
 // Sort colour of control table.
-// preload values in controls from optional URL params: Year, Species, Event, Compare
+// preload values in controls from optional URL params: Year, Species, Compare
 // Add function to allow user to copy URL.
 
 /**
@@ -74,15 +74,6 @@ class iform_time_lapse_map {
               'group' => 'Controls',
               'default' => true,
               'required' => false
-          ),
-          array(
-              'name' => 'advancedUI',
-              'caption' => 'Advanced UI',
-              'description' => 'Advanced User Interface: use a slider for date and dot size controls, and a graphical button. Relies on jQuery_ui.',
-              'type' => 'boolean',
-              'required' => false,
-              'default' => false,
-              'group' => 'Controls'
           ),
           array(
               'name' => 'dotSize',
@@ -140,9 +131,7 @@ class iform_time_lapse_map {
         'yearSelector' => true
     ), $args);
     data_entry_helper::add_resource('jquery_ui');
-    if(isset($args['advancedUI']) && $args['advancedUI']) {
-      hostsite_add_library('jquery-ui-slider');
-    }
+    hostsite_add_library('jquery-ui-slider');
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     
     $now = new DateTime('now');
@@ -167,7 +156,7 @@ class iform_time_lapse_map {
     $canIDuser = false;
   
     $r .= '<div id="errorMsg"></div>';
-    $r .= '<div id="controls-toolbar>';
+    $r .= '<div id="controls-toolbar">';
     if ($args['yearSelector']) {
       $r .= '<label for="yearControl">' . lang::get("Year") . ' : </label><select id="yearControl" name="year">';
       for($i = $now->format('Y'); $i >= $args['firstYear']; $i--){
@@ -175,7 +164,7 @@ class iform_time_lapse_map {
       }
       $r .= "</select>\n";
     } else {
-      $r .= "<input id=\"yearControl\" name=\"year\" value=\"all\" />\n";
+      $r .= "<input type=\"hidden\" id=\"yearControl\" name=\"123year\" value=\"all\" />\n";
     }
     $r .= '<label for="speciesControl">'.lang::get("Species").' : </label>' . 
         '<select id="speciesControl"><option value="">'.lang::get("Please select species").'</option></select>';
@@ -191,17 +180,16 @@ class iform_time_lapse_map {
     $options['divId']='map2';
     
     $r .= '<div class="ui-helper-clearfix"></div><div id="timeControls">'.
-        (isset($args['advancedUI']) && $args['advancedUI'] ? '<div id="timeSlider"></div>' : '').
+        '<div id="timeSlider"></div>' .
         '<div id="toolbar">'.
-        '<span id="dotControlLabel">'.lang::get('Dot Size').' :</span>'.((isset($args['advancedUI']) && $args['advancedUI']) ? '<div id="dotSlider"></div>' : '<select id="dotSelect"><option>2</option><option>3</option><option>4</option><option>5</option></select>').
+        '<span id="dotControlLabel">' . lang::get('Dot Size') . ' :</span><div id="dotSlider"></div>' .
         '<button id="beginning">go to beginning</button><button id="playMap">play</button><button id="end">go to end</button>'.
-        '<span id="dateControlLabel">'.lang::get("Date Currently displayed").' : '.(isset($args['advancedUI']) && $args['advancedUI'] ? '<span id="displayDate" ></span>' : '<select id="timeSelect"><option value="">'.lang::get("Please select date").'</option></select>').'</span>'.
+        '<span id="dateControlLabel">'.lang::get("Date currently displayed").' : <span id="displayDate" ></span>'.
         '</div>';
     
     $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;    
     data_entry_helper::$javascript .= "
 indiciaFns.initTimeLapseMap({
-  advanced_UI: ".(isset($args['advancedUI']) && $args['advancedUI'] ? "true" : "false").",
   dotSize: $args[dotSize],
   lat: $args[map_centroid_lat],
   long: $args[map_centroid_long],
@@ -212,8 +200,8 @@ indiciaFns.initTimeLapseMap({
   nonce: '$readAuth[nonce]',
   reportExtraParams: '$extras',
   indicia_user_id: ".(hostsite_get_user_field('indicia_user_id') ? hostsite_get_user_field('indicia_user_id') : 'false').",
-  timeControlSelector: '".(isset($args['advancedUI']) && $args['advancedUI'] ? '#timeSlider' : '#timeSelect')."',
-  dotControlSelector: '".(isset($args['advancedUI']) && $args['advancedUI'] ? '#dotSlider' : '#dotSelect')."',
+  timeControlSelector: '#timeSlider',
+  dotControlSelector: '#dotSlider',
   timerDelay: ".((int)1000/$args['frameRate']).",
   imgPath: '$imgPath',
   yearSelector: " . ($args['yearSelector'] ? 'true' : 'false') . ",

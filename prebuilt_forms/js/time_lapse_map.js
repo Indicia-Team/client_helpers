@@ -1,18 +1,12 @@
 var iTLMOpts = {};
 var iTLMData = {
-  mySiteWKT: [],
-  mySites: [],
-  myData: [],
-  mySpecies: [],
-  mySpeciesIDs: [],
+  myData: {},
+  mySpecies: {},
   last_displayed: -1,
   global_timer_function: false,
   maxDayIndex: 365, // Dec 31 on a leap year
   minDayIndex: 0, // first January
-  year: '',
-  species: '',
-  event: '',
-  advancedButtons: true
+  species: ''
 };
 
 // for loops: Use of these is meant to prevent bugs.
@@ -27,190 +21,93 @@ var iTLMData = {
 var rgbvalue, applyJitter, setToDate, loadYear;
 
 (function ($) {
+  var currentYear = function() {
+    return $(iTLMOpts.yearControlSelector).val();
+  };
+  
   var stopAnimation = function () {
     if (iTLMData.global_timer_function)
       clearInterval(iTLMData.global_timer_function);
     iTLMData.global_timer_function = false;
   };
-
-  var enableSpeciesControlOptions = function () {
-    var year = iTLMOpts.yearSelector ? $(iTLMOpts.yearControlSelector).val() : 'all'; // this will never be blank.
-    var oldSpecies = $(iTLMOpts.speciesControlSelector).val();
-    var anySpecies = false;
-    for (var m = 0; m < iTLMData.mySpeciesIDs.length; m++) {
-      var validSpecies = false;
-      for (var k = 0; k < iTLMOpts.triggerEvents.length; k++) {
-        for (var j = 0; j < 365; j++) {
-          if (typeof iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]] !== 'undefined') {
-            validSpecies = true;
-          }
-        }
-      }
-      anySpecies |= validSpecies;
-      // If this means deselecting current choice: set species control to blank.
-      if (iTLMData.mySpeciesIDs[m] === oldSpecies && !validSpecies)
-        $(iTLMOpts.speciesControlSelector).val('');
-      $(iTLMOpts.speciesControlSelector).find('option[value=' + iTLMData.mySpeciesIDs[m] + ']').each(function (idx, elem) {
-        if (validSpecies)
-          $(elem).removeAttr('disabled').show();
-        else
-          $(elem).attr('disabled', 'disabled').hide();
-      });
-    }
-    $('.dateErrorWarning').remove();
-    if (!anySpecies)
-      $(iTLMOpts.yearControlSelector).after('<img class="speciesErrorWarning" src="' + iTLMOpts.imgPath + 'warning.png" title="There is no species data for this year">');
-  };
-
-  var calculateMinAndMaxForYear = function () {
-    var year = iTLMOpts.yearSelector;
-    var species = $(iTLMOpts.speciesControlSelector).val();
-    iTLMData.year = year;
-    iTLMData.species = species;
-
-    iTLMData.minDayIndex = 365;
-    iTLMData.maxDayIndex = 0;
-    if (species === '') {
-      iTLMData.minDayIndex = 0;
-      iTLMData.maxDayIndex = (Date.UTC(year, 12, 31) - Date.UTC(year, 1, 1)) / (24 * 60 * 60 * 1000);
-    } else {
-      for (var j = 0; j < 365; j++)
-        if (typeof iTLMData.myData[year][event][j][species] !== 'undefined') {
-          if (j < iTLMData.minDayIndex)
-            iTLMData.minDayIndex = j;
-          if (j > iTLMData.maxDayIndex)
-            iTLMData.maxDayIndex = j;
-        }
-    }
-    if (iTLMData.minDayIndex > 0)
-      iTLMData.minDayIndex--; // allow for day before data actually starts
-    if (iTLMOpts.advanced_UI) {
-      var slider = $(iTLMOpts.timeControlSelector);
-      $(iTLMOpts.timeControlSelector).slider('option', 'min', iTLMData.minDayIndex);
-      $(iTLMOpts.timeControlSelector).slider('option', 'max', iTLMData.maxDayIndex);
-      var diff = iTLMData.maxDayIndex - iTLMData.minDayIndex;
-      var spacing = 100 / diff;
-      slider.find('.ui-slider-tick-mark').remove();
-      slider.find('.ui-slider-label').remove();
-      var maxLabels = 11; // TODO ".(isset($args['numberOfDates']) && $args['numberOfDates'] > 1 ? $args['numberOfDates'] : 11).";
-      var maxTicks = 100;
-      var daySpacing = diff === 0 ? 1 : Math.ceil(diff / maxTicks);
-      var provisionalLabelSpacing = Math.max(7, Math.ceil(diff / maxLabels));
-      var actualLabelSpacing = daySpacing * Math.ceil(provisionalLabelSpacing / daySpacing);
-      for (var j = iTLMData.minDayIndex; j <= iTLMData.maxDayIndex; j += daySpacing) {
-        var myDate = new Date();
-        myDate.setFullYear(year, 0, 1);
-        if (j > 0)
-          myDate.setDate(myDate.getDate() + j);
-        if (j > iTLMData.minDayIndex && j < iTLMData.maxDayIndex)
-          $('<span class=\"ui-slider-tick-mark' + (!((j - iTLMData.minDayIndex) % actualLabelSpacing) ? ' long' : '') + '\"></span>').css('left', Math.round(spacing * (j - iTLMData.minDayIndex) * 10) / 10 + '%').appendTo(slider);
-        if (!((j - iTLMData.minDayIndex) % actualLabelSpacing) && spacing * (j - iTLMData.minDayIndex) < 95)
-          $('<span class=\"ui-slider-label\"><span>' + myDate.getDate() + ' ' + iTLMOpts.monthNames[myDate.getMonth()] + '</span></span>').css('left', Math.round(spacing * (j - iTLMData.minDayIndex) * 10) / 10 + '%').appendTo(slider);
-      }
-    } else {
-      var select = $(iTLMOpts.timeControlSelector);
-      select.find('option').remove();
-      for (var j = iTLMData.minDayIndex; j <= iTLMData.maxDayIndex; j++) {
-        var myDate = new Date();
-        myDate.setFullYear(year, 0, 1);
-        if (j)
-          myDate.setDate(myDate.getDate() + j);
-        $('<option value="' + j + '">' + myDate.getDate() + ' ' + iTLMOpts.monthNames[myDate.getMonth()] + '</option>').appendTo(select);
-      }
-    }
-    // if playing, leave playing, otherwise jump to end.
-    if (!iTLMData.global_timer_function) {
-      setToDate(-1);
-      setToDate(iTLMData.maxDayIndex);
-    } else
-      setLastDisplayed(getLastDisplayed());
-  };
   
-  var calculateMinAndMaxForWholePeriod = function () {
+  var enableSpeciesControlOptions = function(year) {
     var species = $(iTLMOpts.speciesControlSelector).val();
-    iTLMData.year = 'all';
-    iTLMData.species = species;
-    // Indexes will be days since Unix Epoch.
-    iTLMData.minDayIndex = (new Date()).getTime() / (24 * 60 * 60 * 1000);
-    iTLMData.maxDayIndex = 0;
-    if (species === '') {
-      iTLMData.minDayIndex = 0;
-      iTLMData.maxDayIndex = (new Date()).getTime() / (24 * 60 * 60 * 1000);
-    } else {
-      
-      // This bit can't work by cycling all days
-      
-      
-      for (var j = 0; j < 365; j++)
-        if (typeof iTLMData.myData['all'][j][species] !== 'undefined') {
-          if (j < iTLMData.minDayIndex)
-            iTLMData.minDayIndex = j;
-          if (j > iTLMData.maxDayIndex)
-            iTLMData.maxDayIndex = j;
-        }
+    // clear existing species
+    $(iTLMOpts.speciesControlSelector).find('option[value!=""]').remove();
+    // Add options for available species
+    $.each(iTLMData.mySpecies['year:' + year], function() {
+      $(iTLMOpts.speciesControlSelector).append('<option value="' + this.id + '" >' + this.taxon + '</option>');
+    });
+    if (species) {
+      $(iTLMOpts.speciesControlSelector).find('option[value="' + species + '"]').attr('selected', 'selected');
     }
-    if (iTLMData.minDayIndex > 0)
-      iTLMData.minDayIndex--; // allow for day before data actually starts
-    if (iTLMOpts.advanced_UI) {
-      var slider = $(iTLMOpts.timeControlSelector);
-      $(iTLMOpts.timeControlSelector).slider('option', 'min', iTLMData.minDayIndex);
-      $(iTLMOpts.timeControlSelector).slider('option', 'max', iTLMData.maxDayIndex);
-      var diff = iTLMData.maxDayIndex - iTLMData.minDayIndex;
-      var spacing = 100 / diff;
-      slider.find('.ui-slider-tick-mark').remove();
-      slider.find('.ui-slider-label').remove();
-      var maxLabels = 11; // TODO ".(isset($args['numberOfDates']) && $args['numberOfDates'] > 1 ? $args['numberOfDates'] : 11).";
-      var maxTicks = 100;
-      var daySpacing = diff === 0 ? 1 : Math.ceil(diff / maxTicks);
-      var provisionalLabelSpacing = Math.max(7, Math.ceil(diff / maxLabels));
-      var actualLabelSpacing = daySpacing * Math.ceil(provisionalLabelSpacing / daySpacing);
-      for (var j = iTLMData.minDayIndex; j <= iTLMData.maxDayIndex; j += daySpacing) {
-        var myDate = new Date();
-        myDate.setFullYear(year, 0, 1);
-        if (j > 0)
-          myDate.setDate(myDate.getDate() + j);
-        if (j > iTLMData.minDayIndex && j < iTLMData.maxDayIndex)
-          $('<span class=\"ui-slider-tick-mark' + (!((j - iTLMData.minDayIndex) % actualLabelSpacing) ? ' long' : '') + '\"></span>').css('left', Math.round(spacing * (j - iTLMData.minDayIndex) * 10) / 10 + '%').appendTo(slider);
-        if (!((j - iTLMData.minDayIndex) % actualLabelSpacing) && spacing * (j - iTLMData.minDayIndex) < 95)
-          $('<span class=\"ui-slider-label\"><span>' + myDate.getDate() + ' ' + iTLMOpts.monthNames[myDate.getMonth()] + '</span></span>').css('left', Math.round(spacing * (j - iTLMData.minDayIndex) * 10) / 10 + '%').appendTo(slider);
-      }
-    } else {
-      var select = $(iTLMOpts.timeControlSelector);
-      select.find('option').remove();
-      for (var j = iTLMData.minDayIndex; j <= iTLMData.maxDayIndex; j++) {
-        var myDate = new Date();
-        myDate.setFullYear(year, 0, 1);
-        if (j)
-          myDate.setDate(myDate.getDate() + j);
-        $('<option value="' + j + '">' + myDate.getDate() + ' ' + iTLMOpts.monthNames[myDate.getMonth()] + '</option>').appendTo(select);
-      }
-    }
-    // if playing, leave playing, otherwise jump to end.
-    if (!iTLMData.global_timer_function) {
-      setToDate(-1);
-      setToDate(iTLMData.maxDayIndex);
-    } else
-      setLastDisplayed(getLastDisplayed());
   };
   
   var calculateMinAndMax = function() {
-    if (iTlMOpts.yearSelector) {
-      calculateMinAndMaxForYear();
+    var year = $(iTLMOpts.yearControlSelector).val();
+    var species = $(iTLMOpts.speciesControlSelector).val();
+    var date;
+    if (!species) {
+      return;
+    }
+    iTLMData.species = species;
+    // Indexes will be days since Unix Epoch.
+    iTLMData.minDayIndex = Math.floor((new Date()).getTime() / (24 * 60 * 60 * 1000));
+    iTLMData.maxDayIndex = 0;
+    // Loop to find first and last day, as we can't rely on grabbing first and last property in correct order
+    $.each(iTLMData.myData['year:' + year]['species:' + species], function(idx) {
+      var day = idx.replace('day:', '');
+      iTLMData.minDayIndex = Math.min(day, iTLMData.minDayIndex);
+      iTLMData.maxDayIndex = Math.max(day, iTLMData.maxDayIndex);
+    });
+    if (iTLMData.minDayIndex > 0) {
+      iTLMData.minDayIndex--; // allow for day before data actually starts
+    }
+    var slider = $(iTLMOpts.timeControlSelector);
+    $(iTLMOpts.timeControlSelector).slider('option', 'min', iTLMData.minDayIndex);
+    $(iTLMOpts.timeControlSelector).slider('option', 'max', iTLMData.maxDayIndex);
+    var diff = iTLMData.maxDayIndex - iTLMData.minDayIndex;
+    var spacing = 100 / diff;
+    slider.find('.ui-slider-tick-mark').remove();
+    slider.find('.ui-slider-label').remove();
+    var maxLabels = 11; // TODO ".(isset($args['numberOfDates']) && $args['numberOfDates'] > 1 ? $args['numberOfDates'] : 11).";
+    var maxTicks = 100;
+    var daySpacing = diff === 0 ? 1 : Math.ceil(diff / maxTicks);
+    var provisionalLabelSpacing = Math.max(7, Math.ceil(diff / maxLabels));
+    var actualLabelSpacing = daySpacing * Math.ceil(provisionalLabelSpacing / daySpacing);
+    
+    for (var j = iTLMData.minDayIndex; j <= iTLMData.maxDayIndex; j += daySpacing) {
+      if (j > iTLMData.minDayIndex && j < iTLMData.maxDayIndex)
+        $('<span class=\"ui-slider-tick-mark' + (!((j - iTLMData.minDayIndex) % actualLabelSpacing) ? ' long' : '') + '\"></span>').css(
+              'left', Math.round(spacing * (j - iTLMData.minDayIndex) * 10) / 10 + '%').appendTo(slider);
+      
+      if (!((j - iTLMData.minDayIndex) % actualLabelSpacing) && spacing * (j - iTLMData.minDayIndex) < 95) {
+        date = new Date(j * 60 * 60 * 24 * 1000);
+        $('<span class=\"ui-slider-label\"><span>' + 
+            date.getDate() + ' ' + iTLMOpts.monthNames[date.getMonth()] + ' ' + date.getFullYear() + '</span></span>').css(
+            'left', Math.round(spacing * (j - iTLMData.minDayIndex) * 10) / 10 + '%').appendTo(slider);
+      }
+    }
+    // if playing, leave playing, otherwise jump to end.
+    if (!iTLMData.global_timer_function) {
+      setToDate(-1);
+      setToDate(iTLMData.maxDayIndex);
     } else {
-      calculateMinAndMaxForWholePeriod();
+      setLastDisplayed(getLastDisplayed());
     }
   }
 
   var getLastDisplayed = function () {
+    if (iTLMData.last_displayed === -1) {
+      iTLMData.last_displayed = iTLMData.minDayIndex-1;
+    }
     return iTLMData.last_displayed;
   };
 
   var setLastDisplayed = function (idx) {
     iTLMData.last_displayed = idx;
-    if (iTLMOpts.advanced_UI)
-      $(iTLMOpts.timeControlSelector).slider('option', 'value', idx);
-    else
-      $(iTLMOpts.timeControlSelector).val(idx);
+    $(iTLMOpts.timeControlSelector).slider('option', 'value', idx);
   };
 
   var resetMap = function () {
@@ -222,7 +119,6 @@ var rgbvalue, applyJitter, setToDate, loadYear;
   // init must be called before the maps are initialised, as it sets up a 
   indiciaFns.initTimeLapseMap = function (options) {
     var defaults = {
-      advanced_UI: false,
       firstDateRGB: {r: 0, g: 0, b: 255}, // colour of first date displayed.
       lastDateRGB: {r: 255, g: 0, b: 0}, // colour of last date displayed.
       jitterRadius: 15000,
@@ -272,7 +168,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     });
 
     $(iTLMOpts.playButtonSelector).click(function () {
-      if (iTLMData.year === '' || iTLMData.species === '') {
+      if (currentYear() === '' || iTLMData.species === '') {
         alert(iTLMOpts.pleaseSelectPrompt);
         return;
       }
@@ -283,10 +179,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
           setToDate(value + 1);
         } else {
           stopAnimation();
-          if (iTLMOpts.advanced_UI && iTLMData.advancedButtons)
-            $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
-          else
-            $(iTLMOpts.playButtonSelector).text(iTLMOpts.playButtonPlayLabel);
+          $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
         }
       };
 
@@ -301,68 +194,37 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         stopAnimation();
         options = {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}};
       }
-      if (iTLMOpts.advanced_UI && iTLMData.advancedButtons)
-        $(this).button('option', options);
-      else
-        $(this).text(options.label);
+      $(this).button('option', options);
     });
 
     $(iTLMOpts.firstButtonSelector).click(function () {
       stopAnimation();
-      if (iTLMOpts.advanced_UI && iTLMData.advancedButtons)
-        $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
-      else
-        $(iTLMOpts.playButtonSelector).text(iTLMOpts.playButtonPlayLabel);
+      $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
       setToDate(iTLMData.minDayIndex);
     });
 
     $(iTLMOpts.lastButtonSelector).click(function () {
       stopAnimation();
-      if (iTLMOpts.advanced_UI && iTLMData.advancedButtons)
-        $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
-      else
-        $(iTLMOpts.playButtonSelector).text(iTLMOpts.playButtonPlayLabel);
+      $(iTLMOpts.playButtonSelector).button('option', {label: iTLMOpts.playButtonPlayLabel, icons: {primary: iTLMOpts.playButtonPlayIcon}});
       setToDate(iTLMData.maxDayIndex);
     });
 
     // Time control
-    if (iTLMOpts.advanced_UI) {
-      $(iTLMOpts.timeControlSelector).slider();
-      $(iTLMOpts.timeControlSelector).slider({change: function (event, ui) {
-          setToDate($(iTLMOpts.timeControlSelector).slider('value'));
-        }});
-      if (iTLMData.advancedButtons) {
-        $(iTLMOpts.firstButtonSelector).button({text: false, icons: {primary: 'ui-icon-seek-start'}});
-        $(iTLMOpts.playButtonSelector).button({text: false, icons: {primary: 'ui-icon-play'}});
-        $(iTLMOpts.lastButtonSelector).button({text: false, icons: {primary: 'ui-icon-seek-end'}});
-      }
-    } else {
-      $(iTLMOpts.timeControlSelector).change(function (event, ui) {
-        setToDate($(iTLMOpts.timeControlSelector).val());
-      });
-    }
+    $(iTLMOpts.timeControlSelector).slider();
+    $(iTLMOpts.timeControlSelector).slider({change: function (event, ui) {
+        setToDate($(iTLMOpts.timeControlSelector).slider('value'));
+      }});
+    $(iTLMOpts.firstButtonSelector).button({text: false, icons: {primary: 'ui-icon-seek-start'}});
+    $(iTLMOpts.playButtonSelector).button({text: false, icons: {primary: 'ui-icon-play'}});
+    $(iTLMOpts.lastButtonSelector).button({text: false, icons: {primary: 'ui-icon-seek-end'}});
 
     // Dot size control
-    if (iTLMOpts.advanced_UI) {
-      $(iTLMOpts.dotControlSelector).slider();
-      $(iTLMOpts.dotControlSelector).slider('option', 'min', iTLMOpts.dotControlMin);
-      $(iTLMOpts.dotControlSelector).slider('option', 'max', iTLMOpts.dotControlMax);
-      $(iTLMOpts.dotControlSelector).slider('option', 'value', iTLMData.dotSize);
-      $(iTLMOpts.dotControlSelector).slider({change: function (event, ui) {
-          iTLMData.dotSize = $(iTLMOpts.dotControlSelector).slider('value');
-          if ($(iTLMOpts.mapSelector)[0].map.sitesLayer.features.length > 0) {
-            var features = $(iTLMOpts.mapSelector)[0].map.sitesLayer.features;
-            $(iTLMOpts.mapSelector)[0].map.sitesLayer.removeFeatures(features);
-            for (p = 0; p < features.length; p++)
-              features[p].style.pointRadius = iTLMData.dotSize + 2;
-            $(iTLMOpts.mapSelector)[0].map.sitesLayer.addFeatures(features);
-          }
-          resetMap();
-        }});
-    } else {
-      $(iTLMOpts.dotControlSelector).val(iTLMData.dotSize);
-      $(iTLMOpts.dotControlSelector).change(function (event, ui) {
-        iTLMData.dotSize = $(iTLMOpts.dotControlSelector).val();
+    $(iTLMOpts.dotControlSelector).slider();
+    $(iTLMOpts.dotControlSelector).slider('option', 'min', iTLMOpts.dotControlMin);
+    $(iTLMOpts.dotControlSelector).slider('option', 'max', iTLMOpts.dotControlMax);
+    $(iTLMOpts.dotControlSelector).slider('option', 'value', iTLMData.dotSize);
+    $(iTLMOpts.dotControlSelector).slider({change: function (event, ui) {
+        iTLMData.dotSize = $(iTLMOpts.dotControlSelector).slider('value');
         if ($(iTLMOpts.mapSelector)[0].map.sitesLayer.features.length > 0) {
           var features = $(iTLMOpts.mapSelector)[0].map.sitesLayer.features;
           $(iTLMOpts.mapSelector)[0].map.sitesLayer.removeFeatures(features);
@@ -371,11 +233,10 @@ var rgbvalue, applyJitter, setToDate, loadYear;
           $(iTLMOpts.mapSelector)[0].map.sitesLayer.addFeatures(features);
         }
         resetMap();
-      });
-    }
+    }});
 
     mapInitialisationHooks.push(function (mapdiv) {
-      var year = iTLMOpts.yearSelector ? $(iTLMOpts.yearControlSelector).val() : 'all';;
+      var year = $(iTLMOpts.yearControlSelector).val();
       mapdiv.map.eventsLayer = new OpenLayers.Layer.Vector('Events Layer', {displayInLayerSwitcher: false});
       mapdiv.map.addLayer(mapdiv.map.eventsLayer);
       // switch off the mouse drag pan.
@@ -391,20 +252,14 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
   loadYear = function (year, side) {
     var dateFilter = (year === 'all' ? '&date_from=' + iTLMOpts.firstYear + '-01-01' : '&date_from=' + year + '-01-01&date_to=' + year + '-12-31');
-    if (typeof iTLMData.myData[year] !== 'undefined') {
-      enableSpeciesControlOptions();
+    if (typeof iTLMData.myData['year:' + year] !== 'undefined') {
+      enableSpeciesControlOptions(year);
       calculateMinAndMax();
       resetMap();
       return; // already loaded.
     }
-    iTLMData.myData[year] = {};
-    /*
-     for (k = 0; k < iTLMOpts.triggerEvents.length; k++) {
-      iTLMData.myData[year][k] = []; // first event, array of days
-      for (j = 0; j <= 365; j++)
-        iTLMData.myData[year][k][j] = []; // arrays of species geometry pairs
-    }
-    */
+    iTLMData.myData['year:' + year] = {};
+    iTLMData.mySpecies['year:' + year] = {};
     $(iTLMOpts.errorDiv).empty();
     dialog = $('<p>' + iTLMOpts.waitDialogText.replace('{year}', year) + '</p>').dialog({
       title: iTLMOpts.waitDialogTitle, 
@@ -412,17 +267,14 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         dialog.dialog('close');
       }}
     });
-    // Report record should have geom, sample_date, species ttl_id, attributes.
+    // Report record should have geom, date, recordDayIndex (days since unix epoch), species ttl_id, attributes.
     jQuery.getJSON(iTLMOpts.base_url + '/index.php/services/report/requestReport?report=' + iTLMOpts.report_name + '.xml&reportSource=local&mode=json' +
         '&auth_token=' + iTLMOpts.auth_token + '&reset_timeout=true&nonce=' + iTLMOpts.nonce + iTLMOpts.reportExtraParams +
         '&callback=?' + dateFilter,
       function (data) {
-        var canIDuser = false;
         var hasDate = false;
         var wktCol = false;
         var parser = new OpenLayers.Format.WKT();
-        var year = iTLMOpts.yearSelector ? $(iTLMOpts.yearControlSelector).val() : 'all';
-        var firstDate = iTLMOpts.yearSelector ? Date.UTC(parts[0], 1, 1) : Date.UTC(iTLMOpts.firstYear, 1, 1);
         var donePoints = [];
         var wkt;
 
@@ -441,139 +293,39 @@ var rgbvalue, applyJitter, setToDate, loadYear;
               return $(iTLMOpts.errorDiv).append('<p>' + iTLMOpts.noMappableDataError + '</p>');
             if (!hasDate)
               return $(iTLMOpts.errorDiv).append('<p>' + iTLMOpts.noDateError + '</p>');
-            // Date preprocess and sort
-            for (var i = 0; i < data.records.length; i++) {
-              var parts = data.records[i].date.split('-');
-              data.records[i].recordDayIndex = Date.UTC(parts[0], parts[1], parts[2]) / (24 * 60 * 60 * 1000);
-            }
-            data.records.sort(function (a, b) {
-              return a.recordDayIndex - b.recordDayIndex;
-            });
             $.each(data.records, function() {
               // remove point stuff: don't need to convert to numbers, as that was only to save space in php.
-              wkt = data.records[i][wktCol].replace(/POINT\(/, '').replace(/\)/, '');
+              wkt = this[wktCol].replace(/POINT\(/, '').replace(/\)/, '');
               
-              if (typeof iTLMData.mySpecies[this.species_id] === 'undefined') {
-                iTLMData.myData['species:' + species_id] = {};
-                iTLMData.mySpeciesIDs.push(this.species_id);
-                iTLMData.mySpecies[this.species_id] = {
+              if (typeof iTLMData.mySpecies['year:' + year]['species:' + this.species_id] === 'undefined') {
+                iTLMData.myData['year:' + year]['species:' + this.species_id] = {};
+                iTLMData.mySpecies['year:' + year]['species:' + this.species_id] = {
                   id: this.species_id,
                   taxon: this.taxon
                 };
-                $(iTLMOpts.speciesControlSelector).append('<option value="' + this.species_id + '" >' + this.taxon + '</option>');
               }
               // Need to check that geom + species ID combination not already done at this point
-              found = $.inArray(this.species_id + ':' + wkt, donePoints);
+              found = $.inArray(this.species_id + ':' + wkt, donePoints) !== -1;
               if (found) {
                 return true; // continue to next iteration of records
               } else {
                 donePoints.push(this.species_id + ':' + wkt);
               }
-              if (typeof iTLMData.myData['species:' + species_id]['day:' + this.recordDayIndex] === "undefined") {
-                iTLMData.myData['species:' + species_id]['day:' + this.recordDayIndex] = {records: []};
+              if (typeof iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] === "undefined") {
+                iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] = {records: [], coords: []};
               }
-              iTLMData.myData['species:' + species_id]['day:' + this.recordDayIndex].records.push({
-                wkt: wkt,
-                record: this
-              });
-              
-              
-              
-              
+              iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].records.push(this);
+              iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].coords.push(wkt);
             });
-
-// NOW, loop the data, for each species/day, loop the records and build 1 big feature.
-
-
-
-
-/*
- * Moving the following to the above
-
-            for (var i = 0; i < data.records.length; i++) {
-              var wkt;
-              // remove point stuff: don't need to convert to numbers, as that was only to save space in php.
-              wkt = data.records[i][wktCol].replace(/POINT\(/, '').replace(/\)/, '');
-
-              if (typeof iTLMData.mySpecies[data.records[i].species_id] === 'undefined') {
-                iTLMData.mySpeciesIDs.push(data.records[i].species_id);
-                iTLMData.mySpecies[data.records[i].species_id] = {id: data.records[i].species_id, taxon: data.records[i].taxon};
-                $(iTLMOpts.speciesControlSelector).append('<option value="' + data.records[i].species_id + '" ' + (side === 'rh' ? 'disabled="disabled" style="display:none;"' : '') + '>' + data.records[i].taxon + '</option>');
-              }
-              for (k = 0; k < iTLMOpts.triggerEvents.length; k++) {
-                // event definition
-                // check first that this hasn't happened already! we are using assumption that the data is sorted by date, so earlier records will be processed first.
-                var found = false;
-                for (j = 0; j < data.records[i].recordDayIndex; j++) {
-                  if (typeof iTLMData.myData[year][k][j][data.records[i].species_id] !== 'undefined'
-                      && iTLMData.myData[year][k][j][data.records[i].species_id].locations.indexOf(data.records[i].geom) >= 0) {
-                    found = true;
-                    break;
-                  }
-                }
-                if (found) {
-                  continue;
-                }
-                // user locations independant of event
-                if (canIDuser && iTLMOpts.indicia_user_id && data.records[i].created_by_id === iTLMOpts.indicia_user_id &&
-                        typeof iTLMData.mySites[data.records[i].geom] === 'undefined') {
-                  iTLMData.mySites[data.records[i].geom] = true;
-                  iTLMData.mySiteWKT.push(wkt);
-                }
-                // TODO: Dev: allow between values as rules.
-                if (iTLMOpts.triggerEvents[k].type === 'presence' ||
-                    (iTLMOpts.triggerEvents[k].type === 'arrayVal' &&
-                      typeof data.records[i]['attr_occurrence_' + iTLMOpts.triggerEvents[k].attr] !== 'undefined' &&
-                      iTLMOpts.triggerEvents[k].values.indexOf(data.records[i]['attr_occurrence_' + iTLMOpts.triggerEvents[k].attr]) >= 0)) {
-                  if (typeof iTLMData.myData[year][k][data.records[i].recordDayIndex][data.records[i].species_id] === 'undefined')
-                    iTLMData.myData[year][k][data.records[i].recordDayIndex][data.records[i].species_id] = {
-                      mine: {'attributes': {}, 'feature': false, 'wkt': []},
-                      others: {'attributes': {}, 'feature': false, 'wkt': []}, 
-                      locations: []
-                    };
-                  if (canIDuser && iTLMOpts.indicia_user_id && data.records[i].created_by_id === iTLMOpts.indicia_user_id) {
-                    iTLMData.myData[year][k][data.records[i].recordDayIndex][data.records[i].species_id].mine.wkt.push(wkt);
-                  } else {
-                    iTLMData.myData[year][k][data.records[i].recordDayIndex][data.records[i].species_id].others.wkt.push(wkt);
-                  }
-                  iTLMData.myData[year][k][data.records[i].recordDayIndex][data.records[i].species_id].locations.push(data.records[i].geom);
-                }
-              }
-            }
-            
-            */
-            
-            
-            // loop through all records in year, and convert array of WKT to features.
-            for (k = 0; k < iTLMOpts.triggerEvents.length; k++) {
-              for (j = 0; j <= 365; j++)
-                for (m = 0; m < iTLMData.mySpeciesIDs.length; m++) {
-                  if (typeof iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]] !== 'undefined' &&
-                          iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].mine.wkt.length > 0) {
-                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].mine.feature =
-                            parser.read((iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].mine.wkt.length === 1 ? 'POINT(' : 'MULTIPOINT(') +
-                                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].mine.wkt.join(',') + ')');
-                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].mine.feature.style =
-                            {strokeWidth: 3, strokeColor: 'Yellow', graphicName: 'square', fillOpacity: 1};
-                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].mine.feature.attributes.dayIndex = j;
-                  }
-                  if (typeof iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]] !== 'undefined' &&
-                          iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].others.wkt.length > 0) {
-                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].others.feature =
-                            parser.read((iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].others.wkt.length === 1 ? 'POINT(' : 'MULTIPOINT(') +
-                                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].others.wkt.join(',') + ')');
-                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].others.feature.style = {fillOpacity: 0.8, strokeWidth: 0};
-                    iTLMData.myData[year][k][j][iTLMData.mySpeciesIDs[m]].others.feature.attributes.dayIndex = j;
-                  }
-                }
-            }
-
-            $(iTLMOpts.mapSelector)[0].map.sitesLayer.destroyFeatures();
-            if (iTLMData.mySiteWKT.length > 0) {
-              var feature = parser.read((iTLMData.mySiteWKT.length === 1 ? 'POINT(' : 'MULTIPOINT(') + iTLMData.mySiteWKT.join(',') + ')');
-              feature.style = {fillColor: 0, fillOpacity: 0, strokeWidth: 2, strokeColor: 'Yellow', graphicName: 'square', pointRadius: iTLMData.dotSize + 2};
-              $(iTLMOpts.mapSelector)[0].map.sitesLayer.addFeatures([feature]);
-            }
+            // Now, loop the data, for each species/day combination, build 1 big feature.
+            $.each(iTLMData.myData['year:' + year], function(speciesTag, dayList) {
+              $.each(dayList, function(idx) {
+                var shapeType = this.coords.length === 1 ? 'POINT' : 'MULTIPOINT';
+                this.feature = parser.read(shapeType + '(' + this.coords.join(',') + ')');
+                this.feature.style = {fillOpacity: 0.8, strokeWidth: 0};
+                this.feature.attributes.dayIndex = idx.replace('day:', '');
+              });
+            });
           }
         } else if (typeof data.error !== 'undefined') {
           $(iTLMOpts.errorDiv).html('<p>Error Returned from warehouse report:<br>' + data.error + '<br/>' +
@@ -585,9 +337,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         } else {
           $(iTLMOpts.errorDiv).html('<p>Internal Error: Format from report request not recognised.</p>');
         }
-        if (side === 'lh') {
-          enableSpeciesControlOptions();
-        }
+        enableSpeciesControlOptions(year);
         calculateMinAndMax();
         resetMap();
         dialog.dialog('close');
@@ -619,23 +369,21 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
       var applyDay = function (day, layer) {
         if (typeof day !== 'undefined' && day !== false) {
-          if (day.others.feature) {
-            applyJitter(layer, day.others.feature);
-            day.others.feature.style.pointRadius = iTLMData.dotSize;
-            day.others.feature.style.fillColor = rgbvalue(idx);
-            layer.addFeatures([day.others.feature]);
-          }
-          if (day.mine.feature) {
-            // Dont apply jitter to own data as this may 
-            day.mine.feature.style.pointRadius = iTLMData.dotSize + 2;
-            day.mine.feature.style.fillColor = rgbvalue(idx);
-            layer.addFeatures([day.mine.feature]);
+          if (day.feature) {
+            applyJitter(layer, day.feature);
+            day.feature.style.pointRadius = iTLMData.dotSize;
+            day.feature.style.fillColor = rgbvalue(idx);
+            layer.addFeatures([day.feature]);
           }
         }
       };
 
-      if (iTLMData.year !== '' && iTLMData.species !== '' && iTLMData.event !== '') {
-        applyDay(iTLMData.myData[iTLMData.year][iTLMData.event][idx][iTLMData.species], $(iTLMOpts.mapSelector)[0].map.eventsLayer);
+      if (currentYear() !== '' && iTLMData.species !== '' && 
+          typeof iTLMData.myData['year:' + currentYear()]['species:' + iTLMData.species]['day:' + idx] !== "undefined") {
+        applyDay(
+            iTLMData.myData['year:' + currentYear()]['species:' + iTLMData.species]['day:' + idx],
+            $(iTLMOpts.mapSelector)[0].map.eventsLayer
+        );
       }
     };
 
@@ -648,13 +396,10 @@ var rgbvalue, applyJitter, setToDate, loadYear;
         layer.removeFeatures(toRemove);
     };
 
-    var displayYear = (iTLMData.year2 === '' || iTLMData.year === iTLMData.year2);
-    var myDate = new Date();
-    myDate.setFullYear(iTLMData.year, 0, 1);
-    myDate.setDate(myDate.getDate() + idx);
-    $('#displayDate').html(myDate.getDate() + '/' + (myDate.getMonth() + 1) + (displayYear ? '/' + myDate.getFullYear() : ''));
+    var myDate = new Date(idx * 60 * 60 * 24 * 1000);
+    $('#displayDate').html(myDate.getDate() + '/' + (myDate.getMonth() + 1) + '/' + myDate.getFullYear());
 
-    if (iTLMData.year === '' || iTLMData.species === '' || iTLMData.event === '')
+    if (currentYear() === '' || iTLMData.species === '')
       rmFeatures($(iTLMOpts.mapSelector)[0].map.eventsLayer, -1);
     if (idx !== getLastDisplayed()) {
       if (getLastDisplayed() > idx) {
