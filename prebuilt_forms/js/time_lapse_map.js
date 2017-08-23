@@ -229,7 +229,6 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       timerDelay: 250, // milliseconds
       yearControlSelector: '#yearControl',
       speciesControlSelector: '#speciesControl',
-      eventControlSelector: '#eventControl',
       mapSelector: '#map',
       mapContainerClass: 'mapContainers',
       indicia_user_id: false,
@@ -246,13 +245,12 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       dotControlMax: 5,
       dotSize: 3,
       errorDiv: '#errorMsg',
-      pleaseSelectPrompt: 'Please select a Year / Species / Event combination before playing',
+      pleaseSelectPrompt: 'Please select a Year / Species combination before playing',
       waitDialogText: 'Please wait whilst the data for {year} is loaded.',
       waitDialogTitle: 'Loading Data...',
       // waitDialogOK: 'OK',
       noMappableDataError: 'The report does not output any mappable data.',
       noDateError: 'The report does not output a date.',
-      sitesLayerLabel: 'My Sites', // don't need events layer label as not in switcher.
       monthNames: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
       imgPath: '/'
     };
@@ -269,19 +267,12 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
     $(iTLMOpts.speciesControlSelector).change(function (evt) {
       stopAnimation();
-      enableEventControlOptions();
-      calculateMinAndMax();
-      resetMap();
-    });
-
-    $(iTLMOpts.eventControlSelector).change(function (evt) {
-      stopAnimation();
       calculateMinAndMax();
       resetMap();
     });
 
     $(iTLMOpts.playButtonSelector).click(function () {
-      if (iTLMData.year === '' || iTLMData.species === '' || iTLMData.event === '') {
+      if (iTLMData.year === '' || iTLMData.species === '') {
         alert(iTLMOpts.pleaseSelectPrompt);
         return;
       }
@@ -385,10 +376,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
     mapInitialisationHooks.push(function (mapdiv) {
       var year = iTLMOpts.yearSelector ? $(iTLMOpts.yearControlSelector).val() : 'all';;
-      // each map gets its own site and events layers.
       mapdiv.map.eventsLayer = new OpenLayers.Layer.Vector('Events Layer', {displayInLayerSwitcher: false});
-      mapdiv.map.sitesLayer = new OpenLayers.Layer.Vector(iTLMOpts.sitesLayerLabel, {displayInLayerSwitcher: true});
-      mapdiv.map.addLayer(mapdiv.map.sitesLayer);
       mapdiv.map.addLayer(mapdiv.map.eventsLayer);
       // switch off the mouse drag pan.
       for (var n = 0; n < mapdiv.map.controls.length; n++) {
@@ -404,10 +392,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
   loadYear = function (year, side) {
     var dateFilter = (year === 'all' ? '&date_from=' + iTLMOpts.firstYear + '-01-01' : '&date_from=' + year + '-01-01&date_to=' + year + '-12-31');
     if (typeof iTLMData.myData[year] !== 'undefined') {
-      if (side === 'lh') {
-        enableSpeciesControlOptions();
-        enableEventControlOptions();
-      }
+      enableSpeciesControlOptions();
       calculateMinAndMax();
       resetMap();
       return; // already loaded.
@@ -469,7 +454,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
               wkt = data.records[i][wktCol].replace(/POINT\(/, '').replace(/\)/, '');
               
               if (typeof iTLMData.mySpecies[this.species_id] === 'undefined') {
-                iTLMData.myData[year]['species:' + species_id] = {};
+                iTLMData.myData['species:' + species_id] = {};
                 iTLMData.mySpeciesIDs.push(this.species_id);
                 iTLMData.mySpecies[this.species_id] = {
                   id: this.species_id,
@@ -484,13 +469,12 @@ var rgbvalue, applyJitter, setToDate, loadYear;
               } else {
                 donePoints.push(this.species_id + ':' + wkt);
               }
-              if (typeof iTLMData.myData[year]['species:' + species_id]['day:' + this.recordDayIndex] === "undefined") {
-                iTLMData.myData[year]['species:' + species_id]['day:' + this.recordDayIndex] = [];
+              if (typeof iTLMData.myData['species:' + species_id]['day:' + this.recordDayIndex] === "undefined") {
+                iTLMData.myData['species:' + species_id]['day:' + this.recordDayIndex] = {records: []};
               }
-              iTLMData.myData[year]['species:' + species_id]['day:' + this.recordDayIndex].push({
+              iTLMData.myData['species:' + species_id]['day:' + this.recordDayIndex].records.push({
                 wkt: wkt,
-                record: this,
-                feature: /*** TODO ***/
+                record: this
               });
               
               
@@ -498,7 +482,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
               
             });
 
-
+// NOW, loop the data, for each species/day, loop the records and build 1 big feature.
 
 
 
