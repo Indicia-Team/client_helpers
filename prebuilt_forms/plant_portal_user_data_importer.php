@@ -1598,13 +1598,14 @@ TD;
     //reference system into. 
     $last_key = key(array_slice($headerLineItems, -1, 1, TRUE ));
     if (!empty($_SESSION['sample:entered_sref_system'])) {
-      $headerLineItems[$last_key+1]='Spatial reference system';
+      $headerLineItems[$last_key+1]='Spatial reference system (auto-generated)';
       $last_key=$last_key+1;
     }
     //Always needs an extra column for the spatial reference type which is always set automatically
-    $headerLineItems[$last_key+1]='Spatial reference type';
+    $headerLineItems[$last_key+1]='Spatial reference type (auto-generated)';
     //Remove the header row from the file
     unset($fileArray[0]);
+    
     //Cycle through each row excluding the header row and convert into an array
     foreach ($fileArray as $fileLine) {
       //Trim first otherwise we will attempt to process rows which might be just whitespace
@@ -1629,7 +1630,6 @@ TD;
         $fileRowsAsArray[]=$explodedLine;
       }
     }
-
     //If we are going to compare the headers with the $_POST we need to remove the spaces and underscores as they are inconsistent between the two
     $headerLineItemsWithoutSpacesOrUnderscores=array();
     foreach ($headerLineItems as $idx=>$headerLineItem) {
@@ -1637,7 +1637,6 @@ TD;
       $headerLineItemsWithoutSpacesOrUnderscores[$idx] = str_replace('_','',$headerLineItemsWithoutSpacesOrUnderscores[$idx]);
       $headerLineItemsWithoutSpacesOrUnderscores[$idx] = trim($headerLineItemsWithoutSpacesOrUnderscores[$idx]);
     }
-
     //Do the same with the post
     $postWithoutSpacesUnderscoresInKeys=array();
     foreach ($_POST as $amendedTableHeaderWith_ => $fieldData) {
@@ -1656,8 +1655,8 @@ TD;
       if ((!array_key_exists($headerToCheck,$postWithoutSpacesUnderscoresInKeys)||
               $postWithoutSpacesUnderscoresInKeys[$headerToCheck]==''||
               !isset($postWithoutSpacesUnderscoresInKeys[$headerToCheck]))
-              && $headerToCheck!='Spatialreferencesystem'
-              && $headerToCheck!='Spatialreferencetype') {
+              && $headerToCheck!='Spatialreferencesystem(auto-generated)'
+              && $headerToCheck!='Spatialreferencetype(auto-generated)') {
         unset($headerLineItems[$idx]);
         unset($headerLineItemsWithoutSpacesOrUnderscores[$idx]);
         foreach ($fileRowsAsArray AS &$fileLineArray) {
@@ -2156,7 +2155,7 @@ TD;
       //automatically created by the computer (when the user selects a spatial reference system
       //as the very start of the wizard) then save the position of the column
       if ((!empty($chosenColumnHeadings['sampleSrefSystemHeaderName'])&&$header == $chosenColumnHeadings['sampleSrefSystemHeaderName'])
-              ||$header=='Spatialreferencesystem') {
+              ||$header=='Spatialreferencesystem(auto-generated)') {
         if (!empty($_SESSION['sample:entered_sref_system'])) {
           //If automatically created column save the position as one after the last existing column
           $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx'] = $last_key+1;
@@ -2263,7 +2262,8 @@ TD;
   private static function existing_plot_check_for_line(&$fileRowsAsArrayLine,$plotsUserHasRightsTo,&$lineState,$columnHeadingIndexPositions) {   
     $fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]=trim($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']]);    
     $fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']]=trim($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']]);
-    $fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]=trim($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]);
+    if (!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]))
+      $fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]=trim($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]);
     //Only interested in the plots the user has rights to, if they don't have any anyway, we don't need to return anything from this function
     foreach ($plotsUserHasRightsTo as $aPlotUserHasRightsTo) {
       //If spatial reference system isn't on a import row, then get it from the mappings page
