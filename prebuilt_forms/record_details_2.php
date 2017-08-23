@@ -288,7 +288,7 @@ Record ID',
     hostsite_set_page_title($title);
     foreach($availableFields as $field=>$caption) {
       if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
-        $class = $this->getFieldClass($field);
+        $class = self::getFieldClass($field);
         $caption = self::$record[$field] === 'This record is sensitive' ? '' : $caption;
         $anchorfrom = $field==='licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
         $anchorto = $field==='licence_code' ? '</a>' : '';
@@ -700,7 +700,8 @@ Record ID',
         return '';
       }
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-url', window.location.href);\n";
-      $title = 'Check out this record of '.self::$record['taxon'];
+      $title = str_replace("'", "\'", 'Check out this record of ' . self::$record['taxon']);
+      $title = self::$record['taxon'];
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
     }
     $r = '';
