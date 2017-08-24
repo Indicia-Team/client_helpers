@@ -1,11 +1,11 @@
-#toolbar {
+#time-lapse-toolbar {
   margin-left: auto;
   margin-right: auto;
   padding: 4px;
   padding-top: 25px;
   text-align: center;
 }
-#toolbar button, #timeSlider a, #dotControl a {
+#time-lapse-toolbar button, #timeSlider a, #dotControl a {
   border-color: #808080;
 }
 label, form#yearControlForm label {

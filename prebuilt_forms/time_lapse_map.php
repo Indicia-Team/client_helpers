@@ -76,6 +76,15 @@ class iform_time_lapse_map {
               'required' => false
           ),
           array(
+              'name' => 'multiSpecies',
+              'caption' => 'Multiple species allowed',
+              'description' => 'Does the user choose a single species to show at a time, or can they select multiple?',
+              'type' => 'boolean',
+              'group' => 'Controls',
+              'default' => false,
+              'required' => false
+          ),
+          array(
               'name' => 'dotSize',
               'caption' => 'Dot Size',
               'description' => 'Initial size in pixels of observation dots on map. Can be overriden by a control.',
@@ -128,7 +137,8 @@ class iform_time_lapse_map {
   public static function get_form($args, $nid, $response) {
     $r = "";
     $args = array_merge(array(
-        'yearSelector' => true
+        'yearSelector' => true,
+        'multiSpecies' => false
     ), $args);
     data_entry_helper::add_resource('jquery_ui');
     hostsite_add_library('jquery-ui-slider');
@@ -152,9 +162,6 @@ class iform_time_lapse_map {
           $currentParamValues[$key]=$value;
       }
     }
-    $extras = '&wantColumns=1&wantParameters=1&'.report_helper::array_to_query_string($currentParamValues, true);
-    $canIDuser = false;
-  
     $r .= '<div id="errorMsg"></div>';
     $r .= '<div id="controls-toolbar">';
     if ($args['yearSelector']) {
@@ -166,49 +173,74 @@ class iform_time_lapse_map {
     } else {
       $r .= "<input type=\"hidden\" id=\"yearControl\" name=\"123year\" value=\"all\" />\n";
     }
+    $multiple = $args['multiSpecies'] ? ' multiple="multiple"' : '';
     $r .= '<label for="speciesControl">'.lang::get("Species").' : </label>' . 
-        '<select id="speciesControl"><option value="">'.lang::get("Please select species").'</option></select>';
+        '<select id="speciesControl"' . $multiple . '><option value="">'.lang::get("Please select species").'</option></select>';
     $r .= "\n";
-    
+    $r .= '</div>';
+    $r .= '<div id="map-outer-container">';
     $args['map_width']="auto";
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
     $options['editLayer'] = false;
     $options['clickForSpatialRef'] = false;
     $options['scroll_wheel_zoom'] = false;
-    $r .= '<div class="leftMap mapContainers leftMapOnly">'.map_helper::map_panel($options, $olOptions).'</div>';
-    $options['divId']='map2';
-    
-    $r .= '<div class="ui-helper-clearfix"></div><div id="timeControls">'.
-        '<div id="timeSlider"></div>' .
-        '<div id="toolbar">'.
-        '<span id="dotControlLabel">' . lang::get('Dot Size') . ' :</span><div id="dotSlider"></div>' .
-        '<button id="beginning">go to beginning</button><button id="playMap">play</button><button id="end">go to end</button>'.
-        '<span id="dateControlLabel">'.lang::get("Date currently displayed").' : <span id="displayDate" ></span>'.
-        '</div>';
-    
-    $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path()."../media/images/" : data_entry_helper::$images_path;    
-    data_entry_helper::$javascript .= "
+    $r .= map_helper::map_panel($options, $olOptions);
+    $r .= self::timeControls();
+    self::addTimeLapseInitJs($args);
+    return $r;
+  }
+  
+  /**
+   * Time slider and related controls to go under the map.
+   * @return string HTML to add to the page.
+   */
+  private static function timeControls() {
+    $t = array(
+        'dotSize' => lang::get('Dot Size'),
+        'currentDate' => lang::get("Date currently displayed")
+    );
+    return <<<HTML
+<div class="ui-helper-clearfix"></div>
+<div id="timeControls">'.
+  <div id="timeSlider"></div>
+  <div id="time-lapse-toolbar">
+    <span id="dotControlLabel">$t[dotSize] :</span>
+    <div id="dotSlider"></div>
+    <button id="beginning">go to beginning</button>
+    <button id="playMap">play</button>
+    <button id="end">go to end</button>
+    <span id="dateControlLabel">$t[currentDate] :</span>
+    <span id="displayDate" ></span>'.
+  </div>
+</div>
+
+HTML;
+  }
+  
+  private static function addTimeLapseInitJs($args) {
+    $imgPath = empty(data_entry_helper::$images_path) 
+        ? data_entry_helper::relative_client_helper_path() . "../media/images/"
+        : data_entry_helper::$images_path;
+    $timerDelay = ((int)1000/$args['frameRate']);
+    $yearSelector = $args['yearSelector'] ? 'true' : 'false';
+    $extras = '&wantColumns=1&wantParameters=1&'.report_helper::array_to_query_string($currentParamValues, true);
+    data_entry_helper::$javascript .= <<<JS
 indiciaFns.initTimeLapseMap({
   dotSize: $args[dotSize],
   lat: $args[map_centroid_lat],
   long: $args[map_centroid_long],
   zoom: $args[map_zoom],
-  base_url: '".data_entry_helper::$base_url."',
   report_name: '$args[report_name]',
-  auth_token: '$readAuth[auth_token]',
-  nonce: '$readAuth[nonce]',
   reportExtraParams: '$extras',
-  indicia_user_id: ".(hostsite_get_user_field('indicia_user_id') ? hostsite_get_user_field('indicia_user_id') : 'false').",
   timeControlSelector: '#timeSlider',
   dotControlSelector: '#dotSlider',
-  timerDelay: ".((int)1000/$args['frameRate']).",
+  timerDelay: $timerDelay,
   imgPath: '$imgPath',
-  yearSelector: " . ($args['yearSelector'] ? 'true' : 'false') . ",
+  yearSelector: $yearSelector,
   firstYear: $args[firstYear]
 });
-";
-    $r .= '</div>';
-    return $r;
+
+JS;
   }
 }
