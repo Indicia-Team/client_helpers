@@ -21,9 +21,38 @@ var iTLMData = {
 var rgbvalue, applyJitter, setToDate, loadYear;
 
 (function ($) {
+  // See colorbrewer2.org
+  var colourSequence = ['#e66101','#5e3c99','#fdb863','#b2abd2'];
   var currentYear = function() {
     return $(iTLMOpts.yearControlSelector).val();
   };
+  
+  var currentSpecies = function() {
+    var r;
+    var doingSpeciesColours;
+    if ($(iTLMOpts.speciesControlSelector).is('select')) {
+      return $(iTLMOpts.speciesControlSelector).val();
+    } else {
+      // Clear and reset colors in correct sequence
+      $(iTLMOpts.speciesControlSelector).find('.color-icon').css('background', 'none');
+      r = [];
+      // switch to colour by species when showing more than 1.
+      doingSpeciesColours = $(iTLMOpts.speciesControlSelector + ' :checked').length > 1;
+      $.each($(iTLMOpts.speciesControlSelector + ' :checked'), function(idx) {
+        if (idx >= 4) {
+          if (idx === 4) {
+            alert('Up to 4 species can be shown at a time.');
+          }
+          $(this).removeAttr('checked');
+        }
+        r.push($(this).val());
+        if (doingSpeciesColours) {
+          $(this).next('.color-icon').css('background-color', colourSequence[idx]);
+        }
+      });
+      return r;
+    }
+  }
   
   var stopAnimation = function () {
     if (iTLMData.global_timer_function)
@@ -32,21 +61,38 @@ var rgbvalue, applyJitter, setToDate, loadYear;
   };
   
   var enableSpeciesControlOptions = function(year) {
-    var species = $(iTLMOpts.speciesControlSelector).val();
-    // clear existing species
-    $(iTLMOpts.speciesControlSelector).find('option[value!=""]').remove();
-    // Add options for available species
-    $.each(iTLMData.mySpecies['year:' + year], function() {
-      $(iTLMOpts.speciesControlSelector).append('<option value="' + this.id + '" >' + this.taxon + '</option>');
-    });
-    if (species) {
-      $(iTLMOpts.speciesControlSelector).find('option[value="' + species + '"]').attr('selected', 'selected');
+    var existingSelectedSpecies;
+    var colorIdx = 0;
+    if ($(iTLMOpts.speciesControlSelector).is('select')) {
+      existingSelectedSpecies = $(iTLMOpts.speciesControlSelector).val();
+      // Single species mode. Clear existing species
+      $(iTLMOpts.speciesControlSelector).find('option[value!=""]').remove();
+      // Add options for available species
+      $.each(iTLMData.mySpecies['year:' + year], function() {
+        $(iTLMOpts.speciesControlSelector).append('<option value="' + this.id + '" >' + this.taxon + '</option>');
+      });
+      if (existingSelectedSpecies) {
+        $(iTLMOpts.speciesControlSelector).find('option[value="' + existingSelectedSpecies + '"]').attr('selected', 'selected');
+      }
+    } else {
+      // Single species mode. Clear existing species
+      $(iTLMOpts.speciesControlSelector).find('li').remove();
+      $(iTLMOpts.speciesControlSelector).find('.color-icon').css('background', 'none');
+      // Add options for available species
+      $.each(iTLMData.mySpecies['year:' + year], function() {
+        $(iTLMOpts.speciesControlSelector).append(
+            '<li><label><input type="checkbox" value="' + this.id + '" />' +
+            '<span class="color-icon"></span>' +
+            this.taxon + '</label></li>'
+        );
+        colorIdx++;
+      });
     }
   };
   
   var calculateMinAndMax = function() {
     var year = $(iTLMOpts.yearControlSelector).val();
-    var species = $(iTLMOpts.speciesControlSelector).val();
+    var species = currentSpecies();
     // Always treat species as an array, so we can handle multiple or single with same code
     if (species !== null && species !== '' && !Array.isArray(species)) {
       species = [species];
@@ -167,6 +213,12 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     });
 
     $(iTLMOpts.speciesControlSelector).change(function (evt) {
+      stopAnimation();
+      calculateMinAndMax();
+      resetMap();
+    });
+    
+    indiciaFns.on('change', iTLMOpts.speciesControlSelector + ' input[type="checkbox"]', null, function() {
       stopAnimation();
       calculateMinAndMax();
       resetMap();
@@ -370,8 +422,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
             if (iTLMData.species.length === 1) {
               day.feature.style.fillColor = rgbvalue(idx);
             } else {
-              var colors = ['#e41a1c','#377eb8','#4daf4a','#984ea3','#ff7f00','#ffff33','#a65628','#f781bf','#999999'];
-              day.feature.style.fillColor = colors[speciesIdx];
+              day.feature.style.fillColor = colourSequence[speciesIdx];
             }
             layer.addFeatures([day.feature]);
           }

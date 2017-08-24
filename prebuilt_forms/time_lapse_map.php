@@ -150,22 +150,11 @@ class iform_time_lapse_map {
     iform_load_helpers(array('report_helper','map_helper'));
     $args['param_defaults'] = '';
     $options = iform_report_get_report_options($args, $readAuth);
-    
-    $currentParamValues = array();
-    if (isset($options['extraParams'])) {
-      foreach ($options['extraParams'] as $key=>$value) {
-        // trim data to ensure blank lines are not handled.
-        $key = trim($key);
-        $value = trim($value);
-        // We have found a parameter, so put it in the request to the report service
-        if (!empty($key))
-          $currentParamValues[$key]=$value;
-      }
-    }
     $r .= '<div id="errorMsg"></div>';
-    $r .= '<div id="controls-toolbar">';
+    $r .= '<div id="time-lapse-container">';
+    $r .= '<div id="selection-toolbar">';
     if ($args['yearSelector']) {
-      $r .= '<label for="yearControl">' . lang::get("Year") . ' : </label><select id="yearControl" name="year">';
+      $r .= '<label for="yearControl">' . lang::get("Year") . ': </label><select id="yearControl" name="year">';
       for($i = $now->format('Y'); $i >= $args['firstYear']; $i--){
         $r .= '<option value="'.$i.'">'.$i.'</option>';
       }
@@ -173,10 +162,14 @@ class iform_time_lapse_map {
     } else {
       $r .= "<input type=\"hidden\" id=\"yearControl\" name=\"123year\" value=\"all\" />\n";
     }
-    $multiple = $args['multiSpecies'] ? ' multiple="multiple"' : '';
-    $r .= '<label for="speciesControl">'.lang::get("Species").' : </label>' . 
-        '<select id="speciesControl"' . $multiple . '><option value="">'.lang::get("Please select species").'</option></select>';
-    $r .= "\n";
+    $r .= self::speciesSelectorControl($args);
+    $r .= '<label>' . lang::get("Background layers") . ': </label>';
+    $r .= map_helper::layer_list(array(
+        'includeSwitchers' => true,
+        'includeHiddenLayers' => true,
+        'includeIcons' => false,
+        'layerTypes' => ['base']
+    ));
     $r .= '</div>';
     $r .= '<div id="map-outer-container">';
     $args['map_width']="auto";
@@ -187,7 +180,19 @@ class iform_time_lapse_map {
     $options['scroll_wheel_zoom'] = false;
     $r .= map_helper::map_panel($options, $olOptions);
     $r .= self::timeControls();
+    $r .= '<div>';
     self::addTimeLapseInitJs($args);
+    return $r;
+  }
+  
+  private static function speciesSelectorControl($args) {
+    $r = '<label for="speciesControl">'.lang::get("Species").': </label>';
+    if ($args['multiSpecies']) {
+      $r .= '<ul id="speciesControl">';
+      $r .= '</ul>';
+    } else {
+      $r .= '<select id="speciesControl"><option value="">'.lang::get("Please select species").'</option></select>';
+    }
     return $r;
   }
   
@@ -219,6 +224,17 @@ HTML;
   }
   
   private static function addTimeLapseInitJs($args) {
+    $currentParamValues = array();
+    if (isset($options['extraParams'])) {
+      foreach ($options['extraParams'] as $key=>$value) {
+        // trim data to ensure blank lines are not handled.
+        $key = trim($key);
+        $value = trim($value);
+        // We have found a parameter, so put it in the request to the report service
+        if (!empty($key))
+          $currentParamValues[$key]=$value;
+      }
+    }
     $imgPath = empty(data_entry_helper::$images_path) 
         ? data_entry_helper::relative_client_helper_path() . "../media/images/"
         : data_entry_helper::$images_path;
