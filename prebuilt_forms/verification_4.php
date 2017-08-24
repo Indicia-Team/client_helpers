@@ -370,7 +370,6 @@ idlist=';
       'label' => lang::get('New determination'),
       'labelClass' => 'auto',
       'helpText' => lang::get('Enter a new determination for this record before verifying it. The previous determination will be stored with the record.'),
-      'cacheLookup' => true,
       'extraParams' => $readAuth + array('taxon_list_id' => 1),
       'speciesIncludeBothNames' => true,
       'speciesIncludeTaxonGroup' => true

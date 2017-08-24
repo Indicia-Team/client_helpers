@@ -190,7 +190,6 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           $param['name'] != 'multiple_occurrence_mode' &&
           $param['fieldname'] != 'list_id' &&
           $param['fieldname'] != 'extra_list_id' &&
-          $param['fieldname'] != 'cache_lookup' &&
           $param['fieldname'] != 'user_controls_taxon_filter')
         $retVal[] = $param;
     }

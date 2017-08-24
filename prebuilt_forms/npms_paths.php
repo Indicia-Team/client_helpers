@@ -115,19 +115,6 @@ class iform_npms_paths extends iform_wildflower_count {
           'siteSpecific'=>true
       ),
       array(
-          'fieldname'=>'cache_lookup',
-          'label'=>'Cache lookups',
-          'helpText'=>'Tick this box to select to use a cached version of the lookup list when '.
-              'searching for extra species names to add to the grid, or set to false to use the '.
-              'live version (default). The latter is slower and places more load on the warehouse so should only be '.
-              'used during development or when there is a specific need to reflect taxa that have only '.
-              'just been added to the list.',
-          'type'=>'checkbox',
-          'required'=>false,
-          'group'=>'Species',
-          'siteSpecific'=>false
-      ),
-      array(
           'name' => 'species_include_both_names',
           'caption' => 'Include both names in species controls and added rows',
           'description' => 'When using a species grid with the ability to add new rows, the autocomplete control by default shows just the searched taxon name in the drop down. '.

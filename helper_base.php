@@ -111,7 +111,7 @@ $indicia_templates = array(
       "document.write('</div>');\n".
       "/* ]]> */</script>",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
-      '<span class="nobreak vernacular">{common}</span></div>',
+      '<span class="nobreak vernacular">{default_common_name}</span></div>',
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
@@ -507,6 +507,25 @@ class helper_base extends helper_config {
    * Track if we have already output the indiciaFunctions. 
    */
   protected static $indiciaFnsDone = false;
+  
+  /**
+   * Utility function to insert a list of translated text items for use in JavaScript.
+   * @param string $group
+   * @param array $strings Associative array of keys and texts to translate.
+   */
+  protected static function addLanguageStringsToJs($group, $strings) {
+    self::$javascript .= <<<JS
+if (typeof indiciaData.lang === "undefined") {
+  indiciaData.lang = {};
+}
+indiciaData.lang.$group = {};
+
+JS;
+    foreach ($strings as $key => $text) {
+      self::$javascript .= "indiciaData.lang.speciesChecklistFilter.$key = '" . 
+          str_replace("'", "\'", $text) . "';\n";
+    }
+  }
 
   /**
    * Method to link up the external css or js files associated with a set of code.
@@ -525,6 +544,7 @@ class helper_base extends helper_config {
    * <li>graticule</li>
    * <li>clearLayer</li>
    * <li>addrowtogrid</li>
+   * <li>speciesFilterPopup</li>
    * <li>indiciaMapPanel</li>
    * <li>indiciaMapEdit</li>
    * <li>postcode_search</li>
@@ -634,6 +654,7 @@ class helper_base extends helper_config {
         'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
         'clearLayer' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."clearLayer.js")),
         'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path."addRowToGrid.js")),
+        'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path."speciesFilterPopup.js")),
         'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
         'indiciaMapEdit' => array('deps' =>array('indiciaMap'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.js")),
         'postcode_search' => array('javascript' => array(self::$js_path."postcode_search.js")),
@@ -1108,10 +1129,6 @@ class helper_base extends helper_config {
       //option
     } elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {  
       $ctrlOptions['extraParams']=$options['readAuth'];
-      if (empty($options['speciesCacheLookup'])||$options['speciesCacheLookup']==false)
-        $ctrlOptions['cacheLookup']=false;
-      else 
-        $ctrlOptions['cacheLookup']=true;
       if (!empty($options['speciesTaxonListId']))
         $ctrlOptions['extraParams']['taxon_list_id']=$options['speciesTaxonListId'];
       if (!empty($options['speciesIncludeBothNames'])&&$options['speciesIncludeBothNames']==true)

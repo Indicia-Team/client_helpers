@@ -142,14 +142,7 @@ class iform_tree_map_2 {
     $r = "";
     data_entry_helper::add_resource('jquery_ui');
     if(isset($args['advancedUI']) && $args['advancedUI']) {
-    	// TODO Sort out
-//    	data_entry_helper::$resource_list['jquery_ui_slider'] =
-//    		array('deps' => array('jquery_ui'), 'javascript' => array('/misc/ui/jquery.ui.slider.js'));
-//    	data_entry_helper::add_resource('jquery_ui_slider');
-//      drupal_add_js(drupal_get_path('module', 'jquery_update') .'/replace/ui/ui/jquery.ui.slider.js');
-//      drupal_add_js('/misc/ui/jquery.ui.slider.min.js');
-		drupal_add_js('/misc/ui/jquery.ui.slider.js');
-//      drupal_add_js('/misc/ui/jquery.ui.button.min.js');
+    	hostsite_add_library('jquery-ui-slider');
     }
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     
@@ -157,6 +150,7 @@ class iform_tree_map_2 {
     $year = (isset($_REQUEST['year']) ? $_REQUEST['year'] : $year = $now->format('Y'));
 
     iform_load_helpers(array('report_helper','map_helper'));
+    $args['param_defaults'] = '';
     $options = iform_report_get_report_options($args, $readAuth);
     
     $currentParamValues = array();
@@ -173,7 +167,7 @@ class iform_tree_map_2 {
     $extras = '&wantColumns=1&wantParameters=1&'.report_helper::array_to_query_string($currentParamValues, true);
     $canIDuser = false;
     
-    // Report record should have location_id, sample_id, occurrence_id, sample_date, species ttl_id, attributes, geometry. created_by_id is optional
+    // Report record should have location_id, sample_date, species ttl_id, attributes, geometry. created_by_id is optional
     // Event definition: Name|attribute_id|attribute_values
     // Loop through event definitions
 /*    $events = array(array('type'=>'arrayVal', 'name'=>'Budburst', 'attr'=>'289', 'values'=>array(3904,3961,3905,3906,3962,3907)),
