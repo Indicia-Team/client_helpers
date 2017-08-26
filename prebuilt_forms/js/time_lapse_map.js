@@ -124,7 +124,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     var spacing = 100 / diff;
     slider.find('.ui-slider-tick-mark').remove();
     slider.find('.ui-slider-label').remove();
-    var maxLabels = 11; // TODO ".(isset($args['numberOfDates']) && $args['numberOfDates'] > 1 ? $args['numberOfDates'] : 11).";
+    var maxLabels = iTLMOpts.numberOfDateLabels;
     var maxTicks = 100;
     var daySpacing = diff === 0 ? 1 : Math.ceil(diff / maxTicks);
     var provisionalLabelSpacing = Math.max(7, Math.ceil(diff / maxLabels));
@@ -193,7 +193,8 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       dotSize: 3,
       errorDiv: '#errorMsg',
       pleaseSelectPrompt: 'Please select a Year / Species combination before playing',
-      waitDialogText: 'Please wait whilst the data for {year} is loaded.',
+      waitDialogText: 'Please wait whilst the data for {year} are loaded.',
+      waitDialogTextAll: 'Please wait whilst the data are loaded.',
       waitDialogTitle: 'Loading Data...',
       // waitDialogOK: 'OK',
       noMappableDataError: 'The report does not output any mappable data.',
@@ -310,6 +311,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
   loadYear = function (year, side) {
     var dateFilter = (year === 'all' ? '&date_from=' + iTLMOpts.firstYear + '-01-01' : '&date_from=' + year + '-01-01&date_to=' + year + '-12-31');
+    var dlgText;
     if (typeof iTLMData.myData['year:' + year] !== 'undefined') {
       enableSpeciesControlOptions(year);
       calculateMinAndMax();
@@ -319,7 +321,12 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     iTLMData.myData['year:' + year] = {};
     iTLMData.mySpecies['year:' + year] = {};
     $(iTLMOpts.errorDiv).empty();
-    dialog = $('<p>' + iTLMOpts.waitDialogText.replace('{year}', year) + '</p>').dialog({
+    if (year === 'all') {
+      dlgText = iTLMOpts.waitDialogTextAll;
+    } else {
+      dlgText = iTLMOpts.waitDialogText.replace('{year}', year);
+    }
+    dialog = $('<p>' + dlgText + '</p>').dialog({
       title: iTLMOpts.waitDialogTitle, 
       buttons: {OK: function () {
         dialog.dialog('close');

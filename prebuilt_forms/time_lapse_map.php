@@ -99,8 +99,8 @@ class iform_time_lapse_map {
               'group' => 'Controls'
           ),
           array(
-              'name' => 'numberOfDates',
-              'caption' => 'Number of Dates',
+              'name' => 'numberOfDateLabels',
+              'caption' => 'Number of date labels',
               'description' => 'The maximum number of dates displayed on the X-axis. Used to prevent crowding. The minimum spacing is one date displayed per week. Date range is determined by the data.',
               'type' => 'int',
               'default' => 11,
@@ -254,7 +254,8 @@ indiciaFns.initTimeLapseMap({
   timerDelay: $timerDelay,
   imgPath: '$imgPath',
   yearSelector: $yearSelector,
-  firstYear: $args[firstYear]
+  firstYear: $args[firstYear],
+  numberOfDateLabels: $args[numberOfDateLabels]
 });
 
 JS;
