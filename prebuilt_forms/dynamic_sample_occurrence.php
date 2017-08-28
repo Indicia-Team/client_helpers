@@ -720,9 +720,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       // errors with new sample or entity populated with post, so display this data.
       $mode = self::MODE_EXISTING;
     } // else valid save, so go back to gridview: default mode 0
-    if (!empty($_GET['sample_id']) && $_GET['sample_id']!='{sample_id}'){
+    if ((!empty($_GET['sample_id']) && $_GET['sample_id']!='{sample_id}') || !empty($_GET['child_sample_id'])) {
       $mode = self::MODE_EXISTING;
-      self::$loadedSampleId = $_GET['sample_id'];
+      self::$loadedSampleId = empty($_GET['sample_id']) ? $_GET['child_sample_id'] : $_GET['sample_id'];
     }
     if (!empty($_GET['occurrence_id']) && $_GET['occurrence_id']!='{occurrence_id}'){
       $mode = self::MODE_EXISTING;
@@ -826,8 +826,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // Load the sample record
     if (self::$loadedSampleId) {
       data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', false, true);
-      // If there is a parent sample - load it next so the details overwrite the child sample. 
-      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id'])) {
+      // If there is a parent sample and we are not force loading the child sample then load it next so the details 
+      // overwrite the child sample. 
+      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($_GET['child_sample_id'])) {
         data_entry_helper::load_existing_record(
             $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id']);
         self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
