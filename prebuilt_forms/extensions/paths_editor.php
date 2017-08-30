@@ -51,13 +51,19 @@ class extension_paths_editor {
   }
 
   public static function link_to_parent($auth, $args, $tabalias, $options, $path) {
-    if (empty($_GET['table']) || $_GET['table']!=='sample' || empty($_GET['id']))
+    if (empty($_GET['child_sample_id']) && (empty($_GET['table']) || $_GET['table']!=='sample' || empty($_GET['id']))) {
       throw new exception('paths_editor.link_to_parent control needs to be called from a form that saves a sample');
+    }
+    if (isset($_GET['table']) && $_GET['table'] === 'sample' && isset($_GET['id'])) {
+      $parent_id = $_GET['id'];
+    } else {
+      $parent_id = data_entry_helper::$entity_to_load['sample:parent_id'];
+    }
     // construct a query to pull back the parent sample and any existing child samples in one go
     $samples = data_entry_helper::get_population_data(array(
       'table' => 'sample',
       'extraParams' => $auth['read'] + array(
-          'query' => json_encode(array('where' => array('id', $_GET['id']), 'orwhere' => array('parent_id', $_GET['id']))),
+          'query' => json_encode(array('where' => array('id', $parent_id), 'orwhere' => array('parent_id', $parent_id))),
           'view' => 'detail'
       ),
       'caching' => false
@@ -65,7 +71,7 @@ class extension_paths_editor {
     $childGeoms = array();
     $r = '';
     foreach ($samples as $sample) {
-      if ($sample['id']===$_GET['id']) {
+      if ($sample['id']===$parent_id) {
         // found the parent sample. Send to JS so it can be shown on the map
         data_entry_helper::$javascript .= "indiciaData.showParentSampleGeom = '$sample[geom]';\n";
         $r = data_entry_helper::hidden_text(array(
@@ -80,14 +86,24 @@ class extension_paths_editor {
     // Output some instructions to the user which will depend on whether we are on the first
     // child sample or not.
     if (!empty($options['outputInstructionsTo'])) {
-      $instruct = empty($childGeoms) ? $options['firstInstructions'] : $options['otherInstructions'];
-      data_entry_helper::$javascript .= "$('#$options[outputInstructionsTo]').html('$instruct');\n";
+      if (empty($_GET['child_sample_id'])) {
+        $instruct = empty($childGeoms) ? $options['firstInstructions'] : $options['otherInstructions'];
+        data_entry_helper::$javascript .= "$('#$options[outputInstructionsTo]').html('$instruct');\n";
+      } else {
+        data_entry_helper::$javascript .= "$('#$options[outputInstructionsTo]').hide();\n";
+      }
+    }
+    if (!empty($_GET['child_sample_id']) && !empty($options['redirectAfterSingleChildEdit'])) {
+      $r .= data_entry_helper::hidden_text(array(
+        'fieldname' => 'redirect_on_success',
+        'default' => $options['redirectAfterSingleChildEdit']
+      ));
     }
     $childGeoms = implode(',', $childGeoms);
     data_entry_helper::$javascript .= "indiciaData.showChildSampleGeoms = [$childGeoms];\n";
     $r .= data_entry_helper::hidden_text(array(
       'fieldname' => 'sample:parent_id',
-      'default' => $_GET['id']
+      'default' => $parent_id
     ));
     return $r;
   }
