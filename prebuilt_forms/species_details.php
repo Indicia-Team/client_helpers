@@ -471,36 +471,38 @@ class iform_species_details extends iform_dynamic {
     ), $options);
     
     //Use this report to return the photos
-    $reportName = 'library/occurrence_images/explore_list_2';
-    return '<div class="detail-panel" id="detail-panel-photos"><h3>'.lang::get('Photos and media').'</h3>' . 
+    $reportName = 'library/occurrence_images/filterable_explore_list';
+    return 
+      '<div class="detail-panel" id="detail-panel-photos"><h3>'.lang::get('Photos and media').'</h3>' .
       report_helper::freeform_report(array(
       'readAuth' => $auth['read'],
       'dataSource'=> $reportName,
       'itemsPerPage' => $options['itemsPerPage'],
       'class' => $options['class'],
       'header'=>'<ul>',
-      'footer'=>'</ul>',
-      'bands'=>array(array('content'=>'<li class="gallery-item"><a href="{imageFolder}{path}" class="fancybox single"><img src="{imageFolder}'.$options['imageSize'].'-{path}" /></a><br/>{caption}</li>')),
+      'footer'=>'</ul>' .
+          '<p class="helpText">' . 
+          lang::get('*Icons in the top corner of photos show the verification status of the underlying records.') . 
+          '</p>',
+      'bands'=>array(array('content'=><<<HTML
+<li class="gallery-item">
+  <a href="{imageFolder}{media}" class="fancybox single">
+    <img src="{imageFolder}$options[imageSize]-{media}" />
+    <span class="status-icon certainty-{certainty} status-{record_status} substatus-{record_substatus} query-{query}" />
+  </a><br/>
+  {caption}
+</li>
+HTML
+)),   
       'emptyText' => '<p>No photos or media files available</p>',
       'mode' => 'report',
       'autoParamsForm' => false,
       'extraParams' => array(
-        'taxon_meaning_id'=> self::$taxon_meaning_id,
+        'taxon_meaning_list'=> self::$taxon_meaning_id,
         'smpattrs'=>'',
         'occattrs'=>'',
-        'searchArea'=>'',
-        'idlist'=>'',
-        'currentUser'=>'',
-        'ownData'=>0,
-        'location_id'=>'',
-        'ownLocality'=>0,
-        'taxon_groups'=>'',
-        'ownGroups'=>0,
-        'survey_id'=>'',
-        'date_from'=>'',
-        'date_to'=>'',
         'sharing'=>'reporting',
-        'quality'=>'V'
+        'status' => '!R'
       )
     )).'</div>';
   }

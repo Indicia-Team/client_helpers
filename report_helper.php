@@ -630,7 +630,7 @@ class report_helper extends helper_base {
 <form id="updateform-$updateformID" method="post" action="$url">
 <input type="hidden" name="website_id" value="$update[website_id]">
 <input type="hidden" name="transaction_id" value="updateform-$updateformID-field">
-<input id="updateform-$updateformID-field" name="$update[tablename]:$update][fieldname]" 
+<input id="updateform-$updateformID-field" name="$update[tablename]:$update[fieldname]" 
   class="update-input $class" value="$value">
 FORM;
 
@@ -1765,65 +1765,91 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       'dataSourceLoRes'=>'',
     ), $options);
     $options = self::get_report_grid_options($options);
-    // keep track of the columns in the report output which we need to draw the layer
+
+    // Keep track of the columns in the report output which we need to draw the layer and popups.
     $colsToInclude=array();
+    
     if (empty($options['geoserverLayer'])) {
-      if ($options['ajax']) 
-        // just load the report structure, as Ajax will load content later
+      // We are doing vector mapping from an Indicia report.
+      
+      if ($options['ajax']) {
+        // Just load the report structure, as Ajax will load content later.
         $options['extraParams']['limit']=0;
+      }
+      
       self::request_report($response, $options, $currentParamValues, false, '');
-      if (isset($response['error'])) return $response['error'];
+      if (isset($response['error'])) {
+        // Return immediately on error.
+        return $response['error'];
+      }
       $r = self::params_form_if_required($response, $options, $currentParamValues);
-      // return the params form, if that is all that is being requested, or the parameters are not complete.
-      if ($options['paramsOnly'] || !isset($response['records']))
+      if ($options['paramsOnly'] || !isset($response['records'])) {
+        // Return the params form, if that is all that is being requested, or the parameters are not complete.
         return $r;
+      }
       $records = $response['records'];
-      // find the geom column
+
+      // Find the geom column.
       foreach($response['columns'] as $col=>$cfg) {
         if (isset($cfg['mappable']) && $cfg['mappable']=='true') {
           $wktCol = $col;
           break;
         }
       }
-      if (!isset($wktCol))
+      if (!isset($wktCol)) {
         $r .= "<p>".lang::get("The report's configuration does not output any mappable data")."</p>";
-    } else {
-      // using geoserver, so we just need to know the param values.
+      }
+      else {
+        // Always include geom in output even if marked as not visible in report.
+        $colsToInclude[$wktCol]='';
+      }
+      
+      if (isset($options['rowId'])) {
+        // Always include Id in output even if marked as not visible in report.
+        $colsToInclude[$options['rowId']] = '';
+      }
+
+    } 
+    else {
+      // We are doing WMS mapping using geoserver, so we just need to know the param values.
       $currentParamValues = self::get_report_grid_current_param_values($options);
       $response = self::get_report_data($options, self::array_to_query_string($currentParamValues, true).'&wantRecords=0&wantParameters=1');
       $r = self::get_report_grid_parameters_form($response, $options, $currentParamValues);
     }
+    
     if (isset($response['records']) ||
         !isset($response['parameterRequest']) ||
-        count(array_intersect_key($currentParamValues, $response['parameterRequest']))==count($response['parameterRequest'])) {
+        count(array_intersect_key($currentParamValues, $response['parameterRequest'])) == count($response['parameterRequest'])) {
+      // We are ready to draw the map.
+      
       if (empty($options['geoserverLayer'])) {
-        // we are doing vector reporting via indicia services
-        // first we need to build a style object which respects columns in the report output that define style settings for each vector.
-        // default features are blue and red if selected
+        // We are doing vector mapping  from an Indicia report.
+        
+        // Build a default style object which is blue or red if selected.
         $defsettings = array(
-          'fillColor'=> '#0000ff',
-          'strokeColor'=> '#0000ff',
-          'strokeWidth'=>empty($options['featureDoubleOutlineColour']) ? "\${getstrokewidth}" : 1,
-          'fillOpacity'=>"\${getfillopacity}",
-          'strokeOpacity'=>0.8,
-          'pointRadius'=>"\${getpointradius}",
-          'graphicZIndex'=>"\${getgraphiczindex}");
+          'fillColor' => '#0000ff',
+          'strokeColor' => '#0000ff',
+          'strokeWidth' => empty($options['featureDoubleOutlineColour']) ? "\${getstrokewidth}" : 1,
+          'fillOpacity' => "\${getfillopacity}",
+          'strokeOpacity' => 0.8,
+          'pointRadius' => "\${getpointradius}",
+          'graphicZIndex' => "\${getgraphiczindex}");
         $selsettings = array_merge($defsettings, array(
-          'fillColor'=> '#ff0000',
-          'strokeColor'=> '#ff0000',
-          'strokeOpacity'=>0.9)
+          'fillColor' => '#ff0000',
+          'strokeColor' => '#ff0000',
+          'strokeOpacity' => 0.9)
         );
-        $defStyleFns=array();
-        $selStyleFns=array();
-        // default fill opacity, more opaque if selected, and gets more transparent as you zoom in.
+        $defStyleFns = array();
+        $selStyleFns = array();
+        // Default fill opacity, more opaque if selected, and gets more transparent as you zoom in.
         $defStyleFns['fillOpacity'] = "getfillopacity: function(feature) {
-          return Math.max(0, 0.4-feature.layer.map.zoom/100);
+          return Math.max(0, 0.4 - feature.layer.map.zoom/100);
         }";
-        // when selected, a little bit more opaque
+        // When selected, a little bit more opaque.
         $selStyleFns['fillOpacity'] = "getfillopacity: function(feature) {
-          return Math.max(0, 0.7-feature.layer.map.zoom/100);
+          return Math.max(0, 0.7 - feature.layer.map.zoom/100);
         }";
-        // default fill opacity, more opaque if selected, and gets more transparent as you zoom in.
+        // Default radius based on precision of record but limited to maintain visibility when zoomed out.
         // Note that the number of map units only approximates a metre in web-mercator, accurate
         // near the equator but not near the poles. We use a very crude adjustment if necessary
         // which works well around the UK's latitude.
@@ -1834,68 +1860,97 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
           }
           return Math.max(5, units / (feature.layer.map.getResolution()));
         }";
-        // default z index, smaller objects on top
+        // Default z index, smaller objects on top.
         $defStyleFns['graphicZIndex'] = "getgraphiczindex: function(feature) {
-          return Math.round(feature.geometry.getBounds().left - feature.geometry.getBounds().right)+100000;
+          return Math.round(feature.geometry.getBounds().left - feature.geometry.getBounds().right) + 100000;
         }";
-        // when selected, move objects upwards
+        // When selected, move objects upwards.
         $selStyleFns['graphicZIndex'] = "getgraphiczindex: function(feature) {
-          return Math.round(feature.geometry.getBounds().left - feature.geometry.getBounds().right)+200000;
+          return Math.round(feature.geometry.getBounds().left - feature.geometry.getBounds().right) + 200000;
         }";
-        foreach($response['columns'] as $col=>$def) {
+        
+        // Override the default style object using columns in the report output that define style settings.
+        foreach($response['columns'] as $col => $def) {
           if (!empty($def['feature_style'])) {
-            if ($def['feature_style']==='fillOpacity') {
-              // replace the fill opacity functions to use a column value, with the same +0.3 change
-              // when selected
+            // Found a column that defines a style setting.
+            
+            if ($def['feature_style'] === 'fillOpacity') {
+              // Replace the fill opacity functions to use a column value.
               $defStyleFns['fillOpacity'] = "getfillopacity: function(feature) {
-                return Math.max(0, feature.attributes.$col-feature.layer.map.zoom/100);
+                return Math.max(0, feature.attributes.$col - feature.layer.map.zoom/100);
               }";
+              // When selected, a little bit more opaque.
               $selStyleFns['fillOpacity'] = "getfillopacity: function(feature) {
-                return Math.max(0, feature.attributes.$col-feature.layer.map.zoom/100+0.3);
+                return Math.max(0, feature.attributes.$col - feature.layer.map.zoom/100 + 0.3);
               }";
-            } elseif ($def['feature_style']==='graphicZIndex') {
-              // replace the default z index with the column value, using an fn to add 1000 when selected
+            } 
+            elseif ($def['feature_style'] === 'graphicZIndex') {
+              // Replace the default z index with the column value.
+              // ${} syntax is explained at http://docs.openlayers.org/library/feature_styling.html.
               $defsettings['graphicZIndex'] = '${'.$col.'}';
+              // When selected, move objects upwards.
               $selStyleFns['graphicZIndex'] = "getgraphiczindex: function(feature) {
-                return feature.attributes.$col+1000;
+                return feature.attributes.$col + 1000;
               }";
               $selsettings['graphicZIndex'] = '${getgraphiczindex}';
-            } else {
-              // found a column that outputs data to input into a feature style parameter. ${} syntax is explained at http://docs.openlayers.org/library/feature_styling.html.
+            } 
+            else {
+              // Found a column that outputs data to input into a feature style parameter. 
+              // ${} syntax is explained at http://docs.openlayers.org/library/feature_styling.html.
               $defsettings[$def['feature_style']] = '${'.$col.'}';
-              if ($def['feature_style']!=='strokeColor')
+              if ($def['feature_style'] !== 'strokeColor') {
+                // Override the style for selected items too except red stroke colour.
                 $selsettings[$def['feature_style']] = '${'.$col.'}';
+              }
             }
+
+            // We need to include in output any columns involved in the feature style.
+            $colsToInclude[$col] = '';
           }
         }
-        if ($options['displaySymbol']!=='vector')
-          $defsettings['graphicName']=$options['displaySymbol'];
-        // The following function uses the strokeWidth to pad out the squares which go too small when zooming the map out. Points 
-        // always display the same size so are no problem. Also, no need if using a double outline.
+        
+        if ($options['displaySymbol'] !== 'vector') {
+          // Use a symbol marker on the map rather than vector.
+          $defsettings['graphicName'] = $options['displaySymbol'];
+        }
+        
+        // The following function uses the strokeWidth to pad out the squares which go too small when zooming the map
+        // out. Points  always display the same size so are no problem. Also, no need if using a double outline.
         if (empty($options['featureDoubleOutlineColour'])) {
           $strokeWidthFn = "getstrokewidth: function(feature) {
-            var width=feature.geometry.getBounds().right - feature.geometry.getBounds().left,
-              strokeWidth=(width===0) ? 1 : %d - (width / feature.layer.map.getResolution());
-            return (strokeWidth<%d) ? %d : strokeWidth;
+            var width = feature.geometry.getBounds().right - feature.geometry.getBounds().left,
+              strokeWidth = (width === 0) ? 1 : %d - (width / feature.layer.map.getResolution());
+            return (strokeWidth < %d) ? %d : strokeWidth;
           }";
           $defStyleFns['getStrokeWidth'] = sprintf($strokeWidthFn, 9, 2, 2);
           $selStyleFns['getStrokeWidth'] = sprintf($strokeWidthFn, 10, 3, 3);
         }
+        
+        // The style objects can also be overriden by column values as specified in the valueOutput option. 
         if (isset($options['valueOutput'])) {
           foreach($options['valueOutput'] as $type => $outputdef) {
             $value = $outputdef['valueField'];
-            // we need this value in the output
+            // We need this value in the output.
             $colsToInclude[$value]='';
+            
             if (preg_match('/{(?P<name>.+)}/', $outputdef['minValue'], $matches)) {
+              // Min value is obtained from column.
               $minvalue = 'feature.data.'.$matches['name'];
               $colsToInclude[$matches['name']]='';
-            } else
+            } 
+            else {
               $minvalue = $outputdef['minValue'];
+            }
+            
             if (preg_match('/{(?P<name>.+)}/', $outputdef['maxValue'], $matches)) {
+              // Max value is obtained frm column.
               $maxvalue = 'feature.data.'.$matches['name'];
               $colsToInclude[$matches['name']]='';
-            } else
+            } 
+            else {
               $maxvalue = $outputdef['maxValue'];
+            }
+            
             $from = $outputdef['from'];
             $to = $outputdef['to'];
             if (substr($type, -5)==='Color')
@@ -1919,34 +1974,33 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
                   '}';
             $defsettings[$type]="\${get$type}";
           }
-          // As well as the columns required for valueOutput, we also need to include any others
-          // involved in the feature style
-          foreach ($response['columns'] as $col=>$cfg) {
-            if (!empty($cfg['feature_style']))
-              $colsToInclude[$col] = '';
-          }
         }
+        
+        // Convert these styles into a JSON definition ready to feed into JS.
         $selStyleFns = implode(",\n", array_values(array_merge($defStyleFns, $selStyleFns)));
         $defStyleFns = implode(",\n", array_values($defStyleFns));
-        // convert these styles into a JSON definition ready to feed into JS.
-        $defsettings = json_encode($defsettings);
-        $selsettings = json_encode($selsettings);
-        $addFeaturesJs = "";        
-        // No need to pass the default type of vector display, so use empty obj to keep JavaScript size down
-        $opts = $options['displaySymbol']==='vector' ? '{}' : json_encode(array('type'=>$options['displaySymbol']));
-        if ($options['clickableLayersOutputMode']!=='popup' && $options['clickableLayersOutputMode']!=='div'
-            && $options['clickableLayersOutputMode']!=='customFunction' && isset($wktCol)) {
-          // If we don't need record data for every row for feature clicks, then only include necessary columns to minimise JS
-          $colsToInclude['occurrence_id']='';
-          $colsToInclude[$wktCol]='';
-          foreach ($response['columns'] as $name=>$def) {
-            if (isset($def['feature_style']))
-              $colsToInclude[$name] = '';
-          }
-        }
         $defStyleFns = ", {context: {\n    $defStyleFns\n  }}";
         $selStyleFns = ", {context: {\n    $selStyleFns\n  }}";
+        $defsettings = json_encode($defsettings);
+        $selsettings = json_encode($selsettings);
+        
+        $addFeaturesJs = "";        
+        // No need to pass the default type of vector display, so use empty obj to keep JavaScript size down
+        $opts = $options['displaySymbol'] === 'vector' ? '{}' : json_encode(array('type' => $options['displaySymbol']));
+        
+        if ($options['clickableLayersOutputMode'] == 'popup' || $options['clickableLayersOutputMode'] == 'div'
+            || $options['clickableLayersOutputMode'] == 'customFunction') {
+          // Add in all other visible columns from report if needed for feature clicks. They can be omitted otherwise
+          // to minimise JS.
+          foreach ($response['columns'] as $name => $cfg) {
+            if (!isset($cfg['visible']) || ($cfg['visible'] !== 'false' && $cfg['visible'] !== false)) {
+              $colsToInclude[$name] = '';
+            }
+          }
+        }
+            
         if ($options['ajax']) {
+          // Output scripts to get map loading by Ajax.
           self::$javascript .= "mapInitialisationHooks.push(function(div) {\n".
             "  var wantToMap = typeof indiciaData.filter==='undefined' || typeof indiciaData.filter.def.indexed_location_id==='undefined' || indiciaData.filter.def.indexed_location_id==='';\n" .
             "  if (wantToMap && typeof indiciaData.reports!==\"undefined\") {\n" .
@@ -1971,31 +2025,62 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
               "  }});\n";
           }
           self::$javascript .= "});\n";
-        } else {
+        }
+        else {
+          // Not Ajax so output data to be loaded.
           $geoms = array();
-          foreach ($records as $record) { 
+          $imagePath = self::get_uploaded_image_folder();
+          foreach ($records as $record) {
+            // Loop through all records.
+            
             if (isset($wktCol) && !empty($record[$wktCol])) {
-              $record[$wktCol]=preg_replace('/\.(\d+)/', '', $record[$wktCol]);
-              // rather than output every geom separately, do a list of distinct geoms to minify the JS
+              // Only ouput records which can be mapped.
+              
+              // Truncate fractional parts of WKT
+              $record[$wktCol] = preg_replace('/\.(\d+)/', '', $record[$wktCol]);
+              // Rather than output every geom separately, do a list of distinct geoms.
               if (!$geomIdx = array_search('"'.$record[$wktCol].'"', $geoms)) {          
                 $geoms[] = '"'.$record[$wktCol].'"';
-                $geomIdx = count($geoms)-1;
+                $geomIdx = count($geoms) - 1;
               }
               $record[$wktCol] = $geomIdx;
+
+              // Process image columns and templated columns as defined in report file.
+              foreach ($response['columns'] as $col => $cfg) {
+                if (isset($cfg['img']) && $cfg['img']=='true' && !empty($record[$col]) && !isset($cfg['template'])) {
+                  // Output thumbnails from image columns
+                  $imgs = explode(',', $record[$col]);
+                  $value='';
+                  foreach($imgs as $img) {
+                      $value .= "<img src=\"$imagePath" . "thumb-$img\" />";
+                  }
+                }
+                elseif (isset($cfg['template'])) {
+                  // Build value from template in report.
+                  $value = self::mergeParamsIntoTemplate($record, $cfg['template'], true, true, true);
+                } 
+                else {
+                  // Don't display any null values returned.
+                  $value = isset($record[$col]) ? $record[$col] : '';
+                }
+                $record[$col] = $value;
+              }
+
               if (!empty($colsToInclude)) {
-                // if limiting the columns, ensure that the geom and row ID are included.
-                $colsToInclude[$wktCol]='';
-                if (!empty($options['rowId']))
-                  $colsToInclude[$options['rowId']]='';
+                // Remove all columns from record which are not needed.
                 $record = array_intersect_key($record, $colsToInclude); 
               }
+              
               $addFeaturesJs.= "div.addPt(features, ".json_encode($record).", '$wktCol', $opts" . (empty($options['rowId']) ? '' : ", '" . $record[$options['rowId']] . "'") . ");\n";
             }
           }
           self::$javascript .= 'indiciaData.geoms=['.implode(',',$geoms)."];\n";
         }
+        
+        
         self::addFeaturesLoadingJs($addFeaturesJs, $defsettings, $selsettings, $defStyleFns, $selStyleFns, $options['zoomMapToOutput'] && !$options['ajax'], $options['featureDoubleOutlineColour']);
-      } else {
+      }
+      else {
         // doing WMS reporting via GeoServer
         $replacements = array();
         foreach(array_keys($currentParamValues) as $key)
@@ -2019,6 +2104,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
           $filter, $style},
       {singleTile: true, isBaseLayer: false, sphericalMercator: true});\n";
       }
+      
       $setLocationJs = '';
       //When the user uses a page like dynamic report explorer with a map, then there might be more than
       //one parameter that is a location based parameter. For instance, Site and Region might be seperate parameters,

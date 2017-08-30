@@ -112,6 +112,62 @@ class extension_splash_extensions {
     }
   }
  
+  /* $options Options array with the following possibilities:<ul>
+   * <li><b>coreSquareLocationTypeId</b><br/>
+   * The location type id of a core square</li>
+   * <li><b>additionalSquareLocationTypeId</b><br/>
+   * The location type id of an additional square</li>
+   * <li><b>privatePlotAttrId</b><br/>
+   * Optional attribute for the location attribute id which holds whether a plot is private. If supplied then when a private plot is selected
+   * as the location then all occurrences are set to have a privacy_precision=10000</li>
+   * </ul>
+   */
+  public static function extra_species_page_set_private_plot_precision($auth, $args, $tabAlias, $options) {
+    $coreSquareLocationTypeId=$options['coreSquareLocationTypeId'];
+    $additionalSquareLocationTypeId=$options['additionalSquareLocationTypeId'];
+    $currentUserId=hostsite_get_user_field('indicia_user_id');
+    $viceCountyLocationAttributeId=0;
+    $noViceCountyFoundMessage='';
+    $userSquareAttrId=$options['userSquareAttrId'];
+    $extraParamForSquarePlotReports=array(
+        'core_square_location_type_id'=>$coreSquareLocationTypeId,
+        'additional_square_location_type_id'=>$additionalSquareLocationTypeId,
+        'current_user_id'=>$currentUserId,
+        'vice_county_location_attribute_id'=>$viceCountyLocationAttributeId,
+        'no_vice_county_found_message'=>$noViceCountyFoundMessage,
+        'user_square_attr_id'=>$userSquareAttrId);
+    $reportOptions = array(
+      'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
+      'readAuth'=>$auth['read'],
+      'mode'=>'report',
+      'extraParams' => $extraParamForSquarePlotReports
+    );
+    if (!empty($options['privatePlotAttrId'])) {
+      self::set_private_plot_precision($auth, $args, $tabAlias, $options, $reportOptions, $extraParamForSquarePlotReports);
+    }
+  }
+  
+  /*
+   * When a private plot is selected by the user, we need to set a privacy precision
+   * on the occurrences
+   */
+  public static function set_private_plot_precision($auth, $args, $tabAlias, $options, $reportOptions,$extraParamForSquarePlotReports) {
+    $extraParamForSquarePlotReports=array_merge($extraParamForSquarePlotReports,array('private_plot_attr_id'=>$options['privatePlotAttrId'],'only_return_private_plots'=>true));
+    $reportOptions['extraParams']=$extraParamForSquarePlotReports;
+    //When the page initially loads, collect all the private plots that can be selected by the user, rather than
+    //load whether the plot is private when each selection is made.
+    $myPlotsAndSquares = data_entry_helper::get_report_data(
+      $reportOptions
+    );
+    $privatePlots=array();    
+    foreach ($myPlotsAndSquares as $locationDataItem) {
+      $privatePlots[]=$locationDataItem['id'];
+    }
+    data_entry_helper::$javascript .= '
+    private_plots_set_precision('.json_encode($privatePlots).');
+    ';
+  }
+  
   /**
    * Get a location select control pair, first the user must select a square then a plot associated with a square.
    * Only squares that are associated with the user and also have plots are displayed
@@ -138,7 +194,7 @@ class extension_splash_extensions {
    * The location attribute id that holds a plot's % Ash Coverage</li>
    * <li><b>privatePlotAttrId</b><br/>
    * Optional attribute for the location attribute id which holds whether a plot is private. If supplied then when a private plot is selected
-   * as the location then all occurrences are set to have a sensitivity_precision=10000</li>
+   * as the location then the sample is set to have a privacy precision=10000</li>
    * <li><b>rowInclusionCheckModeHasData</b><br/>
    * Optional. Supply this as true if the species grid is in rowInclusionCheck=hasData mode and you are using the privatePlotAttrId option.
    * <li><b>noPlotMessageInAlert</b><br/>
@@ -191,21 +247,75 @@ class extension_splash_extensions {
       data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly');";
     }
     $rawData = data_entry_helper::get_report_data($reportOptions);
-    if (empty($rawData)) {
-      //If the user doesn't have any plots, then hide the map and disable the Spatial Ref field so they can't continue
-      if (!empty($options['noPlotMessageInAlert']))
-        data_entry_helper::$javascript .= "alert('".$options['noPlotMessageInAlert']."');";
-      else
-        drupal_set_message('Note: You have not been allocated any squares to input data for, or the squares you have been allocated do not have plots.');
-      drupal_set_message('You cannot enter data without having a plot to select.');
-      data_entry_helper::$javascript .= "$('#map').hide();";
-      data_entry_helper::$javascript .= "$('#imp-sref').attr('disabled','disabled');";
-      if (!empty($options['noPlotMessageInAlert']))
-        return '<b>'.$options['noPlotMessageInAlert'].'</b></br>';
-      else
-        return '<b>You have not been allocated any Squares that contain plots</b></br>';      
+    if (empty($rawData) && empty($_GET['sample_id'])) {
+        //If the user doesn't have any plots and is in add mode, then hide the map and disable the Spatial Ref field so they can't continue
+        if (!empty($options['noPlotMessageInAlert']))
+          data_entry_helper::$javascript .= "alert('".$options['noPlotMessageInAlert']."');";
+        else
+          drupal_set_message('Note: You have not been allocated any squares to input data for, or the squares you have been allocated do not have plots.');
+        drupal_set_message('You cannot enter data without having a plot to select.');
+        data_entry_helper::$javascript .= "$('#map').hide();";
+        data_entry_helper::$javascript .= "$('#imp-sref').attr('disabled','disabled');";
+        if (!empty($options['noPlotMessageInAlert']))
+          return '<b>'.$options['noPlotMessageInAlert'].'</b></br>';
+        else
+          return '<b>You have not been allocated any Squares that contain plots</b></br>';
     } else {
+      //If the user does have plots and is in edit mode then doing following
+      if (!empty($_GET['sample_id'])) {
+        //Get square and plot data for sample
+        $sampleData = data_entry_helper::get_report_data(
+          array(
+            'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_for_sample',
+            'readAuth'=>$auth['read'],
+            'mode'=>'report',
+            'extraParams' => array('sample_id'=>$_GET['sample_id'])
+          )
+        );
+        $extraParamForSquarePlotReports=array(
+            'core_square_location_type_id'=>$coreSquareLocationTypeId,
+            'additional_square_location_type_id'=>$additionalSquareLocationTypeId,
+            'current_user_id'=>$currentUserId,
+            'vice_county_location_attribute_id'=>$viceCountyLocationAttributeId,
+            'no_vice_county_found_message'=>$noViceCountyFoundMessage,
+            'user_square_attr_id'=>$userSquareAttrId,
+            'only_show_my_useable_plots_squares'=>true);
+        $squareAndPlotData = data_entry_helper::get_report_data(
+          array(
+            'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
+            'readAuth'=>$auth['read'],
+            'mode'=>'report',
+            'extraParams' => $extraParamForSquarePlotReports
+          )
+        );
+        //Assume the user doesn't own a plot until we find that they do
+        $ownsPlot=false;
+        //Cycle through the plots (the report also returns squares but those are redundant for this test)
+        foreach ($squareAndPlotData as $squareOrPlot) {
+          //If we find a matching one, and it has been approved then the user owns the plot
+          if ($sampleData[0]['plot_id']==$squareOrPlot['id'] && ($squareOrPlot['allocation_updater']!=$squareOrPlot['allocated_to'])) {
+            $ownsPlot=true;  
+          }
+        }
+        //If the plot is still marked as not owned by the user after tests, then warn the user that we are locking the plot
+        if ($ownsPlot===false) {
+            if (empty($options['noSquareRightsMessage'])) {    
+              $options['noSquareRightsMessage']= "This plot sample is locked. This is because you are no longer the owner of this plot, or you are the owner of the plot and it is pending approval.";
+            }
+            $options['noSquareRightsMessage']=$options['noSquareRightsMessage'].
+                    '<br><br>The square is <b>'.$sampleData[0]['square_name'].'</b> and the plot is <b>'.$sampleData[0]['plot_name'].'.</b><br><br>';
+            data_entry_helper::$javascript="
+              $(window).load(function() {
+                $('[id*=_lock]').remove();\n $('.remove-row').remove();\n
+                $('.scImageLink,.scClonableRow').hide();
+                $('.edit-taxon-name,.remove-row').hide();
+                $('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');
+              });";
+            return '<em>'.$options['noSquareRightsMessage'].'</em>'; 
+        }
+      }
       //Convert the raw data in the report into array format suitable for the Select drop-down to user (an array of ID=>Name pairs)
+      $squaresData=array();
       foreach($rawData as $rawRow) {
           $squaresData[$rawRow['id']]=$rawRow['name'];        
       }
@@ -260,35 +370,14 @@ class extension_splash_extensions {
       if (empty($options['pssMode']))
         $r .= self::plot_report_panel($auth,$options);
       //If an attribute holding whether plots are private is supplied, then we want to return
-      //whether the selected plot is private and set the occurrence sensitivity_precision appropriately
+      //whether the selected plot is private and set the sample privacy precision appropriately
       if (!empty($options['privatePlotAttrId'])) {
-        $extraParamForSquarePlotReports=array_merge($extraParamForSquarePlotReports,array('private_plot_attr_id'=>$options['privatePlotAttrId'],'only_return_private_plots'=>true));
-        //When the page initially loads, collect all the private plots that can be selected by the user, rather than
-        //load whether the plot is private when each selection is made.
-        $myPlotsAndSquares = data_entry_helper::get_report_data(array(
+        $reportOptions = array(
           'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
           'readAuth'=>$auth['read'],
           'extraParams'=>$extraParamForSquarePlotReports
-        ));
-        $privatePlots=array();    
-        foreach ($myPlotsAndSquares as $locationDataItem) {
-          $privatePlots[]=$locationDataItem['id'];
-        }
-        //Need option to tell the system if the species grid has rowInclusionCheck=hasData, and we are setting the occurrences
-        //sensitivity_precision for occurrences when a plot is private.
-        //This is because the way the system detects if an occurrence is present is different.
-        if (!empty($options['rowInclusionCheckModeHasData']) && $options['rowInclusionCheckModeHasData']==true) {
-          $rowInclusionCheckModeHasData='true';
-        } else {
-          $rowInclusionCheckModeHasData='false';
-        }
-        if (!empty($_GET['sample_id']))
-          $editMode='true';
-        else
-          $editMode='false';
-        data_entry_helper::$javascript .= '
-        private_plots_set_precision('.json_encode($privatePlots).','.$rowInclusionCheckModeHasData.','.$editMode.');
-        ';
+        );
+        self::set_private_plot_precision($auth, $args, $tabAlias, $options,$reportOptions,$extraParamForSquarePlotReports);
       }
       return $r;
     }
@@ -462,8 +551,11 @@ class extension_splash_extensions {
     data_entry_helper::$javascript .= "$('#entry_form').submit(function() { $('#location\\\\:name').val($('#imp-sref').val());});\n";
     //Make the page read-only in summary mode
     if (!empty($_GET['summary_mode']) && $_GET['summary_mode']==true) {
-      data_entry_helper::$javascript .= "$('.read-only-capable').find('input, textarea, text, button, select').attr('disabled','disabled');\n";
-      data_entry_helper::$javascript .= "$('.page-notice').hide();\n";
+      data_entry_helper::$javascript .= "$(window).load(function () {";
+      data_entry_helper::$javascript .= " $('.read-only-capable').find('input, textarea, text, button, select').attr('disabled','disabled');\n";
+      data_entry_helper::$javascript .= " $('.page-notice').hide();\n";
+      data_entry_helper::$javascript .= " $('.delete-file').hide();\n";
+      data_entry_helper::$javascript .= "});";
     }
   }
  
@@ -1704,19 +1796,21 @@ class extension_splash_extensions {
   }
   
   /*
-   * Sensitive plots are no longer going to be used. Hide the existing checkbox and display a warning
-   * if there is an existing sensitive plot (as these will remain, but can no longer be altered.
+   * Private plots are no longer going to be used. Hide the existing checkbox and display a warning
+   * if there is an existing private plot (as these will remain, but can no longer be altered).
    */
-  public static function disable_sensitive_plot_box($auth, $args, $tabAlias, $options) {
-    if (!empty($options['sensitiveAttrId'])) {
+  public static function disable_private_plot_box($auth, $args, $tabAlias, $options) {
+    if (empty($options['warningMessage'])) 
+      $options['warningMessage']='This plot has been marked as private';   
+    if (!empty($options['privateAttrId'])) {
       data_entry_helper::$javascript .= "
       $(window).load(function() {
-        if (!$('#locAttr\\\\:".$options['sensitiveAttrId']."').is(':checked')) {
+        if (!$('#locAttr\\\\:".$options['privateAttrId']."').is(':checked')) {
           $('#no-plot-test').remove();
         }
-        $('#ctrl-wrap-locAttr-".$options['sensitiveAttrId']."').remove()
+        $('#ctrl-wrap-locAttr-".$options['privateAttrId']."').remove();
       });\n";
-      return '<div id="no-plot-test" style="color:red">This plot has been marked as sensitive</div><br>';
+      return '<div id="no-plot-test" style="color:red">'.$options['warningMessage'].'</div><br>';
     }
   }
 }

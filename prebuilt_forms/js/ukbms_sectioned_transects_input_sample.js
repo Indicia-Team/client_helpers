@@ -274,32 +274,44 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		});
 	}
 
-	saveOccurrence = function (selector, ttlID, ssampleID, targetID) {
-		// fill in occurrence stub form
-		$('#ttlid').val(ttlID);
-		$('#occ_sampleid').val(ssampleID);
-		// store the actual abundance value we want to save.
-		$('#occattr').val($(selector).val()==='' ? 0 : $(selector).val());
-		$('#occzero').val($(selector).val()==='0' ? 't' : 'f');
-		$('#occdeleted').val($(selector).val()==='' ? 't' : 'f');
-		// does this cell already have an occurrence? if no existing occurrence, we must not post the occurrence:id field.
-		$('#occid').attr('disabled', ($(selector +'\\:id').length == 0)).val($(selector +'\\:id').length == 0 ? '' : $(selector +'\\:id').val());
-		$('#occSensitive').attr('disabled', $(selector +'\\:id').length>0); // existing ID - leave sensitivity as is, new data - use location sensitivity
-		// by setting the attribute field name to occAttr:n where n is the occurrence attribute id, we will get a new one
-		// by setting the attribute field name to occAttr:n:m where m is the occurrence attribute value id, we will update the existing one
-		$('#occattr').attr('name', 'occAttr:' + $(selector +'\\:attrId').val() + ($(selector +'\\:attrValId').length===0 ? '' : ':' + $(selector +'\\:attrValId').val()));
-		// Store the current cell's ID as a transaction ID, so we know which cell we were updating. Adds a tag if this is a deletion
-		// so we can handle deletion logic properly when the post returns
-		var transactionId =  targetID + ($(selector).val()==='0' ? ':deleted' : '');
-		$('#transaction_id').val(transactionId);
-		if ($(selector +'\\:id').length>0 || $('#occdeleted').val()==='f') {
-			$('#occ-form').submit();
-		}
-		// if deleting, then must remove the occurrence and value IDs
-		if ($('#occdeleted').val()==='t') {
-			$(selector +'\\:id,'+ selector +'\\:attrValId').remove();
-		}
-	}
+  saveOccurrence = function (selector, ttlID, ssampleID, targetID) {
+    // fill in occurrence stub form
+    var occAttrValue = $(selector).val(), // Zero -> zero abundance; blank -> delete
+        transactionId =  targetID + (occAttrValue==='' ? ':deleted' : '');
+
+    $('#ttlid').val(ttlID);
+    $('#occ_sampleid').val(ssampleID);
+
+    $('#occdeleted').val(occAttrValue==='' ? 't' : 'f'); // blank -> delete
+
+    // $(selector +'\\:id') will exist if occurrence already exists.
+    // if no existing occurrence, we must not post the occurrence:id field.
+    $('#occid').attr('disabled', ($(selector +'\\:id').length == 0))
+               .val($(selector +'\\:id').length == 0 ? '' : $(selector +'\\:id').val());
+
+    // store the actual abundance value we want to save in occattr; but this is not required if the data is being deleted.
+    // by setting the attribute field name to occAttr:n where n is the occurrence attribute id, we will get a new one
+    // by setting the attribute field name to occAttr:n:m where m is the occurrence attribute value id, we will update the existing one
+    $('#occattr').val(occAttrValue)
+                 .attr('name', 'occAttr:' + $(selector +'\\:attrId').val() + ($(selector +'\\:attrValId').length===0 ? '' : ':' + $(selector +'\\:attrValId').val()))
+                 .attr('disabled', (occAttrValue==='')); // blank -> delete
+
+    $('#occzero').val(occAttrValue==='0' ? 't' : 'f'); // Zero -> zero abundance
+
+    $('#occSensitive').attr('disabled', $(selector +'\\:id').length>0); // existing ID - leave sensitivity as is, new data - use location sensitivity
+
+    // Store the current cell's ID as a transaction ID, so we know which cell we were updating. Adds a tag if this is a deletion
+    // so we can handle deletion logic properly when the post returns
+    $('#transaction_id').val(transactionId);
+
+    if ($(selector +'\\:id').length>0 || $('#occdeleted').val()==='f') {
+      $('#occ-form').submit();
+    }
+    // if deleting, then must remove the occurrence and value IDs
+    if (occAttrValue==='') { // blank -> delete
+      $(selector +'\\:id,'+ selector +'\\:attrValId').remove();
+    }
+  }
 
 	getTotal = function (cell) {
 		var row = $(cell).parents('tr:first')[0];
@@ -620,7 +632,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			$(selector).addClass('saving');
 			if ($(selector).hasClass('count-input')) {
 				// check for number input - don't post if not a number
-				if (!$(selector).val().match(/^[0-9]*$/)) {
+				if (!$(selector).val().match(/^[0-9]*$/)) { // matches a blank field for deletion
 					alert('Please enter a valid number - '+evt.target.id);
 					// use a timer, as refocus during blur not reliable.
 					setTimeout("jQuery('#"+evt.target.id+"').focus(); jQuery('#"+evt.target.id+"').select()", 100);

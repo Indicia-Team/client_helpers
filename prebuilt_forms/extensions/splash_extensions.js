@@ -1,60 +1,15 @@
 var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, limit_to_post_code,context_sensitive_instructions;
 
 (function($) {
-  //If the use selects a private plot, then we need to set the sensitivity precision
-  //Requires input form Occurrence Sensitivity option to be on on the edit tab.
-  private_plots_set_precision = function (privatePlots, rowInclusionCheckModeHasData, editMode) {
-    //If the species grid only includes rows if they have data, then the presence is based on the attributes instead of the
-    //presence field.
-    var partOfNameForPresenceField;
-    if (rowInclusionCheckModeHasData==true) {
-      partOfNameForPresenceField=":occAttr:";
-      
-    } else {
-      partOfNameForPresenceField=":present";
-    }
-    //When using private plots we make use of the occurrence sensitivity functionality, however
-    //as the functionality is done in code rather than by the user in this case, hide all the existing
-    //fields on the page.
-    $("[id*=\"sensitivity\"]").each(function() {
-      $(this).hide();
-    });
-    var startOfKeyHolder;  
-    var hiddenName;
+  //If the use selects a private plot, then we need to set the privacy precision
+  //Switch off input form Occurrence Sensitivity option as this may end up overriding this code.
+  private_plots_set_precision = function (privatePlots) {
     $("#tab-submit").click(function() {
-      //Find each which is present
-      $("[name*=\""+partOfNameForPresenceField+"\"]").each(function() {;
-        if ($(this).val() && $(this).val()!="0") {
-          //Get the start of the html name we need to use for the occurrence_sensitivity field
-          //Do this by chopping the end off the name of the presence field, which is either a field
-          //ending in :present or ending in :occAttr:<num> depending on whether this species grid has
-          //row inclusion check set to hasData.
-          var numItemsToChop;
-          var lastIndex
-          //If row inclusion check is hasData and in add mode, then we are checking fields which end in occAttr:<num>
-          //So we need to chop off the <num> and the occAttr, otherwise we are just removing the word present
-          //Not in edit mode occAttr has an additional occurrence_attribute_values id
-          //on the end e.g. occAttr:33:32414, however we don't need to worry about this because of the way we do the chop.
-          //Firstly get the field name
-          startOfKeyHolder=$(this).attr("name");
-          //The get the character position of the word we are going to chop from.
-          if (rowInclusionCheckModeHasData==true) {      
-            lastIndex = startOfKeyHolder.lastIndexOf(":occAttr");     
-          } else {
-            lastIndex = startOfKeyHolder.lastIndexOf(":present");
-          }
-          //Remove the end from the key
-          startOfKeyHolder = startOfKeyHolder.substring(0, lastIndex);
-          //Adjust the name so it now refers to the sensitivity precision instead.
-          hiddenName = startOfKeyHolder + ":occurrence:sensitivity_precision"
-          //If the selected plot is private then set the sensitivity precision.
-          if (inArray($("#imp-location").val(),privatePlots)) {
-            $("[name=\""+hiddenName+"\"]").val("10000");
-          } else {
-            $("[name=\""+hiddenName+"\"]").val("");
-          }
-        }
-      });
+      if (inArray($("#imp-location").val(),privatePlots)) {
+        $('#entry_form').append('<input name="sample:privacy_precision" value="10000" type="hidden" />');
+      } else {
+        $('#entry_form').append('<input name="sample:privacy_precision" value="" type="hidden" />');  
+      }
       $("#entry_form").submit();      
     });
   }
