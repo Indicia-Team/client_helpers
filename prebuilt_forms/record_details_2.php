@@ -281,28 +281,29 @@ Record ID',
     
     $details_report = '<div class="record-details-fields ui-helper-clearfix">';
     $nameLabel = self::$record['taxon'];
-    if (self::$record['taxon'] !== self::$record['preferred_taxon'])
+    if (self::$record['taxon'] !== self::$record['preferred_taxon']) {
       $nameLabel .= ' (' . self::$record['preferred_taxon'] . ')';
+    }
     $title = lang::get('Record of {1}', $nameLabel);
     hostsite_set_page_title($title);
     foreach($availableFields as $field=>$caption) {
       if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
-        // special case, sensitive icon
-        $class = self::$record[$field] === 'This record is sensitive' ? ' class="ui-state-error"' : '';
-        $caption = self::$record[$field] === 'This record is sensitive' ? '' : "$caption";
-        // special case, licence
-        $class = $field==='licence_code' ? ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"' : $class;
+        $class = self::getFieldClass($field);
+        $caption = self::$record[$field] === 'This record is sensitive' ? '' : $caption;
         $anchorfrom = $field==='licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
         $anchorto = $field==='licence_code' ? '</a>' : '';
         $value = lang::get(self::$record[$field]);
         // italices latin names
         if (($field === 'taxon' && self::$record['language_iso'] === 'lat')
-            || ($field === 'preferred_taxon' && self::$record['preferred_language_iso'] === 'lat'))
+            || ($field === 'preferred_taxon' && self::$record['preferred_language_iso'] === 'lat')) {
           $value = "<em>$value</em>";
-        if ($field === 'preferred_taxon' && !empty(self::$record['preferred_authority']))
+        }
+        if ($field === 'preferred_taxon' && !empty(self::$record['preferred_authority'])) {
           $value = "$value " . self::$record['preferred_authority'];
-        if ($field !== 'taxon' && $field !== 'preferred_taxon')
+        }
+        if ($field !== 'taxon' && $field !== 'preferred_taxon') {
           $value = htmlspecialchars($value);
+        }
         $details_report .= str_replace(
           array('{caption}', '{value|escape}', '{class}', '{anchorfrom}', '{anchorto}'),
           array(lang::get($caption), $value, $class, $anchorfrom, $anchorto),
@@ -313,11 +314,13 @@ Record ID',
     $created = date('jS F Y \a\t H:i', strtotime(self::$record['created_on']));
     $updated = date('jS F Y \a\t H:i', strtotime(self::$record['updated_on']));
     $dateInfo = lang::get('Entered on {1}', $created);
-    if ($created!==$updated)
+    if ($created!==$updated) {
       $dateInfo .= lang::get(' and last updated on {1}', $updated);
-    if ($test===in_array('submission date', $fieldsLower))
+    }
+    if ($test===in_array('submission date', $fieldsLower)) {
       $details_report .= str_replace(array('{caption}','{value|escape}','{class}', '{anchorfrom}', '{anchorto}'),
           array(lang::get('Submission date'), $dateInfo, '', '', ''), $attrsTemplate);
+    }
     $details_report .= '</div>';
     
     if (!self::$record['sensitivity_precision']) {
@@ -341,8 +344,9 @@ Record ID',
     $r = '<div class="detail-panel" id="detail-panel-recorddetails"><h3>Record Details</h3>';
     
     $r .= $details_report;
-    if (isset($attrs_report))
+    if (isset($attrs_report)) {
       $r .= $attrs_report;
+    }
     $r .= '</div>';
     return $r;
   }
@@ -381,7 +385,7 @@ Record ID',
         'key' => 'occurrence_id',
         'value' => $_GET['occurrence_id']
     );
-    return self::common_control_photos($auth, $options, $settings);
+    return self::commonControlPhotos($auth, $options, $settings);
   }
 
   /**
@@ -408,7 +412,7 @@ Record ID',
         'key' => 'sample_id',
         'value' => $occurrence[0]['sample_id']
     );
-    return self::common_control_photos($auth, $options, $settings);
+    return self::commonControlPhotos($auth, $options, $settings);
   }
 
   /**
@@ -425,7 +429,7 @@ Record ID',
         'imageSize' => 'thumb',
         'class' => 'detail-gallery',
         'title' => lang::get('Parent Sample Photos and Media')
-      ), $options);
+    ), $options);
     $occurrence = data_entry_helper::get_population_data(array(
         'table' => 'occurrence',
         'extraParams' => $auth['read'] + array('id'=>$_GET['occurrence_id'], 'view'=>'detail'),
@@ -439,7 +443,23 @@ Record ID',
         'key' => 'sample_id',
         'value' => $sample[0]['parent_id']
     );
-    return self::common_control_photos($auth, $options, $settings);
+    return self::commonControlPhotos($auth, $options, $settings);
+  }
+  
+  /**
+   * Returns the class attribute HTML to apply to attribute list data in the details pane.
+   * @param string $field Field name
+   * @return string
+   */
+  private static function getFieldClass($field) {
+    if (self::$record[$field] === 'This record is sensitive') {
+      $class = ' class="ui-state-error"';
+    } elseif ($field==='licence_code') {
+      $class = ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"';
+    } else {
+      $class = '';
+    }
+    return $class;
   }
 
   /**
@@ -449,7 +469,7 @@ Record ID',
    * @package    Client
    * @subpackage PrebuiltForms
    */
-  private static function common_control_photos($auth, $options, $settings) {
+  private static function commonControlPhotos($auth, $options, $settings) {
     data_entry_helper::add_resource('fancybox');
     $extraParams = $auth['read'] + array(
         'sharing'=>'reporting',
@@ -461,11 +481,12 @@ Record ID',
         'extraParams' => $extraParams
     ));
     $r = '<div class="detail-panel" id="detail-panel-photos"><h3>'.$options['title'].'</h3><div class="'.$options['class'].'">';
-    if (empty($media))
+    if (empty($media)) {
       $r .= '<p>'.lang::get('No photos or media files available').'</p>';
-    else {
-      if(isset($options['helpText']))
+    } else {
+      if(isset($options['helpText'])) {
         $r .= '<p>'.$options['helpText'].'</p>';
+      }
       $r .= '<ul>';
       $imageFolder = data_entry_helper::get_uploaded_image_folder();
       $firstImage = true;
@@ -473,17 +494,19 @@ Record ID',
         if ($firstImage && substr($medium['media_type'], 0, 6)==='Image:') {
           // first image can be flagged as the main content image. Used for FB OpenGraph for example.
           global $iform_page_metadata;
-          if (!isset($iform_page_metadata))
+          if (!isset($iform_page_metadata)) {
             $iform_page_metadata = array();
+          }
           $iform_page_metadata['image'] = "$imageFolder$medium[path]";
           $firstImage = false;
         }
-        if ($medium['media_type']==='Audio:Local')
+        if ($medium['media_type']==='Audio:Local') {
           $r .= "<li class=\"gallery-item\"><audio controls " .
                 "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
-        else
+        } else {
           $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
                 "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
+        }
       }
       $r .= '</ul>';
     }
@@ -510,13 +533,14 @@ Record ID',
       $options['initialFeatureWkt'] = self::$record['geom'];
     }
     
-    if ($tabalias)
+    if ($tabalias) {
       $options['tabDiv'] = $tabalias;
-    
+    }
     $olOptions = iform_map_get_ol_options($args);
     
-    if (!isset($options['standardControls']))
+    if (!isset($options['standardControls'])) {
       $options['standardControls']=array('layerSwitcher','panZoom');
+    }
     return '<div class="detail-panel" id="detail-panel-map"><h3>Map</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
     
   }
@@ -543,9 +567,9 @@ Record ID',
       'sharing'=>'reporting'
     ));
     $r .= '<div id="comment-list">';
-    if (count($comments)===0) 
+    if (count($comments)===0) {
       $r .= '<p id="no-comments">'.lang::get('No comments have been made.').'</p>';
-    else {
+    } else {
       foreach($comments as $comment) {
         $r .= '<div class="comment">';
         $r .= '<div class="header">';
@@ -665,16 +689,18 @@ Record ID',
     iform_load_helpers(array('report_helper'));
     if (!empty($options['accepted'])) {
       self::load_record($auth, $args);
-      if (!preg_match('/^Accepted/', self::$record['record_status']))
+      if (!preg_match('/^Accepted/', self::$record['record_status'])) {
         return '';
+      }
     }
     if ($options['module'] === 'addtoany') {
       self::load_record($auth, $args);
       // lets not promote sharing of sensitive stuff
-      if (self::$record['sensitivity_precision'])
+      if (self::$record['sensitivity_precision']) {
         return '';
+      }
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-url', window.location.href);\n";
-      $title = 'Check out this record of '.self::$record['taxon'];
+      $title = str_replace("'", "\'", 'Check out this record of ' . self::$record['taxon']);
       report_helper::$javascript .= "$('.a2a_kit').attr('data-a2a-title', '$title');\n";
     }
     $r = '';
@@ -710,14 +736,15 @@ Record ID',
     ));
     $r = '';
     foreach ($options['buttons'] as $button) {
-      if ($button==='edit')
+      if ($button==='edit') {
         $r .= self::buttons_edit($auth, $args, $tabalias, $options);
-      elseif ($button==='explore')
+      } elseif ($button==='explore') {
         $r .= self::buttons_explore($auth, $args, $tabalias, $options);
-      elseif ($button==='species details')
+      } elseif ($button==='species details') {
         $r .= self::buttons_species_details($auth, $args, $tabalias, $options);
-      else
+      } else {
         throw new exception("Unknown button $button");
+      }
     }
     return $r;
   }
@@ -731,22 +758,25 @@ Record ID',
    * @return string HTML for the button.
    */
   protected static function buttons_edit($auth, $args, $tabalias, $options) {
-    if (!$args['default_input_form'])
+    if (!$args['default_input_form']) {
       throw new exception('Please set the default input form path setting before using the [edit button] control');
+    }
     self::load_record($auth, $args);
     $record = self::$record;
     if (($user_id=hostsite_get_user_field('indicia_user_id')) && $user_id==self::$record['created_by_id']
         && $args['website_id']==self::$record['website_id']) {
-      if (empty($record['input_form']))
+      if (empty($record['input_form'])) {
         $record['input_form']=$args['default_input_form'];
+      }
       $rootFolder = data_entry_helper::getRootFolder(true);
       $paramJoin = strpos($rootFolder, '?')===false ? '?' : '&';
       $url =  "$rootFolder$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
       return '<a class="button" href="'.$url.'">' . lang::get('Edit this record') . '</a>';
     }
-    else 
+    else {
       // no rights to edit, so button omitted.
       return '';
+    }
   }
   
   /**
@@ -760,18 +790,20 @@ Record ID',
   protected static function buttons_explore($auth, $args, $tabalias, $options) {
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
       $url = $args['explore_url'];
-      if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
-          $url='{rootFolder}'.$url;
+      if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0) {
+        $url='{rootFolder}'.$url;
+      }
       $rootFolder = data_entry_helper::getRootFolder(true);
       $url = str_replace('{rootFolder}', $rootFolder, $url);
-      $url.= (strpos($url, '?')===false) ? '?' : '&';
+      $url .= (strpos($url, '?')===false) ? '?' : '&';
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
       $taxon = str_replace(' - zero abundance found', '', $taxon);
-      $r='<a class="button" href="'.$url.'">' . lang::get('Explore records of {1}', $taxon) . '</a>';
+      $r = '<a class="button" href="'.$url.'">' . lang::get('Explore records of {1}', $taxon) . '</a>';
+    } else {
+      throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or ' .
+          '"Explore Parameter Name" has not been specified.');
     }
-    else 
-      throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or "Explore Parameter Name" has not been specified.');
     return $r;
   }
   
@@ -786,8 +818,9 @@ Record ID',
   protected static function buttons_species_details($auth, $args, $tabalias, $options) {
     if (!empty($args['species_details_url'])) {
       $url = $args['species_details_url'];
-      if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
-          $url='{rootFolder}'.$url;
+      if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0) {
+        $url='{rootFolder}'.$url;
+      }
       $rootFolder = data_entry_helper::getRootFolder(true);
       $url = str_replace('{rootFolder}', $rootFolder, $url);
       $url.= (strpos($url, '?')===false) ? '?' : '&';
@@ -827,13 +860,15 @@ Record ID',
       lang::get("{1} decades ago"));
     $lengths = array("60","60","24","7","4.35","12","10");
    
-    for($j = 0; $difference >= $lengths[$j]; $j++)
+    for($j = 0; $difference >= $lengths[$j]; $j++) {
       $difference /= $lengths[$j];
-      $difference = round($difference);
-    if($difference == 1) 
-       $text = str_replace('{1}', $difference, $periods[$j]);
-    else
-       $text = str_replace('{1}', $difference, $periodsPlural[$j]);
+    }
+    $difference = round($difference);
+    if($difference == 1) {
+      $text = str_replace('{1}', $difference, $periods[$j]);
+    } else {
+      $text = str_replace('{1}', $difference, $periodsPlural[$j]);
+    }
     return $text; 
   }
   
@@ -845,16 +880,17 @@ Record ID',
    */
  
   protected static function getArgDefaults($args) {
-    if (!isset($args['interface']) || empty($args['interface']))
+    if (!isset($args['interface']) || empty($args['interface'])) {
       $args['interface'] = 'one_page';
+    }
     
-    if (!isset($args['hide_fields']) || empty($args['hide_fields']))
+    if (!isset($args['hide_fields']) || empty($args['hide_fields'])) {
       $args['hide_fields'] = 
 'CMS Username
 Email
 Sample ID
 Record ID';
-    
+    }
     if (!isset($args['structure']) || empty($args['structure'])) {
       $args['structure'] = 
 '=Record Details and Comments=
@@ -897,8 +933,9 @@ Record ID';
   protected static function load_record($auth, $args) {
     if (!isset(self::$record)) {
       $params = array('occurrence_id'=>$_GET['occurrence_id'], 'sharing'=>'reporting');
-      if (!empty($args['map_geom_precision']))
+      if (!empty($args['map_geom_precision'])) {
         $params['geom_precision'] = $args['map_geom_precision'];
+      }
       $records=report_helper::get_report_data(array(
         'readAuth' => $auth['read'],
         'dataSource'=>'reports_for_prebuilt_forms/record_details_2/record_data',
@@ -911,17 +948,21 @@ Record ID';
       }
       // set the page metadata
       global $iform_page_metadata;
-      if (!isset($iform_page_metadata))
+      if (!isset($iform_page_metadata)) {
         $iform_page_metadata = array();
+      }
       $species = self::$record['taxon'];
-      if (!empty(self::$record['preferred_taxon']) && $species !== self::$record['preferred_taxon'])
+      if (!empty(self::$record['preferred_taxon']) && $species !== self::$record['preferred_taxon']) {
         $species .= ' (' . self::$record['preferred_taxon'] . ')';
+      }
       $iform_page_metadata['title'] = lang::get('Record of {1}', $species);
       $iform_page_metadata['description'] = lang::get('Record of {1} on {2}', $species, self::$record['date']);
-      if (!empty(self::$record['sample_comment']))
+      if (!empty(self::$record['sample_comment'])) {
         $iform_page_metadata['description'] .= '. ' . trim(self::$record['sample_comment'], '. \t\n\r\0\x0B') . '.';
-      if (!empty(self::$record['occurrence_comment']))
+      }
+      if (!empty(self::$record['occurrence_comment'])) {
         $iform_page_metadata['description'] .= ' ' . trim(self::$record['occurrence_comment'], '. \t\n\r\0\x0B') . '.';
+      }
       if (empty(self::$record['sensitivity_precision'])) {
         $iform_page_metadata['latitude'] = number_format((float)self::$record['lat'], 5, '.', '');
         $iform_page_metadata['longitude'] = number_format((float)self::$record['long'], 5, '.', '');

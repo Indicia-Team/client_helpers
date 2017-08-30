@@ -630,7 +630,7 @@ class report_helper extends helper_base {
 <form id="updateform-$updateformID" method="post" action="$url">
 <input type="hidden" name="website_id" value="$update[website_id]">
 <input type="hidden" name="transaction_id" value="updateform-$updateformID-field">
-<input id="updateform-$updateformID-field" name="$update[tablename]:$update][fieldname]" 
+<input id="updateform-$updateformID-field" name="$update[tablename]:$update[fieldname]" 
   class="update-input $class" value="$value">
 FORM;
 
