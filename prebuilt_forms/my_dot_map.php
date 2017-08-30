@@ -401,7 +401,7 @@ class iform_my_dot_map {
       
       if ($args['hide_grid'] == false) {
         // Now output a grid of the occurrences that were just saved.
-        $r .= "<table class=\"submission\"><thead><tr><th>".lang::get('Species')."</th><th>".lang::get('Latin Name').
+        $r .= "<table class=\"submission table\"><thead><tr><th>".lang::get('Species')."</th><th>".lang::get('Latin Name').
             "</th><th>".lang::get('Abundance')."</th><th>".lang::get('Date')."</th><th>".lang::get('Spatial Ref')."</th>".
             "</th><th>".lang::get('Comment')."</th></tr></thead>\n";
         $r .= "<tbody>\n";
@@ -441,15 +441,20 @@ class iform_my_dot_map {
    * {survey} with the survey name,
    * @access private
    */
-  private static function prepare_layer_titles(&$args, $occurrence) {
-    $species = array();
-    foreach ($occurrence as $record) {
-      $species[] = empty($record['taxon']) ? $record['preferrred_taxon'] : $record['taxon'];
-      $survey = $record['survey_title'];
+  private static function prepare_layer_titles(&$args, $occurrences) {
+    if (count($occurrences) <= 4) {
+      $speciesList = array();
+      foreach ($occurrences as $record) {
+        $speciesList[] = empty($record['taxon']) ? $record['preferrred_taxon'] : $record['taxon'];
+        $survey = $record['survey_title'];
+      }
+      $last=array_pop($speciesList);
+      $species = implode(', ',$speciesList);
+      $species .= (empty($species) ? '' : ' ' . lang::get('and') . ' ') . $last; 
+    } else {
+      $species = lang::get('these species');
+      $survey = $occurrences[0]['survey_title'];
     }
-    $last=array_pop($species);
-    $species = implode(', ',$species);
-    $species.= (empty($species) ? '' : ' ' . lang::get('and') . ' ') . $last;
     
     for ($i = 1; $i<=3; $i++) {
       $args['wms_dist_'.$i.'_title'] = str_replace(array('{species}','{survey}'), array($species, $survey), $args['wms_dist_'.$i.'_title']);
