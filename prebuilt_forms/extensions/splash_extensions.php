@@ -1796,19 +1796,21 @@ class extension_splash_extensions {
   }
   
   /*
-   * Sensitive plots are no longer going to be used. Hide the existing checkbox and display a warning
-   * if there is an existing sensitive plot (as these will remain, but can no longer be altered.
+   * Private plots are no longer going to be used. Hide the existing checkbox and display a warning
+   * if there is an existing private plot (as these will remain, but can no longer be altered).
    */
-  public static function disable_sensitive_plot_box($auth, $args, $tabAlias, $options) {
-    if (!empty($options['sensitiveAttrId'])) {
+  public static function disable_private_plot_box($auth, $args, $tabAlias, $options) {
+    if (empty($options['warningMessage'])) 
+      $options['warningMessage']='This plot has been marked as private';   
+    if (!empty($options['privateAttrId'])) {
       data_entry_helper::$javascript .= "
       $(window).load(function() {
-        if (!$('#locAttr\\\\:".$options['sensitiveAttrId']."').is(':checked')) {
+        if (!$('#locAttr\\\\:".$options['privateAttrId']."').is(':checked')) {
           $('#no-plot-test').remove();
         }
-        $('#ctrl-wrap-locAttr-".$options['sensitiveAttrId']."').remove()
+        $('#ctrl-wrap-locAttr-".$options['privateAttrId']."').remove();
       });\n";
-      return '<div id="no-plot-test" style="color:red">This plot has been marked as sensitive</div><br>';
+      return '<div id="no-plot-test" style="color:red">'.$options['warningMessage'].'</div><br>';
     }
   }
 }
