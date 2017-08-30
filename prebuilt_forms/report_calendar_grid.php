@@ -273,8 +273,7 @@ class iform_report_calendar_grid {
     if ($siteUrlParams[self::$locationKey]['value'] != null)
       $reportOptions['extraParams']['location_id'] = $siteUrlParams[self::$locationKey]['value'];
     if ($siteUrlParams[self::$locationTypeKey]['value'] != null) {
-      $reportOptions['extraParams']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
-    	$reportOptions['paramDefaults']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
+      $reportOptions['paramDefaults']['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
     }
     return $reportOptions;
   }
