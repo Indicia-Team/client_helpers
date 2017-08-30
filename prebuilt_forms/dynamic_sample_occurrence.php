@@ -1491,15 +1491,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * @param array $extraParams Extra parameters pre-configured with taxon and taxon name type filters.
    * @param array $options additional options for the control, e.g. those configured in the form structure.
    * @return string HTML for the control.
-   * 
-   * 
-   * 
-   * 
-   * @todo Does this work with a drop down species lookup control? Apply changes to mobile version of form.
-   * 
-   * 
-   * 
-   * 
    */
   protected static function get_control_species_single($auth, $args, $extraParams, $options) {
     $r = '';
