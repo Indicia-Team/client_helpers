@@ -4257,7 +4257,7 @@ JS;
       unset($extraTaxonOptions['extraParams']['query']);
       // create an array to hold the IDs, so that get_population_data can construct a single IN query, faster
       // than multiple requests. We'll populate it in a moment
-      $extraTaxonOptions['extraParams']['id'] = array();
+      $taxa_taxon_list_ids = [];
       // look through the data being loaded for the ttlIds associated with existing occurrences
       foreach(self::$entity_to_load as $key => $value) {
         $parts = explode(':', $key);
@@ -4296,17 +4296,20 @@ JS;
             // add a new row to the bottom of the grid
             $taxonRows[] = array('ttlId'=>$ttlId, 'loadedTxIdx'=>$parts[1], 'occId'=>$parts[2], 'smpIdx'=>$smpIdx);
           // store the id of the taxon in the array, so we can load them all in one go later
-          $extraTaxonOptions['extraParams']['id'][]=$ttlId;
+          $taxa_taxon_list_ids[]=$ttlId;
         }
         // Ensure the load of taxa is batched if there are lots to load
-        if (count($extraTaxonOptions['extraParams']['id'])>=50 && !empty($options['lookupListId'])) {
+        if (count($taxa_taxon_list_ids)>=50 && !empty($options['lookupListId'])) {
+          $extraTaxonOptions['extraParams']['taxa_taxon_list_id'] = json_encode($taxa_taxon_list_ids);
           $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
-          $extraTaxonOptions['extraParams']['id'] = array();
+          $taxa_taxon_list_ids = [];
         }
       }
       // Load and append the remaining additional taxa to our list of taxa to use in the grid
-      if (count($extraTaxonOptions['extraParams']['id']) && !empty($options['lookupListId']))
+      if (count($taxa_taxon_list_ids) && !empty($options['lookupListId'])) {
+        $extraTaxonOptions['extraParams']['taxa_taxon_list_id'] = json_encode($taxa_taxon_list_ids);
         $taxalist = array_merge($taxalist, self::get_population_data($extraTaxonOptions));
+      }
     }
     return $taxalist;
   }
