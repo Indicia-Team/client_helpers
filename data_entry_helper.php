@@ -5969,7 +5969,7 @@ if (errors$uniq.length>0) {
 
       $media = self::extract_media_data($_POST);
       $request = parent::$base_url."index.php/services/data/$entity";
-      $postargs = 'submission='.urlencode(json_encode($submission));
+      $postargs = 'sharing=editing&submission='.urlencode(json_encode($submission));
       // passthrough the authentication tokens as POST data. Use parameter writeTokens, or current $_POST if not supplied.
       if ($writeTokens) {
         foreach($writeTokens as $token => $value){

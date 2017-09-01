@@ -808,7 +808,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       // single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
-            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
+            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
       } 
       elseif (self::$loadedSampleId) {
         $response = data_entry_helper::get_population_data(array(
@@ -818,19 +818,19 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         ));
         self::$loadedOccurrenceId = $response[0]['id'];
         data_entry_helper::load_existing_record_from(
-            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
+            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
       }
       self::$loadedSampleId = data_entry_helper::$entity_to_load['occurrence:sample_id'];
     }
     
     // Load the sample record
     if (self::$loadedSampleId) {
-      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', false, true);
+      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
       // If there is a parent sample and we are not force loading the child sample then load it next so the details 
       // overwrite the child sample. 
       if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($_GET['child_sample_id'])) {
         data_entry_helper::load_existing_record(
-            $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id']);
+            $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id'], 'detail', 'editing');
         self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
       }
     }
