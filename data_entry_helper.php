@@ -7064,12 +7064,11 @@ if (errors$uniq.length>0) {
    * or whether it is ordered as it comes from the database (ie block weighting). Needs to be set false if data is to be
    * used by get_attribute_html.
    * @param string $sharing Set to verification, peer_review, moderation, data_flow, reporting or editing to indicate 
-   * the task being performed, if sharing data with other websites. If not set then only data from the current website
-   * is available.
+   * the task being performed, if sharing data with other websites. Default is editing.
    *
    * @return Associative array of attributes, keyed by the attribute ID (multiValue=false) or <attribute ID>:<attribute value ID> if multiValue=true.
    */
-  public static function getAttributes($options, $indexedArray = true, $sharing=false) {
+  public static function getAttributes($options, $indexedArray = true, $sharing='editing') {
     $attrs = array();
     // there is a possiblility that the $options['extraParams'] already features a query entry.
     if(isset($options['extraParams']['query'])) {
@@ -7113,10 +7112,9 @@ if (errors$uniq.length>0) {
         'website_deleted' => 'f',
         'orderby'=>'weight',
         'query'=>json_encode($query),
+        'sharing' => $sharing
       ), $options['extraParams'])
     );
-    if ($sharing)
-      $attrOptions['sharing'] = $sharing;
     $response = self::get_population_data($attrOptions);
     if (array_key_exists('error', $response))
       return $response;
@@ -7129,9 +7127,9 @@ if (errors$uniq.length>0) {
       $existingValuesOptions = array(
         'table'=>$options['valuetable'],
         'cachetimeout' => 0, // can't cache
-        'extraParams'=> $options['extraParams']);
-      if ($sharing)
-        $existingValuesOptions['sharing'] = $sharing;
+        'extraParams'=> $options['extraParams'],
+        'sharing' => $sharing
+      );
       $valueResponse = self::get_population_data($existingValuesOptions);
       if (array_key_exists('error', $valueResponse))
         return $valueResponse;
@@ -7388,7 +7386,7 @@ if (errors$uniq.length>0) {
         }
         if (array_key_exists('class', $options))
           $attrOptions['class'] = $options['class'];
-        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'detail');
+        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'detail', 'sharing' => 'editing');
         if (array_key_exists('language', $options)) {
           $dataSvcParams = $dataSvcParams + array('iso'=>$options['language']);
         }
