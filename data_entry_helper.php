@@ -5261,7 +5261,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @param integer $id ID of the database record to load
    * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'.
    * @param boolean $sharing Defaults to false. If set to the name of a sharing task
-   * (reporting, peer_review, verification, data_flow or moderation), then the record can be
+   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be
    * loaded from another client website if a sharing agreement is in place.
    * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    * @param boolean $loadImages If set to true, then image information is loaded as well.
@@ -5287,7 +5287,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @param integer $id ID of the database record to load
    * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'.
    * @param boolean $sharing Defaults to false. If set to the name of a sharing task
-   * (reporting, peer_review, verification, data_flow or moderation), then the record can be
+   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be
    * loaded from another client website if a sharing agreement is in place.
    * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    * @param boolean $loadImages If set to true, then image information is loaded as well.
@@ -5375,7 +5375,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * later use. Replaces the legacy nocache parameter.
    * </li>
    * <li><b>sharing</b><br/>
-   * Optional. Set to verification, reporting, peer_review, moderation or data_flow to request
+   * Optional. Set to verification, reporting, peer_review, moderation, data_flow or editing to request
    * data sharing with other websites for the task. Further information is given in the link below.
    * </li>
    * </ul>
@@ -7060,10 +7060,12 @@ if (errors$uniq.length>0) {
    * by attribute ID. If set to true, multiple values are enabled and the response array is keyed by <attribute ID>:<attribute value ID>
    * in the cases where there is any data for the attribute.
    * </ul>
-   * @param optional boolean $indexedArray default true. Determines whether the return value is an array indexed by PK, or whether it
-   * is ordered as it comes from the database (ie block weighting). Needs to be set false if data is to be used by get_attribute_html.
-   * @param string $sharing Set to verification, peer_review, moderation, data_flow or reporting to indicate the task being performed, if
-   * sharing data with other websites. If not set then only data from the current website is available.
+   * @param optional boolean $indexedArray default true. Determines whether the return value is an array indexed by PK,
+   * or whether it is ordered as it comes from the database (ie block weighting). Needs to be set false if data is to be
+   * used by get_attribute_html.
+   * @param string $sharing Set to verification, peer_review, moderation, data_flow, reporting or editing to indicate 
+   * the task being performed, if sharing data with other websites. If not set then only data from the current website
+   * is available.
    *
    * @return Associative array of attributes, keyed by the attribute ID (multiValue=false) or <attribute ID>:<attribute value ID> if multiValue=true.
    */

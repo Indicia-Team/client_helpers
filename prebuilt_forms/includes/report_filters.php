@@ -711,22 +711,27 @@ class filter_source extends filter_base {
  *
  * @param array $readAuth Pass read authorisation tokens.
  * @param array $options Options array with the following possibilities:
- *   sharing - define the record sharing task that is being filtered against. Options are reporting (default), peer_review, verification, moderation, data_flow.
- *   context_id - can also be passed as URL parameter. Force the initial selection of a particular context (a record which has defines_permissions=true in the
+ *   sharing - define the record sharing task that is being filtered against. Options are reporting (default), 
+ *   peer_review, verification, moderation, data_flow, editing.
+ *   context_id - can also be passed as URL parameter. Force the initial selection of a particular context (a record 
+ *   which has defines_permissions=true in the
  *   filters table. Set to "default" to select their profile verification settings when sharing=verification.
- *   filter_id - can also be passed as URL parameter. Force the initial selection of a particular filter record in the filters table.
- *   filterTypes - allows control of the list of filter panels available, e.g. to turn one off. Associative array keyed by category
- *   so that the filter panels can be grouped (use a blank key if not required). The array values are an array of or strings with a comma separated list
+ *   filter_id - can also be passed as URL parameter. Force the initial selection of a particular filter record in the 
+ *   filters table.
+ *   filterTypes - allows control of the list of filter panels available, e.g. to turn one off. Associative array keyed
+ *   by category
+ *   so that the filter panels can be grouped (use a blank key if not required). The array values are an array of or 
+ *   strings with a comma separated list
  *   of the filter types to included in the category - options are what, where, when, who, quality, source.
  *   filter-#name# - set the initial value of a report filter parameter #name#.
  *   allowLoad - set to false to disable the load bar at the top of the panel.
  *   allowSave - set to false to disable the save bar at the foot of the panel.
- *   presets - provide an array of preset filters to provide in the filters drop down. Choose from my-records, my-groups (uses
- *     your list of taxon groups in the user account), my-locality (uses your recording locality from the user account),
- *     my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records, queried-records,
- *     answered-records, accepted-records, not-accepted-records.
- *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard filter
- *     user interface.
+ *   presets - provide an array of preset filters to provide in the filters drop down. Choose from my-records, my-groups
+ *   (uses your list of taxon groups in the user account), my-locality (uses your recording locality from the user 
+ *   account), my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records,
+ *   queried-records, answered-records, accepted-records, not-accepted-records.
+ *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard
+ *   filter user interface.
  * @param integer $website_id The current website's warehouse ID.
  * @param string $hiddenStuff Output parameter which will contain the hidden popup HTML that will be shown
  * using fancybox during filter editing. Should be appended AFTER any form element on the page as nested forms are not allowed.
@@ -782,8 +787,10 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $options['sharing'] = report_filters_sharing_code_to_full_term($options['sharing']);
   $options['sharingCode'] = report_filters_full_term_to_sharing_code($options['sharing']);
-  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation)$/', $options['sharing']))
-    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow or moderation (currently '.$options['sharing'].').'; 
+  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation|editing)$/', $options['sharing'])) {
+    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow, moderation or ' .
+        "editing (currently $options[sharing]).";
+  }
   report_helper::add_resource('reportfilters');
   report_helper::add_resource('validation');
   report_helper::add_resource('fancybox');
@@ -1173,6 +1180,7 @@ function report_filters_sharing_code_to_full_term($code) {
       case 'P' : return 'peer_review';
       case 'D' : return 'data_flow';
       case 'M' : return 'moderation';
+      case 'E' : return 'editing';  
     }
   }
   return $code;

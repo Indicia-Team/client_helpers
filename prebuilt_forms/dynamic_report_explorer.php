@@ -266,6 +266,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
             'verification' => 'Verification',
             'data_flow' => 'Data flow',
             'moderation' => 'Moderation',
+            'editing' => 'Editing',
             'me' => 'My records only'
           ),
           'default' => 'reporting',
