@@ -3982,7 +3982,8 @@ JS;
         $subSamples = data_entry_helper::get_population_data(array(
           'table' => 'sample',
           'extraParams' => $extraParams,
-          'nocache' => true
+          'nocache' => true,
+          'sharing' => 'editing'
         ));
         $subSampleList = array();
         if ($subSamplesOptional)
@@ -4012,7 +4013,8 @@ JS;
         $occurrences = self::get_population_data(array(
           'table' => 'occurrence',
           'extraParams' => $extraParams,
-          'nocache' => true
+          'nocache' => true,
+          'sharing' => 'editing'
         ));
         foreach($occurrences as $idx => $occurrence){
           if($useSubSamples){
@@ -4038,7 +4040,8 @@ JS;
           $attrValues = self::get_population_data(array(
             'table' => 'occurrence_attribute_value',
             'extraParams' => $readAuth + array('occurrence_id' => array_keys($occurrenceIds)),
-            'nocache' => true
+            'nocache' => true,
+            'sharing' => 'editing'
           ));
           foreach($attrValues as $attrValue) {
             // vague date controls need the processed vague date put back in, not the raw parts.
@@ -4051,7 +4054,8 @@ JS;
             $media = self::get_population_data(array(
               'table' => 'occurrence_medium',
               'extraParams' => $readAuth + array('occurrence_id' => array_keys($occurrenceIds)),
-              'nocache' => true
+              'nocache' => true,
+              'sharing' => 'editing'
             ));
             foreach($media as $medium) {
               self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']].':'.$medium['occurrence_id'].':occurrence_medium:id:'.$medium['id']]
