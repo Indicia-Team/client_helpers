@@ -91,6 +91,15 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         parent::get_parameters(),
       array(
         array(
+          'name'=>'never_load_parent_sample',
+          'caption'=>'Never load parent sample',
+          'description'=>'When editing a record in a parent/child sample hierarchy, tick this box to prevent loading ' .
+              'the parent sample into the form instead of the child sample.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false
+        ),
+        array(
           'name'=>'emailShow',
           'caption'=>'Show email field even if logged in',
           'description'=>'If the survey requests an email address, it is sent implicitly for logged in users. Check this box to show it explicitly.',
@@ -830,7 +839,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
       // If there is a parent sample and we are not force loading the child sample then load it next so the details 
       // overwrite the child sample. 
-      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($_GET['child_sample_id'])) {
+      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($args['never_load_parent_sample'])) {
         data_entry_helper::load_existing_record(
             $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id'], 'detail', 'editing');
         self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
