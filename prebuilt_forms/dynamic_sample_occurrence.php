@@ -792,19 +792,20 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function getEntity(&$args, $auth) {
     data_entry_helper::$entity_to_load = array();
     if ((call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
-        // multi-record mode using a checklist grid. We really just need to know the sample ID.
-        if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
-          $response = data_entry_helper::get_population_data(array(
-              'table' => 'occurrence',
-              'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
-              'caching' => false
-          ));
-          if (count($response) != 0) {
-            //we found an occurrence so use it to detect the sample
-            self::$loadedSampleId = $response[0]['sample_id'];       
-          }
-        } 
-      } else {
+      // multi-record mode using a checklist grid. We really just need to know the sample ID.
+      if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
+        $response = data_entry_helper::get_population_data(array(
+            'table' => 'occurrence',
+            'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
+            'caching' => false,
+            'sharing' => 'editing'
+        ));
+        if (count($response) !== 0) {
+          //we found an occurrence so use it to detect the sample
+          self::$loadedSampleId = $response[0]['sample_id'];       
+        }
+      } 
+    } else {
       // single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
@@ -814,7 +815,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $response = data_entry_helper::get_population_data(array(
           'table' => 'occurrence',
           'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail'),
-          'caching' => false
+          'caching' => false,
+          'sharing' => 'editing'
         ));
         self::$loadedOccurrenceId = $response[0]['id'];
         data_entry_helper::load_existing_record_from(
@@ -834,7 +836,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
       }
     }
-    
     // Ensure that if we are used to load a different survey's data, then we get the correct survey attributes. We can
     // change args because the caller passes by reference.
     $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
