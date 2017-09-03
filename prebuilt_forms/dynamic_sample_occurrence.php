@@ -819,6 +819,22 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
             $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+        if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
+          // Loading a single record into a form that can do single or multi. Switch to multi if the sample contains 
+          // more than one occurrence.
+          $response = data_entry_helper::get_population_data(array(
+            'table' => 'occurrence',
+            'extraParams' => $auth['read'] + array(
+                'sample_id' => data_entry_helper::$entity_to_load['occurrence:sample_id'],
+                'view' => 'detail'
+              ),
+            'caching' => false,
+            'sharing' => 'editing'
+          ));
+          if (count($response) > 1) {
+            data_entry_helper::$entity_to_load['gridmode'] = true;
+          }
+        }
       } 
       elseif (self::$loadedSampleId) {
         $response = data_entry_helper::get_population_data(array(
@@ -837,8 +853,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // Load the sample record
     if (self::$loadedSampleId) {
       data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
-      // If there is a parent sample - load it next so the details overwrite the child sample. 
-      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id'])) {
+      // If there is a parent sample and we are not force loading the child sample then load it next so the details 
+      // overwrite the child sample. 
+      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($args['never_load_parent_sample'])) {
         data_entry_helper::load_existing_record(
             $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id'], 'detail', 'editing');
         self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
@@ -2115,13 +2132,13 @@ else
    */
   protected static function getGridMode($args) {
     // if loading an existing sample and we are allowed to display a grid or single species selector
-    if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
+    if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
       // Either we are in grid mode because we were instructed to externally, or because the form is reloading
       // after a validation failure with a hidden input indicating grid mode.
       return isset($_GET['gridmode']) ||
           isset(data_entry_helper::$entity_to_load['gridmode']) ||
-          ((array_key_exists('sample_id', $_GET) && $_GET['sample_id']!='{sample_id}') &&
-           (!array_key_exists('occurrence_id', $_GET) || $_GET['occurrence_id']=='{occurrence_id}'));
+          ((array_key_exists('sample_id', $_GET) && $_GET['sample_id'] !== '{sample_id}') &&
+           (!array_key_exists('occurrence_id', $_GET) || $_GET['occurrence_id'] === '{occurrence_id}'));
     } else
       return
           // a form saved using a previous version might not have this setting, so default to grid mode=true
