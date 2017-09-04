@@ -351,7 +351,7 @@ mapInitialisationHooks.push(function(mapdiv) {
    * @param integer $id ID of the database record to load
    * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'. 
    * @param boolean $sharing Defaults to false. If set to the name of a sharing task 
-   * (reporting, peer_review, verification, data_flow or moderation), then the record can be 
+   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be 
    * loaded from another client website if a sharing agreement is in place.
    * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    * @param boolean $loadImages If set to true, then image information is loaded as well.

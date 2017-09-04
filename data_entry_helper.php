@@ -3982,7 +3982,8 @@ JS;
         $subSamples = data_entry_helper::get_population_data(array(
           'table' => 'sample',
           'extraParams' => $extraParams,
-          'nocache' => true
+          'nocache' => true,
+          'sharing' => 'editing'
         ));
         $subSampleList = array();
         if ($subSamplesOptional)
@@ -4012,7 +4013,8 @@ JS;
         $occurrences = self::get_population_data(array(
           'table' => 'occurrence',
           'extraParams' => $extraParams,
-          'nocache' => true
+          'nocache' => true,
+          'sharing' => 'editing'
         ));
         foreach($occurrences as $idx => $occurrence){
           if($useSubSamples){
@@ -4038,7 +4040,8 @@ JS;
           $attrValues = self::get_population_data(array(
             'table' => 'occurrence_attribute_value',
             'extraParams' => $readAuth + array('occurrence_id' => array_keys($occurrenceIds)),
-            'nocache' => true
+            'nocache' => true,
+            'sharing' => 'editing'
           ));
           foreach($attrValues as $attrValue) {
             // vague date controls need the processed vague date put back in, not the raw parts.
@@ -4051,7 +4054,8 @@ JS;
             $media = self::get_population_data(array(
               'table' => 'occurrence_medium',
               'extraParams' => $readAuth + array('occurrence_id' => array_keys($occurrenceIds)),
-              'nocache' => true
+              'nocache' => true,
+              'sharing' => 'editing'
             ));
             foreach($media as $medium) {
               self::$entity_to_load['sc:'.$occurrenceIds[$medium['occurrence_id']].':'.$medium['occurrence_id'].':occurrence_medium:id:'.$medium['id']]
@@ -5261,7 +5265,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @param integer $id ID of the database record to load
    * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'.
    * @param boolean $sharing Defaults to false. If set to the name of a sharing task
-   * (reporting, peer_review, verification, data_flow or moderation), then the record can be
+   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be
    * loaded from another client website if a sharing agreement is in place.
    * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    * @param boolean $loadImages If set to true, then image information is loaded as well.
@@ -5287,7 +5291,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @param integer $id ID of the database record to load
    * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'.
    * @param boolean $sharing Defaults to false. If set to the name of a sharing task
-   * (reporting, peer_review, verification, data_flow or moderation), then the record can be
+   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be
    * loaded from another client website if a sharing agreement is in place.
    * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    * @param boolean $loadImages If set to true, then image information is loaded as well.
@@ -5375,7 +5379,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * later use. Replaces the legacy nocache parameter.
    * </li>
    * <li><b>sharing</b><br/>
-   * Optional. Set to verification, reporting, peer_review, moderation or data_flow to request
+   * Optional. Set to verification, reporting, peer_review, moderation, data_flow or editing to request
    * data sharing with other websites for the task. Further information is given in the link below.
    * </li>
    * </ul>
@@ -5969,7 +5973,7 @@ if (errors$uniq.length>0) {
 
       $media = self::extract_media_data($_POST);
       $request = parent::$base_url."index.php/services/data/$entity";
-      $postargs = 'submission='.urlencode(json_encode($submission));
+      $postargs = 'sharing=editing&submission='.urlencode(json_encode($submission));
       // passthrough the authentication tokens as POST data. Use parameter writeTokens, or current $_POST if not supplied.
       if ($writeTokens) {
         foreach($writeTokens as $token => $value){
@@ -7060,14 +7064,15 @@ if (errors$uniq.length>0) {
    * by attribute ID. If set to true, multiple values are enabled and the response array is keyed by <attribute ID>:<attribute value ID>
    * in the cases where there is any data for the attribute.
    * </ul>
-   * @param optional boolean $indexedArray default true. Determines whether the return value is an array indexed by PK, or whether it
-   * is ordered as it comes from the database (ie block weighting). Needs to be set false if data is to be used by get_attribute_html.
-   * @param string $sharing Set to verification, peer_review, moderation, data_flow or reporting to indicate the task being performed, if
-   * sharing data with other websites. If not set then only data from the current website is available.
+   * @param optional boolean $indexedArray default true. Determines whether the return value is an array indexed by PK,
+   * or whether it is ordered as it comes from the database (ie block weighting). Needs to be set false if data is to be
+   * used by get_attribute_html.
+   * @param string $sharing Set to verification, peer_review, moderation, data_flow, reporting or editing to indicate 
+   * the task being performed, if sharing data with other websites. Default is editing.
    *
    * @return Associative array of attributes, keyed by the attribute ID (multiValue=false) or <attribute ID>:<attribute value ID> if multiValue=true.
    */
-  public static function getAttributes($options, $indexedArray = true, $sharing=false) {
+  public static function getAttributes($options, $indexedArray = true, $sharing='editing') {
     $attrs = array();
     // there is a possiblility that the $options['extraParams'] already features a query entry.
     if(isset($options['extraParams']['query'])) {
@@ -7111,10 +7116,9 @@ if (errors$uniq.length>0) {
         'website_deleted' => 'f',
         'orderby'=>'weight',
         'query'=>json_encode($query),
+        'sharing' => $sharing
       ), $options['extraParams'])
     );
-    if ($sharing)
-      $attrOptions['sharing'] = $sharing;
     $response = self::get_population_data($attrOptions);
     if (array_key_exists('error', $response))
       return $response;
@@ -7127,9 +7131,9 @@ if (errors$uniq.length>0) {
       $existingValuesOptions = array(
         'table'=>$options['valuetable'],
         'cachetimeout' => 0, // can't cache
-        'extraParams'=> $options['extraParams']);
-      if ($sharing)
-        $existingValuesOptions['sharing'] = $sharing;
+        'extraParams'=> $options['extraParams'],
+        'sharing' => $sharing
+      );
       $valueResponse = self::get_population_data($existingValuesOptions);
       if (array_key_exists('error', $valueResponse))
         return $valueResponse;
@@ -7386,7 +7390,7 @@ if (errors$uniq.length>0) {
         }
         if (array_key_exists('class', $options))
           $attrOptions['class'] = $options['class'];
-        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'detail');
+        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'detail', 'sharing' => 'editing');
         if (array_key_exists('language', $options)) {
           $dataSvcParams = $dataSvcParams + array('iso'=>$options['language']);
         }

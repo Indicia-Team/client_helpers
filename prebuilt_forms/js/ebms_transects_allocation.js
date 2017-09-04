@@ -112,7 +112,7 @@ var form_options;
 					$(elem).attr('checked','checked');
 					_value_changed(elem);
 				});
-			$('.'+form_options.select_all_class).removeClass('waiting').val(form_options.deselect_all_button);
+			$('.'+form_options.select_all_class).removeClass('waiting').val(form_options.select_all_button);
 		});
 
 		$('.'+form_options.deselect_all_class).click(function(){

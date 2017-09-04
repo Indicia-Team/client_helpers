@@ -51,7 +51,7 @@ class extension_paths_editor {
   }
 
   public static function link_to_parent($auth, $args, $tabalias, $options, $path) {
-    if (empty($_GET['child_sample_id']) && (empty($_GET['table']) || $_GET['table']!=='sample' || empty($_GET['id']))) {
+    if (empty($_GET['sample_id']) && (empty($_GET['table']) || $_GET['table']!=='sample' || empty($_GET['id']))) {
       throw new exception('paths_editor.link_to_parent control needs to be called from a form that saves a sample');
     }
     if (isset($_GET['table']) && $_GET['table'] === 'sample' && isset($_GET['id'])) {
@@ -86,14 +86,14 @@ class extension_paths_editor {
     // Output some instructions to the user which will depend on whether we are on the first
     // child sample or not.
     if (!empty($options['outputInstructionsTo'])) {
-      if (empty($_GET['child_sample_id'])) {
+      if (empty($_GET['sample_id'])) {
         $instruct = empty($childGeoms) ? $options['firstInstructions'] : $options['otherInstructions'];
         data_entry_helper::$javascript .= "$('#$options[outputInstructionsTo]').html('$instruct');\n";
       } else {
         data_entry_helper::$javascript .= "$('#$options[outputInstructionsTo]').hide();\n";
       }
     }
-    if (!empty($_GET['child_sample_id']) && !empty($options['redirectAfterSingleChildEdit'])) {
+    if (!empty($_GET['sample_id']) && !empty($options['redirectAfterSingleChildEdit'])) {
       $r .= data_entry_helper::hidden_text(array(
         'fieldname' => 'redirect_on_success',
         'default' => $options['redirectAfterSingleChildEdit']

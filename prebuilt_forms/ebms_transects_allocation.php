@@ -329,8 +329,8 @@ class iform_ebms_transects_allocation {
   			'<thead class="ui-widget-header">' .
   				'<tr>' .
   					'<td colspan=6>'.
-  						'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['select_all_class'].'" value="'.lang::get('Select All').'" />' .
-  						'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselect_all_class'].'" value="'.lang::get('Deselect All').'" />' .
+  						'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['select_all_class'].'" value="'.$settings['select_all_button'].'" />' .
+  						'<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselect_all_class'].'" value="'.$settings['deselect_all_button'].'" />' .
   					'</td>' .
   				'</tr>' .
   				'<tr>' .
