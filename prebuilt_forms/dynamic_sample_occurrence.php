@@ -91,6 +91,15 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         parent::get_parameters(),
       array(
         array(
+          'name'=>'never_load_parent_sample',
+          'caption'=>'Never load parent sample',
+          'description'=>'When editing a record in a parent/child sample hierarchy, tick this box to prevent loading ' .
+              'the parent sample into the form instead of the child sample.',
+          'type'=>'boolean',
+          'default' => false,
+          'required' => false
+        ),
+        array(
           'name'=>'emailShow',
           'caption'=>'Show email field even if logged in',
           'description'=>'If the survey requests an email address, it is sent implicitly for logged in users. Check this box to show it explicitly.',
@@ -720,9 +729,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       // errors with new sample or entity populated with post, so display this data.
       $mode = self::MODE_EXISTING;
     } // else valid save, so go back to gridview: default mode 0
-    if ((!empty($_GET['sample_id']) && $_GET['sample_id']!='{sample_id}') || !empty($_GET['child_sample_id'])) {
+    if (!empty($_GET['sample_id']) && $_GET['sample_id']!='{sample_id}') {
       $mode = self::MODE_EXISTING;
-      self::$loadedSampleId = empty($_GET['sample_id']) ? $_GET['child_sample_id'] : $_GET['sample_id'];
+      self::$loadedSampleId = $_GET['sample_id'];
     }
     if (!empty($_GET['occurrence_id']) && $_GET['occurrence_id']!='{occurrence_id}'){
       $mode = self::MODE_EXISTING;
@@ -792,49 +801,66 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function getEntity(&$args, $auth) {
     data_entry_helper::$entity_to_load = array();
     if ((call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
-        // multi-record mode using a checklist grid. We really just need to know the sample ID.
-        if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
-          $response = data_entry_helper::get_population_data(array(
-              'table' => 'occurrence',
-              'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
-              'caching' => false
-          ));
-          if (count($response) != 0) {
-            //we found an occurrence so use it to detect the sample
-            self::$loadedSampleId = $response[0]['sample_id'];       
-          }
-        } 
-      } else {
+      // multi-record mode using a checklist grid. We really just need to know the sample ID.
+      if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
+        $response = data_entry_helper::get_population_data(array(
+            'table' => 'occurrence',
+            'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
+            'caching' => false,
+            'sharing' => 'editing'
+        ));
+        if (count($response) !== 0) {
+          //we found an occurrence so use it to detect the sample
+          self::$loadedSampleId = $response[0]['sample_id'];       
+        }
+      } 
+    } else {
       // single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
-            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
+            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+        if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
+          // Loading a single record into a form that can do single or multi. Switch to multi if the sample contains 
+          // more than one occurrence.
+          $response = data_entry_helper::get_population_data(array(
+            'table' => 'occurrence',
+            'extraParams' => $auth['read'] + array(
+                'sample_id' => data_entry_helper::$entity_to_load['occurrence:sample_id'],
+                'view' => 'detail'
+              ),
+            'caching' => false,
+            'sharing' => 'editing'
+          ));
+          if (count($response) > 1) {
+            data_entry_helper::$entity_to_load['gridmode'] = true;
+          }
+        }
       } 
       elseif (self::$loadedSampleId) {
         $response = data_entry_helper::get_population_data(array(
           'table' => 'occurrence',
           'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail'),
-          'caching' => false
+          'caching' => false,
+          'sharing' => 'editing'
         ));
         self::$loadedOccurrenceId = $response[0]['id'];
         data_entry_helper::load_existing_record_from(
-            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', false, true);
+            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
       }
       self::$loadedSampleId = data_entry_helper::$entity_to_load['occurrence:sample_id'];
     }
     
     // Load the sample record
     if (self::$loadedSampleId) {
-      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', false, true);
+      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
       // If there is a parent sample and we are not force loading the child sample then load it next so the details 
       // overwrite the child sample. 
-      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($_GET['child_sample_id'])) {
+      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($args['never_load_parent_sample'])) {
         data_entry_helper::load_existing_record(
-            $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id']);
+            $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id'], 'detail', 'editing');
         self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
       }
     }
-    
     // Ensure that if we are used to load a different survey's data, then we get the correct survey attributes. We can
     // change args because the caller passes by reference.
     $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
@@ -2106,13 +2132,13 @@ else
    */
   protected static function getGridMode($args) {
     // if loading an existing sample and we are allowed to display a grid or single species selector
-    if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode']=='either') {
+    if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
       // Either we are in grid mode because we were instructed to externally, or because the form is reloading
       // after a validation failure with a hidden input indicating grid mode.
       return isset($_GET['gridmode']) ||
           isset(data_entry_helper::$entity_to_load['gridmode']) ||
-          ((array_key_exists('sample_id', $_GET) && $_GET['sample_id']!='{sample_id}') &&
-           (!array_key_exists('occurrence_id', $_GET) || $_GET['occurrence_id']=='{occurrence_id}'));
+          ((array_key_exists('sample_id', $_GET) && $_GET['sample_id'] !== '{sample_id}') &&
+           (!array_key_exists('occurrence_id', $_GET) || $_GET['occurrence_id'] === '{occurrence_id}'));
     } else
       return
           // a form saved using a previous version might not have this setting, so default to grid mode=true

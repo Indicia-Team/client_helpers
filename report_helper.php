@@ -295,7 +295,7 @@ class report_helper extends helper_base {
   * <li><b>sharing</b>
   * Assuming the report has been written to take account of website sharing agreements, set this to define the task
   * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, website (this website only) or me (my data only).</li>
+  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
   * <li><b>UserId</b>
   * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
   * </li>
@@ -1142,7 +1142,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   * <li><b>sharing</b>
   * Assuming the report has been written to take account of website sharing agreements, set this to define the task
   * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, website (this website only) or me (my data only).</li>
+  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
   * <li><b>UserId</b>
   * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
   * </li>
@@ -1520,7 +1520,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   * <li><b>sharing</b>
   * Assuming the report has been written to take account of website sharing agreements, set this to define the task
   * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, website (this website only) or me (my data only).</li>
+  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
   * <li><b>UserId</b>
   * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
   * </li>
@@ -1729,7 +1729,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   * <li><b>sharing</b>
   * Assuming the report has been written to take account of website sharing agreements, set this to define the task
   * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-  * verification, moderation, peer_review, data_flow, website (this website only) or me (my data only).</li>
+  * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
   * <li><b>UserId</b>
   * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
   * </li>
@@ -2186,7 +2186,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
    * <li><b>sharing</b>
    * Assuming the report has been written to take account of website sharing agreements, set this to define the task
    * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-   * verification, moderation, peer_review, data_flow, website (this website only) or me (my data only).</li>
+   * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
    * <li><b>UserId</b>
    * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
    * <li><b>caching</b>
