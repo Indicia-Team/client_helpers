@@ -524,8 +524,13 @@ HTML
       'footer' => '</ul>',
       'bands' => array(array('content'=>'<li style="font-size: {font_size}px">' .
           "<a href=\"$currentUrl[path]{taxon_meaning_id}\">{species}<a/></li>")),
-      'emptyText' => '<p>No association species information available</p>'
+      'emptyText' => '<p>No association species information available</p>',
+      'extraParams' => array()
     ), $options);
+    $extraParams = array_merge(
+        $options['extraParams'],
+        array('taxon_meaning_list'=> self::$taxon_meaning_id)
+    );
     return '<div class="detail-panel" id="detail-panel-occurrenceassociations"><h3>'.lang::get('Associated species').'</h3>' .
     report_helper::freeform_report(array(
       'readAuth' => $auth['read'],
@@ -538,9 +543,7 @@ HTML
       'emptyText' => $options['emptyText'],
       'mode' => 'report',
       'autoParamsForm' => false,
-      'extraParams' => array(
-        'taxon_meaning_list'=> self::$taxon_meaning_id
-      )
+      'extraParams' => $extraParams
     )).'</div>';
   }
   
