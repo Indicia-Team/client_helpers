@@ -33,5 +33,5 @@ $custom_terms = array(
 	'Date' => 'Datum',
 	'Spatial Ref' => 'Koordinaten',
   'Comment' => 'Kommentar',
-  'Add another record' => 'Geben sie eine andere Beobachtung ein
+  'Add another record' => 'Geben sie eine andere Beobachtung ein'
 );
