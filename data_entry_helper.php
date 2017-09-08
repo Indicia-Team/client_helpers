@@ -2948,6 +2948,11 @@ RIJS;
   * Optional. If set to true, then a spatial reference column is included on each row. When submitted, each unique
   * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
   * defined for some records.</li>
+  * <li><b>spatialRefPrecisionAttrId</b><br/>
+  * Optional. If set to the ID of a sample attribute and spatialRefPerRow is enabled, then a spatial reference 
+  * precision column is included on each row. When submitted, each unique spatial reference and precision value will 
+  * cause a subsample to be included in the submission with the attribute set to this value. The sample attribute must
+  * be a float, configured for the survey with the system function set to sref_precision.</li>
   * <li><b>mediaTypes</b><br/>
   * Optional. Array of media types that can be uploaded. Choose from Audio:Local, Audio:SoundCloud, Image:Flickr,
   * Image:Instagram, Image:Local, Image:Twitpic, Pdf:Local, Social:Facebook, Social:Twitter, Video:Youtube,
@@ -3506,7 +3511,8 @@ JS;
             $indicia_templates[$options['attrCellTemplate']]);
           $idx++;
         }
-        $row .= self::speciesChecklistSpatialRefPerRowCell($options, $colIdx, $txIdx, $existingRecordId);
+        $row .= self::speciesChecklistSpatialRefCell($options, $colIdx, $txIdx, $existingRecordId);
+        $row .= self::speciesChecklistSpatialRefPrecisionCell($options, $colIdx, $txIdx, $existingRecordId);
         $row .= self::speciesChecklistCommentCell($options, $colIdx, $txIdx, $loadedTxIdx, $existingRecordId);
         $row .= self::speciesChecklistSensitivityCell($options, $colIdx, $txIdx, $existingRecordId);
 
@@ -3556,8 +3562,9 @@ JS;
         // Add media in a following row when not in responsive mode.
         if ($options['mediaTypes'] && count($existingImages) > 0 && !$options['responsive']) {
           $totalCols = ($options['lookupListId'] ? 2 : 1) + 1 /*checkboxCol*/ + count($occAttrControls) +
-            ($options['spatialRefPerRow'] ? 1 : 0) + ($options['occurrenceComment'] ? 1 : 0) +
-            ($options['occurrenceSensitivity'] ? 1 : 0) + (count($options['mediaTypes']) ? 1 : 0);
+            ($options['spatialRefPerRow'] ? 1 : 0) + ($options['spatialRefPrecisionAttrId'] ? 1 : 0) +
+            ($options['occurrenceComment'] ? 1 : 0) + ($options['occurrenceSensitivity'] ? 1 : 0) +
+            (count($options['mediaTypes']) ? 1 : 0);
           $rows[$rowIdx]='<td colspan="'.$totalCols.'">'.data_entry_helper::file_box(array(
               'table'=>"sc:$options[id]-$txIdx:$existingRecordId:occurrence_medium",
               'loadExistingRecordKey'=>"sc:$loadedTxIdx:$existingRecordId:occurrence_medium",
@@ -4139,6 +4146,13 @@ JS;
           $r .= self::get_species_checklist_col_header(
             $options['id']."-spatialref-$i", lang::get('Spatial ref'), $visibleColIdx, $options['colWidths'], $attrs);
         }
+        if ($options['spatialRefPrecisionAttrId']) {
+          $attrs = self::get_species_checklist_col_responsive($options, 'spatialrefprecision');
+          $r .= self::get_species_checklist_col_header(
+            $options['id']."-spatialrefprecision-$i", lang::get('GPS precision'), $visibleColIdx, $options['colWidths'],
+            $attrs
+          );
+        }
         if ($options['occurrenceComment']) {
           $attrs = self::get_species_checklist_col_responsive($options, 'comment');
           $r .= self::get_species_checklist_col_header(
@@ -4348,6 +4362,7 @@ JS;
       'occurrenceComment' => false,
       'occurrenceSensitivity' => null,
       'spatialRefPerRow' => false,
+      'spatialRefPrecisionAttrId' => null,
       'id' => 'species-grid-'.rand(0,1000),
       'colWidths' => array(),
       'taxonFilterField' => 'none',
@@ -4373,6 +4388,8 @@ JS;
     ), $options);
     // subSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
+    // spatialRefPrecisionAttrId can't be set without spatialRefPerRow
+    $options['spatialRefPrecisionAttrId'] = $options['spatialRefPrecisionAttrId'] && $options['spatialRefPerRow'];
     if (array_key_exists('readAuth', $options)) {
       $options['extraParams'] += $options['readAuth'];
     } else {
@@ -4518,13 +4535,28 @@ JS;
       $idx++;
     }
     if ($options['spatialRefPerRow']) {
-      $r .= '<td class="ui-widget-content scSpatialRefCell" headers="'.$options['id'].'-spatialref-0">' .
-        '<input class="scSpatialRef" type="text" ' .
-        "id=\"$fieldname:occurrence:spatialref\" name=\"$fieldname:occurrence:spatialref\" value=\"\" /></td>";
+      $r .= <<<HTML
+<td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-0">
+  <input class="scSpatialRef" type="text" id="$fieldname:occurrence:spatialref" 
+     name="$fieldname:occurrence:spatialref\" value="" />
+</td>
+HTML;
+    }
+    if ($options['spatialRefPrecisionAttrId']) {
+      $r .= <<<HTML
+<td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-0">
+  <input class="scSpatialRefPrecision" type="text" id="$fieldname:occurrence:spatialrefprecision" 
+      name="$fieldname:occurrence:spatialrefprecision" value="" />
+</td>
+HTML;
     }
     if ($options['occurrenceComment']) {
-      $r .= '<td class="ui-widget-content scCommentCell" headers="'.$options['id'].'-comment-0"><input class="scComment" type="text" ' .
-        "id=\"$fieldname:occurrence:comment\" name=\"$fieldname:occurrence:comment\" value=\"\" /></td>";
+      $r .= <<<HTML
+<td class="ui-widget-content scCommentCell" headers="$options[id]-comment-0">
+  <input class="scComment" type="text" id="$fieldname:occurrence:comment" 
+      name="$fieldname:occurrence:comment" value="" />
+</td>
+HTML;
     }
     if (isset($options['occurrenceSensitivity']))
       $r .= self::speciesChecklistSensitivityCell($options, 0, '-idx-', '');
@@ -6047,6 +6079,19 @@ if (errors$uniq.length>0) {
   }
 
   /**
+   * Extracts a value from an associative array by key, removes it from the array and returns it.
+   *
+   * @param array $record
+   * @param string $field
+   * @return mixed
+   */
+  private function extractValueFromArray(&$record, $field) {
+    $value = isset($record[$field]) ? $record[$field] : null;
+    unset($record[$field]);
+    return $value;
+  }
+
+  /**
    * Wraps data from a species checklist grid (generated by
    * data_entry_helper::species_checklist) into a suitable format for submission. This will
    * return an array of submodel entries which can be dropped directly into the subModel
@@ -6160,11 +6205,8 @@ if (errors$uniq.length>0) {
         $record['website_id'] = $website_id;
         self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
         // Handle subsamples indicated by a row specific map ref
-        if (!empty($record['occurrence:spatialref'])) {
-          $sref = trim($record['occurrence:spatialref']);
-          unset($record['occurrence:spatialref']);
-        } else
-          $sref = null;
+        $sref = self::extractValueFromArray($record, 'occurrence:spatialref');
+        $srefprecision = self::extractValueFromArray($record, 'occurrence:spatialrefprecision');
         $occ = data_entry_helper::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
@@ -6447,11 +6489,9 @@ if (errors$uniq.length>0) {
    * @param $existingRecordId integer If an existing occurrence record, pass the ID
    * @return string HTML to insert into the grid
    */
-  private static function speciesChecklistSpatialRefPerRowCell($options, $colIdx, $rowIdx, $existingRecordId) {
+  private static function speciesChecklistSpatialRefCell($options, $colIdx, $rowIdx, $existingRecordId) {
     $r = '';
     if ($options['spatialRefPerRow']) {
-      $r .= "\n<td class=\"ui-widget-content scSpatialRefCell\" headers=\"$options[id]-spatialref-$colIdx\">";
-      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialref";
       $value = '';
       if (isset(self::$entity_to_load['sample:id']) &&
           isset(self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"])) {
@@ -6465,8 +6505,49 @@ if (errors$uniq.length>0) {
           }
         }
       }
-      $r .= "<input class=\"scSpatialRef\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
-      $r .= "</td>";
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialref";
+      $r = <<<HTML
+<td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-$colIdx">
+  <input class="scSpatialRef" type="text\" name="$fieldname" id="$fieldname" value="$value" />
+</td>
+HTML;
+    }
+    return $r;
+  }
+
+  /**
+   * Return the HTML for the td element which allows a spatial ref precision to be entered seperately for each row in a
+   * species checklist grid.
+   * @param $options array Options passed to the control
+   * @param $colIdx integer Index of the column position allowing the td to be linked to its header
+   * @param $rowIdx integer Index of the grid row
+   * @param $existingRecordId integer If an existing occurrence record, pass the ID
+   * @return string HTML to insert into the grid
+   */
+   private static function speciesChecklistSpatialRefPrecisionCell($options, $colIdx, $rowIdx, $existingRecordId) {
+    $r = '';
+    if ($options['spatialRefPrecisionAttrId']) {
+      $value = '';
+      if (isset(self::$entity_to_load['sample:id']) &&
+          isset(self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"])) {
+        $sampleIdx = self::$entity_to_load["sc:$rowIdx:$existingRecordId:occurrence:sampleIDX"];
+        $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
+        if (count($keys)) {
+          $key = array_pop($keys);
+          // @todo Load correct precision
+          $value = 123;
+          /*$srefKey = preg_replace('/:id$/', ':entered_sref_precision', $key);
+          if (isset(self::$entity_to_load[$srefKey])) {
+            $value = self::$entity_to_load[$srefKey];
+          }*/
+        }
+      }
+      $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialrefprecision";
+      $r = <<<HTML
+<td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-$colIdx">
+  <input class="scSpatialRefPrecision" type="text\" name="$fieldname" id="$fieldname" value="$value" />
+</td>
+HTML;
     }
     return $r;
   }
