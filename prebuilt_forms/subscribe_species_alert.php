@@ -187,10 +187,12 @@ class iform_subscribe_species_alert {
     }
     $form .= data_entry_helper::species_autocomplete(array(
         'label' => lang::get('Alert species'),
-        'helpText' => lang::get('Select the species you are interested in receiving alerts in ' .
-            'relation to if you want to receive alerts on a single species.'),
+        'helpText' => lang::get(
+            'Select the species you are interested in receiving alerts in ' .
+            'relation to if you want to receive alerts on a single species.'
+        ),
         'fieldname' => 'taxa_taxon_list_id',
-        'extraParams' => $auth['read'] + array('taxon_list_id' => $args['list_id']),
+        'extraParams' => $auth['read'] + array('taxon_list_id' => json_encode($args['list_id'])),
         'class' => 'control-width-4',
         'default' => $default,
         'defaultCaption' => $defaultCaption
