@@ -3621,6 +3621,10 @@ JS;
       $options['helpTextClass'] = (isset($options['helpTextClass'])) ? $options['helpTextClass'] : 'helpTextLeft';
       $r = self::get_help_text($options, 'before');
       $r .= $beforegrid . $grid;
+      $r .= self::speciesChecklistSrefPerRowExistingIds($options);
+      if ($options['spatialRefPerRow'] && $options['spatialRefPrecisionAttrId']) {
+        $r .= "<input type=\"hidden\" name=\"scSpatialRefPrecisionAttrId\" value=\"$options[spatialRefPrecisionAttrId]\" />";
+      }
       $r .= self::get_help_text($options, 'after');
       self::$javascript .= "$('#".$options['id']."').find('input,select').keydown(keyHandler);\n";
       //nameFilter is an array containing all the parameters required to return data for each of the
@@ -4389,7 +4393,7 @@ JS;
     // subSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
     // spatialRefPrecisionAttrId can't be set without spatialRefPerRow
-    $options['spatialRefPrecisionAttrId'] = $options['spatialRefPrecisionAttrId'] && $options['spatialRefPerRow'];
+    $options['spatialRefPrecisionAttrId'] = $options['spatialRefPerRow'] ? $options['spatialRefPrecisionAttrId'] : null;
     if (array_key_exists('readAuth', $options)) {
       $options['extraParams'] += $options['readAuth'];
     } else {
@@ -4538,14 +4542,14 @@ JS;
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-0">
   <input class="scSpatialRef" type="text" id="$fieldname:occurrence:spatialref" 
-     name="$fieldname:occurrence:spatialref\" value="" />
+     name="$fieldname:occurrence:spatialref" value="" />
 </td>
 HTML;
     }
     if ($options['spatialRefPrecisionAttrId']) {
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-0">
-  <input class="scSpatialRefPrecision" type="text" id="$fieldname:occurrence:spatialrefprecision" 
+  <input class="scSpatialRefPrecision" type="number" id="$fieldname:occurrence:spatialrefprecision" 
       name="$fieldname:occurrence:spatialrefprecision" value="" />
 </td>
 HTML;
@@ -4585,7 +4589,6 @@ HTML;
     }
 
     $r .= "</tr></tbody></table>\n";
-    $r .= self::speciesChecklistSrefPerRowExistingIds($options);
     return $r;
   }
 
@@ -6085,7 +6088,7 @@ if (errors$uniq.length>0) {
    * @param string $field
    * @return mixed
    */
-  private function extractValueFromArray(&$record, $field) {
+  private static function extractValueFromArray(&$record, $field) {
     $value = isset($record[$field]) ? $record[$field] : null;
     unset($record[$field]);
     return $value;
@@ -6206,14 +6209,14 @@ if (errors$uniq.length>0) {
         self::speciesChecklistApplyFieldDefaults($fieldDefaults, $record);
         // Handle subsamples indicated by a row specific map ref
         $sref = self::extractValueFromArray($record, 'occurrence:spatialref');
-        $srefprecision = self::extractValueFromArray($record, 'occurrence:spatialrefprecision');
+        $srefPrecision = self::extractValueFromArray($record, 'occurrence:spatialrefprecision');
         $occ = data_entry_helper::wrap($record, 'occurrence');
         self::attachOccurrenceMediaToModel($occ, $record);
         self::attachAssociationsToModel($id, $occ, $assocData, $arr);
         // If we have a record-level spatial reference, then we need to attach the record to a subsample to capture the
         // exact sref.
         if ($sref) {
-          if (!isset($subModels[$sref])) {
+          if (!isset($subModels["$sref.$srefPrecision"])) {
             $subSample = array(
               'website_id' => $website_id,
               'survey_id' => empty($arr['survey_id']) ? '' : $arr['survey_id'],
@@ -6223,19 +6226,22 @@ if (errors$uniq.length>0) {
               'input_form' => empty($arr['sample:input_form']) ? '' : $arr['sample:input_form'],
               'entered_sref' => $sref
             );
+            if ($srefPrecision) {
+              $subSample['smpAttr:' . $arr['scSpatialRefPrecisionAttrId']] = $srefPrecision;
+            }
             // set an existing ID on the sample if editing
             if (!empty($existingSampleIdsBySref[strtoupper(trim($sref))])) {
               $subSample['id'] = $existingSampleIdsBySref[strtoupper(trim($sref))];
               if ($key = array_search($subSample['id'], $unusedExistingSampleIds))
                 unset($unusedExistingSampleIds[$key]);
             }
-            $subModels[$sref] = array(
+            $subModels["$sref.$srefPrecision"] = array(
               'fkId' => 'parent_id',
               'model' => data_entry_helper::wrap($subSample, 'sample'),
             );
-            $subModels[$sref]['model']['subModels'] = array();
+            $subModels["$sref.$srefPrecision"]['model']['subModels'] = array();
           }
-          $subModels[$sref]['model']['subModels'][] = array(
+          $subModels["$sref.$srefPrecision"]['model']['subModels'][] = array(
             'fkId' => 'sample_id',
             'model' => $occ
           );
@@ -6545,7 +6551,7 @@ HTML;
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialrefprecision";
       $r = <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-$colIdx">
-  <input class="scSpatialRefPrecision" type="text\" name="$fieldname" id="$fieldname" value="$value" />
+  <input class="scSpatialRefPrecision" type="number\" name="$fieldname" id="$fieldname" value="$value" />
 </td>
 HTML;
     }
