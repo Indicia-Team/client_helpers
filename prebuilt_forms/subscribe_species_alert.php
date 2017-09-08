@@ -188,9 +188,7 @@ class iform_subscribe_species_alert {
       'helpText' => lang::get('Select the species you are interested in receiving alerts in ' .
           'relation to if you want to receive alerts on a single species.'),
       'fieldname' => 'taxa_taxon_list_id',
-      'extraParams' => $auth['read'] + array('query' => json_encode(
-              array('in' => array('taxon_list_id' => $args['list_id']))
-      )),
+      'extraParams' => $auth['read'] + array('taxon_list_id' => $args['list_id']),
       'class' => 'control-width-4',
       'default' => $default,
       'defaultCaption' => $defaultCaption
