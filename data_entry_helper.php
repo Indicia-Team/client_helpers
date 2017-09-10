@@ -3990,6 +3990,10 @@ JS;
         $extraParams += $readAuth + array('view'=>'detail','parent_id'=>$sampleId,'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
         if($subSampleMethodID != '')
           $extraParams['sample_method_id'] = $subSampleMethodID;
+
+        // @todo This needs to also get the precision attribute if doing that
+
+
         $subSamples = data_entry_helper::get_population_data(array(
           'table' => 'sample',
           'extraParams' => $extraParams,
@@ -6540,12 +6544,10 @@ HTML;
         $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
         if (count($keys)) {
           $key = array_pop($keys);
-          // @todo Load correct precision
-          $value = 123;
-          /*$srefKey = preg_replace('/:id$/', ':entered_sref_precision', $key);
+          $srefKey = preg_replace('/:id$/', ':sref_precision', $key);
           if (isset(self::$entity_to_load[$srefKey])) {
             $value = self::$entity_to_load[$srefKey];
-          }*/
+          }
         }
       }
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialrefprecision";
