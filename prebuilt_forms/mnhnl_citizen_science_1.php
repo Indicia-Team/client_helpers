@@ -444,7 +444,6 @@ class iform_mnhnl_citizen_science_1 {
       'resizeWidth' => 1024,
       'resizeHeight' => 768,
       'table' => 'occurrence_image',
-      'tabDiv' => 'other',
       // Reduce the number of runtimes, because flash and silverlight don't seem reliable on this form.
       'runtimes' => array('html5', 'html4'),
     );
