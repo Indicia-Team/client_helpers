@@ -414,12 +414,14 @@ class iform_mnhnl_citizen_science_1 {
     }
     $r .= data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
     $r .= data_entry_helper::sref_and_system(array(
-        'label' => lang::get('sample:entered_sref'),
-        'systems' => $systems
+      'label' => lang::get('sample:entered_sref'),
+      'systems' => $systems,
     ));
     // Retrieve options for the IndiciaMapPanel, and optionally options for OpenLayers.
     $options = iform_map_get_map_options($args, $readAuth);
-    $options['tabDiv'] = 'place';
+    if ($args['interface'] !== 'one_page') {
+      $options['tabDiv'] = 'place';
+    }
     $olOptions = iform_map_get_ol_options($args);
     $options['scroll_wheel_zoom'] = FALSE;
     $r .= data_entry_helper::map_panel($options, $olOptions);
@@ -436,7 +438,7 @@ class iform_mnhnl_citizen_science_1 {
       'label' => lang::get('Date'),
       'fieldname' => 'sample:date',
     ));
-    $r .= data_entry_helper::file_box(array(
+    $options = array(
       'caption' => 'Upload your photos',
       'readAuth' => $readAuth,
       'resizeWidth' => 1024,
@@ -445,7 +447,11 @@ class iform_mnhnl_citizen_science_1 {
       'tabDiv' => 'other',
       // Reduce the number of runtimes, because flash and silverlight don't seem reliable on this form.
       'runtimes' => array('html5', 'html4'),
-    ));
+    );
+    if ($args['interface'] !== 'one_page') {
+      $options['tabDiv'] = 'other';
+    }
+    $r .= data_entry_helper::file_box($options);
 
     // Dynamically create a control for the abundance, unless overridden for this species.
     if (isset($species) && count($species) > 0 && trim($args['abundance_overrides']) !== '') {
