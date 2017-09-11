@@ -2948,7 +2948,7 @@ RIJS;
   * Optional. If set to true, then a spatial reference column is included on each row. When submitted, each unique
   * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
   * defined for some records.</li>
-  * <li><b>spatialRefPrecisionAttrId</b><br/>
+* <li><b>spatialRefPrecisionAttrId</b><br/>
   * Optional. If set to the ID of a sample attribute and spatialRefPerRow is enabled, then a spatial reference 
   * precision column is included on each row. When submitted, each unique spatial reference and precision value will 
   * cause a subsample to be included in the submission with the attribute set to this value. The sample attribute must
@@ -3237,7 +3237,7 @@ JS;
           $options['mediaTypes'], $options['reloadExtraParams'], $subSampleRows,
           $options['speciesControlToUseSubSamples'] || $options['spatialRefPerRow'],
           (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),
-          $options['spatialRefPerRow']);
+          $options['spatialRefPerRow'], $options['spatialRefPrecisionAttrId']);
     }
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
@@ -3970,10 +3970,13 @@ JS;
    * @param boolean $useSubSamples Enable loading of records from subsamples of the main sample
    * @param boolean $subSamplesOptional If using subsamples but they are optional, records are also loaded that are
    * directly attached to the main sample.
+   * @param string $spatialRefPrecisionAttrId Provide the ID of the attribute which defines the spatial ref precision of
+   * each subsample where relevant.
    * @return array Array with key of occurrence_id and value of $taxonInstance.
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
-       &$subSamples, $useSubSamples, $subSampleMethodID='', $subSamplesOptional=false) {
+       &$subSamples, $useSubSamples, $subSampleMethodID='', 
+       $subSamplesOptional=false, $spatialRefPrecisionAttrId = null) {
     $occurrenceIds = array();
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
     // data we need.
@@ -3990,16 +3993,16 @@ JS;
         $extraParams += $readAuth + array('view'=>'detail','parent_id'=>$sampleId,'deleted'=>'f', 'orderby'=>'id', 'sortdir'=>'ASC' );
         if($subSampleMethodID != '')
           $extraParams['sample_method_id'] = $subSampleMethodID;
-
-        // @todo This needs to also get the precision attribute if doing that
-
-
-        $subSamples = data_entry_helper::get_population_data(array(
+        $params = array(
           'table' => 'sample',
           'extraParams' => $extraParams,
           'nocache' => true,
-          'sharing' => 'editing'
-        ));
+          'sharing' => 'editing',
+        );
+        if ($spatialRefPrecisionAttrId) {
+          $params['attrs'] = $spatialRefPrecisionAttrId;
+        }
+        $subSamples = data_entry_helper::get_population_data($params);
         $subSampleList = array();
         if ($subSamplesOptional)
           $subSampleList[] = $sampleId;
@@ -4011,6 +4014,10 @@ JS;
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:location_id'] = $subsample['location_id'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:entered_sref'] = $subsample['entered_sref'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:entered_sref_system'] = $subsample['entered_sref_system'];
+          if ($spatialRefPrecisionAttrId) {
+            data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:sref_precision'] = 
+                $subsample["attr_sample_$spatialRefPrecisionAttrId"];
+          }
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:date_start'] = $subsample['date_start'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:date_end'] = $subsample['date_end'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:date_type'] = $subsample['date_type'];
@@ -5457,6 +5464,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     }
     if (isset($options['sharing']))
       $request .= '&sharing='.$options['sharing'];
+    if (isset($options['attrs']))
+      $request .= '&attrs='.$options['attrs'];
     if (!isset($options['caching']))
       $options['caching'] = true; // default
     return self::_get_cached_services_call($request, $options);
@@ -6220,6 +6229,10 @@ if (errors$uniq.length>0) {
         // If we have a record-level spatial reference, then we need to attach the record to a subsample to capture the
         // exact sref.
         if ($sref) {
+          $submodelKey = strtoupper(trim($sref));
+          if ($srefPrecision) {
+            $submodelKey .= ".$srefPrecision";
+          }
           if (!isset($subModels["$sref.$srefPrecision"])) {
             $subSample = array(
               'website_id' => $website_id,
@@ -6234,18 +6247,19 @@ if (errors$uniq.length>0) {
               $subSample['smpAttr:' . $arr['scSpatialRefPrecisionAttrId']] = $srefPrecision;
             }
             // set an existing ID on the sample if editing
-            if (!empty($existingSampleIdsBySref[strtoupper(trim($sref))])) {
-              $subSample['id'] = $existingSampleIdsBySref[strtoupper(trim($sref))];
-              if ($key = array_search($subSample['id'], $unusedExistingSampleIds))
+            if (!empty($existingSampleIdsBySref[$submodelKey])) {
+              $subSample['id'] = $existingSampleIdsBySref[$submodelKey];
+              if ($key = array_search($subSample['id'], $unusedExistingSampleIds)) {
                 unset($unusedExistingSampleIds[$key]);
+              }
             }
-            $subModels["$sref.$srefPrecision"] = array(
+            $subModels[$submodelKey] = array(
               'fkId' => 'parent_id',
               'model' => data_entry_helper::wrap($subSample, 'sample'),
             );
-            $subModels["$sref.$srefPrecision"]['model']['subModels'] = array();
+            $subModels[$submodelKey]['model']['subModels'] = array();
           }
-          $subModels["$sref.$srefPrecision"]['model']['subModels'][] = array(
+          $subModels[$submodelKey]['model']['subModels'][] = array(
             'fkId' => 'sample_id',
             'model' => $occ
           );
@@ -6259,7 +6273,7 @@ if (errors$uniq.length>0) {
     }
     // Flag any old samples for deletion that are now empty
     foreach ($unusedExistingSampleIds as $id) {
-      $subModels[$sref]['model']['subModels'][] = array(
+      $subModels[$sref] = array(
         'fkId' => 'parent_id',
         'model' => data_entry_helper::wrap(array(
           'id' => $id,
@@ -6544,9 +6558,9 @@ HTML;
         $keys = preg_grep("/^sc:$sampleIdx:\d+:sample:id$/", array_keys(self::$entity_to_load));
         if (count($keys)) {
           $key = array_pop($keys);
-          $srefKey = preg_replace('/:id$/', ':sref_precision', $key);
-          if (isset(self::$entity_to_load[$srefKey])) {
-            $value = self::$entity_to_load[$srefKey];
+          $precisionFieldKey = preg_replace('/:id$/', ':sref_precision', $key);
+          if (isset(self::$entity_to_load[$precisionFieldKey])) {
+            $value = self::$entity_to_load[$precisionFieldKey];
           }
         }
       }
@@ -6627,24 +6641,28 @@ HTML;
 
   /**
    * When the species_checklist grid is in spatialRefPerRow mode and editing existing records, this method outputs any
-   * existing subsample IDs into an array keyed by spatial ref, so they can be looked up and used in the submission
-   * later. It also outputs geoms into an array keyed by sample ID so they can be drawn on the map.
+   * existing subsample IDs into an array keyed by spatial ref/precision, so they can be looked up and used in the 
+   * submission later. It also outputs geoms into an array keyed by sample ID so they can be drawn on the map.
    * @param array $options Options passed to the species_checklist control.
    * @return string HTML for a hidden input containing the existing sample data.
    */
   private static function speciesChecklistSrefPerRowExistingIds($options) {
     $r = '';
     if ($options['spatialRefPerRow'] && !empty(self::$entity_to_load)) {
-      $keys = preg_grep("/^sc:\d+:\d+:sample:id$/", array_keys(self::$entity_to_load));
+      $sampleIdKeys = preg_grep("/^sc:\d+:\d+:sample:id$/", array_keys(self::$entity_to_load));
       $data = array();
       $geomsData = array();
-      foreach ($keys as $key) {
-        $srefKey = preg_replace('/:id$/', ':entered_sref', $key);
-        $sref = strtoupper(self::$entity_to_load[$srefKey]);
-        $data[$sref] = self::$entity_to_load[$key];
-        $geomKey = preg_replace('/:id$/', ':geom', $key);
+      foreach ($sampleIdKeys as $sampleIdKey) {
+        $srefKey = preg_replace('/:id$/', ':entered_sref', $sampleIdKey);
+        $dataKey = strtoupper(self::$entity_to_load[$srefKey]);
+        if ($options['spatialRefPrecisionAttrId']) {
+          $precisionKey = preg_replace('/:id$/', ':sref_precision', $sampleIdKey);
+          $dataKey .= '.' . self::$entity_to_load[$precisionKey];
+        }
+        $data[$dataKey] = self::$entity_to_load[$sampleIdKey];
+        $geomKey = preg_replace('/:id$/', ':geom', $sampleIdKey);
         $geom = self::$entity_to_load[$geomKey];
-        $geomsData[$sref] = $geom;
+        $geomsData[strtoupper(self::$entity_to_load[$srefKey])] = $geom;
       }
       $value = htmlspecialchars(json_encode($data));
       $r .= "<input type=\"hidden\" name=\"existingSampleIdsBySref\" value=\"$value\" />";
