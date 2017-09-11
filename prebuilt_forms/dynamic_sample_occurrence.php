@@ -838,7 +838,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             // whole lot. 
             if (!empty($args['list_id']) && empty($args['extra_list_id'])) {
               $args['extra_list_id'] = $args['list_id'];
-              unset($args['list_id']);
+              $args['list_id'] = '';
             }
           }
         }
