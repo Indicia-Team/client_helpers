@@ -20,7 +20,7 @@
  */
 
 /**
- * Link in other required php files. 
+ * Link in other required php files.
  */
 require_once('helper_config.php');
 require_once('helper_base.php');
@@ -579,7 +579,7 @@ $('#$escaped').change(function(e) {
     $options['idx']=$sub_list_idx;
     // set up javascript
     self::$javascript .= <<<JS
-indiciaFns.initSubList('$options[escaped_id]', '$options[escaped_captionField]', 
+indiciaFns.initSubList('$options[escaped_id]', '$options[escaped_captionField]',
   '$options[fieldname]', '$indicia_templates[sub_list_item]');
 JS;
     // load any default values for list items into display and hidden lists
@@ -1691,7 +1691,7 @@ JS;
         strtolower($options['label']));
       self::$javascript .= <<<JS
 indiciaData.langMoreThanOneLocationMatch = '$langMoreThanOneLocationMatch';
-$('#imp-geom').change(function() { 
+$('#imp-geom').change(function() {
   indiciaFns.locationControl.autoFillLocationFromLocationTypeId('$options[id]', $options[autofillFromLocationTypeId]);
 });
 
@@ -2617,12 +2617,12 @@ JS;
 
   /**
    * A version of the autocomplete control preconfigured for species lookups.
-   * 
+   *
    * Lookup is performed against the cache_taxon_searchterms table so allows for full-text search behaviour on latin and
    * vernacular species names, as well as lookup against abbreviated or coded versions of species names.
-   * 
+   *
    * The output of this control can be configured using the following templates:
-   * * **autocomplete** - Defines a hidden input and a visible input, to hold the underlying database ID and to allow 
+   * * **autocomplete** - Defines a hidden input and a visible input, to hold the underlying database ID and to allow
    *   input and display of the text search string respectively.
    * * **autocomplete_javascript** - Defines the JavaScript which will be inserted onto the page in order to activate
    *   the autocomplete control.
@@ -2733,11 +2733,11 @@ function(item) {
   }
   // This bit optionally adds '- common' or '- latin' depending on what was being searched
   if (speciesIncludeBothNames) {
-    nameTest = (speciesIncludeAuthorities && 
+    nameTest = (speciesIncludeAuthorities &&
       (item.preferred_taxon !== item.taxon || item.preferred_authority !==item.authority))
       || (!speciesIncludeAuthorities &&
       item.preferred_taxon !== item.taxon)
-      
+
     if (item.preferred === 't' && item.default_common_name !== item.taxon && item.default_common_name) {
       r += '<br/>' + item.default_common_name;
     } else if (item.preferred==='f' && nameTest && item.preferred_taxon) {
@@ -2949,8 +2949,8 @@ RIJS;
   * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
   * defined for some records.</li>
 * <li><b>spatialRefPrecisionAttrId</b><br/>
-  * Optional. If set to the ID of a sample attribute and spatialRefPerRow is enabled, then a spatial reference 
-  * precision column is included on each row. When submitted, each unique spatial reference and precision value will 
+  * Optional. If set to the ID of a sample attribute and spatialRefPerRow is enabled, then a spatial reference
+  * precision column is included on each row. When submitted, each unique spatial reference and precision value will
   * cause a subsample to be included in the submission with the attribute set to this value. The sample attribute must
   * be a float, configured for the survey with the system function set to sref_precision.</li>
   * <li><b>mediaTypes</b><br/>
@@ -3949,7 +3949,7 @@ indiciaData.speciesChecklistFilterOpts = {
   nameFilter: $filtersJson,
   defaultFilterMode : '$defaultFilterMode',
   defaultOptionLabel : '$defaultOptionLabel',
-  taxon_list_id: $options[lookupListId]        
+  taxon_list_id: $options[lookupListId]
 };
 indiciaFns.applyInitialSpeciesFilterMode('$options[id]');
 indiciaFns.setupSpeciesFilterPopup('$options[id]');
@@ -3975,7 +3975,7 @@ JS;
    * @return array Array with key of occurrence_id and value of $taxonInstance.
    */
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $loadMedia, $extraParams,
-       &$subSamples, $useSubSamples, $subSampleMethodID='', 
+       &$subSamples, $useSubSamples, $subSampleMethodID='',
        $subSamplesOptional=false, $spatialRefPrecisionAttrId = null) {
     $occurrenceIds = array();
     // don't load from the db if there are validation errors, since the $_POST will already contain all the
@@ -4015,7 +4015,7 @@ JS;
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:entered_sref'] = $subsample['entered_sref'];
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:entered_sref_system'] = $subsample['entered_sref_system'];
           if ($spatialRefPrecisionAttrId) {
-            data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:sref_precision'] = 
+            data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:sref_precision'] =
                 $subsample["attr_sample_$spatialRefPrecisionAttrId"];
           }
           data_entry_helper::$entity_to_load['sc:'.$idx.':'.$subsample['id'].':sample:date_start'] = $subsample['date_start'];
@@ -4552,7 +4552,7 @@ JS;
     if ($options['spatialRefPerRow']) {
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefCell" headers="$options[id]-spatialref-0">
-  <input class="scSpatialRef" type="text" id="$fieldname:occurrence:spatialref" 
+  <input class="scSpatialRef" type="text" id="$fieldname:occurrence:spatialref"
      name="$fieldname:occurrence:spatialref" value="" />
 </td>
 HTML;
@@ -4560,7 +4560,7 @@ HTML;
     if ($options['spatialRefPrecisionAttrId']) {
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-0">
-  <input class="scSpatialRefPrecision" type="number" id="$fieldname:occurrence:spatialrefprecision" 
+  <input class="scSpatialRefPrecision" type="number" id="$fieldname:occurrence:spatialrefprecision"
       name="$fieldname:occurrence:spatialrefprecision" value="" />
 </td>
 HTML;
@@ -4568,7 +4568,7 @@ HTML;
     if ($options['occurrenceComment']) {
       $r .= <<<HTML
 <td class="ui-widget-content scCommentCell" headers="$options[id]-comment-0">
-  <input class="scComment" type="text" id="$fieldname:occurrence:comment" 
+  <input class="scComment" type="text" id="$fieldname:occurrence:comment"
       name="$fieldname:occurrence:comment" value="" />
 </td>
 HTML;
@@ -6641,7 +6641,7 @@ HTML;
 
   /**
    * When the species_checklist grid is in spatialRefPerRow mode and editing existing records, this method outputs any
-   * existing subsample IDs into an array keyed by spatial ref/precision, so they can be looked up and used in the 
+   * existing subsample IDs into an array keyed by spatial ref/precision, so they can be looked up and used in the
    * submission later. It also outputs geoms into an array keyed by sample ID so they can be drawn on the map.
    * @param array $options Options passed to the species_checklist control.
    * @return string HTML for a hidden input containing the existing sample data.
@@ -7174,7 +7174,7 @@ HTML;
    * @param optional boolean $indexedArray default true. Determines whether the return value is an array indexed by PK,
    * or whether it is ordered as it comes from the database (ie block weighting). Needs to be set false if data is to be
    * used by get_attribute_html.
-   * @param string $sharing Set to verification, peer_review, moderation, data_flow, reporting or editing to indicate 
+   * @param string $sharing Set to verification, peer_review, moderation, data_flow, reporting or editing to indicate
    * the task being performed, if sharing data with other websites. Default is editing.
    *
    * @return Associative array of attributes, keyed by the attribute ID (multiValue=false) or <attribute ID>:<attribute value ID> if multiValue=true.
