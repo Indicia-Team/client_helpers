@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -14,66 +15,55 @@
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
  * @package Client
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link    http://code.google.com/p/indicia/
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
  * Link in other required php files.
  */
-require_once('helper_config.php');
-require_once('helper_base.php');
-require_once('submission_builder.php');
+require_once 'helper_config.php';
+require_once 'helper_base.php';
+require_once 'submission_builder.php';
 
 /**
- * Static helper class that provides automatic HTML and JavaScript generation for Indicia online
- * recording website data entry controls.
- * Examples include auto-complete text boxes that are populated by Indicia species lists, maps
- * for spatial reference selection and date pickers. All controls in this class support the following
- * entries in their $options array parameter:
- * <ul>
- * <li><b>label</b><br/>
- * Optional. If specified, then an HTML label containing this value is prefixed to the control HTML.</li>
- * <li><b>labelTemplate</b>
- * If you need to change the label for this control only, set this to refer to the name of an alternate template you
- * have added to the global $indicia_templates array. To change the label for all controls, you can update the value of
- * $indicia_templates['label'] before building the form.</li>
- * <li><b>helpText</b><br/>
- * Optional. Defines help text to be displayed alongside the control. The position of the text is defined by
- * helper_base::$helpTextPos, which can be set to before or after (default). The template is defined by
- * global $indicia_templates['helpText'] and can be replaced on an instance by instance basis by specifying an
- * option 'helpTextTemplate' for the control.
- * <li><b>helpTextTemplate</b>
- * If helpText is supplied but you need to change the template for this control only, set this to refer to the name of an
- * alternate template you have added to the $indicia_templates array. The template should contain a {helpText} replacement
- * string.</li>
- * <li><b>helpTextClass</b>
- * Specify helpTextClass to override the class normally applied to control help texts, which defaults to helpText.</li>
- * <li><b>tooltip</b><br/>
- * Optional. Defines help text to be displayed as a title for the input control. Display of the control's title is browser
- * dependent so you might need to enhance this functionality by adding jQuery UI tooltip to the page and calling tooltip()
- * on the $(document) object.
- * <li><b>prefixTemplate</b>
- * If you need to change the prefix for this control only, set this to refer to the name of an alternate template you
- * have added to the global $indicia_templates array. To change the prefix for all controls, you can update the value of
- * $indicia_templates['prefix'] before building the form.</li>
- * <li><b>suffixTemplate</b>
- * If you need to change the suffix for this control only, set this to refer to the name of an alternate template you
- * have added to the global $indicia_templates array. To change the suffix for all controls, you can update the value of
- * $indicia_templates['suffix'] before building the form.</li>
- * <li><b>afterControl</b>
- * Allows a piece of HTML to be specified which is inserted immediately after the control, before the suffix and
- * helpText. Ideal for inserting buttons that are to be displayed alongside a control such as a Go button
- * for a search box. Also ideal for inserting units after value input boxes (e.g. degrees, m, cm etc).</li>
- * <li><b>lockable</b>
- * Adds a padlock icon after the control which can be used to lock the control's value.
- * The value will then be remembered and redisplayed in the control each time the form is
- * shown until the control is unlocked or the end of the browser session. This option will not
- * work for password controls.</li>
- * </ul>
+ * Static helper class that provides automatic HTML and JavaScript generation Indicia data entry.
  *
- * @package	Client
+ * Provides a set of controls that can be used to construct data entry forms. Examples include auto-complete text boxes
+ * that are populated by Indicia species lists, maps for spatial reference selection and date pickers. All controls in
+ * this class support the following entries in their $options array parameter:
+ *
+ * * label- Optional. If specified, then an HTML label containing this value is prefixed to the control HTML.
+ * * labelTemplate - If you need to change the label for this control only, set this to refer to the name of an
+ *   alternate template you have added to the global $indicia_templates array. To change the label for all controls, you
+ *   can update the value of $indicia_templates['label'] before building the form.
+ * * helpText- Optional. Defines help text to be displayed alongside the control. The position of the text is defined by
+ *   helper_base::$helpTextPos, which can be set to before or after (default). The template is defined by global
+ *   $indicia_templates['helpText'] and can be replaced on an instance by instance basis by specifying an option
+ *   'helpTextTemplate' for the control.
+ * * helpTextTemplate - If helpText is supplied but you need to change the template for this control only, set this to
+ *   refer to the name of an alternate template you have added to the $indicia_templates array. The template should
+ *   contain a {helpText} replacement string.
+ * * helpTextClass - Specify helpTextClass to override the class normally applied to control help texts, which defaults
+ *   to helpText.
+ * * tooltip - Optional. Defines help text to be displayed as a title for the input control. Display of the control's
+ *   title is browser dependent so you might need to enhance this functionality by adding jQuery UI tooltip to the page
+ *   and calling tooltip() on the $(document) object.
+ * * prefixTemplate - If you need to change the prefix for this control only, set this to refer to the name of an
+ *   alternate template you have added to the global $indicia_templates array. To change the prefix for all controls,
+ *   you can update the value of $indicia_templates['prefix'] before building the form.
+ * * suffixTemplate - If you need to change the suffix for this control only, set this to refer to the name of an
+ *   alternate template you have added to the global $indicia_templates array. To change the suffix for all controls,
+ *   you can update the value of $indicia_templates['suffix'] before building the form.
+ * * afterControl- Allows a piece of HTML to be specified which is inserted immediately after the control, before the
+ *   suffix and helpText. Ideal for inserting buttons that are to be displayed alongside a control such as a Go button
+ *   for a search box. Also ideal for inserting units after value input boxes (e.g. degrees, m, cm etc).
+ * * lockable - Adds a padlock icon after the control which can be used to lock the control's value. The value will then
+ *   be remembered and redisplayed in the control each time the form is shown until the control is unlocked or the end
+ *   of the browser session. This option will not work for password controls.
+ *
+ * @package Client
  */
 class data_entry_helper extends helper_base {
 
