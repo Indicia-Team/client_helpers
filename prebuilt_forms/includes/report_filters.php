@@ -1004,8 +1004,8 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       $existing .= "<option value=\"$filter[id]\" $selected>$filter[title]</option>";
       if ($selected) {
         // Ensure the initially selected filter gets applied across all reports on the page.
-        report_helper::$filterParamsToApply = array_merge(
-          report_helper::$filterParamsToApply, json_decode($filter['definition'], TRUE)
+        report_helper::$initialFilterParamsToApply = array_merge(
+          report_helper::$initialFilterParamsToApply, json_decode($filter['definition'], TRUE)
         );
       }
     }
@@ -1013,7 +1013,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $r = '<div id="standard-params" class="ui-widget">';
   if ($options['allowSave'] && $options['admin']) {
     if (empty($_GET['filters_user_id'])) {
-      // New filter to create, so sharing type can be edited
+      // New filter to create, so sharing type can be edited.
       $reload = data_entry_helper::get_reload_link_parts();
       $reloadPath = $reload['path'];
       if (count($reload['params'])) {
@@ -1059,7 +1059,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
           $contextFilter["{$key}_context"] = $value;
         }
       }
-      report_helper::$filterParamsToApply = array_merge(report_helper::$filterParamsToApply, $contextFilter);
+      // A context filter is loaded initially. It doesn't need to be set in the fixedFilterParamsToApply since the
+      // report filter panel enforces the correct context is applied at all times.
+      report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $contextFilter);
     }
     $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";
@@ -1244,11 +1246,11 @@ HTML;
   }
   $allParams = array_merge($optionParams, $getParams);
   if (!empty($allParams)) {
-    report_helper::$filterParamsToApply = array_merge(report_helper::$filterParamsToApply, $allParams);
+    report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $allParams);
     $json = json_encode($allParams);
     report_helper::$onload_javascript .= "var params = $json;\n";
     report_helper::$onload_javascript .= "indiciaData.filter.def=$.extend(indiciaData.filter.def, params);\n";
-    report_helper::$onload_javascript .= "indiciaData.filter.orig=$.extend({}, params);\n";
+    report_helper::$onload_javascript .= "indiciaData.filter.initialParams = $.extend({}, params);\n";
   }
   $getParams = empty($getParams) ? '{}' : json_encode($getParams);
   if (!empty($options['filters_user_id']) && isset($fu)) {
