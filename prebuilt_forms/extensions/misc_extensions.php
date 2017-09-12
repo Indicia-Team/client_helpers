@@ -540,4 +540,29 @@ $('form#entry_form').tooltip({
     return lang::get($options['text']);
   }
 
+  /**
+   * Outputs a report_helper::freeform report control.
+   *
+   * @param array $auth
+   * @param string $args
+   * @param string $tabalias
+   * @param array $options
+   *   Control options passed in the form config.
+   *
+   * @return void
+   */
+  public static function freeform_report($auth, $args, $tabalias, $options) {
+    iform_client_helpers_path() . 'prebuilt_forms/includes/user.php';
+    if (isset($options['extraParams'])) {
+      foreach ($options['extraParams'] as $key => &$value) {
+        foreach ($_GET as $getKey => $getValue) {
+          $value = str_replace('{' . $getKey . '}', $getValue, $value);
+        }
+        $value = apply_user_replacements($value);
+      }
+    }
+    $options['readAuth'] = $auth['read'];
+    iform_load_helpers(array('report_helper'));
+    return report_helper::freeform_report($options);
+  }
 }
