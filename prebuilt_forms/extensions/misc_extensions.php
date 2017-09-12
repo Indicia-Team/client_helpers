@@ -60,11 +60,11 @@ class extension_misc_extensions {
             $prefix = 'profile_';
             if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
               $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            } 
+            }
             $prefix = 'field_';
             if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
               $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            } 
+            }
             $paramValueFromUserField=hostsite_get_user_field($options['paramValueToPass']);
             //If we have collected the user field from the profile, then overwrite the existing value.
             if (!empty($paramValueFromUserField))
@@ -78,7 +78,7 @@ class extension_misc_extensions {
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
           $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath'], $paramToPass) . "'\">";
-        } else { 
+        } else {
           $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath']) . "'\">";
         }
         $button .= '  </FORM>';
@@ -86,12 +86,12 @@ class extension_misc_extensions {
       } else {
         drupal_set_message('A link button has been specified without a link path or button label, please fill in the @buttonLinkPath and @buttonLabel options');
         $button = '';
-      }   
+      }
       return $button;
     } else
       return '';
   }
-  
+
   /**
    * General text link control can be placed on pages to link to another page.
    * $options Options array with the following possibilities:<ul>
@@ -129,11 +129,11 @@ class extension_misc_extensions {
             $prefix = 'profile_';
             if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
               $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            } 
+            }
             $prefix = 'field_';
             if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
               $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
-            } 
+            }
             $paramValueFromUserField=hostsite_get_user_field($options['paramValueToPass']);
             //If we have collected the user field from the profile, then overwrite the existing value.
             if (!empty($paramValueFromUserField))
@@ -146,12 +146,12 @@ class extension_misc_extensions {
         //This might be useful, for example, if you want to reference the anchor with jQuery to set the path in real-time.
         if (!empty($options['anchorId']))
           $button .= "  <a id=\"".$options['anchorId']."\" ";
-        else 
+        else
           $button .= "  <a  ";
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
           $button .= "href=\"" . hostsite_get_url($options['linkPath'], $paramToPass) . "\">";
-        } else { 
+        } else {
           $button .= "href=\"" . hostsite_get_url($options['linkPath']) . "\">";
         }
         $button .= $options['label'];
@@ -160,12 +160,12 @@ class extension_misc_extensions {
       } else {
         drupal_set_message('A text link has been specified without a link path or label, please fill in the @linkPath and @label options');
         $button = '';
-      }   
+      }
       return $button;
     } else
       return '';
   }
-  
+
   /**
    * Adds JavaScript to the page allowing detection of whether the user has a certain permission.
    * Adds a setting indiciaData.permissions[permission name] = true or false.
@@ -185,7 +185,7 @@ class extension_misc_extensions {
     data_entry_helper::$javascript .= "indiciaData.permissions['$options[permissionName]']=$val;\n";
     return '';
   }
-  
+
   /**
    * Adds JavaScript to the page to provide the value of a field in their user profile, allowing
    * JavaScript on the page to adjust behaviour depending on the value.
@@ -198,11 +198,11 @@ class extension_misc_extensions {
     if (!function_exists('hostsite_get_user_field'))
       return 'Can\'t use the js_user_field extension without a hostsite_get_user_field function.';
     $val = hostsite_get_user_field($options['fieldName']);
-    if ($val===true) 
+    if ($val===true)
       $val='true';
-    elseif ($val===false) 
+    elseif ($val===false)
       $val='false';
-    elseif (is_string($val)) 
+    elseif (is_string($val))
       $val="'$val'";
     if (!$done_js_user_field) {
       data_entry_helper::$javascript .= "if (typeof indiciaData.userFields==='undefined') {
@@ -213,7 +213,7 @@ class extension_misc_extensions {
     data_entry_helper::$javascript .= "indiciaData.userFields['$options[fieldName]']=$val;\n";
     return '';
   }
-  
+
   public static function data_entry_helper_control($auth, $args, $tabalias, $options, $path) {
     $ctrl = $options['control'];
     if (isset($options['extraParams']))
@@ -228,7 +228,7 @@ class extension_misc_extensions {
       $options['extraParams'] = $auth['read'] + $options['extraParams'];
     return map_helper::$ctrl($options);
   }
-  
+
   /**
    * Adds a Drupal breadcrumb to the page.
    * The $options array can contain the following parameters:
@@ -269,16 +269,16 @@ class extension_misc_extensions {
     drupal_set_breadcrumb($breadcrumb);
     return '';
   }
-  
+
   /*
-   * Simply add this extension to your form's form structure to make the page read only. Might need expanding to 
+   * Simply add this extension to your form's form structure to make the page read only. Might need expanding to
    * take into account different scenarios
    */
   public static function read_only_input_form($auth, $args, $tabalias, $options, $path) {
     data_entry_helper::$javascript .= "
     $('#entry_form').find('input, textarea, text, button').attr('readonly', true);
-    $('#entry_form').find('select,:checkbox').attr('disabled', true);\n 
-    $('.indicia-button').hide();\n"; 
+    $('#entry_form').find('select,:checkbox').attr('disabled', true);\n
+    $('.indicia-button').hide();\n";
   }
 
   /**
@@ -539,4 +539,5 @@ $('form#entry_form').tooltip({
     );
     return lang::get($options['text']);
   }
+
 }
