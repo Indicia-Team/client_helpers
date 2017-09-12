@@ -231,6 +231,7 @@ class extension_misc_extensions {
 
   /**
    * Adds a Drupal breadcrumb to the page.
+   *
    * The $options array can contain the following parameters:
    * * path - an associative array of paths and captions. The paths can contain replacements
    *   wrapped in # characters which will be replaced by the $_GET parameter of the same name.
@@ -238,14 +239,15 @@ class extension_misc_extensions {
    *   of the breadcrumb.
    */
   public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
-    if (!isset($options['path']))
+    if (!isset($options['path'])) {
       return 'Please set an array of entries in the @path option';
+    }
     $breadcrumb[] = l('Home', '<front>');
     foreach ($options['path'] as $path => $caption) {
       $parts = explode('?', $path, 2);
       $itemOptions = array();
-      if (count($parts)>1) {
-        foreach ($_GET as $key=>$value) {
+      if (count($parts) > 1) {
+        foreach ($_GET as $key => $value) {
           // GET parameters can be used as replacements.
           $parts[1] = str_replace("#$key#", $value, $parts[1]);
         }
@@ -254,18 +256,19 @@ class extension_misc_extensions {
         $itemOptions['query'] = $query;
       }
       $path = $parts[0];
-      // handle links to # anchors
+      // Handle links to # anchors.
       $fragments = explode('#', $path, 2);
-      if (count($fragments)>1) {
-        $path=$fragments[0];
+      if (count($fragments) > 1) {
+        $path = $fragments[0];
         $itemOptions['fragment'] = $fragments[1];
       }
-      // don't use Drupal l function as a it messes with query params
+      // Don't use Drupal l function as a it messes with query params.
       $caption = lang::get($caption);
       $breadcrumb[] = l($caption, $path, $itemOptions);
     }
-    if (!isset($options['includeCurrentPage']) || $options['includeCurrentPage']!==false)
+    if (!isset($options['includeCurrentPage']) || $options['includeCurrentPage'] !== FALSE) {
       $breadcrumb[] = drupal_get_title();
+    }
     drupal_set_breadcrumb($breadcrumb);
     return '';
   }
@@ -284,18 +287,22 @@ class extension_misc_extensions {
   /**
    * Sets the page title according to an option. The title can refer to the URL query
    * string parameters as tokens.
+   *
    * @param $auth
    * @param $args
    * @param $tabalias
    * @param $options
    * @param $path
+   *
    * @return string
    */
   public static function set_page_title($auth, $args, $tabalias, $options, $path) {
-    if (!isset($options['title']))
+    if (!isset($options['title'])) {
       return 'Please set the template for the title in the @title parameter';
-    foreach($_GET as $key => $value)
+    }
+    foreach($_GET as $key => $value) {
       $options['title'] = str_replace("#$key#", $value, $options['title']);
+    }
     hostsite_set_page_title($options['title']);
     return '';
   }
@@ -304,7 +311,7 @@ class extension_misc_extensions {
    * Helper method to enable jQuery tooltips.
    */
   public static function enable_tooltips() {
-    drupal_add_library('system', 'ui.tooltip', true);
+    drupal_add_library('system', 'ui.tooltip', TRUE);
     data_entry_helper::$javascript .= "
 $('form#entry_form').tooltip({
   open: function(event, ui) {
@@ -317,10 +324,12 @@ $('form#entry_form').tooltip({
    * Provides a way of linking a location ID passed in a URL parameter to a
    * sample being recorded. Outputs hidden inputs containing values derived from
    * the selected location.
+   *
    * @param $auth
    * @param $args
    * @param $tabalias
-   * @param array $options Options array with the following possibilities:
+   * @param array $options
+   *   Options array with the following possibilities:
    *   * param - name of the parameter passed in the URL which should contain a
    *     location ID.
    *   * info_template - template for info to display when a location is found
@@ -340,7 +349,7 @@ $('form#entry_form').tooltip({
    *   * save_boundary_geom_to_field - name of the field to save the location's
    *     boundary_geom value to. Set this to sample:geom to store the location
    *     boundary in the sample. Defaults to false.
-   * @param $path
+   * @param string $path
    */
   public static function location_from_url($auth, $args, $tabalias, $options, $path) {
     $options = array_merge(array(
@@ -349,10 +358,11 @@ $('form#entry_form').tooltip({
       'save_id_to_field' => 'sample:location_id',
       'save_centroid_sref_to_field' => 'sample:entered_sref',
       'save_centroid_sref_system_to_field' => 'sample:entered_sref_system',
-      'save_boundary_geom_to_field' => false
+      'save_boundary_geom_to_field' => FALSE
     ), $options);
-    if (empty($_GET[$options['param']]))
+    if (empty($_GET[$options['param']])) {
       return '';
+    }
     $locations = data_entry_helper::get_population_data(array(
       'table' => 'location',
       'extraParams' => $auth['read'] + array(
@@ -360,36 +370,42 @@ $('form#entry_form').tooltip({
           'view' => 'detail'
       )
     ));
-    if (count($locations)===0)
+    if (count($locations) === 0) {
       return lang::get('<p>Location not found</p>');
+    }
     $r = '';
     $location = $locations[0];
-    if ($options['info_template'])
+    if ($options['info_template']) {
       $r .= str_replace(
         array('{name}', '{centroid_sref}'),
         array($location['name'], $location['centroid_sref']),
         $options['info_template']
       );
-    if ($options['save_id_to_field'])
+    }
+    if ($options['save_id_to_field']) {
       $r .= data_entry_helper::hidden_text(array(
         'fieldname' => $options['save_id_to_field'],
         'default' => $location['id']
       ));
-    if ($options['save_centroid_sref_to_field'])
+    }
+    if ($options['save_centroid_sref_to_field']) {
       $r .= data_entry_helper::hidden_text(array(
         'fieldname' => $options['save_centroid_sref_to_field'],
         'default' => $location['centroid_sref']
       ));
-    if ($options['save_centroid_sref_system_to_field'])
+    }
+    if ($options['save_centroid_sref_system_to_field']) {
       $r .= data_entry_helper::hidden_text(array(
         'fieldname' => $options['save_centroid_sref_system_to_field'],
         'default' => $location['centroid_sref_system']
       ));
-    if ($options['save_boundary_geom_to_field'])
+    }
+    if ($options['save_boundary_geom_to_field']) {
       $r .= data_entry_helper::hidden_text(array(
         'fieldname' => $options['save_boundary_geom_to_field'],
         'default' => $location['boundary_geom']
       ));
+    }
     return $r;
   }
 
@@ -416,11 +432,14 @@ $('form#entry_form').tooltip({
   /**
    * An extension control that takes a scratchpad_list_id parameter in the URL and uses it to load the list onto a
    * species grid on the page. This allows a scratchpad to be used as the first step in data entry.
-   * @param $auth
-   * @param $args
-   * @param $tabalias
-   * @param $options Array of options. Set parameter to the name of the URL parameter for the scratchpad_list_id, if you
-   * want to override the default.
+   *
+   * @param array $auth
+   * @param array $args
+   * @param string $tabalias
+   * @param array $options
+   *   Array of options. Set parameter to the name of the URL parameter for the scratchpad_list_id, if you want to
+   *   override the default.
+   *
    * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
    */
   public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
@@ -429,12 +448,14 @@ $('form#entry_form').tooltip({
         'parameter' => 'scratchpad_list_id'
       ), $options
     );
-    if (empty($_GET[$options['parameter']]))
-      return ''; // no list to load
+    if (empty($_GET[$options['parameter']])) {
+      // No list to load.
+      return '';
+    }
     $entries = data_entry_helper::get_population_data(array(
       'table' => 'scratchpad_list_entry',
       'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET[$options['parameter']]),
-      'caching' => false
+      'caching' => FALSE
     ));
     $r = '';
     if (count($entries)) {
@@ -458,6 +479,8 @@ $('form#entry_form').tooltip({
   }
 
   /**
+   * Scratchpad deletion request callback.
+   *
    * An extension for the submission building code that adds a deletion request for a scratchpad that has now been
    * converted into a list of records. Automatically called when the load_species_list_from_scratchpad control is
    * used.
@@ -499,17 +522,20 @@ $('form#entry_form').tooltip({
    * @return string
    */
   public static function area_picker($auth, $args, $tabalias, $options) {
-    if (empty($options['areas']) || !is_array($options['areas']))
+    if (empty($options['areas']) || !is_array($options['areas'])) {
       return 'Please specify the list of areas for the area_picker control.';
+    }
     if (isset($options['mapDataFile'])) {
       $filepath = PrivateStream::basePath();
       if (!$filepath) {
         $filepath = PublicStream::basePath();
       }
       $path = "$filepath/indicia/js/";
-    } else
-      $path = data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path()
-      . 'prebuilt_forms/extensions/';
+    }
+    else {
+      $path = data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path() .
+        'prebuilt_forms/extensions/';
+    }
     $options = array_merge($options, array(
       'label' => 'Area',
       'mapDataFile' => 'mapAreaData.js',
@@ -518,19 +544,24 @@ $('form#entry_form').tooltip({
         '' => lang::get('<select area>')
       ), array_combine($options['areas'], $options['areas']))
     ));
-    // load the data file.
+    // Load the data file.
     data_entry_helper::$javascript .= "$.getScript('$path$options[mapDataFile]');\n";
     return data_entry_helper::select($options);
   }
 
   /**
+   * Allows localised text to be inserted on the page.
+   *
    * An extension that simply takes an @text option and passes it through lang::get. Allows free text embedded in forms
    * to be localised.
-   * @param $auth
-   * @param $args
-   * @param $tabalias
-   * @param $options
-   * @return string Translated text.
+   *
+   * @param array $auth
+   * @param array $args
+   * @param string $tabalias
+   * @param array $options
+   *
+   * @return string
+   *   Translated text.
    */
   public static function localised_text($auth, $args, $tabalias, $options) {
     $options = array_merge(
@@ -548,14 +579,19 @@ $('form#entry_form').tooltip({
    * generated. Provide @extraParams with a valid JSON array of report parameters, which can include user profile
    * field replacements ({user_id}, {username}, {email} and {profile_*}) as well as parameters loaded from the page's
    * query string, e.g. &queryParam=123 in the URL could be referred to by specifying
-   * @extraParams=["reportParam":"{queryParam}"] which would result in reportParam=123 being passed to the report.
+   * `@extraParams=["reportParam":"{queryParam}"]` which would result in reportParam=123 being passed to the report.
+   *
    * @param array $auth
+   *   Authorisation tokens.
    * @param string $args
+   *   Page configuration arguments.
    * @param string $tabalias
+   *   Name of the tab control if this is being loaded on a tab. Not used for this form.
    * @param array $options
    *   Control options passed in the form config.
    *
-   * @return void
+   * @return string
+   *   Report HTML.
    */
   public static function freeform_report($auth, $args, $tabalias, $options) {
     iform_client_helpers_path() . 'prebuilt_forms/includes/user.php';
@@ -571,4 +607,5 @@ $('form#entry_form').tooltip({
     iform_load_helpers(array('report_helper'));
     return report_helper::freeform_report($options);
   }
+
 }
