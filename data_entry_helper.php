@@ -2738,7 +2738,7 @@ function(item) {
       }
       r += '<em>' + item.preferred_taxon+ '</em>';
       if (speciesIncludeAuthorities) {
-        if (item[db.PreferredAuthority]) {
+        if (item.preferred_authority) {
           r += ' ' + item.preferred_authority;
         }
       }
