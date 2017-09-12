@@ -222,32 +222,36 @@ class filter_when extends FilterBase {
    * Define the HTML required for this filter's UI panel.
    */
   public function get_controls() {
-    // additional helptext in case it is needed when a context is applied
-    $r = '<p class="helpText context-instruct">'.lang::get('Please note that your access permissions are limiting the record dates available.').'</p>';
-    $r .= '<fieldset><legend>'.lang::get('Which date field to filter on').'</legend>';
+    // Additional helptext in case it is needed when a context is applied.
+    $r = '<p class="helpText context-instruct">' . lang::get('Please note that your access permissions are limiting the record dates available.').'</p>';
+    $r .= '<fieldset><legend>' . lang::get('Which date field to filter on') . '</legend>';
     $r .= data_entry_helper::select(array(
-      'label'=>lang::get('Date field'),
+      'label' => lang::get('Date field'),
       'fieldname' => 'date_type',
-      'lookupValues'=>array('recorded'=>lang::get('Field record date'),'input'=>lang::get('Input date'),
-            'edited'=>lang::get('Last changed date'), 'verified'=>lang::get('Verification status change date'))
+      'lookupValues' => array(
+        'recorded' => lang::get('Field record date'),
+        'input' => lang::get('Input date'),
+        'edited' => lang::get('Last changed date'),
+        'verified' => lang::get('Verification status change date'),
+      )
     ));
     $r .= '</fieldset>';
-    $r .= '<fieldset class="exclusive"><legend>'.lang::get('Specify a date range for the records to include').'</legend>';
+    $r .= '<fieldset class="exclusive"><legend>' . lang::get('Specify a date range for the records to include') . '</legend>';
     $r .= data_entry_helper::date_picker(array(
-      'label'=>lang::get('Records from'),
+      'label' => lang::get('Records from'),
       'fieldname' => 'date_from',
-      'allowFuture' => TRUE
+      'allowFuture' => TRUE,
     ));
     $r .= data_entry_helper::date_picker(array(
-      'label'=>lang::get('Records to'),
+      'label' => lang::get('Records to'),
       'fieldname' => 'date_to',
-      'allowFuture' => TRUE
+      'allowFuture' => TRUE,
     ));
     $r .= '</fieldset>';
-    $r .= '<fieldset class="exclusive" id="age"><legend>'.lang::get('Or, specify a maximum age for the records to include').'</legend>';
+    $r .= '<fieldset class="exclusive" id="age"><legend>' . lang::get('Or, specify a maximum age for the records to include') . '</legend>';
     $r .= data_entry_helper::text_input(array(
-      'label'=>lang::get('Max. record age'),
-      'helpText'=>lang::get('How old records can be before they are dropped from the report? ' .
+      'label' => lang::get('Max. record age'),
+      'helpText' => lang::get('How old records can be before they are dropped from the report? ' .
           'Enter a number followed by the unit (days, weeks, months or years), e.g. "2 days" or "1 year".'),
       'fieldname' => 'date_age',
       'validation' => array('regex[/^[0-9]+\s*(day|week|month|year)(s)?$/]')
@@ -255,6 +259,7 @@ class filter_when extends FilterBase {
     $r .= '</fieldset>';
     return $r;
   }
+
 }
 
 /**
@@ -273,8 +278,10 @@ class filter_where extends FilterBase {
    * * **includeSitesCreatedByUser** - boolean which defines if sites that the user is the creator of are available. Default TRUE.
    * * **indexedLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the spatial index builder
    * * **otherLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the
+   *
    * @param array $readAuth
    *   Read authorisation tokens
+   *
    * @param array $options
    *   Control options array. Options include:
    *   * includeSitesCreatedByUser - Defines if user created sites are available for selection. True or false
