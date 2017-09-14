@@ -23,22 +23,19 @@
 /**
  * Link in other required php files.
  */
-require_once 'lang.php';
-require_once 'helper_base.php';
+require_once('lang.php');
+require_once('helper_base.php');
 
 /**
  * Static helper class that provides methods for dealing with reports.
- *
  * @package	Client
  */
 class report_helper extends helper_base {
 
   /**
-   * Accept parameter values that should be initially applied globally to all reports on a page.
-   *
-   * @var array
+   * @var array Allows parameters to be applied globally to all reports on a page.
    */
-  public static $initialFilterParamsToApply = array();
+  public static $filterParamsToApply = array();
 
  /**
   * Control which outputs a treeview of the reports available on the warehouse, with
@@ -129,7 +126,7 @@ class report_helper extends helper_base {
     ), $options);
     $options = self::get_report_grid_options($options);
     $options['linkOnly'] = true;
-    $currentParamValues = self::getReportGridCurrentParamValues($options);
+    $currentParamValues = self::get_report_grid_current_param_values($options);
     $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
     // don't want to paginate the download link
     unset($sortAndPageUrlParams['page']);
@@ -374,13 +371,7 @@ class report_helper extends helper_base {
     $extras = self::get_report_sorting_paging_params($options, $sortAndPageUrlParams);
     if ($options['ajax'])
       $options['extraParams']['limit']=0;
-    self::request_report(
-      $response,
-      $options,
-      $currentParamValues,
-      $options['pager'],
-      $extras
-    );
+    self::request_report($response, $options, $currentParamValues, $options['pager'], $extras);
     if (isset($response['count'])) {
       // Pass knownCount into any subsequent AJAX calls as this allows better performance
       $options['extraParams']['knownCount'] = $response['count'];
@@ -803,16 +794,6 @@ $callToCallback}";
       else
         $warehouseUrl = parent::$base_url;
       $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
-      // Full list of report parameters to load on startup.
-      $extraParams = json_encode(array_merge(
-        $options['extraParams'],
-        $currentParamValues,
-        self::$initialFilterParamsToApply
-      ), JSON_FORCE_OBJECT);
-      // List of report parameters we reset to if filters cleared
-      $resetParams = json_encode(array_merge($options['extraParams'], $currentParamValues), JSON_FORCE_OBJECT);
-      // List of report parameters that cannot be changed by the user.
-      $fixedParams = json_encode($options['extraParams'], JSON_FORCE_OBJECT);
       self::$javascript .= "
 if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
@@ -821,9 +802,6 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   id: '$options[id]',
   mode: '$options[mode]',
   dataSource: '" . str_replace('\\','/',$options['dataSource']) . "',
-  extraParams: $extraParams,
-  resetParams: $resetParams,
-  fixedParams: $fixedParams,
   view: '$options[view]',
   itemsPerPage: $options[itemsPerPage],
   auth_token: '{$options['readAuth']['auth_token']}',
@@ -859,6 +837,8 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       }
       if (!empty($options['rowClass']))
         self::$javascript .= ",\n  rowClass: '".$options['rowClass']."'";
+      if (isset($options['extraParams']))
+        self::$javascript .= ",\n  extraParams: ".json_encode(array_merge($options['extraParams'], $currentParamValues), JSON_FORCE_OBJECT);
       if (isset($options['filters']))
         self::$javascript .= ",\n  filters: ".json_encode($options['filters']);
       if (isset($orderby))
@@ -920,14 +900,13 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       $extras .= '&paramsFormExcludes='.json_encode($options['paramsToExclude']);
     // specify the view variant to load, if loading from a view
     if ($options['mode']=='direct') $extras .= '&view='.$options['view'];
-    $currentParamValues = self::getReportGridCurrentParamValues($options);
+    $currentParamValues = self::get_report_grid_current_param_values($options);
     // if loading the parameters form only, we don't need to send the parameter values in the report request but instead
     // mark the request not to return records
     if (isset($options['paramsOnly']) && $options['paramsOnly'])
       $extras .= '&wantRecords=0&wantCount=0&wantColumns=0';
     else
-      $extras .= '&'.self::array_to_query_string(
-        array_merge($currentParamValues, self::$initialFilterParamsToApply), true);
+      $extras .= '&'.self::array_to_query_string($currentParamValues, true);
     // allow URL parameters to override any extra params that are set. Default params
     // are handled elsewhere.
     if (isset($options['extraParams']) && isset($options['reportGroup'])) {
@@ -1194,7 +1173,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       $options['rendererOptions'] = array();
     if (empty($options['axesOptions']))
       $options['axesOptions'] = array();
-    $currentParamValues = self::getReportGridCurrentParamValues($options);
+    $currentParamValues = self::get_report_grid_current_param_values($options);
     //If we want the report_chart to only return the parameters control, then don't provide
     //the report with parameters so that it will return parameter requests for all the
     //parameters which can then be displayed on the screen.
@@ -1833,7 +1812,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
     }
     else {
       // We are doing WMS mapping using geoserver, so we just need to know the param values.
-      $currentParamValues = self::getReportGridCurrentParamValues($options);
+      $currentParamValues = self::get_report_grid_current_param_values($options);
       $response = self::get_report_data($options, self::array_to_query_string($currentParamValues, true).'&wantRecords=0&wantParameters=1');
       $r = self::get_report_grid_parameters_form($response, $options, $currentParamValues);
     }
@@ -2618,6 +2597,11 @@ if (typeof mapSettingsHooks!=='undefined') {
       if (hostsite_get_user_field('training'))
         $options['extraParams']['training'] = 'true';
     }
+    if (!empty(self::$filterParamsToApply))
+      $options['extraParams'] = array_merge(
+        $options['extraParams'],
+        self::$filterParamsToApply
+      );
     return $options;
   }
 
@@ -2627,7 +2611,7 @@ if (typeof mapSettingsHooks!=='undefined') {
    * @param $options
    * @return Array Associative array of parameters.
    */
-  private static function getReportGridCurrentParamValues($options) {
+  private static function get_report_grid_current_param_values($options) {
     $params = array();
     // get defaults first
     if (isset($options['paramDefaults'])) {
@@ -2756,7 +2740,7 @@ if (typeof mapSettingsHooks!=='undefined') {
     // default is samples_list_for_cms_user.xml
     $options = self::get_report_calendar_grid_options($options);
     $extras = '';
-    $currentParamValues = self::getReportGridCurrentParamValues($options);
+    $currentParamValues = self::get_report_grid_current_param_values($options);
     self::request_report($response, $options, $currentParamValues, false, $extras);
     if (isset($response['error'])) {
       return "ERROR RETURNED FROM request_report:".$response['error'];
