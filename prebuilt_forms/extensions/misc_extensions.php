@@ -574,12 +574,7 @@ $('form#entry_form').tooltip({
   /**
    * Outputs a report_helper::freeform report control.
    *
-   * Allows [misc_extensions.freeform_report] to be embedded in any dynamic content. Options accepted are the same as
-   * those for report_helper::freeform_report and must at least include @dataSource and $bands for any output to be
-   * generated. Provide @extraParams with a valid JSON array of report parameters, which can include user profile
-   * field replacements ({user_id}, {username}, {email} and {profile_*}) as well as parameters loaded from the page's
-   * query string, e.g. &queryParam=123 in the URL could be referred to by specifying
-   * `@extraParams=["reportParam":"{queryParam}"]` which would result in reportParam=123 being passed to the report.
+   * Allows [misc_extensions.freeform_report] to be embedded in any dynamic content.
    *
    * @param array $auth
    *   Authorisation tokens.
@@ -588,7 +583,14 @@ $('form#entry_form').tooltip({
    * @param string $tabalias
    *   Name of the tab control if this is being loaded on a tab. Not used for this form.
    * @param array $options
-   *   Control options passed in the form config.
+   *   Control options passed in the form config. Options accepted are the same as those for
+   *   report_helper::freeform_report and must at least include @dataSource and @bands for any output to be
+   *   generated. Provide @extraParams with a valid JSON array of report parameters, which can include user profile
+   *   field replacements ({user_id}, {username}, {email} and {profile_*}) as well as parameters loaded from the page's
+   *   query string, e.g. &queryParam=123 in the URL could be referred to by specifying
+   *   `@extraParams=["reportParam":"{queryParam}"]` which would result in reportParam=123 being passed to the report.
+   *   In addition the option @requiredParams can be set to a JSON array of parameter names that must be populated for
+   *   any output to be generated.
    *
    * @return string
    *   Report HTML.
@@ -601,6 +603,13 @@ $('form#entry_form').tooltip({
           $value = str_replace('{' . $getKey . '}', $getValue, $value);
         }
         $value = apply_user_replacements($value);
+      }
+      if (!empty($options['requiredParams'])) {
+        foreach ($options['requiredParams'] as $param) {
+          if (empty($options['extraParams'][$param])) {
+            return '';
+          }
+        }
       }
     }
     $options['readAuth'] = $auth['read'];
