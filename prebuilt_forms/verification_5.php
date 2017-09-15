@@ -354,7 +354,7 @@ idlist=';
     }
     return $r;
   }
-  
+
   /**
    * Returns the HTML for the standard set of tabs, excluding the details and optional map tab.
    * @return string HTML to insert onto the page
@@ -413,7 +413,7 @@ idlist=';
       $reportMapOpts['dataSourceLoRes']=$args['mapping_report_name_lores'];
     $r .= report_helper::report_map($reportMapOpts);
     $r .= '</div>';
-    if (function_exists('hostsite_get_user_field') && $locationId=hostsite_get_user_field('location_expertise', false)) 
+    if (function_exists('hostsite_get_user_field') && $locationId=hostsite_get_user_field('location_expertise', false))
       iform_map_zoom_to_location($locationId, $readAuth);
     $r .= '<div id="record-details-wrap" class="ui-widget ui-widget-content">';
     $r .= self::instructions('grid on the left');
@@ -472,14 +472,14 @@ idlist=';
     $r .= '</ul></div>';
     return $r;
   }
-  
+
   private static function check_prerequisites() {
     $msg = false;
     if (!function_exists('iform_ajaxproxy_url'))
       $msg = 'The AJAX Proxy module must be enabled to support saving filters on the verification page.';
     if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
       $msg = 'Before verifying records, please visit your user account profile and ensure that you have entered your full name, then save it.';
-    if ($msg) 
+    if ($msg)
       hostsite_show_message($msg, 'warning');
     return $msg ? false : true;
   }
@@ -604,6 +604,7 @@ idlist=';
     if (strpos($args['param_presets'].$args['param_defaults'], 'expertise_surveys')===false)
       $args['param_presets'].="\nexpertise_surveys=" . ($gotEasyLogin ? '{profile_surveys_expertise}' : '');
     $args['sharing']='verification';
+    $params = self::report_filter_panel($args, $auth['read']);
     $opts = array_merge(
         iform_report_get_report_options($args, $auth['read']),
         array(
@@ -633,8 +634,6 @@ idlist=';
           '<li><a href="#" class="trust-tool">Recorder\'s trust settings</a></li><li><a href="#" class="edit-record">Edit record</a></li></ul>'.
           '<input type="checkbox" class="check-row no-select" style="display: none" value="{occurrence_id}" /></div>'
     ));
-    $params = self::report_filter_panel($args, $auth['read']);
-
     $opts['zoomMapToOutput']=false;
     $grid = report_helper::report_grid($opts);
     $log = report_helper::report_grid(array(
@@ -781,7 +780,7 @@ idlist=';
       self::$statusTermsTranslated = true;
     }
   }
-    
+
   /*
    * When the user opens the Verification screen, clear any notifications of source_type VT (Verifier Task).
    * This method is only run if the user has configured the page to run with this behaviour.
@@ -797,10 +796,10 @@ idlist=';
           'query' => json_encode(array('in' => array('source_type' => array('VT'))))),
       'nocache' => true
     ));
-    
+
     if (count($notifications)>0) {
       //Setup the structure we need to submit.
-      foreach ($notifications as $notification) { 
+      foreach ($notifications as $notification) {
         $data['id']='notification';
         $data['fields']['id']['value'] = $notification['id'];
         $data['fields']['acknowledged']['value'] = 't';
@@ -860,7 +859,7 @@ idlist=';
         $val = ($col==='record_status') ? self::status_label($record[$col], $record['record_substatus']) : $record[$col];
         $data[$caption[0]][] = array('caption'=>$caption[1], 'value'=>$val);
       }
-      if ($col==='email' && !empty($record[$col])) 
+      if ($col==='email' && !empty($record[$col]))
         $email=$record[$col];
     }
     if ($record['zero_abundance']==='t')
@@ -872,7 +871,7 @@ idlist=';
       'readAuth' => $readAuth,
       'sharing' => 'verification',
       'extraParams' => array('occurrence_id'=>$_GET['occurrence_id'])
-    ); 
+    );
     $reportData = report_helper::get_report_data($options);
     foreach ($reportData as $attribute) {
       if (!empty($attribute['value'])) {
@@ -973,7 +972,7 @@ idlist=';
       'nocache' => true,
       'sharing' => 'verification'
     ));
-    // Retrieve related sample media 
+    // Retrieve related sample media
     $smp_media = data_entry_helper::get_population_data(array(
       'table' => 'sample_medium',
       'extraParams' => $readAuth + array('sample_id' => $_GET['sample_id']),
@@ -992,11 +991,11 @@ idlist=';
       if (count($smp_media) > 0) {
         $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
         $r .= self::get_media_html($smp_media);
-      }    
+      }
     }
     return $r;
   }
-  
+
   private static function get_media_html($media) {
     $r = '';
       $path = data_entry_helper::get_uploaded_image_folder();
@@ -1134,14 +1133,14 @@ idlist=';
     else
       echo 'Fail';
   }
-  
+
   /**
    * AJAX callback method to fill in the record's experience tab.
-   * 
+   *
    * Returns a report detailing the total number of records of the species and
    * species group, as well as a breakdown by verified and rejected records.
    * Records link to the Explore report if view_records_report_path is filled in.
-   * 
+   *
    * @param type $website_id
    * @param type $password
    * @param type $nid
@@ -1173,7 +1172,7 @@ idlist=';
         $r .= '<tr class="total"><th>Total</th><td>' . self::records_link($row, 'total_3months', $params) . '</td><td>' .
                 self::records_link($row, 'total_1year', $params) . '</td><td>' . self::records_link($row, 'total_total', $params) . '</td></tr>';
         $r .= "</tbody></table>\n";
-        
+
       }
     }
     // See if there is a filled in profile_experience field for the user. If so, add
@@ -1241,7 +1240,7 @@ idlist=';
       echo 'unknown';
     }
   }
-  
+
   /**
    * Convert a number on the Experience tab into a link to the Explore page for the underlying records.
    */
@@ -1249,15 +1248,15 @@ idlist=';
     if (!empty($nodeParams['view_records_report_path']) && !empty($_GET['user_id'])) {
       $tokens = explode('_', $value);
       $params = array(
-          'filter-date_age' => '', 
+          'filter-date_age' => '',
           'filter-indexed_location_list' => '',
           'filter-indexed_location_id' => '',
           'filter-taxon_group_list' => '',
-          'filter-user_id' => $_GET['user_id'], 
+          'filter-user_id' => $_GET['user_id'],
           'filter-my_records' => 1
       );
       switch ($tokens[0]) {
-        case 'r' : 
+        case 'r' :
           $params['filter-quality'] = 'R';
           break;
         case 'v' :
@@ -1278,7 +1277,7 @@ idlist=';
         $params['filter-taxon_group_list'] = $row['what_id'];
       return l($row[$value], $nodeParams['view_records_report_path'],
           array('attributes'=>array('target' => '_blank'), 'query'=>$params));
-      
+
     } else
       return $row[$value];
   }
@@ -1361,7 +1360,7 @@ idlist=';
      $text = str_replace('{1}', $difference, $periodsPlural[$j]);
    return $text;
   }
-  
+
   private static function report_filter_panel($args, $readAuth) {
     $options = array(
       'allowSave' => true,
