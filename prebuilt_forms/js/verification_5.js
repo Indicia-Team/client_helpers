@@ -61,7 +61,7 @@ indiciaData.rowIdToReselect = false;
     $('#record-details-toolbar *').attr('disabled', 'disabled');
     occurrenceId = tr.id.substr(3);
     $(tr).addClass('selected');
-    var path = $(tr).find('.row-input-form').val(),
+    var path = $(tr).find('.row-input-form-link').val(),
       sep = (path.indexOf('?') >= 0) ? '&' : '?';
     $('#btn-edit-record').attr('href', path + sep + 'occurrence_id=' + occurrenceId);
     // make it clear things are loading
@@ -82,11 +82,11 @@ indiciaData.rowIdToReselect = false;
         } else {
           $('.trust-tool').show();
         }
-        if ($row.find('.row-belongs-to-site').val() === 't') {
-          $row.find('.verify-tools .edit-record').show();
+        if ($row.find('.row-input-form-raw').val() !== '') {
+          $row.find('.verify-tools .edit-record').closest('li').show();
           $('#btn-edit-record').show();
         } else {
-          $row.find('.verify-tools .edit-record').hide();
+          $row.find('.verify-tools .edit-record').closest('li').hide();
           $('#btn-edit-record').hide();
         }
         $('#instructions').hide();
@@ -1039,15 +1039,15 @@ indiciaData.rowIdToReselect = false;
       // can't use User Trusts if the recorder is not linked to a warehouse user.
       if (typeof currRec !== 'undefined' && currRec !== null) {
         if (currRec.extra.created_by_id === '1') {
-          $('.trust-tool').hide();
+          $('.trust-tool').closest('li').hide();
         } else {
-          $('.trust-tool').show();
+          $('.trust-tool').closest('li').show();
         }
-        if ($(row).find('.row-belongs-to-site').val() === 't') {
-          $(row).find('.verify-tools .edit-record').show();
+        if ($(row).find('.row-input-form-raw').val() !== '') {
+          $(row).find('.verify-tools .edit-record').closest('li').show();
           $('#btn-edit-record').show();
         } else {
-          $(row).find('.verify-tools .edit-record').hide();
+          $(row).find('.verify-tools .edit-record').closest('li').hide();
           $('#btn-edit-record').hide();
         }
         // show the menu
@@ -1168,7 +1168,7 @@ indiciaData.rowIdToReselect = false;
 
     function editThisRecord(id) {
       var $row = $('tr#row' + id);
-      var path = $row.find('.row-input-form').val();
+      var path = $row.find('.row-input-form-link').val();
       var sep = (path.indexOf('?') >= 0) ? '&' : '?';
       window.location = path + sep + 'occurrence_id=' + id;
     }
