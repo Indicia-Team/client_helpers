@@ -629,10 +629,18 @@ idlist=';
     );
     array_unshift($opts['columns'], array(
       'display'=>'',
-      'template' => '<div class="nowrap"><button class="default-button quick-verify tools-btn" type="button" id="quick-{occurrence_id}" title="Record tools">...</button>'.
-          '<input type="hidden" class="row-input-form" value="{rootFolder}{input_form}"/><input type="hidden" class="row-belongs-to-site" value="{belongs_to_site}"/><ul class="verify-tools"><li><a href="#" class="quick-verify-tool">Bulk verify similar records</a></li>'.
-          '<li><a href="#" class="trust-tool">Recorder\'s trust settings</a></li><li><a href="#" class="edit-record">Edit record</a></li></ul>'.
-          '<input type="checkbox" class="check-row no-select" style="display: none" value="{occurrence_id}" /></div>'
+      'template' => <<<HTML
+<div class="nowrap">
+  <button class="default-button quick-verify tools-btn" type="button" id="quick-{occurrence_id}" title="Record tools">...</button>
+  <input type="hidden" class="row-input-form-link" value="{rootFolder}{input_form}"/>
+  <input type="hidden" class="row-input-form-raw" value="{input_form}"/>
+  <ul class="verify-tools">
+    <li><a href="#" class="quick-verify-tool">Bulk verify similar records</a></li>
+    <li><a href="#" class="trust-tool">Recorder\'s trust settings</a></li>
+    <li><a href="#" class="edit-record">Edit record</a></li>
+  </ul>
+<input type="checkbox" class="check-row no-select" style="display: none" value="{occurrence_id}" /></div>
+HTML
     ));
     $opts['zoomMapToOutput']=false;
     $grid = report_helper::report_grid($opts);
@@ -651,8 +659,8 @@ idlist=';
       'columns' => array(
         array(
           'display'=>'',
-          'template' => '<input type="hidden" class="row-input-form" value="{rootFolder}{input_form}"/>' .
-              '<input type="hidden" class="row-belongs-to-site" value="{belongs_to_site}"/>'
+          'template' => '<input type="hidden" class="row-input-form-link" value="{rootFolder}{input_form}"/>' .
+            '<input type="hidden" class="row-input-form-raw" value="{input_form}"/>'
         )
       )
     ));
