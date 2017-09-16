@@ -1251,6 +1251,7 @@ HTML;
     report_helper::$onload_javascript .= "var params = $json;\n";
     report_helper::$onload_javascript .= "indiciaData.filter.def=$.extend(indiciaData.filter.def, params);\n";
     report_helper::$onload_javascript .= "indiciaData.filter.initialParams = $.extend({}, params);\n";
+    report_helper::$onload_javascript .= "indiciaData.filter.resetParams = $.extend({}, params);\n";
   }
   $getParams = empty($getParams) ? '{}' : json_encode($getParams);
   if (!empty($options['filters_user_id']) && isset($fu)) {
