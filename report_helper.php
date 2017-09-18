@@ -4900,7 +4900,7 @@ jQuery('#estimateChart .disable-button').click(function(){
   						else $rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']] += $count;
   					}
   				}
-  				$rawTab = '<table class="'.$options['tableClass'].'"><thead class="'.$thClass.'"><tr><th>'.lang::get('Week').'</th>';
+  				$rawTab .= '<table class="'.$options['tableClass'].'"><thead class="'.$thClass.'"><tr><th>'.lang::get('Week').'</th>';
 	  			foreach($sampleDateList as $sample){
   					$sample_date = date_create($sample['date']);
 //  					$this_index = $this_date->format('z');
