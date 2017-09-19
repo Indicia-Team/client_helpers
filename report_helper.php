@@ -810,12 +810,16 @@ $callToCallback}";
       else
         $warehouseUrl = parent::$base_url;
       $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
+      if (isset($options['sharing'])) {
+        $options['extraParams']['sharing']=$options['sharing'];
+      }
       // Full list of report parameters to load on startup.
-      $extraParams = json_encode(array_merge(
+      $extraParams = array_merge(
         $options['extraParams'],
         $currentParamValues,
         self::$initialFilterParamsToApply
-      ), JSON_FORCE_OBJECT);
+      );
+      $extraParams = json_encode($extraParams, JSON_FORCE_OBJECT);
       // List of report parameters we reset to if filters cleared
       $resetParams = json_encode(array_merge($options['extraParams'], $currentParamValues), JSON_FORCE_OBJECT);
       // List of report parameters that cannot be changed by the user.
@@ -859,11 +863,6 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   noRecords: 'No records',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
-      if (isset($options['sharing'])) {
-        if (!isset($options['extraParams']))
-          $options['extraParams']=array();
-        $options['extraParams']['sharing']=$options['sharing'];
-      }
       if (!empty($options['rowClass']))
         self::$javascript .= ",\n  rowClass: '".$options['rowClass']."'";
       if (isset($options['filters']))
