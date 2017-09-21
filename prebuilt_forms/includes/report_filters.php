@@ -123,10 +123,10 @@ class filter_what extends FilterBase {
         'speciesIncludeTaxonGroup' => TRUE,
         'valueField' => 'preferred_taxa_taxon_list_id',
         'extraParams' => $baseParams + array(
-            'preferred' => 't',
-            'query' => '{"where":["taxon_rank_sort_order<=' . $familySortOrder . '"]}'
-          ),
-        'addToTable' => FALSE
+          'preferred' => 't',
+          'max_taxon_rank_sort_order' => $familySortOrder,
+        ),
+        'addToTable' => FALSE,
       );
       $r .= data_entry_helper::sub_list($subListOptions);
       $r .= "</div>\n";
@@ -134,7 +134,7 @@ class filter_what extends FilterBase {
     $r .= '<div id="species-tab">' . "\n";
     $r .= '<p>' . lang::get('Search for and build a list of species or genera to include.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-    $rankFilter = $familySortOrder === 'off' ? array() : array('query' => '{"where":["(taxon_rank_sort_order>' . $familySortOrder . ' or taxon_rank_sort_order is null)"]}');
+    $rankFilter = $familySortOrder === 'off' ? array() : array('min_taxon_rank_sort_order' => $familySortOrder + 1);
     $subListOptions = array(
       'fieldname' => 'taxa_taxon_list_list',
       'autocompleteControl' => 'species_autocomplete',
