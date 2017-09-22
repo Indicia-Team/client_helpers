@@ -23,7 +23,7 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- * 
+ *
  * @package    Client
  * @subpackage PrebuiltForms
  */
@@ -32,7 +32,7 @@ require_once('includes/dynamic.php');
 
 class iform_dynamic_person extends iform_dynamic {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -44,14 +44,14 @@ class iform_dynamic_person extends iform_dynamic {
           'An example use might be for people wishing to register interest in events without needing a formal account.'
     );
   }
-  
+
 //Programmer note - Currently this form inherits quite a lot of redundant fields from dynamic.php suh as the map.
 //Perhaps we can clear this up in the future, although too low priority to deal with right now.
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {    
+  public static function get_parameters() {
     $retVal = array_merge(
       parent::get_parameters(),
       array(
@@ -79,7 +79,7 @@ class iform_dynamic_person extends iform_dynamic {
             "<strong>@helpText</strong> is used to define help text to add to the tab, e.g. @helpText=Enter the surname of the person. <br/>".
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
           'type'=>'textarea',
-          'default' => 
+          'default' =>
               "=Information=\r\n".
               "[first name]\r\n".
               "[surname]\r\n".
@@ -100,23 +100,23 @@ class iform_dynamic_person extends iform_dynamic {
     );
     return $retVal;
   }
-  
+
   //Programmer note - This form is based on dynamic_location. However I have not implemented all the functionality the dynamic_location
   //form supports yet. This form does not currently support grid mode, however it will probably support this in the furture in some form,
   //so for now am leaving this code as it is, even though some of it is currently redundant.
-  /** 
+  /**
    * Determine whether to show a grid of existing records or a form for either adding a new record or editing an existing one.
-   * @param array $args iform parameters. 
+   * @param array $args iform parameters.
    * @param object $nid ID of node being shown.
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING].
    */
   protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
-    
+
     if ($_POST && !is_null(data_entry_helper::$entity_to_load)) {
       // errors with new sample or entity populated with post, so display this data.
-      $mode = self::MODE_EXISTING; 
+      $mode = self::MODE_EXISTING;
     } else if (array_key_exists('person_id', $_GET)){
       // request for display of existing record
       $mode = self::MODE_EXISTING;
@@ -127,15 +127,15 @@ class iform_dynamic_person extends iform_dynamic {
     }
     return $mode;
   }
-    
+
   // Get an existing person.
   protected static function getEntity($args, $auth) {
     data_entry_helper::$entity_to_load = array();
-    data_entry_helper::load_existing_record($auth['read'], 'person', $_GET['person_id'], 'detail', false, false);    
+    data_entry_helper::load_existing_record($auth['read'], 'person', $_GET['person_id'], 'detail', false, false);
   }
-  
+
   protected static function getAttributes($args, $auth) {
-    $id = isset(data_entry_helper::$entity_to_load['person:id']) ? 
+    $id = isset(data_entry_helper::$entity_to_load['person:id']) ?
             data_entry_helper::$entity_to_load['person:id'] : null;
     $attrOpts = array(
     'id' => $id
@@ -148,24 +148,24 @@ class iform_dynamic_person extends iform_dynamic {
     $attributes = data_entry_helper::getAttributes($attrOpts, false);
     return $attributes;
   }
-  
+
   /**
    * Retrieve the additional HTML to appear at the top of the first
    * tab or form section. This is a set of hidden inputs containing the website ID as well as an existing person's ID.
-   * @param type $args 
+   * @param type $args
    */
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
     $r = $auth['write'].
           "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";//.
     if (isset(data_entry_helper::$entity_to_load['person:id'])) {
-      $r .= '<input type="hidden" id="person:id" name="person:id" value="' . data_entry_helper::$entity_to_load['person:id'] . '" />' . PHP_EOL;    
+      $r .= '<input type="hidden" id="person:id" name="person:id" value="' . data_entry_helper::$entity_to_load['person:id'] . '" />' . PHP_EOL;
     }
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['person:id']), $auth['read']);
     return $r;
   }
-  
-  
+
+
   protected static function get_control_firstname($auth, $args, $tabalias, $options) {
     return data_entry_helper::text_input(array_merge(array(
       'label' => lang::get('LANG_First_Name'),
@@ -173,7 +173,7 @@ class iform_dynamic_person extends iform_dynamic {
       'class' => 'control-width-5'
     ), $options));
   }
-  
+
   protected static function get_control_surname($auth, $args, $tabalias, $options) {
     return data_entry_helper::text_input(array_merge(array(
       'label' => lang::get('LANG_Surname'),
@@ -181,7 +181,7 @@ class iform_dynamic_person extends iform_dynamic {
       'class' => 'control-width-5'
     ), $options));
   }
-  
+
   protected static function get_control_emailaddress($auth, $args, $tabalias, $options) {
     return data_entry_helper::text_input(array_merge(array(
       'label' => lang::get('LANG_Email_Address'),
@@ -189,30 +189,30 @@ class iform_dynamic_person extends iform_dynamic {
       'class' => 'control-width-5'
     ), $options));
   }
- 
+
 
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
     $structure = array(
         'model' => 'person',
     );
-    $s = submission_builder::build_submission($values, $structure);  
+    $s = submission_builder::build_submission($values, $structure);
     return $s;
   }
 
   /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
   protected static function getArgDefaults($args) {
      if (!isset($args['structure']) || empty($args['structure']))
-      $args['structure'] = 
+      $args['structure'] =
               "=Information=\r\n".
               "[first name]\r\n".
               "[surname]\r\n".
@@ -221,17 +221,18 @@ class iform_dynamic_person extends iform_dynamic {
               "=*=";
     return $args;
   }
-  
-  /** 
+
+  /**
    * Override the default submit buttons to add a delete button where appropriate.
    */
   protected static function getSubmitButtons($args) {
     $r = '';
-    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Submit')."\" />\n";
+    global $indicia_templates;
+    $r .= '<input type="submit" class="' . $indicia_templates['buttonDefaultClass'] . '" id="save-button" value="'.lang::get('Submit')."\" />\n";
     if (!empty(data_entry_helper::$entity_to_load['person:id'])) {
       // use a button here, not input, as Chrome does not post the input value
-      $r .= '<button type="submit" class="indicia-button" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
-      //Programmer note- this form is based on dynamic_location, dynami_location includes deletion capability. However for the person
+      $r .= '<button type="submit" class="' . $indicia_templates['buttonWarningClass'] . '" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
+      //Programmer note- this form is based on dynamic_location, dynamic_location includes deletion capability. However for the person
       //form I have commented out the deletion code as I am currently uncertain of the suitability of this considering users can be
       //linked to user accounts. I don't want cause breakages, you may resinstate/extend this as required in the future when it is needed, for now it is not needed.
       /*
@@ -245,6 +246,6 @@ class iform_dynamic_person extends iform_dynamic {
     }
     return $r;
   }
-  
+
 }
 

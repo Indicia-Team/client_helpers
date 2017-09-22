@@ -24,14 +24,14 @@ require_once('includes/report_filters.php');
 
 /**
  * A form that allows a group admin to send email invitations to a group.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * A page for send invites to a user group.
  */
 class iform_group_send_invites {
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -43,13 +43,13 @@ class iform_group_send_invites {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    * @todo: Implement this method
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(array(
       'name'=>'accept_invite_path',
       'caption'=>'Accept Invite Path',
@@ -57,7 +57,7 @@ class iform_group_send_invites {
       'type'=>'text_input'
     ));
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -68,7 +68,8 @@ class iform_group_send_invites {
    * @return Form HTML.
    */
   public static function get_form($args, $nid, $response=null) {
-    $reloadPath = self::getReloadPath();   
+    global $indicia_templates;
+    $reloadPath = self::getReloadPath();
     data_entry_helper::$website_id=$args['website_id'];
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $group = self::loadGroup($auth);
@@ -89,14 +90,15 @@ class iform_group_send_invites {
       'validation'=>array('required'),
       'default' => lang::get('Would you like to join the {1}?', $group['title'])
     ));
-    $r .= '<button type="submit" class="indicia-button" id="save-button">'.lang::get('Send Invites')."</button>\n";
-    $r .= '<button type="button" class="indicia-button" id="not-now-button" ' .
+    $r .= '<button type="submit" class="' . $indicia_templates['buttonDefaultClass'] . '" id="save-button">' .
+      lang::get('Send Invites')."</button>\n";
+    $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="not-now-button" ' .
         'onclick="window.location.href=\'' . hostsite_get_url($args['redirect_on_success']) . '\'">'.lang::get('Not Now')."</button>\n";
     $r .= '</form>';
     data_entry_helper::enable_validation('entry_form');
     return $r;
   }
-  
+
   /**
    * Loads the group record from the database. Also checks that the user is an admin of the group.
    * @param array $auth Authorisation tokens
@@ -122,10 +124,10 @@ class iform_group_send_invites {
     ));
     return $response[0];
   }
-  
-  /** 
+
+  /**
    * Retrieve the path to the current page, so the form can submit to itself.
-   * @return string 
+   * @return string
    */
   private static function getReloadPath () {
     $reload = data_entry_helper::get_reload_link_parts();
@@ -139,7 +141,7 @@ class iform_group_send_invites {
     }
     return $reloadPath;
   }
-  
+
   /**
    * Performs the sending of invitation emails.
    * @param array $args Form configuration arguments

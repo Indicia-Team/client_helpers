@@ -43,10 +43,10 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static $loadedSampleId;
   protected static $loadedOccurrenceId;
   protected static $group = false;
-  
+
   protected static $availableForGroups = false;
   protected static $limitToGroupId = 0;
-  
+
   /**
    * The list of attributes loaded for occurrences. Keep a class level variable, so that we can track the ones we have already
    * emitted into the form globally.
@@ -129,8 +129,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'default' => false,
           'required' => false,
           'group' => 'User Interface',
-          // Note that we can't test Drupal module availability whilst loading this form for a new iform, using Ajax. So 
-          // in this case we show the control even though it is not usable (the help text explains the module requirement).          
+          // Note that we can't test Drupal module availability whilst loading this form for a new iform, using Ajax. So
+          // in this case we show the control even though it is not usable (the help text explains the module requirement).
           'visible' => !function_exists('hostsite_module_exists') || hostsite_module_exists('field')
         ),
         array(
@@ -194,7 +194,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             "used, you can change any of the control options for an individual custom attribute control by putting @control|option=value on the subsequent line(s). ".
             "For example, if a control is for smpAttr:4 then you can update it's label by specifying @smpAttr:4|label=New Label on the line after the [*]. ".
             "You can also set an option for all the controls output by the [*] block by specifying @option=value as for non-custom controls, e.g. ".
-            "set @label=My label to define the same label for all controls in this custom attribute block. ". 
+            "set @label=My label to define the same label for all controls in this custom attribute block. ".
             "You can define the value for a control using the standard replacement tokens for user data, namely {user_id}, {username}, {email} and {profile_*}; ".
             "replace * in the latter to construct an existing profile field name. For example you could set the default value of an email input using @smpAttr:n|default={email} ".
             "where n is the attribute ID.<br/>".
@@ -248,7 +248,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'name'=>'species_grid_page_link_url',
           'caption'=>'Species grid page link URL',
           'description'=>'URL path of the page being linked to by the "Include icon to link to another page from a species grid row" option.
-                          The URL path should not include server details or a preceeding slash 
+                          The URL path should not include server details or a preceeding slash
                           e.g. node/216. Note that the current version of the software will only supply a taxa_taxon_list_id value to this page as the parameter.',
           'type'=>'textfield',
           'default' => false,
@@ -369,7 +369,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'name'=>'previous_row_columns_to_include',
           'caption'=>'Columns to include',
           'description'=>'Comma seperated list of columns you wish to include when using the "New species grid rows use previous row\'s data" option. ' .
-                'Non-case or white space sensitive. Any unrecognised columns are ignored and the images column cannot be copied.', 
+                'Non-case or white space sensitive. Any unrecognised columns are ignored and the images column cannot be copied.',
           'type' => 'textarea',
           'required'=>false,
           'group'=>'Species'
@@ -519,7 +519,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         array(
           'name'=>'taxon_filter',
           'caption'=>'Taxon filter items',
-          'description'=>'Taxa can be filtered by entering values into this box. '. 
+          'description'=>'Taxa can be filtered by entering values into this box. '.
               'Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group. '.
               'If you provide a single taxon preferred name, taxon meaning ID or external key in this box and you set the <strong>Allow a single '.
               'ad-hoc record or a list of records</strong> setting to "Only allow entry of one occurrence at a time" then the form is set up for '.
@@ -617,7 +617,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     return $retVal;
   }
 
-  /** 
+  /**
    * Declare the list of permissions we've got set up to pass to the CMS' permissions code.
    * @param int $nid Node ID, not used
    * @param array $args Form parameters array, used to extract the defined permissions.
@@ -632,7 +632,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $perms += parent::get_perms($nid, $args);
     return $perms;
   }
-  
+
   /**
    * Override get_form_html so we can store the remembered argument in a global, to make
    * it available to a hook function which exists outside the form.
@@ -701,7 +701,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     return parent::get_form_html($args, $auth, $attributes);
   }
-  
+
   /**
    * If zooming to a group site, we don't want to display the user's own profile locality or other map setting location.
    */
@@ -794,7 +794,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
   /**
    * Preparing to display an existing sample with occurrences.
-   * When displaying a grid of occurrences, just load the sample and data_entry_helper::species_checklist 
+   * When displaying a grid of occurrences, just load the sample and data_entry_helper::species_checklist
    * will load the occurrences.
    * When displaying just one occurrence we must load the sample and the occurrence
    */
@@ -811,16 +811,16 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         ));
         if (count($response) !== 0) {
           //we found an occurrence so use it to detect the sample
-          self::$loadedSampleId = $response[0]['sample_id'];       
+          self::$loadedSampleId = $response[0]['sample_id'];
         }
-      } 
+      }
     } else {
       // single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
             $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
         if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
-          // Loading a single record into a form that can do single or multi. Switch to multi if the sample contains 
+          // Loading a single record into a form that can do single or multi. Switch to multi if the sample contains
           // more than one occurrence.
           $response = data_entry_helper::get_population_data(array(
             'table' => 'occurrence',
@@ -835,14 +835,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           if (count($response) > 1) {
             data_entry_helper::$entity_to_load['gridmode'] = true;
             // Swapping to grid mode for edit, so use species list as the grid's extra species list rather than load the
-            // whole lot. 
+            // whole lot.
             if (!empty($args['list_id']) && empty($args['extra_list_id'])) {
               $args['extra_list_id'] = $args['list_id'];
               $args['list_id'] = '';
             }
           }
         }
-      } 
+      }
       elseif (self::$loadedSampleId) {
         $response = data_entry_helper::get_population_data(array(
           'table' => 'occurrence',
@@ -856,12 +856,12 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       }
       self::$loadedSampleId = data_entry_helper::$entity_to_load['occurrence:sample_id'];
     }
-    
+
     // Load the sample record
     if (self::$loadedSampleId) {
       data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
-      // If there is a parent sample and we are not force loading the child sample then load it next so the details 
-      // overwrite the child sample. 
+      // If there is a parent sample and we are not force loading the child sample then load it next so the details
+      // overwrite the child sample.
       if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($args['never_load_parent_sample'])) {
         data_entry_helper::load_existing_record(
             $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id'], 'detail', 'editing');
@@ -895,7 +895,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     return self::getAttributesForEntity('sample', $args, $auth['read'],
         isset(data_entry_helper::$entity_to_load['sample:id']) ? data_entry_helper::$entity_to_load['sample:id'] : '');
   }
-  
+
   /**
    * Load the attributes for the sample defined by a supplied Id.
    * @param string $entity Associated entity name, either sample or occurrence.
@@ -906,7 +906,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function getAttributesForEntity($entity, $args, $readAuth, $id=null) {
     $prefix = $entity==='sample' ? 'smp' : 'occ';
-    $attrOpts = array(   
+    $attrOpts = array(
       'valuetable'=>"{$entity}_attribute_value",
       'attrtable'=>"{$entity}_attribute",
       'key'=>"{$entity}_id",
@@ -915,7 +915,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       'survey_id'=>$args['survey_id']
     );
     if (!empty($id))
-      $attrOpts['id'] = $id;  
+      $attrOpts['id'] = $id;
     // select only the custom attributes that are for this sample method or all sample methods, if this
     // form is for a specific sample method.
     if ($entity==='sample' && !empty($args['sample_method_id']))
@@ -924,20 +924,20 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   }
 
   /* Overrides function in class iform_dynamic.
-   * 
-   * This function removes ID information from the entity_to_load, fooling the 
+   *
+   * This function removes ID information from the entity_to_load, fooling the
    * system in to building a form for a new record with default values from the entity_to_load.
-   * This feels like it could be easily broken by changes to how the form is built, 
+   * This feels like it could be easily broken by changes to how the form is built,
    * particularly the species checklist.
    * I would have preferred to modify the completed html but I perceived a problem with
    * multi-value inputs and knowing whether to replace e.g. smpAttr:123:12345 with
    * smpAttr:123 or smpAttr:123[]
-   * 
-   * At the time of calling, the entity_to_load contains the sample and the 
+   *
+   * At the time of calling, the entity_to_load contains the sample and the
    * $attributes array contains the sample attributes. No occurrences are loaded.
-   * This function calls preload_species_checklist_occurrences which loads the 
+   * This function calls preload_species_checklist_occurrences which loads the
    * occurrence and occurrence attribute information in to the entity_to_load. Having
-   * modified the occurrence information in entity_to_load the species checklist must 
+   * modified the occurrence information in entity_to_load the species checklist must
    * be called with option['useLoadedExistingRecords'] = true so that the modifications
    * are not overwritten
    */
@@ -957,7 +957,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             unset($attributes[$attributeKey]['default'][$defaultKey]['fieldname']);
           // Set the fieldname in the defaults array to the attribute id plus brackets as well
           else
-           $attributes[$attributeKey]['default'][$defaultKey]['fieldname'] = $attributeValue['id'] . '[]';        
+           $attributes[$attributeKey]['default'][$defaultKey]['fieldname'] = $attributeValue['id'] . '[]';
        }
       } else {
         // Set the attribute fieldname to the attribute id for single values
@@ -969,7 +969,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // @todo: Convert to occurrences media capabilities.
     $loadImages = $args['occurrence_images'];
     $subSamples = array();
-    data_entry_helper::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'], 
+    data_entry_helper::preload_species_checklist_occurrences(data_entry_helper::$entity_to_load['sample:id'],
               $auth['read'], $loadImages, array(), $subSamples, false);
     // If using a species grid $entity_to_load will now contain elements in the form
     //  sc:row_num:occ_id:occurrence:field_name
@@ -995,7 +995,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       unset(data_entry_helper::$entity_to_load[$key]);
     }
     data_entry_helper::$entity_to_load = array_merge(data_entry_helper::$entity_to_load, $elementsToAdd);
-    
+
     // Unset the sample and occurrence id from entitiy_to_load as for a new record.
     unset(data_entry_helper::$entity_to_load['sample:id']);
     unset(data_entry_helper::$entity_to_load['occurrence:id']);
@@ -1032,14 +1032,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
       }
     } elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
-      // Group enabled form being used to add new records, but no group specified in URL path, so give 
+      // Group enabled form being used to add new records, but no group specified in URL path, so give
       // the user a chance to pick from their list of possible groups for this form.
       // Get the list of possible groups they might be posting into using this form. To do this we need the page
       // path without the initial leading /.
       $reload = data_entry_helper::get_reload_link_parts();
       // Slightly messy path handling. Ideally we'd call the same code as group_edit::get_path but we don't know the nid.
       $reload['path'] = preg_replace('/^\//', '', $reload['path']);
-      $dirname = preg_replace('/^\//', '', dirname($_SERVER['SCRIPT_NAME'])) . '/';      
+      $dirname = preg_replace('/^\//', '', dirname($_SERVER['SCRIPT_NAME'])) . '/';
       $reload['path'] = str_replace($dirname, '', $reload['path']);
       $possibleGroups = data_entry_helper::get_report_data(array(
         'dataSource'=>'library/groups/groups_for_page',
@@ -1182,7 +1182,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   /**
    * Get the control for map based species input, assumed to be multiple entry: ie a grid. Can be single species though.
    * Uses the normal species grid, so all options that apply to that, apply to this.
-   * An option called sampleMethodId can be used to specify the sample method used for subsamples, and therefore the 
+   * An option called sampleMethodId can be used to specify the sample method used for subsamples, and therefore the
    * controls to show for subsamples.
    */
   protected static function get_control_speciesmap($auth, $args, $tabAlias, $options) {
@@ -1190,7 +1190,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $code = rand(0,1000);
     $defaults = array('id' => 'species-grid-'.$code, 'buttonsId' => 'species-grid-buttons-'.$code);
     $options = array_merge($defaults, $options);
-    
+
     $gridmode = call_user_func(array(self::$called_class, 'getGridMode'), $args);
     if(!$gridmode)
       return "<b>The SpeciesMap control must be used in gridmode.</b><br/>";
@@ -1258,26 +1258,26 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // have to use a clas to identify it.
     return '<div class="control_speciesmapsummary"><table class="ui-widget ui-widget-content species-grid-summary"><thead class="ui-widget-header"></thead><tbody/></table></div>';
   }
-  
+
   /* Set up the control JS and also return the existing data subsample blocks */
   protected static function get_control_speciesmap_controls($auth, $args, $options){
     $langStrings = array('AddLabel' => lang::get("Add records to map"),
         'AddMessage' => lang::get("Please click on the map where you would like to add your records. Zoom the map in for greater precision."),
         'AddDataMessage' => lang::get("Please enter all the species records for this position into the grid below. When you have finished, click the Finish button to return to the map where you may choose another grid reference to enter data for."),
-        
+
         'MoveLabel' => lang::get("Move records"),
         'MoveMessage1' => lang::get("Please select the records on the map you wish to move."),
         'MoveMessage2' => lang::get("Please click on the map to choose the new position. Press the Cancel button to choose another set of records to move instead."),
-        
+
         'ModifyLabel' => lang::get("Modify records"),
         'ModifyMessage1' => lang::get("Please select the records on the map you wish to change."),
         'ModifyMessage2' => lang::get("Change (or add to) the records for this position. When you have finished, click the Finish button which will return you to the map where you may choose another set of records to change."),
-        
+
         'DeleteLabel' => lang::get("Delete records"),
         'DeleteMessage' => lang::get("Please select the records on the map you wish to delete."),
         'ConfirmDeleteTitle' => lang::get("Confirm deletion of records"),
         'ConfirmDeleteText' => lang::get("Are you sure you wish to delete all the records at {OLD}?"),
-        
+
         'CancelLabel' => lang::get("Cancel"),
         'FinishLabel' => lang::get("Finish"),
         'Yes' => lang::get("Yes"),
@@ -1300,7 +1300,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                     '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$geomKey].'" name="'.$geomKey.'">'.
                     '<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
                     (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey].'" name="'.$idKey.'">' : '');
-                    
+
           if (!empty($options['sampleMethodId'])) {
             $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth['read'], $a[2]);
             foreach ($sampleAttrs as &$attr) {
@@ -1319,7 +1319,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     return $blocks;
   }
-  
+
   /**
    * Parses an options array to extract the attribute specific option settings, e.g. smpAttr:4|caption=Habitat etc.
    */
@@ -1334,18 +1334,18 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     return $attrOptions;
   }
-  
+
   /**
    * The species filter can be taken from the edit tab or overridden by a URL filter.
    * This method determines the filter to be used.
    * @param array $args Form arguments
    * @return array List of items to filter against, e.g. species names or meaning IDs.
-   */  
+   */
   protected static function get_species_filter($args) {
     // we must have a filter field specified in order to apply a filter
     if (!empty($args['taxon_filter_field'])) {
       // if URL params are enabled and we have one, then this is the top priority filter to apply
-      if (!empty($_GET['taxon']) && $args['use_url_taxon_parameter'])  
+      if (!empty($_GET['taxon']) && $args['use_url_taxon_parameter'])
         // convert commas to newline, so url provided filters are the same format as those
         // on the edit tab, also allowing for url encoding.
         return explode(',', urldecode($_GET['taxon']));
@@ -1356,13 +1356,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // default - no filter to apply
     return array();
   }
-  
+
   /**
    * Get the species data for the page in single species mode
    */
   protected static function get_single_species_data($auth, $args, $filterLines) {
     //The form is configured for filtering by taxon name, meaning id or external key. If there is only one specified, then the form
-    //cannot display a species checklist, as there is no point. So, convert our preferred taxon name, meaning ID or external_key to find the 
+    //cannot display a species checklist, as there is no point. So, convert our preferred taxon name, meaning ID or external_key to find the
     //preferred taxa_taxon_list_id from the selected checklist
     if (empty($args['list_id']))
       throw new exception(lang::get('Please configure the Initial Species List parameter to define which list the species to record is selected from.'));
@@ -1384,7 +1384,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     self::get_single_species_logging($auth, $args, $filterLines, $response);
     return $response;
   }
-    
+
   /**
    * Error logging code for the page in single species mode
    */
@@ -1397,16 +1397,16 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         watchdog('indicia', 'Multiple matches have been found when using the filter \''.$args['taxon_filter_field'].'\'. '.
           'The filter was passed the following value(s)'.$filters);
         throw new exception(lang::get('This form is setup for single species recording, but more than one species matching the criteria exists in the list.'));
-      }    
+      }
     }
     //If our filter returns nothing at all, we log it, we return string 'no matches' which the system then uses to clear the filter
     if (count($response)==0) {
-      if (function_exists('watchdog')) 
+      if (function_exists('watchdog'))
         watchdog('missing sp.', 'No matches were found when using the filter \''.$args['taxon_filter_field'].'\'. '.
-          'The filter was passed the following value(s)'.$filters); 
+          'The filter was passed the following value(s)'.$filters);
     }
   }
-    
+
   /**
    * Get the control for species input, either a grid or a single species input control.
    */
@@ -1420,7 +1420,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if ($args['taxon_filter_field']!=='taxon_group' && count($filterLines)===1 && ($args['multiple_occurrence_mode']!=='multi')) {
       $response = self::get_single_species_data($auth, $args, $filterLines);
       //Optional message to display the single species on the page
-      if ($args['single_species_message']) 
+      if ($args['single_species_message'])
         self::$singleSpeciesName=$response[0]['taxon'];
       if (count($response)==0)
         //if the response is empty there is no matching taxon, so clear the filter as we can try and display the checklist with all data
@@ -1436,8 +1436,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       return self::get_control_species_single($auth, $args, $extraParams, $options);
   }
 
-    
-    
+
+
   /**
    * Returns the species checklist input control.
    * @param array $auth Read authorisation tokens
@@ -1449,7 +1449,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function get_control_species_checklist($auth, $args, $extraParams, $options) {
     // Build the configuration options
     if (isset($options['view']))
-      $extraParams['view'] = $options['view'];    
+      $extraParams['view'] = $options['view'];
     // There may be options in the form occAttr:n|param => value targetted at specific attributes
     $occAttrOptions = array();
     $optionToUnset = array();
@@ -1462,7 +1462,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $optName = $optionParts[1];
         // split the attribute name into the type and id (type will always be occAttr)
         $attrParts = explode(':', $attrName);
-        $attrId = $attrParts[1];      
+        $attrId = $attrParts[1];
         if (!isset($occAttrOptions[$attrId])) $occAttrOptions[$attrId]=array();
         $occAttrOptions[$attrId][$optName] = apply_user_replacements($value);
         $optionToUnset[] = $option;
@@ -1512,7 +1512,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths']=explode(',', $args['col_widths']);
     call_user_func(array(self::$called_class, 'build_grid_taxon_label_function'), $args, $options);
     if (self::$mode == self::MODE_CLONE)
-      $species_ctrl_opts['useLoadedExistingRecords'] = true;   
+      $species_ctrl_opts['useLoadedExistingRecords'] = true;
     return data_entry_helper::species_checklist($species_ctrl_opts);
   }
 
@@ -1562,7 +1562,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $options['parentControlLabel'] = lang::get($label);
       $options['filterField'] = 'taxon_group_id';
     }
-    
+
     $options['speciesNameFilterMode'] = self::getSpeciesNameFilterMode($args);
     $ctrl = $args['species_ctrl'] === 'autocomplete' ? 'species_autocomplete' : $args['species_ctrl'];
     $species_ctrl_opts = array_merge(array(
@@ -1582,7 +1582,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $species_ctrl_opts['extraParams'] = array_merge(array(
         'view' => 'detail', //required for hierarchical select to get parent id
         'orderby' => 'taxonomic_sort_order',
-        'sortdir' => 'ASC' 
+        'sortdir' => 'ASC'
     ), $species_ctrl_opts['extraParams']);
     if (!empty($args['taxon_filter'])) {
       $species_ctrl_opts['taxonFilterField'] = $args['taxon_filter_field']; // applies to autocompletes
@@ -1618,14 +1618,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       }
       $species_ctrl_opts['captionTemplate'] = 'species_caption';
     }
-    
+
     if ($ctrl=='tree_browser') {
       // change the node template to include images
       $indicia_templates['tree_browser_node']='<div>'.
           '<img src="'.data_entry_helper::$base_url.'/upload/thumb-{image_path}" alt="Image of {caption}" width="80" /></div>'.
           '<span>{caption}</span>';
     }
-    
+
     // Dynamically generate the species selection control required.
     $r .= call_user_func(array('data_entry_helper', $ctrl), $species_ctrl_opts);
     return $r;
@@ -1685,7 +1685,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $indicia_templates['taxon_label'] = $php;
     }
   }
-  
+
   /**
    * Get the sample comment control
    */
@@ -1702,14 +1702,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function get_control_samplephoto($auth, $args, $tabAlias, $options) {
     if (!empty($options['label']))
       $label = $options['label'];
-    else 
+    else
       $label = 'Overall Photo';
     //Create a list of arrays. Each item is itself an array with a control id and associated sub type.
-    //This allows there to be multiple photo controls, each saving its own type of image. This can keep the 
+    //This allows there to be multiple photo controls, each saving its own type of image. This can keep the
     //photos from each control independent of each other.
     if (!empty($options['id'])&&!empty($options['subType'])) {
       data_entry_helper::$javascript.="
-      if (indiciaData.subTypes) { 
+      if (indiciaData.subTypes) {
         indiciaData.subTypes.push(['".$options['id']."','".$options['subType']."']);
       } else {
         indiciaData.subTypes=[['".$options['id']."','".$options['subType']."']];
@@ -1770,7 +1770,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
   /**
    * Get the location control as an autocomplete.
-   * As well as the standard location_autocomplete options, set personSiteAttrId to the attribute ID of 
+   * As well as the standard location_autocomplete options, set personSiteAttrId to the attribute ID of
    * a multi-value person attribute used to link people to the sites they record at.
    */
   protected static function get_control_locationautocomplete($auth, $args, $tabAlias, $options) {
@@ -1818,15 +1818,15 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $location_list_args['numValues'] = 200;
     return data_entry_helper::location_autocomplete($location_list_args);
   }
-  
+
   /**
    * Implements the [location url param] control, for accepting the site to record against using a location_id URL parameter.
    *
-   * Outputs hidden inputs into the form to specify the location_id for the sample. Uses the location's centroid and spatial ref system to 
+   * Outputs hidden inputs into the form to specify the location_id for the sample. Uses the location's centroid and spatial ref system to
    * fill in the sample's geometry data. If loading an existing sample, then the location_id in the URL is ignored.
    */
   protected static function get_control_locationurlparam($auth, $args, $tabAlias, $options) {
-    $location_id=isset(data_entry_helper::$entity_to_load['sample:location_id']) ? data_entry_helper::$entity_to_load['sample:location_id'] : 
+    $location_id=isset(data_entry_helper::$entity_to_load['sample:location_id']) ? data_entry_helper::$entity_to_load['sample:location_id'] :
         (empty($_GET['location_id']) ? '' : $_GET['location_id']);
     if (empty($location_id))
       return 'This form requires a URL parameter called location_id to specify which site to record against.';
@@ -1853,14 +1853,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * Default control ordering is by name.
    * reportProvidesOrderBy option should be set to true if the control is populated by a report that
    * provides its own Order By statement, if the reportProvidesOrderBy option is not set in this situation, then the report
-   * will have two Order By statements and will fail. 
+   * will have two Order By statements and will fail.
    */
   protected static function get_control_locationselect($auth, $args, $tabAlias, $options) {
     if (isset($options['extraParams'])) {
       foreach ($options['extraParams'] as $key => &$value)
         $value = apply_user_replacements($value);
       $options['extraParams'] = array_merge($auth['read'], $options['extraParams']);
-    } else 
+    } else
       $options['extraParams'] = array_merge($auth['read']);
     if (empty($options['reportProvidesOrderBy'])||$options['reportProvidesOrderBy']==0) {
       $options['extraParams']['orderby'] = 'name';
@@ -1915,7 +1915,7 @@ else
       'class' => 'control-width-5'
     ), $options));
   }
-  
+
   /**
    * Get an occurrence attribute control.
    */
@@ -1930,11 +1930,11 @@ else
         }
       }
       return "Occurrence attribute $attribName not found.";
-    } 
-    else 
+    }
+    else
       return "Occurrence attribute $attribName cannot be included in form when in grid entry mode.";
   }
-  
+
   /**
    * Get the occurrence comment control
    */
@@ -1948,7 +1948,7 @@ else
       return '';
     }
   }
-  
+
   /**
    * Get the photos control
    */
@@ -1956,7 +1956,7 @@ else
     if ($args['multiple_occurrence_mode']==='single') {
       return self::occurrence_photo_input($auth['read'], $options, $tabAlias);
     }
-    else 
+    else
       return "[photos] control cannot be included in form when in grid entry mode, since photos are automatically included in the grid.";
   }
 
@@ -2012,7 +2012,7 @@ else
     $r .= "</select><br/>\n";
       return $r;
   }
-  
+
   /**
    * Get the sensitivity control
    */
@@ -2028,10 +2028,10 @@ else
         array('additionalControls' => $sensitivity_controls)
       ));
     }
-    else 
+    else
       return "[sensitivity] control cannot be included in form when in grid entry mode, since photos are automatically included in the grid.";
   }
-  
+
   /**
    * Get the zero abundance checkbox control
    */
@@ -2044,10 +2044,10 @@ else
       ), $options);
       return data_entry_helper::checkbox($options);
     }
-    else 
+    else
       return "[zero abundance] control cannot be included in form when in grid entry mode.";
   }
-  
+
   /*
    * A checkbox which when selected will set the record to having a Pending release_status. This is useful if (for instance) an
    * untrained user wishes to have their worked checked.
@@ -2068,7 +2068,7 @@ else
     });";
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
@@ -2272,7 +2272,7 @@ else
     }
     return self::$occAttrs;
   }
-  
+
   /**
    * Provides a control for inputting photos against the record, when in single record mode.
    *
@@ -2297,9 +2297,9 @@ else
     }
     return data_entry_helper::file_box($opts);
   }
-  
-  /** 
-   * Parses the options provided to a control in the user interface definition and splits the options which 
+
+  /**
+   * Parses the options provided to a control in the user interface definition and splits the options which
    * apply to the entire control (@label=Grid Ref) from ones which apply to a specific custom attribute
    * (smpAttr:3|label=Quantity).
    */
@@ -2316,17 +2316,18 @@ else
       }
     }
   }
-  
-  /** 
+
+  /**
    * Override the default submit buttons to add a delete button where appropriate.
    */
   protected static function getSubmitButtons($args) {
+    global $indicia_templates;
     $r = '';
     if(self::$mode === self::MODE_EXISTING_RO) return $r; // don't allow users to submit if in read only mode.
-    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Submit')."\" />\n";
+    $r .= '<input type="submit" class="' . $indicia_templates['buttonHighlightedClass'] . '" id="save-button" value="'.lang::get('Submit')."\" />\n";
     if (!empty(self::$loadedSampleId) && $args['multiple_occurrence_mode']==='single') {
       // use a button here, not input, as Chrome does not post the input value
-      $r .= '<button type="submit" class="indicia-button" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
+      $r .= '<button type="submit" class="' . $indicia_templates['buttonWarningClass'] . '" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
       data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
         if (!confirm(\"Are you sure you want to delete this record?\")) {
           e.preventDefault();
@@ -2336,7 +2337,7 @@ else
     }
     return $r;
   }
-  
+
 }
 
 /**
@@ -2348,5 +2349,5 @@ function indicia_define_remembered_fields() {
   if (!empty($remembered))
     data_entry_helper::set_remembered_fields(helper_base::explode_lines($remembered));
 }
-  
+
 
