@@ -3383,7 +3383,7 @@ JS;
         }
         $row .= str_replace(array('{content}','{colspan}','{editClass}','{tableId}','{idx}'),
           array($firstCell,$colspan,$editClass,$options['id'],$colIdx), $indicia_templates['taxon_label_cell']);
-        $row .= self::speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options);
+        $row .= self::speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options, $options['id']);
         $hidden = ($options['rowInclusionCheck']=='checkbox' ? '' : ' style="display:none"');
         // AlwaysFixed mode means all rows in the default checklist are included as occurrences. Same for
         // AlwayeRemovable except that the rows can be removed.
@@ -3402,7 +3402,7 @@ JS;
           $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\"/>";
         else
           // this includes a control to force out a 0 value when the checkbox is unchecked.
-          $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" value=\"0\"/>".
+          $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"0\"/>".
             "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\" $checked />";
         // If we have a grid ID attribute, output a hidden
         if (!empty($options['gridIdAttributeId'])) {
@@ -3785,13 +3785,20 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
   /**
    * Private function to retrieve the subspecies selection cell for a species_checklist,
    * when the subspeciesColumn option is enabled.
-   * @param array Taxon definition as loaded from the database.
-   * @param integer Index of the taxon row we are operating on.
-   * @param integer If an existing record, then the record's occurrence ID.
-   * @param array Options array for the species grid. Used to obtain the row inclusion check mode,
-   * read authorisation and lookup list's ID.
+   *
+   * @param array
+   *   Taxon definition as loaded from the database.
+   * @param integer
+   *   Index of the taxon row we are operating on.
+   * @param integer
+   *   If an existing record, then the record's occurrence ID.
+   * @param array
+   *   Options array for the species grid. Used to obtain the row inclusion check mode,
+   *   read authorisation and lookup list's ID.
+   * @param string
+   *   ID of the species checklist grid.
    */
-  private static function speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options) {
+  private static function speciesChecklistGetSubspCell($taxon, $txIdx, $existingRecordId, $options, $gridId) {
     if ($options['subSpeciesColumn']) {
       //Disable the sub-species drop-down if the row delete button is not displayed.
       //Also disable if we are preloading our data from a sample.
@@ -3814,14 +3821,15 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         , $selectedParentId
         , '$selectedParentName'
         , '".$options['lookupListId']."'
-        , 'sc:$txIdx:$existingRecordId::occurrence:subspecies'
+        , 'sc:$gridId-$txIdx:$existingRecordId::occurrence:subspecies'
         , {'auth_token' : '".$options['readAuth']['auth_token']."', 'nonce' : '".$options['readAuth']['nonce']."'}
         , $selectedChildId
       );\n";
       return '<td class="ui-widget-content scSubSpeciesCell"><select class="scSubSpecies" ' .
-      "id=\"sc:$txIdx:$existingRecordId::occurrence:subspecies\" name=\"sc:$txIdx:$existingRecordId::occurrence:subspecies\" ".
-      "$isDisabled onchange=\"SetHtmlIdsOnSubspeciesChange(this.id);\">" .
-      '</select></td>';
+        "id=\"sc:$gridId-$txIdx:$existingRecordId::occurrence:subspecies\" " .
+        "name=\"sc:$gridId-$txIdx:$existingRecordId::occurrence:subspecies\" ".
+        "$isDisabled onchange=\"SetHtmlIdsOnSubspeciesChange(this.id);\">" .
+        '</select></td>';
     }
     // default - no cell returned
     return '';
