@@ -40,9 +40,9 @@ require_once('includes/report.php');
 class iform_record_details_2 extends iform_dynamic {
 
   protected static $record;
-    
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_record_details_2_definition() {
@@ -54,13 +54,13 @@ class iform_record_details_2 extends iform_dynamic {
       'recommended' => true
     );
   }
-  
 
-  /** 
-   * Return an array of parameters for the edit tab. 
+
+  /**
+   * Return an array of parameters for the edit tab.
    * @return array The parameters for the form.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     $retVal = array_merge(
       iform_map_get_map_parameters(),
       array(
@@ -86,7 +86,7 @@ class iform_record_details_2 extends iform_dynamic {
               'Type in the field name as seen exactly in the Record Details section. For custom attributes you should use the system function values '.
               'to filter instead of the caption if defined below.',
           'type' => 'textarea',
-          'default' => 
+          'default' =>
 'CMS Username
 CMS User ID
 Email
@@ -141,7 +141,7 @@ Record ID',
             "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
             "<strong>|</strong> is used to split a tab/page/section into two columns, place a [control name] on the previous line and following line to split.<br/>",
           'type'=>'textarea',
-          'default' => 
+          'default' =>
 '=Record Details and Comments=
 [recorddetails]
 [buttons]
@@ -201,6 +201,14 @@ Record ID',
           'options'=>array('1'=>'1km', '2' => '2km', '10' => '10km'),
           'required' => false,
           'group' => 'Other Map Settings'
+        ),
+        array(
+          'name' => 'allow_confidential',
+          'caption' => 'Allow viewing of confidential records',
+          'description' => 'Tick this box to enable viewing of confidential records. Ensure that the page is only ' .
+            'available to logged in users with appropropriate permissions if using this option',
+          'type' => 'checkbox',
+          'required' => FALSE
         )
       )
     );
@@ -232,11 +240,11 @@ Record ID',
     }
   }
 
-  
+
   /**
    * Draw Record Details section of the page.
    * @return string The output freeform report.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
@@ -278,7 +286,7 @@ Record ID',
       unset($availableFields['sample_comment']);
     }
     self::load_record($auth, $args);
-    
+
     $details_report = '<div class="record-details-fields ui-helper-clearfix">';
     $nameLabel = self::$record['taxon'];
     if (self::$record['taxon'] !== self::$record['preferred_taxon']) {
@@ -322,7 +330,7 @@ Record ID',
           array(lang::get('Submission date'), $dateInfo, '', '', ''), $attrsTemplate);
     }
     $details_report .= '</div>';
-    
+
     if (!self::$record['sensitivity_precision']) {
       //draw any custom attributes added by the user, but only for a non-sensitive record
       $attrs_report = report_helper::freeform_report(array(
@@ -342,7 +350,7 @@ Record ID',
     }
 
     $r = '<div class="detail-panel" id="detail-panel-recorddetails"><h3>Record Details</h3>';
-    
+
     $r .= $details_report;
     if (isset($attrs_report)) {
       $r .= $attrs_report;
@@ -350,25 +358,25 @@ Record ID',
     $r .= '</div>';
     return $r;
   }
- 
+
   /**
    * Used to convert an array of attributes to a string formatted like a set,
    * this is then used by the record_data_attributes_with_hiddens report to return
    * custom attributes which aren't in the hidden attributes list.
    * @return string The set of hidden custom attributes.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
   protected static function convert_array_to_set($theArray) {
     return "'".implode("','", str_replace("'", "''", $theArray))."'";
   }
-  
+
 
   /**
    * Draw Photos section of the page.
    * @return string The output report grid.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
@@ -445,7 +453,7 @@ Record ID',
     );
     return self::commonControlPhotos($auth, $options, $settings);
   }
-  
+
   /**
    * Returns the class attribute HTML to apply to attribute list data in the details pane.
    * @param string $field Field name
@@ -513,11 +521,11 @@ Record ID',
     $r .= '</div></div>';
     return $r;
   }
-  
+
   /**
    * Draw Map section of the page.
    * @return string The output map panel.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
@@ -532,24 +540,24 @@ Record ID',
     if (isset(self::$record['geom'])) {
       $options['initialFeatureWkt'] = self::$record['geom'];
     }
-    
+
     if ($tabalias) {
       $options['tabDiv'] = $tabalias;
     }
     $olOptions = iform_map_get_ol_options($args);
-    
+
     if (!isset($options['standardControls'])) {
       $options['standardControls']=array('layerSwitcher','panZoom');
     }
     return '<div class="detail-panel" id="detail-panel-map"><h3>Map</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
-    
+
   }
- 
-  
+
+
   /**
    * Draw the Comments section of the page.
    * @return string The output HTML string.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
@@ -592,14 +600,14 @@ Record ID',
     $r .= $_GET['occurrence_id'].');">'.lang::get('Save').'</button>';
     $r .= '</fieldset></form>';
     $r .= '</div>';
-    
+
     return '<div class="detail-panel" id="detail-panel-comments"><h3>Comments</h3>' . $r . '</div>';
   }
-  
+
   /**
    * Displays a list of determinations associated with an occurrence record. This particular panel
    * is ommitted if there are no determinations.
-   * 
+   *
    * @return string The determinations report grid.
    */
   protected static function get_control_previousdeterminations($auth, $args, $tabalias, $options) {
@@ -721,13 +729,13 @@ Record ID',
     }
     return $r;
   }
-  
+
   /**
    * An edit button control which only displays if the user owns the record.
    * @param array $auth Read authorisation array
    * @param array $args Form options
    * @param string $tabalias The alias of the tab this appears on
-   * @param array $options Options configured for this control. 
+   * @param array $options Options configured for this control.
    * @return string HTML for the buttons.
    */
   protected static function get_control_buttons($auth, $args, $tabalias, $options) {
@@ -748,13 +756,13 @@ Record ID',
     }
     return $r;
   }
-  
+
   /**
    * Retrieve the HTML required for an edit record button.
    * @param array $auth Read authorisation array
    * @param array $args Form options
    * @param string $tabalias The alias of the tab this appears on
-   * @param array $options Options configured for this control. 
+   * @param array $options Options configured for this control.
    * @return string HTML for the button.
    */
   protected static function buttons_edit($auth, $args, $tabalias, $options) {
@@ -778,13 +786,13 @@ Record ID',
       return '';
     }
   }
-  
+
   /**
    * Retrieve the HTML required for an explore records of the same species button.
    * @param array $auth Read authorisation array
    * @param array $args Form options
    * @param string $tabalias The alias of the tab this appears on
-   * @param array $options Options configured for this control. 
+   * @param array $options Options configured for this control.
    * @return string HTML for the button.
    */
   protected static function buttons_explore($auth, $args, $tabalias, $options) {
@@ -806,13 +814,13 @@ Record ID',
     }
     return $r;
   }
-  
+
   /**
    * Retrieve the HTML required for an details of the same species button.
    * @param array $auth Read authorisation array
    * @param array $args Form options
    * @param string $tabalias The alias of the tab this appears on
-   * @param array $options Options configured for this control. 
+   * @param array $options Options configured for this control.
    * @return string HTML for the button.
    */
   protected static function buttons_species_details($auth, $args, $tabalias, $options) {
@@ -831,7 +839,7 @@ Record ID',
     }
     return '';
   }
-  
+
   /*
    * Convert a timestamp into readable format (... ago) for use on a comment list.
    * @param timestamp $timestamp The date time to convert.
@@ -842,24 +850,24 @@ Record ID',
     // Having the full phrase means that it is fully localisable if the phrasing is different.
     $periods = array(
       lang::get("{1} second ago"),
-      lang::get("{1} minute ago"), 
-      lang::get("{1} hour ago"), 
-      lang::get("Yesterday"), 
-      lang::get("{1} week ago"), 
-      lang::get("{1} month ago"), 
-      lang::get("{1} year ago"), 
+      lang::get("{1} minute ago"),
+      lang::get("{1} hour ago"),
+      lang::get("Yesterday"),
+      lang::get("{1} week ago"),
+      lang::get("{1} month ago"),
+      lang::get("{1} year ago"),
       lang::get("{1} decade ago"));
     $periodsPlural = array(
       lang::get("{1} seconds ago"),
-      lang::get("{1} minutes ago"), 
-      lang::get("{1} hours ago"), 
-      lang::get("{1} days ago"), 
-      lang::get("{1} weeks ago"), 
-      lang::get("{1} months ago"), 
-      lang::get("{1} years ago"), 
+      lang::get("{1} minutes ago"),
+      lang::get("{1} hours ago"),
+      lang::get("{1} days ago"),
+      lang::get("{1} weeks ago"),
+      lang::get("{1} months ago"),
+      lang::get("{1} years ago"),
       lang::get("{1} decades ago"));
     $lengths = array("60","60","24","7","4.35","12","10");
-   
+
     for($j = 0; $difference >= $lengths[$j]; $j++) {
       $difference /= $lengths[$j];
     }
@@ -869,64 +877,64 @@ Record ID',
     } else {
       $text = str_replace('{1}', $difference, $periodsPlural[$j]);
     }
-    return $text; 
+    return $text;
   }
-  
-  
+
+
   /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
- 
+
   protected static function getArgDefaults($args) {
-    if (!isset($args['interface']) || empty($args['interface'])) {
-      $args['interface'] = 'one_page';
-    }
-    
-    if (!isset($args['hide_fields']) || empty($args['hide_fields'])) {
-      $args['hide_fields'] = 
-'CMS Username
+    $defaultHiddenFields = <<<FIELDS
+CMS Username
 Email
 Sample ID
-Record ID';
-    }
-    if (!isset($args['structure']) || empty($args['structure'])) {
-      $args['structure'] = 
-'=Record Details and Comments=
+Record ID
+FIELDS;
+    $defaultStructure = <<<STRUCT
+=Record Details and Comments=
 [recorddetails]
 |
 [comments]
 =Map and Photos=
 [map]
 |
-[photos]';
-    }
-    return $args;      
-  } 
-  
+[photos]
+STRUCT;
+    $args = array_merge(array(
+      'interface' => 'one_page',
+      'allow_confidential' => FALSE,
+      'hide_fields' => $defaultHiddenFields,
+      'structure' => $defaultStructure
+    ), $args);
+    return $args;
+  }
+
   /**
    * Disable save buttons for this form class. Not a data entry form...
-   * @return boolean 
+   * @return boolean
    */
   protected static function include_save_buttons() {
-    return FALSE;  
+    return FALSE;
   }
-  
+
   /**
    * Override the standard header as this is not an HTML form.
    */
   protected static function getHeader($args) {
     return '';
   }
-  
+
   /**
    * Override the standard footer as this is not an HTML form.
    */
   protected static function getFooter($args) {
     return '';
   }
-  
+
   /**
    * Loads the record associated with the page if not already loaded.
    */
@@ -942,7 +950,8 @@ Record ID';
         'extraParams'=>$params,
       ));
       self::$record = $records[0];
-      if (isset(self::$record['confidential']) && self::$record['confidential']==='t') {
+      if ($args['allow_confidential'] === false &&
+        isset(self::$record['confidential']) && self::$record['confidential']==='t') {
         hostsite_show_message(lang::get('This record is confidential so cannot be displayed', 'warning'));
         throw new exception('');
       }
@@ -969,13 +978,13 @@ Record ID';
       }
     }
   }
-  
+
   /**
    * Override some default behaviour in dynamic.
    */
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     return '';
   }
-   
-   
+
+
 }
