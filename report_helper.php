@@ -820,8 +820,6 @@ $callToCallback}";
         self::$initialFilterParamsToApply
       );
       $extraParams = json_encode($extraParams, JSON_FORCE_OBJECT);
-      // List of report parameters we reset to if filters cleared
-      $resetParams = json_encode(array_merge($options['extraParams'], $currentParamValues), JSON_FORCE_OBJECT);
       // List of report parameters that cannot be changed by the user.
       $fixedParams = json_encode($options['extraParams'], JSON_FORCE_OBJECT);
       self::$javascript .= "
@@ -833,7 +831,6 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   mode: '$options[mode]',
   dataSource: '" . str_replace('\\','/',$options['dataSource']) . "',
   extraParams: $extraParams,
-  resetParams: $resetParams,
   fixedParams: $fixedParams,
   view: '$options[view]',
   itemsPerPage: $options[itemsPerPage],
