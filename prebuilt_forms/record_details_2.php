@@ -156,7 +156,7 @@ Record ID',
 [map]
 |
 [photos]',
-          'group' => 'User Interface'
+          'group' => 'User Interface',
         ),
         array(
           'name' => 'default_input_form',
@@ -174,7 +174,7 @@ Record ID',
           'type' => 'string',
           'required' => FALSE,
           'default' => '',
-          'group' => 'Path configuration'
+          'group' => 'Path configuration',
         ),
         array(
           'name' => 'species_details_url',
@@ -184,7 +184,7 @@ Record ID',
           'type' => 'string',
           'required' => FALSE,
           'default' => '',
-          'group' => 'Path configuration'
+          'group' => 'Path configuration',
         ),
         array(
           'name' => 'explore_param_name',
@@ -213,7 +213,23 @@ Record ID',
             'available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE
-        )
+        ),
+        array(
+          'name' => 'allow_sensitive_full_precision',
+          'caption' => 'Allow viewing of sensitive records at full precision',
+          'description' => 'Tick this box to enable viewing of sensitive records at full precision records. Ensure ' .
+            'that the page is only available to logged in users with appropropriate permissions if using this option',
+          'type' => 'checkbox',
+          'required' => FALSE
+        ),
+        array(
+          'name' => 'allow_unreleased',
+          'caption' => 'Allow viewing of unreleased records',
+          'description' => 'Tick this box to enable viewing of unreleased records. Ensure that the page is only ' .
+            'available to logged in users with appropropriate permissions if using this option',
+          'type' => 'checkbox',
+          'required' => FALSE
+        ),
       )
     );
     return $retVal;
@@ -261,7 +277,6 @@ Record ID',
     $attrsTemplate = '<div class="field ui-helper-clearfix"><span>{caption}:</span>{anchorfrom}<span{class}>{value|escape}</span>{anchorto}</div>';
     $test = $args['operator'] === 'in';
     $availableFields = array(
-      'sensitive' => 'Sensitive',
       'occurrence_id' => 'Record ID',
       'preferred_taxon' => 'Recommended name',
       'common_name' => 'Common name',
@@ -279,7 +294,8 @@ Record ID',
       'sample_comment' => 'Sample comment',
       'licence_code' => 'Licence'
     );
-    if (!empty(self::$record['sensitivity_precision'])) {
+    self::load_record($auth, $args);
+    if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
       unset($availableFields['recorder']);
       unset($availableFields['inputter']);
       unset($availableFields['entered_sref']);
@@ -287,9 +303,24 @@ Record ID',
       unset($availableFields['location_name']);
       unset($availableFields['sample_comment']);
     }
-    self::load_record($auth, $args);
 
-    $details_report = '<div class="record-details-fields ui-helper-clearfix">';
+    $flags = array();
+    if (!empty(self::$record['sensitive'])) {
+      $flags[] = lang::get('sensitive');
+    }
+    if (self::$record['confidential'] === 't') {
+      $flags[] = lang::get('confidential');
+    }
+    if (self::$record['release_status'] !== 'R') {
+      $flags[] = lang::get('unreleased');
+    }
+    if (!empty($flags)) {
+      $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
+    } else {
+      $details_report = '';
+    }
+
+    $details_report .= '<div class="record-details-fields ui-helper-clearfix">';
     $nameLabel = self::$record['taxon'];
     if (self::$record['taxon'] !== self::$record['preferred_taxon']) {
       $nameLabel .= ' (' . self::$record['preferred_taxon'] . ')';
@@ -333,7 +364,7 @@ Record ID',
     }
     $details_report .= '</div>';
 
-    if (!self::$record['sensitivity_precision']) {
+    if (!self::$record['sensitivity_precision'] || $args['allow_sensitive_full_precision']) {
       // Draw any custom attributes added by the user, but only for a non-sensitive record.
       $attrs_report = report_helper::freeform_report(array(
         'readAuth' => $auth['read'],
@@ -962,6 +993,8 @@ STRUCT;
     $args = array_merge(array(
       'interface' => 'one_page',
       'allow_confidential' => FALSE,
+      'allow_sensitive_full_precision' => FALSE,
+      'allow_unreleased' => FALSE,
       'hide_fields' => $defaultHiddenFields,
       'structure' => $defaultStructure
     ), $args);
@@ -995,7 +1028,13 @@ STRUCT;
    */
   protected static function load_record($auth, $args) {
     if (!isset(self::$record)) {
-      $params = array('occurrence_id' => $_GET['occurrence_id'], 'sharing' => 'reporting');
+      $params = array(
+        'occurrence_id' => $_GET['occurrence_id'],
+        'sharing' => 'reporting',
+        'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
+        'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
+        'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
+      );
       if (!empty($args['map_geom_precision'])) {
         $params['geom_precision'] = $args['map_geom_precision'];
       }
@@ -1004,9 +1043,13 @@ STRUCT;
         'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data',
         'extraParams' => $params,
       ));
+      if (!count($records)) {
+        hostsite_show_message(lang::get('The record cannot be found.', 'warning'));
+        throw new exception('');
+      }
       self::$record = $records[0];
-      if ($args['allow_confidential'] === FALSE &&
-        isset(self::$record['confidential']) && self::$record['confidential']==='t') {
+      if (!$args['allow_confidential'] &&
+        isset(self::$record['confidential']) && self::$record['confidential'] === 't') {
         hostsite_show_message(lang::get('This record is confidential so cannot be displayed', 'warning'));
         throw new exception('');
       }
@@ -1027,7 +1070,7 @@ STRUCT;
       if (!empty(self::$record['occurrence_comment'])) {
         $iform_page_metadata['description'] .= ' ' . trim(self::$record['occurrence_comment'], '. \t\n\r\0\x0B') . '.';
       }
-      if (empty(self::$record['sensitivity_precision'])) {
+      if (empty(self::$record['sensitivity_precision']) || $args['allow_sensitive_full_precision']) {
         $iform_page_metadata['latitude'] = number_format((float) self::$record['lat'], 5, '.', '');
         $iform_page_metadata['longitude'] = number_format((float) self::$record['long'], 5, '.', '');
       }
