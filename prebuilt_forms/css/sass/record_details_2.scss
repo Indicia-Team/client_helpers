@@ -1,0 +1,12 @@
+#record-flags {
+  /* Highlight flags such as confidential or sensitive */
+  span {
+    padding: 0.5em;
+    margin: 0.5em;
+    border: solid red 1px;
+    border-radius: 4px;
+    display: inline-block;
+    font-weight: bold;
+    background-color: #ffcccc;
+  }
+}
