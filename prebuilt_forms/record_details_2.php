@@ -245,8 +245,7 @@ Record ID',
             'editing' => 'Editing',
             'me' => 'My records only',
           ),
-          'default' => 'reporting',
-          'group' => 'Report Settings',
+          'default' => 'reporting'
         ),
       )
     );
