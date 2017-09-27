@@ -142,9 +142,9 @@ class iform_group_admin {
       ),            
     );
     if ($adminRoleOnScreenName==='administrator')
-      $caption='Set user to be an '.$adminRoleOnScreenName;
+      $caption=lang::get('Set user to be an ').$adminRoleOnScreenName;
     else
-      $caption='Set user to be a '.$adminRoleOnScreenName;
+      $caption=lang::get('Set user to be a ').$adminRoleOnScreenName; 
     //Only allow toggle of user's role if page is configured to allow this.
     if (isset($args['allow_role_toggle']) && $args['allow_role_toggle']==true) {
       $actions[] = array(
@@ -153,7 +153,7 @@ class iform_group_admin {
         'visibility_field'=>'member'
       );
       $actions[] = array(
-        'caption'=>'Set user to be a '.$memberRoleOnScreenName,
+        'caption'=>lang::get('Set user to be a ').$memberRoleOnScreenName,
         'javascript'=>'toggleRole({groups_user_id},\'{name}\',\'member\');',
         'visibility_field'=>'administrator'
       );
@@ -161,7 +161,7 @@ class iform_group_admin {
     //Only allow removal of users if page is configured to allow this.
     if (isset($args['allow_remove']) && $args['allow_remove']==true)
       $actions[] = array(
-        'caption'=>'Remove from group',
+        'caption'=>lang::get('Remove from group'),
         'javascript'=>'removeMember({groups_user_id},\'{name}\');',
       );
     // Allow change of user access level page setup to allow this.
