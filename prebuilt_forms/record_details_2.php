@@ -230,6 +230,23 @@ Record ID',
           'type' => 'checkbox',
           'required' => FALSE
         ),
+        array(
+          'name' => 'sharing',
+          'caption' => 'Record sharing mode',
+          'description' => 'Identify the task this page is being used for, which determines the websites that will ' .
+            'share records for use here.',
+          'type' => 'select',
+          'options' => array(
+            'reporting' => 'Reporting',
+            'peer_review' => 'Peer review',
+            'verification' => 'Verification',
+            'data_flow' => 'Data flow',
+            'moderation' => 'Moderation',
+            'editing' => 'Editing',
+            'me' => 'My records only',
+          ),
+          'default' => 'reporting'
+        ),
       )
     );
     return $retVal;
@@ -255,7 +272,8 @@ Record ID',
       data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
       data_entry_helper::$javascript .= 'indiciaData.user_id = "' . hostsite_get_user_field('indicia_user_id') . "\";\n";
       data_entry_helper::$javascript .= 'indiciaData.website_id = ' . $args['website_id'] . ";\n";
-      data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url(NULL, 'occurrence') . "&sharing=reporting\";\n";
+      data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url(NULL, 'occurrence') .
+        "&sharing=$args[sharing]\";\n";
       return parent::get_form_html($args, $auth, $attributes);
     }
   }
@@ -377,7 +395,7 @@ Record ID',
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
-          'sharing' => 'reporting'
+          'sharing' => $args['sharing']
         )
       ));
     }
@@ -423,7 +441,7 @@ Record ID',
         'key' => 'occurrence_id',
         'value' => $_GET['occurrence_id']
     );
-    return self::commonControlPhotos($auth, $options, $settings);
+    return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -450,7 +468,7 @@ Record ID',
         'key' => 'sample_id',
         'value' => $occurrence[0]['sample_id']
     );
-    return self::commonControlPhotos($auth, $options, $settings);
+    return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -481,7 +499,7 @@ Record ID',
         'key' => 'sample_id',
         'value' => $sample[0]['parent_id']
     );
-    return self::commonControlPhotos($auth, $options, $settings);
+    return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
@@ -508,23 +526,23 @@ Record ID',
    * @return string
    *   The output report grid.
    */
-  private static function commonControlPhotos($auth, $options, $settings) {
+  private static function commonControlPhotos($auth, $args, $options, $settings) {
     data_entry_helper::add_resource('fancybox');
     $extraParams = $auth['read'] + array(
-        'sharing' => 'reporting',
-        'limit' => $options['itemsPerPage']
+      'sharing' => $args['sharing'],
+      'limit' => $options['itemsPerPage'],
     );
     $extraParams[$settings['key']] = $settings['value'];
     $media = data_entry_helper::get_population_data(array(
-        'table' => $settings['table'],
-        'extraParams' => $extraParams
+      'table' => $settings['table'],
+      'extraParams' => $extraParams,
     ));
     $r = '<div class="detail-panel" id="detail-panel-photos"><h3>' . $options['title'] . '</h3><div class="' . $options['class'] . '">';
     if (empty($media)) {
       $r .= '<p>' . lang::get('No photos or media files available') . '</p>';
     }
     else {
-      if(isset($options['helpText'])) {
+      if (isset($options['helpText'])) {
         $r .= '<p>' . $options['helpText'] . '</p>';
       }
       $r .= '<ul>';
@@ -602,7 +620,7 @@ Record ID',
           'orderby' => 'updated_on'
       ),
       'nocache' => TRUE,
-      'sharing' => 'reporting'
+      'sharing' => $args['sharing']
     ));
     $r .= '<div id="comment-list">';
     if (count($comments) === 0) {
@@ -658,7 +676,7 @@ Record ID',
       'footer' => '</div>',
       'extraParams' => array(
         'occurrence_id' => $_GET['occurrence_id'],
-        'sharing' => 'reporting',
+        'sharing' => $args['sharing'],
       ),
     ));
   }
@@ -698,7 +716,7 @@ Record ID',
       'autoParamsForm' => FALSE,
       'extraParams' => array(
         'occurrence_id' => $_GET['occurrence_id'],
-        'sharing' => 'reporting'
+        'sharing' => $args['sharing']
       )
     )) . '</div>';
   }
@@ -996,13 +1014,15 @@ STRUCT;
       'allow_sensitive_full_precision' => FALSE,
       'allow_unreleased' => FALSE,
       'hide_fields' => $defaultHiddenFields,
-      'structure' => $defaultStructure
+      'structure' => $defaultStructure,
+      'sharing' => 'reporting',
     ), $args);
     return $args;
   }
 
   /**
    * Disable save buttons for this form class. Not a data entry form...
+   *
    * @return boolean
    */
   protected static function include_save_buttons() {
@@ -1030,7 +1050,7 @@ STRUCT;
     if (!isset(self::$record)) {
       $params = array(
         'occurrence_id' => $_GET['occurrence_id'],
-        'sharing' => 'reporting',
+        'sharing' => $args['sharing'],
         'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
         'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
         'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
