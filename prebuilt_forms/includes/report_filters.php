@@ -190,7 +190,7 @@ class filter_what extends FilterBase {
     $r .= '<p>' . lang::get('Select additional flags to filter for.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions limit the settings you can change on this tab.') . '</div>';
     $r .= data_entry_helper::select(array(
-      'label' => 'Marine species',
+      'label' => lang::get('Marine species'),
       'fieldname' => 'marine_flag',
       'lookupValues' => array(
         'all' => lang::get('Include marine and non-marine species'),
