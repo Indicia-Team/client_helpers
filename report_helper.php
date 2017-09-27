@@ -860,7 +860,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langNext: '".lang::get('next')."',
   langLast: '".lang::get('last')."',
   langShowing: '".lang::get('Showing records {1} to {2} of {3}')."',
-  noRecords: 'No records',
+  noRecords: '".lang::get('No records')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
       if (!empty($options['rowClass']))
