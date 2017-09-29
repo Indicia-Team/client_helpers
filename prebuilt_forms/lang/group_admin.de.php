@@ -33,8 +33,8 @@ global $custom_terms;
 $custom_terms = array(
   "group's" => "Aktivitäten",
   "groups" => "Aktivitäten",
-  'Set user to be a ' => 'Ändern zu ',
-  'Set user to be an ' => 'Ändern zu ',
+  'Set user to be a {1}' => 'Ändern zu {1}',
+  'Set user to be an {1}' => 'Ändern zu {1}',
   'Remove from group' => 'Aus der Gruppe entfernen',
   'Role' => 'Rolle',
   'Access level' => 'Zugriffsberechtigung',

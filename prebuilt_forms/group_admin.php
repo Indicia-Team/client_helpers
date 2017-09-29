@@ -22,15 +22,15 @@
 
 /**
  * A page for managing the list of members of a group.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_group_admin {
-  
+
   private static $groupType='group';
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -42,12 +42,12 @@ class iform_group_admin {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'allow_remove',
@@ -100,7 +100,7 @@ class iform_group_admin {
       ),
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -117,7 +117,7 @@ class iform_group_admin {
     iform_load_helpers(array('report_helper'));
     report_helper::$website_id=$args['website_id'];
     $auth = report_helper::get_read_write_auth($args['website_id'], $args['password']);
-    if (empty($_GET['group_id'])) 
+    if (empty($_GET['group_id']))
       return 'This form should be called with a group_id parameter';
     $group = self::loadExistingGroup($_GET['group_id'], $auth, $args);
     hostsite_set_page_title(lang::get('Administer {1}', $group['title']));
@@ -126,43 +126,45 @@ class iform_group_admin {
     report_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'groups_user')."\";\n";
     if (!empty($args['admin_role_name']))
       $adminRoleOnScreenName=$args['admin_role_name'];
-    else 
+    else
       $adminRoleOnScreenName='administrator';
     if (!empty($args['member_role_name']))
       $memberRoleOnScreenName=$args['member_role_name'];
-    else 
+    else
       $memberRoleOnScreenName='member';
     //Setup actions column
-    $actions = 
+    $actions =
     array(
       array(
         'caption'=>'Approve member',
         'javascript'=>'approveMember({groups_user_id});',
         'visibility_field'=>'pending'
-      ),            
+      ),
     );
-    if ($adminRoleOnScreenName==='administrator')
-      $caption='Set user to be an '.$adminRoleOnScreenName;
-    else
-      $caption='Set user to be a '.$adminRoleOnScreenName;
-    //Only allow toggle of user's role if page is configured to allow this.
-    if (isset($args['allow_role_toggle']) && $args['allow_role_toggle']==true) {
+    if ($adminRoleOnScreenName === 'administrator') {
+      $caption = lang::get('Set user to be an {1}', $adminRoleOnScreenName);
+    }
+    else {
+      $caption = lang::get('Set user to be a {1}', $adminRoleOnScreenName);
+    }
+    // Only allow toggle of user's role if page is configured to allow this.
+    if (isset($args['allow_role_toggle']) && $args['allow_role_toggle'] == TRUE) {
       $actions[] = array(
-        'caption'=>$caption,
-        'javascript'=>'toggleRole({groups_user_id},\'{name}\',\'administrator\');',
-        'visibility_field'=>'member'
+        'caption' => $caption,
+        'javascript' => 'toggleRole({groups_user_id},\'{name}\',\'administrator\');',
+        'visibility_field' => 'member',
       );
       $actions[] = array(
-        'caption'=>'Set user to be a '.$memberRoleOnScreenName,
-        'javascript'=>'toggleRole({groups_user_id},\'{name}\',\'member\');',
-        'visibility_field'=>'administrator'
+        'caption' => lang::get('Set user to be a {1}', $memberRoleOnScreenName),
+        'javascript' => 'toggleRole({groups_user_id},\'{name}\',\'member\');',
+        'visibility_field' => 'administrator',
       );
     }
-    //Only allow removal of users if page is configured to allow this.
-    if (isset($args['allow_remove']) && $args['allow_remove']==true)
+    // Only allow removal of users if page is configured to allow this.
+    if (isset($args['allow_remove']) && $args['allow_remove'] == true)
       $actions[] = array(
-        'caption'=>'Remove from group',
-        'javascript'=>'removeMember({groups_user_id},\'{name}\');',
+        'caption' => 'Remove from group',
+        'javascript' => 'removeMember({groups_user_id},\'{name}\');',
       );
     // Allow change of user access level page setup to allow this.
     if (!empty($args['include_page_access_levels'])) {
@@ -213,7 +215,7 @@ class iform_group_admin {
 </div></div>';
     return $r;
   }
-  
+
   private static function createBreadcrumb($args) {
     if (!empty($args['groups_page_path']) && function_exists('hostsite_set_breadcrumb') && function_exists('drupal_get_normal_path')) {
       $path = drupal_get_normal_path($args['groups_page_path']);
@@ -222,7 +224,7 @@ class iform_group_admin {
       hostsite_set_breadcrumb($breadcrumb);
     }
   }
-  
+
   /**
    * Fetch an existing group's information from the database when editing.
    * @param integer $id Group ID
