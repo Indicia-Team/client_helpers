@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Language terms for group edit page in German.
+ * Language terms for group admin page in German.
  *
  * Indicia, the OPAL Online Recording Toolkit.
  *
