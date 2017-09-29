@@ -571,15 +571,15 @@ $('#entry_form').submit(function() {
         $default = self::getGroupPages($auth);
       $columns = array(
         array(
-          'label' => 'Form',
+          'label' => lang::get('Form'),
           'datatype' => 'lookup',
           'lookupValues' => $pages,
           'validation' => array('unique')
         ), array(
-          'label' => 'Link caption',
+          'label' => lang::get('Link caption'),
           'datatype' => 'text'
         ), array(
-          'label' => 'Who can access the page?',
+          'label' => lang::get('Who can access the page?'),
           'datatype' => 'lookup',
           'lookupValues' => array(
             '' => lang::get('Available to anyone'),
@@ -597,7 +597,7 @@ $('#entry_form').submit(function() {
           $values[$i] = lang::get('Requires access level {1} or higher', $i);
         }
         $columns[] = array(
-          'label' => 'Additional minimum page access level',
+          'label' => lang::get('Additional minimum page access level'),
           'datatype' => 'lookup',
           'lookupValues' => $values,
           'default' => '0'
