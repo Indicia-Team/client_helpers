@@ -852,12 +852,12 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   linkFilterToMap: ".(!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false').",
   msgRowLinkedToMapHint: '" . addslashes(lang::get('Click the row to highlight the record on the map. Double click to zoom in.')) . "',
   msgNoInformation: '" . addslashes(lang::get('No information available')) . "',
-  langFirst: '".lang::get('first')."',
-  langPrev: '".lang::get('prev')."',
-  langNext: '".lang::get('next')."',
-  langLast: '".lang::get('last')."',
-  langShowing: '".lang::get('Showing records {1} to {2} of {3}')."',
-  noRecords: 'No records',
+  langFirst: '" . lang::get('first') . "',
+  langPrev: '" . lang::get('prev') . "',
+  langNext: '" . lang::get('next') . "',
+  langLast: '" . lang::get('last') . "',
+  langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
+  noRecords: '" . lang::get('No records')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
       if (!empty($options['rowClass']))
