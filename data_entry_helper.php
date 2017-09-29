@@ -1610,6 +1610,10 @@ JS;
    * Optional. If true, then when a location is found in the autocomplete, the location's centroid spatial
    * reference is loaded into the spatial_ref control on the form if any exists. Defaults to false.
    * </li>
+   * <li><b>searchUpdatesUsingBoundary/b>
+   * Optional. If true and using searchUpdatesSref=true, then when a location is found in the autocomplete, the
+   * location's boundary geometry is loaded into the record's geometry control on the form if any exists. Defaults to false.
+   * </li>
    * <li><b>allowcreate</b>
    * Optional. If true, if the user has typed in a non-existing location name and also supplied
    * a spatial reference, a button is displayed which lets them save a location for future
@@ -1648,9 +1652,10 @@ JS;
       'valueField' => 'id',
       'captionField' => 'name',
       'defaultCaption' => $caption,
-      'useLocationName' => false,
-      'allowCreate' => false,
-      'searchUpdatesSref' => false,
+      'useLocationName' => FALSE,
+      'allowCreate' => FALSE,
+      'searchUpdatesSref' => FALSE,
+      'searchUpdatesUsingBoundary' => FALSE,
       'fetchLocationAttributesIntoSample' =>
           !isset($options['fieldname']) || $options['fieldname'] === 'sample:location_id'
     ), $options);
@@ -1663,7 +1668,7 @@ JS;
     // copied to the location_name field if not linked to a location id.
     if ($options['useLocationName'])
       $r = '<input type="hidden" name="useLocationName" value="true"/>'.$r;
-    if ($options['allowCreate'] || $options['searchUpdatesSref']) {
+    if ($options['allowCreate']) {
       self::add_resource('createPersonalSites');
       if ($options['allowCreate']) {
         self::$javascript .= "indiciaData.msgRememberSite='".lang::get('Remember site')."';\n";
@@ -1671,8 +1676,11 @@ JS;
         self::$javascript .= "indiciaData.msgSiteWillBeRemembered='".lang::get('The site will be available to search for next time you input some records.')."';\n";
         self::$javascript .= "allowCreateSites();\n";
       }
-      if ($options['searchUpdatesSref'])
-        self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
+    }
+    if ($options['searchUpdatesSref']) {
+      self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
+      self::$javascript .= "indiciaData.searchUpdatesUsingBoundary = " .
+        ($options['searchUpdatesUsingBoundary'] ? 'true' : 'false') . ";\n";
     }
     $escapedId = str_replace(':', '\\\\:', $options['id']);
     // If using Easy Login, then this enables auto-population of the site related fields.
@@ -1730,6 +1738,10 @@ JS;
    * Optional. If true, then when a location is selected, the location's centroid spatial
    * reference is loaded into the spatial_ref control on the form if any exists. Defaults to false.
    * </li>
+   * <li><b>searchUpdatesUsingBoundary/b>
+   * Optional. If true and using searchUpdatesSref=true, then when a location is selected, the location's boundary
+   * geometry is loaded into the record's geometry control on the form if any exists. Defaults to false.
+   * </li>
    * </ul>
    *
    * The output of this control can be configured using the following templates:
@@ -1757,11 +1769,14 @@ JS;
       'captionField' => 'name',
       'id' => 'imp-location',
       'searchUpdatesSref' => FALSE,
+      'searchUpdatesUsingBoundary' => FALSE,
       'isFormControl' => TRUE
     ), $options);
     $options['columns']=$options['valueField'].','.$options['captionField'];
     if ($options['searchUpdatesSref']) {
       self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
+      self::$javascript .= "indiciaData.searchUpdatesUsingBoundary = " .
+        ($options['searchUpdatesUsingBoundary'] ? 'true' : 'false') . ";\n";
     }
     return self::select($options);
   }
