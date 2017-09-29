@@ -102,9 +102,9 @@ class extension_event_reports {
     $reportOptions['extraParams']['ownData'] = 0;
     $reportOptions['extraParams']['currentUser'] = $userId;
     $reportOptions['bands']=array(array('content'=>
-        '<div class="totals species">{species_count} species</div>'.
-        '<div class="totals species">{occurrences_count} records</div>'.
-        '<div class="totals species">{photos_count} photos</div>'));
+        '<div class="totals species">{species_count} '.lang::get('species').'</div>'.
+        '<div class="totals species">{occurrences_count} '.lang::get('records').'</div>'.
+        '<div class="totals species">{photos_count} '.lang::get('photos').'</div>'));
     $r = self::output_title($options);
     $r .= report_helper::freeform_report($reportOptions);
     return $r;
