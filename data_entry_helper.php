@@ -7429,6 +7429,9 @@ HTML;
     // build validation rule classes from the attribute data
     if (isset($item['validation_rules'])) {
       $validation = explode("\n", $item['validation_rules']);
+      if ($item['data_type'] === 'I' && !in_array('integer', $validation)) {
+        $validation[] = 'integer';
+      }
       $attrOptions['validation']=array_merge(isset($attrOptions['validation'])?$attrOptions['validation']:array(), $validation);
     }
     if(isset($item['default']) && $item['default']!="")

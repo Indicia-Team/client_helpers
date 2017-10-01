@@ -18,14 +18,14 @@
  * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link 	http://code.google.com/p/indicia/
  */
- 
+
 global $default_terms;
 /**
  * Provides a list of default localisable terms used by the lang class.
  *
  * @package	Client
  */
-$default_terms = array( 
+$default_terms = array(
   'add'=>'Add',
   'add row'=>'Add Row',
   'back'=>'Back',
@@ -60,22 +60,22 @@ $default_terms = array(
   'validation_date' => 'Please enter a valid date',
   'validation_time' => 'Please enter a valid 24Hr Time in HH:MM format',
   'validation_digit' => 'Please enter only digits',
-  'validation_integer' => 'Please enter an integer, positive or negative',
+  'validation_integer' => 'Please enter a whole number',
   // Default labels for various database fields
   'occurrence:taxa_taxon_list_id' => 'Species',
   'sample:date' => 'Date',
   'sample:entered_sref' => 'Spatial Reference',
-  
+
   // Spatial reference systems
   'sref:OSGB'=>'British National Grid',
   'sref:OSIE'=>'Irish Grid',
   'sref:utm30ed50'=>'Channel Islands Grid (UTM ED50)',
   'sref:4326'=>'WGS84 (decimal lat,long)',
   'sref:2169'=>'LUREF (x,y)',
-  
+
   'import_settings_instructions' => 'Before proceeding with the import, please specify the following settings that will apply to every record in the import file. '.
       'Any settings that you do not specify here can be supplied in the import file on a row by row basis by mapping the setting to the appropriate column in the '.
-      'next step.',      
+      'next step.',
   'column_mapping_instructions' => 'Please map each column in the CSV file you are uploading to the associated attribute in the database. We\'ve tried to '.
       'match your columns to the available attributes where possible so check any automatically selected attributes in the <strong>Maps to attribute</strong> '.
       'column before proceeding. If you plan to repeat imports from similar spreadsheets in future you can use the tickboxes to remember your choices.',
@@ -92,7 +92,7 @@ $default_terms = array(
   'dd:occurrence_2:all_info_in_determinations' => 'Use determinations table for identification information in second occurrence (Y/N)',
   'dd:sample:entered_sref' => 'Grid ref or other spatial ref',
   'dd:sample:entered_sref_system' => 'Spatial reference system',
-  
+
   // and import model name/field name prefix overrides
   'smpAttr' => 'Sample custom attributes',
   'occAttr' => 'Occurrence custom attributes',
@@ -100,7 +100,7 @@ $default_terms = array(
   'taxAttr' => 'Taxon custom attributes',
   'psnAttr' => 'Person custom attributes',
   'fkFilter' => 'Lookup filters',
-  
+
   'Click to Filter What' => 'Select a list of species or species groups to include',
   'Click to Filter Where' => 'Define the geographic area, site or map reference to include',
   'Click to Filter When' => 'Define a date range for records to include',
