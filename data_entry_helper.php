@@ -3354,9 +3354,9 @@ JS;
         // Now create the table cell to contain this.
         $colspan = !empty($options['lookupListId']) && $options['rowInclusionCheck']!='alwaysRemovable' ? ' colspan="2"' : '';
         $row = '';
+        $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
         // Add a delete button if the user can remove rows, add an edit button if the user has the edit option set, add a page link if user has that option set.
         if ($options['rowInclusionCheck']=='alwaysRemovable') {
-          $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
           $speciesGridLinkPageIconSource = $imgPath."nuvola/find-22px.png";
           if ($options['editTaxaNames']) {
             $row .= '<td class="row-buttons">
