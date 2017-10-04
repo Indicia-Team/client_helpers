@@ -35,14 +35,16 @@ $indicia_templates = array(
   'blank' => '',
   'prefix' => '',
   'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap\">{control}</div>\n",
-  // Template for control with associated buttons/icons to appear to the side
+  'controlWrapErrorClass' => '',
+  // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
   'justControl' => "{control}\n",
-  'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-      "document.write('{content}');".
+  'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n" .
+      "document.write('{content}');" .
       "/* ]]> */</script>\n",
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
-  'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>', // label ends with another punctuation mark
+  // Use if label ends with another punctuation mark.
+  'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>',
   'labelAfter' => '<label for="{id}"{labelClass}>{label}</label>', // no colon
   'toplabel' => '<label data-for="{id}"{labelClass}>{label}:</label>',
   'toplabelNoColon' => '<label data-for="{id}"{labelClass}>{label}</label>',
@@ -1680,70 +1682,82 @@ JS;
     if (self::$validated_form_id) {
       global $indicia_templates;
       self::$javascript .= "
-
-        var validator = $('#".self::$validated_form_id."').validate({
-        ignore: \":hidden,.inactive\",
-        errorClass: \"".$indicia_templates['error_class']."\",
-        ". (in_array('inline', self::$validation_mode) ? "" : "errorElement: 'p',") ."
-          highlight: function(element, errorClass) {
-          var jqElement = $(element);
-          if (jqElement.is(':radio') || jqElement.is(':checkbox')) {
-            //if the element is a radio or checkbox group then highlight the group
-            var jqBox = jqElement.parents('.control-box');
-            if (jqBox.length !== 0) {
-              jqBox.eq(0).addClass('ui-state-error');
-            } else {
-              jqElement.addClass('ui-state-error');
-            }
-          } else {
-            jqElement.addClass('ui-state-error');
-          }
-        },
-        unhighlight: function(element, errorClass) {
-          var jqElement = $(element);
-          if (jqElement.is(':radio') || jqElement.is(':checkbox')) {
-            //if the element is a radio or checkbox group then highlight the group
-            var jqBox = jqElement.parents('.control-box');
-            if (jqBox.length !== 0) {
-              jqBox.eq(0).removeClass('ui-state-error');
-            } else {
-              jqElement.removeClass('ui-state-error');
-            }
-          } else {
-            jqElement.removeClass('ui-state-error');
-          }
-        },
-        invalidHandler: ".$indicia_templates['invalid_handler_javascript'].",
-        messages: ".json_encode(self::$validation_messages).",".
-        // Do not place errors if 'message' not in validation_mode
-        // if it is present, put radio button messages at start of list:
-        // radio and checkbox elements come before their labels, so putting the error after the invalid element
-        // places it between the element and its label.
-        // most radio button validation will be "required"
-        (in_array('message', self::$validation_mode) ? "
-        errorPlacement: function(error, element) {
-          var jqBox, nexts;
-          if(element.is(':radio')||element.is(':checkbox')){
-            jqBox = element.parents('.control-box');
-            element=jqBox.length === 0 ? element : jqBox;
-          }
-          nexts=element.nextAll(':visible');
-          if (nexts) {
-            $.each(nexts, function() {
-              if ($(this).hasClass('deh-required') || $(this).hasClass('locked-icon') || $(this).hasClass('unlocked-icon')) {
-                element = this;
-              }
-            });
-          }
-          error.insertAfter(element);
-        }" : "
-        errorPlacement: function(error, element) {}") ."
-      });
-      //Don't validate whilst user is still typing in field
-      if (typeof validator!=='undefined') {
-        validator.settings.onkeyup = false;
+indiciaData.controlWrapErrorClass = '$indicia_templates[controlWrapErrorClass]';
+var validator = $('#".self::$validated_form_id."').validate({
+  ignore: \":hidden,.inactive\",
+  errorClass: \"$indicia_templates[error_class]\",
+  ". (in_array('inline', self::$validation_mode) ? "" : "errorElement: 'p',") ."
+  highlight: function(el, errorClass) {
+    var controlWrap = $(el).closest('.ctrl-wrap');
+    if (controlWrap.length > 0) {
+      $(controlWrap).addClass(indiciaData.controlWrapErrorClass);
+    }
+    if ($(el).is(':radio') || $(el).is(':checkbox')) {
+      //if the element is a radio or checkbox group then highlight the group
+      var jqBox = $(el).parents('.control-box');
+      if (jqBox.length !== 0) {
+        jqBox.eq(0).addClass('ui-state-error');
+      } else {
+        $(el).addClass('ui-state-error');
       }
-      \n";
+    } else {
+      $(el).addClass('ui-state-error');
+    }
+  },
+  unhighlight: function(el, errorClass) {
+    var controlWrap = $(el).closest('.ctrl-wrap');
+    if (controlWrap.length > 0) {
+      $(controlWrap).removeClass(indiciaData.controlWrapErrorClass);
+    }
+    if ($(el).is(':radio') || $(el).is(':checkbox')) {
+      //if the element is a radio or checkbox group then highlight the group
+      var jqBox = $(el).parents('.control-box');
+      if (jqBox.length !== 0) {
+        jqBox.eq(0).removeClass('ui-state-error');
+      } else {
+        $(el).removeClass('ui-state-error');
+      }
+    } else {
+      $(el).removeClass('ui-state-error');
+    }
+  },
+  invalidHandler: $indicia_templates[invalid_handler_javascript],
+  messages: ".json_encode(self::$validation_messages).",".
+  // Do not place errors if 'message' not in validation_mode
+  // if it is present, put radio button messages at start of list:
+  // radio and checkbox elements come before their labels, so putting the error after the invalid element
+  // places it between the element and its label.
+  // most radio button validation will be "required"
+  (in_array('message', self::$validation_mode) ? "
+  errorPlacement: function(error, element) {
+    var jqBox, nexts;
+    // If using Bootstrap input-group class, put the message after the group
+    var inputGroup = $(element).closest('.input-group');
+    if (inputGroup.length) {
+      element = inputGroup;
+    } else {
+      if(element.is(':radio')||element.is(':checkbox')){
+        jqBox = element.parents('.control-box');
+        element=jqBox.length === 0 ? element : jqBox;
+      }
+      nexts=element.nextAll(':visible');
+      if (nexts) {
+        $.each(nexts, function() {
+          if ($(this).hasClass('deh-required') || $(this).hasClass('locked-icon') || $(this).hasClass('unlocked-icon')) {
+            element = this;
+          }
+        });
+      }
+    }
+    error.insertAfter(element);
+  }" : "
+  errorPlacement: function(error, element) {}") ."
+});
+//Don't validate whilst user is still typing in field
+if (typeof validator!=='undefined') {
+  validator.settings.onkeyup = false;
+}
+\n";
     }
   }
 
