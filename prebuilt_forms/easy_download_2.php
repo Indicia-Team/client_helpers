@@ -144,6 +144,15 @@ class iform_easy_download_2 {
         'default'=>'access iform'
       ),
       array(
+        'name'=>'editing_type_permission',
+        'caption'=>'Download type permission - editing',
+        'description'=>'Provide the name of the permission required to allow download of editing recordsets. '.
+            'Leave blank to disallow this download type.',
+        'type'=>'text_input',
+        'required'=>false,
+        'default'=>'access iform'
+      ),
+      array(
         'name'=>'csv_format_permission',
         'caption'=>'Download format permission - CSV',
         'description'=>'Provide the name of the permission required to allow download of CSV format. '.
@@ -653,6 +662,8 @@ class iform_easy_download_2 {
         return 'data_flow';
       case 'M':
         return 'moderation';
+      case 'E':
+        return 'editing';
     }
   }
   
@@ -777,6 +788,8 @@ class iform_easy_download_2 {
       $perms[$args['data_flow_type_permission']] = '';
     if (!empty($args['moderation_type_permission']))
       $perms[$args['moderation_type_permission']] = '';
+    if (!empty($args['editing_type_permission']))
+      $perms[$args['editing_type_permission']] = '';
     if (!empty($args['csv_format_permission']))
       $perms[$args['csv_format_permission']] = '';
     if (!empty($args['tsv_format_permission']))

@@ -35,6 +35,8 @@ $indicia_templates = array(
   'blank' => '',
   'prefix' => '',
   'controlWrap' => "<div id=\"ctrl-wrap-{id}\" class=\"form-row ctrl-wrap\">{control}</div>\n",
+  // Template for control with associated buttons/icons to appear to the side
+  'controlAddonsWrap' => "{control}{addons}",
   'justControl' => "{control}\n",
   'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
       "document.write('{content}');".
@@ -47,11 +49,17 @@ $indicia_templates = array(
   'suffix' => "\n",
   'requiredsuffix' => "<span class=\"deh-required\">*</span>",
   'button' => '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
+  // Button classes. If changing these, keep the indicia-button class to ensure functionality works.
+  'buttonDefaultClass' => 'indicia-button',
+  'buttonHighlightedClass' => 'indicia-button',
+  'buttonWarningClass' => 'indicia-button',
+    // Classes applied to <a> when styled like a button
+  'anchorButtonClass' => 'ui-state-default ui-corner-all indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
-  'anchorButton' => '<a class="ui-corner-all ui-widget-content ui-state-default indicia-button {class}" href="{href}" id="{id}">{caption}</a>',
+  // Lock icons.
   'lock_icon' => '<span id="{id}_lock" class="unset-lock">&nbsp;</span>',
   'lock_javascript' => "indicia.locks.initControls (
-      \"".lang::get('locked tool-tip')."\", 
+      \"".lang::get('locked tool-tip')."\",
       \"".lang::get('unlocked tool-tip')."\",
       \"{lock_form_mode}\"
       );\n",
@@ -111,7 +119,7 @@ $indicia_templates = array(
       "document.write('</div>');\n".
       "/* ]]> */</script>",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
-      '<span class="nobreak vernacular">{common}</span></div>',
+      '<span class="nobreak vernacular">{default_common_name}</span></div>',
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
@@ -196,7 +204,7 @@ $("#{parentControlId}").bind("change.indicia", {fn});
 if ($("#{escapedId} option").length===0) {
   $("#{parentControlId}").trigger("change.indicia");
 }'."\n",
-    
+
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
         'onblur="javascript:indiciaFns.decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
   'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
@@ -243,7 +251,7 @@ if ($("#{escapedId} option").length===0) {
  * @package Client
  */
 class helper_base extends helper_config {
- 
+
   /**
    * @var boolean Flag set to true if returning content for an AJAX request. This allows the javascript to be returned
    * direct rather than embedding in document.ready and window.onload handlers.
@@ -256,10 +264,10 @@ class helper_base extends helper_config {
   public static $website_id = null;
 
   /**
-   * @var Array List of resources that have been identified as required by the 
-   * controls used. This defines the JavaScript and stylesheets that must be 
-   * added to the page. Each entry is an array containing stylesheets and 
-   * javascript sub-arrays. This has public access so the Drupal module can 
+   * @var Array List of resources that have been identified as required by the
+   * controls used. This defines the JavaScript and stylesheets that must be
+   * added to the page. Each entry is an array containing stylesheets and
+   * javascript sub-arrays. This has public access so the Drupal module can
    * perform Drupal specific resource output.
    */
   public static $required_resources=array();
@@ -280,7 +288,7 @@ class helper_base extends helper_config {
   /**
    * @var string Path to Indicia JavaScript folder. If not specified, then it is
    * calculated from the Warehouse $base_url.
-   * This path should be a full path on the server (starting with '/' exluding 
+   * This path should be a full path on the server (starting with '/' exluding
    * the domain and ending with '/').
    */
   public static $js_path = null;
@@ -290,17 +298,17 @@ class helper_base extends helper_config {
    * This path should be a full path on the server (starting with '/' exluding the domain).
    */
   public static $css_path = null;
-  
+
   /**
    * @var string Path to Indicia Images folder.
    */
   public static $images_path = null;
-  
+
   /**
    * @var string Path to Indicia cache folder. Defaults to client_helpers/cache.
    */
   public static $cache_folder = false;
-  
+
   /**
    * @var string Path to proxy script for calls to the warehouse (optional, allows the warehouse to sit behind a firewall only accessible
    * from the server).
@@ -333,26 +341,26 @@ class helper_base extends helper_config {
    * @var boolean Setting to completely disable loading from the cache
    */
   public static $nocache = false;
-  
+
  /**
-  * @var integer On average, every 1 in $interim_image_chance_purge times the 
-  * Warehouse is called for data, all interim images older than $interim_image_expiry 
-  * seconds will be deleted. These are images that should have uploaded to the 
+  * @var integer On average, every 1 in $interim_image_chance_purge times the
+  * Warehouse is called for data, all interim images older than $interim_image_expiry
+  * seconds will be deleted. These are images that should have uploaded to the
   * warehouse but the form was not finally submitted.
   */
   public static $interim_image_chance_purge = 100;
 
   /**
-   * @var integer On average, every 1 in $cache_chance_expire times the Warehouse 
+   * @var integer On average, every 1 in $cache_chance_expire times the Warehouse
    * is called for data which is
    */
   public static $interim_image_expiry = 14400;
-  
+
   /**
    * @var array Contains elements for each media type that can be uploaded. Each
    * element is an array of allowed file extensions for that media type. Used
-   * for filtering files to upload on client side. File extensions must be in 
-   * lower case. Each entry should have its mime type included in 
+   * for filtering files to upload on client side. File extensions must be in
+   * lower case. Each entry should have its mime type included in
    * $upload_mime_types.
    */
   public static $upload_file_types = array(
@@ -423,8 +431,8 @@ class helper_base extends helper_config {
    * @var array List of messages defined to pass to the validation plugin.
    */
   public static $validation_messages = array();
-  
-  
+
+
   /**
    * @var integer Length of time in seconds after which cached Warehouse responses will start to expire.
    */
@@ -448,14 +456,14 @@ class helper_base extends helper_config {
    * They will be refreshed occasionally when requested anyway.
    */
   public static $cache_allowed_file_count=50;
-  
+
   /**
    * @var array A place to keep data and settings for Indicia code, to avoid using globals.
    */
   public static $data = array();
-  
+
   /**
-   * @var string Google API key. Placed here rather than helper_config.php, as only recently introduced. 
+   * @var string Google API key. Placed here rather than helper_config.php, as only recently introduced.
    */
   public static $google_api_key = '';
 
@@ -463,17 +471,17 @@ class helper_base extends helper_config {
    * @var string Google Maps API key. Placed here rather than helper_config.php, as only recently introduced.
    */
   public static $google_maps_api_key = '';
-  
+
   /*
    * Global format for display of dates such as sample date, date attributes in Drupal.
-   * Note this only affects the loading of the date itself when a form in edit mode loads, the format displayed as soon as the 
-   * date picker is selected is determined by Drupal's settings. So make sure Drupal's date format and this option match up. 
+   * Note this only affects the loading of the date itself when a form in edit mode loads, the format displayed as soon as the
+   * date picker is selected is determined by Drupal's settings. So make sure Drupal's date format and this option match up.
    * @todo Need to create a proper config option for this.
    * @todo Need to ensure this setting is utilised every where it should be.
    *
    */
   public static $date_format='d/m/Y';
-  
+
   /**
    * @var Boolean indicates if any form controls have specified the lockable option.
    * If so, we will need to output some javascript.
@@ -496,24 +504,43 @@ class helper_base extends helper_config {
     'outerClass' => 'class',
     'selected' => 'selected'
   );
-  
+
   /**
    * @var array List of error messages that have been displayed, so we don't duplicate them when dumping any
    * remaining ones at the end.
    */
   protected static $displayed_errors=array();
-  
+
   /**
-   * Track if we have already output the indiciaFunctions. 
+   * Track if we have already output the indiciaFunctions.
    */
   protected static $indiciaFnsDone = false;
 
   /**
+   * Utility function to insert a list of translated text items for use in JavaScript.
+   * @param string $group
+   * @param array $strings Associative array of keys and texts to translate.
+   */
+  protected static function addLanguageStringsToJs($group, $strings) {
+    self::$javascript .= <<<JS
+if (typeof indiciaData.lang === "undefined") {
+  indiciaData.lang = {};
+}
+indiciaData.lang.$group = {};
+
+JS;
+    foreach ($strings as $key => $text) {
+      self::$javascript .= "indiciaData.lang.speciesChecklistFilter.$key = '" .
+          str_replace("'", "\'", $text) . "';\n";
+    }
+  }
+
+  /**
    * Method to link up the external css or js files associated with a set of code.
-   * This is normally called internally by the control methods to ensure the required 
-   * files are linked into the page so does not need to be called directly. However 
+   * This is normally called internally by the control methods to ensure the required
+   * files are linked into the page so does not need to be called directly. However
    * it can be useful when writing custom code that uses one of these standard
-   * libraries such as jQuery. 
+   * libraries such as jQuery.
    * Ensures each file is only linked once and that dependencies are included
    * first and in the order given.
    *
@@ -525,6 +552,7 @@ class helper_base extends helper_config {
    * <li>graticule</li>
    * <li>clearLayer</li>
    * <li>addrowtogrid</li>
+   * <li>speciesFilterPopup</li>
    * <li>indiciaMapPanel</li>
    * <li>indiciaMapEdit</li>
    * <li>postcode_search</li>
@@ -634,6 +662,7 @@ class helper_base extends helper_config {
         'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
         'clearLayer' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."clearLayer.js")),
         'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path."addRowToGrid.js")),
+        'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path."speciesFilterPopup.js")),
         'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
         'indiciaMapEdit' => array('deps' =>array('indiciaMap'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.js")),
         'postcode_search' => array('javascript' => array(self::$js_path."postcode_search.js")),
@@ -654,7 +683,7 @@ class helper_base extends helper_config {
         'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
-        'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css"), 'javascript' => array()),
+        'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
         'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
         'plupload' => array('deps' => array('jquery_ui','fancybox'), 'javascript' => array(
             self::$js_path.'jquery.uploader.js', self::$js_path.'plupload/js/plupload.full.min.js')),
@@ -679,16 +708,16 @@ class helper_base extends helper_config {
         'control_speciesmap_controls' => array('deps' =>array('jquery', 'openlayers', 'addrowtogrid', 'validation'), 'javascript' => array(self::$js_path."controls/speciesmap_controls.js")),
         'complexAttrGrid' => array('javascript'=>array(self::$js_path."complexAttrGrid.js")),
         'footable' => array(
-            'stylesheets' => array(self::$js_path . 'footable/css/footable.core.min.css'), 
+            'stylesheets' => array(self::$js_path . 'footable/css/footable.core.min.css'),
 //            'javascript' => array( self::$js_path.'footable/dist/footable.min.js',), /*** does not contain bugfixes ***/
             'javascript' => array( self::$js_path . 'footable/js/footable.js',),
             'deps' => array('jquery')),
         'indiciaFootableReport' => array(
-            'javascript' => array(self::$js_path . 'jquery.indiciaFootableReport.js'), 
+            'javascript' => array(self::$js_path . 'jquery.indiciaFootableReport.js'),
             'deps' => array('footable')),
         'indiciaFootableChecklist' => array(
-            'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'), 
-            'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'), 
+            'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'),
+            'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'),
             'deps' => array('footable')),
         'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
         'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
@@ -708,7 +737,7 @@ class helper_base extends helper_config {
     }
     return self::$resource_list;
   }
-  
+
     /**
    * Causes the default_site.css stylesheet to be included in the list of resources on the
    * page. This gives a basic form layout.
@@ -770,7 +799,7 @@ class helper_base extends helper_config {
    * @param string Arguments to include in the POST data.
    * @param boolean $output_errors Set to false to prevent echoing of errors. Defaults to true.
    * @return array An array with a result element set to true or false for successful or failed posts respectively.
-   * The output is returned in an output element in the array. If there is an error, then an errorno element gives the 
+   * The output is returned in an output element in the array. If there is an error, then an errorno element gives the
    * cUrl error number (as generated by the cUrl library used for the post).
    */
   public static function http_post($url, $postargs=null, $output_errors=true) {
@@ -804,14 +833,14 @@ class helper_base extends helper_config {
             }
           }
         }
-      } 
+      }
       curl_setopt ($session, CURLOPT_POSTFIELDS, $postargs);
     }
     curl_setopt($session, CURLOPT_HEADER, false);
     curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
     // Do the POST and then close the session
     $response = curl_exec($session);
-    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE); 
+    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
     $curlErrno = curl_errno($session);
     // Check for an error, or check if the http response was not OK.
     if ($curlErrno || $httpCode != 200) {
@@ -854,13 +883,13 @@ class helper_base extends helper_config {
       return self::getRootFolder() . self::client_helper_path() . self::$final_image_folder;
     }
   }
-  
+
   /**
    * Returns the client helper folder path, relative to the root folder.
    */
   public static function client_helper_path() {
     // allow integration modules to control path handling, e.g. Drupal).
-    if (function_exists('iform_client_helpers_path')) 
+    if (function_exists('iform_client_helpers_path'))
       return iform_client_helpers_path();
     else {
       $fullpath = str_replace('\\', '/', realpath(__FILE__));
@@ -934,7 +963,7 @@ class helper_base extends helper_config {
    * drawing tools are added to a toolbar at the top of the map.
    * </li>
    * <li><b>helpText</b><br/>
-   * Defaults to true. Set to false to disable helpText being displayed alongside controls, useful for building compact versions of 
+   * Defaults to true. Set to false to disable helpText being displayed alongside controls, useful for building compact versions of
    * simple parameter forms.
    * </li>
    * <li><b>nocache</b><br/>
@@ -964,12 +993,12 @@ class helper_base extends helper_config {
         $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"$default\" class=\"test\"/>\n";
       }
     }
-    // if doing map tools inline, they don't get added to the page until the map initialises. So capture the JavaScript 
+    // if doing map tools inline, they don't get added to the page until the map initialises. So capture the JavaScript
     // into a map initialisation hook.
     if (isset($options['paramsInMapToolbar']) && $options['paramsInMapToolbar'])
       self::$javascript .= "mapInitialisationHooks.push(function(div) {\n";
     foreach($options['form'] as $key=>$info) {
-      $tools = array(); 
+      $tools = array();
       // Skip parameters if we have been asked to ignore them
       if (!isset($options['paramsToExclude']) || !in_array($key, $options['paramsToExclude'])) {
         $r .= self::get_params_form_control($key, $info, $options, $tools);
@@ -1002,7 +1031,7 @@ class helper_base extends helper_config {
             'class'=>'control-width-1',
             'default'=>isset($_POST['geom_buffer']) ? $_POST['geom_buffer'] : 0
           ));
-          if ($options['inlineMapTools']) 
+          if ($options['inlineMapTools'])
             $r .= $bufferInput;
           else {
             $bufferInput = str_replace(array('<br/>',"\n"), '', $bufferInput);
@@ -1024,7 +1053,7 @@ class helper_base extends helper_config {
           {fillOpacity: 0.05},
           OpenLayers.Feature.Vector.style['default']));
     div.map.editLayer.styleMap = styleMap;\n";
-        
+
         if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
           $origWkt = empty($_POST['orig-wkt']) ? '' : $_POST['orig-wkt'];
         else
@@ -1045,9 +1074,9 @@ class helper_base extends helper_config {
         }
         $javascript .= "  opts.standardControls.push('clearEditLayer');
   };
-  mapSettingsHooks.push(add_map_tools);\n";      
-        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true') 
-          $javascript .= "}\n";       
+  mapSettingsHooks.push(add_map_tools);\n";
+        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
+          $javascript .= "}\n";
       }
     }
     // closure for the map initialisation hooks.
@@ -1072,20 +1101,20 @@ class helper_base extends helper_config {
     else
       return $options['extraParams'][$name];
   }
-  
+
   /**
    * Returns a control to insert onto a parameters form.
    * @param string $key The unique identifier of this control.
-   * @param array $info Configuration options for the parameter as defined in the report, including the 
+   * @param array $info Configuration options for the parameter as defined in the report, including the
    * description, display (label), default and datatype.
    * @param array $options Control options array
-   * @param array $tools Any tools to be embedded in the map toolbar are returned in this 
+   * @param array $tools Any tools to be embedded in the map toolbar are returned in this
    * parameter rather than as the return result of the function.
    * @return string The HTML for the form parameter.
    */
   private static function get_params_form_control($key, $info, $options, &$tools) {
     $r = '';
-    
+
     $fieldPrefix=(isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '');
     $ctrlOptions = array(
       'label' => lang::get($info['display']),
@@ -1099,19 +1128,15 @@ class helper_base extends helper_config {
     elseif (isset($info['default']))
       $ctrlOptions['default'] = $info['default'];
     if ($info['datatype']=='idlist') {
-      // idlists are not for human input so use a hidden. 
+      // idlists are not for human input so use a hidden.
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" class=\"".$fieldPrefix."idlist-param\" />\n";
     } elseif (isset($options['extraParams']) && array_key_exists($key, $options['extraParams'])) {
       $r .= "<input type=\"hidden\" name=\"$fieldPrefix$key\" value=\"".self::get_preset_param($options, $key)."\" />\n";
       //if the report parameter is a lookup and its population_call is set to species_autocomplete
       //Options such as @speciesIncludeBothNames can be included as a [params] control form structure
       //option
-    } elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {  
+    } elseif ($info['datatype']=='lookup' && (isset($info['population_call']) && $info['population_call']=='autocomplete:species')) {
       $ctrlOptions['extraParams']=$options['readAuth'];
-      if (empty($options['speciesCacheLookup'])||$options['speciesCacheLookup']==false)
-        $ctrlOptions['cacheLookup']=false;
-      else 
-        $ctrlOptions['cacheLookup']=true;
       if (!empty($options['speciesTaxonListId']))
         $ctrlOptions['extraParams']['taxon_list_id']=$options['speciesTaxonListId'];
       if (!empty($options['speciesIncludeBothNames'])&&$options['speciesIncludeBothNames']==true)
@@ -1125,7 +1150,7 @@ class helper_base extends helper_config {
       $extras = array();
       // if there are any extra parameters on the report lookup call, apply them
       if (count($popOpts) >= 5) {
-        // because any extra params might contain colons, any colons from item 5 onwards are considered part of the extra params. So we 
+        // because any extra params might contain colons, any colons from item 5 onwards are considered part of the extra params. So we
         // have to take the remaining items and re-implode them, then split them by commas instead. E.g. population call could be set to
         // direct:term:id:term:term=a:b - in this case option 5 (term=a:b) is not to be split by colons.
         $extraItems = explode(',', implode(':', array_slice($popOpts, 4)));
@@ -1263,8 +1288,8 @@ class helper_base extends helper_config {
    * template text, otherwise it is the name of a template in the $indicia_templates array. Default false.
    * @param boolean $allowHtml If true then HTML is emitted as is from the parameter values inserted into the template,
    * otherwise they are escaped.
-   * @param boolean $allowEscapeQuotes If true then parameter names can be suffixes -esape-quote, -escape-dblquote, 
-   * -escape-htmlquote or -escape-htmldblquote to insert backslashes or html entities into the replacements for string escaping. 
+   * @param boolean $allowEscapeQuotes If true then parameter names can be suffixes -esape-quote, -escape-dblquote,
+   * -escape-htmlquote or -escape-htmldblquote to insert backslashes or html entities into the replacements for string escaping.
    * @return string HTML for the item label
    */
   public static function mergeParamsIntoTemplate($params, $template, $useTemplateAsIs=false, $allowHtml=false, $allowEscapeQuotes=false) {
@@ -1344,7 +1369,7 @@ class helper_base extends helper_config {
     unlink(realpath($interim_path.$path));
     return $r;
   }
-  
+
  /**
   * Internal function to find the path to the root of the site, including the trailing slash.
   * @param boolean $allowForDirtyUrls Set to true to allow for the content management system's
@@ -1373,6 +1398,15 @@ class helper_base extends helper_config {
   public static function get_auth($website_id, $password) {
     $postargs = "website_id=$website_id";
     $response = self::http_post(parent::$base_url.'index.php/services/security/get_nonce', $postargs);
+    if (isset($response['status'])) {
+      if ($response['status'] === 404) {
+        throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
+          'Indicia configuration is incorrect.', self::$base_url), 404);
+      }
+      else {
+        throw new Exception($response['output'], $response['status']);
+      }
+    }
     $nonce = $response['output'];
     $result = '<input id="auth_token" name="auth_token" type="hidden" class="hidden" ' .
         'value="'.sha1("$nonce:$password").'" />'."\r\n";
@@ -1397,8 +1431,15 @@ class helper_base extends helper_config {
     if ($r===false) {
       $postargs = "website_id=$website_id";
       $response = self::http_post(self::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
-      if (array_key_exists('status', $response))
-        throw new Exception($response['output'], $response['status']);
+      if (isset($response['status'])) {
+        if ($response['status'] === 404) {
+          throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
+            'Indicia configuration is incorrect.', self::$base_url), 404);
+        }
+        else {
+          throw new Exception($response['output'], $response['status']);
+        }
+      }
       $nonce = $response['output'];
       if (substr($nonce, 0, 9) === '<!DOCTYPE')
         throw new Exception(lang::get('Could not authenticate against the warehouse. Is the server down?'));
@@ -1407,7 +1448,7 @@ class helper_base extends helper_config {
           'nonce' => $nonce
       );
       self::cache_set(array('readauth-wid'=>$website_id), json_encode($r));
-    } 
+    }
     else
       $r = json_decode($r, TRUE);
     self::$js_read_tokens = $r;
@@ -1428,7 +1469,13 @@ class helper_base extends helper_config {
     $postargs = "website_id=$website_id";
     $response = self::http_post(self::$base_url.'index.php/services/security/get_read_write_nonces', $postargs);
     if (array_key_exists('status', $response)) {
-      throw new Exception($response['output'], $response['status']);
+      if ($response['status'] === 404) {
+        throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
+          'Indicia configuration is incorrect.', self::$base_url), 404);
+      }
+      else {
+        throw new Exception($response['output'], $response['status']);
+      }
     }
     $nonces = json_decode($response['output'], true);
     $write = '<input id="auth_token" name="auth_token" type="hidden" class="hidden" ' .
@@ -1468,7 +1515,7 @@ class helper_base extends helper_config {
       self::add_resource($resource);
     }
     // place a css class on the body if JavaScript enabled. And output the resources
-    return self::internal_dump_resources(self::$required_resources) . 
+    return self::internal_dump_resources(self::$required_resources) .
         self::get_scripts('$("body").addClass("js");', '', '', true);
   }
 
@@ -1482,7 +1529,9 @@ class helper_base extends helper_config {
   */
   public static function dump_javascript($closure=false) {
     // Add the default stylesheet to the end of the list, so it has highest CSS priority
-    if (self::$default_styles) self::add_resource('defaultStylesheet');
+    if (self::$default_styles) {
+      self::add_resource('defaultStylesheet');
+    }
     // Jquery validation js has to be added at this late stage, because only then do we know all the messages required.
     self::setup_jquery_validation_js();
     $dump = self::internal_dump_resources(self::$required_resources);
@@ -1522,8 +1571,8 @@ class helper_base extends helper_config {
               // look out for a condition that this script is IE only.
               if (substr($j, 0, 4)=='[IE]'){
               	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"".substr($j, 4)."\"></script><![endif]-->\n";
-              } 
-              else { 
+              }
+              else {
                 $libraries .= "<script type=\"text/javascript\" src=\"$j\"></script>\n";
               }
             }
@@ -1535,7 +1584,7 @@ class helper_base extends helper_config {
     }
     return $stylesheets.$libraries;
   }
-  
+
   /**
    * A utility function for building the inline script content which should be inserted into a page from the javaascript,
    * late javascript and onload javascript. Can optionally include the script tags wrapper around the script generated.
@@ -1615,8 +1664,8 @@ JS;
       $script .= $includeWrapper ? "/* ]]> */</script>\n" : "";
     } else {
       $script='';
-    } 
-    return $script; 
+    }
+    return $script;
   }
 
   /**
@@ -1631,7 +1680,7 @@ JS;
     if (self::$validated_form_id) {
       global $indicia_templates;
       self::$javascript .= "
-      
+
         var validator = $('#".self::$validated_form_id."').validate({
         ignore: \":hidden,.inactive\",
         errorClass: \"".$indicia_templates['error_class']."\",
@@ -1650,7 +1699,7 @@ JS;
             jqElement.addClass('ui-state-error');
           }
         },
-        unhighlight: function(element, errorClass) { 
+        unhighlight: function(element, errorClass) {
           var jqElement = $(element);
           if (jqElement.is(':radio') || jqElement.is(':checkbox')) {
             //if the element is a radio or checkbox group then highlight the group
@@ -1667,8 +1716,8 @@ JS;
         invalidHandler: ".$indicia_templates['invalid_handler_javascript'].",
         messages: ".json_encode(self::$validation_messages).",".
         // Do not place errors if 'message' not in validation_mode
-        // if it is present, put radio button messages at start of list: 
-        // radio and checkbox elements come before their labels, so putting the error after the invalid element 
+        // if it is present, put radio button messages at start of list:
+        // radio and checkbox elements come before their labels, so putting the error after the invalid element
         // places it between the element and its label.
         // most radio button validation will be "required"
         (in_array('message', self::$validation_mode) ? "
@@ -1730,15 +1779,11 @@ JS;
     } else {
       $options['title'] = '';
     }
-    if (!array_key_exists('class', $options)) {
-      $options['class']='';
-    }
-    if (!array_key_exists('disabled', $options)) {
-      $options['disabled']='';
-    }
-    if (!array_key_exists('readonly', $options)) {
-      $options['readonly']='';
-    }
+    $options = array_merge(array(
+      'class' => '',
+      'disabled' => '',
+      'readonly' => '',
+    ), $options);
     if (array_key_exists('maxlength', $options)) {
       $options['maxlength']='maxlength="'.$options['maxlength'].'"';
     } else {
@@ -1753,10 +1798,14 @@ JS;
         $options['outerClass'] = 'ui-state-error';
       }
     }
+    // Allows a form control to have a class specific to the base theme.
+    if (isset($options['isFormControl']) && isset($indicia_templates['formControlClass'])) {
+      $options['class'] .= " $indicia_templates[formControlClass]";
+    }
     // add validation metadata to the control if specified, as long as control has a fieldname
     if (array_key_exists('fieldname', $options)) {
       $validationClasses = self::build_validation_class($options);
-      $options['class'] .= ' '.$validationClasses;
+      $options['class'] .= " $validationClasses";
     }
 
     // replace html attributes with their wrapped versions, e.g. a class becomes class="..."
@@ -1790,14 +1839,12 @@ JS;
     	$r .= $label;
     }
     // Output the main control
-    $r .= self::apply_replacements_to_template($indicia_templates[$template], $options);
-    if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
-    	$r .= $label;
-    }
-    
+    $control = self::apply_replacements_to_template($indicia_templates[$template], $options);
+    $addons = '';
+
     // Add a lock icon to the control if the lockable option is set to true
     if (array_key_exists('lockable', $options) && $options['lockable']===true) {
-      $r .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
+      $addons .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
       if (!self::$using_locking) {
         self::$using_locking = true;
         $options['lock_form_mode'] = self::$form_mode ? self::$form_mode : 'NEW';
@@ -1807,11 +1854,25 @@ JS;
       }
     }
     if (isset($validationClasses) && !empty($validationClasses) && strpos($validationClasses, 'required')!==false) {
-      $r .= self::apply_static_template('requiredsuffix', $options);
+      $addons .= self::apply_static_template('requiredsuffix', $options);
     }
     // Add an error icon to the control if there is an error and this option is set
     if ($error && in_array('icon', $options['validation_mode'])) {
-      $r .= $indicia_templates['validation_icon'];
+      $addons .= $indicia_templates['validation_icon'];
+    }
+    // If addons are going to be placed after the control, give the template a chance to wrap them together with the
+    // main control in an element.
+    if ($addons) {
+      $r .= self::apply_replacements_to_template($indicia_templates['controlAddonsWrap'], array(
+        'control' => $control,
+        'addons' => $addons,
+      ));
+    } else {
+      $r .= $control;
+    }
+    // Label can sometimes be placed after the control.
+    if (!empty($options['label']) && isset($options['labelPosition']) && $options['labelPosition'] == 'after') {
+    	$r .= $label;
     }
     // Add a message to the control if there is an error and this option is set
     if ($error && in_array('message', $options['validation_mode'])) {
@@ -1881,7 +1942,7 @@ $.validator.messages.digits = $.validator.format(\"".lang::get('validation_digit
       data_entry_helper::$late_javascript .= "
 $.validator.messages.integer = $.validator.format(\"".lang::get('validation_integer')."\");";
   }
-  
+
   /**
    * Explodes a value on several lines into an array split on the lines. Tolerates any line ending.
    * @param string $value A multi-line string to be split.
@@ -1892,7 +1953,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $structure = str_replace("\r", "\n", $structure);
     return explode("\n", trim($structure));
   }
-  
+
   /**
    * Explodes a value with key=value several lines into an array split on the lines. Tolerates any line ending.
    * @param string $value A multi-line string to be split.
@@ -1905,7 +1966,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     array_walk($pairs[1], $trim);
     array_walk($pairs[2], $trim);
     if (count($pairs[1]) == count($pairs[2]) && count($pairs[1]) != 0) {
-      return array_combine($pairs[1], $pairs[2]); 
+      return array_combine($pairs[1], $pairs[2]);
     } else {
       return array();
     }
@@ -1987,7 +2048,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
   /**
-   * Takes a template string (e.g. <div id="{id}">) and replaces the tokens with the equivalent values looked up from 
+   * Takes a template string (e.g. <div id="{id}">) and replaces the tokens with the equivalent values looked up from
    * the $options array. Tokens suffixed |escape have HTML escaping applied, e.g. <div id="{id}">{value|escape}</div>
    * @param string $template The templatable string.
    * @param string $options The array of items which can be merged into the template.
@@ -2028,7 +2089,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           || $rule=='integer') {
         $converted[] = $rule.':true';
       // Now any rules which need parsing or conversion
-      } elseif ($rule=='date' && !isset($options['allowVagueDates']) || 
+      } elseif ($rule=='date' && !isset($options['allowVagueDates']) ||
             (isset($options['allowVagueDates']) && $options['allowVagueDates']===false)) {
         $converted[] = 'customDate:true';
       } elseif ($rule=='digit') {
@@ -2067,7 +2128,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     global $indicia_templates;
     $key = $name .'Template';
     if (array_key_exists($key, $options)) {
-      //a template has been specified    
+      //a template has been specified
       if (array_key_exists($options[$key], $indicia_templates))
         //the specified template exists
         $r = $indicia_templates[$options[$key]];
@@ -2107,16 +2168,16 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $template = str_replace('{for}', $fieldname, $template);
     return str_replace('{error}', lang::get($error), $template);
   }
-  
+
   /**
    * Utility function for external access to the iform cache.
-   * 
+   *
    * @param array $cacheOpts Options array which defines the cache "key", i.e. the unique set of options being cached.
    * @param integer $cacheTimeout Timeout in seconds, if overriding the default cache timeout.
    * @param boolean $random Should a random element be introduced to prevent simultaneous expiry of multiple
    * caches? Default true.
    * @return mixed String read from the cache, or false if not read.
-   */   
+   */
   public static function cache_get($cacheOpts, $cacheTimeout=0, $random=true) {
     if (!$cacheTimeout)
       $cacheTimeout = self::_getCacheTimeOut(array());
@@ -2125,14 +2186,14 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $r = self::_getCachedResponse($cacheFile, $cacheTimeout, $cacheOpts, $random);
     return $r === false ? $r : $r['output'];
   }
-  
+
   /**
    * Utility function for external writes to the iform cache.
-   *   
+   *
    * @param array $cacheOpts Options array which defines the cache "key", i.e. the unique set of options being cached.
    * @param string $toCache String data to cache.
    * @param integer $cacheTimeout Timeout in seconds, if overriding the default cache timeout.
-   */   
+   */
   public static function cache_set($cacheOpts, $toCache, $cacheTimeout=0) {
     if (!$cacheTimeout)
       $cacheTimeout = self::_getCacheTimeOut(array());
@@ -2203,7 +2264,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         }
         $postArgs['params'] = json_encode((object)$postArgs['params']);
       }
-      
+
       if(count($getArgs)>0) $newURL[] = implode('&', $getArgs);
       $newURL = implode('?', $newURL);
 
@@ -2222,7 +2283,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     self::_purgeImages();
     return $r;
   }
-  
+
   /**
    * Protected function to fetch a validated timeout value from passed in options array.
    *
@@ -2270,7 +2331,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
 
   /**
    * Protected function to return the cached data stored in the specified local file.
-   * 
+   *
    * @param string $file Cache file to be used, includes path
    * @param integer $timeout - will be false if no caching to take place
    * @param array $options Options array : contents used to confirm what this data is.
@@ -2329,7 +2390,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       rename($file.getmypid(),$file);
     }
   }
-  
+
   /**
    * Helper function to clear the Indicia cache files.
    */
@@ -2401,10 +2462,10 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       }
     }
   }
-  
-    
+
+
   /**
-   * A custom PHP sorting function which uses the 2nd element in the compared array to 
+   * A custom PHP sorting function which uses the 2nd element in the compared array to
    * sort by. The sorted array normally contains a list of files, with the first element
    * of each array entry being the file path and the second the file date stamp.
    * @param int $a Datestamp of the first file to compare.
@@ -2444,12 +2505,12 @@ if(!function_exists('get_called_class')) {
         if ($matches[1] == 'self') {
                $line = $bt[$l]['line']-1;
                while ($line > 0 && strpos($lines[$line], 'class') === false) {
-                   $line--;                 
+                   $line--;
                }
                preg_match('/class[\s]+(.+?)[\s]+/si', $lines[$line], $matches);
        }
     }
     while ($matches[1] == 'parent'  && $matches[1]);
     return $matches[1];
-  } 
+  }
 }

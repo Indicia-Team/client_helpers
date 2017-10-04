@@ -13,19 +13,19 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
+ * @package    Client
  * @subpackage PrebuiltForms
- * @author  Indicia Team
- * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @author     Indicia Team
+ * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link       http://code.google.com/p/indicia/
  */
 
-require_once('includes/map.php');
+require_once 'includes/map.php';
 
 /**
  * Provides a form for subscribing to receive a notification when a certain species is recorded.
  * 
- * @package Client
+ * @package    Client
  * @subpackage PrebuiltForms
  */
 class iform_subscribe_species_alert {
@@ -33,15 +33,16 @@ class iform_subscribe_species_alert {
   /** 
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
+   *
    * @return array The definition of the form.
-   * @todo rename this method.
+   * @todo   rename this method.
    */
   public static function get_subscribe_species_alert_definition() {
     return array(
-      'title'=>'Subscribe to a species alert',
-      'category' => 'Miscellaneous',
-      'description'=>'Provides a simple form for picking a species and optional geographic filter to subscribe to receive an alert notification '.
-          'when that species is recorded or verified.'
+        'title'=>'Subscribe to a species alert',
+        'category' => 'Miscellaneous',
+        'description'=>'Provides a simple form for picking a species and optional geographic filter to subscribe to receive an alert notification '.
+            'when that species is recorded or verified.'
     );
   }
   
@@ -63,7 +64,7 @@ class iform_subscribe_species_alert {
           'captionField'=>'title',
           'required'=>false,
           'group'=>'Lookups',
-          'siteSpecific'=>TRUE
+          'siteSpecific'=>true
         ),
         array(
           'name'=>'full_lists',
@@ -74,9 +75,9 @@ class iform_subscribe_species_alert {
           'valueField'=>'id',
           'captionField'=>'title',
           'sharing' => 'reporting',
-          'required'=>FALSE,
+          'required'=>false,
           'group'=>'Lookups',
-          'siteSpecific'=>TRUE
+          'siteSpecific'=>true
         ),
         array(
           'fieldname'=>'location_type_id',
@@ -88,9 +89,9 @@ class iform_subscribe_species_alert {
           'valueField'=>'id',
           'captionField'=>'term',
           'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
-          'required'=>FALSE,
+          'required'=>false,
           'group'=>'Lookups',
-          'siteSpecific'=>TRUE
+          'siteSpecific'=>true
         ),
       )
     );
@@ -98,6 +99,7 @@ class iform_subscribe_species_alert {
   
   /**
    * Return the generated form output.
+   *
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
    * This array always contains a value for language.
    * @param object $nid The Drupal node object's ID.
@@ -120,8 +122,8 @@ class iform_subscribe_species_alert {
       if (data_entry_helper::$entity_to_load['species_alert:user_id']!=hostsite_get_user_field('indicia_user_id'))
         return lang::get('You cannot modify a species alert subscription created by someone else');
       $form .= data_entry_helper::hidden_text(array(
-        'fieldname' => 'species_alert:id',
-        'default' => $_GET['id']
+          'fieldname' => 'species_alert:id',
+          'default' => $_GET['id']
       ));
     }
     // if not logged in, then ask for details to register against
@@ -184,17 +186,16 @@ class iform_subscribe_species_alert {
       $defaultCaption = $_POST['taxa_taxon_list_id:taxon'];
     }
     $form .= data_entry_helper::species_autocomplete(array(
-      'label' => lang::get('Alert species'),
-      'helpText' => lang::get('Select the species you are interested in receiving alerts in ' .
-          'relation to if you want to receive alerts on a single species.'),
-      'fieldname' => 'taxa_taxon_list_id',
-      'cacheLookup' => true,
-      'extraParams' => $auth['read'] + array('query' => json_encode(
-              array('in' => array('taxon_list_id' => $args['list_id']))
-      )),
-      'class' => 'control-width-4',
-      'default' => $default,
-      'defaultCaption' => $defaultCaption
+        'label' => lang::get('Alert species'),
+        'helpText' => lang::get(
+            'Select the species you are interested in receiving alerts in ' .
+            'relation to if you want to receive alerts on a single species.'
+        ),
+        'fieldname' => 'taxa_taxon_list_id',
+        'extraParams' => $auth['read'] + array('taxon_list_id' => json_encode($args['list_id'])),
+        'class' => 'control-width-4',
+        'default' => $default,
+        'defaultCaption' => $defaultCaption
     ));
     if (empty($default)) {
       // Unless we've searched for the species name then posted (and failed), then the

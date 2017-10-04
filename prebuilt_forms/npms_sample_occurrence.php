@@ -143,10 +143,12 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     //lock the form (put simply, old data cannot be edited by the user).
     data_entry_helper::$javascript .= "
       if (sampleCreatedOn&&lockingDate&&sampleCreatedOn<lockingDate) {  
-        $('[id*=_lock]').remove();\n $('.remove-row').remove();\n
-        $('.scImageLink,.scClonableRow').hide();
-        $('.edit-taxon-name,.remove-row').hide();
-        $('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');
+        $(window).load(function () {
+          $('[id*=_lock]').remove();\n $('.remove-row').remove();\n
+          $('.scImageLink,.scClonableRow').hide();
+          $('.edit-taxon-name,.remove-row').hide();
+          $('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');
+        });
       }";
     //remove default validation mode of 'message' as species grid goes spazzy
     data_entry_helper::$validation_mode = array('colour');

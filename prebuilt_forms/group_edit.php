@@ -24,15 +24,15 @@ require_once('includes/report_filters.php');
 
 /**
  * A page for editing or creating a group of people, such as a recording group, organisation or project.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_group_edit {
-  
+
   private static $groupType='group';
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -44,12 +44,12 @@ class iform_group_edit {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'group_type',
@@ -288,10 +288,10 @@ class iform_group_edit {
         'description'=>'Path to the Drupal page which my groups are listed on.',
         'type'=>'text_input',
         'required'=>FALSE
-      ), 
+      ),
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -302,6 +302,7 @@ class iform_group_edit {
    * @return string Form HTML.
    */
   public static function get_form($args, $nid) {
+    global $indicia_templates;
     if (!hostsite_get_user_field('indicia_user_id'))
       return 'Please ensure that you\'ve filled in your surname on your user profile before creating or editing groups.';
     // the following allows for different ways of setting the main parent group in URL params
@@ -329,7 +330,7 @@ class iform_group_edit {
       'data_inclusion_mode' => 'choose'
     ), $args);
     $args['filter_types']=json_decode($args['filter_types'], true);
-    $reloadPath = self::getReloadPath();   
+    $reloadPath = self::getReloadPath();
     data_entry_helper::$website_id=$args['website_id'];
     // maintain compatibility with form settings from before group type became multiselect.
     if (empty($args['group_type']))
@@ -356,7 +357,7 @@ class iform_group_edit {
           "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
     $r .= data_entry_helper::hidden_text(array('fieldname'=>'group:id'));
     // if a fixed choice of group type, can use a hidden input to put the value in the form.
-    if (count($args['group_type'])===1) 
+    if (count($args['group_type'])===1)
       $r .= '<input type="hidden" name="group:group_type_id" value="'.$args['group_type'][0].'"/>';
     if (!empty(data_entry_helper::$entity_to_load['group:title']))
       hostsite_set_page_title(lang::get('Edit {1}', data_entry_helper::$entity_to_load['group:title']));
@@ -439,7 +440,7 @@ class iform_group_edit {
         'helpText'=>lang::get('Tick this box if you want to withold the release of the records from this {1} until a '.
           'later point in time, e.g. when a project is completed.', self::$groupType)
       ));
-      // If an existing group with private records, then we might need to display a message warning the user about releasing the records. 
+      // If an existing group with private records, then we might need to display a message warning the user about releasing the records.
       // Initially hidden, we use JS to display it when appropriate.
       if (!empty(data_entry_helper::$entity_to_load['group:id']) && data_entry_helper::$entity_to_load['group:private_records']==='t')
         $r .= '<p class="warning" style="display: none" id="release-warning">'.
@@ -454,13 +455,13 @@ class iform_group_edit {
     if (!$args['include_administrators'] && empty($_GET['group_id']))
       $r .= '<input type="hidden" name="groups_user:admin_user_id[]" value="' .hostsite_get_user_field('indicia_user_id'). '"/>';
     $r .= '<input type="hidden" name="groups_user:administrator" value="t"/>';
-    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.
-        (empty(data_entry_helper::$entity_to_load['group:id']) ? 
+    $r .= '<input type="submit" class="' . $indicia_templates['buttonDefaultClass'] . '" id="save-button" value="'.
+        (empty(data_entry_helper::$entity_to_load['group:id']) ?
         lang::get('Create {1}', self::$groupType) : lang::get('Update {1} settings', self::$groupType))
-        ."\" />\n";    
+        ."\" />\n";
     $r .= '</form>';
     $r .= $hiddenPopupDivs;
-    
+
     data_entry_helper::enable_validation('entry_form');
     // JavaScript to grab the filter definition and store in the form for posting when the form is submitted
     data_entry_helper::$javascript .= "
@@ -557,7 +558,7 @@ $('#entry_form').submit(function() {
       if (empty($_GET['group_id'])) {
         $default = array();
         if (isset($args['default_linked_pages'])) {
-          $defaultPages = json_decode($args['default_linked_pages'], true);          
+          $defaultPages = json_decode($args['default_linked_pages'], true);
           foreach ($defaultPages as $page) {
             $page['administrator'] = (isset($page['administrator']) && $page['administrator']) ? 't' : 'f';
             if (!isset($page['caption']))
@@ -570,15 +571,15 @@ $('#entry_form').submit(function() {
         $default = self::getGroupPages($auth);
       $columns = array(
         array(
-          'label' => 'Form',
+          'label' => lang::get('Form'),
           'datatype' => 'lookup',
           'lookupValues' => $pages,
           'validation' => array('unique')
         ), array(
-          'label' => 'Link caption',
+          'label' => lang::get('Link caption'),
           'datatype' => 'text'
         ), array(
-          'label' => 'Who can access the page?',
+          'label' => lang::get('Who can access the page?'),
           'datatype' => 'lookup',
           'lookupValues' => array(
             '' => lang::get('Available to anyone'),
@@ -596,7 +597,7 @@ $('#entry_form').submit(function() {
           $values[$i] = lang::get('Requires access level {1} or higher', $i);
         }
         $columns[] = array(
-          'label' => 'Additional minimum page access level',
+          'label' => lang::get('Additional minimum page access level'),
           'datatype' => 'lookup',
           'lookupValues' => $values,
           'default' => '0'
@@ -612,8 +613,8 @@ $('#entry_form').submit(function() {
     }
     return $r;
   }
-  
-  /** 
+
+  /**
    * Retrieve the pages linked to this group from the database.
    */
   private static function getGroupPages($auth) {
@@ -630,7 +631,7 @@ $('#entry_form').submit(function() {
     }
     return $r;
   }
-  
+
   private static function groupLogoControl($args) {
     if ($args['include_logo_controls'])
       return data_entry_helper::image_upload(array(
@@ -641,9 +642,9 @@ $('#entry_form').submit(function() {
     else
       return '';
   }
-  
+
   /**
-   * Returns a control for picking one of the allowed joining methods. If there is only one, 
+   * Returns a control for picking one of the allowed joining methods. If there is only one,
    * then this is output as a single hidden input.
    * @param array $args Form configuration arguments
    * @return string HTML to output
@@ -665,9 +666,9 @@ $('#entry_form').submit(function() {
     }
     return $r;
   }
- 
+
   /**
-   * Returns a control for picking one of the allowed record inclusion methods methods. If there is only one allowed, 
+   * Returns a control for picking one of the allowed record inclusion methods methods. If there is only one allowed,
    * then this is output as a single hidden input.
    * @param array $args Form configuration arguments
    * @return string HTML to output
@@ -707,16 +708,16 @@ $('#entry_form').submit(function() {
     }
     return $r;
   }
-  
+
   /**
-   * Returns controls for defining the date range of a group if this option is enabled. 
+   * Returns controls for defining the date range of a group if this option is enabled.
    * @param array $args Form configuration arguments
    * @return string HTML to output
    */
   private static function dateControls($args) {
     $r = '';
     if ($args['include_dates']) {
-      $r .= '<p>' . lang::get('If the {1} will only be active for a limited period of time (e.g. an event or bioblitz) ' . 
+      $r .= '<p>' . lang::get('If the {1} will only be active for a limited period of time (e.g. an event or bioblitz) ' .
           'then please fill in the start and or end date of this period in the controls below. This helps to prevent people joining after '.
           'the {2}.', self::$groupType, lang::get('group is no longer active')) . '</p>';
       $r .= '<div id="ctrl-wrap-group-from-to" class="form-row ctrl-wrap">';
@@ -804,9 +805,9 @@ $('#entry_form').submit(function() {
     }
     return $r;
   }
-  
+
   /**
-   * Returns controls allowing a records filter to be defined and associated with the group. 
+   * Returns controls allowing a records filter to be defined and associated with the group.
    * @param array $args Form configuration arguments
    * @return string HTML to output
    */
@@ -838,7 +839,7 @@ $('#entry_form').submit(function() {
     }
     return $r;
   }
-  
+
   /**
    * Converts the posted form values for a group into a warehouse submission.
    * @param array $values Form values
@@ -938,31 +939,31 @@ $('#entry_form').submit(function() {
         $s['subModels'][] = array('fkId' => 'group_id', 'model'=>array('id'=>'group_page', 'fields'=>$page));
       }
     }
-    // need to manually build the submission for the admins sub_list, since we are hijacking what is 
+    // need to manually build the submission for the admins sub_list, since we are hijacking what is
     // intended to be a custom attribute control
     if (self::extractUserInfoFromFormValues($s, $values, 'admin_user_id', 't')===0 && empty($values['group:id'])) {
       // no admins created when setting up the group initially, so need to set the current user as an admin
-      $s['subModels'][]=array('fkId' => 'group_id', 
+      $s['subModels'][]=array('fkId' => 'group_id',
           'model' => submission_builder::wrap(array('user_id'=>hostsite_get_user_field('indicia_user_id'), 'administrator'=>'t'), 'groups_user'));
     };
     self::extractUserInfoFromFormValues($s, $values, 'user_id', 'f');
     self::deleteExistingUsers($s, $values);
     return $s;
   }
-  
+
   private static function deleteExistingUsers(&$s, $values) {
     $existingUsers=preg_grep("/^groups_user\:user_id\:[0-9]+$/", array_keys($values));
     // for existing, we just need to look for deletions which will have an empty value
     foreach($existingUsers as $user) {
       if (empty($values[$user])) {
         $id=substr($user, 20);
-        $s['subModels'][]=array('fkId' => 'group_id', 
+        $s['subModels'][]=array('fkId' => 'group_id',
             'model' => submission_builder::wrap(array('id'=>$id, 'deleted'=>'t'), 'groups_user'));
       }
     }
   }
-  
-  /** 
+
+  /**
    * Extracts the sub-models required to populate member and administrator info from the form data.
    */
   private static function extractUserInfoFromFormValues(&$s, $values, $fieldname, $isAdmin) {
@@ -974,7 +975,7 @@ $('#entry_form').submit(function() {
         foreach($values["groups_user:$fieldname"] as $userId) {
           if ($userId) {
             $values = array('user_id'=>$userId, 'administrator'=>$isAdmin);
-            $s['subModels'][]=array('fkId' => 'group_id', 
+            $s['subModels'][]=array('fkId' => 'group_id',
               'model' => submission_builder::wrap($values, 'groups_user'));
             $count++;
           }
@@ -983,7 +984,7 @@ $('#entry_form').submit(function() {
     }
     return $count;
   }
-  
+
   /**
    * Perform some duplication checking on the members list.
    */
@@ -1015,10 +1016,10 @@ $('#entry_form').submit(function() {
     // default is no errors
     return array();
   }
-  
-  /** 
+
+  /**
    * Retrieve the path to the current page, so the form can submit to itself.
-   * @return string 
+   * @return string
    */
   private static function getReloadPath () {
     $reload = data_entry_helper::get_reload_link_parts();
@@ -1070,7 +1071,7 @@ $('#entry_form').submit(function() {
     );
     if ($args['include_report_filter']) {
       $def=$group['filter_definition'] ? $group['filter_definition'] : '{}';
-      data_entry_helper::$javascript .= 
+      data_entry_helper::$javascript .=
           "indiciaData.filter.def=$def;\n";
     }
     if ($args['include_administrators'] || $args['include_members']) {
@@ -1142,11 +1143,11 @@ $('#entry_form').submit(function() {
         throw new exception(lang::get('You are trying to edit a group you don\'t have admin rights to.'));
     }
   }
-  
+
   public static function get_perms() {
     return array('IForm groups admin');
   }
-  
+
   private static function createBreadcrumb($args, $auth) {
     if (!empty($args['groups_page_path']) && function_exists('hostsite_set_breadcrumb') && function_exists('drupal_get_normal_path')) {
       $path = drupal_get_normal_path($args['groups_page_path']);

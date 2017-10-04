@@ -197,18 +197,19 @@ class submission_builder extends helper_config {
             }
           } else
             $sa['fields'][$key] = array('value' => $value);
-        } elseif ($attrEntity && (strpos($key, "$attrEntity+:")===0)) {
+        } elseif ($attrEntity && (strpos($key, "$attrEntity+:") === 0)) {
           // a complex custom attribute data value which will need to be json encoded.
-          $tokens=explode(':', $key);
-          if ($tokens[4]==='deleted') {
-            if ($value==='t') {
-              $complexAttrs[$key]='deleted';
+          $tokens = explode(':', $key);
+          $attrKey = str_replace('+', '', $tokens[0]) . ':' . $tokens[1];
+          if (!empty($tokens[2])) {
+            // existing value record
+            $attrKey .= ':'.$tokens[2];
+          }
+          if ($tokens[4] === 'deleted') {
+            if ($value === 't') {
+              $complexAttrs[$attrKey] = 'deleted';
             }
           } else {
-            $attrKey = str_replace('+', '', $tokens[0]) . ':' . $tokens[1];
-            if (!empty($tokens[2]))
-              // existing value record
-              $attrKey .= ':'.$tokens[2];
             $exists = isset($complexAttrs[$attrKey]) ? $complexAttrs[$attrKey] : array();
             if ($exists!=='deleted') {
               $exists[$tokens[3]][$tokens[4]] = $value;
@@ -220,16 +221,16 @@ class submission_builder extends helper_config {
     }
     foreach($complexAttrs as $attrKey=>$data) {
       if ($data==='deleted')
-        $sa['fields'][$attrKey]=array('value'=>'');
+        $sa['fields'][$attrKey] = array('value' => '');
       else {
-        $sa['fields'][$attrKey]=array('value'=>array());
+        $sa['fields'][$attrKey] = array('value' => array());
         $tokens = explode(':', $attrKey);
-        $exists = count($tokens)===3;
+        $exists = count($tokens) === 3;
         $encoding = $array["complex-attr-grid-encoding-$tokens[0]-$tokens[1]"];
         foreach (array_values($data) as $row) {
           // find any term submissions in form id:term, and split into 2 json fields. Also process checkbox groups into suitable array form.
-          $terms=array();
-          foreach ($row as $key=>&$val) {
+          $terms = array();
+          foreach ($row as $key => &$val) {
             if (is_array($val)) {
               // array from a checkbox_group
               $subvals=array();

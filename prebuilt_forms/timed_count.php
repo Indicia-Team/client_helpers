@@ -599,11 +599,6 @@ mapInitialisationHooks.push(function(mapdiv) {
 });
 if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val(jQuery('#C1\\\\:sample\\\\:date').datepicker('getDate').getFullYear());\n";
     }
-    if (isset(data_entry_helper::$entity_to_load['sample:date']) && preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
-      // Date has 4 digit year first (ISO style) - only interested in Year.
-      $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
-      data_entry_helper::$entity_to_load['sample:date'] = $d->format('Y');
-    }
     unset(data_entry_helper::$default_validation_rules['sample:date']);
     $help = lang::get('The Year field is read-only, and is calculated automatically from the date(s) of the Counts.');
     $r .= data_entry_helper::text_input(array('label' => lang::get('Year'), 'fieldname' => 'sample:date', 'readonly'=>' readonly="readonly" ', 'helpText'=>$help));
@@ -716,8 +711,6 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     if(!isset(data_entry_helper::$validation_errors)){
       // the parent sample and at least one sub-sample have already been created: can't cache in case a new subsample (Count) added.
       data_entry_helper::load_existing_record($auth['read'], 'sample', $parentSampleId);
-      $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
-      data_entry_helper::$entity_to_load['sample:date'] = $d->format('Y');
       // using the report returns the attributes as well.
       $subSamples = data_entry_helper::get_population_data(array(
         'report' => 'library/samples/samples_list_for_parent_sample',
@@ -733,7 +726,7 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
           if(preg_match('/^attr_sample_/',  $field)){
             $parts=explode('_',$field);
             if(isset($subSamples[$i]['attr_id_sample_'.$parts[2]]) && $subSamples[$i]['attr_id_sample_'.$parts[2]] != null)
-              data_entry_helper::$entity_to_load['C'.($i+1).':smpAttr:'+$parts[2]+':'+$subSamples[$i]['attr_id_sample_'.$parts[2]]] = $value;
+                data_entry_helper::$entity_to_load['C'.($i+1).':smpAttr:'.$parts[2].':'.$subSamples[$i]['attr_id_sample_'.$parts[2]]] = $value;
           }
         }
       }

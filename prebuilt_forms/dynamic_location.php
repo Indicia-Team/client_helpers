@@ -23,7 +23,7 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- * 
+ *
  * @package    Client
  * @subpackage PrebuiltForms
  */
@@ -32,7 +32,7 @@ require_once('includes/dynamic.php');
 
 class iform_dynamic_location extends iform_dynamic {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -51,7 +51,7 @@ class iform_dynamic_location extends iform_dynamic {
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {    
+  public static function get_parameters() {
     $retVal = array_merge(
       parent::get_parameters(),
       array(
@@ -84,7 +84,7 @@ class iform_dynamic_location extends iform_dynamic {
             "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>".
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
           'type'=>'textarea',
-          'default' => 
+          'default' =>
               "=Place=\r\n".
               "?Please provide the spatial reference of the location. You can enter the reference directly, or search for a place then click on the map to set it.?\r\n".
               "[location name]\r\n".
@@ -135,20 +135,20 @@ class iform_dynamic_location extends iform_dynamic {
     );
     return $retVal;
   }
-  
-  /** 
+
+  /**
    * Determine whether to show a gird of existing records or a form for either adding a new record or editing an existing one.
-   * @param array $args iform parameters. 
+   * @param array $args iform parameters.
    * @param object $nid ID of node being shown.
    * @return const The mode [MODE_GRID|MODE_NEW|MODE_EXISTING].
    */
   protected static function getMode($args, $nid) {
     // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
     $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
-    
+
     if ($_POST && !is_null(data_entry_helper::$entity_to_load)) {
       // errors with new sample or entity populated with post, so display this data.
-      $mode = self::MODE_EXISTING; 
+      $mode = self::MODE_EXISTING;
     } else if (array_key_exists('location_id', $_GET)||array_key_exists('zoom_id', $_GET)){
       // request for display of existing record
       $mode = self::MODE_EXISTING;
@@ -160,31 +160,31 @@ class iform_dynamic_location extends iform_dynamic {
     return $mode;
   }
 
-  /** 
+  /**
    * Construct a grid of existing records.
-   * @param array $args iform parameters. 
+   * @param array $args iform parameters.
    * @param object $nid ID of node being shown.
-   * @param array $auth authentication tokens for accessing the warehouse. 
+   * @param array $auth authentication tokens for accessing the warehouse.
    * @return string HTML for grid.
    */
   protected static function getGrid($args, $nid, $auth) {
-    $r = '<div id="locationList">' . 
+    $r = '<div id="locationList">' .
             call_user_func(array(self::$called_class, 'getLocationListGrid'), $args, $nid, $auth) .
           '</div>';
-    return $r;  
+    return $r;
   }
-    
+
   // Get an existing location.
   protected static function getEntity($args, $auth) {
     data_entry_helper::$entity_to_load = array();
     if (!empty($_GET['zoom_id'])) {
-      self::zoom_map_when_adding($auth['read'], 'location', $_GET['zoom_id']); 
+      self::zoom_map_when_adding($auth['read'], 'location', $_GET['zoom_id']);
     } else
-      data_entry_helper::load_existing_record($auth['read'], 'location', $_GET['location_id'], 'detail', false, true);    
+      data_entry_helper::load_existing_record($auth['read'], 'location', $_GET['location_id'], 'detail', false, true);
   }
-  
+
   /*
-   * This function is used when an add site screen is in add mode 
+   * This function is used when an add site screen is in add mode
    * and we just want to automatically zoom the map to a region/site we are adding a location to.
    * This boundary is purely visual and isn't submitted.
    */
@@ -197,7 +197,7 @@ class iform_dynamic_location extends iform_dynamic {
       'extraParams' => $readAuth + array('id' => $id, 'view' => $view),
       'nocache' => true
     ));
-    
+
     if (isset($loc['error'])) throw new Exception($loc['error']);
     $loc=$loc[0];
     //Just put the feature onto the map, set the feature type to zoomToBoundary so it isn't used for anything
@@ -213,16 +213,16 @@ mapInitialisationHooks.push(function(mapdiv) {
   if (indiciaData.mapdiv.map.projection.getCode() != indiciaData.mapdiv.indiciaProjection.getCode()) {
       geom.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
   }
-  feature = new OpenLayers.Feature.Vector(geom);   
+  feature = new OpenLayers.Feature.Vector(geom);
   feature.attributes.type = 'zoomToBoundary';
   indiciaData.mapdiv.map.editLayer.addFeatures([feature]);
   mapdiv.map.zoomToExtent(feature.geometry.bounds);
 });
     ";
   }
-  
+
   protected static function getAttributes($args, $auth) {
-    $id = isset(data_entry_helper::$entity_to_load['location:id']) ? 
+    $id = isset(data_entry_helper::$entity_to_load['location:id']) ?
             data_entry_helper::$entity_to_load['location:id'] : null;
     $attrOpts = array(
     'id' => $id
@@ -236,12 +236,12 @@ mapInitialisationHooks.push(function(mapdiv) {
     $attributes = data_entry_helper::getAttributes($attrOpts, false);
     return $attributes;
   }
-  
+
   /**
    * Retrieve the additional HTML to appear at the top of the first
    * tab or form section. This is a set of hidden inputs containing the website ID and
    * survey ID as well as an existing location's ID.
-   * @param type $args 
+   * @param type $args
    */
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
@@ -249,7 +249,7 @@ mapInitialisationHooks.push(function(mapdiv) {
           "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n".
           "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
     if (isset(data_entry_helper::$entity_to_load['location:id'])) {
-      $r .= '<input type="hidden" id="location:id" name="location:id" value="' . data_entry_helper::$entity_to_load['location:id'] . '" />' . PHP_EOL;    
+      $r .= '<input type="hidden" id="location:id" name="location:id" value="' . data_entry_helper::$entity_to_load['location:id'] . '" />' . PHP_EOL;
     }
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['location:id']), $auth['read']);
     // pass through the group_id if set in URL parameters, so we can save the location against the group
@@ -257,8 +257,8 @@ mapInitialisationHooks.push(function(mapdiv) {
       $r .= "<input type=\"hidden\" id=\"group_id\" name=\"group_id\" value=\"".$_GET['group_id']."\" />\n";
     return $r;
   }
- 
-  /** 
+
+  /**
    * Get the map control.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
@@ -269,16 +269,16 @@ mapInitialisationHooks.push(function(mapdiv) {
     // If a drawing tool is on the map we can support boundaries or if automatic plot creation is enabled.
     $boundaries = false;
     if (!empty($options['clickForPlot']) && $options['clickForPlot']==true)
-      $boundaries = true;     
+      $boundaries = true;
     foreach ($options['standardControls'] as $ctrl) {
       if (substr($ctrl, 0, 4)==='draw') {
         $boundaries = true;
         break;
       }
     }
-    if (isset(data_entry_helper::$entity_to_load['location:centroid_geom'])) 
+    if (isset(data_entry_helper::$entity_to_load['location:centroid_geom']))
       $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['location:centroid_geom'];
-    if ($boundaries && isset(data_entry_helper::$entity_to_load['location:boundary_geom'])) 
+    if ($boundaries && isset(data_entry_helper::$entity_to_load['location:boundary_geom']))
       $options['initialBoundaryWkt'] = data_entry_helper::$entity_to_load['location:boundary_geom'];
     if ($tabalias)
       $options['tabDiv'] = $tabalias;
@@ -289,10 +289,10 @@ mapInitialisationHooks.push(function(mapdiv) {
     $r .= data_entry_helper::map_panel($options, $olOptions);
     // Add a geometry hidden field for boundary support
     if ($boundaries) {
-      if (!empty(data_entry_helper::$entity_to_load['location:boundary_geom'])) 
+      if (!empty(data_entry_helper::$entity_to_load['location:boundary_geom']))
         $impBoundaryGeomVal=data_entry_helper::$entity_to_load['location:boundary_geom'];
-      else 
-        $impBoundaryGeomVal='';   
+      else
+        $impBoundaryGeomVal='';
       $r .= '<input type="hidden" name="location:boundary_geom" id="imp-boundary-geom" value="'.$impBoundaryGeomVal.'"/>';
     }
     return $r;
@@ -320,14 +320,14 @@ mapInitialisationHooks.push(function(mapdiv) {
     // e.g.
     // [location type]
     // @terms=["City","Town","Village"]
-    
+
     // get the list of terms
     $filter = null;
     if (array_key_exists('terms', $options)) {
       $filter = $options['terms'];
     }
     $terms = helper_base::get_termlist_terms($auth, 'indicia:location_types', $filter);
-          
+
     if (count($terms) == 1) {
       //only one location type so output as hidden control
       return '<input type="hidden" id="location:location_type_id" name="location:location_type_id" value="' . $terms[0]['id'] . '" />' . PHP_EOL;
@@ -351,9 +351,9 @@ mapInitialisationHooks.push(function(mapdiv) {
     return data_entry_helper::textarea(array_merge(array(
       'fieldname'=>'location:comment',
       'label'=>lang::get('LANG_Comment')
-    ), $options)); 
+    ), $options));
   }
- 
+
     protected static function get_control_spatialreference($auth, $args, $tabalias, $options) {
       $options = array_merge($options, array('fieldname' => 'location:centroid_sref'));
       return parent::get_control_spatialreference($auth, $args, $tabalias, $options);
@@ -368,14 +368,14 @@ mapInitialisationHooks.push(function(mapdiv) {
       'readAuth' => $auth['read'],
       'caption'=>lang::get('File upload'),
       'readAuth' => $auth['read']
-    ), $options)); 
+    ), $options));
   }
-  
+
 
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
@@ -396,12 +396,12 @@ mapInitialisationHooks.push(function(mapdiv) {
       );
     }
     $s = submission_builder::build_submission($values, $structure);
-   
+
     // On first save of a new location, link it to the website.
     // Be careful not to over-write other subModels (e.g. images)
     if (empty($values['location:id'])) {
       $s['subModels'][] = array(
-          'fkId' => 'location_id', 
+          'fkId' => 'location_id',
           'model' => array(
             'id' => 'locations_website',
             'fields' => array(
@@ -412,7 +412,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       // also, on first save we might be linking to a group
       if (!empty($values['group_id']))
         $s['subModels'][] = array(
-            'fkId' => 'location_id', 
+            'fkId' => 'location_id',
             'model' => array(
               'id' => 'groups_location',
               'fields' => array(
@@ -437,24 +437,24 @@ mapInitialisationHooks.push(function(mapdiv) {
       return lang::get('Before using this facility, please <a href="'.
           hostsite_get_url('user/login', array('destination'=>"node/$nid")).'">login</a> to the website.');
     }
-    
+
     // get the Indicia User ID attribute so we can filter the grid to this user
     if (function_exists('hostsite_get_user_field')) {
       $iUserId = hostsite_get_user_field('indicia_user_id');
     }
-    
+
     if (!isset($iUserId) || !$iUserId) {
       return lang::get('LANG_No_User_Id');
     }
-    
+
     // Subclassed forms may provide a getLocationListGridPreamble function
     if(method_exists(self::$called_class, 'getLocationListGridPreamble'))
       $r = call_user_func(array(self::$called_class, 'getLocationListGridPreamble'));
     else
       $r = '';
-    
+
     $extraParams = array(
-      'website_id' => $args['website_id'], 
+      'website_id' => $args['website_id'],
       'iUserID' => $iUserId,
     );
     if (!$args['list_all_locations']) {
@@ -471,22 +471,22 @@ mapInitialisationHooks.push(function(mapdiv) {
       'autoParamsForm' => true,
       'extraParams' => $extraParams,
       'paramDefaults' => array('ownData' => '1')
-    ));    
-    $r .= '<form>';    
+    ));
+    $r .= '<form>';
     $r .= '<input type="button" value="' . lang::get('LANG_Add_Location') . '" ' .
             'onclick="window.location.href=\'' . hostsite_get_url('node/'.($nid->nid), array('new' => '1')) . '\'">';
     $r .= '</form>';
     return $r;
   }
-  
+
   /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
   protected static function getArgDefaults($args) {
      if (!isset($args['structure']) || empty($args['structure']))
-      $args['structure'] = 
+      $args['structure'] =
               "=Place=\r\n".
               "?Please provide the spatial reference of the location. You can enter the reference directly, or search for a place then click on the map to set it.?\r\n".
               "[location name]\r\n".
@@ -507,23 +507,24 @@ mapInitialisationHooks.push(function(mapdiv) {
   }
 
   protected static function getReportActions() {
-    return array(array( 'display' => 'Actions', 
-                        'actions' =>  array(array('caption' => lang::get('Edit'), 
-                                                  'url' => '{currentUrl}', 
+    return array(array( 'display' => 'Actions',
+                        'actions' =>  array(array('caption' => lang::get('Edit'),
+                                                  'url' => '{currentUrl}',
                                                   'urlParams' => array('location_id'=>'{id}'),
                                                   'visibility_field' => 'editable'))
     ));
   }
-  
-  /** 
+
+  /**
    * Override the default submit buttons to add a delete button where appropriate.
    */
   protected static function getSubmitButtons($args) {
     $r = '';
-    $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.lang::get('Submit')."\" />\n";
+    global $indicia_templates;
+    $r .= '<input type="submit" class="' . $indicia_templates['buttonDefaultClass'] . '" id="save-button" value="'.lang::get('Submit')."\" />\n";
     if (!empty(data_entry_helper::$entity_to_load['location:id'])) {
       // use a button here, not input, as Chrome does not post the input value
-      $r .= '<button type="submit" class="indicia-button" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
+      $r .= '<button type="submit" class="' . $indicia_templates['buttonWarningClass'] . '" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
       data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
         if (!confirm(\"Are you sure you want to delete this location?\")) {
           e.preventDefault();
@@ -533,6 +534,6 @@ mapInitialisationHooks.push(function(mapdiv) {
     }
     return $r;
   }
-  
+
 }
 

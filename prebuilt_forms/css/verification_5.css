@@ -416,3 +416,10 @@ tr.total {
 .grid-verify-popup label, .grid-verify-popup label * {
   vertical-align: middle;
 }
+/* line 310, sass/verification_5.scss */
+div#map-loading {
+  right: auto;
+  bottom: auto;
+  width: 32px;
+  height: 32px;
+}

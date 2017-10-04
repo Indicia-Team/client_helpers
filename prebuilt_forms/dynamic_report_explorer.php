@@ -31,27 +31,27 @@ require_once('includes/report_filters.php');
  * @subpackage PrebuiltForms
  */
 class iform_dynamic_report_explorer extends iform_dynamic {
-  
+
   /**
    * Count the total number of reports for this page request so we can generate unique ids.
    * @var integer
    */
-  private static $requestReportCount=0;
+  private static $requestReportCount = 0;
 
   /**
    * Count the reports on this node instance to link reports to the correct set of column configurations.
    * * @var integer
    */
-  private static $reportCount=0;
-  
+  private static $reportCount = 0;
+
   /**
-   * If using the standard params system then the way of supplying user prefs is different. Default to 
-   * use the old ownData/ownGroups/ownLocality way. 
+   * If using the standard params system then the way of supplying user prefs is different. Default to
+   * use the old ownData/ownGroups/ownLocality way.
    * @var bool
    */
-  private static $applyUserPrefs=true;
-  
-  /** 
+  private static $applyUserPrefs = TRUE;
+
+  /**
    * Return the form metadata.
    */
   public static function get_dynamic_report_explorer_definition() {
@@ -60,24 +60,24 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       'category' => 'Reporting',
       'description' => 'Provides a dynamically output page which can contain a map and several reports, potentially '.
           'organised onto several tabs.',
-      'recommended' => true
+      'recommended' => TRUE
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array_merge(
       iform_map_get_map_parameters(),
       array(
         array(
-          'name'=>'interface',
-          'caption'=>'Interface Style Option',
-          'description'=>'Choose the style of user interface, either dividing the form up onto separate tabs, '.
+          'name' => 'interface',
+          'caption' => 'Interface Style Option',
+          'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, '.
             'wizard pages or having all controls on a single page.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'tabs' => 'Tabs',
             'wizard' => 'Wizard',
@@ -87,9 +87,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'structure',
-          'caption'=>'Form Structure',
-          'description'=>'Define the structure of the form. Each component must be placed on a new line. <br/>'.
+          'name' => 'structure',
+          'caption' => 'Form Structure',
+          'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>'.
               "The following types of component can be specified. <br/>".
                   "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>".
                   "&nbsp;&nbsp;<strong>[params]</strong> - a parameters input form for the reports/map<br/>".
@@ -102,8 +102,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
               "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
               "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
               "<strong>|</strong> is used to split a tab/page/section into two columns, place a [control name] on the previous line and following line to split.<br/>",
-          'type'=>'textarea',
-          'default' => 
+          'type' => 'textarea',
+          'default' =>
 '[params]
 @dataSource=library/occurrences/explore_list
 =Map=
@@ -123,8 +123,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
               'use {profile_*} to refer to the value of a field in the user\'s profile (replace the asterisk to make the field name match the field created in the profile). '.
               'Parameters with preset values are not shown in the parameters form and therefore can\'t be overridden by the user.',
           'type' => 'textarea',
-          'required' => false,
-          'group'=>'Report Settings',
+          'required' => FALSE,
+          'group' => 'Report Settings',
           'default' => "smpattrs=\noccattrs=\nlocation_id={profile_location}\ntaxon_groups={profile_taxon_groups}\ncurrentUser={profile_indicia_user_id}"
         ), array(
           'name' => 'param_defaults',
@@ -135,8 +135,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
               'use {profile_*} to refer to the value of a field in the user\'s profile (replace the asterisk to make the field name match the field created in the profile). '.
               'Unlike preset parameter values, parameters referred to by default parameter values are displayed in the parameters form and can therefore be changed by the user.',
           'type' => 'textarea',
-          'required' => false,
-          'group'=>'Report Settings',
+          'required' => FALSE,
+          'group' => 'Report Settings',
           'default' => "idlist=\nsearchArea="
         ), array(
           'name' => 'param_ignores',
@@ -144,8 +144,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
           'description' => 'Provide a list of the parameter names which are in the Default Parameter Values but should not appear in the parameters form. An example usage of this '.
               'is to provide parameters that can be overridden via a URL parameter.',
           'type' => 'textarea',
-          'required' => false,
-          'group'=>'Report Settings'
+          'required' => FALSE,
+          'group' => 'Report Settings'
         ), array(
           'name' => 'columns_config_list',
           'caption' => 'Columns Configuration List',
@@ -242,30 +242,31 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   }
 ]
 }',
-          'required' => false,
-          'group'=>'Report Settings'
+          'required' => FALSE,
+          'group' => 'Report Settings'
         ),
         array(
-          'name'=>'high_volume',
-          'caption'=>'High volume reporting',
-          'description'=>'Tick this box to enable caching which prevents reporting pages with a high number of hits from generating ' .
+          'name' => 'high_volume',
+          'caption' => 'High volume reporting',
+          'description' => 'Tick this box to enable caching which prevents reporting pages with a high number of hits from generating ' .
               'excessive server load. Currently compatible only with reporting pages that do not integrate with the user profile.',
-          'type'=>'boolean',
-          'default' => false,
-          'required' => false
+          'type' => 'boolean',
+          'default' => FALSE,
+          'required' => FALSE
         ),
         array(
-          'name'=>'sharing',
-          'caption'=>'Record sharing mode',
-          'description'=>'Tick this box to enable caching which prevents reporting pages with a high number of hits from generating ' .
-              'excessive server load. Currently compatible only with reporting pages that do not integrate with the user profile.',
-          'type'=>'select',
+          'name' => 'sharing',
+          'caption' => 'Record sharing mode',
+          'description' => 'Identify the task this page is being used for, which determines the websites that will ' .
+            'share records for use here.',
+          'type' => 'select',
           'options' => array(
             'reporting' => 'Reporting',
             'peer_review' => 'Peer review',
             'verification' => 'Verification',
             'data_flow' => 'Data flow',
             'moderation' => 'Moderation',
+            'editing' => 'Editing',
             'me' => 'My records only'
           ),
           'default' => 'reporting',
@@ -274,21 +275,21 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       )
     );
   }
-  
+
   protected static function getHeader($args) {
     return '';
   }
-  
+
   protected static function getFooter($args) {
     return '';
   }
-    
+
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     return '';
   }
-  
+
   /**
-   * Override the get_form to fetch our own auth tokens. This skips the write auth as it is unnecessary, 
+   * Override the get_form to fetch our own auth tokens. This skips the write auth as it is unnecessary,
    * which makes the tokens cachable therefore faster. It does mean that $auth['write'] will not be available.
    */
   public static function get_form($args, $nid) {
@@ -298,28 +299,34 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
     return parent::get_form($args, $nid);
   }
- 
+
   /**
    * Retrieves a [params] control, containing the report parameters.
-   * @param type $auth Authorisation tokens
-   * @param type $args Form configuration parameters from the Drupal edit page.
-   * @param type $tabalias Unique identified for the tab we are loading onto.
-   * @param type $options Options for this control as configured using @ overrides in the 
-   * Drupal edit page's User Interface configuration.
-   * @return type 
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form configuration parameters from the Drupal edit page.
+   * @param string $tabalias
+   *   Unique identified for the tab we are loading onto.
+   * @param array $options
+   *   Options for this control as configured using @ overrides in the Drupal edit page's User Interface configuration.
+   *
+   * @return string
+   *   Control HTML
    */
   protected static function get_control_params($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
-    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
-    $args['report_name']='';
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    // Allow us to call iform_report_get_report_options to get a default report setup, then override report_name.
+    $args['report_name'] = '';
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
-        'reportGroup'=>'dynamic',
-        'paramsOnly'=>true,
-        'sharing'=>$sharing,
-        'paramsFormButtonCaption'=>lang::get('Filter')
+        'reportGroup' => 'dynamic',
+        'paramsOnly' => TRUE,
+        'sharing' => $sharing,
+        'paramsFormButtonCaption' => lang::get('Filter')
       )
     );
     // ensure supplied extraParams are merged, not overwritten
@@ -330,12 +337,12 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       iform_report_apply_explore_user_own_preferences($reportOptions);
     return report_helper::report_grid($reportOptions);
   }
- 
+
   protected static function get_control_map($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper','report_helper'));
     // $_GET data for standard params can override displayed location
     if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
-      $args['display_user_profile_location']=false;
+      $args['display_user_profile_location']=FALSE;
       if (!empty($_GET['filter-indexed_location_id']))
         $args['location_boundary_id']=$_GET['filter-indexed_location_id'];
       elseif (!empty($_GET['filter-location_id']))
@@ -347,14 +354,14 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
-        'reportGroup'=>'dynamic',
-        'autoParamsForm'=>false,
+        'reportGroup' => 'dynamic',
+        'autoParamsForm'=>FALSE,
         'sharing'=>$sharing,
         'readAuth' => $auth['read'],
         'dataSource'=> $options['dataSource'],
-        'rememberParamsReportGroup'=>'dynamic',
-        'clickableLayersOutputMode'=>'report',
-        'rowId'=>'occurrence_id',
+        'rememberParamsReportGroup' => 'dynamic',
+        'clickableLayersOutputMode' => 'report',
+        'rowId' => 'occurrence_id',
         'ajax'=>TRUE
       )
     );
@@ -368,10 +375,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
       array(
-        'featureIdField'=>'occurrence_id',
-        'clickForSpatialRef'=>false,
-        'reportGroup'=>'explore',
-        'toolbarDiv'=>'top',
+        'featureIdField' => 'occurrence_id',
+        'clickForSpatialRef'=>FALSE,
+        'reportGroup' => 'explore',
+        'toolbarDiv' => 'top',
       ),
       $options
     );
@@ -381,7 +388,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $r .= map_helper::map_panel($options, $olOptions);
     return $r;
   }
- 
+
   protected static function get_control_reportgrid($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
     $columnLists = json_decode($args['columns_config_list']);
@@ -394,18 +401,18 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
-        'reportGroup'=>'dynamic',
-        'autoParamsForm'=>false,
+        'reportGroup' => 'dynamic',
+        'autoParamsForm'=>FALSE,
         'sharing'=>$sharing,
-        'ajax'=>true,
-        'id'=>'report-grid-'.self::$requestReportCount,
+        'ajax'=>TRUE,
+        'id' => 'report-grid-'.self::$requestReportCount,
         'responsiveOpts' => array(
           'breakpoints' => array(
             'phone' => 480,
             'tablet-portrait' => 768,
             'tablet-landscape' => 1024,
           ),
-        ),           
+        ),
       )
     );
     // ensure supplied extraParams are merged, not overwritten
@@ -430,10 +437,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
-        'reportGroup'=>'dynamic',
-        'autoParamsForm'=>false,
+        'reportGroup' => 'dynamic',
+        'autoParamsForm'=>FALSE,
         'sharing'=>$sharing,
-        'id'=>'report-freeform-'.self::$reportCount
+        'id' => 'report-freeform-'.self::$reportCount
       )
     );
     // ensure supplied extraParams are merged, not overwritten
@@ -445,7 +452,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     self::$reportCount++;
     return report_helper::freeform_report($reportOptions);
   }
-  
+
   /*
    * Report chart control.
    * Currently take its parameters from $options in the Form Structure.
@@ -465,10 +472,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       iform_report_get_report_options($args, $auth['read']),
       array(
         'id' => 'chart-'.self::$reportCount,
-        'reportGroup'=>'dynamic',
+        'reportGroup' => 'dynamic',
         'width'=> '100%',
         'height'=> 500,
-        'autoParamsForm'=>false
+        'autoParamsForm'=>FALSE
       )
     );
     // ensure supplied extraParams are merged, not overwritten
@@ -482,15 +489,15 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       $reportOptions['xValues']=explode(',', $reportOptions['xValues']);
     if (!empty($reportOptions['xLabels']) && !is_array($reportOptions['xLabels']))
       $reportOptions['xLabels']=explode(',', $reportOptions['xLabels']);
-    
+
     return report_helper::report_chart($reportOptions);
   }
-  
+
   /*
    * Report chart params control.
    * Currently take its parameters from $options in the Form Structure.
    */
-  protected static function get_control_reportchartparams($auth, $args, $tabalias, $options) { 
+  protected static function get_control_reportchartparams($auth, $args, $tabalias, $options) {
     if (!isset($options['yValues'])||!isset($options['dataSource'])||!isset($options['chartType'])) {
       $r = '<h4>Please fill in the following options for the chart parameters control: yValues, dataSource, chartType</h4>';
       return $r;
@@ -502,9 +509,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       iform_report_get_report_options($args, $auth),
       $options,
       array(
-        'reportGroup'=>'dynamic',
+        'reportGroup' => 'dynamic',
         //as we aren't returning the report set paramsOnly
-        'paramsOnly'=>true,
+        'paramsOnly'=>TRUE,
         'sharing'=>$sharing,
         'paramsFormButtonCaption'=>lang::get('Filter'),
         'yValues'=>explode(',', $options['yValues']),
@@ -515,11 +522,11 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $r = '<br/>'.report_helper::report_chart($options);
     return $r;
   }
-  
+
   protected static function get_control_standardparams($auth, $args, $tabalias, $options) {
-    self::$applyUserPrefs=false;
+    self::$applyUserPrefs=FALSE;
     $options = array_merge(array(
-      'allowSave' => true,
+      'allowSave' => TRUE,
       'sharing' => empty($args['sharing']) ? 'reporting' : $args['sharing']
     ), $options);
     if ($args['redirect_on_success'])
@@ -544,13 +551,13 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $r = report_filter_panel($auth['read'], $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
   }
-  
+
   /**
    * Disable save buttons for this form class. Not a data entry form...
-   * @return boolean 
+   * @return boolean
    */
   protected static function include_save_buttons() {
-    return FALSE;  
+    return FALSE;
   }
 
 }

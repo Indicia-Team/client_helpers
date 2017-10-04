@@ -25,7 +25,7 @@
  * @package Client
  * @subpackage PrebuiltForms.
  */
- 
+
 /**
  * Retrieve the html for a block of attributes.
  * @param array $attributes Array of attributes as returned from a call to data_entry_helper::getAttributes.
@@ -37,7 +37,7 @@
  * @param array $idPrefix Optional prefix to give to IDs (e.g. for fieldsets) to allow you to ensure they remain unique.
  */
 
-function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter=null, 
+function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter=null,
     $attrSpecificOptions=null, $idPrefix='', $helperClass = 'data_entry_helper') {
   $lastOuterBlock='';
   $lastInnerBlock='';
@@ -78,8 +78,8 @@ function get_attribute_html(&$attributes, $args, $ctrlOptions, $outerFilter=null
         $optionFieldName = $fieldNameParts[count($fieldNameParts)-2] . ':' . $fieldNameParts[count($fieldNameParts)-1];
       elseif (preg_match('/[a-za-za-z]Attr/', $fieldNameParts[count($fieldNameParts)-3]))
         $optionFieldName = $fieldNameParts[count($fieldNameParts)-3] . ':' . $fieldNameParts[count($fieldNameParts)-2];
-      else 
-        throw new exception('Option fieldname not found');
+      else
+        throw new exception('Option fieldname not found ' . $attribute['fieldname']);
       if (isset($attrSpecificOptions[$optionFieldName])) {
         $options = array_merge($options, $attrSpecificOptions[$optionFieldName]);
       }
@@ -124,17 +124,17 @@ function get_attr_validation($attribute, $args) {
 }
 
 /**
- * Function to build an id for a fieldset from the block nesting data. Giving them a unique id helps if 
+ * Function to build an id for a fieldset from the block nesting data. Giving them a unique id helps if
  * you want to do interesting things with JavaScript for example.
  */
 function get_fieldset_id($outerBlock, $innerBlock='', $idPrefix='') {
   $parts = array();
   if (!empty($idPrefix))
     $parts[] = $idPrefix;
-  $parts[] = 'fieldset';  
-  if (!empty($outerBlock)) 
+  $parts[] = 'fieldset';
+  if (!empty($outerBlock))
     $parts[]=substr($outerBlock, 0, 20);
-  if (!empty($innerBlock)) 
+  if (!empty($innerBlock))
     $parts[]=substr($innerBlock, 0, 20);
   $r = implode('-', $parts);
   // Make it lowercase and no whitespace or other special chars
@@ -152,8 +152,8 @@ function get_attribute_tabs(&$attributes) {
   $r = array();
   foreach($attributes as &$attribute) {
     if (!isset($attribute['handled']) || $attribute['handled']!=true) {
-      // Assign any ungrouped attributes to a block called Other Information 
-      if (empty($attribute['outer_structure_block'])) 
+      // Assign any ungrouped attributes to a block called Other Information
+      if (empty($attribute['outer_structure_block']))
         $attribute['outer_structure_block']='Other Information';
       if (!array_key_exists($attribute['outer_structure_block'], $r))
         // Create a tab for this structure block and mark it with [*] so the content goes in
@@ -163,7 +163,7 @@ function get_attribute_tabs(&$attributes) {
   return $r;
 }
 
-/** 
+/**
  * Find the attribute called CMS User ID, or return false.
  * @param array $attributes List of attributes returned by a call to data_entry_helper::getAttributes.
  * @param bool $unset If true (default) then the CMS User ID attributes are removed from the array.
@@ -189,14 +189,14 @@ function extract_cms_user_attr(&$attributes, $unset=true) {
 /**
  * Returns a list of hidden inputs which are extracted from the form attributes which can be extracted
  * from the user's profile information in Drupal. The attributes which are used are marked as handled
- * so they don't need to be output elsewhere on the form. This function also handles non-profile based 
+ * so they don't need to be output elsewhere on the form. This function also handles non-profile based
  * CMS User ID, Username, and Email; and also special processing for names.
  * @param array $attributes List of form attributes.
  * @param array $args List of form arguments. Can include values called:
  *   copyFromProfile - boolean indicating if values should be copied from the profile when the names match
  *   nameShow - boolean, if true then name values should be displayed rather than hidden.
- *     In fact this extends to all profile fields whose names match attribute 
- *     captions. E.g. in D7, field_age would populate an attribute with caption 
+ *     In fact this extends to all profile fields whose names match attribute
+ *     captions. E.g. in D7, field_age would populate an attribute with caption
  *     age.
  *   emailShow - boolean, if true then email values should be displayed rather than hidden.
  * @param boolean $exists Pass true for an existing record. If the record exists, then the attributes
@@ -206,7 +206,7 @@ function extract_cms_user_attr(&$attributes, $unset=true) {
  */
 function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth) {
   // This is Drupal specific code
-  
+
   $logged_in = hostsite_get_user_field('id') > 0;
   // If the user is not logged in there is no profile so return early.
   if (!$logged_in) {
@@ -217,7 +217,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
     }
     return '';
   }
-   
+
   $hiddens = '';
   foreach($attributes as &$attribute) {
     $value = hostsite_get_user_field(strtolower(str_replace(' ', '_', $attribute['untranslatedCaption'])));
@@ -230,7 +230,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
         ));
         $value = (count($terms) > 0) ? $terms[0]['id'] : '';
       }
-      
+
       if (isset($args['nameShow']) && $args['nameShow'] == true) {
         // Show the attribute with default value.
         $attribute['default'] = $value;
@@ -257,7 +257,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
       else {
         // Hide the email value
         $attribute['value'] = hostsite_get_user_field('mail');
-        $attribute['handled'] = true; 
+        $attribute['handled'] = true;
       }
     }
     elseif ((strcasecmp($attribute['caption'], 'first name') == 0 ||
@@ -265,14 +265,14 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
         strcasecmp($attribute['caption'], 'surname') == 0)) {
       // This would be the case where the warehouse is configured to store these
       // values but there are no matching profile fields
-      if (!isset($args['nameShow']) || $args['nameShow'] != true) {  
+      if (!isset($args['nameShow']) || $args['nameShow'] != true) {
         // Name attributes are not displayed because we have the users login.
         $attribute['handled'] = true;
       }
     }
-    // If we have a value for one of the user login attributes then we need to 
-    // output this value. BUT, for existing data we must not overwrite the user 
-    // who created the record. Note that we don't do this at the beginning of 
+    // If we have a value for one of the user login attributes then we need to
+    // output this value. BUT, for existing data we must not overwrite the user
+    // who created the record. Note that we don't do this at the beginning of
     // the method as we still wanted to mark the attributes as handled.
     if (isset($attribute['value']) && !$exists) {
       $hiddens .= '<input type="hidden" name="' . $attribute['fieldname'] . '" value="' . $attribute['value'] . '" />' . "\n";
@@ -282,7 +282,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
 }
 
 /**
- * Variant on the profile modules profile_load_profile, that also gets empty profile values. 
+ * Variant on the profile modules profile_load_profile, that also gets empty profile values.
  */
 function profile_load_all_profile(&$user) {
   // don't do anything unless in Drupal, with the profile module enabled, and the user logged in.
@@ -290,7 +290,7 @@ function profile_load_all_profile(&$user) {
     $result = db_query('SELECT f.name, f.type, v.value FROM {profile_fields} f LEFT JOIN {profile_values} v ON f.fid = v.fid AND uid = %d', $user->uid);
     while ($field = db_fetch_object($result)) {
       if (empty($user->{$field->name})) {
-        if (empty($field->value)) 
+        if (empty($field->value))
           $user->{$field->name} = '';
         else
           $user->{$field->name} = _profile_field_serialize($field->type) ? unserialize($field->value) : $field->value;

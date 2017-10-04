@@ -241,19 +241,6 @@ class iform_wwt_colour_marked_report {
           'siteSpecific'=>true
         ),
         array(
-          'fieldname'=>'cache_lookup',
-          'label'=>'Cache lookups',
-          'helpText'=>'Tick this box to select to use a cached version of the lookup list when '.
-              'searching for extra species names to add to the grid, or set to false to use the '.
-              'live version (default). The latter is slower and places more load on the warehouse so should only be '.
-              'used during development or when there is a specific need to reflect taxa that have only '.
-              'just been added to the list.',
-          'type'=>'checkbox',
-          'required'=>false,
-          'group'=>'Species',
-          'siteSpecific'=>false
-        ),
-        array(
           'name'=>'species_ctrl',
           'caption'=>'Single Species Selection Control Type',
           'description'=>'The type of control that will be available to select a single species.',
@@ -1504,7 +1491,6 @@ class iform_wwt_colour_marked_report {
           'occurrenceImages'=>$args['observation_images'],
           'PHPtaxonLabel' => true,
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), // used for termlists in attributes
-          'cacheLookup' => isset($args['cache_lookup']) && $args['cache_lookup'],
           'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),          
       ), $options);
       if ($args['extra_list_id']) $species_ctrl_opts['lookupListId']=$args['extra_list_id'];
@@ -1538,17 +1524,16 @@ class iform_wwt_colour_marked_report {
         $query = array();
       // Apply the species names filter to the single species picker control
       if (isset($args['species_names_filter'])) {
-        $languageFieldName = isset($args['cache_lookup']) && $args['cache_lookup'] ? 'language_iso' : 'language';
         switch($args['species_names_filter']) {
           case 'preferred' :
             $extraParams += array('preferred'=>'t');
             break;
           case 'currentLanguage' :
             if (isset($options['language']))
-              $extraParams += array($languageFieldName=>$options['language']);
+              $extraParams += array('language_iso' => $options['language']);
             break;
           case 'excludeSynonyms':
-            $query['where'] = array("(preferred='t' OR $languageFieldName<>'lat')");
+            $query['where'] = array("(preferred='t' OR language_iso<>'lat')");
             break;
         }
       }
@@ -1563,10 +1548,9 @@ class iform_wwt_colour_marked_report {
           'columns'=>2,
           'parentField'=>'parent_id',
           'extraParams'=>$extraParams,
-          'blankText'=>'Please select'
+          'blankText'=>'Please select',
+          'view' => 'cache'
       ), $options);
-      if (isset($args['cache_lookup']) && $args['cache_lookup'])
-        $species_ctrl_opts['extraParams']['view']='cache';
       global $indicia_templates;
       if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
         if ($args['species_names_filter']=='all')

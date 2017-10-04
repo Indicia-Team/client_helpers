@@ -351,20 +351,21 @@ class iform_my_dot_map {
    * @todo: Implement this method
    */
   public static function get_form($args) {
+    global $indicia_templates;
     if (function_exists('hostsite_get_user_field')) {
       $lang = iform_lang_iso_639_2(hostsite_get_user_field('language', 'en'));
     }
     else {
       $lang = 'eng';
     }
-    
+
     if (function_exists('iform_load_helpers')) {
       iform_load_helpers(array('map_helper'));
-    } 
+    }
     else {
       require_once dirname(dirname(__FILE__)) . '/map_helper.php';
     }
-    
+
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $r = '';
     // setup the map options
@@ -391,17 +392,17 @@ class iform_my_dot_map {
       if ($layerName) {
         $options['layers'][] = $layerName;
       }
-      $layerName = self::build_distribution_layer(1, $args, $occurrence);            
-      if ($layerName) {        
+      $layerName = self::build_distribution_layer(1, $args, $occurrence);
+      if ($layerName) {
         $options['layers'][] = $layerName;
       }
       if ($layerName) $options['layers'][] = $layerName;
       // This is not a map used for input
       $options['editLayer']=false;
-      
+
       if ($args['hide_grid'] == false) {
         // Now output a grid of the occurrences that were just saved.
-        $r .= "<table class=\"submission\"><thead><tr><th>".lang::get('Species')."</th><th>".lang::get('Latin Name').
+        $r .= "<table class=\"submission table\"><thead><tr><th>".lang::get('Species')."</th><th>".lang::get('Latin Name').
             "</th><th>".lang::get('Abundance')."</th><th>".lang::get('Date')."</th><th>".lang::get('Spatial Ref')."</th>".
             "</th><th>".lang::get('Comment')."</th></tr></thead>\n";
         $r .= "<tbody>\n";
@@ -415,13 +416,13 @@ class iform_my_dot_map {
     if (!empty($args['add_another_link'])) {
       $path = $args['add_another_link'];
       if (count($occurrence)===1) {
-        $path = str_replace(array('#taxon_meaning_id#', '#external_key#'), 
+        $path = str_replace(array('#taxon_meaning_id#', '#external_key#'),
             array($occurrence[0]['taxon_meaning_id'], $occurrence[0]['external_key']), $path);
         $parts = explode('?', $path, 2);
         $parts[0] = url($parts[0]);
         $path = implode('?', $parts);
       }
-      $r .= '<a class="indicia-button" href="'.$path.'">'.lang::get('Add another record').'</a><br/>';
+      $r .= '<a class="' . $indicia_templates['anchorButtonClass'] . '" href="'.$path.'">'.lang::get('Add another record').'</a><br/>';
     }
     $r .= '<div id="mapandlegend">';
     $r .= map_helper::layer_list(array(
@@ -441,16 +442,21 @@ class iform_my_dot_map {
    * {survey} with the survey name,
    * @access private
    */
-  private static function prepare_layer_titles(&$args, $occurrence) {
-    $species = array();
-    foreach ($occurrence as $record) {
-      $species[] = empty($record['taxon']) ? $record['preferrred_taxon'] : $record['taxon'];
-      $survey = $record['survey_title'];
+  private static function prepare_layer_titles(&$args, $occurrences) {
+    if (count($occurrences) <= 4) {
+      $speciesList = array();
+      foreach ($occurrences as $record) {
+        $speciesList[] = empty($record['taxon']) ? $record['preferrred_taxon'] : $record['taxon'];
+        $survey = $record['survey_title'];
+      }
+      $last=array_pop($speciesList);
+      $species = implode(', ',$speciesList);
+      $species .= (empty($species) ? '' : ' ' . lang::get('and') . ' ') . $last;
+    } else {
+      $species = lang::get('these species');
+      $survey = $occurrences[0]['survey_title'];
     }
-    $last=array_pop($species);
-    $species = implode(', ',$species);
-    $species.= (empty($species) ? '' : ' ' . lang::get('and') . ' ') . $last;
-    
+
     for ($i = 1; $i<=3; $i++) {
       $args['wms_dist_'.$i.'_title'] = str_replace(array('{species}','{survey}'), array($species, $survey), $args['wms_dist_'.$i.'_title']);
     }
@@ -474,7 +480,7 @@ class iform_my_dot_map {
         data_entry_helper::$onload_javascript .= "var filters = new Array();\n";
         $filterField = $args["wms_dist_{$layerId}_internal"] ? $args["wms_dist_{$layerId}_filter_against"] : $args["wms_dist_{$layerId}_filter_field"];
         // Use an array of handled values so we only build each distinct filter once
-        $handled = array();        
+        $handled = array();
         foreach($occurrence as $record) {
           $filterValue = $record[$args["wms_dist_{$layerId}_filter_against"]];
           if (!in_array($filterValue, $handled)) {
@@ -484,7 +490,7 @@ class iform_my_dot_map {
         }
       }
       // Set up the record_status filter if there is one
-      
+
       if (isset($args["wms_dist_{$layerId}_status_filter"])) {
         $status_filter = '';
         foreach ($args["wms_dist_{$layerId}_status_filter"] as $key => $value) {
@@ -499,18 +505,18 @@ class iform_my_dot_map {
           }
         }
       }
-      
+
       // force a filter on the website ID.
-      if ($filter !== '') 
+      if ($filter !== '')
         $filter = "($filter) AND ";
-      $filter .= "website_id=" . $args['website_id'];     
+      $filter .= "website_id=" . $args['website_id'];
       // Get the url, either the external one specified, or our internally registered GeoServer
       $url = $args["wms_dist_{$layerId}_internal"] ? data_entry_helper::$geoserver_url.'wms' : $args["wms_dist_{$layerId}_url"];
       // Get the style if there is one selected
       $style = $args["wms_dist_{$layerId}_style"] ? ", styles: '".$args["wms_dist_$layerId"."_style"]."'" : '';
       // and also the opacity
       $opacity = $args["wms_dist_{$layerId}_opacity"] ? $args["wms_dist_{$layerId}_opacity"] : 1;
-      if ($opacity != 1) 
+      if ($opacity != 1)
         $opacity = " opacity: $opacity,";
       else
         // don't set opacity if not required as it messes up printing in IE<=8
