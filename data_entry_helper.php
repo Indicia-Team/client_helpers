@@ -6257,7 +6257,7 @@ if (errors$uniq.length>0) {
           if ($srefPrecision) {
             $submodelKey .= ".$srefPrecision";
           }
-          if (!isset($subModels["$sref.$srefPrecision"])) {
+          if (!isset($subModels[$submodelKey])) {
             $subSample = array(
               'website_id' => $website_id,
               'survey_id' => empty($arr['survey_id']) ? '' : $arr['survey_id'],
@@ -6273,7 +6273,8 @@ if (errors$uniq.length>0) {
             // set an existing ID on the sample if editing
             if (!empty($existingSampleIdsBySref[$submodelKey])) {
               $subSample['id'] = $existingSampleIdsBySref[$submodelKey];
-              if ($key = array_search($subSample['id'], $unusedExistingSampleIds)) {
+              $key = array_search($subSample['id'], $unusedExistingSampleIds);
+              if ($key !== FALSE) {
                 unset($unusedExistingSampleIds[$key]);
               }
             }
@@ -6681,7 +6682,9 @@ HTML;
         $dataKey = strtoupper(self::$entity_to_load[$srefKey]);
         if ($options['spatialRefPrecisionAttrId']) {
           $precisionKey = preg_replace('/:id$/', ':sref_precision', $sampleIdKey);
-          $dataKey .= '.' . self::$entity_to_load[$precisionKey];
+          if (!empty(self::$entity_to_load[$precisionKey])) {
+            $dataKey .= '.' . self::$entity_to_load[$precisionKey];
+          }
         }
         $data[$dataKey] = self::$entity_to_load[$sampleIdKey];
         $geomKey = preg_replace('/:id$/', ':geom', $sampleIdKey);
