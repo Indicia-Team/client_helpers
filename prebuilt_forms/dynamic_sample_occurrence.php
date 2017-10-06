@@ -1779,9 +1779,12 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $value = apply_user_replacements($value);
     }
 
-    $location_list_args=array_merge_recursive(array(
-      'extraParams'=>array_merge(array('orderby'=>'name'), $auth['read'])
-    ), $options);
+    $extraParams = array_merge(array('orderby' => 'name'), $auth['read']);
+    if (isset($options['extraParams'])) {
+      $extraParams = array_merge($extraParams, $options['extraParams']);
+    }    
+    $location_list_args = array_merge($options, array('extraParams' => $extraParams));
+
     if (!isset($location_list_args['label']))
       $location_list_args['label'] = lang::get('LANG_Location_Label');
     if ((isset($args['users_manage_own_sites']) && $args['users_manage_own_sites'])
