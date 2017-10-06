@@ -2127,7 +2127,8 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
           $proxy = '';
         }
         $layerUrl = $proxy . self::$geoserver_url . 'wms';
-        report_helper::$javascript .= "  indiciaData.reportlayer = new OpenLayers.Layer.WMS('Report output',
+        $layerTitle = lang::get('Report output');
+        report_helper::$javascript .= "  indiciaData.reportlayer = new OpenLayers.Layer.WMS('$layerTitle',
       '$layerUrl', { layers: '".$options['geoserverLayer']."', transparent: true,
           $filter, $style},
       {singleTile: true, isBaseLayer: false, sphericalMercator: true});\n";
@@ -3084,6 +3085,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
   private static function addFeaturesLoadingJs($addFeaturesJs, $defsettings='',
       $selsettings='{"strokeColor":"#ff0000","fillColor":"#ff0000","strokeWidth":2}', $defStyleFns='', $selStyleFns='', $zoomToExtent=true,
       $featureDoubleOutlineColour='') {
+    $layerTitle = lang::get('Report output');
     // Note that we still need the Js to add the layer even if using AJAX (when $addFeaturesJs will be empty)
     report_helper::$javascript.= "
   if (typeof OpenLayers !== \"undefined\") {
@@ -3091,7 +3093,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     var selectStyle = new OpenLayers.Style($selsettings$selStyleFns);
     var styleMap = new OpenLayers.StyleMap({'default' : defaultStyle, 'select' : selectStyle});
     if (typeof indiciaData.reportlayer==='undefined') {
-    indiciaData.reportlayer = new OpenLayers.Layer.Vector('Report output', {styleMap: styleMap, rendererOptions: {zIndexing: true}});
+    indiciaData.reportlayer = new OpenLayers.Layer.Vector('$layerTitle', {styleMap: styleMap, rendererOptions: {zIndexing: true}});
     }";
     // If there are some special styles to apply, but the layer exists already, apply the styling
     if ($defStyleFns!=='' || $selStyleFns) {
