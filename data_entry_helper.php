@@ -4162,7 +4162,7 @@ JS;
         if ($options['spatialRefPrecisionAttrId']) {
           $attrs = self::get_species_checklist_col_responsive($options, 'spatialrefprecision');
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-spatialrefprecision-$i", lang::get('GPS precision'), $visibleColIdx, $options['colWidths'],
+            $options['id']."-spatialrefprecision-$i", lang::get('GPS precision (m)'), $visibleColIdx, $options['colWidths'],
             $attrs
           );
         }
@@ -4556,10 +4556,12 @@ JS;
 HTML;
     }
     if ($options['spatialRefPrecisionAttrId']) {
+      $title = lang::get('For GPS coordinates, provide the precision as a radius in metres.');
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-0">
   <input class="scSpatialRefPrecision" type="number" id="$fieldname:occurrence:spatialrefprecision"
-      name="$fieldname:occurrence:spatialrefprecision" value="" />
+      min="0" name="$fieldname:occurrence:spatialrefprecision" value=""
+      title="$title" />
 </td>
 HTML;
     }
@@ -6232,14 +6234,21 @@ if (errors$uniq.length>0) {
             $submodelKey .= ".$srefPrecision";
           }
           if (!isset($subModels[$submodelKey])) {
+            $system = empty($arr['sample:entered_sref_system']) ? '' : $arr['sample:entered_sref_system'];
+            // If the main sample is a grid system (not x,y or lat long which would be a numeric EPSG code) and the sref
+            // provided in finer grid ref looks like a lat long, treat it as a lat long.
+            if (!preg_match('/^\d+$/', $system) &&
+                preg_match('/^[+-]?[0-9]*(\.[0-9]*)?[NS]?,?\s+[+-]?[0-9]*(\.[0-9]*)?[EW]?$/', $sref)) {
+              $system = 4326;
+            }
             $subSample = array(
               'website_id' => $website_id,
               'survey_id' => empty($arr['survey_id']) ? '' : $arr['survey_id'],
               'date' => empty($arr['sample:date']) ? '' : $arr['sample:date'],
-              'entered_sref_system' => empty($arr['sample:entered_sref_system']) ? '' : $arr['sample:entered_sref_system'],
+              'entered_sref' => $sref,
+              'entered_sref_system' => $system,
               'location_name' => empty($arr['sample:location_name']) ? '' : $arr['sample:location_name'],
               'input_form' => empty($arr['sample:input_form']) ? '' : $arr['sample:input_form'],
-              'entered_sref' => $sref
             );
             if ($srefPrecision) {
               $subSample['smpAttr:' . $arr['scSpatialRefPrecisionAttrId']] = $srefPrecision;
@@ -6564,9 +6573,11 @@ HTML;
         }
       }
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialrefprecision";
+      $title = lang::get('For GPS coordinates, provide the precision as a radius in metres.');
       $r = <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-$colIdx">
-  <input class="scSpatialRefPrecision" type="number\" name="$fieldname" id="$fieldname" value="$value" />
+  <input class="scSpatialRefPrecision" type="number" name="$fieldname" id="$fieldname" value="$value"
+    min="0" title="$title" />
 </td>
 HTML;
     }
