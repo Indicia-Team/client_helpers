@@ -1294,26 +1294,13 @@ $(document).ready(function() {
         // Update Code
         // Next recalculate the code: only do this if the site is new
         if($('#location-id').length==0) {
-            $(this).addClass("working2");
-            $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location" +
-                      '?mode=json&view=detail&columns=code&parent_id=NULL' +
-                      '&auth_token='+indiciaData.readAuth.auth_token+
-                      '&reset_timeout=true&nonce='+indiciaData.readAuth.nonce,
-                  function(ldata) {
-                      var code = 1, thisCode,
-                          prefix = indiciaData.autogeneratePrefix +
-                              $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')+' option:selected').text() +
-                              indiciaData.autogeneratePrefix.substring(indiciaData.autogeneratePrefix.length-1);
-                      $.each(ldata, function(idx, country){
-                        if(country.code !== null &&
-                            country.code.substring(0, prefix.length) == prefix) {
-                          thisCode = parseInt(country.code.substring(prefix.length));
-                          if(code <= thisCode) { code = thisCode + 1; }
-                        }});
-                      $('#location-code').val(prefix+code);
-                      $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).removeClass("working2");
-                  }
-                );
+            // The calculation of the index is now transferred to the submission function on the page, as this is done
+            // at the last moment: prevents duplicates.
+            var code = indiciaData.autogeneratePrefix +
+                $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')+' option:selected').text() +
+                indiciaData.autogeneratePrefix.substring(indiciaData.autogeneratePrefix.length-1) +
+                '[INDEX]';
+            $('#location-code').val(code);
           }
       } else
         _countryChangeEnd(mainMapDiv, mapExtent, details.reproject, oldEditLayerProj);
