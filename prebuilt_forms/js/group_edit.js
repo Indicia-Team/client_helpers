@@ -12,7 +12,7 @@ jQuery(document).ready(function($) {
    * Handler for add admin or member buttons to do email checking
    */
   var addMemberByEmail = function(field) {
-    var searchedValue = $('#groups_user\\:' + field + '\\:search\\:person_name').val();
+    var searchedValue = $('#groups_user\\:' + field + '\\:search\\:person_name_unique').val();
     if (searchedValue.match(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/)) {
       var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
       $.getJSON(
@@ -34,7 +34,7 @@ jQuery(document).ready(function($) {
                 '&nbsp;</span>' + user.person_name + ' (' + user.email_address + ')' +
                 '<input type="hidden" name="groups_user:' + field + '[]" value="' + user.id + '"></li>'
               );
-              $('#groups_user\\:' + field + '\\:search\\:person_name').val('');
+              $('#groups_user\\:' + field + '\\:search\\:person_name_unique').val('');
             }
           }
         }
@@ -43,19 +43,20 @@ jQuery(document).ready(function($) {
   }
 
   /**
-   * Hook the email check handler to the member control add buttons
+   * Hook the email check handler to the member control add buttons.
    */
-  $('#groups_user\\:user_id\\:add, #groups_user\\:admin_user_id\\:add').click(function() {
-    var field = this.id==='groups_user:admin_user_id:add' ? 'admin_user_id' : 'user_id';
+  $('#groups_user\\:user_id\\:add, #groups_user\\:admin_user_id\\:add').click(function handleAddClick() {
+    var field = this.id.match(/admin_user_id/) ? 'admin_user_id' : 'user_id';
     addMemberByEmail(field);
   });
 
   /**
    * Hook the email check handler to the enter key on the search input box for members/admins
    */
-  $('#groups_user\\:user_id\\:search\\:person_name, #groups_user\\admin_user_id\\:search\\:person_name').keyup(function(e) {
+  $('#groups_user\\:user_id\\:search\\:person_name_unique, #groups_user\\:admin_user_id\\:search\\:person_name_unique').keyup(function(e) {
+    var field;
     if ((e.keyCode || e.which) == 13) {
-      var field = this.id==='groups_user:admin_user_id:add' ? 'admin_user_id' : 'user_id';
+      field = this.id.match(/admin_user_id/) ? 'admin_user_id' : 'user_id';
       addMemberByEmail(field);
     }
   });
@@ -70,7 +71,7 @@ jQuery(document).ready(function($) {
         alert('The show records at full precision setting has been unticked as it cannot be used with these settings.');
       }
       $('#group\\:view_full_precision').attr('disabled', true);
-    } 
+    }
     else {
       $('#group\\:view_full_precision').removeAttr('disabled');
     }
