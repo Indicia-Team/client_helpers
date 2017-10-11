@@ -121,39 +121,9 @@ class import_helper extends helper_base {
    * Returns the HTML for a simple file upload form.
    */
   private static function upload_form($options) {
-    if (empty($options['importPreventCommitBehaviour']))
-      $options['importPreventCommitBehaviour']='partial_import';
-    if (empty($options['importOccurrenceIntoSampleLogic']))
-      $options['importOccurrenceIntoSampleLogic']='consecutive_rows';   
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = '<form action="'.$reloadpath.'" method="post" enctype="multipart/form-data">';
-    //Import has two modes, only commit if no errors, or commit valid rows.
-    //This can be user controlled, or provided by the administrator as an argument
-    if ($options['importPreventCommitBehaviour']==='prevent')
-      $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" checked>';
-    if ($options['importPreventCommitBehaviour']==='partial_import')
-      $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" >';
-    if ($options['importPreventCommitBehaviour']==='user_defined') {
-      $r .= data_entry_helper::checkbox(array(
-        'label' => lang::get('Prevent commits on error'),
-        'fieldname' => 'preventCommitsOnError',
-        'helpText'=>'Select this checkbox to prevent the importing of any rows '
-          . 'if there are any errors at all. Leave this checkbox switched off to import valid rows.'
-      ));
-    }
-    if ($options['importOccurrenceIntoSampleLogic']==='sample_ext_key')
-      $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" checked>';
-    if ($options['importOccurrenceIntoSampleLogic']==='consecutive_rows')
-      $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" >';
-    if ($options['importOccurrenceIntoSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
-      $r .= data_entry_helper::checkbox(array(
-        'label' => lang::get('Use sample external key to match occurrences into sample'),
-        'fieldname' => 'importOccurrenceIntoSampleUsingExternalKey', 
-        'helpText'=>'Select this checkbox to import occurrences onto samples using the sample external key to match between rows. '
-          . 'Leave this checkbox off to import similar consecutive rows in the import file onto the same sample.'
-      ));
-    }
     $r .= '<label for="upload">'.lang::get('Select *.csv (comma separated values) file to upload').':</label>';
     $r .= '<input type="file" name="upload" id="upload"/>';
     $r .= '<input type="Submit" value="'.lang::get('Upload').'"></form>';
@@ -165,6 +135,10 @@ class import_helper extends helper_base {
    * @param array $options Options array passed to the import control.
    */
   private static function import_settings_form($options) {
+    if (empty($options['importPreventCommitBehaviour']))
+      $options['importPreventCommitBehaviour']='partial_import';
+    if (empty($options['importOccurrenceIntoSampleLogic']))
+      $options['importOccurrenceIntoSampleLogic']='consecutive_rows';   
     $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
 
     // by this time, we should always have an existing file
@@ -214,6 +188,35 @@ class import_helper extends helper_base {
         unset($extraHiddens['password']);
         foreach ($extraHiddens as $hidden=>$value)
           $r .= "<input type=\"hidden\" name=\"$hidden\" value=\"$value\" />\n";
+      }
+      if (($options['importPreventCommitBehaviour']==='user_defined')||
+             ($options['importOccurrenceIntoSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')))
+          $r .= '<hr>';
+      //Import has two modes, only commit if no errors, or commit valid rows.
+      //This can be user controlled, or provided by the administrator as an argument
+      if ($options['importPreventCommitBehaviour']==='prevent')
+        $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" checked>';
+      if ($options['importPreventCommitBehaviour']==='partial_import')
+          $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" >';
+      if ($options['importPreventCommitBehaviour']==='user_defined') {
+        $r .= data_entry_helper::checkbox(array(
+          'label' => lang::get('Reject entire import if there are any errors'),
+          'fieldname' => 'preventCommitsOnError',
+          'helpText'=>'Select this checkbox to prevent the importing of any rows '
+            . 'if there are any errors at all. Leave this checkbox switched off to import valid rows.'
+        ));
+      }
+      if ($options['importOccurrenceIntoSampleLogic']==='sample_ext_key')
+        $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" checked>';
+      if ($options['importOccurrenceIntoSampleLogic']==='consecutive_rows')
+        $r .= '<input type="checkbox" style="display:none;" name="importOccurrenceIntoSampleUsingExternalKey" >';
+      if ($options['importOccurrenceIntoSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
+        $r .= data_entry_helper::checkbox(array(
+          'label' => lang::get('Samples determined by a provided sample key field'),
+          'fieldname' => 'importOccurrenceIntoSampleUsingExternalKey', 
+          'helpText'=>'Select this checkbox to import occurrences onto samples using the sample external key field to determine which sample the occurrences are placed into. '
+            . 'If you leave this checkbox off, the system will group similar consecutive occurrences into the same sample.'
+        ));
       }
       $r .= '<input type="hidden" name="import_step" value="1" />';
       $r .= '<input type="submit" name="submit" value="'.lang::get('Next').'" class="ui-corner-all ui-state-default button" />';
