@@ -402,7 +402,7 @@ class data_entry_helper extends helper_base {
     $r .= '</tbody>';
     if (empty($options['rowCountControl'])) {
       $r .= '<tfoot>';
-      $r .= '<tr><td colspan="'.(count($options['columns'])+1+$extraCols).'"><button class="add-btn" type="button">Add another</button></td></tr>';
+      $r .= '<tr><td colspan="'.(count($options['columns'])+1+$extraCols).'"><button class="add-btn" type="button">' . lang::get("Add another"). '</button></td></tr>';
       $r .= '</tfoot>';
     } else {
       $escaped = str_replace(':', '\\\\:', $options['rowCountControl']);
