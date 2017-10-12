@@ -15,9 +15,9 @@
 
 /**
  * Helper methods for additional JavaScript functionality required by the species_checklist control.
- * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service 
- * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label 
- * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for 
+ * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service
+ * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label
+ * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for
   the newly added rows.
  */
 var hook_species_checklist_new_row, bindSpeciesAutocomplete;
@@ -25,7 +25,7 @@ var hook_species_checklist_new_row, bindSpeciesAutocomplete;
 (function ($) {
 
 "use strict";
-  
+
 hook_species_checklist_new_row = [];
 
 bindSpeciesAutocomplete = function(selectorID, url, gridId, lookupListId, readAuth, formatter, duplicateMsg, max) {
@@ -46,18 +46,18 @@ bindSpeciesAutocomplete = function(selectorID, url, gridId, lookupListId, readAu
       row.addClass('added-row').addClass(myClass).removeClass('scClonableRow').attr('id','');
       $.each(row.children(), function(j, cell) {
         cell.innerHTML = cell.innerHTML.replace(/-idx-/g, indiciaData['speciesGridCounter']);
-      }); 
+      });
       row.appendTo('#'+gridId);
       row.find('.scOccAttrCell').find('select').addClass('required').after('<span class=\"deh-required\">*</span>');
       row.find('.scOccAttrCell').find('input').not(':hidden').addClass('fillgroup');
       row.find('.scCommentLabelCell').each(function(idx,elem){
           jQuery(this).css('width',jQuery(this).find('label').css('width'));
       });
-    }); 
+    });
     newRows[0].find('.scPresenceCell input').attr('name', 'sc:' + indiciaData['speciesGridCounter'] + '::present').attr('checked','checked').val(data.id);
     // Allow forms to hook into the event of a new row being added
     $.each(hook_species_checklist_new_row, function(idx, fn) {
-      fn(data); 
+      fn(data);
     });
     indiciaData['speciesGridCounter']++;
     $(event.target).val('');
@@ -114,18 +114,20 @@ $('.remove-row').live('click', function(e) {
     // Hide the checkbox so this can't be undone
     row.find('.scPresence').attr('checked',false).css('display','none');
     var considerRow = row;
-    for(var i=0;i<numRows;i++){
+    for(var i = 0; i < numRows; i++) {
       // disable or remove all other active controls from the row.
       // Do NOT disable the presence checkbox or the container td, otherwise it is not submitted.
-      considerRow.addClass('deleted-row').css('opacity',0.25);
-      considerRow.find('*:not(.scPresence,.scPresenceCell)').attr('disabled','disabled').removeClass('required ui-state-error').filter('input,select').val('').width('');
+      considerRow.addClass('deleted-row').css('opacity', 0.25);
+      considerRow.find('*:not(.scPresence,.scPresenceCell)').attr('disabled', 'disabled').removeClass('required ui-state-error').filter('input,select').val('').width('');
       considerRow.find('a').remove();
       considerRow.find('.deh-required,.inline-error').remove();
-      considerRow= considerRow.next();
+      considerRow = considerRow.next();
     }
   }
-  if (typeof hook_species_checklist_delete_row !== "undefined") {
-	  hook_species_checklist_delete_row();
+  if (typeof window.hook_species_checklist_delete_row !== 'undefined') {
+    $.each(window.hook_species_checklist_delete_row, function (idx, fn) {
+      fn(e, $(e.target).closest('table'));
+    });
   }
 });
 
