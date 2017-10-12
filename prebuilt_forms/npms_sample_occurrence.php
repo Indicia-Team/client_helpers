@@ -340,6 +340,12 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
         $elementsToAdd[$keyToCreate] = $value;
       }
     }
+    //Don't clone the date as the date on survey 2 will always be different
+    $keysToDelete[]='sample:date_start';
+    $keysToDelete[]='sample:date_end';
+    $keysToDelete[]='sample:date_type';
+    $keysToDelete[]='sample:date';
+    $keysToDelete[]='sample:display_date';
     foreach($keysToDelete as $key) {
       unset(data_entry_helper::$entity_to_load[$key]);
     }
