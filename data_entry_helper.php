@@ -4589,7 +4589,7 @@ JS;
 HTML;
     }
     if ($options['spatialRefPrecisionAttrId']) {
-      $title = lang::get('For GPS coordinates, provide the precision as a radius in metres.');
+      $title = preg_replace('/[\r\n]/', ' ', lang::get('gps_precision_instructions'));
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-0">
   <input class="scSpatialRefPrecision" type="number" id="$fieldname:occurrence:spatialrefprecision"
@@ -6599,7 +6599,7 @@ HTML;
         }
       }
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialrefprecision";
-      $title = lang::get('For GPS coordinates, provide the precision as a radius in metres.');
+      $title = preg_replace('/[\r\n]/', ' ', lang::get('gps_precision_instructions'));
       $r = <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-$colIdx">
   <input class="scSpatialRefPrecision" type="number" name="$fieldname" id="$fieldname" value="$value"
