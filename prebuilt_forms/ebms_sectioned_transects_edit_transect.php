@@ -857,4 +857,36 @@ $('#delete-transect').click(deleteSurvey);
     self::$branchCmsUserAttrId = self::$countryCmsUserAttrId;
     parent::get_branch_assignment_control($auth, $settings['countryCmsUserAttr'], $args, $settings);
   }
+
+  /**
+   * Construct a submission for the location.
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
+   * @return array Submission structure.
+   */
+  public static function get_submission($values, $args) {
+    $code = $values['location:code'];
+    if (substr($code, -8) == ":[INDEX]") {
+      // function overloading : can't use $nid. Ignore possibility of override
+      $connection = array(
+          'base_url'=>variable_get('indicia_base_url', ''),
+          'website_id'=>variable_get('indicia_website_id', ''),
+          'password'=>variable_get('indicia_password', ''));
+      $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
+      $locations = data_entry_helper::get_population_data(array(
+          'table' => 'location',
+          'extraParams' => $readAuth + array('view'=>'detail', 'columns'=>'code', 'parent_id'=>"NULL"),
+      ));
+      $codeCounter = 1;
+      $prefix = substr($code, 0, -7);
+      foreach($locations as $country) {
+        if($country['code'] !== null && substr($country['code'], 0, strlen($prefix)) == $prefix) {
+          $thisCode = (int)(substr($country['code'], strlen($prefix)));
+          if($codeCounter <= $thisCode) { $codeCounter = $thisCode + 1; }
+        }
+      }
+      $values['location:code'] = $prefix.$codeCounter;
+    }
+    return parent::get_submission($values, $args);
+  }
 }

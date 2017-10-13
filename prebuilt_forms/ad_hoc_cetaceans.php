@@ -25,7 +25,7 @@ require_once('includes/user.php');
 
 /**
  * A form for entering ad-hoc observations of cetaceans.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * @todo Provide form description in this comment block.
@@ -33,7 +33,7 @@ require_once('includes/user.php');
  */
 class iform_ad_hoc_cetaceans {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -45,13 +45,13 @@ class iform_ad_hoc_cetaceans {
           'Records can be entered via a map if the sighting was from the shore, or via GPS coordinates for sightings at sea.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    * @todo: Implement this method
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array_merge(
       iform_map_get_map_parameters(),
       iform_user_get_user_parameters(),
@@ -156,7 +156,7 @@ class iform_ad_hoc_cetaceans {
 	    )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -165,16 +165,16 @@ class iform_ad_hoc_cetaceans {
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
-   * @todo: Implement this method 
+   * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
     global $indicia_templates, $user;
     data_entry_helper::enable_validation('entry_form');
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
     $url = "$protocol://$_SERVER[SERVER_NAME]$_SERVER[REQUEST_URI]";
-    $r = data_entry_helper::loading_block_start();    
+    $r = data_entry_helper::loading_block_start();
     $r .= "<form method=\"post\" id=\"entry_form\" action=\"$url\">\n";
-    $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);    
+    $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $r .= "<div id=\"controls\">\n";
     if ($args['interface']!='one_page') {
       $r .= "<ul>\n";
@@ -192,7 +192,7 @@ class iform_ad_hoc_cetaceans {
     }
     if ($user->uid==0) {
       $r .= "<fieldset id=\"about_you\">\n";
-      if ($args['interface']=='one_page') 
+      if ($args['interface']=='one_page')
         $r .= '<legend>'.lang::get('about you').'</legend>';
       $r .= data_entry_helper::text_input(array(
         'label'=>lang::get('first name'),
@@ -225,10 +225,10 @@ class iform_ad_hoc_cetaceans {
       }
       $r .= "</fieldset>\n";
     }
-    
+
     // Species tab
     $r .= "<fieldset id=\"species\">\n";
-    if ($args['interface']=='one_page') 
+    if ($args['interface']=='one_page')
         $r .= '<legend>'.lang::get('what did you see').'</legend>';
     $species_list_args=array(
         'label'=>lang::get('Species'),
@@ -251,7 +251,7 @@ class iform_ad_hoc_cetaceans {
         '<div class="taxon-desc"><ul><li>\'.str_replace("\n", "</li><li>","{description_in_list}").\'</li></ul>'.
         '<a href="http://www.northeastcetaceans.org.uk/?q=\'.
         strtolower(str_replace(array(" ", "\\\'"), array("-", ""), "{taxon}")).
-        \'" target="_blank" class="ui-state-default ui-corner-all indicia-button">'.lang::get('More Info').'...</a></div>\';';
+        \'" target="_blank" class="'.$indicia_templates['anchorButtonClass'].'">'.lang::get('More Info').'...</a></div>\';';
     // Template the taxon label cell
     $indicia_templates['taxon_label_cell'] = "\n<td class='scTaxonCell'>{content}</td>";
     // Also template the attribute controls to show the label in place.
@@ -266,7 +266,7 @@ class iform_ad_hoc_cetaceans {
     $r .= "</fieldset>";
     // --Place tab--
     $r .= "<fieldset id=\"place\">\n";
-    if ($args['interface']=='one_page') 
+    if ($args['interface']=='one_page')
         $r .= '<legend>'.lang::get('where was it').'</legend>';
     $r .= data_entry_helper::radio_group(array(
       'label' => 'Where were you when you made the sighting?',
@@ -310,7 +310,7 @@ class iform_ad_hoc_cetaceans {
     $options['tabDiv'] = 'place';
     $r .= data_entry_helper::map_panel($options, $olOptions);
     // Now, add some JavaScript to show or hide the map. Show it for when the sighting was from the shore.
-    // Hide it for boat based sightings as we want a GPS coordinate in this case. The JavaScript looks for the 
+    // Hide it for boat based sightings as we want a GPS coordinate in this case. The JavaScript looks for the
     // checked radio button to see the value
     data_entry_helper::$javascript .= 'jQuery(".sighting-platform input").click(
       function() {
@@ -319,7 +319,7 @@ class iform_ad_hoc_cetaceans {
           jQuery("#place_wrapper").removeClass("hidden");
           jQuery(".shore_mode").removeClass("hidden");
           jQuery(".boat_mode").addClass("hidden");
-        } else {          
+        } else {
           jQuery("#place_wrapper").removeClass("hidden");
           jQuery(".shore_mode").addClass("hidden");
           jQuery(".boat_mode").removeClass("hidden");
@@ -337,7 +337,7 @@ class iform_ad_hoc_cetaceans {
       ));
     }
     $r .= '</fieldset>';
-    
+
     // --Other information tab--
     $r .= "<fieldset id=\"other\">\n";
     // Get authorisation tokens to update and read from the Warehouse.
@@ -345,7 +345,7 @@ class iform_ad_hoc_cetaceans {
     $r .= "<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
     $r .= "<input type=\"hidden\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
     $r .= "<input type=\"hidden\" name=\"occurrence:record_status\" value=\"C\" />\n";
-    if ($args['interface']=='one_page') 
+    if ($args['interface']=='one_page')
         $r .= '<legend>'.lang::get('other information').'</legend>';
     $r .= data_entry_helper::date_picker(array(
         'label'=>lang::get('Sighting Date'),
@@ -377,7 +377,7 @@ class iform_ad_hoc_cetaceans {
         'labelClass'=>'auto',
         'fieldname'=>'smpAttr:'.$args['contact_attr_id']
     )).'</div>';
-    
+
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
         'divId'=>'controls',
@@ -391,7 +391,7 @@ class iform_ad_hoc_cetaceans {
     $r .= data_entry_helper::loading_block_end();
     return $r;
   }
- 
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
@@ -403,7 +403,7 @@ class iform_ad_hoc_cetaceans {
     return data_entry_helper::build_sample_occurrences_list_submission($values, true);
   }
 
-  /** 
+  /**
    * Hook the indicia_define_remembered_fields method to specify the personal details page as
    * remembered between sessions.
    * @param $args
@@ -417,6 +417,6 @@ class iform_ad_hoc_cetaceans {
       'smpAttr:'.$args['phone_attr_id']
     ));
   }
-  
-  
+
+
 }

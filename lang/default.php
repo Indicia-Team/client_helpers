@@ -13,46 +13,47 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @package Client
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 global $default_terms;
 /**
  * Provides a list of default localisable terms used by the lang class.
  *
- * @package	Client
+ * @package Client
  */
 $default_terms = array(
-  'add'=>'Add',
-  'add row'=>'Add Row',
-  'back'=>'Back',
-  'click here'=>'Click here',
-  'close'=>'Close',
-  'email'=>'Email',
-  'enter additional species'=>'Enter additional species',
-  'error loading control'=>'Error loading control',
+  'add' => 'Add',
+  'add row' => 'Add Row',
+  'back' => 'Back',
+  'click here' => 'Click here',
+  'close' => 'Close',
+  'email' => 'Email',
+  'enter additional species' => 'Enter additional species',
+  'error loading control' => 'Error loading control',
   'file too big for webserver' => 'The image file cannot be uploaded because it is bigger than the size limit allowed by the server which this data entry page is running on.',
   'file too big for warehouse' => 'The image file cannot be uploaded because it is larger than the maximum file size allowed.',
-  'first name'=>'First Name',
-  'loading'=>'Loading',
-  'locked tool-tip'=>'Click here to unlock the control\'s value for editing.',
-  'metaFields'=>'Other Fields',
-  'next step'=>'Next Step',
-  'phone number'=>'Phone Number',
-  'prev step'=>'Previous Step',
-  'save'=>'Save',
-  'search'=>'Search',
-  'search for place on map'=>'Search for place on map',
-  'spatial ref'=>'Spatial ref.',
-  'species_checklist.species'=>'Species',
-  'species_checklist.present'=>'Present',
-  'submit ok but file failed'=>'Your record was successfully submitted. However, an error occurred when saving an image file. The error was:',
-  'surname'=>'Surname',
-  'unlocked tool-tip'=>'Click here to lock the control\'s current value so that it is reused the next time you input data using this form.',
+  'first name' => 'First Name',
+  'loading' => 'Loading',
+  'locked tool-tip' => 'Click here to unlock the control\'s value for editing.',
+  'metaFields' => 'Other Fields',
+  'next step' => 'Next Step',
+  'phone number' => 'Phone Number',
+  'prev step' => 'Previous Step',
+  'save' => 'Save',
+  'search' => 'Search',
+  'search for place on map' => 'Search for place on map',
+  'spatial ref' => 'Spatial ref.',
+  'species_checklist.species' => 'Species',
+  'species_checklist.present' => 'Present',
+  'submit ok but file failed' => 'Your record was successfully submitted. However, an error occurred when saving an image file. The error was:',
+  'surname' => 'Surname',
+  'unlocked tool-tip' => 'Click here to lock the control\'s current value so that it is reused the next time you input data using this form.',
   'upload error' => 'An error occurred uploading the file.',
+  'upload_not_available' => 'The uploaded file is no longer available. Please try uploading again.',
   'validation_required' => 'Please enter the a value for the %s',
   'validation_email' => 'Please enter a valid email address',
   'validation_url' => 'Please enter a valid URL',
@@ -61,39 +62,28 @@ $default_terms = array(
   'validation_time' => 'Please enter a valid 24Hr Time in HH:MM format',
   'validation_digit' => 'Please enter only digits',
   'validation_integer' => 'Please enter a whole number',
-  // Default labels for various database fields
+  // Default labels for various database fields.
   'occurrence:taxa_taxon_list_id' => 'Species',
   'sample:date' => 'Date',
   'sample:entered_sref' => 'Spatial Reference',
 
-  // Spatial reference systems
-  'sref:OSGB'=>'British National Grid',
-  'sref:OSIE'=>'Irish Grid',
-  'sref:utm30ed50'=>'Channel Islands Grid (UTM ED50)',
-  'sref:4326'=>'WGS84 (decimal lat,long)',
-  'sref:2169'=>'LUREF (x,y)',
+  // Spatial reference systems.
+  'sref:OSGB' => 'British National Grid',
+  'sref:OSIE' => 'Irish Grid',
+  'sref:utm30ed50' => 'Channel Islands Grid (UTM ED50)',
+  'sref:4326' => 'WGS84 (decimal lat,long)',
+  'sref:2169' => 'LUREF (x,y)',
 
-  'import_settings_instructions' => 'Before proceeding with the import, please specify the following settings that will apply to every record in the import file. '.
-      'Any settings that you do not specify here can be supplied in the import file on a row by row basis by mapping the setting to the appropriate column in the '.
-      'next step.',
-  'column_mapping_instructions' => 'Please map each column in the CSV file you are uploading to the associated attribute in the database. We\'ve tried to '.
-      'match your columns to the available attributes where possible so check any automatically selected attributes in the <strong>Maps to attribute</strong> '.
-      'column before proceeding. If you plan to repeat imports from similar spreadsheets in future you can use the tickboxes to remember your choices.',
-  'upload_not_available' => 'The uploaded file is no longer available. Please try uploading again.',
-  'download_error_file_instructions' => 'As part of your upload was unsuccessful, download the generated CSV file ' .
-    'which holds the rows of data that did not upload. Find the column called "Problem" which lists the associated ' .
-    'error for each row. Correct the error, and then re-upload the CSV file containing <strong>only</strong> the ' .
-    'rows of data which did not upload correctly. Please do not re-upload the whole dataset again.',
-  // define the captions for fields in the data dictionary
+  // Define the captions for fields in the data dictionary.
   'dd:occurrence:fk_taxa_taxon_list' => 'Species or taxon name',
   'dd:occurrence:all_info_in_determinations' => 'Use determinations table for identification information (Y/N)',
-  // same for associated occurrences
+  // Same for associated occurrences.
   'dd:occurrence_2:fk_taxa_taxon_list' => 'Second species or taxon name',
   'dd:occurrence_2:all_info_in_determinations' => 'Use determinations table for identification information in second occurrence (Y/N)',
   'dd:sample:entered_sref' => 'Grid ref or other spatial ref',
   'dd:sample:entered_sref_system' => 'Spatial reference system',
 
-  // and import model name/field name prefix overrides
+  // import model name/field name prefix overrides.
   'smpAttr' => 'Sample custom attributes',
   'occAttr' => 'Occurrence custom attributes',
   'locAttr' => 'Location custom attributes',
@@ -109,3 +99,29 @@ $default_terms = array(
   'Click to Filter Quality' => 'Select records based on quality criteria such as verification status or presence of photos',
   'Click to Filter Source' => 'Select records based on source website, survey or input form'
 );
+
+// Some bigger bits of text better handled with HEREDOC.
+$default_terms['import_settings_instructions'] = <<<TEXT
+Before proceeding with the import, please specify the following settings that will apply to every record in the import
+file. Any settings that you do not specify here can be supplied in the import file on a row by row basis by mapping the
+setting to the appropriate column in the next step.
+TEXT;
+$default_terms['column_mapping_instructions'] = <<<TEXT
+Please map each column in the CSV file you are uploading to the associated attribute in the database. We've tried to
+match your columns to the available attributes where possible so check any automatically selected attributes in the
+<strong>Maps to attribute</strong> column before proceeding. If you plan to repeat imports from similar spreadsheets in
+future you can use the tickboxes to remember your choices.
+TEXT;
+$default_terms['download_error_file_instructions'] = <<<TEXT
+As part of your upload was unsuccessful, download the generated CSV file which holds the rows of data that did not
+upload. Find the column called "Problem" which lists the associated error for each row. Correct the error, and then
+re-upload the CSV file containing <strong>only</strong> the rows of data which did not upload correctly. Please do not
+re-upload the whole dataset again.
+TEXT;
+$default_terms['gps_precision_instructions'] = <<<TEXT
+This is the precision (normally given as a radius in metres) reported by most GPS devices or phones. This field is
+only enabled for 10-figure OS grid references. These represent 1 m accuracy, however, this is normally associated with
+some degree of error, which is the GPS precision recorded here. Precise grid references reported to a lower accuracy
+than 10-figures are assumed to represent the corresponding OS square (e.g. a 100 m or 10 m square), and so additional
+precision information is not required.
+TEXT;

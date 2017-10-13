@@ -23,14 +23,14 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
  */
 
-/* 
+/*
  * On Installation:
- * Need to set attributeValidation required for locAttrs for Village, site type, site follow up, and smpAttrs Visit, human freq, microclimate (including min, max) 
+ * Need to set attributeValidation required for locAttrs for Village, site type, site follow up, and smpAttrs Visit, human freq, microclimate (including min, max)
  * Need to manually set the term list sort order on non-default language tems.
  * Need to set the control of Visit to a select, and for the cavity entrance to a checkbox group.
  */
@@ -39,24 +39,24 @@ require_once('includes/mnhnl_common.php');
 
 class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_mnhnl_bats_definition() {
     return array(
       'title'=>self::get_title(),
-      'category' => 'MNHNL forms',      
+      'category' => 'MNHNL forms',
       'description'=>'MNHNL Winter Bats form. Inherits from Dynamic 1.'
     );
   }
 
-  /** 
+  /**
    * Return the form title.
    * @return string The title of the form.
    */
   public static function get_title() {
-    return 'MNHNL Bats';  
+    return 'MNHNL Bats';
   }
 
   public static function get_parameters() {
@@ -132,7 +132,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
           'type'=>'int',
           'group'=>'Species'
         )
-        
+
       )
     );
 
@@ -170,7 +170,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
               "@lookUpKey=meaning_id\r\n".
               "[sample comment]\r\n".
              "=Species=\r\n".
-              "[species]\r\n". 
+              "[species]\r\n".
               "@view=detail\r\n".
               "@rowInclusionCheck=alwaysRemovable\r\n".
               "@sep=&#32;\r\n".
@@ -182,7 +182,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
         $param['default'] = true;
       if($param['name'] == 'grid_report')
         $param['default'] = 'reports_for_prebuilt_forms/MNHNL/mnhnl_bats_grid';
-        
+
       if($param['name'] != 'species_include_taxon_group' &&
           $param['name'] != 'link_species_popups' &&
           $param['name'] != 'species_include_both_names')
@@ -198,7 +198,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
         'mnhnl_bats_conditions_download_report.xml',
         'mnhnl_bats_species_download_report.xml');
   }
-  
+
   protected static function getExtraGridModeTabsSub($retTabs, $readAuth, $args, $attributes, $rep1, $rep2, $rep3) {
     $isAdmin = isset($args['edit_permission']) && $args['edit_permission']!="" && hostsite_user_has_permission($args['edit_permission']);
     if(!$isAdmin) return('');
@@ -226,7 +226,7 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
     self::set_code_functionality(parent::$auth, $args, true);
     return $r;
   }
-  
+
   protected static function getSiteTypeJS($auth, $args){
     $siteTypeAttr=iform_mnhnl_getAttr($auth, $args, 'location', $args['siteTypeAttr']);
     if (!$siteTypeAttr) return lang::get('This form must be used with a survey that has the '.$args['siteTypeAttr'].' attribute associated with it.');
@@ -269,7 +269,7 @@ myTerms_change();
 ";
     return '';
   }
-  
+
   protected static function getSampleListGrid($args, $nid, $auth, $attributes) {
     global $user;
     if ($user->uid===0)
@@ -309,8 +309,8 @@ myTerms_change();
       'itemsPerPage' => $args['grid_num_rows'],
       'autoParamsForm' => true,
       'extraParams' => $extraparams
-    ));    
-    $r .= '<form>';    
+    ));
+    $r .= '<form>';
     $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => 'new')).'\'">';
     $r .= "</form>
 <div style=\"display:none\" />
@@ -326,7 +326,7 @@ myTerms_change();
         data_entry_helper::$entity_to_load['sample:created_by_id'] !== ($userID = hostsite_get_user_field('indicia_user_id')))) {
       $userID = 1;
     }
-    
+
     data_entry_helper::$javascript .= "
 deleteSurvey = function(sampleID){
   jQuery.getJSON(\"".data_entry_helper::$base_url."/index.php/services/data/sample/\"+sampleID +
@@ -385,7 +385,7 @@ jQuery('[name^=smpAttr]').filter(':checkbox').filter('[value=".$args['disturbanc
     return valid;
     },
     \"".lang::get('validation_fillgroup')."\");";
-    
+
       data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
   $('input[type=radio],[type=checkbox]').live('click', function(){
@@ -422,7 +422,7 @@ jQuery('.mnhnl-species-grid > thead').find('th').not(':hidden').filter(':eq(".$i
        	}
        }
     }
-    
+
     // Move the Temperature and Humidity fields side by side.
     $removeBreakIDs = explode(':', $args['removeBreakIDs']);
     foreach($removeBreakIDs as $removeBreakID){
@@ -445,19 +445,19 @@ jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:
           } else if($rule[$i]=='no_observation'){
             data_entry_helper::$late_javascript .= "
 jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:',$rule[0])."\\:]').filter(':checkbox').rules('add', {no_observation: true});
-hook_species_checklist_delete_row=function() {
+hook_species_checklist_delete_row.push(function() {
   if(jQuery('.scPresence').filter(':checkbox').filter('[checked]').length==0)
     jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:',$rule[0])."\\:]').removeAttr('disabled');
   else
     jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:',$rule[0])."\\:]').filter(':checkbox').attr('disabled','disabled').removeAttr('checked');
-};
-hook_species_checklist_pre_delete_row=function(e) {
+});
+hook_species_checklist_pre_delete_row.push(function(e) {
   if(!confirm(\"".lang::get('Are you sure you want to delete this row?')."\")) return false;
   var row = $(e.target.parentNode);
   row.find('*').removeClass('ui-state-error');
   row.find('.inline-error').remove();
   return true;
-};
+});
 // possible clash with link_species_popups, so latter disabled. First get the meaning id for the taxon, then all taxa with that meaning.
 hook_species_checklist_new_row.push(function(rowData) {
   jQuery.getJSON('".data_entry_helper::$base_url."/index.php/services/data/taxa_taxon_list/' + rowData.id +
@@ -491,10 +491,14 @@ hook_species_checklist_new_row.push(function(rowData) {
           }
         }
       });
-    }})
-    hook_species_checklist_delete_row();
+    }});
+    $.each(window.hook_species_checklist_delete_row, function (idx, fn) {
+      fn();
+    });
 });
-hook_species_checklist_delete_row();
+$.each(window.hook_species_checklist_delete_row, function (idx, fn) {
+  fn();
+});
 $.validator.addMethod('no_observation', function(arg1, arg2){
   var numRows = jQuery('.scPresence').filter(':checkbox').filter('[checked]').length;
   var isChecked = jQuery('[name='+jQuery(arg2).attr('name')+']').not(':hidden').filter('[checked]').length>0;
@@ -531,10 +535,10 @@ setupButtons($('#controls'), 0);";
 jQuery('#smpAttr\\\\:$attrId').next().after(\"<span class='extra-text'>".lang::get('LANG_Site_Extra')."</span>\");";
       }
     }
-      
+
     return $r;
   }
-  
+
   /**
    * Get the block of custom attributes at the location level
    */
@@ -551,12 +555,12 @@ jQuery('#smpAttr\\\\:$attrId').next().after(\"<span class='extra-text'>".lang::g
     return data_entry_helper::textarea(array_merge(array(
       'fieldname'=>'location:comment',
       'label'=>lang::get('Location Comment')
-    ), $options)); 
+    ), $options));
   }
 
   protected static function get_control_pointgrid($auth, $args, $tabalias, $options) {
     if(self::$mode === self::MODE_EXISTING_RO) return "";
-  	return iform_mnhnl_PointGrid($auth, $args, $options); 
+  	return iform_mnhnl_PointGrid($auth, $args, $options);
   }
 
   private static function set_code_functionality($auth, $args, $isAdmin) {
@@ -577,7 +581,7 @@ hook_set_defaults=function(){
 };\n";
     if(!$isAdmin)
       data_entry_helper::$javascript .= "jQuery('#location-code').attr('readonly','readonly');\n";
-    else { 
+    else {
       data_entry_helper::$javascript .= "jQuery('#location-code').change(function(){
   if(jQuery.inArray(jQuery(this).val(), usedCodes) >= 0 && jQuery(this).attr('dbCode') != jQuery(this).val()) {
     alert(\"".lang::get('This code is already in use. The value will be set to the next in sequence: ')."\" + defaultCode + \". \"+(jQuery(this).attr('dbCode') != '' ? \"".lang::get('This site previously had a code of: ')."\"+jQuery(this).attr('dbCode') : ''));
@@ -613,7 +617,7 @@ hook_set_defaults=function(){
               geometryName:'".$parts[3]."',
               featureNS: '".$parts[4]."',
               srsName: '".$parts[5]."', // map projection /* GARY */
-              version: '1.1.0'                  
+              version: '1.1.0'
       		  ,propertyNames: [\"".$parts[6]."\"]
 });
 fillCommune = function(a1){
@@ -648,7 +652,7 @@ hook_setSref = function(geom){ // map projection
   protected static function get_control_locationspatialreference($auth, $args, $tabalias, $options) {
     return iform_mnhnl_SrefFields($auth, $args);
   }
-  
+
   /**
    * Get the recorder names control
    */
@@ -658,7 +662,7 @@ hook_setSref = function(geom){ // map projection
   }
 
 
-  // This function pays no attention to the outer block. This is needed when the there is no outer/inner block pair, 
+  // This function pays no attention to the outer block. This is needed when the there is no outer/inner block pair,
   // if the attribute is put in a single block level, then that block appears in the inner, rather than the outer .
   private function bats_get_attribute_html($attributes, $args, $defAttrOptions, $blockFilter=null, $blockOptions=null) {
     if(self::$mode === self::MODE_EXISTING_RO) $options['disabled']='disabled="disabled"';
@@ -676,14 +680,14 @@ hook_setSref = function(geom){ // map projection
    }
    return $r;
   }
-  
+
   /**
    * Build a PHP function  to format the species added to the grid according to the form parameters
    * autocomplete_include_both_names and autocomplete_include_taxon_group.
    * We have an issue with Common names, as the view only gives one, but we have 3 non latin languages.
    */
   protected static function build_grid_autocomplete_function($args) {
-    global $indicia_templates;  
+    global $indicia_templates;
     // always include the searched name
     $fn = "function(item) { \n".
         "  var r;\n".
@@ -698,7 +702,7 @@ hook_setSref = function(geom){ // map projection
     // Set it into the indicia templates
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
-  
+
   /**
    * Build a JavaScript function  to format the autocomplete item list according to the form parameters
    * autocomplete_include_both_names and autocomplete_include_taxon_group.
@@ -767,7 +771,7 @@ hook_species_checklist_pre_delete_row=function(e) {
           "extra_list_id"=>$args["extra_list_id"],
           'listId'=>$args['list_id'],
           'label'=>lang::get('occurrence:taxa_taxon_list_id'),
-          'columns'=>1,          
+          'columns'=>1,
           'extraParams'=>$extraParams,
           'survey_id'=>$args['survey_id'],
           'occurrenceComment'=>$args['occurrence_comment'],
@@ -784,7 +788,7 @@ hook_species_checklist_pre_delete_row=function(e) {
     return '<input type="hidden" value="true" name="gridmode" />'.
           self::mnhnl_bats_species_checklist($species_ctrl_opts);
   }
-  
+
 
   public static function mnhnl_bats_species_checklist($options)
   {
@@ -921,7 +925,7 @@ hook_species_checklist_pre_delete_row=function(e) {
           taxonCell.html(taxaList).removeClass('extraCommonNames');
         });
     }})
-}  
+}
 bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url."index.php/services/data\", \"".$options['id']."\", \"".$options['lookupListId']."\", {\"auth_token\" : \"".
             $options['readAuth']['auth_token']."\", \"nonce\" : \"".$options['readAuth']['nonce']."\"}, formatter, \"".lang::get('LANG_Duplicate_Taxon')."\", ".$options['max_species_ids'].");
 ";
@@ -961,7 +965,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
       $idx++;
     }
   }
-  
+
   /**
    * When the species checklist grid has a lookup list associated with it, this is a
    * secondary checklist which you can pick species from to add to the grid. As this happens,
@@ -1024,8 +1028,8 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
           $options['occAttrClasses'][$idx] :
           'sc'.str_replace(' ', '', ucWords($caption)); // provide a default class based on the control caption
   }
-  
-  
+
+
   public static function get_species_checklist_occ_list($options) {
     // at this point the data_entry_helper::$entity_to_load has been preloaded with the occurrence data.
     // make assumption that no species are automatically added to List.
@@ -1068,10 +1072,10 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     }
   	return $occList;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
+   * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
    * @param integer $nid The node's ID
    * @return array Submission structure.
@@ -1098,7 +1102,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
         $occurrences = submission_builder::wrap_with_images($values, 'occurrence');
       // when a non admin selects an existing location they can not modify it or its attributes and the location record does not form part of the submission
       if (isset($values['location:location_type_id'])){
-        if(count($occurrences)>0) 
+        if(count($occurrences)>0)
             $sampleMod['subModels'] = $occurrences;
         $locationMod = submission_builder::wrap_with_images($values, 'location');
         $locationMod['subModels'] = array(array('fkId' => 'location_id', 'model' => $sampleMod));
@@ -1109,7 +1113,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
         return $locationMod;
       }
 //      $values['sample:location_id'] = $values['location:id'];
-      if(count($occurrences)>0) 
+      if(count($occurrences)>0)
             $sampleMod['subModels'] = $occurrences;
     }
     return $sampleMod;
@@ -1118,19 +1122,19 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   /**
    * Retrieves a list of the css files that this form requires in addition to the standard
    * Drupal, theme or Indicia ones.
-   * 
+   *
    * @return array List of css files to include for this form.
    */
   public static function get_css() {
     return array('mnhnl_bats.css');
   }
-  
+
   protected static function getReportActions() {
     return
       array(array('display' => lang::get('Actions'),
                   'actions' => array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
-            array('display' => '', 'actions' => 
+            array('display' => '', 'actions' =>
                   array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
   }
-  
-} 
+
+}

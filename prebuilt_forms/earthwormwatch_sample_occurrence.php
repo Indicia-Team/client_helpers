@@ -422,6 +422,8 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    * Text to use to the left of the display pit number</li>
    * <li><b>distanceQuestionAttrId</b><br/>
    * Text to use to the left of the display pit number</li>
+   * <li><b>distanceQuestionDoNotKnowAttrId</b><br/>
+   * ID of the attribute that holds the answer to the Don't Know checkbox on the distance between pits question</li>
    */
   protected static function get_control_pitspecificlabelandquestions($auth, $args, $tabAlias, $options) {
     if (!empty($options['label']))
@@ -434,7 +436,7 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
         'extraParams' => $auth['read'] + array('sample_id' => $_GET['sample_id'], 'sample_attribute_id' => $args['pit_1_survey_attr']),
       ));
     }
-    //It is only every Pit 2 if pit two has been alrady and as such the Pit 1 attribute has been populated for it
+    //It is only ever Pit 2 if pit two has been already been saved and as such the Pit 1 attribute has been populated for it
     //OR
     //We detect that there is an existing pit in the params and "new=" is indicated in params (i.e. pit 2 is being created)
     if ((!empty($pit1AttrData[0]['value'])&&$pit1AttrData[0]['value'] != 0)||
@@ -442,8 +444,9 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
       $displayLabel=$displayLabel.'2';
     } else {
       $displayLabel=$displayLabel.'1';
-      if (!empty($options['distanceQuestionAttrId'])) {
+      if (!empty($options['distanceQuestionAttrId'])&&!empty($options['distanceQuestionDoNotKnowAttrId'])) {
         data_entry_helper::$javascript .= "$('#ctrl-wrap-smpAttr-".$options['distanceQuestionAttrId']."').hide();\n";
+        data_entry_helper::$javascript .= "$('#ctrl-wrap-smpAttr-".$options['distanceQuestionDoNotKnowAttrId']."').hide();\n";
       }
     } 
     return $displayLabel;

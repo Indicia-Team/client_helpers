@@ -74,37 +74,48 @@ class extension_event_reports {
   /**
    * Outputs a block with total records, species and photos for the event.
 
-   * @param array $auth Authorisation tokens.
-   * @param array $args Form arguments (the settings on the form edit tab).
-   * @param string $tabalias The alias of the tab this is being loaded onto.
-   * @param array $options The options passed to this control using @option=value settings in the form structure.
-   * Options supported are those which can be passed to the report_helper::freeform_report method and set @title=... to
-   * include a heading in the output.
-   * @param string $path The page reload path, in case it is required for the building of links.
-   * @return string HTML to insert into the page for the location map. JavaScript is added to the variables in helper_base.
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form arguments (the settings on the form edit tab).
+   * @param string $tabalias
+   *   The alias of the tab this is being loaded onto.
+   * @param array $options
+   *   The options passed to this control using @option=value settings in the form structure. Options supported are
+   *   those which can be passed to the report_helper::freeform_report method and set @title=... to include a heading
+   *   in the output.
+   * @param string $path
+   *   The page reload path, in case it is required for the building of links.
+   *
+   * @return string
+   *   HTML to insert into the page for the location map. JavaScript is added to the variables in helper_base.
    *
    * @link http://www.biodiverseit.co.uk/indicia/dev/docs/classes/report_helper.html#method_freeform_report API docs for report_helper::freeform_report
    */
   public static function totals_block($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
-    $userId=hostsite_get_user_field('indicia_user_id');
+    $userId = hostsite_get_user_field('indicia_user_id');
     iform_load_helpers(array('report_helper'));
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
         'dataSource' => 'library/totals/filterable_species_occurrence_image_counts',
-        'autoParamsForm' => false,
-        'caching' => true,
-        'cachePerUser' => false
+        'autoParamsForm' => FALSE,
+        'caching' => TRUE,
+        'cachePerUser' => FALSE,
       ),
       $options
     );
     $reportOptions['extraParams']['ownData'] = 0;
     $reportOptions['extraParams']['currentUser'] = $userId;
-    $reportOptions['bands']=array(array('content'=>
-        '<div class="totals species">{species_count} species</div>'.
-        '<div class="totals species">{occurrences_count} records</div>'.
-        '<div class="totals species">{photos_count} photos</div>'));
+    $reportOptions['bands'] = array(
+      array(
+        'content' =>
+          '<div class="totals species">' . lang::get('{1} species', '{species_count}') . '</div>' .
+          '<div class="totals species">' . lang::get('{1} records', '{occurrences_count}') . '</div>' .
+          '<div class="totals species">' . lang::get('{1} photos', '{photos_count}') . '</div>',
+      )
+    );
     $r = self::output_title($options);
     $r .= report_helper::freeform_report($reportOptions);
     return $r;

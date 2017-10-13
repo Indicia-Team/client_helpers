@@ -820,8 +820,6 @@ $callToCallback}";
         self::$initialFilterParamsToApply
       );
       $extraParams = json_encode($extraParams, JSON_FORCE_OBJECT);
-      // List of report parameters we reset to if filters cleared
-      $resetParams = json_encode(array_merge($options['extraParams'], $currentParamValues), JSON_FORCE_OBJECT);
       // List of report parameters that cannot be changed by the user.
       $fixedParams = json_encode($options['extraParams'], JSON_FORCE_OBJECT);
       self::$javascript .= "
@@ -833,7 +831,6 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   mode: '$options[mode]',
   dataSource: '" . str_replace('\\','/',$options['dataSource']) . "',
   extraParams: $extraParams,
-  resetParams: $resetParams,
   fixedParams: $fixedParams,
   view: '$options[view]',
   itemsPerPage: $options[itemsPerPage],
@@ -855,12 +852,12 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   linkFilterToMap: ".(!empty($options['rowId']) && $options['linkFilterToMap'] ? 'true' : 'false').",
   msgRowLinkedToMapHint: '" . addslashes(lang::get('Click the row to highlight the record on the map. Double click to zoom in.')) . "',
   msgNoInformation: '" . addslashes(lang::get('No information available')) . "',
-  langFirst: '".lang::get('first')."',
-  langPrev: '".lang::get('prev')."',
-  langNext: '".lang::get('next')."',
-  langLast: '".lang::get('last')."',
-  langShowing: '".lang::get('Showing records {1} to {2} of {3}')."',
-  noRecords: 'No records',
+  langFirst: '" . lang::get('first') . "',
+  langPrev: '" . lang::get('prev') . "',
+  langNext: '" . lang::get('next') . "',
+  langLast: '" . lang::get('last') . "',
+  langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
+  noRecords: '" . lang::get('No records')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
       if (!empty($options['rowClass']))
@@ -2130,7 +2127,8 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
           $proxy = '';
         }
         $layerUrl = $proxy . self::$geoserver_url . 'wms';
-        report_helper::$javascript .= "  indiciaData.reportlayer = new OpenLayers.Layer.WMS('Report output',
+        $layerTitle = lang::get('Report output');
+        report_helper::$javascript .= "  indiciaData.reportlayer = new OpenLayers.Layer.WMS('$layerTitle',
       '$layerUrl', { layers: '".$options['geoserverLayer']."', transparent: true,
           $filter, $style},
       {singleTile: true, isBaseLayer: false, sphericalMercator: true});\n";
@@ -3087,6 +3085,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
   private static function addFeaturesLoadingJs($addFeaturesJs, $defsettings='',
       $selsettings='{"strokeColor":"#ff0000","fillColor":"#ff0000","strokeWidth":2}', $defStyleFns='', $selStyleFns='', $zoomToExtent=true,
       $featureDoubleOutlineColour='') {
+    $layerTitle = lang::get('Report output');
     // Note that we still need the Js to add the layer even if using AJAX (when $addFeaturesJs will be empty)
     report_helper::$javascript.= "
   if (typeof OpenLayers !== \"undefined\") {
@@ -3094,7 +3093,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     var selectStyle = new OpenLayers.Style($selsettings$selStyleFns);
     var styleMap = new OpenLayers.StyleMap({'default' : defaultStyle, 'select' : selectStyle});
     if (typeof indiciaData.reportlayer==='undefined') {
-    indiciaData.reportlayer = new OpenLayers.Layer.Vector('Report output', {styleMap: styleMap, rendererOptions: {zIndexing: true}});
+    indiciaData.reportlayer = new OpenLayers.Layer.Vector('$layerTitle', {styleMap: styleMap, rendererOptions: {zIndexing: true}});
     }";
     // If there are some special styles to apply, but the layer exists already, apply the styling
     if ($defStyleFns!=='' || $selStyleFns) {
@@ -4899,7 +4898,7 @@ jQuery('#estimateChart .disable-button').click(function(){
   						else $rawArray[$occurrence['sample_id']][$occurrence['taxon_meaning_id']] += $count;
   					}
   				}
-  				$rawTab = '<table class="'.$options['tableClass'].'"><thead class="'.$thClass.'"><tr><th>'.lang::get('Week').'</th>';
+  				$rawTab .= '<table class="'.$options['tableClass'].'"><thead class="'.$thClass.'"><tr><th>'.lang::get('Week').'</th>';
 	  			foreach($sampleDateList as $sample){
   					$sample_date = date_create($sample['date']);
 //  					$this_index = $this_date->format('z');

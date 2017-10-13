@@ -214,7 +214,8 @@ class data_entry_helper extends helper_base {
       'continueOnBlur' => true,
       'selectMode' => false,
       'default' => '',
-      'matchContains' => false
+      'matchContains' => false,
+      'isFormControl' => true
     ), $options);
     if (isset($options['report'])) {
       $options['extraParams']['report'] = $options['report'].'.xml';
@@ -401,7 +402,7 @@ class data_entry_helper extends helper_base {
     $r .= '</tbody>';
     if (empty($options['rowCountControl'])) {
       $r .= '<tfoot>';
-      $r .= '<tr><td colspan="'.(count($options['columns'])+1+$extraCols).'"><button class="add-btn" type="button">Add another</button></td></tr>';
+      $r .= '<tr><td colspan="'.(count($options['columns'])+1+$extraCols).'"><button class="add-btn" type="button">' . lang::get("Add another"). '</button></td></tr>';
       $r .= '</tfoot>';
     } else {
       $escaped = str_replace(':', '\\\\:', $options['rowCountControl']);
@@ -664,7 +665,7 @@ JS;
       'disabled' => true,
       'label' => 'Training mode',
       'helpText' => 'Records submitted in training mode are segregated from genuine records. ',
-      'template'=>'training'
+      'template' => 'training'
     ), $options);
     // Apply standard options and update default value if loading existing record
     $options = self::check_options($options);
@@ -827,7 +828,8 @@ JS;
     $options = array_merge(array(
       'dateFormat'=>'dd/mm/yy',
       'allowVagueDates'=>false,
-      'default'=>''
+      'default'=>'',
+      'isFormControl' => true
     ), $options);
     if (!isset($options['showButton']))
       // vague dates best with the button
@@ -1209,10 +1211,16 @@ JS;
     $options = array_merge(array(
       'id' => 'imp-georef-search',
       'driver' => 'google_places',
-      'searchButton' => self::apply_replacements_to_template($indicia_templates['button'],
-        array('href'=>'#', 'id'=>'imp-georef-search-btn', 'class' => 'class="indicia-button"', 'caption'=>lang::get('Search'), 'title'=>'')),
+      'searchButton' => self::apply_replacements_to_template($indicia_templates['button'], array(
+        'href'=>'#',
+        'id'=>'imp-georef-search-btn',
+        'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
+        'caption'=>lang::get('Search'),
+        'title'=>''
+      )),
       'public' => false,
-      'autoCollapseResults' => false
+      'autoCollapseResults' => false,
+      'isFormControl' => true
     ), $options);
     if ($options['driver']==='geoplanet') {
       return 'The GeoPlanet place search service is no longer supported';
@@ -1381,6 +1389,8 @@ JS;
       $hiddenOptions['default'] = $options['default'];
     $r .= self::hidden_text($hiddenOptions);
     $options['blankText']=htmlspecialchars(lang::get($options['blankText']));
+    $selectClass = 'hierarchy-select' . isset($indicia_templates['formControlClass']) ?
+      " $indicia_templates[formControlClass]" : '';
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
     // reloading existing values.
     self::$javascript .= "
@@ -1389,7 +1399,7 @@ JS;
     function pickHierarchySelectNode(select,fromOnChange) {
       select.nextAll().remove();
       if (typeof indiciaData.selectData$id [select.val()] !== 'undefined') {
-        var html='<select class=\"hierarchy-select\"><option>".$options['blankText']."</option>', obj;
+        var html='<select class=\"$selectClass\"><option>".$options['blankText']."</option>', obj;
         $.each(indiciaData.selectData$id [select.val()], function(idx, item) {
           //If option is set then if there is only a single child item, auto select it in the list
           //Don't do this if we are initially loading the page (fromOnChange is false) as we only want to do this when the user actually changes the value.
@@ -1600,6 +1610,10 @@ JS;
    * Optional. If true, then when a location is found in the autocomplete, the location's centroid spatial
    * reference is loaded into the spatial_ref control on the form if any exists. Defaults to false.
    * </li>
+   * <li><b>searchUpdatesUsingBoundary/b>
+   * Optional. If true and using searchUpdatesSref=true, then when a location is found in the autocomplete, the
+   * location's boundary geometry is loaded into the record's geometry control on the form if any exists. Defaults to false.
+   * </li>
    * <li><b>allowcreate</b>
    * Optional. If true, if the user has typed in a non-existing location name and also supplied
    * a spatial reference, a button is displayed which lets them save a location for future
@@ -1638,9 +1652,10 @@ JS;
       'valueField' => 'id',
       'captionField' => 'name',
       'defaultCaption' => $caption,
-      'useLocationName' => false,
-      'allowCreate' => false,
-      'searchUpdatesSref' => false,
+      'useLocationName' => FALSE,
+      'allowCreate' => FALSE,
+      'searchUpdatesSref' => FALSE,
+      'searchUpdatesUsingBoundary' => FALSE,
       'fetchLocationAttributesIntoSample' =>
           !isset($options['fieldname']) || $options['fieldname'] === 'sample:location_id'
     ), $options);
@@ -1653,7 +1668,7 @@ JS;
     // copied to the location_name field if not linked to a location id.
     if ($options['useLocationName'])
       $r = '<input type="hidden" name="useLocationName" value="true"/>'.$r;
-    if ($options['allowCreate'] || $options['searchUpdatesSref']) {
+    if ($options['allowCreate']) {
       self::add_resource('createPersonalSites');
       if ($options['allowCreate']) {
         self::$javascript .= "indiciaData.msgRememberSite='".lang::get('Remember site')."';\n";
@@ -1661,8 +1676,11 @@ JS;
         self::$javascript .= "indiciaData.msgSiteWillBeRemembered='".lang::get('The site will be available to search for next time you input some records.')."';\n";
         self::$javascript .= "allowCreateSites();\n";
       }
-      if ($options['searchUpdatesSref'])
-        self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
+    }
+    if ($options['searchUpdatesSref']) {
+      self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
+      self::$javascript .= "indiciaData.searchUpdatesUsingBoundary = " .
+        ($options['searchUpdatesUsingBoundary'] ? 'true' : 'false') . ";\n";
     }
     $escapedId = str_replace(':', '\\\\:', $options['id']);
     // If using Easy Login, then this enables auto-population of the site related fields.
@@ -1720,6 +1738,10 @@ JS;
    * Optional. If true, then when a location is selected, the location's centroid spatial
    * reference is loaded into the spatial_ref control on the form if any exists. Defaults to false.
    * </li>
+   * <li><b>searchUpdatesUsingBoundary/b>
+   * Optional. If true and using searchUpdatesSref=true, then when a location is selected, the location's boundary
+   * geometry is loaded into the record's geometry control on the form if any exists. Defaults to false.
+   * </li>
    * </ul>
    *
    * The output of this control can be configured using the following templates:
@@ -1741,16 +1763,21 @@ JS;
       $options['extraParams'] += array('location_type_id' => $options['location_type_id']);
     }
     $options = array_merge(array(
-      'table'=>'location',
-      'fieldname'=>'sample:location_id',
-      'valueField'=>'id',
-      'captionField'=>'name',
-      'id'=>'imp-location',
-      'searchUpdatesSref'=>false
+      'table' => 'location',
+      'fieldname' => 'sample:location_id',
+      'valueField' => 'id',
+      'captionField' => 'name',
+      'id' => 'imp-location',
+      'searchUpdatesSref' => FALSE,
+      'searchUpdatesUsingBoundary' => FALSE,
+      'isFormControl' => TRUE
     ), $options);
     $options['columns']=$options['valueField'].','.$options['captionField'];
-    if ($options['searchUpdatesSref'])
+    if ($options['searchUpdatesSref']) {
       self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
+      self::$javascript .= "indiciaData.searchUpdatesUsingBoundary = " .
+        ($options['searchUpdatesUsingBoundary'] ? 'true' : 'false') . ";\n";
+    }
     return self::select($options);
   }
 
@@ -1846,7 +1873,8 @@ JS;
     $options = array_merge(
       array(
         'template' => 'listbox',
-        'itemTemplate' => 'listbox_item'
+        'itemTemplate' => 'listbox_item',
+        'isFormControl' => TRUE
       ),
       $options
     );
@@ -2031,7 +2059,8 @@ JS;
     $options = self::check_options($options);
     $options['lockable']=false;
     $options = array_merge(array(
-      'default'=>''
+      'default'=>'',
+      'isFormControl' => true
     ), $options);
     return self::apply_template('password_input', $options);
   }
@@ -2102,7 +2131,8 @@ JS;
       'srefField'=>'sample:entered_sref',
       'systemField'=>'sample:entered_sref_system',
       'hiddenFields'=>true,
-      'linkedAddressBoxId'=>''
+      'linkedAddressBoxId'=>'',
+      'isFormControl' => true
     ), $options);
     self::add_resource('postcode_search');
     $r = self::apply_template('postcode_textbox', $options);
@@ -2296,7 +2326,8 @@ JS;
     $options = array_merge(
       array(
         'template' => 'select',
-        'itemTemplate' => 'select_item'
+        'itemTemplate' => 'select_item',
+        'isFormControl' => true
       ),
       self::check_options($options)
     );
@@ -2424,7 +2455,8 @@ JS;
     $options = array_merge(array(
       'fieldname'=>'sample:entered_sref_system',
       'systems'=>array('OSGB'=>lang::get('sref:OSGB'), '4326'=>lang::get('sref:4326')),
-      'id'=>'imp-sref-system'
+      'id'=>'imp-sref-system',
+      'isFormControl' => true
     ), $options);
     $options = self::check_options($options);
     $opts = "";
@@ -2496,7 +2528,8 @@ JS;
       'geomFieldname'=>$tokens[0].':geom',
       'default'=>self::check_default_value($options['fieldname']),
       'splitLatLong'=>false,
-      'findMeButton'=>true
+      'findMeButton'=>true,
+      'isFormControl' => true
     ), $options);
     $rules = array();
     if (!empty($options['validation']))
@@ -3321,9 +3354,9 @@ JS;
         // Now create the table cell to contain this.
         $colspan = !empty($options['lookupListId']) && $options['rowInclusionCheck']!='alwaysRemovable' ? ' colspan="2"' : '';
         $row = '';
+        $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
         // Add a delete button if the user can remove rows, add an edit button if the user has the edit option set, add a page link if user has that option set.
         if ($options['rowInclusionCheck']=='alwaysRemovable') {
-          $imgPath = empty(self::$images_path) ? self::relative_client_helper_path()."../media/images/" : self::$images_path;
           $speciesGridLinkPageIconSource = $imgPath."nuvola/find-22px.png";
           if ($options['editTaxaNames']) {
             $row .= '<td class="row-buttons">
@@ -4556,7 +4589,7 @@ JS;
 HTML;
     }
     if ($options['spatialRefPrecisionAttrId']) {
-      $title = lang::get('For GPS coordinates, provide the precision as a radius in metres.');
+      $title = preg_replace('/[\r\n]/', ' ', lang::get('gps_precision_instructions'));
       $r .= <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-0">
   <input class="scSpatialRefPrecision" type="number" id="$fieldname:occurrence:spatialrefprecision"
@@ -4634,7 +4667,8 @@ HTML;
   public static function textarea($options) {
     $options = array_merge(array(
       'cols'=>'80',
-      'rows'=>'4'
+      'rows'=>'4',
+      'isFormControl' => true
     ), self::check_options($options));
     return self::apply_template('textarea', $options);
   }
@@ -4667,7 +4701,8 @@ HTML;
    */
   public static function text_input($options) {
     $options = array_merge(array(
-      'default'=>''
+      'default'=>'',
+      'isFormControl' => true
     ), self::check_options($options));
     return self::apply_template('text_input', $options);
   }
@@ -4825,7 +4860,8 @@ $('#sensitive-blur').change(function() {
       'id' => $options['fieldname'],
       'default' => '',
       'timeSteps' => array(1,15,0),
-      'show24Hours' => false,
+      'show24Hours' => FALSE,
+      'isFormControl' => TRUE
     ), $options);
     self::add_resource('timeentry');
     $steps = implode(', ', $options['timeSteps']);
@@ -5060,8 +5096,13 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'panelOnly'=>false
     ), $options);
     $button=$options['panelOnly'] ? '' :
-      self::apply_replacements_to_template($indicia_templates['button'],
-        array('href'=>'#', 'id'=>'verify-btn', 'class' => 'class="indicia-button"', 'caption'=>lang::get('Precheck my records'), 'title'=>''));
+      self::apply_replacements_to_template($indicia_templates['button'], array(
+        'href' => '#',
+        'id' => 'verify-btn',
+        'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
+        'caption' => lang::get('Precheck my records'),
+        'title' => ''
+      ));
     $replacements = array(
       'button'=>$button
     );
@@ -5130,7 +5171,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'captionPrev' => 'Prev step',
       'captionSave' => 'Save',
       'captionDelete'=> 'Delete',
-      'buttonClass' => 'indicia-button inline-control',
+      'buttonClass' => "$indicia_templates[buttonDefaultClass] inline-control",
       'class'       => 'right',
       'page'        => 'middle',
       'includeVerifyButton' => false,
@@ -5144,8 +5185,13 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     $buttonClass=$options['buttonClass'];
     if (array_key_exists('divId', $options)) {
       if ($options['includeVerifyButton']) {
-        $r .= self::apply_replacements_to_template($indicia_templates['button'],
-          array('href'=>'#', 'id'=>'verify-btn', 'class' => 'class="indicia-button"', 'caption'=>lang::get('Precheck my records'), 'title'=>''));
+        $r .= self::apply_replacements_to_template($indicia_templates['button'], array(
+          'href'=>'#',
+          'id'=>'verify-btn',
+          'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
+          'caption'=>lang::get('Precheck my records'),
+          'title'=>''
+        ));
       }
       if ($options['page']!='first') {
         $options['class']=$buttonClass." tab-prev";
@@ -5916,26 +5962,6 @@ if (errors$uniq.length>0) {
     return self::apply_template('tab_header', $options);
   }
 
-  /** Insert a button which, when clicked, displays the previous tab. Insert this inside the tab divs
-   * on each tab you want to have a next button, excluding the first tab.
-   *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>divId</b><br/>
-   * The id of the div which is tabbed and whose next tab should be selected.</li>
-   * <li><b>caption</b><br/>
-   * Optional. The untranslated caption of the button. Defaults to previous step.</li>
-   *
-   * @link http://docs.jquery.com/UI/Tabs
-   */
-  public static function tab_prev_button($options) {
-    if (!array_key_exists('caption', $options)) $options['caption'] = 'previous step';
-    $options['caption'] = lang::get($options['caption']);
-    if (!array_key_exists('class', $options)) $options['class'] = 'ui-widget-content ui-state-default ui-corner-all indicia-button prev-tab';
-    if (array_key_exists('divId', $options)) {
-      return self::apply_template('tab_prev_button', $options);
-    }
-  }
-
   /**
    * <p>Allows the demarcation of the start of a region of the page HTML to be declared which will be replaced by
    * a loading message whilst the page is loading.</p>
@@ -6573,7 +6599,7 @@ HTML;
         }
       }
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:spatialrefprecision";
-      $title = lang::get('For GPS coordinates, provide the precision as a radius in metres.');
+      $title = preg_replace('/[\r\n]/', ' ', lang::get('gps_precision_instructions'));
       $r = <<<HTML
 <td class="ui-widget-content scSpatialRefPrecisionCell" headers="$options[id]-spatialrefprecision-$colIdx">
   <input class="scSpatialRefPrecision" type="number" name="$fieldname" id="$fieldname" value="$value"
