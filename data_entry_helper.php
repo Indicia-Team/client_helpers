@@ -6956,7 +6956,7 @@ HTML;
           }
         } else {
           $r .= "<div class=\"ui-state-error ui-corner-all\">\n";
-          $r .= "<p>An error occurred when the data was submitted.</p>\n";
+          $r .= "<p>" . lang::get('An error occurred when the data was submitted.') . "</p>\n";
           if (is_array($response['error'])) {
             $r .=  "<ul>\n";
             foreach ($response['error'] as $field=>$message)
@@ -6981,7 +6981,7 @@ HTML;
         if (function_exists('hostsite_show_message')) {
           hostsite_show_message(lang::get('A warning occurred when the data was submitted.').' '.$response['error'], 'error');
         } else {
-          $r .= 'A warning occurred when the data was submitted.';
+          $r .= lang::get('A warning occurred when the data was submitted.');
           $r .= '<p class="error">'.$response['error']."</p>\n";
         }
       }
