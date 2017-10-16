@@ -1710,10 +1710,15 @@ JS;
       $langMoreThanOneLocationMatch = lang::get(
         'When trying to find the {1} more than one possibility was found. Please select the correct one below.',
         strtolower($options['label']));
+      $ctrlNameSafe = str_replace(':', '\\\\:', $options['id']);
       self::$javascript .= <<<JS
 indiciaData.langMoreThanOneLocationMatch = '$langMoreThanOneLocationMatch';
 $('#imp-geom').change(function() {
   indiciaFns.locationControl.autoFillLocationFromLocationTypeId('$options[id]', $options[autofillFromLocationTypeId]);
+});
+$('#$ctrlNameSafe\\\\:name').addClass('validateLinkedLocationAgainstGridSquare');
+$('#$ctrlNameSafe').on('change', function() {
+    $('#$ctrlNameSafe\\\\:name').valid();  // trigger validation test
 });
 
 JS;
