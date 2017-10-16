@@ -166,7 +166,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     global $indicia_templates;
     // This bit optionally adds '- common' or '- latin' depending on what was being searched
     if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-      $php = '$r = "<span class=\"scTaxon\"><em>{taxon}</em></span> <span class=\"scCommon\">{common}</span>";' . "\n";
+      $php = '$r = "<span class=\"scTaxon\"><em>{taxon}</em></span> <span class=\"scCommon\">{default_common_name}</span>";' . "\n";
     } else {
       $php = '$r = "<em>{taxon}</em>";' . "\n";
     }
@@ -175,7 +175,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
       $php .= '$r .= "<br/><strong>{taxon_group}</strong>";' . "\n";
     }
     if (isset($options['useCommonName'])&&$options['useCommonName']==true) 
-      $php = '$r = "<span class=\"scCommon\">{common}</span>";' . "\n";
+      $php = '$r = "<span class=\"scCommon\">{default_common_name}</span>";' . "\n";
     // Close the function
     $php .= 'return $r;' . "\n";
     // Set it into the indicia templates
