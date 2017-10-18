@@ -24,14 +24,49 @@ indiciaData.rowIdToReselect = false;
     currRec = null;
   }
 
+  /**
+   * Because we can't be sure the report layer will be visible, always show the selected record on the edit layer.
+   */
+  function showSelectedRecordOnMap() {
+    var geom;
+    var feature;
+    geom = OpenLayers.Geometry.fromWKT(currRec.extra.wkt);
+    if (indiciaData.mapdiv.map.projection.getCode() !== indiciaData.mapdiv.indiciaProjection.getCode()) {
+      geom.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
+    }
+    feature = new OpenLayers.Feature.Vector(geom);
+    feature.attributes.type = 'selectedrecord';
+    indiciaData.mapdiv.removeAllFeatures(indiciaData.mapdiv.map.editLayer, 'selectedrecord');
+    indiciaData.mapdiv.map.editLayer.addFeatures([feature]);
+  }
+
+  /**
+   * Event handler for changes to map layers. On visibility change, store a cookie to remember the setting.
+   */
+  function mapLayerChanged(event) {
+    if (event.property === 'visibility' && typeof $.cookie !== 'undefined') {
+      $.cookie('verification-' + event.layer.name, event.layer.visibility ? 'true' : 'false');
+    }
+  }
+
   mapInitialisationHooks.push(function (div) {
     // nasty hack to fix a problem where these layers get stuck and won't reload after pan/zoom on IE & Chrome
     div.map.events.register('moveend', null, function () {
       $.each(speciesLayers, function (idx, layer) {
-        indiciaData.mapdiv.map.removeLayer(layer);
-        indiciaData.mapdiv.map.addLayer(layer);
+        div.map.removeLayer(layer);
+        div.map.addLayer(layer);
       });
     });
+    div.map.events.register('changelayer', null, mapLayerChanged);
+    if (typeof $.cookie !== 'undefined') {
+      $.each(div.map.layers, function checkLayerVisible() {
+        if (!this.isBaseLayer && this !== div.map.editLayer) {
+          if ($.cookie('verification-' + this.name) !== 'true') {
+            this.setVisibility(false);
+          }
+        }
+      });
+    }
   });
 
   // IE7 compatability
@@ -135,6 +170,12 @@ indiciaData.rowIdToReselect = false;
             layer.setZIndex(0);
             speciesLayers.push(layer);
           }
+          $.each(speciesLayers, function checkLayerVisible() {
+            if ($.cookie('verification-' + this.name) !== 'true') {
+              this.setVisibility(false);
+            }
+          });
+          showSelectedRecordOnMap();
         }
         // ensure the feature is selected and centred
         indiciaData.reports.verification.grid_verification_grid.highlightFeatureById(data.data.Record[0].value, false);
@@ -760,6 +801,19 @@ indiciaData.rowIdToReselect = false;
       });
       $('#verify-all-button').click(function () {
         verifyRecordSet(false);
+      });
+    });
+
+    $('#verification-grid').find('tbody').dblclick(function () {
+      var extent;
+      var zoom;
+      $.each(indiciaData.mapdiv.map.editLayer.features, function() {
+        if (this.attributes.type === 'selectedrecord') {
+          extent = this.geometry.getBounds();
+          zoom = Math.min(
+            indiciaData.reportlayer.map.getZoomForExtent(extent) - 1, indiciaData.mapdiv.settings.maxZoom);
+          indiciaData.reportlayer.map.setCenter(extent.getCenterLonLat(), zoom);
+        }
       });
     });
 

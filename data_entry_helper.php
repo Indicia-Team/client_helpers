@@ -1717,9 +1717,7 @@ $('#imp-geom').change(function() {
   indiciaFns.locationControl.autoFillLocationFromLocationTypeId('$options[id]', $options[autofillFromLocationTypeId]);
 });
 $('#$ctrlNameSafe\\\\:name').addClass('validateLinkedLocationAgainstGridSquare');
-$('#$ctrlNameSafe').on('change', function() {
-    $('#$ctrlNameSafe\\\\:name').valid();  // trigger validation test
-});
+$('#$ctrlNameSafe').on('change', indiciaFns.locationControl.linkedLocationAttrValChange);
 
 JS;
     }
