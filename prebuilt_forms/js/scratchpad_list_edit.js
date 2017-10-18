@@ -6,7 +6,7 @@ jQuery(document).ready(function ($) {
 
   function simplify(text) {
     return text.toLowerCase().replace(/\(.+\)/g, '')
-      .replace(/ae/g, 'e').replace(/\. /g, '* ')
+      .replace(/ae/g, 'e')
       .replace(/[^a-zA-Z0-9\+\?*]/g, '');
   }
 
