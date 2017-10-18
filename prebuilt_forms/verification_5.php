@@ -864,7 +864,8 @@ HTML
         // is this a new heading?
         if (!isset($data[$caption[0]]))
           $data[$caption[0]]=array();
-        $val = ($col==='record_status') ? self::status_label($record[$col], $record['record_substatus']) : $record[$col];
+        $val = ($col==='record_status') ?
+            self::status_label($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
         $data[$caption[0]][] = array('caption'=>$caption[1], 'value'=>$val);
       }
       if ($col==='email' && !empty($record[$col]))
@@ -940,11 +941,18 @@ HTML
 
   /**
    * Converts a status and substatus into a readable label (e.g. accepted, or accepted:considered correct)
-   * @param string $status Status code from database (e.g. 'C')
-   * @param integer $substatus Substatus value from database
+   *
+   * @param string $status
+   *   Status code from database (e.g. 'C').$_GET
+   * @param integer $substatus
+   *   Substatus value from database.
+   * @param string $query
+   *   Query valud for the record (null, Q or A).
+   *
    * @return string
+   *   Status label text.
    */
-  private static function status_label($status, $substatus) {
+  private static function status_label($status, $substatus, $query) {
     $labels = array();
     self::translateStatusTerms();
     // grab the term for the status. We don't need to bother with not reviewed status if
@@ -955,6 +963,15 @@ HTML
       $labels[] = lang::get('Unknown');
     if ($substatus && !empty(self::$substatusTerms[$substatus])) {
       $labels[] = lang::get(self::$substatusTerms[$substatus]);
+    }
+    switch ($query) {
+      case 'Q':
+        $labels[] = lang::get('Queried');
+        break;
+
+      case 'A':
+        $labels[] = lang::get('Query answered');
+        break;
     }
     return implode($labels, '::');
   }
