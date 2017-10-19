@@ -127,6 +127,18 @@ class iform_ukbms_year_index_plot {
       		'group' => 'Access Control'
       	),
 
+          array(
+              'name'=>'taxon_column',
+              'caption'=>'Display Taxon field',
+              'description'=>'When selecting the taxon to display, choose which of the report columns to use.',
+              'type' => 'select',
+              'lookupValues' => array('taxon'=>'Common Name',
+                  'preferred_taxon'=>'Preferred Taxon (usually Latin)'),
+              'required' => true,
+              'default' => 'taxon',
+              'group'=>'Controls'
+          ),
+
       	array(
       		'name'=>'index_report_name',
       		'caption'=>'Index Data Report',
@@ -701,7 +713,8 @@ class iform_ukbms_year_index_plot {
       'species2SelectID' => 'uyip-species2-select-'.$nid,
       'allSpeciesMsg' => lang::get("All Species"),
       'reportGroup' => isset($args['report_group']) ? $args['report_group'] : '',
-      'rememberParamsReportGroup' => isset($args['remember_params_report_group']) ? $args['remember_params_report_group'] : ''
+      'rememberParamsReportGroup' => isset($args['remember_params_report_group']) ? $args['remember_params_report_group'] : '',
+      'taxon_column' => (isset($args['taxon_column']) ? $args['taxon_column'] : 'taxon')
     );
 
     self::_set_up_survey_mapping($args, $auth, $options);
