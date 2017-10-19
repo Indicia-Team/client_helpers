@@ -1402,8 +1402,8 @@ JS;
       $hiddenOptions['default'] = $options['default'];
     $r .= self::hidden_text($hiddenOptions);
     $options['blankText']=htmlspecialchars(lang::get($options['blankText']));
-    $selectClass = 'hierarchy-select' . isset($indicia_templates['formControlClass']) ?
-      " $indicia_templates[formControlClass]" : '';
+    $selectClass = 'hierarchy-select' . (isset($indicia_templates['formControlClass']) ?
+      " $indicia_templates[formControlClass]" : '');
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
     // reloading existing values.
     self::$javascript .= "
