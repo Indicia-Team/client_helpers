@@ -256,37 +256,40 @@ class data_entry_helper extends helper_base {
   }
 
   /**
+   * Complex custom attribute grid control.
+   *
    * A control that can be used to output a multi-value text attribute where the text value holds a json record
    * structure. The control is a simple grid with each row representing a single attribute value and each column representing
    * a field in the JSON stored in the value.
    *
-   * @param array $options Options array with the following possibilities:
-   * * **fieldname** - The fieldname of the attribute, e.g. smpAttr:10.
-   * **defaultRows** - Number of rows to show in the grid by default. An Add Another button is available to add more.
-   *   Defaults to 3.
-   * * **columns** - An array defining the columns available in the grid which map to fields in the JSON stored for each
-   *   value. The array key is the column name and the value is a sub-array with a column definition. The column
-   *   definition can contain the following:
-   *   * label - The column label. Will be automatically translated.
-   *   * class - A class given to the column label.
-   *   * datatype - The column's data type. Currently only text and lookup is supported.
-   *   * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the
-   *     control.
-   *   * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
-   *   * regex - A regular expression which validates the controls input value.
-   *   * default - default value for this control used for new rows
-   * * **default** - An array of default values loaded for existing data, as obtained by a call to getAttributes.
-   * * **rowCountControl** - Pass the ID of an input control that will contain an integer value to define the number of
-   *   rows in the grid. If not set, then a button is shown allowing additional rows to be added.
-   * * **encoding** - encoding used when saving the array for a row to the database. Default is json. If not json then
-   *   the provided character acts as a separator used to join the value list together.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **fieldname** - The fieldname of the attribute, e.g. smpAttr:10.
+   *   **defaultRows** - Number of rows to show in the grid by default. An Add Another button is available to add more.
+   *     Defaults to 3.
+   *   * **columns** - An array defining the columns available in the grid which map to fields in the JSON stored for each
+   *     value. The array key is the column name and the value is a sub-array with a column definition. The column
+   *     definition can contain the following:
+   *     * label - The column label. Will be automatically translated.
+   *     * class - A class given to the column label.
+   *     * datatype - The column's data type. Currently only text and lookup is supported.
+   *     * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the
+   *       control.
+   *     * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
+   *     * regex - A regular expression which validates the controls input value.
+   *     * default - default value for this control used for new rows
+   *   * **default** - An array of default values loaded for existing data, as obtained by a call to getAttributes.
+   *   * **rowCountControl** - Pass the ID of an input control that will contain an integer value to define the number of
+   *     rows in the grid. If not set, then a button is shown allowing additional rows to be added.
+   *   * **encoding** - encoding used when saving the array for a row to the database. Default is json. If not json then
+   *     the provided character acts as a separator used to join the value list together.
    */
   public static function complex_attr_grid($options) {
     self::add_resource('complexAttrGrid');
     $options = array_merge(array(
       'defaultRows' => 3,
       'columns' => array(
-        'x'=>array(
+        'x' => array(
           'label' => 'x',
           'datatype' => 'text',
           'unit' => 'cm',
@@ -299,30 +302,37 @@ class data_entry_helper extends helper_base {
         )
       ),
       'default' => array(),
-      'deleteRows' => false,
+      'deleteRows' => FALSE,
       'rowCountControl' => '',
       'encoding' => 'json'
     ), $options);
     list($attrTypeTag, $attrId) = explode(':', $options['fieldname']);
-    if (preg_match('/\[\]$/', $attrId))
+    if (preg_match('/\[\]$/', $attrId)) {
       $attrId = str_replace('[]', '', $attrId);
-    else
+    }
+    else {
       return 'The complex attribute grid control must be used with a mult-value attribute.';
+    }
     $r = '<thead><tr>';
     $lookupData = array();
     $thRow2 = '';
     foreach ($options['columns'] as $idx => &$def) {
-      // whilst we are iterating the columns, may as well do some setup.
-      // apply i18n to unit now, as it will be used in JS later
-      if (!empty($def['unit']))
+      // Whilst we are iterating the columns, may as well do some setup.
+      // Apply i18n to unit now, as it will be used in JS later.
+      if (!empty($def['unit'])) {
         $def['unit'] = lang::get($def['unit']);
+      }
       if ($def['datatype'] === 'lookup') {
         $minified = array();
-        // no matter if the lookup comes from the db, or from a local array, we want it in the same minimal format
+        // No matter if the lookup comes from the db, or from a local array, we want it in the same minimal format.
         if (!empty($def['termlist_id'])) {
           $termlistData = self::get_population_data(array(
             'table' => 'termlists_term',
-            'extraParams'=>$options['extraParams'] + array('termlist_id'=>$def['termlist_id'], 'view' => 'cache', 'orderby'=>isset($def['orderby'])?$def['orderby']:'term')
+            'extraParams' => $options['extraParams'] + array(
+              'termlist_id' => $def['termlist_id'],
+              'view' => 'cache',
+              'orderby' => isset($def['orderby']) ? $def['orderby'] : 'term',
+            ),
           ));
           foreach ($termlistData as $term) {
             $minified[] = array($term['id'], $term['term']);
@@ -334,8 +344,9 @@ class data_entry_helper extends helper_base {
           }
         }
         foreach ($minified as $tokens) {
-          if (isset($def['control']) && $def['control'] === 'checkbox_group')
+          if (isset($def['control']) && $def['control'] === 'checkbox_group') {
             $thRow2 .= "<th>$minified[1]</th>";
+          }
         }
         $lookupData["tl$idx"] = $minified;
         self::$javascript .= "indiciaData.tl$idx=" . json_encode($minified) . ";\n";
@@ -347,77 +358,91 @@ class data_entry_helper extends helper_base {
       $class = isset($def['class']) ? $def['class'] : 'complex-attr-grid-col' . $idx;
       $r .= "<th rowspan=\"$rowspan\" colspan=\"$colspan\" class=\"$class\">" . lang::get($def['label']) . '</th>';
     }
-    self::$javascript .= "indiciaData.langPleaseSelect='".lang::get('Please select') . "'\n";
-    self::$javascript .= "indiciaData.langCantRemoveEnoughRows='".lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
-    // need to unset the variable used in &$def, otherwise it doesn't work in the next iterator.
+    self::$javascript .= "indiciaData.langPleaseSelect='" . lang::get('Please select') . "'\n";
+    self::$javascript .= "indiciaData.langCantRemoveEnoughRows='" .
+      lang::get('Please clear the values in some more rows before trying to reduce the number of rows further.') . "'\n";
+    // Need to unset the variable used in &$def, otherwise it doesn't work in the next iterator.
     unset($def);
-    $jsData = array('cols'=>$options['columns'],'rowCount'=>$options['defaultRows'],
-      'rowCountControl'=>$options['rowCountControl'],'deleteRows'=>$options['deleteRows']);
-    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=".json_encode($jsData) . ";\n";
+    $jsData = array(
+      'cols' => $options['columns'],
+      'rowCount' => $options['defaultRows'],
+      'rowCountControl' => $options['rowCountControl'],
+      'deleteRows' => $options['deleteRows']
+    );
+    self::$javascript .= "indiciaData['complexAttrGrid-$attrTypeTag-$attrId']=" . json_encode($jsData) . ";\n";
     // Add delete column and end tr.
     $r .= '<th rowspan="2" class="complex-attr-grid-col-del"></th></tr>';
     // Add second header row then end thead.
     $r .= "<tr>$thRow2</tr></thead>";
     $r .= '<tbody>';
     $rowCount = $options['defaultRows'] > count($options['default']) ? $options['defaultRows'] : count($options['default']);
-    $extraCols=0;
-    for ($i = 0; $i<=$rowCount-1; $i++) {
-      $class=($i % 2 === 1) ? '' : ' class="odd"';
+    $extraCols = 0;
+    for ($i = 0; $i <= $rowCount - 1; $i++) {
+      $class = ($i % 2 === 1) ? '' : ' class="odd"';
       $r .= "<tr$class>";
       if (isset($options['default'][$i])) {
         $defaults = $options['encoding'] === 'json'
-          ? json_decode($options['default'][$i]['default'], true)
+          ? json_decode($options['default'][$i]['default'], TRUE)
           : explode($options['encoding'], $options['default'][$i]['default']);
-      } else {
+      }
+      else {
         $defaults = array();
       }
       foreach ($options['columns'] as $idx => $def) {
-        if (isset($options['default'][$i]))
+        if (isset($options['default'][$i])) {
           $fieldnamePrefix = str_replace('Attr:', 'Attr+:', $options['default'][$i]['fieldname']);
-        else
+        }
+        else {
           $fieldnamePrefix = "$attrTypeTag+:$attrId:";
-        $fieldname="$fieldnamePrefix:$i:$idx";
+        }
+        $fieldname = "$fieldnamePrefix:$i:$idx";
         $default = isset(self::$entity_to_load[$fieldname]) ? self::$entity_to_load[$fieldname] :
           (array_key_exists($idx, $defaults) ? $defaults[$idx] :
             (isset($def['default']) ? $def['default'] : ''));
         $r .= "<td>";
         if ($def['datatype'] === 'lookup' && isset($def['control']) && $def['control']) {
-          $checkboxes=array();
-          // array field
+          $checkboxes = array();
+          // Array field.
           $fieldname .= '[]';
           foreach ($lookupData["tl$idx"] as $term) {
             $checked = is_array($default) && in_array($term[0], $default) ? ' checked="checked"' : '';
             $checkboxes[] = "<input title=\"$term[1]\" type=\"checkbox\" name=\"$fieldname\" value=\"$term[0]:$term[1]\"$checked>";
           }
           $r .= implode('</td><td>', $checkboxes);
-          $extraCols .= count($checkboxes)-1;
-        } elseif ($def['datatype'] === 'lookup') {
-          $r .= "<select name=\"$fieldname\"><option value=''>&lt;".lang::get('Please select') . "&gt;</option>";
+          $extraCols .= count($checkboxes) - 1;
+        }
+        elseif ($def['datatype'] === 'lookup') {
+          $r .= "<select name=\"$fieldname\"><option value=''>&lt;" . lang::get('Please select') . "&gt;</option>";
           foreach ($lookupData["tl$idx"] as $term) {
-            $selected = $default=="$term[0]" ? ' selected="selected"' : '';
+            $selected = $default == "$term[0]" ? ' selected="selected"' : '';
             $r .= "<option value=\"$term[0]:$term[1]\"$selected>$term[1]</option>";
           }
           $r .= "</select>";
-        } else {
-          $class = empty($def['regex']) ? '' : ' class="{pattern:'.$def['regex'].'}"';
+        }
+        else {
+          $class = empty($def['regex']) ? '' : ' class="{pattern:' . $def['regex'] . '}"';
           $default = htmlspecialchars($default);
           $r .= "<input type=\"text\" name=\"$fieldname\" value=\"$default\"$class/>";
         }
-        if (!empty($def['unit']))
-          $r .= '<span class="unit">'.lang::get($def['unit']).'</span>';
+        if (!empty($def['unit'])) {
+          $r .= '<span class="unit">' . lang::get($def['unit']) . '</span>';
+        }
         $r .= '</td>';
       }
       $r .= "<td><input type=\"hidden\" name=\"$fieldnamePrefix:$i:deleted\" value=\"f\" class=\"delete-flag\"/>";
-      if (empty($options['rowCountControl']))
+      if (empty($options['rowCountControl'])) {
         $r .= "<span class=\"ind-delete-icon\"/>";
+      }
       $r .= "</td></tr>";
     }
     $r .= '</tbody>';
     if (empty($options['rowCountControl'])) {
       $r .= '<tfoot>';
-      $r .= '<tr><td colspan="'.(count($options['columns'])+1+$extraCols).'"><button class="add-btn" type="button">' . lang::get("Add another"). '</button></td></tr>';
+      $r .= '<tr><td colspan="' . (count($options['columns']) + 1 + $extraCols) .
+        '"><button class="add-btn" type="button">' . lang::get("Add another") . '</button></td></tr>';
       $r .= '</tfoot>';
-    } else {
+    }
+    else {
       $escaped = str_replace(':', '\\\\:', $options['rowCountControl']);
       data_entry_helper::$javascript .=
         "$('#$escaped').val($rowCount);
@@ -425,7 +450,7 @@ $('#$escaped').change(function(e) {
   changeComplexGridRowCount('$escaped', '$attrTypeTag', '$attrId');
 });\n";
     }
-    // wrap in a table template
+    // Wrap in a table template.
     global $indicia_templates;
     $r = str_replace(
       array('{class}', '{id}', '{content}'),
@@ -1402,8 +1427,8 @@ JS;
       $hiddenOptions['default'] = $options['default'];
     $r .= self::hidden_text($hiddenOptions);
     $options['blankText']=htmlspecialchars(lang::get($options['blankText']));
-    $selectClass = 'hierarchy-select' . isset($indicia_templates['formControlClass']) ?
-      " $indicia_templates[formControlClass]" : '';
+    $selectClass = 'hierarchy-select' . (isset($indicia_templates['formControlClass']) ?
+      " $indicia_templates[formControlClass]" : '');
     // Now output JavaScript that creates and populates child selects as each option is selected. There is also code for
     // reloading existing values.
     self::$javascript .= "
