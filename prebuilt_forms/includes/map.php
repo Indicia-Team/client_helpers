@@ -108,7 +108,11 @@ function iform_map_get_map_parameters() {
         'bing_aerial' => 'Bing Aerial',
         'bing_hybrid' => 'Bing Hybrid',
         'bing_shaded' => 'Bing Shaded',
-        'osm' => 'OpenStreetMap'
+        'osm' => 'OpenStreetMap',
+        'os_outdoor' => 'OS Outdoor',
+        'os_road' => 'OS Road',
+        'os_light' => 'OS Light',
+        'os_night' => 'OS Night',
       ),
       'sortable'=>true,
       'group'=>'Base Map Layers',

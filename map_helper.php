@@ -82,7 +82,8 @@ class map_helper extends helper_base {
   * <li><b>presetLayers</b><br/>
   * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
   * 'google_satellite', 'openlayers_wms', 'nasa_mosaic', 'virtual_earth' (deprecated, use bing_aerial),
-  * 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'osm' (for OpenStreetMap), 'osm_th' (for OpenStreetMap Tiles@Home).
+  * 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'osm' (for OpenStreetMap), 'osm_th' (for OpenStreetMap Tiles@Home),
+   * os_outdoor, os_road, os_light, os_night.
   * </li>
   * <li><b>tilecacheLayers</b><br/>
   * Array of layer definitions for tilecaches, which are pre-cached background tiles. They are less flexible but much faster
@@ -329,9 +330,16 @@ class map_helper extends helper_base {
               self::add_resource('virtualearth');
               break;
           }
-          if ($a=='bing' && (!isset(self::$bing_api_key) || empty(self::$bing_api_key)))
-            return '<p class="error">To use the Bing layers, please ensure that you declare a variable called $bing_api_key in the helper_config.php file set to an '.
-                'empty string and specify a Bing API Key on the IForm settings page.</p>';
+          if ($a=='bing' && (!isset(self::$bing_api_key) || empty(self::$bing_api_key))) {
+            return '<p class="error">To use the Bing map layers, please ensure that you declare a variable called ' .
+              '$bing_api_key in the helper_config.php file. Either set a value or set to an empty string and specify ' .
+              'a value in the IForm settings page if using the Drupal module.</p>';
+          }
+          if ($a=='os' && (!isset(self::$os_api_key) || empty(self::$os_api_key))) {
+            return '<p class="error">To use the Ordnance Survey map layers, please ensure that you declare a variable ' .
+              'called $os_api_key in the helper_config.php file. Either set a value or set to an empty string and ' .
+              'specify a value in the IForm settings page if using the Drupal module.</p>';
+          }
         }
       }
 
@@ -371,6 +379,8 @@ class map_helper extends helper_base {
       unset($jsoptions['tabDiv']);
       if (isset(self::$bing_api_key))
         $jsoptions['bing_api_key'] = self::$bing_api_key;
+      if (isset(self::$os_api_key))
+        $jsoptions['os_api_key'] = self::$os_api_key;
       $json=substr(json_encode($jsoptions), 0, -1).$json_insert.'}';
       $olOptions = array_merge(array(
         'theme' => self::$js_path . 'theme/default/style.css'
