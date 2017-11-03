@@ -423,3 +423,7 @@ div#map-loading {
   width: 32px;
   height: 32px;
 }
+div#ctrl-wrap-log-created-by {
+  width: 50%;
+  float: left;
+}
