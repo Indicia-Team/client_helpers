@@ -698,7 +698,22 @@ HTML
     ));
     $opts['zoomMapToOutput']=FALSE;
     $grid = report_helper::report_grid($opts);
-    $log = report_helper::report_grid(array(
+    $log =
+      data_entry_helper::radio_group(array(
+        'label'=>lang::get('Log Records'),
+        'fieldname'=>'log-created-by',
+        'lookupValues' => array('all'=>lang::get('All'), 'mine'=>lang::get('Mine'), 'others'=>lang::get('Other\'s')),
+        'default'=>'all',
+        'class'=>'radio-log-created-by'
+      )) .
+        
+      data_entry_helper::checkbox(array(
+        'label'=>lang::get('Verification decisions only?'),
+        'fieldname'=>'verification-only',
+        'class'=>'checkbox-log-verification-comments'
+      )) .
+        
+      report_helper::report_grid(array(
       'dataSource' => 'library/occurrence_comments/filterable_explore_list',
       'id' => 'comments-log',
       'rowId' => 'occurrence_id',

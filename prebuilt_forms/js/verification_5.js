@@ -761,6 +761,90 @@ indiciaData.rowIdToReselect = false;
     $.fancybox.close();
   }
 
+  // There are 2 related controls, a "created by" and "verification records only"
+  indiciaFns.applyCreatedByFilterToReports = function (doReload, elem) {
+    var filterDef;
+    var reload = (typeof doReload === 'undefined') ? true : doReload;
+    var val;
+
+    filterDef = $.extend({}, indiciaData.filter.def);
+
+    if(elem === false)
+      val = $('.radio-log-created-by input:checked').val();
+    else if($(elem).filter(':checked').length == 0)
+      return;
+    else 
+      val = $(elem).val();
+
+    if (indiciaData.reports) {
+      // apply the filter to any reports on the page
+      $.each(indiciaData.reports, function (i, group) {
+        $.each(group, function () {
+          var grid = this[0];
+          // Only apply to the Log grid
+          if (grid.id != 'comments-log')
+            return;
+          // reset to first page
+          grid.settings.offset = 0;
+          if(typeof grid.settings.fixedParams == 'undefined') {
+            grid.settings.fixedParams = {};
+          }
+          grid.settings.extraParams.created_by_filter = val;
+          grid.settings.fixedParams.created_by_filter = val;
+          grid.settings.extraParams.user_id = indiciaData.userId;
+          grid.settings.fixedParams.user_id = indiciaData.userId;
+          if (reload) {
+            // reload the report grid (but only if not already done)
+            this.ajaxload();
+            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
+              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
+            }
+          }
+        });
+      });
+    }
+  };
+
+  // There are 2 related controls, a "created by" and "verification records only"
+  indiciaFns.applyVerificationCommentsFilterToReports = function (doReload, elem) {
+    var filterDef;
+    var reload = (typeof doReload === 'undefined') ? true : doReload;
+    var val;
+
+    filterDef = $.extend({}, indiciaData.filter.def);
+
+    if(elem === false)
+      val = $('input.checkbox-log-verification-comments:checked').length ? 't' : 'f';
+    else
+      val = $(elem).filter(':checked').length ? 't' : 'f';
+
+    if (indiciaData.reports) {
+      // apply the filter to any reports on the page
+      $.each(indiciaData.reports, function (i, group) {
+        $.each(group, function () {
+          var grid = this[0];
+          // Only apply to the Log grid
+          if (grid.id != 'comments-log')
+            return;
+          // reset to first page
+          grid.settings.offset = 0;
+          if(typeof grid.settings.fixedParams == 'undefined') {
+            grid.settings.fixedParams = {};
+          }
+          grid.settings.extraParams.verification_only_filter = val;
+          grid.settings.fixedParams.verification_only_filter = val;
+          if (reload) {
+            // reload the report grid (but only if not already done)
+            this.ajaxload();
+            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
+              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
+            }
+          }
+        });
+      });
+    }
+  };
+
   $(document).ready(function () {
     // Use jQuery to add button to the top of the verification page. Use the first button to access the popup
     // which allows you to verify all trusted records or all records. The second enabled multiple record verification checkboxes
@@ -1238,6 +1322,20 @@ indiciaData.rowIdToReselect = false;
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: currRec.extra.taxon_list_id });
       }
     });
+
+    $('.radio-log-created-by input:radio').change(function () {
+      indiciaFns.applyCreatedByFilterToReports(true, this);
+    });
+
+    indiciaFns.applyCreatedByFilterToReports(false, false);
+
+
+    $('input.checkbox-log-verification-comments:checkbox').change(function () {
+      indiciaFns.applyVerificationCommentsFilterToReports(true, this);
+    });
+
+    indiciaFns.applyVerificationCommentsFilterToReports(false, false);
+
   });
 
   function removeTrust(RemoveTrustId) {
