@@ -773,7 +773,7 @@ indiciaData.rowIdToReselect = false;
       val = $('.radio-log-created-by input:checked').val();
     else if($(elem).filter(':checked').length == 0)
       return;
-    else 
+    else
       val = $(elem).val();
 
     if (indiciaData.reports) {
@@ -1329,12 +1329,22 @@ indiciaData.rowIdToReselect = false;
 
     indiciaFns.applyCreatedByFilterToReports(false, false);
 
-
     $('input.checkbox-log-verification-comments:checkbox').change(function () {
       indiciaFns.applyVerificationCommentsFilterToReports(true, this);
     });
 
     indiciaFns.applyVerificationCommentsFilterToReports(false, false);
+
+    $('#details-zoom').click(function toggleZoom() {
+      if ($('#outer-with-map').hasClass('details-zoomed')) {
+        $('#outer-with-map').removeClass('details-zoomed');
+        $('#details-zoom').html('&#8689;');
+      } else {
+        $('#outer-with-map').addClass('details-zoomed');
+        $('#details-zoom').html('&#8690;');
+      }
+    });
+
 
   });
 

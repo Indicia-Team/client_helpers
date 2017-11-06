@@ -460,6 +460,7 @@ idlist=';
     ));
     $r .= '<div id="details-tab"></div>';
     $r .= self::otherTabHtml();
+    $r .= '<span id="details-zoom" title="' . lang::get('Click to expand record details to full screen') . '">&#8689;</span>';
     $r .= '</div></div></div></div></div></div>';
     return $r;
   }
@@ -706,13 +707,13 @@ HTML
         'default'=>'all',
         'class'=>'radio-log-created-by'
       )) .
-        
+
       data_entry_helper::checkbox(array(
         'label'=>lang::get('Verification decisions only?'),
         'fieldname'=>'verification-only',
         'class'=>'checkbox-log-verification-comments'
       )) .
-        
+
       report_helper::report_grid(array(
       'dataSource' => 'library/occurrence_comments/filterable_explore_list',
       'id' => 'comments-log',
