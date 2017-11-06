@@ -210,6 +210,7 @@ ul.gallery li {
 
 #record-details-tabs {
   font-size: 80%;
+  position: relative;
 
   #details-tab {
     table {
@@ -239,6 +240,33 @@ ul.gallery li {
   #phenology-tab {
     p {
       margin: 0;
+    }
+  }
+
+  #details-zoom {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0 4px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+}
+
+#outer-with-map.details-zoomed {
+  position: relative;
+  #record-details-wrap {
+    background: white;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    #record-details-tabs {
+      font-size: 100%;
+      #details-zoom {
+        margin: 4px 6px;
+      }
     }
   }
 }

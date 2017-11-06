@@ -146,74 +146,74 @@ ul.gallery li {
 .popup-form {
   width: 580px;
 }
-/* line 18, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 18, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form label {
   font-weight: bold;
 }
-/* line 19, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 19, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form fieldset {
   padding: 1.4em;
   margin: 0 0 1.5em 0;
 }
-/* line 20, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 20, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form legend {
   font-weight: bold;
   font-size: 1.2em;
 }
-/* line 22, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 22, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password] {
   margin: 0.5em 0;
   background-color: white;
   padding: 5px;
 }
-/* line 27, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 27, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.title {
   font-size: 1.5em;
 }
-/* line 29, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 29, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form textarea {
   margin: 0.5em 0;
   padding: 5px;
 }
-/* line 30, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 30, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form select {
   margin: 0.5em 0;
 }
-/* line 55, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 55, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form fieldset {
   border: 1px solid #cccccc;
 }
-/* line 57, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 57, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password],
 .popup-form textarea {
   background-color: #fff;
   border: 1px solid #bbbbbb;
 }
-/* line 61, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 61, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text:focus, .popup-form input.title:focus, .popup-form input[type=email]:focus, .popup-form input[type=text]:focus, .popup-form input[type=password]:focus,
 .popup-form textarea:focus {
   border-color: #666666;
 }
-/* line 65, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 65, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form select {
   background-color: #fff;
   border-width: 1px;
   border-style: solid;
 }
-/* line 40, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 40, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password] {
   width: 300px;
 }
-/* line 46, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 46, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form textarea {
   width: 390px;
   height: 250px;
 }
-/* line 40, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 40, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password] {
   width: 555px;
 }
-/* line 46, ../../../../../../../../../../../usr/local/lib/ruby/gems/2.2.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 46, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form textarea {
   width: 555px;
   height: 250px;
@@ -319,19 +319,20 @@ ul.gallery li {
 /* line 211, sass/verification_5.scss */
 #record-details-tabs {
   font-size: 80%;
+  position: relative;
 }
-/* line 217, sass/verification_5.scss */
+/* line 218, sass/verification_5.scss */
 #record-details-tabs #details-tab table td.header {
   color: #027AC6;
   font-weight: bold;
   border-bottom: solid silver 1px;
 }
-/* line 222, sass/verification_5.scss */
+/* line 223, sass/verification_5.scss */
 #record-details-tabs #details-tab table td.caption {
   padding: 0 1em 0 0.5em;
   font-weight: bold;
 }
-/* line 231, sass/verification_5.scss */
+/* line 232, sass/verification_5.scss */
 #record-details-tabs .comment .header {
   background-color: #e7e7e7;
   padding: 4px;
@@ -340,90 +341,124 @@ ul.gallery li {
   -webkit-border-radius: 4px;
   border-radius: 4px;
 }
-/* line 240, sass/verification_5.scss */
+/* line 241, sass/verification_5.scss */
 #record-details-tabs #phenology-tab p {
   margin: 0;
 }
-
 /* line 246, sass/verification_5.scss */
+#record-details-tabs #details-zoom {
+  position: absolute;
+  top: 0;
+  right: 0;
+  margin: 0 4px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+/* line 256, sass/verification_5.scss */
+#outer-with-map.details-zoomed {
+  position: relative;
+}
+/* line 258, sass/verification_5.scss */
+#outer-with-map.details-zoomed #record-details-wrap {
+  background: white;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+/* line 265, sass/verification_5.scss */
+#outer-with-map.details-zoomed #record-details-wrap #record-details-tabs {
+  font-size: 100%;
+}
+/* line 267, sass/verification_5.scss */
+#outer-with-map.details-zoomed #record-details-wrap #record-details-tabs #details-zoom {
+  margin: 4px 6px;
+}
+
+/* line 274, sass/verification_5.scss */
 input[type="button"].tools-btn, button.tools-btn {
   padding: 0.3em;
 }
 
-/* line 251, sass/verification_5.scss */
+/* line 279, sass/verification_5.scss */
 .quick-verify-popup label {
   width: auto;
   margin-left: 2em;
 }
-/* line 255, sass/verification_5.scss */
+/* line 283, sass/verification_5.scss */
 .quick-verify-popup button {
   margin-top: 1em;
 }
-/* line 258, sass/verification_5.scss */
+/* line 286, sass/verification_5.scss */
 .quick-verify-popup .helpText {
   margin-left: 45px;
 }
-/* line 261, sass/verification_5.scss */
+/* line 289, sass/verification_5.scss */
 .quick-verify-popup h2, .quick-verify-popup h3 {
   margin-bottom: 4px;
 }
-/* line 264, sass/verification_5.scss */
+/* line 292, sass/verification_5.scss */
 .quick-verify-popup a {
   text-decoration: underline;
   margin: 0 6px;
 }
-/* line 267, sass/verification_5.scss */
+/* line 295, sass/verification_5.scss */
 .quick-verify-popup a:hover, .quick-verify-popup a:active {
   background-color: #ffffcc;
 }
 
-/* line 274, sass/verification_5.scss */
+/* line 302, sass/verification_5.scss */
 .verify-tools {
   display: none;
   position: absolute;
   background: white;
   border: solid silver 1px;
 }
-/* line 279, sass/verification_5.scss */
+/* line 307, sass/verification_5.scss */
 .verify-tools li {
   background-image: none;
   padding: 0.2em 0.5em;
 }
 
-/* line 286, sass/verification_5.scss */
+/* line 314, sass/verification_5.scss */
 tr.verified, tr.rejected, tr.total {
   text-align: right;
   padding-right: 1em;
 }
-/* line 290, sass/verification_5.scss */
+/* line 318, sass/verification_5.scss */
 tr.verified {
   color: #00a000;
 }
-/* line 293, sass/verification_5.scss */
+/* line 321, sass/verification_5.scss */
 tr.rejected {
   color: #00a000;
 }
-/* line 296, sass/verification_5.scss */
+/* line 324, sass/verification_5.scss */
 tr.total {
   font-weight: bold;
 }
 
-/* line 302, sass/verification_5.scss */
+/* line 330, sass/verification_5.scss */
 .grid-verify-popup button {
   margin-right: 1em;
 }
-/* line 305, sass/verification_5.scss */
+/* line 333, sass/verification_5.scss */
 .grid-verify-popup label, .grid-verify-popup label * {
   vertical-align: middle;
 }
-/* line 310, sass/verification_5.scss */
-div#map-loading {
+
+/* line 338, sass/verification_5.scss */
+#map-loading {
   right: auto;
   bottom: auto;
   width: 32px;
   height: 32px;
 }
-div#ctrl-wrap-log-created-by {
+
+/* line 345, sass/verification_5.scss */
+#ctrl-wrap-log-created-by {
   width: 50%;
   float: left;
 }
