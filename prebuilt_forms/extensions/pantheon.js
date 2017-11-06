@@ -42,7 +42,7 @@ jQuery(document).ready(function ($) {
         termAlias = $(this).html().replace(/&amp;/g, '&')
           .replace(/[^a-zA-Z0-9]+/g, '-')
           .toLowerCase();
-        $(this).after('<a class="lexicon-info" target="_blank" title="' + summary + '" ' +
+        $(this).after('<a class="lexicon-info skip-text" target="_blank" title="' + summary + '" ' +
             'href="/pantheon/lexicon/' + termAlias + '">i</a>');
         $(this).addClass('processed');
       }
