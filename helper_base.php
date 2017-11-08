@@ -122,6 +122,7 @@ $indicia_templates = array(
       "/* ]]> */</script>",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
+  'single_species_taxon_label' => '{taxon}',
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
@@ -2132,28 +2133,32 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
  /**
-  * Returns a static template which is either a default template or one
-  * specified in the options
-  * @param string $name The static template type. e.g. prefix or suffix.
-  * @param array $options Array of options which may contain a template name.
-  * @return string Template value.
+  * Returns a static template which is either a default template or one specified in the options.
+  *
+  * @param string $name
+  *   The static template type. e.g. prefix or suffix.
+  * @param array $options
+  *   Array of options which may contain a template name.
+  *
+  * @return string
+  *   Template value.
   */
-  protected static function apply_static_template($name, $options) {
+  public static function apply_static_template($name, $options) {
     global $indicia_templates;
     $key = $name .'Template';
     if (array_key_exists($key, $options)) {
       //a template has been specified
       if (array_key_exists($options[$key], $indicia_templates))
         //the specified template exists
-        $r = $indicia_templates[$options[$key]];
+        $template = $indicia_templates[$options[$key]];
       else
-        $r = $indicia_templates[$name] .
+        $template = $indicia_templates[$name] .
         '<span class="ui-state-error">Code error: suffix template '.$options[$key].' not in list of known templates.</span>';
     } else {
       //no template specified
-      $r = $indicia_templates[$name];
+      $template = $indicia_templates[$name];
     }
-    return self::apply_replacements_to_template($r, $options);
+    return self::apply_replacements_to_template($template, $options);
   }
 
  /**

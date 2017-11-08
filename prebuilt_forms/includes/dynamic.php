@@ -322,7 +322,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     }
     // Output the dynamic tab content
     $pageIdx = 0;
-    $singleSpeciesLabel=self::$singleSpeciesName;
+    $singleSpeciesLabel = self::$singleSpeciesName;
     foreach ($tabHtml as $tab=>$tabContent) {
       // get a machine readable alias for the heading
       $tabalias = 'tab-'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
