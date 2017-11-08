@@ -504,7 +504,10 @@ $('form#entry_form').tooltip({
     );
   }
 
-  /* Adds a drop down box to the page which lists areas on the maps (e.g. a list
+  /**
+   * Control for picking an area on the map.
+   *
+   * Adds a drop down box to the page which lists areas on the maps (e.g. a list
    * of countries). When you choose an area in the drop down, the map on the
    * page can automatically pan and zoom to that area and the spatial reference
    * system control, if present, can automatically pick the best system for the
@@ -526,24 +529,21 @@ $('form#entry_form').tooltip({
       return 'Please specify the list of areas for the area_picker control.';
     }
     if (isset($options['mapDataFile'])) {
-      $filepath = PrivateStream::basePath();
-      if (!$filepath) {
-        $filepath = PublicStream::basePath();
-      }
-      $path = "$filepath/indicia/js/";
+      $filepath = hostsite_get_public_file_path();
+      $path = data_entry_helper::getRootFolder() . "$filepath/indicia/js/";
     }
     else {
       $path = data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path() .
         'prebuilt_forms/extensions/';
     }
-    $options = array_merge($options, array(
+    $options = array_merge(array(
       'label' => 'Area',
       'mapDataFile' => 'mapAreaData.js',
       'id' => 'area-picker',
       'lookupValues' => array_merge(array(
         '' => lang::get('<select area>')
       ), array_combine($options['areas'], $options['areas']))
-    ));
+    ), $options);
     // Load the data file.
     data_entry_helper::$javascript .= "$.getScript('$path$options[mapDataFile]');\n";
     return data_entry_helper::select($options);
