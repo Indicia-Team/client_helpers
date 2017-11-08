@@ -166,7 +166,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     global $indicia_templates;
     // This bit optionally adds '- common' or '- latin' depending on what was being searched
     if (isset($args['species_include_both_names']) && $args['species_include_both_names']) {
-      $php = '$r = "<span class=\"scTaxon\"><em>{taxon}</em></span> <span class=\"scCommon\">{common}</span>";' . "\n";
+      $php = '$r = "<span class=\"scTaxon\"><em>{taxon}</em></span> <span class=\"scCommon\">{default_common_name}</span>";' . "\n";
     } else {
       $php = '$r = "<em>{taxon}</em>";' . "\n";
     }
@@ -175,7 +175,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
       $php .= '$r .= "<br/><strong>{taxon_group}</strong>";' . "\n";
     }
     if (isset($options['useCommonName'])&&$options['useCommonName']==true) 
-      $php = '$r = "<span class=\"scCommon\">{common}</span>";' . "\n";
+      $php = '$r = "<span class=\"scCommon\">{default_common_name}</span>";' . "\n";
     // Close the function
     $php .= 'return $r;' . "\n";
     // Set it into the indicia templates
@@ -340,6 +340,12 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
         $elementsToAdd[$keyToCreate] = $value;
       }
     }
+    //Don't clone the date as the date on survey 2 will always be different
+    $keysToDelete[]='sample:date_start';
+    $keysToDelete[]='sample:date_end';
+    $keysToDelete[]='sample:date_type';
+    $keysToDelete[]='sample:date';
+    $keysToDelete[]='sample:display_date';
     foreach($keysToDelete as $key) {
       unset(data_entry_helper::$entity_to_load[$key]);
     }

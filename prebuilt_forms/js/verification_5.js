@@ -24,14 +24,49 @@ indiciaData.rowIdToReselect = false;
     currRec = null;
   }
 
+  /**
+   * Because we can't be sure the report layer will be visible, always show the selected record on the edit layer.
+   */
+  function showSelectedRecordOnMap() {
+    var geom;
+    var feature;
+    geom = OpenLayers.Geometry.fromWKT(currRec.extra.wkt);
+    if (indiciaData.mapdiv.map.projection.getCode() !== indiciaData.mapdiv.indiciaProjection.getCode()) {
+      geom.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
+    }
+    feature = new OpenLayers.Feature.Vector(geom);
+    feature.attributes.type = 'selectedrecord';
+    indiciaData.mapdiv.removeAllFeatures(indiciaData.mapdiv.map.editLayer, 'selectedrecord');
+    indiciaData.mapdiv.map.editLayer.addFeatures([feature]);
+  }
+
+  /**
+   * Event handler for changes to map layers. On visibility change, store a cookie to remember the setting.
+   */
+  function mapLayerChanged(event) {
+    if (event.property === 'visibility' && typeof $.cookie !== 'undefined') {
+      $.cookie('verification-' + event.layer.name, event.layer.visibility ? 'true' : 'false');
+    }
+  }
+
   mapInitialisationHooks.push(function (div) {
     // nasty hack to fix a problem where these layers get stuck and won't reload after pan/zoom on IE & Chrome
     div.map.events.register('moveend', null, function () {
       $.each(speciesLayers, function (idx, layer) {
-        indiciaData.mapdiv.map.removeLayer(layer);
-        indiciaData.mapdiv.map.addLayer(layer);
+        div.map.removeLayer(layer);
+        div.map.addLayer(layer);
       });
     });
+    div.map.events.register('changelayer', null, mapLayerChanged);
+    if (typeof $.cookie !== 'undefined') {
+      $.each(div.map.layers, function checkLayerVisible() {
+        if (!this.isBaseLayer && this !== div.map.editLayer) {
+          if ($.cookie('verification-' + this.name) !== 'true') {
+            this.setVisibility(false);
+          }
+        }
+      });
+    }
   });
 
   // IE7 compatability
@@ -135,6 +170,12 @@ indiciaData.rowIdToReselect = false;
             layer.setZIndex(0);
             speciesLayers.push(layer);
           }
+          $.each(speciesLayers, function checkLayerVisible() {
+            if ($.cookie('verification-' + this.name) !== 'true') {
+              this.setVisibility(false);
+            }
+          });
+          showSelectedRecordOnMap();
         }
         // ensure the feature is selected and centred
         indiciaData.reports.verification.grid_verification_grid.highlightFeatureById(data.data.Record[0].value, false);
@@ -720,6 +761,90 @@ indiciaData.rowIdToReselect = false;
     $.fancybox.close();
   }
 
+  // There are 2 related controls, a "created by" and "verification records only"
+  indiciaFns.applyCreatedByFilterToReports = function (doReload, elem) {
+    var filterDef;
+    var reload = (typeof doReload === 'undefined') ? true : doReload;
+    var val;
+
+    filterDef = $.extend({}, indiciaData.filter.def);
+
+    if(elem === false)
+      val = $('.radio-log-created-by input:checked').val();
+    else if($(elem).filter(':checked').length == 0)
+      return;
+    else
+      val = $(elem).val();
+
+    if (indiciaData.reports) {
+      // apply the filter to any reports on the page
+      $.each(indiciaData.reports, function (i, group) {
+        $.each(group, function () {
+          var grid = this[0];
+          // Only apply to the Log grid
+          if (grid.id != 'comments-log')
+            return;
+          // reset to first page
+          grid.settings.offset = 0;
+          if(typeof grid.settings.fixedParams == 'undefined') {
+            grid.settings.fixedParams = {};
+          }
+          grid.settings.extraParams.created_by_filter = val;
+          grid.settings.fixedParams.created_by_filter = val;
+          grid.settings.extraParams.user_id = indiciaData.userId;
+          grid.settings.fixedParams.user_id = indiciaData.userId;
+          if (reload) {
+            // reload the report grid (but only if not already done)
+            this.ajaxload();
+            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
+              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
+            }
+          }
+        });
+      });
+    }
+  };
+
+  // There are 2 related controls, a "created by" and "verification records only"
+  indiciaFns.applyVerificationCommentsFilterToReports = function (doReload, elem) {
+    var filterDef;
+    var reload = (typeof doReload === 'undefined') ? true : doReload;
+    var val;
+
+    filterDef = $.extend({}, indiciaData.filter.def);
+
+    if(elem === false)
+      val = $('input.checkbox-log-verification-comments:checked').length ? 't' : 'f';
+    else
+      val = $(elem).filter(':checked').length ? 't' : 'f';
+
+    if (indiciaData.reports) {
+      // apply the filter to any reports on the page
+      $.each(indiciaData.reports, function (i, group) {
+        $.each(group, function () {
+          var grid = this[0];
+          // Only apply to the Log grid
+          if (grid.id != 'comments-log')
+            return;
+          // reset to first page
+          grid.settings.offset = 0;
+          if(typeof grid.settings.fixedParams == 'undefined') {
+            grid.settings.fixedParams = {};
+          }
+          grid.settings.extraParams.verification_only_filter = val;
+          grid.settings.fixedParams.verification_only_filter = val;
+          if (reload) {
+            // reload the report grid (but only if not already done)
+            this.ajaxload();
+            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
+              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
+            }
+          }
+        });
+      });
+    }
+  };
+
   $(document).ready(function () {
     // Use jQuery to add button to the top of the verification page. Use the first button to access the popup
     // which allows you to verify all trusted records or all records. The second enabled multiple record verification checkboxes
@@ -760,6 +885,19 @@ indiciaData.rowIdToReselect = false;
       });
       $('#verify-all-button').click(function () {
         verifyRecordSet(false);
+      });
+    });
+
+    $('#verification-grid').find('tbody').dblclick(function () {
+      var extent;
+      var zoom;
+      $.each(indiciaData.mapdiv.map.editLayer.features, function() {
+        if (this.attributes.type === 'selectedrecord') {
+          extent = this.geometry.getBounds();
+          zoom = Math.min(
+            indiciaData.reportlayer.map.getZoomForExtent(extent) - 1, indiciaData.mapdiv.settings.maxZoom);
+          indiciaData.reportlayer.map.setCenter(extent.getCenterLonLat(), zoom);
+        }
       });
     });
 
@@ -1184,6 +1322,30 @@ indiciaData.rowIdToReselect = false;
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: currRec.extra.taxon_list_id });
       }
     });
+
+    $('.radio-log-created-by input:radio').change(function () {
+      indiciaFns.applyCreatedByFilterToReports(true, this);
+    });
+
+    indiciaFns.applyCreatedByFilterToReports(false, false);
+
+    $('input.checkbox-log-verification-comments:checkbox').change(function () {
+      indiciaFns.applyVerificationCommentsFilterToReports(true, this);
+    });
+
+    indiciaFns.applyVerificationCommentsFilterToReports(false, false);
+
+    $('#details-zoom').click(function toggleZoom() {
+      if ($('#outer-with-map').hasClass('details-zoomed')) {
+        $('#outer-with-map').removeClass('details-zoomed');
+        $('#details-zoom').html('&#8689;');
+      } else {
+        $('#outer-with-map').addClass('details-zoomed');
+        $('#details-zoom').html('&#8690;');
+      }
+    });
+
+
   });
 
   function removeTrust(RemoveTrustId) {

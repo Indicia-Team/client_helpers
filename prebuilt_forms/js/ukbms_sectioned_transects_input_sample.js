@@ -101,6 +101,12 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    	$('.ac_results').hide();
 	    });
 	    
+        var table = $('#transect-input1');
+        if(table.length > 0) {
+          table.addClass('sticky-enabled');
+          Drupal.behaviors.tableHeader.attach(table.parent()); // Drupal 7
+        }
+
 	    $.each(formOptions.autoCompletes, function(idx, details){
 	  		bindSpeciesAutocomplete('taxonLookupControl'+details.tabNum,
 	  								'table#transect-input'+details.tabNum,
@@ -614,9 +620,11 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			colidx = matches[0].substr(4);
 		$(evt.target).parents('table:first').find('.table-selected').removeClass('table-selected');
 		$(evt.target).parents('table:first').find('.ui-state-active').removeClass('ui-state-active');
+		$(evt.target).parents('div:first').find('table.sticky-header .ui-state-active').removeClass('ui-state-active');
 		$(evt.target).parents('tr:first').addClass('table-selected');
 		$(evt.target).parents('table:first').find('tbody .col-'+colidx).addClass('table-selected');
 		$(evt.target).parents('table:first').find('thead .col-'+colidx).addClass('ui-state-active');
+		$(evt.target).parents('div:first').find('table.sticky-header thead .col-'+colidx).addClass('ui-state-active');
 	}
 
 	input_change = function (evt) {
@@ -729,6 +737,10 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
         }
         break;
     }
+    $(table).parent().find('.sticky-header').remove();
+    $(table).find('thead.tableHeader-processed').removeClass('tableHeader-processed');
+    $(table).removeClass('tableheader-processed');
+    $(table).addClass('sticky-enabled');
     if(valid) {
       if(!$.isEmptyObject(query["in"])) {
         TaxonData.query = JSON.stringify(query);
@@ -738,17 +750,19 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
           'data': TaxonData,
           'dataType': 'jsonp',
           'success': function(data) {
-              addSpeciesToGrid(data, 'table#transect-input'+N, N);
+              addSpeciesToGrid(data, table, N);
               // at this point only adding empty rows, so no affect on totals.
-              removeTaggedRows('table#transect-input1'); // redoes row classes
+              removeTaggedRows(table); // redoes row classes
               $('#grid'+N+'-loading').hide();
               $('#listSelect'+N).removeClass('working');
+              Drupal.behaviors.tableHeader.attach($(table).parent()); // Drupal 7
           }
       });
     } else {
       removeTaggedRows(table);
       $('#grid'+N+'-loading').hide();
       $('#listSelect'+N).removeClass('working');
+      Drupal.behaviors.tableHeader.attach($(table).parent()); // Drupal 7
     }
   }
 
