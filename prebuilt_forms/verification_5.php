@@ -1038,7 +1038,7 @@ HTML
    * @param integer $substatus
    *   Substatus value from database.
    * @param string $query
-   *   Query valud for the record (null, Q or A).
+   *   Query valid for the record (null, Q or A).
    *
    * @return string
    *   Status label text.
@@ -1146,7 +1146,7 @@ HTML
   private static function status_icons($status, $substatus, $imgPath) {
     $r = '';
     if (!empty($status)) {
-      $hint = self::status_label($status, $substatus);
+      $hint = self::status_label($status, $substatus, NULL);
       $images = array();
       if ($status === 'V') {
         $images[] = 'ok-16px';
