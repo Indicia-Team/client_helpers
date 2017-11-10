@@ -629,7 +629,7 @@ $('form#entry_form').tooltip({
       $flags[] = lang::get('confidential');
     }
     if ($options['record']['release_status'] !== 'R') {
-      $flags[] = lang::get('unreleased');
+      $flags[] = lang::get($options['record']['release_status'] === 'U' ? 'unreleased' : 'pending review');
     }
     if (!empty($flags)) {
       return '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
