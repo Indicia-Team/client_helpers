@@ -1205,8 +1205,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if ($args['taxon_filter_field']!=='taxon_group' && count($filterLines)===1 && ($args['multiple_occurrence_mode']!=='multi')) {
       $response = self::get_single_species_data($auth, $args, $filterLines);
       //Optional message to display the single species on the page
-      if ($args['single_species_message'])
-        self::$singleSpeciesName=$response[0]['taxon'];
+      if ($args['single_species_message']) {
+        self::$singleSpeciesName = data_entry_helper::apply_static_template('single_species_taxon_label', $response[0]);
+      }
       if (count($response)==0)
         //if the response is empty there is no matching taxon, so clear the filter as we can try and display the checklist with all data
         $args['taxon_filter']='';
@@ -1420,8 +1421,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if ($args['taxon_filter_field']!=='taxon_group' && count($filterLines)===1 && ($args['multiple_occurrence_mode']!=='multi')) {
       $response = self::get_single_species_data($auth, $args, $filterLines);
       //Optional message to display the single species on the page
-      if ($args['single_species_message'])
-        self::$singleSpeciesName=$response[0]['taxon'];
+      if ($args['single_species_message']) {
+        self::$singleSpeciesName = data_entry_helper::apply_static_template('single_species_taxon_label', $response[0]);
+      }
       if (count($response)==0)
         //if the response is empty there is no matching taxon, so clear the filter as we can try and display the checklist with all data
         $args['taxon_filter']='';
@@ -1782,7 +1784,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $extraParams = array_merge(array('orderby' => 'name'), $auth['read']);
     if (isset($options['extraParams'])) {
       $extraParams = array_merge($extraParams, $options['extraParams']);
-    }    
+    }
     $location_list_args = array_merge($options, array('extraParams' => $extraParams));
 
     if (!isset($location_list_args['label']))

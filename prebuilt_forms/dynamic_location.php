@@ -301,16 +301,14 @@ mapInitialisationHooks.push(function(mapdiv) {
   protected static function get_control_locationname($auth, $args, $tabalias, $options) {
     return data_entry_helper::text_input(array_merge(array(
       'label' => lang::get('LANG_Location_Name'),
-      'fieldname' => 'location:name',
-      'class' => 'control-width-5'
+      'fieldname' => 'location:name'
     ), $options));
   }
 
   protected static function get_control_locationcode($auth, $args, $tabalias, $options) {
     return data_entry_helper::text_input(array_merge(array(
       'label' => lang::get('LANG_Location_Code'),
-      'fieldname' => 'location:code',
-      'class' => 'control-width-5'
+      'fieldname' => 'location:code'
     ), $options));
   }
 
