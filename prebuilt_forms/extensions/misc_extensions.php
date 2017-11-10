@@ -617,4 +617,26 @@ $('form#entry_form').tooltip({
     return report_helper::freeform_report($options);
   }
 
+  public static function occurrence_flag_icons($auth, $args, $tabalias, $options) {
+    if (!isset($options['record']) || !is_array($options['record'])) {
+      return 'The occurrence_flag_icons extension requires a record array in the options.';
+    }
+    $flags = array();
+    if (!empty($options['record']['sensitive']) && $options['record']['sensitive'] !== 'f') {
+      $flags[] = lang::get('sensitive');
+    }
+    if ($options['record']['confidential'] === 't') {
+      $flags[] = lang::get('confidential');
+    }
+    if ($options['record']['release_status'] !== 'R') {
+      $flags[] = lang::get('unreleased');
+    }
+    if (!empty($flags)) {
+      return '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
+    }
+    else {
+      return '';
+    }
+  }
+
 }
