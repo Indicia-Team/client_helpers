@@ -1857,6 +1857,9 @@ if (typeof validator!=='undefined') {
     $control = self::apply_replacements_to_template($indicia_templates[$template], $options);
     $addons = '';
 
+    if (isset($options['afterControl'])) {
+      $addons .= $options['afterControl'];
+    }
     // Add a lock icon to the control if the lockable option is set to true
     if (array_key_exists('lockable', $options) && $options['lockable']===true) {
       $addons .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
@@ -1893,8 +1896,6 @@ if (typeof validator!=='undefined') {
     if ($error && in_array('message', $options['validation_mode'])) {
       $r .=  self::apply_error_template($error, $options['fieldname']);
     }
-    if (isset($options['afterControl']))
-      $r .= $options['afterControl'];
 
     // Add suffix
     $r .= self::apply_static_template('suffix', $options);
