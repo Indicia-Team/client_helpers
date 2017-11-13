@@ -127,6 +127,7 @@ ul.gallery li {
 #comment-text, #query-comment-text {
   display: block;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .popup-form {
@@ -235,6 +236,14 @@ ul.gallery li {
       vertical-align: middle;
       @include border-radius(4px);
     }
+    .correspondance {
+      background-color: $hover-color;
+      border: solid 1px darken($hover-color, 20%);
+      padding: 4px;
+      span {
+        font-weight: bold;
+      }
+    }
   }
 
   #phenology-tab {
@@ -260,8 +269,9 @@ ul.gallery li {
     position: absolute;
     top: 0;
     left: 0;
-    bottom: 0;
-    right: 0;
+    bottom: 0px;
+    right: 0px;
+    display: inline-block;
     #record-details-tabs {
       font-size: 100%;
       #details-zoom {

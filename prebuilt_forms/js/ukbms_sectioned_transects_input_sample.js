@@ -351,7 +351,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	}
 	
 	addGridRow = function (species, speciesTableSelector, tabIDX){
-		var name, row, isNumber, rowTotal = 0;
+		var name, title, row, isNumber, rowTotal = 0;
 
 		if($('#row-' + species.taxon_meaning_id).length>0) {
 			row = $('#row-' + species.taxon_meaning_id).removeClass('possibleRemove');
@@ -364,10 +364,18 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			});
 			return;
 		}
-
-		name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
-		row = $('<tr id="row-' + species.taxon_meaning_id + '"><td'+(name.replace(/<em>/,'').replace(/<\/em>/,'') != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '')+'>'+name+'</td></tr>')
-		   .data( 'species', species);
+        switch(formOptions.taxon_column) {
+          case 'preferred_taxon':
+            name = (species.preferred_language_iso==='lat' ? '<em>'+species.preferred_taxon+'</em>' : species.preferred_taxon);
+            title = (species.default_common_name!==null ? ' title="'+species.default_common_name+'"' : '');
+            break;
+          default: // taxon
+            name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
+            title = (name.replace(/<em>/,'').replace(/<\/em>/,'') != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '');
+            break;
+        }
+//		name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
+		row = $('<tr id="row-' + species.taxon_meaning_id + '"><td ' + title + '>' + name + '</td></tr>').data( 'species', species);
 		if($(speciesTableSelector+ ' tbody tr').length % 2 == 1) row.addClass('alt-row');
 		isNumber = formOptions.occurrence_attribute_ctrl[tabIDX].indexOf('number:true')>=0; // TBD number:true
 		$.each(formOptions.sections, function(idx, section) {
@@ -787,9 +795,9 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		
 		var extra_params = {
 				view : 'cache',
-				orderby : 'taxon',
+				orderby : formOptions.taxon_column,
 				mode : 'json',
-				qfield : 'taxon',
+				qfield : formOptions.taxon_column,
 				auth_token: readAuth.auth_token,
 				nonce: readAuth.nonce,
 				taxon_list_id: lookupListId,
@@ -809,7 +817,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 					results[results.length] =
 						{
 							'data' : item,
-							'result' : item.taxon,
+							'result' : item[formOptions.taxon_column],
 							'value' : item.id
 						};
 				});
@@ -818,6 +826,8 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			formatItem: function(item) {
 				if(item.taxon == item.preferred_taxon)
 					return '<em>'+item.taxon+'</em>';
+				else if(formOptions.taxon_column === 'preferred_taxon')
+					return '<em>'+item.preferred_taxon+'</em> &lt;'+item.taxon+'&gt;';
 				else
 					return item.taxon+' <em>&lt;'+item.preferred_taxon+'&gt;</em>';
 			}

@@ -101,10 +101,10 @@ class iform_verification_5 {
         array(
           'name' => 'record_details_report',
           'caption' => 'Report for record details',
-          'description' => 'Report used to obtain the details of a record. See reports_for_prebuilt_forms/verification_3/record_data.xml for an example.',
+          'description' => 'Report used to obtain the details of a record. See reports_for_prebuilt_forms/verification_5/record_data.xml for an example.',
           'type' => 'report_helper::report_picker',
           'group' => 'Report Settings',
-          'default' => 'reports_for_prebuilt_forms/verification_3/record_data'
+          'default' => 'reports_for_prebuilt_forms/verification_5/record_data'
         ),
         array(
           'name' => 'record_attrs_report',
@@ -913,8 +913,9 @@ HTML
    * Ajax handler to provide the content for the details of a single record.
    */
   public static function ajax_details($website_id, $password, $nid) {
+    require_once 'extensions/misc_extensions.php';
     $params = hostsite_get_node_field_value($nid, 'params');
-    $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data' : $params['record_details_report'];
+    $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_5/record_data' : $params['record_details_report'];
     $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
@@ -943,7 +944,7 @@ HTML
     $data = array();
     $email = '';
     foreach ($reportData['columns'] as $col => $def) {
-      if ($def['visible'] !== 'false' && !empty($record[$col])) {
+      if (!empty($def['display']) && $def['visible'] !== 'false' && !empty($record[$col])) {
         $caption = explode(':', $def['display']);
         // Is this a new heading?
         if (!isset($data[$caption[0]]))
@@ -979,8 +980,8 @@ HTML
         $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
       }
     }
-
-    $r = "<table class=\"report-grid\">\n";
+    $r = extension_misc_extensions::occurrence_flag_icons(['read' => $readAuth], null, null, ['record' => $record]);
+    $r .= "<table class=\"report-grid\">\n";
     $first = TRUE;
     foreach ($data as $heading => $items) {
       if ($first && !empty($params['record_details_path'])) {
@@ -1002,7 +1003,7 @@ HTML
     }
     $r .= "</table>\n";
 
-    $extra=array();
+    $extra = array();
     $extra['wkt'] = $record['wkt'];
     $extra['taxon'] = $record['taxon'];
     $extra['recorder'] = $record['recorder'];
@@ -1038,7 +1039,7 @@ HTML
    * @param integer $substatus
    *   Substatus value from database.
    * @param string $query
-   *   Query valud for the record (null, Q or A).
+   *   Query valid for the record (null, Q or A).
    *
    * @return string
    *   Status label text.
@@ -1146,7 +1147,7 @@ HTML
   private static function status_icons($status, $substatus, $imgPath) {
     $r = '';
     if (!empty($status)) {
-      $hint = self::status_label($status, $substatus);
+      $hint = self::status_label($status, $substatus, NULL);
       $images = array();
       if ($status === 'V') {
         $images[] = 'ok-16px';
@@ -1213,6 +1214,21 @@ HTML
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
       $r .= "<div>$c</div>";
+      if (!empty($comment['correspondance_data'])) {
+        $data = str_replace("\n", '<br/>', $comment['correspondance_data']);
+        $correspondanceData = json_decode($data, TRUE);
+        foreach ($correspondanceData as $type => $items) {
+          $r .= '<h3>' . ucfirst($type) . '</h3>';
+          foreach ($items as $item) {
+            $r .= '<div class="correspondance">';
+            foreach ($item as $field => $value) {
+              $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
+              $r .= "<div>$field $value</div>";
+            }
+            $r .= '</div>';
+          }
+        }
+      }
       $r .= '</div>';
     }
     $r .= '</div>';

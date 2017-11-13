@@ -1339,9 +1339,11 @@ indiciaData.rowIdToReselect = false;
       if ($('#outer-with-map').hasClass('details-zoomed')) {
         $('#outer-with-map').removeClass('details-zoomed');
         $('#details-zoom').html('&#8689;');
+        $('#record-details-wrap').appendTo($('#map-and-record'));
       } else {
         $('#outer-with-map').addClass('details-zoomed');
         $('#details-zoom').html('&#8690;');
+        $('#record-details-wrap').appendTo($('#outer-with-map'));
       }
     });
 
