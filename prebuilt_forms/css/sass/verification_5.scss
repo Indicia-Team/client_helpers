@@ -235,6 +235,14 @@ ul.gallery li {
       vertical-align: middle;
       @include border-radius(4px);
     }
+    .correspondance {
+      background-color: $hover-color;
+      border: solid 1px darken($hover-color, 20%);
+      padding: 4px;
+      span {
+        font-weight: bold;
+      }
+    }
   }
 
   #phenology-tab {

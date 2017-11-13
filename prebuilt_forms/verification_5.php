@@ -1214,6 +1214,21 @@ HTML
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
       $r .= "<div>$c</div>";
+      if (!empty($comment['correspondance_data'])) {
+        $data = str_replace("\n", '<br/>', $comment['correspondance_data']);
+        $correspondanceData = json_decode($data, TRUE);
+        foreach ($correspondanceData as $type => $items) {
+          $r .= '<h3>' . ucfirst($type) . '</h3>';
+          foreach ($items as $item) {
+            $r .= '<div class="correspondance">';
+            foreach ($item as $field => $value) {
+              $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
+              $r .= "<div>$field $value</div>";
+            }
+            $r .= '</div>';
+          }
+        }
+      }
       $r .= '</div>';
     }
     $r .= '</div>';

@@ -341,11 +341,21 @@ ul.gallery li {
   -webkit-border-radius: 4px;
   border-radius: 4px;
 }
-/* line 241, sass/verification_5.scss */
+/* line 238, sass/verification_5.scss */
+#record-details-tabs .comment .correspondance {
+  background-color: #ffffcc;
+  border: solid 1px #ffff66;
+  padding: 4px;
+}
+/* line 242, sass/verification_5.scss */
+#record-details-tabs .comment .correspondance span {
+  font-weight: bold;
+}
+/* line 249, sass/verification_5.scss */
 #record-details-tabs #phenology-tab p {
   margin: 0;
 }
-/* line 246, sass/verification_5.scss */
+/* line 254, sass/verification_5.scss */
 #record-details-tabs #details-zoom {
   position: absolute;
   top: 0;
@@ -355,11 +365,11 @@ ul.gallery li {
   cursor: pointer;
 }
 
-/* line 256, sass/verification_5.scss */
+/* line 264, sass/verification_5.scss */
 #outer-with-map.details-zoomed {
   position: relative;
 }
-/* line 258, sass/verification_5.scss */
+/* line 266, sass/verification_5.scss */
 #outer-with-map.details-zoomed #record-details-wrap {
   background: white;
   position: absolute;
@@ -368,88 +378,88 @@ ul.gallery li {
   bottom: 0;
   right: 0;
 }
-/* line 265, sass/verification_5.scss */
+/* line 273, sass/verification_5.scss */
 #outer-with-map.details-zoomed #record-details-wrap #record-details-tabs {
   font-size: 100%;
 }
-/* line 267, sass/verification_5.scss */
+/* line 275, sass/verification_5.scss */
 #outer-with-map.details-zoomed #record-details-wrap #record-details-tabs #details-zoom {
   margin: 4px 6px;
 }
 
-/* line 274, sass/verification_5.scss */
+/* line 282, sass/verification_5.scss */
 input[type="button"].tools-btn, button.tools-btn {
   padding: 0.3em;
 }
 
-/* line 279, sass/verification_5.scss */
+/* line 287, sass/verification_5.scss */
 .quick-verify-popup label {
   width: auto;
   margin-left: 2em;
 }
-/* line 283, sass/verification_5.scss */
+/* line 291, sass/verification_5.scss */
 .quick-verify-popup button {
   margin-top: 1em;
 }
-/* line 286, sass/verification_5.scss */
+/* line 294, sass/verification_5.scss */
 .quick-verify-popup .helpText {
   margin-left: 45px;
 }
-/* line 289, sass/verification_5.scss */
+/* line 297, sass/verification_5.scss */
 .quick-verify-popup h2, .quick-verify-popup h3 {
   margin-bottom: 4px;
 }
-/* line 292, sass/verification_5.scss */
+/* line 300, sass/verification_5.scss */
 .quick-verify-popup a {
   text-decoration: underline;
   margin: 0 6px;
 }
-/* line 295, sass/verification_5.scss */
+/* line 303, sass/verification_5.scss */
 .quick-verify-popup a:hover, .quick-verify-popup a:active {
   background-color: #ffffcc;
 }
 
-/* line 302, sass/verification_5.scss */
+/* line 310, sass/verification_5.scss */
 .verify-tools {
   display: none;
   position: absolute;
   background: white;
   border: solid silver 1px;
 }
-/* line 307, sass/verification_5.scss */
+/* line 315, sass/verification_5.scss */
 .verify-tools li {
   background-image: none;
   padding: 0.2em 0.5em;
 }
 
-/* line 314, sass/verification_5.scss */
+/* line 322, sass/verification_5.scss */
 tr.verified, tr.rejected, tr.total {
   text-align: right;
   padding-right: 1em;
 }
-/* line 318, sass/verification_5.scss */
+/* line 326, sass/verification_5.scss */
 tr.verified {
   color: #00a000;
 }
-/* line 321, sass/verification_5.scss */
+/* line 329, sass/verification_5.scss */
 tr.rejected {
   color: #00a000;
 }
-/* line 324, sass/verification_5.scss */
+/* line 332, sass/verification_5.scss */
 tr.total {
   font-weight: bold;
 }
 
-/* line 330, sass/verification_5.scss */
+/* line 338, sass/verification_5.scss */
 .grid-verify-popup button {
   margin-right: 1em;
 }
-/* line 333, sass/verification_5.scss */
+/* line 341, sass/verification_5.scss */
 .grid-verify-popup label, .grid-verify-popup label * {
   vertical-align: middle;
 }
 
-/* line 338, sass/verification_5.scss */
+/* line 346, sass/verification_5.scss */
 #map-loading {
   right: auto;
   bottom: auto;
@@ -457,7 +467,7 @@ tr.total {
   height: 32px;
 }
 
-/* line 345, sass/verification_5.scss */
+/* line 353, sass/verification_5.scss */
 #ctrl-wrap-log-created-by {
   width: 50%;
   float: left;
