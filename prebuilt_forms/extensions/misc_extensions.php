@@ -525,7 +525,7 @@ $('form#entry_form').tooltip({
    * @return string
    */
   public static function area_picker($auth, $args, $tabalias, $options) {
-    if (empty($options['areas']) || !is_array($options['areas'])) {
+    if (!isset($options['areas']) || !is_array($options['areas'])) {
       return 'Please specify the list of areas for the area_picker control.';
     }
     if (isset($options['mapDataFile'])) {

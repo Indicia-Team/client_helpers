@@ -1534,7 +1534,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     elseif ($args['extra_list_id'] !== '' && $args['list_id'] === '')
       $extraParams['taxon_list_id'] = $args['extra_list_id'];
     elseif ($args['extra_list_id'] !== '' && $args['list_id'] !== '')
-      $extraParams['query'] = json_encode(array('in' => array('taxon_list_id' => array($args['list_id'],$args['extra_list_id']))));
+      $extraParams['taxon_list_id'] = json_encode([$args['list_id'], $args['extra_list_id']]);
 
     // Add a taxon group selector if that option was chosen
     if (isset($options['taxonGroupSelect']) && $options['taxonGroupSelect']) {
