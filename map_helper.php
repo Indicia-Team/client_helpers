@@ -83,7 +83,7 @@ class map_helper extends helper_base {
   * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
   * 'google_satellite', 'openlayers_wms', 'nasa_mosaic', 'virtual_earth' (deprecated, use bing_aerial),
   * 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'osm' (for OpenStreetMap), 'osm_th' (for OpenStreetMap Tiles@Home),
-   * os_outdoor, os_road, os_light, os_night.
+   * os_outdoor, os_road, os_light, os_night, os_leisure.
   * </li>
   * <li><b>tilecacheLayers</b><br/>
   * Array of layer definitions for tilecaches, which are pre-cached background tiles. They are less flexible but much faster

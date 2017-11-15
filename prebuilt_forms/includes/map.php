@@ -109,6 +109,7 @@ function iform_map_get_map_parameters() {
         'bing_hybrid' => 'Bing Hybrid',
         'bing_shaded' => 'Bing Shaded',
         'osm' => 'OpenStreetMap',
+        'os_leisure' => 'OS Leisure',
         'os_outdoor' => 'OS Outdoor',
         'os_road' => 'OS Road',
         'os_light' => 'OS Light',
