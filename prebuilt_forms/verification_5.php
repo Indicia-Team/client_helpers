@@ -595,6 +595,7 @@ idlist=';
       'validation' => array('required')
     ));
     $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    $taxon_list_id = 15; // TODO REMOVE BEFORE COMMIT
     if ($taxon_list_id) {
       data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
       $r .= data_entry_helper::checkbox(array(
@@ -776,10 +777,19 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.verbC3="' . lang::get('mark as plausible') . "\";\n";
 
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.V="' . lang::get('accepted') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.V1="' . lang::get('accepted as correct') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.V2="' . lang::get('accepted as considered correct') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.C3="' . lang::get('plausible') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R="' . lang::get('not accepted') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R4="' . lang::get('not accepted as unable to verify') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R5="' . lang::get('not accepted as incorrect') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub1="' . lang::get('correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub2="' . lang::get('considered correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub3="' . lang::get('plausible') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.templateLabel="' . lang::get('Use Comment Template') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.pleaseSelect="' . lang::get('Please select if required...') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.commentLabel="' . lang::get('Comment') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.referenceLabel="' . lang::get('External reference or other source information') . "\";\n";
 
     // @todo: Should this term be unable to accept
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub4="' . lang::get('unable to verify') . "\";\n";
@@ -1006,11 +1016,14 @@ HTML
     $extra = array();
     $extra['wkt'] = $record['wkt'];
     $extra['taxon'] = $record['taxon'];
+    $extra['preferred_taxon'] = $record['preferred_taxon'];
+    $extra['default_common_name'] = $record['default_common_name'];
     $extra['recorder'] = $record['recorder'];
     $extra['sample_id'] = $record['sample_id'];
     $extra['created_by_id'] = $record['created_by_id'];
     $extra['input_by_first_name'] = $record['input_by_first_name'];
     $extra['input_by_surname'] = $record['input_by_surname'];
+    $extra['website_id'] = $record['website_id'];
     $extra['survey_title'] = $record['survey_title'];
     $extra['survey_id'] = $record['survey_id'];
     $extra['date'] = $record['date'];
@@ -1023,6 +1036,7 @@ HTML
     $extra['taxon_list_id'] = $record['taxon_list_id'];
     $extra['localities'] = $record['localities'];
     $extra['locality_ids'] = $record['locality_ids'];
+    $extra['location_name'] = $record['location_name'];
     header('Content-type: application/json');
     echo json_encode(array(
       'content' => $r,
@@ -1544,7 +1558,7 @@ HTML
     if (!empty($args['other_location_type_ids'])) {
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
     }
-    $options['taxon_list_id'] = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    $options['taxon_list_id'] = 15; // hostsite_get_config_value('iform', 'master_checklist_id', 15);
     $hiddenStuff = '';
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;

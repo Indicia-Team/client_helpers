@@ -650,6 +650,9 @@ indiciaData.rowIdToReselect = false;
       if ($('#verify-comment').val()) {
         data['occurrence_comment:comment'] = $('#verify-comment').val();
       }
+      if ($('#verify-reference').val()) {
+        data['occurrence_comment:reference'] = $('#verify-reference').val();
+      }
       $.fancybox.close();
       $.post(
         indiciaData.ajaxFormPostUrl,
@@ -716,14 +719,92 @@ indiciaData.rowIdToReselect = false;
     html = '<fieldset class="popup-form status-form">' +
       '<legend><span class="icon status-' + status + substatus + '"></span>' +
       indiciaData.popupTranslations.title.replace('{1}', '<strong>' + statusLabel(status, substatus)) + '</strong></legend>';
-    html += '<label class="auto">Comment:</label><textarea id="verify-comment" rows="5" cols="80"></textarea><br />' +
+    html += '<span id="verify-template-container"> ' +
+      '<label class="auto" style="display:inline-block;">' + indiciaData.popupTranslations.templateLabel + ':</label>' +
+      '<select id="verify-template" >' +
+      '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select><br /></span>';
+    
+    html += '<label class="auto">' + indiciaData.popupTranslations.commentLabel + ':</label>' +
+      '<textarea id="verify-comment" rows="5" cols="80"></textarea><br />';
+
+    html += '<label class="auto">' + indiciaData.popupTranslations.referenceLabel + ':</label>' +
+      '<input type="text" id="verify-reference" value=""><br />' +
       helpText +
       '<input type="hidden" id="set-status" value="' + status + '"/>' +
       '<input type="hidden" id="set-substatus" value="' + substatus + '"/>' +
       '<button type="button" class="default-button" onclick="indiciaFns.saveVerifyComment();">' +
       indiciaData.popupTranslations.save.replace('{1}', verb) + '</button>' +
       '</fieldset>';
+
+    var getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?',
+        getTemplatesReportParameters = {
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce,
+        reportSource: 'local',
+        taxon_meaning_id: currRec.extra.taxon_meaning_id,
+        template_status: status + substatus,
+        website_id: currRec.extra.website_id
+      };
+    $.getJSON(
+      getTemplatesReport,
+      getTemplatesReportParameters,
+      function (data) {
+        if (data.length > 0) {
+          for(var i = 0; i < data.length; i++) {
+            $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+          }
+          $('#verify-template').data('data',data);
+        } else {
+          $('#verify-template-container').hide();
+        }
+      }
+    );
     $.fancybox(html);
+    $('#verify-template').change(function(){
+      var templateID = $('#verify-template').val(),
+          data = $('#verify-template').data('data'),
+          substitute = function (item) {
+            // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
+            var conversions = {
+                  "date" : currRec.extra.date,
+                  "entered sref" : currRec.extra.entered_sref,
+                  "species" : currRec.extra.taxon,
+                  "common name" : [currRec.extra.default_common_name, currRec.extra.preferred_taxon, currRec.extra.taxon],
+                  "preferred name" : [currRec.extra.preferred_taxon, currRec.extra.taxon],
+                  "action" : {'V' : indiciaData.popupTranslations.V,
+                              'V1' : indiciaData.popupTranslations.V1,
+                              'V2' : indiciaData.popupTranslations.V2,
+                              'C3' : indiciaData.popupTranslations.C3,
+                              'R' : indiciaData.popupTranslations.R,
+                              'R4' : indiciaData.popupTranslations.R4,
+                              'R5' : indiciaData.popupTranslations.R5}[status + substatus],
+                  "location name" : [currRec.extra.location_name, currRec.extra.entered_sref]
+                },
+                convs = Object.keys(conversions),
+                replacement;
+            for (var i = 0; i < convs.length; i++) {
+              if (typeof conversions[convs[i]] === 'object') {
+                for (var j = 0; j < conversions[convs[i]].length; j++) {
+                  replacement = conversions[convs[i]][j];
+                  if (typeof replacement !== "undefined" && replacement !== null  && replacement !== '') {
+                    break;
+                  }
+                }
+              } else {
+                replacement = conversions[convs[i]];
+              }
+              if (typeof replacement !== "undefined" && replacement !== null) {
+                item = item.replace(new RegExp("{{\\s*"+convs[i].replace(/ /g,"[\\s|_]")+"\\s*}}", 'gi'), replacement);
+              }
+            }
+            return item;
+          };
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].id == templateID) {
+          $('#verify-comment').val(substitute(data[i].template));
+        }
+      }
+    })
   }
 
   mapInitialisationHooks.push(function (div) {
