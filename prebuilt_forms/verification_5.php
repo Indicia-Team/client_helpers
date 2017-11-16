@@ -595,7 +595,6 @@ idlist=';
       'validation' => array('required')
     ));
     $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
-    $taxon_list_id = 15; // TODO REMOVE BEFORE COMMIT
     if ($taxon_list_id) {
       data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
       $r .= data_entry_helper::checkbox(array(
@@ -1558,7 +1557,7 @@ HTML
     if (!empty($args['other_location_type_ids'])) {
       $options['otherLocationTypeIds'] = array_map('intval', explode(',', $args['other_location_type_ids']));
     }
-    $options['taxon_list_id'] = 15; // hostsite_get_config_value('iform', 'master_checklist_id', 15);
+    $options['taxon_list_id'] = hostsite_get_config_value('iform', 'master_checklist_id', 0);
     $hiddenStuff = '';
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
