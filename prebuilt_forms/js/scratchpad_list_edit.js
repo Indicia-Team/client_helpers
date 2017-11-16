@@ -39,8 +39,9 @@ jQuery(document).ready(function ($) {
     $('#scratchpad-input a.non-unique-name,#scratchpad-input span:empty').remove();
     input = $('#scratchpad-input').html();
     inputClean = [];
-    // HTML whitespace clean
+    // HTML and duplicate whitespace clean
     inputDirty = input.replace(/&nbsp;/g, ' ');
+    inputDirty = inputDirty.replace(/ +/g, ' ');
     // Remove stuff in parenthesis - left from a previous scan result, or subgenera, both are not needed.
     inputDirty = inputDirty.replace(/\([^\)]*\)/g, '');
     // Remove stuff in square brackets - normally common names left from a previous scan result.
@@ -105,6 +106,8 @@ jQuery(document).ready(function ($) {
     $('#scratchpad-save').attr('disabled', 'disabled');
     if (typeof data.error !== 'undefined') {
       alert(data.error);
+    } else if (typeof data.parameterRequest !== 'undefined') {
+      alert('The check failed, possibly due to non-standard hidden characters in the pasted text.');
     } else {
       // Loop through the input rows so we can check against the results from the db to see which are matched
       $.each(inputClean, function (idx, rowInput) {
@@ -176,9 +179,9 @@ jQuery(document).ready(function ($) {
       });
       $('#scratchpad-input').html(output.join('<br/>'));
       recalculateStats();
-      $('#scratchpad-check').removeClass('checking');
       $('#scratchpad-stats')[0].scrollIntoView();
     }
+    $('#scratchpad-check').removeClass('checking');
   }
 
   function matchToDb() {
