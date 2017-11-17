@@ -785,7 +785,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub1="' . lang::get('correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub2="' . lang::get('considered correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub3="' . lang::get('plausible') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.templateLabel="' . lang::get('Use Comment Template') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.templateLabel="' . lang::get('Use comment template') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.pleaseSelect="' . lang::get('Please select if required...') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.commentLabel="' . lang::get('Comment') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.referenceLabel="' . lang::get('External reference or other source information') . "\";\n";
