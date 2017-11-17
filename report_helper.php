@@ -381,11 +381,13 @@ class report_helper extends helper_base {
     $extras = self::get_report_sorting_paging_params($options, $sortAndPageUrlParams);
     if ($options['ajax'])
       $options['extraParams']['limit']=0;
+    // Request report data.
     self::request_report(
       $response,
       $options,
       $currentParamValues,
-      $options['pager'],
+      // Only get a count if doing a pager and not doing Ajax population as Ajax can update the pager later.
+      $options['pager'] && !$options['ajax'],
       $extras
     );
     if (isset($response['count'])) {
@@ -880,8 +882,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       self::$javascript.= "  opts.clickableLayersOutputMode='reportHighlight';\n";
       self::$javascript .= "});\n";
     }
-    if ($options['ajax'] && $options['autoloadAjax'])
-      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(false);\n";
+    if ($options['ajax'] && $options['autoloadAjax']) {
+      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(true);\n";
+    }
     return $r;
   }
 
@@ -1016,9 +1019,11 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   * @return string The HTML for the simple paginator.
   */
   private static function simple_pager($options, $sortAndPageUrlParams, $response, $pagLinkUrl) {
-    // skip pager if all records fit on one page
-    if ($sortAndPageUrlParams['page']['value']==0 && count($response['records'])<=$options['itemsPerPage'])
+    // Skip pager if all records fit on one page, or if doing AJAX initial population as JS will add pager
+    // when ready.
+    if ($sortAndPageUrlParams['page']['value'] == 0 && count($response['records']) <= $options['itemsPerPage']) {
       return '';
+    }
     else {
       $r = '';
       // If not on first page, we can go back.
