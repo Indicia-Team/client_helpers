@@ -133,13 +133,13 @@ class iform_verification_template_edit extends iform_dynamic {
             "[restrict to website]\r\n" .
             "[restrict to external keys]\r\n" .
             "@id=external-keys\r\n" .
-            "@description=keys\r\n" .
+            "@description=external keys\r\n" .
             "@fieldName=verification_template:restrict_to_external_keys\r\n" .
             "@rankExtraParam=min_taxon_rank_sort_order\r\n" .
             "@rankOffset=1\r\n" .
             "[restrict to external keys]\r\n" .
             "@id=family-keys\r\n" .
-            "@description=family keys\r\n" .
+            "@description=external family level keys\r\n" .
             "@fieldName=verification_template:restrict_to_family_external_keys\r\n" .
             "@rankExtraParam=max_taxon_rank_sort_order\r\n" .
             "@rankOffset=0\r\n" .
@@ -252,13 +252,16 @@ class iform_verification_template_edit extends iform_dynamic {
             'valueField' => 'external_key',
             'extraParams' => $baseParams,
             'addToTable' => FALSE,
+            'helpText' => lang::get('Previously selected entries will show as the key, with a single relevant taxon and a count of any other taxa (if applicable). Anything added during this editing session will display as just the taxon. The list will be simplified on saving to remove keys duplicates.'),
         );
-        return '<div id="' . $options['id'] . '">' . PHP_EOL .
-        '<p>' .
-        lang::get('Search for and build a list of {1} this template will apply to:', $options['description']) .
-        '</p>' . PHP_EOL .
-        data_entry_helper::sub_list($subListOptions) . PHP_EOL .
-        '</div>' . PHP_EOL;
+        return '<fieldset><legend>' . ucfirst($options['description']) . '</legend>' .
+            '<div id="' . $options['id'] . '">' . PHP_EOL .
+            '<p>' .
+            lang::get('Use the following control to search for taxa: these are used to build a list of {1} this template ' .
+                      'will apply to.', $options['description']) .
+            '</p>' . PHP_EOL .
+            data_entry_helper::sub_list($subListOptions) . PHP_EOL .
+            '</div></fieldset>' . PHP_EOL;
     }
     
     /**
