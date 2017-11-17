@@ -720,7 +720,7 @@ indiciaData.rowIdToReselect = false;
       '<legend><span class="icon status-' + status + substatus + '"></span>' +
       indiciaData.popupTranslations.title.replace('{1}', '<strong>' + statusLabel(status, substatus)) + '</strong></legend>';
     html += '<span id="verify-template-container"> ' +
-      '<label class="auto" style="display:inline-block;">' + indiciaData.popupTranslations.templateLabel + ':</label>' +
+      '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
       '<select id="verify-template" >' +
       '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select><br /></span>';
     
