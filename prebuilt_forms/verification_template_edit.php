@@ -188,7 +188,8 @@ class iform_verification_template_edit extends iform_dynamic {
                     'R4' => lang::get('Not accepted as unable to verify (R4)'),
                     'R5' => lang::get('Not accepted as incorrect (R5)'),
                 ),
-                'helpText' => lang::get('Choose which verification status changes this template will available for.'),
+                'helpText' => lang::get('Choose which verification status changes this template will available for. ' .
+                    'Note that a template available for "V" will also be available for "V1" and "V2", and similar for "R" and "R4"/"R5".'),
                 'validation' => array('required'),
                 'default' => data_entry_helper::$entity_to_load['verification_template:template_statuses'],
             )) .
