@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,33 +14,34 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
+ * @package Client
  * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
  *
- * @package    Client
+ * @package Client
  * @subpackage PrebuiltForms
  */
 
-require_once('includes/dynamic.php');
-require_once('includes/groups.php');
+require_once 'includes/dynamic.php';
+require_once 'includes/groups.php';
 
 /**
  * Store remembered field settings, since these need to be accessed from a hook function which runs outside the class.
+ *
  * @var string
  */
 global $remembered;
 
 class iform_dynamic_sample_occurrence extends iform_dynamic {
 
-  // The ids we are loading if editing existing data
+  // The ids we are loading if editing existing data.
   protected static $loadedSampleId;
   protected static $loadedOccurrenceId;
   protected static $group = false;
@@ -50,23 +52,26 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   /**
    * The list of attributes loaded for occurrences. Keep a class level variable, so that we can track the ones we have already
    * emitted into the form globally.
+   *
    * @var array
    */
   protected static $occAttrs;
 
   /**
    * Return the form metadata.
-   * @return string The definition of the form.
+   *
+   * @return string
+   *   The definition of the form.
    */
   public static function get_dynamic_sample_occurrence_definition() {
     return array(
-      'title'=>'Enter single record or list of records (customisable)',
+      'title' => 'Enter single record or list of records (customisable)',
       'category' => 'Data entry forms',
-      'helpLink'=>'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/dynamic-sample-occurrence.html',
-      'description'=>'A data entry form for records (taxon occurrences). Can be used for entry of a single record, ' .
+      'helpLink' => 'http://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/dynamic-sample-occurrence.html',
+      'description' => 'A data entry form for records (taxon occurrences). Can be used for entry of a single record, ' .
         'ticking species off a checklist or entering user selected species into a list. Highly customisable.',
-      'supportsGroups'=>true,
-      'recommended'=>true
+      'supportsGroups' => TRUE,
+      'recommended' => TRUE
     );
   }
 
@@ -91,41 +96,41 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         parent::get_parameters(),
       array(
         array(
-          'name'=>'never_load_parent_sample',
-          'caption'=>'Never load parent sample',
-          'description'=>'When editing a record in a parent/child sample hierarchy, tick this box to prevent loading ' .
+          'name' => 'never_load_parent_sample',
+          'caption' => 'Never load parent sample',
+          'description' => 'When editing a record in a parent/child sample hierarchy, tick this box to prevent loading ' .
               'the parent sample into the form instead of the child sample.',
-          'type'=>'boolean',
-          'default' => false,
-          'required' => false
+          'type' => 'boolean',
+          'default' => FALSE,
+          'required' => FALSE
         ),
         array(
-          'name'=>'emailShow',
-          'caption'=>'Show email field even if logged in',
-          'description'=>'If the survey requests an email address, it is sent implicitly for logged in users. Check this box to show it explicitly.',
-          'type'=>'boolean',
-          'default' => false,
-          'required' => false,
+          'name' => 'emailShow',
+          'caption' => 'Show email field even if logged in',
+          'description' => 'If the survey requests an email address, it is sent implicitly for logged in users. Check this box to show it explicitly.',
+          'type' => 'boolean',
+          'default' => FALSE,
+          'required' => FALSE,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'nameShow',
-          'caption'=>'Show user profile fields even if logged in',
-          'description'=>'If the survey requests first name and last name or any field which matches a field in the users profile, these are hidden. '.
+          'name' => 'nameShow',
+          'caption' => 'Show user profile fields even if logged in',
+          'description' => 'If the survey requests first name and last name or any field which matches a field in the users profile, these are hidden. '.
               'Check this box to show these fields. Always show these fields if they are required at the warehouse unless the profile module is enabled, '.
               '<em>copy field values from user profile</em> is selected and the fields are required in the profile.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'copyFromProfile',
-          'caption'=>'Copy field values from user profile',
-          'description'=>'Copy any matching fields from the user\'s profile into the fields with matching names in the sample data. '
+          'name' => 'copyFromProfile',
+          'caption' => 'Copy field values from user profile',
+          'description' => 'Copy any matching fields from the user\'s profile into the fields with matching names in the sample data. '
             . 'This works for fields defined in the Drupal Profile module (version 6) or Fields module (version 7) which must be '
             . 'enabled to use this feature. Applies whether fields are shown or not.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'User Interface',
@@ -134,95 +139,97 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'visible' => !function_exists('hostsite_module_exists') || hostsite_module_exists('field')
         ),
         array(
-          'name'=>'structure',
-          'caption'=>'Form Structure',
-          'description'=>'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
-            "component can be specified. <br/>".
-            "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page. (Alpha-numeric characters only)<br/>".
-            "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>".
-            "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>".
-                "&nbsp;&nbsp;<strong>[species]</strong> - a species grid or input control. ".
-                    "You can change any of the control options for an individual custom attribute control in a grid by putting @control|option=value on the subsequent line(s). ".
-                    "For example, if a control is for occAttr:4 then you can set it's default value by specifying @occAttr:4|default=7 on the line after the [species]<br/>".
-                    "If you want to specify a custom template for a grid's species label cell, then override the taxon_label template. If you have multiple grids on the ".
-                    "form, you can override each one individually by setting the @taxonLabelTemplate for each grid to the name of a template that you've added to the ".
-                    "\$indicia_templates global array. ".
-                    "If in single species entry mode and using a select box for data input, you can put a taxon group select above the species input select by ".
-                    "setting the option @taxonGroupSelect=true. Control the label and helptext for this control using the options @taxonGroupSelectLabel and @taxonGroupSelectHelpText.<br/>".
-                "&nbsp;&nbsp;<strong>[species map]</strong> - a species grid or input control: this is the same as the species control, but the sample is broken down ".
-                "into subsamples, each of which has its own location picked from the map. Only the part of the species grid which is being added to or modified at the ".
-                "time is displayed. This control should be placed after the map control, with which it integrates. Species recording must be set to a List (grid mode) rather than single entry. ".
-                "This control does not currently support mixed spatial reference systems, only the first specified will be used. You do not need a [spatial reference] control on the ".
-                "page when using a [species map] control.<br/>".
-                "&nbsp;&nbsp;<strong>[species map summary]</strong> - a read only grid showing a summary of the data entered using the species map control.<br/>".
-                "&nbsp;&nbsp;<strong>[species attributes]</strong> - any custom attributes for the occurrence, if not using the grid. Also includes a file upload ".
-                    "box and sensitivity input control if relevant. The attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they ".
-                    "default to 1600. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls ".
-                    "and outputs all attributes irrespective of the form block or tab. For finer control of the output, see the [occAttr:n], [photos] and [sensitivity] controls.<br/>".
-                "&nbsp;&nbsp;<strong>[date]</strong> - a sample must always have a date.<br/>".
-                "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location select/autocomplete controls<br/>".
-                "&nbsp;&nbsp;<strong>[spatial reference]</strong> - a sample must always have a spatial reference.<br/>".
-                "&nbsp;&nbsp;<strong>[location name]</strong> - a text box to enter a place name.<br/>".
-                "&nbsp;&nbsp;<strong>[location autocomplete]</strong> - an autocomplete control for picking a stored location. A spatial reference is still required.<br/>".
-                "&nbsp;&nbsp;<strong>[location url param]</strong> - a set of hidden inputs that insert the location ID read from a URL parameter called location_id into the form. Uses the ".
-                "location's centroid as the sample map reference.<br/>".
-                "&nbsp;&nbsp;<strong>[location select]</strong> - a select control for picking a stored location. A spatial reference is still required.<br/>".
-                "&nbsp;&nbsp;<strong>[location map]</strong> - combines location select, map and spatial reference controls for recording only at stored locations.<br/>".
-                "&nbsp;&nbsp;<strong>[occurrence comment]</strong> - a text box for occurrence level comment. Alternatively use the ".
-                    "[species attributes] control to output all input controls for the species automatically. <br/>".
-                "&nbsp;&nbsp;<strong>[photos]</strong> - use when in single record entry mode to provide a control for uploading occurrence photos. Alternatively use the ".
-                    "[species attributes] control to output all input controls for the species automatically. The [photos] control overrides the setting <strong>Occurrence Images</strong>.<br/>".
-                "&nbsp;&nbsp;<strong>[place search]</strong> - zooms the map to the entered location.<br/>".
-                "&nbsp;&nbsp;<strong>[recorder names]</strong> - a text box for names. The logged-in user's id is always stored with the record.<br/>".
-                "&nbsp;&nbsp;<strong>[record status]</strong> - allow recorder to mark record as in progress or complete<br/>".
+          'name' => 'structure',
+          'caption' => 'Form Structure',
+          'description' => 'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of ' .
+            "component can be specified. <br/>" .
+            "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page. (Alpha-numeric characters only)<br/>" .
+            "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>" .
+            "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>" .
+                "&nbsp;&nbsp;<strong>[species]</strong> - a species grid or input control. " .
+                    "You can change any of the control options for an individual custom attribute control in a grid by putting @control|option=value on the subsequent line(s). " .
+                    "For example, if a control is for occAttr:4 then you can set it's default value by specifying @occAttr:4|default=7 on the line after the [species]<br/>" .
+                    "If you want to specify a custom template for a grid's species label cell, then override the taxon_label template. If you have multiple grids on the " .
+                    "form, you can override each one individually by setting the @taxonLabelTemplate for each grid to the name of a template that you've added to the " .
+                    "\$indicia_templates global array. " .
+                    "If in single species entry mode and using a select box for data input, you can put a taxon group select above the species input select by " .
+                    "setting the option @taxonGroupSelect=true. Control the label and helptext for this control using the options @taxonGroupSelectLabel and @taxonGroupSelectHelpText.<br/>" .
+                "&nbsp;&nbsp;<strong>[species map]</strong> - a species grid or input control: this is the same as the species control, but the sample is broken down " .
+                "into subsamples, each of which has its own location picked from the map. Only the part of the species grid which is being added to or modified at the " .
+                "time is displayed. This control should be placed after the map control, with which it integrates. Species recording must be set to a List (grid mode) rather than single entry. " .
+                "This control does not currently support mixed spatial reference systems, only the first specified will be used. You do not need a [spatial reference] control on the " .
+                "page when using a [species map] control.<br/>" .
+                "&nbsp;&nbsp;<strong>[species map summary]</strong> - a read only grid showing a summary of the data entered using the species map control.<br/>" .
+                "&nbsp;&nbsp;<strong>[species attributes]</strong> - any custom attributes for the occurrence, if not using the grid. Also includes a file upload " .
+                    "box and sensitivity input control if relevant. The attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they " .
+                    "default to 1600. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
+                    "and outputs all attributes irrespective of the form block or tab. For finer control of the output, see the [occAttr:n], [photos] and [sensitivity] controls.<br/>" .
+                "&nbsp;&nbsp;<strong>[date]</strong> - a sample must always have a date.<br/>" .
+                "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location select/autocomplete controls<br/>" .
+                "&nbsp;&nbsp;<strong>[spatial reference]</strong> - a sample must always have a spatial reference.<br/>" .
+                "&nbsp;&nbsp;<strong>[location name]</strong> - a text box to enter a place name.<br/>" .
+                "&nbsp;&nbsp;<strong>[location autocomplete]</strong> - an autocomplete control for picking a stored location. A spatial reference is still required.<br/>" .
+                "&nbsp;&nbsp;<strong>[location url param]</strong> - a set of hidden inputs that insert the location ID read from a URL parameter called location_id into the form. Uses the " .
+                "location's centroid as the sample map reference.<br/>" .
+                "&nbsp;&nbsp;<strong>[location select]</strong> - a select control for picking a stored location. A spatial reference is still required.<br/>" .
+                "&nbsp;&nbsp;<strong>[location map]</strong> - combines location select, map and spatial reference controls for recording only at stored locations.<br/>" .
+                "&nbsp;&nbsp;<strong>[occurrence comment]</strong> - a text box for occurrence level comment. Alternatively use the " .
+                    "[species attributes] control to output all input controls for the species automatically. <br/>" .
+                "&nbsp;&nbsp;<strong>[photos]</strong> - use when in single record entry mode to provide a control for uploading occurrence photos. Alternatively use the " .
+                    "[species attributes] control to output all input controls for the species automatically. The [photos] control overrides the setting <strong>Occurrence Images</strong>.<br/>" .
+                "&nbsp;&nbsp;<strong>[place search]</strong> - zooms the map to the entered location.<br/>" .
+                "&nbsp;&nbsp;<strong>[recorder names]</strong> - a text box for names. The logged-in user's id is always stored with the record.<br/>" .
+                "&nbsp;&nbsp;<strong>[record status]</strong> - allow recorder to mark record as in progress or complete<br/>" .
                 "&nbsp;&nbsp;<strong>[review input]</strong>. - a panel showing all the currently input form values ' .
-                    'which can be placed on the last tab of the form to allow the submission to be reviewed<br/>".
-                "&nbsp;&nbsp;<strong>[sample comment]</strong> - a text box for sample level comment. (Each occurrence may also have a comment.) <br/>".
-                "&nbsp;&nbsp;<strong>[sample photo]</strong>. - a photo upload for sample level images. (Each occurrence may also have photos.) <br/>".
-                "&nbsp;&nbsp;<strong>[sensitivity]</strong> - outputs a control for setting record sensitivity and the public viewing precision. This control will also output ".
-                    "any other occurrence custom attributes which are on an outer block called Sensitivity. Any such attributes will then be disabled when the record is ".
-                    "not sensitive, so they can be used to capture information that only relates to sensitive records.<br/>".
-                "&nbsp;&nbsp;<strong>[zero abundance]</strong>. - use when in single record entry mode to provide a checkbox for specifying negative records.<br/>".
-            "<strong>@option=value</strong> on the line(s) following any control allows you to override one of the options passed to the control. The options ".
-            "available depend on the control. For example @label=Abundance would set the untranslated label of a control to Abundance. Where the ".
-            "option value is an array, use valid JSON to encode the value. For example an array of strings could be passed as @occAttrClasses=[\"class1\",\"class2\"] ".
+                    'which can be placed on the last tab of the form to allow the submission to be reviewed<br/>" .
+                "&nbsp;&nbsp;<strong>[sample comment]</strong> - a text box for sample level comment. (Each occurrence may also have a comment.) <br/>" .
+                "&nbsp;&nbsp;<strong>[sample photo]</strong>. - a photo upload for sample level images. (Each occurrence may also have photos.) <br/>" .
+                "&nbsp;&nbsp;<strong>[sensitivity]</strong> - outputs a control for setting record sensitivity and the public viewing precision. This control will also output " .
+                    "any other occurrence custom attributes which are on an outer block called Sensitivity. Any such attributes will then be disabled when the record is " .
+                    "not sensitive, so they can be used to capture information that only relates to sensitive records.<br/>" .
+                "&nbsp;&nbsp;<strong>[zero abundance]</strong>. - use when in single record entry mode to provide a checkbox for specifying negative records.<br/>" .
+            "<strong>@option=value</strong> on the line(s) following any control allows you to override one of the options passed to the control. The options " .
+            "available depend on the control. For example @label=Abundance would set the untranslated label of a control to Abundance. Where the " .
+            "option value is an array, use valid JSON to encode the value. For example an array of strings could be passed as @occAttrClasses=[\"class1\",\"class2\"] " .
             "or a keyed array as @extraParams={\"preferred\":\"true\",\"orderby\":\"term\"}. " .
-            "Other common options include helpText (set to a piece of additional text to display alongside the control) and class (to add css ".
+            "Other common options include helpText (set to a piece of additional text to display alongside the control) and class (to add css " .
             "classes to the control such as control-width-3). Specify @permision=... to create a Drupal permission which you can use to " .
-            "control the visibility of this specific control.<br/>".
-            "<strong>[*]</strong> is used to make a placeholder for putting any custom attributes that should be inserted into the current tab. When this option is ".
-            "used, you can change any of the control options for an individual custom attribute control by putting @control|option=value on the subsequent line(s). ".
-            "For example, if a control is for smpAttr:4 then you can update it's label by specifying @smpAttr:4|label=New Label on the line after the [*]. ".
-            "You can also set an option for all the controls output by the [*] block by specifying @option=value as for non-custom controls, e.g. ".
-            "set @label=My label to define the same label for all controls in this custom attribute block. ".
-            "You can define the value for a control using the standard replacement tokens for user data, namely {user_id}, {username}, {email} and {profile_*}; ".
-            "replace * in the latter to construct an existing profile field name. For example you could set the default value of an email input using @smpAttr:n|default={email} ".
-            "where n is the attribute ID.<br/>".
-            "<strong>[smpAttr:<i>n</i>]</strong> is used to insert a particular custom sample attribute identified by its ID number<br/>".
-            "<strong>[occAttr:<i>n</i>]</strong> is used to insert a particular custom occurrence attribute identified by its ID number when inputting single records at a time. ".
-            "Or use [species attributes] to output the whole lot.<br/>".
-            "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>".
-            "<strong>|</strong> is used insert a split so that controls before the split go into a left column and controls after the split go into a right column.<br/>".
+            "control the visibility of this specific control.<br/>" .
+            "<strong>[*]</strong> is used to make a placeholder for putting any custom attributes that should be inserted into the current tab. When this option is " .
+            "used, you can change any of the control options for an individual custom attribute control by putting @control|option=value on the subsequent line(s). " .
+            "For example, if a control is for smpAttr:4 then you can update it's label by specifying @smpAttr:4|label=New Label on the line after the [*]. " .
+            "You can also set an option for all the controls output by the [*] block by specifying @option=value as for non-custom controls, e.g. " .
+            "set @label=My label to define the same label for all controls in this custom attribute block. " .
+            "You can define the value for a control using the standard replacement tokens for user data, namely {user_id}, {username}, {email} and {profile_*}; " .
+            "replace * in the latter to construct an existing profile field name. For example you could set the default value of an email input using @smpAttr:n|default={email} " .
+            "where n is the attribute ID.<br/>" .
+            "<strong>[smpAttr:<i>n</i>]</strong> is used to insert a particular custom sample attribute identified by its ID number<br/>" .
+            "<strong>[occAttr:<i>n</i>]</strong> is used to insert a particular custom occurrence attribute identified by its ID number when inputting single records at a time. " .
+            "Or use [species attributes] to output the whole lot.<br/>" .
+            "For any attribute controls you can set the default value to load from a parameter provided in the URL query string. Set " .
+            "@urlParam to the name of the parameter in the URL which will contain the default value.<br/>" .
+            "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>" .
+            "<strong>|</strong> is used insert a split so that controls before the split go into a left column and controls after the split go into a right column.<br/>" .
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
-          'type'=>'textarea',
-          'default' => "=Species=\r\n".
-              "?Please enter the species you saw and any other information about them.?\r\n".
-              "[species]\r\n".
-              "@resizeWidth=1500\r\n".
-              "@resizeHeight=1500\r\n".
-              "[species attributes]\r\n".
-              "[*]\r\n".
-              "=Place=\r\n".
-              "?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map to set it.?\r\n".
-              "[spatial reference]\r\n".
-              "[place search]\r\n".
-              "[map]\r\n".
-              "[*]\r\n".
-              "=Other Information=\r\n".
-              "?Please provide the following additional information.?\r\n".
-              "[date]\r\n".
-              "[sample comment]\r\n".
-              "[*]\r\n".
+          'type' => 'textarea',
+          'default' => "=Species=\r\n" .
+              "?Please enter the species you saw and any other information about them.?\r\n" .
+              "[species]\r\n" .
+              "@resizeWidth=1500\r\n" .
+              "@resizeHeight=1500\r\n" .
+              "[species attributes]\r\n" .
+              "[*]\r\n" .
+              "=Place=\r\n" .
+              "?Please provide the spatial reference of the record. You can enter the reference directly, or search for a place then click on the map to set it.?\r\n" .
+              "[spatial reference]\r\n" .
+              "[place search]\r\n" .
+              "[map]\r\n" .
+              "[*]\r\n" .
+              "=Other Information=\r\n" .
+              "?Please provide the following additional information.?\r\n" .
+              "[date]\r\n" .
+              "[sample comment]\r\n" .
+              "[*]\r\n" .
               "=*=",
           'group' => 'User Interface'
         ),
@@ -230,7 +237,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'name' => 'edit_taxa_names',
           'caption' => 'Include option to edit entered taxa',
           'description' => 'Include an icon to allow taxa to be edited after they has been entered into the species grid.',
-          'type'=>'checkbox',
+          'type' => 'checkbox',
           'default'=>false,
           'required'=>false,
           'group' => 'User Interface',
@@ -239,37 +246,37 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'name' => 'include_species_grid_link_page',
           'caption' => 'Include icon to link to another page from a species grid row?',
           'description' => 'Include an icon which links to a page from each row on the species grid e.g. to display details about a taxon. Use the "Species grid page link URL" option to provide a URL.',
-          'type'=>'checkbox',
+          'type' => 'checkbox',
           'default'=>false,
           'required'=>false,
           'group' => 'User Interface',
         ),
         array(
-          'name'=>'species_grid_page_link_url',
-          'caption'=>'Species grid page link URL',
-          'description'=>'URL path of the page being linked to by the "Include icon to link to another page from a species grid row" option.
+          'name' => 'species_grid_page_link_url',
+          'caption' => 'Species grid page link URL',
+          'description' => 'URL path of the page being linked to by the "Include icon to link to another page from a species grid row" option.
                           The URL path should not include server details or a preceeding slash
                           e.g. node/216. Note that the current version of the software will only supply a taxa_taxon_list_id value to this page as the parameter.',
-          'type'=>'textfield',
+          'type' => 'textfield',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'species_grid_page_link_parameter',
-          'caption'=>'Species grid page link parameter',
-          'description'=>'Parameter name used by the page being linked to by the "Species grid page link URL" option. Note in the current version of the software the value
+          'name' => 'species_grid_page_link_parameter',
+          'caption' => 'Species grid page link parameter',
+          'description' => 'Parameter name used by the page being linked to by the "Species grid page link URL" option. Note in the current version of the software the value
                           of the parameter will always be a taxa_taxon_list_id.',
-          'type'=>'textfield',
+          'type' => 'textfield',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
         ),
         array(
-          'name'=>'species_grid_page_link_tooltip',
-          'caption'=>'Species grid page link tooltip',
-          'description'=>'Mouse pointer tooltip for the "Include icon to link to another page from a species grid row" option.',
-          'type'=>'textfield',
+          'name' => 'species_grid_page_link_tooltip',
+          'caption' => 'Species grid page link tooltip',
+          'description' => 'Mouse pointer tooltip for the "Include icon to link to another page from a species grid row" option.',
+          'type' => 'textfield',
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
@@ -280,7 +287,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'description' => 'Name of the report to use to populate the grid for selecting existing data from. The report must return a sample_id '.
               'field or occurrence_id field for linking to the data entry form. As a starting point, try ' .
               'reports_for_prebuilt_forms/dynamic_sample_occurrence_samples for a list of samples.',
-          'type'=>'string',
+          'type' => 'string',
           'group' => 'User Interface',
           'default' => 'reports_for_prebuilt_forms/dynamic_sample_occurrence_samples'
         ),
@@ -290,31 +297,31 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'description' => 'Include a "Precheck my records" button which allows the user to request an automated '.
               'verification check to be run against their records before submission, enabling them to provide '.
               'additional information for any records which are likely to be contentious.',
-          'type'=>'checkbox',
+          'type' => 'checkbox',
           'group' => 'User Interface',
           'default' => false,
           'required' => false
         ),
         array(
-          'name'=>'users_manage_own_sites',
-          'caption'=>'Users can save sites',
-          'description'=>'Allow users to save named sites for recall when they add records in future. Users '.
+          'name' => 'users_manage_own_sites',
+          'caption' => 'Users can save sites',
+          'description' => 'Allow users to save named sites for recall when they add records in future. Users '.
               'are only able to use their own sites. To use this option, make sure you include a '.
               '[location autocomplete] control in the User Interface - Form Structure setting. Use @searchUpdatesSref=true '.
               'on the next line in the form structure to specify that the grid reference for the site should be automatically filled '.
               'in after a site has been selected. You can also add @useLocationName=true on a line after the location autocomplete '.
               'to force any unmatched location names to be stored as a free-text location name against the sample.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Locations'
         ),
         array(
-          'name'=>'multiple_occurrence_mode',
-          'caption'=>'Allow a single ad-hoc record or a list of records',
-          'description'=>'Method of data entry, one occurrence at a time, via a grid allowing '.
+          'name' => 'multiple_occurrence_mode',
+          'caption' => 'Allow a single ad-hoc record or a list of records',
+          'description' => 'Method of data entry, one occurrence at a time, via a grid allowing '.
               'entry of multiple occurrences at the same place and date, or allow the user to choose.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'single' => 'Only allow entry of one occurrence at a time',
             'multi' => 'Only allow entry of multiple occurrences using a grid',
@@ -324,72 +331,72 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'group' => 'Species'
         ),
         array(
-          'fieldname'=>'list_id',
-          'label'=>'Species List ',
-          'helpText'=>'The species list that species can be selected from. This list is pre-populated '.
+          'fieldname' => 'list_id',
+          'label' => 'Species List ',
+          'helpText' => 'The species list that species can be selected from. This list is pre-populated '.
               'into the grid when doing grid based data entry, or provides the list which a species '.
               'can be picked from when doing single occurrence data entry.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'required'=>false,
-          'group'=>'Species',
+          'group' => 'Species',
           'siteSpecific'=>true
         ),
         array(
-          'fieldname'=>'extra_list_id',
-          'label'=>'Extra Species List',
-          'helpText'=>'The second species list that species can be selected from. This list is available for additional '.
+          'fieldname' => 'extra_list_id',
+          'label' => 'Extra Species List',
+          'helpText' => 'The second species list that species can be selected from. This list is available for additional '.
               'taxa being added to the grid when doing grid based data entry. When using the single record input mode, if you '.
               'provide a list here as well as in the Species List option above, then both will be available for selection from. '.
               'You might like to use this when you need to augment the species available from a main species list with a few '.
               'additional specialist taxa for example.',
-          'type'=>'select',
-          'table'=>'taxon_list',
-          'valueField'=>'id',
-          'captionField'=>'title',
+          'type' => 'select',
+          'table' => 'taxon_list',
+          'valueField' => 'id',
+          'captionField' => 'title',
           'required'=>false,
-          'group'=>'Species',
+          'group' => 'Species',
           'siteSpecific'=>true
         ),
         array(
-          'fieldname'=>'copy_species_row_data_to_new_rows',
-          'label'=>'New species grid rows use previous row\'s data',
-          'helpText'=>'Use this option to enable newly added rows on the species grid to have their default data '.
-              'taken from the previous row rather than being initially blank. Use the "Columns to include" option '.
-              'to specify which columns you wish to include. The data is copied automatically when the new row is '.
+          'fieldname' => 'copy_species_row_data_to_new_rows',
+          'label' => 'New species grid rows use previous row\'s data',
+          'helpText' => 'Use this option to enable newly added rows on the species grid to have their default data ' .
+              'taken from the previous row rather than being initially blank. Use the "Columns to include" option ' .
+              'to specify which columns you wish to include. The data is copied automatically when the new row is ' .
               'created and also when edits are made to the previous row.',
-          'type'=>'checkbox',
+          'type' => 'checkbox',
           'default'=>false,
           'required'=>false,
-          'group'=>'Species',
+          'group' => 'Species',
         ),
         array(
-          'name'=>'previous_row_columns_to_include',
-          'caption'=>'Columns to include',
-          'description'=>'Comma seperated list of columns you wish to include when using the "New species grid rows use previous row\'s data" option. ' .
+          'name' => 'previous_row_columns_to_include',
+          'caption' => 'Columns to include',
+          'description' => 'Comma seperated list of columns you wish to include when using the "New species grid rows use previous row\'s data" option. ' .
                 'Non-case or white space sensitive. Any unrecognised columns are ignored and the images column cannot be copied.',
           'type' => 'textarea',
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
           'fieldname' => 'user_controls_taxon_filter',
           'label' => 'User can filter the Extra Species List',
-          'helpText' => 'Tick this box to enable a filter button in the species column title which allows the user to control '.
-              'which species groups are available for selection when adding new species to the grid, e.g. the user can filter '.
+          'helpText' => 'Tick this box to enable a filter button in the species column title which allows the user to control ' .
+              'which species groups are available for selection when adding new species to the grid, e.g. the user can filter ' .
               'to allow selection from just one species group.',
           'type' => 'checkbox',
           'default' => false,
           'required' => false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'species_ctrl',
-          'caption'=>'Single Species Selection Control Type',
-          'description'=>'The type of control that will be available to select a single species.',
-          'type'=>'select',
+          'name' => 'species_ctrl',
+          'caption' => 'Single Species Selection Control Type',
+          'description' => 'The type of control that will be available to select a single species.',
+          'type' => 'select',
           'options' => array(
             'autocomplete' => 'Autocomplete',
             'select' => 'Select',
@@ -400,17 +407,17 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             'tree_browser' => 'Tree browser'
           ),
           'default' => 'autocomplete',
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'sub_species_column',
-          'caption'=>'Include sub-species in a separate column?',
-          'description'=>'If checked and doing grid based data entry letting the recorder add species they choose to '.
+          'name' => 'sub_species_column',
+          'caption' => 'Include sub-species in a separate column?',
+          'description' => 'If checked and doing grid based data entry letting the recorder add species they choose to '.
             'the bottom of the grid, sub-species will be displayed in a separate column so the recorder picks the species '.
             'first then the subspecies. The species checklist must be configured so that species are parents of the subspecies. '.
             'This setting also forces the Cache Lookups option therefore it requires the Cache Builder module to be installed '.
             'on the Indicia warehouse.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'default' => false,
           'required' => false,
           'group' => 'Species'
@@ -452,49 +459,49 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'group' => 'Species'
         ),
         array(
-          'name'=>'occurrence_comment',
-          'caption'=>'Occurrence Comment',
-          'description'=>'Should an input box be present for a comment against each occurrence?',
-          'type'=>'boolean',
+          'name' => 'occurrence_comment',
+          'caption' => 'Occurrence Comment',
+          'description' => 'Should an input box be present for a comment against each occurrence?',
+          'type' => 'boolean',
           'required' => false,
           'default'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'occurrence_sensitivity',
-          'caption'=>'Occurrence Sensitivity',
-          'description'=>'Should a control be present for sensitivity of each record?  This applies when using grid entry mode or when using the [species attributes] control '.
+          'name' => 'occurrence_sensitivity',
+          'caption' => 'Occurrence Sensitivity',
+          'description' => 'Should a control be present for sensitivity of each record?  This applies when using grid entry mode or when using the [species attributes] control '.
               'to output all the occurrence related input controls automatically. The [sensitivity] control outputs a sensitivity input control independently of this setting.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'required' => false,
           'default'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'occurrence_images',
-          'caption'=>'Occurrence Images',
-          'description'=>'Should occurrences allow images to be uploaded? This applies when using grid entry mode or when using the [species attributes] control '.
+          'name' => 'occurrence_images',
+          'caption' => 'Occurrence Images',
+          'description' => 'Should occurrences allow images to be uploaded? This applies when using grid entry mode or when using the [species attributes] control '.
               'to output all the occurrence related input controls automatically. The [photos] control outputs a photos input control independently of this setting.',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'required' => false,
           'default'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'col_widths',
-          'caption'=>'Grid Column Widths',
-          'description'=>'Provide percentage column widths for each species checklist grid column as a comma separated list. To leave a column at its default with, put a blank '.
+          'name' => 'col_widths',
+          'caption' => 'Grid Column Widths',
+          'description' => 'Provide percentage column widths for each species checklist grid column as a comma separated list. To leave a column at its default with, put a blank '.
               'entry in the list. E.g. "25,,20" would set the first column to 25% width and the 3rd column to 20%, leaving the other columns as they are.',
-          'type'=>'string',
-          'group'=>'Species',
+          'type' => 'string',
+          'group' => 'Species',
           'required' => false
         ),
         array(
-          'name'=>'taxon_filter_field',
-          'caption'=>'Field used to filter taxa',
-          'description'=>'If you want to allow recording for just part of the selected list(s), then select which field you will '.
+          'name' => 'taxon_filter_field',
+          'caption' => 'Field used to filter taxa',
+          'description' => 'If you want to allow recording for just part of the selected list(s), then select which field you will '.
               'use to specify the filter by.',
-          'type'=>'select',
+          'type' => 'select',
           'options' => array(
             'preferred_name' => 'Preferred name of the taxa',
             'taxon_meaning_id' => 'Taxon Meaning ID',
@@ -504,22 +511,22 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             'id' => 'Taxon ID'
           ),
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'use_url_taxon_parameter',
-          'caption'=>'Use URL taxon parameter',
-          'description'=>'Use a URL parameter called taxon to get the filter? Case sensitive. Uses the "Field used to filter taxa" setting to control '.
+          'name' => 'use_url_taxon_parameter',
+          'caption' => 'Use URL taxon parameter',
+          'description' => 'Use a URL parameter called taxon to get the filter? Case sensitive. Uses the "Field used to filter taxa" setting to control '.
             'what is being filtered against, e.g. &taxon=Passer+domesticus,Turdus+merula',
-          'type'=>'boolean',
+          'type' => 'boolean',
           'required' => false,
           'default'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'taxon_filter',
-          'caption'=>'Taxon filter items',
-          'description'=>'Taxa can be filtered by entering values into this box. '.
+          'name' => 'taxon_filter',
+          'caption' => 'Taxon filter items',
+          'description' => 'Taxa can be filtered by entering values into this box. '.
               'Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group. '.
               'If you provide a single taxon preferred name, taxon meaning ID or external key in this box and you set the <strong>Allow a single '.
               'ad-hoc record or a list of records</strong> setting to "Only allow entry of one occurrence at a time" then the form is set up for '.
@@ -531,22 +538,22 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
               'The \'Use URL taxon parameter\' option can be used to override the filters specified here.',
           'type' => 'textarea',
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'single_species_message',
-          'caption'=>'Include a message stating which species you are recording in single species mode?',
-          'description'=>'Message which displays the species you are recording against in single species mode. When selected, this will automatically be displayed where applicable.',
-          'type'=>'boolean',
+          'name' => 'single_species_message',
+          'caption' => 'Include a message stating which species you are recording in single species mode?',
+          'description' => 'Message which displays the species you are recording against in single species mode. When selected, this will automatically be displayed where applicable.',
+          'type' => 'boolean',
           'required' => false,
           'default'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'species_names_filter',
-          'caption'=>'Species Names Filter',
-          'description'=>'Select the filter to apply to the species names which are available to choose from.',
-          'type'=>'select',
+          'name' => 'species_names_filter',
+          'caption' => 'Species Names Filter',
+          'description' => 'Select the filter to apply to the species names which are available to choose from.',
+          'type' => 'select',
           'options' => array(
             'all' => 'All names are available',
             'language' => 'Only allow selection of species using common names in the user\'s language',
@@ -554,63 +561,63 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             'excludeSynonyms' => 'Allow common names or preferred latin names'
           ),
           'default' => 'all',
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
-          'name'=>'link_species_popups',
-          'caption'=>'Create popups for certain species',
-          'description'=>'You can mark some blocks of the form to only be shown as a popup when a certain species is entered into the species grid. For each popup block, '.
+          'name' => 'link_species_popups',
+          'caption' => 'Create popups for certain species',
+          'description' => 'You can mark some blocks of the form to only be shown as a popup when a certain species is entered into the species grid. For each popup block, '.
               'put the species name on a newline, followed by | then the outer block name, followed by | then the inner block name if relevant. For example, '.
               '"Lasius niger|Additional info|Colony info" pops up the controls from the block Additional Info > Colony info when a species is entered with this '.
               'name. For the species name, specify the preferred name from list.',
           'type' => 'textarea',
           'required'=>false,
-          'group'=>'Species'
+          'group' => 'Species'
         ),
         array(
           'name' => 'sample_method_id',
           'caption' => 'Sample Method',
           'type' => 'select',
-          'table'=>'termlists_term',
-          'captionField'=>'term',
-          'valueField'=>'id',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:sample_methods'),
           'required' => false,
           'helpText' => 'The sample method that will be used for created samples.'
         ),
         array(
-          'name'=>'defaults',
-          'caption'=>'Default Values',
-          'description'=>'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
+          'name' => 'defaults',
+          'caption' => 'Default Values',
+          'description' => 'Supply default values for each field as required. On each line, enter fieldname=value. For custom attributes, '.
               'the fieldname is the untranslated caption. For other fields, it is the model and fieldname, e.g. occurrence.record_status. '.
               'For date fields, use today to dynamically default to today\'s date. NOTE, currently only supports occurrence:record_status and '.
               'sample:date but will be extended in future.',
-          'type'=>'textarea',
-          'default'=>'occurrence:record_status=C'
+          'type' => 'textarea',
+          'default' => 'occurrence:record_status=C'
         ),
         array(
-          'name'=>'remembered',
-          'caption'=>'Remembered Fields',
-          'description'=>'Supply a list of field names that should be remembered in a cookie, saving re-inputting them if they are likely to repeat. '.
+          'name' => 'remembered',
+          'caption' => 'Remembered Fields',
+          'description' => 'Supply a list of field names that should be remembered in a cookie, saving re-inputting them if they are likely to repeat. '.
               'For greater flexibility use the @lockable=true option on each control instead.',
-          'type'=>'textarea',
+          'type' => 'textarea',
           'required'=>false
         ),
         array(
-          'name'=>'edit_permission',
-          'caption'=>'Permission required for editing other people\'s data',
-          'description'=>'Set to the name of a permission which is required in order to be able to edit other people\'s data.',
-          'type'=>'text_input',
+          'name' => 'edit_permission',
+          'caption' => 'Permission required for editing other people\'s data',
+          'description' => 'Set to the name of a permission which is required in order to be able to edit other people\'s data.',
+          'type' => 'text_input',
           'required'=>false,
-          'default'=>'indicia data admin'
+          'default' => 'indicia data admin'
         ),
         array(
-          'name'=>'ro_permission',
-          'caption'=>'Permission required for viewing other people\'s data',
-          'description'=>'Set to the name of a permission which is required in order to be able to view other people\'s data (not edit).',
-          'type'=>'text_input',
+          'name' => 'ro_permission',
+          'caption' => 'Permission required for viewing other people\'s data',
+          'description' => 'Set to the name of a permission which is required in order to be able to view other people\'s data (not edit).',
+          'type' => 'text_input',
           'required'=>false,
-          'default'=>'indicia data view'
+          'default' => 'indicia data view'
         )
       )
     );
@@ -659,8 +666,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       data_entry_helper::$entity_to_load['sample:group_id']=$_GET['group_id'];
     if (!empty(data_entry_helper::$entity_to_load['sample:group_id'])) {
       self::$group = data_entry_helper::get_population_data(array(
-          'table'=>'group',
-          'extraParams'=>$auth['read']+array('view'=>'detail','id'=>data_entry_helper::$entity_to_load['sample:group_id'])
+          'table' => 'group',
+          'extraParams' => $auth['read']+array('view' => 'detail','id'=>data_entry_helper::$entity_to_load['sample:group_id'])
       ));
       self::$group=self::$group[0];
       $filterDef = json_decode(self::$group['filter_definition']);
@@ -675,7 +682,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           $response = data_entry_helper::get_population_data(array(
             'table' => 'location',
             'extraParams' => $auth['read'] + array(
-                'query' => json_encode(array('in'=>array('id'=>explode(',', $locationIDToLoad)))),
+                'query' => json_encode(array('in' => array('id'=>explode(',', $locationIDToLoad)))),
                 'view' => 'detail'
               )
           ));
@@ -771,13 +778,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // Only actually need to show tabs if there is more than one
     if(count($tabs) > 1){
       $active = isset($_GET['page']) ? '#setLocations' : '#sampleList'; // ??? setLocations
-      data_entry_helper::enable_tabs(array('divId'=>'controls','active'=>$active));
+      data_entry_helper::enable_tabs(array('divId' => 'controls','active' => $active));
       $r .= '<div id="controls"><div id="temp"></div>';
-      $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
+      $r .= data_entry_helper::tab_header(array('tabs' => $tabs));
     }
 
     // Here is where we get the table of samples
-    $r .= "<div id=\"sampleList\">".call_user_func(
+    $r .= "<div id=\"sampleList\">" .call_user_func(
         array(self::$called_class, 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
 
     // Add content to extra tabs that derived classes may have added
@@ -911,8 +918,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       'attrtable'=>"{$entity}_attribute",
       'key'=>"{$entity}_id",
       'fieldprefix'=>"{$prefix}Attr",
-      'extraParams'=>$readAuth,
-      'survey_id'=>$args['survey_id']
+      'extraParams' => $readAuth,
+      'survey_id' => $args['survey_id']
     );
     if (!empty($id))
       $attrOpts['id'] = $id;
@@ -1004,10 +1011,10 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
     $r = $auth['write'].
-          "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n".
-          "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
+          "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"" . $args['website_id']."\" />\n" .
+          "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"" . $args['survey_id']."\" />\n";
     if (!empty($args['sample_method_id'])) {
-      $r .= '<input type="hidden" name="sample:sample_method_id" value="'.$args['sample_method_id'].'"/>' . PHP_EOL;
+      $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $args['sample_method_id'].'"/>' . PHP_EOL;
     }
     if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
       $r .= '<input type="hidden" id="sample:id" name="sample:id" value="' . data_entry_helper::$entity_to_load['sample:id'] . '" />' . PHP_EOL;
@@ -1017,7 +1024,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     $r .= self::get_group_licence_html();
     if (!empty(data_entry_helper::$entity_to_load['sample:group_id'])) {
-      $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"".data_entry_helper::$entity_to_load['sample:group_id']."\" />\n";
+      $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"" . data_entry_helper::$entity_to_load['sample:group_id']."\" />\n";
       // If the group does not release it's records, set the release_status flag
       if (self::$group['private_records']==='t')
         $r .= "<input type=\"hidden\" id=\"occurrence:release_status\" name=\"occurrence:release_status\" value=\"U\" />\n";
@@ -1042,9 +1049,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $dirname = preg_replace('/^\//', '', dirname($_SERVER['SCRIPT_NAME'])) . '/';
       $reload['path'] = str_replace($dirname, '', $reload['path']);
       $possibleGroups = data_entry_helper::get_report_data(array(
-        'dataSource'=>'library/groups/groups_for_page',
-        'readAuth'=>$auth['read'],
-        'extraParams'=>array(
+        'dataSource' => 'library/groups/groups_for_page',
+        'readAuth' => $auth['read'],
+        'extraParams' => array(
             'currentUser' => hostsite_get_user_field('indicia_user_id'),
             'path' => $reload['path']
         )
@@ -1368,8 +1375,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if (empty($args['list_id']))
       throw new exception(lang::get('Please configure the Initial Species List parameter to define which list the species to record is selected from.'));
     $filter = array(
-      'preferred'=>'t',
-      'taxon_list_id'=>$args['list_id']
+      'preferred' => 't',
+      'taxon_list_id' => $args['list_id']
     );
     if ($args['taxon_filter_field']=='preferred_name') {
       $filter['taxon']=$filterLines[0];
@@ -1693,7 +1700,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    */
   protected static function get_control_samplecomment($auth, $args, $tabAlias, $options) {
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'sample:comment',
+      'fieldname' => 'sample:comment',
       'label'=>lang::get('Overall comment')
     ), $options));
   }
@@ -1718,7 +1725,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       }\n";
     }
     return data_entry_helper::file_box(array_merge(array(
-      'table'=>'sample_medium',
+      'table' => 'sample_medium',
       'readAuth' => $auth['read'],
       'caption'=>lang::get($label)
     ), $options));
@@ -1730,7 +1737,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function get_control_speciesattributes($auth, $args, $tabAlias, $options) {
     if (!(call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
       self::load_custom_occattrs($auth['read'], $args['survey_id']);
-      $ctrlOptions = array('extraParams'=>$auth['read']);
+      $ctrlOptions = array('extraParams' => $auth['read']);
       $attrSpecificOptions = array();
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
       $r = '';
@@ -1743,7 +1750,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $r .= get_attribute_html(self::$occAttrs, $args, $ctrlOptions, '', $attrSpecificOptions);
       if ($args['occurrence_comment'])
         $r .= data_entry_helper::textarea(array(
-          'fieldname'=>'occurrence:comment',
+          'fieldname' => 'occurrence:comment',
           'label'=>lang::get('Record comment')
         ));
       if ($args['occurrence_images']){
@@ -1765,7 +1772,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       data_entry_helper::$javascript .= "\njQuery('[name=sample\\:date]').next().after('<span class=\"date-explanation\"> ".lang::get('LANG_Date_Explanation')."</span>');\n";
     return data_entry_helper::date_picker(array_merge(array(
       'label'=>lang::get('LANG_Date'),
-      'fieldname'=>'sample:date',
+      'fieldname' => 'sample:date',
       'default' => isset($args['defaults']['sample:date']) ? $args['defaults']['sample:date'] : ''
     ), $options));
   }
@@ -1807,9 +1814,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       // pass through the group we are recording in plus its parent, if any, so we can show group sites
       if (!empty($_GET['group_id'])) {
         $parent = data_entry_helper::get_report_data(array(
-          'dataSource'=>'library/groups/groups_list',
-          'readAuth'=>$auth['read'],
-          'extraParams'=>array('to_group_id' => $_GET['group_id'], 'userFilterMode'=>'all', 'currentUser'=>''),
+          'dataSource' => 'library/groups/groups_list',
+          'readAuth' => $auth['read'],
+          'extraParams' => array('to_group_id' => $_GET['group_id'], 'userFilterMode' => 'all', 'currentUser' => ''),
           'caching' => true
         ));
         $groups = $_GET['group_id'];
@@ -1839,17 +1846,17 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       return 'The location_id parameter must be an integer.';
     if (isset(data_entry_helper::$entity_to_load['sample:location_id'])) {
       // no need for values as the entity to load will override any defaults.
-      $location=array('id'=>'', 'centroid_sref'=>'', 'centroid_sref_system'=>'');
+      $location=array('id' => '', 'centroid_sref' => '', 'centroid_sref_system' => '');
     } else {
       $response = data_entry_helper::get_population_data(array(
-        'table'=>'location',
-        'extraParams'=>$auth['read'] + array('id'=>$_GET['location_id'], 'view'=>'detail')
+        'table' => 'location',
+        'extraParams' => $auth['read'] + array('id' => $_GET['location_id'], 'view' => 'detail')
       ));
       $location=$response[0];
     }
-    $r = data_entry_helper::hidden_text(array('fieldname'=>'sample:location_id', 'default'=>$location['id']));
-    $r .= data_entry_helper::hidden_text(array('fieldname'=>'sample:entered_sref', 'default'=>$location['centroid_sref']));
-    $r .= data_entry_helper::hidden_text(array('fieldname'=>'sample:entered_sref_system', 'default'=>$location['centroid_sref_system']));
+    $r = data_entry_helper::hidden_text(array('fieldname' => 'sample:location_id', 'default' => $location['id']));
+    $r .= data_entry_helper::hidden_text(array('fieldname' => 'sample:entered_sref', 'default' => $location['centroid_sref']));
+    $r .= data_entry_helper::hidden_text(array('fieldname' => 'sample:entered_sref_system', 'default' => $location['centroid_sref_system']));
     return $r;
   }
 
@@ -1872,7 +1879,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     $location_list_args = array_merge(array(
         'label'=>lang::get('LANG_Location_Label'),
-        'view'=>'detail'
+        'view' => 'detail'
     ), $options);
     return data_entry_helper::location_select($location_list_args);
   }
@@ -1946,7 +1953,7 @@ else
   protected static function get_control_occurrencecomment($auth, $args, $tabAlias, $options) {
     if (!(call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
       return data_entry_helper::textarea(array_merge(array(
-        'fieldname'=>'occurrence:comment',
+        'fieldname' => 'occurrence:comment',
         'label'=>lang::get('Record comment')
       ), $options));
     } else {
@@ -1979,16 +1986,16 @@ else
     //We don't need to touch the control in edit mode. Make the current user's name the default in add mode if the user has selected that option.
     if (empty($_GET['sample_id']) && !empty($options['defaultToCurrentUser'])&& $options['defaultToCurrentUser']==true) {
       $defaultUserData = data_entry_helper::get_report_data(array(
-        'dataSource'=>'library/users/get_people_details_for_website_or_user',
-        'readAuth'=>$auth['read'],
-        'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
+        'dataSource' => 'library/users/get_people_details_for_website_or_user',
+        'readAuth' => $auth['read'],
+        'extraParams' => array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
       ));
       //Need to escape characters otherwise a name like O'Brian will break the page HTML
       $defaultUserData[0]['fullname_firstname_first']=addslashes($defaultUserData[0]['fullname_firstname_first']);
       data_entry_helper::$javascript .= "$('#sample\\\\:recorder_names').val('".$defaultUserData[0]['fullname_firstname_first']."');";
     }
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'sample:recorder_names',
+      'fieldname' => 'sample:recorder_names',
       'label'=>lang::get('Recorder names')
     ), $options));
   }
@@ -2024,7 +2031,7 @@ else
   protected static function get_control_sensitivity($auth, $args, $tabAlias, $options) {
     if ($args['multiple_occurrence_mode']==='single') {
       self::load_custom_occattrs($auth['read'], $args['survey_id']);
-      $ctrlOptions = array('extraParams'=>$auth['read']);
+      $ctrlOptions = array('extraParams' => $auth['read']);
       $attrSpecificOptions = array();
       self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
       $sensitivity_controls = get_attribute_html(self::$occAttrs, $args, $ctrlOptions, 'sensitivity', $attrSpecificOptions);
@@ -2108,7 +2115,7 @@ else
           if ($attr['data_type']==='L') {
             $attr['terms'] = data_entry_helper::get_population_data(array(
               'table' => 'termlists_term',
-              'extraParams' => $readAuth + array('termlist_id'=>$attr['termlist_id'], 'view'=>'cache', 'columns'=>'id,term'),
+              'extraParams' => $readAuth + array('termlist_id' => $attr['termlist_id'], 'view' => 'cache', 'columns' => 'id,term'),
               'cachePerUser' => false
             ));
           }
@@ -2185,7 +2192,7 @@ else
     if (function_exists('hostsite_get_user_field')) {
       $iUserId = hostsite_get_user_field('indicia_user_id');
       if (isset($iUserId) && $iUserId!=false) $filter = array (
-          'survey_id'=>$args['survey_id'],
+          'survey_id' => $args['survey_id'],
           'userID_attr_id' => 0,
           'userID' => 0,
           'iUserID' => $iUserId);
@@ -2259,7 +2266,7 @@ else
 
   protected static function getReportActions() {
     return array(array('display' => 'Actions', 'actions' =>
-        array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}','occurrence_id'=>'{occurrence_id}')))));
+        array(array('caption' => lang::get('Edit'), 'url' => '{currentUrl}', 'urlParams' => array('sample_id' => '{sample_id}','occurrence_id' => '{occurrence_id}')))));
   }
 
   /**
@@ -2272,7 +2279,7 @@ else
    */
   protected static function load_custom_occattrs($readAuth, $surveyId) {
     if (!isset(self::$occAttrs)) {
-      self::$occAttrs = self::getAttributesForEntity('occurrence', array('survey_id'=>$surveyId), $readAuth,
+      self::$occAttrs = self::getAttributesForEntity('occurrence', array('survey_id' => $surveyId), $readAuth,
         isset(data_entry_helper::$entity_to_load['occurrence:id']) ? data_entry_helper::$entity_to_load['occurrence:id'] : '');
     }
     return self::$occAttrs;
@@ -2288,7 +2295,7 @@ else
    */
   protected static function occurrence_photo_input($readAuth, $options, $tabalias) {
     $opts = array(
-      'table'=>'occurrence_medium',
+      'table' => 'occurrence_medium',
       'readAuth' => $readAuth,
       'resizeWidth' => 1600,
       'resizeHeight' => 1600
