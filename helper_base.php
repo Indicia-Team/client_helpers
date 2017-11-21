@@ -596,6 +596,7 @@ JS;
    * <li>footable</li>
    * <li>indiciaFootableReport</li>
    * <li>indiciaFootableChecklist</li>
+   * <li>html2pdf</li>
    * <li>review_input</li>
    * <li>sub_list</li>
    * <li>georeference_default_geoportal_lu</li>
@@ -722,6 +723,13 @@ JS;
             'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'),
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'),
             'deps' => array('footable')),
+        'html2pdf' => array(
+          'javascript' => array(
+            self::$js_path . 'html2pdf/vendor/jspdf.min.js',
+            self::$js_path . 'html2pdf/vendor/html2canvas.min.js',
+            self::$js_path . 'html2pdf/src/html2pdf.js',
+          )
+        ),
         'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
         'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
         'georeference_default_geoportal_lu' => array(
