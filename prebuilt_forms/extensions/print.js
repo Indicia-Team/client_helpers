@@ -64,9 +64,12 @@ jQuery(document).ready(function enablePdf($) {
       indiciaData.htmlPreparedForPdf = true;
     }
     shrinkTablesIfNeeded();
+    if (indiciaData.printSettings.excludeSelector !== '') {
+      $(indiciaData.printSettings.excludeSelector).remove();
+    }
 
     // Create the PDF
-    html2pdf($('div.node-content')[0], {
+    html2pdf($(indiciaData.printSettings.includeSelector)[0], {
       filename: 'pantheonReport.pdf',
       margin: 1,
       image: { type: 'jpeg', quality: 0.98 },

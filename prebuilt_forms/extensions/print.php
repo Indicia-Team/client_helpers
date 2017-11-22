@@ -43,6 +43,9 @@ class extension_print {
    * @param array $options
    *   Options passed to the control. Options are:
    *     * format - portrait, landscape, or choose (default).
+   *     * includeSelector - selector for the element which includes the content to be printed. Defaults to
+   *       #content.
+   *     * excludeSelector - selector for any elements inside the element being printed which should be hidden.
    * @param string $path
    *   Current page path.
    *
@@ -55,7 +58,16 @@ class extension_print {
     helper_base::add_resource('fancybox');
     $options = array_merge(array(
       'format' => 'choose',
+      'includeSelector' => '#content',
+      'excludeSelector' => ''
     ), $options);
+    helper_base::$javascript .= <<<JS
+indiciaData.printSettings = {
+  includeSelector: "$options[includeSelector]",
+  excludeSelector: "$options[excludeSelector]"
+};
+
+JS;
     $lang = array(
       'ConvertPageToPDF' => lang::get('Convert page to PDF'),
       'PDFOptions' => lang::get('PDF options'),
