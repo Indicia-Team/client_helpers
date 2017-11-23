@@ -147,74 +147,74 @@ ul.gallery li {
 .popup-form {
   width: 580px;
 }
-/* line 18, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 18, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form label {
   font-weight: bold;
 }
-/* line 19, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 19, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form fieldset {
   padding: 1.4em;
   margin: 0 0 1.5em 0;
 }
-/* line 20, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 20, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form legend {
   font-weight: bold;
   font-size: 1.2em;
 }
-/* line 22, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 22, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password] {
   margin: 0.5em 0;
   background-color: white;
   padding: 5px;
 }
-/* line 27, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 27, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.title {
   font-size: 1.5em;
 }
-/* line 29, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 29, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form textarea {
   margin: 0.5em 0;
   padding: 5px;
 }
-/* line 30, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 30, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form select {
   margin: 0.5em 0;
 }
-/* line 55, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 55, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form fieldset {
   border: 1px solid #cccccc;
 }
-/* line 57, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 57, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password],
 .popup-form textarea {
   background-color: #fff;
   border: 1px solid #bbbbbb;
 }
-/* line 61, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 61, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text:focus, .popup-form input.title:focus, .popup-form input[type=email]:focus, .popup-form input[type=text]:focus, .popup-form input[type=password]:focus,
 .popup-form textarea:focus {
   border-color: #666666;
 }
-/* line 65, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 65, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form select {
   background-color: #fff;
   border-width: 1px;
   border-style: solid;
 }
-/* line 40, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 40, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password] {
   width: 300px;
 }
-/* line 46, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 46, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form textarea {
   width: 390px;
   height: 250px;
 }
-/* line 40, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 40, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form input.text, .popup-form input.title, .popup-form input[type=email], .popup-form input[type=text], .popup-form input[type=password] {
   width: 555px;
 }
-/* line 46, ../../../../../Program Files/Ruby24-x64/lib/ruby/gems/2.4.0/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
+/* line 46, ../../../../../../../../../../../Users/john/.rvm/gems/ruby-2.4.2@global/gems/compass-blueprint-1.0.0/framework/blueprint/stylesheets/blueprint/_form.scss */
 .popup-form textarea {
   width: 555px;
   height: 250px;
@@ -473,8 +473,14 @@ tr.total {
   height: 32px;
 }
 
-/* line 358, sass/verification_5.scss */
-#ctrl-wrap-log-created-by {
-  width: 50%;
-  float: left;
+/* line 359, sass/verification_5.scss */
+#log-filter * {
+  margin: 0;
+  padding: 0;
+  display: inline-block;
+  width: auto;
+}
+/* line 365, sass/verification_5.scss */
+#log-filter label, #log-filter li, #log-filter input {
+  margin-right: 8px;
 }
