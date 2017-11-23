@@ -699,41 +699,43 @@ HTML
     ));
     $opts['zoomMapToOutput']=FALSE;
     $grid = report_helper::report_grid($opts);
-    $log =
+    $log = '<div id="log-filter">' .
       data_entry_helper::radio_group(array(
-        'label'=>lang::get('Log Records'),
+        'label'=>lang::get('Show'),
         'fieldname'=>'log-created-by',
-        'lookupValues' => array('all'=>lang::get('All'), 'mine'=>lang::get('Mine'), 'others'=>lang::get('Other\'s')),
+        'lookupValues' => array('all'=>lang::get('All log entries'), 'mine'=>lang::get('Only my actions'), 'others'=>lang::get("Only other verifiers' actions")),
         'default'=>'all',
-        'class'=>'radio-log-created-by'
+        'class'=>'radio-log-created-by inline'
       )) .
 
       data_entry_helper::checkbox(array(
-        'label'=>lang::get('Verification decisions only?'),
+        'label'=>lang::get('Only verification decisions'),
         'fieldname'=>'verification-only',
         'class'=>'checkbox-log-verification-comments'
       )) .
 
+      '</div>' .
+
       report_helper::report_grid(array(
-      'dataSource' => 'library/occurrence_comments/filterable_explore_list',
-      'id' => 'comments-log',
-      'rowId' => 'occurrence_id',
-      'linkFilterToMap' => FALSE,
-      'reportGroup' => 'verification',
-      'ajax' => TRUE,
-      'sharing' => 'verification',
-      'mode' => 'report',
-      'readAuth' => $auth['read'],
-      'itemsPerPage' => 20,
-      'extraParams' => array_merge($opts['extraParams'], array('data_cleaner_filter' => 'f')),
-      'columns' => array(
-        array(
-          'display' => '',
-          'template' => '<input type="hidden" class="row-input-form-link" value="{rootFolder}{input_form}"/>' .
-            '<input type="hidden" class="row-input-form-raw" value="{input_form}"/>'
+        'dataSource' => 'library/occurrence_comments/filterable_explore_list',
+        'id' => 'comments-log',
+        'rowId' => 'occurrence_id',
+        'linkFilterToMap' => FALSE,
+        'reportGroup' => 'verification',
+        'ajax' => TRUE,
+        'sharing' => 'verification',
+        'mode' => 'report',
+        'readAuth' => $auth['read'],
+        'itemsPerPage' => 20,
+        'extraParams' => array_merge($opts['extraParams'], array('data_cleaner_filter' => 'f')),
+        'columns' => array(
+          array(
+            'display' => '',
+            'template' => '<input type="hidden" class="row-input-form-link" value="{rootFolder}{input_form}"/>' .
+              '<input type="hidden" class="row-input-form-raw" value="{input_form}"/>'
+          )
         )
-      )
-    ));
+      ));
     $r = str_replace(array('{grid}', '{log}', '{paramsForm}'), array($grid, $log, $params),
         self::getTemplateWithMap($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();

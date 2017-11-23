@@ -355,7 +355,14 @@ tr {
   height: 32px;
 }
 
-#ctrl-wrap-log-created-by {
-  width: 50%;
-  float: left;
+#log-filter {
+  * {
+    margin: 0;
+    padding: 0;
+    display: inline-block;
+    width: auto;
+  }
+  label, li, input {
+    margin-right: 8px;
+  }
 }
