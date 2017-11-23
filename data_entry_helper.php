@@ -5779,7 +5779,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         'template' => 'check_or_radio_group',
         'itemTemplate' => 'check_or_radio_group_item',
         'id' => $options['fieldname'],
-        'class' => ''
+        'class' => '',
+        'otherTextboxLabel' => lang::get('Other')
       ),
       $options
     );
@@ -5849,23 +5850,21 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       //Finally draw the Other textbox to the screen, then use jQuery to hide/show the box at the appropriate time.
       $otherBoxOptions['id'] = $options['otherValueAttrId'];
       $otherBoxOptions['fieldname'] = $options['otherValueAttrId'];
-      //When the field is populated with existing data, the name includes the sample_attribute_value id, this is used on submission.
-      //Don't include it if it isn't pre-populated.
-      if (isset($otherAttributeData[0]['id']))
+      // When the field is populated with existing data, the name includes the sample_attribute_value id, this is used on submission.
+      // Don't include it if it isn't pre-populated.
+      if (isset($otherAttributeData[0]['id'])) {
         $otherBoxOptions['fieldname'] .= ':'.$otherAttributeData[0]['id'];
-      //User can provide their own label for the textbox if they wish, otherwise default to "Other".
-      if ($options['otherTextboxLabel'])
-        $otherBoxOptions['label'] = $options['otherTextboxLabel'];
-      else
-        $otherBoxOptions['label'] = 'Other';
-      //Fill in the textbox with existing value if in edit mode.
-      if (isset($otherAttributeData[0]['value']))
+      }
+      $otherBoxOptions['label'] = $options['otherTextboxLabel'];
+      // Fill in the textbox with existing value if in edit mode.
+      if (isset($otherAttributeData[0]['value'])) {
         $otherBoxOptions['default']=$otherAttributeData[0]['value'];
+      }
       $r .= data_entry_helper::textarea($otherBoxOptions);
       // jQuery safe versions of the attribute IDs
-      $mainAttributeIdSafe = str_replace(':', '\\\\:', $options['id']);
-      $mainAttributeNameSafe = str_replace(':', '\\\\:', $options['fieldname']);
-      $otherAttributeIdSafe = str_replace(':', '\\\\:', $options['otherValueAttrId']);
+      $mainAttributeIdSafe = helper_base::jq_esc($options['id']);
+      $mainAttributeNameSafe = helper_base::jq_esc($options['fieldname']);
+      $otherAttributeIdSafe = helper_base::jq_esc($options['otherValueAttrId']);
       //Set the visibility of the "Other" textbox based on the checkbox when the page loads, but also when the checkbox changes.
       self::$javascript .= '
         show_hide_other();
