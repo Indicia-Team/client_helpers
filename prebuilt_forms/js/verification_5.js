@@ -650,6 +650,9 @@ indiciaData.rowIdToReselect = false;
       if ($('#verify-comment').val()) {
         data['occurrence_comment:comment'] = $('#verify-comment').val();
       }
+      if ($('#verify-reference').val()) {
+        data['occurrence_comment:reference'] = $('#verify-reference').val();
+      }
       $.fancybox.close();
       $.post(
         indiciaData.ajaxFormPostUrl,
@@ -716,14 +719,92 @@ indiciaData.rowIdToReselect = false;
     html = '<fieldset class="popup-form status-form">' +
       '<legend><span class="icon status-' + status + substatus + '"></span>' +
       indiciaData.popupTranslations.title.replace('{1}', '<strong>' + statusLabel(status, substatus)) + '</strong></legend>';
-    html += '<label class="auto">Comment:</label><textarea id="verify-comment" rows="5" cols="80"></textarea><br />' +
+    html += '<span id="verify-template-container"> ' +
+      '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
+      '<select id="verify-template" >' +
+      '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select><br /></span>';
+    
+    html += '<label class="auto">' + indiciaData.popupTranslations.commentLabel + ':</label>' +
+      '<textarea id="verify-comment" rows="5" cols="80"></textarea><br />';
+
+    html += '<label class="auto">' + indiciaData.popupTranslations.referenceLabel + ':</label>' +
+      '<input type="text" id="verify-reference" value=""><br />' +
       helpText +
       '<input type="hidden" id="set-status" value="' + status + '"/>' +
       '<input type="hidden" id="set-substatus" value="' + substatus + '"/>' +
       '<button type="button" class="default-button" onclick="indiciaFns.saveVerifyComment();">' +
       indiciaData.popupTranslations.save.replace('{1}', verb) + '</button>' +
       '</fieldset>';
+
+    var getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?',
+        getTemplatesReportParameters = {
+        auth_token: indiciaData.read.auth_token,
+        nonce: indiciaData.read.nonce,
+        reportSource: 'local',
+        taxon_meaning_id: currRec.extra.taxon_meaning_id,
+        template_status: status + substatus,
+        website_id: currRec.extra.website_id
+      };
+    $.getJSON(
+      getTemplatesReport,
+      getTemplatesReportParameters,
+      function (data) {
+        if (data.length > 0) {
+          for(var i = 0; i < data.length; i++) {
+            $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+          }
+          $('#verify-template').data('data',data);
+        } else {
+          $('#verify-template-container').hide();
+        }
+      }
+    );
     $.fancybox(html);
+    $('#verify-template').change(function(){
+      var templateID = $('#verify-template').val(),
+          data = $('#verify-template').data('data'),
+          substitute = function (item) {
+            // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
+            var conversions = {
+                  "date" : currRec.extra.date,
+                  "entered sref" : currRec.extra.entered_sref,
+                  "species" : currRec.extra.taxon,
+                  "common name" : [currRec.extra.default_common_name, currRec.extra.preferred_taxon, currRec.extra.taxon],
+                  "preferred name" : [currRec.extra.preferred_taxon, currRec.extra.taxon],
+                  "action" : {'V' : indiciaData.popupTranslations.V,
+                              'V1' : indiciaData.popupTranslations.V1,
+                              'V2' : indiciaData.popupTranslations.V2,
+                              'C3' : indiciaData.popupTranslations.C3,
+                              'R' : indiciaData.popupTranslations.R,
+                              'R4' : indiciaData.popupTranslations.R4,
+                              'R5' : indiciaData.popupTranslations.R5}[status + substatus],
+                  "location name" : [currRec.extra.location_name, currRec.extra.entered_sref]
+                },
+                convs = Object.keys(conversions),
+                replacement;
+            for (var i = 0; i < convs.length; i++) {
+              if (typeof conversions[convs[i]] === 'object') {
+                for (var j = 0; j < conversions[convs[i]].length; j++) {
+                  replacement = conversions[convs[i]][j];
+                  if (typeof replacement !== "undefined" && replacement !== null  && replacement !== '') {
+                    break;
+                  }
+                }
+              } else {
+                replacement = conversions[convs[i]];
+              }
+              if (typeof replacement !== "undefined" && replacement !== null) {
+                item = item.replace(new RegExp("{{\\s*"+convs[i].replace(/ /g,"[\\s|_]")+"\\s*}}", 'gi'), replacement);
+              }
+            }
+            return item;
+          };
+      for (var i = 0; i < data.length; i++) {
+        if (data[i].id == templateID) {
+          $('#verify-comment').val(substitute(data[i].template));
+        }
+      }
+    })
   }
 
   mapInitialisationHooks.push(function (div) {
@@ -760,6 +841,90 @@ indiciaData.rowIdToReselect = false;
     );
     $.fancybox.close();
   }
+
+  // There are 2 related controls, a "created by" and "verification records only"
+  indiciaFns.applyCreatedByFilterToReports = function (doReload, elem) {
+    var filterDef;
+    var reload = (typeof doReload === 'undefined') ? true : doReload;
+    var val;
+
+    filterDef = $.extend({}, indiciaData.filter.def);
+
+    if(elem === false)
+      val = $('.radio-log-created-by input:checked').val();
+    else if($(elem).filter(':checked').length == 0)
+      return;
+    else
+      val = $(elem).val();
+
+    if (indiciaData.reports) {
+      // apply the filter to any reports on the page
+      $.each(indiciaData.reports, function (i, group) {
+        $.each(group, function () {
+          var grid = this[0];
+          // Only apply to the Log grid
+          if (grid.id != 'comments-log')
+            return;
+          // reset to first page
+          grid.settings.offset = 0;
+          if(typeof grid.settings.fixedParams == 'undefined') {
+            grid.settings.fixedParams = {};
+          }
+          grid.settings.extraParams.created_by_filter = val;
+          grid.settings.fixedParams.created_by_filter = val;
+          grid.settings.extraParams.user_id = indiciaData.userId;
+          grid.settings.fixedParams.user_id = indiciaData.userId;
+          if (reload) {
+            // reload the report grid (but only if not already done)
+            this.ajaxload();
+            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
+              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
+            }
+          }
+        });
+      });
+    }
+  };
+
+  // There are 2 related controls, a "created by" and "verification records only"
+  indiciaFns.applyVerificationCommentsFilterToReports = function (doReload, elem) {
+    var filterDef;
+    var reload = (typeof doReload === 'undefined') ? true : doReload;
+    var val;
+
+    filterDef = $.extend({}, indiciaData.filter.def);
+
+    if(elem === false)
+      val = $('input.checkbox-log-verification-comments:checked').length ? 't' : 'f';
+    else
+      val = $(elem).filter(':checked').length ? 't' : 'f';
+
+    if (indiciaData.reports) {
+      // apply the filter to any reports on the page
+      $.each(indiciaData.reports, function (i, group) {
+        $.each(group, function () {
+          var grid = this[0];
+          // Only apply to the Log grid
+          if (grid.id != 'comments-log')
+            return;
+          // reset to first page
+          grid.settings.offset = 0;
+          if(typeof grid.settings.fixedParams == 'undefined') {
+            grid.settings.fixedParams = {};
+          }
+          grid.settings.extraParams.verification_only_filter = val;
+          grid.settings.fixedParams.verification_only_filter = val;
+          if (reload) {
+            // reload the report grid (but only if not already done)
+            this.ajaxload();
+            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
+              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
+            }
+          }
+        });
+      });
+    }
+  };
 
   $(document).ready(function () {
     // Use jQuery to add button to the top of the verification page. Use the first button to access the popup
@@ -1238,6 +1403,32 @@ indiciaData.rowIdToReselect = false;
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: currRec.extra.taxon_list_id });
       }
     });
+
+    $('.radio-log-created-by input:radio').change(function () {
+      indiciaFns.applyCreatedByFilterToReports(true, this);
+    });
+
+    indiciaFns.applyCreatedByFilterToReports(false, false);
+
+    $('input.checkbox-log-verification-comments:checkbox').change(function () {
+      indiciaFns.applyVerificationCommentsFilterToReports(true, this);
+    });
+
+    indiciaFns.applyVerificationCommentsFilterToReports(false, false);
+
+    $('#details-zoom').click(function toggleZoom() {
+      if ($('#outer-with-map').hasClass('details-zoomed')) {
+        $('#outer-with-map').removeClass('details-zoomed');
+        $('#details-zoom').html('&#8689;');
+        $('#record-details-wrap').appendTo($('#map-and-record'));
+      } else {
+        $('#outer-with-map').addClass('details-zoomed');
+        $('#details-zoom').html('&#8690;');
+        $('#record-details-wrap').appendTo($('#outer-with-map'));
+      }
+    });
+
+
   });
 
   function removeTrust(RemoveTrustId) {

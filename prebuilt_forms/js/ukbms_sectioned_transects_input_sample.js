@@ -101,6 +101,12 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	    	$('.ac_results').hide();
 	    });
 	    
+        var table = $('#transect-input1');
+        if(table.length > 0) {
+          table.addClass('sticky-enabled');
+          Drupal.behaviors.tableHeader.attach(table.parent()); // Drupal 7
+        }
+
 	    $.each(formOptions.autoCompletes, function(idx, details){
 	  		bindSpeciesAutocomplete('taxonLookupControl'+details.tabNum,
 	  								'table#transect-input'+details.tabNum,
@@ -345,7 +351,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 	}
 	
 	addGridRow = function (species, speciesTableSelector, tabIDX){
-		var name, row, isNumber, rowTotal = 0;
+		var name, title, row, isNumber, rowTotal = 0;
 
 		if($('#row-' + species.taxon_meaning_id).length>0) {
 			row = $('#row-' + species.taxon_meaning_id).removeClass('possibleRemove');
@@ -358,10 +364,18 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			});
 			return;
 		}
-
-		name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
-		row = $('<tr id="row-' + species.taxon_meaning_id + '"><td'+(name.replace(/<em>/,'').replace(/<\/em>/,'') != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '')+'>'+name+'</td></tr>')
-		   .data( 'species', species);
+        switch(formOptions.taxon_column) {
+          case 'preferred_taxon':
+            name = (species.preferred_language_iso==='lat' ? '<em>'+species.preferred_taxon+'</em>' : species.preferred_taxon);
+            title = (species.default_common_name!==null ? ' title="'+species.default_common_name+'"' : '');
+            break;
+          default: // taxon
+            name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
+            title = (name.replace(/<em>/,'').replace(/<\/em>/,'') != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '');
+            break;
+        }
+//		name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
+		row = $('<tr id="row-' + species.taxon_meaning_id + '"><td ' + title + '>' + name + '</td></tr>').data( 'species', species);
 		if($(speciesTableSelector+ ' tbody tr').length % 2 == 1) row.addClass('alt-row');
 		isNumber = formOptions.occurrence_attribute_ctrl[tabIDX].indexOf('number:true')>=0; // TBD number:true
 		$.each(formOptions.sections, function(idx, section) {
@@ -614,9 +628,11 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			colidx = matches[0].substr(4);
 		$(evt.target).parents('table:first').find('.table-selected').removeClass('table-selected');
 		$(evt.target).parents('table:first').find('.ui-state-active').removeClass('ui-state-active');
+		$(evt.target).parents('div:first').find('table.sticky-header .ui-state-active').removeClass('ui-state-active');
 		$(evt.target).parents('tr:first').addClass('table-selected');
 		$(evt.target).parents('table:first').find('tbody .col-'+colidx).addClass('table-selected');
 		$(evt.target).parents('table:first').find('thead .col-'+colidx).addClass('ui-state-active');
+		$(evt.target).parents('div:first').find('table.sticky-header thead .col-'+colidx).addClass('ui-state-active');
 	}
 
 	input_change = function (evt) {
@@ -729,6 +745,10 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
         }
         break;
     }
+    $(table).parent().find('.sticky-header').remove();
+    $(table).find('thead.tableHeader-processed').removeClass('tableHeader-processed');
+    $(table).removeClass('tableheader-processed');
+    $(table).addClass('sticky-enabled');
     if(valid) {
       if(!$.isEmptyObject(query["in"])) {
         TaxonData.query = JSON.stringify(query);
@@ -738,17 +758,19 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
           'data': TaxonData,
           'dataType': 'jsonp',
           'success': function(data) {
-              addSpeciesToGrid(data, 'table#transect-input'+N, N);
+              addSpeciesToGrid(data, table, N);
               // at this point only adding empty rows, so no affect on totals.
-              removeTaggedRows('table#transect-input1'); // redoes row classes
+              removeTaggedRows(table); // redoes row classes
               $('#grid'+N+'-loading').hide();
               $('#listSelect'+N).removeClass('working');
+              Drupal.behaviors.tableHeader.attach($(table).parent()); // Drupal 7
           }
       });
     } else {
       removeTaggedRows(table);
       $('#grid'+N+'-loading').hide();
       $('#listSelect'+N).removeClass('working');
+      Drupal.behaviors.tableHeader.attach($(table).parent()); // Drupal 7
     }
   }
 
@@ -773,9 +795,9 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 		
 		var extra_params = {
 				view : 'cache',
-				orderby : 'taxon',
+				orderby : formOptions.taxon_column,
 				mode : 'json',
-				qfield : 'taxon',
+				qfield : formOptions.taxon_column,
 				auth_token: readAuth.auth_token,
 				nonce: readAuth.nonce,
 				taxon_list_id: lookupListId,
@@ -795,7 +817,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 					results[results.length] =
 						{
 							'data' : item,
-							'result' : item.taxon,
+							'result' : item[formOptions.taxon_column],
 							'value' : item.id
 						};
 				});
@@ -804,6 +826,8 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, getTotal,
 			formatItem: function(item) {
 				if(item.taxon == item.preferred_taxon)
 					return '<em>'+item.taxon+'</em>';
+				else if(formOptions.taxon_column === 'preferred_taxon')
+					return '<em>'+item.preferred_taxon+'</em> &lt;'+item.taxon+'&gt;';
 				else
 					return item.taxon+' <em>&lt;'+item.preferred_taxon+'&gt;</em>';
 			}

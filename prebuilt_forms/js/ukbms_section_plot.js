@@ -151,7 +151,7 @@ var reportOptions;
               $('#'+reportOptions.species1SelectID+' option,#'+reportOptions.species2SelectID+' option').remove();
               if(reportOptions.species.length) {
                 $('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID).append('<option value="" class="italic-option">&lt;'+reportOptions.pleaseSelectMsg+'&gt;</option><option value="0">'+reportOptions.allSpeciesMsg+'</option>');
-                reportOptions.species.sort(function (a, b) { return a.taxon.localeCompare(b.taxon); } );
+                reportOptions.species.sort(function (a, b) { return a[reportOptions.taxon_column].localeCompare(b[reportOptions.taxon_column]); } );
                 $('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID+',#'+reportOptions.weekNumSelectID).removeAttr('disabled');
                 $.each(reportOptions.species, function(idx, species){
                   if(reportOptions.dataCombining == 'location')
@@ -183,7 +183,10 @@ var reportOptions;
                       }
                     }
                   }
-                  $('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID).append('<option value="'+species.taxon_meaning_id+'" title="'+(species.taxon != species.preferred_taxon ? species.preferred_taxon : '')+'">'+species.taxon+'</option>');
+                  $('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID)
+                      .append('<option value="'+species.taxon_meaning_id+'" title="'+
+                        (species.taxon != species.preferred_taxon ? (reportOptions.taxon_column === 'taxon' ? species.preferred_taxon : species.taxon) : '')+
+                        '">'+species[reportOptions.taxon_column]+'</option>');
                 });
                 // have to do all species calcs after the data rounding. special taxon_meaning_id of 0
                 // reportOptions.species.unshift({'taxon': reportOptions.allSpeciesMsg, 'preferred_taxon': reportOptions.allSpeciesMsg, 'taxon_meaning_id':0});

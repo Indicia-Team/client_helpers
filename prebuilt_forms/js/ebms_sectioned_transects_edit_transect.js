@@ -3,6 +3,72 @@ var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncP
 var defaultLayers = null,
     defaultRouteLayers = null;
 
+MyMousePositionControl=OpenLayers.Class(
+  OpenLayers.Control.MousePosition,
+  {
+    formatOutput: function(lonLat) {
+        
+        var digits = parseInt(this.numDigits),
+            newHtml, lat, latDeg, latMin, latSec, long, longDeg, longMin, longSec,
+            LLFormat = 'DMS'; // 'D' = Decimal degrees, 'DM' = Degrees + Decimal Minutes, 'DMS' = Degrees, Minutes + Decimal Seconds
+        switch(this.displayProjection.projCode) {
+          case 'EPSG:2169': // Lux
+              newHtml =
+                  'LUREF ' +
+                  lonLat.lon.toFixed(0) +
+                  ' ' +
+                  lonLat.lat.toFixed(0);
+              break;
+          case 'EPSG:4326':
+              latDeg = Math.abs(lonLat.lat);
+              latMin = (latDeg - Math.floor(latDeg))*60
+              latSec = (latMin - Math.floor(latMin))*60
+              longDeg = Math.abs(lonLat.lon);
+              longMin = (longDeg - Math.floor(longDeg))*60
+              longSec = (longMin - Math.floor(longMin))*60
+              switch (LLFormat) {
+                case 'DM' :
+                    lat = Math.floor(latDeg)+'&#176;' + 
+                          (latMin.toFixed(3) < 10 ? '0' : '') + latMin.toFixed(3);
+                    long = Math.floor(longDeg)+'&#176;' + 
+                          (longMin.toFixed(3) < 10 ? '0' : '') + longMin.toFixed(3);
+                    break;
+                case 'DMS' :
+                    lat = Math.floor(latDeg)+'&#176;' + 
+                          (latMin < 10 ? '0' : '') + Math.floor(latMin) + '&apos;' + 
+                          (latSec.toFixed(1) < 10 ? '0' : '') +latSec.toFixed(1) ;
+                    long = Math.floor(longDeg)+'&#176;' + 
+                          (longMin < 10 ? '0' : '') + Math.floor(longMin) + '&apos;' + 
+                          (longSec.toFixed(1) < 10 ? '0' : '') +longSec.toFixed(1) ;
+                    break;
+                default : // 'D'
+                    lat = latDeg.toFixed(5);
+                    long = longtDeg.toFixed(5);
+                    break;
+              }
+              newHtml =
+                  'LatLong ' +
+                  (lonLat.lat > 0 ? 'N' : 'S') +
+                  lat +
+                  ' ' +
+                  (lonLat.lon > 0 ? 'W' : 'E') +
+                  long;
+              break;
+          default:
+              var newHtml =
+                  this.prefix +
+                  lonLat.lon.toFixed(digits) +
+                  this.separator +
+                  lonLat.lat.toFixed(digits) +
+                  this.suffix;
+              break;
+        }
+        return newHtml;
+    },
+    CLASS_NAME:'MyMousePositionControl'
+  }
+);
+
 (function ($) {
 /*
  * The following functions are utility functions within this file..
@@ -576,6 +642,8 @@ $(document).ready(function() {
                 div.map.infoLayer.projection = new OpenLayers.Projection(layer.settings.srs);
                 div.map.editLayer.projection = new OpenLayers.Projection(layer.settings.srs);
               }
+              if(typeof div.map.mousePosCtrl != 'undefined')
+                  div.map.mousePosCtrl.displayProjection = new OpenLayers.Projection(layer.settings.srs);
               div.map.addLayer(tcLayer);
               div.map.setBaseLayer(tcLayer);
               div.map.maxExtent = tcLayer.maxExtent;
@@ -794,7 +862,7 @@ $(document).ready(function() {
   mapInitialisationHooks.push(function(div) {
     var defaultStyle = new OpenLayers.Style(),
         selectedStyle = new OpenLayers.Style(),
-        baseStyle = { strokeWidth: 4, strokeDashstyle: "dash" },
+        baseStyle = { strokeWidth: 4, strokeDashstyle: "1 5" },
         defaultRule = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: "#0000FF"}, baseStyle) }),
         selectedRule = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: "#FFFF00"}, baseStyle) }),
         f = [];
@@ -836,6 +904,15 @@ $(document).ready(function() {
             indiciaData.navControl = control;
         }
       });
+
+      $('.olControlEditingToolbar').append('<span id="mousePos"></span>');
+      div.map.mousePosCtrl = new MyMousePositionControl({
+          div: document.getElementById('mousePos'),
+          displayProjection: new OpenLayers.Projection('EPSG:4326'),
+          emptyString: '',
+          numDigits: 0 
+      });
+      div.map.addControl(div.map.mousePosCtrl);
 
       // Set up the styles
       div.map.editLayer.style = null;

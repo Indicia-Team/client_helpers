@@ -249,7 +249,22 @@ class iform_ukbms_sectioned_transects_input_sample {
     }
   }
 }'
+            
       		),
+          
+          array(
+              'name'=>'taxon_column',
+              'caption'=>'Display Taxon field',
+              'description'=>'When displaying a taxon, choose what to use.',
+              'type' => 'select',
+              'lookupValues' => array('taxon'=>'Common Name',
+                  'preferred_taxon'=>'Preferred Taxon (usually Latin)'),
+              'required' => true,
+              'default' => 'taxon',
+              'group'=>'Transects Editor Settings'
+          ),
+          
+          
       		array(
           'name'=>'species_tab_1',
           'caption'=>'Species Tab 1 Title',
@@ -1068,25 +1083,26 @@ class iform_ukbms_sectioned_transects_input_sample {
     global $indicia_templates;
 
     $formOptions = array(
-    				'userID' => self::$userId,
-    				'surveyID' => $args['survey_id'],
-    				'autoCompletes' => array(),
-    				'speciesList' => array(),
-    				'speciesListForce' => array(),
-    				'speciesListFilterField' => array(),
-    				'speciesListFilterValues' => array(),
-    				'duplicateTaxonMessage' => lang::get('LANG_Duplicate_Taxon'),
-    				'requiredMessage' => lang::get('This field is required'),
-    				'existingOccurrences' => array(),
-    				'occurrence_attribute' => array(),
-    				'occurrence_attribute_ctrl' => array(),
-    				'maxTabs' => 4,
-    				'commonTaxonMeaningIDs' => array(),
-    				'allTaxonMeaningIDsAtTransect' => array(),
-    				'existingTaxonMeaningIDs' => array(),
-    				'myTaxonMeaningIDs' => array(),
-    				'attribute_configuration' => (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array()),
-    				'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : array())
+        'userID' => self::$userId,
+        'surveyID' => $args['survey_id'],
+        'autoCompletes' => array(),
+        'speciesList' => array(),
+        'speciesListForce' => array(),
+        'speciesListFilterField' => array(),
+        'speciesListFilterValues' => array(),
+        'duplicateTaxonMessage' => lang::get('LANG_Duplicate_Taxon'),
+        'requiredMessage' => lang::get('This field is required'),
+        'existingOccurrences' => array(),
+        'occurrence_attribute' => array(),
+        'occurrence_attribute_ctrl' => array(),
+        'maxTabs' => 4,
+        'commonTaxonMeaningIDs' => array(),
+        'allTaxonMeaningIDsAtTransect' => array(),
+        'existingTaxonMeaningIDs' => array(),
+        'myTaxonMeaningIDs' => array(),
+        'attribute_configuration' => (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array()),
+        'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : array()),
+        'taxon_column' => (isset($args['taxon_column']) ? $args['taxon_column'] : 'taxon')
     );
     
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily

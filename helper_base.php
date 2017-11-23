@@ -122,6 +122,7 @@ $indicia_templates = array(
       "/* ]]> */</script>",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
+  'single_species_taxon_label' => '{taxon}',
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
@@ -595,6 +596,7 @@ JS;
    * <li>footable</li>
    * <li>indiciaFootableReport</li>
    * <li>indiciaFootableChecklist</li>
+   * <li>html2pdf</li>
    * <li>review_input</li>
    * <li>sub_list</li>
    * <li>georeference_default_geoportal_lu</li>
@@ -721,6 +723,13 @@ JS;
             'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'),
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'),
             'deps' => array('footable')),
+        'html2pdf' => array(
+          'javascript' => array(
+            self::$js_path . 'html2pdf/vendor/jspdf.min.js',
+            self::$js_path . 'html2pdf/vendor/html2canvas.min.js',
+            self::$js_path . 'html2pdf/src/html2pdf.js',
+          )
+        ),
         'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
         'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
         'georeference_default_geoportal_lu' => array(
@@ -1856,6 +1865,9 @@ if (typeof validator!=='undefined') {
     $control = self::apply_replacements_to_template($indicia_templates[$template], $options);
     $addons = '';
 
+    if (isset($options['afterControl'])) {
+      $addons .= $options['afterControl'];
+    }
     // Add a lock icon to the control if the lockable option is set to true
     if (array_key_exists('lockable', $options) && $options['lockable']===true) {
       $addons .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
@@ -1892,8 +1904,6 @@ if (typeof validator!=='undefined') {
     if ($error && in_array('message', $options['validation_mode'])) {
       $r .=  self::apply_error_template($error, $options['fieldname']);
     }
-    if (isset($options['afterControl']))
-      $r .= $options['afterControl'];
 
     // Add suffix
     $r .= self::apply_static_template('suffix', $options);
@@ -2132,28 +2142,32 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
  /**
-  * Returns a static template which is either a default template or one
-  * specified in the options
-  * @param string $name The static template type. e.g. prefix or suffix.
-  * @param array $options Array of options which may contain a template name.
-  * @return string Template value.
+  * Returns a static template which is either a default template or one specified in the options.
+  *
+  * @param string $name
+  *   The static template type. e.g. prefix or suffix.
+  * @param array $options
+  *   Array of options which may contain a template name.
+  *
+  * @return string
+  *   Template value.
   */
-  protected static function apply_static_template($name, $options) {
+  public static function apply_static_template($name, $options) {
     global $indicia_templates;
     $key = $name .'Template';
     if (array_key_exists($key, $options)) {
       //a template has been specified
       if (array_key_exists($options[$key], $indicia_templates))
         //the specified template exists
-        $r = $indicia_templates[$options[$key]];
+        $template = $indicia_templates[$options[$key]];
       else
-        $r = $indicia_templates[$name] .
+        $template = $indicia_templates[$name] .
         '<span class="ui-state-error">Code error: suffix template '.$options[$key].' not in list of known templates.</span>';
     } else {
       //no template specified
-      $r = $indicia_templates[$name];
+      $template = $indicia_templates[$name];
     }
-    return self::apply_replacements_to_template($r, $options);
+    return self::apply_replacements_to_template($template, $options);
   }
 
  /**

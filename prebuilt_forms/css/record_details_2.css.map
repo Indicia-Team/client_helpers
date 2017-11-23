@@ -1,7 +1,0 @@
-{
-"version": 3,
-"mappings": "AACE,kBAAK;EACH,OAAO,EAAE,KAAK;EACd,MAAM,EAAE,KAAK;EACb,MAAM,EAAE,aAAa;EACrB,aAAa,EAAE,GAAG;EAClB,OAAO,EAAE,YAAY;EACrB,WAAW,EAAE,IAAI;EACjB,gBAAgB,EAAE,OAAO",
-"sources": ["sass/record_details_2.scss"],
-"names": [],
-"file": "record_details_2.css"
-}

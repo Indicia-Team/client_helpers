@@ -127,6 +127,7 @@ ul.gallery li {
 #comment-text, #query-comment-text {
   display: block;
   width: 100%;
+  box-sizing: border-box;
 }
 
 .popup-form {
@@ -143,6 +144,9 @@ ul.gallery li {
     }
   }
   #ctrl-wrap-redet-from-full-list label {
+    display: inline-block;
+  }
+  #verify-template-container label {
     display: inline-block;
   }
   .helpText {
@@ -210,6 +214,7 @@ ul.gallery li {
 
 #record-details-tabs {
   font-size: 80%;
+  position: relative;
 
   #details-tab {
     table {
@@ -234,11 +239,47 @@ ul.gallery li {
       vertical-align: middle;
       @include border-radius(4px);
     }
+    .correspondance {
+      background-color: $hover-color;
+      border: solid 1px darken($hover-color, 20%);
+      padding: 4px;
+      span {
+        font-weight: bold;
+      }
+    }
   }
 
   #phenology-tab {
     p {
       margin: 0;
+    }
+  }
+
+  #details-zoom {
+    position: absolute;
+    top: 0;
+    right: 0;
+    margin: 0 4px;
+    font-size: 15px;
+    cursor: pointer;
+  }
+}
+
+#outer-with-map.details-zoomed {
+  position: relative;
+  #record-details-wrap {
+    background: white;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0px;
+    right: 0px;
+    display: inline-block;
+    #record-details-tabs {
+      font-size: 100%;
+      #details-zoom {
+        margin: 4px 6px;
+      }
     }
   }
 }
@@ -312,4 +353,9 @@ tr {
   bottom: auto;
   width: 32px;
   height: 32px;
+}
+
+#ctrl-wrap-log-created-by {
+  width: 50%;
+  float: left;
 }

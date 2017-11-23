@@ -101,10 +101,10 @@ class iform_verification_5 {
         array(
           'name' => 'record_details_report',
           'caption' => 'Report for record details',
-          'description' => 'Report used to obtain the details of a record. See reports_for_prebuilt_forms/verification_3/record_data.xml for an example.',
+          'description' => 'Report used to obtain the details of a record. See reports_for_prebuilt_forms/verification_5/record_data.xml for an example.',
           'type' => 'report_helper::report_picker',
           'group' => 'Report Settings',
-          'default' => 'reports_for_prebuilt_forms/verification_3/record_data'
+          'default' => 'reports_for_prebuilt_forms/verification_5/record_data'
         ),
         array(
           'name' => 'record_attrs_report',
@@ -460,6 +460,7 @@ idlist=';
     ));
     $r .= '<div id="details-tab"></div>';
     $r .= self::otherTabHtml();
+    $r .= '<span id="details-zoom" title="' . lang::get('Click to expand record details to full screen') . '">&#8689;</span>';
     $r .= '</div></div></div></div></div></div>';
     return $r;
   }
@@ -698,7 +699,22 @@ HTML
     ));
     $opts['zoomMapToOutput']=FALSE;
     $grid = report_helper::report_grid($opts);
-    $log = report_helper::report_grid(array(
+    $log =
+      data_entry_helper::radio_group(array(
+        'label'=>lang::get('Log Records'),
+        'fieldname'=>'log-created-by',
+        'lookupValues' => array('all'=>lang::get('All'), 'mine'=>lang::get('Mine'), 'others'=>lang::get('Other\'s')),
+        'default'=>'all',
+        'class'=>'radio-log-created-by'
+      )) .
+
+      data_entry_helper::checkbox(array(
+        'label'=>lang::get('Verification decisions only?'),
+        'fieldname'=>'verification-only',
+        'class'=>'checkbox-log-verification-comments'
+      )) .
+
+      report_helper::report_grid(array(
       'dataSource' => 'library/occurrence_comments/filterable_explore_list',
       'id' => 'comments-log',
       'rowId' => 'occurrence_id',
@@ -760,10 +776,19 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.verbC3="' . lang::get('mark as plausible') . "\";\n";
 
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.V="' . lang::get('accepted') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.V1="' . lang::get('accepted as correct') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.V2="' . lang::get('accepted as considered correct') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.C3="' . lang::get('plausible') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R="' . lang::get('not accepted') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R4="' . lang::get('not accepted as unable to verify') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R5="' . lang::get('not accepted as incorrect') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub1="' . lang::get('correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub2="' . lang::get('considered correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub3="' . lang::get('plausible') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.templateLabel="' . lang::get('Use comment template') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.pleaseSelect="' . lang::get('Please select if required...') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.commentLabel="' . lang::get('Comment') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.referenceLabel="' . lang::get('External reference or other source information') . "\";\n";
 
     // @todo: Should this term be unable to accept
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub4="' . lang::get('unable to verify') . "\";\n";
@@ -897,8 +922,9 @@ HTML
    * Ajax handler to provide the content for the details of a single record.
    */
   public static function ajax_details($website_id, $password, $nid) {
+    require_once 'extensions/misc_extensions.php';
     $params = hostsite_get_node_field_value($nid, 'params');
-    $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data' : $params['record_details_report'];
+    $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_5/record_data' : $params['record_details_report'];
     $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
@@ -927,7 +953,7 @@ HTML
     $data = array();
     $email = '';
     foreach ($reportData['columns'] as $col => $def) {
-      if ($def['visible'] !== 'false' && !empty($record[$col])) {
+      if (!empty($def['display']) && $def['visible'] !== 'false' && !empty($record[$col])) {
         $caption = explode(':', $def['display']);
         // Is this a new heading?
         if (!isset($data[$caption[0]]))
@@ -963,8 +989,8 @@ HTML
         $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
       }
     }
-
-    $r = "<table class=\"report-grid\">\n";
+    $r = extension_misc_extensions::occurrence_flag_icons(['read' => $readAuth], null, null, ['record' => $record]);
+    $r .= "<table class=\"report-grid\">\n";
     $first = TRUE;
     foreach ($data as $heading => $items) {
       if ($first && !empty($params['record_details_path'])) {
@@ -986,14 +1012,17 @@ HTML
     }
     $r .= "</table>\n";
 
-    $extra=array();
+    $extra = array();
     $extra['wkt'] = $record['wkt'];
     $extra['taxon'] = $record['taxon'];
+    $extra['preferred_taxon'] = $record['preferred_taxon'];
+    $extra['default_common_name'] = $record['default_common_name'];
     $extra['recorder'] = $record['recorder'];
     $extra['sample_id'] = $record['sample_id'];
     $extra['created_by_id'] = $record['created_by_id'];
     $extra['input_by_first_name'] = $record['input_by_first_name'];
     $extra['input_by_surname'] = $record['input_by_surname'];
+    $extra['website_id'] = $record['website_id'];
     $extra['survey_title'] = $record['survey_title'];
     $extra['survey_id'] = $record['survey_id'];
     $extra['date'] = $record['date'];
@@ -1006,6 +1035,7 @@ HTML
     $extra['taxon_list_id'] = $record['taxon_list_id'];
     $extra['localities'] = $record['localities'];
     $extra['locality_ids'] = $record['locality_ids'];
+    $extra['location_name'] = $record['location_name'];
     header('Content-type: application/json');
     echo json_encode(array(
       'content' => $r,
@@ -1197,6 +1227,21 @@ HTML
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
       $r .= "<div>$c</div>";
+      if (!empty($comment['correspondance_data'])) {
+        $data = str_replace("\n", '<br/>', $comment['correspondance_data']);
+        $correspondanceData = json_decode($data, TRUE);
+        foreach ($correspondanceData as $type => $items) {
+          $r .= '<h3>' . ucfirst($type) . '</h3>';
+          foreach ($items as $item) {
+            $r .= '<div class="correspondance">';
+            foreach ($item as $field => $value) {
+              $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
+              $r .= "<div>$field $value</div>";
+            }
+            $r .= '</div>';
+          }
+        }
+      }
       $r .= '</div>';
     }
     $r .= '</div>';
