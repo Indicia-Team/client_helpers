@@ -97,23 +97,26 @@ jQuery(document).ready(function enablePdf($) {
   function convertToPdf() {
     $('#show-pdf-options').hide();
     $.fancybox.close();
-    // Count the report grids so we know when they are all done
-    $.each(indiciaData.reports, function handleReportGroup() {
-      indiciaData.reportsToLoad += Object.keys(this).length;
-    });
-    // Reloaad report grids without pagination. The callback means when the last is loaded, the PDF will be rendered.
-    $.each(indiciaData.reports, function handleReportGroup() {
-      $.each(this, function handleReportGrid() {
-        // Reload the report grid if not showing all data.
-        if (this[0].settings.recordCount > this[0].settings.itemsPerPage) {
-          this[0].settings.callback = 'reportLoaded';
-          this[0].settings.itemsPerPage = 1000;
-          this.reload(false);
-        } else {
-          indiciaData.reportsToLoad--;
-        }
+    if (typeof indiciaData.reports !== 'undefined') {
+      // Count the report grids so we know when they are all done
+      $.each(indiciaData.reports, function handleReportGroup() {
+        indiciaData.reportsToLoad += Object.keys(this).length;
       });
-    });
+      // Reloaad report grids without pagination. The callback means when the last is loaded, the PDF will be rendered.
+      $.each(indiciaData.reports, function handleReportGroup() {
+        $.each(this, function handleReportGrid() {
+          // Reload the report grid if not showing all data or never loaded.
+          if (typeof this[0].settings.recordCount === 'undefined'
+              || this[0].settings.recordCount > this[0].settings.itemsPerPage) {
+            this[0].settings.callback = 'reportLoaded';
+            this[0].settings.itemsPerPage = indiciaData.printSettings.maxRecords;
+            this.reload(false);
+          } else {
+            indiciaData.reportsToLoad--;
+          }
+        });
+      });
+    }
     if (indiciaData.reportsToLoad === 0) {
       doConversion();
     }
