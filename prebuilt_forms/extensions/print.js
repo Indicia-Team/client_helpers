@@ -69,7 +69,7 @@ jQuery(document).ready(function enablePdf($) {
 
     // Create the PDF
     html2pdf($(indiciaData.printSettings.includeSelector)[0], {
-      filename: 'pantheonReport.pdf',
+      filename: indiciaData.printSettings.fileName,
       margin: 1,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { dpi: 192, letterRendering: true },

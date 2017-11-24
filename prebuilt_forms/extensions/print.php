@@ -47,6 +47,7 @@ class extension_print {
    *       #content.
    *     * excludeSelector - selector for any elements inside the element being printed which should be hidden.
    *     * maxRecords - maximum number of records to load per report table. Default 20,000.
+   *     * fileName - default name given to download PDF files.
    * @param string $path
    *   Current page path.
    *
@@ -62,12 +63,14 @@ class extension_print {
       'includeSelector' => '#content',
       'excludeSelector' => '',
       'maxRecords' => 20000,
+      'fileName' => 'report.pdf',
     ), $options);
     helper_base::$javascript .= <<<JS
 indiciaData.printSettings = {
   includeSelector: "$options[includeSelector]",
   excludeSelector: "$options[excludeSelector]",
-  maxRecords: $options[maxRecords]
+  maxRecords: $options[maxRecords],
+  fileName: "$options[fileName]"
 };
 
 JS;
