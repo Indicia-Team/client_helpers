@@ -61,7 +61,7 @@ class extension_print {
       'format' => 'choose',
       'includeSelector' => '#content',
       'excludeSelector' => '',
-      'maxRecords' => 20000
+      'maxRecords' => 20000,
     ), $options);
     helper_base::$javascript .= <<<JS
 indiciaData.printSettings = {
