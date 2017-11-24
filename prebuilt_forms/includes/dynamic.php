@@ -281,29 +281,30 @@ class iform_dynamic {
     }
 
     $r .= "<div id=\"controls\">\n";
-    // Build a list of the tabs that actually have content
+    // Build a list of the tabs that actually have content.
     $tabHtml = self::get_tab_html($tabs, $auth, $args, $attributes, $firstTabExtras);
-    // Output the dynamic tab headers
-    if ($args['interface']!='one_page') {
+    // Output the dynamic tab headers.
+    if ($args['interface'] !== 'one_page') {
       $headerOptions = array('tabs'=>array());
       foreach ($tabHtml as $tab=>$tabContent) {
         $alias = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
         $tabtitle = lang::get("LANG_Tab_$alias");
-        if ($tabtitle=="LANG_Tab_$alias") {
+        if ($tabtitle === "LANG_Tab_$alias") {
           // if no translation provided, we'll just use the standard heading
           $tabtitle = $tab;
         }
-        $headerOptions['tabs']['#tab-'.$alias] = $tabtitle;
+        $headerOptions['tabs']['#tab-' . $alias] = $tabtitle;
       }
       $r .= data_entry_helper::tab_header($headerOptions);
       data_entry_helper::enable_tabs(array(
-          'divId'=>'controls',
-          'style'=>$args['interface'],
-          'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==true,
+          'divId' => 'controls',
+          'style' => $args['interface'],
+          'progressBar' => isset($args['tabProgress']) && $args['tabProgress'] == true,
           'progressBarOptions' => isset($args['progressBarOptions']) ? $args['progressBarOptions'] : array(),
           'navButtons' => isset($args['force_next_previous']) && $args['force_next_previous']
       ));
-    } else {
+    }
+    else {
       // ensure client side validation is activated if requested on single page forms. This is done in the enable_tabs bit above.
       // This is useful if we have custom client side validation.
       if (isset(data_entry_helper::$validated_form_id)) {
