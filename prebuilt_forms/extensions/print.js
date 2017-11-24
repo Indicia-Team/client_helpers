@@ -32,7 +32,6 @@ jQuery(document).ready(function enablePdf($) {
     $('.col-picker').remove();
     $('tfoot .pager').remove();
     $('div.report-download-link').closest('tr').remove();
-    $('ul.button-links').remove();
     // Tidy other table related styling for print.
     $('table.report-grid').css('width', '100%');
     $('table.report-grid').css('width', '100%');
