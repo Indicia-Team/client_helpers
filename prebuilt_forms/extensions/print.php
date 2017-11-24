@@ -46,6 +46,7 @@ class extension_print {
    *     * includeSelector - selector for the element which includes the content to be printed. Defaults to
    *       #content.
    *     * excludeSelector - selector for any elements inside the element being printed which should be hidden.
+   *     * maxRecords - maximum number of records to load per report table. Default 20,000.
    * @param string $path
    *   Current page path.
    *
@@ -59,23 +60,31 @@ class extension_print {
     $options = array_merge(array(
       'format' => 'choose',
       'includeSelector' => '#content',
-      'excludeSelector' => ''
+      'excludeSelector' => '',
+      'maxRecords' => 20000
     ), $options);
     helper_base::$javascript .= <<<JS
 indiciaData.printSettings = {
   includeSelector: "$options[includeSelector]",
-  excludeSelector: "$options[excludeSelector]"
+  excludeSelector: "$options[excludeSelector]",
+  maxRecords: $options[maxRecords]
 };
 
 JS;
     $lang = array(
-      'ConvertPageToPDF' => lang::get('Convert page to PDF'),
       'PDFOptions' => lang::get('PDF options'),
+
     );
     if ($options['format'] === 'portrait' || $options['format'] === 'landscape') {
+      $generateBtn = helper_base::apply_static_template('button', array(
+        'id' => 'convert-to-pdf',
+        'title' => lang::get('Generate a PDF file from the current page.'),
+        'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+        'caption' => lang::get('Convert page to PDF'),
+      ));
       return <<<HTML
 <input type="hidden" name="pdf-format" value="$options[format]" />
-<button id="convert-to-pdf" type="button">$lang[ConvertPageToPDF]</button>
+$generateBtn
 HTML;
     }
     else {
@@ -86,6 +95,12 @@ HTML;
           'portrait' => lang::get('Portrait'),
           'landscape' => lang::get('Landscape'),
         ),
+      ));
+      $convertPageBtn = helper_base::apply_static_template('button', array(
+        'id' => 'show-pdf-options',
+        'title' => lang::get('Show the options for converting the page to PDF'),
+        'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+        'caption' => lang::get('Convert page to PDF'),
       ));
       $generateBtn = helper_base::apply_static_template('button', array(
         'id' => 'convert-to-pdf',
@@ -100,7 +115,7 @@ HTML;
         'caption' => lang::get('Cancel'),
       ));
       return <<<HTML
-<button id="show-pdf-options" type="button">$lang[ConvertPageToPDF]</button>
+$convertPageBtn
 <div id="pdf-options" style="display: none">
   <fieldset>
     <legend>$lang[PDFOptions]</legend>
