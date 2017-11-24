@@ -1229,7 +1229,10 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       // default is line
     }
     self::check_for_jqplot_plugins($options);
-    $opts[] = "seriesDefaults:{\n".(isset($renderer) ? "  renderer:$renderer,\n" : '')."  rendererOptions:".json_encode($options['rendererOptions'])."}";
+    $opts[] = "seriesDefaults:{\n      " .
+      (isset($renderer) ? "renderer:$renderer,\n      " : '') .
+      "rendererOptions:" . json_encode($options['rendererOptions']) .
+      "\n    }";
     $optsToCopyThrough = array('legend'=>'legendOptions', 'series'=>'seriesOptions', 'seriesColors'=>'seriesColors');
     foreach ($optsToCopyThrough as $key=>$settings) {
       if (!empty($options[$settings]))
@@ -1335,7 +1338,19 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       $options['id'] = 'report-chart-' . rand();
     }
     $plotName = preg_replace('/[^a-zA-Z0-9]/', '_', $options['id']);
-    self::$javascript .= "var $plotName = $.jqplot('{$options['id']}', " . json_encode($seriesData) . ", \n{" . implode(",\n", $opts) . "});\n";
+    $encodedData = json_encode($seriesData);
+    $optsList = implode(",\n    ", $opts);
+    self::$javascript .= <<<JS
+var $plotName = $.jqplot(
+  '$options[id]',
+  $encodedData,
+  {
+    $optsList
+  }
+);
+
+JS;
+
     // Store the plot object with its div.
     self::$javascript .= "$('#{$options['id']}').data('jqplot', $plotName);\n";
     //once again we only include summary report clicking functionality if user has setup the appropriate options
@@ -1359,16 +1374,18 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   }
 );\n";
     }
-    self::$javascript .= "$('#chartdiv').bind('jqplotDataHighlight', function(ev, seriesIndex, pointIndex, data) {
-      $('table.jqplot-table-legend td').removeClass('highlight');
-      $('table.jqplot-table-legend td').filter(function() {
-        return this.textContent == data[0];
-      }).addClass('highlight');
-  });
-  $('#chartdiv').bind('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
-    $('table.jqplot-table-legend td').removeClass('highlight');
-  });\n";
+    self::$javascript .= <<<JS
+$('#$options[id]').bind('jqplotDataHighlight', function(ev, seriesIndex, pointIndex, data) {
+  $('table.jqplot-table-legend td').removeClass('highlight');
+  $('table.jqplot-table-legend td').filter(function() {
+    return this.textContent == data[0];
+  }).addClass('highlight');
+});
+$('#$options[id]').bind('jqplotDataUnhighlight', function(ev, seriesIndex, pointIndex, data) {
+  $('table.jqplot-table-legend td').removeClass('highlight');
+});
 
+JS;
     if (!empty($options['responsive'])) {
       // Make plots responsive.
       $options['width'] = '100%';
@@ -1412,28 +1429,34 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
             jqp.replot({resetAxes: true});
           });
         });\n";
-
-        // If plots are hidden across several tabs, replot when tab is
-        //activated.
-        self::$javascript .= "var tabs = $('#{$options['id']}').closest('#controls');
-        if (tabs.length > 0) {
-          indiciaFns.bindTabsActivate(tabs, function(evt, ui) {
-            var panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
-            var plots = $(panel).find('.jqplot-target');
-            if (plots.length > 0) {
-              // The activated panel holds jqplots.
-              plots.each(function() {
-                var jqp = $(this).data('jqplot');
-                jqp.replot({resetAxes: true});
-              });
-            }
-          });
-        };\n";
         $handlers_once = true;
       }
-
     }
+    // If plots are hidden across several tabs, replot when tab is activated.
+    self::$javascript .= <<<JS
+indiciaFns.reflowAllCharts = function(evt, ui) {
+  var panel;
+  var plots;
+  if (typeof ui === 'undefined') {
+    plots = $('.jqplot-target');
+  } else {
+    panel = ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
+    plots = $(panel).find('.jqplot-target');
+  }
+  if (plots.length > 0) {
+    // The activated panel holds jqplots.
+    plots.each(function() {
+      var jqp = $(this).data('jqplot');
+      jqp.replot({resetAxes: true});
+    });
+  }
+};
+var tabs = $('#$options[id]').closest('#controls');
+if (tabs.length > 0) {
+  indiciaFns.bindTabsActivate(tabs, indiciaFns.reflowAllCharts);
+};
 
+JS;
     $heightStyle = '';
     $widthStyle = '';
     if (!empty($options['height']))

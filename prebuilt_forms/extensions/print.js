@@ -3,10 +3,10 @@ jQuery(document).ready(function enablePdf($) {
   indiciaData.reportsToLoad = 0;
   indiciaData.htmlPreparedForPdf = false;
 
-  function shrinkTablesIfNeeded() {
+  function shrinkReportsIfNeeded() {
     var maxWidthLandscape = 1100;
     // Calculate max width value, based on A4 aspect ratio for portrait.
-    var maxWidth = $('#pdf-format').val() === 'landscape' ? maxWidthLandscape : (maxWidthLandscape * 21) / 27;
+    var maxWidth = $('#pdf-format').val() === 'landscape' ? maxWidthLandscape : (maxWidthLandscape * 210) / 297;
     // A rough attempt at shrinking the font for tables that are too wide.
     $.each($('table.report-grid'), function correctTableFontSize() {
       $(this).css('font-size', '');
@@ -14,6 +14,10 @@ jQuery(document).ready(function enablePdf($) {
         $(this).css('font-size', ((maxWidth * 100) / $(this).width()) + '%');
       }
     });
+    $('.jqplot-target').css('max-width', maxWidth * 0.8);
+    if (typeof indiciaFns.reflowAllCharts !== 'undefined') {
+      indiciaFns.reflowAllCharts();
+    }
   }
 
   /**
@@ -32,7 +36,6 @@ jQuery(document).ready(function enablePdf($) {
     $('.col-picker').remove();
     $('tfoot .pager').remove();
     $('div.report-download-link').closest('tr').remove();
-    $('ul.button-links').remove();
     // Tidy other table related styling for print.
     $('table.report-grid').css('width', '100%');
     $('table.report-grid').css('width', '100%');
@@ -42,8 +45,15 @@ jQuery(document).ready(function enablePdf($) {
     $('th').css('border-bottom-color', '');
     $('tr').css('border-bottom', 'solid silver 1px');
     $('table.report-grid audio').remove();
+    // Move the page title into the report
+    $(indiciaData.printSettings.includeSelector).prepend($(indiciaData.printSettings.titleSelector));
+    // Transcribe tab headings into header elements.
+    $.each($('ul.ui-tabs-nav li a'), function() {
+      $($(this).attr('href')).prepend('<h2>' + $(this).text() + '</h2>');
+    });
     // Show all tabs
     $('ul.ui-tabs-nav').remove();
+    $('ul.ui-tabs-panel').css('padding', 0);
     $('#controls > div[aria-hidden="true"]').show();
     // Pad the outer content
     $('div.node-content').css('padding', '10px');
@@ -54,8 +64,10 @@ jQuery(document).ready(function enablePdf($) {
       }
     });
 
-    // Split grids onto different pages.
-    $('#tab-records').after('<div class="html2pdf__page-break"></div>');
+    // Split tabs onto different pages.
+    $('.ui-tabs-panel').after('<div class="html2pdf__page-break"></div>');
+    // Not the last page
+    $('.html2pdf__page-break:last').remove();
   }
 
   function doConversion() {
@@ -63,15 +75,15 @@ jQuery(document).ready(function enablePdf($) {
       prepareHtmlForPdf();
       indiciaData.htmlPreparedForPdf = true;
     }
-    shrinkTablesIfNeeded();
+    shrinkReportsIfNeeded();
     if (indiciaData.printSettings.excludeSelector !== '') {
       $(indiciaData.printSettings.excludeSelector).remove();
     }
 
     // Create the PDF
     html2pdf($(indiciaData.printSettings.includeSelector)[0], {
-      filename: 'pantheonReport.pdf',
-      margin: 1,
+      filename: indiciaData.printSettings.fileName,
+      margin: [0.5, 0.5],
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { dpi: 192, letterRendering: true },
       jsPDF: {
@@ -81,6 +93,7 @@ jQuery(document).ready(function enablePdf($) {
       }
     });
     $('#show-pdf-options').show();
+    $('div.loading').remove();
   }
 
   window.reportLoaded = function checkIfAllReportsLoaded() {
@@ -96,6 +109,7 @@ jQuery(document).ready(function enablePdf($) {
    */
   function convertToPdf() {
     $('#show-pdf-options').hide();
+    $('body').append('<div class="loading">Loading&#8230;</div>');
     $.fancybox.close();
     if (typeof indiciaData.reports !== 'undefined') {
       // Count the report grids so we know when they are all done
