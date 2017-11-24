@@ -74,7 +74,7 @@ JS;
     );
     if ($options['format'] === 'portrait' || $options['format'] === 'landscape') {
       return <<<HTML
-<input name="pdf-format" value="$options[format]" />
+<input type="hidden" name="pdf-format" value="$options[format]" />
 <button id="convert-to-pdf" type="button">$lang[ConvertPageToPDF]</button>
 HTML;
     }
