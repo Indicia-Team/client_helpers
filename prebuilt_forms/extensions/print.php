@@ -32,8 +32,7 @@ class extension_print {
   /**
    * Button for converting a page to a PDF file.
    *
-   * Allows a report page to be output into PDF format. Does not currently support maps. Has the following
-   * limitations:
+   * Allows a report page to be output into PDF format. Has the following limitations:
    * * May not work with maps.
    * * report_helper::report_charts should have the option @responsive set to true to ensure the layout
    *   fits the page.
