@@ -80,6 +80,7 @@ jQuery(document).ready(function enablePdf($) {
       }
     });
     $('#show-pdf-options').show();
+    $('div.loading').remove();
   }
 
   window.reportLoaded = function checkIfAllReportsLoaded() {
@@ -95,6 +96,7 @@ jQuery(document).ready(function enablePdf($) {
    */
   function convertToPdf() {
     $('#show-pdf-options').hide();
+    $('body').append('<div class="loading">Loading&#8230;</div>');
     $.fancybox.close();
     if (typeof indiciaData.reports !== 'undefined') {
       // Count the report grids so we know when they are all done
