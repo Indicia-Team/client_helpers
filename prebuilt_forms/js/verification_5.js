@@ -301,7 +301,7 @@ indiciaData.rowIdToReselect = false;
     return '<form class="popup-form"><fieldset><legend>Add new query</legend>' +
       (workflow ? '<label><input type="checkbox" id="query-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' : '') +
       '<textarea id="query-comment-text" rows="30"></textarea><br>' +
-      '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), jQuery(\'#query-confidential:checked\').length, \'t\', true); jQuery.fancybox.close();">' +
+      '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), jQuery(\'#query-confidential:checked\').length, false, \'t\', true); jQuery.fancybox.close();">' +
       'Add query to comments log</button></fieldset></form>';
   }
 
@@ -440,7 +440,7 @@ indiciaData.rowIdToReselect = false;
         // save a comment to indicate that the mail was sent
         indiciaFns.saveComment(indiciaData.commentTranslations.emailed.replace('{1}', email.subtype === 'R' ?
           indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert),
-          ($('#email-confidential:checked').length > 0 ? 't' : 'f'), 't', true);
+          ($('#email-confidential:checked').length > 0 ? 't' : 'f'), true, 't', true);
       }
 
       sendEmail();
@@ -479,7 +479,7 @@ indiciaData.rowIdToReselect = false;
     $('#comment-list').prepend(html);
   }
 
-  indiciaFns.saveComment = function (text, confidential, query, reloadGridAfterSave) {
+  indiciaFns.saveComment = function (text, confidential, email, query, reloadGridAfterSave) {
     var data;
     if (typeof confidential === 'undefined' || confidential == 0 || confidential == 'f') {
       confidential = 'f';
@@ -496,7 +496,7 @@ indiciaData.rowIdToReselect = false;
       'occurrence_comment:person_name': indiciaData.username,
       'occurrence_comment:query': query
     };
-    if (indiciaData.workflowEnabled &&
+    if (email && indiciaData.workflowEnabled &&
         indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1) {
       data['occurrence_comment:correspondence_data'] = JSON.stringify(
           {"email" : [{
@@ -1588,7 +1588,7 @@ indiciaData.rowIdToReselect = false;
       html += '<label><input type="checkbox" id="log-response-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' +
         '<textarea id="log-response-comment" rows="4"></textarea><br>' +
         '<fieldset class="">' +
-        '<label>From:</label><input type="text" id="email-to" class="email required" value=""/><br />' +
+        '<label>From:</label><input type="text" id="email-from" class="email required" value=""/><br />' +
         '<label>To:</label><input type="text" id="email-to" class="email required" value=""/><br />' +
         '<label>Subject:</label><input type="text" id="email-subject" class="required" value=""/><br />' +
         '<label>Body:</label><textarea id="email-body" class="required"></textarea><br />' +
@@ -1612,7 +1612,7 @@ indiciaData.rowIdToReselect = false;
       email.subject = $('#email-subject').val();
       email.body = $('#email-body').val();
 
-      indiciaFns.saveComment($('#log-response-comment').val(), jQuery('#log-response-confidential:checked').length, 'f', false);
+      indiciaFns.saveComment($('#log-response-comment').val(), jQuery('#log-response-confidential:checked').length, true, 'f', false);
     }
     return false;
   }

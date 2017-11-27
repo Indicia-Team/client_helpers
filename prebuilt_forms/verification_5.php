@@ -1311,7 +1311,7 @@ HTML
         $r .= '<input type="hidden" id="comment-confidential" value="f" />';
       }
       $r .= '<textarea id="comment-text"></textarea><br/>';
-      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-confidential\:checked\').length);">' . lang::get('Save') . '</button>';
+      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-confidential\:checked\').length, false);">' . lang::get('Save') . '</button>';
       $r .= '</fieldset></form>';
     }
     return $r;
