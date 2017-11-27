@@ -329,6 +329,15 @@ class iform_verification_5 {
           'required' => 'false'
         ),
         array(
+          'name' => 'enableWorkflow',
+          'caption' => 'Enable Workflow?',
+          'description' => 'Is the Workflow module enabled on the warehouse?',
+          'type' => 'boolean',
+          'group' => 'Notification Settings',
+          'default' => FALSE,
+          'required' => 'false'
+        ),
+        array(
           'name' => 'clear_verification_task_notifications',
           'caption' => 'Clear verification task notifications?',
           'description' => 'Automatically clear any verification task notifications when the user opens the verification screen.',
@@ -569,6 +578,8 @@ idlist=';
     // @todo following needs to be disabled if record is not on iRecord.
     $r .= '<a id="btn-edit-record" class="button default-button" title="' .
       lang::get('Edit the record on its original data entry form.') . '">' . lang::get('Edit') . '</a>';
+    $r .= '<button type="button" id="btn-log-response" class="default-button" title="' .
+      lang::get('Log an email or other response.') . '">' . lang::get('Log Reply') . '</a>';
     $r .= '</div>';
     return $r;
   }
@@ -831,6 +842,10 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.queryProbablyWillGetNotified="' .
       lang::get('The recorder normally checks their notifications so your query can be posted as a comment ' .
       'against the record. If you prefer, you can send a direct email.') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.confidential="' . lang::get('Confidential?') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponseTitle="' . lang::get('Log a response to a Query') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponse="' . lang::get('Save Response') . "\";\n";
+
     self::translateStatusTerms();
     data_entry_helper::$javascript .= "indiciaData.statusTranslations = " . json_encode(self::$statusTerms) . ";\n";
     data_entry_helper::$javascript .= "indiciaData.commentTranslations = {};\n";
@@ -850,6 +865,45 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.expertise_location = "' . $opts['extraParams']['expertise_location'] . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.expertise_surveys = "' . $opts['extraParams']['expertise_surveys'] . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.expertise_taxon_groups = "' . $opts['extraParams']['expertise_taxon_groups'] . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.siteEmail = "'.$site_email = hostsite_get_config_value('site', 'mail', '') . "\";\n";
+
+    if (isset($args['enableWorkflow']) && $args['enableWorkflow']) {
+      data_entry_helper::$javascript .= "indiciaData.workflowEnabled = true;\n";
+      $wfMetadata = data_entry_helper::get_population_data(array( // allow caching
+          'table'=>'workflow_metadata',
+          'extraParams'=>$auth['read'] +
+              array(
+                'log_all_communications' => 't',
+                'entity' => 'occurrence',
+                'view'=>'detail',
+                'columns' => 'key,key_value'),
+      ));
+      $workflowTaxonMeaningIDsLogAllComms = array();
+      foreach ($wfMetadata as $wfMeta) {
+          switch($wfMeta['key']) {
+              case 'taxa_taxon_list_external_key' :
+                  $wkMIDs = data_entry_helper::get_population_data(array( // allow caching
+                      'table'=>'cache_taxa_taxon_list',
+                      'extraParams'=>$auth['read'] +
+                          array(
+                              'external_key' => $wfMeta['key_value'],
+                              'columns' => 'taxon_meaning_id'),
+                      ));
+                  foreach ($wkMIDs as $wkMID) {
+                      $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
+                  }
+                  break;
+              default :
+                  drupal_set_message('Unrecognised workflow_metadata key '.$wfMeta['key']);
+                  break;
+          }
+      }
+      data_entry_helper::$javascript .= "indiciaData.workflowTaxonMeaningIDsLogAllComms = " .
+          json_encode(array_values(array_unique($workflowTaxonMeaningIDsLogAllComms))) . ";\n";
+    } else {
+      data_entry_helper::$javascript .= "indiciaData.workflowEnabled = false;\n";
+      data_entry_helper::$javascript .= "indiciaData.workflowTaxonMeaningIDsLogAllComms = [];\n";
+    }
     data_entry_helper::add_resource('jqplot');
     data_entry_helper::add_resource('jqplot_bar');
     return $r;
@@ -1038,6 +1092,7 @@ HTML
     $extra['localities'] = $record['localities'];
     $extra['locality_ids'] = $record['locality_ids'];
     $extra['location_name'] = $record['location_name'];
+    $extra['query'] = $record['query'] === null ? '' : $record['query'];
     header('Content-type: application/json');
     echo json_encode(array(
       'content' => $r,
@@ -1229,13 +1284,13 @@ HTML
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
       $r .= "<div>$c</div>";
-      if (!empty($comment['correspondance_data'])) {
-        $data = str_replace("\n", '<br/>', $comment['correspondance_data']);
-        $correspondanceData = json_decode($data, TRUE);
-        foreach ($correspondanceData as $type => $items) {
+      if (!empty($comment['correspondence_data'])) {
+        $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
+        $correspondenceData = json_decode($data, TRUE);
+        foreach ($correspondenceData as $type => $items) {
           $r .= '<h3>' . ucfirst($type) . '</h3>';
           foreach ($items as $item) {
-            $r .= '<div class="correspondance">';
+            $r .= '<div class="correspondence">';
             foreach ($item as $field => $value) {
               $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
               $r .= "<div>$field $value</div>";
@@ -1247,10 +1302,16 @@ HTML
       $r .= '</div>';
     }
     $r .= '</div>';
+    $allowConfidential = isset($_GET['allowconfidential']) && $_GET['allowconfidential'] === 'true';
     if ($includeAddNew) {
       $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
+      if ($allowConfidential) {
+        $r .= '<label><input type="checkbox" id="comment-confidential" /> ' . lang::get('Confidential?') . '</label><br>';
+      } else {
+        $r .= '<input type="hidden" id="comment-confidential" value="f" />';
+      }
       $r .= '<textarea id="comment-text"></textarea><br/>';
-      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val());">' . lang::get('Save') . '</button>';
+      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-confidential\:checked\').length);">' . lang::get('Save') . '</button>';
       $r .= '</fieldset></form>';
     }
     return $r;

@@ -11,7 +11,7 @@ indiciaData.rowIdToReselect = false;
   var speciesLayers = [];
   var trustsCounter
   var multimode = false
-  var email = { to: '', subject: '', body: '', type: '' };
+  var email = { to: '', from: '', subject: '', body: '', type: '' };
 
   /**
    * Resets to the state where no grid row is shown
@@ -110,6 +110,9 @@ indiciaData.rowIdToReselect = false;
         var layer;
         var thisSpLyrSettings;
         var filter;
+        var workflow = (indiciaData.workflowEnabled &&
+                indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(data.extra.taxon_meaning_id) !== -1);
+
         rowRequest = null;
         currRec = data;
         if (currRec.extra.created_by_id === '1') {
@@ -124,12 +127,18 @@ indiciaData.rowIdToReselect = false;
           $row.find('.verify-tools .edit-record').closest('li').hide();
           $('#btn-edit-record').hide();
         }
+        if (currRec.extra.query === 'Q') {
+          $('#btn-log-response').show();
+        } else {
+          $('#btn-log-response').hide();
+        }
         $('#instructions').hide();
         $('#record-details-content').show();
         if ($row.parents('tbody').length !== 0) {
           // point the comments tabs to the correct AJAX call for the selected occurrence.
           indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('comments'), 'comments-tab-tab',
-            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrenceId);
+            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrenceId +
+            (workflow ? '&allowconfidential=true' : ''));
           // reload current tabs
           $('#record-details-tabs').tabs('load', indiciaFns.activeTab($('#record-details-tabs')));
           $('#record-details-toolbar *').removeAttr('disabled');
@@ -279,7 +288,7 @@ indiciaData.rowIdToReselect = false;
     return '<form id="email-form" class="popup-form"><fieldset>' +
       '<legend>' + indiciaData.popupTranslations.tab_email + '</legend>' +
       '<label>To:</label><input type="text" id="email-to" class="email required" value="' + email.to + '"/><br />' +
-      '<label>Subject:</label><input type="text" id="email-subject" class="require" value="' + email.subject + '"/><br />' +
+      '<label>Subject:</label><input type="text" id="email-subject" class="required" value="' + email.subject + '"/><br />' +
       '<label>Body:</label><textarea id="email-body" class="required">' + email.body + '</textarea><br />' +
       '<input type="submit" class="default-button" ' +
       'value="' + indiciaData.popupTranslations.sendEmail + '" />' +
@@ -287,9 +296,12 @@ indiciaData.rowIdToReselect = false;
   }
 
   function recorderQueryCommentForm() {
+    var workflow = (indiciaData.workflowEnabled &&
+                    indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1);
     return '<form class="popup-form"><fieldset><legend>Add new query</legend>' +
+      (workflow ? '<label><input type="checkbox" id="query-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' : '') +
       '<textarea id="query-comment-text" rows="30"></textarea><br>' +
-      '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), \'t\', true); jQuery.fancybox.close();">' +
+      '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), jQuery(\'#query-confidential:checked\').length, \'t\', true); jQuery.fancybox.close();">' +
       'Add query to comments log</button></fieldset></form>';
   }
 
@@ -409,6 +421,7 @@ indiciaData.rowIdToReselect = false;
     // Complete creation of email of record details
     if (validator.numberOfInvalids() === 0) {
       email.to = $('#email-to').val();
+      email.from = indiciaData.siteEmail,
       email.subject = $('#email-subject').val();
       email.body = $('#email-body').val();
 
@@ -426,7 +439,8 @@ indiciaData.rowIdToReselect = false;
         });
         // save a comment to indicate that the mail was sent
         indiciaFns.saveComment(indiciaData.commentTranslations.emailed.replace('{1}', email.subtype === 'R' ?
-          indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert), 't', true);
+          indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert),
+          ($('#email-confidential:checked').length > 0 ? 't' : 'f'), 't', true);
       }
 
       sendEmail();
@@ -435,11 +449,14 @@ indiciaData.rowIdToReselect = false;
   }
 
   function popupEmailExpert() {
+    var workflow = (indiciaData.workflowEnabled &&
+                indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1);
     $.fancybox('<form id="email-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.emailTitle + '</legend>' +
       '<p>' + indiciaData.popupTranslations.emailInstruction + '</p>' +
+      (workflow ? '<label><input type="checkbox" id="email-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' : '') +
       '<label>To:</label><input type="text" id="email-to" class="email required" value="' + email.to + '"/><br />' +
-      '<label>Subject:</label><input type="text" id="email-subject" class="require" value="' + email.subject + '"/><br />' +
+      '<label>Subject:</label><input type="text" id="email-subject" class="required" value="' + email.subject + '"/><br />' +
       '<label>Body:</label><textarea id="email-body" class="required">' + email.body + '</textarea><br />' +
       '<input type="submit" class="default-button" ' +
       'value="' + indiciaData.popupTranslations.sendEmail + '" />' +
@@ -462,8 +479,13 @@ indiciaData.rowIdToReselect = false;
     $('#comment-list').prepend(html);
   }
 
-  indiciaFns.saveComment = function (text, query, reloadGridAfterSave) {
+  indiciaFns.saveComment = function (text, confidential, query, reloadGridAfterSave) {
     var data;
+    if (typeof confidential === 'undefined' || confidential == 0 || confidential == 'f') {
+      confidential = 'f';
+    } else {
+      confidential = 't';
+    }
     if (typeof query === 'undefined') {
       query = 'f';
     }
@@ -474,6 +496,18 @@ indiciaData.rowIdToReselect = false;
       'occurrence_comment:person_name': indiciaData.username,
       'occurrence_comment:query': query
     };
+    if (indiciaData.workflowEnabled &&
+        indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1) {
+      data['occurrence_comment:correspondence_data'] = JSON.stringify(
+          {"email" : [{
+                "from" : email.from,
+                "to" : email.to,
+                "subject" : email.subject,
+                "body" : email.body,
+            }]
+          }
+        );
+    }
     $.post(
       indiciaData.ajaxFormPostUrl.replace('occurrence', 'occ-comment'),
       data,
@@ -676,6 +710,7 @@ indiciaData.rowIdToReselect = false;
   }
 
   function showRedeterminationPopup() {
+    // No confidential checkbox for redeterminations.
     var html = '<form id="redet-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.redetermine + '</legend>';
     html += '<div id="redet-dropdown-popup-ctnr"></div>';
@@ -1385,6 +1420,10 @@ indiciaData.rowIdToReselect = false;
       showRedeterminationPopup();
     });
 
+    $('#btn-log-response').click(function () {
+      popupLogResponse();
+    });
+
     function editThisRecord(id) {
       var $row = $('tr#row' + id);
       var path = $row.find('.row-input-form-link').val();
@@ -1538,4 +1577,44 @@ indiciaData.rowIdToReselect = false;
       }
     );
   }
+
+  function popupLogResponse() {
+    var workflow = (indiciaData.workflowEnabled &&
+            indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1);
+    var html = '<form id="log-response-form"><fieldset class="popup-form log-response '+
+      (workflow ? 'short' : '') + '">' +
+      '<legend>' + indiciaData.popupTranslations.logResponseTitle + '</legend>';
+    if (workflow) {
+      html += '<label><input type="checkbox" id="log-response-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' +
+        '<textarea id="log-response-comment" rows="4"></textarea><br>' +
+        '<fieldset class="">' +
+        '<label>From:</label><input type="text" id="email-to" class="email required" value=""/><br />' +
+        '<label>To:</label><input type="text" id="email-to" class="email required" value=""/><br />' +
+        '<label>Subject:</label><input type="text" id="email-subject" class="required" value=""/><br />' +
+        '<label>Body:</label><textarea id="email-body" class="required"></textarea><br />' +
+        '</fieldset>';
+    } else {
+      html += '<input type="hidden" id="log-response-confidential" value="f"/>' +
+        '<textarea id="log-response-comment" rows="4"></textarea><br>';
+    }
+    html += '<input type="submit" class="default-button" ' +
+      'value="' + indiciaData.popupTranslations.logResponse + '" />' +
+      '</fieldset></form>';
+    $.fancybox(html);
+    validator = $('#log-response-form').validate({});
+    $('#log-response-form').submit(logResponse);
+  }
+
+  function logResponse() {
+    if (validator.numberOfInvalids() === 0) {
+      email.to = $('#email-to').val();
+      email.from = $('#email-from').val();
+      email.subject = $('#email-subject').val();
+      email.body = $('#email-body').val();
+
+      indiciaFns.saveComment($('#log-response-comment').val(), jQuery('#log-response-confidential:checked').length, 'f', false);
+    }
+    return false;
+  }
+
 })(jQuery);
