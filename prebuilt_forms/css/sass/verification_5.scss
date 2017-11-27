@@ -239,7 +239,7 @@ ul.gallery li {
       vertical-align: middle;
       @include border-radius(4px);
     }
-    .correspondance {
+    .correspondence {
       background-color: $hover-color;
       border: solid 1px darken($hover-color, 20%);
       padding: 4px;
@@ -364,5 +364,13 @@ tr {
   }
   label, li, input {
     margin-right: 8px;
+  }
+}
+
+#log-response-form {
+  .popup-form.short {
+    textarea {
+      height: 100px;
+    }
   }
 }
