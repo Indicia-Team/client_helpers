@@ -616,6 +616,7 @@ Record ID',
       'table' => 'occurrence_comment',
       'extraParams' => $auth['read'] + array(
           'occurrence_id' => $_GET['occurrence_id'],
+          'confidential' => 'f',
           'sortdir' => 'DESC',
           'orderby' => 'updated_on'
       ),
