@@ -32,8 +32,7 @@ class extension_print {
   /**
    * Button for converting a page to a PDF file.
    *
-   * Allows a report page to be output into PDF format. Does not currently support maps. Has the following
-   * limitations:
+   * Allows a report page to be output into PDF format. Has the following limitations:
    * * May not work with maps.
    * * report_helper::report_charts should have the option @responsive set to true to ensure the layout
    *   fits the page.
@@ -53,8 +52,10 @@ class extension_print {
    *     * maxRecords - maximum number of records to load per report table. Default 20,000.
    *     * fileName - default name given to download PDF files.
    *     * addToSelector - if specified, then the button generated will be added to the element matching this selector
-   *       rather than emitted inline.
+   *       rather than emitted inline. This allows you to embed the PDF generation button anywhere on the page you
+   *       want to.
    *     * titleSelector - set to the selector used for the page title element to include in the report.
+   *       Defaults to #page-title.
    * @param string $path
    *   Current page path.
    *
