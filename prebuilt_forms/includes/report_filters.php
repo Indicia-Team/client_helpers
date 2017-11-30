@@ -598,10 +598,15 @@ class filter_quality extends FilterBase {
         'controlWrapTemplate' => 'justControl'
       ))
     ));
-    $r .= data_entry_helper::checkbox(array(
-      'label' => lang::get('Only include records which have photos available'),
-      'fieldname' => 'has_photos'
-    ));
+    $r .= data_entry_helper::select([
+      'label' => 'Photos',
+      'fieldname' => 'has_photos',
+      'lookupValues' => [
+        '' => 'Include all records',
+        '1' => 'Only include records which have photos',
+        '0' => 'Exclude records which have photos',
+      ],
+    ]);
     return $r;
   }
 
@@ -641,12 +646,17 @@ class filter_quality_sample extends FilterBase {
         '' => lang::get('Not filtered'),
         'P' => lang::get('Only include records that pass all automated checks'),
         'F' => lang::get('Only include records that fail at least one automated check'),
-      )
+      ),
     ));
-    $r .= data_entry_helper::checkbox(array(
-      'label' => lang::get('Only include records which have photos available'),
-      'fieldname' => 'has_photos'
-    ));
+    $r .= data_entry_helper::select([
+      'label' => 'Photos',
+      'fieldname' => 'has_photos',
+      'lookupValues' => [
+        '' => 'Include records with or without photosq',
+        '1' => 'Only include records which have photos',
+        '0' => 'Exclude records which have photos',
+      ],
+    ]);
     return $r;
   }
 
@@ -1209,7 +1219,8 @@ HTML;
   report_helper::$javascript .= "indiciaData.lang.AutochecksFailed='" . lang::get('Automated checks failed') . "';\n";
   report_helper::$javascript .= "indiciaData.lang.AutochecksPassed='" . lang::get('Automated checks passed') . "';\n";
   report_helper::$javascript .= "indiciaData.lang.IdentificationDifficulty='" . lang::get('Identification difficulty') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.HasPhotos='" . lang::get('Records which have photos') . "';\n";
+  report_helper::$javascript .= "indiciaData.lang.HasPhotos='" . lang::get('Only include records which have photos') . "';\n";
+  report_helper::$javascript .= "indiciaData.lang.HasNoPhotos='" . lang::get("Exclude records which have photos") . "';\n";
   report_helper::$javascript .= "indiciaData.lang.ConfirmFilterDelete='" . lang::get('Are you sure you want to permanently delete the {title} filter?') . "';\n";
   report_helper::$javascript .= "indiciaData.lang.MyRecords='" . lang::get('My records only') . "';\n";
   if (function_exists('iform_ajaxproxy_url')) {
