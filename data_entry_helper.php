@@ -5623,8 +5623,12 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @return array Associative array of the lookup values and templated list items.
    */
   private static function get_list_items_from_options($options, $selectedItemAttribute) {
-    $r = array();
     global $indicia_templates;
+    if (empty($options['lookupValues']) && empty($options['report']) && empty($options['table'])) {
+      $name = empty($options['id']) ? $options['fieldname'] : $options['id'];
+      throw new exception("Control $name needs a method of obtaining a list of options.");
+    }
+    $r = array();
     $hints = (isset($options['optionHints']) ? (is_array($options['optionHints']) ? $options['optionHints'] : json_decode($options['optionHints'])) : array());
     if (is_object($hints)) {
       $hints = get_object_vars($hints);
@@ -5639,7 +5643,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
           $indicia_templates[$options['itemTemplate']]
         );
       }
-    } else {
+    }
+    else {
       // lookup values need to be obtained from the database. ParentControlId indicates a linked list parent control whose value
       // would filter this list.
       if (isset($options['parentControlId']) && !empty(data_entry_helper::$entity_to_load[$options['parentControlId']])) {
