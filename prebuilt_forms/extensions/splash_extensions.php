@@ -1022,6 +1022,7 @@ class extension_splash_extensions {
    * @minimumLocationDate option must be provided to specify a minimum created_on date for squares (tested with format yyyy-mm-dd
    * suh as 2014-5-26 although other formats may work). This means that old squares can be ignored for instance.
    */
+  //AVB note: This function can be improved, as elegance and performance was at a low priority at the time of writing, clean up when I have time
   public static function simple_user_square_upload($auth, $args, $tabalias, $options, $path) {
     if (empty($options['minimumLocationDate'])) {
       drupal_set_message('Please enter a @minimumLocationDate option to specify minimum square created_on date to look for');
@@ -1136,8 +1137,8 @@ class extension_splash_extensions {
   /*
    * In a similar way to the simple square upload, this function is designed only to be used once, so is not 
    * optimised for speed or elegance.
-   * This will upload the Address/Town/County/Country/Post Code And Over 18 profile field into person_attribute_values on the warehouse.
-   * This is needed as the site went live before the easy_login syncing was working, and the easy login syncing needs a user to be logging
+   * This will upload the Address/Town/County/Country/Post Code/Over 18 and Data Access Policy Agreement profile fields into person_attribute_values on the warehouse.
+   * This is needed as the site went live before the easy_login syncing was working, and the easy login syncing needs a user to be logged
    * in for the sync to work, which is not useful in this situation as some people have already used the site and won't be logging in again soon.
    */
   public static function simple_user_address_upload($auth, $args, $tabalias, $options, $path) {
@@ -1156,6 +1157,11 @@ class extension_splash_extensions {
     //same as above, but for over 18 data that already exists.
     $convertedExistingOver18UploadData=array();
     $convertedExistingOver18UploadIdx=0;
+    //Data Access Policy agreement is also a boolean, so do as above
+    $convertedNewDataAccessUploadData=array();
+    $convertedNewDataAccessUploadIdx=0;
+    $convertedExistingDataAccessUploadData=array();
+    $convertedExistingDataAccessUploadIdx=0;
     
     $convertedExistingUploadDataToDelete=array();
     
@@ -1273,7 +1279,28 @@ class extension_splash_extensions {
           $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][2]=$over18Data;
           $convertedNewOver18UploadIdx++;
         }
-       
+        $reportOptions = array(
+          'dataSource'=>'reports_for_prebuilt_forms/Splash/check_existing_person_attribute_values',
+          'readAuth'=>$auth['read'],
+          'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['dataAccessAttrId'], 'person_id'=>$userData[0]['person_id']),
+        );
+        $existingDataAccessAttrVal = data_entry_helper::get_report_data($reportOptions);
+        if (!empty($user->field_indicia_i_agree['und'][0]['value']))
+          $dataAccessData=$user->field_indicia_i_agree['und'][0]['value'];
+        else
+          $dataAccessData=0;
+        if (!empty($existingDataAccessAttrVal[0]['id'])&&$dataAccessData==1) {
+          $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][0]=$existingDataAccessAttrVal[0]['id'];    
+          $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][1]=$dataAccessData;
+          $convertedExistingDataAccessUploadIdx++;
+        } elseif (!empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==0) {  
+          $convertedExistingUploadDataToDelete[]=$existingDataAccessAttrVal[0]['id'];
+        } elseif (empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==1) {
+          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][0]=$userData[0]['person_id']; 
+          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][1]=$options['dataAccessAttrId'];
+          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][2]=$dataAccessData;
+          $convertedNewDataAccessUploadIdx++;
+        }
       }  
     }
     if (!empty($convertedExistingUploadData)||!empty($convertedNewUploadData)) {
@@ -1284,6 +1311,8 @@ class extension_splash_extensions {
         var existingSyncData = ".json_encode($convertedExistingUploadData).";
         var newOver18SyncData = ".json_encode($convertedNewOver18UploadData).";
         var existingOver18SyncData = ".json_encode($convertedExistingOver18UploadData).";
+        var newDataAccesSyncData = ".json_encode($convertedNewDataAccessUploadData).";
+        var existingDataAccesSyncData = ".json_encode($convertedExistingDataAccessUploadData).";
         var syncDataToDelete = ".json_encode($convertedExistingUploadDataToDelete).";
         for (i=0; i<newSyncData.length; i++) {
           if (newSyncData[i][2].length>0) {
@@ -1357,6 +1386,34 @@ class extension_splash_extensions {
             async:false
           });    
         }
+        for (i=0; i<newDataAccesSyncData.length; i++) {
+          $.ajax({
+            type: 'POST',
+            url: '$postUrl',
+            data: {\"website_id\":".$args['website_id'].",\"person_id\":newDataAccesSyncData[i][0],\"person_attribute_id\":newDataAccesSyncData[i][1],\"text_value\":newDataAccesSyncData[i][2]},
+            success: function (data) {
+              if (typeof data.error !== 'undefined') {
+                alert(data.error);
+              }              
+            },
+            dataType: 'json',
+            async:false
+          });
+        }
+        for (i=0; i<existingDataAccesSyncData.length; i++) {
+          $.ajax({
+            type: 'POST',
+            url: '$postUrl',
+            data: {\"website_id\":".$args['website_id'].",\"id\":existingDataAccesSyncData[i][0],\"text_value\":existingDataAccesSyncData[i][1]},
+            success: function (data) {
+              if (typeof data.error !== 'undefined') {
+                alert(data.error);
+              }              
+            },
+            dataType: 'json',
+            async:false
+          });    
+        }
         alert('Import Complete');
       });";
     }
@@ -1397,6 +1454,10 @@ class extension_splash_extensions {
     } 
     if (empty($options['over18AttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the over 18 field');
+      return false;
+    } 
+    if (empty($options['dataAccessAttrId'])) {
+      drupal_set_message('Please enter the person_attribute_id that holds the data access policy agreement selection');
       return false;
     } 
   }
