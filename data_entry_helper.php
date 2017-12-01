@@ -5624,7 +5624,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    */
   private static function get_list_items_from_options($options, $selectedItemAttribute) {
     global $indicia_templates;
-    if (empty($options['lookupValues']) && empty($options['report']) && empty($options['table'])) {
+    if (!isset($options['lookupValues']) && empty($options['report']) && empty($options['table'])) {
       $name = empty($options['id']) ? $options['fieldname'] : $options['id'];
       throw new exception("Control $name needs a method of obtaining a list of options.");
     }
