@@ -38,11 +38,15 @@ class extension_pantheon {
    * Updates the page title with dynamic values.
    *
    * Replaces the following:
-   * * {sample_id} with the current ID (loaded from the URL query parameter dynamic-sample_id)
-   * * {term:<queryparam>} with a term from the warehouse. Replace <queryparam> with the
-   *   name of a URL query string parameter that contains the value of the termlists_term
-   *   record to load the term for.
-   * * {attr:<id>} with the caption of the taxa taxon list attribute with the given ID.
+   * * {sample_id} with the current ID (loaded from the URL query parameter
+   *   dynamic-sample_id)
+   * * {sample_name} - builds a name for the sample from the ID, sample type
+   *   (list or sample), date, grid ref and location name.
+   * * {term:<queryparam>} with a term from the warehouse. Replace <queryparam>
+   *   with the name of a URL query string parameter that contains the value of
+   *   the termlists_term record to load the term for.
+   * * {attr:<id>} with the caption of the taxa taxon list attribute with the
+   *   given ID.
    *
    * @return string
    *   Empty string as no control output HTML required.
@@ -57,6 +61,33 @@ class extension_pantheon {
     }
     if (!empty($_GET['dynamic-sample_id'])) {
       $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
+      if ($_GET['dynamic-sample_type'] === 'scratchpad') {
+        $name = 'List ' . $_GET['dynamic-sample_id'];
+        $scratchpad = data_entry_helper::get_population_data(array(
+          'table' => 'scratchpad_list',
+          'extraParams' => $auth['read'] + array('id' => $_GET['dynamic-sample_id']),
+          'columns' => 'title',
+        ));
+        $name .= ' [' . $scratchpad[0]['title'] . ']';
+      }
+      else {
+        $name = 'Sample ' . $_GET['dynamic-sample_id'];
+        $sample = data_entry_helper::get_population_data(array(
+          'report' => 'library/samples/filterable_explore_list',
+          'extraParams' => $auth['read'] + array('sample_id' => $_GET['dynamic-sample_id'])
+        ));
+        if (!isset($sample['error']) && count($sample) > 0) {
+          $parts = [
+            $sample[0]['date'],
+            $sample[0]['entered_sref']
+          ];
+          if (!empty($sample[0]['location_name'])) {
+            $parts[] = $sample[0]['location_name'];
+          }
+          $name .= ' [' . implode(', ', $parts) . ']';
+        }
+      }
+      $title = str_replace('{sample_name}', $name, $title);
     }
     if (preg_match('/{term:(?P<param>.+)}/', $title, $matches) && !empty($_GET[$matches['param']])) {
       $terms = data_entry_helper::get_population_data(array(
@@ -85,8 +116,9 @@ class extension_pantheon {
   /**
    * Outputs the list of buttons to appear under a Pantheon report.
    *
-   * Also enables use of the jsPlumb library for connections between report output boxes.
-   * Download the latest jsPlumb JS file into sites/all/libraries/jsPlumb/jsPlumb.js.
+   * Also enables use of the jsPlumb library for connections between report
+   * output boxes. Download the latest jsPlumb JS file into
+   * sites/all/libraries/jsPlumb/jsPlumb.js.
    *
    * @param array $options
    *   Array with the following options:
@@ -113,7 +145,7 @@ class extension_pantheon {
     }
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
 <li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Feeding guilds</a></li>
-<li><a id="osiris-link" class="button" href="' . hostsite_get_url('osiris') . '">Habitats &amp; resources</a></li>
+<li><a id="habitats-resources-link" class="button" href="' . hostsite_get_url('habitats-resources') . '">Habitats &amp; resources</a></li>
 <li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Habitat scores</a></li>
 <li><a id="associations-link" class="button" href="' . hostsite_get_url('associations') . '">Associations</a></li>
 <li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
