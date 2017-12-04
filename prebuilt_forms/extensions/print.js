@@ -24,61 +24,36 @@ jQuery(document).ready(function enablePdf($) {
    * Tidies up various aspects of the HTML output to make it suitable for printing/PDF.
    */
   function prepareHtmlForPdf() {
-    // Remove Drupal tabs
-    $('div#tasks').remove();
-    // Clean up jQuery UI styling
-    $('.ui-widget').removeClass('ui-widget');
-    $('.ui-widget-header').removeClass('ui-widget-header');
-    $('.ui-widget-content').removeClass('ui-widget-content');
-    // Remove active stuff on grids
-    $('tr.filter-row').remove();
-    $('.col-actions').remove();
-    $('.col-picker').remove();
-    $('tfoot .pager').remove();
-    $('div.report-download-link').closest('tr').remove();
-    // Tidy other table related styling for print.
-    $('table.report-grid').css('width', '100%');
-    $('table.report-grid').css('width', '100%');
-    $('tr.odd').removeClass('odd');
-    $('tr').css('padding', '0');
-    $('td').css('padding', '0 4px');
-    $('th').css('border-bottom-color', '');
-    $('tr').css('border-bottom', 'solid silver 1px');
-    $('table.report-grid audio').remove();
     // Move the page title into the report
     $(indiciaData.printSettings.includeSelector).prepend($(indiciaData.printSettings.titleSelector));
     // Transcribe tab headings into header elements.
-    $.each($('ul.ui-tabs-nav li a'), function() {
-      $($(this).attr('href')).prepend('<h2>' + $(this).text() + '</h2>');
+    $.each($('ul.ui-tabs-nav li a'), function addHeader() {
+      $($(this).attr('href')).prepend('<h2 class="print-header">' + $(this).text() + '</h2>');
     });
-    // Show all tabs
-    $('ul.ui-tabs-nav').remove();
-    $('ul.ui-tabs-panel').css('padding', 0);
-    $('#controls > div[aria-hidden="true"]').show();
-    // Pad the outer content
-    $('div.node-content').css('padding', '10px');
     // Clean up broken images
     $('img').each(function checkImage() {
       if (!this.complete || typeof this.naturalWidth === 'undefined' || this.naturalWidth === 0) {
         $(this).remove();
       }
     });
-
     // Split tabs onto different pages.
     $('.ui-tabs-panel').after('<div class="html2pdf__page-break"></div>');
     // Not the last page
     $('.html2pdf__page-break:last').remove();
   }
 
+  /**
+   * Once the page has all data loaded, trigger conversion to PDF.
+   */
   function doConversion() {
+    // Apply required HTML changes.
     if (!indiciaData.htmlPreparedForPdf) {
       prepareHtmlForPdf();
       indiciaData.htmlPreparedForPdf = true;
     }
+    // Use a CSS class to clean up page style.
+    $(indiciaData.printSettings.includeSelector).addClass('printing');
     shrinkReportsIfNeeded();
-    if (indiciaData.printSettings.excludeSelector !== '') {
-      $(indiciaData.printSettings.excludeSelector).remove();
-    }
 
     // Create the PDF
     html2pdf($(indiciaData.printSettings.includeSelector)[0], {
@@ -92,13 +67,18 @@ jQuery(document).ready(function enablePdf($) {
         format: 'a4'
       }
     });
-    $('#show-pdf-options').show();
+    //
+    $(indiciaData.printSettings.includeSelector).removeClass('printing');
     $('div.loading').remove();
   }
 
-  window.reportLoaded = function checkIfAllReportsLoaded() {
+  window.reportLoaded = function checkIfAllReportsLoaded(div) {
     // Count down until there are zero reports left to load, when we will be ready to prepare the PDF.
     indiciaData.reportsToLoad--;
+    // Ensure any existing report grid callbacks that we replaced are still called.
+    if (typeof div.settings.originalCallback !== 'undefined') {
+      window[div.settings.originalCallback](div);
+    }
     if (indiciaData.reportsToLoad === 0) {
       doConversion();
     }
@@ -108,7 +88,6 @@ jQuery(document).ready(function enablePdf($) {
    * Initiates the process of converting the page HTML to a PDF document.
    */
   function convertToPdf() {
-    $('#show-pdf-options').hide();
     $('body').append('<div class="loading">Loading&#8230;</div>');
     $.fancybox.close();
     if (typeof indiciaData.reports !== 'undefined') {
@@ -122,6 +101,9 @@ jQuery(document).ready(function enablePdf($) {
           // Reload the report grid if not showing all data or never loaded.
           if (typeof this[0].settings.recordCount === 'undefined'
               || this[0].settings.recordCount > this[0].settings.itemsPerPage) {
+            if (typeof this[0].settings.callback !== 'undefined') {
+              this[0].settings.originalCallback = this[0].settings.callback;
+            }
             this[0].settings.callback = 'reportLoaded';
             this[0].settings.itemsPerPage = indiciaData.printSettings.maxRecords;
             this.reload(false);
