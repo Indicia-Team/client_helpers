@@ -551,14 +551,14 @@ class filter_sample_id extends FilterBase {
       'lookupValues' => array(
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most')
+        '<=' => lang::get('is at most'),
       ),
-      'controlWrapTemplate' => 'justControl'
+      'controlWrapTemplate' => 'justControl',
     ));
     $r .= data_entry_helper::text_input(array(
       'fieldname' => 'sample_id',
       'class' => 'control-width-2',
-      'controlWrapTemplate' => 'justControl'
+      'controlWrapTemplate' => 'justControl',
     ));
     $r .= '</div>';
     return $r;
@@ -600,7 +600,7 @@ class filter_quality extends FilterBase {
         'A' => lang::get('Answered records only'),
         'R' => lang::get('Not accepted records only'),
         'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
-        'DR' => lang::get('Queried or not accepted records')
+        'DR' => lang::get('Queried or not accepted records'),
       )
     ));
     $r .= data_entry_helper::select(array(
@@ -609,7 +609,7 @@ class filter_quality extends FilterBase {
       'lookupValues' => array(
         '' => lang::get('Not filtered'),
         'P' => lang::get('Only include records that pass all automated checks'),
-        'F' => lang::get('Only include records that fail at least one automated check')
+        'F' => lang::get('Only include records that fail at least one automated check'),
       )
     ));
     $r .= data_entry_helper::select(array(
@@ -618,7 +618,7 @@ class filter_quality extends FilterBase {
       'lookupValues' => array(
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most')
+        '<=' => lang::get('is at most'),
       ),
       'afterControl' => data_entry_helper::select(array(
         'fieldname' => 'identification_difficulty',
@@ -628,9 +628,9 @@ class filter_quality extends FilterBase {
           2 => 2,
           3 => 3,
           4 => 4,
-          5 => 5
+          5 => 5,
         ),
-        'controlWrapTemplate' => 'justControl'
+        'controlWrapTemplate' => 'justControl',
       ))
     ));
     $r .= data_entry_helper::select([
@@ -671,7 +671,7 @@ class filter_quality_sample extends FilterBase {
         '!R' => lang::get('Exclude not accepted records'),
         '!D' => lang::get('Exclude queried or not accepted records'),
         'all' => lang::get('All records'),
-        'R' => lang::get('Not accepted records only')
+        'R' => lang::get('Not accepted records only'),
       )
     ));
     $r .= data_entry_helper::select(array(
@@ -727,7 +727,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing'])
+        'extraParams' => array('sharing' => $options['sharing']),
       ));
       if (count($sources) > 1) {
         $r .= '<div id="filter-websites" class="filter-popup-columns"><h3>' . lang::get('Websites') . '</h3><p>' .
@@ -746,7 +746,7 @@ class filter_source extends FilterBase {
     if (isset($options['runningOnWarehouse']) && $options['runningOnWarehouse'] == TRUE) {
       $sources = data_entry_helper::get_population_data(array(
         'table' => 'survey',
-        'extraParams' => $readAuth + array('view' => 'detail', 'website_id' => $options['website_id'])
+        'extraParams' => $readAuth + array('view' => 'detail', 'website_id' => $options['website_id']),
       ));
       $titleToDisplay = 'title';
     }
@@ -756,7 +756,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing'])
+        'extraParams' => array('sharing' => $options['sharing']),
       ));
       $titleToDisplay = 'fulltitle';
     }
@@ -774,7 +774,7 @@ class filter_source extends FilterBase {
       'readAuth' => $readAuth,
       'caching' => TRUE,
       'cachePerUser' => FALSE,
-      'extraParams' => array('sharing' => $options['sharing'])
+      'extraParams' => array('sharing' => $options['sharing']),
     );
     // If in the warehouse then we are only interested in the website for the milestone we are editing.
     if (isset($options['website_id'])) {
@@ -805,34 +805,55 @@ class filter_source extends FilterBase {
 /**
  * Code to output a standardised report filtering panel.
  *
- * Filters can be saved and loaded by each user. Additionally, filters can define permissions to a certain task, e.g. they can be used to define the
- * context within which someone can verify. In this case they provide the "outer limit" of the available records.
- * Requires a [map] control on the page. If you don't want a map, the current option is to include one anyway and use css to hide the #map-container div.
+ * Filters can be saved and loaded by each user. Additionally, filters can
+ * define permissions to a certain task, e.g. they can be used to define the
+ * context within which someone can verify. In this case they provide the
+ * "outer limit" of the available records.
+ * Requires a [map] control on the page. If you don't want a map, the current
+ * option is to include one anyway and use css to hide the #map-container div.
  *
  * @param array $readAuth
  *   Pass read authorisation tokens.
- * @param array $options Options array with the following possibilities:
- *   sharing - define the record sharing task that is being filtered against. Options are reporting (default),
- *   peer_review, verification, moderation, data_flow, editing.
- *   context_id - can also be passed as URL parameter. Force the initial selection of a particular context (a record
- *   which has defines_permissions=TRUE in the
- *   filters table. Set to "default" to select their profile verification settings when sharing=verification.
- *   filter_id - can also be passed as URL parameter. Force the initial selection of a particular filter record in the
- *   filters table.
- *   filterTypes - allows control of the list of filter panels available, e.g. to turn one off. Associative array keyed
- *   by category
- *   so that the filter panels can be grouped (use a blank key if not required). The array values are an array of or
- *   strings with a comma separated list
- *   of the filter types to included in the category - options are what, where, when, who, quality, source.
- *   filter-#name# - set the initial value of a report filter parameter #name#.
- *   allowLoad - set to FALSE to disable the load bar at the top of the panel.
- *   allowSave - set to FALSE to disable the save bar at the foot of the panel.
- *   presets - provide an array of preset filters to provide in the filters drop down. Choose from my-records, my-groups
- *   (uses your list of taxon groups in the user account), my-locality (uses your recording locality from the user
- *   account), my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records,
- *   queried-records, answered-records, accepted-records, not-accepted-records.
- *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard
- *   filter user interface.
+ * @param array $options
+ *   Options array with the following possibilities:
+ *   * sharing - define the record sharing task that is being filtered against.
+ *     Options are reporting (default), peer_review, verification, moderation,
+ *     data_flow, editing.
+ *   * context_id - can also be passed as URL parameter. Force the initial
+ *     selection of a particular context (a record which has
+ *     defines_permissions=TRUE in the
+ *   * filters table. Set to "default" to select their profile verification
+ *     settings when sharing=verification.
+ *   * filter_id - can also be passed as URL parameter. Force the initial
+ *     selection of a particular filter record in the filters table.
+ *   * filterTypes - allows control of the list of filter panels available,
+ *     e.g. to turn one off. Associative array keyed by category  so that the
+ *     filter panels can be grouped (use a blank key if not required). The
+ *     array values are an array of or strings with a comma separated list of
+ *     the filter types to included in the category - options are what, where,
+ *     when, who, quality, source.
+ *   * filter-#name# - set the initial value of a report filter parameter
+ *     #name#.
+ *   * allowLoad - set to FALSE to disable the load bar at the top of the panel.
+ *   * allowSave - set to FALSE to disable the save bar at the foot of the
+ *     panel.
+ *   * presets - provide an array of preset filters to provide in the filters
+ *     drop down. Choose from my-records, my-groups (uses your list of taxon
+ *     groups in the user account), my-locality (uses your recording locality
+ *     from the user  account), my-groups-locality (uses taxon groups and
+ *     recording locality from the user account), my-queried-records,
+ *     queried-records, answered-records, accepted-records,
+ *     not-accepted-records.
+ *   * generateFilterListCallback - a callback to allow custom versions of the
+ *     filters to be used, utilising the standard filter user interface.
+ *   * taxaTaxonListAttributeTerms - a JSON encoded list of groups of taxa
+ *     taxon list attributes. Each group will be added to the What panel's
+ *     Other flags tab allowing the user to filter for terms linked via the
+ *     attributes to the species. For example, if habitat data can be in
+ *     taxa_taxon_list_attributes ID 1 or 2 and food data in attributes 3 or 4
+ *     then the value can be set to {"Habitat":[1,2],"Food":[3,4]} resulting
+ *     in 2 controls being added to the Other flags tab for filtering on this
+ *     information.
  * @param int $website_id
  *   The current website's warehouse ID.
  * @param string $hiddenStuff
@@ -871,9 +892,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'my-accepted-records',
       'my-groups',
       'my-locality',
-      'my-groups-locality'
+      'my-groups-locality',
     ),
-    'entity' => 'occurrence'
+    'entity' => 'occurrence',
   ), $options);
   // Introduce some extra quick filters useful for verifiers.
   if ($options['sharing'] === 'verification') {
@@ -881,7 +902,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'queried-records',
       'answered-records',
       'accepted-records',
-      'not-accepted-records'
+      'not-accepted-records',
     ), $options['presets']);
   }
   if ($options['entity'] === 'sample') {
