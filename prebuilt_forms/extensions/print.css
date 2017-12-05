@@ -20,7 +20,7 @@
 .printing table.report-grid .col-actions,
 .printing table.report-grid tfoot,
 .printing table.report-grid audio,
-img.col-picker {
+.printing .report-grid-container img.col-picker {
   display: none;
 }
 /* Tidy report table appearance. */
