@@ -89,6 +89,18 @@ class iform_report_calendar_summary_2 {
     return
       array(
         array(
+            'name'=>'taxon_column',
+            'caption'=>'Display Taxon field',
+            'description'=>'When displaying a taxon, choose what to use.',
+            'type' => 'select',
+            'lookupValues' => array('common_name'=>'Common Name',
+                'preferred_taxon'=>'Preferred Taxon (usually Latin)'),
+            'required' => true,
+            'default' => 'taxon',
+            'group'=>'General Settings'
+        ),
+        
+        array(
           'name' => 'includeRawData',
           'caption' => 'Include raw data',
           'description' => 'Defines whether to include raw data in the chart/grid.',
@@ -225,28 +237,28 @@ class iform_report_calendar_summary_2 {
           'required' => false,
           'group'=>'Controls'
         ),
-      		array(
-      				'name' => 'report_group',
-      				'caption' => 'Report group',
-      				'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
-      				'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
-      				'type' => 'text_input',
-      				'default' => 'report',
-      				'group' => 'Controls'
-      		),
-      		array(
-      				'name' => 'remember_params_report_group',
-      				'caption' => 'Remember report parameters group',
-      				'description' => 'Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded. '.
-      				'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
-      				'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
-      				'requires cookies to be enabled on the browser.',
-      				'type'=>'text_input',
-      				'required'=>false,
-      				'default' => '',
-      				'group'=>'Controls'
-      		),
-      		
+        array(
+          'name' => 'report_group',
+          'caption' => 'Report group',
+          'description' => 'When using several reports on a single page (e.g. <a href="http://code.google.com/p/indicia/wiki/DrupalDashboardReporting">dashboard reporting</a>) '.
+          'you must ensure that all reports that share a set of input parameters have the same report group as the parameters report.',
+          'type' => 'text_input',
+          'default' => 'report',
+          'group' => 'Controls'
+        ),
+        array(
+          'name' => 'remember_params_report_group',
+          'caption' => 'Remember report parameters group',
+          'description' => 'Enter any value in this parameter to allow the report to save its parameters for the next time the report is loaded. '.
+          'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
+          'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
+          'requires cookies to be enabled on the browser.',
+          'type'=>'text_input',
+          'required'=>false,
+          'default' => '',
+          'group'=>'Controls'
+        ),
+
         array(
           'name' => 'sampleFields',
           'caption' => 'Sample Fields',
@@ -338,6 +350,17 @@ class iform_report_calendar_summary_2 {
           'group' => 'Downloads'
         ),
         array(
+          'name' => 'download_report_1_param_presets',
+          'caption' => 'Download Report 1Preset Parameter Values',
+          'description' => 'To provide preset values for any report parameter and avoid the user having to enter them, enter each parameter into this '.
+              'box one per line. Each parameter is followed by an equals then the value, e.g. survey_id=6. You can use {user_id} as a value which will be replaced by the '.
+              'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
+          'type' => 'textarea',
+          'required' => false,
+          'group' => 'Downloads'
+        ),
+
+        array(
           'name'=>'Download2Caption',
           'caption'=>'Report 2 Download Caption',
           'description'=>'Caption for the second download report.',
@@ -352,7 +375,7 @@ class iform_report_calendar_summary_2 {
           'description'=>'Select the report to provide the second download report.',
           'type'=>'report_helper::report_picker',
           'required' => false,
-          'group'=>'Downloads'
+          'group' => 'Downloads'
         ),
         array(
           'name'=>'download_report_2_format',
@@ -371,6 +394,17 @@ class iform_report_calendar_summary_2 {
           'default' => 'csv',
           'group' => 'Downloads'
         ),
+        array(
+          'name' => 'download_report_2_param_presets',
+          'caption' => 'Download Report 2 Preset Parameter Values',
+          'description' => 'To provide preset values for any report parameter and avoid the user having to enter them, enter each parameter into this '.
+              'box one per line. Each parameter is followed by an equals then the value, e.g. survey_id=6. You can use {user_id} as a value which will be replaced by the '.
+              'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
+          'type' => 'textarea',
+          'required' => false,
+          'group' => 'Downloads'
+        ),
+
         array(
           'name'=>'Download3Caption',
           'caption'=>'Report 3 Download Caption',
@@ -406,6 +440,17 @@ class iform_report_calendar_summary_2 {
           'group' => 'Downloads'
         ),
         array(
+          'name' => 'download_report_3_param_presets',
+          'caption' => 'Download Report 3 Preset Parameter Values',
+          'description' => 'To provide preset values for any report parameter and avoid the user having to enter them, enter each parameter into this '.
+              'box one per line. Each parameter is followed by an equals then the value, e.g. survey_id=6. You can use {user_id} as a value which will be replaced by the '.
+              'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
+          'type' => 'textarea',
+          'required' => false,
+          'group' => 'Downloads'
+        ),
+
+        array(
           'name'=>'Download4Caption',
           'caption'=>'Report 4 Download Caption',
           'description'=>'Caption for the fourth download report.',
@@ -439,6 +484,17 @@ class iform_report_calendar_summary_2 {
           'default' => 'csv',
           'group' => 'Downloads'
         ),
+        array(
+          'name' => 'download_report_4_param_presets',
+          'caption' => 'Download Report 4 Preset Parameter Values',
+          'description' => 'To provide preset values for any report parameter and avoid the user having to enter them, enter each parameter into this '.
+              'box one per line. Each parameter is followed by an equals then the value, e.g. survey_id=6. You can use {user_id} as a value which will be replaced by the '.
+              'user ID from the CMS logged in user or {username} as a value replaces with the logged in username.',
+          'type' => 'textarea',
+          'required' => false,
+          'group' => 'Downloads'
+        ),
+
         array(
           'name'=>'includeFilenameTimestamps',
           'caption'=>'Include Timestamp in Filename',
@@ -1416,7 +1472,8 @@ jQuery('#".$ctrlid."').change(function(){
             'includeChartTotalSeries','includeChartItemSeries',
             'includeRawData', 'includeSummaryData', 'includeEstimatesData',
             'includeRawGridDownload', 'includeSummaryGridDownload',
-            'includeEstimatesGridDownload', 'sampleFields'
+            'includeEstimatesGridDownload', 'sampleFields',
+            'taxon_column'
       ));
     if (isset($_GET['outputSeries']))
       $reportOptions['outputSeries']=$_GET['outputSeries']; // default is all
@@ -1447,7 +1504,7 @@ jQuery('#".$ctrlid."').change(function(){
           'fieldprefix'=>'locAttr',
           'extraParams'=>$auth,
           'survey_id'=>self::$siteUrlParams[self::$SurveyKey],
-            'caching' => self::$siteUrlParams[self::$cacheKey]['value']
+          'caching' => self::$siteUrlParams[self::$cacheKey]['value']
       );
       if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
         $attrArgs['location_type_id'] = self::$siteUrlParams[self::$locationTypeKey]['value'];
@@ -1531,7 +1588,12 @@ jQuery('#".$ctrlid."').change(function(){
           $reportOpts = array('caption' => lang::get($args['Download'.$i.'Caption']),
                 'dataSource' => $args['download_report_'.$i],
                 'filename' => $reportOptions['downloadFilePrefix'].preg_replace('/[^A-Za-z0-9]/i', '', lang::get($args['Download'.$i.'Caption'])).(isset($reportOptions['includeReportTimeStamp']) && $reportOptions['includeReportTimeStamp'] ? '_'.date('YmdHis') : ''));
-          if(isset($args['download_report_'.$i.'_format'])) $reportOpts['format']=$args['download_report_'.$i.'_format'];
+          if(isset($args['download_report_'.$i.'_format'])) {
+            $reportOpts['format'] = $args['download_report_'.$i.'_format'];
+          }
+          if(isset($args['download_report_'.$i.'_param_presets'])) {
+            $reportOpts['param_presets'] = get_options_array_with_user_data($args['download_report_'.$i.'_param_presets']);
+          }
           $reportOptions['downloads'][] = $reportOpts;
         }
       }
