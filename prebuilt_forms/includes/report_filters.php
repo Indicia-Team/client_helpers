@@ -198,6 +198,41 @@ class filter_what extends FilterBase {
         'N' => lang::get('Exclude marine species')
       )
     ));
+    if (!empty($options['taxaTaxonListAttributeTerms'])) {
+      $allAttrIds = [];
+      $idx = 0;
+      foreach ($options['taxaTaxonListAttributeTerms'] as $label => $attrIds) {
+        $allAttrIds += $attrIds;
+        $attrs = data_entry_helper::get_population_data([
+          'table' => 'taxa_taxon_list_attribute',
+          'extraParams' => $readAuth + [
+            'query' => json_encode(['in' => ['id' => $attrIds]])
+          ],
+        ]);
+        $termlistIds = [];
+        foreach ($attrs as $attr) {
+          if (!empty($attr['termlist_id'])) {
+            $termlistIds[] = $attr['termlist_id'];
+          }
+        }
+        $r .= data_entry_helper::sub_list([
+          'label' => $label,
+          'fieldname' => "taxa_taxon_list_attribute_termlist_term_ids:$idx",
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'addToTable' => FALSE,
+          'extraParams' => $readAuth + [
+            'view' => 'cache',
+            'query' => json_encode(['in' => ['termlist_id' => $termlistIds]]),
+          ],
+        ]);
+        $idx++;
+      }
+      helper_base::$javascript .= 'indiciaData.taxaTaxonListAttributeIds = ' . json_encode($allAttrIds) . ";\n";
+      helper_base::$javascript .= 'indiciaData.taxaTaxonListAttributeLabels = ' .
+        json_encode(array_keys($options['taxaTaxonListAttributeTerms'])) . ";\n";
+    }
     $r .= '</div>';
     $r .= "</div>\n";
     data_entry_helper::enable_tabs(array(
