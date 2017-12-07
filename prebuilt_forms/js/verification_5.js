@@ -758,7 +758,7 @@ indiciaData.rowIdToReselect = false;
       '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
       '<select id="verify-template" >' +
       '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select><br /></span>';
-    
+
     html += '<label class="auto">' + indiciaData.popupTranslations.commentLabel + ':</label>' +
       '<textarea id="verify-comment" rows="5" cols="80"></textarea><br />';
 
