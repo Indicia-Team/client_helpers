@@ -301,7 +301,7 @@ indiciaData.rowIdToReselect = false;
     return '<form class="popup-form"><fieldset><legend>Add new query</legend>' +
       (workflow ? '<label><input type="checkbox" id="query-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' : '') +
       '<textarea id="query-comment-text" rows="30"></textarea><br>' +
-      '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), jQuery(\'#query-confidential:checked\').length, false, \'t\', true); jQuery.fancybox.close();">' +
+      '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), null, jQuery(\'#query-confidential:checked\').length, false, \'t\', true); jQuery.fancybox.close();">' +
       'Add query to comments log</button></fieldset></form>';
   }
 
@@ -439,7 +439,7 @@ indiciaData.rowIdToReselect = false;
         });
         // save a comment to indicate that the mail was sent
         indiciaFns.saveComment(indiciaData.commentTranslations.emailed.replace('{1}', email.subtype === 'R' ?
-          indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert),
+          indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert), null,
           ($('#email-confidential:checked').length > 0 ? 't' : 'f'), true, 't', true);
       }
 
@@ -479,9 +479,9 @@ indiciaData.rowIdToReselect = false;
     $('#comment-list').prepend(html);
   }
 
-  indiciaFns.saveComment = function (text, confidential, email, query, reloadGridAfterSave) {
+  indiciaFns.saveComment = function (text, reference, confidential, email, query, reloadGridAfterSave) {
     var data;
-    if (typeof confidential === 'undefined' || confidential == 0 || confidential == 'f') {
+    if (typeof confidential === 'undefined' || confidential == 0 || confidential === 'f') {
       confidential = 'f';
     } else {
       confidential = 't';
@@ -493,6 +493,7 @@ indiciaData.rowIdToReselect = false;
       website_id: indiciaData.website_id,
       'occurrence_comment:occurrence_id': occurrenceId,
       'occurrence_comment:comment': text,
+      'occurrence_comment:reference': reference,
       'occurrence_comment:person_name': indiciaData.username,
       'occurrence_comment:query': query
     };
@@ -516,6 +517,9 @@ indiciaData.rowIdToReselect = false;
           showComment(text, query, indiciaData.username);
           if ($('#comment-text')) {
             $('#comment-text').val('');
+          }
+          if ($('#comment-reference')) {
+            $('#comment-reference').val('');
           }
           if (typeof reloadGridAfterSave !== 'undefined' && reloadGridAfterSave === true) {
             reloadGrid();
@@ -1612,7 +1616,7 @@ indiciaData.rowIdToReselect = false;
       email.subject = $('#email-subject').val();
       email.body = $('#email-body').val();
 
-      indiciaFns.saveComment($('#log-response-comment').val(), jQuery('#log-response-confidential:checked').length, true, 'f', false);
+      indiciaFns.saveComment($('#log-response-comment').val(), null, jQuery('#log-response-confidential:checked').length, true, 'f', false);
     }
     return false;
   }

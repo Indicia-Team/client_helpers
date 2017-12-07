@@ -43,7 +43,7 @@ ul.gallery li {
 }
 
 #action-buttons {
-  button {    
+  button {
     width: $verify-button-width;
     margin: 0 $verify-button-margin 2px 0;
     height: 26px;
@@ -184,6 +184,14 @@ ul.gallery li {
       padding: 4px;
       vertical-align: middle;
       @include border-radius(4px);
+    }
+  }
+  #ctrl-wrap-comment-reference {
+    input, label {
+      display: block;
+      width: 100%;
+      margin: 0;
+      box-sizing: border-box;
     }
   }
 

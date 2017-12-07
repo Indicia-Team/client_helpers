@@ -1283,7 +1283,10 @@ HTML
         $r .= self::ago($commentTime);
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
-      $r .= "<div>$c</div>";
+      $r .= "<p>$c</p>";
+      if ($comment['reference']) {
+        $r .= "<p><em>$comment[reference]</em></p>";
+      }
       if (!empty($comment['correspondence_data'])) {
         $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
         $correspondenceData = json_decode($data, TRUE);
@@ -1307,11 +1310,17 @@ HTML
       $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
       if ($allowConfidential) {
         $r .= '<label><input type="checkbox" id="comment-confidential" /> ' . lang::get('Confidential?') . '</label><br>';
-      } else {
+      }
+      else {
         $r .= '<input type="hidden" id="comment-confidential" value="f" />';
       }
-      $r .= '<textarea id="comment-text"></textarea><br/>';
-      $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-confidential\:checked\').length, false);">' . lang::get('Save') . '</button>';
+      $r .= '<textarea id="comment-text"></textarea>';
+      $r .= data_entry_helper::text_input([
+        'label' => lang::get('External reference or other source'),
+        'fieldname' => 'comment-reference'
+      ]);
+      $r .= '<button type="button" class="default-button" ' .
+        'onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-reference\').val(), jQuery(\'#comment-confidential\:checked\').length, false);">' . lang::get('Save') . '</button>';
       $r .= '</fieldset></form>';
     }
     return $r;
