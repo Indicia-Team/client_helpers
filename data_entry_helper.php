@@ -4009,18 +4009,18 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
       if (count($options['usersPreferredGroups'])) {
         self::$javascript .= 'indiciaData.usersPreferredTaxonGroups = [' . implode(',', $options['usersPreferredGroups']) . "];\n";
       }
-      self::addLanguageStringsToJs('speciesChecklistFilter', array(
-          'configureFilter' => lang::get('Configure the filter applied to species names you are searching for'),
-          'preferredGroupsOptionLabel' => lang::get('Input species from the preferred list of species groups from your user account.'),
-          'singleGroupOptionLabel' => lang::get('Input species from the following species group:'),
-          'chooseSpeciesLabel' => lang::get('Choose species names available for selection'),
-          'namesOptionAllNamesLabel' => lang::get('All names including common names and synonyms'),
-          'namesOptionCommonNamesLabel' => lang::get('Common names only'),
-          'namesOptionCommonPrefLatinNamesLabel' => lang::get('Common names and preferred latin names only'),
-          'namesOptionPrefLatinNamesLabel' => lang::get('Preferred latin names only'),
-          'apply' => lang::get('Apply'),
-          'cancel' => lang::get('Cancel')
-      ));
+      self::addLanguageStringsToJs('speciesChecklistFilter', [
+        'configureFilter' => 'Configure the filter applied to species names you are searching for',
+        'preferredGroupsOptionLabel' => 'Input species from the preferred list of species groups from your user account.',
+        'singleGroupOptionLabel' => 'Input species from the following species group:',
+        'chooseSpeciesLabel' => 'Choose species names available for selection',
+        'namesOptionAllNamesLabel' => 'All names including common names and synonyms',
+        'namesOptionCommonNamesLabel' => 'Common names only',
+        'namesOptionCommonPrefLatinNamesLabel' => 'Common names and preferred latin names only',
+        'namesOptionPrefLatinNamesLabel' => 'Preferred latin names only',
+        'apply' => 'Apply',
+        'cancel' => 'Cancel',
+      ]);
       self::$javascript .= <<<JS
 indiciaData.speciesChecklistFilterOpts = {
   nameFilter: $filtersJson,

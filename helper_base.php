@@ -521,10 +521,13 @@ class helper_base extends helper_config {
 
   /**
    * Utility function to insert a list of translated text items for use in JavaScript.
+   *
    * @param string $group
-   * @param array $strings Associative array of keys and texts to translate.
+   *   Name of the group of strings.
+   * @param array $strings
+   *   Associative array of keys and texts to translate.
    */
-  protected static function addLanguageStringsToJs($group, $strings) {
+  public static function addLanguageStringsToJs($group, array $strings) {
     self::$javascript .= <<<JS
 if (typeof indiciaData.lang === "undefined") {
   indiciaData.lang = {};
@@ -533,8 +536,8 @@ indiciaData.lang.$group = {};
 
 JS;
     foreach ($strings as $key => $text) {
-      self::$javascript .= "indiciaData.lang.speciesChecklistFilter.$key = '" .
-          str_replace("'", "\'", $text) . "';\n";
+      self::$javascript .= "indiciaData.lang.$group.$key = '" .
+          str_replace("'", "\'", lang::get($text)) . "';\n";
     }
   }
 
