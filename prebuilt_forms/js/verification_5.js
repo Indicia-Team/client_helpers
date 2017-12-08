@@ -14,6 +14,16 @@ indiciaData.rowIdToReselect = false;
   var email = { to: '', from: '', subject: '', body: '', type: '' };
 
   /**
+   * A public function to allow any custom scripts to know what record is being checked.
+   */
+  indiciaFns.getCurrentVerificationRecord = function foo() {
+    return {
+      occurrenceId: occurrenceId,
+      currRec: currRec
+    };
+  };
+
+  /**
    * Resets to the state where no grid row is shown
    */
   function clearRow() {
