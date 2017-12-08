@@ -198,6 +198,28 @@ class filter_what extends FilterBase {
         'N' => lang::get('Exclude marine species')
       )
     ));
+    if (!empty($options['allowConfidential'])) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Confidential records'),
+        'fieldname' => 'confidential',
+        'lookupValues' => [
+          'f' => lang::get('Exclude confidential records'),
+          't' => lang::get('Only confidential records'),
+          'all' => lang::get('Include both confidential and non-confidential records'),
+        ],
+        'defaultValue' => 'f'
+      ]);
+    }
+    if (!empty($options['allowUnreleased'])) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Unreleased records'),
+        'fieldname' => 'release_status',
+        'lookupValues' => [
+          'R' => lang::get('Exclude unreleased records'),
+          'A' => lang::get('Include unreleased records'),
+        ],
+      ]);
+    }
     if (!empty($options['taxaTaxonListAttributeTerms'])) {
       $allAttrIds = [];
       $idx = 0;
@@ -1266,19 +1288,26 @@ HTML;
 
   }
   $r .= '</div>';
-  report_helper::$javascript .= "indiciaData.lang.CreateAFilter='" . lang::get('Create a filter') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.ModifyFilter='" . lang::get('Modify filter') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterSaved='" . lang::get('The filter has been saved') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterDeleted='" . lang::get('The filter has been deleted') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.ConfirmFilterChangedLoad='" . lang::get('Do you want to load the selected filter and lose your current changes?') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterExistsOverwrite='" . lang::get('A filter with that name already exists. Would you like to overwrite it?') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.AutochecksFailed='" . lang::get('Automated checks failed') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.AutochecksPassed='" . lang::get('Automated checks passed') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.IdentificationDifficulty='" . lang::get('Identification difficulty') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.HasPhotos='" . lang::get('Only include records which have photos') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.HasNoPhotos='" . lang::get("Exclude records which have photos") . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.ConfirmFilterDelete='" . lang::get('Are you sure you want to permanently delete the {title} filter?') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.MyRecords='" . lang::get('My records only') . "';\n";
+  report_helper::addLanguageStringsToJs('reportFilters', [
+    'CreateAFilter' => 'Create a filter',
+    'ModifyFilter' => 'Modify filter',
+    'FilterSaved' => 'The filter has been saved',
+    'FilterDeleted' => 'The filter has been deleted',
+    'ConfirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
+    'FilterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
+    'AutochecksFailed' => 'Automated checks failed',
+    'AutochecksPassed' => 'Automated checks passed',
+    'IdentificationDifficulty' => 'Identification difficulty',
+    'HasPhotos' => 'Only include records which have photos',
+    'HasNoPhotos' => 'Exclude records which have photos',
+    'ConfirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
+    'MyRecords' => 'My records only',
+    'OnlyConfidentialRecords' => 'Only confidential records',
+    'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
+    'NoConfidentialRecords' => 'Exclude confidential records',
+    'includeUnreleasedRecords' => 'Include unreleased records',
+    'excludeUnreleasedRecords' => 'Exclude unreleased records',
+  ]);
   if (function_exists('iform_ajaxproxy_url')) {
     report_helper::$javascript .= "indiciaData.filterPostUrl='" . iform_ajaxproxy_url(NULL, 'filter') . "';\n";
     report_helper::$javascript .= "indiciaData.filterAndUserPostUrl='" . iform_ajaxproxy_url(NULL, 'filter_and_user') . "';\n";
