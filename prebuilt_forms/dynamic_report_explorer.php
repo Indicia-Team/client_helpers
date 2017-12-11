@@ -297,6 +297,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     self::$reportCount = 0;
     $conn = iform_get_connection_details($nid);
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/dynamic_report_explorer') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     return parent::get_form($args, $nid);
   }
 
@@ -340,6 +342,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
 
   protected static function get_control_map($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper','report_helper'));
+    if(isset($options['hoverShowsDetails'])) {
+      $options['hoverShowsDetails'] = true;
+    }
     // $_GET data for standard params can override displayed location
     if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
       $args['display_user_profile_location']=FALSE;
@@ -558,6 +563,34 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    */
   protected static function include_save_buttons() {
     return FALSE;
+  }
+
+  /**
+   * Ajax handler to provide the content for the details of a single record.
+   */
+  public static function ajax_get_feature_popup_details($website_id, $password, $nid) {
+      require_once 'extensions/misc_extensions.php';
+      // TODO extend to include images back from report.
+      $columns = array('taxon','source','date','date_start','date_end','date_type','recorder');
+      $params = hostsite_get_node_field_value($nid, 'params');
+      $details_report = 'library/occurrences/filterable_explore_list';
+      iform_load_helpers(array('report_helper'));
+      $readAuth = report_helper::get_read_auth($website_id, $password);
+      $options = array(
+          'dataSource' => $details_report,
+          'readAuth' => $readAuth,
+          'sharing' => 'verification',
+          'extraParams' => array('idlist' => $_GET['occurrence_ids'], 'columns' => implode(',',$columns))
+      );
+      $reportData = report_helper::get_report_data($options);
+      // Set some values which must exist in the record.
+      if(count($reportData) === 0) {
+        echo "";
+        return;
+      }
+      header('Content-type: application/json');
+      echo json_encode($reportData);
+      return;
   }
 
 }

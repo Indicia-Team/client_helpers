@@ -528,7 +528,7 @@ class helper_base extends helper_config {
    *   Associative array of keys and texts to translate.
    */
   public static function addLanguageStringsToJs($group, array $strings) {
-    self::$javascript .= <<<JS
+      self::$javascript .= <<<JS
 if (typeof indiciaData.lang === "undefined") {
   indiciaData.lang = {};
 }
@@ -536,8 +536,8 @@ indiciaData.lang.$group = {};
 
 JS;
     foreach ($strings as $key => $text) {
-      self::$javascript .= "indiciaData.lang.$group.$key = '" .
-          str_replace("'", "\'", lang::get($text)) . "';\n";
+        self::$javascript .= "indiciaData.lang.$group.$key = '" .
+        str_replace("'", "\'", lang::get($text)) . "';\n";
     }
   }
 
@@ -668,9 +668,10 @@ JS;
             self::$js_path."proj4js.js", self::$js_path."proj4defs.js", self::$js_path."lang/en.js")),
         'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
         'clearLayer' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."clearLayer.js")),
+        'hoverControl' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."hoverControl.js")),
         'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path."addRowToGrid.js")),
         'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path."speciesFilterPopup.js")),
-        'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
+        'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie','hoverControl'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
         'indiciaMapEdit' => array('deps' =>array('indiciaMap'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.js")),
         'postcode_search' => array('javascript' => array(self::$js_path."postcode_search.js")),
         'locationFinder' => array('deps' =>array('indiciaMapEdit'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.locationFinder.js")),
