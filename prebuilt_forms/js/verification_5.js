@@ -1616,16 +1616,16 @@ indiciaData.rowIdToReselect = false;
   indiciaFns.on('click', '.shrink-comment', {}, function () {
     $(this).closest('.comment-body').addClass('shrunk');
   });
-  $(document).on('click', '.unshrink-comment', {}, function () {
+  indiciaFns.on('click', '.unshrink-comment', {}, function () {
     $(this).closest('.comment-body').removeClass('shrunk');
   });
-  $(document).on('click', '.shrink-correspondence', {}, function () {
+  indiciaFns.on('click', '.shrink-correspondence', {}, function () {
     $(this).closest('.correspondence').addClass('shrunk');
   });
-  $(document).on('click', '.unshrink-correspondence', {}, function () {
+  indiciaFns.on('click', '.unshrink-correspondence', {}, function () {
     $(this).closest('.correspondence').removeClass('shrunk');
   });
-  $(document).on('tabsload', '#record-details-tabs', function () {
+  indiciaFns.on('tabsload', '#record-details-tabs', function () {
     $('.comment-body').each(function () {
       if ($(this)[0].offsetHeight >= $(this)[0].scrollHeight) {
         $(this).find('.unshrink-comment,.shrink-comment').remove();
