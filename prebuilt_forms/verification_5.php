@@ -187,9 +187,26 @@ class iform_verification_5 {
       }
     ]
   }',
-            'group' => 'Report Settings',
-            'required' => FALSE
-          ), array(
+          'group' => 'Report Settings',
+          'required' => FALSE
+        ), array(
+          'name' => 'sharing',
+          'caption' => 'Record sharing mode',
+          'description' => 'Identify the task this page is being used for, which determines the websites that will ' .
+            'share records for use here.',
+          'type' => 'select',
+          'options' => array(
+            'reporting' => 'Reporting',
+            'peer_review' => 'Peer review',
+            'verification' => 'Verification',
+            'data_flow' => 'Data flow',
+            'moderation' => 'Moderation',
+            'editing' => 'Editing',
+            'me' => 'My records only',
+          ),
+          'default' => 'verification',
+          'group' => 'Report Settings',
+        ), array(
           'name' => 'email_subject_send_to_verifier',
           'caption' => 'Send to Expert Email Subject',
           'description' => 'Default subject for the send to expert email. Replacements allowed include %taxon% and %id%.',
@@ -638,7 +655,10 @@ idlist=';
     if (!self::check_prerequisites()) {
       return '';
     }
-    iform_load_helpers(array('data_entry_helper', 'map_helper', 'report_helper'));
+    iform_load_helpers(['data_entry_helper', 'map_helper', 'report_helper']);
+    $args = array_merge([
+      'sharing' => 'verification',
+    ], $args);
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     // Clear Verifier Tasks automatically when they open the screen if the option is set.
     if ($args['clear_verification_task_notifications']&&hostsite_get_user_field('indicia_user_id')) {
@@ -669,7 +689,6 @@ idlist=';
       $args['param_presets'] .= "\nexpertise_taxon_groups=" . ($gotEasyLogin ? '{profile_taxon_groups_expertise}' : '');
     if (strpos($args['param_presets'] . $args['param_defaults'], 'expertise_surveys') === FALSE)
       $args['param_presets'] .= "\nexpertise_surveys=" . ($gotEasyLogin ? '{profile_surveys_expertise}' : '');
-    $args['sharing'] = 'verification';
     $params = self::reportFilterPanel($args, $auth['read']);
     $opts = array_merge(
         iform_report_get_report_options($args, $auth['read']),
@@ -680,7 +699,7 @@ idlist=';
           'paramsFormButtonCaption' => lang::get('Filter'),
           'paramPrefix' => '<div class="report-param">',
           'paramSuffix' => '</div>',
-          'sharing' => 'verification',
+          'sharing' => $args['sharing'],
           'ajax' => TRUE,
           'callback' => 'verificationGridLoaded',
           'rowClass' => 'zero-{zero_abundance}',
@@ -734,7 +753,7 @@ HTML
         'linkFilterToMap' => FALSE,
         'reportGroup' => 'verification',
         'ajax' => TRUE,
-        'sharing' => 'verification',
+        'sharing' => $args['sharing'],
         'mode' => 'report',
         'readAuth' => $auth['read'],
         'itemsPerPage' => 20,
@@ -755,7 +774,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.userId = "' . $indicia_user_id . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "' . $link['path'] . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.website_id = ' . $args['website_id'] . ";\n";
-    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url($nid, 'occurrence') . "&user_id=$indicia_user_id&sharing=verification\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url($nid, 'occurrence') . "&user_id=$indicia_user_id&sharing=$args[sharing]\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/verification_5') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autoDiscard = ' . $args['auto_discard_rows'] . ";\n";
     $imgPath = empty(data_entry_helper::$images_path) ? data_entry_helper::relative_client_helper_path() . "../media/images/" : data_entry_helper::$images_path;
@@ -979,7 +998,7 @@ HTML
    */
   public static function ajax_details($website_id, $password, $nid) {
     require_once 'extensions/misc_extensions.php';
-    $params = hostsite_get_node_field_value($nid, 'params');
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_5/record_data' : $params['record_details_report'];
     $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
     iform_load_helpers(array('report_helper'));
@@ -987,7 +1006,7 @@ HTML
     $options = array(
       'dataSource' => $details_report,
       'readAuth' => $readAuth,
-      'sharing' => 'verification',
+      'sharing' => $params['sharing'],
       'extraParams' => array('occurrence_id' => $_GET['occurrence_id'], 'wantColumns' => 1,
           'locality_type_id' => hostsite_get_config_value('iform', 'profile_location_type_id', 0))
     );
@@ -1033,7 +1052,7 @@ HTML
     $options = array(
       'dataSource' => $attrs_report,
       'readAuth' => $readAuth,
-      'sharing' => 'verification',
+      'sharing' => $params['sharing'],
       'extraParams' => array('occurrence_id' => $_GET['occurrence_id'])
     );
     $reportData = report_helper::get_report_data($options);
@@ -1147,27 +1166,28 @@ HTML
    *
    * @throws \exception
    */
-  public static function ajax_media($website_id, $password) {
+  public static function ajax_media($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::getMedia($readAuth);
+    echo self::getMedia($readAuth, $params);
   }
 
-  private static function getMedia($readAuth) {
+  private static function getMedia($readAuth, $params) {
     iform_load_helpers(array('data_entry_helper'));
     // Retrieve occurrence media for record.
     $occ_media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_medium',
       'extraParams' => $readAuth + array('occurrence_id' => $_GET['occurrence_id']),
       'nocache' => TRUE,
-      'sharing' => 'verification'
+      'sharing' => $params['sharing'],
     ));
     // Retrieve related sample media.
     $smp_media = data_entry_helper::get_population_data(array(
       'table' => 'sample_medium',
       'extraParams' => $readAuth + array('sample_id' => $_GET['sample_id']),
       'nocache' => TRUE,
-      'sharing' => 'verification'
+      'sharing' => $params['sharing'],
     ));
     $r = '';
     if (count($occ_media) + count($smp_media) === 0) {
@@ -1208,10 +1228,11 @@ HTML
     return $r;
   }
 
-  public static function ajax_comments($website_id, $password) {
+  public static function ajax_comments($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::get_comments($readAuth);
+    echo self::getComments($readAuth, $params, $nid);
   }
 
   private static function status_icons($status, $substatus, $imgPath) {
@@ -1253,12 +1274,12 @@ HTML
     return $r;
   }
 
-  private static function get_comments($readAuth, $includeAddNew = TRUE) {
+  private static function getComments($readAuth, $params, $includeAddNew = TRUE) {
     iform_load_helpers(array('report_helper'));
     $options = array(
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
-      'sharing' => 'verification',
+      'sharing' => $params['sharing'],
       'extraParams' => array('occurrence_id' => $_GET['occurrence_id'])
     );
     $comments = report_helper::get_report_data($options);
@@ -1379,7 +1400,7 @@ HTML
    */
   public static function ajax_experience($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
-    $params = hostsite_get_node_field_value($nid, 'params');
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $filter = array('occurrence_id' => $_GET['occurrence_id']);
     if (!empty($params['min_taxon_rank_sort_order'])) {
@@ -1534,8 +1555,9 @@ HTML
   /**
    * Ajax method to retrieve phenology data for a species by external key.
    */
-  public static function ajax_phenology($website_id, $password) {
+  public static function ajax_phenology($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $extraParams = array(
       'external_key' => (empty($_GET['external_key']) || $_GET['external_key'] === 'null') ? '' : $_GET['external_key'],
@@ -1549,7 +1571,7 @@ HTML
       'dataSource' => 'library/months/phenology',
       'readAuth' => $readAuth,
       'extraParams' => $extraParams,
-      'sharing' => 'verification'
+      'sharing' => $params['sharing']
     ));
     // Must output all months.
     $output = array();
@@ -1625,7 +1647,7 @@ HTML
   private static function reportFilterPanel($args, $readAuth) {
     $options = array(
       'allowSave' => TRUE,
-      'sharing' => 'verification',
+      'sharing' => $args['sharing'],
       'linkToMapDiv' => 'map',
       'filter-quality' => 'P'
     );
