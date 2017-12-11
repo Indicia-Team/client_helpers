@@ -48,7 +48,6 @@ class iform_verification_5 {
   private static $substatusTerms = array(
     '1' => 'correct',
     '2' => 'considered correct',
-    // deprecated
     '3' => 'plausible',
     '4' => 'unable to verify',
     '5' => 'incorrect'
@@ -81,6 +80,15 @@ class iform_verification_5 {
       iform_map_get_map_parameters(),
       iform_report_get_minimal_report_parameters(),
       array(
+        array(
+          'name' => 'report_row_class',
+          'caption' => 'Report row class',
+          'description' => 'CSS class to attach to report grid rows. Fieldnames from the report output wrapped in {} ' .
+            'are replaced by field values',
+          'type' => 'text_input',
+          'group' => 'Report Settings',
+          'default' => 'zero-{zero_abundance}',
+        ),
         array(
           'name' => 'mapping_report_name',
           'caption' => 'Report for map output',
@@ -658,6 +666,7 @@ idlist=';
     iform_load_helpers(['data_entry_helper', 'map_helper', 'report_helper']);
     $args = array_merge([
       'sharing' => 'verification',
+      'report_row_class' => 'zero-{zero_abundance}',
     ], $args);
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     // Clear Verifier Tasks automatically when they open the screen if the option is set.
@@ -691,26 +700,26 @@ idlist=';
       $args['param_presets'] .= "\nexpertise_surveys=" . ($gotEasyLogin ? '{profile_surveys_expertise}' : '');
     $params = self::reportFilterPanel($args, $auth['read']);
     $opts = array_merge(
-        iform_report_get_report_options($args, $auth['read']),
-        array(
-          'id' => 'verification-grid',
-          'reportGroup' => 'verification',
-          'rowId' => 'occurrence_id',
-          'paramsFormButtonCaption' => lang::get('Filter'),
-          'paramPrefix' => '<div class="report-param">',
-          'paramSuffix' => '</div>',
-          'sharing' => $args['sharing'],
-          'ajax' => TRUE,
-          'callback' => 'verificationGridLoaded',
-          'rowClass' => 'zero-{zero_abundance}',
-          'responsiveOpts' => array(
-            'breakpoints' => array(
-              'phone' => 480,
-              'tablet-portrait' => 768,
-              'tablet-landscape' => 1300,
-            )
-          )
-        )
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'id' => 'verification-grid',
+        'reportGroup' => 'verification',
+        'rowId' => 'occurrence_id',
+        'paramsFormButtonCaption' => lang::get('Filter'),
+        'paramPrefix' => '<div class="report-param">',
+        'paramSuffix' => '</div>',
+        'sharing' => $args['sharing'],
+        'ajax' => TRUE,
+        'callback' => 'verificationGridLoaded',
+        'rowClass' => $args['report_row_class'],
+        'responsiveOpts' => array(
+          'breakpoints' => array(
+            'phone' => 480,
+            'tablet-portrait' => 768,
+            'tablet-landscape' => 1300,
+          ),
+        ),
+      )
     );
     array_unshift($opts['columns'], array(
       'display' => '',
