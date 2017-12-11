@@ -1613,4 +1613,32 @@ indiciaData.rowIdToReselect = false;
     );
   }
 
+  
+  $( document ).on( 'click', '.shrink-comment', {}, function(evt) {
+	  $(this).closest('.comment-body').addClass('shrunk')
+  } );
+  $( document ).on( 'click', '.unshrink-comment', {}, function(evt) {
+	  $(this).closest('.comment-body').removeClass('shrunk')
+  } );
+  $( document ).on( 'click', '.shrink-correspondence', {}, function(evt) {
+	  $(this).closest('.correspondence').addClass('shrunk')
+  } );
+  $( document ).on( 'click', '.unshrink-correspondence', {}, function(evt) {
+	  $(this).closest('.correspondence').removeClass('shrunk')
+  } );
+  $( document ).on( "tabsload", '#record-details-tabs', function(evt) {
+	  $('.comment-body').each(function(idx, elem) {
+		  if ($(this)[0].offsetHeight >= $(this)[0].scrollHeight) {
+			  $(this).find('.unshrink-comment,.shrink-comment').remove();
+			  $(this).removeClass('shrunk');
+		  }
+	  })
+	  $('.correspondence').each(function(idx, elem) {
+		  if ($(this)[0].offsetHeight >= $(this)[0].scrollHeight) {
+			  $(this).find('.unshrink-correspondence,.shrink-correspondence').remove();
+			  $(this).removeClass('shrunk');
+		  }
+	  })
+  } );
+
 })(jQuery);

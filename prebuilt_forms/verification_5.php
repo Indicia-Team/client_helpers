@@ -1283,21 +1283,28 @@ HTML
         $r .= self::ago($commentTime);
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
-      $r .= "<p>$c</p>";
-      if ($comment['reference']) {
-        $r .= "<p><em>$comment[reference]</em></p>";
-      }
+      $r .= '<div class="comment-body shrunk">' .
+              '<a class="unshrink-comment" title="' . lang::get('Expand this comment block to show its full details.') . '">' .
+                lang::get('more...') .
+              '</a>' .
+              $c .
+              '<a class="shrink-comment" title="' . lang::get('Shrink this comment block.') . '">' .
+                lang::get('less...') .
+              '</a>' .
+            '</div>';
       if (!empty($comment['correspondence_data'])) {
         $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
         $correspondenceData = json_decode($data, TRUE);
         foreach ($correspondenceData as $type => $items) {
           $r .= '<h3>' . ucfirst($type) . '</h3>';
           foreach ($items as $item) {
-            $r .= '<div class="correspondence">';
+            $r .= '<div class="correspondence shrunk">';
+            $r .= '<a class="unshrink-correspondence" title="'.lang::get('Expand this correspondence block to show its full details.').'">'.lang::get('more...').'</a>';
             foreach ($item as $field => $value) {
               $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
               $r .= "<div>$field $value</div>";
             }
+            $r .= '<a class="shrink-correspondence" title="'.lang::get('Shrink this correspondence block.').'">'.lang::get('less...').'</a>';
             $r .= '</div>';
           }
         }
@@ -1310,8 +1317,7 @@ HTML
       $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
       if ($allowConfidential) {
         $r .= '<label><input type="checkbox" id="comment-confidential" /> ' . lang::get('Confidential?') . '</label><br>';
-      }
-      else {
+      } else {
         $r .= '<input type="hidden" id="comment-confidential" value="f" />';
       }
       $r .= '<textarea id="comment-text"></textarea>';

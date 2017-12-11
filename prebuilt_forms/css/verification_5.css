@@ -495,3 +495,50 @@ tr.total {
 #log-response-form .popup-form.short textarea {
   height: 100px;
 }
+/* line 379, sass/verification_5.scss */
+div.comment-body .shrink-comment {
+  float: right;
+}
+/* line 382, sass/verification_5.scss */
+div.comment-body .unshrink-comment {
+  display: none;
+  float: right;
+}
+
+/* line 388, sass/verification_5.scss */
+div.correspondence .shrink-correspondence {
+  float: right;
+}
+/* line 391, sass/verification_5.scss */
+div.correspondence .unshrink-correspondence {
+  display: none;
+  float: right;
+}
+
+/* line 396, sass/verification_5.scss */
+div.comment-body.shrunk {
+  max-height: 3.4em;
+  overflow: hidden;
+}
+/* line 399, sass/verification_5.scss */
+div.comment-body.shrunk .unshrink-comment {
+  display: block;
+}
+/* line 402, sass/verification_5.scss */
+div.comment-body.shrunk .shrink-comment {
+  display: none;
+}
+
+/* line 406, sass/verification_5.scss */
+div.correspondence.shrunk {
+  max-height: 5em;
+  overflow: hidden;
+}
+/* line 409, sass/verification_5.scss */
+div.correspondence.shrunk .unshrink-correspondence {
+  display: block;
+}
+/* line 412, sass/verification_5.scss */
+div.correspondence.shrunk .shrink-correspondence {
+  display: none;
+}

@@ -374,3 +374,41 @@ tr {
     }
   }
 }
+div.comment-body {
+  .shrink-comment {
+    float: right;
+  }
+  .unshrink-comment {
+    display: none;
+    float: right;
+  }
+}
+div.correspondence {
+  .shrink-correspondence {
+    float: right;
+  }
+  .unshrink-correspondence {
+    display: none;
+    float: right;
+  }
+}
+div.comment-body.shrunk {
+  max-height: 3.4em;
+  overflow: hidden;
+  .unshrink-comment {
+    display: block;
+  }
+  .shrink-comment {
+    display: none;
+  }
+}
+div.correspondence.shrunk {
+  max-height: 5em;
+  overflow: hidden;
+  .unshrink-correspondence {
+    display: block;
+  }
+  .shrink-correspondence  {
+    display: none;
+  }
+}
