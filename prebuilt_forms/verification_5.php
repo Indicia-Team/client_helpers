@@ -1651,6 +1651,10 @@ HTML
       'linkToMapDiv' => 'map',
       'filter-quality' => 'P'
     );
+    $defaults = report_helper::explode_lines_key_value_pairs($args['param_defaults']);
+    foreach ($defaults as $field => $value) {
+      $options["filter-$field"] = $value;
+    }
     if (!empty($args['indexed_location_type_ids'])) {
       $options['indexedLocationTypeIds'] = array_map('intval', explode(',', $args['indexed_location_type_ids']));
     }
@@ -1662,4 +1666,5 @@ HTML
     $r = report_filter_panel($readAuth, $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
   }
+
 }
