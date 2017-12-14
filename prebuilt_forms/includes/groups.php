@@ -1,5 +1,8 @@
 <?php
 /**
+ * @file
+ * List of methods that assist with handling recording groups.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,58 +16,78 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/warehouse/
  */
 
 /**
- * List of methods that assist with handling recording groups.
- * @package Client
- * @subpackage PrebuiltForms.
- * @return boolean True if the user is a member of the group associated with the page.
+ * Authorise the current page.
+ *
+ * If accessing a page for a group you don't belong to, or a page via a group
+ * which is not linked to the page then a message is shown and you are
+ * redirected to home.
+ *
+ * @return bool
+ *   True if the user is a member of the group associated with the page.
  */
-
 function group_authorise_form($args, $readAuth) {
-  if (!empty($args['limit_to_group_id']) && $args['limit_to_group_id']!==(empty($_GET['group_id']) ? '' : $_GET['group_id'])) {
-    // page owned by a different group, so throw them out
+  if (!empty($args['limit_to_group_id']) && $args['limit_to_group_id'] !== (empty($_GET['group_id']) ? '' : $_GET['group_id'])) {
+    // Page owned by a different group, so throw them out.
     hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert', true);
     hostsite_goto_page('<front>');
   }
   $gu = array();
   if (!empty($_GET['group_id'])) {
-    // loading data into a recording group. Are they a member or is the page public?
+    // Loading data into a recording group. Are they a member or is the page
+    // public?
     // @todo: consider performance - 2 web services hits required to check permissions.
     if (hostsite_get_user_field('indicia_user_id')) {
       $gu = data_entry_helper::get_population_data(array(
-        'table'=>'groups_user',
-        'extraParams'=>$readAuth + array(
-            'group_id'=>$_GET['group_id'],
-            'user_id'=>hostsite_get_user_field('indicia_user_id'),
-            'pending'=>'f'
+        'table' => 'groups_user',
+        'extraParams' => $readAuth + array(
+          'group_id' => $_GET['group_id'],
+          'user_id' => hostsite_get_user_field('indicia_user_id'),
+          'pending' => 'f',
         ),
-        'nocache'=>true
+        'nocache' => true
       ));
     }
     $gp = data_entry_helper::get_population_data(array(
-      'table'=>'group_page',
-      'extraParams'=>$readAuth + array('group_id'=>$_GET['group_id'], 'path'=>hostsite_get_current_page_path())
+      'table' => 'group_page',
+      'extraParams' => $readAuth + array('group_id' => $_GET['group_id'], 'path' => hostsite_get_current_page_path())
     ));
-    if (count($gp)===0) {
-      hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'alert', true);
+    if (count($gp) === 0) {
+      hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'alert', TRUE);
       hostsite_goto_page('<front>');
-    } elseif (count($gu)===0 && $gp[0]['administrator']!==NULL) {
-      // Administrator field is null if the page is fully public. Else if not a group member, then throw them out.
-      hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'alert', true);
+    }
+    elseif (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
+      // Administrator field is null if the page is fully public. Else if not
+      // a group member, then throw them out.
+      hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'alert', TRUE);
       hostsite_goto_page('<front>');
     }
   }
-  return count($gu)>0;
+  return count($gu) > 0;
 }
 
-function group_apply_report_limits(&$args, $readAuth, $nid, $isMember) {
+/**
+ * Applies any limits defined by a group's filters to the report config for the current page.
+ *
+ * Also adds the group name to the page title.
+ *
+ * @param array $args
+ *   Form arguments.
+ * @param array $readAuth
+ *   Read authorisation tokens.
+ * @param int $nid
+ *   Node ID.
+ * @param bool $isMember
+ *
+ * @return array
+ *   Group field values loaded from the database.
+ */
+function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
   $group = data_entry_helper::get_population_data([
     'table' => 'group',
     'extraParams' => $readAuth + ['id' => $_GET['group_id'], 'view' => 'detail']
@@ -79,8 +102,9 @@ function group_apply_report_limits(&$args, $readAuth, $nid, $isMember) {
       $value = is_array($value) ? json_encode($value) : $value;
       $defstring .= "{$key}_context=$value\n";
       if (!empty($value) && $key === 'indexed_location_id' || $key === 'indexed_location_list'
-        || $key === 'location_id' || $key === 'location_list')
+        || $key === 'location_id' || $key === 'location_list') {
         $args['location_boundary_id'] = $value;
+      }
       elseif (!empty($value) && $key === 'searchArea') {
         // A search area needs to be added to the map.
         require_once 'map.php';
@@ -116,4 +140,5 @@ function group_apply_report_limits(&$args, $readAuth, $nid, $isMember) {
     ]);
   }
   $args['param_presets'] .= "\n";
+  return $group;
 }
