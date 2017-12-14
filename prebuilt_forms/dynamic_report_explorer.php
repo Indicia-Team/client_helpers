@@ -267,10 +267,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
             'data_flow' => 'Data flow',
             'moderation' => 'Moderation',
             'editing' => 'Editing',
-            'me' => 'My records only'
+            'me' => 'My records only',
           ),
           'default' => 'reporting',
-          'group' => 'Report Settings'
+          'group' => 'Report Settings',
         )
       )
     );
@@ -312,7 +312,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    * @param string $tabalias
    *   Unique identified for the tab we are loading onto.
    * @param array $options
-   *   Options for this control as configured using @ overrides in the Drupal edit page's User Interface configuration.
+   *   Options for this control as configured using @ overrides in the Drupal
+   *   edit page's User Interface configuration.
    *
    * @return string
    *   Control HTML
@@ -331,65 +332,72 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'paramsFormButtonCaption' => lang::get('Filter')
       )
     );
-    // ensure supplied extraParams are merged, not overwritten
-    if (!empty($options['extraParams']))
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
       $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
     $reportOptions = array_merge($reportOptions, $options);
-    if (self::$applyUserPrefs)
+    if (self::$applyUserPrefs) {
       iform_report_apply_explore_user_own_preferences($reportOptions);
+    }
     return report_helper::report_grid($reportOptions);
   }
 
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('map_helper','report_helper'));
-    if(isset($options['hoverShowsDetails'])) {
-      $options['hoverShowsDetails'] = true;
+    iform_load_helpers(array('map_helper', 'report_helper'));
+    if (isset($options['hoverShowsDetails'])) {
+      $options['hoverShowsDetails'] = TRUE;
     }
     // $_GET data for standard params can override displayed location
     if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
-      $args['display_user_profile_location']=FALSE;
-      if (!empty($_GET['filter-indexed_location_id']))
-        $args['location_boundary_id']=$_GET['filter-indexed_location_id'];
-      elseif (!empty($_GET['filter-location_id']))
-        $args['location_boundary_id']=$_GET['filter-location_id'];
+      $args['display_user_profile_location'] = FALSE;
+      if (!empty($_GET['filter-indexed_location_id'])) {
+        $args['location_boundary_id'] = $_GET['filter-indexed_location_id'];
+      }
+      elseif (!empty($_GET['filter-location_id'])) {
+        $args['location_boundary_id'] = $_GET['filter-location_id'];
+      }
     }
     // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
-    $args['report_name']='';
-    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $args['report_name'] = '';
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
         'reportGroup' => 'dynamic',
-        'autoParamsForm'=>FALSE,
-        'sharing'=>$sharing,
+        'autoParamsForm' => FALSE,
+        'sharing' => $sharing,
         'readAuth' => $auth['read'],
-        'dataSource'=> $options['dataSource'],
+        'dataSource' => $options['dataSource'],
         'rememberParamsReportGroup' => 'dynamic',
         'clickableLayersOutputMode' => 'report',
         'rowId' => 'occurrence_id',
-        'ajax'=>TRUE
+        'ajax' => FALSE,
       )
     );
-    // ensure supplied extraParams are merged, not overwritten
-    if (!empty($options['extraParams']))
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
       $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
     $reportOptions = array_merge($reportOptions, $options);
-    if (self::$applyUserPrefs)
+    if (self::$applyUserPrefs) {
       iform_report_apply_explore_user_own_preferences($reportOptions);
+    }
     $r = report_helper::report_map($reportOptions);
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
       array(
         'featureIdField' => 'occurrence_id',
-        'clickForSpatialRef'=>FALSE,
+        'clickForSpatialRef' => FALSE,
         'reportGroup' => 'explore',
         'toolbarDiv' => 'top',
       ),
       $options
     );
     $olOptions = iform_map_get_ol_options($args);
-    if ($tabalias)
+    if ($tabalias) {
       $options['tabDiv'] = $tabalias;
+    }
     $r .= map_helper::map_panel($options, $olOptions);
     return $r;
   }
@@ -397,20 +405,22 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   protected static function get_control_reportgrid($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
     $columnLists = json_decode($args['columns_config_list']);
-    if (self::$reportCount < count($columnLists))
-      $args['columns_config']=json_encode($columnLists[self::$reportCount]);
-    else
+    if (self::$reportCount < count($columnLists)) {
+      $args['columns_config'] = json_encode($columnLists[self::$reportCount]);
+    }
+    else {
       unset($args['columns_config']);
-    $args['report_name']='';
-    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    }
+    $args['report_name'] = '';
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
         'reportGroup' => 'dynamic',
-        'autoParamsForm'=>FALSE,
-        'sharing'=>$sharing,
-        'ajax'=>TRUE,
-        'id' => 'report-grid-'.self::$requestReportCount,
+        'autoParamsForm' => FALSE,
+        'sharing' => $sharing,
+        'ajax' => TRUE,
+        'id' => 'report-grid-' . self::$requestReportCount,
         'responsiveOpts' => array(
           'breakpoints' => array(
             'phone' => 480,
@@ -421,11 +431,13 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       )
     );
     // ensure supplied extraParams are merged, not overwritten
-    if (!empty($options['extraParams']))
+    if (!empty($options['extraParams'])) {
       $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
     $reportOptions = array_merge($reportOptions, $options);
-    if (self::$applyUserPrefs)
+    if (self::$applyUserPrefs) {
       iform_report_apply_explore_user_own_preferences($reportOptions);
+    }
     self::$requestReportCount++;
     self::$reportCount++;
     return report_helper::report_grid($reportOptions);
@@ -437,15 +449,15 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    */
   protected static function get_control_reportfreeform($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
-    $args['report_name']='';
-    $sharing=empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $args['report_name'] = '';
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
         'reportGroup' => 'dynamic',
-        'autoParamsForm'=>FALSE,
-        'sharing'=>$sharing,
-        'id' => 'report-freeform-'.self::$reportCount
+        'autoParamsForm' => FALSE,
+        'sharing' => $sharing,
+        'id' => 'report-freeform-' . self::$reportCount
       )
     );
     // ensure supplied extraParams are merged, not overwritten
@@ -472,15 +484,15 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       return '<p>Please provide either a value for xLabels or xValues.</p>';
     }
     iform_load_helpers(array('report_helper'));
-    $args['report_name']='';
+    $args['report_name'] = '';
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
-        'id' => 'chart-'.self::$reportCount,
+        'id' => 'chart-' . self::$reportCount,
         'reportGroup' => 'dynamic',
-        'width'=> '100%',
-        'height'=> 500,
-        'autoParamsForm'=>FALSE
+        'width' => '100%',
+        'height' => 500,
+        'autoParamsForm' => FALSE,
       )
     );
     // ensure supplied extraParams are merged, not overwritten
