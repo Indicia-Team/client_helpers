@@ -856,6 +856,11 @@ class filter_source extends FilterBase {
  *     when, who, quality, source.
  *   * filter-#name# - set the initial value of a report filter parameter
  *     #name#.
+ *   * overridePermissionsFilters - set to true to ignore any permissions
+ *     filters defined for this user for this sharing mode. Use with
+ *     caution as it prevents permissions from applying. An example usage
+ *     is for a report page that gets it's filter from the group it is
+ *     linked to rather than the user's permissions.
  *   * allowLoad - set to FALSE to disable the load bar at the top of the panel.
  *   * allowSave - set to FALSE to disable the save bar at the foot of the
  *     panel.
@@ -1083,9 +1088,11 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   foreach ($filterData as $filter) {
     if ($filter['defines_permissions'] === 't') {
-      $selected = (!empty($options['context_id']) && $options['context_id'] == $filter['id']) ? 'selected="selected" ' : '';
-      $contexts .= "<option value=\"$filter[id]\" $selected>$filter[title]</option>";
-      $contextDefs[$filter['id']] = json_decode($filter['definition'], TRUE);
+      if (empty($options['overridePermissionsFilters'])) {
+        $selected = (!empty($options['context_id']) && $options['context_id'] == $filter['id']) ? 'selected="selected" ' : '';
+        $contexts .= "<option value=\"$filter[id]\" $selected>$filter[title]</option>";
+        $contextDefs[$filter['id']] = json_decode($filter['definition'], TRUE);
+      }
     }
     else {
       $selected = (!empty($options['filter_id']) && $options['filter_id']==$filter['id']) ? 'selected="selected" ' : '';

@@ -24,6 +24,7 @@
 require_once 'includes/map.php';
 require_once 'includes/report.php';
 require_once 'includes/report_filters.php';
+require_once 'includes/groups.php';
 
 /**
  * Verification 5 prebuilt form.
@@ -54,6 +55,13 @@ class iform_verification_5 {
   );
 
   /**
+   * Flag that can be set when the user's permissions filters are to be ignored.
+   *
+   * @var bool
+   */
+  private static $overridePermissionsFilters = FALSE;
+
+  /**
    * Return the form metadata.
    *
    * @return array
@@ -65,7 +73,8 @@ class iform_verification_5 {
       'category' => 'Verification',
       'description' => 'Verification form supporting 2 tier verification statuses. Requires the ' .
         'Easy Login module and Indicia AJAX Proxy module to both be enabled.',
-      'recommended' => TRUE
+      'recommended' => TRUE,
+      'supportsGroups' => TRUE,
     );
   }
 
@@ -80,6 +89,19 @@ class iform_verification_5 {
       iform_map_get_map_parameters(),
       iform_report_get_minimal_report_parameters(),
       array(
+        array(
+          'name' => 'group_type_ids',
+          'caption' => 'Group types',
+          'description' => 'If this page is going to be used by recording groups to facilitate verification, ' .
+            'it is strongly recommended that you limit this feature to certain groups by choosing appropriate ' .
+            'group types here.',
+          'type' => 'checkbox_group',
+          'table' => 'termlists_term',
+          'valueField' => 'id',
+          'captionField' => 'term',
+          'extraParams' => array('termlist_external_key' => 'indicia:group_types'),
+          'class' => 'group-field',
+        ),
         array(
           'name' => 'report_row_class',
           'caption' => 'Report row class',
@@ -669,6 +691,16 @@ idlist=';
       'report_row_class' => 'zero-{zero_abundance}',
     ], $args);
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
+    if (group_authorise_form($args, $auth['read'])) {
+      $group = group_apply_report_limits($args, $auth['read'], $nid, TRUE);
+      if (!empty($args['group_type_ids']) && !in_array($group['group_type_id'], $args['group_type_ids'])) {
+        // Group type is not authorised for verification.
+        hostsite_show_message(lang::get('This group is not allowed to perform verification tasks.'), 'alert', TRUE);
+        hostsite_goto_page('<front>');
+      } else {
+        self::$overridePermissionsFilters = TRUE;
+      }
+    }
     // Clear Verifier Tasks automatically when they open the screen if the option is set.
     if ($args['clear_verification_task_notifications']&&hostsite_get_user_field('indicia_user_id')) {
       self::clear_verifier_task_notifications($auth);
@@ -1658,7 +1690,8 @@ HTML
       'allowSave' => TRUE,
       'sharing' => $args['sharing'],
       'linkToMapDiv' => 'map',
-      'filter-quality' => 'P'
+      'filter-quality' => 'P',
+      'overridePermissionsFilters' => self::$overridePermissionsFilters,
     );
     $defaults = report_helper::explode_lines_key_value_pairs($args['param_defaults']);
     foreach ($defaults as $field => $value) {
