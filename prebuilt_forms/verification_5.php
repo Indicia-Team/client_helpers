@@ -94,7 +94,9 @@ class iform_verification_5 {
           'caption' => 'Group types',
           'description' => 'If this page is going to be used by recording groups to facilitate verification, ' .
             'it is strongly recommended that you limit this feature to certain groups by choosing appropriate ' .
-            'group types here.',
+            'group types here. Note that a group linked verification page MUST be accessed via a group - it ' .
+            'cannot be accessed directly to remove the risk of users with no permissions filters accessing ' .
+            'all records for verification by removing the group ID from the link.',
           'type' => 'checkbox_group',
           'table' => 'termlists_term',
           'valueField' => 'id',
@@ -697,9 +699,14 @@ idlist=';
         // Group type is not authorised for verification.
         hostsite_show_message(lang::get('This group is not allowed to perform verification tasks.'), 'alert', TRUE);
         hostsite_goto_page('<front>');
-      } else {
+      }
+      else {
         self::$overridePermissionsFilters = TRUE;
       }
+    }
+    elseif ($args['available_for_groups'] === '1') {
+      hostsite_show_message(lang::get('This page must be accessed via a group.'), 'alert', TRUE);
+      hostsite_goto_page('<front>');
     }
     // Clear Verifier Tasks automatically when they open the screen if the option is set.
     if ($args['clear_verification_task_notifications']&&hostsite_get_user_field('indicia_user_id')) {
