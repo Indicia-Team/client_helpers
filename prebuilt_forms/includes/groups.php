@@ -63,3 +63,57 @@ function group_authorise_form($args, $readAuth) {
   }
   return count($gu)>0;
 }
+
+function group_apply_report_limits(&$args, $readAuth, $nid, $isMember) {
+  $group = data_entry_helper::get_population_data([
+    'table' => 'group',
+    'extraParams' => $readAuth + ['id' => $_GET['group_id'], 'view' => 'detail']
+  ]);
+  $group = $group[0];
+  hostsite_set_page_title("$group[title]: " . hostsite_get_page_title($nid));
+  $def = json_decode($group['filter_definition'], TRUE);
+  $defstring = '';
+  // Reconstruct this as a string to feed into dynamic report explorer.
+  foreach ($def as $key => $value) {
+    if ($key) {
+      $value = is_array($value) ? json_encode($value) : $value;
+      $defstring .= "{$key}_context=$value\n";
+      if (!empty($value) && $key === 'indexed_location_id' || $key === 'indexed_location_list'
+        || $key === 'location_id' || $key === 'location_list')
+        $args['location_boundary_id'] = $value;
+      elseif (!empty($value) && $key === 'searchArea') {
+        // A search area needs to be added to the map.
+        require_once 'map.php';
+        iform_map_zoom_to_geom($value, lang::get('Boundary'));
+      }
+      elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && strpos($value, ',') === FALSE) {
+        // If the report is locked to a single taxon group, then we don't
+        // need taxonomy columns.
+        $args['skipped_report_columns'] = array('taxon_group', 'taxonomy');
+      }
+    }
+  }
+  // If records private, need to show them on a group report but only if user
+  // is group member, which might not be the case if page accidentally made
+  // fully public.
+  if ($isMember && $group['private_records'] === 't') {
+    $defstring .= "release_status=A\n";
+  }
+  if (empty($_GET['implicit'])) {
+    // No need for a group user filter.
+    $args['param_presets'] = implode("\n", array($args['param_presets'], $defstring));
+  }
+  else {
+    // Filter to group users - either implicitly, or only if they explicitly
+    // submitted to the group.
+    $prefix = ($_GET['implicit'] === 'true' || $_GET['implicit'] === 't') ? 'implicit_' : '';
+    // Add the group parameters to the preset parameters passed to all reports
+    // on this page.
+    $args['param_presets'] = implode("\n", [
+      $args['param_presets'],
+      $defstring,
+      "{$prefix}group_id=" . $_GET['group_id']
+    ]);
+  }
+  $args['param_presets'] .= "\n";
+}
