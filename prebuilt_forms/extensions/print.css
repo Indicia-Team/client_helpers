@@ -2,6 +2,72 @@
   width: auto;
   margin-right: 1em;
 }
+
+
+/* Restyle an element for printing */
+
+/* Pad the outer content */
+.printing div.node-content {
+  padding: 10px;
+}
+/* Hide the PDF UI */
+.printing #convert-to-pdf,
+.printing #show-pdf-options,
+/* Drupal tabs */
+.printing div#tasks,
+/* Remove active stuff on grids */
+.printing table.report-grid tr.filter-row,
+.printing table.report-grid .col-actions,
+.printing table.report-grid tfoot,
+.printing table.report-grid audio,
+.printing .report-grid-container img.col-picker {
+  display: none;
+}
+/* Tidy report table appearance. */
+.printing table.report-grid {
+  width: 100%;
+  border: none;
+}
+.printing table.report-grid tr {
+  padding: 0;
+  border-bottom: solid silver 1px;
+}
+.printing table.report-grid tr.odd {
+  background: none;
+  border-bottom: solid silver 1px;
+}
+.printing table.report-grid td {
+  padding: 0 4px;
+}
+.printing table.report-grid thead tr {
+  border-bottom: solid silver 2px;
+}
+.printing table.report-grid th {
+  padding: 0 4px;
+}
+/* Undo jQuery UI styling */
+.printing .ui-widget-header {
+  border: none;
+  background: none;
+}
+.printing .ui-widget-content {
+  border: none;
+}
+.printing ul.ui-tabs-nav {
+  display: none;
+}
+.printing div.ui-tabs-panel {
+  display: block !important;
+  padding: 0;
+}
+/* Headers which only show on print */
+.print-header {
+  display: none;
+}
+.printing .print-header {
+  display: block;
+}
+
 /* Absolute Center Spinner */
 .loading {
   position: fixed;
@@ -55,7 +121,7 @@
   box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) 0 1.5em 0 0, rgba(0, 0, 0, 0.75) -1.1em 1.1em 0 0, rgba(0, 0, 0, 0.75) -1.5em 0 0 0, rgba(0, 0, 0, 0.75) -1.1em -1.1em 0 0, rgba(0, 0, 0, 0.75) 0 -1.5em 0 0, rgba(0, 0, 0, 0.75) 1.1em -1.1em 0 0;
 }
 
-/* Animation */
+/* Animation for loading overlay */
 
 @-webkit-keyframes spinner {
   0% {

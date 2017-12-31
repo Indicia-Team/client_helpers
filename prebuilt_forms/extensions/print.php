@@ -116,8 +116,8 @@ HTML;
         'id' => 'pdf-format',
         'label' => lang::get('Format'),
         'lookupValues' => array(
-          'portrait' => lang::get('Portrait'),
           'landscape' => lang::get('Landscape'),
+          'portrait' => lang::get('Portrait'),
         ),
       ));
       $generateBtn = helper_base::apply_static_template('button', array(

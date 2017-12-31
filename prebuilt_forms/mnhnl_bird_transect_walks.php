@@ -747,7 +747,7 @@ mapInitialisationHooks.push(function (div) {
     } else {
       // can't use location select due to location filtering.
       $r .= "<label for=\"imp-location\">".lang::get('LANG_Transect').":</label>\n<select id=\"imp-location\" name=\"sample:location_id\" ".$disabled_text." class=\" \"  >";
-      $url = $svcUrl.'/data/location?mode=json&view=detail&parent_id=NULL&orderby=name&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth["nonce"];
+      $url = $svcUrl.'/data/location?mode=json&view=detail&parent_id=NULL&orderby=name&columns=id,name&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth["nonce"];
       $session = curl_init($url);
       curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
       $entities = json_decode(curl_exec($session), true);

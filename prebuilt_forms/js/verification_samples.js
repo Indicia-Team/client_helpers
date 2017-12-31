@@ -1,17 +1,27 @@
 var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdToReselect = false;
 
 (function ($) {
-  "use strict";
-  
-  var rowRequest=null, sample_id = null, currRec = null, urlSep, validator,
-      multimode=false, email = {to:'', subject:'', body:'', type:''};
+  'use strict';
+
+  var rowRequest = null;
+  var sampleId = null;
+  var currRec = null;
+  var urlSep;
+  var validator;
+  var multimode = false;
+  var email = {
+    to: '',
+    subject: '',
+    body: '',
+    type: ''
+  };
 
   reselectRow = function() {
     if (rowIdToReselect) {
       // Reselect current record if still in the grid
       var row = $('tr#row' + rowIdToReselect);
       if (row.length) {
-        sample_id = null;
+        sampleId = null;
         selectRow(row[0]);
       } else {
         clearRow();
@@ -27,7 +37,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     $('table.report-grid tr').removeClass('selected');
     $('#instructions').show();
     $('#record-details-content').hide();
-    sample_id = null;
+    sampleId = null;
     currRec = null;
   }
 
@@ -45,7 +55,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
 
   function selectRow(tr, callback) {
     // The row ID is row1234 where 1234 is the sample ID.
-    if (tr.id.substr(3) === sample_id) {
+    if (tr.id.substr(3) === sampleId) {
       if (typeof callback !== "undefined") {
         callback(tr);
       }
@@ -56,12 +66,12 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     }
     // while we are loading, disable the toolbar
     $('#record-details-toolbar *').attr('disabled', 'disabled');
-    sample_id = tr.id.substr(3);
+    sampleId = tr.id.substr(3);
     $(tr).addClass('selected');
     // make it clear things are loading
     $('#chart-div').css('opacity', 0.15);
     rowRequest = $.getJSON(
-      indiciaData.ajaxUrl + '/details/' + indiciaData.nid + urlSep + 'sample_id=' + sample_id,
+      indiciaData.ajaxUrl + '/details/' + indiciaData.nid + urlSep + 'sample_id=' + sampleId,
       null,
       function (data) {
         // refind the row, as $(tr) sometimes gets obliterated.
@@ -73,15 +83,15 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
         if ($row.parents('tbody').length !== 0) {
           // point the image and comments tabs to the correct AJAX call for the selected sample.
           indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('media'), 'media-tab-tab',
-            indiciaData.ajaxUrl + '/media/' + indiciaData.nid + urlSep + 'sample_id=' + sample_id);
+            indiciaData.ajaxUrl + '/media/' + indiciaData.nid + urlSep + 'sample_id=' + sampleId);
           indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('comments'), 'comments-tab-tab',
-            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'sample_id=' + sample_id);
+            indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'sample_id=' + sampleId);
           // reload current tabs
           $('#record-details-tabs').tabs('load', indiciaFns.activeTab($('#record-details-tabs')));
           $('#record-details-toolbar *').removeAttr('disabled');
           showTab();
         }
-        if (typeof callback !== "undefined") {
+        if (typeof callback !== 'undefined') {
           callback(tr);
         }
       }
@@ -99,14 +109,16 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
    * visual indicators of the record's status.
    */
   function postVerification(occ) {
-    var status = occ['sample:record_status'], id=occ['sample:id'];
+    var status = occ['sample:record_status'];
+    var id = occ['sample:id'];
     $.post(
       indiciaData.ajaxFormPostUrl.replace('sample', 'single_verify_sample'),
       occ,
       function () {
-        removeStatusClasses('#row' + id + ' td:first div, #details-tab td', 'status', ['V','C','R','I','T']);
+        var text = indiciaData.statusTranslations[status];
+        var nextRow;
+        removeStatusClasses('#row' + id + ' td:first div, #details-tab td', 'status', ['V', 'C', 'R', 'I', 'T']);
         $('#row' + id + ' td:first div, #details-tab td.status').addClass('status-' + status);
-        var text = indiciaData.statusTranslations[status], nextRow;
         $('#details-tab').find('td.status').html(text);
         if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'details' ||
             indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'comments') {
@@ -115,7 +127,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
         if (indiciaData.autoDiscard) {
           nextRow = $('#row' + id).next();
           $('#row' + id).remove();
-          if (nextRow.length>0) {
+          if (nextRow.length > 0) {
             selectRow(nextRow[0]);
             indiciaData.reports.verification.grid_verification_grid.removeRecordsFromPage(1);
           } else {
@@ -146,10 +158,10 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     email.to = currRec.extra.recorder_email;
     email.subject = subject
         .replace('%taxon%', currRec.extra.taxon)
-        .replace('%id%', sample_id);
+        .replace('%id%', sampleId);
     email.body = body
         .replace('%taxon%', currRec.extra.taxon)
-        .replace('%id%', sample_id)
+        .replace('%id%', sampleId)
         .replace('%record%', record);
     $('#record-details-tabs').tabs('load', 0);
     email.type = 'recordCheck';
@@ -298,7 +310,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       if (email.type === 'recordCheck') {
         // ensure media are loaded
         $.ajax({
-          url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep + 'sample_id=' + sample_id,
+          url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep + 'sample_id=' + sampleId,
           async: false,
           dataType: 'json',
           success: function (response) {
@@ -357,7 +369,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     }
     var data = {
       'website_id': indiciaData.website_id,
-      'sample_comment:sample_id': sample_id,
+      'sample_comment:sample_id': sampleId,
       'sample_comment:comment': text,
       'sample_comment:person_name': indiciaData.username,
       'sample_comment:query': query
@@ -411,14 +423,14 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
         postStatusComment($(elem).val(), status, comment);
       });
     } else {
-      postStatusComment(sample_id, status, comment);
+      postStatusComment(sampleId, status, comment);
     }
   };
 
   // show the list of tickboxes for verifying multiple records quickly
   function showTickList() {
     $('.check-row').attr('checked', false);
-    $('#row' + sample_id + ' .check-row').attr('checked', true);
+    $('#row' + sampleId + ' .check-row').attr('checked', true);
     $('.check-row').show();
     $('#btn-multiple').addClass('active');
     $('#btn-edit-verify').hide();
@@ -427,7 +439,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     $('#btn-multiple').after($('#action-buttons-status'));
     $('#action-buttons').find('button').removeAttr('disabled');
   }
-    
+
   // Callback for the report grid. Use to fill in the tickboxes if in multiple mode.
   verificationGridLoaded = function() {
     if (multimode) {
@@ -444,17 +456,19 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       }
       // make it clear things are loading
       if (indiciaData.mapdiv !== null) {
-        $(indiciaData.mapdiv).css('opacity', currRec.extra.wkt===null ? 0.1 : 1);
+        $(indiciaData.mapdiv).css('opacity', currRec.extra.wkt === null ? 0.1 : 1);
       }
     }
   }
 
   function setStatus(status) {
-    var helpText='', html, verb;
-    if (multimode && $('.check-row:checked').length>1) {
-      helpText='<p class="warning">'+indiciaData.popupTranslations.multipleWarning+'</p>';
+    var helpText = '';
+    var html;
+    var verb;
+    if (multimode && $('.check-row:checked').length > 1) {
+      helpText = '<p class="warning">' + indiciaData.popupTranslations.multipleWarning + '</p>';
     }
-    verb = status==='C' ? indiciaData.popupTranslations['verbC3'] : indiciaData.popupTranslations['verb' + status];
+    verb = status === 'C' ? indiciaData.popupTranslations.verbC3 : indiciaData.popupTranslations['verb' + status];
     html = '<fieldset class="popup-form">' +
           '<legend>' + indiciaData.popupTranslations.title.replace('{1}', statusLabel(status)) + '</legend>';
     html += '<label class="auto">Comment:</label><textarea id="verify-comment" rows="5" cols="80"></textarea><br />' +
@@ -469,24 +483,25 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
   mapInitialisationHooks.push(function (div) {
     div.map.editLayer.style = null;
     div.map.editLayer.styleMap = new OpenLayers.StyleMap({
-      'default': {
+      default: {
         pointRadius: 5,
-        strokeColor: "#0000FF",
+        strokeColor: '#0000FF',
         strokeWidth: 3,
-        fillColor: "#0000FF",
+        fillColor: '#0000FF',
         fillOpacity: 0.4
       }
     });
     showTab();
   });
-  
+
   function verifyRecordSet() {
-    var request, params=indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords();
+    var request;
+    var params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords();
     //If doing trusted only, this through as a report parameter.
-    request = indiciaData.ajaxUrl + '/bulk_verify/'+indiciaData.nid;
+    request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
     $.post(request,
-      'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
-      '&user_id='+indiciaData.userId,
+      'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
+      '&user_id=' + indiciaData.userId,
       function(response) {
         indiciaData.reports.verification.grid_verification_grid.reload(true);
         alert(response + ' records processed');
@@ -496,8 +511,8 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
   }
 
   $(document).ready(function () {
-    //Use jQuery to add button to the top of the verification page. Use the first button to access the popup
-    //which allows you to verify all records. The second enabled multiple record verification checkboxes
+    // Use jQuery to add button to the top of the verification page. Use the first button to access the popup
+    // which allows you to verify all records. The second enabled multiple record verification checkboxes.
     var verifyGridButtons = '<button type="button" class="default-button review-grid tools-btn" id="review-grid"">Review grid</button>'+
         '<button type="button" id="btn-multiple" title="Select this tool to tick off a list of records and action all of the ticked records in one go">Review tick list</button>';
     $('#filter-build').after(verifyGridButtons);
@@ -506,15 +521,17 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
                     '<p>This facility allows you to set the status of entire sets of records in one step. Before using this '+
                     'facility, you should filter the grid so that only the records you want to process are listed. '+
                     'You can then choose to either process the entire set of records from <em>all pages of the grid</em>.</p>';
-      var settings=indiciaData.reports.verification.grid_verification_grid[0].settings;
+      var settings = indiciaData.reports.verification.grid_verification_grid[0].settings;
       if (settings.recordCount > settings.itemsPerPage) {
         html += '<p class="warning">Remember that the following buttons will verify records from every page in the grid up to a maximum of ' +
           settings.recordCount + ' records, not just the current page.</p>';
       }
       html += '<button type="button" class="default-button" id="verify-all-button">Accept all records</button></div>';
-      
+
       $.fancybox(html);
-      $('#verify-all-button').click(function() {verifyRecordSet(false);});
+      $('#verify-all-button').click(function() {
+        verifyRecordSet(false);
+      });
     });
 
     $('table.report-grid tbody').click(function (evt) {
@@ -559,9 +576,9 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     $('#btn-notaccepted-incorrect').click(function () {
       setStatus('R', 5);
     });
-    
+
     $('#btn-multiple').click(function() {
-      multimode=!multimode;
+      multimode = !multimode;
       if (multimode) {
         showTickList();
       } else {
@@ -586,15 +603,14 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     });
 
     function editThisRecord(id) {
-      var $row=$('tr#row'+id),
-        path=$row.find('.row-input-form').val(),
-        sep=(path.indexOf('?')>=0) ? '&' : '?';
-      window.location=path+sep+'sample_id='+id;
+      var $row = $('tr#row' + id);
+      var path = $row.find('.row-input-form').val();
+      var sep = (path.indexOf('?') >= 0) ? '&' : '?';
+      window.location = path + sep + 'sample_id=' + id;
     }
 
     $('#btn-edit-record').click(function() {
       editThisRecord(sample_id);
     });
-
   });
-}) (jQuery);
+})(jQuery);

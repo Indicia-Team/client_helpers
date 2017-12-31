@@ -295,22 +295,22 @@ Record ID',
     $attrsTemplate = '<div class="field ui-helper-clearfix"><span>{caption}:</span>{anchorfrom}<span{class}>{value|escape}</span>{anchorto}</div>';
     $test = $args['operator'] === 'in';
     $availableFields = array(
-      'occurrence_id' => 'Record ID',
-      'preferred_taxon' => 'Recommended name',
-      'common_name' => 'Common name',
-      'taxon' => 'Name as entered',
-      'taxonomy' => 'Taxonomy',
-      'survey_title' => 'Survey',
-      'recorder' => 'Recorder',
-      'inputter' => 'Input by',
-      'record_status' => 'Record status',
-      'verifier' => 'Verified by',
-      'date' => 'Date',
-      'entered_sref' => 'Grid ref',
-      'occurrence_comment' => 'Record comment',
-      'location_name' => 'Site name',
-      'sample_comment' => 'Sample comment',
-      'licence_code' => 'Licence'
+      'occurrence_id' => lang::get('Record ID'),
+      'preferred_taxon' => lang::get('Recommended name'),
+      'common_name' => lang::get('Common name'),
+      'taxon' => lang::get('Name as entered'),
+      'taxonomy' => lang::get('Taxonomy'),
+      'survey_title' => lang::get('Survey'),
+      'recorder' => lang::get('Recorder'),
+      'inputter' => lang::get('Input by'),
+      'record_status' => lang::get('Record status'),
+      'verifier' => lang::get('Verified by'),
+      'date' => lang::get('Date'),
+      'entered_sref' => lang::get('Grid ref'),
+      'occurrence_comment' => lang::get('Record comment'),
+      'location_name' => lang::get('Site name'),
+      'sample_comment' => lang::get('Sample comment'),
+      'licence_code' => lang::get('Licence')
     );
     self::load_record($auth, $args);
     if (!empty(self::$record['sensitivity_precision'] && !$args['allow_sensitive_full_precision'])) {
@@ -400,7 +400,7 @@ Record ID',
       ));
     }
 
-    $r = '<div class="detail-panel" id="detail-panel-recorddetails"><h3>Record Details</h3>';
+    $r = '<div class="detail-panel" id="detail-panel-recorddetails"><h3>' . lang::get('Record Details') . '</h3>';
 
     $r .= $details_report;
     if (isset($attrs_report)) {
@@ -600,7 +600,7 @@ Record ID',
     if (!isset($options['standardControls'])) {
       $options['standardControls'] = array('layerSwitcher', 'panZoom');
     }
-    return '<div class="detail-panel" id="detail-panel-map"><h3>Map</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
+    return '<div class="detail-panel" id="detail-panel-map"><h3>' . lang::get('Map') .'</h3>' . map_helper::map_panel($options, $olOptions) . '</div>';
   }
 
   /**
@@ -652,7 +652,7 @@ Record ID',
     $r .= '</fieldset></form>';
     $r .= '</div>';
 
-    return '<div class="detail-panel" id="detail-panel-comments"><h3>Comments</h3>' . $r . '</div>';
+    return '<div class="detail-panel" id="detail-panel-comments"><h3>' . lang::get('Comments') . '</h3>' . $r . '</div>';
   }
 
   /**

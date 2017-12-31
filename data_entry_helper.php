@@ -480,6 +480,8 @@ $('#$escaped').change(function(e) {
    * <li><b>captionField</b><br/>
    * Required if addToTable is false. Field to draw values from to show in the control from.
    * If addToTable is true, this setting will be ignored and 'caption' will always be used.</li>
+   * <li><b>valueField</b><br/>
+   * Field to obtain the value to store for each item from.</li>
    * <li><b>extraParams</b><br/>
    * Required. Associative array of items to pass via the query string to the service. This
    * should at least contain the read authorisation array.</li>
@@ -610,6 +612,7 @@ $('#$escaped').change(function(e) {
     self::$javascript .= <<<JS
 indiciaFns.initSubList('$options[escaped_id]', '$options[escaped_captionField]',
   '$options[fieldname]', '$indicia_templates[sub_list_item]');
+
 JS;
     // load any default values for list items into display and hidden lists
     $items = "";
@@ -2733,11 +2736,13 @@ JS;
     ), $options);
     $options['extraParams'] += self::getSpeciesNamesFilter($options);
     if (!empty($options['default']) && empty($options['defaultCaption'])) {
+      // Which field will be used to lookup the default caption?
+      $idField = $options['valueField'] === 'taxa_taxon_list_id' ? 'id' : $options['valueField'];
       // We've been given an attribute value but no caption for the species name in the data to load for an existing record. So look it up.
       $r = self::get_population_data(array(
         'table' => 'cache_taxa_taxon_list',
         'extraParams' => array('nonce'=>$options['extraParams']['nonce'],'auth_token'=>$options['extraParams']['auth_token'])+
-          array('id' => $options['default'],'columns'=>"taxon")
+          array($idField => $options['default'],'columns'=>"taxon")
       ));
       $options['defaultCaption']=$r[0]['taxon'];
     }
@@ -4006,18 +4011,18 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
       if (count($options['usersPreferredGroups'])) {
         self::$javascript .= 'indiciaData.usersPreferredTaxonGroups = [' . implode(',', $options['usersPreferredGroups']) . "];\n";
       }
-      self::addLanguageStringsToJs('speciesChecklistFilter', array(
-          'configureFilter' => lang::get('Configure the filter applied to species names you are searching for'),
-          'preferredGroupsOptionLabel' => lang::get('Input species from the preferred list of species groups from your user account.'),
-          'singleGroupOptionLabel' => lang::get('Input species from the following species group:'),
-          'chooseSpeciesLabel' => lang::get('Choose species names available for selection'),
-          'namesOptionAllNamesLabel' => lang::get('All names including common names and synonyms'),
-          'namesOptionCommonNamesLabel' => lang::get('Common names only'),
-          'namesOptionCommonPrefLatinNamesLabel' => lang::get('Common names and preferred latin names only'),
-          'namesOptionPrefLatinNamesLabel' => lang::get('Preferred latin names only'),
-          'apply' => lang::get('Apply'),
-          'cancel' => lang::get('Cancel')
-      ));
+      self::addLanguageStringsToJs('speciesChecklistFilter', [
+        'configureFilter' => 'Configure the filter applied to species names you are searching for',
+        'preferredGroupsOptionLabel' => 'Input species from the preferred list of species groups from your user account.',
+        'singleGroupOptionLabel' => 'Input species from the following species group:',
+        'chooseSpeciesLabel' => 'Choose species names available for selection',
+        'namesOptionAllNamesLabel' => 'All names including common names and synonyms',
+        'namesOptionCommonNamesLabel' => 'Common names only',
+        'namesOptionCommonPrefLatinNamesLabel' => 'Common names and preferred latin names only',
+        'namesOptionPrefLatinNamesLabel' => 'Preferred latin names only',
+        'apply' => 'Apply',
+        'cancel' => 'Cancel',
+      ]);
       self::$javascript .= <<<JS
 indiciaData.speciesChecklistFilterOpts = {
   nameFilter: $filtersJson,

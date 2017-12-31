@@ -198,6 +198,63 @@ class filter_what extends FilterBase {
         'N' => lang::get('Exclude marine species')
       )
     ));
+    if (!empty($options['allowConfidential'])) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Confidential records'),
+        'fieldname' => 'confidential',
+        'lookupValues' => [
+          'f' => lang::get('Exclude confidential records'),
+          't' => lang::get('Only confidential records'),
+          'all' => lang::get('Include both confidential and non-confidential records'),
+        ],
+        'defaultValue' => 'f'
+      ]);
+    }
+    if (!empty($options['allowUnreleased'])) {
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Unreleased records'),
+        'fieldname' => 'release_status',
+        'lookupValues' => [
+          'R' => lang::get('Exclude unreleased records'),
+          'A' => lang::get('Include unreleased records'),
+        ],
+      ]);
+    }
+    if (!empty($options['taxaTaxonListAttributeTerms'])) {
+      $allAttrIds = [];
+      $idx = 0;
+      foreach ($options['taxaTaxonListAttributeTerms'] as $label => $attrIds) {
+        $allAttrIds += $attrIds;
+        $attrs = data_entry_helper::get_population_data([
+          'table' => 'taxa_taxon_list_attribute',
+          'extraParams' => $readAuth + [
+            'query' => json_encode(['in' => ['id' => $attrIds]])
+          ],
+        ]);
+        $termlistIds = [];
+        foreach ($attrs as $attr) {
+          if (!empty($attr['termlist_id'])) {
+            $termlistIds[] = $attr['termlist_id'];
+          }
+        }
+        $r .= data_entry_helper::sub_list([
+          'label' => $label,
+          'fieldname' => "taxa_taxon_list_attribute_termlist_term_ids:$idx",
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'addToTable' => FALSE,
+          'extraParams' => $readAuth + [
+            'view' => 'cache',
+            'query' => json_encode(['in' => ['termlist_id' => $termlistIds]]),
+          ],
+        ]);
+        $idx++;
+      }
+      helper_base::$javascript .= 'indiciaData.taxaTaxonListAttributeIds = ' . json_encode($allAttrIds) . ";\n";
+      helper_base::$javascript .= 'indiciaData.taxaTaxonListAttributeLabels = ' .
+        json_encode(array_keys($options['taxaTaxonListAttributeTerms'])) . ";\n";
+    }
     $r .= '</div>';
     $r .= "</div>\n";
     data_entry_helper::enable_tabs(array(
@@ -516,14 +573,14 @@ class filter_sample_id extends FilterBase {
       'lookupValues' => array(
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most')
+        '<=' => lang::get('is at most'),
       ),
-      'controlWrapTemplate' => 'justControl'
+      'controlWrapTemplate' => 'justControl',
     ));
     $r .= data_entry_helper::text_input(array(
       'fieldname' => 'sample_id',
       'class' => 'control-width-2',
-      'controlWrapTemplate' => 'justControl'
+      'controlWrapTemplate' => 'justControl',
     ));
     $r .= '</div>';
     return $r;
@@ -565,7 +622,7 @@ class filter_quality extends FilterBase {
         'A' => lang::get('Answered records only'),
         'R' => lang::get('Not accepted records only'),
         'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
-        'DR' => lang::get('Queried or not accepted records')
+        'DR' => lang::get('Queried or not accepted records'),
       )
     ));
     $r .= data_entry_helper::select(array(
@@ -574,7 +631,7 @@ class filter_quality extends FilterBase {
       'lookupValues' => array(
         '' => lang::get('Not filtered'),
         'P' => lang::get('Only include records that pass all automated checks'),
-        'F' => lang::get('Only include records that fail at least one automated check')
+        'F' => lang::get('Only include records that fail at least one automated check'),
       )
     ));
     $r .= data_entry_helper::select(array(
@@ -583,7 +640,7 @@ class filter_quality extends FilterBase {
       'lookupValues' => array(
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most')
+        '<=' => lang::get('is at most'),
       ),
       'afterControl' => data_entry_helper::select(array(
         'fieldname' => 'identification_difficulty',
@@ -593,9 +650,9 @@ class filter_quality extends FilterBase {
           2 => 2,
           3 => 3,
           4 => 4,
-          5 => 5
+          5 => 5,
         ),
-        'controlWrapTemplate' => 'justControl'
+        'controlWrapTemplate' => 'justControl',
       ))
     ));
     $r .= data_entry_helper::select([
@@ -636,7 +693,7 @@ class filter_quality_sample extends FilterBase {
         '!R' => lang::get('Exclude not accepted records'),
         '!D' => lang::get('Exclude queried or not accepted records'),
         'all' => lang::get('All records'),
-        'R' => lang::get('Not accepted records only')
+        'R' => lang::get('Not accepted records only'),
       )
     ));
     $r .= data_entry_helper::select(array(
@@ -692,7 +749,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing'])
+        'extraParams' => array('sharing' => $options['sharing']),
       ));
       if (count($sources) > 1) {
         $r .= '<div id="filter-websites" class="filter-popup-columns"><h3>' . lang::get('Websites') . '</h3><p>' .
@@ -711,7 +768,7 @@ class filter_source extends FilterBase {
     if (isset($options['runningOnWarehouse']) && $options['runningOnWarehouse'] == TRUE) {
       $sources = data_entry_helper::get_population_data(array(
         'table' => 'survey',
-        'extraParams' => $readAuth + array('view' => 'detail', 'website_id' => $options['website_id'])
+        'extraParams' => $readAuth + array('view' => 'detail', 'website_id' => $options['website_id']),
       ));
       $titleToDisplay = 'title';
     }
@@ -721,7 +778,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing'])
+        'extraParams' => array('sharing' => $options['sharing']),
       ));
       $titleToDisplay = 'fulltitle';
     }
@@ -739,7 +796,7 @@ class filter_source extends FilterBase {
       'readAuth' => $readAuth,
       'caching' => TRUE,
       'cachePerUser' => FALSE,
-      'extraParams' => array('sharing' => $options['sharing'])
+      'extraParams' => array('sharing' => $options['sharing']),
     );
     // If in the warehouse then we are only interested in the website for the milestone we are editing.
     if (isset($options['website_id'])) {
@@ -770,34 +827,60 @@ class filter_source extends FilterBase {
 /**
  * Code to output a standardised report filtering panel.
  *
- * Filters can be saved and loaded by each user. Additionally, filters can define permissions to a certain task, e.g. they can be used to define the
- * context within which someone can verify. In this case they provide the "outer limit" of the available records.
- * Requires a [map] control on the page. If you don't want a map, the current option is to include one anyway and use css to hide the #map-container div.
+ * Filters can be saved and loaded by each user. Additionally, filters can
+ * define permissions to a certain task, e.g. they can be used to define the
+ * context within which someone can verify. In this case they provide the
+ * "outer limit" of the available records.
+ * Requires a [map] control on the page. If you don't want a map, the current
+ * option is to include one anyway and use css to hide the #map-container div.
  *
  * @param array $readAuth
  *   Pass read authorisation tokens.
- * @param array $options Options array with the following possibilities:
- *   sharing - define the record sharing task that is being filtered against. Options are reporting (default),
- *   peer_review, verification, moderation, data_flow, editing.
- *   context_id - can also be passed as URL parameter. Force the initial selection of a particular context (a record
- *   which has defines_permissions=TRUE in the
- *   filters table. Set to "default" to select their profile verification settings when sharing=verification.
- *   filter_id - can also be passed as URL parameter. Force the initial selection of a particular filter record in the
- *   filters table.
- *   filterTypes - allows control of the list of filter panels available, e.g. to turn one off. Associative array keyed
- *   by category
- *   so that the filter panels can be grouped (use a blank key if not required). The array values are an array of or
- *   strings with a comma separated list
- *   of the filter types to included in the category - options are what, where, when, who, quality, source.
- *   filter-#name# - set the initial value of a report filter parameter #name#.
- *   allowLoad - set to FALSE to disable the load bar at the top of the panel.
- *   allowSave - set to FALSE to disable the save bar at the foot of the panel.
- *   presets - provide an array of preset filters to provide in the filters drop down. Choose from my-records, my-groups
- *   (uses your list of taxon groups in the user account), my-locality (uses your recording locality from the user
- *   account), my-groups-locality (uses taxon groups and recording locality from the user account), my-queried-records,
- *   queried-records, answered-records, accepted-records, not-accepted-records.
- *   generateFilterListCallback - a callback to allow custom versions of the filters to be used, utilising the standard
- *   filter user interface.
+ * @param array $options
+ *   Options array with the following possibilities:
+ *   * sharing - define the record sharing task that is being filtered against.
+ *     Options are reporting (default), peer_review, verification, moderation,
+ *     data_flow, editing.
+ *   * context_id - can also be passed as URL parameter. Force the initial
+ *     selection of a particular context (a record which has
+ *     defines_permissions=TRUE in the
+ *   * filters table. Set to "default" to select their profile verification
+ *     settings when sharing=verification.
+ *   * filter_id - can also be passed as URL parameter. Force the initial
+ *     selection of a particular filter record in the filters table.
+ *   * filterTypes - allows control of the list of filter panels available,
+ *     e.g. to turn one off. Associative array keyed by category  so that the
+ *     filter panels can be grouped (use a blank key if not required). The
+ *     array values are an array of or strings with a comma separated list of
+ *     the filter types to included in the category - options are what, where,
+ *     when, who, quality, source.
+ *   * filter-#name# - set the initial value of a report filter parameter
+ *     #name#.
+ *   * overridePermissionsFilters - set to true to ignore any permissions
+ *     filters defined for this user for this sharing mode. Use with
+ *     caution as it prevents permissions from applying. An example usage
+ *     is for a report page that gets it's filter from the group it is
+ *     linked to rather than the user's permissions.
+ *   * allowLoad - set to FALSE to disable the load bar at the top of the panel.
+ *   * allowSave - set to FALSE to disable the save bar at the foot of the
+ *     panel.
+ *   * presets - provide an array of preset filters to provide in the filters
+ *     drop down. Choose from my-records, my-groups (uses your list of taxon
+ *     groups in the user account), my-locality (uses your recording locality
+ *     from the user  account), my-groups-locality (uses taxon groups and
+ *     recording locality from the user account), my-queried-records,
+ *     queried-records, answered-records, accepted-records,
+ *     not-accepted-records.
+ *   * generateFilterListCallback - a callback to allow custom versions of the
+ *     filters to be used, utilising the standard filter user interface.
+ *   * taxaTaxonListAttributeTerms - a JSON encoded list of groups of taxa
+ *     taxon list attributes. Each group will be added to the What panel's
+ *     Other flags tab allowing the user to filter for terms linked via the
+ *     attributes to the species. For example, if habitat data can be in
+ *     taxa_taxon_list_attributes ID 1 or 2 and food data in attributes 3 or 4
+ *     then the value can be set to {"Habitat":[1,2],"Food":[3,4]} resulting
+ *     in 2 controls being added to the Other flags tab for filtering on this
+ *     information.
  * @param int $website_id
  *   The current website's warehouse ID.
  * @param string $hiddenStuff
@@ -836,9 +919,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'my-accepted-records',
       'my-groups',
       'my-locality',
-      'my-groups-locality'
+      'my-groups-locality',
     ),
-    'entity' => 'occurrence'
+    'entity' => 'occurrence',
   ), $options);
   // Introduce some extra quick filters useful for verifiers.
   if ($options['sharing'] === 'verification') {
@@ -846,7 +929,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'queried-records',
       'answered-records',
       'accepted-records',
-      'not-accepted-records'
+      'not-accepted-records',
     ), $options['presets']);
   }
   if ($options['entity'] === 'sample') {
@@ -1005,9 +1088,11 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   foreach ($filterData as $filter) {
     if ($filter['defines_permissions'] === 't') {
-      $selected = (!empty($options['context_id']) && $options['context_id'] == $filter['id']) ? 'selected="selected" ' : '';
-      $contexts .= "<option value=\"$filter[id]\" $selected>$filter[title]</option>";
-      $contextDefs[$filter['id']] = json_decode($filter['definition'], TRUE);
+      if (empty($options['overridePermissionsFilters'])) {
+        $selected = (!empty($options['context_id']) && $options['context_id'] == $filter['id']) ? 'selected="selected" ' : '';
+        $contexts .= "<option value=\"$filter[id]\" $selected>$filter[title]</option>";
+        $contextDefs[$filter['id']] = json_decode($filter['definition'], TRUE);
+      }
     }
     else {
       $selected = (!empty($options['filter_id']) && $options['filter_id']==$filter['id']) ? 'selected="selected" ' : '';
@@ -1210,19 +1295,26 @@ HTML;
 
   }
   $r .= '</div>';
-  report_helper::$javascript .= "indiciaData.lang.CreateAFilter='" . lang::get('Create a filter') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.ModifyFilter='" . lang::get('Modify filter') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterSaved='" . lang::get('The filter has been saved') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterDeleted='" . lang::get('The filter has been deleted') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.ConfirmFilterChangedLoad='" . lang::get('Do you want to load the selected filter and lose your current changes?') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.FilterExistsOverwrite='" . lang::get('A filter with that name already exists. Would you like to overwrite it?') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.AutochecksFailed='" . lang::get('Automated checks failed') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.AutochecksPassed='" . lang::get('Automated checks passed') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.IdentificationDifficulty='" . lang::get('Identification difficulty') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.HasPhotos='" . lang::get('Only include records which have photos') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.HasNoPhotos='" . lang::get("Exclude records which have photos") . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.ConfirmFilterDelete='" . lang::get('Are you sure you want to permanently delete the {title} filter?') . "';\n";
-  report_helper::$javascript .= "indiciaData.lang.MyRecords='" . lang::get('My records only') . "';\n";
+  report_helper::addLanguageStringsToJs('reportFilters', [
+    'CreateAFilter' => 'Create a filter',
+    'ModifyFilter' => 'Modify filter',
+    'FilterSaved' => 'The filter has been saved',
+    'FilterDeleted' => 'The filter has been deleted',
+    'ConfirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
+    'FilterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
+    'AutochecksFailed' => 'Automated checks failed',
+    'AutochecksPassed' => 'Automated checks passed',
+    'IdentificationDifficulty' => 'Identification difficulty',
+    'HasPhotos' => 'Only include records which have photos',
+    'HasNoPhotos' => 'Exclude records which have photos',
+    'ConfirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
+    'MyRecords' => 'My records only',
+    'OnlyConfidentialRecords' => 'Only confidential records',
+    'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
+    'NoConfidentialRecords' => 'Exclude confidential records',
+    'includeUnreleasedRecords' => 'Include unreleased records',
+    'excludeUnreleasedRecords' => 'Exclude unreleased records',
+  ]);
   if (function_exists('iform_ajaxproxy_url')) {
     report_helper::$javascript .= "indiciaData.filterPostUrl='" . iform_ajaxproxy_url(NULL, 'filter') . "';\n";
     report_helper::$javascript .= "indiciaData.filterAndUserPostUrl='" . iform_ajaxproxy_url(NULL, 'filter_and_user') . "';\n";
