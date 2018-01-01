@@ -372,7 +372,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         'rememberParamsReportGroup' => 'dynamic',
         'clickableLayersOutputMode' => 'report',
         'rowId' => 'occurrence_id',
-        'ajax' => FALSE,
+        'ajax' => TRUE,
       )
     );
     // Ensure supplied extraParams are merged, not overwritten.
