@@ -61,7 +61,7 @@
           if (preg_match('/^occAttr:'.$args['reticules'].'.*/',$occurrenceAttrToMatchKey)) {
             $reticuleToUse = $occurrenceAttrToMatch['value'];
           }
-          if (preg_match('/^occAttr:'.$args['distance_esimate'].'.*/',$occurrenceAttrToMatchKey)) {
+          if (preg_match('/^occAttr:'.$args['distance_estimate'].'.*/',$occurrenceAttrToMatchKey)) {
             $distance = $occurrenceAttrToMatch['value'];
           }
         }   

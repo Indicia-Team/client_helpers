@@ -21,24 +21,33 @@ jQuery(document).ready(function ($) {
     $.fancybox($('#group-link-popup'));
   };
 
-  $('#area-picker').change(function() {
-    var bounds;
-    var data;
+  $('#area-picker').change(function areaPickerSelect() {
+    var geom;
+    var data = indiciaData.areaPickerMapAreaData;
     var placeDef;
-    data = indiciaData.areaPickerMapAreaData;
     var map = indiciaData.mapdiv.map;
+    var feature;
+    indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'boundary');
     if (typeof data[$('#area-picker').val()] !== 'undefined') {
       placeDef = data[$('#area-picker').val()];
-      bounds = new OpenLayers.Bounds(placeDef.bounds);
-      map.zoomToExtent(bounds);
-      if ($('#imp-sref-system').val() !== placeDef.system) {
+      geom = new OpenLayers.Bounds(placeDef.bounds).toGeometry();
+      if (typeof indiciaData.areaPickerBoundsProjection !== 'undefined') {
+        geom.transform('epsg:' + indiciaData.areaPickerBoundsProjection, map.projection);
+      }
+      map.zoomToExtent(geom.getBounds());
+      if (typeof placeDef.system !== 'undefined' && $('#imp-sref-system').val() !== placeDef.system) {
         $('#imp-sref-system').val(data[$('#area-picker').val()].system);
         $('#imp-sref').val('');
-        $.each(map.controls, function() {
+        $.each(map.controls, function () {
           if (this.CLASS_NAME === 'OpenLayers.Control.Graticule') {
             this.gratLayer.setVisibility(this.projection === 'EPSG:' + placeDef.projection);
           }
         });
+      }
+      if (typeof indiciaData.areaPickerDrawBounds !== 'undefined' && indiciaData.areaPickerDrawBounds === true) {
+        feature = new OpenLayers.Feature.Vector(geom);
+        feature.attributes.type = 'boundary';
+        map.editLayer.addFeatures([feature]);
       }
     }
   });

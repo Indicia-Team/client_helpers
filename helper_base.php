@@ -122,6 +122,7 @@ $indicia_templates = array(
       "/* ]]> */</script>",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
+  'single_species_taxon_label' => '{taxon}',
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
@@ -520,11 +521,14 @@ class helper_base extends helper_config {
 
   /**
    * Utility function to insert a list of translated text items for use in JavaScript.
+   *
    * @param string $group
-   * @param array $strings Associative array of keys and texts to translate.
+   *   Name of the group of strings.
+   * @param array $strings
+   *   Associative array of keys and texts to translate.
    */
-  protected static function addLanguageStringsToJs($group, $strings) {
-    self::$javascript .= <<<JS
+  public static function addLanguageStringsToJs($group, array $strings) {
+      self::$javascript .= <<<JS
 if (typeof indiciaData.lang === "undefined") {
   indiciaData.lang = {};
 }
@@ -532,8 +536,8 @@ indiciaData.lang.$group = {};
 
 JS;
     foreach ($strings as $key => $text) {
-      self::$javascript .= "indiciaData.lang.speciesChecklistFilter.$key = '" .
-          str_replace("'", "\'", $text) . "';\n";
+        self::$javascript .= "indiciaData.lang.$group.$key = '" .
+        str_replace("'", "\'", lang::get($text)) . "';\n";
     }
   }
 
@@ -595,6 +599,7 @@ JS;
    * <li>footable</li>
    * <li>indiciaFootableReport</li>
    * <li>indiciaFootableChecklist</li>
+   * <li>html2pdf</li>
    * <li>review_input</li>
    * <li>sub_list</li>
    * <li>georeference_default_geoportal_lu</li>
@@ -663,9 +668,10 @@ JS;
             self::$js_path."proj4js.js", self::$js_path."proj4defs.js", self::$js_path."lang/en.js")),
         'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
         'clearLayer' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."clearLayer.js")),
+        'hoverControl' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."hoverControl.js")),
         'addrowtogrid' => array('deps' => array('validation'), 'javascript' => array(self::$js_path."addRowToGrid.js")),
         'speciesFilterPopup' => array('deps' => array('addrowtogrid'), 'javascript' => array(self::$js_path."speciesFilterPopup.js")),
-        'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
+        'indiciaMapPanel' => array('deps' =>array('jquery', 'openlayers', 'jquery_ui', 'jquery_cookie','hoverControl'), 'javascript' => array(self::$js_path."jquery.indiciaMapPanel.js")),
         'indiciaMapEdit' => array('deps' =>array('indiciaMap'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.js")),
         'postcode_search' => array('javascript' => array(self::$js_path."postcode_search.js")),
         'locationFinder' => array('deps' =>array('indiciaMapEdit'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.locationFinder.js")),
@@ -721,6 +727,13 @@ JS;
             'stylesheets' => array(self::$css_path . 'jquery.indiciaFootableChecklist.css'),
             'javascript' => array(self::$js_path . 'jquery.indiciaFootableChecklist.js'),
             'deps' => array('footable')),
+        'html2pdf' => array(
+          'javascript' => array(
+            self::$js_path . 'html2pdf/vendor/jspdf.min.js',
+            self::$js_path . 'html2pdf/vendor/html2canvas.min.js',
+            self::$js_path . 'html2pdf/src/html2pdf.js',
+          )
+        ),
         'review_input' => array('javascript' => array(self::$js_path . 'jquery.reviewInput.js')),
         'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
         'georeference_default_geoportal_lu' => array(
@@ -1856,6 +1869,9 @@ if (typeof validator!=='undefined') {
     $control = self::apply_replacements_to_template($indicia_templates[$template], $options);
     $addons = '';
 
+    if (isset($options['afterControl'])) {
+      $addons .= $options['afterControl'];
+    }
     // Add a lock icon to the control if the lockable option is set to true
     if (array_key_exists('lockable', $options) && $options['lockable']===true) {
       $addons .= self::apply_replacements_to_template($indicia_templates['lock_icon'], $options);
@@ -1892,8 +1908,6 @@ if (typeof validator!=='undefined') {
     if ($error && in_array('message', $options['validation_mode'])) {
       $r .=  self::apply_error_template($error, $options['fieldname']);
     }
-    if (isset($options['afterControl']))
-      $r .= $options['afterControl'];
 
     // Add suffix
     $r .= self::apply_static_template('suffix', $options);
@@ -2132,28 +2146,32 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
  /**
-  * Returns a static template which is either a default template or one
-  * specified in the options
-  * @param string $name The static template type. e.g. prefix or suffix.
-  * @param array $options Array of options which may contain a template name.
-  * @return string Template value.
+  * Returns a static template which is either a default template or one specified in the options.
+  *
+  * @param string $name
+  *   The static template type. e.g. prefix or suffix.
+  * @param array $options
+  *   Array of options which may contain a template name.
+  *
+  * @return string
+  *   Template value.
   */
-  protected static function apply_static_template($name, $options) {
+  public static function apply_static_template($name, $options) {
     global $indicia_templates;
     $key = $name .'Template';
     if (array_key_exists($key, $options)) {
       //a template has been specified
       if (array_key_exists($options[$key], $indicia_templates))
         //the specified template exists
-        $r = $indicia_templates[$options[$key]];
+        $template = $indicia_templates[$options[$key]];
       else
-        $r = $indicia_templates[$name] .
+        $template = $indicia_templates[$name] .
         '<span class="ui-state-error">Code error: suffix template '.$options[$key].' not in list of known templates.</span>';
     } else {
       //no template specified
-      $r = $indicia_templates[$name];
+      $template = $indicia_templates[$name];
     }
-    return self::apply_replacements_to_template($r, $options);
+    return self::apply_replacements_to_template($template, $options);
   }
 
  /**
@@ -2218,33 +2236,41 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
 
   /**
    * Wrapped up handler for a cached call to the data or reporting services.
-   * @param string $request Request URL.
-   * @param array $options Control options, which may include a caching option and/or cachePerUser
-   * option.
+   *
+   * @param string $request
+   *   Request URL.
+   * @param array $options
+   *   Control options, which may include a caching option and/or cachePerUser
+   *   option.
+   *
    * @return mixed
+   *   Service call response.
+   *
    * @throws \Exception
    */
   protected static function _get_cached_services_call($request, $options) {
     $cacheLoaded = FALSE;
     // allow use of the legacy nocache parameter.
-    if (isset($options['nocache']) && $options['nocache']===TRUE)
+    if (isset($options['nocache']) && $options['nocache'] === TRUE) {
       $options['caching'] = FALSE;
+    }
     $useCache = !self::$nocache && !isset($_GET['nocache']) && !empty($options['caching']) && $options['caching'];
     if ($useCache) {
-      // Get the URL params, so we know what the unique thing is we are caching
-      $parsedURL=parse_url(parent::$base_url.$request);
+      // Get the URL params, so we know what the unique thing is we are caching.
+      $parsedURL = parse_url(parent::$base_url.$request);
       parse_str($parsedURL["query"], $cacheOpts);
       unset($cacheOpts['auth_token']);
       unset($cacheOpts['nonce']);
-      $cacheOpts['path']=$parsedURL['path'];
-      if (isset($options['cachePerUser']) && !$options['cachePerUser'])
+      $cacheOpts['serviceCallPath'] = $parsedURL['path'];
+      if (isset($options['cachePerUser']) && !$options['cachePerUser']) {
         unset($cacheOpts['user_id']);
+      }
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
       $cacheTimeOut = self::_getCacheTimeOut($options);
       $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
       if ($options['caching']!=='store') {
       	$response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
-        if ($response!==FALSE)
+        if ($response !== FALSE)
           $cacheLoaded = TRUE;
       }
     }
@@ -2346,29 +2372,37 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   /**
    * Protected function to return the cached data stored in the specified local file.
    *
-   * @param string $file Cache file to be used, includes path
-   * @param integer $timeout - will be false if no caching to take place
-   * @param array $options Options array : contents used to confirm what this data is.
-   * @param boolean $random Should a random element be introduced to prevent simultaneous expiry of multiple
-   * caches? Default true.
-   * @return array equivalent of call to http_post, else FALSE if data is not to be cached.
+   * @param string $file
+   *   Cache file to be used, includes path.
+   * @param integer $timeout
+   *   Will be false if no caching to take place.
+   * @param array $options
+   *   Options array : contents used to confirm what this data is.
+   * @param boolean $random
+   *   Should a random element be introduced to prevent simultaneous expiry of multiple
+   *   caches? Default true.
+   *
+   * @return array
+   *   Equivalent of call to http_post, else FALSE if data is not to be cached.
    */
-  protected static function _getCachedResponse($file, $timeout, $options, $random=true)
-  {
+  protected static function _getCachedResponse($file, $timeout, $options, $random=true) {
     // Note the random element, we only timeout a cached file sometimes.
-    $wantToCache = $timeout!==false;
+    $wantToCache = $timeout !== false;
     $haveFile = $file && is_file($file);
     $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
     $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file)!==1);
     if ($wantToCache && $haveFile && ($fresh || $randomSurvival)) {
       $response = array();
       $handle = fopen($file, 'rb');
-      if(!$handle) return false;
+      if (!$handle) {
+        return false;
+      }
       $tags = fgets($handle);
       $response['output'] = fread($handle, filesize($file));
       fclose($handle);
-      if ($tags == self::array_to_query_string($options)."\n")
+      if ($tags == self::array_to_query_string($options)."\n") {
         return($response);
+      }
     } else {
       self::_timeOutCacheFile($file, $timeout);
     }
@@ -2377,11 +2411,13 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
 
   /**
    * Protected function to remove a cache file if it has timed out.
-   * @param string $file Cache file to be removed, includes path
-   * @param number $timeout - will be false if no caching to take place
+   *
+   * @param string $file
+   *   Cache file to be removed, includes path
+   * @param number $timeout
+   *   Will be false if no caching to take place.
    */
-  protected static function _timeOutCacheFile($file, $timeout)
-  {
+  protected static function _timeOutCacheFile($file, $timeout) {
     if ($file && is_file($file) && filemtime($file) < (time() - $timeout)) {
       unlink($file);
     }

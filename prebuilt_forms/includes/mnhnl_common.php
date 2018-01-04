@@ -4003,7 +4003,7 @@ function iform_mnhnl_set_editable($auth, $args, $node, $locList, $force, $loctyp
     while($locIdx < $locCount) {
       $locIDs = array();
       for($i = 0; $i < $maxPerQuery && $locIdx < $locCount; $i++, $locIdx++){
-        $locIDs[] = $locCheckList[$smpIdx];
+        $locIDs[] = $locCheckList[$locIdx];
       }
       $sample_list_args=array(
           'nocache'=>true, // new samples can be added for existing locations.
