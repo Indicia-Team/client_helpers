@@ -70,3 +70,13 @@ label.working {
   background: url(../../../media/images/ajax-loader.gif) no-repeat right;
   font-style: italic;
 }
+.range-warning-icon {
+  width: 22px;
+  height: 16px;
+  display: inline-block;
+  background: url("../../../media/images/warning.png") no-repeat center;
+}
+table tr.range-warning td input {
+  background-color: #ffcece;
+}
+
