@@ -359,6 +359,7 @@ class extension_my_sites {
     if (!empty($options['useAutocomplete'])&&$options['useAutocomplete']==true) {
       $r .= data_entry_helper::autocomplete(array(
         'report'=>'library/users/get_people_details_for_website_or_user',
+        'extraParams' => $readAuth + array('website_id'=>$website_id),
         'id' => 'user-select',
         'fieldname'=> 'user-select',
         'label' => lang::get('Select a user'),
