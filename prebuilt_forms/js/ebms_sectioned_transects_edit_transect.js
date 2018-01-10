@@ -188,33 +188,54 @@ updateTransectDetails = function(newNumSections) {
   var numSections = parseInt($('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').val(),10);
   var ldata = {'location:id':$('#location-id').val(), 'website_id':indiciaData.website_id};
   var save = (newNumSections !== false);
+  var renameAutoCalc = false;
   
   if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
-		indiciaData.autocalcTransectLengthAttrId &&
-		indiciaData.autocalcSectionLengthAttrId) {
-	// add all sections lengths together
-	for(var i = 1; i <= numSections; i++){
-		if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
-			transectLen += indiciaData.sections['S'+i].sectionLen;
-		}
-	}
-	// load into form.
+        indiciaData.autocalcTransectLengthAttrId &&
+        indiciaData.autocalcSectionLengthAttrId) {
+    // add all sections lengths together
+    for(var i = 1; i <= numSections; i++){
+      if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
+        transectLen += indiciaData.sections['S'+i].sectionLen;
+      }
+    }
+    // load into form.
     $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
     ldata[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
-    save = true;
+    save = renameAutoCalc = true;
   }
 
   if(newNumSections !== false)
     ldata[indiciaData.settings.numSectionsAttr] = ''+newNumSections;
   
   if(save)
-	  syncPost(indiciaData.ajaxFormPostUrl, ldata);
-  
+    syncPost(indiciaData.ajaxFormPostUrl, ldata);
+
   if(newNumSections !== false) {
-	window.onbeforeunload = null;
-	setTimeout(function(){
-		  window.location.reload(true);
-	});
+    window.onbeforeunload = null;
+    setTimeout(function(){
+        window.location.reload(true);
+    });
+  } else if (renameAutoCalc && indiciaData.autocalcTransectLengthAttrName.split(':').length === 2) {
+    $.ajax({
+        type: 'GET',
+        url: indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?" +
+              "location_id=" + $('#location-id').val() +
+              "&location_attribute_id=" + indiciaData.autocalcTransectLengthAttrId +
+              "&mode=json&view=list&callback=?" +
+              "&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
+        success: function(data) {
+          if (data.length > 0) {
+            var attrname = 'locAttr:' +
+                           indiciaData.autocalcTransectLengthAttrId + ':' +
+                           data[0].id;
+            $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).attr('name', attrname);
+            indiciaData.autocalcTransectLengthAttrName = attrname;
+          }
+        },
+        dataType: 'json',
+        async: false
+      });
   }
 }
 
