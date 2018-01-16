@@ -61,30 +61,50 @@ class extension_pantheon {
     }
     if (!empty($_GET['dynamic-sample_id'])) {
       $title = str_replace('{sample_id}', $_GET['dynamic-sample_id'], $title);
+      $ids = explode(',', $_GET['dynamic-sample_id']);
       if ($_GET['dynamic-sample_type'] === 'scratchpad') {
         $name = 'List ' . $_GET['dynamic-sample_id'];
-        $scratchpad = data_entry_helper::get_population_data(array(
-          'table' => 'scratchpad_list',
-          'extraParams' => $auth['read'] + array('id' => $_GET['dynamic-sample_id']),
-          'columns' => 'title',
-        ));
-        $name .= ' [' . $scratchpad[0]['title'] . ']';
+        if (count($ids) <= 3) {
+          $name = count($ids) === 1 ? lang::get('List') : lang::get('Lists');
+          $lists = data_entry_helper::get_population_data([
+            'table' => 'scratchpad_list',
+            'extraParams' => $auth['read'] + ['query' => json_encode(['in' => ['id' => $ids]])],
+            'columns' => 'title',
+          ]);
+          $titles = [];
+          foreach ($lists as $list) {
+            $titles[] = "$list[id] [$list[title]]";
+          }
+          $name .= ' ' . implode('; ', $titles);
+        }
+        else {
+          $name = lang::get('Multiple lists');
+        }
       }
       else {
         $name = 'Sample ' . $_GET['dynamic-sample_id'];
-        $sample = data_entry_helper::get_population_data(array(
-          'report' => 'library/samples/filterable_explore_list',
-          'extraParams' => $auth['read'] + array('sample_id' => $_GET['dynamic-sample_id'])
-        ));
-        if (!isset($sample['error']) && count($sample) > 0) {
-          $parts = [
-            $sample[0]['date'],
-            $sample[0]['entered_sref']
-          ];
-          if (!empty($sample[0]['location_name'])) {
-            $parts[] = $sample[0]['location_name'];
+        if (count($ids) <= 3) {
+          $samples = data_entry_helper::get_population_data(array(
+            'report' => 'library/samples/filterable_explore_list',
+            'extraParams' => $auth['read'] + array('sample_id' => $_GET['dynamic-sample_id']),
+          ));
+          if (!isset($samples['error']) && count($samples) > 0) {
+            $titles = [];
+            foreach ($samples as $sample) {
+              $parts = [
+                $sample['date'],
+                $sample['entered_sref'],
+              ];
+              if (!empty($sample[0]['location_name'])) {
+                $parts[] = $sample[0]['location_name'];
+              }
+              $titles[] = implode(', ', $parts);
+            }
+            $name .= ' [' . implode('; ', $titles) . ']';
           }
-          $name .= ' [' . implode(', ', $parts) . ']';
+        }
+        else {
+          $name .= ' [' . lang::get('multiple samples') . ']';
         }
       }
       $title = str_replace('{sample_name}', $name, $title);
@@ -172,6 +192,51 @@ class extension_pantheon {
     }
     report_helper::$javascript .= "indiciaData.lexicon = " . json_encode($list) . ";\n";
     report_helper::$javascript .= "indiciaFns.applyLexicon();\n";
+  }
+
+  /**
+   * Links spans on the page to the Pantheon Lexicon.
+   *
+   * Dependencies:
+   *   * Should be a tab called Quick Analysis Group.
+   *
+   * @param array $options
+   *   Options passed to the control:
+   *   * analysisPath - path to the analysis page.
+   */
+  public static function quick_analysis_group($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('report_helper'));
+    $imgPath = empty(report_helper::$images_path)
+      ? report_helper::relative_client_helper_path() . "../media/images/"
+      : report_helper::$images_path;
+    $userId = hostsite_get_user_field('indicia_user_id');
+    $auth = report_helper::get_read_write_auth(variable_get('indicia_website_id'), variable_get('indicia_password'));
+    $write = json_encode($auth['write_tokens']);
+    report_helper::$javascript .= <<<JS
+indiciaData.imagesPath = '$imgPath';
+indiciaData.userId = $userId;
+indiciaData.write = $write;
+
+JS;
+    return <<<HTML
+<table id="quick-analysis-group" class="ui-widget ui-widget-content">
+  <thead class="ui-widget-header">
+    <th>List</th>
+    <th>Actions</th>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+<div id="qa-group-actions">
+  <button disabled="disabled" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]')">Analyse all lists in group</button>
+  <label class="auto">
+    Convert group to a new list named:
+    <input disabled="disabled" type="text" id="new-list-name" placeholder="Enter a list name" />
+  </label>
+  <button disabled="disabled" onclick="indiciaFns.saveQuickAnalysisGroup()">Convert</button>
+</div>
+
+HTML;
   }
 
 }

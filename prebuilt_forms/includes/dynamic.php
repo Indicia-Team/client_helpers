@@ -551,8 +551,10 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
           $hasControls = true;
         }
         elseif (count($parts)===2) {
-          include_once(dirname($_SERVER['SCRIPT_FILENAME']) . '/' . data_entry_helper::relative_client_helper_path() . 'prebuilt_forms/extensions/'.$parts[0].'.php');
-          if (method_exists('extension_' . $parts[0], $parts[1])) {
+          $extensionPath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
+            data_entry_helper::relative_client_helper_path() . 'prebuilt_forms/extensions/'.$parts[0].'.php';
+          require_once($extensionPath);
+          if (method_exists("extension_$parts[0]", $parts[1])) {
             if (!empty($options['fieldname'])) {
               // If reloading an existing attribute, set the default and fieldname to contain the value ID.
               // First, if this is an occurrence attribute then the list of attributes might not be loaded.
