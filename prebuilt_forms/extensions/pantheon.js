@@ -231,8 +231,7 @@ jQuery(document).ready(function ($) {
         params.join('/') + '?nonce=' + indiciaData.write.nonce + '&auth_token=' + indiciaData.write.auth_token,
       dataType: 'jsonp',
       success: function (response) {
-        alert('OK!');
-        console.log(response);
+        alert('The combined list has been saved');
       }
     });
   };
