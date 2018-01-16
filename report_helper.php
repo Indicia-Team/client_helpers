@@ -134,16 +134,24 @@ class report_helper extends helper_base {
       'format' => 'csv',
       'itemsPerPage' => 20000
     ), $options);
+    // Option for a special report for downloading.
+    if (!empty($options['dataSourceDownloadLink'])) {
+      $origDataSource = $options['dataSource'];
+      $options['dataSource'] = $options['dataSourceDownloadLink'];
+    }
     $options = self::get_report_grid_options($options);
-    $options['linkOnly'] = true;
+    $options['linkOnly'] = TRUE;
     $currentParamValues = self::getReportGridCurrentParamValues($options);
     $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
-    // don't want to paginate the download link
+    // Don't want to paginate the download link.
     unset($sortAndPageUrlParams['page']);
     $extras = self::get_report_sorting_paging_params($options, $sortAndPageUrlParams);
-    $link = self::get_report_data($options, $extras.'&'.self::array_to_query_string($currentParamValues, true), true);
+    $link = self::get_report_data($options, $extras . '&' . self::array_to_query_string($currentParamValues, TRUE), TRUE);
+    if (isset($origDataSource)) {
+      $options['dataSource'] = $origDataSource;
+    }
     global $indicia_templates;
-    return str_replace(array('{link}','{caption}'), array($link, lang::get($options['caption'])), $indicia_templates['report_download_link']);
+    return str_replace(array('{link}', '{caption}'), array($link, lang::get($options['caption'])), $indicia_templates['report_download_link']);
   }
 
  /**
@@ -179,6 +187,8 @@ class report_helper extends helper_base {
   * Read authorisation tokens.</li>
   * <li><b>dataSource</b><br/>
   * Name of the report file or singular form of the table/view.</li>
+  * <li><b>dataSourceDownloadLink</b><br/>
+  * Optionally use a different data source for the download link displayed beneath the grid..</li>
   * <li><b>view</b>
   * When loading from a view, specify list, gv or detail to determine which view variant is loaded. Default is list.
   * </li>
