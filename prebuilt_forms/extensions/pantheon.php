@@ -69,7 +69,7 @@ class extension_pantheon {
           $lists = data_entry_helper::get_population_data([
             'table' => 'scratchpad_list',
             'extraParams' => $auth['read'] + ['query' => json_encode(['in' => ['id' => $ids]])],
-            'columns' => 'title',
+            'columns' => 'id,title',
           ]);
           $titles = [];
           foreach ($lists as $list) {
@@ -195,16 +195,20 @@ class extension_pantheon {
   }
 
   /**
-   * Links spans on the page to the Pantheon Lexicon.
+   * Outputs a table and controls associated with combining lists together.
    *
    * Dependencies:
    *   * Should be a tab called Quick Analysis Group.
+   *   * On another tab, a list of scratchpads in a report. Set @rowId=id
+   *     to ensure the IDs are available in the row classes. Add an action
+   *     column with an action that calls the JavaScript
+   *     indiciaFns.addToQuickAnalysisGroup({id}).
    *
    * @param array $options
    *   Options passed to the control:
    *   * analysisPath - path to the analysis page.
    */
-  public static function quick_analysis_group($auth, $args, $tabalias, $options, $path) {
+  public static function quick_analysis_scratchpad_group($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
     $imgPath = empty(report_helper::$images_path)
       ? report_helper::relative_client_helper_path() . "../media/images/"
@@ -228,12 +232,13 @@ JS;
   </tbody>
 </table>
 <div id="qa-group-actions">
-  <button disabled="disabled" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]')">Analyse all lists in group</button>
+  <button disabled="disabled" onclick="indiciaFns.analyseQuickAnalysisGroup('$options[analysisPath]', 'scratchpad')">Analyse all lists in group</button>
+  <button disabled="disabled" onclick="indiciaFns.clearQuickAnalysisGroup()">Clear group</button>
   <label class="auto">
     Convert group to a new list named:
     <input disabled="disabled" type="text" id="new-list-name" placeholder="Enter a list name" />
   </label>
-  <button disabled="disabled" onclick="indiciaFns.saveQuickAnalysisGroup()">Convert</button>
+  <button disabled="disabled" onclick="indiciaFns.saveQuickAnalysisScratchpadGroup()">Convert</button>
 </div>
 
 HTML;

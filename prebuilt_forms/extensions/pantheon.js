@@ -203,14 +203,17 @@ jQuery(document).ready(function ($) {
     }
   };
 
-
-
-  indiciaFns.analyseQuickAnalysisGroup = function (path) {
-    lists = listsInCurrentGroup();
-    window.location = path + '?dynamic-sample_type=scratchpad&dynamic-sample_id=' + lists.join(',');
+  indiciaFns.clearQuickAnalysisGroup = function () {
+    $('#quick-analysis-group tbody tr').remove();
+    $('#qa-group-actions button,#qa-group-actions input').attr('disabled', 'disabled');
   };
 
-  indiciaFns.saveQuickAnalysisGroup = function () {
+  indiciaFns.analyseQuickAnalysisGroup = function (path, type) {
+    var lists = listsInCurrentGroup();
+    window.location = path + '?dynamic-sample_type=' + type + '&dynamic-sample_id=' + lists.join(',');
+  };
+
+  indiciaFns.saveQuickAnalysisScratchpadGroup = function () {
     var lists;
     var params;
     if ($('#new-list-name').val().trim() === '') {
