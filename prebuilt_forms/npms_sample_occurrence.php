@@ -139,11 +139,16 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           var photoWithoutAbunFound=false;
           var rowCounter=-1;
           $(\"table[id^='species-grid'] tr\").each(function() {
-            if ($(this).hasClass('image-row')&&$(this).find('img').length) {
-              if (!$(this).prev().find('#sc\\\\:'+$(this).parents('table').attr('id')+'-'+rowCounter+'\\\\:\\\\:occAttr\\\\:'+'".$args['abun_attr_id']."').val()) {
-                photoWithoutAbunFound=true;
-              };
+            if ($(this).hasClass('image-row')) {
+              //Image row might not actually have any image if Add Photo button wasn't clicked
+              if ($(this).find('img').length) {
+                //Current row is image row, so to get abundance we need to look in previous row and do a no value check
+                if (!$(this).prev().find('#sc\\\\:'+$(this).parents('table').attr('id')+'-'+rowCounter+'\\\\:\\\\:occAttr\\\\:'+'".$args['abun_attr_id']."').val()) {
+                  photoWithoutAbunFound=true;
+                }
+              } 
             } else {
+              //If row isn't an image row, then it is a real grid row that we need to keep track of
               rowCounter++;
             }
           });
