@@ -1323,7 +1323,7 @@ HTML
   }
 
   private static function getComments($readAuth, $params, $includeAddNew = TRUE) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(array('data_entry_helper', 'report_helper'));
     $options = array(
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
