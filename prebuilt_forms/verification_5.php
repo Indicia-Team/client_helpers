@@ -1389,7 +1389,9 @@ HTML
       } else {
         $r .= '<input type="hidden" id="comment-confidential" value="f" />';
       }
-      $r .= '<textarea id="comment-text"></textarea>';
+      $r .= data_entry_helper::textarea([
+        'fieldname' => 'comment-text'
+      ]);
       $r .= data_entry_helper::text_input([
         'label' => lang::get('External reference or other source'),
         'fieldname' => 'comment-reference'
