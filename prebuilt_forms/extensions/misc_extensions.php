@@ -540,9 +540,8 @@ $('form#entry_form').tooltip({
       'label' => 'Area',
       'mapDataFile' => 'mapAreaData.js',
       'id' => 'area-picker',
-      'lookupValues' => array_merge(array(
-        '' => lang::get('<select area>')
-      ), array_combine($options['areas'], $options['areas']))
+      'blankText' => lang::get('<select area>'),
+      'lookupValues' => array_combine($options['areas'], $options['areas'])
     ), $options);
     // Load the data file.
     data_entry_helper::$javascript .= "$.getScript('$path$options[mapDataFile]');\n";
