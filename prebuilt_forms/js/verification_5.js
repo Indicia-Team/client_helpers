@@ -40,14 +40,18 @@ indiciaData.rowIdToReselect = false;
   function showSelectedRecordOnMap() {
     var geom;
     var feature;
+    var map = indiciaData.mapdiv.map;
     geom = OpenLayers.Geometry.fromWKT(currRec.extra.wkt);
-    if (indiciaData.mapdiv.map.projection.getCode() !== indiciaData.mapdiv.indiciaProjection.getCode()) {
-      geom.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
+    if (map.projection.getCode() !== indiciaData.mapdiv.indiciaProjection.getCode()) {
+      geom.transform(indiciaData.mapdiv.indiciaProjection, map.projection);
     }
     feature = new OpenLayers.Feature.Vector(geom);
     feature.attributes.type = 'selectedrecord';
-    indiciaData.mapdiv.removeAllFeatures(indiciaData.mapdiv.map.editLayer, 'selectedrecord');
-    indiciaData.mapdiv.map.editLayer.addFeatures([feature]);
+    indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'selectedrecord');
+    map.editLayer.addFeatures([feature]);
+    // Force the correct style.
+    feature.style = map.editLayer.styleMap.styles.defaultStyle;
+    map.editLayer.redraw();
   }
 
   /**
@@ -838,17 +842,24 @@ indiciaData.rowIdToReselect = false;
     })
   }
 
-  mapInitialisationHooks.push(function (div) {
-    div.map.editLayer.style = null;
-    div.map.editLayer.styleMap = new OpenLayers.StyleMap({
-      default: {
-        pointRadius: 5,
-        strokeColor: '#0000FF',
-        strokeWidth: 3,
-        fillColor: '#0000FF',
-        fillOpacity: 0.4
+  mapInitialisationHooks.push(function initMap(div) {
+    var defaultStyle = new OpenLayers.Style({
+      fillColor: '#0000ff',
+      strokeColor: '#0000ff',
+      strokeWidth: '${getstrokewidth}',
+      fillOpacity: 0.5,
+      strokeOpacity: 0.8
+    }, {
+      context: {
+        getstrokewidth: function getstrokewidth(feature) {
+          var width = feature.geometry.getBounds().right - feature.geometry.getBounds().left;
+          var strokeWidth = (width === 0) ? 1 : 10 - (width / feature.layer.map.getResolution());
+          return (strokeWidth < 2) ? 2 : strokeWidth;
+        }
       }
     });
+    div.map.editLayer.style = null;
+    div.map.editLayer.styleMap = new OpenLayers.StyleMap(defaultStyle);
     showTab();
   });
 
