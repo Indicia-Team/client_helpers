@@ -121,9 +121,8 @@ class iform_group_admin {
       return 'This form should be called with a group_id parameter';
     $group = self::loadExistingGroup($_GET['group_id'], $auth, $args);
     hostsite_set_page_title(lang::get('Administer {1}', $group['title']));
-    report_helper::$javascript .= "indiciaData.website_id=$args[website_id];\n";
-    report_helper::$javascript .= "indiciaData.group_id=$group[id];\n";
-    report_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'groups_user')."\";\n";
+    report_helper::$javascript .= "indiciaData.group_id = $group[id];\n";
+    report_helper::$javascript .= 'indiciaData.ajaxFormPostUrl = "'.iform_ajaxproxy_url($nid, 'groups_user')."\";\n";
     if (!empty($args['admin_role_name']))
       $adminRoleOnScreenName=$args['admin_role_name'];
     else

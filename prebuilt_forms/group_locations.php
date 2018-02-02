@@ -22,14 +22,14 @@
 
 /**
  * Page for configuring the locations used by a recording group.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_group_locations {
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    * @todo rename this method.
    */
@@ -43,13 +43,13 @@ class iform_group_locations {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    * @todo: Implement this method
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     require_once('includes/map.php');
     $r = array_merge(array(
       array(
@@ -78,7 +78,7 @@ class iform_group_locations {
     ), iform_map_get_map_parameters());
     return $r;
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -87,7 +87,7 @@ class iform_group_locations {
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
-   * @todo: Implement this method 
+   * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
     if (empty($_GET['group_id']))
@@ -99,7 +99,6 @@ class iform_group_locations {
     iform_load_helpers(array('report_helper', 'map_helper'));
     $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
-    report_helper::$javascript .= "indiciaData.website_id = $conn[website_id];\n";
     report_helper::$javascript .= "indiciaData.nodeId = $nid;\n";
     data_entry_helper::$javascript .= "indiciaData.baseUrl = '".$base_url."';\n";
     group_authorise_form($args, $readAuth);
@@ -139,7 +138,7 @@ class iform_group_locations {
       );
 
     $leftcol = report_helper::report_grid(array(
-      'readAuth' => $readAuth, 
+      'readAuth' => $readAuth,
       'dataSource' => 'library/locations/locations_for_groups',
       'sendOutputToMap' => true,
       'extraParams' => array('group_id'=>$_GET['group_id']),

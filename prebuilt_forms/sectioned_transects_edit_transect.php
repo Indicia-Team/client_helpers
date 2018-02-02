@@ -24,8 +24,8 @@ require_once 'includes/map.php';
 require_once 'includes/form_generation.php';
 
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * Form for adding or editing the site details on a transect which contains a number of sections.
@@ -37,20 +37,20 @@ class iform_sectioned_transects_edit_transect {
    */
   protected static $cmsUserAttrId;
   protected static $cmsUserList = null;
-  
+
   /**
    * @var int Contains the id of the location attribute used to store the CMS user ID.
    */
   protected static $branchCmsUserAttrId;
-  
+
   /**
    * @var string The Url to post AJAX form saves to.
    */
   protected static $ajaxFormUrl = null;
   protected static $ajaxFormSampleUrl = null;
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_sectioned_transects_edit_transect_definition() {
@@ -60,7 +60,7 @@ class iform_sectioned_transects_edit_transect {
       'description'=>'Form for adding or editing the site details on a transect which has a number of sub-sections.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -129,7 +129,7 @@ class iform_sectioned_transects_edit_transect {
             'captionField'=>'term',
             'valueField'=>'term',
             'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
-            'required' => true,            
+            'required' => true,
             'group'=>'Transects Editor Settings'
           ), array(
             'name'=>'bottom_blocks',
@@ -148,7 +148,7 @@ class iform_sectioned_transects_edit_transect {
             'required'=>false
           ), array(
             'name'=>'spatial_systems',
-            'caption'=>'Allowed Spatial Ref Systems',      
+            'caption'=>'Allowed Spatial Ref Systems',
             'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
             'type'=>'text_input',
             'group'=>'Other Map Settings'
@@ -229,19 +229,19 @@ class iform_sectioned_transects_edit_transect {
     );
   }
   /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
   protected static function getArgDefaults($args) {
-      
+
     if (!isset($args['route_map_height'])) $args['route_map_height'] = 600;
     if (!isset($args['route_map_buffer'])) $args['route_map_buffer'] = 0.1;
     if (!isset($args['allow_user_assignment'])) $args['allow_user_assignment'] = true;
     if (!isset($args['managerPermission'])) $args['managerPermission'] = '';
     if (!isset($args['branch_assignment_permission'])) $args['branch_assignment_permission'] = '';
     if (!isset($args['always_show_section_details'])) $args['always_show_section_details'] = false;
-    
+
     return $args;
   }
 
@@ -261,7 +261,7 @@ class iform_sectioned_transects_edit_transect {
   	}
   	return $found;
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -270,7 +270,7 @@ class iform_sectioned_transects_edit_transect {
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
-   * @todo: Implement this method 
+   * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
     global $user;
@@ -325,7 +325,7 @@ class iform_sectioned_transects_edit_transect {
       // keep a copy of the cms user ID attribute so we can use it later.
       self::$cmsUserAttrId = $settings['cmsUserAttr']['attributeId'];
     }
-    
+
     // need to check if branch allocation is active.
     if ($args['branch_assignment_permission'] != '') {
       if (false== ($settings['branchCmsUserAttr'] = self::extract_attr($settings['attributes'], "Branch CMS User ID")))
@@ -333,7 +333,7 @@ class iform_sectioned_transects_edit_transect {
       // keep a copy of the branch cms user ID attribute so we can use it later.
       self::$branchCmsUserAttrId = $settings['branchCmsUserAttr']['attributeId'];
     }
-    
+
     data_entry_helper::$javascript .= "indiciaData.sections = {};\n";
     $settings['sections']=array();
     $settings['numSectionsAttr'] = "";
@@ -440,7 +440,7 @@ class iform_sectioned_transects_edit_transect {
       if ($args['always_show_section_details'] || count($settings['section_attributes']) > 0)
         $r .= self::get_section_details_tab($auth, $args, $settings);
     }
-    $r .= '</div>'; // controls    
+    $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
       $breadcrumb = array();
@@ -455,9 +455,8 @@ class iform_sectioned_transects_edit_transect {
     // Inform JS where to post data to for AJAX form saving
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.self::$ajaxFormUrl."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostSampleUrl="'.self::$ajaxFormSampleUrl."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.website_id="'.$args['website_id']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";    
+    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
     data_entry_helper::$javascript .= "indiciaData.currentSection = '';\n";
     data_entry_helper::$javascript .= "indiciaData.sectionTypeId = '".$settings['locationTypes'][1]['id']."';\n";
     data_entry_helper::$javascript .= "indiciaData.sectionDeleteConfirm = \"".lang::get('Are you sure you wish to delete section')."\";\n";
@@ -471,12 +470,12 @@ class iform_sectioned_transects_edit_transect {
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
     return $r;
   }
-  
+
   protected static function check_prerequisites() {
     // check required modules installed
     if (isset($_POST['enable'])) {
       module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));      
+      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
     }
     $ok=true;
     if (!hostsite_module_exists('iform_ajaxproxy')) {
@@ -494,15 +493,15 @@ class iform_sectioned_transects_edit_transect {
     }
     return $ok;
   }
-  
+
   private static function get_site_tab($auth, $args, $settings) {
     $r = '<div id="site-details" class="ui-helper-clearfix">';
     $r .= '<form method="post" id="input-form">';
-    $r .= $auth['write'];    
+    $r .= $auth['write'];
     $r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: 54%">';
     $r .= '<fieldset><legend>'.lang::get('Transect Details').'</legend>';
     $r .= "<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
-    $r .= "<input type=\"hidden\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";    
+    $r .= "<input type=\"hidden\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
     $r .= "<input type=\"hidden\" name=\"location:location_type_id\" value=\"".$settings['locationTypes'][0]['id']."\" />\n";
     if ($settings['locationId'])
       $r .= '<input type="hidden" name="location:id" id="location:id" value="'.$settings['locationId']."\" />\n";
@@ -539,7 +538,7 @@ class iform_sectioned_transects_edit_transect {
       ));
     else
       $r .= "<p>".lang::get('The Site Code will be allocated by the Administrator.')."</p>";
-      
+
     // setup the map options
     $options = iform_map_get_map_options($args, $auth['read']);
     // find the form blocks that need to go below the map.
@@ -552,7 +551,7 @@ class iform_sectioned_transects_edit_transect {
     if(isset($args['site_help']) && $args['site_help'] != ''){
       $r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.t($args['site_help']).'</p>';
     }
-    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read'])); 
+    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read']));
     $r .= '</fieldset>';
     $r .= "</div>"; // left
     $r .= '<div class="right" style="width: 44%">';
@@ -578,7 +577,7 @@ class iform_sectioned_transects_edit_transect {
     $olOptions = iform_map_get_ol_options($args);
     $options['clickForSpatialRef']=$settings['canEditBody'];
     $r .= map_helper::map_panel($options, $olOptions);
-    $r .= '</div></div>'; // right    
+    $r .= '</div></div>'; // right
     if (!empty($bottom))
       $r .= $bottom;
     if ($args['branch_assignment_permission'] != '') {
@@ -596,7 +595,7 @@ class iform_sectioned_transects_edit_transect {
     }
     if ($settings['canEditBody'])
       $r .= '<button type="submit" class="indicia-button right">'.lang::get('Save').'</button>';
-    
+
     if($settings['canEditBody'] && $settings['locationId'])
       $r .= '<button type="button" class="indicia-button right" id="delete-transect">'.lang::get('Delete').'</button>' ;
     $r .='</form>';
@@ -605,7 +604,7 @@ class iform_sectioned_transects_edit_transect {
     data_entry_helper::$onload_javascript .= "$('#current-section').change(selectSection);\n";
     if($settings['canEditBody'] && $settings['locationId']) {
       $walkIDs = array();
-      foreach($settings['walks'] as $walk) 
+      foreach($settings['walks'] as $walk)
         $walkIDs[] = $walk['id'];
       $sectionIDs = array();
       foreach($settings['sections'] as $code=>$section)
@@ -626,7 +625,7 @@ $('#delete-transect').click(deleteSurvey);
     }
     return $r;
   }
-  
+
   protected static function get_your_route_tab($auth, $args, $settings) {
     $r = '<div id="your-route" class="ui-helper-clearfix">';
     $olOptions = iform_map_get_ol_options($args);
@@ -672,21 +671,21 @@ $('#delete-transect').click(deleteSurvey);
     // override the map height and buffer size, which are specific to this map.
     $options['height'] = $args['route_map_height'];
     $options['maxZoomBuffer'] = $args['route_map_buffer'];
-    
+
     $r .= map_helper::map_panel($options, $olOptions);
     if(count($settings['section_attributes']) == 0)
       $r .= '<button class="indicia-button right" type="button" title="'.
             lang::get('Returns to My Sites page. Any changes to sections carried out on this page (including creating new ones) are saved to the database as they are done, but changes to the Site Details must be saved using the Save button on that tab.').
             '" onclick="window.location.href=\'' . url($args['redirect_on_success']) . '\'">'.lang::get('Return to My Sites').'</button>';
     $r .= '</div>';
-    return $r;  
+    return $r;
   }
-  
+
   protected static function get_section_details_tab($auth, $args, $settings) {
     $r = '<div id="section-details" class="ui-helper-clearfix">';
     $r .= '<form method="post" id="section-form" action="'.self::$ajaxFormUrl.'">';
     $r .= '<fieldset><legend>'.lang::get('Section Details').'</legend>';
-    // Output a selector for the current section.    
+    // Output a selector for the current section.
     $r .= self::section_selector($settings, 'section-select')."<br/>";
     if ($settings['canEditBody']){
       $r .= "<input type=\"hidden\" name=\"location:id\" value=\"\" id=\"section-location-id\" />\n";
@@ -723,15 +722,15 @@ $('#delete-transect').click(deleteSurvey);
         $blockOptions[$tokens[0]][$optvalue[0]] = $optvalue[1];
       }
     }
-    
+
     $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), null, $blockOptions);
     if ($settings['canEditBody'])
-      $r .= '<input type="submit" value="'.lang::get('Save').'" class="form-button right" id="submit-section" />';    
+      $r .= '<input type="submit" value="'.lang::get('Save').'" class="form-button right" id="submit-section" />';
     $r .= '</fieldset></form>';
     $r .= '</div>';
     return $r;
   }
-  
+
   /**
    * Build a row of buttons for selecting the route.
    */
@@ -742,7 +741,7 @@ $('#delete-transect').click(deleteSurvey);
     $selector = '<label for="'.$id.'">'.lang::get('Select section').':</label><ol id="'.$id.'" class="section-select">';
     foreach ($sectionArr as $key=>$value) {
       $classes = array();
-      if ($key=='S1') 
+      if ($key=='S1')
         $classes[] = 'selected';
       if (!isset($settings['sections'][$key]))
         $classes[] = 'missing';
@@ -752,7 +751,7 @@ $('#delete-transect').click(deleteSurvey);
     $selector .= '</ol>';
     return $selector;
   }
-  
+
   /**
    * If the user has permissions, then display a control so that they can specify the list of users associated with this site.
    */
@@ -762,10 +761,10 @@ $('#delete-transect').click(deleteSurvey);
       $users = array();
       // there have been DB API changes for Drupal7: db_query now returns the result array.
       if(version_compare(VERSION, '7', '<')) {
-        while ($user = db_fetch_object($query)) 
+        while ($user = db_fetch_object($query))
           $users[$user->uid] = $user->name;
       } else {
-        foreach ($query as $user) 
+        foreach ($query as $user)
           $users[$user->uid] = $user->name;
       }
       self::$cmsUserList = $users;
@@ -805,15 +804,15 @@ $('#delete-transect').click(deleteSurvey);
       $users = array();
       // there have been DB API changes for Drupal7: db_query now returns the result array.
       if(version_compare(VERSION, '7', '<')) {
-        while ($user = db_fetch_object($query)) 
+        while ($user = db_fetch_object($query))
           $users[$user->uid] = $user->name;
       } else {
-        foreach ($query as $user) 
+        foreach ($query as $user)
           $users[$user->uid] = $user->name;
       }
       self::$cmsUserList = $users;
     } else $users= self::$cmsUserList;
-    
+
     // next reduce the list to branch users
     if($settings['canAllocBranch']){ // only check the users permissions if can change value - for performance reasons.
       $new_users = array();
@@ -855,15 +854,15 @@ $('#delete-transect').click(deleteSurvey);
 
     return $r;
   }
-    
+
   /**
    * Construct a submission for the location.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    $s = submission_builder::build_submission($values, 
+    $s = submission_builder::build_submission($values,
       array(
         'model' => 'location'
       )
@@ -872,7 +871,7 @@ $('#delete-transect').click(deleteSurvey);
     if (empty($values['location:id']))
       $s['subModels'] = array(
         array(
-          'fkId' => 'location_id', 
+          'fkId' => 'location_id',
           'model' => array(
             'id' => 'locations_website',
             'fields' => array(
@@ -883,7 +882,7 @@ $('#delete-transect').click(deleteSurvey);
       );
     return $s;
   }
-  
+
   /**
    * After saving a new transect, reload the transect so that the user can continue to save the sections.
    */
