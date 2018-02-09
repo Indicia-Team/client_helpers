@@ -806,6 +806,7 @@ HTML
         'readAuth' => $auth['read'],
         'itemsPerPage' => 20,
         'extraParams' => array_merge($opts['extraParams'], array('data_cleaner_filter' => 'f')),
+        'immutableParams' => array('quality_context' => 'all'),
         'columns' => array(
           array(
             'display' => '',
