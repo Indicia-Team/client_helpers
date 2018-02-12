@@ -576,7 +576,6 @@ indiciaData.rowIdToReselect = false;
   // show the list of tickboxes for verifying multiple records quickly
   function showTickList() {
     $('.check-row').attr('checked', false);
-    $('#row' + occurrenceId + ' .check-row').attr('checked', true);
     $('.check-row').show();
     $('#action-buttons-status label').html('With ticked records:');
     $('#btn-multiple').addClass('active').html('Review single records').after($('#action-buttons-status'));
@@ -745,6 +744,9 @@ indiciaData.rowIdToReselect = false;
     var helpText = '';
     var html;
     var verb = status === 'C' ? indiciaData.popupTranslations.verbC3 : indiciaData.popupTranslations['verb' + status];
+    var getTemplatesReport;
+    var getTemplatesReportParameters;
+    var i;
     if (typeof substatus === 'undefined') {
       substatus = '';
     }
@@ -771,8 +773,13 @@ indiciaData.rowIdToReselect = false;
       indiciaData.popupTranslations.save.replace('{1}', verb) + '</button>' +
       '</fieldset>';
 
-    var getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?',
-        getTemplatesReportParameters = {
+    $.fancybox(html);
+    if (multimode) {
+      // Doing multiple records, so can't use templates
+      $('#verify-template-container').hide();
+    } else {
+      getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?';
+      getTemplatesReportParameters = {
         auth_token: indiciaData.read.auth_token,
         nonce: indiciaData.read.nonce,
         reportSource: 'local',
@@ -780,22 +787,22 @@ indiciaData.rowIdToReselect = false;
         template_status: status + substatus,
         website_id: currRec.extra.website_id
       };
-    $.getJSON(
-      getTemplatesReport,
-      getTemplatesReportParameters,
-      function (data) {
-        if (data.length > 0) {
-          for(var i = 0; i < data.length; i++) {
-            $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+      $.getJSON(
+        getTemplatesReport,
+        getTemplatesReportParameters,
+        function (data) {
+          if (data.length > 0) {
+            for (i = 0; i < data.length; i++) {
+              $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+            }
+            $('#verify-template').data('data', data);
+          } else {
+            $('#verify-template-container').hide();
           }
-          $('#verify-template').data('data',data);
-        } else {
-          $('#verify-template-container').hide();
         }
-      }
-    );
-    $.fancybox(html);
-    $('#verify-template').change(function(){
+      );
+    }
+    $('#verify-template').change(function () {
       var templateID = $('#verify-template').val(),
           data = $('#verify-template').data('data'),
           substitute = function (item) {
