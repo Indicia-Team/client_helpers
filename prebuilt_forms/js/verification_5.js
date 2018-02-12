@@ -369,20 +369,29 @@ indiciaData.rowIdToReselect = false;
         $.ajax({
           url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep +
           'occurrence_id=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
-          async: false,
           dataType: 'json',
           success: function handleResponse(response) {
+            var comment = indiciaData.commentTranslations.emailed.replace(
+              '{1}',
+              email.subtype === 'R' ? indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert
+            );
             email.body = email.body.replace(/\[Photos]/g, response.media);
             email.body = email.body.replace(/\[Comments]/g, response.comments);
+            // save a comment to indicate that the mail was sent
+            indiciaFns.saveComment(
+              comment,
+              null,
+              ($('#email-confidential:checked').length > 0 ? 't' : 'f'),
+              email,
+              't',
+              true
+            );
+            sendEmail();
           }
         });
-        // save a comment to indicate that the mail was sent
-        indiciaFns.saveComment(indiciaData.commentTranslations.emailed.replace('{1}', email.subtype === 'R' ?
-          indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert), null,
-          ($('#email-confidential:checked').length > 0 ? 't' : 'f'), email, 't', true);
+      } else {
+        sendEmail();
       }
-
-      sendEmail();
     }
     return false;
   }
