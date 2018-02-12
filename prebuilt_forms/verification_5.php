@@ -1404,13 +1404,14 @@ HTML
     return $r;
   }
 
-  public static function ajax_mediaAndComments($website_id, $password) {
+  public static function ajax_mediaAndComments($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     header('Content-type: application/json');
     echo json_encode(array(
-      'media' => self::getMedia($readAuth),
-      'comments' => self::get_comments($readAuth, FALSE)
+      'media' => self::getMedia($readAuth, $params),
+      'comments' => self::getComments($readAuth, $params, FALSE)
     ));
   }
 
