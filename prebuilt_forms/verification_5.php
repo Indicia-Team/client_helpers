@@ -454,6 +454,7 @@ idlist=';
     $r .= '<div id="map-and-record" class="right" style="width: 34%"><div id="summary-map">';
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
+    $options['editLayerName'] = 'Selected record';
     // This is used for drawing, so need an editlayer, but not used for input.
     $options['editLayer'] = TRUE;
     $options['editLayerInSwitcher'] = TRUE;
