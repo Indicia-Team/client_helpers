@@ -1281,7 +1281,7 @@ HTML
     iform_load_helpers(array('report_helper'));
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::getComments($readAuth, $params, $nid);
+    echo self::getComments($readAuth, $params);
   }
 
   private static function status_icons($status, $substatus, $imgPath) {
@@ -1323,7 +1323,7 @@ HTML
     return $r;
   }
 
-  private static function getComments($readAuth, $params, $includeAddNew = TRUE) {
+  private static function getComments($readAuth, $params, $emailMode = FALSE) {
     iform_load_helpers(array('data_entry_helper', 'report_helper'));
     $options = array(
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
@@ -1341,10 +1341,12 @@ HTML
     foreach ($comments as $comment) {
       $r .= '<div class="comment">';
       $r .= '<div class="header">';
-      $r .= self::status_icons($comment['record_status'], $comment['record_substatus'], $imgPath);
-      if ($comment['query'] === 't') {
-        $hint = lang::get('This is a query');
-        $r .= "<img width=\"12\" height=\"12\" src=\"{$imgPath}nuvola/dubious-16px.png\" title=\"$hint\" alt=\"$hint\"/>";
+      if (!$emailMode) {
+        $r .= self::status_icons($comment['record_status'], $comment['record_substatus'], $imgPath);
+        if ($comment['query'] === 't') {
+          $hint = lang::get('This is a query');
+          $r .= "<img width=\"12\" height=\"12\" src=\"{$imgPath}nuvola/dubious-16px.png\" title=\"$hint\" alt=\"$hint\"/>";
+        }
       }
       $r .= "<strong>$comment[person_name]</strong> ";
       $commentTime = strtotime($comment['updated_on']);
@@ -1353,41 +1355,45 @@ HTML
         $r .= self::ago($commentTime);
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
-      $r .= '<div class="comment-body shrunk">' .
-              '<a class="unshrink-comment" title="' . lang::get('Expand this comment block to show its full details.') . '">' .
-                lang::get('more...') .
-              '</a>' .
-              $c .
-              '<a class="shrink-comment" title="' . lang::get('Shrink this comment block.') . '">' .
-                lang::get('less...') .
-              '</a>' .
-            '</div>';
-      if (!empty($comment['correspondence_data'])) {
-        $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
-        $correspondenceData = json_decode($data, TRUE);
-        foreach ($correspondenceData as $type => $items) {
-          $r .= '<h3>' . ucfirst($type) . '</h3>';
-          foreach ($items as $item) {
-            $r .= '<div class="correspondence shrunk">';
-            $r .= '<a class="unshrink-correspondence" title="'.lang::get('Expand this correspondence block to show its full details.').'">'.lang::get('more...').'</a>';
-            foreach ($item as $field => $value) {
-              $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
-              $r .= "<div>$field $value</div>";
+      if ($emailMode) {
+        $r .= "<div class=\"comment-body\">$c</div>";
+      }
+      else {
+        $r .= '<div class="comment-body shrunk">' .
+                '<a class="unshrink-comment" title="' . lang::get('Expand this comment block to show its full details.') . '">' .
+                  lang::get('more...') .
+                '</a>' .
+                $c .
+                '<a class="shrink-comment" title="' . lang::get('Shrink this comment block.') . '">' .
+                  lang::get('less...') .
+                '</a>' .
+              '</div>';
+        if (!empty($comment['correspondence_data'])) {
+          $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
+          $correspondenceData = json_decode($data, TRUE);
+          foreach ($correspondenceData as $type => $items) {
+            $r .= '<h3>' . ucfirst($type) . '</h3>';
+            foreach ($items as $item) {
+              $r .= '<div class="correspondence shrunk">';
+              $r .= '<a class="unshrink-correspondence" title="'.lang::get('Expand this correspondence block to show its full details.').'">'.lang::get('more...').'</a>';
+              foreach ($item as $field => $value) {
+                $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
+                $r .= "<div>$field $value</div>";
+              }
+              $r .= '<a class="shrink-correspondence" title="'.lang::get('Shrink this correspondence block.').'">'.lang::get('less...').'</a>';
+              $r .= '</div>';
             }
-            $r .= '<a class="shrink-correspondence" title="'.lang::get('Shrink this correspondence block.').'">'.lang::get('less...').'</a>';
-            $r .= '</div>';
           }
         }
+        $r .= '</div>';
       }
       $r .= '</div>';
-    }
-    $r .= '</div>';
-    $allowConfidential = isset($_GET['allowconfidential']) && $_GET['allowconfidential'] === 'true';
-    if ($includeAddNew) {
+      $allowConfidential = isset($_GET['allowconfidential']) && $_GET['allowconfidential'] === 'true';
       $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
       if ($allowConfidential) {
         $r .= '<label><input type="checkbox" id="comment-confidential" /> ' . lang::get('Confidential?') . '</label><br>';
-      } else {
+      }
+      else {
         $r .= '<input type="hidden" id="comment-confidential" value="f" />';
       }
       $r .= data_entry_helper::textarea([
@@ -1411,7 +1417,7 @@ HTML
     header('Content-type: application/json');
     echo json_encode(array(
       'media' => self::getMedia($readAuth, $params),
-      'comments' => self::getComments($readAuth, $params, FALSE)
+      'comments' => self::getComments($readAuth, $params, TRUE)
     ));
   }
 
