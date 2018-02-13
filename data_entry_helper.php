@@ -7285,8 +7285,19 @@ HTML;
       $query['in']['website_id']=$options['website_ids'];
     } elseif ($options['attrtable']!=='person_attribute') {
       $surveys = array(NULL);
-      if (isset($options['survey_id']))
+      if (isset($options['survey_id'])) {
         $surveys[] = $options['survey_id'];
+        $survey = data_entry_helper::get_population_data(array(
+          'table' => 'survey',
+          'extraParams' => array(
+            'id' => $options['survey_id'],
+            'auth_token' => $options['extraParams']['auth_token'],
+            'nonce' => $options['extraParams']['nonce'],
+            'sharing' => $sharing
+          )
+        ));
+        $query['where'] = array('website_id', $survey[0]['website_id']);
+      }
       $query['in']['restrict_to_survey_id']=$surveys;
     }
     if ($options['attrtable']=='sample_attribute') {

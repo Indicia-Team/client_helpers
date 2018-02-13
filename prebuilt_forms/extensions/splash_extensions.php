@@ -24,7 +24,7 @@
  * Extension class that supplies new controls to support the Splash project.
  */
 class extension_splash_extensions {
- 
+
   /*
    * If no options are supplied then the only validation applied is a check to make sure the plot is filled in.
    *
@@ -47,7 +47,7 @@ class extension_splash_extensions {
                           This should be a comma seperated list of attribute ids that hold the Epiphyte counts for trees.');
       return '';
     }
-    
+
     //The validator that makes sure the user hasn't entered a Epiphyte presence for a tree that doesn't exist works as follows.
     //- Cycle through each the occurrence attribute that holds the presence boolean for trees that haven't been entered on the trees grid (taking into account trees can be deleted)
     //- Use jQuery to cycle through each instance of the attribute on the page (effectively check all rows on both grids)
@@ -63,7 +63,7 @@ class extension_splash_extensions {
       }";
     if ((!empty($options['treeCountMode']) && $options['treeCountMode']===true)||
         (!empty($options['treeGridRefAndEpiphyteMode']) && $options['treeGridRefAndEpiphyteMode']===true)) {
-      data_entry_helper::$javascript .= "    
+      data_entry_helper::$javascript .= "
       //Take 1 off because there is an empty row on the grid.
       var treesCount = $('#trees').find('.scTaxonCell:not([disabled])').length - 1;
       if (treesCount < 1) {
@@ -90,7 +90,7 @@ class extension_splash_extensions {
     data_entry_helper::$javascript .= "
       $('#entry_form').submit();
     });";
-    
+
     if (!empty($options['treeGridRefAndEpiphyteMode']) && $options['treeGridRefAndEpiphyteMode']===true) {
     data_entry_helper::$javascript .= "
     function runValidateOnEpiphyteGrid(treesCount,treeOccurrenceAttrIds) {
@@ -105,13 +105,13 @@ class extension_splash_extensions {
             issueCount++;
           }
         });
-      }  
+      }
       return issueCount;
     }
     ";
     }
   }
- 
+
   /* $options Options array with the following possibilities:<ul>
    * <li><b>coreSquareLocationTypeId</b><br/>
    * The location type id of a core square</li>
@@ -146,7 +146,7 @@ class extension_splash_extensions {
       self::set_private_plot_precision($auth, $args, $tabAlias, $options, $reportOptions, $extraParamForSquarePlotReports);
     }
   }
-  
+
   /*
    * When a private plot is selected by the user, we need to set a privacy precision
    * on the occurrences
@@ -159,7 +159,7 @@ class extension_splash_extensions {
     $myPlotsAndSquares = data_entry_helper::get_report_data(
       $reportOptions
     );
-    $privatePlots=array();    
+    $privatePlots=array();
     foreach ($myPlotsAndSquares as $locationDataItem) {
       $privatePlots[]=$locationDataItem['id'];
     }
@@ -167,7 +167,7 @@ class extension_splash_extensions {
     private_plots_set_precision('.json_encode($privatePlots).');
     ';
   }
-  
+
   /**
    * Get a location select control pair, first the user must select a square then a plot associated with a square.
    * Only squares that are associated with the user and also have plots are displayed
@@ -294,12 +294,12 @@ class extension_splash_extensions {
         foreach ($squareAndPlotData as $squareOrPlot) {
           //If we find a matching one, and it has been approved then the user owns the plot
           if ($sampleData[0]['plot_id']==$squareOrPlot['id'] && ($squareOrPlot['allocation_updater']!=$squareOrPlot['allocated_to'])) {
-            $ownsPlot=true;  
+            $ownsPlot=true;
           }
         }
         //If the plot is still marked as not owned by the user after tests, then warn the user that we are locking the plot
         if ($ownsPlot===false) {
-            if (empty($options['noSquareRightsMessage'])) {    
+            if (empty($options['noSquareRightsMessage'])) {
               $options['noSquareRightsMessage']= "This plot sample is locked. This is because you are no longer the owner of this plot, or you are the owner of the plot and it is pending approval.";
             }
             $options['noSquareRightsMessage']=$options['noSquareRightsMessage'].
@@ -311,13 +311,13 @@ class extension_splash_extensions {
                 $('.edit-taxon-name,.remove-row').hide();
                 $('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');
               });";
-            return '<em>'.$options['noSquareRightsMessage'].'</em>'; 
+            return '<em>'.$options['noSquareRightsMessage'].'</em>';
         }
       }
       //Convert the raw data in the report into array format suitable for the Select drop-down to user (an array of ID=>Name pairs)
       $squaresData=array();
       foreach($rawData as $rawRow) {
-          $squaresData[$rawRow['id']]=$rawRow['name'];        
+          $squaresData[$rawRow['id']]=$rawRow['name'];
       }
       //Need a report to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
       if (!empty($_GET['sample_id'])) {
@@ -382,7 +382,7 @@ class extension_splash_extensions {
       return $r;
     }
   }
- 
+
   /*
    * Display a mini report when the user selects a plot
    */
@@ -392,16 +392,16 @@ class extension_splash_extensions {
       'linkOnly'=>'true',
       'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_details_for_square_id',
       'readAuth'=>$auth['read']
-    );  
+    );
     //Report that will return the type of the square selected by the user
     data_entry_helper::$javascript .= "indiciaData.squareReportRequest='".
        report_helper::get_report_data($reportOptions)."';\n";
-    
+
     $reportOptions = array(
       'linkOnly'=>'true',
       'dataSource'=>'reports_for_prebuilt_forms/Splash/get_plot_details',
       'readAuth'=>$auth['read']
-    );  
+    );
     data_entry_helper::$javascript .= "indiciaData.plotReportRequest='".
        report_helper::get_report_data($reportOptions)."';\n";
     //The html to place the data into using jQuery
@@ -473,7 +473,7 @@ class extension_splash_extensions {
         $.getJSON(reportRequest,
           null,
           function(response, textStatus, jqXHR) {
-            $.each(response, function (idx, obj) {         
+            $.each(response, function (idx, obj) {
               if (obj.type) {
                 $('#plot-type-value').text(obj.type);
               } else {
@@ -514,7 +514,7 @@ class extension_splash_extensions {
         );
       }
     }";
-    
+
     return $htmlTemplate;
   }
 
@@ -534,7 +534,7 @@ class extension_splash_extensions {
       return $hiddenField;
     }
   }
- 
+
   /*
    * This function performs two tasks,
    * 1. In view mode (summary mode) it allows the page to be displayed with read-only data.
@@ -558,7 +558,7 @@ class extension_splash_extensions {
       data_entry_helper::$javascript .= "});";
     }
   }
- 
+
   /*
    * When the plot details page is in edit/view mode we display a list of species recorded against the plot.
    */
@@ -581,7 +581,7 @@ class extension_splash_extensions {
       ));
     }
   }
- 
+
   /*
    * When the plot details or square/user administration pages are displayed then we need to display the name of the square.
    * As the square display name is made from the name of the square plus its vice counties, then we need to collect this information from a report.
@@ -638,7 +638,7 @@ class extension_splash_extensions {
       }
     }
   }
- 
+
   /*
    * For some plot types we simply provide the user with a free drawing tool (drawPolygon) to draw the plot.
    * For Plot Squares/Rectangles plot types, when the user clicks on the map on the plot details page, we calculate a plot square on the map where the south-west corner is the clicked point
@@ -699,21 +699,21 @@ class extension_splash_extensions {
         $squareSizesArray[$squareSizeSingleOptionSplit[0]]=array($squareSizeSingleOptionSplit[1],$squareSizeSingleOptionSplit[1]);
      else
         $squareSizesArray[$squareSizeSingleOptionSplit[0]]=array($squareSizeSingleOptionSplit[1],$squareSizeSingleOptionSplit[2]);
-    }    
+    }
     //Javascript needs to know the square sizes for each location type (note that squares can actually be rectangles if required now, however code still refers to
     //squares as this was a late enhancement)
     $squareSizesForJavascript=json_encode($squareSizesArray);
     self::draw_map_plot_setup_indiciaData($options,$squareSizesForJavascript);
     //If enhanced mode is toggled, then clear the map and also run the code as if the plot type has changed.
     //This allows the plot drawing to be reset for a new mode.
-    map_helper::$javascript .= "  
-    $('#locAttr\\\\:'+indiciaData.enhancedModeCheckboxAttrId).change(function() {  
+    map_helper::$javascript .= "
+    $('#locAttr\\\\:'+indiciaData.enhancedModeCheckboxAttrId).change(function() {
       clear_map_features();
       plot_type_dropdown_change();
     });";
     //If you change the location type then clear the features already on the map
-    //If no location type is selected, then don't provide the plot drawing code with plot size details, this way it automatically warns the user  
-    map_helper::$javascript .= " 
+    //If no location type is selected, then don't provide the plot drawing code with plot size details, this way it automatically warns the user
+    map_helper::$javascript .= "
     $('#location\\\\:location_type_id').change(function() {
       clear_map_features();
       if ($(this).val()) {
@@ -746,16 +746,16 @@ class extension_splash_extensions {
     });\n";
     //Do not allow submission if there is no plot set
     data_entry_helper::$javascript .= '
-    $("#save-button").click(function() { 
+    $("#save-button").click(function() {
       if (!$("#imp-boundary-geom").val()) {
-        alert("Please select a plot type and then select a plot position on the map before continuing. If you are using a Linear plot in Enhanced Mode, you will also need to make sure the plot is manually drawn onto the map."); 
-        return false; 
-      } else { 
-        $("#entry_form").submit(); 
+        alert("Please select a plot type and then select a plot position on the map before continuing. If you are using a Linear plot in Enhanced Mode, you will also need to make sure the plot is manually drawn onto the map.");
+        return false;
+      } else {
+        $("#entry_form").submit();
       }
     });';
   }
-  
+
   /* Function to setup the data to pass to javascript in the draw_map_plot function */
   private static function draw_map_plot_setup_indiciaData($options,$squareSizesForJavascript) {
     map_helper::$javascript .= "indiciaData.squareSizes=$squareSizesForJavascript;\n";
@@ -770,7 +770,7 @@ class extension_splash_extensions {
       if (!empty($options['linearGridRef1'])&&!empty($options['linearGridRef2'])) {
         map_helper::$javascript .= "indiciaData.linearGridRef1='".$options['linearGridRef1']."';\n";
         map_helper::$javascript .= "indiciaData.linearGridRef2='".$options['linearGridRef2']."';\n";
-      }      
+      }
       //When using square plots, we have an extra box for the user to fill-in the south-west corner of the plot.
       if (!empty($options['swGridRef'])) {
         map_helper::$javascript .= "indiciaData.swGridRef='".$options['swGridRef']."';\n";
@@ -789,7 +789,7 @@ class extension_splash_extensions {
     if (!empty($options['hideLocationAttrsInSimpleMode']))
       map_helper::$javascript .= "indiciaData.hideLocationAttrsInSimpleMode='".$options['hideLocationAttrsInSimpleMode']."';\n";
   }
- 
+
   /*
    * When the administrator allocates squares to a user, allow the user to enter a mileage value
    * and then reload the screen only showing squares which are within that distance of the user's post code.
@@ -812,7 +812,7 @@ class extension_splash_extensions {
           indiciaData.mapdiv = div;
           if (indiciaData.postCodeGeom) {
             var feature = new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.postCodeGeom));
-            indiciaData.mapdiv.map.editLayer.addFeatures([feature]);  
+            indiciaData.mapdiv.map.editLayer.addFeatures([feature]);
           }
       });
     });
@@ -862,15 +862,15 @@ class extension_splash_extensions {
     //This post code variable might later be overriden if a free text post code search is available (depending on whether option is set
     if (empty($postCode) && function_exists('hostsite_get_user_field') && hostsite_get_user_field('field_indicia_post_code'))
       $postCode=hostsite_get_user_field('field_indicia_post_code');
-    else 
+    else
       $postCode=null;
     if (!empty($options['postCodeSearchButtonLabel']))
       $postCodeSearchButtonLabel=$options['postCodeSearchButtonLabel'];
-    else 
+    else
       $postCodeSearchButtonLabel='Get Squares';
     if (!empty($options['returnAllButtonLabel']))
       $returnAllButtonLabel=$options['returnAllButtonLabel'];
-    else 
+    else
       $returnAllButtonLabel='Return all squares';
     //Message displayed if post code is invalid, or the the google api key has run out of requests available on the google account
     if (!empty($options['postCodeRequestIssueWarning']))
@@ -899,7 +899,7 @@ class extension_splash_extensions {
       ";
       if (!empty($options['instructionText']))
         $instructionText=$options['instructionText'];
-       else 
+       else
         $instructionText="Only show locations within this distance (miles) of the user's post code.";
       //Put a free text post code on the page if that option has been set by the user
       if (!empty($options['freeTextPostCode'])&&$options['freeTextPostCode']==true)
@@ -909,12 +909,12 @@ class extension_splash_extensions {
       if(!empty($options['noPostCodeMessage']))
         $noPostCodeMessage=$options['noPostCodeMessage'];
       else
-        $noPostCodeMessage='Unable to display post code distance limiter control. This is probably because there is no post code on your own user account, or on the account of the person you are editing.';   
+        $noPostCodeMessage='Unable to display post code distance limiter control. This is probably because there is no post code on your own user account, or on the account of the person you are editing.';
       $r.='<div><em>'.$noPostCodeMessage.'</em></div><br>';
-    }  
+    }
     return $r;
   }
- 
+
   public static function delete_plot($auth, $args, $tabalias, $options, $path) {
     $postUrl = iform_ajaxproxy_url(null, 'location');
     data_entry_helper::$javascript .= "
@@ -937,11 +937,11 @@ class extension_splash_extensions {
       }
     }\n";
   }
-  
+
   /* Approve a user/square allocation.
    * Squares need approval if the updated_by_id on the allocation record (person_attribute_value) is the same as the user the allocation is intended for (i.e. they allocated it to themselves)
    * The approval simply sets the updated_by_id on the record to the same id as the user who is doing the approval.
-   * This also means we need a message on screen that warns the user that they can't approve a square/user allocation record that is 
+   * This also means we need a message on screen that warns the user that they can't approve a square/user allocation record that is
    * intended for themselves.
    */
   public static function approve_allocation($auth, $args, $tabalias, $options, $path) {
@@ -952,9 +952,8 @@ class extension_splash_extensions {
   };
 
   data_entry_helper::$javascript .= "
-  indiciaData.baseUrl='".$base_url."';  
-  indiciaData.website_id = ".variable_get('indicia_website_id', '').";\n";  
-  
+  indiciaData.baseUrl='".$base_url."';\n";
+
   data_entry_helper::$javascript .= "
   approve_allocation= function(id,allocation_updater,allocated_to) {
     if (indiciaData.indicia_user_id===allocated_to) {
@@ -962,14 +961,14 @@ class extension_splash_extensions {
       return false;
     }
     var confirmation = confirm('Do you really want to approve the user/square allocation with id '+id+'?');
-    if (confirmation) { 
+    if (confirmation) {
       var s = {
         'website_id':indiciaData.website_id,
         'person_attribute_value:id':id,
         'person_attribute_value:updated_by_id':indiciaData.indicia_user_id
       };
       var postUrl = indiciaData.baseUrl+'/?q=ajaxproxy&index=person_attribute_value';
-      $.post(postUrl, 
+      $.post(postUrl,
         s,
         function (data) {
           if (typeof data.error === 'undefined') {
@@ -986,7 +985,7 @@ class extension_splash_extensions {
     }
   }\n";
   }
-  
+
   /* Reject a user/square allocation.
    * Squares need approval if the updated_by_id on the allocation record (person_attribute_value) is the same as the user the allocation is intended for (i.e. they allocated it to themselves)
    * Rejecting simply removes the original allocation.
@@ -996,14 +995,14 @@ class extension_splash_extensions {
     data_entry_helper::$javascript .= "
     reject_allocation = function(pav_id) {
       var confirmation = confirm('Do you really want to reject the user/square allocation with id '+pav_id+'?');
-      if (confirmation) { 
+      if (confirmation) {
         user_site_delete(pav_id);
       }
     }
     ";
     self::user_site_delete($postUrl,$args);
   }
-  
+
   /*
    * Very simple control with a text area to import data,and an upload button.
    * Allows locations (squares) to be attached to people using the person_attribute_values table.
@@ -1013,10 +1012,10 @@ class extension_splash_extensions {
    * admin@bb.com,NO1402
    * admin2@abcd.com,NO1402,NO1202,NP1202
    * admin3@abcde.com,NO1402
-   * 
+   *
    * Duplicates are ignored and result in an alert showing the duplicate record which must be cleared before import continues.
-   * 
-   * Very simple control that needed to be developed very quickly. Not particularly well optimised as places one record at a 
+   *
+   * Very simple control that needed to be developed very quickly. Not particularly well optimised as places one record at a
    * time into the database. However this allowed me to use existing code from the user/sqaure admin page, and as the import will only
    * be done once or twice this won't be an issue.
    * @minimumLocationDate option must be provided to specify a minimum created_on date for squares (tested with format yyyy-mm-dd
@@ -1048,7 +1047,7 @@ class extension_splash_extensions {
         'table' => 'person_attribute_value',
         'extraParams' => $auth['read'] + array(),
         'nocache' => true
-      )); 
+      ));
       //Cycle through all the lines in the upload data
       foreach ($uploadLines as $lineIdx=>$uploadLine) {
         //Split each line up into cells, cell 2 (index 1) onwards contain all the squares we are going to attach to people.
@@ -1059,7 +1058,7 @@ class extension_splash_extensions {
           'table' => 'person',
           'extraParams' => $auth['read'] + array('email_address' => $email, 'view' => 'detail'),
           'nocache' => true
-        )); 
+        ));
         if (empty($personData[0]['id'])) {
           $personData = data_entry_helper::get_report_data(array(
             'dataSource'=>'reports_for_prebuilt_forms/Splash/get_person_for_email_address',
@@ -1076,12 +1075,12 @@ class extension_splash_extensions {
               'table' => 'location',
               'extraParams' => $auth['read'] + array('name' => $location, 'view' => 'detail'),
               'nocache' => true
-            )); 
+            ));
             //Save the data ready to import.
             if (!empty($personData[0]['id'])&&!empty($locationData[0]['id'])) {
               $locationCreatedOnDate=new DateTime($locationData[0]['created_on']);
               //Only attach squares if they are newer than the specified minimum created_on option
-              if ($locationCreatedOnDate>=$minSquareDate) { 
+              if ($locationCreatedOnDate>=$minSquareDate) {
                 $convertedUploadData[$convertedUploadIdx][0]=$personData[0]['id'];
                 $convertedUploadData[$convertedUploadIdx][1]=$locationData[0]['id'];
                 $convertedUploadIdx++;
@@ -1109,13 +1108,13 @@ class extension_splash_extensions {
           }
         }
         if (duplicateDetected==false) {
-          $.post('$postUrl', 
+          $.post('$postUrl',
           {\"website_id\":".$args['website_id'].",\"person_attribute_id\":".$options['mySitesPsnAttrId'].
             ",\"person_id\":uploadLines[i][0],\"int_value\":uploadLines[i][1]},
           function (data) {
             if (typeof data.error !== 'undefined') {
               alert(data.error);
-            }              
+            }
           },
           'json'
           );
@@ -1125,7 +1124,7 @@ class extension_splash_extensions {
 
           existingPersonAttrVals.push(emptyObj);
         } else {
-          alert('A duplicate entry upload has been attempted for person id ' + uploadLines[i][0] + ' location id ' + uploadLines[i][1]); 
+          alert('A duplicate entry upload has been attempted for person id ' + uploadLines[i][0] + ' location id ' + uploadLines[i][1]);
         }
         duplicateDetected=false;
       }
@@ -1133,9 +1132,9 @@ class extension_splash_extensions {
     }
     return $r;
   }
-  
+
   /*
-   * In a similar way to the simple square upload, this function is designed only to be used once, so is not 
+   * In a similar way to the simple square upload, this function is designed only to be used once, so is not
    * optimised for speed or elegance.
    * This will upload the Address/Town/County/Country/Post Code/Over 18 and Data Access Policy Agreement profile fields into person_attribute_values on the warehouse.
    * This is needed as the site went live before the easy_login syncing was working, and the easy login syncing needs a user to be logged
@@ -1162,16 +1161,16 @@ class extension_splash_extensions {
     $convertedNewDataAccessUploadIdx=0;
     $convertedExistingDataAccessUploadData=array();
     $convertedExistingDataAccessUploadIdx=0;
-    
-    $convertedExistingUploadDataToDelete=array();
-    
-    
-    
 
-    $r = ''; 
+    $convertedExistingUploadDataToDelete=array();
+
+
+
+
+    $r = '';
     $r .= '<div><form method="post">';
-    $r .= '<input type="submit" id="sync-addresses" value="Sync"></form></div><br>'; 
-    
+    $r .= '<input type="submit" id="sync-addresses" value="Sync"></form></div><br>';
+
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
     //Need to call this so we can use indiciaData.read
     data_entry_helper::$js_read_tokens = $auth['read'];
@@ -1190,7 +1189,7 @@ class extension_splash_extensions {
           'table' => 'user',
           'extraParams' => $auth['read'] + array('id' => $user->field_indicia_user_id['und'][0]['value']),
           'nocache' => true
-        )); 
+        ));
       }
       //This won't be empty, but check anyway
       if (!empty($userData[0]['person_id'])) {
@@ -1199,7 +1198,7 @@ class extension_splash_extensions {
           $existingAttrVal=null;
           $existingOver18AttrVal=null;
           //Grab the field we are interested in and save to a variable
-          if ($addressFieldToCheck==='Address') {        
+          if ($addressFieldToCheck==='Address') {
             $attributeId=$options['addressAttrId'];
             if (!empty($user->field_indicia_address['und'][0]['value']))
               $fieldData=$user->field_indicia_address['und'][0]['value'];
@@ -1245,13 +1244,13 @@ class extension_splash_extensions {
           //has the data the existing attribute value id to update)
           //Otherwise add it to the array of new data to create.
           if (!empty($existingAttrVal[0]['id'])&&$fieldData!=="") {
-            $convertedExistingUploadData[$convertedExistingUploadIdx][0]=$existingAttrVal[0]['id'];    
+            $convertedExistingUploadData[$convertedExistingUploadIdx][0]=$existingAttrVal[0]['id'];
             $convertedExistingUploadData[$convertedExistingUploadIdx][1]=$fieldData;
             $convertedExistingUploadIdx++;
           } elseif (!empty($existingAttrVal[0]['id'])&&$fieldData==="") {
             $convertedExistingUploadDataToDelete[]=$existingAttrVal[0]['id'];
           }  else {
-            $convertedNewUploadData[$convertedNewUploadIdx][0]=$userData[0]['person_id']; 
+            $convertedNewUploadData[$convertedNewUploadIdx][0]=$userData[0]['person_id'];
             $convertedNewUploadData[$convertedNewUploadIdx][1]=$attributeId;
             $convertedNewUploadData[$convertedNewUploadIdx][2]=$fieldData;
             $convertedNewUploadIdx++;
@@ -1268,13 +1267,13 @@ class extension_splash_extensions {
         else
           $over18Data=0;
         if (!empty($existingOver18AttrVal[0]['id'])&&$over18Data==1) {
-          $convertedExistingOver18UploadData[$convertedExistingOver18UploadIdx][0]=$existingOver18AttrVal[0]['id'];    
+          $convertedExistingOver18UploadData[$convertedExistingOver18UploadIdx][0]=$existingOver18AttrVal[0]['id'];
           $convertedExistingOver18UploadData[$convertedExistingOver18UploadIdx][1]=$over18Data;
           $convertedExistingOver18UploadIdx++;
-        } elseif (!empty($existingOver18AttrVal[0]['id'])&& $over18Data==0) {  
+        } elseif (!empty($existingOver18AttrVal[0]['id'])&& $over18Data==0) {
           $convertedExistingUploadDataToDelete[]=$existingOver18AttrVal[0]['id'];
         } elseif (empty($existingOver18AttrVal[0]['id'])&& $over18Data==1) {
-          $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][0]=$userData[0]['person_id']; 
+          $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][0]=$userData[0]['person_id'];
           $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][1]=$options['over18AttrId'];
           $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][2]=$over18Data;
           $convertedNewOver18UploadIdx++;
@@ -1290,18 +1289,18 @@ class extension_splash_extensions {
         else
           $dataAccessData=0;
         if (!empty($existingDataAccessAttrVal[0]['id'])&&$dataAccessData==1) {
-          $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][0]=$existingDataAccessAttrVal[0]['id'];    
+          $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][0]=$existingDataAccessAttrVal[0]['id'];
           $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][1]=$dataAccessData;
           $convertedExistingDataAccessUploadIdx++;
-        } elseif (!empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==0) {  
+        } elseif (!empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==0) {
           $convertedExistingUploadDataToDelete[]=$existingDataAccessAttrVal[0]['id'];
         } elseif (empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==1) {
-          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][0]=$userData[0]['person_id']; 
+          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][0]=$userData[0]['person_id'];
           $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][1]=$options['dataAccessAttrId'];
           $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][2]=$dataAccessData;
           $convertedNewDataAccessUploadIdx++;
         }
-      }  
+      }
     }
     if (!empty($convertedExistingUploadData)||!empty($convertedNewUploadData)) {
       data_entry_helper::$javascript .= "
@@ -1323,7 +1322,7 @@ class extension_splash_extensions {
               success: function (data) {
                           if (typeof data.error !== 'undefined') {
                             alert(data.error);
-                          }              
+                          }
                         },
               dataType: 'json',
               async:false
@@ -1338,7 +1337,7 @@ class extension_splash_extensions {
               success: function (data) {
                 if (typeof data.error !== 'undefined') {
                   alert(data.error);
-                }              
+                }
               },
               dataType: 'json',
               async:false
@@ -1352,7 +1351,7 @@ class extension_splash_extensions {
             success: function (data) {
               if (typeof data.error !== 'undefined') {
                 alert(data.error);
-              }              
+              }
             },
             dataType: 'json',
             async:false
@@ -1366,7 +1365,7 @@ class extension_splash_extensions {
             success: function (data) {
               if (typeof data.error !== 'undefined') {
                 alert(data.error);
-              }              
+              }
             },
             dataType: 'json',
             async:false
@@ -1380,11 +1379,11 @@ class extension_splash_extensions {
             success: function (data) {
               if (typeof data.error !== 'undefined') {
                 alert(data.error);
-              }              
+              }
             },
             dataType: 'json',
             async:false
-          });    
+          });
         }
         for (i=0; i<newDataAccesSyncData.length; i++) {
           $.ajax({
@@ -1394,7 +1393,7 @@ class extension_splash_extensions {
             success: function (data) {
               if (typeof data.error !== 'undefined') {
                 alert(data.error);
-              }              
+              }
             },
             dataType: 'json',
             async:false
@@ -1408,60 +1407,60 @@ class extension_splash_extensions {
             success: function (data) {
               if (typeof data.error !== 'undefined') {
                 alert(data.error);
-              }              
+              }
             },
             dataType: 'json',
             async:false
-          });    
+          });
         }
         alert('Import Complete');
       });";
     }
     return $r;
   }
-  
+
   private static function simple_user_address_upload_mandatory_options_checks($options) {
     if (!function_exists('iform_ajaxproxy_url'))
       return 'An AJAX Proxy module must be enabled for user address syncing to work.';
-    
+
     if (empty($options['minimumUid'])) {
       drupal_set_message('Please enter a minimumUid for the minimum user id for the user address upload');
       return false;
-    } 
+    }
     if (empty($options['maximumUid'])) {
       drupal_set_message('Please enter a maximumUid for the maximum user id for the user address upload');
       return false;
-    }  
+    }
     if (empty($options['addressAttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the address field');
       return false;
-    }  
+    }
     if (empty($options['townAttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the town field');
       return false;
-    }  
+    }
     if (empty($options['countyAttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the county field');
       return false;
-    }  
+    }
     if (empty($options['countryAttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the country field');
       return false;
-    }  
+    }
     if (empty($options['postCodeAttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the post code field');
       return false;
-    } 
+    }
     if (empty($options['over18AttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the over 18 field');
       return false;
-    } 
+    }
     if (empty($options['dataAccessAttrId'])) {
       drupal_set_message('Please enter the person_attribute_id that holds the data access policy agreement selection');
       return false;
-    } 
+    }
   }
-  
+
   /*
    * Control allows a user to add squares to themselves or another user (depending if the user id is present in the dynamic-the_user_id get parameter)
    * Very similar to the add_sites_to_any_user control in my_sites but with some key difference.
@@ -1479,11 +1478,11 @@ class extension_splash_extensions {
    * @dontReturnAllocatedLocations Optional, when true then locations that are already allocated to another user are not available for selection (maximum of one location allocation per person)
    * @maxAllocationForLocationAttrId Optional, Id of attribute that holds the maximum number of people that can be allocated to a location before it becomes hidden for selection. Provide this attribute id to enable this option.
    * An example might be an event location, where only a certain number of people can attend.
-   * @allocatedLocationEmailSubject Optional, Provide a subject line if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailMessage option must also be provided. 
-   * @allocatedLocationEmailMessage Optional, Provide the message if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailSubject option must also be provided. 
+   * @allocatedLocationEmailSubject Optional, Provide a subject line if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailMessage option must also be provided.
+   * @allocatedLocationEmailMessage Optional, Provide the message if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailSubject option must also be provided.
    * Put {location_name} or {username} into the text to replace with the location or username when message is sent.
    * @overrideCurrentUserIdParam Optional, Force the page to only ever load for the current user, even if no user URL param is supplied. If an incorrect dynamic-the_user_id is specified in the URL, then draw a blank page, this is because
-   * by default the URL parameter overrides the Preset Report Parameters on the edit tab and we don't want users looking at the wrong user. 
+   * by default the URL parameter overrides the Preset Report Parameters on the edit tab and we don't want users looking at the wrong user.
    * This option is useful if we want users to be only able to edit themselves.
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
@@ -1498,27 +1497,27 @@ class extension_splash_extensions {
         $_GET['dynamic-the_user_id']=hostsite_get_user_field('indicia_user_id');
       }
     }
-    global $user;  
+    global $user;
     //Need to call this so we can use indiciaData.read
     data_entry_helper::$js_read_tokens = $auth['read'];
     if (!function_exists('iform_ajaxproxy_url'))
       return 'An AJAX Proxy module must be enabled for user sites administration to work.';
      if (!empty($options['locationDropDownLabel']))
       $locationDropDownLabel=$addButtonLabel=$options['locationDropDownLabel'].' :';
-    else 
+    else
       $locationDropDownLabel=lang::get('Location :');
     if (!empty($options['addButtonLabel']))
       $addButtonLabel=$options['addButtonLabel'];
-    else 
+    else
       $addButtonLabel=lang::get('Add to this User\'s Sites List');
     if (!empty($options['fieldSetLegend']))
       $fieldSetLegendText=$options['fieldSetLegend'];
-    else 
+    else
       $fieldSetLegendText=lang::get('Add locations to the sites lists for other users');
     if (!empty($options['rolesExemptFromApproval']))
-      $RolesExemptFromApproval=explode(',',$options['rolesExemptFromApproval']);      
-    else 
-      $RolesExemptFromApproval=array(); 
+      $RolesExemptFromApproval=explode(',',$options['rolesExemptFromApproval']);
+    else
+      $RolesExemptFromApproval=array();
     $r = "<form><fieldset><legend>" .$fieldSetLegendText. "</legend>";
     if (empty($options['locationTypes']) || !preg_match('/^([0-9]+,( )?)*[0-9]+$/', $options['locationTypes']))
       return 'The sites form is not correctly configured. Please provide the location type you can add.';
@@ -1543,21 +1542,21 @@ class extension_splash_extensions {
     elseif (!empty($_GET['dynamic-the_user_id']))
       $userIdFromURL=$_GET['dynamic-the_user_id'];
     else
-      $userIdFromURL=0; 
+      $userIdFromURL=0;
     $extraParams=array('location_type_ids'=>$options['locationTypes'], 'user_id'=>hostsite_get_user_field('indicia_user_id'),
         'my_sites_person_attr_id'=>$options['mySitesPsnAttrId']);
     //Can limit results in location drop-down to certain distance of a post code
     if (!empty($options['postCodeGeomParamName'])&&!empty($_GET[$options['postCodeGeomParamName']]))
       $extraParams['post_code_geom']=$_GET[$options['postCodeGeomParamName']];
     if (!empty($options['distanceFromPostCodeParamName'])&&!empty($_GET[$options['distanceFromPostCodeParamName']]))
-      $extraParams['distance_from_post_code']=$_GET[$options['distanceFromPostCodeParamName']]; 
+      $extraParams['distance_from_post_code']=$_GET[$options['distanceFromPostCodeParamName']];
     if (!empty($options['excludedSquareAttrId']))
       $extraParams['excluded_square_attr_id']=$options['excludedSquareAttrId'];
     if (!empty($options['dontReturnAllocatedLocations']))
       $extraParams['dont_return_allocated_locations']=$options['dontReturnAllocatedLocations'];
     if (!empty($options['maxAllocationForLocationAttrId']))
       $extraParams['max_allocation_for_location_attr_id']=$options['maxAllocationForLocationAttrId'];
-    //If we don't want to automatically get the location id from the URL, then display a drop-down of locations the user can select from   
+    //If we don't want to automatically get the location id from the URL, then display a drop-down of locations the user can select from
     if (empty($locationIdFromURL)) {
       $r .= '<label>'.$locationDropDownLabel.'</label> ';
       //Get a list of all the locations that match the given location types (in this case my sites are returned first, although this isn't a requirement)
@@ -1572,9 +1571,9 @@ class extension_splash_extensions {
     //Get the user select control if the user id isn't in the url
     if (empty($userIdFromURL))
       $r .= self:: user_select_for_add_sites_to_any_user_control($auth['read'],$args);
-    
+
     $r .= '<input id="add-user-site-button" type="button" value="'.$addButtonLabel.'"/><br></form><br>';
-    
+
     $postUrl = iform_ajaxproxy_url(null, 'person_attribute_value');
 
     //Firstly check both a uer and location have been selected.
@@ -1584,14 +1583,14 @@ class extension_splash_extensions {
       var userIdToAdd = userId;
       var locationIdToAdd = locationId;
       var sitesReport = indiciaData.read.url +'/index.php/services/report/requestReport?report=library/locations/all_user_sites.xml&mode=json&mode=json&callback=?';
-        
+
       var sitesReportParameters = {
         'person_site_attr_id': '".$options['mySitesPsnAttrId']."',
         'auth_token': indiciaData.read.auth_token,
         'nonce': indiciaData.read.nonce,
         'reportSource':'local'
       };
-      
+
       if (!userIdToAdd||!locationIdToAdd) {
         alert('Please select both a user and a location to add.');
       } else {
@@ -1612,19 +1611,19 @@ class extension_splash_extensions {
             }
           }
         );
-      }    
+      }
     }
     ";
-      
-    //This veriabe holds the updated_by_id=1 if the user is found to be exempt, if they aren't exempt then this is blank so that the 
+
+    //This veriabe holds the updated_by_id=1 if the user is found to be exempt, if they aren't exempt then this is blank so that the
     //updated_by_id is set automatically by the system.
-    $updatedBySystem = ''; 
+    $updatedBySystem = '';
 
     //See if any of the user's roles are in the exempt list.
     foreach ($RolesExemptFromApproval as $exemptRole) {
       foreach ($user->roles as $userRole) {
         if ($exemptRole===$userRole)
-          $updatedBySystem = ',"updated_by_id":1'; 
+          $updatedBySystem = ',"updated_by_id":1';
       }
     }
     //Add the user/site combination to the person_attribute_values database table.
@@ -1632,7 +1631,7 @@ class extension_splash_extensions {
     data_entry_helper::$javascript .= "
     var addUserSiteData = function (locationId, userIdToAdd) {
       if (!isNaN(locationId) && locationId!=='') {
-        $.post('$postUrl', 
+        $.post('$postUrl',
           {\"website_id\":".$args['website_id'].",\"person_attribute_id\":".$options['mySitesPsnAttrId'].
               ",\"user_id\":userIdToAdd,\"int_value\":locationId".$updatedBySystem."},
           function (data) {
@@ -1641,7 +1640,7 @@ class extension_splash_extensions {
               if (indiciaData.doSendEmail) {
                 var parameters;
                 //remove overlay off back of URL
-                var url = window.location.href.split('#')[0]; 
+                var url = window.location.href.split('#')[0];
                 //Replace any existing parameters. Am sure there must be a nicer way to do this, but this works for now
                 url = url.split('?location_id_to_email')[0];
                 url = url.split('&location_id_to_email')[0];
@@ -1657,7 +1656,7 @@ class extension_splash_extensions {
               }
             } else {
               alert(data.error);
-            }              
+            }
           },
           'json'
         );
@@ -1673,12 +1672,12 @@ class extension_splash_extensions {
       if (".$locationIdFromURL.") {
         locationId = ".$locationIdFromURL.";
       } else {
-        locationId = $('#location-select').val();       
+        locationId = $('#location-select').val();
       }
       if (".$userIdFromURL.") {
         userId = ".$userIdFromURL.";
       } else {
-        userId = $('#user-select').val();     
+        userId = $('#user-select').val();
       }
       duplicateCheck(locationId,userId);
     });";
@@ -1693,19 +1692,19 @@ class extension_splash_extensions {
     self::user_site_delete($postUrl,$args);
     return $r;
   }
-  
+
   private static function user_site_delete($postUrl,$args) {
     //Function for when user elects to remove site allocations
     data_entry_helper::$javascript .= "
     user_site_delete = function(pav_id) {
-      $.post('$postUrl', 
+      $.post('$postUrl',
         {\"website_id\":".$args['website_id'].",\"id\":pav_id, \"deleted\":\"t\"},
         function (data) {
           if (typeof data.error === 'undefined') {
-            //Avoid including the email paramters when removing locations as we don't want to send the 
+            //Avoid including the email paramters when removing locations as we don't want to send the
             //location sign-up email
-            var url = window.location.href.split('?location_id_to_email')[0]; 
-            url = window.location.href.split('&location_id_to_email')[0]; 
+            var url = window.location.href.split('?location_id_to_email')[0];
+            url = window.location.href.split('&location_id_to_email')[0];
             window.location.href = url;
           } else {
             alert(data.error);
@@ -1716,7 +1715,7 @@ class extension_splash_extensions {
     }
     ";
   }
-  
+
   /*
    * User select drop-down for sites administation control
    */
@@ -1737,7 +1736,7 @@ class extension_splash_extensions {
     $r .= '</select>';
     return '<label>User : </label>'.$r.'<br>';
   }
-  
+
   /*
    * Setup the sending of the location allocation email to the person allocated the location if required.
    */
@@ -1749,20 +1748,20 @@ class extension_splash_extensions {
         'table' => 'location',
         'extraParams' => $auth['read'] + array('id' => $_GET['location_id_to_email']),
         'nocache' => true
-      )); 
+      ));
       $userData = data_entry_helper::get_population_data(array(
         'table' => 'user',
         'extraParams' => $auth['read'] + array('id' => $_GET['user_id_to_email'], 'view' => 'detail'),
         'nocache' => true
-      )); 
+      ));
       if (!empty($locationData[0]['name'])&&!empty($userData[0]['email_address'])&&!empty($userData[0]['username'])) {
         self::send_location_allocation_email($userData[0]['username'],$options['allocatedLocationEmailSubject'],$options['allocatedLocationEmailMessage'],$userData[0]['email_address'],$locationData[0]['name']);
       } else {
         return watchdog('iform', 'Location signup email not sent as not all the parameters were supplied');
-      }   
+      }
     }
   }
-  
+
   /*
    * Optionally send email to user when location is assigned to them
    */
@@ -1773,7 +1772,7 @@ class extension_splash_extensions {
     if (!empty(variable_get('site_mail', '')))
       $emailFrom=variable_get('site_mail', '');
     if (!empty($emailFrom)) {
-      $sent = mail($emailTo, $subject, wordwrap($message, 70),             
+      $sent = mail($emailTo, $subject, wordwrap($message, 70),
           'From: '. $emailFrom . PHP_EOL .
           'Reply-To: '. $emailFrom.
           'Return-Path: '. $emailFrom);
@@ -1786,7 +1785,7 @@ class extension_splash_extensions {
       watchdog('iform', 'Location signup failed to '.$username.' '.$emailTo);
     }
   }
-  
+
   //The map pages uses node specific javascript that is very similar to the javascript functions found in
   //add_locations_to_user in this file (we couldn't call this code for re-use).
   //Use a simple function to supply the required indiciaData for that node specific javascript
@@ -1797,29 +1796,27 @@ class extension_splash_extensions {
       data_entry_helper::$javascript.="
         indiciaData.indiciaUserId='".hostsite_get_user_field('indicia_user_id')."';\n";
     }
-    if (isset($args['website_id']))
-      data_entry_helper::$javascript .= "indiciaData.website_id = ".$args['website_id'].";\n";
     if (function_exists('iform_ajaxproxy_url'))
       data_entry_helper::$javascript .= "indiciaData.postUrl='".iform_ajaxproxy_url(null, 'person_attribute_value')."';\n";
     if (isset($options['mySitesPsnAttrId']))
       data_entry_helper::$javascript .= "indiciaData.mySitesPsnAttrId='".$options['mySitesPsnAttrId']."';\n";
 
     if (!empty($options['rolesExemptFromApproval']))
-      $RolesExemptFromApproval=explode(',',$options['rolesExemptFromApproval']);      
-    else 
-      $RolesExemptFromApproval=array(); 
+      $RolesExemptFromApproval=explode(',',$options['rolesExemptFromApproval']);
+    else
+      $RolesExemptFromApproval=array();
     //See if any of the user's roles are in the exempt list, if they are then set the updated_by_id on the person_attribute_value
     //to the system id, as this will bypass the approval system required for squares.
     foreach ($RolesExemptFromApproval as $exemptRole) {
       foreach ($user->roles as $userRole) {
         if ($exemptRole===$userRole) {
-          $updatedBySystem = '1'; 
+          $updatedBySystem = '1';
           data_entry_helper::$javascript.="indiciaData.updatedBySystem='".$updatedBySystem."';\n";
         }
       }
     }
   }
-  
+
   /*
    * On the Request a Square page we need to hide the column filter on the My Allocations grid only
    */
@@ -1828,21 +1825,21 @@ class extension_splash_extensions {
     $('#col-filter-location_name-report-grid-0').hide()
     ";
   }
-  
+
   /**
    * Hide/show instructions on the page based on the selected options. Currently supports showing specific options for
    * - Expert mode
    * - Linear Plots in Expert Mode.
-   * 
+   *
    * Help text should be placed manually into the form structure using the following div tag if you wish your help to look the same
    * as text placed inside ?? in the form structure (e.g. ?My help text?)
    * div class="page-notice ui-state-highlight ui-corner-all expert-help"
-   * Change the class expert-help to linear-expert-help as required. 
+   * Change the class expert-help to linear-expert-help as required.
    */
   public static function mode_specific_instructions($auth, $args, $tabalias, $options, $path) {
     if (!empty($options['expertModeAttrId']))
       data_entry_helper::$javascript .= "indiciaData.expertModeAttrId=".json_encode(explode(',',$options['expertModeAttrId'])).";";
-    
+
     if (!empty($options['linearLocationTypeId']))
       data_entry_helper::$javascript .= "indiciaData.linearLocationTypeId=".json_encode(explode(',',$options['linearLocationTypeId'])).";";
     //Make sure we hide all option specific instructions when the page first loads.
@@ -1855,14 +1852,14 @@ class extension_splash_extensions {
       });
       ";
   }
-  
+
   /*
    * Private plots are no longer going to be used. Hide the existing checkbox and display a warning
    * if there is an existing private plot (as these will remain, but can no longer be altered).
    */
   public static function disable_private_plot_box($auth, $args, $tabAlias, $options) {
-    if (empty($options['warningMessage'])) 
-      $options['warningMessage']='This plot has been marked as private';   
+    if (empty($options['warningMessage']))
+      $options['warningMessage']='This plot has been marked as private';
     if (!empty($options['privateAttrId'])) {
       data_entry_helper::$javascript .= "
       $(window).load(function() {

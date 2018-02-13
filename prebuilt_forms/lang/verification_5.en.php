@@ -26,5 +26,5 @@ global $custom_terms;
  */
 
 $custom_terms = array(
-  'Report output' => 'All records from grid'
+  'Report output' => 'All records in verification grid'
 );

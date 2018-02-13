@@ -238,7 +238,7 @@ class extension_my_sites {
     }
     //Get the user select control if the user id isn't in the url
     if (empty($userIdFromURL))
-      $r .= self:: user_select_for_add_sites_to_any_user_control($auth['read'],$args);
+      $r .= self:: user_select_for_add_sites_to_any_user_control($auth['read'],$args['website_id'],$options);
     
     $r .= '<input id="add-user-site-button" type="button" value="'.$addButtonLabel.'"/><br></form><br>';
     
@@ -350,22 +350,40 @@ class extension_my_sites {
   
   /*
    * User select drop-down for sites administation control
+   * @readAuth read authentication
+   * @website_id Website ID.
+   * @options Options passed to the control.
    */
-  private static function  user_select_for_add_sites_to_any_user_control($readAuth,$args) {
-    $reportOptions = array(
-      'dataSource'=>'library/users/get_people_details_for_website_or_user',
-      'readAuth'=>$readAuth,
-      'extraParams' => array('website_id'=>$args['website_id']),
-      'valueField'=>'id',
-      'captionField'=>'fullname_surname_first'
-    );
-    $userData = data_entry_helper::get_report_data($reportOptions);
-    $r = '<select id="user-select">\n';
-    $r .= '<option value="">'.'please select'.'</option>\n';
-    foreach ($userData as $userItem) {
-      $r .= '<option value='.$userItem['id'].'>'.$userItem['fullname_surname_first'].'</option>';
+  private static function  user_select_for_add_sites_to_any_user_control($readAuth,$website_id,$options) {
+    $r = '';
+    if (!empty($options['useAutocomplete'])&&$options['useAutocomplete']==true) {
+      $r .= data_entry_helper::autocomplete(array(
+        'report'=>'library/users/get_people_details_for_website_or_user',
+        'extraParams' => $readAuth + array('website_id'=>$website_id),
+        'id' => 'user-select',
+        'fieldname'=> 'user-select',
+        'label' => lang::get('Select a user'),
+        'helpText' => lang::get('Select a location to input data for before selecting a site.'),
+        'captionField'=>'fullname_surname_first',
+        'valueField'=>'id'
+      )); 
+    } else {
+      $reportOptions = array(
+        'dataSource'=>'library/users/get_people_details_for_website_or_user',
+        'readAuth'=>$readAuth,
+        'extraParams' => array('website_id'=>$website_id),
+        'valueField'=>'id',
+        'captionField'=>'fullname_surname_first'
+      );
+      $userData = data_entry_helper::get_report_data($reportOptions);
+      $selectHtml = '<select id="user-select">\n';
+      $selectHtml .= '<option value="">'.'please select'.'</option>\n';
+      foreach ($userData as $userItem) {
+        $selectHtml .= '<option value='.$userItem['id'].'>'.$userItem['fullname_surname_first'].'</option>';
+      }
+      $selectHtml .= '</select>';
+      $r .= '<label>User : </label>'.$selectHtml.'<br>';
     }
-    $r .= '</select>';
-    return '<label>User : </label>'.$r.'<br>';
+    return $r;
   }
 }

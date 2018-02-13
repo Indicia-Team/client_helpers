@@ -466,6 +466,19 @@ mapInitialisationHooks.push(function (div) {
       if(hostsite_user_has_permission($args['edit_permission'])){
         $r .= '
   <div id="downloads" class="mnhnl-btw-datapanel">
+    <fieldset><legend>' . lang::get('Specify a date range for the records to include') . '</legend>' . 
+    data_entry_helper::date_picker(array(
+      'label' => lang::get('Records from'),
+        'fieldname' => 'filter_date_from',
+        'class' => 'control-width-4',
+        'dateFormat' => 'yy/mm/dd'
+    )) .
+    data_entry_helper::date_picker(array(
+      'label' => lang::get('Records to'),
+        'fieldname' => 'filter_date_to',
+        'class' => 'control-width-4',
+        'dateFormat' => 'yy/mm/dd'
+    )) . '</fieldset>
     <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/mnhnl_btw_transect_direction_report.xml&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv">
       <p>'.lang::get('LANG_Direction_Report').'</p>
       <input type="hidden" name="params" value=\'{"survey_id":'.$args['survey_id'].', "direction_attr_id":'.$sample_walk_direction_id.', "closed_attr_id":'.$sample_closure_id.'}\' />
@@ -497,6 +510,33 @@ mapInitialisationHooks.push(function (div) {
       <input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('LANG_Complete_Final_Download_Button').'">
     </form>
   </div>';
+        data_entry_helper::$late_javascript .= "
+$('#filter_date_from').change(function() {
+  $('#downloads form [name=params]').each(function(idx, elem) {
+    var params = JSON.parse($(elem).val()),
+        newValue = $('#filter_date_from').val();
+    if (newValue != '') {
+      params.date_from = newValue;
+    } else if (typeof params.date_from != 'undefined') {
+      delete params.date_from;
+    }
+    $(elem).val(JSON.stringify(params));
+  });
+});
+$('#filter_date_to').change(function() {
+  $('#downloads form [name=params]').each(function(idx, elem) {
+    var params = JSON.parse($(elem).val()),
+        newValue = $('#filter_date_to').val();
+    if (newValue != '') {
+      params.date_from = newValue;
+    } else if (typeof params.date_from != 'undefined') {
+      delete params.date_from;
+    }
+    $(elem).val(JSON.stringify(params));
+  });
+});
+$('#filter_date_from,#filter_date_to').change();
+";
       }
       // Create Map
       $options = iform_map_get_map_options($args, $readAuth);

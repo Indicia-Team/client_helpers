@@ -50,6 +50,7 @@
     $enteredSref = $submission['fields']['entered_sref']['value'];
     //Cycle through each occurrence
     foreach($submission['subModels'] as &$occurrenceAndSubSampleRecord) {
+      $bearing = $reticuleToUse = $reticuleFromToUse = $distance = $reticules = $reticuleFrom = null;
       if (!empty($occurrenceAndSubSampleRecord['model']['subModels'][0]['model']['fields'])) {
         //Assign the attributes associated with the occurrence to a variable to make it easier to work with.
         $occurrenceAttrsToMatch = $occurrenceAndSubSampleRecord['model']['subModels'][0]['model']['fields'];
@@ -61,6 +62,9 @@
           if (preg_match('/^occAttr:'.$args['reticules'].'.*/',$occurrenceAttrToMatchKey)) {
             $reticuleToUse = $occurrenceAttrToMatch['value'];
           }
+          if (preg_match('/^occAttr:'.$args['reticules_from'].'.*/',$occurrenceAttrToMatchKey)) {
+            $reticuleFromToUse = $occurrenceAttrToMatch['value'];
+          }
           if (preg_match('/^occAttr:'.$args['distance_estimate'].'.*/',$occurrenceAttrToMatchKey)) {
             $distance = $occurrenceAttrToMatch['value'];
           }
@@ -69,17 +73,25 @@
         $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
         if (!empty($reticuleToUse)) {
           $termlistsTermsRow = data_entry_helper::get_population_data(array(
-            'table' => 'termlists_term',
-            'extraParams' => $readAuth + array('id' => $reticuleToUse)
+              'table' => 'termlists_term',
+              'extraParams' => $readAuth + array('id' => $reticuleToUse)
           ));      
         }
         if (!empty($termlistsTermsRow[0]['term']))
           $reticules = $termlistsTermsRow[0]['term'];
 
+        if (!empty($reticuleFromToUse)) {
+          $termlistsTermsRow = data_entry_helper::get_population_data(array(
+              'table' => 'termlists_term',
+              'extraParams' => $readAuth + array('id' => $reticuleFromToUse)
+          ));
+        }
+        if (!empty($termlistsTermsRow[0]['term']))
+          $reticuleFrom = $termlistsTermsRow[0]['term'];
       }
       //We calculate the grid ref of the cetacean by using the reticules/bearing/platform height and the original entered sptial reference. This is stored in the sub-sample associated with the occurrence.  
       if (!empty($bearing) && ((!empty($platformHeight) && !empty($reticules)) || !empty($distance))) {
-        $occurrenceAndSubSampleRecord['model']['fields']['entered_sref']['value'] = calculate_sighting_sref($bearing, $reticules, $platformHeight, $distance, $enteredSref, $args);
+        $occurrenceAndSubSampleRecord['model']['fields']['entered_sref']['value'] = calculate_sighting_sref($bearing, $reticuleFrom, $reticules, $platformHeight, $distance, $enteredSref, $args);
       } else {
         $occurrenceAndSubSampleRecord['model']['fields']['entered_sref']['value'] = $enteredSref;
       }
@@ -119,14 +131,15 @@
    * Method that calculates the spatial reference of cetacean sightings by using the spatial reference of 
    * the observer, the bearing to the sighting, the number of reticules and the platform height.
    */
-  function calculate_sighting_sref($bearing, $reticules, $platformHeight, $distance, $enteredSref, $args) {
+  function calculate_sighting_sref($bearing, $reticuleFrom, $reticules, $platformHeight, $distance, $enteredSref, $args) {
     //Convert the 50N 50E style latitude/longitude spatial reference format into pure numbers so we 
     //can manipulate it mathematically.
     $convertedSref = lat_long_conversion_to_numbers($enteredSref);
     $radians = $bearing*pi()/180;
-    if (empty($platformHeight) || empty($reticules)) {
-      // use estimated distance if we don't have reticules.
-      $radialDistance = $distance;
+    if (empty($platformHeight) || empty($reticules) || $reticuleFrom === 'Land') {
+      // use estimated distance if we don't have reticules, or reticules taken from land (currently don't have a distance to land)
+      // we assume that if no reticulesFrom then from hoizon.
+      $radialDistance = empty($distance) ? 0 : $distance; // assumed in metres
     } else {
       //Calculations done assuming Platform Height is in km, however Platform Height is stored in metres, so divide by 1000.
       $platformHeight=$platformHeight/1000;

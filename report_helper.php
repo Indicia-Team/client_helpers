@@ -134,16 +134,24 @@ class report_helper extends helper_base {
       'format' => 'csv',
       'itemsPerPage' => 20000
     ), $options);
+    // Option for a special report for downloading.
+    if (!empty($options['dataSourceDownloadLink'])) {
+      $origDataSource = $options['dataSource'];
+      $options['dataSource'] = $options['dataSourceDownloadLink'];
+    }
     $options = self::get_report_grid_options($options);
-    $options['linkOnly'] = true;
+    $options['linkOnly'] = TRUE;
     $currentParamValues = self::getReportGridCurrentParamValues($options);
     $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
-    // don't want to paginate the download link
+    // Don't want to paginate the download link.
     unset($sortAndPageUrlParams['page']);
     $extras = self::get_report_sorting_paging_params($options, $sortAndPageUrlParams);
-    $link = self::get_report_data($options, $extras.'&'.self::array_to_query_string($currentParamValues, true), true);
+    $link = self::get_report_data($options, $extras . '&' . self::array_to_query_string($currentParamValues, TRUE), TRUE);
+    if (isset($origDataSource)) {
+      $options['dataSource'] = $origDataSource;
+    }
     global $indicia_templates;
-    return str_replace(array('{link}','{caption}'), array($link, lang::get($options['caption'])), $indicia_templates['report_download_link']);
+    return str_replace(array('{link}', '{caption}'), array($link, lang::get($options['caption'])), $indicia_templates['report_download_link']);
   }
 
  /**
@@ -179,6 +187,8 @@ class report_helper extends helper_base {
   * Read authorisation tokens.</li>
   * <li><b>dataSource</b><br/>
   * Name of the report file or singular form of the table/view.</li>
+  * <li><b>dataSourceDownloadLink</b><br/>
+  * Optionally use a different data source for the download link displayed beneath the grid..</li>
   * <li><b>view</b>
   * When loading from a view, specify list, gv or detail to determine which view variant is loaded. Default is list.
   * </li>
@@ -272,8 +282,12 @@ class report_helper extends helper_base {
   * Array of key value pairs to include as a filter against the data.
   * </li>
   * <li><b>extraParams</b><br/>
-  * Array of additional key value pairs to attach to the request. This should include fixed values which cannot be changed by the
-  * user and therefore are not needed in the parameters form.
+  * Array of additional key value pairs to attach to the request. This should include fixed values which cannot be
+  * changed by the user and therefore are not needed in the parameters form. extraParams can be overridden by loaded
+  * context filters (permissions filters, e.g. for verification).
+  * </li>
+  * <li><b>immutableParams</b><br/>
+  * Immutable parameters are parameters to apply to the report grid which cannot be changed under any circumstance.
   * </li>
   * <li><b>paramDefaults</b>
   * Optional associative array of parameter default values. Default values appear in the parameter form and can be overridden.</li>
@@ -824,6 +838,7 @@ $callToCallback}";
       $extraParams = json_encode($extraParams, JSON_FORCE_OBJECT);
       // List of report parameters that cannot be changed by the user.
       $fixedParams = json_encode($options['extraParams'], JSON_FORCE_OBJECT);
+      $immutableParams = json_encode($options['immutableParams'], JSON_FORCE_OBJECT);
       self::$javascript .= "
 if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
@@ -834,6 +849,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   dataSource: '" . str_replace('\\','/',$options['dataSource']) . "',
   extraParams: $extraParams,
   fixedParams: $fixedParams,
+  immutableParams: $immutableParams,
   view: '$options[view]',
   itemsPerPage: $options[itemsPerPage],
   auth_token: '{$options['readAuth']['auth_token']}',
@@ -2624,6 +2640,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       'autoParamsForm' => true,
       'paramsOnly' => false,
       'extraParams' => array(),
+      'immutableParams' => array(),
       'completeParamsForm' => true,
       'callback' => '',
       'paramsFormButtonCaption' => 'Run Report',

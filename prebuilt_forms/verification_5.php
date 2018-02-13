@@ -454,6 +454,7 @@ idlist=';
     $r .= '<div id="map-and-record" class="right" style="width: 34%"><div id="summary-map">';
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
+    $options['editLayerName'] = 'Selected record';
     // This is used for drawing, so need an editlayer, but not used for input.
     $options['editLayer'] = TRUE;
     $options['editLayerInSwitcher'] = TRUE;
@@ -806,6 +807,7 @@ HTML
         'readAuth' => $auth['read'],
         'itemsPerPage' => 20,
         'extraParams' => array_merge($opts['extraParams'], array('data_cleaner_filter' => 'f')),
+        'immutableParams' => array('quality_context' => 'all'),
         'columns' => array(
           array(
             'display' => '',
@@ -821,7 +823,6 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "' . $indicia_user_id . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "' . $link['path'] . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.website_id = ' . $args['website_id'] . ";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url($nid, 'occurrence') . "&user_id=$indicia_user_id&sharing=$args[sharing]\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/verification_5') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autoDiscard = ' . $args['auto_discard_rows'] . ";\n";
@@ -1323,7 +1324,7 @@ HTML
   }
 
   private static function getComments($readAuth, $params, $includeAddNew = TRUE) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(array('data_entry_helper', 'report_helper'));
     $options = array(
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
@@ -1389,7 +1390,9 @@ HTML
       } else {
         $r .= '<input type="hidden" id="comment-confidential" value="f" />';
       }
-      $r .= '<textarea id="comment-text"></textarea>';
+      $r .= data_entry_helper::textarea([
+        'fieldname' => 'comment-text'
+      ]);
       $r .= data_entry_helper::text_input([
         'label' => lang::get('External reference or other source'),
         'fieldname' => 'comment-reference'
@@ -1401,13 +1404,14 @@ HTML
     return $r;
   }
 
-  public static function ajax_mediaAndComments($website_id, $password) {
+  public static function ajax_mediaAndComments($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     header('Content-type: application/json');
     echo json_encode(array(
-      'media' => self::getMedia($readAuth),
-      'comments' => self::get_comments($readAuth, FALSE)
+      'media' => self::getMedia($readAuth, $params),
+      'comments' => self::getComments($readAuth, $params, FALSE)
     ));
   }
 

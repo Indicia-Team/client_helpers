@@ -155,4 +155,84 @@ jQuery(document).ready(function ($) {
     }
     formatSqiWarning();
   };
+
+  /**
+   * Retrieve an array of lists in the current Quick Analysis Group.
+   */
+  function listsInCurrentGroup() {
+    var lists = [];
+    $.each($('#quick-analysis-group tbody tr'), function addRow() {
+      lists.push(this.id.replace(/^row/, ''));
+    });
+    return lists;
+  }
+
+  indiciaFns.addToQuickAnalysisGroup = function (id) {
+    var row;
+    var display;
+    var description;
+    if ($('#quick-analysis-group tr#row' + id).length > 0) {
+      alert('This list is already in the current Quick Analysis Group.');
+    } else {
+      display = '<strong>' + $('#my-lists tr#row' + id + ' td.col-title').text() + '</strong>';
+      description = $('#my-lists tr#row' + id + ' td.col-description').text();
+      if (description) {
+        display += '<br/>' + description;
+      }
+      row = '<tr id="row' + id + '">' +
+        '<td>' + display + '</td>' +
+        '<td><img alt="Remove" title="Remove this list from the group" src="' + indiciaData.imagesPath + '/nuvola/cancel-16px.png" onclick="indiciaFns.removeFromQuickAnalysisGroup(' + id + ');" /></td>' +
+        '</tr>';
+      $('#quick-analysis-group tbody').append(row);
+      // Animate the tab to show where it has gone.
+      $('#tab-quickanalysisgroup-tab span').animate({
+        'background-color': 'yellow'
+      }, 200, function resetBackground() {
+        $('#tab-quickanalysisgroup-tab span').animate({
+          'background-color': 'transparent'
+        }, 1000);
+      });
+      $('#qa-group-actions button,#qa-group-actions input').removeAttr('disabled');
+    }
+  };
+
+  indiciaFns.removeFromQuickAnalysisGroup = function (id) {
+    $('#quick-analysis-group tbody tr#row' + id).remove();
+    if ($('#quick-analysis-group tbody tr').length === 0) {
+      $('#qa-group-actions button,#qa-group-actions input').attr('disabled', 'disabled');
+    }
+  };
+
+  indiciaFns.clearQuickAnalysisGroup = function () {
+    $('#quick-analysis-group tbody tr').remove();
+    $('#qa-group-actions button,#qa-group-actions input').attr('disabled', 'disabled');
+  };
+
+  indiciaFns.analyseQuickAnalysisGroup = function (path, type) {
+    var lists = listsInCurrentGroup();
+    window.location = path + '?dynamic-sample_type=' + type + '&dynamic-sample_id=' + lists.join(',');
+  };
+
+  indiciaFns.saveQuickAnalysisScratchpadGroup = function () {
+    var lists;
+    var params;
+    if ($('#new-list-name').val().trim() === '') {
+      alert('Please specify the name of the list to save the group as.');
+      return;
+    }
+    lists = listsInCurrentGroup();
+    params = [
+      encodeURIComponent($('#new-list-name').val().trim()),
+      indiciaData.userId,
+      encodeURIComponent('{' + lists.join(',') + '}')
+    ];
+    $.ajax({
+      url: indiciaData.warehouseUrl + 'index.php/services/data_utils/combine_scratchpad_lists/' +
+        params.join('/') + '?nonce=' + indiciaData.write.nonce + '&auth_token=' + indiciaData.write.auth_token,
+      dataType: 'jsonp',
+      success: function (response) {
+        alert('The combined list has been saved');
+      }
+    });
+  };
 });

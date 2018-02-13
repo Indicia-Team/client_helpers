@@ -77,6 +77,25 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'type'=>'string',
           'group'=>'Other IForm Parameters',
           'required'=>false
+        ),
+        array(
+          'name'=>'abun_photo_msg',
+          'caption'=>'Abundance missing message',
+          'description'=>'Message to display to the user '
+            . 'if they have added a photo with no abundance. '
+            . 'Disabled if this and the Abundance Missing Message are not filled in.',
+          'type'=>'textarea',
+          'group'=>'Other IForm Parameters',
+          'required'=>false
+        ),
+        array(
+          'name'=>'abun_attr_id',
+          'caption'=>'Abundance occurrence attribute ID',
+          'description'=>'Occurrence attribute ID for abundance.'
+            . 'Disabled if this and the Abundance Occurrence Attribute ID are not filled in.',
+          'type'=>'textarea',
+          'group'=>'Other IForm Parameters',
+          'required'=>false
         )
       )
     ); 
@@ -98,7 +117,6 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
   }
 
   protected static function get_form_html($args, $auth, $attributes) {
-    
     global $user;
     data_entry_helper::$javascript .= "
       var sampleCreatedOn;
@@ -113,7 +131,39 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           } else {
             return false;
           }
-        });
+        });";
+    if (!empty($args['abun_photo_msg']) && !empty($args['abun_attr_id'])) {
+      //If the user enters a photo without an abundance warn them.
+      data_entry_helper::$javascript .= "
+        $('#tab-submit').click(function(e) {
+          var photoWithoutAbunFound=false;
+          var rowCounter=-1;
+          $(\"table[id^='species-grid'] tr\").each(function() {
+            //Image row is called supplementary-row in edit mode
+            if ($(this).hasClass('image-row')||$(this).hasClass('supplementary-row')) {
+              //Image row might not actually have any image if Add Photo button wasn't clicked
+              if ($(this).find('img').length) {
+                //Current row is image row, so to get abundance we need to look in previous row and do a no value check
+                //As we are doing a contains selector we need to loop even though there should only be one result
+                //Difficult to use an exact selector, as edit mode has attribute values IDs in the selector, this makes life complicated.
+                $(this).prev().find(\"input[id*='occAttr\\\\:".$args['abun_attr_id']."']\").each(function( index ) {
+                  if (!$(this).val()) {
+                    photoWithoutAbunFound=true;
+                  }
+                });
+              } 
+            } else {
+              //If row isn't an image row, then it is a real grid row that we need to keep track of
+              rowCounter++;
+            }
+          });
+          if (photoWithoutAbunFound===true) {
+            alert('".$args['abun_photo_msg']."') 
+            e.preventDefault();
+          }
+        });";  
+    }
+      data_entry_helper::$javascript .= "
       });
     ";
     //Test if the sample date is less than the locking date, if it is then lock the form.

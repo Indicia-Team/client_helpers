@@ -30,16 +30,17 @@ require_once 'includes/form_generation.php';
 // Add a new "Vertical Tab" Under "Recording settings", called "Preferences"/group_preferences beneath "Who you are"
 // Add a new field "Default species view" (field_default_species_view) under this, type "List (text)"
 // Set the allowed list to :
+//  branch|The species list associated with the branch the user records in.
 //  full|The full taxa list
 //  common|Common taxa list
 //  mine|Taxa from the list previously recorded by me
 //  here|Taxa from the list previously recorded at this site.
 // Leave "Required field" and "Display on user registration form" unchecked.
-// Help Text : This selects what default species list is displayed when you enter first data for a walk. Common is only available on the first tab (Butterflies): if you choose this option, the other tabs will display the full list. The full list will not be displayed on the final (Others) tab, as this is the full UK list and is very big: in this case, those taxa previously recorded here will be displayed. When viewing data subsequently, only those taxa who have data recorded will initially be displayed. Leaving unselected will default to the standard form configuration setting.
+// Help Text : This selects what default species list is displayed when you enter first data for a walk. Common and Branch are only available on the first tab (Butterflies): if you choose one of these options, the other tabs will display the full list. The full list will not be displayed on the final (Others) tab, as this is the full UK list and is very big: in this case, those taxa previously recorded here will be displayed. When viewing data subsequently, only those taxa who have data recorded will initially be displayed. Leaving unselected will default to the standard form configuration setting.
 // Default: N/A
 // Number of values: 1
 
-// TODO
+// @todo
 // add filtering ability to auto complete look up and discriminator between subsidiary grids.
 /**
  * A custom function for usort which sorts by the location code of a list of sections.
@@ -63,11 +64,11 @@ function ukbms_stis_sectionSort($a, $b)
  */
 class iform_ukbms_sectioned_transects_input_sample {
 
-	private static $auth;
-	private static $userId;
-	private static $sampleID;
-	private static $locationID;
-	
+  private static $auth;
+  private static $userId;
+  private static $sampleID;
+  private static $locationID;
+  
   /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
@@ -85,7 +86,6 @@ class iform_ukbms_sectioned_transects_input_sample {
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
-   * @todo: Implement this method
    */
   public static function get_parameters() {
     return array_merge(
@@ -99,6 +99,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'survey',
           'captionField'=>'title',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'title'),
           'siteSpecific'=>true
         ),
         array(
@@ -110,6 +111,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'occurrence_attribute',
           'captionField'=>'caption',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
           'required' => true,
           'siteSpecific'=>true,
           'group'=>'Transects Editor Settings'
@@ -122,7 +124,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'termlists_term',
           'captionField'=>'term',
           'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+          'extraParams' => array('termlist_external_key'=>'indicia:location_types','orderby'=>'title'),
           'required' => true,
           'group'=>'Transects Editor Settings'
         ),
@@ -134,7 +136,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'termlists_term',
           'captionField'=>'term',
           'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
+          'extraParams' => array('termlist_external_key'=>'indicia:location_types','orderby'=>'title'),
           'required' => true,
           'group'=>'Transects Editor Settings'
         ), 
@@ -146,7 +148,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'termlists_term',
           'captionField'=>'term',
           'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods','orderby'=>'title'),
           'required' => true,
           'group'=>'Transects Editor Settings'
         ),
@@ -158,7 +160,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'termlists_term',
           'captionField'=>'term',
           'valueField'=>'term',
-          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods'),
+          'extraParams' => array('termlist_external_key'=>'indicia:sample_methods','orderby'=>'title'),
           'required' => true,            
           'group'=>'Transects Editor Settings'
         ),
@@ -204,7 +206,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     }
   ]
 }'
-      		),
+          ),
         array(
           'name' => 'species_sort',
           'caption' => 'Species Grid Sort',
@@ -250,7 +252,7 @@ class iform_ukbms_sectioned_transects_input_sample {
   }
 }'
             
-      		),
+          ),
           
           array(
               'name'=>'taxon_column',
@@ -263,9 +265,34 @@ class iform_ukbms_sectioned_transects_input_sample {
               'default' => 'taxon',
               'group'=>'Transects Editor Settings'
           ),
-          
-          
-      		array(
+
+        array(
+          'name' => 'out_of_range_validation',
+          'caption' => 'Out of range validation',
+          'description' => 'Custom configuration for out of range validation',
+          'type' => 'jsonwidget',
+          'required' => false,
+          'group'=>'Transects Editor Settings',
+          'schema' =>
+'{
+  "type":"seq",
+  "title":"Out of Range Validation Custom Configuration List",
+  "sequence":
+  [
+    {
+      "type":"map",
+      "title":"Taxon List Definition",
+      "mapping": {
+        "taxon": {"type":"str","title":"Taxon","desc":"Taxon: included for commenting purposes only."},
+        "taxon_meaning_id": {"type":"str","title":"Taxon Meaning ID","required":true,"desc":"Meaning ID of the Taxon."},
+        "walk_limit": {"type":"str","title":"Walk Limit","desc":"The maximum number of the species on a single walk, across all sections in the walk."},
+      }
+    }
+  ]
+}'
+        ),
+
+        array(
           'name'=>'species_tab_1',
           'caption'=>'Species Tab 1 Title',
           'description'=>'The title to be used on the species checklist for the main tab.',
@@ -281,6 +308,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'taxon_list',
           'captionField'=>'title',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'title'),
           'required' => true,
           'siteSpecific'=>true,
           'group'=>'Species'
@@ -318,6 +346,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'taxon_list',
           'captionField'=>'title',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'title'),
           'required'=>false,
           'siteSpecific'=>true,
           'group'=>'Species'
@@ -353,6 +382,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'description' => 'Preselect which species list to polulate the first species grid with.',
           'type'=>'select',
           'options' => array(
+            'branch' => 'Branch specific species list',
             'full' => 'Full species list',
             'common' => 'Common species list', // only available on tab 1
             'here' => 'Previous species recorded at this location',
@@ -381,7 +411,42 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species'
         ),
-      	array(
+        array(
+          'name' => 'branch_taxon_list_configuration',
+          'caption' => 'Branch specific taxon lists',
+          'description' => 'Custom configuration for branch specific taxon lists',
+          'type' => 'jsonwidget',
+          'required' => false,
+          'group'=>'Species',
+          'schema' =>
+'{
+  "type":"seq",
+  "title":"Branch Specific Taxon List Custom Configuration List",
+  "sequence":
+  [
+    {
+      "type":"map",
+      "title":"Taxon List Definition",
+      "mapping": {
+        "location_id_list": {"type":"seq",
+          "title":"Location IDs",
+          "desc":"List of Location IDs this Taxon List definition applies to.",
+          "required":true,
+          "sequence":[{
+            "type":"int",
+            "title":"ID",
+            "desc":"ID of the Branch Location."
+          }]},
+        "taxon_list_id": {"type":"str","title":"Taxon List ID","required":true,"desc":"ID of the Taxon List."},
+        "taxon_filter_field": {"type":"str","title":"Filter Field","desc":"Field used to filter taxa, e.g. taxon, taxon_meaning_id or taxon_group."},
+        "taxon_filter": {"type":"txt","title":"Filter Values","desc":"When filtering the list of available taxa, taxa will not be available for recording unless they match one of the values you input in this box. Enter one value per line. E.g. enter a list of taxon group titles if you are filtering by taxon group."},
+      }
+    }
+  ]
+}'
+        ),
+
+        array(
           'name'=>'species_tab_2',
           'caption'=>'Species Tab 2 Title',
           'description'=>'The title to be used on the species checklist for the second tab.',
@@ -412,7 +477,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species 2'
         ),
-      	array(
+        array(
           'name'=>'second_taxon_list_id',
           'caption'=>'Second Tab Species List',
           'description'=>'The species checklist used to drive the autocomplete in the optional second grid. If not provided, the second grid and its tab are omitted.',
@@ -420,6 +485,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'taxon_list',
           'captionField'=>'title',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'title'),
           'required'=>false,
           'siteSpecific'=>true,
           'group'=>'Species 2'
@@ -457,6 +523,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'occurrence_attribute',
           'captionField'=>'caption',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
           'required' => false,
           'siteSpecific'=>true,
           'group'=>'Species 2'
@@ -470,7 +537,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species 2'
         ),
-      	array(
+        array(
           'name'=>'species_tab_3',
           'caption'=>'Species Tab 3 Title',
           'description'=>'The title to be used on the species checklist for the third tab.',
@@ -501,7 +568,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species 3'
         ),
-      	array(
+        array(
           'name'=>'third_taxon_list_id',
           'caption'=>'Third Tab Species List',
           'description'=>'The species checklist used to drive the autocomplete in the optional third grid. If not provided, the third grid and its tab are omitted.',
@@ -509,6 +576,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'taxon_list',
           'captionField'=>'title',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'title'),
           'required'=>false,
           'siteSpecific'=>true,
           'group'=>'Species 3'
@@ -546,6 +614,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'occurrence_attribute',
           'captionField'=>'caption',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
           'required' => false,
           'siteSpecific'=>true,
           'group'=>'Species 3'
@@ -559,7 +628,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species 3'
         ),
-      	array(
+        array(
           'name'=>'species_tab_4',
           'caption'=>'Fourth Species Tab Title',
           'description'=>'The title to be used on the species checklist for the fourth tab.',
@@ -590,7 +659,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species 4'
         ),
-      	array(
+        array(
           'name'=>'fourth_taxon_list_id',
           'caption'=>'Fourth Tab Species List',
           'description'=>'The species checklist used to drive the autocomplete in the optional fourth grid. If not provided, the fourth grid and its tab are omitted.',
@@ -598,6 +667,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'taxon_list',
           'captionField'=>'title',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'title'),
           'required'=>'false',
           'siteSpecific'=>true,
           'group'=>'Species 4'
@@ -635,6 +705,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'occurrence_attribute',
           'captionField'=>'caption',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
           'required' => false,
           'siteSpecific'=>true,
           'group'=>'Species 4'
@@ -648,7 +719,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'required' => false,
           'group' => 'Species 4'
         ),
-      	array(
+        array(
           'fieldname'=>'cache_lookup',
           'label'=>'Cache lookups',
           'helpText'=>'Tick this box to select to use a cached version of the lookup list when '.
@@ -745,7 +816,11 @@ class iform_ukbms_sectioned_transects_input_sample {
           'name'=>'sensitiveAttrID',
           'caption' => 'Location attribute used to filter out sensitive sites',
           'description' => 'A boolean location attribute, set to true if a site is sensitive.',
-          'type' => 'locAttr',
+          'type'=>'select',
+          'table'=>'location_attribute',
+          'captionField'=>'caption',
+          'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
           'required' => false,
           'group' => 'Sensitivity Handling'
         ),
@@ -765,6 +840,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'table'=>'sample_attribute',
           'captionField'=>'caption',
           'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
           'siteSpecific'=>true,
           'required' => false
         )
@@ -780,24 +856,23 @@ class iform_ukbms_sectioned_transects_input_sample {
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
-   * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
     iform_load_helpers(array('map_helper'));
 
-  	$r = (isset($response['error']) ? data_entry_helper::dump_errors($response) : '');
-  	if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('iform_ajaxproxy')) {
-    	return $r.'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
-  	}
+    $r = (isset($response['error']) ? data_entry_helper::dump_errors($response) : '');
+    if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('iform_ajaxproxy')) {
+      return $r.'This form must be used in Drupal with the Indicia AJAX Proxy module enabled.';
+    }
     if (!hostsite_module_exists('easy_login')) {
-    	return $r.'This form must be used in Drupal with the Easy Login module enabled.';
+      return $r.'This form must be used in Drupal with the Easy Login module enabled.';
     }
     self::$userId = hostsite_get_user_field('indicia_user_id');
     if (empty(self::$userId)) {
-		return '<p>Easy Login active but could not identify user</p>'; // something is wrong
-		// TODO REPLACE
-    	// self::$userId = 1;
-		// $r .= '<p>Easy Login active but could not identify user</p>';
+      return '<p>Easy Login active but could not identify user</p>'; // something is wrong
+    // TODO REPLACE
+    // self::$userId = 1;
+    // $r .= '<p>Easy Login active but could not identify user</p>';
     }
     
     self::$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -805,13 +880,13 @@ class iform_ukbms_sectioned_transects_input_sample {
     self::$sampleID = isset($_GET['sample_id']) ? $_GET['sample_id'] : null;
     // TODO if error, the entity to load should already be filled in.
     if (self::$sampleID) {
-    	data_entry_helper::load_existing_record(self::$auth['read'], 'sample', self::$sampleID);
-    	self::$locationID = data_entry_helper::$entity_to_load['sample:location_id'];
+      data_entry_helper::load_existing_record(self::$auth['read'], 'sample', self::$sampleID);
+      self::$locationID = data_entry_helper::$entity_to_load['sample:location_id'];
     } else {
-    	self::$locationID = isset($_GET['site']) ? $_GET['site'] : null;
-    	// location ID also might be in the $_POST data after a validation save of a new record
-    	if (!self::$locationID && isset($_POST['sample:location_id']))
-    		self::$locationID = $_POST['sample:location_id'];
+      self::$locationID = isset($_GET['site']) ? $_GET['site'] : null;
+      // location ID also might be in the $_POST data after a validation save of a new record
+      if (!self::$locationID && isset($_POST['sample:location_id']))
+        self::$locationID = $_POST['sample:location_id'];
     }
 
     if(isset($_POST['from'])) $url = $_POST['from'];
@@ -822,14 +897,17 @@ class iform_ukbms_sectioned_transects_input_sample {
     $fragment = NULL;
     // fragment is always at the end.
     if(count($url)>1){
-    	$params = explode('#', $url[1], 2);
-    	if(count($params)>1) $fragment=$params[1];
-    	$params=$params[0];
+      $params = explode('#', $url[1], 2);
+      if(count($params)>1) $fragment=$params[1];
+      $params=$params[0];
     } else {
-    	$url = explode('#', $url[0], 2);
-    	if (count($url)>1) $fragment=$url[1];
+      $url = explode('#', $url[0], 2);
+      if (count($url)>1) $fragment=$url[1];
     }
     $args['return_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
+
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/ukbms_sectioned_transects_input_sample') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     
     if (((isset($_REQUEST['page']) && $_REQUEST['page']==='mainSample') || isset($_REQUEST['occurrences'])) && !isset(data_entry_helper::$validation_errors) && !isset($response['error'])) {
       // we have just saved the sample page, so move on to the occurrences list,
@@ -845,83 +923,85 @@ class iform_ukbms_sectioned_transects_input_sample {
     data_entry_helper::add_resource('autocomplete');
 
     $formOptions = array(
-    		'userID' => self::$userId,
-    		'surveyID' => $args['survey_id']
-    	);
+        'userID' => self::$userId,
+        'surveyID' => $args['survey_id']
+      );
 
     $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));
     if (count($sampleMethods) != 1) {
-    	return 'Did not recognise sample method '.$args['transect_sample_method_term'];
-  	}
+      return 'Did not recognise sample method '.$args['transect_sample_method_term'];
+    }
     $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
     if (count($locationType) != 1) {
-    	return 'Did not recognise location type '.$args['transect_type_term'];
-  	}
+      return 'Did not recognise location type '.$args['transect_type_term'];
+    }
     
     $attributes = data_entry_helper::getAttributes(array(
-    		'id' => self::$sampleID,
-    		'valuetable'=>'sample_attribute_value',
-    		'attrtable'=>'sample_attribute',
-    		'key'=>'sample_id',
-    		'fieldprefix'=>'smpAttr',
-    		'extraParams'=>self::$auth['read'],
-    		'survey_id'=>$args['survey_id'],
-    		'sample_method_id'=>$sampleMethods[0]['id']
+        'id' => self::$sampleID,
+        'valuetable'=>'sample_attribute_value',
+        'attrtable'=>'sample_attribute',
+        'key'=>'sample_id',
+        'fieldprefix'=>'smpAttr',
+        'extraParams'=>self::$auth['read'],
+        'survey_id'=>$args['survey_id'],
+        'sample_method_id'=>$sampleMethods[0]['id']
     ));
 
     if (!empty($args['attribute_configuration'])) {
-    	$attribute_configuration = json_decode($args['attribute_configuration'], true);
-    	foreach ($attribute_configuration as $attrConfig) {
-    		if(empty($attributes[$attrConfig['id']])) continue; // may be a section only attribute
-    		$rules = explode("\n", $attributes[$attrConfig['id']]['validation_rules']);
-    		$req = array_search('required', $rules);
-    	  if($req !== false) { // required validation must be switched off on the warehouse
-    			throw new exception("Form Config error: warehouse enabled required validation detected on sample attribute ".$attrConfig['id']);
-    		}
-    		if(isset($attrConfig['required']['main_page']) && $attrConfig['required']['main_page'] && $req === false) {
-    			$rules[] = 'required';
-    			$attributes[$attrConfig['id']]['validation_rules'] = implode("\n", $rules);
-    		} // required validation must be switched off on the warehouse so don't check reverse.
-    	}
+      $attribute_configuration = json_decode($args['attribute_configuration'], true);
+      foreach ($attribute_configuration as $attrConfig) {
+        if(empty($attributes[$attrConfig['id']])) continue; // may be a section only attribute
+        $rules = explode("\n", $attributes[$attrConfig['id']]['validation_rules']);
+        $req = array_search('required', $rules);
+        if($req !== false) { // required validation must be switched off on the warehouse
+          throw new exception("Form Config error: warehouse enabled required validation detected on sample attribute ".$attrConfig['id']);
+        }
+        if(isset($attrConfig['required']['main_page']) && $attrConfig['required']['main_page'] && $req === false) {
+          $rules[] = 'required';
+          $attributes[$attrConfig['id']]['validation_rules'] = implode("\n", $rules);
+        } // required validation must be switched off on the warehouse so don't check reverse.
+      }
     }
     
     if(isset($args['include_map_samples_form']) && $args['include_map_samples_form'])
-    	$r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: '.(98-(isset($args['percent_width']) ? $args['percent_width'] : 50)).'%">';
+      $r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: '.(98-(isset($args['percent_width']) ? $args['percent_width'] : 50)).'%">';
     
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call, so it can get location details.
     $r = '<form method="post" id="sample">' .
-    		self::$auth['write'] .
-    		'<input type="hidden" name="page" value="mainSample"/>' .
-    		'<input type="hidden" name="from" value="'.$args['return_page'].'"/>' .
-    		'<input type="hidden" name="read_nonce" value="'.self::$auth['read']['nonce'].'"/>' .
-    		'<input type="hidden" name="read_auth_token" value="'.self::$auth['read']['auth_token'].'"/>' .
-    		'<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' .
-    		'<input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'"/>' .
-			(isset(data_entry_helper::$entity_to_load['sample:id']) ?
-				'<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' : '') .
-			'<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
-    		get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), self::$auth['read']).
-    		'<p id="finishedMessage" class="ui-state-highlight page-notice ui-corner-all" style="display: none;">' .
-    			lang::get('The Walks for this location have been flagged as finished for the year') . ' <span id="finishedMessageYear">X</span>. ' .
-    			// lang::get('This was done during the entry of the walk data for <date>. ') .
-    			lang::get('This is an information message only - you can continue to enter data') . '. ' .
-    			// lang::get('Alternatively you can click the following button to clear the finished flag for year <X>[ when you save this walk] ') .
-    			// lang::get('<Clear Finished flag>') .
-    			'</p>';
+        self::$auth['write'] .
+        '<input type="hidden" name="page" value="mainSample"/>' .
+        '<input type="hidden" name="from" value="'.$args['return_page'].'"/>' .
+        '<input type="hidden" name="read_nonce" value="'.self::$auth['read']['nonce'].'"/>' .
+        '<input type="hidden" name="read_auth_token" value="'.self::$auth['read']['auth_token'].'"/>' .
+        '<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' .
+        '<input type="hidden" name="sample:survey_id" value="'.$args['survey_id'].'"/>' .
+      (isset(data_entry_helper::$entity_to_load['sample:id']) ?
+        '<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' : '') .
+      '<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
+        get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), self::$auth['read']).
+        '<p id="finishedMessage" class="ui-state-highlight page-notice ui-corner-all" style="display: none;">' .
+          lang::get('The Walks for this location have been flagged as finished for the year') . ' <span id="finishedMessageYear">X</span>. ' .
+          // lang::get('This was done during the entry of the walk data for <date>. ') .
+          lang::get('This is an information message only - you can continue to enter data') . '. ' .
+          // lang::get('Alternatively you can click the following button to clear the finished flag for year <X>[ when you save this walk] ') .
+          // lang::get('<Clear Finished flag>') .
+          '</p>';
     
     if (self::$locationID) {
       $site = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>self::$locationID,'deleted'=>'f')
+        'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>self::$locationID,'deleted'=>'f', 'location_type_id'=>$locationType[0]['id'])
       ));
-      // TODO check if site is valid
+      if (count($site) !== 1) {
+        throw new exception("Could not identify specific site");
+      }
       $site = $site[0];
       if(in_array($site['centroid_sref_system'], array('osgb','osie')))
         $site['centroid_sref_system'] = strtoupper($site['centroid_sref_system']);
       $r .= '<input type="hidden" name="sample:location_id" value="'.self::$locationID.'"/>' .
-			'<input type="hidden" name="sample:entered_sref" value="'.$site['centroid_sref'].'"/>' .
-			'<input type="hidden" name="sample:entered_sref_system" value="'.$site['centroid_sref_system'].'"/>';
+            '<input type="hidden" name="sample:entered_sref" value="'.$site['centroid_sref'].'"/>' .
+            '<input type="hidden" name="sample:entered_sref_system" value="'.$site['centroid_sref_system'].'"/>';
     }
     
     // location control
@@ -932,7 +1012,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       // Output only the locations for this website and transect type. Note we load both transects and sections, just so that
       // we always use the same warehouse call and therefore it uses the cache.
       // Allocation of locations to user is done by the CMS User Attribute on the Location record.
-      // TODO convert this to use the Indicia user ID.
+      // @todo convert this to use the Indicia user ID.
       $siteParams = self::$auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
       if ((!isset($args['user_locations_filter']) || $args['user_locations_filter']) &&
           (!isset($args['managerPermission']) || !hostsite_user_has_permission($args['managerPermission']))) {
@@ -981,51 +1061,47 @@ class iform_ukbms_sectioned_transects_input_sample {
     }
     if (!self::$locationID) {
       $r .= '<input type="hidden" name="sample:entered_sref" value="" id="entered_sref"/>' .
-			'<input type="hidden" name="sample:entered_sref_system" value="" id="entered_sref_system"/>';
+      '<input type="hidden" name="sample:entered_sref_system" value="" id="entered_sref_system"/>';
       // sref values for the sample will be populated automatically when the submission is built.
     }
 
     // Date entry field.
     if (isset(data_entry_helper::$entity_to_load['sample:date']) && preg_match('/^(\d{4})/', data_entry_helper::$entity_to_load['sample:date'])) {
-		// Date has 4 digit year first (ISO style) - convert date to expected output format
-		// @todo The date format should be a global configurable option. It should also be applied to reloading of custom date attributes.
-		$d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
-		data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
-	}
+      // Date has 4 digit year first (ISO style) - convert date to expected output format
+      // @todo The date format should be a global configurable option. It should also be applied to reloading of custom date attributes.
+      $d = new DateTime(data_entry_helper::$entity_to_load['sample:date']);
+      data_entry_helper::$entity_to_load['sample:date'] = $d->format('d/m/Y');
+    }
     if (!isset(data_entry_helper::$entity_to_load['sample:date']) && isset($_GET['date'])){
-		$r .= '<input type="hidden" name="sample:date" value="'.$_GET['date'].'"/>' .
-				'<label>'.lang::get('Date').':</label> <span class="value-label">'.$_GET['date'].'</span><br/>';
+      $r .= '<input type="hidden" name="sample:date" value="'.$_GET['date'].'"/>' .
+            '<label>'.lang::get('Date').':</label> <span class="value-label">'.$_GET['date'].'</span><br/>';
     } else { 
-		$r .= data_entry_helper::date_picker(array(
-				'label' => lang::get('Date'),
-				'fieldname' => 'sample:date',
-			  ));
-	}
-
-	// remainder of form : sample attributes, comment, and buttons.
-	if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
-		$attributes[$args['finishedAttrID']]['handled'] = true;
-		$attrOptions = array(
-				'fieldname' => $attributes[$args['finishedAttrID']]['fieldname'],
-				'id' => $attributes[$args['finishedAttrID']]['id'],
-				'disabled' => '',
-				'default' => $attributes[$args['finishedAttrID']]['default'],
-				'controlWrapTemplate' => 'justControl');
-     	$r .= data_entry_helper::apply_template('hidden_text', $attrOptions);
-	}
+      $r .= data_entry_helper::date_picker(array('label' => lang::get('Date'), 'fieldname' => 'sample:date'));
+    }
+  // remainder of form : sample attributes, comment, and buttons.
+  if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
+    $attributes[$args['finishedAttrID']]['handled'] = true;
+    $attrOptions = array(
+        'fieldname' => $attributes[$args['finishedAttrID']]['fieldname'],
+        'id' => $attributes[$args['finishedAttrID']]['id'],
+        'disabled' => '',
+        'default' => $attributes[$args['finishedAttrID']]['default'],
+        'controlWrapTemplate' => 'justControl');
+       $r .= data_entry_helper::apply_template('hidden_text', $attrOptions);
+  }
     $r .= get_attribute_html($attributes, $args, array('extraParams'=>self::$auth['read']), null,
-    			(isset($args['custom_attribute_options']) && $args['custom_attribute_options'] ?
-					get_attr_options_array_with_user_data($args['custom_attribute_options']) : array())) .
-    		data_entry_helper::textarea(array(
-      			'fieldname'=>'sample:comment',
-      			'label'=>lang::get('Notes'),
-      			'helpText'=>lang::get("Use this space to input comments about this week's walk.")
-    			)) .
-    		'<input type="submit" value="'.lang::get('Next').'" />' .
-    		'<a href="'.$args['return_page'].'" class="button">'.lang::get('Cancel').'</a>' .
-    		(isset(data_entry_helper::$entity_to_load['sample:id']) ?
-      			'<button id="delete-button" type="button" />'.lang::get('Delete').'</button>' : '') .
-    		'</form>';
+          (isset($args['custom_attribute_options']) && $args['custom_attribute_options'] ?
+          get_attr_options_array_with_user_data($args['custom_attribute_options']) : array())) .
+        data_entry_helper::textarea(array(
+            'fieldname'=>'sample:comment',
+            'label'=>lang::get('Notes'),
+            'helpText'=>lang::get("Use this space to input comments about this week's walk.")
+          )) .
+        '<input type="submit" value="'.lang::get('Next').'" />' .
+        '<a href="'.$args['return_page'].'" class="button">'.lang::get('Cancel').'</a>' .
+        (isset(data_entry_helper::$entity_to_load['sample:id']) ?
+            '<button id="delete-button" type="button" />'.lang::get('Delete').'</button>' : '') .
+        '</form>';
     
     // Include side by side map if requested.
     if(isset($args['include_map_samples_form']) && $args['include_map_samples_form']){
@@ -1037,8 +1113,8 @@ class iform_ukbms_sectioned_transects_input_sample {
       }
       $r .= '</div>' .
             '<div class="right" style="width: '.(isset($args['percent_width']) ? $args['percent_width'] : 50).'%">' .
-      		map_helper::map_panel($options, $olOptions) .
-      		'</div>';
+          map_helper::map_panel($options, $olOptions) .
+          '</div>';
     }
 
     // Find Recorder Name attribute for use with autocomplete.
@@ -1046,10 +1122,10 @@ class iform_ukbms_sectioned_transects_input_sample {
       if(strcasecmp('Recorder Name', $attr["untranslatedCaption"]) == 0){
         $formOptions['recorderNameAttrID'] = $attrID; // will be undefined if not present.
       } else if(strcasecmp('Start Time', $attr["untranslatedCaption"]) == 0 || strcasecmp('End Time', $attr["untranslatedCaption"]) == 0){
-      	// want to convert the time fields to html5 type=time: can't use JS to checnge type
-      	// Don't want to use the time control type  as doesn't meet customer requirements.
-      	// Am fully aware that functionality is very browser dependant.
-      	$safeId = str_replace(':','\\\\:',$attr["id"]);
+        // want to convert the time fields to html5 type=time: can't use JS to checnge type
+        // Don't want to use the time control type  as doesn't meet customer requirements.
+        // Am fully aware that functionality is very browser dependant.
+        $safeId = str_replace(':','\\\\:',$attr["id"]);
         data_entry_helper::$javascript .= "$('#".$safeId."').prop('type', 'time').prop('placeholder', '__:__');\n";
       }
     }
@@ -1059,17 +1135,17 @@ class iform_ukbms_sectioned_transects_input_sample {
     if (isset(data_entry_helper::$entity_to_load['sample:id'])){
       // note we only require bare minimum in order to flag a sample as deleted.
       $r .= '<form method="post" id="delete-form" style="display: none;">' .
-      			self::$auth['write'] .
-      			'<input type="hidden" name="page" value="delete"/>' .
-      			'<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' .
-      			'<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' .
-      			'<input type="hidden" name="sample:deleted" value="t"/>' .
-      			'</form>';
+            self::$auth['write'] .
+            '<input type="hidden" name="page" value="delete"/>' .
+            '<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' .
+            '<input type="hidden" name="sample:id" value="'.data_entry_helper::$entity_to_load['sample:id'].'"/>' .
+            '<input type="hidden" name="sample:deleted" value="t"/>' .
+            '</form>';
     }
 
     $formOptions['finishedAttrID'] = false;
     if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
-    	$formOptions['finishedAttrID'] = $args['finishedAttrID'];
+      $formOptions['finishedAttrID'] = $args['finishedAttrID'];
     }
 
     data_entry_helper::$javascript .= "\nsetUpSamplesForm(".json_encode((object)$formOptions).");\n\n";
@@ -1096,20 +1172,25 @@ class iform_ukbms_sectioned_transects_input_sample {
         'occurrence_attribute' => array(),
         'occurrence_attribute_ctrl' => array(),
         'maxTabs' => 4,
+        'branchSpeciesLists' => array(),
+        'branchTaxonMeaningIDs' => array(),
         'commonTaxonMeaningIDs' => array(),
         'allTaxonMeaningIDsAtTransect' => array(),
         'existingTaxonMeaningIDs' => array(),
         'myTaxonMeaningIDs' => array(),
         'attribute_configuration' => (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array()),
         'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : array()),
-        'taxon_column' => (isset($args['taxon_column']) ? $args['taxon_column'] : 'taxon')
+        'taxon_column' => (isset($args['taxon_column']) ? $args['taxon_column'] : 'taxon'),
+        'verificationTitle' => lang::get('Warnings'),
+        'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk exceeds the expected maximum ({{ limit }})'),
+        'outOfRangeVerification' => array()
     );
     
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
     $oldCtrlWrapTemplate = $indicia_templates['controlWrap'];
     $indicia_templates['controlWrap'] = '{control}';
 
-  	drupal_add_js('misc/tableheader.js'); // for sticky heading
+    drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::add_resource('json');
@@ -1136,6 +1217,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     data_entry_helper::load_existing_record(self::$auth['read'], 'sample', $parentSampleId);
     
     $parentLocId = data_entry_helper::$entity_to_load['sample:location_id']; // TODO should already be in self::$locationID
+    data_entry_helper::$javascript .= 'indiciaData.parentLocId = "' . $parentLocId . "\";\n";
     $date = data_entry_helper::$entity_to_load['sample:date_start'];
     $formOptions['parentSampleDate'] = $date;
     
@@ -1195,22 +1277,22 @@ class iform_ukbms_sectioned_transects_input_sample {
           $occurrences[$occurrence['sample_id'].':'.$occurrence['taxon_meaning_id']]['value_'.$attr] = $occurrence['attr_occurrence_'.$attr];
           $occurrences[$occurrence['sample_id'].':'.$occurrence['taxon_meaning_id']]['a_id_'.$attr] = $occurrence['attr_id_occurrence_'.$attr];
         }
-		$formOptions['existingTaxonMeaningIDs'][$occurrence['taxon_meaning_id']] = true;
+    $formOptions['existingTaxonMeaningIDs'][$occurrence['taxon_meaning_id']] = true;
       }
       $formOptions['existingTaxonMeaningIDs'] = array_keys($formOptions['existingTaxonMeaningIDs']);
-	}
+  }
     // store it in data for JS to read when populating the grid
     $formOptions['existingOccurrences'] = $occurrences;
     
     // The occurrence attribute must be flagged as numeric:true in the survey specific validation rules in order for totals to be worked out.
     $occ_attributes = data_entry_helper::getAttributes(array(
-    		'valuetable'=>'occurrence_attribute_value',
-    		'attrtable'=>'occurrence_attribute',
-    		'key'=>'occurrence_id',
-    		'fieldprefix'=>'occAttr',
-    		'extraParams'=>self::$auth['read'],
-    		'survey_id'=>$args['survey_id'],
-    		'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
+        'valuetable'=>'occurrence_attribute_value',
+        'attrtable'=>'occurrence_attribute',
+        'key'=>'occurrence_id',
+        'fieldprefix'=>'occAttr',
+        'extraParams'=>self::$auth['read'],
+        'survey_id'=>$args['survey_id'],
+        'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
     ));
     $defAttrOptions = array('extraParams'=>self::$auth['read']);
     foreach(array($args['occurrence_attribute_id'],
@@ -1221,7 +1303,11 @@ class iform_ukbms_sectioned_transects_input_sample {
       unset($occ_attributes[$attr]['caption']);
       $ctrl = data_entry_helper::outputAttribute($occ_attributes[$attr], $defAttrOptions);
       $formOptions['occurrence_attribute'][$idx+1] = $attr;
-	  $formOptions['occurrence_attribute_ctrl'][$idx+1] = str_replace("\n","",$ctrl);
+    $formOptions['occurrence_attribute_ctrl'][$idx+1] = str_replace("\n","",$ctrl);
+    }
+
+    if(isset($args['out_of_range_validation']) && $args['out_of_range_validation'] !== "") {
+        $formOptions['outOfRangeVerification'] = json_decode($args['out_of_range_validation'], true);
     }
     
     // Fetch the sections
@@ -1238,62 +1324,65 @@ class iform_ukbms_sectioned_transects_input_sample {
       'table' => 'location',
       'extraParams' => self::$auth['read'] + array('view'=>'detail','id'=>$parentLocId)
     ));
-    $r = '<h2 id="ukbms_stis_header">'.$location[0]['name']." on ".$date."</h2><div id=\"tabs\">\n";
+    
+    $dateObj   = DateTime::createFromFormat('!Y#m#d', $date);
+    $displayDate = $dateObj->format('l jS F Y');
+    $r = '<h2 id="ukbms_stis_header">'.$location[0]['name']." on ".$displayDate."</h2><div id=\"tabs\">\n";
  
     $formOptions['finishedAttrID'] = false;
     if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
-    	// Get all the samples for this location for this year
-    	$samples = data_entry_helper::get_population_data(array(
-    			'table' => 'sample',
-    			'extraParams' => self::$auth['read'] + array('view'=>'detail','location_id'=>$parentLocId),
-      			'nocache' => true
-    	));
-    	$thisYearsSamples = array();
-    	$sampleDates = array();
-    	foreach($samples as $sample) {
-    		$sampleDates[$sample['id']] = $sample['display_date'];
-    		if(substr($sample['display_date'],0,4) == substr($date,0,4))
-    			$thisYearsSamples[] = $sample['id'];
-    	}
-    	$sample_finished_attributes = data_entry_helper::get_population_data(array(
-    			'table' => 'sample_attribute_value',
-    			'extraParams' => self::$auth['read'] + array('view'=>'list',
-    					'sample_id'=>$thisYearsSamples,
-    					'sample_attribute_id' => $args['finishedAttrID']),
-      			'nocache' => true
-    	));
-    	$displayMessage = false;
-    	foreach($sample_finished_attributes as $sample_finished_attribute) {
-    		if($sample_finished_attribute['id'] != null) {
-    			$displayMessage = $sample_finished_attribute['sample_id'];
-    			break;
-    		}
-    	}
-    	// Get all the finished flags for those samples.
-    	if($displayMessage)
-    		$r .= '<p id="finishedMessage" class="ui-state-highlight page-notice ui-corner-all">' .
-    			lang::get('The Walks for this location have been flagged as finished for the year') . ' ' .substr($date,0,4) . '. ' .
-    			// lang::get('This was done during the entry of the walk data for') . ' ' . $sampleDates[$displayMessage] . '. ' .
-    			lang::get('This is an information message only - you can continue to enter data.') .
-    			'</p>';
-    	else
-    	  $formOptions['finishedAttrID'] = $args['finishedAttrID'];
-    		
+      // Get all the samples for this location for this year
+      $samples = data_entry_helper::get_population_data(array(
+          'table' => 'sample',
+          'extraParams' => self::$auth['read'] + array('view'=>'detail','location_id'=>$parentLocId),
+            'nocache' => true
+      ));
+      $thisYearsSamples = array();
+      $sampleDates = array();
+      foreach($samples as $sample) {
+        $sampleDates[$sample['id']] = $sample['display_date'];
+        if(substr($sample['display_date'],0,4) == substr($date,0,4))
+          $thisYearsSamples[] = $sample['id'];
+      }
+      $sample_finished_attributes = data_entry_helper::get_population_data(array(
+          'table' => 'sample_attribute_value',
+          'extraParams' => self::$auth['read'] + array('view'=>'list',
+              'sample_id'=>$thisYearsSamples,
+              'sample_attribute_id' => $args['finishedAttrID']),
+            'nocache' => true
+      ));
+      $displayMessage = false;
+      foreach($sample_finished_attributes as $sample_finished_attribute) {
+        if($sample_finished_attribute['id'] != null) {
+          $displayMessage = $sample_finished_attribute['sample_id'];
+          break;
+        }
+      }
+      // Get all the finished flags for those samples.
+      if($displayMessage)
+        $r .= '<p id="finishedMessage" class="ui-state-highlight page-notice ui-corner-all">' .
+          lang::get('The Walks for this location have been flagged as finished for the year') . ' ' .substr($date,0,4) . '. ' .
+          // lang::get('This was done during the entry of the walk data for') . ' ' . $sampleDates[$displayMessage] . '. ' .
+          lang::get('This is an information message only - you can continue to enter data.') .
+          '</p>';
+      else
+        $formOptions['finishedAttrID'] = $args['finishedAttrID'];
+        
     }
     
     // bit of a bodge here but converts backwardly compatible args into useful ones.
-    $args['taxon_list_id_1']		= $args['taxon_list_id'];
-    $args['taxon_filter_field_1']	= (isset($args['main_taxon_filter_field']) ? $args['main_taxon_filter_field'] : '');
-    $args['taxon_filter_1']			= (isset($args['main_taxon_filter']) ? $args['main_taxon_filter'] : '');
-    $args['taxon_list_id_2']		= (isset($args['second_taxon_list_id']) ? $args['second_taxon_list_id'] : '');
-    $args['taxon_filter_field_2']	= (isset($args['second_taxon_filter_field']) ? $args['second_taxon_filter_field'] : '');
-    $args['taxon_filter_2']			= (isset($args['second_taxon_filter']) ? $args['second_taxon_filter'] : '');
-    $args['taxon_list_id_3']		= (isset($args['third_taxon_list_id']) ? $args['third_taxon_list_id'] : '');
-    $args['taxon_filter_field_3']	= (isset($args['third_taxon_filter_field']) ? $args['third_taxon_filter_field'] : '');
-    $args['taxon_filter_3']			= (isset($args['third_taxon_filter']) ? $args['third_taxon_filter'] : '');
-    $args['taxon_list_id_4']		= (isset($args['fourth_taxon_list_id']) ? $args['fourth_taxon_list_id'] : '');
-    $args['taxon_filter_field_4']	= (isset($args['fourth_taxon_filter_field']) ? $args['fourth_taxon_filter_field'] : '');
-    $args['taxon_filter_4']			= (isset($args['fourth_taxon_filter']) ? $args['fourth_taxon_filter'] : '');
+    $args['taxon_list_id_1']    = $args['taxon_list_id'];
+    $args['taxon_filter_field_1']  = (isset($args['main_taxon_filter_field']) ? $args['main_taxon_filter_field'] : '');
+    $args['taxon_filter_1']      = (isset($args['main_taxon_filter']) ? $args['main_taxon_filter'] : '');
+    $args['taxon_list_id_2']    = (isset($args['second_taxon_list_id']) ? $args['second_taxon_list_id'] : '');
+    $args['taxon_filter_field_2']  = (isset($args['second_taxon_filter_field']) ? $args['second_taxon_filter_field'] : '');
+    $args['taxon_filter_2']      = (isset($args['second_taxon_filter']) ? $args['second_taxon_filter'] : '');
+    $args['taxon_list_id_3']    = (isset($args['third_taxon_list_id']) ? $args['third_taxon_list_id'] : '');
+    $args['taxon_filter_field_3']  = (isset($args['third_taxon_filter_field']) ? $args['third_taxon_filter_field'] : '');
+    $args['taxon_filter_3']      = (isset($args['third_taxon_filter']) ? $args['third_taxon_filter'] : '');
+    $args['taxon_list_id_4']    = (isset($args['fourth_taxon_list_id']) ? $args['fourth_taxon_list_id'] : '');
+    $args['taxon_filter_field_4']  = (isset($args['fourth_taxon_filter_field']) ? $args['fourth_taxon_filter_field'] : '');
+    $args['taxon_filter_4']      = (isset($args['fourth_taxon_filter']) ? $args['fourth_taxon_filter'] : '');
     
     $tabs = array('#grid1'=>t($args['species_tab_1'])); // tab 1 is required.
     if($args['taxon_list_id_2']!='')
@@ -1308,8 +1397,39 @@ class iform_ukbms_sectioned_transects_input_sample {
         'style'=>'Tabs'
     ));
 
-    // Produce special lists required for grid one, where user can choose full list, common, here or mine.
+    // Produce special lists required for grid one, where user can choose branch list, full list, common, here or mine.
     // other grids are fixed by form configuration.
+    
+    // The branch list is a branch specific taxon list, where the branch is defined by the a multivalue field in the user account
+    // It is only available in the first species tab.
+    // It is assumed that the meaning_ids it comes up with are a subset of the main tab1 list: this assumption also applies for the common list.
+    $branches = hostsite_get_user_field('branch_record_in', array(), true);
+    // $branches = array("1953") ;  // TODOconfirm comes in as a string
+    if (count($branches) > 0 && isset($args['branch_taxon_list_configuration']) && $args['branch_taxon_list_configuration'] != '') {
+      $branchesConfiguration = json_decode($args['branch_taxon_list_configuration'], true);
+      foreach ($branchesConfiguration as $branchConfig) {
+        $intersect = array_intersect($branches, $branchConfig["location_id_list"]);
+        if(count($intersect) > 0) {
+          $extraParams = array_merge(self::$auth['read'],
+              array('taxon_list_id' => $branchConfig["taxon_list_id"],
+                    'preferred' => 't',
+                    'allow_data_entry' => 't',
+                    'view' => 'cache'));
+          if (!empty($branchConfig['taxon_filter_field']) && !empty($branchConfig['taxon_filter'])) {
+            $extraParams[$branchConfig['taxon_filter_field']] = helper_base::explode_lines($branchConfig['taxon_filter']);
+          }
+          $taxa = data_entry_helper::get_population_data(array('table' => 'taxa_taxon_list', 'extraParams' => $extraParams, 'columns' => 'taxon_meaning_id'));
+          foreach ($intersect as $branch) {
+            $formOptions['branchSpeciesLists']['branch'.$branch] = count($formOptions['branchTaxonMeaningIDs']);
+          }
+          $taxaList = array();
+          foreach($taxa as $taxon){
+            $taxaList[] = $taxon['taxon_meaning_id'];
+          }
+          $formOptions['branchTaxonMeaningIDs'][] = $taxaList;
+        }
+      }
+    }
     
     // Common is only used on first species tab.
     if (!empty($args['common_taxon_list_id'])) {
@@ -1322,7 +1442,7 @@ class iform_ukbms_sectioned_transects_input_sample {
         $extraParams[$args['common_taxon_filter_field']] = helper_base::explode_lines($args['common_taxon_filter']);
       $taxa = data_entry_helper::get_population_data(array('table' => 'taxa_taxon_list', 'extraParams' => $extraParams, 'columns' => 'taxon_meaning_id'));
       foreach($taxa as $taxon){
-      	$formOptions['commonTaxonMeaningIDs'][] = $taxon['taxon_meaning_id'];
+        $formOptions['commonTaxonMeaningIDs'][] = $taxon['taxon_meaning_id'];
       }
     }
     
@@ -1332,24 +1452,24 @@ class iform_ukbms_sectioned_transects_input_sample {
         'nocache' => true // don't cache as this is live data
     ));
     foreach($taxa as $taxon){
-    	$formOptions['allTaxonMeaningIDsAtTransect'][] = $taxon['taxon_meaning_id'];
+      $formOptions['allTaxonMeaningIDsAtTransect'][] = $taxon['taxon_meaning_id'];
     } // all meanings will include currently filled in data.
 
     $extraParams = array_merge(self::$auth['read'],
           array('created_by_id' => self::$userId,
-          		'survey_id'=>$args['survey_id'],
-				'view' => 'cache'));
-	$taxa = data_entry_helper::get_population_data(array('table' => 'occurrence', 'extraParams' => $extraParams, 'columns' => 'taxon_meaning_id'));
-	foreach($taxa as $taxon){
-		$formOptions['myTaxonMeaningIDs'][$taxon['taxon_meaning_id']] = true;
-	}
-	$formOptions['myTaxonMeaningIDs'] = array_keys($formOptions['myTaxonMeaningIDs']);
-	
-   	$r .= self::_buildGrid ($formOptions, 1, $args, $sections, $occ_attributes, count($occurrences)>0, true, $attributes, $subSamplesByCode) .
-			($args['taxon_list_id_2'] !='' ? self::_buildGrid ($formOptions, 2, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
-			($args['taxon_list_id_3'] !='' ? self::_buildGrid ($formOptions, 3, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
-			($args['taxon_list_id_4'] !='' ? self::_buildGrid ($formOptions, 4, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
-		  '</div>';
+              'survey_id'=>$args['survey_id'],
+        'view' => 'cache'));
+  $taxa = data_entry_helper::get_population_data(array('table' => 'occurrence', 'extraParams' => $extraParams, 'columns' => 'taxon_meaning_id'));
+  foreach($taxa as $taxon){
+    $formOptions['myTaxonMeaningIDs'][$taxon['taxon_meaning_id']] = true;
+  }
+  $formOptions['myTaxonMeaningIDs'] = array_keys($formOptions['myTaxonMeaningIDs']);
+  
+     $r .= self::_buildGrid ($formOptions, 1, $args, $sections, $occ_attributes, count($occurrences)>0, true, $attributes, $subSamplesByCode) .
+      ($args['taxon_list_id_2'] !='' ? self::_buildGrid ($formOptions, 2, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+      ($args['taxon_list_id_3'] !='' ? self::_buildGrid ($formOptions, 3, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+      ($args['taxon_list_id_4'] !='' ? self::_buildGrid ($formOptions, 4, $args, $sections, $occ_attributes, count($occurrences)>0) : '') .
+      '</div>';
     
     // stub form to attach validation to.
     $r .= '<form style="display: none" id="validation-form"></form>';
@@ -1371,45 +1491,45 @@ class iform_ukbms_sectioned_transects_input_sample {
     $defaults = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $record_status = isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C';
     $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($nid, 'occurrence').'">' .
-    		'<input name="website_id" value="'.$args['website_id'].'"/>' .
-    		'<input name="survey_id" value="'.$args["survey_id"].'" />' .
-    		'<input name="occurrence:id" id="occid" />' .
-    		'<input name="occurrence:deleted" id="occdeleted" />' .
-    		'<input name="occurrence:zero_abundance" id="occzero" />' .
-    		'<input name="occurrence:taxa_taxon_list_id" id="ttlid" />' .
-    		'<input name="occurrence:record_status" value="'.$record_status.'" />' .
-    		'<input name="occurrence:sample_id" id="occ_sampleid"/>' .
-    		(isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "" ?
-	      		'<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($site_attributes)>0 && $site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
-			'<input name="occAttr:' . $args['occurrence_attribute_id'] . '" id="occattr"/>' .
-			'<input name="transaction_id" id="transaction_id"/>' .
-			'<input name="user_id" value="'.self::$userId.'"/>' .
- 		  '</form>';
+        '<input name="website_id" value="'.$args['website_id'].'"/>' .
+        '<input name="survey_id" value="'.$args["survey_id"].'" />' .
+        '<input name="occurrence:id" id="occid" />' .
+        '<input name="occurrence:deleted" id="occdeleted" />' .
+        '<input name="occurrence:zero_abundance" id="occzero" />' .
+        '<input name="occurrence:taxa_taxon_list_id" id="ttlid" />' .
+        '<input name="occurrence:record_status" value="'.$record_status.'" />' .
+        '<input name="occurrence:sample_id" id="occ_sampleid"/>' .
+        (isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "" ?
+            '<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($site_attributes)>0 && $site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
+      '<input name="occAttr:' . $args['occurrence_attribute_id'] . '" id="occattr"/>' .
+      '<input name="transaction_id" id="transaction_id"/>' .
+      '<input name="user_id" value="'.self::$userId.'"/>' .
+       '</form>';
 
     // A stub form for AJAX posting when we need to update a subsample
     $r .= '<form style="display: none" id="smp-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">' .
-    		'<input name="website_id" value="'.$args['website_id'].'"/>' .
-    		'<input name="sample:id" id="smpid" />' .
-    		'<input name="sample:parent_id" value="'.$parentSampleId.'" />' .
-    		'<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
-    		'<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
-    		'<input name="sample:entered_sref" id="smpsref" />' .
-    		'<input name="sample:entered_sref_system" id="smpsref_system" />' .
-    		'<input name="sample:location_id" id="smploc" />' .
-    		'<input name="sample:date" value="'.$date.'" />';
+        '<input name="website_id" value="'.$args['website_id'].'"/>' .
+        '<input name="sample:id" id="smpid" />' .
+        '<input name="sample:parent_id" value="'.$parentSampleId.'" />' .
+        '<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
+        '<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
+        '<input name="sample:entered_sref" id="smpsref" />' .
+        '<input name="sample:entered_sref_system" id="smpsref_system" />' .
+        '<input name="sample:location_id" id="smploc" />' .
+        '<input name="sample:date" value="'.$date.'" />';
     // include a stub input for each transect section sample attribute
     foreach ($attributes as $attr) {
       $r .= '<input id="'.$attr['fieldname'].'" />';
     }
     $r .=   '<input name="transaction_id" id="transaction_id"/>' .
-			'<input name="user_id" value="'.self::$userId.'"/>' .
-    	  '</form>';
+      '<input name="user_id" value="'.self::$userId.'"/>' .
+        '</form>';
 
     if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '' && $displayMessage === false) {
-    	// A stub form for posting when we need to flag a super sample as finished
-    	$formOptions['return_page'] = $args['return_page'];
-    	$sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));    	 
-    	$finished_attributes = data_entry_helper::getAttributes(array(
+      // A stub form for posting when we need to flag a super sample as finished
+      $formOptions['return_page'] = $args['return_page'];
+      $sampleMethods = helper_base::get_termlist_terms(self::$auth, 'indicia:sample_methods', array(empty($args['transect_sample_method_term']) ? 'Transect' : $args['transect_sample_method_term']));       
+      $finished_attributes = data_entry_helper::getAttributes(array(
             'valuetable'=>'sample_attribute_value'
             ,'attrtable'=>'sample_attribute'
             ,'key'=>'sample_id'
@@ -1418,29 +1538,35 @@ class iform_ukbms_sectioned_transects_input_sample {
             ,'sample_method_id'=>$sampleMethods[0]['id']
             ,'survey_id'=>$args['survey_id']
             ,'id' => $parentSampleId
-	    ));
-    	// The finished attribute is a sample attribute that applies to the location.
-    	// If present, the attribute holds the year value, and is multi value: it is a finished_for_year flag.
-		// TODO Can they reset the finished flag? Not yet
-    	// At this point the date has been filled in, so can fill in the form
-    	$r .= "\n".'<form style="display: none" id="finished-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">' .
-    			'<input name="website_id" value="'.$args['website_id'].'"/>' .
-    			'<input name="sample:id" value="'.$parentSampleId.'" />' .
-    			'<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
-    			'<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
-    			'<input name="sample:location_id" id="smploc" value="'.$parentLocId.'"/>' .
-    			'<input name="sample:date" value="'.$date.'" />';
-    	// include a stub input for each transect sample attribute: need to include all as some will be mandatory
-    	foreach ($finished_attributes as $attr) {
-    		if($attr['attributeId'] == $args["finishedAttrID"]) {
-     			$attr['default'] = substr($date,0,4);
-    		}
-    		$r .= '<input name="'.$attr['fieldname'].'" value="'.$attr['default'].'"/>'; //TODO html safe for text?
-	    }
-		$r .=   '<input name="user_id" value="'.self::$userId.'"/>' .
-    			'</form>';
+      ));
+      // The finished attribute is a sample attribute that applies to the location.
+      // If present, the attribute holds the year value, and is multi value: it is a finished_for_year flag.
+    // TODO Can they reset the finished flag? Not yet
+      // At this point the date has been filled in, so can fill in the form
+      $r .= "\n".'<form style="display: none" id="finished-form" method="post" action="'.iform_ajaxproxy_url($nid, 'sample').'">' .
+          '<input name="website_id" value="'.$args['website_id'].'"/>' .
+          '<input name="sample:id" value="'.$parentSampleId.'" />' .
+          '<input name="sample:survey_id" value="'.$args['survey_id'].'" />' .
+          '<input name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />' .
+          '<input name="sample:location_id" id="smploc" value="'.$parentLocId.'"/>' .
+          '<input name="sample:date" value="'.$date.'" />';
+      // include a stub input for each transect sample attribute: need to include all as some will be mandatory
+      foreach ($finished_attributes as $attr) {
+        if($attr['attributeId'] == $args["finishedAttrID"]) {
+           $attr['default'] = substr($date,0,4);
+        }
+        $r .= '<input name="'.$attr['fieldname'].'" value="'.$attr['default'].'"/>'; //TODO html safe for text?
+      }
+    $r .=   '<input name="user_id" value="'.self::$userId.'"/>' .
+          '</form>';
     }
-    
+
+    $r .= '<div style="display: none"><div id="warning-dialog"><p>' .
+          lang::get('The following warnings have been identified') .
+          '</p><ul id="warning-dialog-list"></ul><p>' .
+          lang::get('Do you still wish to enter this data?') .
+          '</p></div></div>';
+
     data_entry_helper::$javascript .= "\nsetUpOccurrencesForm(".json_encode((object)$formOptions).");\n\n";
 
     $indicia_templates['controlWrap'] = $oldCtrlWrapTemplate;
@@ -1484,7 +1610,7 @@ class iform_ukbms_sectioned_transects_input_sample {
               'fieldname'=>'species-sort-order-'.$tabNum,
               'lookupValues' => $options,
               'default'=>$default,
-        		  'class'=>'species-sort-order'
+              'class'=>'species-sort-order'
         ));
       } // count=0 -> defaults to initial value of $r, i.e. taxonomic sort order. 
     }
@@ -1492,49 +1618,65 @@ class iform_ukbms_sectioned_transects_input_sample {
   }
   
   protected static function _buildGrid (&$formOptions, $tabNum, $args, $sections, $occ_attributes, $existing, $includeControl = false, $attributes = array(), $subSamplesByCode = array()) {
-  	$isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
-  			$args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
+    $isNumber = ($occ_attributes[(isset($args['occurrence_attribute_id_'.$tabNum]) && $args['occurrence_attribute_id_'.$tabNum]!="" ?
+        $args['occurrence_attribute_id_'.$tabNum] : $args['occurrence_attribute_id'])]["data_type"] == 'I');
 
-  	$listSelected = hostsite_get_user_field('default_species_view');
-  	if (empty($listSelected)) {
-		$listSelected = isset($args['start_list_'.$tabNum]) ? $args['start_list_'.$tabNum] : 'here';
-  	}
-  	if(!in_array($listSelected, array('full','common','mine','here'))) {
-		$listSelected = 'here';
-  	}
-  	if($listSelected == 'common' && ($tabNum != 1 || count($formOptions['commonTaxonMeaningIDs']) == 0)) { // common is only available on tab 1, provided it is defined
-  		$listSelected = 'full';
-  	}
-  	if($listSelected == 'full' && isset($args['disable_full_'.$tabNum]) && $args['disable_full_'.$tabNum]) {
-  		$listSelected = 'here';
-  	}
-  	
-  	$r = '<div id="grid'.$tabNum.'">' .
-  			'<p id="grid'.$tabNum.'-loading"><b>' . lang::get('Loading - Please Wait') . '</b></p>' .
-    		($includeControl ?
-  					'<label for="listSelect'.$tabNum.'">'.lang::get('Use species list').' :</label>'.
-  					'<select id="listSelect'.$tabNum.'">'.
-  					  '<option value="full"'.($listSelected == 'full' ? ' selected="selected"' : '').'>'.lang::get('All species').'</option>'.
-  					  ($tabNum == 1 && (count($formOptions['commonTaxonMeaningIDs']) > 0) ? '<option value="common"'.($listSelected == 'common' ? ' selected="selected"' : '').'>'.lang::get('Common species').'</option>' : '').
-  					  '<option value="here"'.($listSelected == 'here' ? ' selected="selected"' : '').'>'.lang::get('Species known at this site').'</option>'.
-  					  '<option value="mine"'.($listSelected == 'mine' ? ' selected="selected"' : '').'>'.lang::get('Species I have recorded').'</option>'.
-  					'</select>'
-  				:
-  					(isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>')
-  			) .
-  			self::_buildSortControl($tabNum, $args) .
-  			'<table id="transect-input'.$tabNum.'" class="ui-widget species-grid"><thead class="table-header">' .
-  			'<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
-  	foreach ($sections as $idx=>$section) {
-  		$r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
-  	}
-  	$r .= ($isNumber ? '<th class="ui-widget-header">' . lang::get('Total') . '</th>' : '').'</tr></thead>';
-  	// output rows at the top for any transect section level sample attributes
-  	$rowClass='';
-  	$r .= '<tbody class="ui-widget-content">';
+    $listSelected = hostsite_get_user_field('default_species_view');
+    if (empty($listSelected)) {
+      $listSelected = isset($args['start_list_'.$tabNum]) ? $args['start_list_'.$tabNum] : 'here';
+    }
+    if(!in_array($listSelected, array('branch','full','common','mine','here'))) {
+      $listSelected = 'here';
+    }
+    if($listSelected === 'branch' && ($tabNum != 1 || count($formOptions['branchTaxonMeaningIDs']) === 0)) {
+      // branch is only available on tab 1, provided it is defined
+      $listSelected = 'full';
+    }
+    if($listSelected == 'common' && ($tabNum != 1 || count($formOptions['commonTaxonMeaningIDs']) == 0)) { // common is only available on tab 1, provided it is defined
+      $listSelected = 'full';
+    }
+    if($listSelected == 'full' && isset($args['disable_full_'.$tabNum]) && $args['disable_full_'.$tabNum]) {
+      $listSelected = 'here';
+    }
+
+    $r = '<div id="grid'.$tabNum.'">' .
+         '<p id="grid'.$tabNum.'-loading"><b>' . lang::get('Loading - Please Wait') . '</b></p>';
+    if ($includeControl) {
+      $r .= '<label for="listSelect'.$tabNum.'">'.lang::get('Use species list').' :</label>'.
+            '<select id="listSelect'.$tabNum.'">';
+      if ($tabNum == 1 && count($formOptions['branchTaxonMeaningIDs']) > 0) {
+        foreach ($formOptions['branchSpeciesLists'] as $branch => $idx) {
+          $branchID = substr($branch,6);
+          $branchRecord = data_entry_helper::get_population_data(
+                array('table' => 'location',
+                      'extraParams' => array_merge(self::$auth['read'], array('id' => $branchID, 'view' => 'detail')),
+                      'columns' => 'name'));
+          $r .= '<option value="'.$branch.'">'.$branchRecord[0]['name'].' '.lang::get('specific species list').'</option>';
+        }
+      }
+      $r .=  '<option value="full"'.($listSelected == 'full' ? ' selected="selected"' : '').'>'.lang::get('All species').'</option>'.
+             ($tabNum == 1 && (count($formOptions['commonTaxonMeaningIDs']) > 0) ? '<option value="common"'.($listSelected == 'common' ? ' selected="selected"' : '').'>'.lang::get('Common species').'</option>' : '').
+             '<option value="here"'.($listSelected == 'here' ? ' selected="selected"' : '').'>'.lang::get('Species known at this site').'</option>'.
+             '<option value="mine"'.($listSelected == 'mine' ? ' selected="selected"' : '').'>'.lang::get('Species I have recorded').'</option>'.
+           '</select>';
+    } else {
+      $r .= (isset($args['supress_tab_msg']) && $args['supress_tab_msg'] ? '' : '<p>' . lang::get('LANG_Tab_Msg') . '</p>');
+    }
+
+    $r .= self::_buildSortControl($tabNum, $args) .
+          '<table id="transect-input'.$tabNum.'" class="ui-widget species-grid"><thead class="table-header">' .
+          '<tr><th class="ui-widget-header">' . lang::get('Sections') . '</th>';
+    foreach ($sections as $idx=>$section) {
+      $r .= '<th class="ui-widget-header col-'.($idx+1).'">' . $section['code'] . '</th>';
+    }
+    $r .= ($isNumber ? '<th class="ui-widget-header">' . lang::get('Total') . '</th>' : '').'</tr></thead>';
+
+    // output rows at the top for any transect section level sample attributes
+    $rowClass='';
+    $r .= '<tbody class="ui-widget-content">';
     $attribute_configuration = (!empty($args['attribute_configuration']) ? json_decode($args['attribute_configuration'], true) : array());
-//  	var_dump($attributes);
-  	foreach ($attributes as $attrID => $attr) {
+//    var_dump($attributes);
+    foreach ($attributes as $attrID => $attr) {
       $inc = true;
       $mandatory = true;
       foreach ($attribute_configuration as $attrConfig) {
@@ -1546,88 +1688,88 @@ class iform_ukbms_sectioned_transects_input_sample {
         if(empty($attrConfig['filter'])) continue;
         $inc = false;
         $locAttrs = data_entry_helper::get_population_data(array(
-        		'table' => 'location_attribute_value',
-        		'extraParams' => self::$auth['read'] + array('location_id' => data_entry_helper::$entity_to_load['sample:location_id'],
-        				'location_attribute_id' => $attrConfig['filter']['id']),
-        		'caching' => false
+            'table' => 'location_attribute_value',
+            'extraParams' => self::$auth['read'] + array('location_id' => data_entry_helper::$entity_to_load['sample:location_id'],
+                'location_attribute_id' => $attrConfig['filter']['id']),
+            'caching' => false
         ));
         foreach($locAttrs as $locAttr) {
           $inc |= (in_array($locAttr['value'], $attrConfig['filter']['values']));
         }
       }
       if(!$inc) continue;
-  		$r .= '<tr '.$rowClass.' id="smp-'.$attr['attributeId'].'"><td>'.$attr['caption'].'</td>';
-  		$rowClass=$rowClass=='' ? 'class="alt-row"':'';
-  		unset($attr['caption']);
-  		foreach ($sections as $idx=>$section) {
-  			// output a cell with the attribute - tag it with a class & id to make it easy to find from JS.
-  			$attrOpts = array(
-  					'class' => 'smp-input smpAttr-'.$section['code'],
-  					'id' => $attr['fieldname'].':'.$section['code'],
-  					'extraParams'=>self::$auth['read']
-  			);
-  			// if there is an existing value, set it and also ensure the attribute name reflects the attribute value id.
-  			if (isset($subSamplesByCode[$section['code']])) {
-  				// but have to take into account possibility that this field has been blanked out, so deleting the attribute.
-  				if(isset($subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']]) && $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']] != ''){
-  					$attrOpts['fieldname'] = $attr['fieldname'] . ':' . $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']];
-  					$attr['default'] = $subSamplesByCode[$section['code']]['attr_sample_'.$attr['attributeId']];
-  				} else
-  					$attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
-  			} else {
-  				$attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
-  			}
-  			if($mandatory && $attr['default']=='')
-  				$attrOpts['class'] .= ' ui-state-error';
-  			$r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').'">' .
-  					data_entry_helper::outputAttribute($attr, $attrOpts) .
-  					($mandatory && $attr['default']=='' ? '<p htmlfor="'.$attrOpts['id'].'" class="inline-error">' . lang::get('This field is required') . '</p>' : '') .
-  					'</td>';
-  		}
-  		$r .= ($isNumber ? '<td class="ui-state-disabled first"></td>' : '').'</tr>';
-  	}
-  	$r .= '</tbody>';
-  	$r .= '<tbody class="ui-widget-content occs-body"></tbody>';
-  	if($isNumber) { // add a totals row only if the attribute is a number
-  		$r .= '<tfoot><tr><td>Total</td>';
-  		foreach ($sections as $idx=>$section) {
-  			$r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').' col-total"></td>';
-  		}
-  		$r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
-  	}
-  	$r .= '</table>';
+      $r .= '<tr '.$rowClass.' id="smp-'.$attr['attributeId'].'"><td>'.$attr['caption'].'</td>';
+      $rowClass=$rowClass=='' ? 'class="alt-row"':'';
+      unset($attr['caption']);
+      foreach ($sections as $idx=>$section) {
+        // output a cell with the attribute - tag it with a class & id to make it easy to find from JS.
+        $attrOpts = array(
+            'class' => 'smp-input smpAttr-'.$section['code'],
+            'id' => $attr['fieldname'].':'.$section['code'],
+            'extraParams'=>self::$auth['read']
+        );
+        // if there is an existing value, set it and also ensure the attribute name reflects the attribute value id.
+        if (isset($subSamplesByCode[$section['code']])) {
+          // but have to take into account possibility that this field has been blanked out, so deleting the attribute.
+          if(isset($subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']]) && $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']] != ''){
+            $attrOpts['fieldname'] = $attr['fieldname'] . ':' . $subSamplesByCode[$section['code']]['attr_id_sample_'.$attr['attributeId']];
+            $attr['default'] = $subSamplesByCode[$section['code']]['attr_sample_'.$attr['attributeId']];
+          } else
+            $attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
+        } else {
+          $attr['default']=isset($_POST[$attr['fieldname']]) ? $_POST[$attr['fieldname']] : '';
+        }
+        if($mandatory && $attr['default']=='')
+          $attrOpts['class'] .= ' ui-state-error';
+        $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').'">' .
+            data_entry_helper::outputAttribute($attr, $attrOpts) .
+            ($mandatory && $attr['default']=='' ? '<p htmlfor="'.$attrOpts['id'].'" class="inline-error">' . lang::get('This field is required') . '</p>' : '') .
+            '</td>';
+      }
+      $r .= ($isNumber ? '<td class="ui-state-disabled first"></td>' : '').'</tr>';
+    }
+    $r .= '</tbody>';
+    $r .= '<tbody class="ui-widget-content occs-body"></tbody>';
+    if($isNumber) { // add a totals row only if the attribute is a number
+      $r .= '<tfoot><tr><td>Total</td>';
+      foreach ($sections as $idx=>$section) {
+        $r .= '<td class="col-'.($idx+1).' '.($idx % 5 == 0 ? 'first' : '').' col-total"></td>';
+      }
+      $r .= '<td class="ui-state-disabled first"></td></tr></tfoot>';
+    }
+    $r .= '</table>';
 
-  	if($listSelected !='full' || $includeControl || $tabNum == 1)
-  		$r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
-  	$r .= '<br />';
-  	$reloadUrl = data_entry_helper::get_reload_link_parts();
-	$reloadUrl['params']['sample_id'] = $formOptions['parentSampleId'];
-  	foreach ($reloadUrl['params'] as $key => $value) {
-  		$reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
-  	}
-  	$r .= '<a href="'.$reloadUrl['path'].'" class="button">'.lang::get('Back to visit details').'</a>';
-  	$r .= '<a href="'.$args['return_page'].'" class="button">'.lang::get('Finish and return to walk list').'</a>';
-  	if(isset($formOptions['finishedAttrID']) && $formOptions['finishedAttrID'] != '') 
-  		$r .= '<input type="button" class="button smp-finish" value="'. str_replace('%s',substr($formOptions['parentSampleDate'],0,4), lang::get('Flag walk entry for year %s as finished for this location, and return to walk list')) .'"/>';
-  	$r .= '</div>';
-  	// page is ajax so no submit button.
-  	
-  	$formOptions['speciesList'][$tabNum] = $args['taxon_list_id_'.$tabNum];
-  	$formOptions['speciesListForce'][$tabNum] = $listSelected;
-  	if ($args['taxon_filter_'.$tabNum] != '') {
-  		$filterLines = helper_base::explode_lines($args['taxon_filter_'.$tabNum]);
-  		$formOptions['speciesListFilterField'][$tabNum] = $args['taxon_filter_field_'.$tabNum];
-  		$formOptions['speciesListFilterValues'][$tabNum] = $filterLines; 		
-  	}
-  	if($listSelected !='full' || $includeControl || $tabNum == 1) {
-  		$autoComplete = new stdClass();
-  		$autoComplete->tabNum = $tabNum;
-  		$formOptions['autoCompletes'][] = $autoComplete;
-  	}
-  	 
-  	return $r;
+    if($listSelected !='full' || $includeControl || $tabNum == 1)
+      $r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
+    $r .= '<br />';
+    $reloadUrl = data_entry_helper::get_reload_link_parts();
+  $reloadUrl['params']['sample_id'] = $formOptions['parentSampleId'];
+    foreach ($reloadUrl['params'] as $key => $value) {
+      $reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
+    }
+    $r .= '<a href="'.$reloadUrl['path'].'" class="button">'.lang::get('Back to visit details').'</a>';
+    $r .= '<a href="'.$args['return_page'].'" class="button">'.lang::get('Finish and return to walk list').'</a>';
+    if(isset($formOptions['finishedAttrID']) && $formOptions['finishedAttrID'] != '') 
+      $r .= '<input type="button" class="button smp-finish" value="'. str_replace('%s',substr($formOptions['parentSampleDate'],0,4), lang::get('Flag walk entry for year %s as finished for this location, and return to walk list')) .'"/>';
+    $r .= '</div>';
+    // page is ajax so no submit button.
+    
+    $formOptions['speciesList'][$tabNum] = $args['taxon_list_id_'.$tabNum];
+    $formOptions['speciesListForce'][$tabNum] = $listSelected; // this may hold branch, which indicates the first branch list
+    if ($args['taxon_filter_'.$tabNum] != '') {
+      $filterLines = helper_base::explode_lines($args['taxon_filter_'.$tabNum]);
+      $formOptions['speciesListFilterField'][$tabNum] = $args['taxon_filter_field_'.$tabNum];
+      $formOptions['speciesListFilterValues'][$tabNum] = $filterLines;     
+    }
+    if($listSelected !='full' || $includeControl || $tabNum == 1) {
+      $autoComplete = new stdClass();
+      $autoComplete->tabNum = $tabNum;
+      $formOptions['autoCompletes'][] = $autoComplete;
+    }
+     
+    return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
@@ -1681,7 +1823,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       ));
       $smpDate = self::parseSingleDate($values['sample:date']);
       foreach($sections as $section){
-      	$smp = false;
+        $smp = false;
         $exists=false;
         foreach($existingSubSamples as $existingSubSample){
           if($existingSubSample['location_id'] == $section['id']){
@@ -1712,15 +1854,15 @@ class iform_ukbms_sectioned_transects_input_sample {
         } else { // need to ensure any date change is propagated: only do if date has changed for performance reasons.
           $subSmpDate = self::parseSingleDate($exists['date_start']);
           if(strcmp($smpDate,$subSmpDate))
-        	$smp = array('fkId' => 'parent_id',
-        			'model' => array('id' => 'sample',
-        					'fields' => array('survey_id' => array('value' => $values['sample:survey_id']),
-        							'website_id' => array('value' => $values['website_id']),
-        							'id' => array('value' => $exists['id']),
+          $smp = array('fkId' => 'parent_id',
+              'model' => array('id' => 'sample',
+                  'fields' => array('survey_id' => array('value' => $values['sample:survey_id']),
+                      'website_id' => array('value' => $values['website_id']),
+                      'id' => array('value' => $exists['id']),
                                     'date' => array('value' => $values['sample:date']),
-        							'location_id' => array('value' => $exists['location_id'])
-        					)),
-        			'copyFields' => array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'));
+                      'location_id' => array('value' => $exists['location_id'])
+                  )),
+              'copyFields' => array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'));
         }
         if($smp) $subsampleModels[] = $smp;
       }
@@ -1749,4 +1891,126 @@ class iform_ukbms_sectioned_transects_input_sample {
     return  ($values['page']==='delete') ? $args['my_walks_page'] : '';
   }
 
+  /*
+   * Ajax function call: provided with taxon_meaning_id, location_id and date
+   */
+  public static function ajax_check_verification_rules($website_id, $password, $node) {
+    $ruleIDs = array();
+    $warnings = array();
+    $info = array();
+    $ruleTypesDone = array('WithoutPolygon' => false, 'PeriodWithinYear' => false);
+
+    iform_load_helpers(array('report_helper'));
+    $readAuth = report_helper::get_read_auth($website_id, $password);
+
+    $cttl = data_entry_helper::get_population_data(array(
+        'table' => 'taxa_taxon_list',
+        'extraParams' => $readAuth + array('view' => 'cache',
+            'taxon_meaning_id' => $_GET['taxon_meaning_id'],
+            'preferred' => 't')
+      ));
+    if (count($cttl) > 0) {
+      $fieldsToCheck = array(array('key' => 'DataRecordId', 'field' => 'external_key'), // without polygon
+          array('key' => 'Taxon', 'field' => 'preferred_taxon'), // without polygon
+          array('key' => 'Tvk', 'field' => 'external_key'), // period within year
+          array('key' => 'TaxonMeaningId', 'field' => 'taxon_meaning_id'), // period within year
+          array('key' => 'Taxon', 'field' => 'preferred_taxon') // period within year
+      );
+      foreach ($fieldsToCheck as $entry) {
+        $metadata = data_entry_helper::get_population_data(array(
+            'table' => 'verification_rule_metadatum',
+            'extraParams' => $readAuth + array('view'=>'detail',
+                'key' => $entry['key'],
+                'value' => $cttl[0][$entry['field']],
+                'columns' => 'verification_rule_id')
+        ));
+        foreach ($metadata as $meta) {
+          $ruleIDs[] = $meta['verification_rule_id'];
+        }
+      };
+      if (count($ruleIDs) > 0) {
+        $rules = data_entry_helper::get_population_data(array(
+            'table' => 'verification_rule',
+            'extraParams' => $readAuth + array('view' => 'detail',
+                'orderby' => 'created_on',
+                'sortdir'=>'DESC',
+                'query' => json_encode(array('in' => array('id' => $ruleIDs, 'test_type' => array('WithoutPolygon', 'PeriodWithinYear')))))
+        ));
+        // we are assuming no reverse rules
+        foreach ($rules as $rule) {
+            if ($ruleTypesDone[$rule['test_type']] === true) {
+              continue;
+            }
+            $ruleTypesDone[$rule['test_type']] = true;
+            $metadata = data_entry_helper::get_population_data(array(
+                'table' => 'verification_rule_metadatum',
+                'extraParams' => $readAuth + array('view'=>'detail',
+                    'verification_rule_id' => $rule['id'])
+            ));
+            switch ($rule['test_type']) {
+                case 'WithoutPolygon' :
+                    $vrmfield = self::vr_extract('metadata', $metadata, 'DataFieldName');
+                    $info[] = array($vrmfield);
+                    if ($vrmfield === null || $vrmfield !== 'Species') {
+                      break;
+                    }
+                    // report is cacheable: the geometry for a particular parent location won't change, and the
+                    // verification rule geometry will rarely change
+                    $reportResult = data_entry_helper::get_population_data(array(
+                        'report'=>'projects/ukbms/location_verification_intersection',
+                        'extraParams' => $readAuth + array('location_id' => $_GET['location_id'],
+                            'verification_rule_id' => $rule['id'])
+                    ));
+                    $info[] = array($reportResult);
+                    // report returns the id of the location in a single record if the location intersects
+                    if (count($reportResult) === 0 xor $rule['reverse_rule'] === 't') {
+                      $warnings[] = $rule['error_message'];
+                    }
+                    break;
+                case 'PeriodWithinYear' :
+                    // we ignore the periods filtered by stage as only from Hoverfly and spider at moment.
+                    $vrmstart = self::vr_extract('metadata', $metadata, 'StartDate', 4);
+                    $vrmend = self::vr_extract('metadata', $metadata, 'EndDate', 4);
+                    $vrmsurvey = self::vr_extract('metadata', $metadata, 'SurveyId');
+                    $info[] = array($vrmstart, $vrmend, $vrmsurvey);
+                    // Check survey
+                    if ($vrmsurvey !== null && $vrmsurvey != $args['survey_id']) {
+                      break;
+                    }
+                    $md = substr($_GET['date'], 5, 2) . substr($_GET['date'], 8, 2); // cut off year from front: Assume YYYY-MM-DD
+                    // following logic copied from SQL in module
+                    $fails = ($rule['reverse_rule'] === 't') !==
+                      ((($vrmstart === null || $vrmend === null || $vrmstart <= $vrmend)
+                            && (($vrmstart !== null && $md < $vrmstart) || ($vrmend !== null && $md > $vrmend)))
+                        || (($vrmstart !== null && $vrmend !== null && $vrmstart > $vrmend)
+                            && (($vrmstart !== null && $md < $vrmstart) && ($vrmend !== null && $md > $vrmend))));
+                    if ($fails) {
+                      $dateObj   = DateTime::createFromFormat('!m', substr($vrmstart, 0, 2));
+                      $monthName1 = $dateObj->format('M');
+                      $dateObj   = DateTime::createFromFormat('!m', substr($vrmend, 0, 2));
+                      $monthName2 = $dateObj->format('M');
+                      $warnings[] = $rule['error_message'] .
+                          ' (' . ($vrmstart !== null ? substr($vrmstart, 2, 2) . ' ' . $monthName1 : '') .
+                          '-' . ($vrmend !== null ? substr($vrmend, 2, 2) . ' ' . $monthName2 : '') . ')';
+                    }
+                    break;
+            }
+        }
+      }
+    }
+    header('Content-type: application/json');
+    echo json_encode(array('taxon_meaning_id' => $_GET['taxon_meaning_id'], 'warnings'=> $warnings,
+//        'debug' => array('rules' => $rules, 'info' => $info),
+    ));
+  }
+  
+  private static function vr_extract($type, $data, $key, $length = null) {
+      foreach($data as $pair) {
+          if ($pair['key'] == $key && ($length === null || strlen($pair['value']) === $length)) {
+              return $pair['value'];
+          }
+      }
+      return null;
+  }
+      
 }

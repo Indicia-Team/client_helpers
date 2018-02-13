@@ -1326,9 +1326,6 @@ HTML;
   else {
     report_helper::$javascript .= "indiciaData.user_id='" . $_SESSION['auth_user']->id . "';\n";
   }
-  if (!empty($website_id)) {
-    report_helper::$javascript .= "indiciaData.website_id=" . $website_id . ";\n";
-  }
   report_helper::$javascript .= "indiciaData.redirectOnSuccess='$options[redirect_on_success]';\n";
   // Load up the filter, BEFORE any AJAX load of the grid code. First fetch any URL param overrides.
   $getParams = array();

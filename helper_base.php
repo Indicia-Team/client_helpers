@@ -1411,6 +1411,7 @@ JS;
   * @param string $password Indicia password for the website.
   */
   public static function get_auth($website_id, $password) {
+    self::$website_id = $website_id;
     $postargs = "website_id=$website_id";
     $response = self::http_post(parent::$base_url.'index.php/services/security/get_nonce', $postargs);
     if (isset($response['status'])) {
@@ -1619,6 +1620,7 @@ indiciaData.imagesPath='" . self::$images_path . "';
 indiciaData.warehouseUrl='" . self::$base_url . "';
 indiciaData.protocol='$protocol';
 indiciaData.jQuery = jQuery; //saving the current version of jQuery
+indiciaData.website_id = " . self::$website_id . ";
 ";
       if (self::$js_read_tokens) {
         if (!empty(parent::$warehouse_proxy))

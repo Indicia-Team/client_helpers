@@ -329,7 +329,12 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
      $roleType = 'data manager';  
     //Get the data such as phone number associated with the user
     $user_fields = user_load($user->uid);
-    
+
+    // If locks are used, make sure they only apply to this user: some people masquerade, and this causes problems.
+    data_entry_helper::$javascript .= "if (indicia && indicia.locks && indicia.locks.setUser) {
+  indicia.locks.setUser ('".$user->uid."');
+}\n";
+
     $userPhoneNum = null; 
     $userEmail= null;
     $userName= null;
