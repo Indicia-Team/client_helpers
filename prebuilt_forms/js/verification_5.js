@@ -858,10 +858,45 @@ indiciaData.rowIdToReselect = false;
     })
   }
 
+  /**
+   * Mouse over map displays a layers button hint.
+   */
+  function onMouseOverMap() {
+    var myTooltip;
+    var layersButton = $('.olControlLayerSwitcher .maximizeDiv.olButton');
+    var btnRect = layersButton[0].getBoundingClientRect();
+    var tooltipRect;
+    var leftPos;
+    var topPos;
+    $('body').append('<div class="ui-tip below-left" id="tip-layers-button"><p>Click the blue + button to show layers</p></div>');
+    myTooltip = $('#tip-layers-button');
+    // Position the tip.
+    if (myTooltip.width() > 300) {
+      myTooltip.css({ width: '300px' });
+    }
+    tooltipRect = myTooltip[0].getBoundingClientRect();
+    leftPos = Math.min(btnRect.left, $(window).width() - tooltipRect.width - 10);
+    topPos = btnRect.bottom + 8;
+    if (topPos + tooltipRect.height > $(window).height()) {
+      topPos = btnRect.top - (tooltipRect.height + 4);
+    }
+    topPos += $(window).scrollTop();
+    // Fade the tip in and out.
+    myTooltip.css({
+      display: 'none',
+      left: leftPos,
+      top: topPos
+    }).fadeIn(400, function () {
+      $(this).delay(2000).fadeOut('slow');
+    });
+    // Only do this once.
+    indiciaData.mapdiv.map.events.unregister('mouseover', indiciaData.mapdiv.map, onMouseOverMap);
+  }
+
   mapInitialisationHooks.push(function initMap(div) {
     var defaultStyle = new OpenLayers.Style({
-      fillColor: '#0000ff',
-      strokeColor: '#0000ff',
+      fillColor: '#ff0000',
+      strokeColor: '#ff0000',
       strokeWidth: '${getstrokewidth}',
       fillOpacity: 0.5,
       strokeOpacity: 0.8
@@ -869,7 +904,7 @@ indiciaData.rowIdToReselect = false;
       context: {
         getstrokewidth: function getstrokewidth(feature) {
           var width = feature.geometry.getBounds().right - feature.geometry.getBounds().left;
-          var strokeWidth = (width === 0) ? 1 : 10 - (width / feature.layer.map.getResolution());
+          var strokeWidth = (width === 0) ? 1 : 12 - (width / feature.layer.map.getResolution());
           return (strokeWidth < 2) ? 2 : strokeWidth;
         }
       }
@@ -877,7 +912,8 @@ indiciaData.rowIdToReselect = false;
     div.map.editLayer.style = null;
     div.map.editLayer.styleMap = new OpenLayers.StyleMap(defaultStyle);
     showTab();
-  });
+    div.map.events.register('mouseover', div.map, onMouseOverMap);
+});
 
   function verifyRecordSet(trusted) {
     var request;
