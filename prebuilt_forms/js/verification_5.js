@@ -926,7 +926,8 @@ indiciaData.rowIdToReselect = false;
     }
     request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
     $.post(request,
-      'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
+      'report=' + encodeURIComponent(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) +
+      '&params=' + encodeURIComponent(JSON.stringify(params)) +
       '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus,
       function (response) {
         indiciaData.reports.verification.grid_verification_grid.reload(true);
