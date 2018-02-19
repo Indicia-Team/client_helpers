@@ -394,8 +394,9 @@ Record ID',
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
-          'sharing' => $args['sharing']
-        )
+          'sharing' => $args['sharing'],
+          'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+        ),
       ));
     }
 
