@@ -7347,13 +7347,13 @@ HTML;
         return $valueResponse;
     } else
       $valueResponse = array();
-    foreach ($response as $item){
+    foreach ($response as $item) {
       $itemId=$item['id'];
       unset($item['id']);
       $item['fieldname']=$options['fieldprefix'].':'.$itemId.($item['multi_value'] == 't' ? '[]' : '');
       $item['id']=$options['fieldprefix'].':'.$itemId;
       $item['untranslatedCaption']=$item['caption'];
-      $item['caption']=lang::get($item['caption']);
+      $item['caption'] = self::getTranslatedAttrCaption($item);
       $item['default'] = self::attributes_get_default($item);
       $item['attributeId'] = $itemId;
       $item['values'] = array();
@@ -7403,6 +7403,36 @@ HTML;
         $attrs[] = $item;
     }
     return $attrs;
+  }
+
+  /**
+   * Returns the translation for a custom attribute caption.
+   *
+   * Allows translation to occur on the server side or client side. If the
+   * server supplies a list of terms in the caption_i18n field and there is
+   * a match for the user's language, then that is used. Otherwise defaults to
+   * the client helpers lamg::get function.
+   *
+   * @param array $attr
+   *   Custom attribute array loaded from data services.
+   *
+   * @return string
+   *   Translated caption.
+   */
+  private static function getTranslatedAttrCaption(array $attr) {
+    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+    if (!empty($attr['caption_i18n'])) {
+      $otherLanguages = json_decode($attr['caption_i18n'], TRUE);
+      if (isset($otherLanguages[$language])) {
+        return $otherLanguages[$language];
+      }
+      else {
+        return lang::get($attr['caption']);
+      }
+    }
+    else {
+      return lang::get($attr['caption']);
+    }
   }
 
   /**
