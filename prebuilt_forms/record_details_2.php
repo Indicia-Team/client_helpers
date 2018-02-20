@@ -647,7 +647,7 @@ Record ID',
     $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
     $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
     $r .= '<textarea id="comment-text"></textarea><br/>';
-    $r .= '<button type="button" class="default-button" onclick="saveComment(';
+    $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
     $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
     $r .= '</fieldset></form>';
     $r .= '</div>';

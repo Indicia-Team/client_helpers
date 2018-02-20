@@ -1,40 +1,66 @@
-var occurrence_id = null, current_record = null, saveComment;
 
-(function($) {
+(function enclosed($) {
+  function showComment(comment, username) {
+    var html = '<div class="comment">';
+    var c = comment.replace(/\n/g, '<br/>');
+    html += '<div class="header">';
+    html += '<strong>' + username + '</strong> Now';
+    html += '</div>';
+    html += '<div>' + c + '</div>';
+    html += '</div>';
+    // Remove message that there are no comments
+    $('#no-comments').hide();
+    $('#comment-list').prepend(html);
+  }
 
-function showComment(comment, username) {
-  // Remove message that there are no comments
-  $('#no-comments').hide();
-  var html = '<div class="comment">', c = comment.replace(/\n/g, '<br/>');
-  html += '<div class="header">';
-  html += '<strong>' + username + '</strong> Now';
-  html += '</div>';
-  html += '<div>' + c + '</div>';
-  html += '</div>';
-  $('#comment-list').prepend(html);
-}
-
-saveComment = function (occurrence_id) {
-  var data = {
-    'website_id': indiciaData.website_id,
-    'occurrence_comment:occurrence_id': occurrence_id,
-    'occurrence_comment:comment': $('#comment-text').val(),
-    'occurrence_comment:person_name': indiciaData.username,
-    'user_id': indiciaData.user_id
+  indiciaFns.saveComment = function (occurrenceId) {
+    var data = {
+      website_id: indiciaData.website_id,
+      'occurrence_comment:occurrence_id': occurrenceId,
+      'occurrence_comment:comment': $('#comment-text').val(),
+      'occurrence_comment:person_name': indiciaData.username,
+      user_id: indiciaData.user_id
+    };
+    $.post(
+      indiciaData.ajaxFormPostUrl.replace('occurrence', 'occ-comment'),
+      data,
+      function (response) {
+        if (typeof response.error === 'undefined') {
+          showComment($('#comment-text').val(), indiciaData.username);
+          $('#comment-text').val('');
+        } else {
+          alert(response.error);
+        }
+      },
+      'json'
+    );
   };
-  $.post(
-    indiciaData.ajaxFormPostUrl.replace('occurrence', 'occ-comment'),
-    data,
-    function (data) {
-      if (typeof data.error === "undefined") {
-        showComment($('#comment-text').val(), indiciaData.username);
-        $('#comment-text').val('');
-      } else {
-        alert(data.error);
-      }
-    },
-    'json'
-  );
-}
 
+  /**
+   * When the map loads, set the feature style to ensure small grid squares are
+   * visible.
+   */
+  mapInitialisationHooks.push(function initMap(div) {
+    var layer = div.map.editLayer;
+    var defaultStyle = new OpenLayers.Style({
+      fillColor: '#ee9900',
+      strokeColor: '#ee9900',
+      strokeWidth: '${getstrokewidth}',
+      fillOpacity: 0.5,
+      strokeOpacity: 0.8
+    }, {
+      context: {
+        getstrokewidth: function getstrokewidth(feature) {
+          var width = feature.geometry.getBounds().right - feature.geometry.getBounds().left;
+          var strokeWidth = (width === 0) ? 1 : 12 - (width / feature.layer.map.getResolution());
+          return (strokeWidth < 2) ? 2 : strokeWidth;
+        }
+      }
+    });
+    layer.style = null;
+    layer.styleMap = defaultStyle;
+    layer.features[0].style = null;
+    layer.redraw();
+  });
 })(jQuery);
+

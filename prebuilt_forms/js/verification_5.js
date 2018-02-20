@@ -913,7 +913,7 @@ indiciaData.rowIdToReselect = false;
     div.map.editLayer.styleMap = new OpenLayers.StyleMap(defaultStyle);
     showTab();
     div.map.events.register('mouseover', div.map, onMouseOverMap);
-});
+  });
 
   function verifyRecordSet(trusted) {
     var request;
