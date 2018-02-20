@@ -329,7 +329,7 @@ Record ID',
       $flags[] = lang::get('confidential');
     }
     if (self::$record['release_status'] !== 'R') {
-      $flags[] = lang::get('unreleased');
+      $flags[] = lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
     }
     if (!empty($flags)) {
       $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
