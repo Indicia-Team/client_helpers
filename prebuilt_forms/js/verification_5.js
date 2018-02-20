@@ -899,7 +899,8 @@ indiciaData.rowIdToReselect = false;
       strokeColor: '#ff0000',
       strokeWidth: '${getstrokewidth}',
       fillOpacity: 0.5,
-      strokeOpacity: 0.8
+      strokeOpacity: 0.8,
+      pointRadius: 5
     }, {
       context: {
         getstrokewidth: function getstrokewidth(feature) {
