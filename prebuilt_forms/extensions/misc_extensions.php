@@ -358,7 +358,8 @@ $('form#entry_form').tooltip({
       'save_id_to_field' => 'sample:location_id',
       'save_centroid_sref_to_field' => 'sample:entered_sref',
       'save_centroid_sref_system_to_field' => 'sample:entered_sref_system',
-      'save_boundary_geom_to_field' => FALSE
+      'save_boundary_geom_to_field' => FALSE,
+      'draw_boundary_on_map' => FALSE,
     ), $options);
     if (empty($_GET[$options['param']])) {
       return '';
@@ -405,6 +406,9 @@ $('form#entry_form').tooltip({
         'fieldname' => $options['save_boundary_geom_to_field'],
         'default' => $location['boundary_geom']
       ));
+    }
+    if ($options['draw_boundary_on_map']) {
+      iform_map_zoom_to_geom($location['boundary_geom'], 'Survey square');
     }
     return $r;
   }

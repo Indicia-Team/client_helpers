@@ -53,6 +53,9 @@ jQuery(document).ready(function ($) {
       if (indiciaData.areaPickerUpdatesSref) {
         lonlat = { lon: geom.getCentroid().x, lat: geom.getCentroid().y };
         indiciaData.mapdiv.processLonLatPositionOnMap(lonlat, indiciaData.mapdiv);
+        if ($('#imp-boundary-geom').length > 0) {
+          $('#imp-boundary-geom').val(geom.toString());
+        }
       }
     }
   });
