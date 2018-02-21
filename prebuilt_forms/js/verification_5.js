@@ -1097,6 +1097,14 @@ indiciaData.rowIdToReselect = false;
       }
       popupHtml += '<label><input type="checkbox" name="ignore-checks" /> Include failures?</label><p class="helpText">The records will only be accepted if they do not fail ' +
         'any automated verification checks. If you <em>really</em> trust the records are correct then you can verify them even if they fail some checks by ticking this box.</p>';
+      if ($('#actions-more').is(':visible')) {
+        // Enable level 2 options.
+        popupHtml += '<label>Choose verification status: <select id="bulk-substatus">' +
+          '<option value="">Accepted</option>' +
+          '<option value="1">Accepted as correct</option>' +
+          '<option value="2">Accepted as considered correct</option>' +
+          '</select></label><br/>';
+      }
       popupHtml += '<button type="button" class="default-button verify-button">Verify chosen records</button>' +
         '<button type="button" class="default-button cancel-button">Cancel</button></p></div>';
       $.fancybox(popupHtml);
@@ -1105,6 +1113,8 @@ indiciaData.rowIdToReselect = false;
         var radio = $('.quick-verify-popup input[name=quick-option]:checked');
         var request;
         var ignoreParams;
+        var substatus = $('#actions-more').is(':visible') && $('#bulk-substatus option:selected').val() !== ''
+          ? '&record_substatus=' + $('#bulk-substatus option:selected').val() : '';
         if (radio.length === 1) {
           if ($(radio).val().indexOf('recorder') !== -1) {
             params.created_by_id = currRec.extra.created_by_id;
@@ -1118,7 +1128,7 @@ indiciaData.rowIdToReselect = false;
           ignoreParams = $('.quick-verify-popup input[name=ignore-checks]:checked').length > 0 ? 'true' : 'false';
           $.post(request,
             'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
-            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams,
+            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus,
             function (response) {
               indiciaData.reports.verification.grid_verification_grid.reload();
               alert(response + ' records processed');
