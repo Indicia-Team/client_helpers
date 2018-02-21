@@ -271,7 +271,6 @@ Record ID',
       // @todo The call to module_load_included needs to be Drupal version independent
       data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
       data_entry_helper::$javascript .= 'indiciaData.user_id = "' . hostsite_get_user_field('indicia_user_id') . "\";\n";
-      data_entry_helper::$javascript .= 'indiciaData.website_id = ' . $args['website_id'] . ";\n";
       data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url(NULL, 'occurrence') .
         "&sharing=$args[sharing]\";\n";
       return parent::get_form_html($args, $auth, $attributes);
@@ -330,7 +329,7 @@ Record ID',
       $flags[] = lang::get('confidential');
     }
     if (self::$record['release_status'] !== 'R') {
-      $flags[] = lang::get('unreleased');
+      $flags[] = lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
     }
     if (!empty($flags)) {
       $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
@@ -395,8 +394,9 @@ Record ID',
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
-          'sharing' => $args['sharing']
-        )
+          'sharing' => $args['sharing'],
+          'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+        ),
       ));
     }
 
@@ -647,7 +647,7 @@ Record ID',
     $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
     $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
     $r .= '<textarea id="comment-text"></textarea><br/>';
-    $r .= '<button type="button" class="default-button" onclick="saveComment(';
+    $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
     $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
     $r .= '</fieldset></form>';
     $r .= '</div>';

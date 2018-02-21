@@ -24,9 +24,9 @@
  * Extension class that supplies general extension controls that can be used with any project.
  */
 class extension_ecmc_data_portal {
-  
+
   /**
-   * 
+   *
    */
   public static function survey_points_report_params($auth, $args, $tabalias, $options, $path) {
     if (!function_exists('iform_ajaxproxy_url'))
@@ -76,7 +76,7 @@ class extension_ecmc_data_portal {
         'report'=>'reports_for_prebuilt_forms/marinelife/transects_list',
         'valueField'=>'id',
         'captionField'=>'caption',
-        'extraParams'=>$auth['read'] + array('parent_sample_id'=>$surveySampleId, 
+        'extraParams'=>$auth['read'] + array('parent_sample_id'=>$surveySampleId,
             'sample_type_attr_id'=>$options['sampleTypeAttrId'], 'transect_id_attr_id'=>$options['transectIdAttrId']),
         'caching'=>false
     ));
@@ -132,7 +132,7 @@ class extension_ecmc_data_portal {
     data_entry_helper::$javascript .= "indiciaData.langRequireSampleType='".lang::get('Please supply the Sample Type.')."';\n";
     return $r;
   }
-  
+
   public static function surveys_list_extras($auth, $args, $tabalias, $options, $path) {
     $rows = data_entry_helper::get_population_data(array(
       'table'=>'termlists_term',
@@ -144,14 +144,14 @@ class extension_ecmc_data_portal {
       'default'=>$surveyLocationTypeId
     ));
   }
-  
+
   public static function routes_list_extras($auth, $args, $tabalias, $options, $path) {
     $url = iform_ajaxproxy_url(null, 'location');
     data_entry_helper::$javascript .= "indiciaData.postUrl='$url';\n";
     data_entry_helper::$javascript .= "indiciaData.websiteId=$args[website_id];\n";
     data_entry_helper::$javascript .= "indiciaData.langConfirmDelete='".lang::get('Are you sure that you want to delete {1}? This change cannot be undone.')."';\n";
   }
-  
+
   public static function effort_point_extras($auth, $args, $tabalias, $options, $path) {
     if (empty($_GET['transect_sample_id']))
       return 'Transect sample ID identifier not provided - cannot load the transect';
@@ -178,7 +178,7 @@ class extension_ecmc_data_portal {
     ));
     return $r;
   }
-  
+
   /**
    * Output a lat long field split into 2 fields.
    * @param type $auth
@@ -209,7 +209,7 @@ class extension_ecmc_data_portal {
     ));
     return $r;
   }
-  
+
   public static function autoset_record_id_and_record_type($auth, $args, $tabalias, $options, $path) {
     $mode = empty($options['mode']) ? false : $options['mode'];
     // skip this functionality for existing data
@@ -241,7 +241,7 @@ class extension_ecmc_data_portal {
         data_entry_helper::$javascript .= "$.each($('#smpAttr\\\\:$options[recordTypeAttrId] option'), function() {
   if ($(this).html().toLowerCase()==='$mode'.toLowerCase()) {
     $(this).attr('selected', 'selected');
-  }  
+  }
 });\n";
       }
       $_SESSION['last_record_id'] = $recordId;
@@ -251,7 +251,7 @@ class extension_ecmc_data_portal {
         data_entry_helper::$javascript .= "$('#next-action').val('sighting');\n";
     }
   }
-  
+
   public static function clone_effort_button($auth, $args, $tabalias, $options, $path) {
     $r = '<button type="button" id="clone-effort" disabled="disabled">Copy last effort</button>';
     $resportingServerURL = (!empty(data_entry_helper::$warehouse_proxy))?data_entry_helper::$warehouse_proxy:data_entry_helper::$base_url.
@@ -282,7 +282,7 @@ $('#clone-effort').click(function() {
       function(data) {
         $.each(data, function() {
           // don't clone the start time, UTC time, or record type attributes
-          
+
           $('#smpAttr\\\\:'+this.sample_attribute_id).val(this.val);
         });
       }
@@ -292,7 +292,7 @@ $('#clone-effort').click(function() {
 ";
     return $r;
   }
-  
+
   public static function points_editor($auth, $args, $tabalias, $options, $path) {
     if (!empty($_GET['dynamic-transect'])) {
       $tokens = explode(':', $_GET['dynamic-transect']);
@@ -300,11 +300,10 @@ $('#clone-effort').click(function() {
     }
     hostsite_set_breadcrumb(array('Review transect lines'=>'data/review-transect-lines'));
     data_entry_helper::$javascript .= "mapInitialisationHooks.push(drawPoints);\n";
-    data_entry_helper::$javascript .= "indiciaData.website_id=$args[website_id];\n";
     data_entry_helper::$javascript .= "indiciaData.localTimeAttrId=$options[localTimeAttrId];\n";
     data_entry_helper::$javascript .= "indiciaData.utcTimeAttrId=$options[utcTimeAttrId];\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url(null, 'sample')."\";\n";
     return '';
   }
-  
+
 }

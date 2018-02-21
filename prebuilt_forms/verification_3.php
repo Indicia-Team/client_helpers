@@ -418,7 +418,7 @@ idlist=';
     $r .= '</div></div></div></div>';
     return $r;
   }
-  
+
   /**
    * Returns the HTML for the standard set of tabs, excluding the details and optional map tab.
    * @return string HTML to insert onto the page
@@ -465,7 +465,7 @@ idlist=';
     ));
     $r .= '</div>';
     global $user;
-    if (function_exists('hostsite_get_user_field') && $locationId=hostsite_get_user_field('location_expertise', false)) 
+    if (function_exists('hostsite_get_user_field') && $locationId=hostsite_get_user_field('location_expertise', false))
       iform_map_zoom_to_location($locationId, $auth);
     $r .= '<div id="record-details-wrap" class="ui-widget ui-widget-content">';
     $r .= self::instructions('grid on the left');
@@ -594,7 +594,6 @@ idlist=';
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "'.$link['path']."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.website_id = '.$args['website_id'].";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'occurrence')."&user_id=$indicia_user_id&sharing=verification\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/verification_3')."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autoDiscard = '.$args['auto_discard_rows'].";\n";
@@ -738,7 +737,7 @@ idlist=';
           $data[$caption[0]]=array();
         $data[$caption[0]][] = array('caption'=>$caption[1], 'value'=>$record[$col]);
       }
-      if ($col==='email' && !empty($record[$col])) 
+      if ($col==='email' && !empty($record[$col]))
         $email=$record[$col];
     }
 
@@ -925,14 +924,14 @@ idlist=';
     else
       echo 'Fail';
   }
-  
+
   /**
    * AJAX callback method to fill in the record's experience tab.
-   * 
+   *
    * Returns a report detailing the total number of records of the species and
    * species group, as well as a breakdown by verified and rejected records.
    * Records link to the Explore report if view_records_report_path is filled in.
-   * 
+   *
    * @param type $website_id
    * @param type $password
    * @param type $nid
@@ -961,7 +960,7 @@ idlist=';
         $r .= '<tr class="total"><th>Total</th><td>' . self::records_link($row, 'total_3months', $params) . '</td><td>' .
                 self::records_link($row, 'total_1year', $params) . '</td><td>' . self::records_link($row, 'total_total', $params) . '</td></tr>';
         $r .= "</tbody></table>\n";
-        
+
       }
     }
     // See if there is a filled in profile_experience field for the user. If so, add
@@ -974,13 +973,13 @@ JOIN {profile_values} vuid ON vuid.uid=vuser_id.uid
 JOIN {profile_fields} fuid ON fuid.fid=vuid.fid AND fuid.name='profile_experience'
 WHERE vuser_id.value=".$_GET['user_id']);
       if ($exp = db_fetch_object($result)) {
-        if (!empty($exp->value)) 
+        if (!empty($exp->value))
           $r .= "<h3>User's description of their experience</h3>{$exp->value}\n";
-      } 
+      }
     }
     echo $r;
   }
-  
+
   /**
    * Convert a number on the Experience tab into a link to the Explore page for the underlying records.
    */
@@ -989,7 +988,7 @@ WHERE vuser_id.value=".$_GET['user_id']);
       $tokens = explode('_', $value);
       $params = array('dynamic-ownGroups'=>0,'dynamic-recent'=>0,'dynamic-user_filter'=>$_GET['user_id']);
       switch ($tokens[0]) {
-        case 'r' : 
+        case 'r' :
           $params['dynamic-record_status'] = 'R';
           break;
         case 'v' :
@@ -1010,7 +1009,7 @@ WHERE vuser_id.value=".$_GET['user_id']);
         $params['dynamic-taxon_group_id'] = $row['what_id'];
       return l($row[$value], $nodeParams['view_records_report_path'],
           array('attributes'=>array('target' => '_blank'), 'query'=>$params));
-      
+
     } else
       return $row[$value];
   }

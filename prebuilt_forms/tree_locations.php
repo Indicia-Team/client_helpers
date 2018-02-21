@@ -24,8 +24,8 @@ require_once 'includes/map.php';
 require_once 'includes/form_generation.php';
 
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * Form for adding or editing the site details at a location which contains a number of trees.
@@ -37,16 +37,16 @@ class iform_tree_locations {
    */
   protected static $cmsUserAttrId;
   private static $cmsUserList = null;
-  
+
   /**
    * @var string The Url to post AJAX form saves to.
    */
   private static $ajaxFormUrl = null;
   private static $ajaxFormLocationUrl = null;
   private static $ajaxFormSampleUrl = null;
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_tree_locations_definition() {
@@ -56,7 +56,7 @@ class iform_tree_locations {
       'description'=>'Form for adding or editing the site details at a location which has a number of trees.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -109,11 +109,11 @@ class iform_tree_locations {
             'captionField'=>'term',
             'valueField'=>'term',
             'extraParams' => array('termlist_external_key'=>'indicia:location_types'),
-            'required' => true,            
+            'required' => true,
             'group'=>'General Settings'
           ), array(
             'name'=>'spatial_systems',
-            'caption'=>'Allowed Spatial Ref Systems',      
+            'caption'=>'Allowed Spatial Ref Systems',
             'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
             'type'=>'text_input',
             'group'=>'Other Map Settings'
@@ -259,7 +259,7 @@ class iform_tree_locations {
     );
   }
   /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
@@ -283,7 +283,7 @@ class iform_tree_locations {
   	}
   	return $found;
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -346,7 +346,7 @@ class iform_tree_locations {
           $found=true;
           break;
         }
-      }      
+      }
       if (!$found)
         return 'This form is designed to be used with the "Recorder Name" attribute setup for Tree locations in the survey, or the "Allow users to be assigned to locations" option unticked.';
     }
@@ -423,7 +423,7 @@ check_attrs = function(){
     }
     $r .= data_entry_helper::tab_header($headerOptions);
     data_entry_helper::enable_tabs($tabOptions);
-    
+
     $settings['treeSampleMethod'] = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('TreeInitialRegistration'));
     // TODO put in error check, add in $arg driving of text value
     $settings['treeSampleMethod'] = $settings['treeSampleMethod'][0];
@@ -434,7 +434,7 @@ check_attrs = function(){
       data_entry_helper::enable_validation('tree-form');
       data_entry_helper::setup_jquery_validation_js();
     }
-    $r .= '</div>'; // controls    
+    $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
       $breadcrumb = array();
@@ -450,9 +450,8 @@ check_attrs = function(){
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.self::$ajaxFormUrl."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostLocationUrl="'.self::$ajaxFormLocationUrl."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostSampleUrl="'.self::$ajaxFormSampleUrl."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.website_id="'.$args['website_id']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";    
+    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
     data_entry_helper::$javascript .= "indiciaData.currentTree = '';\n";
     data_entry_helper::$javascript .= "indiciaData.treeTypeId = '".$settings['TreeLocationType'][0]['id']."';\n";
     data_entry_helper::$javascript .= "indiciaData.treeDeleteConfirm = \"".lang::get('Are you sure you wish to delete tree')."\";\n";
@@ -467,12 +466,12 @@ check_attrs = function(){
       data_entry_helper::$onload_javascript .= "var first=true;\njQuery.each(indiciaData.trees, function(idx, tree) {\n  if(first) selectTree(tree.id, true);  \nfirst=false\n});\nif(first) insertTree();\n";
     return $r;
   }
-  
+
   private static function check_prerequisites() {
     // check required modules installed
     if (isset($_POST['enable'])) {
       module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));      
+      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
     }
     $ok=true;
     if (!hostsite_module_exists('iform_ajaxproxy')) {
@@ -490,14 +489,14 @@ check_attrs = function(){
     }
     return $ok;
   }
-  
+
   private static function get_site_tab($auth, $args, $settings) {
     $r = '<div id="site-details" class="ui-helper-clearfix">';
     $r .= '<form method="post" id="input-form">';
-    $r .= $auth['write'];    
+    $r .= $auth['write'];
     $r .= '<fieldset><legend>'.lang::get('Site Details').'</legend>';
     $r .= "<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
-    $r .= "<input type=\"hidden\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";    
+    $r .= "<input type=\"hidden\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
     $r .= "<input type=\"hidden\" name=\"location:location_type_id\" value=\"".$settings['SiteLocationType'][0]['id']."\" />\n";
     if ($settings['locationId'])
       $r .= '<input type="hidden" name="location:id" id="location:id" value="'.$settings['locationId']."\" />\n";
@@ -517,10 +516,10 @@ check_attrs = function(){
     ));
     $r .= '<input type="hidden" name="location:boundary_geom" id="imp-boundary-geom" value="' .
     		data_entry_helper::$entity_to_load['location:boundary_geom'] . '"/>';
-    
+
     // setup the map options
     $options = iform_map_get_map_options($args, $auth['read']);
-    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read'])); 
+    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read']));
     $r .= '</fieldset>';
     if (!$settings['locationId']) {
       $help = lang::get('Use the search box to find a nearby town or village, then drag the map to pan and zoom in or out to find your site.');
@@ -560,7 +559,7 @@ check_attrs = function(){
     $options['hintDrawPolygonHint']=lang::get('Draw Site Tool.');
     $options['hintNavigation']=lang::get('Navigation Tool.');
     $options['searchDisplaysPoint']=false;
-    
+
     // with multiple maps can't use built in method on tabshow, so do here...
     $divId = preg_replace('/[^a-zA-Z0-9]/', '', 'site-details');
     $javascript = "var mapTabHandler = function(event, ui) { \n";
@@ -589,7 +588,7 @@ indiciaFns.bindTabsActivate(jQuery(jQuery('#site-details').parent()), mapTabHand
       }
     }
     $r .= '<button type="submit" class="indicia-button right">'.lang::get('Save').'</button>';
-    
+
     if($settings['locationId'])
       $r .= '<button type="button" class="indicia-button right" id="delete-site">'.lang::get('Delete').'</button>' ;
     $r .='</form>';
@@ -613,7 +612,7 @@ $('#delete-site').click(deleteSite);
     }
     return $r;
   }
-  
+
   private static function get_site_trees_tab($auth, $args, $settings) {
     global $indicia_templates;
   	$r = '<div id="site-trees" class="ui-helper-clearfix">';
@@ -760,7 +759,7 @@ $('#imp-sref-tree').attr('title',
     $options = helper_base::explode_lines_key_value_pairs($args['attrOptions']);
     self::parseForAttrSpecificOptions($options, $ctrlOptions, $attrSpecificOptions);
     $r .= get_attribute_html($settings['tree_attributes'], $args, $ctrlOptions, '', $attrSpecificOptions);
-    
+
     $r .= '</fieldset>';
     $r .= "</div>" .
     		'<div class="right" style="width: '.(isset($args['percent_width']) ? $args['percent_width'] : 50).'%">';
@@ -787,7 +786,7 @@ $('#imp-sref-tree').attr('title',
     // override the map height and buffer size, which are specific to this map.
     $options['height'] = $args['tree_map_height'];
     $options['maxZoomBuffer'] = $args['tree_map_buffer'];
-    
+
     $options['srefId']='imp-sref-tree';
     $options['geomId']='imp-geom-tree';
     $options['srefSystemId']='imp-sref-system-tree';
@@ -850,7 +849,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
     $selector .= '</ol>';
     return $selector;
   }
-  
+
   /**
    * If the user has permissions, then display a control so that they can specify the list of users associated with this site.
    */
@@ -917,12 +916,12 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
 
   /**
    * Construct a submission for the location.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    $s = submission_builder::build_submission($values, 
+    $s = submission_builder::build_submission($values,
       array(
         'model' => 'location'
       )
@@ -931,7 +930,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
     if (empty($values['location:id']))
       $s['subModels'] = array(
         array(
-          'fkId' => 'location_id', 
+          'fkId' => 'location_id',
           'model' => array(
             'id' => 'locations_website',
             'fields' => array(
@@ -942,7 +941,7 @@ $('#fieldset-optional-external-sc').prepend(\"".lang::get('If you choose to reco
       );
     return $s;
   }
-  
+
   /**
    * After saving a new site, reload the site so that the user can continue to save the trees.
    */

@@ -40,14 +40,18 @@ indiciaData.rowIdToReselect = false;
   function showSelectedRecordOnMap() {
     var geom;
     var feature;
+    var map = indiciaData.mapdiv.map;
     geom = OpenLayers.Geometry.fromWKT(currRec.extra.wkt);
-    if (indiciaData.mapdiv.map.projection.getCode() !== indiciaData.mapdiv.indiciaProjection.getCode()) {
-      geom.transform(indiciaData.mapdiv.indiciaProjection, indiciaData.mapdiv.map.projection);
+    if (map.projection.getCode() !== indiciaData.mapdiv.indiciaProjection.getCode()) {
+      geom.transform(indiciaData.mapdiv.indiciaProjection, map.projection);
     }
     feature = new OpenLayers.Feature.Vector(geom);
     feature.attributes.type = 'selectedrecord';
-    indiciaData.mapdiv.removeAllFeatures(indiciaData.mapdiv.map.editLayer, 'selectedrecord');
-    indiciaData.mapdiv.map.editLayer.addFeatures([feature]);
+    indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'selectedrecord');
+    map.editLayer.addFeatures([feature]);
+    // Force the correct style.
+    feature.style = map.editLayer.styleMap.styles.defaultStyle;
+    map.editLayer.redraw();
   }
 
   /**
@@ -365,20 +369,29 @@ indiciaData.rowIdToReselect = false;
         $.ajax({
           url: indiciaData.ajaxUrl + '/mediaAndComments/' + indiciaData.nid + urlSep +
           'occurrence_id=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
-          async: false,
           dataType: 'json',
           success: function handleResponse(response) {
+            var comment = indiciaData.commentTranslations.emailed.replace(
+              '{1}',
+              email.subtype === 'R' ? indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert
+            );
             email.body = email.body.replace(/\[Photos]/g, response.media);
             email.body = email.body.replace(/\[Comments]/g, response.comments);
+            // save a comment to indicate that the mail was sent
+            indiciaFns.saveComment(
+              comment,
+              null,
+              ($('#email-confidential:checked').length > 0 ? 't' : 'f'),
+              email,
+              't',
+              true
+            );
+            sendEmail();
           }
         });
-        // save a comment to indicate that the mail was sent
-        indiciaFns.saveComment(indiciaData.commentTranslations.emailed.replace('{1}', email.subtype === 'R' ?
-          indiciaData.commentTranslations.recorder : indiciaData.commentTranslations.expert), null,
-          ($('#email-confidential:checked').length > 0 ? 't' : 'f'), email, 't', true);
+      } else {
+        sendEmail();
       }
-
-      sendEmail();
     }
     return false;
   }
@@ -572,7 +585,6 @@ indiciaData.rowIdToReselect = false;
   // show the list of tickboxes for verifying multiple records quickly
   function showTickList() {
     $('.check-row').attr('checked', false);
-    $('#row' + occurrenceId + ' .check-row').attr('checked', true);
     $('.check-row').show();
     $('#action-buttons-status label').html('With ticked records:');
     $('#btn-multiple').addClass('active').html('Review single records').after($('#action-buttons-status'));
@@ -741,6 +753,9 @@ indiciaData.rowIdToReselect = false;
     var helpText = '';
     var html;
     var verb = status === 'C' ? indiciaData.popupTranslations.verbC3 : indiciaData.popupTranslations['verb' + status];
+    var getTemplatesReport;
+    var getTemplatesReportParameters;
+    var i;
     if (typeof substatus === 'undefined') {
       substatus = '';
     }
@@ -767,8 +782,13 @@ indiciaData.rowIdToReselect = false;
       indiciaData.popupTranslations.save.replace('{1}', verb) + '</button>' +
       '</fieldset>';
 
-    var getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?',
-        getTemplatesReportParameters = {
+    $.fancybox(html);
+    if (multimode) {
+      // Doing multiple records, so can't use templates
+      $('#verify-template-container').hide();
+    } else {
+      getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?';
+      getTemplatesReportParameters = {
         auth_token: indiciaData.read.auth_token,
         nonce: indiciaData.read.nonce,
         reportSource: 'local',
@@ -776,22 +796,22 @@ indiciaData.rowIdToReselect = false;
         template_status: status + substatus,
         website_id: currRec.extra.website_id
       };
-    $.getJSON(
-      getTemplatesReport,
-      getTemplatesReportParameters,
-      function (data) {
-        if (data.length > 0) {
-          for(var i = 0; i < data.length; i++) {
-            $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+      $.getJSON(
+        getTemplatesReport,
+        getTemplatesReportParameters,
+        function (data) {
+          if (data.length > 0) {
+            for (i = 0; i < data.length; i++) {
+              $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+            }
+            $('#verify-template').data('data', data);
+          } else {
+            $('#verify-template-container').hide();
           }
-          $('#verify-template').data('data',data);
-        } else {
-          $('#verify-template-container').hide();
         }
-      }
-    );
-    $.fancybox(html);
-    $('#verify-template').change(function(){
+      );
+    }
+    $('#verify-template').change(function () {
       var templateID = $('#verify-template').val(),
           data = $('#verify-template').data('data'),
           substitute = function (item) {
@@ -838,18 +858,62 @@ indiciaData.rowIdToReselect = false;
     })
   }
 
-  mapInitialisationHooks.push(function (div) {
-    div.map.editLayer.style = null;
-    div.map.editLayer.styleMap = new OpenLayers.StyleMap({
-      default: {
-        pointRadius: 5,
-        strokeColor: '#0000FF',
-        strokeWidth: 3,
-        fillColor: '#0000FF',
-        fillOpacity: 0.4
+  /**
+   * Mouse over map displays a layers button hint.
+   */
+  function onMouseOverMap() {
+    var myTooltip;
+    var layersButton = $('.olControlLayerSwitcher .maximizeDiv.olButton');
+    var btnRect = layersButton[0].getBoundingClientRect();
+    var tooltipRect;
+    var leftPos;
+    var topPos;
+    $('body').append('<div class="ui-tip below-left" id="tip-layers-button"><p>Click the blue + button to show layers</p></div>');
+    myTooltip = $('#tip-layers-button');
+    // Position the tip.
+    if (myTooltip.width() > 300) {
+      myTooltip.css({ width: '300px' });
+    }
+    tooltipRect = myTooltip[0].getBoundingClientRect();
+    leftPos = Math.min(btnRect.left, $(window).width() - tooltipRect.width - 10);
+    topPos = btnRect.bottom + 8;
+    if (topPos + tooltipRect.height > $(window).height()) {
+      topPos = btnRect.top - (tooltipRect.height + 4);
+    }
+    topPos += $(window).scrollTop();
+    // Fade the tip in and out.
+    myTooltip.css({
+      display: 'none',
+      left: leftPos,
+      top: topPos
+    }).fadeIn(400, function () {
+      $(this).delay(2000).fadeOut('slow');
+    });
+    // Only do this once.
+    indiciaData.mapdiv.map.events.unregister('mouseover', indiciaData.mapdiv.map, onMouseOverMap);
+  }
+
+  mapInitialisationHooks.push(function initMap(div) {
+    var defaultStyle = new OpenLayers.Style({
+      fillColor: '#ff0000',
+      strokeColor: '#ff0000',
+      strokeWidth: '${getstrokewidth}',
+      fillOpacity: 0.5,
+      strokeOpacity: 0.8,
+      pointRadius: 5
+    }, {
+      context: {
+        getstrokewidth: function getstrokewidth(feature) {
+          var width = feature.geometry.getBounds().right - feature.geometry.getBounds().left;
+          var strokeWidth = (width === 0) ? 1 : 12 - (width / feature.layer.map.getResolution());
+          return (strokeWidth < 2) ? 2 : strokeWidth;
+        }
       }
     });
+    div.map.editLayer.style = null;
+    div.map.editLayer.styleMap = new OpenLayers.StyleMap(defaultStyle);
     showTab();
+    div.map.events.register('mouseover', div.map, onMouseOverMap);
   });
 
   function verifyRecordSet(trusted) {
@@ -863,7 +927,8 @@ indiciaData.rowIdToReselect = false;
     }
     request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
     $.post(request,
-      'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
+      'report=' + encodeURIComponent(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) +
+      '&params=' + encodeURIComponent(JSON.stringify(params)) +
       '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus,
       function (response) {
         indiciaData.reports.verification.grid_verification_grid.reload(true);

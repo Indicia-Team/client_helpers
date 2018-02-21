@@ -27,8 +27,8 @@ require_once('sectioned_transects_edit_transect.php');
  * see references to branches in the code: these are interchangeable with countries.
  */
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
  * Form for adding or editing the site details on a transect which contains a number of sections.
@@ -36,11 +36,11 @@ require_once('sectioned_transects_edit_transect.php');
 class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_transects_edit_transect {
 
 	protected static $countryCmsUserAttrId;
-	
+
 	protected static $countryAttrId;
-	
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_ebms_sectioned_transects_edit_transect_definition() {
@@ -50,7 +50,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       'description'=>'Form for adding or editing the site details on a transect style location which has a number of sub-sections, but which can have various location types.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -169,7 +169,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
           'required' => false,
           'group'=>'Transects Editor Settings',
         ),
-      			
+
         array(
           'name'=>'autogenerateCode',
           'caption'=>'Autogenerate Code',
@@ -236,7 +236,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
           'type'=>'textarea',
       	  'group'=>'Transects Editor Settings'
         )
-      		
+
     ));
     for($i= count($retVal)-1; $i>=0; $i--){
       switch($retVal[$i]['name']) {
@@ -274,7 +274,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     // use the js/css from the parent forms, until there is a deviation.
     // drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/ukbms_sectioned_transects_edit_transect.js");
     // drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/sectioned_transects_edit_transect.css");
-    
+
     $checks=self::check_prerequisites();
     $args = self::getArgDefaults($args);
     if ($checks!==true)
@@ -353,9 +353,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
         'location_type_id' => $settings['sectionLocationType'][0]['id'],
         'multiValue' => true
     ));
-    
+
     // The following deals with special processing associate with specific attributes.
-    
+
     // TODO NTH Add functionality to allow selection between CMS Attr ID and Indicia User ID
     // We are assigning people to locations, rather than locations to people.
     // This version of the form assumes that user allocation and country allocation are givens.
@@ -379,7 +379,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
              '. This attribute should be shared with all location types.';
     // keep a copy of the cms user ID attribute so we can use it later.
     self::$countryAttrId = $settings['countryAttr']['attributeId'];
-    
+
     data_entry_helper::$javascript .= "indiciaData.sections = {};\n";
     $settings['sections']=array();
     $settings['numSectionsAttr'] = "";
@@ -435,7 +435,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
             $settings['sections']["S$i"]=null;
           }
         }
-        if (isset($args['autocalc_transect_length_attr_id']) && 
+        if (isset($args['autocalc_transect_length_attr_id']) &&
             $args['autocalc_transect_length_attr_id'] != '' &&
             $attr['attributeId']==$args['autocalc_transect_length_attr_id']) {
           $settings['autocalcTransectLengthAttrName'] = $attr['fieldname'];
@@ -453,7 +453,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
         	$section['centroid_sref_system'] = strtoupper($section['centroid_sref_system']);
         data_entry_helper::$javascript .= "indiciaData.sections.$code = {'geom':'".$section['boundary_geom']."','id':'".$section['id']."','sref':'".$section['centroid_sref']."','system':'".$section['centroid_sref_system']."'};\n";
         $settings['sections'][$code]=$section;
-        
+
         if (isset($args['autocalc_transect_length_attr_id']) &&
         		$args['autocalc_transect_length_attr_id'] != '') {
     		$section_attributes = data_entry_helper::getAttributes(array(
@@ -504,7 +504,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
       if(count($settings['section_attributes']) > 0)
         $r .= self::get_section_details_tab($auth, $args, $settings);
     }
-    $r .= '</div>'; // controls    
+    $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
     if (function_exists('drupal_set_breadcrumb')) {
       $breadcrumb = array();
@@ -519,10 +519,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     // Inform JS where to post data to for AJAX form saving
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.self::$ajaxFormUrl."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostSampleUrl="'.self::$ajaxFormSampleUrl."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.website_id="'.$args['website_id']."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.autogeneratePrefix="'.$args['autogeneratePrefix']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path() . "proxy.php?url=".data_entry_helper::$base_url."';\n";
-    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";    
+    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
     data_entry_helper::$javascript .= "indiciaData.currentSection = '';\n";
     data_entry_helper::$javascript .= "indiciaData.settings = ".json_encode($settings).";\n";
     data_entry_helper::$javascript .= "indiciaData.sectionTypeId = '".$settings['sectionLocationType'][0]['id']."';\n";
@@ -538,7 +537,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     data_entry_helper::$javascript .= "indiciaData.defaultSectionGridRef = '".$settings['defaultSectionGridRef']."';\n";
     if ($settings['locationId'])
       data_entry_helper::$javascript .= "selectSection('S1', true);\n";
-    
+
     return $r;
   }
 
@@ -560,7 +559,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
 
     $r = '<div id="site-details" class="ui-helper-clearfix">';
     $r .= '<form method="post" id="input-form">';
-    $r .= $auth['write'];    
+    $r .= $auth['write'];
     $r .= "<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
     $r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: 54%">';
 
@@ -693,7 +692,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
         if(!isset($systems[$system])) $systems[$system] = lang::get($system);
       }
     }
-    
+
     if(isset(data_entry_helper::$entity_to_load['location:centroid_sref_system']) &&
         in_array(data_entry_helper::$entity_to_load['location:centroid_sref_system'], array('osgb','osie')))
       data_entry_helper::$entity_to_load['location:centroid_sref_system'] = strtoupper(data_entry_helper::$entity_to_load['location:centroid_sref_system']);
@@ -731,7 +730,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     if(isset($args['site_help']) && $args['site_help'] != ''){
       $r .= '<p class="ui-state-highlight page-notice ui-corner-all">'.t($args['site_help']).'</p>';
     }
-    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read']), null, $blockOptions); 
+    $r .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read']), null, $blockOptions);
     $r .= '</fieldset>';
     $r .= "</div>"; // left
     $r .= '<div class="right" style="width: 44%">';
@@ -750,7 +749,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     $olOptions = iform_map_get_ol_options($args);
     $options['clickForSpatialRef']=$settings['canEditBody'];
     $r .= map_helper::map_panel($options, $olOptions);
-    $r .= '</div></div>'; // right    
+    $r .= '</div></div>'; // right
     if (!empty($bottom))
       $r .= $bottom;
     if ($settings['canAllocCountry'] || $settings['locationId'])
@@ -764,7 +763,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     }
     if ($settings['canEditBody'])
       $r .= '<button type="submit" class="indicia-button right">'.lang::get('Save').'</button>';
-    
+
     if($settings['canEditBody'] && $settings['locationId'])
       $r .= '<button type="button" class="indicia-button right" id="delete-transect">'.lang::get('Delete').'</button>' ;
     $r .='</form>';
@@ -773,7 +772,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     data_entry_helper::$onload_javascript .= "$('#current-section').change(selectSection);\n";
     if($settings['canEditBody'] && $settings['locationId']) {
       $walkIDs = array();
-      foreach($settings['walks'] as $walk) 
+      foreach($settings['walks'] as $walk)
         $walkIDs[] = $walk['id'];
       $sectionIDs = array();
       foreach($settings['sections'] as $code=>$section)
@@ -794,7 +793,7 @@ $('#delete-transect').click(deleteSurvey);
     }
     return $r;
   }
-  
+
   protected static function get_your_route_tab($auth, $args, $settings) {
   	$r = '<div id="your-route" class="ui-helper-clearfix">';
   	$olOptions = iform_map_get_ol_options($args);
@@ -843,7 +842,7 @@ $('#delete-transect').click(deleteSurvey);
   	// override the map height and buffer size, which are specific to this map.
   	$options['height'] = $args['route_map_height'];
   	$options['maxZoomBuffer'] = $args['route_map_buffer'];
-  
+
   	$r .= map_helper::map_panel($options, $olOptions);
   	$r .= '<button class="indicia-button right" type="button" title="'.
   		lang::get('Returns to My Sites page. Remember to save any changes to the Site details, Route and/or Section details first.').
@@ -851,7 +850,7 @@ $('#delete-transect').click(deleteSurvey);
   	$r .= '</div>';
   	return $r;
   }
-  
+
   protected static function get_ebms_branch_assignment_control($auth, $args, $settings) {
     $settings['canAllocBranch'] = $settings['canAllocCountry'];
     self::$branchCmsUserAttrId = self::$countryCmsUserAttrId;
