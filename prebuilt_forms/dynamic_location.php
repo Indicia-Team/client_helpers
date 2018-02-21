@@ -347,13 +347,16 @@ mapInitialisationHooks.push(function(mapdiv) {
 
     protected static function get_control_locationcomment($auth, $args, $tabalias, $options) {
     return data_entry_helper::textarea(array_merge(array(
-      'fieldname'=>'location:comment',
-      'label'=>lang::get('LANG_Comment')
+      'fieldname' => 'location:comment',
+      'label' => lang::get('LANG_Comment'),
     ), $options));
   }
 
     protected static function get_control_spatialreference($auth, $args, $tabalias, $options) {
-      $options = array_merge($options, array('fieldname' => 'location:centroid_sref'));
+      $options = array_merge($options, array(
+        'fieldname' => 'location:centroid_sref',
+        'geomFieldname' => 'centroid_geom',
+      ));
       return parent::get_control_spatialreference($auth, $args, $tabalias, $options);
     }
 
