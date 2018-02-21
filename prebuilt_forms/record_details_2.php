@@ -847,6 +847,7 @@ Record ID',
    *   HTML for the button.
    */
   protected static function buttons_edit($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
     if (!$args['default_input_form']) {
       throw new exception('Please set the default input form path setting before using the [edit button] control');
     }
@@ -860,7 +861,7 @@ Record ID',
       $rootFolder = data_entry_helper::getRootFolder(TRUE);
       $paramJoin = strpos($rootFolder, '?') === FALSE ? '?' : '&';
       $url = "$rootFolder$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
-      return '<a class="button" href="' . $url . '">' . lang::get('Edit this record') . '</a>';
+      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this record') . '</a>';
     }
     else {
       // No rights to edit, so button omitted.
@@ -884,6 +885,7 @@ Record ID',
    *   HTML for the button.
    */
   protected static function buttons_explore($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}') !== 0 && strcasecmp(substr($url, 0, 4), 'http') !== 0) {
@@ -895,7 +897,7 @@ Record ID',
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
       $taxon = str_replace(' - zero abundance found', '', $taxon);
-      $r = '<a class="button" href="' . $url . '">' . lang::get('Explore records of {1}', $taxon) . '</a>';
+      $r = "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Explore records of {1}', $taxon) . '</a>';
     }
     else {
       throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or ' .
@@ -919,6 +921,7 @@ Record ID',
    *   HTML for the button.
    */
   protected static function buttons_species_details($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
     if (!empty($args['species_details_url'])) {
       $url = $args['species_details_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}') !== 0 && strcasecmp(substr($url, 0, 4), 'http') !== 0) {
@@ -930,7 +933,7 @@ Record ID',
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
       $taxon = str_replace(' - zero abundance found', '', $taxon);
-      return '<a class="button" href="' . $url . '">' . lang::get('{1} details page', $taxon) . '</a>';
+      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('{1} details page', $taxon) . '</a>';
     }
     return '';
   }
