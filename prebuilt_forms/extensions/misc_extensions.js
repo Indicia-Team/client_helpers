@@ -27,6 +27,7 @@ jQuery(document).ready(function ($) {
     var placeDef;
     var map = indiciaData.mapdiv.map;
     var feature;
+    var lonlat;
     indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'boundary');
     if (typeof data[$('#area-picker').val()] !== 'undefined') {
       placeDef = data[$('#area-picker').val()];
@@ -48,6 +49,10 @@ jQuery(document).ready(function ($) {
         feature = new OpenLayers.Feature.Vector(geom);
         feature.attributes.type = 'boundary';
         map.editLayer.addFeatures([feature]);
+      }
+      if (indiciaData.areaPickerUpdatesSref) {
+        lonlat = { lon: geom.getCentroid().x, lat: geom.getCentroid().y };
+        indiciaData.mapdiv.processLonLatPositionOnMap(lonlat, indiciaData.mapdiv);
       }
     }
   });

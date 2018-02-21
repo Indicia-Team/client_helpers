@@ -512,19 +512,30 @@ $('form#entry_form').tooltip({
    * page can automatically pan and zoom to that area and the spatial reference
    * system control, if present, can automatically pick the best system for the
    * chosen map area.
-   * @param $auth
-   * @param $args
-   * @param $tabalias
-   * @param $options Array of control options. Pass an array of area names to
-   * include in the drop down list in the @areas option. Optionally override
-   * the @mapDataFile option to specify a different file defining the map areas.
-   * If you use this option, copy the file mapAreaData.js from the extensions
-   * folder to files/indicia/js rename and edit it there. Other options
-   * available are the same as for data_entry_helper::select controls, e.g. use
-   * the @label option to define the control's label.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form arguments.
+   * @param string $tabalias
+   *   Alias of the tab this control sits on, where relevant.
+   * @param array $options
+   *   Array of control options. The following options are available:
+   *   * @areas - Pass an array of area names to include. Othewise all areas
+   *     defined in the map data file will be used.
+   *   * @mapDataFile - optionally override this option to specify a different
+   *     file defining the map areas. If you use this option, copy the file
+   *     mapAreaData.js from the extensions folder to files/indicia/js rename
+   *     and edit it there.
+   *   * @updateSref - set to true to update the spatial reference control
+   *     with the centroid of the chosen area.
+   *   Other options available are the same as for data_entry_helper::select
+   *   controls, e.g. use the @label option to define the control's label.
+   *
    * @return string
+   *   HTML for the control.
    */
-  public static function area_picker($auth, $args, $tabalias, $options) {
+  public static function area_picker(array $auth, array $args, $tabalias, array $options) {
     if (!isset($options['areas']) || !is_array($options['areas'])) {
       return 'Please specify the list of areas for the area_picker control.';
     }
@@ -541,10 +552,16 @@ $('form#entry_form').tooltip({
       'mapDataFile' => 'mapAreaData.js',
       'id' => 'area-picker',
       'blankText' => lang::get('<select area>'),
-      'lookupValues' => array_combine($options['areas'], $options['areas'])
+      'lookupValues' => array_combine($options['areas'], $options['areas']),
+      'updateSref' => FALSE,
     ), $options);
+    $updateSrefBool = $options['updateSref'] ? 'true' : 'false';
     // Load the data file.
-    data_entry_helper::$javascript .= "$.getScript('$path$options[mapDataFile]');\n";
+    data_entry_helper::$javascript .= <<<JS
+indiciaData.areaPickerUpdatesSref = $updateSrefBool;
+$.getScript('$path$options[mapDataFile]');
+
+JS;
     return data_entry_helper::select($options);
   }
 
