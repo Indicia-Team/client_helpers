@@ -56,6 +56,18 @@ class iform_dynamic_location extends iform_dynamic {
       parent::get_parameters(),
       array(
         array(
+          'name' => 'location_type_id',
+          'caption' => 'Location type',
+          'type' => 'select',
+          'table' => 'termlists_term',
+          'captionField' => 'term',
+          'valueField' => 'id',
+          'extraParams' => array('termlist_external_key' => 'indicia:location_types'),
+          'required' => FALSE,
+          'helpText' => 'The location type that will be used for all created locations. Alternatively use a ' .
+            '[location type] control in the form structure.',
+        ),
+        array(
           'name'=>'structure',
           'caption'=>'Form Structure',
           'description'=>'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of '.
@@ -225,14 +237,17 @@ mapInitialisationHooks.push(function(mapdiv) {
     $id = isset(data_entry_helper::$entity_to_load['location:id']) ?
             data_entry_helper::$entity_to_load['location:id'] : null;
     $attrOpts = array(
-    'id' => $id
-    ,'valuetable'=>'location_attribute_value'
-    ,'attrtable'=>'location_attribute'
-    ,'key'=>'location_id'
-    ,'fieldprefix'=>'locAttr'
-    ,'extraParams'=>$auth['read']
-    ,'survey_id'=>$args['survey_id']
+      'id' => $id,
+      'valuetable' => 'location_attribute_value',
+      'attrtable' => 'location_attribute',
+      'key' => 'location_id',
+      'fieldprefix' => 'locAttr',
+      'extraParams' => $auth['read'],
+      'survey_id' => $args['survey_id'],
     );
+    if (!empty($args['location_type_id'])) {
+      $attrOpts['location_type_id'] = $args['location_type_id'];
+    }
     $attributes = data_entry_helper::getAttributes($attrOpts, false);
     return $attributes;
   }
@@ -252,9 +267,14 @@ mapInitialisationHooks.push(function(mapdiv) {
       $r .= '<input type="hidden" id="location:id" name="location:id" value="' . data_entry_helper::$entity_to_load['location:id'] . '" />' . PHP_EOL;
     }
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['location:id']), $auth['read']);
-    // pass through the group_id if set in URL parameters, so we can save the location against the group
-    if (!empty($_GET['group_id']))
+    // Pass through the group_id if set in URL parameters, so we can save the
+    // location against the group.
+    if (!empty($_GET['group_id'])) {
       $r .= "<input type=\"hidden\" id=\"group_id\" name=\"group_id\" value=\"".$_GET['group_id']."\" />\n";
+    }
+    if (!empty($args['location_type_id'])) {
+      $r .= "<input type=\"hidden\" name=\"location:location_type_id\" value=\"$args[location_type_id]\" />";
+    }
     return $r;
   }
 
