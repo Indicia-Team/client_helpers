@@ -4233,7 +4233,7 @@ JS;
         foreach ($occAttrs as $idx=>$a) {
           $attrs = self::get_species_checklist_col_responsive($options, "attr$idx");
           $r .= self::get_species_checklist_col_header(
-            $options['id']."-attr$idx-$i", lang::get($a), $visibleColIdx, $options['colWidths'], $attrs);
+            $options['id']."-attr$idx-$i", $a, $visibleColIdx, $options['colWidths'], $attrs);
         }
         if ($options['spatialRefPerRow']) {
           $attrs = self::get_species_checklist_col_responsive($options, 'spatialref');
