@@ -352,12 +352,6 @@ class iform_my_dot_map {
    */
   public static function get_form($args) {
     global $indicia_templates;
-    if (function_exists('hostsite_get_user_field')) {
-      $lang = iform_lang_iso_639_2(hostsite_get_user_field('language', 'en'));
-    }
-    else {
-      $lang = 'eng';
-    }
 
     if (function_exists('iform_load_helpers')) {
       iform_load_helpers(array('map_helper'));
@@ -368,17 +362,18 @@ class iform_my_dot_map {
 
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $r = '';
-    // setup the map options
+    // Setup the map options.
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
     if (array_key_exists('table', $_GET) && $_GET['table'] === 'sample') {
-      // Use a cUrl request to get the data from Indicia which contains the value we need to filter against
+      // Use a cUrl request to get the data from Indicia which contains the
+      // value we need to filter against.
       // Read the record that was just posted.
       $fetchOpts = array(
         'dataSource' => 'reports_for_prebuilt_forms/my_dot_map/occurrences_list_2',
         'mode' => 'report',
         'readAuth' => $readAuth,
-        'extraParams' => array('sample_id' => $_GET['id'], 'language' => $lang)
+        'extraParams' => array('sample_id' => $_GET['id']),
       );
       // @todo Error handling on the response
       $occurrence = data_entry_helper::get_report_data($fetchOpts);
