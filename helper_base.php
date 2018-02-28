@@ -1620,8 +1620,10 @@ indiciaData.imagesPath='" . self::$images_path . "';
 indiciaData.warehouseUrl='" . self::$base_url . "';
 indiciaData.protocol='$protocol';
 indiciaData.jQuery = jQuery; //saving the current version of jQuery
-indiciaData.website_id = " . self::$website_id . ";
 ";
+      if(!empty(self::$website_id)) // not on warehouse
+          $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
+
       if (self::$js_read_tokens) {
         if (!empty(parent::$warehouse_proxy))
           self::$js_read_tokens['url'] = parent::$warehouse_proxy;
