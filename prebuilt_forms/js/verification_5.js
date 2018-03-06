@@ -697,7 +697,7 @@ indiciaData.rowIdToReselect = false;
       }
       $.fancybox.close();
       $.post(
-        indiciaData.ajaxFormPostUrl,
+        indiciaData.ajaxFormPostUrl.replace(/sharing=[a-z_]+/, 'sharing=editing')
         data,
         function (response) {
           if (typeof response.error !== 'undefined') {
