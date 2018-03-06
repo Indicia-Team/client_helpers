@@ -863,6 +863,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R="' . lang::get('not accepted') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R4="' . lang::get('not accepted as unable to verify') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.R5="' . lang::get('not accepted as incorrect') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.popupTranslations.DT="' . lang::get('redetermined') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub1="' . lang::get('correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub2="' . lang::get('considered correct') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.sub3="' . lang::get('plausible') . "\";\n";
