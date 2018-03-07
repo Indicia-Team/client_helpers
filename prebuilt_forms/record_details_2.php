@@ -612,14 +612,17 @@ Record ID',
   protected static function get_control_comments($auth, $args) {
     iform_load_helpers(array('data_entry_helper'));
     $r = '<div>';
+    $params = [
+      'occurrence_id' => $_GET['occurrence_id'],
+      'sortdir' => 'DESC',
+      'orderby' => 'updated_on'
+    ];
+    if (!$args['allow_confidential']) {
+      $params['confidential'] = 'f';
+    }
     $comments = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_comment',
-      'extraParams' => $auth['read'] + array(
-          'occurrence_id' => $_GET['occurrence_id'],
-          'confidential' => 'f',
-          'sortdir' => 'DESC',
-          'orderby' => 'updated_on'
-      ),
+      'extraParams' => $auth['read'] + $params,
       'nocache' => TRUE,
       'sharing' => $args['sharing']
     ));
