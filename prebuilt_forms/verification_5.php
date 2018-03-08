@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers
  */
 
 require_once 'includes/map.php';
@@ -39,11 +37,11 @@ class iform_verification_5 {
   private static $statusTerms = array(
     'V' => 'Accepted',
     'R' => 'Not accepted',
-    // deprecated
+    // Deprecated.
     'D' => 'Query',
     'I' => 'In progress',
     'T' => 'Test record',
-    'C' => 'Not reviewed'
+    'C' => 'Not reviewed',
   );
 
   private static $substatusTerms = array(
@@ -51,7 +49,7 @@ class iform_verification_5 {
     '2' => 'considered correct',
     '3' => 'plausible',
     '4' => 'unable to verify',
-    '5' => 'incorrect'
+    '5' => 'incorrect',
   );
 
   /**
@@ -120,7 +118,7 @@ class iform_verification_5 {
               'return the occurrence id, geom and any shape formatting.',
           'type' => 'report_helper::report_picker',
           'group' => 'Report Settings',
-          'default' => 'library/occurrences/filterable_explore_list_mapping'
+          'default' => 'library/occurrences/filterable_explore_list_mapping',
         ),
         array(
           'name' => 'mapping_report_name_lores',
@@ -128,7 +126,7 @@ class iform_verification_5 {
           'description' => 'Report used to obtain the output for the map at low zoom levels.',
           'type' => 'report_helper::report_picker',
           'group' => 'Report Settings',
-          'default' => 'library/occurrences/filterable_explore_list_mapping_lores'
+          'default' => 'library/occurrences/filterable_explore_list_mapping_lores',
         ),
         array(
           'name' => 'record_details_report',
@@ -136,7 +134,7 @@ class iform_verification_5 {
           'description' => 'Report used to obtain the details of a record. See reports_for_prebuilt_forms/verification_5/record_data.xml for an example.',
           'type' => 'report_helper::report_picker',
           'group' => 'Report Settings',
-          'default' => 'reports_for_prebuilt_forms/verification_5/record_data'
+          'default' => 'reports_for_prebuilt_forms/verification_5/record_data',
         ),
         array(
           'name' => 'record_attrs_report',
@@ -144,7 +142,7 @@ class iform_verification_5 {
           'description' => 'Report used to obtain the custom attributes of a record. See reports_for_prebuilt_forms/verification_3/record_data_attributes.xml for an example.',
           'type' => 'report_helper::report_picker',
           'group' => 'Report Settings',
-          'default' => 'reports_for_prebuilt_forms/verification_3/record_data_attributes'
+          'default' => 'reports_for_prebuilt_forms/verification_3/record_data_attributes',
         ),
         array(
           'name' => 'min_taxon_rank_sort_order',
@@ -152,7 +150,7 @@ class iform_verification_5 {
           'description' => 'For the experience report, specify the minimum taxon rank sort order to include.',
           'type' => 'text_input',
           'group' => 'Report Settings',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
             'name' => 'columns_config',
@@ -220,7 +218,7 @@ class iform_verification_5 {
     ]
   }',
           'group' => 'Report Settings',
-          'required' => FALSE
+          'required' => FALSE,
         ), array(
           'name' => 'sharing',
           'caption' => 'Record sharing mode',
@@ -244,7 +242,7 @@ class iform_verification_5 {
           'description' => 'Default subject for the send to expert email. Replacements allowed include %taxon% and %id%.',
           'type' => 'string',
           'default' => 'Requesting your opinion on a record of %taxon% (ID:%id%)',
-          'group' => 'Verifier emails'
+          'group' => 'Verifier emails',
         ), array(
           'name' => 'email_body_send_to_verifier',
           'caption' => 'Send to Expert Email Body',
@@ -253,23 +251,23 @@ class iform_verification_5 {
           'default' => 'We would appreciate your opinion on the following record. Please reply to this mail with "accepted", "not accepted" or "query" '.
               'in the email body, followed by any comments you have including the proposed re-identification if relevant on the next line.'.
               "\n\n%record%",
-          'group' => 'Verifier emails'
+          'group' => 'Verifier emails',
         ), array(
           'name' => 'email_subject_send_to_recorder',
           'caption' => 'Send to Recorder Email Subject',
           'description' => 'Default subject for the send query to recorder email. Replacements allowed include %taxon% and %id%.',
           'type' => 'string',
           'default' => 'Query on your record of %taxon% (ID:%id%)',
-          'group' => 'Recorder emails'
+          'group' => 'Recorder emails',
         ), array(
           'name' => 'email_body_send_to_recorder',
           'caption' => 'Send to Recorder Email Body',
           'description' => 'Default body for the send to recorder email. Replacements allowed include %taxon%, %id% and %record% which is replaced to give details of the record.',
           'type' => 'textarea',
           'default' => 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct '.
-              'and any other information you have which may help to confirm this.'.
+              'and any other information you have which may help to confirm this.' .
               "\n\n%record%",
-          'group' => 'Recorder emails'
+          'group' => 'Recorder emails',
         ), array(
           'name' => 'auto_discard_rows',
           'caption' => 'Automatically remove rows',
@@ -277,7 +275,7 @@ class iform_verification_5 {
               'longer matches the grid filter.',
           'type' => 'checkbox',
           'default' => 'true',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'indicia_species_layer_feature_type',
@@ -286,19 +284,19 @@ class iform_verification_5 {
               'Leave empty for no layer. Normally this should be set to a feature type that exposes the cache_occurrences view.',
           'type' => 'text_input',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'indicia_species_layer_ds_filter_field',
           'caption' => 'Filter method',
           'description' => 'Method of filtering taxa to display the species layer.',
           'type' => 'select',
-          'options'=>array(
+          'options' => array(
             'taxon_meaning_id' => 'Meaning ID',
             'taxon_external_key' => 'External Key',
           ),
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ), array(
           'name' => 'indicia_species_layer_filter_field',
           'caption' => 'Field to filter on',
@@ -306,14 +304,14 @@ class iform_verification_5 {
               'taxon_external_key, taxon_meaning_id.',
           'type' => 'text_input',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
-        ),array(
+          'group' => 'Other Map Settings',
+        ), array(
           'name' => 'indicia_species_layer_sld',
           'caption' => 'SLD file from GeoServer for Indicia species layer',
           'description' => 'Set to the name of an SLD file available on the GeoServer for the rendering of the Indicia species layer, or leave blank for default.',
           'type' => 'text_input',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'additional_wms_species_layer_title',
@@ -321,7 +319,7 @@ class iform_verification_5 {
           'description' => 'Title of an additional species layer to load from a WMS service',
           'type' => 'text_input',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'additional_wms_species_layer_url',
@@ -329,7 +327,7 @@ class iform_verification_5 {
           'description' => 'URL of an additional species layer to load from a WMS service. {external_key} is replaced by the species external key.',
           'type' => 'text_input',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'additional_wms_species_layer_settings',
@@ -337,7 +335,7 @@ class iform_verification_5 {
           'description' => 'JSON settings object for an additional species layer to load from a WMS service. {external_key} is replaced by the species external key.',
           'type' => 'textarea',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'additional_wms_species_layer_ol_settings',
@@ -345,7 +343,7 @@ class iform_verification_5 {
           'description' => 'JSON settings object for the Open Layers settings object for an additional species layer to load from a WMS service.',
           'type' => 'textarea',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'indexed_location_type_ids',
@@ -353,7 +351,7 @@ class iform_verification_5 {
           'description' => 'Comma separated list of location type IDs for location layers that are available to search against.',
           'type' => 'text_input',
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'other_location_type_ids',
@@ -368,14 +366,14 @@ class iform_verification_5 {
           'caption' => 'View records report path',
           'description' => 'Path to page used to show a list of records, e.g. when clicking on the record counts on the Experience tab',
           'type' => 'string',
-          'required' => 'false'
+          'required' => FALSE,
         ),
         array(
           'name' => 'record_details_path',
           'caption' => 'Record details page path',
           'description' => 'Path to page used to show details of a single record, e.g. an instance of the Record Details 2 prebuilt form.',
           'type' => 'string',
-          'required' => 'false'
+          'required' => FALSE,
         ),
         array(
           'name' => 'enableWorkflow',
@@ -384,7 +382,7 @@ class iform_verification_5 {
           'type' => 'boolean',
           'group' => 'Notification Settings',
           'default' => FALSE,
-          'required' => 'false'
+          'required' => FALSE,
         ),
         array(
           'name' => 'clear_verification_task_notifications',
@@ -393,23 +391,23 @@ class iform_verification_5 {
           'type' => 'boolean',
           'group' => 'Notification Settings',
           'default' => FALSE,
-          'required' => 'false'
+          'required' => FALSE,
         )
       )
     );
     // Set default values for the report.
     foreach ($r as &$param) {
-      if ($param['name'] == 'report_name') {
+      if ($param['name'] === 'report_name') {
         $param['default'] = 'library/occurrences/filterable_explore_list';
       }
-      elseif ($param['name'] == 'param_presets') {
+      elseif ($param['name'] === 'param_presets') {
         $param['default'] = 'survey_id=
 date_from=
 date_to=
 smpattrs=
 occattrs=';
       }
-      elseif ($param['name'] == 'param_defaults') {
+      elseif ($param['name'] === 'param_defaults') {
         $param['default'] = 'id=
 record_status=C
 records=unverified
@@ -446,7 +444,7 @@ idlist=';
       )
     ));
     data_entry_helper::enable_tabs(array(
-      'divId' => 'grids-tabs'
+      'divId' => 'grids-tabs',
     ));
     $r .= '<div id="records-tab">{grid}</div>';
     $r .= '<div id="log-tab">{log}</div>';
@@ -475,7 +473,7 @@ idlist=';
       'clickableLayersOutputMode' => 'report',
       'rowId' => 'occurrence_id',
       'sharing' => 'verification',
-      'ajax' => TRUE
+      'ajax' => TRUE,
     );
     if (!empty($args['mapping_report_name_lores'])) {
       $reportMapOpts['dataSourceLoRes'] = $args['mapping_report_name_lores'];
@@ -934,42 +932,46 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.expertise_location = "' . $opts['extraParams']['expertise_location'] . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.expertise_surveys = "' . $opts['extraParams']['expertise_surveys'] . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.expertise_taxon_groups = "' . $opts['extraParams']['expertise_taxon_groups'] . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.siteEmail = "'.$site_email = hostsite_get_config_value('site', 'mail', '') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.siteEmail = "' . $site_email = hostsite_get_config_value('site', 'mail', '') . "\";\n";
 
     if (isset($args['enableWorkflow']) && $args['enableWorkflow']) {
       data_entry_helper::$javascript .= "indiciaData.workflowEnabled = true;\n";
-      $wfMetadata = data_entry_helper::get_population_data(array( // allow caching
-          'table'=>'workflow_metadata',
-          'extraParams'=>$auth['read'] +
-              array(
-                'log_all_communications' => 't',
-                'entity' => 'occurrence',
-                'view'=>'detail',
-                'columns' => 'key,key_value'),
+      // Allow caching.
+      $wfMetadata = data_entry_helper::get_population_data(array(
+        'table' => 'workflow_metadata',
+        'extraParams' => $auth['read'] + array(
+          'log_all_communications' => 't',
+          'entity' => 'occurrence',
+          'view' => 'detail',
+          'columns' => 'key,key_value',
+        ),
       ));
       $workflowTaxonMeaningIDsLogAllComms = array();
       foreach ($wfMetadata as $wfMeta) {
-          switch($wfMeta['key']) {
-              case 'taxa_taxon_list_external_key' :
-                  $wkMIDs = data_entry_helper::get_population_data(array( // allow caching
-                      'table'=>'cache_taxa_taxon_list',
-                      'extraParams'=>$auth['read'] +
-                          array(
-                              'external_key' => $wfMeta['key_value'],
-                              'columns' => 'taxon_meaning_id'),
-                      ));
-                  foreach ($wkMIDs as $wkMID) {
-                      $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
-                  }
-                  break;
-              default :
-                  drupal_set_message('Unrecognised workflow_metadata key '.$wfMeta['key']);
-                  break;
-          }
+        switch ($wfMeta['key']) {
+          case 'taxa_taxon_list_external_key':
+            // Allow caching.
+            $wkMIDs = data_entry_helper::get_population_data(array(
+              'table' => 'cache_taxa_taxon_list',
+              'extraParams' => $auth['read'] + array(
+                'external_key' => $wfMeta['key_value'],
+                'columns' => 'taxon_meaning_id',
+              ),
+            ));
+            foreach ($wkMIDs as $wkMID) {
+              $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
+            }
+            break;
+
+          default:
+            drupal_set_message("Unrecognised workflow_metadata key $wfMeta[key]");
+            break;
+        }
       }
       data_entry_helper::$javascript .= "indiciaData.workflowTaxonMeaningIDsLogAllComms = " .
           json_encode(array_values(array_unique($workflowTaxonMeaningIDsLogAllComms))) . ";\n";
-    } else {
+    }
+    else {
       data_entry_helper::$javascript .= "indiciaData.workflowEnabled = false;\n";
       data_entry_helper::$javascript .= "indiciaData.workflowTaxonMeaningIDsLogAllComms = [];\n";
     }
@@ -1330,7 +1332,7 @@ HTML
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
       'sharing' => $params['sharing'],
-      'extraParams' => array('occurrence_id' => $_GET['occurrence_id'])
+      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
     );
     $comments = report_helper::get_report_data($options);
     $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path() . "../media/images/" : report_helper::$images_path;
