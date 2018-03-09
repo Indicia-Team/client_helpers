@@ -1741,6 +1741,7 @@ indiciaData.rowIdToReselect = false;
     });
     data = {
       website_id: indiciaData.website_id,
+      sharing: 'editing',
       'occurrence:id': occurrenceId,
       'occurrence:metadata': JSON.stringify(metadata)
     };
@@ -1748,14 +1749,21 @@ indiciaData.rowIdToReselect = false;
       indiciaData.ajaxFormPostUrl,
       data,
       function handleResponse(response) {
-        if (typeof response.error !== 'undefined') {
-          alert(response.error);
-        } else {
-          $('.metadata-msg').html('saved');
-          $('.metadata-msg').removeClass('changed');
-          $('.metadata-msg').addClass('saved');
-          $('.metadata-msg').show();
+        var json;
+        try {
+          json = JSON.parse(response);
+          if (typeof json.success !== 'undefined') {
+            $('.metadata-msg').html('saved');
+            $('.metadata-msg').removeClass('changed');
+            $('.metadata-msg').addClass('saved');
+            $('.metadata-msg').show();
+            return;
+          }
         }
+        catch (err) {
+          // Do nothing.
+        }
+        alert('An error occurred when saving the value.');
       }
     );
   });
