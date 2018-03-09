@@ -1186,13 +1186,13 @@ HTML
     $extra['localities'] = $record['localities'];
     $extra['locality_ids'] = $record['locality_ids'];
     $extra['location_name'] = $record['location_name'];
-    $extra['query'] = $record['query'] === null ? '' : $record['query'];
-    $extra['metadata'] = isset($record['metadata']) ? json_decode($record['metadata']) : '{}';
+    $extra['query'] = $record['query'] === NULL ? '' : $record['query'];
+    $extra['metadata'] = isset($record['metadata']) ? json_decode($record['metadata']) : json_decode('{}');
     header('Content-type: application/json');
     echo json_encode(array(
       'content' => $r,
       'data' => $data,
-      'extra' => $extra
+      'extra' => $extra,
     ));
   }
 
