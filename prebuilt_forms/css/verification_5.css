@@ -567,3 +567,16 @@ div.correspondence.shrunk .shrink-correspondence {
   top: -20px;
   border-bottom: 10px solid #444;
 }
+
+/* line 441, sass/verification_5.scss */
+#metadata .metadata-msg {
+  font-size: 90%;
+}
+/* line 443, sass/verification_5.scss */
+#metadata .metadata-msg.changed {
+  color: orangered;
+}
+/* line 446, sass/verification_5.scss */
+#metadata .metadata-msg.saved {
+  color: green;
+}

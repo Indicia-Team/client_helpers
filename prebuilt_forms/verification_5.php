@@ -392,7 +392,28 @@ class iform_verification_5 {
           'group' => 'Notification Settings',
           'default' => FALSE,
           'required' => FALSE,
-        )
+        ),
+        array(
+          'name' => 'custom_occurrence_metadata',
+          'caption' => 'Custom occurrence metadata',
+          'description' => 'Definition of any additional fields that can be stored in the occurrence metadata which will not be shown to the recorder',
+          'type' => 'jsonwidget',
+          'schema' => '{
+  "type":"seq",
+  "title":"Fields list",
+  "sequence":
+  [
+    {
+      "type":"map",
+      "title":"Field",
+      "mapping": {
+        "title": {"type":"str","desc":"The field title"},
+        "values": {"type":"txt","desc":"Any key=value pairs to limit the options to. Otherwise free text is accepted."}
+      }
+    }
+  ]
+}',
+        ),
       )
     );
     // Set default values for the report.
@@ -1116,7 +1137,9 @@ HTML
         $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
       }
     }
-    $r = extension_misc_extensions::occurrence_flag_icons(['read' => $readAuth], null, null, ['record' => $record]);
+    $r = extension_misc_extensions::occurrence_flag_icons(['read' => $readAuth], NULL, NULL, ['record' => $record]);
+    $occMetadata = empty($record['metadata']) ? [] : json_decode($record['metadata'], TRUE);
+    $r .= self::customMetadataFields($params, $occMetadata);
     $r .= "<table class=\"report-grid\">\n";
     $first = TRUE;
     foreach ($data as $heading => $items) {
@@ -1164,12 +1187,60 @@ HTML
     $extra['locality_ids'] = $record['locality_ids'];
     $extra['location_name'] = $record['location_name'];
     $extra['query'] = $record['query'] === null ? '' : $record['query'];
+    $extra['metadata'] = isset($record['metadata']) ? json_decode($record['metadata']) : '{}';
     header('Content-type: application/json');
     echo json_encode(array(
       'content' => $r,
       'data' => $data,
       'extra' => $extra
     ));
+  }
+
+  /**
+   * Output custom metadata field controls.
+   *
+   * If the form configures any extra custom metadata fields to store data in
+   * for each occurrence, output the input controls to appear on the details
+   * pane.
+   *
+   * @param array $params
+   *   Form configuration.
+   * @param array $occMetadata
+   *   Occurrences.metadata value from the db for the existing record.
+   *
+   * @return string
+   *   Control HTML.
+   */
+  private static function customMetadataFields(array $params, array $occMetadata) {
+    if (!empty($params['custom_occurrence_metadata'])) {
+      $fields = json_decode($params['custom_occurrence_metadata'], TRUE);
+      $r .= '<fieldset id="metadata"><legend>' . lang::get('Record metadata') . '</legend>';
+      foreach ($fields as $idx => $field) {
+        $safeTitle = htmlspecialchars($field['title']);
+        $safeVal = empty($occMetadata[$field['title']]) ? 'noVal' : htmlspecialchars($occMetadata[$field['title']]);
+        $r .= "<div><label>$safeTitle";
+        if (empty($field['values'])) {
+          $r .= "<input class=\"metadata-field\" type=\"text\" data-title=\"$safeTitle\" value=\"$safeVal\"/>";
+        }
+        else {
+          $r .= "<select class=\"metadata-field\" data-title=\"$field[title]\">" .
+            '<option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
+          $values = report_helper::explode_lines_key_value_pairs($field['values']);
+          foreach ($values as $value => $caption) {
+            $selected = empty($occMetadata[$field['title']]) || $occMetadata[$field['title']] !== $value
+              ? '' : ' selected="selected"';
+            $r .= "<option value=\"$value\"$selected>$caption</option>";
+          }
+          $r .= "</select>";
+        }
+        $r .= ' <span class="metadata-msg"></span>';
+        $r .= '</label></div>';
+      }
+      global $indicia_templates;
+      $r .= "<button type=\"button\" id=\"save-metadata\" class=\"$indicia_templates[buttonDefaultClass]\">" . lang::get('Save') . '</button>';
+      $r .= '</fieldset>';
+    }
+    return $r;
   }
 
   /**

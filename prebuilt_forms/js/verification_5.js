@@ -1727,4 +1727,45 @@ indiciaData.rowIdToReselect = false;
       }
     });
   });
+
+  /**
+   * Save functionality for custom occurrence metadata fields.
+   */
+  indiciaFns.on('click', '#save-metadata', function saveMetadata() {
+    var metadata = currRec.extra.metadata;
+    var data;
+    $('.metadata-msg').hide();
+
+    $.each($('#metadata .metadata-field'), function getValue() {
+      metadata[$(this).attr('data-title')] = $(this).val();
+    });
+    data = {
+      website_id: indiciaData.website_id,
+      'occurrence:id': occurrenceId,
+      'occurrence:metadata': JSON.stringify(metadata)
+    };
+    $.post(
+      indiciaData.ajaxFormPostUrl,
+      data,
+      function handleResponse(response) {
+        if (typeof response.error !== 'undefined') {
+          alert(response.error);
+        } else {
+          $('.metadata-msg').html('saved');
+          $('.metadata-msg').removeClass('changed');
+          $('.metadata-msg').addClass('saved');
+          $('.metadata-msg').show();
+        }
+      }
+    );
+  });
+
+  indiciaFns.on('change', '#metadata :input', function updateMsg() {
+    var msg = $(this).closest('label').find('.metadata-msg');
+    $(msg).removeClass('saved');
+    $(msg).addClass('changed');
+    $(msg).html('changed');
+    $(msg).show();
+  });
+
 })(jQuery);
