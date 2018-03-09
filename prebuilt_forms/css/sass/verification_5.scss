@@ -437,3 +437,14 @@ div.correspondence.shrunk {
   top: -20px;
   border-bottom: 10px solid #444;
 }
+#metadata {
+  .metadata-msg {
+    font-size: 90%;
+    &.changed {
+      color: orangered;
+    }
+    &.saved {
+      color: green;
+    }
+  }
+}

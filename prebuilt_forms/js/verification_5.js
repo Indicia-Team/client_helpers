@@ -697,7 +697,7 @@ indiciaData.rowIdToReselect = false;
       }
       $.fancybox.close();
       $.post(
-        indiciaData.ajaxFormPostUrl,
+        indiciaData.ajaxFormPostUrl.replace(/sharing=[a-z_]+/, 'sharing=editing'),
         data,
         function (response) {
           if (typeof response.error !== 'undefined') {
@@ -717,16 +717,98 @@ indiciaData.rowIdToReselect = false;
     return false;
   }
 
+  function loadVerificationTemplates(status) {
+    var getTemplatesReport;
+    var getTemplatesReportParameters;
+    var i;
+    getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?';
+    getTemplatesReportParameters = {
+      auth_token: indiciaData.read.auth_token,
+      nonce: indiciaData.read.nonce,
+      reportSource: 'local',
+      taxon_meaning_id: currRec.extra.taxon_meaning_id,
+      template_status: status,
+      website_id: currRec.extra.website_id
+    };
+    $.getJSON(
+      getTemplatesReport,
+      getTemplatesReportParameters,
+      function (data) {
+        if (data.length > 0) {
+          for (i = 0; i < data.length; i++) {
+            $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+          }
+          $('#verify-template').data('data', data);
+        } else {
+          $('#verify-template-container').hide();
+        }
+      }
+    );
+    $('#verify-template').change(function () {
+      var templateID = $('#verify-template').val();
+      var data = $('#verify-template').data('data');
+      var substitute = function (item) {
+        // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
+        var conversions = {
+          date: currRec.extra.date,
+          'entered sref': currRec.extra.entered_sref,
+          species: currRec.extra.taxon,
+          'common name': [currRec.extra.default_common_name, currRec.extra.preferred_taxon, currRec.extra.taxon],
+          'preferred name': [currRec.extra.preferred_taxon, currRec.extra.taxon],
+          action: {
+            V: indiciaData.popupTranslations.V,
+            V1: indiciaData.popupTranslations.V1,
+            V2: indiciaData.popupTranslations.V2,
+            C3: indiciaData.popupTranslations.C3,
+            R: indiciaData.popupTranslations.R,
+            R4: indiciaData.popupTranslations.R4,
+            R5: indiciaData.popupTranslations.R5,
+            DT: indiciaData.popupTranslations.DT
+          }[status],
+          'location name': [currRec.extra.location_name, currRec.extra.entered_sref]
+        };
+        var convs = Object.keys(conversions);
+        var replacement;
+        var j;
+        for (i = 0; i < convs.length; i++) {
+          if (typeof conversions[convs[i]] === 'object') {
+            for (j = 0; j < conversions[convs[i]].length; j++) {
+              replacement = conversions[convs[i]][j];
+              if (typeof replacement !== 'undefined' && replacement !== null  && replacement !== '') {
+                break;
+              }
+            }
+          } else {
+            replacement = conversions[convs[i]];
+          }
+          if (typeof replacement !== 'undefined' && replacement !== null) {
+            item = item.replace(new RegExp('{{\\s*' + convs[i].replace(/ /g, '[\\s|_]') + "\\s*}}", 'gi'), replacement);
+          }
+        }
+        return item;
+      };
+      for (i = 0; i < data.length; i++) {
+        if (data[i].id === templateID) {
+          $('#verify-comment').val(substitute(data[i].template));
+        }
+      }
+    });
+  }
+
   function showRedeterminationPopup() {
     // No confidential checkbox for redeterminations.
     var html = '<form id="redet-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.redetermine + '</legend>';
     html += '<div id="redet-dropdown-popup-ctnr"></div>';
-    $('#redet\\:taxon').setExtraParams({"taxon_list_id": currRec.extra.taxon_list_id});
+    html += '<div id="verify-template-container"> ' +
+    '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
+    '<select id="verify-template" >' +
+    '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
     html += '<label class="auto">Comment:</label><textarea id="verify-comment" rows="5" cols="80"></textarea><br />' +
       '<input type="submit" class="default-button" value="' +
       indiciaData.popupTranslations.redetermine + '" />' +
       '</fieldset></form>';
+    $('#redet\\:taxon').setExtraParams({"taxon_list_id": currRec.extra.taxon_list_id});
     $.fancybox(html, {
       "beforeClose": function () {
         // hide the species dropdown if left in open state
@@ -734,6 +816,7 @@ indiciaData.rowIdToReselect = false;
         $('#redet-dropdown').appendTo($('#redet-dropdown-ctnr'));
       }
     });
+    loadVerificationTemplates('DT');
     // move taxon input box onto the form
     $('#redet').val('');
     $('#redet\\:taxon').val('');
@@ -753,9 +836,6 @@ indiciaData.rowIdToReselect = false;
     var helpText = '';
     var html;
     var verb = status === 'C' ? indiciaData.popupTranslations.verbC3 : indiciaData.popupTranslations['verb' + status];
-    var getTemplatesReport;
-    var getTemplatesReportParameters;
-    var i;
     if (typeof substatus === 'undefined') {
       substatus = '';
     }
@@ -765,10 +845,10 @@ indiciaData.rowIdToReselect = false;
     html = '<fieldset class="popup-form status-form">' +
       '<legend><span class="icon status-' + status + substatus + '"></span>' +
       indiciaData.popupTranslations.title.replace('{1}', '<strong>' + statusLabel(status, substatus)) + '</strong></legend>';
-    html += '<span id="verify-template-container"> ' +
+    html += '<div id="verify-template-container"> ' +
       '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
       '<select id="verify-template" >' +
-      '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select><br /></span>';
+      '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
 
     html += '<label class="auto">' + indiciaData.popupTranslations.commentLabel + ':</label>' +
       '<textarea id="verify-comment" rows="5" cols="80"></textarea><br />';
@@ -787,75 +867,8 @@ indiciaData.rowIdToReselect = false;
       // Doing multiple records, so can't use templates
       $('#verify-template-container').hide();
     } else {
-      getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?';
-      getTemplatesReportParameters = {
-        auth_token: indiciaData.read.auth_token,
-        nonce: indiciaData.read.nonce,
-        reportSource: 'local',
-        taxon_meaning_id: currRec.extra.taxon_meaning_id,
-        template_status: status + substatus,
-        website_id: currRec.extra.website_id
-      };
-      $.getJSON(
-        getTemplatesReport,
-        getTemplatesReportParameters,
-        function (data) {
-          if (data.length > 0) {
-            for (i = 0; i < data.length; i++) {
-              $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
-            }
-            $('#verify-template').data('data', data);
-          } else {
-            $('#verify-template-container').hide();
-          }
-        }
-      );
+      loadVerificationTemplates(status + substatus);
     }
-    $('#verify-template').change(function () {
-      var templateID = $('#verify-template').val(),
-          data = $('#verify-template').data('data'),
-          substitute = function (item) {
-            // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
-            var conversions = {
-                  "date" : currRec.extra.date,
-                  "entered sref" : currRec.extra.entered_sref,
-                  "species" : currRec.extra.taxon,
-                  "common name" : [currRec.extra.default_common_name, currRec.extra.preferred_taxon, currRec.extra.taxon],
-                  "preferred name" : [currRec.extra.preferred_taxon, currRec.extra.taxon],
-                  "action" : {'V' : indiciaData.popupTranslations.V,
-                              'V1' : indiciaData.popupTranslations.V1,
-                              'V2' : indiciaData.popupTranslations.V2,
-                              'C3' : indiciaData.popupTranslations.C3,
-                              'R' : indiciaData.popupTranslations.R,
-                              'R4' : indiciaData.popupTranslations.R4,
-                              'R5' : indiciaData.popupTranslations.R5}[status + substatus],
-                  "location name" : [currRec.extra.location_name, currRec.extra.entered_sref]
-                },
-                convs = Object.keys(conversions),
-                replacement;
-            for (var i = 0; i < convs.length; i++) {
-              if (typeof conversions[convs[i]] === 'object') {
-                for (var j = 0; j < conversions[convs[i]].length; j++) {
-                  replacement = conversions[convs[i]][j];
-                  if (typeof replacement !== "undefined" && replacement !== null  && replacement !== '') {
-                    break;
-                  }
-                }
-              } else {
-                replacement = conversions[convs[i]];
-              }
-              if (typeof replacement !== "undefined" && replacement !== null) {
-                item = item.replace(new RegExp("{{\\s*"+convs[i].replace(/ /g,"[\\s|_]")+"\\s*}}", 'gi'), replacement);
-              }
-            }
-            return item;
-          };
-      for (var i = 0; i < data.length; i++) {
-        if (data[i].id == templateID) {
-          $('#verify-comment').val(substitute(data[i].template));
-        }
-      }
-    })
   }
 
   /**
@@ -914,7 +927,7 @@ indiciaData.rowIdToReselect = false;
     div.map.editLayer.styleMap = new OpenLayers.StyleMap(defaultStyle);
     showTab();
     div.map.events.register('mouseover', div.map, onMouseOverMap);
-});
+  });
 
   function verifyRecordSet(trusted) {
     var request;
@@ -1097,6 +1110,14 @@ indiciaData.rowIdToReselect = false;
       }
       popupHtml += '<label><input type="checkbox" name="ignore-checks" /> Include failures?</label><p class="helpText">The records will only be accepted if they do not fail ' +
         'any automated verification checks. If you <em>really</em> trust the records are correct then you can verify them even if they fail some checks by ticking this box.</p>';
+      if ($('#actions-more').is(':visible')) {
+        // Enable level 2 options.
+        popupHtml += '<label>Choose verification status: <select id="bulk-substatus">' +
+          '<option value="">Accepted</option>' +
+          '<option value="1">Accepted as correct</option>' +
+          '<option value="2">Accepted as considered correct</option>' +
+          '</select></label><br/>';
+      }
       popupHtml += '<button type="button" class="default-button verify-button">Verify chosen records</button>' +
         '<button type="button" class="default-button cancel-button">Cancel</button></p></div>';
       $.fancybox(popupHtml);
@@ -1105,6 +1126,8 @@ indiciaData.rowIdToReselect = false;
         var radio = $('.quick-verify-popup input[name=quick-option]:checked');
         var request;
         var ignoreParams;
+        var substatus = $('#actions-more').is(':visible') && $('#bulk-substatus option:selected').val() !== ''
+          ? '&record_substatus=' + $('#bulk-substatus option:selected').val() : '';
         if (radio.length === 1) {
           if ($(radio).val().indexOf('recorder') !== -1) {
             params.created_by_id = currRec.extra.created_by_id;
@@ -1118,7 +1141,7 @@ indiciaData.rowIdToReselect = false;
           ignoreParams = $('.quick-verify-popup input[name=ignore-checks]:checked').length > 0 ? 'true' : 'false';
           $.post(request,
             'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
-            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams,
+            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus,
             function (response) {
               indiciaData.reports.verification.grid_verification_grid.reload();
               alert(response + ' records processed');
@@ -1704,4 +1727,45 @@ indiciaData.rowIdToReselect = false;
       }
     });
   });
+
+  /**
+   * Save functionality for custom occurrence metadata fields.
+   */
+  indiciaFns.on('click', '#save-metadata', function saveMetadata() {
+    var metadata = currRec.extra.metadata;
+    var data;
+    $('.metadata-msg').hide();
+
+    $.each($('#metadata .metadata-field'), function getValue() {
+      metadata[$(this).attr('data-title')] = $(this).val();
+    });
+    data = {
+      website_id: indiciaData.website_id,
+      'occurrence:id': occurrenceId,
+      'occurrence:metadata': JSON.stringify(metadata)
+    };
+    $.post(
+      indiciaData.ajaxFormPostUrl,
+      data,
+      function handleResponse(response) {
+        if (typeof response.error !== 'undefined') {
+          alert(response.error);
+        } else {
+          $('.metadata-msg').html('saved');
+          $('.metadata-msg').removeClass('changed');
+          $('.metadata-msg').addClass('saved');
+          $('.metadata-msg').show();
+        }
+      }
+    );
+  });
+
+  indiciaFns.on('change', '#metadata :input', function updateMsg() {
+    var msg = $(this).closest('label').find('.metadata-msg');
+    $(msg).removeClass('saved');
+    $(msg).addClass('changed');
+    $(msg).html('changed');
+    $(msg).show();
+  });
+
 })(jQuery);

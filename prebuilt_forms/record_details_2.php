@@ -329,7 +329,7 @@ Record ID',
       $flags[] = lang::get('confidential');
     }
     if (self::$record['release_status'] !== 'R') {
-      $flags[] = lang::get('unreleased');
+      $flags[] = lang::get(self::$record['release_status'] === 'P' ? 'pending release' : 'unreleased');
     }
     if (!empty($flags)) {
       $details_report = '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';
@@ -394,8 +394,9 @@ Record ID',
           'attrs' => strtolower(self::convert_array_to_set($fields)),
           'testagainst' => $args['testagainst'],
           'operator' => $args['operator'],
-          'sharing' => $args['sharing']
-        )
+          'sharing' => $args['sharing'],
+          'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+        ),
       ));
     }
 
@@ -611,14 +612,17 @@ Record ID',
   protected static function get_control_comments($auth, $args) {
     iform_load_helpers(array('data_entry_helper'));
     $r = '<div>';
+    $params = [
+      'occurrence_id' => $_GET['occurrence_id'],
+      'sortdir' => 'DESC',
+      'orderby' => 'updated_on'
+    ];
+    if (!$args['allow_confidential']) {
+      $params['confidential'] = 'f';
+    }
     $comments = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_comment',
-      'extraParams' => $auth['read'] + array(
-          'occurrence_id' => $_GET['occurrence_id'],
-          'confidential' => 'f',
-          'sortdir' => 'DESC',
-          'orderby' => 'updated_on'
-      ),
+      'extraParams' => $auth['read'] + $params,
       'nocache' => TRUE,
       'sharing' => $args['sharing']
     ));
@@ -646,7 +650,7 @@ Record ID',
     $r .= '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
     $r .= '<input type="hidden" id="comment-by" value="' . hostsite_get_user_field('name') . '"/>';
     $r .= '<textarea id="comment-text"></textarea><br/>';
-    $r .= '<button type="button" class="default-button" onclick="saveComment(';
+    $r .= '<button type="button" class="default-button" onclick="indiciaFns.saveComment(';
     $r .= $_GET['occurrence_id'] . ');">' . lang::get('Save') . '</button>';
     $r .= '</fieldset></form>';
     $r .= '</div>';
@@ -846,6 +850,7 @@ Record ID',
    *   HTML for the button.
    */
   protected static function buttons_edit($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
     if (!$args['default_input_form']) {
       throw new exception('Please set the default input form path setting before using the [edit button] control');
     }
@@ -859,7 +864,7 @@ Record ID',
       $rootFolder = data_entry_helper::getRootFolder(TRUE);
       $paramJoin = strpos($rootFolder, '?') === FALSE ? '?' : '&';
       $url = "$rootFolder$record[input_form]{$paramJoin}occurrence_id=$record[occurrence_id]";
-      return '<a class="button" href="' . $url . '">' . lang::get('Edit this record') . '</a>';
+      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Edit this record') . '</a>';
     }
     else {
       // No rights to edit, so button omitted.
@@ -883,6 +888,7 @@ Record ID',
    *   HTML for the button.
    */
   protected static function buttons_explore($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}') !== 0 && strcasecmp(substr($url, 0, 4), 'http') !== 0) {
@@ -894,7 +900,7 @@ Record ID',
       $url .= $args['explore_param_name'] . '=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
       $taxon = str_replace(' - zero abundance found', '', $taxon);
-      $r = '<a class="button" href="' . $url . '">' . lang::get('Explore records of {1}', $taxon) . '</a>';
+      $r = "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('Explore records of {1}', $taxon) . '</a>';
     }
     else {
       throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or ' .
@@ -918,6 +924,7 @@ Record ID',
    *   HTML for the button.
    */
   protected static function buttons_species_details($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
     if (!empty($args['species_details_url'])) {
       $url = $args['species_details_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}') !== 0 && strcasecmp(substr($url, 0, 4), 'http') !== 0) {
@@ -929,7 +936,7 @@ Record ID',
       $url .= 'taxon_meaning_id=' . self::$record['taxon_meaning_id'];
       $taxon = empty(self::$record['preferred_taxon']) ? self::$record['taxon'] : self::$record['preferred_taxon'];
       $taxon = str_replace(' - zero abundance found', '', $taxon);
-      return '<a class="button" href="' . $url . '">' . lang::get('{1} details page', $taxon) . '</a>';
+      return "<a class=\"$indicia_templates[buttonDefaultClass]\" href=\"$url\">" . lang::get('{1} details page', $taxon) . '</a>';
     }
     return '';
   }
