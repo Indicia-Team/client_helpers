@@ -70,11 +70,12 @@ class lang {
       // translations, the key itself is used.
       return $useHostsiteTranslation ? "[$output]" : "[$key]";
     }
+    $args = func_get_args();
     if ($useHostsiteTranslation) {
-      $output = self::applyDrupalTranslation($output);
+      $output = self::applyDrupalTranslation($output, $args);
     }
     else {
-      $output = self::applyArgs($output);
+      $output = self::applyArgs($output, $args);
     }
     return $output;
   }
@@ -85,14 +86,16 @@ class lang {
    * @param string $output
    *   The translated string, with replacement tokens still in place, e.g.
    *   "User {1} is logged in".
+   * @param array $args
+   *   Additional arguments passed to the lang::get function which act as
+   *   replacements in the language string.
    *
    * @return string
    *   The translated string, with replacements applied, e.g.
    *   "User Foo is logged in".
    */
-  private static function applyArgs($output) {
+  private static function applyArgs($output, array $args) {
     // Now do any replacements using any additional function arguments.
-    $args = func_get_args();
     if (count($args) > 1) {
       // Get rid of the first argument, it is the language string key.
       array_shift($args);
@@ -113,12 +116,15 @@ class lang {
    * @param string $output
    *   The English string, with replacement tokens still in place, e.g.
    *   "User {1} is logged in".
+   * @param array $args
+   *   Additional arguments passed to the lang::get function which act as
+   *   replacements in the language string.
    *
    * @return string
    *   The translated string, with replacements applied, e.g.
    *   "User Foo is logged in".
    */
-  private static function applyDrupalTranslation($output) {
+  private static function applyDrupalTranslation($output, array $args) {
     // Now do any replacements using any additional function arguments.
     $args = func_get_args();
     $tArgs = [];
