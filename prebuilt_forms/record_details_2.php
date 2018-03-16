@@ -14,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers
  */
 
 /**
@@ -28,13 +26,12 @@
  * A map including geometry
  * Any photos associated with the occurrence
  * Any comments associated with the occurrence including the ability to add comments
- * @package Client
- * @subpackage PrebuiltForms
  */
 
 
-require_once('includes/dynamic.php');
-require_once('includes/report.php');
+require_once 'includes/dynamic.php';
+require_once 'includes/report.php';
+require_once 'includes/groups.php';
 
 
 class iform_record_details_2 extends iform_dynamic {
@@ -53,10 +50,10 @@ class iform_record_details_2 extends iform_dynamic {
       'category' => 'Utilities',
       'description' => 'A summary view of a record with commenting capability. Pass a parameter in the URL called ' .
         'occurrence_id to define which occurrence to show.',
-      'recommended' => TRUE
+      'supportsGroups' => TRUE,
+      'recommended' => TRUE,
     );
   }
-
 
   /**
    * Return an array of parameters for the edit tab.
@@ -245,36 +242,42 @@ Record ID',
             'editing' => 'Editing',
             'me' => 'My records only',
           ),
-          'default' => 'reporting'
+          'default' => 'reporting',
         ),
       )
     );
     return $retVal;
   }
 
-  /**
-   * Override the get_form_html function.
-   * getForm in dynamic.php will now call this.
-   * Vary the display of the page based on the interface type.
-   *
-   * @param $args
-   * @param $auth
-   * @param $attributes
-   *
-   * @return mixed|string
-   */
-  protected static function get_form_html($args, $auth, $attributes) {
+  public static function get_form($args, $nid) {
     if (empty($_GET['occurrence_id'])) {
       return 'This form requires an occurrence_id parameter in the URL.';
     }
-    else {
-      // @todo The call to module_load_included needs to be Drupal version independent
-      data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
-      data_entry_helper::$javascript .= 'indiciaData.user_id = "' . hostsite_get_user_field('indicia_user_id') . "\";\n";
-      data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url(NULL, 'occurrence') .
-        "&sharing=$args[sharing]\";\n";
-      return parent::get_form_html($args, $auth, $attributes);
+    iform_load_helpers(array('report_helper'));
+    if ($args['available_for_groups'] === '1') {
+      if (empty($_GET['group_id'])) {
+        return 'This page needs a group_id URL parameter.';
+      }
+      $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
+      $isMember = group_authorise_form($args, $readAuth);
+      // If groups support is enabled, then do a report to check access.
+      $argArray = [];
+      group_apply_report_limits($argArray, $readAuth, $nid, $isMember);
+      $accessCheck = report_helper::get_report_data(array(
+        'readAuth' => $readAuth,
+        'dataSource' => 'library/occurrences/filterable_explore_list',
+        'extraParams' => get_options_array_with_user_data($argArray['param_presets']) +
+          array('occurrence_id' => $_GET['occurrence_id'], 'wantCount' => '1', 'wantRecords' => 0),
+      ));
+      if ($accessCheck['count'] === 0) {
+        return 'You do not have permission to view this record.';
+      }
     }
+    data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.user_id = "' . hostsite_get_user_field('indicia_user_id') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url(NULL, 'occurrence') .
+      "&sharing=$args[sharing]\";\n";
+    return parent::get_form($args, $nid);
   }
 
   /**
@@ -284,7 +287,6 @@ Record ID',
    *   The output freeform report.
    */
   protected static function get_control_recorddetails($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
     $options = array_merge(array(
       'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens'
     ), $options);
@@ -666,7 +668,6 @@ Record ID',
    *   The determinations report grid.
    */
   protected static function get_control_previousdeterminations($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
     $options = array_merge(array(
       'report' => 'library/determinations/determinations_list'
     ));
@@ -698,7 +699,6 @@ Record ID',
    * @throws \exception
    */
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
     $options = array_merge(array(
       'dataSource' => 'library/occurrence_associations/filterable_explore_list',
       'itemsPerPage' => 100,
@@ -756,7 +756,6 @@ Record ID',
   }
 
   protected static function get_control_block($auth, $args, $tabalias, $options) {
-    iform_load_helpers(array('report_helper'));
     if (!empty($options['accepted'])) {
       self::load_record($auth, $args);
       if (!preg_match('/^Accepted/', self::$record['record_status'])) {
