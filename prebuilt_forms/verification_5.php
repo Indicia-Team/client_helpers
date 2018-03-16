@@ -1217,7 +1217,7 @@ HTML
       $r .= '<fieldset id="metadata"><legend>' . lang::get('Record metadata') . '</legend>';
       foreach ($fields as $idx => $field) {
         $safeTitle = htmlspecialchars($field['title']);
-        $safeVal = empty($occMetadata[$field['title']]) ? 'noVal' : htmlspecialchars($occMetadata[$field['title']]);
+        $safeVal = empty($occMetadata[$field['title']]) ? '' : htmlspecialchars($occMetadata[$field['title']]);
         $r .= "<div><label>$safeTitle";
         if (empty($field['values'])) {
           $r .= "<input class=\"metadata-field\" type=\"text\" data-title=\"$safeTitle\" value=\"$safeVal\"/>";
