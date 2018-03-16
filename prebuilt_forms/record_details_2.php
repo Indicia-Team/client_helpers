@@ -266,8 +266,13 @@ Record ID',
       $accessCheck = report_helper::get_report_data(array(
         'readAuth' => $readAuth,
         'dataSource' => 'library/occurrences/filterable_explore_list',
-        'extraParams' => get_options_array_with_user_data($argArray['param_presets']) +
-          array('occurrence_id' => $_GET['occurrence_id'], 'wantCount' => '1', 'wantRecords' => 0),
+        'extraParams' => get_options_array_with_user_data($argArray['param_presets']) + array(
+          'occurrence_id' => $_GET['occurrence_id'],
+          'wantCount' => '1',
+          'wantRecords' => 0,
+          'confidential' => $args['allow_confidential'] ? 'all' : 'f',
+          'release_status' => $args['allow_unreleased'] ? 'A' : 'R',
+        ),
       ));
       if ($accessCheck['count'] === 0) {
         return 'You do not have permission to view this record.';
