@@ -161,7 +161,7 @@ Record ID',
           'description' => 'Default path to use to the edit form for old records which did not have their input form recorded in the database. Specify the ' .
               'path to a general purpose list entry form.',
           'type' => 'text_input',
-          'group' => 'Path configuration'
+          'group' => 'Path configuration',
         ),
         array(
           'name' => 'explore_url',
@@ -191,7 +191,7 @@ Record ID',
           'type' => 'string',
           'required' => FALSE,
           'default' => '',
-          'group' => 'Path configuration'
+          'group' => 'Path configuration',
         ),
         array(
           'name' => 'map_geom_precision',
@@ -201,7 +201,7 @@ Record ID',
           'type' => 'select',
           'options' => array('1' => '1km', '2' => '2km', '10' => '10km'),
           'required' => FALSE,
-          'group' => 'Other Map Settings'
+          'group' => 'Other Map Settings',
         ),
         array(
           'name' => 'allow_confidential',
@@ -209,7 +209,7 @@ Record ID',
           'description' => 'Tick this box to enable viewing of confidential records. Ensure that the page is only ' .
             'available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'allow_sensitive_full_precision',
@@ -217,7 +217,7 @@ Record ID',
           'description' => 'Tick this box to enable viewing of sensitive records at full precision records. Ensure ' .
             'that the page is only available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'allow_unreleased',
@@ -260,7 +260,7 @@ Record ID',
       }
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
       $isMember = group_authorise_form($args, $readAuth);
-      // If groups support is enabled, then do a report to check access.
+      // If groups support is enabled, then do a count report to check access.
       $argArray = [];
       group_apply_report_limits($argArray, $readAuth, $nid, $isMember);
       $accessCheck = report_helper::get_report_data(array(
@@ -353,7 +353,7 @@ Record ID',
         $anchorfrom = $field === 'licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
         $anchorto = $field === 'licence_code' ? '</a>' : '';
         $value = lang::get(self::$record[$field]);
-        // italices latin names
+        // Italices latin names.
         if (($field === 'taxon' && self::$record['language_iso'] === 'lat')
             || ($field === 'preferred_taxon' && self::$record['preferred_language_iso'] === 'lat')) {
           $value = "<em>$value</em>";
@@ -377,7 +377,7 @@ Record ID',
     if ($created !== $updated) {
       $dateInfo .= lang::get(' and last updated on {1}', $updated);
     }
-    if ($test===in_array('submission date', $fieldsLower)) {
+    if ($test === in_array('submission date', $fieldsLower)) {
       $details_report .= str_replace(array('{caption}', '{value|escape}', '{class}', '{anchorfrom}', '{anchorto}'),
           array(lang::get('Submission date'), $dateInfo, '', '', ''), $attrsTemplate);
     }
@@ -433,25 +433,24 @@ Record ID',
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
     $options = array_merge(array(
-        'itemsPerPage' => 20,
-        'imageSize' => 'thumb',
-        'class' => 'detail-gallery',
-        'title' => lang::get('Photos and Media')
+      'itemsPerPage' => 20,
+      'imageSize' => 'thumb',
+      'class' => 'detail-gallery',
+      'title' => lang::get('Photos and Media'),
     ), $options);
     $settings = array(
-        'table' => 'occurrence_image',
-        'key' => 'occurrence_id',
-        'value' => $_GET['occurrence_id']
+      'table' => 'occurrence_image',
+      'key' => 'occurrence_id',
+      'value' => $_GET['occurrence_id'],
     );
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
-   * Draw Sample Photos section of the page.
-   * @return string The output report grid.
+   * Render Sample Photos section of the page.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output report grid.
    */
   protected static function get_control_samplephotos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
@@ -459,7 +458,7 @@ Record ID',
         'itemsPerPage' => 20,
         'imageSize' => 'thumb',
         'class' => 'detail-gallery',
-        'title' => lang::get('Sample Photos and Media')
+        'title' => lang::get('Sample Photos and Media'),
     ), $options);
     $occurrence = data_entry_helper::get_population_data(array(
       'table' => 'occurrence',
@@ -468,17 +467,16 @@ Record ID',
     $settings = array(
         'table' => 'sample_image',
         'key' => 'sample_id',
-        'value' => $occurrence[0]['sample_id']
+        'value' => $occurrence[0]['sample_id'],
     );
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
 
   /**
    * Draw Parent Samples Photos section of the page.
-   * @return string The output report grid.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output report grid.
    */
   protected static function get_control_parentsamplephotos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
@@ -499,7 +497,7 @@ Record ID',
     $settings = array(
         'table' => 'sample_image',
         'key' => 'sample_id',
-        'value' => $sample[0]['parent_id']
+        'value' => $sample[0]['parent_id'],
     );
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
@@ -576,11 +574,10 @@ Record ID',
   }
 
   /**
-   * Draw Map section of the page.
-   * @return string The output map panel.
+   * Render the Map section of the page.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output map panel.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper'));
@@ -617,7 +614,7 @@ Record ID',
     $params = [
       'occurrence_id' => $_GET['occurrence_id'],
       'sortdir' => 'DESC',
-      'orderby' => 'updated_on'
+      'orderby' => 'updated_on',
     ];
     if (!$args['allow_confidential']) {
       $params['confidential'] = 'f';
@@ -626,7 +623,7 @@ Record ID',
       'table' => 'occurrence_comment',
       'extraParams' => $auth['read'] + $params,
       'nocache' => TRUE,
-      'sharing' => $args['sharing']
+      'sharing' => $args['sharing'],
     ));
     $r .= '<div id="comment-list">';
     if (count($comments) === 0) {
@@ -720,7 +717,7 @@ Record ID',
       'autoParamsForm' => FALSE,
       'extraParams' => array(
         'occurrence_id' => $_GET['occurrence_id'],
-        'sharing' => $args['sharing']
+        'sharing' => $args['sharing'],
       )
     )) . '</div>';
   }
@@ -812,8 +809,8 @@ Record ID',
       'buttons' => array(
         'edit',
         'explore',
-        'species details'
-      )
+        'species details',
+      ),
     ));
     $r = '';
     foreach ($options['buttons'] as $button) {
@@ -919,6 +916,7 @@ Record ID',
    *   The alias of the tab this appears on.
    * @param array $options
    *   Options configured for this control.
+   *
    * @return string
    *   HTML for the button.
    */
@@ -960,7 +958,7 @@ Record ID',
       lang::get("{1} week ago"),
       lang::get("{1} month ago"),
       lang::get("{1} year ago"),
-      lang::get("{1} decade ago")
+      lang::get("{1} decade ago"),
     );
     $periodsPlural = array(
       lang::get("{1} seconds ago"),
@@ -970,7 +968,7 @@ Record ID',
       lang::get("{1} weeks ago"),
       lang::get("{1} months ago"),
       lang::get("{1} years ago"),
-      lang::get("{1} decades ago")
+      lang::get("{1} decades ago"),
     );
     $lengths = array("60", "60", "24", "7", "4.35", "12", "10");
 
