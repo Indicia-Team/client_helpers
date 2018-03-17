@@ -336,6 +336,13 @@ class iform_species_details extends iform_dynamic {
       else
         self::$commonNames[] = $speciesData['taxon'];
     }
+    /* Fix a problem on the fungi-without-borders site where providing a
+       taxa_taxon_list_id doesn't work (the system would try and return all records). 
+       This makes sense because the cache_table doesn't have a taxa_taxon_list_id. 
+       However, I am not sure why this is fine on other sites when the $extraParams
+       are the same. At worst these two lines make the page more robust. */
+    if (!empty($extraParams['taxa_taxon_list_id']))
+      $extraParams['id']=$extraParams['taxa_taxon_list_id'];
     $taxon = data_entry_helper::get_population_data(array(
       'table' => 'cache_taxa_taxon_list',
       'extraParams'=>$auth['read']+$extraParams
