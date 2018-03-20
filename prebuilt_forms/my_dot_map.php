@@ -402,7 +402,7 @@ class iform_my_dot_map {
       if ($args['hide_grid'] == FALSE) {
         // Now output a grid of the occurrences that were just saved.
         $cols = [
-          'id' => 'ID',
+          'occurrence_id' => 'ID',
           'taxon' => 'Species',
           'preferred_taxon' => 'Latin name',
           'abundance' => 'Abundance',
