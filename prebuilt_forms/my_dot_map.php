@@ -64,7 +64,7 @@ class iform_my_dot_map {
           'required' => FALSE,
           'default' => FALSE,
         ),
-        // Distribution layer 1
+        // Distribution layer 1.
         array(
           'name' => 'wms_dist_1_title',
           'caption' => 'Layer Caption',
@@ -72,7 +72,7 @@ class iform_my_dot_map {
             . 'replacement strings {species} or {survey}.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 1' ,
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_internal',
@@ -80,7 +80,7 @@ class iform_my_dot_map {
           'description' => 'Check this box if layer 1 uses a GeoServer instance to access the Indicia database.',
           'type' => 'checkbox',
           'group' => 'Distribution Layer 1' ,
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_url',
@@ -89,7 +89,7 @@ class iform_my_dot_map {
               'if using GeoServer to access this instance of Indicia.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 1',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_layer',
@@ -99,7 +99,7 @@ class iform_my_dot_map {
             . 'prefix is given here.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 1',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_filter_against',
@@ -109,7 +109,7 @@ class iform_my_dot_map {
           'type' => 'select',
           'options' => $filters,
           'group' => 'Distribution Layer 1',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_status_filter',
@@ -119,7 +119,7 @@ class iform_my_dot_map {
           'type' => 'list',
           'options' => $statuses,
           'group' => 'Distribution Layer 1',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_filter_field',
@@ -129,7 +129,7 @@ class iform_my_dot_map {
             . 'this instance of Indicia.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 1',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_style',
@@ -138,7 +138,7 @@ class iform_my_dot_map {
             . 'to use). This style must exist, and the setting is case sensitive.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 1',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_1_opacity',
@@ -148,7 +148,7 @@ class iform_my_dot_map {
             . 'printout may not render correctly.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 1',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         // Distribution layer 2
         array(
@@ -158,7 +158,7 @@ class iform_my_dot_map {
             . 'replacement strings {species} or {survey}.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 2' ,
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_internal',
@@ -166,7 +166,7 @@ class iform_my_dot_map {
           'description' => 'Check this box if layer 2 uses a GeoServer instance to access the Indicia database.',
           'type' => 'checkbox',
           'group' => 'Distribution Layer 2' ,
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_url',
@@ -175,7 +175,7 @@ class iform_my_dot_map {
               'if using GeoServer to access this instance of Indicia.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 2',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_layer',
@@ -185,18 +185,18 @@ class iform_my_dot_map {
             . 'prefix is given here.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 2',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_filter_against',
           'caption' => 'What to Filter Against?',
           'description' => 'Select what to match this layer against. The layer shown will be those points which match '
-            . 'the previously saved record '.
+            . 'the previously saved record ' .
             'on the selected value.',
           'type' => 'select',
           'options' => $filters,
           'group' => 'Distribution Layer 2',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_status_filter',
@@ -206,7 +206,7 @@ class iform_my_dot_map {
           'type' => 'list',
           'options' => $statuses,
           'group' => 'Distribution Layer 2',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_filter_field',
@@ -216,7 +216,7 @@ class iform_my_dot_map {
             . 'this instance of Indicia.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 2',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_style',
@@ -225,7 +225,7 @@ class iform_my_dot_map {
             . 'to use). This style must exist, and the setting is case sensitive.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 2',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_2_opacity',
@@ -235,7 +235,7 @@ class iform_my_dot_map {
             . 'printout may not render correctly.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 2',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         // Distribution layer 3
         array(
@@ -245,7 +245,7 @@ class iform_my_dot_map {
             . 'replacement strings {species} or {survey}.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 3' ,
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_internal',
@@ -253,7 +253,7 @@ class iform_my_dot_map {
           'description' => 'Check this box if layer 3 uses a GeoServer instance to access the Indicia database.',
           'type' => 'checkbox',
           'group' => 'Distribution Layer 3' ,
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_url',
@@ -262,7 +262,7 @@ class iform_my_dot_map {
             . 'this instance of Indicia.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 3',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_layer',
@@ -272,7 +272,7 @@ class iform_my_dot_map {
             . 'prefix is given here.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 3',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_filter_against',
@@ -282,7 +282,7 @@ class iform_my_dot_map {
           'type' => 'select',
           'options' => $filters,
           'group' => 'Distribution Layer 3',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_status_filter',
@@ -292,7 +292,7 @@ class iform_my_dot_map {
           'type' => 'list',
           'options' => $statuses,
           'group' => 'Distribution Layer 3',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_filter_field',
@@ -302,7 +302,7 @@ class iform_my_dot_map {
             . 'this instance of Indicia.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 3',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_style',
@@ -311,7 +311,7 @@ class iform_my_dot_map {
             . 'to use).',
           'type' => 'textfield',
           'group' => 'Distribution Layer 3',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'wms_dist_3_opacity',
@@ -321,7 +321,7 @@ class iform_my_dot_map {
             . 'printout may not render correctly.',
           'type' => 'textfield',
           'group' => 'Distribution Layer 3',
-          'required' => FALSE
+          'required' => FALSE,
         ),
         array(
           'name' => 'add_another_link',
@@ -330,7 +330,7 @@ class iform_my_dot_map {
             . 'replacements #taxon_meaning_id# or #external_key# to identify the recorded taxon, though note that '
             . 'these will only work if a single taxon was recorded.',
           'type' => 'textfield',
-          'required' => FALSE
+          'required' => FALSE,
         ),
       )
     );
@@ -338,8 +338,9 @@ class iform_my_dot_map {
 
   /**
    * Return the form title.
-   * @return string The title of the form.
-   * @todo: Implement this method
+   *
+   * @return string
+   *   The title of the form.
    */
   public static function get_title() {
     return 'My dot map';
@@ -347,8 +348,9 @@ class iform_my_dot_map {
 
   /**
    * Return the generated form output.
-   * @return Form HTML.
-   * @todo: Implement this method
+   *
+   * @return string
+   *   Form HTML.
    */
   public static function get_form($args) {
     global $indicia_templates;
@@ -394,20 +396,39 @@ class iform_my_dot_map {
       if ($layerName) {
         $options['layers'][] = $layerName;
       }
-      // This is not a map used for input
+      // This is not a map used for input.
       $options['editLayer'] = FALSE;
 
       if ($args['hide_grid'] == FALSE) {
         // Now output a grid of the occurrences that were just saved.
-        $r .= "<table class=\"submission table\"><thead><tr><th>" . lang::get('Species')."</th><th>" . lang::get('Latin Name') .
-            "</th><th>" . lang::get('Abundance') . "</th><th>" . lang::get('Date') . "</th><th>" . lang::get('Spatial Ref') . "</th>" .
-            "</th><th>" . lang::get('Comment') . "</th></tr></thead>\n";
-        $r .= "<tbody>\n";
-        foreach ($occurrence as $record) {
-          $r .= '<tr class="biota"><td>' . $record['taxon'] . '</td><td class="binomial"><em>' . $record['preferred_taxon'] . '</em></td><td>'
-              . $record['abundance'] . '</td><td>' . $record['date'] . '</td><td>' . $record['entered_sref'] . '</td><td>' . $record['comment'] . "</td></tr>\n";
+        $cols = [
+          'id' => 'ID',
+          'taxon' => 'Species',
+          'preferred_taxon' => 'Latin name',
+          'abundance' => 'Abundance',
+          'date' => 'Date',
+          'entered_sref' => 'Spatial Ref',
+          'comment' => 'Comment',
+        ];
+
+        $r .= "<table class=\"submission table\">\n  <thead><tr>\n";
+        foreach ($cols as $field => $title) {
+          $r .= '    <th>' . lang::get($title) . "</th>\n";
         }
-        $r .= "</tbody></table>\n";
+        $r .= "  </tr></thead>\n  <tbody>\n";
+        foreach ($occurrence as $record) {
+          $r .= "    <tr class=\"biota\">\n";
+          foreach ($cols as $field => $title) {
+            if ($field === 'preferred_taxon') {
+              $r .= "      <td class=\"binomial\"><em>$record[preferred_taxon]</em></td>\n";
+            }
+            else {
+              $r .= '      <td>' . $record[$field] . "</td>\n";
+            }
+          }
+          $r .= "    </tr>";
+        }
+        $r .= "  </tbody>\n</table>\n";
       }
     }
     if (!empty($args['add_another_link'])) {
@@ -438,7 +459,6 @@ class iform_my_dot_map {
   /**
    * Perform replacements on the legend titles. Replaces {species} with the species name and
    * {survey} with the survey name,
-   * @access private
    */
   private static function prepare_layer_titles(&$args, $occurrences) {
     if (count($occurrences) <= 4) {
