@@ -1830,11 +1830,11 @@ JS;
       'clickable' => true,
       'clickableLayersOutputMode' => 'popup',
       'clickableLayersOutputDiv' => '',
-      'displaySymbol'=>'vector',
-      'ajax'=>false,
-      'extraParams'=>'',
-      'featureDoubleOutlineColour'=>'',
-      'dataSourceLoRes'=>'',
+      'displaySymbol' => 'vector',
+      'ajax' => false,
+      'extraParams' => '',
+      'featureDoubleOutlineColour' => '',
+      'dataSourceLoRes' => '',
     ), $options);
     $options = self::get_report_grid_options($options);
 
@@ -2073,30 +2073,50 @@ JS;
 
         if ($options['ajax']) {
           // Output scripts to get map loading by Ajax.
-          self::$javascript .= "mapInitialisationHooks.push(function(div) {\n".
-            "  var wantToMap = typeof indiciaData.filter==='undefined' || typeof indiciaData.filter.def.indexed_location_id==='undefined' || indiciaData.filter.def.indexed_location_id==='';\n" .
-            "  if (wantToMap && typeof indiciaData.reports!==\"undefined\") {\n" .
-            "    $.each(indiciaData.reports.".$options['reportGroup'].", function(idx, grid) {\n" .
-            "      grid.mapRecords('".$options['dataSource']."', '".$options['dataSourceLoRes']."');\n" .
-            "      return false;\n" . // only need the first grid to draw the map.
-            "    });\n" .
-            "  }\n";
-          if ($options['dataSourceLoRes']) {
-            // hook up a zoom and pan handler so we can switch reports
-            self::$javascript .= "  div.map.events.on({'moveend': function(){\n".
-              "    if (!indiciaData.disableMapDataLoading) {\n" .
-              "      $.each(indiciaData.reports.".$options['reportGroup'].", function(idx, grid) {\n" .
-              "        indiciaData.selectedRows=[];\n".
-              "        $.each($(grid).find('tr.selected'), function(idx, tr) {\n".
-              "          indiciaData.selectedRows.push($(tr).attr('id').replace(/^row/, ''));\n".
-              "        });\n".
-              "        grid.mapRecords('".$options['dataSource']."', '".$options['dataSourceLoRes']."', true);\n" .
-              "        return false;\n" . // only need the first grid to draw the map.
-              "      });\n".
-		          "    }\n".
-              "  }});\n";
-          }
-          self::$javascript .= "});\n";
+          $mapDataSource = json_encode([
+            'fullRes' => $options['dataSource'],
+            'loRes' => $options['dataSourceLoRes']
+          ]);
+          self::$javascript .= <<<JS
+indiciaData.mapDataSource = $mapDataSource;
+mapInitialisationHooks.push(function(div) {
+  var wantToMap =
+    typeof indiciaData.filter === 'undefined' ||
+    typeof indiciaData.filter.def.indexed_location_id === 'undefined' ||
+    indiciaData.filter.def.indexed_location_id === '';
+  // Find the best report grid to use as a map report controller.
+  $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
+    if (typeof indiciaData.mapReportControllerGrid === 'undefined') {
+      // Use the first grid to contol the map report...
+      indiciaData.mapReportControllerGrid = grid;
+    }
+    if (grid[0].settings.linkFilterToMap) {
+      // ...Unless there is a better filter linked grid.
+      indiciaData.mapReportControllerGrid = grid;
+      // Only need one grid to draw the map.
+      return false;
+    }
+  });
+  if (wantToMap && typeof indiciaData.reports !== 'undefined') {
+    if (typeof indiciaData.mapReportControllerGrid !== 'undefined') {
+      indiciaData.mapReportControllerGrid.mapRecords();
+    }
+  }
+  if (indiciaData.mapDataSource.loRes !== '') {
+    // hook up a zoom and pan handler so we can switch reports.
+    div.map.events.on({'moveend': function() {
+      if (!indiciaData.disableMapDataLoading) {
+        indiciaData.selectedRows=[];
+        $.each($(indiciaData.mapReportControllerGrid).find('tr.selected'), function(idx, tr) {
+          indiciaData.selectedRows.push($(tr).attr('id').replace(/^row/, ''));
+        });
+        indiciaData.mapReportControllerGrid.mapRecords(true);
+      }
+    }});
+  }
+});
+
+JS;
         }
         else {
           // Not Ajax so output data to be loaded.

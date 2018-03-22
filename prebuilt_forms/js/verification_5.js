@@ -986,12 +986,12 @@ indiciaData.rowIdToReselect = false;
           if (reload) {
             // reload the report grid (but only if not already done)
             this.ajaxload();
-            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
-              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
-            }
           }
         });
       });
+      if (typeof indiciaData.mapdiv !== 'undefined') {
+        indiciaData.mapReportControllerGrid.mapRecords();
+      }
     }
   };
 
@@ -1026,12 +1026,12 @@ indiciaData.rowIdToReselect = false;
           if (reload) {
             // reload the report grid (but only if not already done)
             this.ajaxload();
-            if (grid.settings.linkFilterToMap && typeof indiciaData.mapdiv !== 'undefined') {
-              this.mapRecords(grid.settings.mapDataSource, grid.settings.mapDataSourceLoRes);
-            }
           }
         });
       });
+      if (typeof indiciaData.mapdiv !== 'undefined') {
+        indiciaData.mapReportControllerGrid.mapRecords();
+      }
     }
   };
 
