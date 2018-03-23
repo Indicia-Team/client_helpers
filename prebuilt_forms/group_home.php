@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,36 +14,31 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers
  */
 
-require_once('dynamic_report_explorer.php');
-require_once('includes/report_filters.php');
-require_once('includes/groups.php');
+require_once 'dynamic_report_explorer.php';
+require_once 'includes/report_filters.php';
+require_once 'includes/groups.php';
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * A page for editing or creating a user group report page.
  */
 class iform_group_home extends iform_dynamic_report_explorer {
+
   public static function get_parameters() {
     $retVal = array_merge(
       parent::get_parameters(),
       array(
         array(
-          'name'=>'hide_standard_param_filter',
-          'caption'=>'Hide filter in standard_params control?',
-          'description'=>'Hide the filter displayed when the standard_params control is specified. Still allows
+          'name' => 'hide_standard_param_filter',
+          'caption' => 'Hide filter in standard_params control?',
+          'description' => 'Hide the filter displayed when the standard_params control is specified. Still allows
             standard params such as the release_status_limiter to be used with the report.',
-          'type'=>'boolean',
-          'required'=>false,
+          'type' => 'boolean',
+          'required' => FALSE,
           'group' => 'Other Settings',
         ),
       )
@@ -52,16 +48,18 @@ class iform_group_home extends iform_dynamic_report_explorer {
 
   /**
    * Return the form metadata.
-   * @return array The definition of the form.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_group_home_definition() {
     return array(
-      'title'=>'Group report page',
+      'title' => 'Group report page',
       'category' => 'Recording groups',
-      'description'=>'A report page for recording groups. This is based on a dynamic report explorer, but it applies '.
+      'description' => 'A report page for recording groups. This is based on a dynamic report explorer, but it applies '.
           'an automatic filter to the page output based on a group_id URL parameter.',
-      'supportsGroups'=>true,
-      'recommended' => true
+      'supportsGroups' => TRUE,
+      'recommended' => TRUE,
     );
   }
 

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,31 +14,29 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers
  */
 
 /**
  * List of methods that can be used for a prebuilt form report configuration.
- * @package Client
- * @subpackage PrebuiltForms.
  */
 
 /**
  * Return a minimal list of parameter definitions for a form that includes definition of a report.
- * @return array List of parameter definitions.
+ *
+ * @return array
+ *   List of parameter definitions.
  */
 function iform_report_get_minimal_report_parameters() {
   return array(
     array(
-      'name'=>'report_name',
-      'caption'=>'Report Name',
-      'description'=>'Select the report to provide the output for this page.',
-      'type'=>'report_helper::report_picker',
-      'group'=>'Report Settings'
+      'name' => 'report_name',
+      'caption' => 'Report Name',
+      'description' => 'Select the report to provide the output for this page.',
+      'type' => 'report_helper::report_picker',
+      'group' => 'Report Settings'
     ), array(
       'name' => 'param_presets',
       'caption' => 'Preset parameter values',
@@ -48,8 +47,8 @@ function iform_report_get_minimal_report_parameters() {
           'Finally, use [*] to set a report parameter to 1 or 0 depending on whether the user has the permission, replacing * with the permission name. '.
           'Parameters with preset values are not shown in the parameters form and therefore can\'t be overridden by the user.',
       'type' => 'textarea',
-      'required' => false,
-      'group'=>'Report Settings'
+      'required' => FALSE,
+      'group' => 'Report Settings'
     ), array(
       'name' => 'param_defaults',
       'caption' => 'Default parameter values',
@@ -60,16 +59,16 @@ function iform_report_get_minimal_report_parameters() {
           'Finally, use [*] to set a report parameter to 1 or 0 depending on whether the user has the permission, replacing * with the permission name. '.
           'Unlike preset parameter values, parameters referred to by default parameter values are displayed in the parameters form and can therefore be changed by the user.',
       'type' => 'textarea',
-      'required' => false,
-      'group'=>'Report Settings'
+      'required' => FALSE,
+      'group' => 'Report Settings'
     ), array(
       'name' => 'param_ignores',
       'caption' => 'Default params to exclude from the form',
       'description' => 'Provide a list of the parameter names which are in the Default Parameter Values but should not appear in the parameters form. An example usage of this '.
           'is to provide parameters that can be overridden via a URL parameter.',
       'type' => 'textarea',
-      'required' => false,
-      'group'=>'Report Settings'
+      'required' => FALSE,
+      'group' => 'Report Settings'
     ), array(
       'name' => 'items_per_page',
       'caption' => 'Items per page',
@@ -77,7 +76,7 @@ function iform_report_get_minimal_report_parameters() {
       'type' => 'int',
       'default' => 20,
       'required' => true,
-      'group'=>'Report Settings'
+      'group' => 'Report Settings'
     ),
   );
 }
@@ -98,12 +97,12 @@ function iform_report_get_report_parameters() {
         'type' => 'select',
         'required' => true,
         'options' => array(
-          'default'=>'Include a parameters form and output',
-          'form'=>'Parameters form only - the output will be displayed elsewhere.',
-          'output'=>'Output only - the params form will be output elsewhere.',
+          'default' => 'Include a parameters form and output',
+          'form' => 'Parameters form only - the output will be displayed elsewhere.',
+          'output' => 'Output only - the params form will be output elsewhere.',
         ),
         'default' => 'default',
-        'group'=>'Report Settings'
+        'group' => 'Report Settings'
       ), array(
         'name' => 'param_lookup_extras',
         'caption' => 'Params Lookup Extras',
@@ -113,8 +112,8 @@ function iform_report_get_report_parameters() {
       		             'but when used with a report (rather than a direct table), the report must be able to handle it as a single string. Care should be '.
       		             'taken with string values - depending on the report, they may need to be delimited by single inverted commas.',
         'type' => 'textarea',
-        'required' => false,
-        'group'=>'Report Settings'
+        'required' => FALSE,
+        'group' => 'Report Settings'
       ), array(
         'name' => 'report_group',
         'caption' => 'Report group',
@@ -130,17 +129,17 @@ function iform_report_get_report_parameters() {
           'The parameters are saved site wide, so if several reports share the same value and the same report group then the parameter '.
           'settings will be shared across the reports even if they are on different pages of the site. This functionality '.
           'requires cookies to be enabled on the browser.',
-        'type'=>'text_input',
-        'required'=>false,
+        'type' => 'text_input',
+        'required'=>FALSE,
         'default' => '',
-        'group'=>'Report Settings'
+        'group' => 'Report Settings'
       ), array(
         'name' => 'params_in_map_toolbar',
         'caption' => 'Params in map toolbar',
         'description' => 'Should the report input parameters be inserted into a map toolbar instead of displaying a panel of input parameters at the top? '.
             'This is only useful when there is a map output onto the page which has a toolbar in the top or bottom position.',
         'type' => 'checkbox',
-        'required' => false,
+        'required' => FALSE,
         'group' => 'Report Settings'
       ), array(
         'name' => 'row_class',
@@ -149,7 +148,7 @@ function iform_report_get_report_parameters() {
             'classes from field values, e.g. to colour rows in the grid according to the data.',
         'type' => 'text_input',
         'default' => '',
-        'required' => 'false',
+        'required' => 'FALSE',
         'group' => 'Report Settings'
       ), array(
         'name' => 'refresh_timer',
@@ -157,71 +156,79 @@ function iform_report_get_report_parameters() {
         'description' => 'Set this value to the number of seconds you want to elapse before the report will be automatically reloaded, useful for '.
         'displaying live data updates at BioBlitzes. Combine this with Page to reload to define a sequence of pages that load in turn.',
         'type' => 'int',
-        'required' => false,
-        'group'=>'Page Refreshing'
+        'required' => FALSE,
+        'group' => 'Page Refreshing'
       ), array(
         'name' => 'load_on_refresh',
         'caption' => 'Page to reload',
         'description' => 'Provide the full URL of a page to reload after the number of seconds indicated above.',
         'type' => 'string',
-        'required' => false,
-        'group'=>'Page Refreshing'
+        'required' => FALSE,
+        'group' => 'Page Refreshing'
       )
     )
   );
 }
 
 /**
- * Retreives the options array required to set up a report according to the default
- * report parameters.
+ * Retrieves the options array required to set up a report.
+ *
+ * Uses to the report settings provided in the configuration of a prebuilt form
+ * to determin the settings required for a report.
+ *
  * @global <type> $indicia_templates
  * @param string $args
  * @param <type> $readAuth
  * @return string
  */
 function iform_report_get_report_options($args, $readAuth) {
-  // handle auto_params_form for backwards compatibility
+  // Handle auto_params_form for backwards compatibility.
   if (empty($args['output']) && !empty($args['auto_params_form'])) {
     if (!$args['auto_params_form'])
-      $args['output']='output';
+      $args['output'] = 'output';
   }
-  if (isset($args['map_toolbar_pos']) && $args['map_toolbar_pos']=='map')
+  if (isset($args['map_toolbar_pos']) && $args['map_toolbar_pos'] === 'map')
     // report params cannot go in the map toolbar if displayed as overlay on map
-    $args['params_in_map_toolbar']=false;
+    $args['params_in_map_toolbar'] = FALSE;
   require_once('user.php');
   $presets = get_options_array_with_user_data($args['param_presets']);
   $defaults = get_options_array_with_user_data($args['param_defaults']);
   $ignores = isset($args['param_ignores']) ? helper_base::explode_lines($args['param_ignores']) : array();
   $param_lookup_extras = array();
-  if(isset($args['param_lookup_extras'])) {
+  if (isset($args['param_lookup_extras'])) {
     $paramlx = helper_base::explode_lines($args['param_lookup_extras']);
     foreach ($paramlx as $param) {
       if (!empty($param)) {
         $tokens = explode(':', $param, 2);
-        if (count($tokens)==2) {
+        if (count($tokens) === 2) {
           $tokens2 = explode('=', $tokens[1], 2);
-          if (count($tokens2)==2) {
-            if(!isset($param_lookup_extras[$tokens[0]])) $param_lookup_extras[$tokens[0]] = array();
+          if (count($tokens2) === 2) {
+            if (!isset($param_lookup_extras[$tokens[0]])) $param_lookup_extras[$tokens[0]] = array();
             $param_lookup_extras[$tokens[0]][$tokens2[0]]=explode(',', $tokens2[1]);
-          } else {
+          }
+          else {
             throw new Exception('One of the param_lookup_extras defined for this page are not of the form key:param=value[,value...] : '.$param.'. (No equals)');
           }
-        } else {
-            throw new Exception('One of the param_lookup_extras defined for this page are not of the form key:param=value[,value...] : '.$param.'. (No colon)');
+        }
+        else {
+          throw new Exception('One of the param_lookup_extras defined for this page are not of the form key:param=value[,value...] : '.$param.'. (No colon)');
         }
       }
     }
-  } else $param_lookup_extras = array();
-  	
-  // default columns behaviour is to just include anything returned by the report
+  }
+  else {
+    $param_lookup_extras = array();
+  }
+
+  // Default columns behaviour is to just include anything returned by the report.
   $columns = array();
-  // this can be overridden
+  // This can be overridden.
   if (isset($args['columns_config']) && !empty($args['columns_config']))
     $columns = json_decode($args['columns_config'], true);
-  // do the form arguments request that certain columns are globally skipped?
+  // Do the form arguments request that certain columns are globally skipped?
   if (!empty($args['skipped_report_columns'])) {
-    // look for configured columns that should be skipped
-    foreach($columns as &$column) {
+    // Look for configured columns that should be skipped.
+    foreach ($columns as &$column) {
       if (isset($column['fieldname'])) {
         $index = array_search($column['fieldname'], $args['skipped_report_columns']);
         if ($index !== FALSE) {
@@ -232,10 +239,10 @@ function iform_report_get_report_options($args, $readAuth) {
         }
       }
     }
-    // add configurations to hide any remaining columns that should be skipped
+    // Add configurations to hide any remaining columns that should be skipped.
     if (!empty($args['skipped_report_columns'])) {
       foreach ($args['skipped_report_columns'] as $fieldname) {
-        $columns[] = array('fieldname' => $fieldname, 'visible' => false);
+        $columns[] = array('fieldname' => $fieldname, 'visible' => FALSE);
       }
     }
   }
@@ -253,13 +260,13 @@ function iform_report_get_report_options($args, $readAuth) {
     'ignoreParams' => $ignores,
     'param_lookup_extras' => $param_lookup_extras,
     'galleryColCount' => isset($args['gallery_col_count']) ? $args['gallery_col_count'] : 1,
-    'headers' => isset($args['gallery_col_count']) && $args['gallery_col_count']>1 ? false : true,
-    'paramsInMapToolbar'=>isset($args['params_in_map_toolbar']) ? $args['params_in_map_toolbar'] : false    
+    'headers' => isset($args['gallery_col_count']) && $args['gallery_col_count'] > 1 ? FALSE : TRUE,
+    'paramsInMapToolbar' => isset($args['params_in_map_toolbar']) ? $args['params_in_map_toolbar'] : FALSE
   );
-   // put each param control in a div, which makes it easier to layout with CSS
+   // Put each param control in a div, which makes it easier to layout with CSS.
   if (!isset($args['params_in_map_toolbar']) || !$args['params_in_map_toolbar']) {
-    $reportOptions['paramPrefix']='<div id="container-{fieldname}" class="param-container">';
-    $reportOptions['paramSuffix']='</div>';
+    $reportOptions['paramPrefix'] = '<div id="container-{fieldname}" class="param-container">';
+    $reportOptions['paramSuffix'] = '</div>';
   }
   // If in Drupal, allow the params panel to collapse.
   if (function_exists('drupal_add_js')) {
@@ -268,29 +275,31 @@ function iform_report_get_report_options($args, $readAuth) {
       $reportOptions['fieldsetClass'] = 'collapsible';
     }
   }
-  
-  if (empty($args['output']) || $args['output']=='default') {
-    $reportOptions['autoParamsForm'] = true;
-  } elseif ($args['output']=='form') {
-    $reportOptions['autoParamsForm'] = true;
-    $reportOptions['paramsOnly'] = true;
-  } else {
-    $reportOptions['autoParamsForm'] = false;
+
+  if (empty($args['output']) || $args['output'] === 'default') {
+    $reportOptions['autoParamsForm'] = TRUE;
+  }
+  elseif ($args['output']=='form') {
+    $reportOptions['autoParamsForm'] = TRUE;
+    $reportOptions['paramsOnly'] = TRUE;
+  }
+  else {
+    $reportOptions['autoParamsForm'] = FALSE;
   }
   if (!empty($args['row_class'])) {
     $reportOptions['rowClass'] = $args['row_class'];
   }
   // Set up a page refresh for dynamic update of the report at set intervals
-  if (isset($args['refresh_timer']) && $args['refresh_timer']!==0 && is_numeric($args['refresh_timer'])) { // is_numeric prevents injection
+  if (isset($args['refresh_timer']) && $args['refresh_timer'] !== 0 && is_numeric($args['refresh_timer'])) { // is_numeric prevents injection
     if (isset($args['load_on_refresh']) && !empty($args['load_on_refresh']))
-      report_helper::$javascript .= "setTimeout('window.location=\"".$args['load_on_refresh']."\";', ".$args['refresh_timer']."*1000 );\n";
+      report_helper::$javascript .= "setTimeout('window.location=\"" . $args['load_on_refresh'] . "\";', " . $args['refresh_timer']."*1000 );\n";
     else
-      report_helper::$javascript .= "setTimeout('window.location.reload( false );', ".$args['refresh_timer']."*1000 );\n";
+      report_helper::$javascript .= "setTimeout('window.location.reload(false);', " . $args['refresh_timer'] . "*1000 );\n";
   }
   return $reportOptions;
 }
 
-/** 
+/**
  * Takes a set of report parameters and applies preferences from the user's EasyLogin profile to the report parameters. Assumes
  * parameters called ownData, ownLocality, ownGroups. See the library/occurrences/explore_list report for an example.
  */
@@ -301,18 +310,18 @@ function iform_report_apply_explore_user_own_preferences(&$reportOptions) {
   if (!array_key_exists('ownData', $allParams)) {
     $indicia_user_id = hostsite_get_user_field('indicia_user_id');
     if (!empty($indicia_user_id))
-      $reportOptions['paramDefaults']['ownData']=0;
+      $reportOptions['paramDefaults']['ownData'] = 0;
     else
-      $reportOptions['extraParams']['ownData']=0;
+      $reportOptions['extraParams']['ownData'] = 0;
   }
   // Unless ownLocality explicitly set, we either default it to checked, or we set it unchecked and hidden if the user account
   // has no location preferences set
   if (!array_key_exists('ownLocality', $allParams)) {
     $location_id = hostsite_get_user_field('location');
     if (!empty($location_id))
-      $reportOptions['paramDefaults']['ownLocality']=1;
+      $reportOptions['paramDefaults']['ownLocality'] = 1;
     else
-      $reportOptions['extraParams']['ownLocality']=0;
+      $reportOptions['extraParams']['ownLocality'] = 0;
   }
   // Unless ownGroups explicitly set, we either default it to checked, or we set it unchecked and hidden if the user account
   // has no taxon groups set
