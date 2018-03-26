@@ -709,8 +709,12 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         $r .= '<input type="hidden" name="locAttr:'.self::$cmsUserAttrId.'" value="'.$user->uid.'">';
       }
     }
-    if ($settings['canEditBody'])
+    if ($settings['canEditBody']) {
+      if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+        $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
+      }
       $r .= '<button type="submit" class="indicia-button right">'.lang::get('Save').'</button>';
+    }
 
     if($settings['canEditBody'] && $settings['locationId'])
       $r .= '<button type="button" class="indicia-button right" id="delete-transect">'.lang::get('Delete').'</button>' ;
@@ -751,6 +755,9 @@ $('#delete-transect').click(deleteSurvey);
   	// $options['tabDiv']='your-route';
   	$options['gridRefHint']=true;
   	if ($settings['canEditBody']){
+  	    if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+  	        $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
+  	    }
   		$options['toolbarPrefix'] = parent::section_selector($settings, 'section-select-route') .
   									'<br/>'.
   									'<input class="save-route form-button" type="button" value="Save Route">'.

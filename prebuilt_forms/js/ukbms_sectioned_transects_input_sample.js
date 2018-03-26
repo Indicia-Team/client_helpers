@@ -112,6 +112,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
                     'table#transect-input'+details.tabNum,
                     indiciaData.warehouseUrl+'index.php/services/data',
                     formOptions.speciesList[details.tabNum],
+                    formOptions.speciesMinRank[details.tabNum],
                     formOptions.speciesListFilterField[details.tabNum],
                     formOptions.speciesListFilterValues[details.tabNum],
                     {"auth_token" : indiciaData.read.auth_token, "nonce" : indiciaData.read.nonce},
@@ -368,20 +369,19 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
       });
       return;
     }
-        switch(formOptions.taxon_column) {
-          case 'preferred_taxon':
-            name = (species.preferred_language_iso==='lat' ? '<em>'+species.preferred_taxon+'</em>' : species.preferred_taxon);
-            title = (species.default_common_name!==null ? ' title="'+species.default_common_name+'"' : '');
-            break;
-          default: // taxon
-            name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
-            title = (name.replace(/<em>/,'').replace(/<\/em>/,'') != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '');
-            break;
-        }
-//    name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
+    switch(formOptions.taxon_column) {
+      case 'preferred_taxon':
+        name = (species.preferred_language_iso==='lat' ? '<em>'+species.preferred_taxon+'</em>' : species.preferred_taxon);
+        title = (species.default_common_name!==null ? ' title="'+species.default_common_name+'"' : '');
+        break;
+      default: // taxon
+        name = (species.default_common_name!==null ? species.default_common_name : (species.preferred_language_iso==='lat' ? '<em>'+species.taxon+'</em>' : species.taxon));
+        title = (name.replace(/<em>/,'').replace(/<\/em>/,'') != species.preferred_taxon ? ' title="'+species.preferred_taxon+'"' : '');
+        break;
+    }
     row = $('<tr id="row-' + species.taxon_meaning_id + '"><td ' + title + '>' + name + '</td></tr>').data( 'species', species);
     if($(speciesTableSelector+ ' tbody tr').length % 2 == 1) row.addClass('alt-row');
-    isNumber = formOptions.occurrence_attribute_ctrl[tabIDX].indexOf('number:true')>=0; // TBD number:true
+    isNumber = formOptions.occurrence_attribute_ctrl[tabIDX].indexOf('number:true')>=0;
     $.each(formOptions.sections, function(idx, section) {
       var key, cell, myCtrl, val = '';
 
@@ -853,7 +853,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
   }
 
   //autocompletes assume ID
-  bindSpeciesAutocomplete = function (selectorID, tableSelectorID, url, lookupListId, lookupListFilterField, lookupListFilterValues, readAuth, duplicateMsg, max, tabIDX) {
+  bindSpeciesAutocomplete = function (selectorID, tableSelectorID, url, lookupListId, lookupMinRank, lookupListFilterField, lookupListFilterValues, readAuth, duplicateMsg, max, tabIDX) {
     // inner function to handle a selection of a taxon from the autocomplete
     var handleSelectedTaxon = function(event, data) {
       var table = $(tableSelectorID);
@@ -892,7 +892,8 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
         parse: function(data) {
           var results = [];
           $.each(data, function(i, item) {
-              results[results.length] = {'data' : item, 'result' : item[formOptions.taxon_column], 'value' : item.id};
+              if (item.taxon_rank_sort_order === null || item.taxon_rank_sort_order >= lookupMinRank)
+                results[results.length] = {'data' : item, 'result' : item[formOptions.taxon_column], 'value' : item.id};
           });
           return results;
         },

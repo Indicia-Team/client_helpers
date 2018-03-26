@@ -314,6 +314,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Species'
         ),
         array(
+          'name' => 'taxon_min_rank_1',
+          'caption' => 'Min Rank',
+          'description' => 'Some species lists implement taxon ranks. These ranks are sorted, and have a sort order, where the most general have a low value, and the most specific have a high value. Setting this field allows things like Order classifications to be excluded from the Pick List.',
+          'type' => 'int',
+          'required' => FALSE,
+          'siteSpecific' => TRUE,
+          'group' => 'Species'
+        ),
+        array(
           'name'=>'main_taxon_filter_field',
           'caption'=>'All Species List: Field used to filter taxa',
           'description'=>'If you want to allow recording for just part of the selected All Species List, then select which field you will '.
@@ -491,6 +500,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Species 2'
         ),
         array(
+          'name' => 'taxon_min_rank_2',
+          'caption' => 'Min Rank',
+          'description' => 'Some species lists implement taxon ranks. These ranks are sorted, and have a sort order, where the most general have a low value, and the most specific have a high value. Setting this field allows things like Order classifications to be excluded from the Pick List.',
+          'type' => 'int',
+          'required' => FALSE,
+          'siteSpecific' => TRUE,
+          'group' => 'Species 2'
+        ),
+        array(
           'name'=>'second_taxon_filter_field',
           'caption'=>'Second Tab Species List: Field used to filter taxa',
           'description'=>'If you want to allow recording for just part of the selected Species List, then select which field you will '.
@@ -582,6 +600,15 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Species 3'
         ),
         array(
+          'name' => 'taxon_min_rank_3',
+          'caption' => 'Min Rank',
+          'description' => 'Some species lists implement taxon ranks. These ranks are sorted, and have a sort order, where the most general have a low value, and the most specific have a high value. Setting this field allows things like Order classifications to be excluded from the Pick List.',
+          'type' => 'int',
+          'required' => FALSE,
+          'siteSpecific' => TRUE,
+          'group' => 'Species 3'
+        ),
+        array(
           'name'=>'third_taxon_filter_field',
           'caption'=>'Third Tab Species List: Field used to filter taxa',
           'description'=>'If you want to allow recording for just part of the selected Species List, then select which field you will '.
@@ -668,9 +695,18 @@ class iform_ukbms_sectioned_transects_input_sample {
           'captionField'=>'title',
           'valueField'=>'id',
           'extraParams' => array('orderby'=>'title'),
-          'required'=>'false',
+          'required'=>false,
           'siteSpecific'=>true,
           'group'=>'Species 4'
+        ),
+        array(
+          'name' => 'taxon_min_rank_4',
+          'caption' => 'Min Rank',
+          'description' => 'Some species lists implement taxon ranks. These ranks are sorted, and have a sort order, where the most general have a low value, and the most specific have a high value. Setting this field allows things like Order classifications to be excluded from the Pick List.',
+          'type' => 'int',
+          'required' => FALSE,
+          'siteSpecific' => TRUE,
+          'group' => 'Species 4'
         ),
         array(
           'name'=>'fourth_taxon_filter_field',
@@ -1097,6 +1133,7 @@ class iform_ukbms_sectioned_transects_input_sample {
             'label'=>lang::get('Notes'),
             'helpText'=>lang::get("Use this space to input comments about this week's walk.")
           )) .
+        (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION' ? '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>' : '') .
         '<input type="submit" value="'.lang::get('Next').'" />' .
         '<a href="'.$args['return_page'].'" class="button">'.lang::get('Cancel').'</a>' .
         (isset(data_entry_helper::$entity_to_load['sample:id']) ?
@@ -1166,6 +1203,7 @@ class iform_ukbms_sectioned_transects_input_sample {
         'speciesListForce' => array(),
         'speciesListFilterField' => array(),
         'speciesListFilterValues' => array(),
+        'speciesMinRank' => array(),
         'duplicateTaxonMessage' => lang::get('LANG_Duplicate_Taxon'),
         'requiredMessage' => lang::get('This field is required'),
         'existingOccurrences' => array(),
@@ -1327,7 +1365,11 @@ class iform_ukbms_sectioned_transects_input_sample {
     
     $dateObj   = DateTime::createFromFormat('!Y#m#d', $date);
     $displayDate = $dateObj->format('l jS F Y');
-    $r = '<h2 id="ukbms_stis_header">'.$location[0]['name']." on ".$displayDate."</h2><div id=\"tabs\">\n";
+    $r = '<h2 id="ukbms_stis_header">'.$location[0]['name']." on ".$displayDate."</h2>";
+    if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+        $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
+    }
+    $r .= "<div id=\"tabs\">\n";
  
     $formOptions['finishedAttrID'] = false;
     if(isset($args['finishedAttrID']) && $args['finishedAttrID']!= '') {
@@ -1743,9 +1785,12 @@ class iform_ukbms_sectioned_transects_input_sample {
       $r .= '<span id="taxonLookupControlContainer'.$tabNum.'"><label for="taxonLookupControl'.$tabNum.'" class="auto-width">'.lang::get('Add species to list').':</label> <input id="taxonLookupControl'.$tabNum.'" name="taxonLookupControl'.$tabNum.'" ></span>';
     $r .= '<br />';
     $reloadUrl = data_entry_helper::get_reload_link_parts();
-  $reloadUrl['params']['sample_id'] = $formOptions['parentSampleId'];
+    $reloadUrl['params']['sample_id'] = $formOptions['parentSampleId'];
     foreach ($reloadUrl['params'] as $key => $value) {
       $reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
+    }
+    if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+      $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
     }
     $r .= '<a href="'.$reloadUrl['path'].'" class="button">'.lang::get('Back to visit details').'</a>';
     $r .= '<a href="'.$args['return_page'].'" class="button">'.lang::get('Finish and return to walk list').'</a>';
@@ -1753,8 +1798,9 @@ class iform_ukbms_sectioned_transects_input_sample {
       $r .= '<input type="button" class="button smp-finish" value="'. str_replace('%s',substr($formOptions['parentSampleDate'],0,4), lang::get('Flag walk entry for year %s as finished for this location, and return to walk list')) .'"/>';
     $r .= '</div>';
     // page is ajax so no submit button.
-    
     $formOptions['speciesList'][$tabNum] = $args['taxon_list_id_'.$tabNum];
+    $formOptions['speciesMinRank'][$tabNum] = (isset($args['taxon_min_rank_'.$tabNum]) && $args['taxon_min_rank_'.$tabNum] !== "" ?
+                                                $args['taxon_min_rank_'.$tabNum] : -1);
     $formOptions['speciesListForce'][$tabNum] = $listSelected; // this may hold branch, which indicates the first branch list
     if ($args['taxon_filter_'.$tabNum] != '') {
       $filterLines = helper_base::explode_lines($args['taxon_filter_'.$tabNum]);
@@ -1766,7 +1812,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       $autoComplete->tabNum = $tabNum;
       $formOptions['autoCompletes'][] = $autoComplete;
     }
-     
+
     return $r;
   }
 
