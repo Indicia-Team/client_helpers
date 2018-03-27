@@ -3977,7 +3977,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
             $filterFields['language'] = $options['language'];
           } elseif (isset($user) && function_exists('hostsite_get_user_field')) {
             // if in Drupal we can use the user's language
-            require_once('prebuilt_forms/includes/language_utils.php');
+            require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
           }
           break;
@@ -7420,6 +7420,7 @@ HTML;
    *   Translated caption.
    */
   private static function getTranslatedAttrCaption(array $attr) {
+    require_once 'prebuilt_forms/includes/language_utils.php';
     $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
     if (!empty($attr['caption_i18n'])) {
       $otherLanguages = json_decode($attr['caption_i18n'], TRUE);

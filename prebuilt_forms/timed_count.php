@@ -645,6 +645,9 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     $r .= data_entry_helper::map_panel($options, $olOptions);
 
     $r .= data_entry_helper::textarea(array('label'=>'Comment', 'fieldname'=>'sample:comment', 'class'=>'wide'));
+    if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+      $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
+    }
     $r .= '<input type="submit" value="'.lang::get('Next').'" />';
     $r .= '<a href="'.$args['summary_page'].'"><button type="button" class="ui-state-default ui-corner-all" />'.lang::get('Cancel').'</button></a>';
 
@@ -896,6 +899,9 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       $r .= '</fieldset>';
     }
     $r .= '<p>'.lang::get('In order to enter extra counts, save these first, and then view the form again for this location. Each time you do so an extra blank count will be displayed at the bottom, ready to be entered.').'</p>';
+    if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+        $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
+    }
     $r .= '<input type="submit" value="'.lang::get('Save').'" />';
     $r .= '<a href="'.$args['summary_page'].'"><button type="button" class="ui-state-default ui-corner-all" />'.lang::get('Cancel').'</button></a></form>';
     data_entry_helper::enable_validation('subsamples');

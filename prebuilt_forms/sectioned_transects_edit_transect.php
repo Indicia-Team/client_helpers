@@ -724,8 +724,12 @@ $('#delete-transect').click(deleteSurvey);
     }
 
     $r .= get_attribute_html($settings['section_attributes'], $args, array('extraParams'=>$auth['read'], 'disabled' => $settings['canEditBody'] ? '' : ' disabled="disabled" '), null, $blockOptions);
-    if ($settings['canEditBody'])
+    if ($settings['canEditBody']) {
+      if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+        $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
+      }
       $r .= '<input type="submit" value="'.lang::get('Save').'" class="form-button right" id="submit-section" />';
+    }
     $r .= '</fieldset></form>';
     $r .= '</div>';
     return $r;

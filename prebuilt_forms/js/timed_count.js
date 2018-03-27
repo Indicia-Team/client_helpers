@@ -34,8 +34,10 @@ bindSpeciesAutocomplete = function (selectorID, target, url, lookupListId, looku
         qfield : 'taxon',
         auth_token: readAuth.auth_token,
         nonce: readAuth.nonce,
-        taxon_list_id: lookupListId
+        taxon_list_id: lookupListId,
+        allow_data_entry: 't'
   };
+
   if(typeof lookupListFilterField != 'undefined'){
     extra_params.query = '{"in":{"'+lookupListFilterField+'":'+lookupListFilterValues+'}}';
   };
