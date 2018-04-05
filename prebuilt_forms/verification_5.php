@@ -1539,13 +1539,17 @@ HTML
   /**
    * AJAX callback method to fill in the record's experience tab.
    *
-   * Returns a report detailing the total number of records of the species and
+   * Echoes a report detailing the total number of records of the species and
    * species group, as well as a breakdown by verified and rejected records.
-   * Records link to the Explore report if view_records_report_path is filled in.
+   * Records link to the Explore report if view_records_report_path is filled
+   * in.
    *
-   * @param type $website_id
-   * @param type $password
-   * @param type $nid
+   * @param int $website_id
+   *   Website warehouse ID.
+   * @param string $password
+   *   Website warehouse password.
+   * @param int $nid
+   *   Node ID.
    */
   public static function ajax_experience($website_id, $password, $nid) {
     iform_load_helpers(array('report_helper'));
@@ -1558,24 +1562,60 @@ HTML
     $data = report_helper::get_report_data(array(
       'dataSource' => 'library/totals/user_experience_for_record',
       'readAuth' => $readAuth,
-      'extraParams' => $filter
+      'extraParams' => $filter,
     ));
+    $contextId = empty($_GET['context_id']) ? NULL : $_GET['context_id'];
     $r = '';
     foreach ($data as $row) {
       if ($row['v_total'] === 0) {
         $r .= '<p>This recorder has not recorded this ' . $row['type'] . ' before.</p>';
       }
       else {
-        $r .= '<h3>Records of ' . $row['what'] . '</h3>';
-        $r .= '<table><thead><tr><th></th><th>Last 3 months</th><th>Last year</th><th>All time</th></tr></thead>';
-        $r .= '<tbody>';
-        $r .= '<tr class="verified"><th>Verified</th><td>' . self::records_link($row, 'v_3months', $params) . '</td><td>' .
-                self::records_link($row, 'v_1year', $params) . '</td><td>' . self::records_link($row, 'v_total', $params) . '</td></tr>';
-        $r .= '<tr class="rejected"><th>Rejected</th><td>' . self::records_link($row, 'r_3months', $params) . '</td><td>' .
-                self::records_link($row, 'r_1year', $params) . '</td><td>' . self::records_link($row, 'r_total', $params) . '</td></tr>';
-        $r .= '<tr class="total"><th>Total</th><td>' . self::records_link($row, 'total_3months', $params) . '</td><td>' .
-                self::records_link($row, 'total_1year', $params) . '</td><td>' . self::records_link($row, 'total_total', $params) . '</td></tr>';
-        $r .= "</tbody></table>\n";
+        $links = [
+          'v_3months' => self::recordsLink($row, 'v_3months', $params, $contextId),
+          'v_1year' => self::recordsLink($row, 'v_1year', $params, $contextId),
+          'v_total' => self::recordsLink($row, 'v_total', $params, $contextId),
+          'r_3months' => self::recordsLink($row, 'r_3months', $params, $contextId),
+          'r_1year' => self::recordsLink($row, 'r_1year', $params, $contextId),
+          'r_total' => self::recordsLink($row, 'r_total', $params, $contextId),
+          'total_3months' => self::recordsLink($row, 'total_3months', $params, $contextId),
+          'total_1year' => self::recordsLink($row, 'total_1year', $params, $contextId),
+          'total_total' => self::recordsLink($row, 'total_total', $params, $contextId),
+        ];
+        $r .= <<<HTML
+<h3>Records of $row[what]</h3>
+<table>
+  <thead>
+    <tr>
+      <th></th>
+      <th>Last 3 months</th>
+      <th>Last year</th>
+      <th>All time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr class="verified">
+      <th scope="row">Verified</th>
+      <td>$links[v_3months]</td>
+      <td>$links[v_1year]</td>
+      <td>$links[v_total]</td>
+    </tr>
+    <tr class="rejected">
+      <th scope="row">Rejected</th>
+      <td>$links[r_3months]</td>
+      <td>$links[r_1year]</td>
+      <td>$links[r_total]</td>
+    </tr>
+    <tr class="total">
+      <th scope="row">Total</th>
+      <td>$links[total_3months]</td>
+      <td>$links[total_1year]</td>
+      <td>$links[total_total]</td>
+    </tr>
+  </tbody>
+</table>
+
+HTML;
 
       }
     }
@@ -1655,19 +1695,29 @@ HTML
   }
 
   /**
-   * Convert a number on the Experience tab into a link to the Explore page for the underlying records.
+   * Provide a link to explore records.
+   *
+   * Convert a number on the Experience tab into a link to the Explore page for
+   * the underlying records.
+   *
+   * @return string
+   *   Link HTML.
    */
-  private static function records_link($row, $value, $nodeParams) {
+  private static function recordsLink($row, $value, $nodeParams, $contextId) {
     if (!empty($nodeParams['view_records_report_path']) && !empty($_GET['user_id'])) {
       $tokens = explode('_', $value);
       $params = array(
-          'filter-date_age' => '',
-          'filter-indexed_location_list' => '',
-          'filter-indexed_location_id' => '',
-          'filter-taxon_group_list' => '',
-          'filter-user_id' => $_GET['user_id'],
-          'filter-my_records' => 1
+        'filter-date_age' => '',
+        'filter-indexed_location_list' => '',
+        'filter-indexed_location_id' => '',
+        'filter-taxon_group_list' => '',
+        'filter-user_id' => $_GET['user_id'],
+        'filter-my_records' => 1,
       );
+      // Preserve the current verification context in any links to reports.
+      if (!empty($contextId)) {
+        $params['context_id'] = $contextId;
+      }
       switch ($tokens[0]) {
         case 'r':
           $params['filter-quality'] = 'R';

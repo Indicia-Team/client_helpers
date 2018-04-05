@@ -614,6 +614,7 @@ indiciaData.rowIdToReselect = false;
   };
 
   function showTab() {
+    var params;
     if (currRec === null) {
       return;
     }
@@ -625,13 +626,16 @@ indiciaData.rowIdToReselect = false;
     } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'experience') {
       if (currRec.extra.created_by_id === '1') {
         $('#experience-div').html('No experience information available. This record does not have the required information for other records by the same recorder to be extracted.');
-      }
-      else {
+      } else {
+        params = 'occurrence_id=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id;
+        // Include context in the link params.
+        if ($('#context-filter').length > 0) {
+          params += '&context_id=' + $('#context-filter option:selected').val();
+        }
         $.get(
-          indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep +
-          'occurrence_id=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id,
+          indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep + params,
           null,
-          function (data) {
+          function success(data) {
             $('#experience-div').html(data);
           }
         );
