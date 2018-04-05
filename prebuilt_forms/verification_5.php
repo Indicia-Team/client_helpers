@@ -1212,34 +1212,38 @@ HTML
    *   Control HTML.
    */
   private static function customMetadataFields(array $params, array $occMetadata) {
-    if (!empty($params['custom_occurrence_metadata'])) {
-      $fields = json_decode($params['custom_occurrence_metadata'], TRUE);
-      $r .= '<fieldset id="metadata"><legend>' . lang::get('Record metadata') . '</legend>';
-      foreach ($fields as $idx => $field) {
-        $safeTitle = htmlspecialchars($field['title']);
-        $safeVal = empty($occMetadata[$field['title']]) ? '' : htmlspecialchars($occMetadata[$field['title']]);
-        $r .= "<div><label>$safeTitle";
-        if (empty($field['values'])) {
-          $r .= "<input class=\"metadata-field\" type=\"text\" data-title=\"$safeTitle\" value=\"$safeVal\"/>";
-        }
-        else {
-          $r .= "<select class=\"metadata-field\" data-title=\"$field[title]\">" .
-            '<option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
-          $values = report_helper::explode_lines_key_value_pairs($field['values']);
-          foreach ($values as $value => $caption) {
-            $selected = empty($occMetadata[$field['title']]) || $occMetadata[$field['title']] !== $value
-              ? '' : ' selected="selected"';
-            $r .= "<option value=\"$value\"$selected>$caption</option>";
-          }
-          $r .= "</select>";
-        }
-        $r .= ' <span class="metadata-msg"></span>';
-        $r .= '</label></div>';
-      }
-      global $indicia_templates;
-      $r .= "<button type=\"button\" id=\"save-metadata\" class=\"$indicia_templates[buttonDefaultClass]\">" . lang::get('Save') . '</button>';
-      $r .= '</fieldset>';
+    if (empty($params['custom_occurrence_metadata'])) {
+      return '';
     }
+    $fields = json_decode($params['custom_occurrence_metadata'], TRUE);
+    if (empty($fields)) {
+      return '';
+    }
+    $r = '<fieldset id="metadata"><legend>' . lang::get('Record metadata') . '</legend>';
+    foreach ($fields as $idx => $field) {
+      $safeTitle = htmlspecialchars($field['title']);
+      $safeVal = empty($occMetadata[$field['title']]) ? '' : htmlspecialchars($occMetadata[$field['title']]);
+      $r .= "<div><label>$safeTitle";
+      if (empty($field['values'])) {
+        $r .= "<input class=\"metadata-field\" type=\"text\" data-title=\"$safeTitle\" value=\"$safeVal\"/>";
+      }
+      else {
+        $r .= "<select class=\"metadata-field\" data-title=\"$field[title]\">" .
+          '<option value="">&lt;' . lang::get('Please select') . '&gt;</option>';
+        $values = report_helper::explode_lines_key_value_pairs($field['values']);
+        foreach ($values as $value => $caption) {
+          $selected = empty($occMetadata[$field['title']]) || $occMetadata[$field['title']] !== $value
+            ? '' : ' selected="selected"';
+          $r .= "<option value=\"$value\"$selected>$caption</option>";
+        }
+        $r .= "</select>";
+      }
+      $r .= ' <span class="metadata-msg"></span>';
+      $r .= '</label></div>';
+    }
+    global $indicia_templates;
+    $r .= "<button type=\"button\" id=\"save-metadata\" class=\"$indicia_templates[buttonDefaultClass]\">" . lang::get('Save') . '</button>';
+    $r .= '</fieldset>';
     return $r;
   }
 
