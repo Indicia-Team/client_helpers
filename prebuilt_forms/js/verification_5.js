@@ -1067,12 +1067,9 @@ indiciaData.rowIdToReselect = false;
         trustedHtml += '<p class="warning">Remember that the following buttons will verify records from every page in the grid up to a maximum of ' +
           settings.recordCount + ' records, not just the current page.</p>';
       }
-      if (typeof $.cookie !== 'undefined') {
-        show = $.cookie('verification-status-buttons');
-        if (show === 'more') {
-          trustedHtml += '<div><label class="auto">Accepted records will be flagged as:<select id="process-grid-substatus">' +
-            '<option selected="selected" value="2">considered correct</option><option value="1">correct</option></select></label></div>';
-        }
+      if ($('#actions-more').is(':visible')) {
+        trustedHtml += '<div><label class="auto">Accepted records will be flagged as:<select id="process-grid-substatus">' +
+          '<option selected="selected" value="2">considered correct</option><option value="1">correct</option></select></label></div>';
       }
       trustedHtml += '<button type="button" class="default-button" id="verify-trusted-button">Accept trusted records</button>';
       trustedHtml += '<button type="button" class="default-button" id="verify-all-button">Accept all records</button></div>';
