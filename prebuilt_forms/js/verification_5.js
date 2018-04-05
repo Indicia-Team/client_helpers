@@ -614,6 +614,7 @@ indiciaData.rowIdToReselect = false;
   };
 
   function showTab() {
+    var params;
     if (currRec === null) {
       return;
     }
@@ -625,13 +626,16 @@ indiciaData.rowIdToReselect = false;
     } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'experience') {
       if (currRec.extra.created_by_id === '1') {
         $('#experience-div').html('No experience information available. This record does not have the required information for other records by the same recorder to be extracted.');
-      }
-      else {
+      } else {
+        params = 'occurrence_id=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id;
+        // Include context in the link params.
+        if ($('#context-filter').length > 0) {
+          params += '&context_id=' + $('#context-filter option:selected').val();
+        }
         $.get(
-          indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep +
-          'occurrence_id=' + occurrenceId + '&user_id=' + currRec.extra.created_by_id,
+          indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep + params,
           null,
-          function (data) {
+          function success(data) {
             $('#experience-div').html(data);
           }
         );
@@ -1067,12 +1071,9 @@ indiciaData.rowIdToReselect = false;
         trustedHtml += '<p class="warning">Remember that the following buttons will verify records from every page in the grid up to a maximum of ' +
           settings.recordCount + ' records, not just the current page.</p>';
       }
-      if (typeof $.cookie !== 'undefined') {
-        show = $.cookie('verification-status-buttons');
-        if (show === 'more') {
-          trustedHtml += '<div><label class="auto">Accepted records will be flagged as:<select id="process-grid-substatus">' +
-            '<option selected="selected" value="2">considered correct</option><option value="1">correct</option></select></label></div>';
-        }
+      if ($('#actions-more').is(':visible')) {
+        trustedHtml += '<div><label class="auto">Accepted records will be flagged as:<select id="process-grid-substatus">' +
+          '<option selected="selected" value="2">considered correct</option><option value="1">correct</option></select></label></div>';
       }
       trustedHtml += '<button type="button" class="default-button" id="verify-trusted-button">Accept trusted records</button>';
       trustedHtml += '<button type="button" class="default-button" id="verify-all-button">Accept all records</button></div>';
