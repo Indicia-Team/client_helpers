@@ -789,7 +789,7 @@ idlist=';
   <input type="hidden" class="row-input-form-raw" value="{input_form}"/>
   <ul class="verify-tools">
     <li><a href="#" class="quick-verify-tool">Bulk verify similar records</a></li>
-    <li><a href="#" class="trust-tool">Recorder\'s trust settings</a></li>
+    <li><a href="#" class="trust-tool">Recorder's trust settings</a></li>
     <li><a href="#" class="edit-record">Edit record</a></li>
   </ul>
 <input type="checkbox" class="check-row no-select" style="display: none" value="{occurrence_id}" /></div>
