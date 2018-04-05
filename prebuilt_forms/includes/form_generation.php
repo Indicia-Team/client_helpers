@@ -232,8 +232,10 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
       }
 
       if (isset($args['nameShow']) && $args['nameShow'] == true) {
-        // Show the attribute with default value.
-        $attribute['default'] = $value;
+        // Show the attribute with default value providing we aren't editing, in which case the value should be collected 
+        // from the saved data (even if that data is blank) so we don't want to overwrite it
+        if (!isset($attribute['default']) && !isset($_GET['sample_id']) && !isset($_GET['occurrence_id']))
+          $attribute['default'] = $value;
       }
       else {
         // Hide the attribute value
@@ -251,8 +253,10 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
     }
     elseif (strcasecmp($attribute['untranslatedCaption'], 'email') == 0) {
       if (isset($args['emailShow']) && $args['emailShow'] == true) {
-        // Show the email attribute with default value.
-        $attribute['default'] = hostsite_get_user_field('mail');
+        // Show the email attribute with default value providing we aren't editing, in which case the value should be collected 
+        // from the saved data (even if that data is blank) so we don't want to overwrite it
+        if (!isset($attribute['default']) && !isset($_GET['sample_id']) && !isset($_GET['occurrence_id']))
+          $attribute['default'] = hostsite_get_user_field('mail');
       }
       else {
         // Hide the email value
