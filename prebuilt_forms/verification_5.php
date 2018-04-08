@@ -246,12 +246,14 @@ class iform_verification_5 {
         ), array(
           'name' => 'email_body_send_to_verifier',
           'caption' => 'Send to Expert Email Body',
-          'description' => 'Default body for the send to expert email. Replacements allowed include %taxon%, %id% and %record% which is replaced to give details of the record.',
+          'description' => 'Default body for the send to expert email. Replacements allowed include %taxon%, %id% and %record% which is replaced to give details of the record. '
+           . 'Use the %commentQuickReplyPageLink% replacement if you wish the recipient to be able to quickly reply to comments using a linked page, '
+           . 'setup the options for this using the COMMENT QUICK REPLY PAGE LINK section of this page',
           'type' => 'textarea',
           'default' => 'We would appreciate your opinion on the following record. Please reply to this mail with "accepted", "not accepted" or "query" '.
               'in the email body, followed by any comments you have including the proposed re-identification if relevant on the next line.'.
               "\n\n%record%",
-          'group' => 'Verifier emails',
+          'group' => 'Verifier emails'
         ), array(
           'name' => 'email_subject_send_to_recorder',
           'caption' => 'Send to Recorder Email Subject',
@@ -262,12 +264,14 @@ class iform_verification_5 {
         ), array(
           'name' => 'email_body_send_to_recorder',
           'caption' => 'Send to Recorder Email Body',
-          'description' => 'Default body for the send to recorder email. Replacements allowed include %taxon%, %id% and %record% which is replaced to give details of the record.',
+          'description' => 'Default body for the send to recorder email. Replacements allowed include %taxon%, %id% and %record% which is replaced to give details of the record. '
+           . 'Use the %commentQuickReplyPageLink% replacement if you wish the recipient to be able to quickly reply to queries using a linked page, '
+           . 'setup the options for this using the COMMENT QUICK REPLY PAGE LINK section of this page',
           'type' => 'textarea',
           'default' => 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct '.
-              'and any other information you have which may help to confirm this.' .
+              'and any other information you have which may help to confirm this.'.
               "\n\n%record%",
-          'group' => 'Recorder emails',
+          'group' => 'Recorder emails'
         ), array(
           'name' => 'auto_discard_rows',
           'caption' => 'Automatically remove rows',
@@ -414,6 +418,22 @@ class iform_verification_5 {
   ]
 }',
         ),
+        array(
+          'name' => 'comment_quick_reply_page_link_label',
+          'caption' => 'Comment quick reply page link label',
+          'description' => 'Label for the link to the Comment Quick Reply page.',
+          'type' => 'text_input',
+          'group' => 'Comment quick reply page link',
+          'required' => 'false'
+        ),
+        array(
+          'name' => 'comment_quick_reply_page_link_url',
+          'caption' => 'Comment quick reply page link URL',
+          'description' => 'URL link to the Comment Quick Reply page.',
+          'type' => 'text_input',
+          'group' => 'Comment quick reply page link',
+          'required' => 'false'
+        )
       )
     );
     // Set default values for the report.
@@ -835,6 +855,10 @@ HTML
           )
         )
       ));
+    if (!empty($args['comment_quick_reply_page_link_label']) && !empty($args['comment_quick_reply_page_link_url'])) {
+      data_entry_helper::$javascript .= 'indiciaData.commentQuickReplyPageLinkLabel = "' . $args['comment_quick_reply_page_link_label'] . "\";\n";
+      data_entry_helper::$javascript .= 'indiciaData.commentQuickReplyPageLinkURL = "' . $args['comment_quick_reply_page_link_url'] . "\";\n";
+    }
     $r = str_replace(array('{grid}', '{log}', '{paramsForm}'), array($grid, $log, $params),
         self::getTemplateWithMap($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();
