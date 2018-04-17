@@ -1363,8 +1363,9 @@ HTML
     $path = data_entry_helper::get_uploaded_image_folder();
     $r .= '<ul class="gallery">';
     foreach ($media as $file) {
-      if (preg_match('/^http(s)?:\/\/(www\.)?([a-z]+)/', $file['path'], $matches)) {
-        $media = "<a href=\"$file[path]\" class=\"social-icon $matches[3]\"></a>";
+      if (preg_match('/^http(s)?:\/\/(www\.)?([a-z+(\.kr)]+)/', $file['path'], $matches)) {
+        $class = str_replace('.', '', $matches[3]);
+        $media = "<a href=\"$file[path]\" class=\"social-icon $class\"></a>";
       }
       elseif (preg_match('/.(wav|mp3)$/', $file['path'])) {
         $media = "<audio controls src=\"$path$file[path]\" type=\"audio/mpeg\"/>";
