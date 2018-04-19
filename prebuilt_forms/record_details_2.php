@@ -567,6 +567,11 @@ Record ID',
           $r .= "<li class=\"gallery-item\"><audio controls " .
                 "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
         }
+        elseif ($medium['media_type'] === 'Image:iNaturalist') {
+          $imgLarge = str_replace('/thumb.', '/large.', $medium['path']);
+          $r .= "<li class=\"gallery-item\"><a href=\"$imgLarge\" class=\"fancybox single\">" .
+          "<img src=\"$medium[path]\" /></a><br/>$medium[caption]</li>";;
+        }
         else {
           $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
                 "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";

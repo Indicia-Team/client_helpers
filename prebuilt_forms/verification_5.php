@@ -1363,7 +1363,11 @@ HTML
     $path = data_entry_helper::get_uploaded_image_folder();
     $r .= '<ul class="gallery">';
     foreach ($media as $file) {
-      if (preg_match('/^http(s)?:\/\/(www\.)?([a-z+(\.kr)]+)/', $file['path'], $matches)) {
+      if (preg_match('/^https:\/\/static\.inaturalist\.org/', $file['path'])) {
+        $imgLarge = str_replace('/square.', '/large.', $file['path']);
+        $media = "<a href=\"$imgLarge\" class=\"inaturalist fancybox\"><img src=\"$file[path]\" /></a>";
+      }
+      elseif (preg_match('/^http(s)?:\/\/(www\.)?([a-z+(\.kr)]+)/', $file['path'], $matches)) {
         $class = str_replace('.', '', $matches[3]);
         $media = "<a href=\"$file[path]\" class=\"social-icon $class\"></a>";
       }
