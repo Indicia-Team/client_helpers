@@ -44,6 +44,7 @@ function iform_lang_iso_639_2($lang=null) {
   switch ($lang) {
     case 'en' : return 'eng';
     case 'de' : return 'deu';
+    case 'cs' : return 'cze';
     case 'lb' : return 'ltz';
     case 'fr' : return 'fra';
   }

@@ -635,8 +635,14 @@ class report_helper extends helper_base {
             $imgclass=count($imgs)>1 ? 'multi' : 'single';
             $group=count($imgs)>1 && !empty($options['rowId']) ? ' rel="group-' . $row[$options['rowId']] . '"' : '';
             foreach($imgs as $img) {
-              if (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+)/', $img, $matches)) {
+              if (preg_match('/^https:\/\/static\.inaturalist\.org/', $img)) {
+                $imgLarge = str_replace('/square.', '/large.', $img);
+                $value .= "<a href=\"$imgLarge\" class=\"inaturalist fancybox $imgclass$group\"><img src=\"$img\" /></a>";
+              }
+              elseif (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+(\.kr)?)/', $img, $matches)) {
                 // http, means an external file
+                // Flickr URLs sometimes have . in them.
+                $matches['site'] = str_replace('.', '', $matches['site']);
                 $value .= "<a href=\"$img\" class=\"social-icon $matches[site]\"></a>";
               } else {
                 $value .= "<a href=\"$imagePath$img\" class=\"fancybox $imgclass$group\"><img src=\"$imagePath" . $options['imageThumbPreset'] . "-$img\" /></a>";
