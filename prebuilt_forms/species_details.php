@@ -562,6 +562,10 @@ HTML
    * @subpackage PrebuiltForms
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
+    //Draw a distribution map by calling Indicia report when Geoserver isn't available
+    if (isset($options['noGeoserver'])&&$options['noGeoserver']===true) {
+      return self::mapwithoutgeoserver($auth, $args, $tabalias, $options);
+    }
     iform_load_helpers(array('map_helper', 'data_entry_helper'));
     global $user;
     // setup the map options
@@ -623,6 +627,85 @@ HTML
         map_helper::$javascript .= "setTimeout('window.location.reload( false );', ".$args['refresh_timer']."*1000 );\n";
     }    
     return $r;  
+  }
+  
+  /**
+   * Draw a distribution map by calling Indicia report when Geoserver isn't available
+   * @return string The output map panel.
+   * 
+   * @package    Client
+   * @subpackage PrebuiltForms
+   */
+  protected static function mapwithoutgeoserver($auth, $args, $tabalias, $options) {
+    iform_load_helpers(array('map_helper', 'report_helper'));
+    if (isset($options['hoverShowsDetails'])) {
+      $options['hoverShowsDetails'] = TRUE;
+    }
+    // $_GET data for standard params can override displayed location
+    if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
+      $args['display_user_profile_location'] = FALSE;
+      if (!empty($_GET['filter-indexed_location_id'])) {
+        $args['location_boundary_id'] = $_GET['filter-indexed_location_id'];
+      }
+      elseif (!empty($_GET['filter-location_id'])) {
+        $args['location_boundary_id'] = $_GET['filter-location_id'];
+      }
+    }
+    // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
+    $args['report_name'] = '';
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $params= array(
+      'taxa_taxon_list_id' => $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => $_GET['taxon_meaning_id'],
+      'sharing' => 'reporting',
+      'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
+      'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
+      'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
+      'reportGroup' => 'dynamic',
+      'autoParamsForm' => FALSE,
+      'sharing' => $sharing,
+      'readAuth' => $auth['read'],
+      'rememberParamsReportGroup' => 'dynamic',
+      'clickableLayersOutputMode' => 'report',
+      'rowId' => 'occurrence_id',
+      'ajax' => TRUE,
+    );
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'reportGroup' => 'dynamic',
+        'autoParamsForm' => FALSE,
+        'sharing' => $sharing,
+        'readAuth' => $auth['read'],
+        'dataSource' => 'reports_for_prebuilt_forms/species_details/species_record_data',
+        'rememberParamsReportGroup' => 'dynamic',
+        'clickableLayersOutputMode' => 'report',
+        'rowId' => 'occurrence_id',
+        'extraParams' => $params
+      )
+    );
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
+    $reportOptions = array_merge($reportOptions, $options);
+    $r = report_helper::report_map($reportOptions);
+    $options = array_merge(
+      iform_map_get_map_options($args, $auth['read']),
+      array(
+        'featureIdField' => 'occurrence_id',
+        'clickForSpatialRef' => FALSE,
+        'reportGroup' => 'explore',
+        'toolbarDiv' => 'top',
+      ),
+      $options
+    );
+    $olOptions = iform_map_get_ol_options($args);
+    if ($tabalias) {
+      $options['tabDiv'] = $tabalias;
+    }
+    $r .= map_helper::map_panel($options, $olOptions);
+    return $r;
   }
   
   /**
