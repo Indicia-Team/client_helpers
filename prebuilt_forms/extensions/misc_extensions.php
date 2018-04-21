@@ -74,12 +74,12 @@ class extension_misc_extensions {
         }
         $button = '<div>';
         $button .= '  <FORM>';
-        $button .= "    <INPUT TYPE=\"button\" VALUE=\"".$options['buttonLabel']."\"";
+        $button .= "    <INPUT TYPE=\"button\" VALUE=\"".lang::get($options['buttonLabel'])."\"";
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
-          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath'], $paramToPass) . "'\">";
+          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath']), $paramToPass) . "'\">";
         } else {
-          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath']) . "'\">";
+          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath'])) . "'\">";
         }
         $button .= '  </FORM>';
         $button .= '</div><br>';
@@ -150,11 +150,11 @@ class extension_misc_extensions {
           $button .= "  <a  ";
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
-          $button .= "href=\"" . hostsite_get_url($options['linkPath'], $paramToPass) . "\">";
+          $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath']), $paramToPass) . "\">";
         } else {
-          $button .= "href=\"" . hostsite_get_url($options['linkPath']) . "\">";
+          $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath'])) . "\">";
         }
-        $button .= $options['label'];
+        $button .= lang::get($options['label']);
         $button .= '  </a>';
         $button .= '</div><br>';
       } else {
