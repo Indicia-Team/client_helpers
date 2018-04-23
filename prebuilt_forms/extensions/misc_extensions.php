@@ -568,27 +568,43 @@ $.getScript('$path$options[mapDataFile]');
 JS;
     return data_entry_helper::select($options);
   }
-
+  
   /**
    * Allows localised text to be inserted on the page.
    *
-   * An extension that simply takes an @text option and passes it through lang::get. Allows free text embedded in forms
-   * to be localised.
+   * An extension that takes an @text option and passes it through lang::get. Allows free text embedded in forms
+   * to be localised. Optionally allows html to be placed around the text to be translated.
    *
    * @param array $auth
    * @param array $args
    * @param string $tabalias
    * @param array $options
+   *   Array of control options. The following options are available:
+   *   * @htmlBefore - Optional (required if @htmlAfter used). Html before the translatable text e.g. @htmlBefore=<input type="submit" value="
+   *   * @text - The text to be translated e.g. @text=Submit
+   *   * @htmlAfter - Optional (required if @htmlBefore used). Html after the translatable text e.g. @htmlAfter=">
    *
    * @return string
-   *   Translated text.
+   *   Translated string
    */
   public static function localised_text($auth, $args, $tabalias, $options) {
+    $r = '';
     $options = array_merge(
       array('text' => 'The misc_extensions.localised_text control needs a @text parameter'),
       $options
     );
-    return lang::get($options['text']);
+    if ((isset($options['htmlBefore']) && !isset($options['htmlAfter'])) ||
+         (!isset($options['htmlBefore']) && isset($options['htmlAfter']))) {
+      return 'If one of the @htmlBefore or @htmlAfter options is set for the misc_extensions.localised_text control, '
+        . 'then they both must be set.';
+    }
+    if (isset($options['htmlBefore']) && isset($options['htmlAfter'])) {
+      $r .= $options['htmlBefore'] . lang::get($options['text']) . $options['htmlAfter'];
+    }
+    else {
+      $r .= lang::get($options['text']);
+    }
+    return $r;
   }
 
   /**
