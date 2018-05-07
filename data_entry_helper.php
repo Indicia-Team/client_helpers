@@ -7327,7 +7327,13 @@ HTML;
         'sharing' => $sharing
       ), $options['extraParams'])
     );
+    // Sample or occurrence attributes default to exclude taxon linked attrs.
+    if (($options['attrtable'] === 'occurrence_attribute' || $options['attrtable'] === 'sample_attribute')
+        && !isset($attrOptions['extraParams']['restrict_to_taxon_meaning_id'])) {
+      $attrOptions['extraParams']['restrict_to_taxon_meaning_id'] = 'NULL';
+    }
     $response = self::get_population_data($attrOptions);
+
     if (array_key_exists('error', $response))
       return $response;
     if(isset($options['id'])){
@@ -7554,9 +7560,10 @@ HTML;
       'extraParams' => array()
     ), $options);
     $attrOptions = array(
-      'fieldname'=>$item['fieldname'],
-      'id'=>$item['id'],
-      'disabled'=>'');
+      'fieldname' => $item['fieldname'],
+      'id' => $item['id'],
+      'disabled' => ''
+    );
     if (isset($item['caption']))
       $attrOptions['label']=$item['caption']; // no need to translate, as that has already been done by getAttributes. Untranslated caption is in field untranslatedCaption
     $attrOptions = array_merge($attrOptions, $options);

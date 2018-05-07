@@ -164,6 +164,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                     "box and sensitivity input control if relevant. The attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they " .
                     "default to 1600. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
                     "and outputs all attributes irrespective of the form block or tab. For finer control of the output, see the [occAttr:n], [photos] and [sensitivity] controls.<br/>" .
+                "&nbsp;&nbsp;<strong>[species dynamic attributes]</strong> - a placeholder for any attributes that should be dynamically added to the form depending " .
+                    "on the chosen taxon and/or stage.<br/>" .
                 "&nbsp;&nbsp;<strong>[date]</strong> - a sample must always have a date.<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location select/autocomplete controls<br/>" .
                 "&nbsp;&nbsp;<strong>[spatial reference]</strong> - a sample must always have a spatial reference.<br/>" .
@@ -669,7 +671,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           'table' => 'group',
           'extraParams' => $auth['read']+array('view' => 'detail','id'=>data_entry_helper::$entity_to_load['sample:group_id'])
       ));
-      self::$group=self::$group[0];
+      self::$group = self::$group[0];
       $filterDef = json_decode(self::$group['filter_definition']);
       if (empty($args['location_boundary_id'])) {
         // Does the group filter define a site or boundary for the recording? If so and the form
@@ -1760,6 +1762,78 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     } else
       // in grid mode the attributes are embedded in the grid.
       return '';
+  }
+
+  /**
+   * Returns a div for dynamic attributes.
+   *
+   * Returns div into which any attributes associated with the chosen taxon
+   * and/or stage will be inserted. JavaScript is added to the page which
+   * detects a chosen taxon (single record forms only) and adds the appropriate
+   * attributes. If loading an existing record, then the attributes are
+   * pre-loaded into the div.
+   *
+   * @return string
+   *   HTML for the div.
+   */
+  protected static function get_control_speciesdynamicattributes($auth, $args, $tabAlias, $options) {
+    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/dynamic_sample_occurrence') . "\";\n";
+    $controls = '';
+    if (!empty(self::$loadedOccurrenceId)) {
+      $controls = self::getDynamicAttrs($auth['read'], $args['survey_id'], data_entry_helper::$entity_to_load['occurrence:taxon_external_key'], self::$loadedOccurrenceId);
+    }
+    return "<div id=\"species-dynamic-attributes\">$controls</div>";
+  }
+
+  private static function getDynamicAttrs($readAuth, $surveyId, $externalKey, $occurrenceId = NULL) {
+    iform_load_helpers(['data_entry_helper', 'report_helper']);
+    $params = [
+      'survey_id' => $surveyId,
+      'taxa_taxon_list_external_key' => $externalKey,
+    ];
+    if (!empty($occurrenceId)) {
+      $params['occurrence_id'] = $occurrenceId;
+    }
+    $attrs = report_helper::get_report_data([
+      'dataSource' => 'library/occurrence_attributes/occurrence_attributes_for_form',
+      'readAuth' => $readAuth,
+      'extraParams' => $params,
+      'caching' => false, // TRUE
+    ]);
+    $r = '';
+    foreach ($attrs as $attr) {
+      $values = json_decode($attr['values']);
+      if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
+        $attr['fieldname'] = "occAttr:$attr[attribute_id]";
+        $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
+      }
+      else {
+        foreach ($values as $value) {
+          $attr['id'] = "occAttr:$attr[attribute_id]:$value->id";
+          $attr['fieldname'] = "occAttr:$attr[attribute_id]:$value->id";
+          $attr['default'] = $value->raw_value;
+          $attr['defaultCaption'] = $value->value;
+          $attr['defaultUpper'] = $value->upper_value;
+          $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
+        }
+      }
+    }
+    return $r;
+  }
+
+  /**
+   * Ajax handler to retrieve the dynamic attrs for a taxon.
+   *
+   * Attribute HTML is echoed to the client.
+   */
+  public static function ajax_dynamicattrs($website_id, $password) {
+    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    echo self::getDynamicAttrs(
+      $readAuth,
+      $_GET['survey_id'],
+      $_GET['taxa_taxon_list_external_key'],
+      empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
+    );
   }
 
   /**
