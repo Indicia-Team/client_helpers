@@ -7605,17 +7605,19 @@ HTML;
       // flow through
       case 'Float':
       case 'F':
-        if (!isset($ctrl))
-          $ctrl='text_input';
-        $output = self::$ctrl($attrOptions);
+        $ctrl = empty($ctrl) ? 'text_input' : $ctrl;
         if (isset($item['allow_ranges']) && $item['allow_ranges'] === 't') {
           $toAttrOptions = array_merge($attrOptions, [
-            'label' => 'to',
-            'fieldname' => "$attrOptions[fieldname]:upper"
+            'label' => NULL,
+            'fieldname' => "$attrOptions[fieldname]:upper",
+            'default' => empty($item['defaultUpper']) ? '' : $item['defaultUpper'],
+            'controlWrapTemplate' => 'justControl',
           ]);
-          $output .= self::$ctrl($toAttrOptions);
+          $attrOptions['afterControl'] = ' to ' . self::$ctrl($toAttrOptions);
         }
+        $output = self::$ctrl($attrOptions);
         break;
+
       case 'Boolean':
       case 'B':
         // A change in template means we can now use a checkbox if desired: in fact this is now the default.

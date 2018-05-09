@@ -1786,8 +1786,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   }
 
   private static function getDynamicAttrs($readAuth, $surveyId, $externalKey, $occurrenceId = NULL) {
-    global $indicia_templates;
-    iform_load_helpers(['data_entry_helper', 'report_helper']);
+     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $params = [
       'survey_id' => $surveyId,
       'taxa_taxon_list_external_key' => $externalKey,
@@ -1805,13 +1804,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     foreach ($attrs as $attr) {
       $values = json_decode($attr['values']);
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
+        $attr['id'] = "occAttr:$attr[attribute_id]";
         $attr['fieldname'] = "occAttr:$attr[attribute_id]";
-        $ctrl = data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
-        $r .= str_replace(
-          array('{control}', '{id}'),
-          array("\n$ctrl", str_replace(':', '-', $attr['fieldName'])),
-          $indicia_templates['controlWrap']
-        );
+        $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
       }
       else {
         foreach ($values as $value) {
@@ -1820,12 +1815,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           $attr['default'] = $value->raw_value;
           $attr['defaultCaption'] = $value->value;
           $attr['defaultUpper'] = $value->upper_value;
-          $ctrl = data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
-          $r .= str_replace(
-            array('{control}', '{id}'),
-            array("\n$ctrl", str_replace(':', '-', $attr['fieldName'])),
-            $indicia_templates['controlWrap']
-          );
+          $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
         }
       }
     }
