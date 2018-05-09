@@ -7610,6 +7610,7 @@ HTML;
           $toAttrOptions = array_merge($attrOptions, [
             'label' => NULL,
             'fieldname' => "$attrOptions[fieldname]:upper",
+            'id' => "$attrOptions[fieldname]:upper",
             'default' => empty($item['defaultUpper']) ? '' : $item['defaultUpper'],
             'controlWrapTemplate' => 'justControl',
           ]);
