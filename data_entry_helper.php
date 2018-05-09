@@ -7608,6 +7608,13 @@ HTML;
         if (!isset($ctrl))
           $ctrl='text_input';
         $output = self::$ctrl($attrOptions);
+        if (isset($item['allow_ranges']) && $item['allow_ranges'] === 't') {
+          $toAttrOptions = array_merge($attrOptions, [
+            'label' => 'to',
+            'fieldname' => "$attrOptions[fieldname]:upper"
+          ]);
+          $output .= self::$ctrl($toAttrOptions);
+        }
         break;
       case 'Boolean':
       case 'B':
