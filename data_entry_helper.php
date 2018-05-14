@@ -7327,7 +7327,13 @@ HTML;
         'sharing' => $sharing
       ), $options['extraParams'])
     );
+    // Sample or occurrence attributes default to exclude taxon linked attrs.
+    if (($options['attrtable'] === 'occurrence_attribute' || $options['attrtable'] === 'sample_attribute')
+        && !isset($attrOptions['extraParams']['restrict_to_taxon_meaning_id'])) {
+      $attrOptions['extraParams']['restrict_to_taxon_meaning_id'] = 'NULL';
+    }
     $response = self::get_population_data($attrOptions);
+
     if (array_key_exists('error', $response))
       return $response;
     if(isset($options['id'])){
@@ -7554,9 +7560,10 @@ HTML;
       'extraParams' => array()
     ), $options);
     $attrOptions = array(
-      'fieldname'=>$item['fieldname'],
-      'id'=>$item['id'],
-      'disabled'=>'');
+      'fieldname' => $item['fieldname'],
+      'id' => $item['id'],
+      'disabled' => ''
+    );
     if (isset($item['caption']))
       $attrOptions['label']=$item['caption']; // no need to translate, as that has already been done by getAttributes. Untranslated caption is in field untranslatedCaption
     $attrOptions = array_merge($attrOptions, $options);
@@ -7598,10 +7605,20 @@ HTML;
       // flow through
       case 'Float':
       case 'F':
-        if (!isset($ctrl))
-          $ctrl='text_input';
+        $ctrl = empty($ctrl) ? 'text_input' : $ctrl;
+        if (isset($item['allow_ranges']) && $item['allow_ranges'] === 't') {
+          $toAttrOptions = array_merge($attrOptions, [
+            'label' => NULL,
+            'fieldname' => "$attrOptions[fieldname]:upper",
+            'id' => "$attrOptions[fieldname]:upper",
+            'default' => empty($item['defaultUpper']) ? '' : $item['defaultUpper'],
+            'controlWrapTemplate' => 'justControl',
+          ]);
+          $attrOptions['afterControl'] = ' to ' . self::$ctrl($toAttrOptions);
+        }
         $output = self::$ctrl($attrOptions);
         break;
+
       case 'Boolean':
       case 'B':
         // A change in template means we can now use a checkbox if desired: in fact this is now the default.

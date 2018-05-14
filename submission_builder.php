@@ -178,7 +178,7 @@ class submission_builder extends helper_config {
           $sa['fields'][$key] = array('value' => $value);
         } elseif ($attrEntity && (strpos($key, "$attrEntity:")===0) && substr_count($key, ':')<4) {
           // Skip fields smpAttr:atrrId:attrValId:uniqueIdx:controlname because :controlname indicates this is the extra control used for autocomplete, not the data to post.
-          // Custom attribute data can also go straight into the submission for the "master" table. Array data might need 
+          // Custom attribute data can also go straight into the submission for the "master" table. Array data might need
           // special handling to link it to existing database records.
           if (is_array($value) && count($value)>0) {
             // The value is an array
@@ -192,11 +192,14 @@ class submission_builder extends helper_config {
               } elseif (preg_match("/^\d+:\d+$/", $arrayItem)) {
                 $tokens=explode(':', $arrayItem);
                 $sa['fields']["$key:$tokens[1]:$idx"] = array('value' => $tokens[0]);
-              } else
+              }
+              else {
                 $sa['fields']["$key::$idx"]=array('value' => $arrayItem);
+              }
             }
-          } else
+          } else {
             $sa['fields'][$key] = array('value' => $value);
+          }
         } elseif ($attrEntity && (strpos($key, "$attrEntity+:") === 0)) {
           // a complex custom attribute data value which will need to be json encoded.
           $tokens = explode(':', $key);
@@ -351,7 +354,7 @@ class submission_builder extends helper_config {
    * contain an image upload (as long as a suitable entity is available to store the image in).
    */
   public static function wrap_with_images($values, $modelName, $fieldPrefix=null) {
-    // Now search for an input control values which imply that an image file will need to be 
+    // Now search for an input control values which imply that an image file will need to be
     // either moved to the warehouse, or if already on the warehouse, processed to create
     // thumbnails.
     foreach ($_FILES as $fieldname => &$file) {
@@ -390,7 +393,7 @@ class submission_builder extends helper_config {
     // Get the parent model into JSON
     $modelWrapped = self::wrap($values, $modelName, $fieldPrefix);
 
-    // Build sub-models for the media files. Don't post to the warehouse until after validation success. This 
+    // Build sub-models for the media files. Don't post to the warehouse until after validation success. This
     // also moves any simple uploaded files to the interim image upload folder.
     $media = data_entry_helper::extract_media_data($values, $modelName.'_medium', true, true);
     foreach ($media as $item) {

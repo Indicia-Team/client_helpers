@@ -163,6 +163,7 @@ $indicia_templates = array(
     });
     $('input#{escaped_input_id}').result(function(event, data) {
       $('input#{escaped_id}').attr('value', data.{valueField});
+      $('input#{escaped_id}').attr('data-result', JSON.stringify(data));
       $('.item-icon').remove();
       if (typeof data.icon!=='undefined') {
         $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
