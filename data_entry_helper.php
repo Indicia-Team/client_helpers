@@ -550,26 +550,31 @@ $('#$escaped').change(function(e) {
     if (substr($options['fieldname'],-2) !='[]')
       $options['fieldname'] .= '[]';
 
-    if ($options['addToTable']===true) {
-      // prepare options for updating the source table
-      $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname'])-2);
+    if ($options['addToTable'] === true) {
+      // Prepare options for updating the source table.
+      $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname']) - 2);
       if (preg_match('/^[a-z]{3}Attr\:[1-9][0-9]*$/', $options['basefieldname'])) {
-        switch (substr($options['basefieldname'],0,3)) {
+        switch (substr($options['basefieldname'], 0, 3)) {
           case 'loc':
             $options['mainEntity'] = 'location';
             break;
+
           case 'occ':
             $options['mainEntity'] = 'occurrence';
             break;
+
           case 'smp':
             $options['mainEntity'] = 'sample';
             break;
+
           case 'srv':
             $options['mainEntity'] = 'survey';
             break;
+
           case 'psn':
             $options['mainEntity'] = 'person';
             break;
+
           default:
             $options['mainEntity'] = '';
         }
@@ -583,18 +588,18 @@ $('#$escaped').change(function(e) {
       $options['subListAdd'] = '';
     }
 
-    // prepare embedded search control for add bar panel
+    // Prepare embedded search control for add bar panel.
     $list_options = $options;
     unset($list_options['helpText']);
-    $list_options['id'] = $list_options['id'].':search';
+    $list_options['id'] = "$list_options[id]:search";
     $list_options['fieldname'] = $list_options['id'];
-    $list_options['default']='';
-    $list_options['lockable']=null;
-    $list_options['label'] = null;
+    $list_options['default'] = '';
+    $list_options['lockable'] = NULL;
+    $list_options['label'] = NULL;
     $list_options['controlWrapTemplate'] = 'justControl';
     if (!empty($options['selectMode']) && $options['selectMode'])
       $list_options['selectMode']=true;
-    // set up add panel
+    // Set up add panel.
     $control = $options['autocompleteControl'];
     $options['panel_control'] = self::$control($list_options);
 
@@ -602,7 +607,7 @@ $('#$escaped').change(function(e) {
     $options['inputId'] = $options['id'].':'.$options['captionField'];
     $options = array_merge(array(
       'template' => 'sub_list',
-      // Escape the ids for jQuery selectors
+      // Escape the ids for jQuery selectors.
       'escaped_input_id' => self::jq_esc($options['inputId']),
       'escaped_id' => self::jq_esc($options['id']),
       'escaped_captionField' => self::jq_esc($options['captionField'])
@@ -698,24 +703,25 @@ JS;
    * @return string HTML to insert into the page for the checkbox control.
    */
   public static function training($options) {
-    // The fieldname is fixed for the specific purpose of this control
+    // The fieldname is fixed for the specific purpose of this control.
     $options['fieldname'] = 'training';
-    // Apply default options which may be overriden by supplied values
+    // Apply default options which may be overriden by supplied values.
     $options = array_merge(array(
-      'default' => true,
-      'disabled' => true,
+      'default' => TRUE,
+      'disabled' => TRUE,
       'label' => 'Training mode',
       'helpText' => 'Records submitted in training mode are segregated from genuine records. ',
       'template' => 'training'
     ), $options);
     // Apply standard options and update default value if loading existing record
-    $options = self::check_options($options);
+    $options = self::check_options($options);.
     // Be flexible about the value to accept as meaning checked.
     $v = $options['default'];
-    if ($v==='on' || $v === 1 || $v === '1' || $v === 't' || $v === true) {
+    if ($v === 'on' || $v === 1 || $v === '1' || $v === 't' || $v === TRUE) {
       $options['checked'] = ' checked="checked"';
       $options['default'] = 1;
-    } else {
+    }
+    else {
       $options['checked'] = '';
       $options['default'] = 0;
     }
@@ -723,7 +729,8 @@ JS;
     if ($options['disabled']) {
       $options['disabled'] = ' disabled="disabled"';
       $options['hiddenValue'] = $options['default'];
-    } else {
+    }
+    else {
       $options['disabled'] = '';
       $options['hiddenValue'] = 0;
     }
@@ -733,72 +740,51 @@ JS;
   /**
    * Helper function to generate a list of checkboxes from a Indicia core service query.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control. Defaults to inline when not sortable.</li>
-   * <li><b>table</b><br/>
-   * Required. Table name to get data from for the select options.</li>
-   * <li><b>captionField</b><br/>
-   * Optional. Field to draw values to show in the control from. Required unless lookupValues is specified.</li>
-   * <li><b>valueField</b><br/>
-   * Optional. Field to draw values to return from the control from. Defaults
-   * to the value of captionField. </li>
-   * <li><b>otherItemId</b><br/>
-   * Optional. The termlists_terms id of the checkbox_group item that will be considered as "Other".
-   * When this checkbox is selected then another textbox is displayed allowing specific details relating to the
-   * Other item to be entered. The otherValueAttrId and otherTextboxLabel options must be specified to use this feature.</li>
-   * <li><b>otherValueAttrId</b><br/>
-   * Optional. The attribute id where the "Other" text will be stored, e.g. smpAttr:10. See otherItemId option
-   * description. This attribute's control does not need to be explicitly added to the form - it will be
-   * autogenerated.</li>
-   * <li><b>otherTextboxLabel</b><br/>
-   * Optional. The label for the "Other" textbox. See otherItemId, otherValueAttrId option descriptions.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the group is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>sortable</b></br>
-   * Set to true to allow drag sorting of the list of checkboxes. If sortable, then the layout will be a vertical
-   * column of checkboxes rather than inline.
-   * </li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>check_or_radio_group</b></br>
-   * Container element for the group of checkboxes.
-   * </li>
-   * <li><b>check_or_radio_group_item</b></br>
-   * Template for the HTML element used for each item in the group.
-   * </li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **fieldname** - Required. The name of the database field this control is bound to.
+   *   * **id** - Optional. The id to assign to the HTML control. If not assigned the fieldname is used.
+   *   * **default** - Optional. The default value to assign to the control. This is verridden when reloading a record
+   *     with existing data for this control.
+   *   * **class** - Optional. CSS class names to add to the control. Defaults to inline when not sortable.
+   *   * **table** - Required. Table name to get data from for the select options.
+   *   * **captionField** - Optional. Field to draw values to show in the control from. Required unless lookupValues is
+   *     specified.
+   *   * **valueField** - Optional. Field to draw values to return from the control from. Defaults to the value of
+   *     captionField.
+   *   * **otherItemId** - Optional. The termlists_terms id of the checkbox_group item that will be considered as
+   *     "Other". When this checkbox is selected then another textbox is displayed allowing specific details relating to
+   *     the Other item to be entered. The otherValueAttrId and otherTextboxLabel options must be specified to use this
+   *     feature.
+   *   * **otherValueAttrId** - Optional. The attribute id where the "Other" text will be stored, e.g. smpAttr:10. See
+   *     otherItemId option description. This attribute's control does not need to be explicitly added to the form - it
+   *     will be autogenerated.
+   *   * **otherTextboxLabel** - Optional. The label for the "Other" textbox. See otherItemId, otherValueAttrId option
+   *     descriptions.
+   *   * **extraParams** - Optional. Associative array of items to pass via the query string to the service. This
+   *     should at least contain the read authorisation array.
+   *   * **lookupValues** - If the group is to be populated with a fixed list of values, rather than via a service call,
+   *     then the values can be passed into this parameter as an associated array of key=>caption.
+   *   * **cachetimeout** - Optional. Specifies the number of seconds before the data cache times out - i.e. how long
+   *     after a request for data to the Indicia Warehouse before a new request will refetch the data, rather than use a
+   *     locally stored (cached) copy of the previous request. This speeds things up and reduces the loading on the
+   *     Indicia Warehouse. Defaults to the global website-wide value; if this is not specified then 1 hour.
+   *   * **template** - Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
+   *     for the outer control.
+   *   * **itemTemplate** - Optional. If specified, specifies the name of the template (in global $indicia_templates) to
+   *     use for each item in the control.
+   *   * **captionTemplate** - Optional and only relevant when loading content from a data service call. Specifies the
+   *     template used to build the caption, with each database field represented as {fieldname}.
+   *   * **sortable** - Set to true to allow drag sorting of the list of checkboxes. If sortable, then the layout will
+   *     be a vertical column of checkboxes rather than inline.
+   *   The output of this control can be configured using the following templates:
+   *   * **check_or_radio_group** - Container element for the group of checkboxes.
+   *   * **check_or_radio_group_item** - Template for the HTML element used for each item in the group.
    *
-   * @return string HTML to insert into the page for the group of checkboxes.
+   * @return string
+   *   HTML to insert into the page for the group of checkboxes.
    */
-  public static function checkbox_group($options) {
+  public static function checkbox_group(array $options) {
     $options = self::check_options($options);
     $options = array_merge(array(
       'class'=>empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
@@ -7693,13 +7679,15 @@ HTML;
         }
         if($ctrl=='autocomplete' && isset($attrOptions['default'])){
           // two options: we could be using the id or the meaning_id.
-          if($lookUpKey=='id'){
+          if($lookUpKey === 'id') {
             $attrOptions['defaultCaption'] = $item['displayValue'];
-          } else {
+          }
+          else {
             $termOptions = array(
               'table'=>'termlists_term',
-              'extraParams'=> $options['extraParams'] + $dataSvcParams);
-            $termOptions['extraParams']['meaning_id']=$attrOptions['default'];
+              'extraParams'=> $options['extraParams'] + $dataSvcParams,
+            );
+            $termOptions['extraParams']['meaning_id'] = $attrOptions['default'];
             $response = self::get_population_data($termOptions);
             if(count($response)>0)
               $attrOptions['defaultCaption'] = $response[0]['term'];
