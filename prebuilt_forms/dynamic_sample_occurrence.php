@@ -1806,6 +1806,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
         $attr['id'] = "occAttr:$attr[attribute_id]";
         $attr['fieldname'] = "occAttr:$attr[attribute_id]";
+        $attr['default'] = $attr['default_value'];
+        $attr['displayValue'] = $attr['default_value_caption'];
+        $attr['defaultUpper'] = $attr['default_upper_value'];
         $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
       }
       else {
@@ -1813,7 +1816,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           $attr['id'] = "occAttr:$attr[attribute_id]:$value->id";
           $attr['fieldname'] = "occAttr:$attr[attribute_id]:$value->id";
           $attr['default'] = $value->raw_value;
-          $attr['defaultCaption'] = $value->value;
+          $attr['displayValue'] = $value->value;
           $attr['defaultUpper'] = $value->upper_value;
           $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
         }
