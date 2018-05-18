@@ -714,7 +714,7 @@ JS;
       'template' => 'training'
     ), $options);
     // Apply standard options and update default value if loading existing record
-    $options = self::check_options($options);.
+    $options = self::check_options($options);
     // Be flexible about the value to accept as meaning checked.
     $v = $options['default'];
     if ($v === 'on' || $v === 1 || $v === '1' || $v === 't' || $v === TRUE) {
@@ -7315,11 +7315,10 @@ HTML;
     );
     // Sample or occurrence attributes default to exclude taxon linked attrs.
     if (($options['attrtable'] === 'occurrence_attribute' || $options['attrtable'] === 'sample_attribute')
-        && !isset($attrOptions['extraParams']['restrict_to_taxon_meaning_id'])) {
-      $attrOptions['extraParams']['restrict_to_taxon_meaning_id'] = 'NULL';
+        && !isset($attrOptions['extraParams']['taxon_restrictions'])) {
+      $attrOptions['extraParams']['taxon_restrictions'] = 'NULL';
     }
     $response = self::get_population_data($attrOptions);
-
     if (array_key_exists('error', $response))
       return $response;
     if(isset($options['id'])){
@@ -7337,8 +7336,9 @@ HTML;
       $valueResponse = self::get_population_data($existingValuesOptions);
       if (array_key_exists('error', $valueResponse))
         return $valueResponse;
-    } else
+    } else {
       $valueResponse = array();
+    }
     foreach ($response as $item) {
       $itemId=$item['id'];
       unset($item['id']);
@@ -7346,11 +7346,11 @@ HTML;
       $item['id']=$options['fieldprefix'].':'.$itemId;
       $item['untranslatedCaption']=$item['caption'];
       $item['caption'] = self::getTranslatedAttrCaption($item);
-      $item['default'] = self::attributes_get_default($item);
+      self::attributePrepareDatabaseDefaultForControl($item);
       $item['attributeId'] = $itemId;
       $item['values'] = array();
-      if(count($valueResponse) > 0){
-        foreach ($valueResponse as $value){
+      if(count($valueResponse) > 0) {
+        foreach ($valueResponse as $value) {
           $attrId = $value[$options['attrtable'].'_id'];
           if($attrId == $itemId && $value['id']) {
             if ($item['data_type'] === 'D' && isset($value['value']) && preg_match('/^(\d{4})/', $value['value'])) {
@@ -7368,22 +7368,29 @@ HTML;
               //If not date we need to use the raw_value, items like drop-downs won't reload correctly without this
               $defaultValue = $value['raw_value'];
             }
+            $defaultUpper = ($item['data_type'] === 'I' || $item['data_type'] === 'F') && $item['allow_ranges'] === 't'
+              ? $value['upper_value'] : NULL;
             // for multilanguage look ups we get > 1 record for the same attribute.
             $fieldname = $options['fieldprefix'].':'.$itemId.':'.$value['id'];
             $found = false;
             foreach ($item['values'] as $prev)
               if($prev['fieldname'] == $fieldname && $prev['default'] == $value['raw_value'])
                 $found = true;
-            if(!$found)
-              $item['values'][] = array('fieldname' => $options['fieldprefix'].':'.$itemId.':'.$value['id'],
-                                'default' => $defaultValue, 'caption'=>$value['value']);
+            if (!$found)
+              $item['values'][] = array(
+                'fieldname' => $options['fieldprefix'].':'.$itemId.':'.$value['id'],
+                'default' => $defaultValue,
+                'defaultUpper' => $defaultUpper,
+                'caption'=>$value['value']
+              );
             $item['displayValue'] = $value['value']; //bit of a bodge but not using multivalue for this at the moment.
           }
         }
       }
-      if(count($item['values'])>=1 && $item['multi_value'] != 't'){
+      if(count($item['values'])>=1 && $item['multi_value'] != 't') {
         $item['fieldname'] = $item['values'][0]['fieldname'];
         $item['default'] = $item['values'][0]['default'];
+        $item['defaultUpper'] = $item['values'][0]['defaultUpper'];
       }
       if($item['multi_value'] == 't'){
         $item['default'] = $item['values'];
@@ -7431,24 +7438,38 @@ HTML;
   /**
    * For a single sample or occurrence attribute array loaded from the database, find the
    * appropriate default value depending on the data type.
-   * @param array $item The attribute's definition array.
+   *
+   * @param array $item
+   *   The attribute's definition array.
    * @todo Handle vague dates. At the moment we just use the start date.
    */
-  private static function attributes_get_default($item) {
+  private static function attributePrepareDatabaseDefaultForControl(&$item) {
     switch ($item['data_type']) {
       case 'T':
-        return $item['default_text_value'];
+        $item['default'] = $item['default_text_value'];
+        break;
+
       case 'F':
-        return $item['default_float_value'];
+        $item['default'] = $item['default_float_value'];
+        break;
+
       case 'I':
       case 'L':
       case 'B':
-        return $item['default_int_value'];
+        $item['default'] = $item['default_int_value'];
+        break;
+
       case 'D':
       case 'V':
-        return $item['default_date_start_value'];
+        $item['default'] = $item['default_date_start_value'];
+        break;
+
       default:
-        return '';
+        $item['default'] =  '';
+    }
+    // Load defaults if the attribute has a range value.
+    if (($item['data_type'] === 'I' || $item['data_type'] === 'F') && $item['allow_ranges'] === 't') {
+      $item['defaultUpper'] = $item['default_upper_value'];
     }
   }
 
@@ -7561,6 +7582,9 @@ HTML;
         $validation[] = 'integer';
       }
       $attrOptions['validation']=array_merge(isset($attrOptions['validation'])?$attrOptions['validation']:array(), $validation);
+    }
+    if (!empty($item['system_function'])) {
+      $attrOptions['class'] = (empty($attrOptions['class']) ? '' : "$attrOptions[class] ") . "system-function-$item[system_function]";
     }
     if(isset($item['default']) && $item['default']!="")
       $attrOptions['default']= $item['default'];

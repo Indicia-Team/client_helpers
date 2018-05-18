@@ -1773,39 +1773,119 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * attributes. If loading an existing record, then the attributes are
    * pre-loaded into the div.
    *
+   * The [species dynamic attributes] control can be called with a @types option
+   * which can be set to a JSON array containing either occurrence and/or
+   * sample depending on which type of custom attributes to load. Defaults to
+   * ["occurrence"] but you might want to include "sample" in the array when
+   * there are taxon specific habitat attributes for example.
+   *
    * @return string
    *   HTML for the div.
    */
   protected static function get_control_speciesdynamicattributes($auth, $args, $tabAlias, $options) {
+    // Provide a default
+    $options = array_merge([
+      'types' => ['occurrence'],
+    ], $options);
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/dynamic_sample_occurrence') . "\";\n";
-    $controls = '';
+    // If loading existing data, we need to know the sex/stage attrs so we can
+    // find the value to filter to when retrieving attrs.
     if (!empty(self::$loadedOccurrenceId)) {
-      $controls = self::getDynamicAttrs($auth['read'], $args['survey_id'], data_entry_helper::$entity_to_load['occurrence:taxon_external_key'], self::$loadedOccurrenceId);
+      self::load_custom_occattrs($auth['read'], $args['survey_id']);
+      $stageTermlistTermIds = [];
+      foreach (self::$occAttrs as $attr) {
+        if (!empty($attr['default']) && ($attr['system_function'] === 'sex'
+            || $attr['system_function'] === 'stage'
+            || $attr['system_function'] === 'sex_stage')) {
+          $stageTermlistTermIds[] = $attr['default'];
+        }
+      }
     }
-    return "<div id=\"species-dynamic-attributes\">$controls</div>";
+    // For each type (occurrence/sample) create a div to hold the controls,
+    // pre-populated only when loading existing data.
+    $r = '';
+    foreach ($options['types'] as $type) {
+      $controls = '';
+      if (!empty(self::$loadedOccurrenceId)) {
+        $controls = self::getDynamicAttrs(
+          $auth['read'],
+          $args['survey_id'],
+          data_entry_helper::$entity_to_load['occurrence:taxa_taxon_list_id'],
+          $stageTermlistTermIds,
+          $type,
+          self::$loadedOccurrenceId
+        );
+      }
+      $r .= "<div class=\"species-dynamic-attributes attr-type-$type\">$controls</div>";
+    }
+    return $r;
   }
 
-  private static function getDynamicAttrs($readAuth, $surveyId, $externalKey, $occurrenceId = NULL) {
-     iform_load_helpers(['data_entry_helper', 'report_helper']);
+  /**
+   * Retrieves a list of dynamically loaded attributes from the database.
+   *
+   * @return array
+   *   List of attribute data.
+   */
+  private static function getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId = NULL) {
     $params = [
       'survey_id' => $surveyId,
-      'taxa_taxon_list_external_key' => $externalKey,
+      'taxa_taxon_list_id' => $ttlId,
     ];
+    if (!empty($stageTermlistsTermIds)) {
+      $params['stage_termlists_term_ids'] = implode(',', $stageTermlistsTermIds);
+    }
     if (!empty($occurrenceId)) {
       $params['occurrence_id'] = $occurrenceId;
     }
-    $attrs = report_helper::get_report_data([
-      'dataSource' => 'library/occurrence_attributes/occurrence_attributes_for_form',
+    return report_helper::get_report_data([
+      'dataSource' => "library/{$type}_attributes/{$type}_attributes_for_form",
       'readAuth' => $readAuth,
       'extraParams' => $params,
-      'caching' => false, // TRUE
+      'caching' => FALSE,
     ]);
+  }
+
+  /**
+   * Retrieves a list of dynamically loaded attributes as control HTML.
+   *
+   * @return string
+   *   Controls as an HTML string.
+   */
+  private static function getDynamicAttrs($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId = NULL) {
+    iform_load_helpers(['data_entry_helper', 'report_helper']);
+    $attrs = self::getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId);
+    $prefix = $type === 'sample' ? 'smp' : 'occ';
     $r = '';
+    $lastOuterBlock = '';
+    $lastInnerBlock = '';
     foreach ($attrs as $attr) {
+      // Create fieldsets for the innner and outer block.
+      if ($lastOuterBlock !== $attr['outer_block_name']) {
+        if (!empty($lastInnerBlock)) {
+          $r .= '</fieldset>';
+        }
+        if (!empty($lastOuterBlock)) {
+          $r .= '</fieldset>';
+        }
+        if (!empty($attr['outer_block_name']))
+          $r .= '<fieldset><legend>' . lang::get($attr['outer_block_name']) . '</legend>';
+        if (!empty($attr['inner_block_name']))
+          $r .= '<fieldset><legend>' . lang::get($attr['inner_block_name']) . '</legend>';
+      }
+      elseif ($lastInnerBlock !== $attr['inner_block_name']) {
+        if (!empty($lastInnerBlock)) {
+          $r .= '</fieldset>';
+        }
+        if (!empty($attr['inner_block_name']))
+          $r .= '<fieldset><legend>' . lang::get($attr['inner_block_name']) . '</legend>';
+      }
+      $lastInnerBlock=$attr['inner_block_name'];
+      $lastOuterBlock=$attr['outer_block_name'];
       $values = json_decode($attr['values']);
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
-        $attr['id'] = "occAttr:$attr[attribute_id]";
-        $attr['fieldname'] = "occAttr:$attr[attribute_id]";
+        $attr['id'] = "{$prefix}Attr:$attr[attribute_id]";
+        $attr['fieldname'] = "{$prefix}Attr:$attr[attribute_id]";
         $attr['default'] = $attr['default_value'];
         $attr['displayValue'] = $attr['default_value_caption'];
         $attr['defaultUpper'] = $attr['default_upper_value'];
@@ -1813,14 +1893,20 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       }
       else {
         foreach ($values as $value) {
-          $attr['id'] = "occAttr:$attr[attribute_id]:$value->id";
-          $attr['fieldname'] = "occAttr:$attr[attribute_id]:$value->id";
+          $attr['id'] = "{$prefix}Attr:$attr[attribute_id]:$value->id";
+          $attr['fieldname'] = "{$prefix}Attr:$attr[attribute_id]:$value->id";
           $attr['default'] = $value->raw_value;
           $attr['displayValue'] = $value->value;
           $attr['defaultUpper'] = $value->upper_value;
           $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
         }
       }
+    }
+    if (!empty($lastInnerBlock)) {
+      $r .= '</fieldset>';
+    }
+    if (!empty($lastOuterBlock)) {
+      $r .= '</fieldset>';
     }
     return $r;
   }
@@ -1835,7 +1921,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     echo self::getDynamicAttrs(
       $readAuth,
       $_GET['survey_id'],
-      $_GET['taxa_taxon_list_external_key'],
+      $_GET['taxa_taxon_list_id'],
+      json_decode($_GET['stage_termlists_term_ids']),
+      $_GET['type'],
       empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
     );
   }
@@ -2351,9 +2439,13 @@ else
    * Load the list of occurrence attributes into a static variable.
    *
    * By maintaining a single list of attributes we can track which have already been output.
-   * @param array $readAuth Read authorisation tokens.
-   * @param integer $surveyId ID of the survey to load occurrence attributes for.
-   * @return array List of occurrence attribute definitions.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param integer $surveyId
+   *   ID of the survey to load occurrence attributes for.
+   * @return array
+   *   List of occurrence attribute definitions.
    */
   protected static function load_custom_occattrs($readAuth, $surveyId) {
     if (!isset(self::$occAttrs)) {
