@@ -1831,6 +1831,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     $params = [
       'survey_id' => $surveyId,
       'taxa_taxon_list_id' => $ttlId,
+      'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
     ];
     if (!empty($stageTermlistsTermIds)) {
       $params['stage_termlists_term_ids'] = implode(',', $stageTermlistsTermIds);
