@@ -33,9 +33,14 @@
  */
 function group_authorise_form($args, $readAuth) {
   if (!empty($args['limit_to_group_id']) && $args['limit_to_group_id'] !== (empty($_GET['group_id']) ? '' : $_GET['group_id'])) {
-    // Page owned by a different group, so throw them out.
-    hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert', true);
-    hostsite_goto_page('<front>');
+    if (empty($_GET['group_id'])) {
+      hostsite_access_denied();
+    }
+    else {
+      // Page owned by a different group, so throw them out.
+      hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert', true);
+      hostsite_goto_page('<front>');
+    }
   }
   $gu = array();
   if (!empty($_GET['group_id'])) {
