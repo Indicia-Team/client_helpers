@@ -2337,15 +2337,26 @@ else
     $r = '';
     if(self::$mode === self::MODE_EXISTING_RO) return $r; // don't allow users to submit if in read only mode.
     $r .= '<input type="submit" class="' . $indicia_templates['buttonHighlightedClass'] . '" id="save-button" value="'.lang::get('Submit')."\" />\n";
-    if (!empty(self::$loadedSampleId) && $args['multiple_occurrence_mode']==='single') {
+    if (!empty(self::$loadedSampleId)) {
       // use a button here, not input, as Chrome does not post the input value
-      $r .= '<button type="submit" class="' . $indicia_templates['buttonWarningClass'] . '" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
-        if (!confirm(\"Are you sure you want to delete this record?\")) {
-          e.preventDefault();
-          return false;
-        }
-      });\n";
+      $formType = $args['multiple_occurrence_mode'] === 'single' ? lang::get('record') : lang::get('list of records');
+      $btnLabel = lang::get('Delete {1}', $formType);
+      $r .= <<<HTML
+<button type="submit" class="$indicia_templates[buttonWarningClass]" id="delete-button" name="delete-button" value="delete" >
+  $btnLabel
+</button>
+
+HTML;
+      $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
+      data_entry_helper::$javascript .= <<<JS
+$('#delete-button').click(function(e) {
+  if (!confirm('$msg')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+JS;
     }
     return $r;
   }
