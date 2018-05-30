@@ -881,6 +881,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langNext: '" . lang::get('next') . "',
   langLast: '" . lang::get('last') . "',
   langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
+  langHideInfo: '" . lang::get('Hide info') . "',
   noRecords: '" . lang::get('No records')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";

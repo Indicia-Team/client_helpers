@@ -1581,8 +1581,8 @@ JS;
           if (isset($resourceList[$resource]['javascript'])) {
             foreach ($resourceList[$resource]['javascript'] as $j) {
               // if enabling fancybox, link it up
-              if (strpos($j, 'fancybox.')!==false) {
-                self::$javascript .= "jQuery('a.fancybox').fancybox();\n";
+              if (strpos($j, 'fancybox.') !== FALSE) {
+                self::$javascript .= "$('a.fancybox').fancybox({ afterLoad: indiciaFns.afterFancyboxLoad });\n";
               }
               // look out for a condition that this script is IE only.
               if (substr($j, 0, 4)=='[IE]'){
