@@ -333,3 +333,57 @@ function iform_report_apply_explore_user_own_preferences(&$reportOptions) {
       $reportOptions['extraParams']['ownGroups']=0;
   }
 }
+
+function iform_report_get_gallery_item($medium, $imageSize = 'thumb') {
+  $imageFolder = data_entry_helper::get_uploaded_image_folder();
+  $metadata = [];
+  if (!empty($medium['caption'])) {
+    $metadata[] = "<div class=\"image-caption\">$medium[caption]</div>";
+  }
+  if (!empty($medium['licence_code'])) {
+    $code = strtolower($medium['licence_code']);
+    $metadata[] = "<div class=\"licence licence-$code\">$medium[licence_title]</div>";
+  }
+  $infoPane = '';
+  if (count($metadata)) {
+    $langHideInfo = lang::get('Hide info');
+    $metadata = implode("\n", $metadata);
+    $class = substr($medium['media_type'], 0, 6) === 'Image:' ? 'media-info image-info' : 'media-info';
+    $hide = $imageSize === 'thumb' && $medium['media_type'] !== 'Audio:Local' ? ' style="display: none"' : '';
+    $infoPane = <<<HTML
+<div class="$class"$hide>
+  $metadata
+  <span class="media-info-close" title="$langHideInfo">x</span>
+</div>
+HTML;
+  }
+  if ($medium['media_type'] === 'Audio:Local') {
+    return <<<HTML
+<li class="gallery-item">
+  <audio controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
+  $infoPane
+</li>
+HTML;
+  }
+  elseif ($medium['media_type'] === 'Image:iNaturalist') {
+    $imgLarge = str_replace('/square.', '/large.', $medium['path']);
+    return <<<HTML
+<li class="gallery-item">
+  <a href="$imgLarge" class="fancybox single">
+    <img src="$medium[path]" />
+  </a>
+  $infoPane
+</li>
+HTML;
+  }
+  else {
+    return <<<HTML
+<li class="gallery-item">
+  <a href="$imageFolder$medium[path]" class="fancybox single">
+    <img src="$imageFolder$imageSize-$medium[path]" />
+  </a>
+  $infoPane
+</li>
+HTML;
+  }
+}
