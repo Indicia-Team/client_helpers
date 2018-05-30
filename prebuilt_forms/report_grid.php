@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -30,7 +31,7 @@ require_once('includes/report.php');
  */
 class iform_report_grid {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -44,7 +45,7 @@ class iform_report_grid {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -153,7 +154,7 @@ class iform_report_grid {
           'required' => false,
           'default' => 1,
           'group'=>'Report Settings'
-        ),        
+        ),
         array(
           'name' => 'download_link',
           'caption' => 'Download link',
