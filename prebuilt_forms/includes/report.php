@@ -334,29 +334,52 @@ function iform_report_apply_explore_user_own_preferences(&$reportOptions) {
   }
 }
 
+/**
+ * Retrieve HTML for a media file in a gallery.
+ *
+ * @param array $medium
+ *   Media file data as loaded from a *_media table's list view.
+ * @param string $imageSize
+ *   Output file size, e.g. thumb or med.
+ * @return string
+ *   HTML.
+ */
 function iform_report_get_gallery_item($medium, $imageSize = 'thumb') {
   $imageFolder = data_entry_helper::get_uploaded_image_folder();
-  $metadata = [];
+  // Find the licence and caption info for the file.
+  $info = [];
   if (!empty($medium['caption'])) {
-    $metadata[] = "<div class=\"image-caption\">$medium[caption]</div>";
+    $info[] = "<div class=\"image-caption\">$medium[caption]</div>";
   }
   if (!empty($medium['licence_code'])) {
     $code = strtolower($medium['licence_code']);
-    $metadata[] = "<div class=\"licence licence-$code\">$medium[licence_title]</div>";
+    $info[] = "<div class=\"licence licence-$code\">$medium[licence_title]</div>";
   }
+  // If there is any info, build a pane to show it.
   $infoPane = '';
-  if (count($metadata)) {
+  if (count($info)) {
     $langHideInfo = lang::get('Hide info');
-    $metadata = implode("\n", $metadata);
+    $info = implode("\n", $info);
     $class = substr($medium['media_type'], 0, 6) === 'Image:' ? 'media-info image-info' : 'media-info';
-    $hide = $imageSize === 'thumb' && $medium['media_type'] !== 'Audio:Local' ? ' style="display: none"' : '';
+    $hide = '';
+    $smallVersion = '';
+    // For thumbnails, we still add the main info pane, but hide it. Then it
+    // is still available for showing in the full fancybox output. Also add
+    // a minified version of the info to the displayed output.
+    if ($imageSize === 'thumb' && $medium['media_type'] !== 'Audio:Local') {
+      $hide = ' style="display: none"';
+      $licence = empty($medium['licence_code']) ? '' : " [<abbr title=\"$medium[licence_title]\">$medium[licence_code]</abbr>]";
+      $smallVersion = "<div class=\"image-caption small\">$medium[caption]$licence</div>";
+    }
     $infoPane = <<<HTML
 <div class="$class"$hide>
-  $metadata
+  $info
   <span class="media-info-close" title="$langHideInfo">x</span>
 </div>
+$smallVersion
 HTML;
   }
+  // Output the media file content, with the info pane attached.
   if ($medium['media_type'] === 'Audio:Local') {
     return <<<HTML
 <li class="gallery-item">
