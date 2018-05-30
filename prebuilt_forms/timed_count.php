@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -53,7 +54,7 @@ class iform_timed_count {
       'description'=>'A form for inputting the counts of species during a timed period. Can be called with sample=<id> to edit an existing sample.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -211,7 +212,7 @@ class iform_timed_count {
     if (isset($response['error'])){
       data_entry_helper::dump_errors($response);
     }
-    if (isset($_REQUEST['page']) && 
+    if (isset($_REQUEST['page']) &&
           (($_REQUEST['page']==='site' && !isset(data_entry_helper::$validation_errors)) || // we have just saved the main sample page with no errors, so move on to the occurrences list
            ($_REQUEST['page']==='occurrences' && isset(data_entry_helper::$validation_errors)))) { // or we have just saved the occurrences page with errors, so redisplay the occurrences list
       return self::get_occurrences_form($args, $nid, $response);
@@ -221,7 +222,7 @@ class iform_timed_count {
   }
 
   public static function get_sample_form($args, $nid, $response) {
-  	
+
   	global $user;
   	iform_load_helpers(array('map_helper'));
   	$auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
@@ -230,11 +231,11 @@ class iform_timed_count {
   	$sampleMethods = helper_base::get_termlist_terms($auth, 'indicia:sample_methods', array('Timed Count'));
   	if (count($sampleMethods)==0)
   		return 'The sample method "Timed Count" must be defined in the termlist in order to use this form.';
-  	
+
   	$sampleId = isset($_GET['sample_id']) ? $_GET['sample_id'] : null;
   	if ($sampleId && !isset(data_entry_helper::$validation_errors))
   		data_entry_helper::load_existing_record($auth['read'], 'sample', $sampleId);
-  	
+
   	$isAdmin = (isset($args['manager_permission']) && hostsite_user_has_permission($args['manager_permission']));
 
   	// The following is butchered from mnhnl.
@@ -306,7 +307,7 @@ getwkt = function(geometry, incFront, incBrackets){
 setSref = function(geometry){
   var centre = getCentroid(geometry);
   centre = reverseConvertGeom(centre, editLayer.map.projection); // convert to indicia internal projection
-  var system = $('#imp-sref-system').val();				
+  var system = $('#imp-sref-system').val();
   jQuery.getJSON('".data_entry_helper::$base_url."/index.php/services/spatial/wkt_to_sref?wkt=POINT(' + centre.x + '  ' + centre.y + ')&system=' + system + '&precision=".(isset($args['precision']) && $args['precision'] != '' ? $args['precision'] : '8')."&callback=?',
       function(data){
         if(typeof data.error != 'undefined')
@@ -331,7 +332,7 @@ setGeomFields = function(){
   else
     completeGeom = new OpenLayers.Geometry.Collection(geomstack);
   // the geometry is in the map projection: if this doesn't match indicia's internal one, then must convert.
-  if (editLayer.map.projection.projcode!='EPSG:900913' && editLayer.map.projection.projcode!='EPSG:3857') 
+  if (editLayer.map.projection.projcode!='EPSG:900913' && editLayer.map.projection.projcode!='EPSG:3857')
     completeGeom.transform(editLayer.map.projection,  new OpenLayers.Projection('EPSG:900913'));
   jQuery('#imp-geom').val(getwkt(completeGeom, true, true));
   setSref(getCentroid(completeGeom));
@@ -513,7 +514,7 @@ polygonDrawActivate = function(){
         modAreaFeature.selectFeature(editLayer.features[i]);
   return true;
 };
-		         		 		
+
 modAreaFeature = null;
 selectFeature = null;
 polygonDraw = null;
@@ -522,18 +523,18 @@ editControl = null;
 mapInitialisationHooks.push(function(mapdiv) {
 	$('#imp-sref').unbind('change');
 	editLayer=mapdiv.map.editLayer;
-    var nav=new OpenLayers.Control.Navigation({displayClass: \"olControlNavigation\", \"title\":mapdiv.settings.hintNavigation+((!mapdiv.settings.scroll_wheel_zoom || mapdiv.settings.scroll_wheel_zoom===\"false\")?'': mapdiv.settings.hintScrollWheel)});	
+    var nav=new OpenLayers.Control.Navigation({displayClass: \"olControlNavigation\", \"title\":mapdiv.settings.hintNavigation+((!mapdiv.settings.scroll_wheel_zoom || mapdiv.settings.scroll_wheel_zoom===\"false\")?'': mapdiv.settings.hintScrollWheel)});
 	editControl = new OpenLayers.Control.Panel({allowDepress: false, 'displayClass':'olControlEditingToolbar'});
 	mapdiv.map.addControl(editControl);
 ".($isAdmin || $sampleId == null ?
-	// can edit the shape 
+	// can edit the shape
 "  	modAreaFeature = new OpenLayers.Control.ModifyFeature(editLayer,{standalone: true});
 	selectFeature = new OpenLayers.Control.SelectFeature([editLayer],{standalone: true});
 	polygonDraw = new OpenLayers.Control.DrawFeature(editLayer,OpenLayers.Handler.Polygon,{'displayClass':'olControlDrawFeaturePolygon', drawFeature: addDrawnPolygonToSelection, title: '".lang::get('Select this tool to draw a polygon, clicking on the map to place the vertices of the shape, and double clicking on the final vertex to finish. You may drag and drop vertices (circles) to move them, and draw more than one polygon, i.e. input a discontinuous site.')."'});
 	polygonDraw.events.on({'activate': polygonDrawActivate});
 	editControl.addControls([polygonDraw
 				         ,new OpenLayers.Control.Button({displayClass: \"olControlClearLayer\", trigger: RemoveNewSite, title: '".lang::get('Press this button to completely remove the currently drawn site.')."'})
-    					 ,nav	
+    					 ,nav
 				         ,new OpenLayers.Control.Button({displayClass: \"olControlUndo\", trigger: UndoSketchPoint, title: '".lang::get('If you have not completed a polygon, press this button to clear the last vertex. If you have completed a polygon but wish to remove a vertex, place the mouse over the vertex and press the Delete button: this only works for the corner vertices, not the dummy ones half way down each side.')."'})
     ]);
 	mapdiv.map.addControl(modAreaFeature);
@@ -549,7 +550,7 @@ mapInitialisationHooks.push(function(mapdiv) {
 	  editLayer.features[i].attributes.type = 'ours';
 	  editLayer.features[i].attributes.ours = true;
 	  selectFeature.highlight(editLayer.features[i]);
-	}				         		
+	}
 	editLayer.events.on({
 		'featuremodified': onFeatureModified
 	});
@@ -564,7 +565,7 @@ mapInitialisationHooks.push(function(mapdiv) {
 "	mapdiv.map.events.triggerEvent('zoomend');
 });
 ";
-  	
+
     $r = '<form method="post" id="sample">'.$auth['write'];
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call, so it can get location details.
@@ -603,9 +604,9 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     $help = lang::get('The Year field is read-only, and is calculated automatically from the date(s) of the Counts.');
     $r .= data_entry_helper::text_input(array('label' => lang::get('Year'), 'fieldname' => 'sample:date', 'readonly'=>' readonly="readonly" ', 'helpText'=>$help));
     data_entry_helper::$javascript .= "$('#sample\\\\:date').css('color','graytext').css('background-color','#d0d0d0');\n";
-    
+
     // are there any option overrides for the custom attributes?
-    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) 
+    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options'])
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
     else $blockOptions=array();
     $r .= get_attribute_html($attributes, $args, array('extraParams'=>$auth['read']), null, $blockOptions);
@@ -619,7 +620,7 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
       		  $parts = explode(',',$value); // 0=factor,1=number decimal places
       		  data_entry_helper::$javascript .= "$('#".str_replace(':','\\\\:',$attr)."').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\nhook_setGeomFields.push(function(geom){\n$('#".str_replace(':','\\\\:',$attr)."').val(\n(geom.getArea()/".$parts[0].").toFixed(".$parts[1]."));\n});\n";
       		  break;
-      	}		 
+      	}
       }
     }
     $r .= '<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />';
@@ -628,10 +629,10 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     $options = iform_map_get_map_options($args, $auth['read']);
     $options['clickForSpatialRef'] = false;
     $olOptions = iform_map_get_ol_options($args);
-    
+
     $systems=array();
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
-    foreach($list as $system) $systems[$system] = lang::get('sref:'.$system) == 'sref:'.$system ? lang::get($system) : lang::get('sref:'.$system); 
+    foreach($list as $system) $systems[$system] = lang::get('sref:'.$system) == 'sref:'.$system ? lang::get($system) : lang::get('sref:'.$system);
     $r .= data_entry_helper::sref_and_system(array(
       'label' => lang::get('Grid Reference'),
       'fieldname'=>'sample:entered_sref',
@@ -763,7 +764,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
       ));
       // the report is ordered id desc. REverse it
       $o = array_reverse($o);
-    } else $o = array(); // empty array of occurrences when no creating a new sample. 
+    } else $o = array(); // empty array of occurrences when no creating a new sample.
 
     // we pass through the read auth. This makes it possible for the get_submission method to authorise against the warehouse
     // without an additional (expensive) warehouse call.
@@ -785,7 +786,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     $record_status = (isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C');
     $r .= '<input type="hidden" name="occurrence:record_status" value="'.$record_status.'">'."\n";
 
-    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) 
+    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options'])
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
     else $blockOptions=array();
     for($i = 0; $i < max($args['numberOfCounts'], count($subSamples)+1); $i++){
@@ -797,7 +798,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
         $dateValidation = array('required','date');
       else
         $dateValidation = array('date');
-      // The sample dates are restrained to the requisite year, but there is already a restriction on future dates, so only 
+      // The sample dates are restrained to the requisite year, but there is already a restriction on future dates, so only
       // change the upper limit if not this year. the date in data_entry_helper::$entity_to_load['sample:date'] is a vague date year
       $r .= data_entry_helper::date_picker(array('label' => lang::get('Date'), 'fieldname' => 'C'.($i+1).':sample:date', 'validation' => $dateValidation));
       data_entry_helper::$javascript .= "$('#C".($i+1)."\\\\:sample\\\\:date' ).datepicker( 'option', 'minDate', new Date(".data_entry_helper::$entity_to_load['sample:date'].", 1 - 1, 1) );\n";
@@ -814,7 +815,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
         $r .= "<label for='C".($i+1).":sample:deleted'>Delete this count:</label>
 <input id='C".($i+1).":sample:deleted' type='checkbox' value='t' name='C".($i+1).":sample:deleted' class='subSampleDelete'><br />
 <p class='helpText'>".lang::get('Setting this will delete this count when the page is saved. Only one count can be deleted at a time.').'</p>';
-      
+
       foreach ($attributes as $attr) {
         if(strcasecmp($attr['untranslatedCaption'],'Unconfirmed Individuals')==0) continue;
         // output the attribute - tag it with a class & id to make it easy to find from JS.
@@ -893,7 +894,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
                '<td></td>'.
                '</tr>';
       }
-      
+
       $r .= '</tbody></table>';
       if($i && !$subSampleId) $r .= '<button type="button" class="clear-button ui-state-default ui-corner-all smp-input" disabled="disabled" />'.lang::get('Clear this count').'</button>';
       $r .= '</fieldset>';
@@ -985,7 +986,7 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     }
     return($sampleMod);
   }
-  
+
   /**
    * Override the form redirect to go back to My Walks after the grid is submitted. Leave default redirect (current page)
    * for initial submission of the parent sample.
