@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -41,19 +42,19 @@ class iform_report_calendar_summary_2 {
 
   /* This is the URL parameter used to pass the user_id filter through */
   private static $userKey = 'userID';
-  
+
   /* This is the URL parameter used to pass the location_id filter through */
   private static $locationKey = 'locationID';
-  
+
   /* This is the URL parameter used to pass the location_type_id filter through */
   private static $locationTypeKey = 'location_type_id';
-  
+
   /* This is the URL parameter used to pass the year filter through */
   private static $yearKey = 'year';
 
   /* This is the URL parameter used to pass the caching filter through */
   private static $cacheKey = 'caching';
-  
+
   // internal key, not used on URL: maps the location_id to the survey_id.
   private static $SurveyKey = 'survey_id';
 
@@ -61,12 +62,12 @@ class iform_report_calendar_summary_2 {
   private static $URLExtensionKey = 'URLExtension';
 
   private static $removableParams = array();
-  
+
   private static $siteUrlParams = array();
-  
+
   private static $branchLocationList = array();
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -99,7 +100,7 @@ class iform_report_calendar_summary_2 {
             'default' => 'taxon',
             'group'=>'General Settings'
         ),
-        
+
         array(
           'name' => 'includeRawData',
           'caption' => 'Include raw data',
@@ -504,7 +505,7 @@ class iform_report_calendar_summary_2 {
           'required' => false,
           'group' => 'Downloads'
         ),
-          
+
         array(
           'name'=>'weekstart',
           'caption'=>'Start of week definition',
@@ -646,7 +647,7 @@ class iform_report_calendar_summary_2 {
         "sequence":[{"type":"str"}]
     },
     "highlightColor":{"type":"str","desc":"A colour to use when highlighting an area on a filled line plot."}
-  }  
+  }
 }',
           'required' => false,
           'group'=>'Advanced Chart Options'
@@ -779,7 +780,7 @@ class iform_report_calendar_summary_2 {
           'required' => false,
           'group' => 'Raw Data Report Settings'
         ),
-          
+
         array(
           'name' => 'sensitivityLocAttrId',
           'caption' => 'Location attribute used to filter out sensitive sites',
@@ -800,18 +801,18 @@ class iform_report_calendar_summary_2 {
   }
 
     /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
   protected static function getArgDefaults($args) {
-      
+
     if (!isset($args['includeRawData']) && !isset($args['includeSummaryData']) && !isset($args['includeEstimatesData']))
         $args['includeRawData'] = true;
-      
+
     return $args;
   }
-  
+
   /**
    * Retreives the options array required to set up a report according to the default
    * report parameters.
@@ -877,7 +878,7 @@ class iform_report_calendar_summary_2 {
 
   private static function location_control($args, $readAuth, $nid, &$options)
   {
-    // note that when in user specific mode it returns the list currently assigned to the user: it does not give 
+    // note that when in user specific mode it returns the list currently assigned to the user: it does not give
     // locations which the user previously recorded data against, but is no longer allocated to.
     global $user;
     $ctrl = '';
@@ -889,7 +890,7 @@ class iform_report_calendar_summary_2 {
     $options['location_id'] = $siteUrlParams[self::$locationKey]['value'];
     $options['extraParams']['location_id'] = $siteUrlParams[self::$locationKey]['value'];
     $options['extraParams']['location_list'] = '';
-    
+
     // Set up common data.
     $locationListArgs=array(
         'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '', 'sensattr' => '', 'exclude_sensitive' => 0),
@@ -909,7 +910,7 @@ class iform_report_calendar_summary_2 {
         'extraParams'=>$readAuth,
         'survey_id'=>self::$siteUrlParams[self::$SurveyKey],
         'caching' => $siteUrlParams[self::$cacheKey]['value']);
-    
+
     if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
       $types = explode(',',$args['locationTypesFilter']);
       $types1=array();
@@ -939,10 +940,10 @@ class iform_report_calendar_summary_2 {
         $options['downloadFilePrefix'] .= preg_replace('/[^A-Za-z0-9]/i', '', $lookUpValues[$siteUrlParams[self::$locationTypeKey]['value']]).'_';
       }
     }
-    
+
     $locationAttributes = data_entry_helper::getAttributes($attrArgs, false);
     $locationList = array();
-    
+
     // If we are looking a user, then we display all that users sites. If I am that user, or if I am a person with sensitive access, then I can see all the sites, even sensitive.
     if(isset($args['includeUserFilter']) && $args['includeUserFilter'] &&
           isset($args['userSpecificLocationLookUp']) && $args['userSpecificLocationLookUp'] &&
@@ -1071,7 +1072,7 @@ class iform_report_calendar_summary_2 {
     if(!is_dir($path) || !is_writeable($path)) return false;
     return $path.'cache_'.data_entry_helper::$website_id.'_CMS_User_List_'.$userID;
   }
-  
+
   // Idea here is to not just cache the query used to get the user data, but also the user_loads also run
   private static function _fetchDBCache($userID)
   {
@@ -1081,7 +1082,7 @@ class iform_report_calendar_summary_2 {
       $cacheTimeOut = false;
     }
     $cacheFile = self::_getCacheFileName($userID);
-    
+
     if ($cacheTimeOut && $cacheFile && is_file($cacheFile) && filemtime($cacheFile) >= (time() - $cacheTimeOut))
     {
       $handle = fopen($cacheFile, 'rb');
@@ -1108,7 +1109,7 @@ class iform_report_calendar_summary_2 {
       rename($cacheFile.getmypid(),$cacheFile);
     }
   }
-  
+
   private static function user_control(&$args, $readAuth, $nid, &$options)
   {
     // user filter is keyed on the CMS User ID; converted to cms_user_id/Indicia user_id pair by report_helper, if applicable.
@@ -1122,7 +1123,7 @@ class iform_report_calendar_summary_2 {
     $options['user_id'] = $siteUrlParams[self::$userKey]['value'] == "branch" ? '' : $siteUrlParams[self::$userKey]['value'];
     $options['extraParams']['user_id'] = $options['user_id'];
     $userList=array();
-    
+
     if(!isset($args['manager_permission']) || $args['manager_permission']=="" || !hostsite_user_has_permission($args['manager_permission'])) {
       // user is a normal user or branch manager
       $userList[$user->uid]=$user; // just me
@@ -1140,7 +1141,7 @@ class iform_report_calendar_summary_2 {
                   lang::get(' control to yourself or branch data.') : lang::get(' control to yourself.')).'</p>';
       }
     } else {
-      // user is manager, so need to load the list of users they can choose to report against 
+      // user is manager, so need to load the list of users they can choose to report against
       if(!($userList = self::_fetchDBCache($user->uid))) {
        $userList=array(); // make sure I'm on list
        $userList[$user->uid] = $user; // make sure I'm on list
@@ -1274,7 +1275,7 @@ class iform_report_calendar_summary_2 {
           $userListArr[$id] = $account['name'];
         }
       }
-    
+
     natcasesort($userListArr);
     foreach($userListArr as $id => $name) {
       $ctrl .= '<option value="'.$id.'" class="user-select-option" '.($siteUrlParams[self::$userKey]['value']==$id ? 'selected="selected" ' : '').'>'.$name.'</option>';
@@ -1303,7 +1304,7 @@ class iform_report_calendar_summary_2 {
     self::set_up_control_change($ctrlid, self::$userKey, array('locationID'));
     return $ctrl;
   }
-  
+
   /**
    * Get the parameters required for the current filter.
    */
@@ -1339,7 +1340,7 @@ class iform_report_calendar_summary_2 {
            $args['branch_manager_permission']=="" ||
            !hostsite_user_has_permission($args['branch_manager_permission'])))
         self::$siteUrlParams[self::$userKey]['value']=$user->uid;
-      
+
       foreach (self::$removableParams as $param=>$caption) {
         self::$siteUrlParams[$param] = array(
           'name' => $param,
@@ -1436,7 +1437,7 @@ jQuery('#".$ctrlid."').change(function(){
     }
     return $retVal;
   }
-    
+
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
@@ -1455,7 +1456,7 @@ jQuery('#".$ctrlid."').change(function(){
     if(isset($args['locationTypeFilter'])) {
       return('<p>'.lang::get('Please contact the site administrator. This version of the form uses a different method of specifying the location types.').'</p>');
     }
-    
+
     iform_load_helpers(array('report_helper'));
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
     if(!self::set_up_survey($args, $auth))
@@ -1484,7 +1485,7 @@ jQuery('#".$ctrlid."').change(function(){
     $axesOptions = trim($args['axes_options']);
     if (!empty($axesOptions))
       $reportOptions['axesOptions'] = json_decode($axesOptions, true);
-    
+
     if(isset($args['countColumn']) && $args['countColumn']!='') {
       $reportOptions['countColumn']= 'attr_occurrence_'.str_replace(' ', '_', strtolower($args['countColumn'])); // assume that this is an occurrence attribute.
       $reportOptions['extraParams']['occattrs']=$args['countColumn'];
@@ -1538,7 +1539,7 @@ jQuery('#".$ctrlid."').change(function(){
     $retVal .= '<th>'.self::user_control($args, $auth, $nid, $reportOptions).'</th>';
     $retVal .= '<th>'.self::location_control($args, $auth, $nid, $reportOptions).'</th>'; // note this includes the location_type control if needed
     $siteUrlParams = self::get_site_url_params($args);
-    if (!empty($args['removable_params'])) {      
+    if (!empty($args['removable_params'])) {
       foreach(self::$removableParams as $param=>$caption) {
         $checked=(isset($_GET[$param]) && $_GET[$param]==='true') ? ' checked="checked"' : '';
         $retVal .= '<th><input type="checkbox" name="removeParam-'.$param.'" id="removeParam-'.$param.'" class="removableParam"'.$checked.'/>'.
@@ -1576,7 +1577,7 @@ jQuery('#".$ctrlid."').change(function(){
       $reportOptions['linkURL'] .= (strpos($reportOptions['linkURL'], '?') !== FALSE ? '&' : '?').'sample_id=';
     }
     $reportOptions['includeReportTimeStamp']=isset($args['includeFilenameTimestamps']) && $args['includeFilenameTimestamps'];
-    
+
     $retVal.= '</tr></thead></table>';
     $reportOptions['survey_id']=self::$siteUrlParams[self::$SurveyKey]; // Sort of assuming that only one location type recorded against per survey.
     $reportOptions['downloads'] = array();
@@ -1599,7 +1600,7 @@ jQuery('#".$ctrlid."').change(function(){
       }
     } else $reportOptions['includeRawGridDownload'] = false;
     $retVal .= report_helper::report_calendar_summary2($reportOptions);
-    
+
     return $retVal;
   }
 

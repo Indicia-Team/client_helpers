@@ -26,7 +26,7 @@ require_once('includes/map.php');
 /**
  * Prebuilt Indicia data entry form that presents taxon search box, date control, map picker,
  * survey selector and comment entry controls.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
  */
@@ -44,12 +44,12 @@ class iform_record_details {
           'define which occurrence to show.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array_merge(
       iform_map_get_map_parameters(),
       array(
@@ -63,7 +63,7 @@ class iform_record_details {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @return Form HTML.
@@ -119,8 +119,8 @@ class iform_record_details {
     $olOptions = iform_map_get_ol_options($args);
     $options['initialFeatureWkt'] = data_entry_helper::$entity_to_load['occurrence:wkt'];
     $r .= map_helper::map_panel($options, $olOptions);
-        
+
     return $r;
-  }  
-  
+  }
+
 }

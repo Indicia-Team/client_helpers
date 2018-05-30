@@ -1359,28 +1359,13 @@ HTML
   }
 
   private static function getMediaHtml($media) {
-    $r = '';
+    require_once 'includes/report.php';
     $path = data_entry_helper::get_uploaded_image_folder();
-    $r .= '<ul class="gallery">';
+    $r = '<div class="media-gallery"><ul >';
     foreach ($media as $file) {
-      if (preg_match('/^https:\/\/static\.inaturalist\.org/', $file['path'])) {
-        $imgLarge = str_replace('/square.', '/large.', $file['path']);
-        $media = "<a href=\"$imgLarge\" class=\"inaturalist fancybox\"><img src=\"$file[path]\" /></a>";
-      }
-      elseif (preg_match('/^http(s)?:\/\/(www\.)?([a-z+(\.kr)]+)/', $file['path'], $matches)) {
-        $class = str_replace('.', '', $matches[3]);
-        $media = "<a href=\"$file[path]\" class=\"social-icon $class\"></a>";
-      }
-      elseif (preg_match('/.(wav|mp3)$/', $file['path'])) {
-        $media = "<audio controls src=\"$path$file[path]\" type=\"audio/mpeg\"/>";
-      }
-      else {
-        $media = "<a href=\"$path$file[path]\" class=\"fancybox\"><img src=\"{$path}thumb-" .
-            "$file[path]\"/><br/>$file[caption]</a>";
-      }
-      $r .= "<li>$media</li>";
+      $r .= iform_report_get_gallery_item($file);
     }
-    $r .= '</ul>';
+    $r .= '</ul></div>';
     return $r;
   }
 

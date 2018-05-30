@@ -438,10 +438,7 @@ Record ID',
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
     $options = array_merge(array(
-      'itemsPerPage' => 20,
-      'imageSize' => 'thumb',
-      'class' => 'detail-gallery',
-      'title' => lang::get('Photos and Media'),
+      'title' => lang::get('Photos and media'),
     ), $options);
     $settings = array(
       'table' => 'occurrence_image',
@@ -460,19 +457,16 @@ Record ID',
   protected static function get_control_samplephotos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
     $options = array_merge(array(
-        'itemsPerPage' => 20,
-        'imageSize' => 'thumb',
-        'class' => 'detail-gallery',
-        'title' => lang::get('Sample Photos and Media'),
+      'title' => lang::get('Sample photos and media'),
     ), $options);
     $occurrence = data_entry_helper::get_population_data(array(
       'table' => 'occurrence',
       'extraParams' => $auth['read'] + array('id' => $_GET['occurrence_id'], 'view' => 'detail'),
     ));
     $settings = array(
-        'table' => 'sample_image',
-        'key' => 'sample_id',
-        'value' => $occurrence[0]['sample_id'],
+      'table' => 'sample_image',
+      'key' => 'sample_id',
+      'value' => $occurrence[0]['sample_id'],
     );
     return self::commonControlPhotos($auth, $args, $options, $settings);
   }
@@ -486,10 +480,7 @@ Record ID',
   protected static function get_control_parentsamplephotos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
     $options = array_merge(array(
-        'itemsPerPage' => 20,
-        'imageSize' => 'thumb',
-        'class' => 'detail-gallery',
-        'title' => lang::get('Parent Sample Photos and Media')
+      'title' => lang::get('Parent sample photos and media')
     ), $options);
     $occurrence = data_entry_helper::get_population_data(array(
       'table' => 'occurrence',
@@ -533,6 +524,12 @@ Record ID',
    */
   private static function commonControlPhotos($auth, $args, $options, $settings) {
     data_entry_helper::add_resource('fancybox');
+    require_once 'includes/report.php';
+    $options = array_merge([
+      'itemsPerPage' => 20,
+      'imageSize' => 'thumb',
+      'class' => 'media-gallery',
+    ], $options);
     $extraParams = $auth['read'] + array(
       'sharing' => $args['sharing'],
       'limit' => $options['itemsPerPage'],
@@ -542,7 +539,12 @@ Record ID',
       'table' => $settings['table'],
       'extraParams' => $extraParams,
     ));
-    $r = '<div class="detail-panel" id="detail-panel-photos"><h3>' . $options['title'] . '</h3><div class="' . $options['class'] . '">';
+    $r = <<<HTML
+<div class="detail-panel" id="detail-panel-photos">
+  <h3>$options[title]</h3>
+  <div class="$options[class]">
+
+HTML;
     if (empty($media)) {
       $r .= '<p>' . lang::get('No photos or media files available') . '</p>';
     }
@@ -551,31 +553,22 @@ Record ID',
         $r .= '<p>' . $options['helpText'] . '</p>';
       }
       $r .= '<ul>';
-      $imageFolder = data_entry_helper::get_uploaded_image_folder();
       $firstImage = TRUE;
       foreach ($media as $idx => $medium) {
+        // iNat only uses a thumb or full size image. So force thumb for
+        // preview.
+        $imageSize = $medium['media_type'] === 'Image:iNaturalist' ? 'thumb' : $options['imageSize'];
         if ($firstImage && substr($medium['media_type'], 0, 6) === 'Image:') {
           // First image can be flagged as the main content image. Used for FB OpenGraph for example.
           global $iform_page_metadata;
           if (!isset($iform_page_metadata)) {
             $iform_page_metadata = array();
           }
+          $imageFolder = data_entry_helper::get_uploaded_image_folder();
           $iform_page_metadata['image'] = "$imageFolder$medium[path]";
           $firstImage = FALSE;
         }
-        if ($medium['media_type'] === 'Audio:Local') {
-          $r .= "<li class=\"gallery-item\"><audio controls " .
-                "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
-        }
-        elseif ($medium['media_type'] === 'Image:iNaturalist') {
-          $imgLarge = str_replace('/thumb.', '/large.', $medium['path']);
-          $r .= "<li class=\"gallery-item\"><a href=\"$imgLarge\" class=\"fancybox single\">" .
-          "<img src=\"$medium[path]\" /></a><br/>$medium[caption]</li>";;
-        }
-        else {
-          $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
-                "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
-        }
+        $r .= iform_report_get_gallery_item($medium, $imageSize);
       }
       $r .= '</ul>';
     }

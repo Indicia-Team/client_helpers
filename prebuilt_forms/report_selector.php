@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -22,7 +23,7 @@
 
 /**
  * A form for providing a way of selecting and running one of a catalogue of reports.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
@@ -31,15 +32,15 @@ class iform_report_selector {
   /**
    * Set a cache refresh time for reports that don't need to update often to 1 day (in seconds)
    */
-  const SLOW_CACHE_REFRESH = 86400; 
-  
+  const SLOW_CACHE_REFRESH = 86400;
+
   /**
    * Set a cache refresh time for reports that do need to update often to 5 minutes (in seconds).
    * Generally used only when reporting the user's own data.
    */
-  const FAST_CACHE_REFRESH = 300; 
-  
-  /** 
+  const FAST_CACHE_REFRESH = 300;
+
+  /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
    * @return array The definition of the form.
@@ -51,7 +52,7 @@ class iform_report_selector {
       'description' => 'Provides a library of ready made reports that the user can browse through and run.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -200,7 +201,7 @@ class iform_report_selector {
       )
     );
   }
-  
+
   private static function get_reports() {
     return array(
         'my_sites' => array(
@@ -215,7 +216,7 @@ class iform_report_selector {
               'title' => 'My sites heat map showing species counts',
               'description' => 'Show a map of your recording sites, with the site colouration indicating the number of species.',
               'outputs' => array('map', 'raw_data')
-            ) 
+            )
           )
         ),
         'regions' => array(
@@ -230,7 +231,7 @@ class iform_report_selector {
               'title' => '#main_location_layer_type# heat map showing species counts',
               'description' => 'Show a map of #main_location_layer_type# boundaries, with the area  colouration indicating the number of species.',
               'outputs' => array('map', 'raw_data')
-            ) 
+            )
           )
         ),
         'months' => array(
@@ -290,7 +291,7 @@ class iform_report_selector {
         )
     );
   }
-  
+
   /**
    * Either return a report picker, or if already picked, the report content.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -304,7 +305,7 @@ class iform_report_selector {
     iform_load_helpers(array('report_helper', 'map_helper'));
     $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
-    if (empty($_GET['catname']) || empty($_GET['report'])) 
+    if (empty($_GET['catname']) || empty($_GET['report']))
       return self::report_picker($args, $nid, $readAuth);
     else {
       $reports = self::get_reports();
@@ -318,7 +319,7 @@ class iform_report_selector {
       return call_user_func(array('iform_report_selector', $fn), $args, $readAuth, $output);
     }
   }
-  
+
   public static function report_picker($args, $nid, $readAuth) {
     $r = '<ul class="categories">';
     $available = self::get_reports();
@@ -357,7 +358,7 @@ class iform_report_selector {
     $r .= '</ul>';
     return $r;
   }
-  
+
   /**
    * Applies any filters set in the page URL to the report options.
    */
@@ -383,9 +384,9 @@ class iform_report_selector {
       $reportOptions['extraParams']['taxon_group_list']=$_GET['taxon_group_list'];
     }
   }
-  
+
   /**
-   * Returns the term for the location type selected in the form arguments which defines the 
+   * Returns the term for the location type selected in the form arguments which defines the
    * main layer of regions, e.g. could be vice county or province.
    * @param type $args
    * @param type $readAuth
@@ -398,7 +399,7 @@ class iform_report_selector {
     ));
     return $data[0]['term'];
   }
-  
+
   private static function filter_toolbar($filters, $readAuth) {
     if (count($filters)===0)
       return '';
@@ -442,13 +443,13 @@ class iform_report_selector {
     $r .= '</form>';
     return $r;
   }
-  
+
   private static function _build_sites_report($args, $readAuth, $output, $type, $mySites) {
     $r = self::filter_toolbar(array('my_records', 'year', 'taxon_group_list'), $readAuth);
-    $reportNameSuffix = $mySites 
-        ? '_my_sites' 
+    $reportNameSuffix = $mySites
+        ? '_my_sites'
         : '_indexed_sites';
-    $extraParams = $mySites 
+    $extraParams = $mySites
         ? array('person_site_attr_id' => $args['my_sites_psn_attr_id'])
         : array('location_type_ids' => $args['main_location_layer_type_id']);
     if (!empty($args['min_rank_sort_order_for_species']))
@@ -503,9 +504,9 @@ class iform_report_selector {
       );
       $r .= report_helper::report_grid($reportOptions);
     }
-    return $r; 
+    return $r;
   }
-  
+
   private static function _build_months_report($args, $readAuth, $output, $type) {
     $r = self::filter_toolbar(array('my_records', 'year', 'taxon_group_list'), $readAuth);
     $reportPerUser = !empty($_GET['my_records']);
@@ -537,9 +538,9 @@ class iform_report_selector {
       );
       $r .= report_helper::report_grid($reportOptions);
     }
-    return $r; 
+    return $r;
   }
-  
+
   private static function _build_months_by_taxon_groups_report($args, $readAuth, $output, $type) {
     $r = self::filter_toolbar(array('my_records', 'year'), $readAuth);
     // first we need a quick (cached) prefetch of the main species groups recorded
@@ -548,7 +549,7 @@ class iform_report_selector {
     $reportOptions = array(
       'readAuth' => $readAuth,
       'dataSource' => "library/taxon_groups/filterable_explore_list",
-      'extraParams' => array('limit' => 10, 'orderby'=>$sortField, 'sortdir'=>'DESC', 
+      'extraParams' => array('limit' => 10, 'orderby'=>$sortField, 'sortdir'=>'DESC',
           'restrict_to_taxon_list_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
           'min_taxon_rank_sort_order' => $args['min_rank_sort_order_for_species']),
       'caching' => true,
@@ -606,7 +607,7 @@ class iform_report_selector {
       );
       if (!empty($args['responsive'])) {
         $reportOptions['responsiveOpts'] = array(
-          'breakpoints' => array('tp' => 768),  
+          'breakpoints' => array('tp' => 768),
         );
         $reportOptions['columns'] = array();
         $reportOptions['columns'][] = array('fieldname' => 'month');
@@ -625,9 +626,9 @@ class iform_report_selector {
       }
       $r .= report_helper::report_grid($reportOptions);
     }
-    return $r; 
+    return $r;
   }
-  
+
   private static function _build_years_report($args, $readAuth, $output, $type) {
     $r = self::filter_toolbar(array('my_records', 'taxon_group_list'), $readAuth);
     // do a quick (cached) search for the first record to output
@@ -679,9 +680,9 @@ class iform_report_selector {
       );
       $r .= report_helper::report_grid($reportOptions);
     }
-    return $r; 
+    return $r;
   }
-  
+
   private static function _build_taxon_groups_report($args, $readAuth, $output, $type) {
     $r = self::filter_toolbar(array('my_records', 'year'), $readAuth);
     $reportPerUser = !empty($_GET['my_records']);
@@ -708,13 +709,13 @@ class iform_report_selector {
       ));
       // make an easy lookup
       $groupIds = array();
-      foreach($groups as $group) 
+      foreach($groups as $group)
         $groupIds[$group['id']] = $group['title'];
       // roll categories into 'other' if too many and process to remove unofficial groups
       $totalOther = 0;
       $processedData = array();
       foreach ($data as $row) {
-        if (count($processedData)>=10 || !array_key_exists($row['id'], $groupIds)) 
+        if (count($processedData)>=10 || !array_key_exists($row['id'], $groupIds))
           $totalOther += $row['count'];
         else
           $processedData[] = $row;
@@ -744,53 +745,53 @@ class iform_report_selector {
       );
       $r .= report_helper::report_grid($reportOptions);
     }
-    return $r; 
+    return $r;
   }
-  
+
   private static function build_report_my_sites_records($args, $readAuth, $output) {
     return self::_build_sites_report($args, $readAuth, $output, 'occurrence', true);
   }
-  
+
   private static function build_report_my_sites_species($args, $readAuth, $output) {
     return self::_build_sites_report($args, $readAuth, $output, 'species', true);
   }
-  
+
   private static function build_report_regions_records($args, $readAuth, $output) {
     return self::_build_sites_report($args, $readAuth, $output, 'occurrence', false);
   }
-  
+
   private static function build_report_regions_species($args, $readAuth, $output) {
     return self::_build_sites_report($args, $readAuth, $output, 'species', false);
   }
-  
+
   private static function build_report_months_records($args, $readAuth, $output) {
     return self::_build_months_report($args, $readAuth, $output, 'occurrence');
   }
-  
+
   private static function build_report_months_species($args, $readAuth, $output) {
     return self::_build_months_report($args, $readAuth, $output, 'species');
   }
-  
+
   private static function build_report_months_records_by_taxon_groups($args, $readAuth, $output) {
     return self::_build_months_by_taxon_groups_report($args, $readAuth, $output, 'occurrence');
   }
-  
+
   private static function build_report_months_species_by_taxon_groups($args, $readAuth, $output) {
     return self::_build_months_by_taxon_groups_report($args, $readAuth, $output, 'species');
   }
-  
+
   private static function build_report_years_records($args, $readAuth, $output) {
     return self::_build_years_report($args, $readAuth, $output, 'occurrence');
   }
-  
+
   private static function build_report_years_species($args, $readAuth, $output) {
     return self::_build_years_report($args, $readAuth, $output, 'species');
   }
-  
+
   private static function build_report_taxon_groups_records($args, $readAuth, $output) {
     return self::_build_taxon_groups_report($args, $readAuth, $output, 'occurrence');
   }
-  
+
   private static function build_report_taxon_groups_species($args, $readAuth, $output) {
     return self::_build_taxon_groups_report($args, $readAuth, $output, 'species');
   }
