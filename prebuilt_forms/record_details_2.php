@@ -554,6 +554,9 @@ Record ID',
       $imageFolder = data_entry_helper::get_uploaded_image_folder();
       $firstImage = TRUE;
       foreach ($media as $idx => $medium) {
+        // iNat only uses a thumb or full size image. So force thumb for
+        // preview.
+        $imageSize = $medium['media_type'] === 'Image:iNaturalist' ? 'thumb' : $options['imageSize'];
         if ($firstImage && substr($medium['media_type'], 0, 6) === 'Image:') {
           // First image can be flagged as the main content image. Used for FB OpenGraph for example.
           global $iform_page_metadata;
@@ -563,18 +566,56 @@ Record ID',
           $iform_page_metadata['image'] = "$imageFolder$medium[path]";
           $firstImage = FALSE;
         }
+        $metadata = [];
+        if (!empty($medium['caption'])) {
+          $metadata[] = "<div class=\"image-caption\">$medium[caption]</div>";
+        }
+        if (!empty($medium['licence_code'])) {
+          $code = strtolower($medium['licence_code']);
+          $metadata[] = "<div class=\"licence licence-$code\">$medium[licence_title]</div>";
+        }
+        $infoPane = '';
+        if (count($metadata)) {
+          $langHideInfo = lang::get('Hide info');
+          $metadata = implode("\n", $metadata);
+          $class = substr($medium['media_type'], 0, 6) === 'Image:' ? 'media-info image-info' : 'media-info';
+          $hide = $imageSize === 'thumb' && $medium['media_type'] !== 'Audio:Local' ? ' style="display: none"' : '';
+          $infoPane = <<<HTML
+<div class="$class"$hide>
+  $metadata
+  <span class="media-info-close" title="$langHideInfo">x</span>
+</div>
+HTML;
+        }
         if ($medium['media_type'] === 'Audio:Local') {
-          $r .= "<li class=\"gallery-item\"><audio controls " .
-                "src=\"$imageFolder$medium[path]\" type=\"audio/mpeg\"/></li>";
+          $r .= <<<HTML
+<li class="gallery-item">
+  <audio controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
+  $infoPane
+</li>
+HTML;
         }
         elseif ($medium['media_type'] === 'Image:iNaturalist') {
-          $imgLarge = str_replace('/thumb.', '/large.', $medium['path']);
-          $r .= "<li class=\"gallery-item\"><a href=\"$imgLarge\" class=\"fancybox single\">" .
-          "<img src=\"$medium[path]\" /></a><br/>$medium[caption]</li>";;
+          $imgLarge = str_replace('/square.', '/large.', $medium['path']);
+          $r .= <<<HTML
+<li class="gallery-item">
+  <a href="$imgLarge" class="fancybox single">
+    <img src="$medium[path]" />
+  </a>
+  $infoPane
+</li>
+HTML;
         }
         else {
-          $r .= "<li class=\"gallery-item\"><a href=\"$imageFolder$medium[path]\" class=\"fancybox single\">" .
-                "<img src=\"$imageFolder$options[imageSize]-$medium[path]\" /></a><br/>$medium[caption]</li>";
+          $r .= <<<HTML
+<li class="gallery-item" style="position: relative">
+  <a href="$imageFolder$medium[path]" class="fancybox single">
+    <img src="$imageFolder$options[imageSize]-$medium[path]" />
+  </a>
+  $infoPane
+</li>
+
+HTML;
         }
       }
       $r .= '</ul>';
