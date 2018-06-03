@@ -1129,6 +1129,7 @@ indiciaData.rowIdToReselect = false;
     var verifyGridButtons = '<button type="button" class="default-button verify-grid-trusted tools-btn" id="verify-grid-trusted">Review grid</button>' +
         '<button type="button" id="btn-multiple" title="Select this tool to tick off a list of records and action all of the ticked records in one go">Review tick list</button>',
       trustedHtml;
+    $('#verification-grid').height($(document).height() - $('#verification-grid').offset().top - 50);
     $('#filter-build').after(verifyGridButtons);
     $('#verify-grid-trusted').click(function () {
       var settings = indiciaData.reports.verification.grid_verification_grid[0].settings;
