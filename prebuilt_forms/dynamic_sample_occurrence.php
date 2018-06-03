@@ -2214,7 +2214,7 @@ else
    */
   protected static function get_control_recordernames($auth, $args, $tabAlias, $options) {
     //We don't need to touch the control in edit mode. Make the current user's name the default in add mode if the user has selected that option.
-    if (empty($_GET['sample_id']) && !empty($options['defaultToCurrentUser'])&& $options['defaultToCurrentUser']==true) {
+    if (empty($_GET['sample_id']) && empty($_GET['occurrence_id']) && !empty($options['defaultToCurrentUser'])&& $options['defaultToCurrentUser']==true) {
       $defaultUserData = data_entry_helper::get_report_data(array(
         'dataSource' => 'library/users/get_people_details_for_website_or_user',
         'readAuth' => $auth['read'],
