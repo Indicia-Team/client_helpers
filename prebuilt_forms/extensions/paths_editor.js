@@ -315,12 +315,14 @@ jQuery(document).ready(function ($) {
         } else if (this.displayClass.match(/^olControlDrawFeature/)) {
           this.deactivate();
         }
-
       });
-      div.map.editLayer.removeAllFeatures();
-      walkLayer.removeAllFeatures();
-      if (typeof indiciaData[$(this).attr('id')]!=="undefined") {
-        $(this).after('<p>' + indiciaData[$(this).attr('id')] + '</p>');
+      if (controlDisplayClass !== 'olControlModifyFeature') {
+        div.map.editLayer.removeAllFeatures();
+        walkLayer.removeAllFeatures();
+      }
+      $('p.map-control-instruct').remove();
+      if (typeof indiciaData[$(this).attr('id')] !== "undefined") {
+        $(this).after('<p class="map-control-instruct">' + indiciaData[$(this).attr('id')] + '</p>');
         delete indiciaData[$(this).attr('id')];
       }
     });
