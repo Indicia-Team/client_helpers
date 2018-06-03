@@ -1826,6 +1826,10 @@ JS;
   * Default true. Defines that the map will automatically zoom to show the records. If using AJAX then note that the
   * zoom will happen after initial page load and the map will zoom again if several pages of records are loaded.
   * </li>
+  * <li><b>minMapReportZoom</b>
+  * If set to a map zoom level (typically from 1-18) then the map does not show
+  * the report output until zoomed to this level.
+  * </li>
   * <li><b>featureDoubleOutlineColour</b>
   * If set to a CSS colour class, then feature outlines will be doubled up, for example a 1 pixel dark outline
   * over a 3 pixel light outline, creating a line halo effect which can make the map clearer.
@@ -1842,6 +1846,7 @@ JS;
       'extraParams' => '',
       'featureDoubleOutlineColour' => '',
       'dataSourceLoRes' => '',
+      'minMapReportZoom' => 'false',
     ), $options);
     $options = self::get_report_grid_options($options);
 
@@ -2086,6 +2091,7 @@ JS;
           ]);
           self::$javascript .= <<<JS
 indiciaData.mapDataSource = $mapDataSource;
+indiciaData.minMapReportZoom = $options[minMapReportZoom];
 mapInitialisationHooks.push(function(div) {
   var wantToMap =
     typeof indiciaData.filter === 'undefined' ||
