@@ -474,7 +474,8 @@ SCRIPT;
   * @param array $options
   *   Associative array of options to pass to the jQuery.indiciaMapPanel
   *   plugin. Has the following possible options:
-  *   * id - Optional CSS id for the output panel.
+  *   * id - Optional CSS id for the output panel. Always set a value if there
+  *     are multiple layer pickers on one page.
   *   * includeIcons - Set to true to include icons alongside each layer item.
   *     Default true.
   *   * includeSwitchers - Set to true to include radio buttons and/or
