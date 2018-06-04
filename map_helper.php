@@ -463,33 +463,31 @@ SCRIPT;
   }
 
  /**
-  * Outputs a map layer list panel which automatically integrates with the map_panel added to the same page. The list by default will
-  * behave like a map legend, showing an icon and caption for each visible layer, but can be configured to show all hidden layers
-  * and display a checkbox or radio button alongside each item, making it into a layer switcher panel.
+  * Map layer legend.
   *
-  * @param array $options Associative array of options to pass to the jQuery.indiciaMapPanel plugin.
-  * Has the following possible options:
-  * <ul>
-  * <li><b>id</b><br/>
-  * Optional CSS id for the output panel.
-  * </li>
-  * <li><b>includeIcons</b><br/>
-  * Set to true to include icons alongside each layer item. Default true.
-  * </li>
-  * <li><b>includeSwitchers/b><br/>
-  * Set to true to include radio buttons and/or checkboxes for switching on or off the visible base
-  * layers and overlays. Default false.
-  * </li>
-  * <li><b>includeHiddenLayers</b><br/>
-  * True or false to include layers that are not currently visible on the map. Default is false.
-  * </li>
-  * <li><b>layerTypes</b><br/>
-  * Array of layer types to include, options are base or overlay. Default is both.
-  * </li>
-  * <li><b>class</b><br/>
-  * Class to add to the outer div.
-  * </li>
-  * </ul>
+  * Outputs a map layer list panel which automatically integrates with the
+  * map_panel added to the same page. The list by default will behave like a
+  * map legend, showing an icon and caption for each visible layer, but can be
+  * configured to show all hidden layers and display a checkbox or radio button
+  * alongside each item, making it into a layer switcher panel.
+  *
+  * @param array $options
+  *   Associative array of options to pass to the jQuery.indiciaMapPanel
+  *   plugin. Has the following possible options:
+  *   * id - Optional CSS id for the output panel.
+  *   * includeIcons - Set to true to include icons alongside each layer item.
+  *     Default true.
+  *   * includeSwitchers - Set to true to include radio buttons and/or
+  *     checkboxes for switching on or off the visible base layers and
+  *     overlays. Default false.
+  *   * includeHiddenLayers - True or false to include layers that are not
+  *     currently visible on the map. Default is false.
+  *   * layerTypes - Array of layer types to include, options are base or
+  *     overlay. Default is both.
+  *   * class - Class to add to the outer div.
+  *
+  * @return string
+  *   Control HTML.
   */
   public static function layer_list($options) {
     $options = array_merge(array(
