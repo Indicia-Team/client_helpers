@@ -135,7 +135,7 @@ class lang {
       $argkeys = [];
       foreach ($args as $arg) {
         $argkeys[] = '/\{' . (count($argkeys) + 1) . '\}/';
-        $tArgs['@arg' . (count($argkeys) + 1)] = $arg;
+        $tArgs['@arg' . (count($argkeys) + 1)] = $arg[0];
       }
       // Convert the indicia style args to Drupal style ones.
       $output = preg_replace($argkeys, array_keys($tArgs), $output);
