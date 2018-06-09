@@ -44,6 +44,14 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'required'=>true
         ),
         array(
+          'name'=>'person_square_attr_id',
+          'caption'=>'Person attribute ID',
+          'description'=>'The person attribute ID that stores the squares assigned to the user.',
+          'type'=>'string',
+          'group'=>'Other IForm Parameters',
+          'required'=>true
+        ),
+        array(
           'name'=>'locking_date',
           'caption'=>'Locking Date',
           'description'=>'The date to lock the form from. Samples "created on" earlier than this date are read-only (use format yyyy-mm-dd)',
@@ -53,12 +61,22 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
         ),
         array(
           'name'=>'override_locking_date_text',
-          'caption'=>'Override locked form text',
-          'description'=>'Override the warning text shown to the user when the form is locked from editing.',
+          'caption'=>'Locking date text',
+          'description'=>'Override the warning text shown to the user when the form is locked from editing 
+          because the locking date has past.',
           'type'=>'string',
           'group'=>'Other IForm Parameters',
           'required'=>false
-        ),  
+        ), 
+        array(
+          'name'=>'override_locking_wrong_user_text',
+          'caption'=>'Locking wrong user text',
+          'description'=>'Override the warning text shown to the user when the form is locked from editing
+          because it is being viewed by someone who did not create the original sample.',
+          'type'=>'string',
+          'group'=>'Other IForm Parameters',
+          'required'=>false
+        ),   
         array(
           'name'=>'plot_number_attr_id',
           'caption'=>'Plot number/label attribute id',
@@ -117,7 +135,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
   }
 
   protected static function get_form_html($args, $auth, $attributes) {
-    global $user;
+    $r='';
     data_entry_helper::$javascript .= "
       var sampleCreatedOn;
       var lockingDate;
@@ -166,8 +184,29 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
       data_entry_helper::$javascript .= "
       });
     ";
+    if (function_exists('hostsite_get_user_field')) {
+      $iUserId = hostsite_get_user_field('indicia_user_id');
+    }
+    if (!empty($_GET['sample_id'])&&!empty($iUserId)) {
+      $r .= self::form_lock_logic($args, $auth, $attributes, $iUserId);
+    }
+    $r .= '<div id = "disableDiv">';
+    $r .= parent::get_form_html($args, $auth, $attributes);
+    $r .= '</div>';
+    return $r;
+  }
+  
+  /*
+   * Logic for setting form to read-only. This currently happens if the data was created before the custom
+   * locking date, or if the data was created by another user.
+   */
+protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
+  global $user;
+  $r='';
+  //No need to lock form for administrator users
+  if (!(in_array('administrator', $user->roles))) {
     //Test if the sample date is less than the locking date, if it is then lock the form.
-    if (!empty($_GET['sample_id'])&&!empty($args['locking_date']) && !(in_array('administrator', $user->roles))) {
+    if (!empty($args['locking_date'])) {
       $sampleData = data_entry_helper::get_population_data(array(
         'table' => 'sample',
         'extraParams' => $auth['read'] + array('id' => $_GET['sample_id'], 'view' => 'detail'),
@@ -175,24 +214,62 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
       //The date also has a time element. However this breaks javascript new date, so just get first part of the date (remove time).
       //(the line below just gets the part of the string before the space).
       $sampleCreatedOn = strtok($sampleData[0]['created_on'],  ' ');
-      if (!empty($sampleCreatedOn)) {
-        data_entry_helper::$javascript .= "
-          sampleCreatedOn = new Date('".$sampleCreatedOn."');
-          lockingDate = new Date('".$args['locking_date']."');
-        ";
-      }
     }
-    $r='';
+    // Find the samples for the squares the user has rights too
+    $reportOptions=array(
+      'readAuth' => $auth['read'],
+      'dataSource'=> 'reports_for_prebuilt_forms/Splash/npms_sample_occurrence_samples_2',
+      'extraParams'=>array(
+        'survey_id' => $args['survey_id'],
+        'person_square_attr_id' => $args['person_square_attr_id'],
+        's1AttrID' => $args['survey_1_attr'],
+        'iUserID' => $iUserId)     
+    );
+    if (!empty($args['plot_number_attr_id'])) {
+      $reportOptions = array_merge($reportOptions,array('plot_number_attr_id' => $args['plot_number_attr_id']));
+    }
+    $userCreatedSample=false;
+    $mySamples = data_entry_helper::get_report_data($reportOptions);
+    // Cycle through each sample associated with the user's squares and
+    // find out if current user created it
+    foreach ($mySamples as $sampleData) {
+      if ($sampleData['sample_id1']===$_GET['sample_id']&&
+        (!empty($sampleData['created_by_id1'])&&$sampleData['created_by_id1']===$iUserId)) {
+        $userCreatedSample=true; 
+      } 
+      if ($sampleData['sample_id2']===$_GET['sample_id']&&
+          (!empty($sampleData['created_by_id2'])&&$sampleData['created_by_id2']===$iUserId)) {
+        $userCreatedSample=true;  
+      }  
+    }
+    // Lock form if past locking date
+    // This is always the message shown if this has happened regardless if they created sample or not
     if (!empty($sampleCreatedOn) && !empty($args['locking_date']) && $sampleCreatedOn<$args['locking_date']) {
+        data_entry_helper::$javascript .= "
+          var lockForm=true;
+        ";
       if (!empty($args['override_locking_date_text']))
         $r .= '<em style="color: red;">'.$args['override_locking_date_text'].'</em>';
       else
         $r .= '<em style="color: red;">This form can no longer be edited as it was created before the data locking date specified by the administrator.</em>';
+    //Lock form if user didn't create sample
+    } elseif ($userCreatedSample===false) {
+      if (!empty($args['override_locking_wrong_user_text']))
+        $r .= '<em style="color: red;">'.$args['override_locking_wrong_user_text'].'</em>';
+      else
+        $r .= '<em style="color: red;">This form cannot be edited as the plot visit was made by another person.</em>';
+      data_entry_helper::$javascript .= "
+      var lockForm=true;
+      ";
+    } else {  
+      // Otherwise don't lock
+      data_entry_helper::$javascript .= "
+        var lockForm=false;
+      ";  
     }
-    //If the date the sample was created is less than the threshold date set by the user, then
-    //lock the form (put simply, old data cannot be edited by the user).
+    // Lock the form controls
     data_entry_helper::$javascript .= "
-      if (sampleCreatedOn&&lockingDate&&sampleCreatedOn<lockingDate) {  
+      if (lockForm) {  
         $(window).load(function () {
           $('[id*=_lock]').remove();\n $('.remove-row').remove();\n
           $('.scImageLink,.scClonableRow').hide();
@@ -200,13 +277,11 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           $('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');
         });
       }";
-    //remove default validation mode of 'message' as species grid goes spazzy
+    }
+    //remove default validation mode of 'message' as species grid goes wrong
     data_entry_helper::$validation_mode = array('colour');
     //Div that can be used to disable page when required
-    $r .= '<div id = "disableDiv">';
-    $r .= parent::get_form_html($args, $auth, $attributes);
-    $r .= '</div>';
-    return $r;
+    return $r;    
   }
 
   /**
@@ -300,6 +375,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
       if (isset($iUserId)) {
         $repOptions=array(
             'survey_id' => $args['survey_id'],
+            'person_square_attr_id' => $args['person_square_attr_id'],
             's1AttrID' => $args['survey_1_attr'],
             'iUserID' => $iUserId);
         if (!empty($args['ignore_grid_sample_dates_before'])) 
