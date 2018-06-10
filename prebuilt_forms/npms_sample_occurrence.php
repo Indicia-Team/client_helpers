@@ -114,7 +114,18 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'type'=>'textarea',
           'group'=>'Other IForm Parameters',
           'required'=>false
-        )
+        ),
+        array(
+          'name'=>'override_indicia_perms',
+          'caption'=>'Override Indicia editing permissions',
+          'description'=>'This form has its own custom rules for when data is read-only, override the Indicia '
+            . 'editing permissions to prevent users being prevented from opening samples created by someone else.'
+            . 'Leave on if the samples grid is using npms_sample_occurrence_samples_2.xml report.',
+          'type'=>'boolean',
+          'default'=>true,
+          'group'=>'Permissions',
+          'required'=>true
+        )       
       )
     ); 
   }
@@ -194,6 +205,101 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     $r .= parent::get_form_html($args, $auth, $attributes);
     $r .= '</div>';
     return $r;
+  }
+  
+  /**
+   * Preparing to display an existing sample with occurrences.
+   * When displaying a grid of occurrences, just load the sample and data_entry_helper::species_checklist
+   * will load the occurrences.
+   * When displaying just one occurrence we must load the sample and the occurrence
+   */
+  protected static function getEntity(&$args, $auth) {
+    data_entry_helper::$entity_to_load = array();
+    if ((call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
+      // multi-record mode using a checklist grid. We really just need to know the sample ID.
+      if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
+        $response = data_entry_helper::get_population_data(array(
+            'table' => 'occurrence',
+            'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
+            'caching' => false,
+            'sharing' => 'editing'
+        ));
+        if (count($response) !== 0) {
+          //we found an occurrence so use it to detect the sample
+          self::$loadedSampleId = $response[0]['sample_id'];
+        }
+      }
+    } else {
+      // single record entry mode. We want to load the occurrence entity and to know the sample ID.
+      if (self::$loadedOccurrenceId) {
+        data_entry_helper::load_existing_record(
+            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+        if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
+          // Loading a single record into a form that can do single or multi. Switch to multi if the sample contains
+          // more than one occurrence.
+          $response = data_entry_helper::get_population_data(array(
+            'table' => 'occurrence',
+            'extraParams' => $auth['read'] + array(
+                'sample_id' => data_entry_helper::$entity_to_load['occurrence:sample_id'],
+                'view' => 'detail',
+                'limit' => 2
+              ),
+            'caching' => false,
+            'sharing' => 'editing'
+          ));
+          if (count($response) > 1) {
+            data_entry_helper::$entity_to_load['gridmode'] = true;
+            // Swapping to grid mode for edit, so use species list as the grid's extra species list rather than load the
+            // whole lot.
+            if (!empty($args['list_id']) && empty($args['extra_list_id'])) {
+              $args['extra_list_id'] = $args['list_id'];
+              $args['list_id'] = '';
+            }
+          }
+        }
+      }
+      elseif (self::$loadedSampleId) {
+        $response = data_entry_helper::get_population_data(array(
+          'table' => 'occurrence',
+          'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail'),
+          'caching' => false,
+          'sharing' => 'editing'
+        ));
+        self::$loadedOccurrenceId = $response[0]['id'];
+        data_entry_helper::load_existing_record_from(
+            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+      }
+      self::$loadedSampleId = data_entry_helper::$entity_to_load['occurrence:sample_id'];
+    }
+
+    // Load the sample record
+    if (self::$loadedSampleId) {
+      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
+      // If there is a parent sample and we are not force loading the child sample then load it next so the details
+      // overwrite the child sample.
+      if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($args['never_load_parent_sample'])) {
+        data_entry_helper::load_existing_record(
+            $auth['read'], 'sample', data_entry_helper::$entity_to_load['sample:parent_id'], 'detail', 'editing');
+        self::$loadedSampleId = data_entry_helper::$entity_to_load['sample:id'];
+      }
+    }
+    // Ensure that if we are used to load a different survey's data, then we get the correct survey attributes. We can
+    // change args because the caller passes by reference.
+    $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
+    $args['sample_method_id']=data_entry_helper::$entity_to_load['sample:sample_method_id'];
+    // enforce that people only access their own data, unless explicitly have permissions
+    $editor = !empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']);
+    // See notes in the args code for information on override_indicia_perms
+    if($editor||(isset($args['override_indicia_perms'])&&$args['override_indicia_perms']==true))
+      return;
+    $readOnly = !empty($args['ro_permission']) && hostsite_user_has_permission($args['ro_permission']);
+    if (function_exists('hostsite_get_user_field') &&
+        data_entry_helper::$entity_to_load['sample:created_by_id'] != hostsite_get_user_field('indicia_user_id')) {
+      if($readOnly)
+        self::$mode = self::MODE_EXISTING_RO;
+      else
+        throw new exception(lang::get('Attempt to access a record you did not create'));
+    }
   }
   
   /*
