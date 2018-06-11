@@ -1120,7 +1120,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
           'fieldname' => 'filter:sharing',
           'lookupValues' => $options['adminCanSetSharingTo'],
           'afterControl' => '<input type="submit" value="Go"/>',
-          'default' => $options['sharingCode']
+          'default' => $options['sharingCode'],
       ));
       $r .= '</form>';
     }
@@ -1157,6 +1157,18 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       // A context filter is loaded initially. It doesn't need to be set in the fixedFilterParamsToApply since the
       // report filter panel enforces the correct context is applied at all times.
       report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $contextFilter);
+    }
+    // Remove bits of the definition that shouldn't go in as a report filter
+    // parameter as they contain arrays.
+    $definitionKeysToExcludeFromFilter = [
+      'taxon_group_names',
+      'higher_taxa_taxon_list_names',
+      'taxa_taxon_list_names',
+      'taxon_designation_list_names',
+    ];
+    foreach ($definitionKeysToExcludeFromFilter as $key) {
+      unset(report_helper::$initialFilterParamsToApply[$key]);
+      unset(report_helper::$initialFilterParamsToApply["{$key}_context"]);
     }
     $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";
