@@ -365,7 +365,7 @@ class iform_group_edit {
     }
     self::$groupType = lang::get(self::$groupType);
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
-    $r .= '<fieldset><legend>' . lang::get('Fill in details of your {1} below', self::$groupType) . '</legend>';
+    $r .= '<fieldset id="group-details-fieldset"><legend>' . lang::get('Fill in details of your {1} below', self::$groupType) . '</legend>';
     $r .= $auth['write'] .
           "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"" . $args['website_id'] . "\" />\n";
     $r .= data_entry_helper::hidden_text(array('fieldname' => 'group:id'));
@@ -526,7 +526,7 @@ $('#entry_form').submit(function() {
     if (!empty($_GET['group_id'])) {
       $existing = self::loadExistingMultipleParents($auth);
     }
-    $r = '<fieldset><legend>' . lang::get('{1} parents', ucfirst(self::$groupType)) . ':</legend><ul>';
+    $r = '<fieldset id="group-parents-fieldset"><legend>' . lang::get('{1} parents', ucfirst(self::$groupType)) . ':</legend><ul>';
     // retrieve list of entire hierarchy
     $params = array('parent_group_id' => $_GET['from_group_id']);
     if (!empty($args['allowed_multiple_parent_group_types'])) {
@@ -579,7 +579,7 @@ $('#entry_form').submit(function() {
   private static function formsBlock($args, $auth) {
     $r = '';
     if ($args['include_linked_pages']) {
-      $r = '<fieldset><legend>' . lang::get('{1} pages', ucfirst(self::$groupType)) . '</legend>';
+      $r = '<fieldset id="group-pages-fieldset"><legend>' . lang::get('{1} pages', ucfirst(self::$groupType)) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Pages_Instruct', self::$groupType, lang::get('groups')) . '</p>';
       $pages = hostsite_get_group_compatible_pages(empty($_GET['group_id']) ? NULL : $_GET['group_id']);
       if (empty($_GET['group_id'])) {
@@ -708,7 +708,7 @@ $('#entry_form').submit(function() {
         'default' => $mappings[$args['data_inclusion_mode']]
       ));
     } else {
-      $r = '<fieldset><legend>' . lang::get('How to decide which records to include in the {1} reports', self::$groupType) . '</legend>';
+      $r = '<fieldset id="group-records-fieldset"><legend>' . lang::get('How to decide which records to include in the {1} reports', self::$groupType) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Record_Inclusion_Instruct_1', self::$groupType, lang::get(self::$groupType . "'s")) . ' ';
       if ($args['include_sensitivity_controls'])
         $r .= lang::get('LANG_Record_Inclusion_Instruct_Sensitive', self::$groupType) . ' ';
@@ -846,7 +846,7 @@ $('#entry_form').submit(function() {
     $r = '';
     $hiddenPopupDivs = '';
     if ($args['include_report_filter']) {
-      $r .= '<fieldset><legend>' . lang::get('Records that are of interest to the {1}', lang::get(self::$groupType)) . '</legend>';
+      $r .= '<fieldset id="group-filter-fieldset"><legend>' . lang::get('Records that are of interest to the {1}', lang::get(self::$groupType)) . '</legend>';
       $r .= '<p>' . lang::get('LANG_Filter_Instruct', lang::get(self::$groupType), lang::get(self::$groupType . "'s")) . '</p>';
       $indexedLocationTypeIds = array_map('intval', explode(',', $args['indexed_location_type_ids']));
       $otherLocationTypeIds = array_map('intval', explode(',', $args['other_location_type_ids']));
