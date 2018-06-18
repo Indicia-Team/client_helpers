@@ -84,6 +84,15 @@ class iform_quick_species_maps {
           'default'=>"dist_point_red\ndist_point_blue",
           'group'=>'Other Map Settings'
         ), array(
+          'name' => 'indicia_species_layer_extra_cql',
+          'caption' => 'Additional CQL filters for Indicia species layer',
+          'description' => 'There should be consistency between the report filters and the map filters. ' .
+              'Enter any additional filters for the map on separate lines e.g. survey_id in (142,143,511).',
+          'type' => 'textarea',
+          'required '=> false,
+          'default' => "",
+          'group' => 'Other Map Settings',
+        ), array(
           'name' => 'species_details_page_path',
           'caption' => 'Species details page path',
           'description' => 'Path to the species details page, if any. Adds a link to the page to the table.',
@@ -192,6 +201,19 @@ class iform_quick_species_maps {
         case '!R':
           // nothing to add - rejects are always excluded
       }
+
+      // Add any further CQL filter options from $args.
+      // For the map to to correctly represent the species listed in the report then both
+      // report and map should use the same filters.
+      if (isset($args['indicia_species_layer_extra_cql'])) {
+        $extraCql = report_helper::explode_lines($args['indicia_species_layer_extra_cql']);
+        foreach($extraCql as $filter) {
+          if (trim($filter) !== '') {
+            $cql .= " AND $filter";
+          }
+        }
+      }
+
       report_helper::$javascript .= "indiciaData.indiciaSpeciesLayer = {\n".
           '  "title":"'.lang::get('{1}')."\",\n".
           '  "myRecords":"'.lang::get('my records')."\",\n".
