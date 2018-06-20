@@ -32,6 +32,7 @@ class extension_extra_data_entry_controls {
    * Options include:
    * * includePeopleInAttrs - set to true to also include people only
    *   identified in a full_name custom attribute in the search results.
+   * * showEmails - options are false, true, 'domainsOnly'. Default false.
    * * Other option overrides as for an autocomplete control.
    *
    * @return string
@@ -53,7 +54,14 @@ class extension_extra_data_entry_controls {
       'extraParams' => $auth['read'] + array('view' => 'detail'),
       'class' => 'control-width-5',
       'inputId' => $options['fieldname'],
+      'showEmails' => FALSE,
     ), $options);
+    if ($options['showEmails'] === 'domainsOnly') {
+      $options['class'] .= ' show-email-domains';
+    }
+    elseif ($options['showEmails'] === TRUE) {
+      $options['class'] .= ' show-emails';
+    }
     if (empty($options['includePeopleInAttrs'])) {
       $options['table'] = 'user';
     }
@@ -65,6 +73,7 @@ class extension_extra_data_entry_controls {
     // fieldname gets assigned to the hidden control which only gets used after
     // a lookup operation.
     $options['fieldname'] = "$options[fieldname]:lookup";
+    drupal_set_message(var_export($options, true));
     return data_entry_helper::autocomplete($options);
   }
 
