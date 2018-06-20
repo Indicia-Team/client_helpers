@@ -73,7 +73,6 @@ class extension_extra_data_entry_controls {
     // fieldname gets assigned to the hidden control which only gets used after
     // a lookup operation.
     $options['fieldname'] = "$options[fieldname]:lookup";
-    drupal_set_message(var_export($options, true));
     return data_entry_helper::autocomplete($options);
   }
 
