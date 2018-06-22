@@ -126,7 +126,6 @@ class lang {
    */
   private static function applyDrupalTranslation($output, array $args) {
     // Now do any replacements using any additional function arguments.
-    $args = func_get_args();
     $tArgs = [];
     if (count($args) > 1) {
       // Get rid of the first argument, it is the language string key.
