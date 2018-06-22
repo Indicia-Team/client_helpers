@@ -1757,9 +1757,10 @@ HTML;
       else {
         $params['filter-taxon_group_list'] = $row['what_id'];
       }
-      return l($row[$value], $nodeParams['view_records_report_path'],
-          array('attributes' => array('target' => '_blank'), 'query' => $params));
-
+      $linkTo = hostsite_get_url($nodeParams['view_records_report_path'], $params);
+      return <<<HTML
+<a target="_blank" href="$linkTo">{$row[$value]}</a>
+HTML;
     }
     else {
       return $row[$value];
