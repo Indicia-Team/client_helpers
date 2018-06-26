@@ -2098,22 +2098,22 @@ mapInitialisationHooks.push(function(div) {
     typeof indiciaData.filter.def.indexed_location_id === 'undefined' ||
     indiciaData.filter.def.indexed_location_id === '';
   // Find the best report grid to use as a map report controller.
-  $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
-    if (typeof indiciaData.mapReportControllerGrid === 'undefined') {
-      // Use the first grid to contol the map report...
-      indiciaData.mapReportControllerGrid = grid;
-    }
-    if (grid[0].settings.linkFilterToMap) {
-      // ...Unless there is a better filter linked grid.
-      indiciaData.mapReportControllerGrid = grid;
-      // Only need one grid to draw the map.
-      return false;
-    }
-  });
-  if (wantToMap && typeof indiciaData.reports !== 'undefined') {
-    if (typeof indiciaData.mapReportControllerGrid !== 'undefined') {
-      indiciaData.mapReportControllerGrid.mapRecords();
-    }
+  if (typeof indiciaData.reports.$options[reportGroup] !== 'undefined') {
+    $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
+      if (typeof indiciaData.mapReportControllerGrid === 'undefined') {
+        // Use the first grid to contol the map report...
+        indiciaData.mapReportControllerGrid = grid;
+      }
+      if (grid[0].settings.linkFilterToMap) {
+        // ...Unless there is a better filter linked grid.
+        indiciaData.mapReportControllerGrid = grid;
+        // Only need one grid to draw the map.
+        return false;
+      }
+    });
+  }
+  if (wantToMap && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
+    indiciaData.mapReportControllerGrid.mapRecords();
   }
   if (indiciaData.mapDataSource.loRes !== '') {
     // hook up a zoom and pan handler so we can switch reports.
