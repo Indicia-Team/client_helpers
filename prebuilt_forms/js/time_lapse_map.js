@@ -233,7 +233,8 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
     $(iTLMOpts.speciesControlSelector).change(function (evt) {
       stopAnimation();
-      if ($(evt.target).is(':checked')) {
+      // Either a select (single species) or a checked checkbox triggers load.
+      if ($(evt.target).is('select') || $(evt.target).is(':checked')) {
         loadDataOnDemand($(evt.target).val());
       }
       calculateMinAndMax();
