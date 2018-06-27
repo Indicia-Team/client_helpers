@@ -85,6 +85,15 @@ class iform_time_lapse_map {
             'required' => FALSE,
           ),
           array(
+            'name' => 'preloadData',
+            'caption' => 'Pre-load data',
+            'description' => 'Load the data on form startup? If unchecked, then data are loaded only as required.',
+            'type' => 'boolean',
+            'group' => 'Controls',
+            'default' => TRUE,
+            'required' => FALSE,
+          ),
+          array(
             'name' => 'dotSize',
             'caption' => 'Dot Size',
             'description' => 'Initial size in pixels of observation dots on map. Can be overriden by a control.',
@@ -113,7 +122,15 @@ class iform_time_lapse_map {
             'type' => 'int',
             'default' => 4,
             'group' => 'Controls',
-          )
+          ),
+          array(
+            'name' => 'species_report_name',
+            'caption' => 'Species report name',
+            'description' => 'Select the report to provide the list of available species, only used when pre-load data is unchecked.',
+            'type' => 'report_helper::report_picker',
+            'group' => 'Report Settings',
+            'default' => 'reports_for_prebuilt_forms/time_lapse_map/filterable_time_lapse_map_species',
+          ),
         )
     );
     $retVal = array();
@@ -154,6 +171,7 @@ class iform_time_lapse_map {
     $args = array_merge(array(
       'yearSelector' => TRUE,
       'multiSpecies' => FALSE,
+      'preloadData' => TRUE,
     ), $args);
     data_entry_helper::add_resource('jquery_ui');
     hostsite_add_library('jquery-ui-slider');
@@ -260,15 +278,18 @@ HTML;
         ? data_entry_helper::relative_client_helper_path() . "../media/images/"
         : data_entry_helper::$images_path;
     $timerDelay = ((int) 1000 / $args['frameRate']);
+    $preloadData = $args['preloadData'] ? 'true' : 'false';
     $yearSelector = $args['yearSelector'] ? 'true' : 'false';
     $extras = '&wantColumns=1&wantParameters=1&' . report_helper::array_to_query_string($currentParamValues, TRUE);
     data_entry_helper::$javascript .= <<<JS
 indiciaFns.initTimeLapseMap({
+  preloadData: $preloadData,
   dotSize: $args[dotSize],
   lat: $args[map_centroid_lat],
   long: $args[map_centroid_long],
   zoom: $args[map_zoom],
   report_name: '$args[report_name]',
+  species_report_name: '$args[species_report_name]',
   reportExtraParams: '$extras',
   timeControlSelector: '#timeSlider',
   dotControlSelector: '#dotSlider',
