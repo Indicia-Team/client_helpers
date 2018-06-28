@@ -1356,7 +1356,7 @@ HTML;
       $optionParams[substr($key, 7)] = $value;
     }
   }
-  $allParams = array_merge($optionParams, $getParams);
+  $allParams = array_merge(['quality' => '!R'], $optionParams, $getParams);
   if (!empty($allParams)) {
     report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $allParams);
     $json = json_encode($allParams);
