@@ -908,6 +908,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
     if ($options['ajax'] && $options['autoloadAjax']) {
       self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(true);\n";
     }
+    elseif (!$options['ajax']) {
+      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.setupPagerEvents();\n";
+    }
     return $r;
   }
 
