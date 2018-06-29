@@ -237,6 +237,15 @@ class iform_verification_5 {
           'default' => 'verification',
           'group' => 'Report Settings',
         ), array(
+          'name' => 'email_from_address',
+          'caption' => 'Email from address',
+          'description' => 'Specify the email address which emails should be sent from. This must be an address on ' .
+            'the same domain as the site to avoid the emails being blocked as spam. If blank then the site email ' .
+            'address is used.',
+          'type' => 'string',
+          'required' => FALSE,
+          'group' => 'Verifier emails',
+        ), array(
           'name' => 'email_subject_send_to_verifier',
           'caption' => 'Send to Expert Email Subject',
           'description' => 'Default subject for the send to expert email. Replacements allowed include %taxon% and %id%.',
@@ -250,10 +259,10 @@ class iform_verification_5 {
            . 'Use the %commentQuickReplyPageLink% replacement if you wish the recipient to be able to quickly reply to comments using a linked page, '
            . 'setup the options for this using the COMMENT QUICK REPLY PAGE LINK section of this page',
           'type' => 'textarea',
-          'default' => 'We would appreciate your opinion on the following record. Please reply to this mail with "accepted", "not accepted" or "query" '.
-              'in the email body, followed by any comments you have including the proposed re-identification if relevant on the next line.'.
+          'default' => 'We would appreciate your opinion on the following record. Please reply to this mail with "accepted", "not accepted" or "query" ' .
+              'in the email body, followed by any comments you have including the proposed re-identification if relevant on the next line.' .
               "\n\n%record%",
-          'group' => 'Verifier emails'
+          'group' => 'Verifier emails',
         ), array(
           'name' => 'email_subject_send_to_recorder',
           'caption' => 'Send to Recorder Email Subject',
@@ -264,19 +273,19 @@ class iform_verification_5 {
         ), array(
           'name' => 'email_body_send_to_recorder',
           'caption' => 'Send to Recorder Email Body',
-          'description' => 'Default body for the send to recorder email. Replacements allowed include %taxon%, %id% and %record% which is replaced to give details of the record. '
-           . 'Use the %commentQuickReplyPageLink% replacement if you wish the recipient to be able to quickly reply to queries using a linked page, '
-           . 'setup the options for this using the COMMENT QUICK REPLY PAGE LINK section of this page',
+          'description' => 'Default body for the send to recorder email. Replacements allowed include %taxon%, %id% and %record% which is replaced to give details of the record. ' .
+            'Use the %commentQuickReplyPageLink% replacement if you wish the recipient to be able to quickly reply to queries using a linked page, ' .
+            'setup the options for this using the COMMENT QUICK REPLY PAGE LINK section of this page',
           'type' => 'textarea',
-          'default' => 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct '.
-              'and any other information you have which may help to confirm this.'.
-              "\n\n%record%",
-          'group' => 'Recorder emails'
+          'default' => 'The following record requires confirmation. Please could you reply to this email stating how confident you are that the record is correct ' .
+            'and any other information you have which may help to confirm this.' .
+            "\n\n%record%",
+          'group' => 'Recorder emails',
         ), array(
           'name' => 'auto_discard_rows',
           'caption' => 'Automatically remove rows',
-          'description' => 'If checked, then when changing the status of a record the record is removed from the grid if it no '.
-              'longer matches the grid filter.',
+          'description' => 'If checked, then when changing the status of a record the record is removed from the grid if it no ' .
+            'longer matches the grid filter.',
           'type' => 'checkbox',
           'default' => 'true',
           'required' => FALSE,
@@ -285,7 +294,7 @@ class iform_verification_5 {
           'name' => 'indicia_species_layer_feature_type',
           'caption' => 'Feature type for Indicia species layer',
           'description' => 'Set to the name of a feature type on GeoServer that will be loaded to display the Indicia species data for the selected record. '.
-              'Leave empty for no layer. Normally this should be set to a feature type that exposes the cache_occurrences view.',
+            'Leave empty for no layer. Normally this should be set to a feature type that exposes the cache_occurrences view.',
           'type' => 'text_input',
           'required' => FALSE,
           'group' => 'Other Map Settings',
@@ -305,7 +314,7 @@ class iform_verification_5 {
           'name' => 'indicia_species_layer_filter_field',
           'caption' => 'Field to filter on',
           'description' => 'Set to the name of a field exposed by the feature type which can be used to filter for the species data to display. Examples include '.
-              'taxon_external_key, taxon_meaning_id.',
+            'taxon_external_key, taxon_meaning_id.',
           'type' => 'text_input',
           'required' => FALSE,
           'group' => 'Other Map Settings',
@@ -1532,12 +1541,18 @@ HTML
    *
    * Response is OK or Fail depending on whether the email was sent or not.
    */
-  public static function ajax_email() {
-    $site_email = hostsite_get_config_value('site', 'mail', '');
+  public static function ajax_email($website_id, $password, $nid) {
+    $params = hostsite_get_node_field_value($nid, 'params');
+    if (empty($params['email_from_address'])) {
+      $fromEmail = hostsite_get_config_value('site', 'mail', '');
+    }
+    else {
+      $fromEmail = $params['email_from_address'];
+    }
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
-    $headers[] = 'From: ' . $site_email;
+    $headers[] = 'From: ' . $fromEmail;
     $headers[] = 'Reply-To: ' . hostsite_get_user_field('mail');
     $headers[] = 'Return-Path: ' . $site_email;
     $headers = implode("\r\n", $headers) . PHP_EOL;

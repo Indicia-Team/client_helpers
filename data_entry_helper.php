@@ -777,6 +777,8 @@ JS;
    *     template used to build the caption, with each database field represented as {fieldname}.
    *   * **sortable** - Set to true to allow drag sorting of the list of checkboxes. If sortable, then the layout will
    *     be a vertical column of checkboxes rather than inline.
+   *   * **termImageSize** - Optional. Set to an Indicia image size preset (normally thumb, med or original) to include
+   *     term images in the output.
    *   The output of this control can be configured using the following templates:
    *   * **check_or_radio_group** - Container element for the group of checkboxes.
    *   * **check_or_radio_group_item** - Template for the HTML element used for each item in the group.
@@ -1892,7 +1894,10 @@ JS;
    * characters as literal.
    * <li><b>selectedItemTemplate</b><br/>
    * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li></ul>
+   * for the selected item in the control.</li>
+   * <li><b>termImageSize</b><br/>
+   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
+   * output.</li>
    * </ul>
    *
    * @return string HTML to insert into the page for the listbox control.
@@ -2222,6 +2227,9 @@ JS;
    * <li><b>captionTemplate</b><br/>
    * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
    * with each database field represented as {fieldname}.</li>
+   * <li><b>termImageSize</b><br/>
+   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
+   * output.</li>
    * </ul>
    * The output of this control can be configured using the following templates:
    * <ul>
@@ -2349,7 +2357,11 @@ JS;
    * characters as literal.
    * <li><b>selectedItemTemplate</b><br/>
    * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li></ul>
+   * for the selected item in the control.</li>
+   * <li><b>termImageSize</b><br/>
+   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
+   * output.</li>
+   * </ul>
    *
    * @return string HTML code for a select control.
    */
@@ -5663,6 +5675,15 @@ $('div#$escaped_divId').indiciaTreeBrowser({
             // If an array field and we are loading an existing value, then the value needs to store the db ID otherwise we loose the link
             if ($itemFieldname)
               $value .= ":$itemFieldname";
+            if (!empty($record['preferred_image_path']) && !empty($options['termImageSize'])) {
+              $baseUrl = self::$base_url;
+              $preset = $options['termImageSize'] === 'original' ? '' : "$options[termImageSize]-";
+              $caption .= <<<HTML
+<a href="{$baseUrl}upload/$record[preferred_image_path]" class="fancybox">
+  <img src="{$baseUrl}upload/$preset$record[preferred_image_path]" />
+</a>
+HTML;
+            }
             $item = str_replace(
               array('{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
               array($value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
@@ -7345,7 +7366,8 @@ HTML;
       $item['fieldname']=$options['fieldprefix'].':'.$itemId.($item['multi_value'] == 't' ? '[]' : '');
       $item['id']=$options['fieldprefix'].':'.$itemId;
       $item['untranslatedCaption']=$item['caption'];
-      $item['caption'] = self::getTranslatedAttrCaption($item);
+      $item['caption'] = self::getTranslatedAttrField('caption', $item);
+      $item['description'] = self::getTranslatedAttrField('description', $item);
       self::attributePrepareDatabaseDefaultForControl($item);
       $item['attributeId'] = $itemId;
       $item['values'] = array();
@@ -7405,33 +7427,35 @@ HTML;
   }
 
   /**
-   * Returns the translation for a custom attribute caption.
+   * Returns the translation for a custom attribute caption or description.
    *
    * Allows translation to occur on the server side or client side. If the
-   * server supplies a list of terms in the caption_i18n field and there is
+   * server supplies a list of terms in the *_i18n field and there is
    * a match for the user's language, then that is used. Otherwise defaults to
    * the client helpers lamg::get function.
    *
+   * @param string $field
+   *   Either caption or description depending on what is being translated.
    * @param array $attr
    *   Custom attribute array loaded from data services.
    *
    * @return string
    *   Translated caption.
    */
-  private static function getTranslatedAttrCaption(array $attr) {
+  private static function getTranslatedAttrField($field, array $attr) {
     require_once 'prebuilt_forms/includes/language_utils.php';
     $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
-    if (!empty($attr['caption_i18n'])) {
-      $otherLanguages = json_decode($attr['caption_i18n'], TRUE);
+    if (!empty($attr[$field . '_i18n'])) {
+      $otherLanguages = json_decode($attr[$field . '_i18n'], TRUE);
       if (isset($otherLanguages[$language])) {
         return $otherLanguages[$language];
       }
       else {
-        return lang::get($attr['caption']);
+        return lang::get($attr[$field]);
       }
     }
     else {
-      return lang::get($attr['caption']);
+      return lang::get($attr[$field]);
     }
   }
 
@@ -7532,6 +7556,9 @@ HTML;
    *    booleanCtrl - radio or checkbox for boolean attribute output, default is checkbox. Can also be a checkbox_group, used to
    *    allow selection of both yes and no, e.g. on a filter form.
    *    language - iso 639:3 code for the language to output for terms in a termlist. If not set no language filter is used.
+   *    useDescriptionAsHelpText - set to true to load descriptions from server side attribute definitions into the
+   *    helpText.
+   *    attrImageSize - 'thumb', 'med' or 'original' to display the server defined attribute image alongside the caption.
    * @return string HTML to insert into the page for the control.
    * @todo full handling of the control_type. Only works for text data at the moment.
    */
@@ -7565,8 +7592,11 @@ HTML;
   private static function internalOutputAttribute($item, $options) {
     global $indicia_templates;
     $options = array_merge(array(
-      'extraParams' => array()
+      'extraParams' => array(),
     ), $options);
+    if (!empty($options['useDescriptionAsHelpText'])) {
+      $options['helpText'] = $options['helpText'] ?: $item['description'];
+    }
     $attrOptions = array(
       'fieldname'=>$item['fieldname'],
       'id'=>$item['id'],
@@ -7665,7 +7695,7 @@ HTML;
         }
         if (array_key_exists('class', $options))
           $attrOptions['class'] = $options['class'];
-        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'detail', 'sharing' => 'editing');
+        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'cache', 'sharing' => 'editing');
         if (array_key_exists('language', $options)) {
           $dataSvcParams = $dataSvcParams + array('iso'=>$options['language']);
         }
@@ -7721,6 +7751,16 @@ HTML;
             if(count($response)>0)
               $attrOptions['defaultCaption'] = $response[0]['term'];
           }
+        }
+        if (!empty($options['attrImageSize']) && !empty($item['image_path'])) {
+          $baseUrl = self::$base_url;
+          $preset = $options['attrImageSize'] === 'original' ? '' : "$options[attrImageSize]-";
+          $output .= <<<HTML
+<a href="{$baseUrl}upload/$item[image_path]" class="fancybox">
+  <img src="{$baseUrl}upload/$preset$item[image_path]" />
+</a>
+HTML;
+
         }
         $output .= call_user_func(array(get_called_class(), $ctrl), array_merge($attrOptions, array(
           'table'=>'termlists_term',

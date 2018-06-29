@@ -162,7 +162,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                 "&nbsp;&nbsp;<strong>[species map summary]</strong> - a read only grid showing a summary of the data entered using the species map control.<br/>" .
                 "&nbsp;&nbsp;<strong>[species attributes]</strong> - any custom attributes for the occurrence, if not using the grid. Also includes a file upload " .
                     "box and sensitivity input control if relevant. The attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they " .
-                    "default to 1600. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
+                    "default to 1600. Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the server into the help text displayed " .
+                    "with the control. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
                     "and outputs all attributes irrespective of the form block or tab. For finer control of the output, see the [occAttr:n], [photos] and [sensitivity] controls.<br/>" .
                 "&nbsp;&nbsp;<strong>[date]</strong> - a sample must always have a date.<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location select/autocomplete controls<br/>" .
@@ -206,8 +207,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             "<strong>[smpAttr:<i>n</i>]</strong> is used to insert a particular custom sample attribute identified by its ID number<br/>" .
             "<strong>[occAttr:<i>n</i>]</strong> is used to insert a particular custom occurrence attribute identified by its ID number when inputting single records at a time. " .
             "Or use [species attributes] to output the whole lot.<br/>" .
-            "For any attribute controls you can set the default value to load from a parameter provided in the URL query string. Set " .
-            "@urlParam to the name of the parameter in the URL which will contain the default value.<br/>" .
+            "For any attribute controls you can:<br/>" .
+            " * Set the default value to load from a parameter provided in the URL query string by setting @urlParam to " .
+            "   the name of the parameter in the URL which will contain the default value.<br/>" .
+            " * Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the server into the help text displayed with the control.<br/>" .
+            " * Set @attrImageSize = 'thumb', 'med' or 'original' to display the image defined for the attribute on the server alongside the caption.<br/>" .
             "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>" .
             "<strong>|</strong> is used insert a split so that controls before the split go into a left column and controls after the split go into a right column.<br/>" .
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
@@ -1775,17 +1779,17 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * which can be set to a JSON array containing either occurrence and/or
    * sample depending on which type of custom attributes to load. Defaults to
    * ["occurrence"] but you might want to include "sample" in the array when
-   * there are taxon specific habitat attributes for example.
+   * there are taxon specific habitat attributes for example. Any other options
+   * are passed through to the controls.
    *
    * @return string
    *   HTML for the div.
    */
   protected static function get_control_speciesdynamicattributes($auth, $args, $tabAlias, $options) {
-    // Provide a default
-    $options = array_merge([
-      'types' => ['occurrence'],
-    ], $options);
-    data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/dynamic_sample_occurrence') . "\";\n";
+    $types = isset($options['types']) ? $options['types'] : ['occurrence'];
+    unset($options['types']);
+    $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_sample_occurrence');
+    data_entry_helper::$javascript .= "indiciaData.ajaxUrl=\"$ajaxUrl\";\n";
     // If loading existing data, we need to know the sex/stage attrs so we can
     // find the value to filter to when retrieving attrs.
     if (!empty(self::$loadedOccurrenceId)) {
@@ -1802,7 +1806,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     // For each type (occurrence/sample) create a div to hold the controls,
     // pre-populated only when loading existing data.
     $r = '';
-    foreach ($options['types'] as $type) {
+    foreach ($types as $type) {
       $controls = '';
       if (!empty(self::$loadedOccurrenceId)) {
         $controls = self::getDynamicAttrs(
@@ -1811,9 +1815,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           data_entry_helper::$entity_to_load['occurrence:taxa_taxon_list_id'],
           $stageTermlistTermIds,
           $type,
+          $options,
           self::$loadedOccurrenceId
         );
       }
+      // Other options need to pass through to AJAX loaded controls.
+      $optsJson = json_encode($options);
+      data_entry_helper::$javascript .= "indiciaData.dynamicAttrOptions$type=$optsJson;\n";
+      // Add a container div.
       $r .= "<div class=\"species-dynamic-attributes attr-type-$type\">$controls</div>";
     }
     return $r;
@@ -1916,7 +1925,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * @return string
    *   Controls as an HTML string.
    */
-  private static function getDynamicAttrs($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId = NULL) {
+  private static function getDynamicAttrs($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $options, $occurrenceId = NULL) {
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $attrs = self::getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId);
     $prefix = $type === 'sample' ? 'smp' : 'occ';
@@ -1947,13 +1956,14 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $lastInnerBlock=$attr['inner_block_name'];
       $lastOuterBlock=$attr['outer_block_name'];
       $values = json_decode($attr['values']);
+      $options['extraParams'] = $readAuth;
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
         $attr['id'] = "{$prefix}Attr:$attr[attribute_id]";
         $attr['fieldname'] = "{$prefix}Attr:$attr[attribute_id]";
         $attr['default'] = $attr['default_value'];
         $attr['displayValue'] = $attr['default_value_caption'];
         $attr['defaultUpper'] = $attr['default_upper_value'];
-        $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
+        $r .= data_entry_helper::outputAttribute($attr, $options);
       }
       else {
         foreach ($values as $value) {
@@ -1962,7 +1972,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           $attr['default'] = $value->raw_value;
           $attr['displayValue'] = $value->value;
           $attr['defaultUpper'] = $value->upper_value;
-          $r .= data_entry_helper::outputAttribute($attr, ['extraParams' => $readAuth]);
+          $r .= data_entry_helper::outputAttribute($attr, $options);
         }
       }
     }
@@ -1988,6 +1998,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $_GET['taxa_taxon_list_id'],
       json_decode($_GET['stage_termlists_term_ids']),
       $_GET['type'],
+      json_decode($_GET['options'], TRUE),
       empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
     );
   }

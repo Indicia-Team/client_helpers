@@ -20,7 +20,8 @@ jQuery(document).ready(function docReady($) {
             'survey_id=' + $('#survey_id').val() +
             '&taxa_taxon_list_id=' + $('#occurrence\\:taxa_taxon_list_id').val() +
             '&type=' + type +
-            '&stage_termlists_term_ids=' + JSON.stringify(sexStageVals), null,
+            '&stage_termlists_term_ids=' + JSON.stringify(sexStageVals) +
+            '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]), null,
           function getAttrsReportCallback(data) {
             $(div).html(data);
           }
