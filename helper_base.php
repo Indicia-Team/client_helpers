@@ -1624,7 +1624,9 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       if (!empty(self::$website_id)) {
         // not on warehouse
         $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
-        $script .= "indiciaData.user_id = " . hostsite_get_user_field('indicia_user_id') . ";\n";
+        if (function_exists('hostsite_get_user_field')) {
+          $script .= "indiciaData.user_id = " . hostsite_get_user_field('indicia_user_id') . ";\n";
+        }
       }
 
       if (self::$js_read_tokens) {
