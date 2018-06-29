@@ -846,7 +846,6 @@ $callToCallback}";
       $fixedParams = json_encode($options['extraParams'], JSON_FORCE_OBJECT);
       $immutableParams = json_encode($options['immutableParams'], JSON_FORCE_OBJECT);
       self::$javascript .= "
-if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
 indiciaFns.simpleTooltip('input.col-filter','tooltip');
 indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
