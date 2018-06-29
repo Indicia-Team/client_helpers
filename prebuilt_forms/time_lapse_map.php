@@ -197,6 +197,7 @@ class iform_time_lapse_map {
       $r .= "<input type=\"hidden\" id=\"yearControl\" name=\"123year\" value=\"all\" />\n";
     }
     $r .= self::speciesSelectorControl($args);
+    $r .= self::acceptedOnlyControl($args);
     $r .= '<label>' . lang::get("Background layers") . ': </label>';
     $r .= map_helper::layer_list(array(
       'includeSwitchers' => TRUE,
@@ -209,7 +210,6 @@ class iform_time_lapse_map {
     $args['map_width'] = "auto";
     $options = iform_map_get_map_options($args, $readAuth);
     $olOptions = iform_map_get_ol_options($args);
-    $options['editLayer'] = FALSE;
     $options['clickForSpatialRef'] = FALSE;
     $options['scroll_wheel_zoom'] = FALSE;
     $r .= map_helper::map_panel($options, $olOptions);
@@ -228,6 +228,26 @@ class iform_time_lapse_map {
     else {
       $r .= '<select id="speciesControl"><option value="">' . lang::get("Please select species") . '</option></select>';
     }
+    return $r;
+  }
+
+  /**
+   * A control for filtering to accepted records only.
+   *
+   * @param array $args
+   *   Form arguments.
+   *
+   * @return string
+   *   Control HTML.
+   */
+  private static function acceptedOnlyControl($args) {
+    $langVerifiedRecordsOnly = lang::get("Accepted records only");
+    $r = <<<HTML
+<label>
+  <input type="checkbox" id="acceptedOnlyControl" />
+  $langVerifiedRecordsOnly
+</label>
+HTML;
     return $r;
   }
 

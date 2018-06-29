@@ -211,9 +211,8 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       dotSize: 3,
       errorDiv: '#errorMsg',
       pleaseSelectPrompt: 'Please select a Year / Species combination before playing',
-      waitDialogText: 'Please wait whilst the data for {year} are loaded.',
-      waitDialogTextAll: 'Please wait whilst the data are loaded.',
-      waitDialogTitle: 'Loading Data...',
+      waitDialogText: 'Loading, please wait...',
+      waitDialogTitle: 'Loading data',
       // waitDialogOK: 'OK',
       noMappableDataError: 'The report does not output any mappable data.',
       noDateError: 'The report does not output a date.',
@@ -237,6 +236,11 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       if ($(evt.target).is('select') || $(evt.target).is(':checked')) {
         loadDataOnDemand($(evt.target).val());
       }
+      calculateMinAndMax();
+      resetMap();
+    });
+
+    $('#acceptedOnlyControl').change(function acceptedChange() {
       calculateMinAndMax();
       resetMap();
     });
@@ -312,8 +316,10 @@ var rgbvalue, applyJitter, setToDate, loadYear;
 
     mapInitialisationHooks.push(function (mapdiv) {
       var year = $(iTLMOpts.yearControlSelector).val();
-      mapdiv.map.eventsLayer = new OpenLayers.Layer.Vector('Events Layer', {displayInLayerSwitcher: false});
-      mapdiv.map.addLayer(mapdiv.map.eventsLayer);
+      var eventsLayer = new OpenLayers.Layer.Vector('Events layer', {displayInLayerSwitcher: false});
+      mapdiv.map.eventsLayer = eventsLayer;
+      mapdiv.map.addLayer(eventsLayer);
+
       // switch off the mouse drag pan.
       for (var n = 0; n < mapdiv.map.controls.length; n++) {
         if (mapdiv.map.controls[n].CLASS_NAME === 'OpenLayers.Control.Navigation')
@@ -349,12 +355,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
       iTLMData.mySpecies['year:' + year] = {};
     }
     $(iTLMOpts.errorDiv).empty();
-    if (year === 'all') {
-      dlgText = iTLMOpts.waitDialogTextAll;
-    } else {
-      dlgText = iTLMOpts.waitDialogText.replace('{year}', year);
-    }
-    dialog = $('<p>' + dlgText + '</p>').dialog({
+    dialog = $('<div><img src="' + indiciaData.imagesPath + 'ajax-loader2.gif" style="float: left; padding-right: 20px" /><p>' + iTLMOpts.waitDialogText + '</p></div>').dialog({
       title: iTLMOpts.waitDialogTitle,
       buttons: {
         OK: function okClick() {
@@ -366,7 +367,7 @@ var rgbvalue, applyJitter, setToDate, loadYear;
     jQuery.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?report=' + iTLMOpts.report_name +
         '.xml&reportSource=local&mode=json&reset_timeout=true' +
         '&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + iTLMOpts.reportExtraParams +
-        '&callback=?' + dateFilter + speciesFilter,
+        '&callback=?&quality=!R' + dateFilter + speciesFilter,
       function (data) {
         var hasDate = false;
         var wktCol = false;
@@ -410,10 +411,17 @@ var rgbvalue, applyJitter, setToDate, loadYear;
               }
               donePoints.push(this.species_id + ':' + wkt);
               if (typeof iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] === "undefined") {
-                iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] = {records: [], coords: []};
+                iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex] = {
+                  records: [],
+                  coords: [],
+                  acceptedCoords: [],
+                };
               }
               iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].records.push(this);
               iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].coords.push(wkt);
+              if (this.record_status === 'V') {
+                iTLMData.myData['year:' + year]['species:' + this.species_id]['day:' + this.recordDayIndex].acceptedCoords.push(wkt);
+              }
             });
             // Now, loop the data, for each species/day combination, build 1 big feature.
             $.each(iTLMData.myData['year:' + year], function(speciesTag, dayList) {
@@ -422,6 +430,11 @@ var rgbvalue, applyJitter, setToDate, loadYear;
                 this.feature = parser.read(shapeType + '(' + this.coords.join(',') + ')');
                 this.feature.style = { fillOpacity: 0.8, strokeWidth: 0 };
                 this.feature.attributes.dayIndex = idx.replace('day:', '');
+                this.feature.attributes.acceptedOnly = 0;
+                this.acceptedFeature = parser.read(shapeType + '(' + this.acceptedCoords.join(',') + ')');
+                this.acceptedFeature.style = { fillOpacity: 0.8, strokeWidth: 0 };
+                this.acceptedFeature.attributes.dayIndex = idx.replace('day:', '');
+                this.acceptedFeature.attributes.acceptedOnly = 1;
               });
             });
           }
@@ -492,15 +505,17 @@ var rgbvalue, applyJitter, setToDate, loadYear;
   setToDate = function (idx) {
     var displayDay = function (idx) {
       var applyDay = function (day, layer, speciesIdx) {
+        var featureName;
         if (typeof day !== 'undefined' && day !== false) {
-          if (day.feature) {
-            day.feature.style.pointRadius = iTLMData.dotSize;
+          featureName = $('#acceptedOnlyControl').is(':checked') ? 'acceptedFeature' : 'feature';
+          if (day[featureName]) {
+            day[featureName].style.pointRadius = iTLMData.dotSize;
             if (iTLMData.species.length === 1) {
-              day.feature.style.fillColor = rgbvalue(idx);
+              day[featureName].style.fillColor = rgbvalue(idx);
             } else {
-              day.feature.style.fillColor = colourSequence[speciesIdx];
+              day[featureName].style.fillColor = colourSequence[speciesIdx];
             }
-            layer.addFeatures([day.feature]);
+            layer.addFeatures([day[featureName]]);
           }
         }
       };

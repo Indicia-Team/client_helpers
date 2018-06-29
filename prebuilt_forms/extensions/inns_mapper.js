@@ -6,7 +6,7 @@ jQuery(document).ready(function docReady($) {
       $('#ctrl-wrap-dynamic-region_location_id').remove();
     } else if (indiciaData.userInnsRegions.length === 1) {
       $('#ctrl-wrap-dynamic-region_location_id').after(
-        '<input type="hidden" name="dynamic-region_location_id" value="' + indiciaData.userInnsRegions[0]['id'] + '" />'
+        '<input type="hidden" name="dynamic-region_location_id" value="' + indiciaData.userInnsRegions[0]['location_id'] + '" />'
       );
       $('#ctrl-wrap-dynamic-region_location_id').remove();
       if (typeof indiciaData.regionLocationId === 'undefined') {
@@ -16,7 +16,7 @@ jQuery(document).ready(function docReady($) {
       $('#dynamic-region_location_id option').remove();
       $.each(indiciaData.userInnsRegions, function() {
         $('#dynamic-region_location_id').append(
-          '<option value="' + this.id + '">' + this.name + '</option>'
+          '<option value="' + this.location_id + '">' + this.location_name + '</option>'
         );
       });
       if (typeof indiciaData.regionLocationId !== 'undefined') {

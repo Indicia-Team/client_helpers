@@ -1373,7 +1373,7 @@ HTML;
 if ($('#select-filter').val()) {
   loadFilter($('#select-filter').val(), $getParams);
 } else {
-  applyFilterToReports(false);
+  indiciaFns.applyFilterToReports(false);
 }
 
 JS;
