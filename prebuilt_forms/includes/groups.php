@@ -128,6 +128,7 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
   if ($isMember && $group['private_records'] === 't') {
     $defstring .= "release_status=A\n";
   }
+  $defstring .= "group_id=$_GET[group_id]\n";
   if (empty($_GET['implicit'])) {
     // No need for a group user filter.
     $args['param_presets'] = implode("\n", array($args['param_presets'], $defstring));
