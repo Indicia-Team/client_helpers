@@ -7455,7 +7455,7 @@ HTML;
       }
     }
     else {
-      return lang::get($attr[$field]);
+      return empty($attr[$field]) ? '' : lang::get($attr[$field]);
     }
   }
 
@@ -7492,7 +7492,8 @@ HTML;
         $item['default'] =  '';
     }
     // Load defaults if the attribute has a range value.
-    if (($item['data_type'] === 'I' || $item['data_type'] === 'F') && $item['allow_ranges'] === 't') {
+    if (($item['data_type'] === 'I' || $item['data_type'] === 'F')
+        && array_key_exists('allow_ranges', $item) && $item['allow_ranges'] === 't') {
       $item['defaultUpper'] = $item['default_upper_value'];
     }
   }
