@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
@@ -127,11 +125,21 @@ class extension_paths_editor {
    */
   public static function select_map_control($auth, $args, $tabalias, $options, $path) {
     if (!empty($options['instruction'])) {
-      data_entry_helper::$javascript .= "indiciaData.select_map_control_$options[control]=\"$options[instruction]\";\n";
+      data_entry_helper::$javascript .= <<<JS
+indiciaData.select_map_control_$options[control] = {
+  instruction: "$options[instruction]",
+  selector: "$options[instructionSelector]"
+};
+
+JS;
     }
     $minZoomLevel = empty($options['minZoomLevel']) ? '' : " data-minzoomlevel=\"$options[minZoomLevel]\"";
-    return "<button type=\"button\" class=\"select_map_control\" id=\"select_map_control_$options[control]\" " .
-        "data-control=\"$options[control]\"$minZoomLevel>$options[label]</button>\n";
+    return <<<HTML
+<button type="button" class="select_map_control" id="select_map_control_$options[control]"
+    data-control="$options[control]"$minZoomLevel>
+  $options[label]
+</button>
+HTML;
   }
 
 }
