@@ -1850,7 +1850,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       return 'sex/stage/count';
     }
     else {
-      return $attr['system_function'] ?? $attr['term_name'];
+      return empty($attr['system_function']) ? $attr['term_name'] : $attr['system_function'];
     }
   }
 
