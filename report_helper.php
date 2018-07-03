@@ -846,7 +846,6 @@ $callToCallback}";
       $fixedParams = json_encode($options['extraParams'], JSON_FORCE_OBJECT);
       $immutableParams = json_encode($options['immutableParams'], JSON_FORCE_OBJECT);
       self::$javascript .= "
-if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
 indiciaFns.simpleTooltip('input.col-filter','tooltip');
 indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
@@ -881,6 +880,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langNext: '" . lang::get('next') . "',
   langLast: '" . lang::get('last') . "',
   langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
+  langHideInfo: '" . lang::get('Hide info') . "',
   noRecords: '" . lang::get('No records')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
@@ -906,6 +906,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
     }
     if ($options['ajax'] && $options['autoloadAjax']) {
       self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(true);\n";
+    }
+    elseif (!$options['ajax']) {
+      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.setupPagerEvents();\n";
     }
     return $r;
   }
@@ -1825,6 +1828,10 @@ JS;
   * Default true. Defines that the map will automatically zoom to show the records. If using AJAX then note that the
   * zoom will happen after initial page load and the map will zoom again if several pages of records are loaded.
   * </li>
+  * <li><b>minMapReportZoom</b>
+  * If set to a map zoom level (typically from 1-18) then the map does not show
+  * the report output until zoomed to this level.
+  * </li>
   * <li><b>featureDoubleOutlineColour</b>
   * If set to a CSS colour class, then feature outlines will be doubled up, for example a 1 pixel dark outline
   * over a 3 pixel light outline, creating a line halo effect which can make the map clearer.
@@ -1841,6 +1848,7 @@ JS;
       'extraParams' => '',
       'featureDoubleOutlineColour' => '',
       'dataSourceLoRes' => '',
+      'minMapReportZoom' => 'false',
     ), $options);
     $options = self::get_report_grid_options($options);
 
@@ -2085,28 +2093,29 @@ JS;
           ]);
           self::$javascript .= <<<JS
 indiciaData.mapDataSource = $mapDataSource;
+indiciaData.minMapReportZoom = $options[minMapReportZoom];
 mapInitialisationHooks.push(function(div) {
   var wantToMap =
     typeof indiciaData.filter === 'undefined' ||
     typeof indiciaData.filter.def.indexed_location_id === 'undefined' ||
     indiciaData.filter.def.indexed_location_id === '';
   // Find the best report grid to use as a map report controller.
-  $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
-    if (typeof indiciaData.mapReportControllerGrid === 'undefined') {
-      // Use the first grid to contol the map report...
-      indiciaData.mapReportControllerGrid = grid;
-    }
-    if (grid[0].settings.linkFilterToMap) {
-      // ...Unless there is a better filter linked grid.
-      indiciaData.mapReportControllerGrid = grid;
-      // Only need one grid to draw the map.
-      return false;
-    }
-  });
-  if (wantToMap && typeof indiciaData.reports !== 'undefined') {
-    if (typeof indiciaData.mapReportControllerGrid !== 'undefined') {
-      indiciaData.mapReportControllerGrid.mapRecords();
-    }
+  if (typeof indiciaData.reports.$options[reportGroup] !== 'undefined') {
+    $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
+      if (typeof indiciaData.mapReportControllerGrid === 'undefined') {
+        // Use the first grid to contol the map report...
+        indiciaData.mapReportControllerGrid = grid;
+      }
+      if (grid[0].settings.linkFilterToMap) {
+        // ...Unless there is a better filter linked grid.
+        indiciaData.mapReportControllerGrid = grid;
+        // Only need one grid to draw the map.
+        return false;
+      }
+    });
+  }
+  if (wantToMap && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
+    indiciaData.mapReportControllerGrid.mapRecords();
   }
   if (indiciaData.mapDataSource.loRes !== '') {
     // hook up a zoom and pan handler so we can switch reports.

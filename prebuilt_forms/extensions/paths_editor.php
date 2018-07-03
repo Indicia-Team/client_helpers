@@ -13,11 +13,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
@@ -26,25 +24,31 @@
 class extension_paths_editor {
 
   public static function add_template_locations_to_map($auth, $args, $tabalias, $options, $path) {
-    if (empty($options['location_type_id']) || !preg_match('/^\d+$/', $options['location_type_id']))
+    if (empty($options['location_type_id']) || !preg_match('/^\d+$/', $options['location_type_id'])) {
       throw new exception('Please supply a valid location_type_id option.');
+    }
     iform_load_helpers(array('report_helper'));
-    $r = report_helper::report_map(array(
+    $reportMapOptions = [
       'readAuth' => $auth['read'],
       'dataSource' => 'library/locations/locations_list_mapping',
       'dataSourceLoRes' => 'library/locations/locations_list_mapping',
       'extraParams' => array('location_type_id' => $options['location_type_id']),
       'ajax' => TRUE,
-      // handle our own clicking behaviour
-      'clickable' => FALSE
-    ));
-    // output a hidden grid, since the AJAX code for a report_map is in the grid.
+      // Handle our own clicking behaviour.
+      'clickable' => FALSE,
+    ];
+    if (isset($options['minMapReportZoom'])) {
+      $reportMapOptions['minMapReportZoom'] = $options['minMapReportZoom'];
+    }
+    $r = report_helper::report_map($reportMapOptions);
+    // Output a hidden grid, since the AJAX code for a report_map is in the
+    // grid.
     $r .= report_helper::report_grid(array(
       'readAuth' => $auth['read'],
       'dataSource' => 'library/locations/locations_list_mapping',
       'extraParams' => array('location_type_id' => $options['location_type_id']),
       'ajax' => TRUE,
-      'class' => 'report-grid hidden'
+      'class' => 'report-grid hidden',
     ));
     report_helper::$javascript .= "indiciaData.wantPathEditor = true;\n";
     return $r;
@@ -56,22 +60,24 @@ class extension_paths_editor {
     }
     if (isset($_GET['table']) && $_GET['table'] === 'sample' && isset($_GET['id'])) {
       $parent_id = $_GET['id'];
-    } else {
+    }
+    else {
       $parent_id = data_entry_helper::$entity_to_load['sample:parent_id'];
     }
-    // construct a query to pull back the parent sample and any existing child samples in one go
+    // Construct a query to pull back the parent sample and any existing child
+    // samples in one go.
     $samples = data_entry_helper::get_population_data(array(
       'table' => 'sample',
       'extraParams' => $auth['read'] + array(
-          'query' => json_encode(array('where' => array('id', $parent_id), 'orwhere' => array('parent_id', $parent_id))),
-          'view' => 'detail'
+        'query' => json_encode(array('where' => array('id', $parent_id), 'orwhere' => array('parent_id', $parent_id))),
+        'view' => 'detail',
       ),
-      'caching' => false
+      'caching' => FALSE
     ));
     $childGeoms = array();
     $r = '';
     foreach ($samples as $sample) {
-      if ($sample['id']===$parent_id) {
+      if ($sample['id'] === $parent_id) {
         // found the parent sample. Send to JS so it can be shown on the map
         data_entry_helper::$javascript .= "indiciaData.showParentSampleGeom = '$sample[geom]';\n";
         $r = data_entry_helper::hidden_text(array(
@@ -119,11 +125,21 @@ class extension_paths_editor {
    */
   public static function select_map_control($auth, $args, $tabalias, $options, $path) {
     if (!empty($options['instruction'])) {
-      data_entry_helper::$javascript .= "indiciaData.select_map_control_$options[control]=\"$options[instruction]\";\n";
+      data_entry_helper::$javascript .= <<<JS
+indiciaData.select_map_control_$options[control] = {
+  instruction: "$options[instruction]",
+  selector: "$options[instructionSelector]"
+};
+
+JS;
     }
     $minZoomLevel = empty($options['minZoomLevel']) ? '' : " data-minzoomlevel=\"$options[minZoomLevel]\"";
-    return "<button type=\"button\" class=\"select_map_control\" id=\"select_map_control_$options[control]\" " .
-        "data-control=\"$options[control]\"$minZoomLevel>$options[label]</button>\n";
+    return <<<HTML
+<button type="button" class="select_map_control" id="select_map_control_$options[control]"
+    data-control="$options[control]"$minZoomLevel>
+  $options[label]
+</button>
+HTML;
   }
 
 }

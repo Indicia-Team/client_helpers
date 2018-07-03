@@ -74,12 +74,12 @@ class extension_misc_extensions {
         }
         $button = '<div>';
         $button .= '  <FORM>';
-        $button .= "    <INPUT TYPE=\"button\" VALUE=\"".$options['buttonLabel']."\"";
+        $button .= "    <INPUT TYPE=\"button\" VALUE=\"".lang::get($options['buttonLabel'])."\"";
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
-          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath'], $paramToPass) . "'\">";
+          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath']), $paramToPass) . "'\">";
         } else {
-          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url($options['buttonLinkPath']) . "'\">";
+          $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath'])) . "'\">";
         }
         $button .= '  </FORM>';
         $button .= '</div><br>';
@@ -150,11 +150,11 @@ class extension_misc_extensions {
           $button .= "  <a  ";
         //Button can still be used without a parameter to pass
         if (!empty($paramToPass)) {
-          $button .= "href=\"" . hostsite_get_url($options['linkPath'], $paramToPass) . "\">";
+          $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath']), $paramToPass) . "\">";
         } else {
-          $button .= "href=\"" . hostsite_get_url($options['linkPath']) . "\">";
+          $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath'])) . "\">";
         }
-        $button .= $options['label'];
+        $button .= lang::get($options['label']);
         $button .= '  </a>';
         $button .= '</div><br>';
       } else {
@@ -568,27 +568,43 @@ $.getScript('$path$options[mapDataFile]');
 JS;
     return data_entry_helper::select($options);
   }
-
+  
   /**
    * Allows localised text to be inserted on the page.
    *
-   * An extension that simply takes an @text option and passes it through lang::get. Allows free text embedded in forms
-   * to be localised.
+   * An extension that takes an @text option and passes it through lang::get. Allows free text embedded in forms
+   * to be localised. Optionally allows html to be placed around the text to be translated.
    *
    * @param array $auth
    * @param array $args
    * @param string $tabalias
    * @param array $options
+   *   Array of control options. The following options are available:
+   *   * @htmlBefore - Optional (required if @htmlAfter used). Html before the translatable text e.g. @htmlBefore=<input type="submit" value="
+   *   * @text - The text to be translated e.g. @text=Submit
+   *   * @htmlAfter - Optional (required if @htmlBefore used). Html after the translatable text e.g. @htmlAfter=">
    *
    * @return string
-   *   Translated text.
+   *   Translated string
    */
   public static function localised_text($auth, $args, $tabalias, $options) {
+    $r = '';
     $options = array_merge(
       array('text' => 'The misc_extensions.localised_text control needs a @text parameter'),
       $options
     );
-    return lang::get($options['text']);
+    if ((isset($options['htmlBefore']) && !isset($options['htmlAfter'])) ||
+         (!isset($options['htmlBefore']) && isset($options['htmlAfter']))) {
+      return 'If one of the @htmlBefore or @htmlAfter options is set for the misc_extensions.localised_text control, '
+        . 'then they both must be set.';
+    }
+    if (isset($options['htmlBefore']) && isset($options['htmlAfter'])) {
+      $r .= $options['htmlBefore'] . lang::get($options['text']) . $options['htmlAfter'];
+    }
+    else {
+      $r .= lang::get($options['text']);
+    }
+    return $r;
   }
 
   /**

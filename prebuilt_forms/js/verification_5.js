@@ -337,13 +337,13 @@ indiciaData.rowIdToReselect = false;
     html += recorderQueryCommentForm();
     popupQueryForm(html);
   }
-  
+
   /*
    * Saves the authorisation token for the Record Comment Quick Reply page into the database
    * so that it is saved against the occurrence id
    * @param string authorisationNumber
    * @return boolean indicates if database was successfully written to or not
-   * 
+   *
    */
   function saveAuthorisationNumberToDb(authorisationNumber, occurrenceId) {
     var data = {
@@ -354,7 +354,7 @@ indiciaData.rowIdToReselect = false;
     $.post(
       indiciaData.ajaxFormPostUrl.replace('occurrence', 'comment_quick_reply_page_auth'),
       data,
-      function (data) {      
+      function (data) {
         if (typeof data.error !== "undefined") {
           alert(data.error);
         }
@@ -367,7 +367,7 @@ indiciaData.rowIdToReselect = false;
   function sendEmail() {
     var authorisationWriteToDbResult;
     var autoRemoveLink =false;
-    //If the email isn't for an occurrence or the setup options are missing 
+    //If the email isn't for an occurrence or the setup options are missing
     //then then we won't be writing an auth to the DB, and we will want to remove the link from the email body
     if (!indiciaData.commentQuickReplyPageLinkURL||!indiciaData.commentQuickReplyPageLinkLabel||!occurrenceId) {
       autoRemoveLink=true;
@@ -376,7 +376,7 @@ indiciaData.rowIdToReselect = false;
       var personIdentifierParam;
       // Note: The quick reply page does actually support supplying a user_id parameter to it, however we don't do that in practice here as
       // we don't actually know if the user has an account (we would also have to collect the user_id for the entered email)
-      personIdentifierParam='&email_address='+email.to;  
+      personIdentifierParam='&email_address='+email.to;
       //Need an authorisation unique string in URL, this is linked to the occurrence.
       //Only if correct auth and occurrence_id combination are present does the Record Comment Quick Reply page display
       var authorisationNumber = makeAuthNumber();
@@ -395,12 +395,12 @@ indiciaData.rowIdToReselect = false;
     // Replace the text token from the email with the actual link or remove the link if
     // A. We couldn't write the authorisation to the database
     // B. The system is requesting we remove the link (perhaps the required options are not filled in)
-    if (authorisationWriteToDbResult!=='failure' && autoRemoveLink===false) {  
+    if (authorisationWriteToDbResult!=='failure' && autoRemoveLink===false) {
       email.body = email.body
             .replace('%commentQuickReplyPageLink%', commentQuickReplyPageLink);
     } else {
       email.body = email.body
-            .replace('%commentQuickReplyPageLink%', '');  
+            .replace('%commentQuickReplyPageLink%', '');
     }
     $.post(
       indiciaData.ajaxUrl + '/email/' + indiciaData.nid + urlSep,
@@ -419,7 +419,7 @@ indiciaData.rowIdToReselect = false;
       }
     );
   }
-  
+
   /*
    * Create a random authorisation number to pass to the Record Comment Quick Reply page
    * (This page sits outside the Warehouse)
@@ -748,7 +748,7 @@ indiciaData.rowIdToReselect = false;
         null,
         function (data) {
           $('#media-tab').html(data);
-          $('#media-tab a.fancybox').fancybox();
+          $('#media-tab a.fancybox').fancybox({ afterLoad: indiciaFns.afterFancyboxLoad });
         }
       );
     }
@@ -1129,6 +1129,7 @@ indiciaData.rowIdToReselect = false;
     var verifyGridButtons = '<button type="button" class="default-button verify-grid-trusted tools-btn" id="verify-grid-trusted">Review grid</button>' +
         '<button type="button" id="btn-multiple" title="Select this tool to tick off a list of records and action all of the ticked records in one go">Review tick list</button>',
       trustedHtml;
+    $('#verification-grid').height($(document).height() - $('#verification-grid').offset().top - 50);
     $('#filter-build').after(verifyGridButtons);
     $('#verify-grid-trusted').click(function () {
       var settings = indiciaData.reports.verification.grid_verification_grid[0].settings;

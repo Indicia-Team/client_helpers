@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link http://code.google.com/p/indicia/
  */
 
 require_once('includes/dynamic.php');
