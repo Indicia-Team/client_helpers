@@ -1353,8 +1353,16 @@ JS;
    */
   public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
     if ($readAuth==null) $readAuth=$_POST;
-    $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    $interim_path = dirname(__FILE__).'/'.$interim_image_folder;
+    if(function_exists('conf_path')){
+    //image upload path if it is in Drupal.
+      $interim_image_folder = conf_path() . "/files/indicia/upload/";
+      $interim_path = getcwd() .'/' . $interim_image_folder;
+    }else{
+      //For non-Drupal's image upload path.
+      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
+      $client_helper = self::client_helper_path();
+      $interim_path = $client_helper . $interim_image_folder;
+    }
     if (!file_exists($interim_path.$path))
       return "The file $interim_path$path does not exist and cannot be uploaded to the Warehouse.";
     $serviceUrl = parent::$base_url."index.php/services/".$service;
@@ -2477,7 +2485,12 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    * Internal function to ensure old image files are purged periodically.
    */
   protected static function _purgeImages() {
-    $interimImageFolder = self::relative_client_helper_path() . (isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/');
+    if(function_exists('conf_path')){
+      //image upload path if it is in Drupal.
+      $interimImageFolder = conf_path() . "/files/indicia/upload/";
+    }else{
+      $interimImageFolder = self::relative_client_helper_path() . (isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/');
+    }
     self::purgeFiles(self::$cache_chance_purge, $interimImageFolder, self::$interim_image_expiry);
   }
 

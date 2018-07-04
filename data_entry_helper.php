@@ -1049,9 +1049,20 @@ JS;
    */
   public static function file_box($options) {
     global $indicia_templates;
-    // Upload directory defaults to client_helpers/upload, but can be overriden.
-    $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
     $relpath = self::getRootFolder() . self::client_helper_path();
+    if(function_exists('conf_path')){
+    //image upload path if it is in Drupal.
+       $interim_image_folder = conf_path() . "/files/indicia/upload/";
+       $upload_folder = self::getRootFolder() . $interim_image_folder;
+    }else{
+    //For non-Drupal's image upload path.
+       $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
+       $client_helper = self::client_helper_path();
+       $client_path =  'client_helpers/';
+       if($client_helper != 'client_helpers/')
+         $upload_folder = self::getRootFolder() . $client_path . $interim_image_folder;
+       else $upload_folder = self::getRootFolder() . $client_helper . $interim_image_folder;
+    }
     //If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
     if (!empty($options['subType']))
       self::$upload_file_types[$options['subType']]=self::$upload_file_types['image'];
@@ -1068,7 +1079,7 @@ JS;
       'autoupload' => true,
       'imageWidth' => 200,
       'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
-      'destinationFolder' => $relpath . $interim_image_folder,
+      'destinationFolder' => $upload_folder,
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
@@ -3258,12 +3269,18 @@ RIJS;
       self::add_resource('plupload');
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
+      if(function_exists('conf_path')){
+        $interim_image_folder = conf_path() . "/files/indicia/upload/";
+        $upload_folder = self::getRootFolder() . $interim_image_folder;
+      }else{
+        $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
+        $upload_folder = $relpath . $interim_image_folder;
+      }
       $js_path = self::$js_path;
       self::$javascript .= <<<JS
 indiciaData.uploadSettings = {
   uploadScript: '{$relpath}upload.php',
-  destinationFolder: '{$relpath}{$interim_image_folder}',
+  destinationFolder: '{$upload_folder}',
   jsPath: '$js_path'
 JS;
       $langStrings = array(
