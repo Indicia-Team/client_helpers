@@ -673,9 +673,7 @@ HTML;
    * @return string
    *   HTML for the div.
    *
-   * @todo Adding a new taxon to an existing parent should fill in the dynamic
-   * attrs, either on form load (if parent_id in URL), or subsequently when the
-   * user picks the taxon.
+   * @todo Changing the parent should reload the attributes dynamically.
    */
   protected static function get_control_taxondynamicattributes($auth, $args, $tabAlias, $options) {
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_taxon');
@@ -685,10 +683,18 @@ HTML;
     $r = '';
     $controls = '';
     if (!empty(data_entry_helper::$entity_to_load['taxa_taxon_list:id'])) {
+      $idToLoad = data_entry_helper::$entity_to_load['taxa_taxon_list:id'];
+    }
+    elseif (!empty($_GET['parent_id'])) {
+      // If the parent ID is provided for a new taxon, we can load the
+      // attributes associated with the parent.
+      $idToLoad = $_GET['parent_id'];
+    }
+    if (isset($idToLoad)) {
       $controls = self::getDynamicAttrs(
         $auth['read'],
         $args['taxon_list_id'],
-        data_entry_helper::$entity_to_load['taxa_taxon_list:id'],
+        $idToLoad,
         $options
       );
       // Other options need to pass through to AJAX loaded controls.
