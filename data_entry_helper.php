@@ -5460,8 +5460,9 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon'] = self::$entity_to_load['occurrence:taxon'];
     }
     if ($loadImages) {
+      $mediaEntity = $entity === 'taxa_taxon_list' ? 'taxon_medium' : "{$entity}_medium";
       $images = self::get_population_data(array(
-        'table' => $entity . '_medium',
+        'table' => $mediaEntity,
         'extraParams' => $readAuth + array($entity . '_id' => $id),
         'nocache' => true,
         'sharing' => $sharing
@@ -7290,7 +7291,7 @@ HTML;
     self::add_resource('json');
     if (isset($options['website_ids'])) {
       $query['in']['website_id']=$options['website_ids'];
-    } elseif ($options['attrtable']!=='person_attribute') {
+    } elseif ($options['attrtable'] !== 'person_attribute' && $options['attrtable'] !== 'taxa_taxon_list_attribute') {
       $surveys = array(NULL);
       if (isset($options['survey_id'])) {
         $surveys[] = $options['survey_id'];
@@ -7334,8 +7335,8 @@ HTML;
         'sharing' => $sharing
       ), $options['extraParams'])
     );
-    // Sample or occurrence attributes default to exclude taxon linked attrs.
-    if (($options['attrtable'] === 'occurrence_attribute' || $options['attrtable'] === 'sample_attribute')
+    // Taxon, sample or occurrence attributes default to exclude taxon linked attrs.
+    if (in_array($options['attrtable'], ['taxa_taxon_list_attribute', 'occurrence_attribute', 'sample_attribute'])
         && !isset($attrOptions['extraParams']['taxon_restrictions'])) {
       $attrOptions['extraParams']['taxon_restrictions'] = 'NULL';
     }
@@ -7770,8 +7771,9 @@ HTML;
           'extraParams' => array_merge($options['extraParams'] + $dataSvcParams))));
         break;
       default:
-        if ($item)
+        if ($item) {
           $output = '<strong>UNKNOWN DATA TYPE "'.$item['data_type'].'" FOR ID:'.$item['id'].' CAPTION:'.$item['caption'].'</strong><br />';
+        }
         else
           $output = '<strong>Requested attribute is not available</strong><br />';
         break;
