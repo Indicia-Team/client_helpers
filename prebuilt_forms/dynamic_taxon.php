@@ -503,6 +503,9 @@ HTML;
         'fieldname' => 'taxa_taxon_list:parent_id',
         'extraParams' => $auth['read'] + ['taxon_list_id' => $args['taxon_list_id']],
         'defaultCaption' => isset($parentName) ? $parentName : NULL,
+        'speciesIncludeAuthorities' => TRUE,
+        'speciesIncludeBothNames' => TRUE,
+        'speciesNameFilterMode' => 'preferred',
       ]);
     }
     else {
@@ -791,6 +794,25 @@ HTML;
       $r .= '</fieldset>';
     }
     return $r;
+  }
+
+  /**
+   * Ajax handler to retrieve the dynamic attrs for a taxon.
+   *
+   * Attribute HTML is echoed to the client.
+   */
+  public static function ajax_dynamicattrs($website_id, $password) {
+    iform_load_helpers(['data_entry_helper']);
+    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    echo self::getDynamicAttrs(
+      $readAuth,
+      $_GET['taxon_list_id'],
+      $_GET['taxa_taxon_list_id'],
+      json_decode($_GET['stage_termlists_term_ids']),
+      $_GET['type'],
+      json_decode($_GET['options'], TRUE),
+      empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
+    );
   }
 
   /**
