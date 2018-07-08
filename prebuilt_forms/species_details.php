@@ -505,13 +505,14 @@ HTML
       'mode' => 'report',
       'autoParamsForm' => false,
       'extraParams' => array(
-        'taxon_meaning_list'=> self::$taxon_meaning_id,
-        'smpattrs'=>'',
-        'occattrs'=>'',
-        'sharing'=>'reporting',
-        'status' => '!R'
+        'taxon_meaning_list' => self::$taxon_meaning_id,
+        'smpattrs' => '',
+        'occattrs' => '',
+        'sharing' => 'reporting',
+        'status' => '!R',
+        'limit' => $options['itemsPerPage'],
       )
-    )).'</div>';
+    )) . '</div>';
   }
 
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
