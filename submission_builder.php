@@ -178,7 +178,7 @@ class submission_builder extends helper_config {
           $sa['fields'][$key] = array('value' => $value);
         } elseif ($attrEntity && (strpos($key, "$attrEntity:")===0) && substr_count($key, ':')<4) {
           // Skip fields smpAttr:atrrId:attrValId:uniqueIdx:controlname because :controlname indicates this is the extra control used for autocomplete, not the data to post.
-          // Custom attribute data can also go straight into the submission for the "master" table. Array data might need 
+          // Custom attribute data can also go straight into the submission for the "master" table. Array data might need
           // special handling to link it to existing database records.
           if (is_array($value) && count($value)>0) {
             // The value is an array
@@ -351,9 +351,21 @@ class submission_builder extends helper_config {
    * contain an image upload (as long as a suitable entity is available to store the image in).
    */
   public static function wrap_with_images($values, $modelName, $fieldPrefix=null) {
-    // Now search for an input control values which imply that an image file will need to be 
+    // Now search for an input control values which imply that an image file will need to be
     // either moved to the warehouse, or if already on the warehouse, processed to create
     // thumbnails.
+    switch ($modelName) {
+      case 'taxon_meaning':
+        $mediaModelName = 'taxon';
+        break;
+
+      case 'taxon':
+        $mediaModelName = '-';
+        break;
+
+      default:
+        $mediaModelName = $modelName;
+    }
     foreach ($_FILES as $fieldname => &$file) {
       if ($file['name'] && is_string($file['name'])) {
         // Get the original file's extension
@@ -372,7 +384,8 @@ class submission_builder extends helper_config {
             // This is the final file destination, so create the image files.
             Image::create_image_files($uploadpath, $filename);
           }
-        } elseif (preg_match('/^('.$modelName.':)?[a-z_]+_path$/', $fieldname)) {
+        }
+        elseif (preg_match('/^('.$mediaModelName.':)?[a-z_]+_path$/', $fieldname)) {
           // image fields can be of form {model}:{qualifier}_path (e.g. group:logo_path) if they are
           // directly embedded in the entity, rather than in a child media entity. These files need
           // to be moved to interim upload folder and will be sent to the warehouse after a successful
@@ -390,11 +403,11 @@ class submission_builder extends helper_config {
     // Get the parent model into JSON
     $modelWrapped = self::wrap($values, $modelName, $fieldPrefix);
 
-    // Build sub-models for the media files. Don't post to the warehouse until after validation success. This 
+    // Build sub-models for the media files. Don't post to the warehouse until after validation success. This
     // also moves any simple uploaded files to the interim image upload folder.
-    $media = data_entry_helper::extract_media_data($values, $modelName.'_medium', true, true);
+    $media = data_entry_helper::extract_media_data($values, $mediaModelName.'_medium', true, true);
     foreach ($media as $item) {
-      $wrapped = self::wrap($item, $modelName.'_medium');
+      $wrapped = self::wrap($item, $mediaModelName.'_medium');
       $modelWrapped['subModels'][] = array(
         'fkId' => $modelName.'_id',
         'model' => $wrapped

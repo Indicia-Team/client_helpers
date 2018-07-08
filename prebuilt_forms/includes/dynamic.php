@@ -489,6 +489,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
   }
 
   protected static function get_tab_content($auth, $args, $tab, $tabContent, $tabalias, &$attributes, &$hasControls) {
+    global $indicia_templates;
     // cols array used if we find | splitters
     $cols = array();
     $defAttrOptions = array('extraParams'=>$auth['read']);
@@ -506,7 +507,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
       if (preg_match('/\A\?[^�]*\?\z/', $component) === 1) {
         // Component surrounded by ? so represents a help text
         $helpText = substr($component, 1, -1);
-        $html .= '<div class="page-notice ui-state-highlight ui-corner-all">'.lang::get($helpText)."</div>";
+        $html .= str_replace('{message}', lang::get($helpText), $indicia_templates['messageBox']);
       } elseif (preg_match('/\A\[[^�]*\]\z/', $component) === 1) {
         // Component surrounded by [] so represents a control or control block
         // Anything following the component that starts with @ is an option to pass to the control
@@ -672,7 +673,6 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     if (count($cols)>0) {
       $cols[] = $html;
       // a splitter in the structure so put the stuff so far in a 50% width left float div, and the stuff that follows in a 50% width right float div.
-      global $indicia_templates;
       $html = str_replace(array('{col-1}', '{col-2}'), $cols, $indicia_templates['two-col-50']);
       if(count($cols)>2){
         unset($cols[1]);
@@ -757,6 +757,70 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
       $georefOpts,
       $options
     ));
+  }
+
+
+  /**
+   * Get a key name which defines the type of an attribute.
+   *
+   * Since sex, stage and abundance attributes interact, treat them as the same
+   * thing for the purposes of duplicate removal when dynamic attributes are
+   * loaded from different levels in the taxonomic hierarchy. Otherwise we
+   * use the attribute's system function or term name (i.e. Darwin Core term).
+   *
+   * @param array
+   *   Attribute definition.
+   *
+   * @return string
+   *   Key name.
+   */
+  protected static function getAttrTypeKey($attr) {
+    $sexStageAttrs = ['sex', 'stage', 'sex_stage', 'sex_stage_count'];
+    // For the purposes of duplicate handling, we treat sex, stage and count
+    // related data as the same thing.
+    if (in_array($attr['system_function'], $sexStageAttrs)) {
+      return 'sex/stage/count';
+    }
+    else {
+      return empty($attr['system_function']) ? $attr['term_name'] : $attr['system_function'];
+    }
+  }
+
+  /**
+   * Dynamic taxon linked attribute duplicate removal.
+   *
+   * If a higher taxon has an attribute linked to it and a lower taxon has
+   * a different attribute of the same type, then the lower taxon's attribute
+   * should take precedence. For example, a stage linked to Animalia would
+   * be superceded by a stage attribute linked to Insecta.
+   *
+   * @param array $list
+   *   List of attributes which will be modified to remove duplicates.
+   */
+  protected static function removeDuplicateAttrs(&$list) {
+    // First build a list of the different types of attribute and work out
+    // the highest taxon_rank_sort_order (i.e. the lowest rank) which has
+    // attributes for each attribute type.
+    $attrTypeSortOrders = [];
+    foreach ($list as $attr) {
+      $attrTypeKey = self::getAttrTypeKey($attr);
+      if (!empty($attrTypeKey)) {
+        if (!array_key_exists($attrTypeKey, $attrTypeSortOrders) ||
+            (integer) $attr['attr_taxon_rank_sort_order'] > $attrTypeSortOrders[$attrTypeKey]) {
+          $attrTypeSortOrders[$attrTypeKey] = (integer) $attr['attr_taxon_rank_sort_order'];
+        }
+      }
+    }
+
+    // Now discard any attributes of a type, where there are attributes of the
+    // same type attached to a lower rank taxon. E.g. a genus stage attribute
+    // will cause a family stage attribute to be discarded.
+    foreach ($list as $idx => $attr) {
+      $attrTypeKey = self::getAttrTypeKey($attr);
+      if (!empty($attrTypeKey) && $attrTypeSortOrders[$attrTypeKey] > (integer) $attr['attr_taxon_rank_sort_order']) {
+        unset($list[$idx]);
+      }
+    }
   }
 
 }

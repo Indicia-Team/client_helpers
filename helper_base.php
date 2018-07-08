@@ -58,6 +58,8 @@ $indicia_templates = array(
     // Classes applied to <a> when styled like a button
   'anchorButtonClass' => 'ui-state-default ui-corner-all indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
+  // Message boxes
+  'messageBox' => '<div class="page-notice ui-state-highlight ui-corner-all">{message}</div>',
   // Lock icons.
   'lock_icon' => '<span id="{id}_lock" class="unset-lock">&nbsp;</span>',
   'lock_javascript' => "indicia.locks.initControls (

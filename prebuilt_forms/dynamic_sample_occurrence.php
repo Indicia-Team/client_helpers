@@ -1829,69 +1829,6 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   }
 
   /**
-   * Get a key name which defines the type of an attribute.
-   *
-   * Since sex, stage and abundance attributes interact, treat them as the same
-   * thing for the purposes of duplicate removal when dynamic attributes are
-   * loaded from different levels in the taxonomic hierarchy. Otherwise we
-   * use the attribute's system function or term name (i.e. Darwin Core term).
-   *
-   * @param array
-   *   Attribute definition.
-   *
-   * @return string
-   *   Key name.
-   */
-  private static function getAttrTypeKey($attr) {
-    $sexStageAttrs = ['sex', 'stage', 'sex_stage', 'sex_stage_count'];
-    // For the purposes of duplicate handling, we treat sex, stage and count
-    // related data as the same thing.
-    if (in_array($attr['system_function'], $sexStageAttrs)) {
-      return 'sex/stage/count';
-    }
-    else {
-      return empty($attr['system_function']) ? $attr['term_name'] : $attr['system_function'];
-    }
-  }
-
-  /**
-   * Remove duplicate attributes linked to different levels in the taxon tree.
-   *
-   * If a higher taxon has an attribute linked to it and a lower taxon has
-   * a different attribute of the same type, then the lower taxon's attribute
-   * should take precedence. For example, a stage linked to Animalia would
-   * be superceded by a stage attribute linked to Insecta.
-   *
-   * @param array $list
-   *   List of attributes which will be modified to remove duplicates.
-   */
-  private static function removeDuplicateAttrs(&$list) {
-    // First build a list of the different types of attribute and work out
-    // the highest taxon_rank_sort_order (i.e. the lowest rank) which has
-    // attributes for each attribute type.
-    $attrTypeSortOrders = [];
-    foreach ($list as $attr) {
-      $attrTypeKey = self::getAttrTypeKey($attr);
-      if (!empty($attrTypeKey)) {
-        if (!array_key_exists($attrTypeKey, $attrTypeSortOrders) ||
-            (integer) $attr['attr_taxon_rank_sort_order'] > $attrTypeSortOrders[$attrTypeKey]) {
-          $attrTypeSortOrders[$attrTypeKey] = (integer) $attr['attr_taxon_rank_sort_order'];
-        }
-      }
-    }
-
-    // Now discard any attributes of a type, where there are attributes of the
-    // same type attached to a lower rank taxon. E.g. a genus stage attribute
-    // will cause a family stage attribute to be discarded.
-    foreach ($list as $idx => $attr) {
-      $attrTypeKey = self::getAttrTypeKey($attr);
-      if (!empty($attrTypeKey) && $attrTypeSortOrders[$attrTypeKey] > (integer) $attr['attr_taxon_rank_sort_order']) {
-        unset($list[$idx]);
-      }
-    }
-  }
-
-  /**
    * Retrieves a list of dynamically loaded attributes from the database.
    *
    * @return array
