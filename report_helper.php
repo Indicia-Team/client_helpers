@@ -2095,10 +2095,7 @@ JS;
 indiciaData.mapDataSource = $mapDataSource;
 indiciaData.minMapReportZoom = $options[minMapReportZoom];
 mapInitialisationHooks.push(function(div) {
-  var wantToMap =
-    typeof indiciaData.filter === 'undefined' ||
-    typeof indiciaData.filter.def.indexed_location_id === 'undefined' ||
-    indiciaData.filter.def.indexed_location_id === '';
+  var wantToMap = typeof indiciaData.mapZoomPlanned === 'undefined';
   // Find the best report grid to use as a map report controller.
   if (typeof indiciaData.reports.$options[reportGroup] !== 'undefined') {
     $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
