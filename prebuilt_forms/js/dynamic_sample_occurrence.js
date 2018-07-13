@@ -1,6 +1,7 @@
 jQuery(document).ready(function docReady($) {
   var sexStageInputSelectors = '.system-function-sex, .system-function-stage, .system-function-sex_stage';
   var taxonRestrictionInputSelectors = '#occurrence\\:taxa_taxon_list_id, ' + sexStageInputSelectors;
+  var hasDynamicAttrs = $('.species-dynamic-attributes').length > 0;
 
   function changeTaxonRestrictionInputs() {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
@@ -31,6 +32,8 @@ jQuery(document).ready(function docReady($) {
     }
   }
 
-  // On selection of a taxon or change of sex/stage attribute, load any dynamically linked attrs into the form.
-  $(taxonRestrictionInputSelectors).change(changeTaxonRestrictionInputs);
+  if (hasDynamicAttrs) {
+    // On selection of a taxon or change of sex/stage attribute, load any dynamically linked attrs into the form.
+    $(taxonRestrictionInputSelectors).change(changeTaxonRestrictionInputs);
+  }
 });
