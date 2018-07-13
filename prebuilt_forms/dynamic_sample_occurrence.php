@@ -1016,24 +1016,30 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
-    $r = $auth['write'].
-          "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"" . $args['website_id']."\" />\n" .
-          "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"" . $args['survey_id']."\" />\n";
+    $r = <<<HTML
+$auth[write]
+<input type="hidden" id="website_id" name="website_id" value="$args[website_id]" />
+<input type="hidden" id="survey_id" name="survey_id" value="$args[survey_id]" />
+
+HTML;
     if (!empty($args['sample_method_id'])) {
-      $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $args['sample_method_id'].'"/>' . PHP_EOL;
+      $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $args['sample_method_id'] . '"/>' . PHP_EOL;
     }
     if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
       $r .= '<input type="hidden" id="sample:id" name="sample:id" value="' . data_entry_helper::$entity_to_load['sample:id'] . '" />' . PHP_EOL;
     }
-    if (isset(data_entry_helper::$entity_to_load['occurrence:id'])) {
+    $gridMode = call_user_func(array(self::$called_class, 'getGridMode'), $args);
+    if (isset(data_entry_helper::$entity_to_load['occurrence:id']) && !$gridMode) {
       $r .= '<input type="hidden" id="occurrence:id" name="occurrence:id" value="' . data_entry_helper::$entity_to_load['occurrence:id'] . '" />' . PHP_EOL;
     }
     $r .= self::get_group_licence_html();
     if (!empty(data_entry_helper::$entity_to_load['sample:group_id'])) {
-      $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"" . data_entry_helper::$entity_to_load['sample:group_id']."\" />\n";
-      // If the group does not release it's records, set the release_status flag
-      if (self::$group['private_records']==='t')
+      $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"" . data_entry_helper::$entity_to_load['sample:group_id'] . "\" />\n";
+      // If the group does not release it's records, set the release_status
+      // flag.
+      if (self::$group['private_records'] === 't') {
         $r .= "<input type=\"hidden\" id=\"occurrence:release_status\" name=\"occurrence:release_status\" value=\"U\" />\n";
+      }
       if (empty(data_entry_helper::$entity_to_load['sample:group_title'])) {
         data_entry_helper::$entity_to_load['sample:group_title'] = self::$group['title'];
       }
@@ -1044,7 +1050,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             'The records on this form are part of the <strong>{1}</strong> group.';
         $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
       }
-    } elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
+    }
+    elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
       // Group enabled form being used to add new records, but no group specified in URL path, so give
       // the user a chance to pick from their list of possible groups for this form.
       // Get the list of possible groups they might be posting into using this form. To do this we need the page
@@ -1063,7 +1070,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         )
       ));
       // Output a drop down so they can select the appropriate group.
-      if (count($possibleGroups)>1) {
+      if (count($possibleGroups) > 1) {
         $options = array('' => lang::get('Ad-hoc non-group records'));
         foreach ($possibleGroups as $group) {
           $options[$group['id']] = "$group[group_type]: $group[title]";
@@ -1074,7 +1081,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             'fieldname' => 'sample:group_id',
             'lookupValues' => $options
         ));
-      } elseif (count($possibleGroups)===1) {
+      }
+      elseif (count($possibleGroups) === 1) {
         $r .= data_entry_helper::radio_group(array(
             'label' => lang::get('Post to {1}', $possibleGroups[0]['title']),
             'labelClass' => 'auto',
@@ -1093,8 +1101,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     if (!empty($args['defaults']['occurrence:release_status']))
       $r .= '<input type="hidden" id="occurrence:release_status" name="occurrence:release_status" value="' . $args['defaults']['occurrence:release_status'] . '" />' . PHP_EOL;
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
-    if ($args['multiple_occurrence_mode']==='multi')
-      $r .= '<input type="hidden" value="true" name="gridmode" />';
+    if ($gridMode) {
+      $r .= '<input type="hidden" value="true" name="gridmode" />' . "\n";
+    }
     return $r;
   }
 
