@@ -813,19 +813,20 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $response = data_entry_helper::get_population_data(array(
             'table' => 'occurrence',
             'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
-            'caching' => false,
+            'caching' => FALSE,
             'sharing' => 'editing'
         ));
         if (count($response) !== 0) {
-          //we found an occurrence so use it to detect the sample
+          // We found an occurrence so use it to detect the sample.
           self::$loadedSampleId = $response[0]['sample_id'];
         }
       }
-    } else {
+    }
+    else {
       // single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
-            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', TRUE);
         if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
           // Loading a single record into a form that can do single or multi. Switch to multi if the sample contains
           // more than one occurrence.
@@ -836,11 +837,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                 'view' => 'detail',
                 'limit' => 2
               ),
-            'caching' => false,
+            'caching' => FALSE,
             'sharing' => 'editing'
           ));
           if (count($response) > 1) {
-            data_entry_helper::$entity_to_load['gridmode'] = true;
+            data_entry_helper::$entity_to_load['gridmode'] = TRUE;
             // Swapping to grid mode for edit, so use species list as the grid's extra species list rather than load the
             // whole lot.
             if (!empty($args['list_id']) && empty($args['extra_list_id'])) {
@@ -854,19 +855,19 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $response = data_entry_helper::get_population_data(array(
           'table' => 'occurrence',
           'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail'),
-          'caching' => false,
+          'caching' => FALSE,
           'sharing' => 'editing'
         ));
         self::$loadedOccurrenceId = $response[0]['id'];
         data_entry_helper::load_existing_record_from(
-            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', TRUE);
       }
       self::$loadedSampleId = data_entry_helper::$entity_to_load['occurrence:sample_id'];
     }
 
-    // Load the sample record
+    // Load the sample record.
     if (self::$loadedSampleId) {
-      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
+      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', TRUE);
       // If there is a parent sample and we are not force loading the child sample then load it next so the details
       // overwrite the child sample.
       if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($args['never_load_parent_sample'])) {
@@ -877,18 +878,23 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     // Ensure that if we are used to load a different survey's data, then we get the correct survey attributes. We can
     // change args because the caller passes by reference.
-    $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
-    $args['sample_method_id']=data_entry_helper::$entity_to_load['sample:sample_method_id'];
-    // enforce that people only access their own data, unless explicitly have permissions
+    $args['survey_id'] = data_entry_helper::$entity_to_load['sample:survey_id'];
+    $args['sample_method_id'] = data_entry_helper::$entity_to_load['sample:sample_method_id'];
+    // Enforce that people only access their own data, unless explicitly
+    // have permissions.
     $editor = !empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']);
-    if($editor) return;
+    if ($editor) {
+      return;
+    }
     $readOnly = !empty($args['ro_permission']) && hostsite_user_has_permission($args['ro_permission']);
     if (function_exists('hostsite_get_user_field') &&
         data_entry_helper::$entity_to_load['sample:created_by_id'] != hostsite_get_user_field('indicia_user_id')) {
-      if($readOnly)
+      if ($readOnly) {
         self::$mode = self::MODE_EXISTING_RO;
-      else
+      }
+      else {
         throw new exception(lang::get('Attempt to access a record you did not create'));
+      }
     }
   }
 
