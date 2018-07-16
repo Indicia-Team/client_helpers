@@ -1050,19 +1050,8 @@ JS;
   public static function file_box($options) {
     global $indicia_templates;
     $relpath = self::getRootFolder() . self::client_helper_path();
-    if(function_exists('conf_path')){
-    //image upload path if it is in Drupal.
-       $interim_image_folder = conf_path() . "/files/indicia/upload/";
-       $upload_folder = self::getRootFolder() . $interim_image_folder;
-    }else{
-    //For non-Drupal's image upload path.
-       $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-       $client_helper = self::client_helper_path();
-       $client_path =  'client_helpers/';
-       if($client_helper != 'client_helpers/')
-         $upload_folder = self::getRootFolder() . $client_path . $interim_image_folder;
-       else $upload_folder = self::getRootFolder() . $client_helper . $interim_image_folder;
-    }
+    // Upload directory defaults to client_helpers/upload, but can be overriden.
+    $interim_image_folder = !empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
     //If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
     if (!empty($options['subType']))
       self::$upload_file_types[$options['subType']]=self::$upload_file_types['image'];
@@ -1079,7 +1068,7 @@ JS;
       'autoupload' => true,
       'imageWidth' => 200,
       'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
-      'destinationFolder' => $upload_folder,
+      'destinationFolder' => $interim_image_folder,
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
@@ -1553,7 +1542,7 @@ JS;
       if (self::$form_mode==='ERRORS') {
         // The control is being reloaded after a validation failure. So we can display a thumbnail of the
         // already uploaded file, so the user knows not to re-upload.
-        $folder = isset(self::$interim_image_folder) ? self::$interim_image_folder : 'upload/';
+        $folder = !empty(self::$interim_image_folder) ? self::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
       } else {
         // image should be already on the warehouse
         $folder = self::get_uploaded_image_folder();
@@ -3269,18 +3258,12 @@ RIJS;
       self::add_resource('plupload');
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
-      if(function_exists('conf_path')){
-        $interim_image_folder = conf_path() . "/files/indicia/upload/";
-        $upload_folder = self::getRootFolder() . $interim_image_folder;
-      }else{
-        $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-        $upload_folder = $relpath . $interim_image_folder;
-      }
+      $interim_image_folder = !empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
       $js_path = self::$js_path;
       self::$javascript .= <<<JS
 indiciaData.uploadSettings = {
   uploadScript: '{$relpath}upload.php',
-  destinationFolder: '{$upload_folder}',
+  destinationFolder: '{$interim_image_folder}',
   jsPath: '$js_path'
 JS;
       $langStrings = array(
@@ -6158,8 +6141,8 @@ if (errors$uniq.length>0) {
       if (is_array($output) && array_key_exists('success', $output))  {
         if (isset(self::$final_image_folder) && self::$final_image_folder!='warehouse') {
           // moving the files on the local machine. Find out where from and to
-          $interim_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
-            (isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/');
+          $interim_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
+            (!empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/');
           $final_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
             parent::$final_image_folder;
         }
@@ -7227,8 +7210,9 @@ HTML;
           $r .= '<li class="ui-state-error">Warning: The cache path setting in helper_config.php points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
 
       }
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      if (!is_writeable(self::relative_client_helper_path() . $interim_image_folder))
+      $interim_image_folder = !empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
+      //Check if folder is writable or not.
+      if (!is_writeable($interim_image_folder))
         $r .= '<li class="ui-state-error">The interim_image_folder setting in helper_config.php points to a read only directory (' . $interim_image_folder . '). This will prevent image uploading.</li>';
       elseif ($fullInfo)
         $r .= '<li>Success: Interim image upload directory is writeable.</li>';

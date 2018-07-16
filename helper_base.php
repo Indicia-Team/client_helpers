@@ -313,6 +313,11 @@ class helper_base extends helper_config {
   public static $cache_folder = false;
 
   /**
+   * @var string Path to Indicia image upload folder. Defaults to client_helpers/upload.
+   */
+  public static $interim_image_folder = false;
+
+  /**
    * @var string Path to proxy script for calls to the warehouse (optional, allows the warehouse to sit behind a firewall only accessible
    * from the server).
    */
@@ -1353,17 +1358,9 @@ JS;
    */
   public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
     if ($readAuth==null) $readAuth=$_POST;
-    if(function_exists('conf_path')){
-    //image upload path if it is in Drupal.
-      $interim_image_folder = conf_path() . "/files/indicia/upload/";
-      $interim_path = getcwd() .'/' . $interim_image_folder;
-    }else{
-      //For non-Drupal's image upload path.
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      $client_helper = self::client_helper_path();
-      $interim_path = $client_helper . $interim_image_folder;
-    }
-    if (!file_exists($interim_path.$path))
+    $interim_image_folder = !empty(self::$interim_image_folder) ? self::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
+    $interim_path = getcwd() . '/' . $interim_image_folder;
+	     if (!file_exists($interim_path.$path))
       return "The file $interim_path$path does not exist and cannot be uploaded to the Warehouse.";
     $serviceUrl = parent::$base_url."index.php/services/".$service;
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
@@ -2485,12 +2482,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    * Internal function to ensure old image files are purged periodically.
    */
   protected static function _purgeImages() {
-    if(function_exists('conf_path')){
-      //image upload path if it is in Drupal.
-      $interimImageFolder = conf_path() . "/files/indicia/upload/";
-    }else{
-      $interimImageFolder = self::relative_client_helper_path() . (isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/');
-    }
+    $interimImageFolder = !empty(self::$interim_image_folder) ? self::$interim_image_folder : self::relative_client_helper_path() .  'upload/';
     self::purgeFiles(self::$cache_chance_purge, $interimImageFolder, self::$interim_image_expiry);
   }
 
