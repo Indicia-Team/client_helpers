@@ -388,7 +388,6 @@ class report_helper extends helper_base {
   */
   public static function report_grid($options) {
     global $indicia_templates;
-    global $user;
     self::add_resource('fancybox');
     $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
     $options = self::get_report_grid_options($options);
@@ -560,7 +559,7 @@ class report_helper extends helper_base {
           'nonce='.$options['readAuth']['nonce'],
           'auth_token='.$options['readAuth']['auth_token'],
           (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
-          $user->uid,
+          hostsite_get_user_field('id'),
           self::$website_id
         ), $options['footer']
       );
@@ -3077,7 +3076,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
    * @param array $options Options array passed to the control.
    */
   private static function get_report_calendar_grid_options($options) {
-    global $user;
+    $userId = hostsite_get_user_field('id');
     $options = array_merge(array(
       'mode' => 'report',
       'id' => 'calendar-report-output', // this needs to be set explicitly when more than one report on a page
@@ -3094,20 +3093,22 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $options["extraParams"] = array_merge(array(
       'date_from' => $options["year"].'-01-01',
       'date_to' => $options["year"].'-12-31',
-      'user_id' => $user->uid, // Initially CMS User, changed to Indicia User later if in Easy Login mode.
-      'cms_user_id' => $user->uid, // CMS User, not Indicia User.
+      'user_id' => $userId, // Initially CMS User, changed to Indicia User later if in Easy Login mode.
+      'cms_user_id' => $userId, // CMS User, not Indicia User.
       'smpattrs' => ''), $options["extraParams"]);
-    $options['my_user_id'] = $user->uid; // Initially CMS User, changed to Indicia User later if in Easy Login mode.
+    $options['my_user_id'] = $userId; // Initially CMS User, changed to Indicia User later if in Easy Login mode.
     // Note for the calendar reports, the user_id is assumed to be the CMS user id as recorded in the CMS User ID attribute,
     // not the Indicia user id.
     if (function_exists('hostsite_get_user_field') && $options["extraParams"]['user_id'] == $options["extraParams"]['cms_user_id']) {
       $indicia_user_id = hostsite_get_user_field('indicia_user_id');
-      if($indicia_user_id)
+      if ($indicia_user_id) {
         $options["extraParams"]['user_id'] = $indicia_user_id;
-      if($options['my_user_id']){ // false switches this off.
+      }
+      if ($options['my_user_id']) { // false switches this off.
         $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options['my_user_id']);
-        if(!empty($user_id))
+        if(!empty($user_id)) {
           $options['my_user_id'] = $user_id;
+        }
       }
     }
     return $options;
