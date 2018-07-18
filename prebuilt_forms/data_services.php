@@ -21,13 +21,13 @@
  */
 
 require_once ('includes/report_filters.php');
- 
+
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
- * A quick and easy way to download data you have access to. 
+ * A quick and easy way to download data you have access to.
  */
 class iform_data_services {
 
@@ -35,9 +35,9 @@ class iform_data_services {
    * @var array List of sets of filters loaded from the db, one per sharing type code.
    */
   private static $filterSets=array();
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_data_services_definition() {
@@ -48,12 +48,12 @@ class iform_data_services {
       'helpLink'=>'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/data-services.html'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'download_all_users_reporting',
@@ -298,7 +298,7 @@ class iform_data_services {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -314,9 +314,9 @@ class iform_data_services {
     if (!empty($_GET))
       self::do_data_services_download($args, $nid);
 
-  } 
-  
-  /** 
+  }
+
+  /**
    * Works out the list of download type options available to the user. This is the list
    * of sharing modes they have permission for, combined with any filters defined for the user
    * which define their permissions for that sharing type.
@@ -359,16 +359,16 @@ class iform_data_services {
           $survey_ids = hostsite_get_user_field('surveys_expertise');
           if ($location_id || $taxon_group_ids || $survey_ids)
             $r['V profile'] = lang::get('Verification - my verification records');
-        } elseif (!$gotPermissionsFilterForThisType) 
+        } elseif (!$gotPermissionsFilterForThisType)
           // If no permissions defined for this sharing type for this user, then allow an all-access download
           $r[$sharingTypeCode]=$sharingType;
       }
     }
     return $r;
   }
-  
-  /** 
-   * Works out the list of download format options available to the user. This depends on the 
+
+  /**
+   * Works out the list of download format options available to the user. This depends on the
    * permissions settings in the form configuration
    * @param array $args Form parameters
    * @return array Associative array of download formats
@@ -382,7 +382,7 @@ class iform_data_services {
     }
     return $r;
   }
-  
+
   /**
    * An ajax handler which returns the surveys that are available for a given sharing type.
    * @param type $website_id
@@ -402,11 +402,11 @@ class iform_data_services {
       'sharing'=>$_GET['sharing_type']
     ));
     $r = array();
-    foreach ($surveys as $survey) 
+    foreach ($surveys as $survey)
       $r[$survey['id']]=$survey['title'];
     echo json_encode($r);
   }
-  
+
   /**
    * Performs the download.
    * URL arguments date_from, date_to, survey_list, format, download-type
@@ -416,18 +416,18 @@ class iform_data_services {
    */
   private static function do_data_services_download($args, $nid) {
     iform_load_helpers(array('report_helper'));
-    
+
     // default data format JSON
     if (!array_key_exists('format', $_GET)){
       $_GET['format'] = 'json';
-    } 
-    $format = $_GET['format']; 
-    
+    }
+    $format = $_GET['format'];
+
     // download type set to Reporting by default
     if (!array_key_exists('download-type', $_GET)){
-      $_GET['download-type']='R';   
-    } 
-    
+      $_GET['download-type']='R';
+    }
+
     $isCustom = preg_match('/^custom-(\d+)$/', $_GET['format'], $matches);
     if ($isCustom) {
       $customFormats = json_decode($args['custom_formats'], true);
@@ -447,20 +447,19 @@ class iform_data_services {
           $additionalParamText = $args["report_params_$format"];
       }
     }
-    
+
     //Getting the form params first and then allowing the user to
     //overwrite then through $args
     require_once('includes/user.php');
     $params = get_options_array_with_user_data($additionalParamText);
     $params = array_merge($params, self::build_params($args));
-    $conn = iform_get_connection_details($nid);
-    
+
     global $indicia_templates;
     // let's just get the URL, not the whole anchor element
     $indicia_templates['report_download_link'] = '{link}';
     $limit = ($args['limit']==0 ? '' : $args['limit']); // unlimited or limited
     $sharing = substr($_GET['download-type'], 0, 1);
-    
+
     $url = report_helper::report_download_link(array(
       'readAuth'=>data_entry_helper::$js_read_tokens,
       'dataSource'=>$report,
@@ -471,7 +470,7 @@ class iform_data_services {
     ));
     header("Location: $url");
   }
-  
+
   /**
    * Expand a single character sharing mode code (e.g. R) to the full term (e.g. reporting).
    * @param string $sharing Sharing mode code to expand.
@@ -493,7 +492,7 @@ class iform_data_services {
         return 'editing';
     }
   }
-  
+
   /**
    * Builds the parameters array to apply which filters the download report according to the report type, subfilter,
    * date range and survey selected.
@@ -520,7 +519,7 @@ class iform_data_services {
       if ($survey_ids)
         $params['survey_list_context']=implode(',', unserialize($survey_ids));
       $_GET['download-type']='V';
-    } 
+    }
     elseif (preg_match('/^[RPVDM] my$/', $_GET['download-type'])) {
       // autogenerated context for my records
       $params['my_records_context']=1;
@@ -529,7 +528,7 @@ class iform_data_services {
     if (strlen($_GET['download-type'])>1 || !empty($_GET['download-subfilter'])) {
       // use the saved filters system to filter the records
       $filterData = self::load_filter_set($sharing);
-      if (preg_match('/^[RPVDM] filter (\d+)$/', $_GET['download-type'], $matches)) 
+      if (preg_match('/^[RPVDM] filter (\d+)$/', $_GET['download-type'], $matches))
         // download type includes a context filter from the database
         self::apply_filter_to_params($filterData, $matches[1], '_context', $params);
       if (!empty($_GET['download-subfilter'])) {
@@ -554,10 +553,10 @@ class iform_data_services {
       $params[$datePrefix.'updated_to']=$_GET['updated_to'];
     //if(!empty($args['taxon_group_ids']))
     $params[$datePrefix.'taxon_group_ids'] = $args['taxon_group_ids'];
-    
+
     return $params;
   }
-  
+
   /**
    * Loads the definition of a saved filter onto the params we are using to filter the report.
    * @param array $filterData List of filters loaded from the db
@@ -582,8 +581,8 @@ class iform_data_services {
       }
     }
   }
-  
-  /** 
+
+  /**
    * Declare the list of permissions we've got set up to pass to the CMS' permissions code.
    * @param int $nid Node ID, not used
    * @param array $args Form parameters array, used to extract the defined permissions.
@@ -612,19 +611,19 @@ class iform_data_services {
     if (!empty($args['kml_format_permission']))
       $perms[] = $args['kml_format_permission'];
     if (!empty($args['gpx_format_permission']))
-      $perms[] = $args['gpx_format_permission'];  
+      $perms[] = $args['gpx_format_permission'];
     if (!empty($args['nbn_format_permission']))
       $perms[] = $args['nbn_format_permission'];
     if (!empty($args['custom_formats'])) {
       $customFormats = json_decode($args['custom_formats'], true);
       foreach ($customFormats as $idx=>$format) {
-        if (!empty($format['permission'])) 
+        if (!empty($format['permission']))
           $perms[$format['permission']]='';
       }
     }
     return array_keys($perms);
   }
-  
+
   /**
    * Loads the set of report filters available for a given sharing type code. Avoids multiple loads.
    * @param string $sharingTypeCode A sharing mode, i.e. R(eporting), M(oderation), V(erification), P(eer review) or D(ata flow).
@@ -635,5 +634,5 @@ class iform_data_services {
       self::$filterSets[$sharingTypeCode]=report_filters_load_existing(data_entry_helper::$js_read_tokens, $sharingTypeCode);
     return self::$filterSets[$sharingTypeCode];
   }
-  
+
 }
