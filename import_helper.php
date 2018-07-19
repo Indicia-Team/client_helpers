@@ -459,7 +459,7 @@ NEWFUNCS;
               duplicateStore[duplicateStoreIndex] = select.value;
               duplicateStoreIndex++;
             }
-             
+
           }
           valueStore[valueStoreIndex] = select.value;
           valueStoreIndex++;
@@ -951,7 +951,7 @@ NEWFUNCS;
      * The value is an array of regexes that the system will automatically match against.
      */
     $alternatives = array(
-      "sample:entered sref" => array("/(sample)?(spatial|grid)ref(erence)?/"),
+      "sample:entered sref" => array("/(sample)?((spatial|grid|map)ref(erence)?|lat(\/?)lon(g?))/"),
       "occurrence_2:taxa taxon list (from controlled termlist)" => array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "occurrence:taxa taxon list (from controlled termlist)" => array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "sample:location name" => array("/(site|location)(name)?/"),
@@ -1016,9 +1016,9 @@ NEWFUNCS;
       $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
       $r .= <<<TD
 <td class="centre">
-<input type="checkbox" name="$inputName" class="rememberField" id="$inputName" value="1"$checked 
-  onclick="if (!this.checked) { $('#RememberAll').removeAttr('checked'); }" 
-  title="If checked, your selection for this particular column will be saved and automatically selected during future 
+<input type="checkbox" name="$inputName" class="rememberField" id="$inputName" value="1"$checked
+  onclick="if (!this.checked) { $('#RememberAll').removeAttr('checked'); }"
+  title="If checked, your selection for this particular column will be saved and automatically selected during future
     imports. Any alterations you make to this default selection in the future will also be remembered until you deselect
     the checkbox.">
 </td>
