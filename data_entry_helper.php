@@ -5423,6 +5423,12 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     self::load_existing_record_from($records[0], $readAuth, $entity, $id, $view, $sharing, $loadImages);
   }
 
+  /**
+   * Returns mappings from loaded view data to the control fieldnames.
+   *
+   * @return array
+   *   Array of mappings from view field names to form control field names.
+   */
   private static function getControlFieldKeyMappings($entity, $viewField) {
     return [
       'sample:wkt' => 'sample:geom',
