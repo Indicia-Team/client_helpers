@@ -20,7 +20,21 @@ $reject-color: #a00000;
   @include passfailicon;
   border-color: $verify-color;
   @include box-shadow($verify-color 1px 1px 3px);
-  background-image: url("../images/nuvola/ok-16px.png");
+  background-image: url("../images/p.png");
+}
+
+.auto-check-disabled-icon {
+  @include passfailicon;
+  border-color: #aaa;
+  @include box-shadow(#aaa 1px 1px 3px);
+  background-image: url("../images/no-entry.png");
+}
+
+.pending-icon {
+  @include passfailicon;
+  border-color: #aaa;
+  @include box-shadow(#aaa 1px 1px 3px);
+  background-image: url("../images/cog.png");
 }
 
 .fail-icon {
