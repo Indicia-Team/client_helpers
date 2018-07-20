@@ -1,4 +1,4 @@
-/* line 19, sass/verification_icons.scss */
+/* line 20, sass/verification_icons.scss */
 .pass-icon {
   width: 16px;
   height: 16px;
@@ -14,6 +14,7 @@
   *display: inline;
   background-repeat: no-repeat;
   background-position: 2px 2px;
+  font-size: 0;
   border-color: #00a000;
   -moz-box-shadow: #00a000 1px 1px 3px;
   -webkit-box-shadow: #00a000 1px 1px 3px;
@@ -21,7 +22,7 @@
   background-image: url("../images/p.png");
 }
 
-/* line 26, sass/verification_icons.scss */
+/* line 27, sass/verification_icons.scss */
 .auto-check-disabled-icon {
   width: 16px;
   height: 16px;
@@ -37,6 +38,7 @@
   *display: inline;
   background-repeat: no-repeat;
   background-position: 2px 2px;
+  font-size: 0;
   border-color: #aaa;
   -moz-box-shadow: #aaa 1px 1px 3px;
   -webkit-box-shadow: #aaa 1px 1px 3px;
@@ -44,7 +46,7 @@
   background-image: url("../images/no-entry.png");
 }
 
-/* line 33, sass/verification_icons.scss */
+/* line 34, sass/verification_icons.scss */
 .pending-icon {
   width: 16px;
   height: 16px;
@@ -60,6 +62,7 @@
   *display: inline;
   background-repeat: no-repeat;
   background-position: 2px 2px;
+  font-size: 0;
   border-color: #aaa;
   -moz-box-shadow: #aaa 1px 1px 3px;
   -webkit-box-shadow: #aaa 1px 1px 3px;
@@ -67,7 +70,7 @@
   background-image: url("../images/cog.png");
 }
 
-/* line 40, sass/verification_icons.scss */
+/* line 41, sass/verification_icons.scss */
 .fail-icon {
   width: 16px;
   height: 16px;
@@ -83,6 +86,7 @@
   *display: inline;
   background-repeat: no-repeat;
   background-position: 2px 2px;
+  font-size: 0;
   border-color: #a00000;
   -moz-box-shadow: #a00000 1px 1px 3px;
   -webkit-box-shadow: #a00000 1px 1px 3px;
@@ -90,27 +94,27 @@
   background-image: url("../images/nuvola/help-16px.png");
 }
 
-/* line 47, sass/verification_icons.scss */
+/* line 48, sass/verification_icons.scss */
 div.data_cleaner_identification_difficulty {
   background-image: url("../images/nuvola/xmag-16px.png");
 }
 
-/* line 51, sass/verification_icons.scss */
+/* line 52, sass/verification_icons.scss */
 div.data_cleaner_period {
   background-image: url("../images/nuvola/history-16px.png");
 }
 
-/* line 55, sass/verification_icons.scss */
+/* line 56, sass/verification_icons.scss */
 div.data_cleaner_period_within_year {
   background-image: url("../images/nuvola/date-16px.png");
 }
 
-/* line 59, sass/verification_icons.scss */
+/* line 60, sass/verification_icons.scss */
 div.data_cleaner_without_polygon {
   background-image: url("../images/nuvola/browser-16px.png");
 }
 
-/* line 63, sass/verification_icons.scss */
+/* line 64, sass/verification_icons.scss */
 div.verification_check_species_designation {
   background-image: url("../images/nuvola/bottom-16px.png");
 }
