@@ -5480,7 +5480,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     if (self::$form_mode===null) {
       self::$form_mode = 'RELOAD';
     }
-    $mappings = self::getControlFieldKeyMappings($entity, $key);
+    $mappings = self::getControlFieldKeyMappings();
     // populate the entity to load with the record data
     foreach ($record as $key => $value) {
       self::$entity_to_load[array_key_exists("$entity:$key", $mappings) ? $mappings["$entity:$key"] : "$entity:$key"] = $value;
