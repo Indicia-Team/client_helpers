@@ -5429,7 +5429,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @return array
    *   Array of mappings from view field names to form control field names.
    */
-  private static function getControlFieldKeyMappings($entity, $viewField) {
+  private static function getControlFieldKeyMappings() {
     return [
       'sample:wkt' => 'sample:geom',
       'taxa_taxon_list:taxon' => 'taxon:taxon',

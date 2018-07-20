@@ -542,12 +542,12 @@ HTML;
   protected static function get_control_photos($auth, $args, $tabAlias, $options) {
     $opts = [
       'table' => 'taxon_medium',
-      'readAuth' => $readAuth,
+      'readAuth' => $auth['read'],
       'resizeWidth' => 1600,
       'resizeHeight' => 1600,
     ];
     if ($tabalias) {
-      $opts['tabDiv'] = $tabalias;
+      $opts['tabDiv'] = $tabAlias;
     }
     foreach ($options as $key => $value) {
       // Skip attribute specific options as they break the JavaScript.
