@@ -223,59 +223,32 @@ TXT;
    * @param array $auth
    *   Authorisation tokens.
    */
-  protected static function getEntity(array $args, array $auth) {
+  protected static function getEntity($args, $auth) {
     data_entry_helper::$entity_to_load = [];
-    $taxon = data_entry_helper::get_population_data([
+    data_entry_helper::load_existing_record($auth['read'], 'taxa_taxon_list', $_GET['taxa_taxon_list_id'], 'detail', FALSE, TRUE);
+    // Load common names and synonyms.
+    $otherNames = data_entry_helper::get_population_data([
       'table' => 'taxa_taxon_list',
       'extraParams' => $auth['read'] + [
-        'view' => 'detail',
-        'id' => $_GET['taxa_taxon_list_id'],
+        'view' => 'list',
+        'taxon_meaning_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:taxon_meaning_id'],
         'taxon_list_id' => $args['taxon_list_id'],
+        'preferred' => 'f',
       ],
       'caching' => FALSE,
     ]);
-    if (count($taxon)) {
-      data_entry_helper::$entity_to_load = [
-        'taxa_taxon_list:id' => $taxon[0]['id'],
-        'taxa_taxon_list:parent_id' => $taxon[0]['parent_id'],
-        'taxon:id' => $taxon[0]['taxon_id'],
-        'taxon_meaning:id' => $taxon[0]['taxon_meaning_id'],
-        'taxon:taxon' => $taxon[0]['taxon'],
-        'taxon:attribute' => $taxon[0]['taxon_attribute'],
-        'taxon:authority' => $taxon[0]['authority'],
-        'taxon:language_id' => $taxon[0]['language_id'],
-        'taxon:taxon_group_id' => $taxon[0]['taxon_group_id'],
-        'taxon:taxon_rank_id' => $taxon[0]['taxon_rank_id'],
-        'taxon:description' => $taxon[0]['general_description'],
-        'taxa_taxon_list:description' => $taxon[0]['description_in_list'],
-        'taxon:external_key' => $taxon[0]['external_key'],
-        'taxon:search_code' => $taxon[0]['search_code'],
-        'taxa_taxon_list:taxonomic_sort_order' => $taxon[0]['taxonomic_sort_order'],
-      ];
-      // Load common names and synonyms.
-      $otherNames = data_entry_helper::get_population_data([
-        'table' => 'taxa_taxon_list',
-        'extraParams' => $auth['read'] + [
-          'view' => 'list',
-          'taxon_meaning_id' => $taxon[0]['taxon_meaning_id'],
-          'taxon_list_id' => $args['taxon_list_id'],
-          'preferred' => 'f',
-        ],
-        'caching' => FALSE,
-      ]);
-      $commonNames = [];
-      $synonyms = [];
-      foreach ($otherNames as $name) {
-        if ($name['language'] === 'lat') {
-          $synonyms[] = "$name[taxon]|$name[authority]";
-        }
-        else {
-          $commonNames[] = "$name[taxon]|$name[language]";
-        }
+    $commonNames = [];
+    $synonyms = [];
+    foreach ($otherNames as $name) {
+      if ($name['language'] === 'lat') {
+        $synonyms[] = "$name[taxon]|$name[authority]";
       }
-      data_entry_helper::$entity_to_load['metaFields:commonNames'] = implode("\n", $commonNames);
-      data_entry_helper::$entity_to_load['metaFields:synonyms'] = implode("\n", $synonyms);
+      else {
+        $commonNames[] = "$name[taxon]|$name[language]";
+      }
     }
+    data_entry_helper::$entity_to_load['metaFields:commonNames'] = implode("\n", $commonNames);
+    data_entry_helper::$entity_to_load['metaFields:synonyms'] = implode("\n", $synonyms);
   }
 
   /**
