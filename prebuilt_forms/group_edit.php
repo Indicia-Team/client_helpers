@@ -391,7 +391,11 @@ class iform_group_edit {
         'label' => lang::get('Code'),
         'fieldname' => 'group:code',
         'class' => 'control-width-4',
-        'helpText' => lang::get('Provide a code or abbreviation identifying the {1}', self::$groupType),
+        'helpText' => lang::get(
+          'Provide a code or abbreviation identifying the {1}, up to 20 characters long.',
+          self::$groupType
+        ),
+        'validation' => ['length[20]'],
       ));
     }
     $r .= data_entry_helper::textarea(array(
