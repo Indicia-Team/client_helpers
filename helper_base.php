@@ -781,7 +781,13 @@ JS;
     if (self::$validation_errors!==null) {
        if (array_key_exists($fieldname, self::$validation_errors)) {
          $errorKey = $fieldname;
-       } elseif (substr($fieldname, -4)=='date') {
+       }
+       elseif ($fieldname === 'sample:location_id' && array_key_exists('sample:location_name', self::$validation_errors)) {
+         // Location autocompletes can have a linked location ID or a freetext
+         // location name, so outptu both errors against the control.
+         $errorKey = 'sample:location_name';
+       }
+       elseif (substr($fieldname, -4)=='date') {
           // For date fields, we also include the type, start and end validation problems
           if (array_key_exists($fieldname.'_start', self::$validation_errors)) {
             $errorKey = $fieldname.'_start';
