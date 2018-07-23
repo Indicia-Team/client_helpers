@@ -304,9 +304,9 @@ class iform_species_details extends iform_dynamic {
    */
   protected static function get_names($auth) {
     iform_load_helpers(array('report_helper'));
-    self::$preferred=lang::get('Unknown');
+    self::$preferred = lang::get('Unknown');
     //Get all the different names for the species
-    $extraParams = array('sharing'=>'reporting');
+    $extraParams = array('sharing' => 'reporting');
     if (isset($_GET['taxa_taxon_list_id'])) {
       $extraParams['taxa_taxon_list_id'] = $_GET['taxa_taxon_list_id'];
       self::$taxa_taxon_list_id=$_GET['taxa_taxon_list_id'];
@@ -317,13 +317,13 @@ class iform_species_details extends iform_dynamic {
     }
     $species_details = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
-      'class'=>'species-details-fields',
-      'dataSource'=>'library/taxa/taxon_names',
-      'useCache' => false,
-      'extraParams'=>$extraParams
+      'class' => 'species-details-fields',
+      'dataSource' => 'library/taxa/taxon_names',
+      'useCache' => FALSE,
+      'extraParams' => $extraParams,
     ));
     foreach ($species_details as $speciesData) {
-      if ($speciesData['preferred']==='t') {
+      if ($speciesData['preferred'] === 't') {
         self::$preferred = $speciesData['taxon'];
         if (!isset(self::$taxon_meaning_id))
           self::$taxon_meaning_id = $speciesData['taxon_meaning_id'];
@@ -331,10 +331,12 @@ class iform_species_details extends iform_dynamic {
           self::$taxa_taxon_list_id = $speciesData['id'];
         }
       }
-      elseif ($speciesData['language_iso']==='lat')
+      elseif ($speciesData['language_iso'] === 'lat') {
         self::$synonyms[] = $speciesData['taxon'];
-      else
+      }
+      else {
         self::$commonNames[] = $speciesData['taxon'];
+      }
     }
     /* Fix a problem on the fungi-without-borders site where providing a
        taxa_taxon_list_id doesn't work (the system would try and return all records).
@@ -563,9 +565,10 @@ HTML
    * @subpackage PrebuiltForms
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    //Draw a distribution map by calling Indicia report when Geoserver isn't available
-    if (isset($options['noGeoserver'])&&$options['noGeoserver']===true) {
-      return self::mapwithoutgeoserver($auth, $args, $tabalias, $options);
+    // Draw a distribution map by calling Indicia report when Geoserver isn't
+    // available
+    if (isset($options['noGeoserver']) && $options['noGeoserver'] === true) {
+      return self::mapWithoutGeoserver($auth, $args, $tabalias, $options);
     }
     iform_load_helpers(array('map_helper', 'data_entry_helper'));
     global $user;
@@ -637,7 +640,7 @@ HTML
    * @package    Client
    * @subpackage PrebuiltForms
    */
-  protected static function mapwithoutgeoserver($auth, $args, $tabalias, $options) {
+  protected static function mapWithoutGeoserver($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper', 'report_helper'));
     if (isset($options['hoverShowsDetails'])) {
       $options['hoverShowsDetails'] = TRUE;
@@ -652,25 +655,23 @@ HTML
         $args['location_boundary_id'] = $_GET['filter-location_id'];
       }
     }
-    // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
+    // aAlow us to call iform_report_get_report_options to get a default report setup, then override report_name
     $args['report_name'] = '';
     $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    $params= array(
-      'taxa_taxon_list_id' => $_GET['taxa_taxon_list_id'],
-      'taxon_meaning_id' => $_GET['taxon_meaning_id'],
+    $params = array(
+      'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
       'sharing' => 'reporting',
-      'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
-      'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
-      'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
       'reportGroup' => 'dynamic',
       'autoParamsForm' => FALSE,
       'sharing' => $sharing,
-      'readAuth' => $auth['read'],
       'rememberParamsReportGroup' => 'dynamic',
       'clickableLayersOutputMode' => 'report',
       'rowId' => 'occurrence_id',
       'ajax' => TRUE,
     );
+    $args['param_presets'] = '';
+    $args['param_defaults'] = '';
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
@@ -679,10 +680,7 @@ HTML
         'sharing' => $sharing,
         'readAuth' => $auth['read'],
         'dataSource' => 'reports_for_prebuilt_forms/species_details/species_record_data',
-        'rememberParamsReportGroup' => 'dynamic',
-        'clickableLayersOutputMode' => 'report',
-        'rowId' => 'occurrence_id',
-        'extraParams' => $params
+        'extraParams' => $params,
       )
     );
     // Ensure supplied extraParams are merged, not overwritten.
