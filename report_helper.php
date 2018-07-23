@@ -493,15 +493,15 @@ class report_helper extends helper_base {
             switch ($field['datatype']) {
               case 'text':
               case 'species':
-                $title=lang::get("{1} text begins with ... search. Use * as a wildcard.", $caption);
+                $title=lang::get("Search for {1} text begins with .... Use * as a wildcard.", $caption);
                 break;
               case 'date':
-                $title=lang::get("{1} search. Search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
+                $title=lang::get("Search on {1} - search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
                 break;
-              default: $title=lang::get("{1} search. Either enter an exact number, use >, >=, <, or <= before the number to filter for ".
+              default: $title=lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for ".
                       "{1} more or less than your search value, or enter a range such as 1000-2000.", $caption);
             }
-            $title = htmlspecialchars(lang::get('Type here to filter.').' '.$title);
+            $title = htmlspecialchars(lang::get('Type here to filter then press Tab or Return to apply the filter.').' '.$title);
             //Filter, which when clicked, displays a popup with a series of checkboxes representing a distinct set of data from a column on the report.
             //The user can then deselect these checkboxes to remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
