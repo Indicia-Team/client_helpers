@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
@@ -2339,9 +2338,9 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     if (!empty($extra) && substr($extra, 0, 1)!=='&')
       $extra = '&'.$extra;
     $request = 'index.php/services/'.
-        $serviceCall.
-        'mode='.$options['format'].'&nonce='.$options['readAuth']['nonce'].
-        '&auth_token='.$options['readAuth']['auth_token'].
+        $serviceCall .
+        'mode=' . $options['format'] . '&nonce=' . $options['readAuth']['nonce'] .
+        '&auth_token=' . $options['readAuth']['auth_token'] .
         $extra;
     if (isset($options['filters'])) {
       foreach ($options['filters'] as $key=>$value) {
@@ -2354,11 +2353,12 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
         }
       }
     }
-    if (!empty($query))
+    if (!empty($query)) {
       $request .= "&query=".urlencode(json_encode($query));
-    foreach ($options['extraParams'] as $key=>$value) {
+    }
+    foreach ($options['extraParams'] as $key => $value) {
       // Must urlencode the keys and parameters, as things like spaces cause curl to hang.
-      $request .= '&'.urlencode($key).'='.urlencode($value);
+      $request .= '&' . urlencode($key) . '=' . urlencode($value);
     }
     // Pass through the type of data sharing
     if (isset($options['sharing']))
