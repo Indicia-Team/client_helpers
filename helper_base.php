@@ -1633,7 +1633,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         // not on warehouse
         $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
         if (function_exists('hostsite_get_user_field')) {
-          $script .= "indiciaData.user_id = " . hostsite_get_user_field('indicia_user_id') . ";\n";
+          $userId = hostsite_get_user_field('indicia_user_id');
+          if ($userId) {
+            $script .= "indiciaData.user_id = " . hostsite_get_user_field('indicia_user_id') . ";\n";
+          }
         }
       }
 
