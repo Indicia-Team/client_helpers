@@ -279,7 +279,6 @@ Record ID',
       }
     }
     data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.user_id = "' . hostsite_get_user_field('indicia_user_id') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url(NULL, 'occurrence') .
       "&sharing=$args[sharing]\";\n";
     return parent::get_form($args, $nid);
