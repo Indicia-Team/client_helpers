@@ -260,6 +260,8 @@ class report_helper extends helper_base {
   * in their default state, since the columns array will be empty.</li>
   * <li><b>headers</b>
   * Should a header row be included? Defaults to true.
+  * <li><b>sortable</b>
+  * If a header is included, should columns which allow sorting be sortable by clicking? Defaults to true.
   * <li><b>galleryColCount</b>
   * If set to a value greater than one, then each grid row will contain more than one record of data from the database, allowing
   * a gallery style view to be built. Defaults to 1.
@@ -450,7 +452,7 @@ class report_helper extends helper_base {
             $caption = empty($field['display']) ? $field['fieldname'] : lang::get($field['display']);
           }
 
-          if (isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
+          if ($options['sortable'] && isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
             if (empty($field['orderby'])) {
               $field['orderby'] = $field['fieldname'];
             }
@@ -2672,6 +2674,7 @@ if (typeof mapSettingsHooks!=='undefined') {
       'columns' => array(),
       'galleryColCount' => 1,
       'headers' => true,
+      'sortable' => false,
       'includeAllColumns' => true,
       'autoParamsForm' => true,
       'paramsOnly' => false,
