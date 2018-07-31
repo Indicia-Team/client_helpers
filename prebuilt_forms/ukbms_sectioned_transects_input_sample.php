@@ -1946,7 +1946,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $info = array();
     $ruleTypesDone = array('WithoutPolygon' => false, 'PeriodWithinYear' => false);
 
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(array('data_entry_helper', 'report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
 
     $cttl = data_entry_helper::get_population_data(array(
