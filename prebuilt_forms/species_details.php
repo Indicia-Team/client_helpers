@@ -360,14 +360,20 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw the Species Details section of the page.
-   * @return string The output html string.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * Available options include:
+   * * @includeAttributes - defaults to true. If false, then the custom
+   *   attributes are not included in the block.
+   *
+   * @return string
+   *   The output html string.
    */
   protected static function get_control_speciesdetails($auth, $args, $tabalias, $options) {
-    $fields=helper_base::explode_lines($args['fields']);
-    $fieldsLower=helper_base::explode_lines(strtolower($args['fields']));
+    $options = array_merge([
+      'includeAttributes' => TRUE,
+    ], $options);
+    $fields = helper_base::explode_lines($args['fields']);
+    $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
 
     //If the user sets the option to exclude particular fields then we set to the hide flag
     //on the name types they have specified.
@@ -409,23 +415,25 @@ class iform_species_details extends iform_dynamic {
     //Draw the names on the page
     $details_report = self::draw_names($auth['read'], $hidePreferred, $hideCommon, $hideSynonym, $hideTaxonomy);
 
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>';
+    if ($options['includeAttributes']) {
+      $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>';
 
-    //draw any custom attributes for the species added by the user
-    $attrs_report = report_helper::freeform_report(array(
-      'readAuth' => $auth['read'],
-      'class'=>'species-details-fields',
-      'dataSource'=>'library/taxa/taxon_attributes_with_hiddens',
-      'bands'=>array(array('content'=>$attrsTemplate)),
-      'extraParams'=>array(
-        'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
-        //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
-        'attrs'=>strtolower(self::convert_array_to_set($fields)),
-        'testagainst'=>$args['testagainst'],
-        'operator'=>$args['operator'],
-        'sharing'=>'reporting'
-      )
-    ));
+      //draw any custom attributes for the species added by the user
+      $attrs_report = report_helper::freeform_report(array(
+        'readAuth' => $auth['read'],
+        'class'=>'species-details-fields',
+        'dataSource'=>'library/taxa/taxon_attributes_with_hiddens',
+        'bands'=>array(array('content'=>$attrsTemplate)),
+        'extraParams'=>array(
+          'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
+          //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
+          'attrs'=>strtolower(self::convert_array_to_set($fields)),
+          'testagainst'=>$args['testagainst'],
+          'operator'=>$args['operator'],
+          'sharing'=>'reporting'
+        )
+      ));
+    }
 
     $r = '<div class="detail-panel" id="detail-panel-speciesdetails"><h3>'.lang::get('Species Details').'</h3><div class="record-details-fields ui-helper-clearfix">';
     //draw the species names and custom attributes
@@ -461,6 +469,58 @@ class iform_species_details extends iform_dynamic {
       $r .= str_replace(array('{caption}','{value}'), array(lang::get('Taxonomy'), implode(' :: ', self::$taxonomy)), $attrsTemplate);
     }
     return $r;
+  }
+
+  /**
+   * Undocumented function
+   *
+   * Available options include:
+   * * @includeCaptions - set to 0 to exclude attribute captions from the
+   *   grouped data.
+   *
+   * @return string
+   *   Html for the description.
+   */
+  protected static function get_control_attributedescription($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'includeCaptions' => '1',
+    ], $options);
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $args['param_presets'] = '';
+    $args['param_defaults'] = '';
+    $params = [
+      'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
+    ];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'reportGroup' => 'dynamic',
+        'autoParamsForm' => FALSE,
+        'sharing' => $sharing,
+        'readAuth' => $auth['read'],
+        'dataSource' => 'reports_for_prebuilt_forms/species_details/species_attr_description',
+        'extraParams' => $params,
+        'wantCount' => '0',
+        'header' => '',
+        'footer' => '',
+        'bands' => [
+          [
+            'content' => '<h3>{category}</h3>',
+            'triggerFields' => ['category'],
+          ],
+          [
+            'content' => '<strong>{subcategory}</strong> {values}',
+          ],
+        ],
+      )
+    );
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
+    return report_helper::freeform_report($reportOptions);
+
   }
 
   /**
