@@ -90,6 +90,11 @@ class extension_extra_data_entry_controls {
    *   * copy_attributes - comma separated list of occurrence attribute IDs
    *     whose values are to be cloned from the main occurrence to the
    *     association.
+   *   * taxon_list_id - ID of the species list to search if not the same as
+   *     the main list configured for the form.
+   *   * index - if there are multiple associated occurrence controls on the
+   *     page, then give each a unique number in the index to allow them to
+   *     function separately.
    *
    * @return string
    *   HTML for the control
