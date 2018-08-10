@@ -7501,19 +7501,14 @@ HTML;
    */
   private static function getTranslatedAttrField($field, array $attr) {
     require_once 'prebuilt_forms/includes/language_utils.php';
-    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
-    if (!empty($attr[$field . '_i18n'])) {
+    if (!empty($attr[$field . '_i18n']) && function_exists('hostsite_get_user_field')) {
+      $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
       $otherLanguages = json_decode($attr[$field . '_i18n'], TRUE);
       if (isset($otherLanguages[$language])) {
         return $otherLanguages[$language];
       }
-      else {
-        return lang::get($attr[$field]);
-      }
     }
-    else {
-      return empty($attr[$field]) ? '' : lang::get($attr[$field]);
-    }
+    return empty($attr[$field]) ? '' : lang::get($attr[$field]);
   }
 
   /**

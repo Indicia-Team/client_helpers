@@ -2319,7 +2319,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       'format' => 'json',
       'extraParams' => [],
     ], $options);
-    if (hostsite_get_user_field('training')) {
+    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
       $options['extraParams']['training'] = 'true';
     }
     $query = array();
