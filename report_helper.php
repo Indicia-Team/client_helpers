@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
@@ -261,6 +260,8 @@ class report_helper extends helper_base {
   * in their default state, since the columns array will be empty.</li>
   * <li><b>headers</b>
   * Should a header row be included? Defaults to true.
+  * <li><b>sortable</b>
+  * If a header is included, should columns which allow sorting be sortable by clicking? Defaults to true.
   * <li><b>galleryColCount</b>
   * If set to a value greater than one, then each grid row will contain more than one record of data from the database, allowing
   * a gallery style view to be built. Defaults to 1.
@@ -388,7 +389,6 @@ class report_helper extends helper_base {
   */
   public static function report_grid($options) {
     global $indicia_templates;
-    global $user;
     self::add_resource('fancybox');
     $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
     $options = self::get_report_grid_options($options);
@@ -452,7 +452,7 @@ class report_helper extends helper_base {
             $caption = empty($field['display']) ? $field['fieldname'] : lang::get($field['display']);
           }
 
-          if (isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
+          if ($options['sortable'] && isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
             if (empty($field['orderby'])) {
               $field['orderby'] = $field['fieldname'];
             }
@@ -494,15 +494,15 @@ class report_helper extends helper_base {
             switch ($field['datatype']) {
               case 'text':
               case 'species':
-                $title=lang::get("{1} text begins with ... search. Use * as a wildcard.", $caption);
+                $title=lang::get("Search for {1} text begins with .... Use * as a wildcard.", $caption);
                 break;
               case 'date':
-                $title=lang::get("{1} search. Search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
+                $title=lang::get("Search on {1} - search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
                 break;
-              default: $title=lang::get("{1} search. Either enter an exact number, use >, >=, <, or <= before the number to filter for ".
+              default: $title=lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for ".
                       "{1} more or less than your search value, or enter a range such as 1000-2000.", $caption);
             }
-            $title = htmlspecialchars(lang::get('Type here to filter.').' '.$title);
+            $title = htmlspecialchars(lang::get('Type here to filter then press Tab or Return to apply the filter.').' '.$title);
             //Filter, which when clicked, displays a popup with a series of checkboxes representing a distinct set of data from a column on the report.
             //The user can then deselect these checkboxes to remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
@@ -560,7 +560,7 @@ class report_helper extends helper_base {
           'nonce='.$options['readAuth']['nonce'],
           'auth_token='.$options['readAuth']['auth_token'],
           (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
-          $user->uid,
+          hostsite_get_user_field('id'),
           self::$website_id
         ), $options['footer']
       );
@@ -2340,9 +2340,9 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     if (!empty($extra) && substr($extra, 0, 1)!=='&')
       $extra = '&'.$extra;
     $request = 'index.php/services/'.
-        $serviceCall.
-        'mode='.$options['format'].'&nonce='.$options['readAuth']['nonce'].
-        '&auth_token='.$options['readAuth']['auth_token'].
+        $serviceCall .
+        'mode=' . $options['format'] . '&nonce=' . $options['readAuth']['nonce'] .
+        '&auth_token=' . $options['readAuth']['auth_token'] .
         $extra;
     if (isset($options['filters'])) {
       foreach ($options['filters'] as $key=>$value) {
@@ -2355,11 +2355,12 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
         }
       }
     }
-    if (!empty($query))
+    if (!empty($query)) {
       $request .= "&query=".urlencode(json_encode($query));
-    foreach ($options['extraParams'] as $key=>$value) {
+    }
+    foreach ($options['extraParams'] as $key => $value) {
       // Must urlencode the keys and parameters, as things like spaces cause curl to hang.
-      $request .= '&'.urlencode($key).'='.urlencode($value);
+      $request .= '&' . urlencode($key) . '=' . urlencode($value);
     }
     // Pass through the type of data sharing
     if (isset($options['sharing']))
@@ -2672,26 +2673,27 @@ if (typeof mapSettingsHooks!=='undefined') {
       'altRowClass' => 'odd',
       'columns' => array(),
       'galleryColCount' => 1,
-      'headers' => true,
-      'includeAllColumns' => true,
-      'autoParamsForm' => true,
-      'paramsOnly' => false,
+      'headers' => TRUE,
+      'sortable' => TRUE,
+      'includeAllColumns' => TRUE,
+      'autoParamsForm' => TRUE,
+      'paramsOnly' => FALSE,
       'extraParams' => array(),
       'immutableParams' => array(),
-      'completeParamsForm' => true,
+      'completeParamsForm' => TRUE,
       'callback' => '',
       'paramsFormButtonCaption' => 'Run Report',
-      'paramsInMapToolbar' => false,
+      'paramsInMapToolbar' => FALSE,
       'view' => 'list',
       'caching' => isset($options['paramsOnly']) && $options['paramsOnly'],
-      'sendOutputToMap' => false,
-      'zoomMapToOutput' => true,
-      'ajax' => false,
-      'autoloadAjax' => true,
-      'linkFilterToMap' => true,
-      'pager' => true,
+      'sendOutputToMap' => FALSE,
+      'zoomMapToOutput' => TRUE,
+      'ajax' => FALSE,
+      'autoloadAjax' => TRUE,
+      'linkFilterToMap' => TRUE,
+      'pager' => TRUE,
       'imageThumbPreset' => 'thumb',
-      'includeColumnsPicker' => false
+      'includeColumnsPicker' => FALSE,
     ), $options);
     // if using AJAX we are only loading parameters and columns, so may as well use local cache
     if ($options['ajax'])
@@ -3077,7 +3079,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
    * @param array $options Options array passed to the control.
    */
   private static function get_report_calendar_grid_options($options) {
-    global $user;
+    $userId = hostsite_get_user_field('id');
     $options = array_merge(array(
       'mode' => 'report',
       'id' => 'calendar-report-output', // this needs to be set explicitly when more than one report on a page
@@ -3094,20 +3096,22 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $options["extraParams"] = array_merge(array(
       'date_from' => $options["year"].'-01-01',
       'date_to' => $options["year"].'-12-31',
-      'user_id' => $user->uid, // Initially CMS User, changed to Indicia User later if in Easy Login mode.
-      'cms_user_id' => $user->uid, // CMS User, not Indicia User.
+      'user_id' => $userId, // Initially CMS User, changed to Indicia User later if in Easy Login mode.
+      'cms_user_id' => $userId, // CMS User, not Indicia User.
       'smpattrs' => ''), $options["extraParams"]);
-    $options['my_user_id'] = $user->uid; // Initially CMS User, changed to Indicia User later if in Easy Login mode.
+    $options['my_user_id'] = $userId; // Initially CMS User, changed to Indicia User later if in Easy Login mode.
     // Note for the calendar reports, the user_id is assumed to be the CMS user id as recorded in the CMS User ID attribute,
     // not the Indicia user id.
     if (function_exists('hostsite_get_user_field') && $options["extraParams"]['user_id'] == $options["extraParams"]['cms_user_id']) {
       $indicia_user_id = hostsite_get_user_field('indicia_user_id');
-      if($indicia_user_id)
+      if ($indicia_user_id) {
         $options["extraParams"]['user_id'] = $indicia_user_id;
-      if($options['my_user_id']){ // false switches this off.
+      }
+      if ($options['my_user_id']) { // false switches this off.
         $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options['my_user_id']);
-        if(!empty($user_id))
+        if(!empty($user_id)) {
           $options['my_user_id'] = $user_id;
+        }
       }
     }
     return $options;

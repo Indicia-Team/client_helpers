@@ -1,3 +1,4 @@
 # ignore the helper configuration file
 helper_config.php
 .DS_Store
+.sass-cache

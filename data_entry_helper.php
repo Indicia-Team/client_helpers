@@ -1137,16 +1137,19 @@ JS;
         ));
         $mediaTypeIdLimiter = $typeTermData[0]['id'];
       }
-      // add in any reloaded items, when editing or after validation failure
+      // Add in any reloaded items, when editing or after validation failure.
       if (self::$entity_to_load) {
-        //If we only want to display media of a particular type, then supply this as a parameter when extracting the media.
+        // If we only want to display media of a particular type, then supply
+        // this as a parameter when extracting the media.
         if (!empty($mediaTypeIdLimiter)) {
           $images = self::extract_media_data(self::$entity_to_load,
             isset($options['loadExistingRecordKey']) ? $options['loadExistingRecordKey'] : $options['table'],
-            false,
-            false,
-            $mediaTypeIdLimiter);
-        } else {
+            FALSE,
+            FALSE,
+            $mediaTypeIdLimiter
+          );
+        }
+        else {
           $images = self::extract_media_data(self::$entity_to_load,
             isset($options['loadExistingRecordKey']) ? $options['loadExistingRecordKey'] : $options['table']);
         }
@@ -1677,6 +1680,15 @@ JS;
     $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : null;
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
       $caption = self::$entity_to_load['sample:location_name'];
+    if (empty($caption) && !empty($options['default'])) {
+      $thisLoc = self::get_population_data([
+        'table' => 'location',
+        'extraParams' => $options['extraParams'] + ['id' => $options['default']]
+      ]);
+      if (count($thisLoc)) {
+        $caption = $thisLoc[0]['name'];
+      }
+    }
     $options = array_merge(array(
       'table' => 'location',
       'fieldname' => 'sample:location_id',
@@ -5421,30 +5433,68 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   }
 
   /**
+   * Returns mappings from loaded view data to the control fieldnames.
+   *
+   * @return array
+   *   Array of mappings from view field names to form control field names.
+   */
+  private static function getControlFieldKeyMappings() {
+    return [
+      'sample:wkt' => 'sample:geom',
+      'taxa_taxon_list:taxon' => 'taxon:taxon',
+      'taxa_taxon_list:authority' => 'taxon:authority',
+      'taxa_taxon_list:taxon_attribute' => 'taxon:attribute',
+      'taxa_taxon_list:language_id' => 'taxon:language_id',
+      'taxa_taxon_list:taxon_group_id' => 'taxon:taxon_group_id',
+      'taxa_taxon_list:taxon_rank_id' => 'taxon:taxon_rank_id',
+      'taxa_taxon_list:description_in_list' => 'taxa_taxon_list:description',
+      'taxa_taxon_list:general_description' => 'taxon:description',
+      'taxa_taxon_list:external_key' => 'taxon:external_key',
+      'taxa_taxon_list:search_code' => 'taxon:search_code',
+    ];
+  }
+
+  /**
+   * Build array of form data from loaded record query.
+   *
    * Version of load_existing_record which accepts an already queried record array from the database
    * as an input parameter.
-   * @param array $record Record loaded from the db
-   * @param array $readAuth Read authorisation tokens
-   * @param string $entity Name of the entity to load data from.
-   * @param integer $id ID of the database record to load
-   * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'.
-   * @param boolean $sharing Defaults to false. If set to the name of a sharing task
-   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be
-   * loaded from another client website if a sharing agreement is in place.
-   * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
-   * @param boolean $loadImages If set to true, then image information is loaded as well.
+   *
+   * @param array $record
+   *   Record loaded from the db.
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param string $entity
+   *   Name of the entity to load data from.
+   * @param integer $id
+   *   ID of the database record to load.
+   * @param string $view
+   *   Name of the view to load attributes from, normally 'list' or 'detail'.
+   * @param boolean $sharing
+   *   Defaults to false. If set to the name of a sharing task (reporting,
+   *   peer_review, verification, data_flow, moderation or editing), then the
+   *   record can be loaded from another client website if a sharing agreement
+   *   is in place.
+   *   @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
+   * @param boolean $loadImages
+   *   If set to true, then image information is loaded as well.
+   *
    * @throws Exception
    */
   public static function load_existing_record_from($record, $readAuth, $entity, $id, $view = 'detail', $sharing = false, $loadImages = false) {
-    if (isset($record['error'])) throw new Exception($record['error']);
-    // set form mode
-    if (self::$form_mode===null) self::$form_mode = 'RELOAD';
-    // populate the entity to load with the record data
-    foreach($record as $key => $value) {
-      self::$entity_to_load["$entity:$key"] = $value;
+    if (isset($record['error'])) {
+      throw new Exception($record['error']);
     }
-    if ($entity=='sample') {
-      self::$entity_to_load['sample:geom'] = self::$entity_to_load['sample:wkt']; // value received from db in geom is not WKT, which is assumed by all the code.
+    // set form mode
+    if (self::$form_mode===null) {
+      self::$form_mode = 'RELOAD';
+    }
+    $mappings = self::getControlFieldKeyMappings();
+    // populate the entity to load with the record data
+    foreach ($record as $key => $value) {
+      self::$entity_to_load[array_key_exists("$entity:$key", $mappings) ? $mappings["$entity:$key"] : "$entity:$key"] = $value;
+    }
+    if ($entity === 'sample') {
       // If the date is a vague date, use the string formatted by the db.
       // @todo Would allow better localisation if the vague date formatting could be applied on the client.
       self::$entity_to_load['sample:date'] = empty(self::$entity_to_load['sample:display_date']) ?
@@ -5454,26 +5504,32 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         $d = new DateTime(self::$entity_to_load['sample:date']);
         self::$entity_to_load['sample:date'] = $d->format(self::$date_format);
       }
-    } elseif ($entity=='occurrence') {
+    } elseif ($entity === 'occurrence') {
       // prepare data to work in autocompletes
       if (!empty(self::$entity_to_load['occurrence:taxon']) && empty(self::$entity_to_load['occurrence:taxa_taxon_list:taxon']))
         self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon'] = self::$entity_to_load['occurrence:taxon'];
     }
     if ($loadImages) {
+      // Taxon images are linked via meaning rather than the entity ID.
       $mediaEntity = $entity === 'taxa_taxon_list' ? 'taxon_medium' : "{$entity}_medium";
-      $images = self::get_population_data(array(
+      $filter = $entity === 'taxa_taxon_list'
+        ? ['taxon_meaning_id' => self::$entity_to_load['taxa_taxon_list:taxon_meaning_id']]
+        : [$entity . '_id' => $id];
+      $images = self::get_population_data([
         'table' => $mediaEntity,
-        'extraParams' => $readAuth + array($entity . '_id' => $id),
+        'extraParams' => $readAuth + $filter,
         'nocache' => true,
-        'sharing' => $sharing
-      ));
-      if (isset($images['error'])) throw new Exception($images['error']);
+        'sharing' => $sharing,
+      ]);
+      if (isset($images['error'])) {
+        throw new Exception($images['error']);
+      }
       foreach($images as $image) {
-        self::$entity_to_load[$entity . '_medium:id:' . $image['id']]  = $image['id'];
-        self::$entity_to_load[$entity . '_medium:path:' . $image['id']] = $image['path'];
-        self::$entity_to_load[$entity . '_medium:caption:' . $image['id']] = $image['caption'];
-        self::$entity_to_load[$entity . '_medium:media_type:' . $image['id']] = $image['media_type'];
-        self::$entity_to_load[$entity . '_medium:media_type_id:' . $image['id']] = $image['media_type_id'];
+        self::$entity_to_load["$mediaEntity:id:$image[id]"]  = $image['id'];
+        self::$entity_to_load["$mediaEntity:path:$image[id]"] = $image['path'];
+        self::$entity_to_load["$mediaEntity:caption:$image[id]"] = $image['caption'];
+        self::$entity_to_load["$mediaEntity:media_type:$image[id]"] = $image['media_type'];
+        self::$entity_to_load["$mediaEntity:media_type_id:$image[id]"] = $image['media_type_id'];
       }
     }
   }

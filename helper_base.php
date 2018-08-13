@@ -781,7 +781,13 @@ JS;
     if (self::$validation_errors!==null) {
        if (array_key_exists($fieldname, self::$validation_errors)) {
          $errorKey = $fieldname;
-       } elseif (substr($fieldname, -4)=='date') {
+       }
+       elseif ($fieldname === 'sample:location_id' && array_key_exists('sample:location_name', self::$validation_errors)) {
+         // Location autocompletes can have a linked location ID or a freetext
+         // location name, so outptu both errors against the control.
+         $errorKey = 'sample:location_name';
+       }
+       elseif (substr($fieldname, -4)=='date') {
           // For date fields, we also include the type, start and end validation problems
           if (array_key_exists($fieldname.'_start', self::$validation_errors)) {
             $errorKey = $fieldname.'_start';
@@ -1627,7 +1633,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         // not on warehouse
         $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
         if (function_exists('hostsite_get_user_field')) {
-          $script .= "indiciaData.user_id = " . hostsite_get_user_field('indicia_user_id') . ";\n";
+          $userId = hostsite_get_user_field('indicia_user_id');
+          if ($userId) {
+            $script .= "indiciaData.user_id = $userId;\n";
+          }
         }
       }
 
@@ -2067,7 +2076,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           lang::get($options['fieldname']));
     }
     // Convert these rules into jQuery format.
-    return self::convert_to_jquery_val_metadata($rules, $options);
+    return self::converToJqueryValMetadata($rules, $options);
   }
 
   /**
@@ -2115,41 +2124,55 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   * @return string Validation metadata classes to add to the input element.
   * @todo Implement a more complete list of validation rules.
   */
-  protected static function convert_to_jquery_val_metadata($rules, $options) {
+  protected static function converToJqueryValMetadata($rules, $options) {
     $converted = array();
     foreach ($rules as $rule) {
       // Detect the rules that can simply be passed through
       $rule = trim($rule);
-      if    ($rule=='required'
-          || $rule=='dateISO'
-          || $rule=='email'
-          || $rule=='url'
-          || $rule=='time'
-          || $rule=='integer') {
-        $converted[] = $rule.':true';
-      // Now any rules which need parsing or conversion
-      } elseif ($rule=='date' && !isset($options['allowVagueDates']) ||
-            (isset($options['allowVagueDates']) && $options['allowVagueDates']===false)) {
+      $mappings = [
+        'required' => ['jqRule' => 'required'],
+        'dateISO' => ['jqRule' => 'dateISO'],
+        'email' => ['jqRule' => 'email'],
+        'url' => ['jqRule' => 'url'],
+        'time' => ['jqRule' => 'time'],
+        'integer' => ['jqRule' => 'integer'],
+        'digit' => ['jqRule' => 'digits'],
+        'numeric' => ['jqRule' => 'number'],
+        'maximum' => ['jqRule' => 'max', 'valRegEx' => '-?\d+'],
+        'minimum' => ['jqRule' => 'min', 'valRegEx' => '-?\d+'],
+        'mingridref' => ['jqRule' => 'mingridref', 'valRegEx' => '\d+'],
+        'maxgridref' => ['jqRule' => 'maxgridref', 'valRegEx' => '\d+'],
+        'regex' => ['jqRule' => 'pattern', 'valRegEx' => '-?\d+'],
+      ];
+      $arr = explode('[', $rule);
+      $ruleName = $arr[0];
+      if (!empty($mappings[$ruleName])) {
+        $config = $mappings[$ruleName];
+        if (isset($config['valRegEx'])) {
+          if (preg_match("/$ruleName\[(?P<val>$config[valRegEx])\]/", $rule, $matches)) {
+            $converted[] = "$config[jqRule]:$matches[val]";
+          }
+        }
+        else {
+          $converted[] = "$config[jqRule]:true";
+        }
+      } elseif ($ruleName === 'date' && !isset($options['allowVagueDates']) ||
+            (isset($options['allowVagueDates']) && $options['allowVagueDates'] === false)) {
+        // Special case for dates where validation disabled when vague dates enabled.
         $converted[] = 'customDate:true';
-      } elseif ($rule=='digit') {
-        $converted[] = 'digits:true';
-      } elseif ($rule=='numeric') {
-        $converted[] = 'number:true';
-      // the next test uses a regexp named expression to find the digit in a maximum rule (maximum[10])
-      } elseif (preg_match('/maximum\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'max:'.$matches['val'];
-      // and again for minimum rules
-      } elseif (preg_match('/minimum\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'min:'.$matches['val'];
-      } elseif (preg_match('/regex\[(?P<val>.+)\]/', $rule, $matches)) {
-        $converted[] = 'pattern:'. $matches['val'];
-      } elseif (preg_match('/mingridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'mingridref:'.$matches['val'];
-      } elseif (preg_match('/maxgridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'maxgridref:'.$matches['val'];
+      } elseif ($ruleName === 'length' && preg_match("/length\[(?P<val>\d+(,\d+)?)\]/", $rule, $matches)) {
+        // Special case for length Kohana rule which can map to jQuery minlenth
+        // and maxlength rules.
+        $range = explode(',', $matches['val']);
+        if (count($range === 1)) {
+          $converted[] = "maxlength:$range[0]";
+        } elseif (count($range === 2)) {
+          $converted[] = "minlength:$range[0]";
+          $converted[] = "maxlength:$range[1]";
+        }
       }
     }
-    if (count($converted) == 0) {
+    if (count($converted) === 0) {
       return '';
     } else {
       return '{'. implode(', ', $converted) .'}';

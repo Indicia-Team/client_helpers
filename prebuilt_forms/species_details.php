@@ -304,9 +304,9 @@ class iform_species_details extends iform_dynamic {
    */
   protected static function get_names($auth) {
     iform_load_helpers(array('report_helper'));
-    self::$preferred=lang::get('Unknown');
+    self::$preferred = lang::get('Unknown');
     //Get all the different names for the species
-    $extraParams = array('sharing'=>'reporting');
+    $extraParams = array('sharing' => 'reporting');
     if (isset($_GET['taxa_taxon_list_id'])) {
       $extraParams['taxa_taxon_list_id'] = $_GET['taxa_taxon_list_id'];
       self::$taxa_taxon_list_id=$_GET['taxa_taxon_list_id'];
@@ -317,13 +317,13 @@ class iform_species_details extends iform_dynamic {
     }
     $species_details = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
-      'class'=>'species-details-fields',
-      'dataSource'=>'library/taxa/taxon_names',
-      'useCache' => false,
-      'extraParams'=>$extraParams
+      'class' => 'species-details-fields',
+      'dataSource' => 'library/taxa/taxon_names',
+      'useCache' => FALSE,
+      'extraParams' => $extraParams,
     ));
     foreach ($species_details as $speciesData) {
-      if ($speciesData['preferred']==='t') {
+      if ($speciesData['preferred'] === 't') {
         self::$preferred = $speciesData['taxon'];
         if (!isset(self::$taxon_meaning_id))
           self::$taxon_meaning_id = $speciesData['taxon_meaning_id'];
@@ -331,10 +331,12 @@ class iform_species_details extends iform_dynamic {
           self::$taxa_taxon_list_id = $speciesData['id'];
         }
       }
-      elseif ($speciesData['language_iso']==='lat')
+      elseif ($speciesData['language_iso'] === 'lat') {
         self::$synonyms[] = $speciesData['taxon'];
-      else
+      }
+      else {
         self::$commonNames[] = $speciesData['taxon'];
+      }
     }
     /* Fix a problem on the fungi-without-borders site where providing a
        taxa_taxon_list_id doesn't work (the system would try and return all records).
@@ -358,14 +360,20 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw the Species Details section of the page.
-   * @return string The output html string.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * Available options include:
+   * * @includeAttributes - defaults to true. If false, then the custom
+   *   attributes are not included in the block.
+   *
+   * @return string
+   *   The output html string.
    */
   protected static function get_control_speciesdetails($auth, $args, $tabalias, $options) {
-    $fields=helper_base::explode_lines($args['fields']);
-    $fieldsLower=helper_base::explode_lines(strtolower($args['fields']));
+    $options = array_merge([
+      'includeAttributes' => TRUE,
+    ], $options);
+    $fields = helper_base::explode_lines($args['fields']);
+    $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
 
     //If the user sets the option to exclude particular fields then we set to the hide flag
     //on the name types they have specified.
@@ -407,23 +415,25 @@ class iform_species_details extends iform_dynamic {
     //Draw the names on the page
     $details_report = self::draw_names($auth['read'], $hidePreferred, $hideCommon, $hideSynonym, $hideTaxonomy);
 
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>';
+    if ($options['includeAttributes']) {
+      $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>';
 
-    //draw any custom attributes for the species added by the user
-    $attrs_report = report_helper::freeform_report(array(
-      'readAuth' => $auth['read'],
-      'class'=>'species-details-fields',
-      'dataSource'=>'library/taxa/taxon_attributes_with_hiddens',
-      'bands'=>array(array('content'=>$attrsTemplate)),
-      'extraParams'=>array(
-        'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
-        //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
-        'attrs'=>strtolower(self::convert_array_to_set($fields)),
-        'testagainst'=>$args['testagainst'],
-        'operator'=>$args['operator'],
-        'sharing'=>'reporting'
-      )
-    ));
+      //draw any custom attributes for the species added by the user
+      $attrs_report = report_helper::freeform_report(array(
+        'readAuth' => $auth['read'],
+        'class'=>'species-details-fields',
+        'dataSource'=>'library/taxa/taxon_attributes_with_hiddens',
+        'bands'=>array(array('content'=>$attrsTemplate)),
+        'extraParams'=>array(
+          'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
+          //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
+          'attrs'=>strtolower(self::convert_array_to_set($fields)),
+          'testagainst'=>$args['testagainst'],
+          'operator'=>$args['operator'],
+          'sharing'=>'reporting'
+        )
+      ));
+    }
 
     $r = '<div class="detail-panel" id="detail-panel-speciesdetails"><h3>'.lang::get('Species Details').'</h3><div class="record-details-fields ui-helper-clearfix">';
     //draw the species names and custom attributes
@@ -459,6 +469,58 @@ class iform_species_details extends iform_dynamic {
       $r .= str_replace(array('{caption}','{value}'), array(lang::get('Taxonomy'), implode(' :: ', self::$taxonomy)), $attrsTemplate);
     }
     return $r;
+  }
+
+  /**
+   * Undocumented function
+   *
+   * Available options include:
+   * * @includeCaptions - set to 0 to exclude attribute captions from the
+   *   grouped data.
+   *
+   * @return string
+   *   Html for the description.
+   */
+  protected static function get_control_attributedescription($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'includeCaptions' => '1',
+    ], $options);
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $args['param_presets'] = '';
+    $args['param_defaults'] = '';
+    $params = [
+      'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
+    ];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'reportGroup' => 'dynamic',
+        'autoParamsForm' => FALSE,
+        'sharing' => $sharing,
+        'readAuth' => $auth['read'],
+        'dataSource' => 'reports_for_prebuilt_forms/species_details/species_attr_description',
+        'extraParams' => $params,
+        'wantCount' => '0',
+        'header' => '',
+        'footer' => '',
+        'bands' => [
+          [
+            'content' => '<h3>{category}</h3>',
+            'triggerFields' => ['category'],
+          ],
+          [
+            'content' => '<strong>{subcategory}</strong> {values}',
+          ],
+        ],
+      )
+    );
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
+    return report_helper::freeform_report($reportOptions);
+
   }
 
   /**
@@ -563,9 +625,10 @@ HTML
    * @subpackage PrebuiltForms
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    //Draw a distribution map by calling Indicia report when Geoserver isn't available
-    if (isset($options['noGeoserver'])&&$options['noGeoserver']===true) {
-      return self::mapwithoutgeoserver($auth, $args, $tabalias, $options);
+    // Draw a distribution map by calling Indicia report when Geoserver isn't
+    // available
+    if (isset($options['noGeoserver']) && $options['noGeoserver'] === true) {
+      return self::mapWithoutGeoserver($auth, $args, $tabalias, $options);
     }
     iform_load_helpers(array('map_helper', 'data_entry_helper'));
     global $user;
@@ -637,7 +700,7 @@ HTML
    * @package    Client
    * @subpackage PrebuiltForms
    */
-  protected static function mapwithoutgeoserver($auth, $args, $tabalias, $options) {
+  protected static function mapWithoutGeoserver($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper', 'report_helper'));
     if (isset($options['hoverShowsDetails'])) {
       $options['hoverShowsDetails'] = TRUE;
@@ -652,25 +715,23 @@ HTML
         $args['location_boundary_id'] = $_GET['filter-location_id'];
       }
     }
-    // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
+    // aAlow us to call iform_report_get_report_options to get a default report setup, then override report_name
     $args['report_name'] = '';
     $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    $params= array(
-      'taxa_taxon_list_id' => $_GET['taxa_taxon_list_id'],
-      'taxon_meaning_id' => $_GET['taxon_meaning_id'],
+    $params = array(
+      'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
       'sharing' => 'reporting',
-      'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
-      'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
-      'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
       'reportGroup' => 'dynamic',
       'autoParamsForm' => FALSE,
       'sharing' => $sharing,
-      'readAuth' => $auth['read'],
       'rememberParamsReportGroup' => 'dynamic',
       'clickableLayersOutputMode' => 'report',
       'rowId' => 'occurrence_id',
       'ajax' => TRUE,
     );
+    $args['param_presets'] = '';
+    $args['param_defaults'] = '';
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
@@ -679,10 +740,7 @@ HTML
         'sharing' => $sharing,
         'readAuth' => $auth['read'],
         'dataSource' => 'reports_for_prebuilt_forms/species_details/species_record_data',
-        'rememberParamsReportGroup' => 'dynamic',
-        'clickableLayersOutputMode' => 'report',
-        'rowId' => 'occurrence_id',
-        'extraParams' => $params
+        'extraParams' => $params,
       )
     );
     // Ensure supplied extraParams are merged, not overwritten.

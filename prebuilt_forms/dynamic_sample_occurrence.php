@@ -165,6 +165,9 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                     "default to 1600. Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the server into the help text displayed " .
                     "with the control. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
                     "and outputs all attributes irrespective of the form block or tab. For finer control of the output, see the [occAttr:n], [photos] and [sensitivity] controls.<br/>" .
+                "&nbsp;&nbsp;<strong>[species dynamic attributes]</strong> - any custom attributes that have been configured to only show for certain branches " .
+                    "of the taxonomic hierarchy. Set @types to an array containing either sample or occurrence to limit the block of attributes to those associated " .
+                    "at the sample or occurrence level only.<br/>" .
                 "&nbsp;&nbsp;<strong>[date]</strong> - a sample must always have a date.<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location select/autocomplete controls<br/>" .
                 "&nbsp;&nbsp;<strong>[spatial reference]</strong> - a sample must always have a spatial reference.<br/>" .
@@ -1943,6 +1946,7 @@ HTML;
    * Attribute HTML is echoed to the client.
    */
   public static function ajax_dynamicattrs($website_id, $password) {
+    iform_load_helpers(['data_entry_helper']);
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
     echo self::getDynamicAttrs(
       $readAuth,
