@@ -258,6 +258,14 @@ class iform_group_edit {
         'required' => FALSE,
       ),
       array(
+        'name' => 'include_sites_created_by_user',
+        'caption' => 'Include sites created by the user',
+        'description' => "Are a user's own sites (e.g. My Sites) available for selection as a filter.",
+        'type' => 'boolean',
+        'required' => FALSE,
+        'default' => TRUE,
+      ),
+      array(
         'name' => 'taxon_list_id',
         'caption' => 'Taxon list ID',
         'description' => 'If you need to override the default taxon list used on this site for the filter builder, ' .
@@ -337,6 +345,7 @@ class iform_group_edit {
       'filter_types' => '{"":"what,where,when","Advanced":"source,quality"}',
       'indexed_location_type_ids' => '',
       'other_location_type_ids' => '',
+      'include_sites_created_by_user' => TRUE,
       'data_inclusion_mode' => 'choose',
     ), $args);
     $args['filter_types'] = json_decode($args['filter_types'], TRUE);
@@ -856,7 +865,8 @@ $('#entry_form').submit(function() {
         'filterTypes' => $args['filter_types'],
         'embedInExistingForm' => TRUE,
         'indexedLocationTypeIds' => $indexedLocationTypeIds,
-        'otherLocationTypeIds' => $otherLocationTypeIds
+        'otherLocationTypeIds' => $otherLocationTypeIds,
+        'includeSitesCreatedByUser' => $args['include_sites_created_by_user'],
       );
       if (!empty($args['taxon_list_id']) && preg_match('/^\d+$/', trim($args['taxon_list_id']))) {
         $options['taxon_list_id'] = $args['taxon_list_id'];
