@@ -1012,6 +1012,7 @@ HTML
                 'external_key' => $wfMeta['key_value'],
                 'columns' => 'taxon_meaning_id',
               ),
+              'sharing' => $args['sharing'],
             ));
             foreach ($wkMIDs as $wkMID) {
               $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
