@@ -198,13 +198,12 @@ class iform_time_lapse_map {
     }
     $r .= self::speciesSelectorControl($args);
     $r .= self::acceptedOnlyControl($args);
-    $r .= '<label>' . lang::get("Background layers") . ': </label>';
-    $r .= map_helper::layer_list(array(
+    $r .= '<label>' . lang::get("Layers") . ': </label>';
+    $r .= map_helper::layer_list([
       'includeSwitchers' => TRUE,
       'includeHiddenLayers' => TRUE,
       'includeIcons' => FALSE,
-      'layerTypes' => ['base'],
-    ));
+    ]);
     $r .= '</div>';
     $r .= '<div id="map-outer-container">';
     $args['map_width'] = "auto";
