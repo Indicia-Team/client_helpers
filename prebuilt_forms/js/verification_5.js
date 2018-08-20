@@ -289,25 +289,38 @@ indiciaData.rowIdToReselect = false;
   }
 
   function recorderQueryEmailForm() {
+    var r;
     setupRecordCheckEmail(indiciaData.email_subject_send_to_recorder, indiciaData.email_body_send_to_recorder);
-    return '<form id="email-form" class="popup-form"><fieldset>' +
-      '<legend>' + indiciaData.popupTranslations.tab_email + '</legend>' +
+    r = '<form id="email-form" class="popup-form"><fieldset>' +
+      '<legend>' + indiciaData.popupTranslations.tab_email + '</legend>';
+    r += '<div class="verify-template-container"> ' +
+      '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
+      '<select class="verify-template" >' +
+      '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
+    r +=
       '<label>To:</label><input type="text" id="email-to" class="email required" value="' + email.to + '"/><br />' +
       '<label>Subject:</label><input type="text" id="email-subject" class="required" value="' + email.subject + '"/><br />' +
-      '<label>Body:</label><textarea id="email-body" class="required">' + email.body + '</textarea><br />' +
+      '<label>Body:</label><textarea id="email-body" class="required templatable-comment">' + email.body + '</textarea><br />' +
       '<input type="submit" class="default-button" ' +
       'value="' + indiciaData.popupTranslations.sendEmail + '" />' +
       '</fieldset></form>';
+    return r;
   }
 
   function recorderQueryCommentForm() {
     var workflow = (indiciaData.workflowEnabled &&
                     indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1);
-    return '<form class="popup-form"><fieldset><legend>Add new query</legend>' +
+    var r = '<form class="popup-form"><fieldset><legend>Add new query</legend>';
+    r += '<div class="verify-template-container"> ' +
+    '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
+    '<select class="verify-template" >' +
+    '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
+    r +=
       (workflow ? '<label><input type="checkbox" id="query-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' : '') +
-      '<textarea id="query-comment-text" rows="30"></textarea><br>' +
+      '<textarea id="query-comment-text" rows="30" class="templatable-comment"></textarea><br>' +
       '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), null, jQuery(\'#query-confidential:checked\').length, null, \'t\', true); jQuery.fancybox.close();">' +
       'Add query to comments log</button></fieldset></form>';
+    return r;
   }
 
   function popupTabs(tabs) {
@@ -327,6 +340,7 @@ indiciaData.rowIdToReselect = false;
 
   function popupQueryForm(html) {
     $.fancybox(html);
+    loadVerificationTemplates('Q');
     if ($('#popup-tabs')) {
       $('#popup-tabs').tabs();
     }
@@ -824,17 +838,17 @@ indiciaData.rowIdToReselect = false;
       function (data) {
         if (data.length > 0) {
           for (i = 0; i < data.length; i++) {
-            $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+            $('.verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
           }
-          $('#verify-template').data('data', data);
+          $('.verify-template').data('data', data);
         } else {
-          $('#verify-template-container').hide();
+          $('.verify-template-container').hide();
         }
       }
     );
-    $('#verify-template').change(function () {
-      var templateID = $('#verify-template').val();
-      var data = $('#verify-template').data('data');
+    $('.verify-template').change(function () {
+      var templateID = $('.verify-template').val();
+      var data = $('.verify-template').data('data');
       var substitute = function (item) {
         // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
         var conversions = {
@@ -877,7 +891,7 @@ indiciaData.rowIdToReselect = false;
       };
       for (i = 0; i < data.length; i++) {
         if (data[i].id === templateID) {
-          $('#verify-comment').val(substitute(data[i].template));
+          $('.templatable-comment').val(substitute(data[i].template));
         }
       }
     });
@@ -888,11 +902,11 @@ indiciaData.rowIdToReselect = false;
     var html = '<form id="redet-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.redetermine + '</legend>';
     html += '<div id="redet-dropdown-popup-ctnr"></div>';
-    html += '<div id="verify-template-container"> ' +
+    html += '<div class="verify-template-container"> ' +
     '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
-    '<select id="verify-template" >' +
+    '<select class="verify-template" >' +
     '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
-    html += '<label class="auto">Comment:</label><textarea id="verify-comment" rows="5" cols="80"></textarea><br />' +
+    html += '<label class="auto">Comment:</label><textarea id="verify-comment" class="templatable-comment" rows="5" cols="80"></textarea><br />' +
       '<input type="submit" class="default-button" value="' +
       indiciaData.popupTranslations.redetermine + '" />' +
       '</fieldset></form>';
@@ -933,13 +947,13 @@ indiciaData.rowIdToReselect = false;
     html = '<fieldset class="popup-form status-form">' +
       '<legend><span class="icon status-' + status + substatus + '"></span>' +
       indiciaData.popupTranslations.title.replace('{1}', '<strong>' + statusLabel(status, substatus)) + '</strong></legend>';
-    html += '<div id="verify-template-container"> ' +
+    html += '<div class="verify-template-container"> ' +
       '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
-      '<select id="verify-template" >' +
+      '<select class="verify-template" >' +
       '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
 
     html += '<label class="auto">' + indiciaData.popupTranslations.commentLabel + ':</label>' +
-      '<textarea id="verify-comment" rows="5" cols="80"></textarea><br />';
+      '<textarea id="verify-comment" class="templatable-comment" rows="5" cols="80"></textarea><br />';
 
     html += '<label class="auto">' + indiciaData.popupTranslations.referenceLabel + ':</label>' +
       '<input type="text" id="verify-reference" value=""><br />' +
@@ -953,7 +967,7 @@ indiciaData.rowIdToReselect = false;
     $.fancybox(html);
     if (multimode) {
       // Doing multiple records, so can't use templates
-      $('#verify-template-container').hide();
+      $('.verify-template-container').hide();
     } else {
       loadVerificationTemplates(status + substatus);
     }
