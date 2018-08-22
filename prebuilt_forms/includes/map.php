@@ -370,7 +370,6 @@ function iform_map_zoom_to_location($locationId, $readAuth) {
  * @param bool $restrict Set true to limit the map to the area covering the geoms.
  */
 function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
-  drupal_set_message('iform_map_zoom_to_geom');
   $name = str_replace("'", "\\'", $name);
   $geoms = is_array($geom) ? $geom : [$geom];
   $geomJson = json_encode($geoms);
