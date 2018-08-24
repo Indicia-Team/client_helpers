@@ -1606,11 +1606,7 @@ class extension_splash_extensions {
       $locationIdFromURL=$_GET[$options['locationParamFromURL']];
     else
       $locationIdFromURL=0;
-    //Setup options for sending an email to the user on successful location assignment
-    if (!empty($options['allocatedLocationEmailSubject'])&& $options['allocatedLocationEmailSubject']==true
-            && !empty($options['allocatedLocationEmailMessage'])&& $options['allocatedLocationEmailMessage']==true) {
-      self::setup_and_prepare_location_allocation_email($auth,$options);
-    }
+    self::decide_if_email_needed($auth, $options);
     //Get the user_id from the URL if we can, this would hide the user drop-down and make
     //the control applicable to a single user.
     if (!empty($options['userParamFromURL'])&&!empty($_GET[$options['userParamFromURL']]))
@@ -1715,23 +1711,22 @@ class extension_splash_extensions {
           function (data) {
             if (typeof data.error === 'undefined') {
               alert('User site configuration saved successfully');
-              if (indiciaData.doSendEmail) {
-                var parameters;
-                //remove overlay off back of URL
-                var url = window.location.href.split('#')[0];
-                //Replace any existing parameters. Am sure there must be a nicer way to do this, but this works for now
-                url = url.split('?location_id_to_email')[0];
-                url = url.split('&location_id_to_email')[0];
-                if (url.indexOf('?') !== -1) {
-                  parameters = '&location_id_to_email='+locationId+'&user_id_to_email='+userIdToAdd;
-                } else {
-                  parameters = '?location_id_to_email='+locationId+'&user_id_to_email='+userIdToAdd;
-                }
-                url = url+parameters;
-                window.location.href = url;
+              
+              var parameters;
+              //remove overlay off back of URL
+              var url = window.location.href.split('#')[0];
+              //Replace any existing parameters. Am sure there must be a nicer way to do this, but this works for now
+              url = url.split('?location_id_for_square_signup_email')[0];
+              url = url.split('&location_id_for_square_signup_email')[0];
+              url = url.split('?location_id_for_square_remove_email')[0];
+              url = url.split('&location_id_for_square_remove_email')[0];
+              if (url.indexOf('?') !== -1) {
+                parameters = '&location_id_for_square_signup_email='+locationId+'&user_id_for_email='+userIdToAdd;
               } else {
-                location.reload();
+                parameters = '?location_id_for_square_signup_email='+locationId+'&user_id_for_email='+userIdToAdd;
               }
+              url = url+parameters;
+              window.location.href = url;
             } else {
               alert(data.error);
             }
@@ -1770,19 +1765,62 @@ class extension_splash_extensions {
     self::user_site_delete($postUrl,$args);
     return $r;
   }
-
+  /*
+   * Decide if we need to send an information email to user when they allocate themselves a location, 
+   * or do we need to send email to support on location removal
+   * @auth Authentication to pass to functions for calling Warehouse.
+   * @options Options complete set of options passed to the control.
+   */
+  private static function decide_if_email_needed($auth, $options) {
+    // When screen reploads we can work out the kind of email to send depending on the URL params.
+    $sendAllocationEmail = false;
+    $sendRemovalEmailToAdmin = false;
+    if (!empty($_GET['location_id_for_square_signup_email'])) {
+      $sendAllocationEmail = true;
+    } elseif (!empty($_GET['location_id_for_square_remove_email'])) {
+      $sendRemovalEmailToAdmin = true;
+    }
+    // Setup options for sending an email to the user on successful location assignment.
+    if (!empty($options['allocatedLocationEmailSubject']) && $options['allocatedLocationEmailSubject']==true
+            && !empty($options['allocatedLocationEmailMessage']) && $options['allocatedLocationEmailMessage']==true
+            && $sendAllocationEmail==true) {
+      self::setup_and_prepare_location_allocation_remove_email($auth,null,$options['allocatedLocationEmailSubject'], $options['allocatedLocationEmailMessage'], 'Allocate');
+    }
+    if (!empty($options['removalLocationEmailSubject']) && $options['removalLocationEmailSubject']==true
+            && !empty($options['removalLocationEmailMessage']) && $options['removalLocationEmailMessage']==true
+            && !empty($options['npmsSupportEmail'])
+            && $sendRemovalEmailToAdmin==true) {
+      self::setup_and_prepare_location_allocation_remove_email($auth, $options['npmsSupportEmail'],$options['removalLocationEmailSubject'], $options['removalLocationEmailMessage'], 'Remove');
+    }
+  }
+  
   private static function user_site_delete($postUrl,$args) {
     //Function for when user elects to remove site allocations
     data_entry_helper::$javascript .= "
-    user_site_delete = function(pav_id) {
+    user_site_delete = function(pav_id, locationId, userIdToAdd, allocationStatus) {
       $.post('$postUrl',
         {\"website_id\":".$args['website_id'].",\"id\":pav_id, \"deleted\":\"t\"},
         function (data) {
           if (typeof data.error === 'undefined') {
             //Avoid including the email paramters when removing locations as we don't want to send the
             //location sign-up email
-            var url = window.location.href.split('?location_id_to_email')[0];
-            url = window.location.href.split('&location_id_to_email')[0];
+            //remove overlay off back of URL
+            var url = window.location.href.split('#')[0];
+            //Replace any existing parameters. Am sure there must be a nicer way to do this, but this works for now
+            url = url.split('?location_id_for_square_signup_email')[0];
+            url = url.split('&location_id_for_square_signup_email')[0];
+            url = url.split('?location_id_for_square_remove_email')[0];
+            url = url.split('&location_id_for_square_remove_email')[0];
+            // Only inform support that square has been removed by user if the square is approved otherwise
+            // the user adding and removing from grid would send an email each time
+            if (allocationStatus==1) {
+              if (url.indexOf('?') !== -1) {
+                parameters = '&location_id_for_square_remove_email='+locationId+'&user_id_for_email='+userIdToAdd;
+              } else {
+                parameters = '?location_id_for_square_remove_email='+locationId+'&user_id_for_email='+userIdToAdd;
+              }
+              url = url+parameters;
+            }
             window.location.href = url;
           } else {
             alert(data.error);
@@ -1814,36 +1852,45 @@ class extension_splash_extensions {
     $r .= '</select>';
     return '<label>User : </label>'.$r.'<br>';
   }
-
   /*
    * Setup the sending of the location allocation email to the person allocated the location if required.
    */
-  private static function setup_and_prepare_location_allocation_email($auth,$options) {
-    data_entry_helper::$javascript.="indiciaData.doSendEmail=true;\n";
+  private static function setup_and_prepare_location_allocation_remove_email($auth, $npmsSupportEmail, $subject, $message, $type) {
+    if ($type == 'Allocate') {
+      $locationId = $_GET['location_id_for_square_signup_email'];
+      $userId = $_GET['user_id_for_email'];
+    } elseif ($type == 'Remove') {
+      $locationId = $_GET['location_id_for_square_remove_email'];
+      $userId = $_GET['user_id_for_email'];
+    }
     //Once the page actually reloads after the allocation, the email can be sent
-    if (!empty($_GET['location_id_to_email'])&&!empty($_GET['user_id_to_email'])) {
+    if (!empty($locationId) && !empty($userId)) {
       $locationData = data_entry_helper::get_population_data(array(
         'table' => 'location',
-        'extraParams' => $auth['read'] + array('id' => $_GET['location_id_to_email']),
+        'extraParams' => $auth['read'] + array('id' => $locationId),
         'nocache' => true
       ));
       $userData = data_entry_helper::get_population_data(array(
         'table' => 'user',
-        'extraParams' => $auth['read'] + array('id' => $_GET['user_id_to_email'], 'view' => 'detail'),
+        'extraParams' => $auth['read'] + array('id' => $userId, 'view' => 'detail'),
         'nocache' => true
       ));
-      if (!empty($locationData[0]['name'])&&!empty($userData[0]['email_address'])&&!empty($userData[0]['username'])) {
-        self::send_location_allocation_email($userData[0]['username'],$options['allocatedLocationEmailSubject'],$options['allocatedLocationEmailMessage'],$userData[0]['email_address'],$locationData[0]['name']);
+      if ($type=='Allocate') {
+        $emailAddress = $userData[0]['email_address'];
+      } elseif ($type == 'Remove') {
+        $emailAddress = $npmsSupportEmail;
+      } 
+      if (!empty($locationData[0]['name'])&&!empty($emailAddress)&&!empty($userData[0]['username'])) {
+        self::send_location_allocation_or_removal_email($userData[0]['username'], $subject, $message, $emailAddress, $locationData[0]['name'], $type);
       } else {
-        return watchdog('iform', 'Location signup email not sent as not all the parameters were supplied');
+        return watchdog('iform', 'Email not sent as the name, email_address, or username is missing');
       }
     }
   }
-
   /*
    * Optionally send email to user when location is assigned to them
    */
-  private static function send_location_allocation_email($username,$subject,$message,$emailTo,$locationName) {
+  private static function send_location_allocation_or_removal_email($username, $subject, $message, $emailTo, $locationName, $type) {
     //Replacements for the person's username and the location name tags in the message with the real location and person name.
     $message = str_replace("{username}", $username, $message);
     $message = str_replace("{location_name}", $locationName, $message);
@@ -1857,13 +1904,20 @@ class extension_splash_extensions {
     } else {
       $sent = mail($emailTo, $subject, wordwrap($message, 70));
     }
+    // Change the logging message depending on email purpose
+    if ($type==='Allocate') {
+      $action='signup';    
+    }
+    if ($type==='Remove') {
+      $action='removal';    
+    }    
     if ($sent) {
-      watchdog('iform', 'Location signup email sent to '.$username.' '.$emailTo);
+      watchdog('iform', 'Location '.$action.' email sent to '.$username.' '.$emailTo);
     } else {
-      watchdog('iform', 'Location signup failed to '.$username.' '.$emailTo);
+      watchdog('iform', 'Location '.$action.' email failed to '.$username.' '.$emailTo);
     }
   }
-
+  
   //The map pages uses node specific javascript that is very similar to the javascript functions found in
   //add_locations_to_user in this file (we couldn't call this code for re-use).
   //Use a simple function to supply the required indiciaData for that node specific javascript
