@@ -384,6 +384,84 @@ class extension_splash_extensions {
   }
 
   /*
+   * The Splash Location Select control allows selection of a square/plot on the first tab of data entry,
+   * but these are then not visible to the user on the other tabs. This control takes what is in the Splash Location Select
+   * control and displays it to a label on the screen.
+   * $options Options array with the following possibilities:<ul>
+   * <li><b>sectionTitle</b><br/>
+   * A title for this area of the page</li>
+   * <li><b>selectedSquareLabel</b><br/>
+   * Label next to the box showing the square</li>
+   * <li><b>selectedPlotLabel</b><br/>
+   * Label next to the box showing the plot</li>
+   */
+  public static function labels_displayed_from_splash_location_select($auth, $args, $tabAlias, $options) {
+    if (!empty($options['selectedSquareLabel'])) {
+      $selectedSquareLabel=$options['selectedSquareLabel'];
+    } 
+    else {
+      $selectedSquareLabel='';
+    }
+    if (!empty($options['selectedPlotLabel'])) {
+      $selectedPlotLabel=$options['selectedPlotLabel'];
+    }
+    else {
+      $selectedPlotLabel='';
+    }
+    $r='';
+    $squareLabelOptions=array();
+    $squareLabelOptions=array_merge($squareLabelOptions,
+        array('id'=>'selected-square-id','class'=>'selected-square-class', 'label'=>$selectedSquareLabel,'readonly'=>'readonly', 'disabled'=>'disabled'));
+    
+    $plotLabelOptions=array();
+    $plotLabelOptions=array_merge($squareLabelOptions,
+        array('id'=>'selected-plot-id', 'class'=>'selected-plot-class', 'label'=>$selectedPlotLabel,'readonly'=>'readonly', 'disabled'=>'disabled'));
+    
+    if (empty($options['sectionTitle'])) {
+      $options['sectionTitle']='';
+    }
+    
+    $r .= '<div>' . $options['sectionTitle'];
+    // Dsplay the square and the plot
+    $r .= data_entry_helper::text_input($squareLabelOptions);
+    $r .= data_entry_helper::text_input($plotLabelOptions);
+    $r .= '</div>';
+    // If the Square or Plot selection changes then update our label.
+    // imp-location is the plot as this is what is saved against the sample
+    data_entry_helper::$javascript .= "
+    $('#squares-select-list').ready(function() {
+      update_square_plot_info_labels();
+    });
+    $('#squares-select-list').change(function() {
+      update_square_plot_info_labels();
+    });
+    $('#imp-location').ready(function() {
+      update_square_plot_info_labels();
+    });
+    $('#imp-location').change(function() {
+      update_square_plot_info_labels();
+    });
+    
+    function update_square_plot_info_labels() {
+     var plotLabel=$('#imp-location :selected').text();
+     plotLabel=plotLabel.substring(0, plotLabel.indexOf(' ('))
+     if ($('#squares-select-list').val()) {
+        $('.".'selected-square-class'."').val($('#squares-select-list :selected').text());
+      } else {
+        $('.".'selected-square-class'."').val('');
+      }
+      // Square must also have a selection to display plot, otherwise it ends up showing the Awaiting Selection
+      // text in our plot label
+      if ($('#squares-select-list').val() && $('#imp-location').val()) {
+        $('.".'selected-plot-class'."').val(plotLabel);
+      } else {
+        $('.".'selected-plot-class'."').val('');
+      }
+    }\n";
+    return $r;
+  }
+
+  /*
    * Display a mini report when the user selects a plot
    */
   private static function plot_report_panel($auth,$options) {
