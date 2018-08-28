@@ -276,14 +276,8 @@ class map_helper extends helper_base {
         $presetLayers[] = 'virtual_earth';
         $presetLayers[] = 'osm';
       }
-      if (!empty(parent::$warehouse_proxy)) {
-        $warehouseUrl = parent::$warehouse_proxy;
-      }
-      else {
-        $warehouseUrl = parent::$base_url;
-      }
       $options = array_merge(array(
-          'indiciaSvc' => $warehouseUrl,
+          'indiciaSvc' => parent::getProxiedBaseUrl(),
           'indiciaGeoSvc' => self::$geoserver_url,
           'divId' => 'map',
           'class' => '',
@@ -327,23 +321,23 @@ class map_helper extends helper_base {
         {
           $a = explode('_', $layer);
           $a = strtolower($a[0]);
-          switch($a)
-          {
+          switch ($a) {
             case 'google':
               self::add_resource('googlemaps');
               break;
+
             case 'virtual':
               self::add_resource('virtualearth');
               break;
           }
-          if ($a=='bing' && (!isset(self::$bing_api_key) || empty(self::$bing_api_key))) {
-            return '<p class="error">To use the Bing map layers, please ensure that you declare a variable called ' .
-              '$bing_api_key in the helper_config.php file. Either set a value or set to an empty string and specify ' .
-              'a value in the IForm settings page if using the Drupal module.</p>';
+          if ($a === 'bing' && (!isset(self::$bing_api_key) || empty(self::$bing_api_key))) {
+            return '<p class="error">To use the Bing map layers, please ensure that you declare the $bing_api_key ' .
+              'setting. Either set a value in the helper_config.php file or set to an empty string and specify a ' .
+              'value in the IForm settings page if using the Drupal module.</p>';
           }
-          if ($a=='os' && (!isset(self::$os_api_key) || empty(self::$os_api_key))) {
-            return '<p class="error">To use the Ordnance Survey map layers, please ensure that you declare a variable ' .
-              'called $os_api_key in the helper_config.php file. Either set a value or set to an empty string and ' .
+          if ($a === 'os' && (!isset(self::$os_api_key) || empty(self::$os_api_key))) {
+            return '<p class="error">To use the Ordnance Survey map layers, please ensure that you declare the ' .
+              '$os_api_key setting. Either set a value in the helper_config.php file or set to an empty string and ' .
               'specify a value in the IForm settings page if using the Drupal module.</p>';
           }
         }

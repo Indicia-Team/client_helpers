@@ -19,7 +19,7 @@
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link  http://code.google.com/p/indicia/
  */
- 
+
 require_once('includes/user.php');
 require_once('includes/groups.php');
 /**
@@ -32,7 +32,7 @@ require_once('includes/groups.php');
 //AVB To DO  - Test importer with various attributes
 //Importer changed to extend helper_base as the plant portal importer needs customer versions of many of the functions
 //that were previously in the import_helper (and the import_helper extends helper_base)
-class iform_plant_portal_user_data_importer extends helper_base {  
+class iform_plant_portal_user_data_importer extends helper_base {
   //AVB To Do - This variable's functionality comes from the standard importer, needs testing if it works with Plant Portal importer
   /**
    * @var boolean Flag set to true if the host system is capable of storing our user's remembered import mappings
@@ -43,13 +43,13 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @var array List of field to column mappings that we managed to set automatically
    */
   private static $automaticMappings=array();
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
-  /** 
-   * Return the form metadata. 
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_plant_portal_user_data_importer_definition() {
@@ -60,7 +60,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       'recommended' => false
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -338,7 +338,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'type'=>'textarea',
         'required'=>true,
         'group'=>'Custom fatal import errors'
-      )  
+      )
     );
   }
   /**
@@ -357,7 +357,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
             'eSG'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>0),
             'eSG-ePG'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>1,'newPlotExistingPlotGroup'=>1),
             'ePG'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>1));
-    
+
     $args['fatalImportTypes'] = array(
             'eSwD'=>array('existingSample'=>2,'existingPlot'=>0,'newSampleExistingSampleGroup'=>0,'newPlotExistingPlotGroup'=>0),
             'eSGwD'=>array('existingSample'=>0,'existingPlot'=>0,'newSampleExistingSampleGroup'=>2,'newPlotExistingPlotGroup'=>0),
@@ -373,13 +373,13 @@ class iform_plant_portal_user_data_importer extends helper_base {
             empty($args['sample_group_permission_person_attr_id'])||empty($args['plot_group_permission_person_attr_id'])||
             empty($args['sample_group_termlist_id'])||empty($args['plot_group_termlist_id']))
     return '<div>Not all the parameters for the page have been filled in. Please filled in all the parameters on the Edit Tab.</div>';
-    
+
     foreach ($args['nonFatalImportTypes'] as $importTypeCode=>$importTypeStates) {
       if (empty($args[$importTypeCode.'_message'])) {
         return '<div>Please make sure all the non-fatal import warnings have been specified on the Edit Tab.</div>';
       }
     }
-    
+
     foreach ($args['fatalImportTypes'] as $importTypeCode=>$importTypeStates) {
       if (empty($args[$importTypeCode.'_message'])) {
         return '<div>Please make sure all the fatal import error messages have been specified on the Edit Tab.</div>';
@@ -406,7 +406,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
         'skipMappingIfPossible' => $args['skipMappingIfPossible']
       );
-      
+
       $r = self::importer($args,$options);
     } catch (Exception $e) {
       hostsite_show_message($e->getMessage(), 'warning');
@@ -418,7 +418,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $r;
   }
-  
+
     /**
    * Returns the HTML for a simple file upload form.
    */
@@ -466,28 +466,28 @@ class iform_plant_portal_user_data_importer extends helper_base {
         // skip parts of the form we have a preset value for
         $formOptions['extraParams'] = $options['presetSettings'];
       }
-      
+
       //Don't display the survey drop-down on the setting form as this has been specified in the $args
       if (!empty($args['override_survey_id'])) {
         unset($formOptions['form']['survey_id']);
         $r .= '<input id="survey_id" name="survey_id" type="hidden" value = "'.$args['override_survey_id'].'">';
       }
-      
+
       //Don't display the species list drop-down on the setting form as this has been specified in the $args
       if (!empty($args['override_taxon_list_id'])) {
         unset($formOptions['form']['occurrence:fkFilter:taxa_taxon_list:taxon_list_id']);
         $r .= '<input id="occurrence:fkFilter:taxa_taxon_list:taxon_list_id" name="occurrence:fkFilter:taxa_taxon_list:taxon_list_id" type="hidden" value = "'.$args['override_taxon_list_id'].'">';
       }
-      
+
       //For Plant Portal, all records are uploaded as in-progress, until the user approves the records for final submission.
       unset($formOptions['form']['occurrence:record_status']);
       $r .= '<input id="occurrence:record_status" name="occurrence:record_status" type="hidden" value = "I">';
-      
+
       $form = self::build_params_form($formOptions, $hasVisibleContent);
       // If there are no settings required, skip to the next step.
       if (!$hasVisibleContent)
         return self::upload_mappings_form($options);
-      $r .= $form;      
+      $r .= $form;
       if (isset($options['presetSettings'])) {
         // The presets might contain some extra values to apply to every row - must be output as hiddens
         $extraHiddens = array_diff_key($options['presetSettings'], $formArray);
@@ -507,7 +507,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       return self::upload_mappings_form($options);
     }
   }
-  
+
   /**
    * Outputs the form for mapping columns to the import fields.
    * @param array $options Options array passed to the import control.
@@ -528,7 +528,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $options['presetSettings'],
         $_POST
       );
-    } else 
+    } else
       $settings = $_POST;
     // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
     foreach ($settings as $key => $value) {
@@ -555,7 +555,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $response = self::http_post($request, array());
     //Most of this code matches the "normal" importer page.
     $fields = json_decode($response['output'], true);
-    
+
     //To Do AVB. This bit can probably be optimised a bit
     $options['model']='location';
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
@@ -574,7 +574,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //as everything else can be found against the sample, even the plot location
     $locationFieldsToUse['locAttr:'.$options['plot_group_identifier_name_attr_id']] = $locationfields['locAttr:'.$options['plot_group_identifier_name_attr_id']];
     $fields = array_merge($fields,$locationFieldsToUse);
-    
+
     if (!is_array($fields))
       return "curl request to $request failed. Response ".print_r($response, true);
     // Restrict the fields to ones relevant for the survey
@@ -594,7 +594,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $unlinked_fields = array_diff_key($fields, array_combine($preset_fields, $preset_fields));
     else
       $unlinked_fields = $fields;
-    
+
     // only use the required fields that are available for selection - the rest are handled somehow else
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
     $handle = fopen($_SESSION['uploaded_file'], "r");
@@ -638,17 +638,17 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     $r .= '</tbody>';
     $r .= '</table>';
-    
+
     $r .= '<div><div id="required-instructions" class="import-mappings-instructions"><b>'.lang::get('Tasks: ').'</b><span>'.
       lang::get('The following database attributes must be matched to a column in your import file before you can continue').':</span><ul></ul><br/></div><br>';
-    
+
     $r .= '<div id="duplicate-instructions" class="import-mappings-duplicate-instructions"><span id="duplicate-instruct"><em>'.
       lang::get('There are currently two or more drop-downs allocated to the same value.').'</em></span><ul></ul><br/></div></div></div>';
-    
+
     $r .= '<input type="hidden" name="import_step" value="2" />';
     $r .= '<input type="submit" name="submit" id="submit" value="'.lang::get('Continue').'" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
-    
+
     self::$javascript .= "function detect_duplicate_fields() {
       var valueStore = [];
       var duplicateStore = [];
@@ -664,11 +664,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
               duplicateStore[duplicateStoreIndex] = select.value;
               duplicateStoreIndex++;
             }
-             
+
           }
           valueStore[valueStoreIndex] = select.value;
           valueStoreIndex++;
-        }      
+        }
       })
       if (duplicateStore.length==0) {
         DuplicateAllowsUpload = 1;
@@ -677,7 +677,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         DuplicateAllowsUpload = 0;
         $('#duplicate-instruct').css('display', 'inline');
       }
-    }\n";  
+    }\n";
     self::$javascript .= "function update_required_fields() {
       // copy the list of required fields
       var fields = $.extend(true, {}, required_fields),
@@ -715,7 +715,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         delete fields['sample:entered_sref'];
     	delete fields['sample:entered_sref_system']
       }
-      //To Do AVB - May need to clean this, remove these from being mandatory mapping fields as we get spatial references from 
+      //To Do AVB - May need to clean this, remove these from being mandatory mapping fields as we get spatial references from
       //the sample itself.
       delete fields['location:centroid_sref'];
       delete fields['location:centroid_sref_system']
@@ -753,7 +753,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     self::$javascript .= "$('#entry_form select').change(function() {detect_duplicate_fields(); update_required_fields();});\n";
     return $r;
   }
-  
+
   /**
    * As the Plant Portal importal contains an extra step, we need a hidden version of the upload_mappings_form to be displayed on the Plant Portal specific
    * step otherwise the information is not posted and is lost.
@@ -765,7 +765,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $options['presetSettings'],
         $_POST
       );
-    } else 
+    } else
       $settings = $_POST;
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_fields/".$options['model'];
     $request .= '?'.self::array_to_query_string($options['auth']['read']);
@@ -901,7 +901,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * Takes an array of fields, and removes the website ID or survey ID fields within the arrays if
    * the website and/or survey id are set in the $settings data.
    * @param array $array Array of fields.
-   * @param array $settings Global settings which apply to every row, which may include the website_id 
+   * @param array $settings Global settings which apply to every row, which may include the website_id
    * and survey_id.
    */
   private static function clear_website_survey_fields(&$array, $settings) {
@@ -914,7 +914,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
     }
   }
-  
+
   /**
    * Displays the upload result page.
    * @param array $options Array of options passed to the import control.
@@ -946,7 +946,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
   * Returns a list of columns as an list of <options> for inclusion in an HTML drop down,
   * loading the columns from a model that are available to import data into
   * (excluding the id and metadata). Triggers the handling of remembered checkboxes and the
-  * associated labelling. 
+  * associated labelling.
   * This method also attempts to automatically find a match for the columns based on a number of rules
   * and gives the user the chance to save their settings for use the next time they do an import (TO DO AVB - Note might need to alter this text if remember fields is not found to work with Plant Portal)
   * @param string $model Name of the model
@@ -980,7 +980,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         * in the drop-down lists. Using array_count_values the array values are calculated as the number of times
         * each caption occurs for use in duplicate detection.
         * $labelListHeading is an array where the keys are each column we work with concatenated to the heading of the caption we
-        * are currently working on. 
+        * are currently working on.
         */
         $strippedScreenCaption = str_replace(" (lookup existing record)","",self::translate_field($field, $caption));
         $labelList[$labelListIndex] = strtolower($strippedScreenCaption);
@@ -988,9 +988,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
         if (isset ($labelListHeading[$column.$prefix]))
           $labelListHeading[$column.$prefix] = $labelListHeading[$column.$prefix].':'.strtolower($strippedScreenCaption);
         else
-          $labelListHeading[$column.$prefix] = strtolower($strippedScreenCaption); 
+          $labelListHeading[$column.$prefix] = strtolower($strippedScreenCaption);
       }
-    } 
+    }
     $labelList = array_count_values($labelList);
     $multiMatch=array();
     foreach ($fields as $field=>$caption) {
@@ -1040,14 +1040,14 @@ class iform_plant_portal_user_data_importer extends helper_base {
         //As a last resort. If we have a match and find that there is more than one caption with this match, then flag a multiMatch to deal with it later
         if (strcasecmp($strippedScreenCaption, $column)==0 && $labelList[strtolower($strippedScreenCaption)] > 1) {
           $multiMatch[] = $column;
-          $optionID = $idColumn.'Duplicate';  
-        } else 
+          $optionID = $idColumn.'Duplicate';
+        } else
           $optionID = $idColumn.'Normal';
         $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
         if ($selected)
           self::$automaticMappings[$column] = $field;
       }
-      
+
       // if we have got an option for this field, add to the list
       if (isset($option)) {
         // first check if we need a new heading
@@ -1066,18 +1066,18 @@ class iform_plant_portal_user_data_importer extends helper_base {
                 $class = $idColumn.'Normal';
             }
           }
-          if (!empty($r)) 
+          if (!empty($r))
             $r .= '</optgroup>';
           $r .= "<optgroup class=\"$class\" label=\"";
           $r .= self::processLabel(lang::get($heading)).'">';
         }
         $r .= $option;
       }
-    }  
+    }
     $r = self::items_to_draw_once_per_import_column($r, $column, $itWasSaved, isset($autoFieldMappings['RememberAll']), $multiMatch);
     return $r;
   }
-  
+
  /**
   * This method is used by the mode_field_options method.
   * It has two modes:
@@ -1086,7 +1086,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
   * When $saveDetectedMode is true, the method uses the same rules to see if the system would have retrieved the
   * same drop-down value as the one that was saved by the user. If this is the case, the system acts
   * as if the value had been automatically determined rather than saved.
-  * 
+  *
   * @param string $column The CSV column we are currently working with from the import file.
   * @param string $defaultCaption The default, untranslated caption.
   * @param string $strippedScreenCaption A version of an item in the column selection drop-down that has 'lookup existing record'stripped
@@ -1096,12 +1096,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
   * @param integer $itWasSaved This is set to 1 if the system detects that the user has a custom saved preference for a csv column drop-down.
   * @param boolean $saveDetectedMode Determines the mode the method is running in
   * @return array Depending on the mode, we either are interested in the $selected value or the $itWasSaved value.
-  */ 
+  */
   private static function auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved, $saveDetectedMode) {
     $column=trim($column);
     /*
     * This is an array of drop-down options with a list of possible column headings the system will use to match against that option.
-    * The key is in the format heading:option, all lowercase e.g. occurrence:comment 
+    * The key is in the format heading:option, all lowercase e.g. occurrence:comment
     * The value is an array of regexes that the system will automatically match against.
     */
     $alternatives = array(
@@ -1114,29 +1114,29 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $selected=false;
     //handle situation where there is a unique exact match
     if (strcasecmp($strippedScreenCaption, $column)==0 && $labelList[strtolower($strippedScreenCaption)] == 1) {
-      if ($saveDetectedMode) 
-        $itWasSaved = 0; 
-      else 
+      if ($saveDetectedMode)
+        $itWasSaved = 0;
+      else
         $selected=true;
     } else {
       //handle the situation where a there isn' a unqiue match, but there is if you take the heading into account also
       if (strcasecmp($prefix.' '.$strippedScreenCaption, $column)==0) {
-        if ($saveDetectedMode) 
-          $itWasSaved = 0; 
-        else 
+        if ($saveDetectedMode)
+          $itWasSaved = 0;
+        else
           $selected=true;
       }
       //handle the situation where there is a match with one of the items in the alternatives array.
       if (isset($alternatives[$prefix.':'.strtolower($defaultCaption)])) {
         foreach ($alternatives[$prefix.':'.strtolower($defaultCaption)] as $regexp) {
           if (preg_match($regexp, strtolower(str_replace(' ', '', $column)))) {
-            if ($saveDetectedMode) 
-              $itWasSaved = 0; 
-            else 
+            if ($saveDetectedMode)
+              $itWasSaved = 0;
+            else
               $selected=true;
             break;
           }
-        } 
+        }
       }
     }
     return array (
@@ -1144,8 +1144,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
       'selected'=>$selected
     );
   }
-  
-  
+
+
  /**
   * Used by the get_column_options to draw the items that appear once for each of the import columns on the import page.
   * These are the checkboxes, the warning the drop-down setting was saved and also the non-unique match warning
@@ -1154,18 +1154,18 @@ class iform_plant_portal_user_data_importer extends helper_base {
   * @param integer $itWasSaved This is 1 if a setting is saved for the column and the column would not have been automatically calculated as that value anyway.
   * @param boolean $rememberAll Is the remember all mappings option set?.
   * @param array $multiMatch Array of columns where there are multiple matches for the column and this cannot be resolved.
-  * @return string HTMl string 
+  * @return string HTMl string
   */
   private static function items_to_draw_once_per_import_column($r, $column, $itWasSaved, $rememberAll, $multiMatch) {
     $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
     $optionID = str_replace(" ", "", $column).'Normal';
     $r = "<option value=\"&lt;Not imported&gt;\">&lt;".lang::get('Not imported').'&gt;</option>'.$r.'</optgroup>';
     //To DO AVB - Only need to keep if we can support Remember Mappings in Plant Portal
-    if (self::$rememberingMappings) 
+    if (self::$rememberingMappings)
       $r .= "<td class=\"centre\"><input type='checkbox' name='$column.Remember' class='rememberField'id='$column.Remember' value='1'$checked onclick='
       if (!this.checked) {
         $(\"#RememberAll\").removeAttr(\"checked\");
-      }' 
+      }'
       title='If checked, your selection for this particular column will be saved and automatically selected during future imports. ".
           "Any alterations you make to this default selection in the future will also be remembered until you deselect the checkbox.'></td>";
     if ($itWasSaved[$column] == 1) {
@@ -1186,8 +1186,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $r;
   }
-  
-  
+
+
  /**
   * Used by the get_column_options method to add "lookup existing record" to the appropriate captions
   * in the drop-downs on the import page.
@@ -1203,7 +1203,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     if (empty($caption)) {
       if (substr($fieldname,0,3)=='fk_') {
         $captionSuffix .= ' ('.lang::get('lookup existing record').')';
-      }   
+      }
       $fieldname=str_replace(array('fk_','_id'), array('',''), $fieldname);
       if ($prefix==$model || $prefix=="metaFields" || $prefix==substr($fieldname,0,strlen($prefix))) {
         $caption = self::processLabel($fieldname).$captionSuffix;
@@ -1211,7 +1211,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $caption = self::processLabel("$fieldname").$captionSuffix;
       }
     } else {
-        $caption .= (substr($fieldname,0,3)=='fk_' ? ' ('.lang::get('lookup existing record').')' : ''); 
+        $caption .= (substr($fieldname,0,3)=='fk_' ? ' ('.lang::get('lookup existing record').')' : '');
     }
     return $caption;
   }
@@ -1290,10 +1290,10 @@ class iform_plant_portal_user_data_importer extends helper_base {
       return $caption;
     }
   }
-  
+
   /**
    * Takes a file that has been uploaded to the client website upload folder, and moves it to the warehouse upload folder using the
-   * data services. 
+   * data services.
    *
    * @param string $path Path to the file to upload, relative to the interim image path folder (normally the
    * client_helpers/upload folder.
@@ -1306,7 +1306,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
   protected static function send_file_to_warehouse_plant_portal_importer($path, $persist_auth=false, $readAuth = null, $service='data/handle_media',$model) {
     if ($readAuth==null) $readAuth=$_POST;
     $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    //This code is slightly different for the Plant Portal importer. Customised because the importer php file is a prebuilt form, so we can't simply get the current 
+    //This code is slightly different for the Plant Portal importer. Customised because the importer php file is a prebuilt form, so we can't simply get the current
     //directory as the Upload folder isn't actually there
     $uploadFolderPath=str_replace('prebuilt_forms','',dirname(__FILE__));
     $interim_path = $uploadFolderPath.'/'.$interim_image_folder;
@@ -1340,9 +1340,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     unlink(realpath($interim_path.$path));
     return $r;
   }
-  
+
   /**
-   * Outputs the import wizard steps. 
+   * Outputs the import wizard steps.
    *
    * @param array $options Options array with the following possibilities:
    *
@@ -1395,9 +1395,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     else throw new exception('Invalid importer state');
   }
-  
+
   /**
-   * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload. 
+   * Display the page which outputs the upload progress bar. Adds JavaScript to the page which performs the chunked upload.
    * @param array $options Array of options passed to the import control.
    * @param array $mappings List of column title to field mappings
    */
@@ -1437,14 +1437,14 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
       $post = array_merge($options['auth']['write_tokens'], $metadata);
       // store the warehouse user ID if we know it.
-      if (function_exists('hostsite_get_user_field')) 
+      if (function_exists('hostsite_get_user_field'))
         $post['user_id'] = hostsite_get_user_field('indicia_user_id');
       $request = parent::$base_url."index.php/services/plant_portal_import/cache_upload_metadata?uploaded_csv=$filename";
       $response = self::http_post($request, $post);
       if (!isset($response['output']) || $response['output'] != 'OK')
         return "Could not upload the mappings metadata. <br/>".print_r($response, true);
-      $warehouseUrl = self::get_warehouse_url();
-            
+      $warehouseUrl = parent::getProxiedBaseUrl();
+
       self::$onload_javascript .= "
     /**
     * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
@@ -1476,12 +1476,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $r;
   }
-  
+
   /* Plant Portal has quite a lot of extra logic that the "normal" importer doesn't have, and this is handled here. For instance, it creates groups and trys to attach occurrences to existing samples.
    * @param array $args Array of arguments passed from the Edit Tab.
    * @param array $options Array of options passed to the import control.
    */
-  private static function plant_portal_import_logic($args,$options) {  
+  private static function plant_portal_import_logic($args,$options) {
     $reload = self::get_reload_link_parts();
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
@@ -1494,7 +1494,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $fileArray = file($_SESSION['uploaded_file']);
     if (empty($_SESSION['chosen_column_headings'])) {
       $_SESSION['chosen_column_headings']=self::store_column_header_names_for_existing_match_checks($args);
-      $chosenColumnHeadings=$_SESSION['chosen_column_headings']; 
+      $chosenColumnHeadings=$_SESSION['chosen_column_headings'];
     }
     $headerLineItems = explode(',',$fileArray[0]);
     //Remove the header row from the file
@@ -1513,7 +1513,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $fileRowsAsArray[]=$explodedLine;
       }
     }
-    
+
     //Collect the samples and groups the user has rights to, from here we can also work out which samples and plots they have rights to
     $sampleGroupsAndPlotGroupsUserHasRightsTo = self::get_sample_groups_and_plot_groups_user_has_rights_to($auth,$args);
     $fileArrayForImportRowsToProcess = self::check_user_samples_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions);
@@ -1522,7 +1522,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $rFatal =self::display_import_warnings($args,$fileArrayForImportRowsToProcess,$headerLineItems,$args['fatalImportTypes']);
     if (empty($rFatal))
       $fatalErrorsFound=false;
-    else 
+    else
       $fatalErrorsFound=true;
     //If fatal warning are found, then we cannot continue the import. Warn the user in red.
     if ($fatalErrorsFound===true) {
@@ -1536,7 +1536,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $r;
   }
-  
+
   /*
    * Buttons at the end of the wizard to allow the user to continue with their upload, or alternatively, make corrections to the file before importing
    */
@@ -1560,7 +1560,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r .= '</fieldset></form>';
     return $r;
   }
-  
+
   /*
    * Buttons at the end of the wizard to allow the user to continue with their upload, or alternatively, make corrections to the file before importing
    */
@@ -1607,13 +1607,13 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $r .= '</fieldset></form>';
     return $r;
   }
-  
+
   /*
    * Perform the upload when the user clicks on the import button
    */
   private static function get_upload_click_function($args,$fileArrayForImportRowsToProcess,$columnHeadingIndexPositions) {
     // store the warehouse user ID if we know it.
-    if (function_exists('hostsite_get_user_field')) 
+    if (function_exists('hostsite_get_user_field'))
       $currentUserId = hostsite_get_user_field('indicia_user_id');
     $plotNamesToProcess=array();
     $plotSrefsToProcess=array();
@@ -1662,7 +1662,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     //- Submit the import to the warehouse
     if (!empty($websiteId))
       data_entry_helper::$javascript .= "var websiteId = ".$websiteId.";";
-    
+
     if (!empty($plotNamesToProcess) && !empty($plotSrefsToProcess) && !empty($plotSrefSystemsToProcess)) {
       data_entry_helper::$javascript .= "
           var plotNamesToProcess = ".json_encode($plotNamesToProcess).";
@@ -1674,7 +1674,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
           var plotSrefsToProcess = [];
           var plotSrefSystemsToProcess = [];";
     }
-    
+
     if (!empty($sampleGroupDataToProcess) && !empty($sampleGroupTermlistId)) {
       data_entry_helper::$javascript .= "
         var sampleGroupNamesToProcess = ".json_encode($sampleGroupNamesToProcess).";
@@ -1686,7 +1686,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
         var sampleGroupTermlistId = 0;
         var sampleGroupPersonAttributeId = 0";
     }
-    
+
     if (!empty($plotGroupDataToProcess) && !empty($plotGroupTermlistId)) {
       data_entry_helper::$javascript .= "
         var plotGroupNamesToProcess = ".json_encode($plotGroupNamesToProcess).";
@@ -1698,8 +1698,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
         var plotGroupTermlistId = 0;
         var plotGroupPersonAttributeId = 0;";
     }
-    $warehouseUrl = self::get_warehouse_url();
-    
+    $warehouseUrl = parent::getProxiedBaseUrl();
+
     data_entry_helper::$javascript .= "$('#create-import-data').click(function () {
       $('#create-import-data').attr('disabled','true');
       $('#import-loading-msg').show();
@@ -1715,9 +1715,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $('#submit-import').click();
     });";
   }
-  
+
   //To Do AVB - Currently the mappings drop-down contains mappings we will probably not use
-  
+
   /*
    * Function looks at all the rows in the import, and returns an array of data of a particular type that needs to be created.
    * e.g. ['Sample group 1','Sample group 2','Sample group 3']
@@ -1743,12 +1743,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
           }
         }
       }
-    }  
+    }
     return $dataExtractedReadyToProcess;
   }
-  
-  /* 
-   * Extract the data relating to new plots so that they can be created before passing the import to the warehouse 
+
+  /*
+   * Extract the data relating to new plots so that they can be created before passing the import to the warehouse
    * @param array $rowToExtractDataFrom Array of columns from row we want to extract data from
    * @param array $dataExtractedReadyToProcess Array of data already extracted (so we can make sure the plot hasn't already been listed for creation)
    * @param array $columnHeadingIndexPositions Array which contains the position of each of the columns relevant to the duplicate check.
@@ -1762,7 +1762,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $spatialReferenceSystem=$_SESSION['sample:entered_sref_system'];
     //If the index position is -1, it means that column does not appear in the data file
     //We can only create plots if there is a plot name, and a spatial reference (we know there is a spatial reference system as we set it above)
-    if ($columnHeadingIndexPositions['plotNameHeaderIdx']!=-1&&$columnHeadingIndexPositions['sampleSrefHeaderIdx']!=-1) { 
+    if ($columnHeadingIndexPositions['plotNameHeaderIdx']!=-1&&$columnHeadingIndexPositions['sampleSrefHeaderIdx']!=-1) {
       if (!empty($dataExtractedReadyToProcess)) {
         //Check the existing data that we have already extracted to see if the plot already exists, if it does, it doesn't need to be re-extracted
         foreach ($dataExtractedReadyToProcess as $plotAlreadyMarkedForCreation) {
@@ -1795,7 +1795,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $dataFromRow;
   }
-  
+
   /*
    * Function detects if a plot in the existing data has already be stored so that it can be created, if it has, we don't have to store it again
    * @param array $rowToExtractDataFrom Array of columns from row we want to extract data from
@@ -1815,11 +1815,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
       //The Plot Group is not mandatory, we can't match empty variables, so set temporary variables to -1 if empty to allow a test for empty
       if (empty($plotAlreadyMarkedForCreation['plot_group_name']))
         $plotAlreadyMarkedForCreationTempPlotGroupTest = -1;
-      else 
+      else
         $plotAlreadyMarkedForCreationTempPlotGroupTest = $plotAlreadyMarkedForCreation['plot_group_name'];
       if (empty($rowToExtractDataFrom[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']]))
         $rowToExtractDataFromTempPlotGroupTest = -1;
-      else 
+      else
         $rowToExtractDataFromTempPlotGroupTest = $rowToExtractDataFrom[$columnHeadingIndexPositions['plotGroupNameHeaderIdx']];
       if ($plotAlreadyMarkedForCreationTempPlotGroupTest!=$rowToExtractDataFromTempPlotGroupTest) {
         $matchFound=false;
@@ -1835,9 +1835,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $doNotCreatePlotForRow=true;
     return $doNotCreatePlotForRow;
   }
-  
-  /* 
-   * Extract the data relating to new groups so that they can be created before passing the import to the warehouse 
+
+  /*
+   * Extract the data relating to new groups so that they can be created before passing the import to the warehouse
    * @param array $rowToExtractDataFrom Array of columns from row we want to extract data from
    * @param array $dataExtractedReadyToProcess Array of data already extracted (so we can make sure the group hasn't already been listed for creation)
    * @param array $columnHeadingIndexPositions Array which contains the position of each of the columns relevant to the duplicate check.
@@ -1851,7 +1851,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $groupColoumnIdx=$columnHeadingIndexPositions['plotGroupNameHeaderIdx'];
     //If the index position is -1, it means that column does not appear in the data file
     //We can only create groups if there is a group name
-    if ($groupColoumnIdx!=-1) { 
+    if ($groupColoumnIdx!=-1) {
       if (!empty($dataExtractedReadyToProcess)) {
         foreach ($dataExtractedReadyToProcess as $groupAlreadyMarkedForCreation) {
           //Only need to continue if not already true, otherwise we already have a true result and don't need further processing
@@ -1881,7 +1881,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $dataFromRow;
   }
-  
+
   /*
    * Display messages to the user describing how the import will proceed
    * @param Array $args Array of all the arguments from the edit tab
@@ -1890,7 +1890,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param Array $importTypes Array of all the import situations we want to display messages for
    */
   private static function display_import_warnings($args,$fileArrayForImportRowsToProcess,$headerLineItems,$importTypes) {
-    $r='';    
+    $r='';
     foreach ($importTypes as $importTypeCode=>$importTypeStates) {
       if (!empty($args[$importTypeCode.'_message']))
         $warningText=$args[$importTypeCode.'_message'];
@@ -1904,7 +1904,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param String $warningText Warning to display to the user
    * @param $warningCode The code for the import situation we are dealing with
    * @param $headerLineItems All the import headers so that the import rows we want to display can be listed
-   * 
+   *
    */
   private static function display_individual_message($fileArrayForImportRowsToProcess,$warningText,$warningCode,$headerLineItems) {
     $r='';
@@ -1914,13 +1914,13 @@ class iform_plant_portal_user_data_importer extends helper_base {
       foreach ($headerLineItems as $headerLineItem) {
         $r.='<th>'.$headerLineItem.'</th>';
       }
-      $r .= '</tr>'; 
-      foreach ($fileArrayForImportRowsToProcess[$warningCode] as $theRow) { 
+      $r .= '</tr>';
+      foreach ($fileArrayForImportRowsToProcess[$warningCode] as $theRow) {
         $r .= '<tr>';
         foreach ($theRow as $theRowCellNum => $theRowCell) {
           $r.='<td>'.$theRowCell.'</td>';
         }
-        $r .= '</tr>';     
+        $r .= '</tr>';
       }
       $r .= '</table><br>';
       return $r;
@@ -1935,7 +1935,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * and plot groups against existing ones.
    * @param Array $args Arguments from Edit Tab
    */
-  private static function store_column_header_names_for_existing_match_checks($args) {   
+  private static function store_column_header_names_for_existing_match_checks($args) {
     $chosenColumnHeadings=array();
     foreach ($_POST as $amendedTableHeaderWith_ => $chosenField) {
       if ($chosenField==='sample:date') {
@@ -1955,19 +1955,19 @@ class iform_plant_portal_user_data_importer extends helper_base {
         $chosenColumnHeadings['plotGroupNameHeaderName'] = str_replace('_', ' ', $amendedTableHeaderWith_);
     }
     return $chosenColumnHeadings;
-  }  
- 
+  }
+
  /*
    * Save the horizontal position of each column that is to be used when matching existing Samples, Plots, Sample
    * Groups and Plot Groups.
    * This allows us to count along a data row and know what we are looking at without re-examining the headings.
    * Headings are saved as an index from zero.
-   * 
+   *
    * @param Array $headerLineItems Array of header names from first line of import file
    * @param Array $chosenColumnHeadings The actual header names used in the file stored with their meaning
    * as the array key
    */
-  private static function get_column_heading_index_positions($headerLineItems,$chosenColumnHeadings) {   
+  private static function get_column_heading_index_positions($headerLineItems,$chosenColumnHeadings) {
     $columnHeadingIndexPositions=array();
      //We can't leave these uninitialised as we will get loads of not initialised errors.
     //Overcome this by setting to -1, which is an index we will never actually use.
@@ -1977,17 +1977,17 @@ class iform_plant_portal_user_data_importer extends helper_base {
     $columnHeadingIndexPositions['sampleGroupNameHeaderIdx']=-1;
     $columnHeadingIndexPositions['plotNameHeaderIdx']=-1;
     $columnHeadingIndexPositions['plotGroupNameHeaderIdx']=-1;
-    //Cycle through all the names from the header line, then check to see if there is a match in the array holding the 
+    //Cycle through all the names from the header line, then check to see if there is a match in the array holding the
     //header names meanings. If there is a match, it means we have identified the header and can save its position as
     //and index starting from zero.
     foreach ($headerLineItems as $idx=>$header) {
       //Remove white space from the ends of the headers
       $header=trim($header);
-      if (!empty($chosenColumnHeadings['sampleDateHeaderName']) && $header == $chosenColumnHeadings['sampleDateHeaderName']) 
+      if (!empty($chosenColumnHeadings['sampleDateHeaderName']) && $header == $chosenColumnHeadings['sampleDateHeaderName'])
         $columnHeadingIndexPositions['sampleDateHeaderIdx'] = $idx;
-      if (!empty($chosenColumnHeadings['sampleSrefHeaderName']) && $header == $chosenColumnHeadings['sampleSrefHeaderName']) 
+      if (!empty($chosenColumnHeadings['sampleSrefHeaderName']) && $header == $chosenColumnHeadings['sampleSrefHeaderName'])
         $columnHeadingIndexPositions['sampleSrefHeaderIdx'] = $idx;
-      if (!empty($chosenColumnHeadings['sampleSrefSystemHeaderName']) && $header == $chosenColumnHeadings['sampleSrefSystemHeaderName']) 
+      if (!empty($chosenColumnHeadings['sampleSrefSystemHeaderName']) && $header == $chosenColumnHeadings['sampleSrefSystemHeaderName'])
         $columnHeadingIndexPositions['sampleSrefSystemHeaderIdx'] = $idx;
       if (!empty($chosenColumnHeadings['sampleGroupNameHeaderName']) && $header == $chosenColumnHeadings['sampleGroupNameHeaderName'])
         $columnHeadingIndexPositions['sampleGroupNameHeaderIdx'] = $idx;
@@ -1998,7 +1998,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $columnHeadingIndexPositions;
   }
-    
+
   /*
    * Check the samples/plots the user has permission to use against the import data.
    * Once that is done, we are able to determine and report to the user how the data will be imported
@@ -2010,7 +2010,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    */
   private static function check_user_samples_against_import_data($args,$fileRowsAsArray,$sampleGroupsAndPlotGroupsUserHasRightsTo,$columnHeadingIndexPositions) {
     //Store the rows into the different import categories ready to process
-    $fileArrayForImportRowsToProcess=array();  
+    $fileArrayForImportRowsToProcess=array();
     if (!empty($fileRowsAsArray)) {
       //Cycle through each row in the import data
       foreach ($fileRowsAsArray as $idx => &$fileRowsAsArrayLine) {
@@ -2032,7 +2032,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
     }
     return $fileArrayForImportRowsToProcess;
   }
-  
+
   /*
    * Return whether a particular import row matches an existing sample.
    * If there is more that one match, then 2 is return instead of 1.
@@ -2040,7 +2040,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param Array $samplesUserHasRightsTo The samples the user has rights to use
    * @param Array @lineState The array to return the result to
    * @param Array $columnHeadingIndexPositions The positions from the left of the most important columns in the import file, starting with 0 at the left
-   * 
+   *
    */
   private static function existing_sample_check_for_line(&$fileRowsAsArrayLine,$samplesUserHasRightsTo,&$lineState,$columnHeadingIndexPositions) {
     //Only interested in the samples the user has rights to, if they don't have any anyway, we don't need to return anything from this function
@@ -2056,20 +2056,20 @@ class iform_plant_portal_user_data_importer extends helper_base {
       if (((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&empty($aSampleUserHasRightsTo['entered_sref']))||
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&!empty($aSampleUserHasRightsTo['entered_sref'])) &&
           strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])==strtolower($aSampleUserHasRightsTo['entered_sref']))) &&
-              
+
           ((empty($spatialReferenceSystem)&&empty($aSampleUserHasRightsTo['entered_sref_system']))||
           ((!empty($spatialReferenceSystem)&&!empty($aSampleUserHasRightsTo['entered_sref_system'])) &&
-          strtolower($spatialReferenceSystem)==strtolower($aSampleUserHasRightsTo['entered_sref_system']))) &&   
-              
+          strtolower($spatialReferenceSystem)==strtolower($aSampleUserHasRightsTo['entered_sref_system']))) &&
+
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['plot_name']))||
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['plot_name'])) &&
           strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['plot_name']))) &&
-              
+
           //To DO AVB, we are going to need to convert any dates before comparisons are made
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&empty($aSampleUserHasRightsTo['sample_date']))||
               ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])&&!empty($aSampleUserHasRightsTo['sample_date'])) &&
               strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleDateHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_date']))) &&
-              
+
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&empty($aSampleUserHasRightsTo['sample_group_identifier_name']))||
               ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])&&!empty($aSampleUserHasRightsTo['sample_group_identifier_name']))&&
               strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleGroupNameHeaderIdx']])==strtolower($aSampleUserHasRightsTo['sample_group_identifier_name']))) &&
@@ -2079,12 +2079,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
         //Return the code 2 if there are duplicate samples (even if there are more than 2, this is just to indicate duplicates)
         if ($aSampleUserHasRightsTo['sample_count']>1)
           $lineState['existingSample']  = 2;
-        else 
+        else
           $lineState['existingSample']  = 1;
-      } 
+      }
     }
   }
-  
+
   /*
    * Return whether a particular import row matches an existing group when a new sample/plot is required.
    * If there is more that one match, then 2 is return instead of 1.
@@ -2092,7 +2092,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param Array $groupsUserHasRightsTo The groups the user has rights to use
    * @param Array @lineState The array to return the result to
    * @param Array $columnHeadingIndexPositions The positions from the left of the most important columns in the import file, starting with 0 at the left
-   * 
+   *
    */
   private static function existing_group_check_for_line(&$fileRowsAsArrayLine,$groupsUserHasRightsTo,&$lineState,$columnHeadingIndexPositions,$groupType) {
     if ($groupType==='sample')
@@ -2109,12 +2109,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
         //Return the code 2 if there are duplicate groups (even if there are more than 2, this is just to indicate duplicates)
         if ($aGroupUserHasRightsTo['group_count']>1)
           $lineState[$lineStateArrayKey]  = 2;
-        else 
+        else
           $lineState[$lineStateArrayKey]  = 1;
-      } 
+      }
     }
   }
-  
+
   /*
    * Return whether a particular import row matches an existing plot.
    * If there is more that one match, then code 2 is returned instead of 1.
@@ -2122,7 +2122,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param Array $plotsUserHasRightsTo The plots the user has rights to use
    * @param Array @lineState The array to return the result to
    * @param Array $columnHeadingIndexPositions The positions from the left of the most important columns in the import file, starting with 0 at the left
-   * 
+   *
    */
   private static function existing_plot_check_for_line(&$fileRowsAsArrayLine,$plotsUserHasRightsTo,&$lineState,$columnHeadingIndexPositions) {
     //Only interested in the plots the user has rights to, if they don't have any anyway, we don't need to return anything from this function
@@ -2137,11 +2137,11 @@ class iform_plant_portal_user_data_importer extends helper_base {
       if (((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&empty($aPlotUserHasRightsTo['entered_sref']))||
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])&&!empty($aPlotUserHasRightsTo['entered_sref'])) &&
           strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['sampleSrefHeaderIdx']])==strtolower($aPlotUserHasRightsTo['entered_sref']))) &&
-              
+
           ((empty($spatialReferenceSystem)&&empty($aPlotUserHasRightsTo['entered_sref_system']))||
           ((!empty($spatialReferenceSystem)&&!empty($aPlotUserHasRightsTo['entered_sref_system'])) &&
-          strtolower($spatialReferenceSystem)==strtolower($aPlotUserHasRightsTo['entered_sref_system']))) &&   
-              
+          strtolower($spatialReferenceSystem)==strtolower($aPlotUserHasRightsTo['entered_sref_system']))) &&
+
           ((empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&empty($aPlotUserHasRightsTo['plot_name']))||
           ((!empty($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])&&!empty($aPlotUserHasRightsTo['plot_name']))&&
           strtolower($fileRowsAsArrayLine[$columnHeadingIndexPositions['plotNameHeaderIdx']])==strtolower($aPlotUserHasRightsTo['plot_name']))) &&
@@ -2151,12 +2151,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
         //Return the code 2 if there are duplicate plots (even if there are more than 2, this is just to indicate duplicates)
         if ($aPlotUserHasRightsTo['plot_count']>1)
           $lineState['existingPlot']  = 2;
-        else 
+        else
           $lineState['existingPlot']  = 1;
-      } 
+      }
     }
   }
-  
+
   /*
    * Function is given a row for the import. The flags for the row (which have already been set to say whether it is an existing sample, plot, sample group, plot group) are
    * checked against the import situations. When we find a matching situation, we store it against that situation.
@@ -2164,12 +2164,12 @@ class iform_plant_portal_user_data_importer extends helper_base {
   private static function assign_import_row_into_import_category(&$fileArrayForImportRowsToProcess,$fileRowsAsArrayLine,$lineState,$importTypes) {
     foreach ($importTypes as $importTypeCode=>$importTypeStates) {
       if ($lineState==$importTypeStates) {
-        $fileArrayForImportRowsToProcess[$importTypeCode][]=$fileRowsAsArrayLine; 
+        $fileArrayForImportRowsToProcess[$importTypeCode][]=$fileRowsAsArrayLine;
       }
     }
     return $fileArrayForImportRowsToProcess;
   }
-  
+
   private static function get_sample_groups_and_plot_groups_user_has_rights_to($auth,$args) {
     $sampleGroupsAndPlotGroupsUserHasRightsTo=array();
     global $user;
@@ -2206,13 +2206,5 @@ class iform_plant_portal_user_data_importer extends helper_base {
                           'user_id'=>$currentUserId)
     ));
     return $sampleGroupsAndPlotGroupsUserHasRightsTo;
-  }
-  
-  private static function get_warehouse_url() {
-    if (!empty(parent::$warehouse_proxy))
-      $warehouseUrl = parent::$warehouse_proxy;
-    else
-      $warehouseUrl = parent::$base_url;
-    return $warehouseUrl;
   }
 }

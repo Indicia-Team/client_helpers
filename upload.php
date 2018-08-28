@@ -19,22 +19,21 @@
   header("Cache-Control: no-store, no-cache, must-revalidate");
   header("Cache-Control: post-check=0, pre-check=0", false);
   header("Pragma: no-cache");
-  
+
   // 5 minutes execution time
   @set_time_limit(5 * 60);
 
-  require('helper_config.php');
   require('data_entry_helper.php');
 
-  // Settings. 
-  // Note the interim image folder may not be in helper_config in which case use a default
-  $interim_image_folder = isset(helper_config::$interim_image_folder) ? helper_config::$interim_image_folder : 'upload/';
+  // Settings.
+  // Note the interim image folder setting may not be specified in which case use a default
+  $interim_image_folder = isset(data_entry_helper::$interim_image_folder) ? data_entry_helper::$interim_image_folder : 'upload/';
   $targetDir = dirname(__FILE__) . '/' . $interim_image_folder;
   // Clenaup old .part upload files
-  $cleanupTargetDir = true; 
+  $cleanupTargetDir = true;
   // Max .part file age in seconds
-  $maxFileAge = 5 * 3600; 
-  
+  $maxFileAge = 5 * 3600;
+
 // Create target dir
   if (!file_exists($targetDir)) {
     @mkdir($targetDir);
@@ -42,7 +41,7 @@
   if (!file_exists($targetDir)) {
     die('{"jsonrpc" : "2.0", "error" : {"code": 105, "message": "Failed to create upload directory."}, "id" : "id"}');
   }
-  
+
   // Get a file name
   if (isset($_REQUEST["name"])) {
     $fileName = $_REQUEST["name"];
@@ -53,7 +52,7 @@
   }
   // Clean the fileName for security reasons
   $fileName = preg_replace('/[^\w\._]+/', '', $fileName);
-  
+
   // Test file extension is one of the allowed types
   $fileNameParts = explode('.', $fileName);
   if (count($fileNameParts) < 2) {
@@ -70,15 +69,15 @@
   if (!$extensionFound) {
     die('{"jsonrpc" : "2.0", "error" : {"code": 108, "message": "File type not allowed."}, "id" : "id"}');
   }
-  
- 
+
+
   // Chunking might be enabled
   $chunk = isset($_REQUEST["chunk"]) ? intval($_REQUEST["chunk"]) : 0;
   $chunks = isset($_REQUEST["chunks"]) ? intval($_REQUEST["chunks"]) : 0;
 
   $filePath  = $targetDir . DIRECTORY_SEPARATOR . $fileName;
 
-  
+
 // Remove old temp files
 if ($cleanupTargetDir) {
   if (!is_dir($targetDir) || !$dir = opendir($targetDir)) {
@@ -93,13 +92,13 @@ if ($cleanupTargetDir) {
       continue;
     }
 
-    // Remove .part file if it is older than the max age 
+    // Remove .part file if it is older than the max age
     if (preg_match('/\.part$/', $file) && (filemtime($tmpfilePath) < time() - $maxFileAge)) {
       @unlink($tmpfilePath);
     }
   }
   closedir($dir);
-}	
+}
 
   // Open .part file for output
   if (!$out = @fopen("{$filePath}.part", $chunks ? "ab" : "wb")) {
@@ -115,7 +114,7 @@ if ($cleanupTargetDir) {
     if (!$in = @fopen($_FILES["file"]["tmp_name"], "rb")) {
       die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
     }
-  } else {	
+  } else {
     if (!$in = @fopen("php://input", "rb")) {
       die('{"jsonrpc" : "2.0", "error" : {"code": 101, "message": "Failed to open input stream."}, "id" : "id"}');
     }
@@ -128,26 +127,26 @@ if ($cleanupTargetDir) {
   @fclose($out);
   @fclose($in);
 
-  // Test file size after each chunk in case hacker has 
+  // Test file size after each chunk in case hacker has
   // circumvented client-side check to send something huge.
   clearstatcache();
   $file['size'] = filesize("{$filePath}.part");
   $file['error'] = '';
   if (!data_entry_helper::check_upload_size($file)) {
     unlink("{$filePath}.part");
-    die('{"jsonrpc" : "2.0", "error" : {"code": 104, "message": "Uploaded file too big."}, "id" : "id"}'); 
+    die('{"jsonrpc" : "2.0", "error" : {"code": 104, "message": "Uploaded file too big."}, "id" : "id"}');
   }
-  
+
 // Check if file has been uploaded
   if (!$chunks || $chunk == $chunks - 1) {
     if (function_exists('finfo_open')) {
-      // Check MIME type of file    
+      // Check MIME type of file
       $finfo = finfo_open(FILEINFO_MIME_TYPE);
-      $mimeType = finfo_file($finfo, "{$filePath}.part");  
+      $mimeType = finfo_file($finfo, "{$filePath}.part");
       finfo_close($finfo);
       if (!$mimeType) {
         unlink("{$filePath}.part");
-        die('{"jsonrpc" : "2.0", "error" : {"code": 110, "message": "File type not known."}, "id" : "id"}'); 
+        die('{"jsonrpc" : "2.0", "error" : {"code": 110, "message": "File type not known."}, "id" : "id"}');
       }
       list($mediaType, $mimeSubType) = explode('/', $mimeType);
       if (!in_array($mimeSubType, data_entry_helper::$upload_mime_types[$mediaType], true)) {

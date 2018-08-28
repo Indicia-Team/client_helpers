@@ -708,13 +708,8 @@ NEWFUNCS;
         $post['user_id'] = hostsite_get_user_field('indicia_user_id');
       $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
       $response = self::http_post($request, $post);
-      if (!isset($response['output']) || $response['output'] != 'OK')
+      if (!isset($response['output']) || $response['output'] != 'OK') {
         return "Could not upload the mappings metadata. <br/>" . print_r($response, TRUE);
-      if (!empty(parent::$warehouse_proxy)) {
-        $warehouseUrl = parent::$warehouse_proxy;
-      }
-      else {
-        $warehouseUrl = parent::$base_url;
       }
       self::$onload_javascript .= "
     /**
@@ -724,7 +719,7 @@ NEWFUNCS;
     uploadChunk = function() {
       var limit=50;
       $.ajax({
-        url: '" . $warehouseUrl . "index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=" . $options['model'] . "',
+        url: '" . parent::getProxiedBaseUrl() . "index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=" . $options['model'] . "',
         dataType: 'jsonp',
         success: function(response) {
           total = total + response.uploaded;

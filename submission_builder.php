@@ -23,7 +23,6 @@
  * Link in other required php files.
  */
 require_once('lang.php');
-require_once('helper_config.php');
 require_once('data_entry_helper.php');
 
 /**
@@ -32,7 +31,7 @@ require_once('data_entry_helper.php');
  * @package  Client
  */
 
-class submission_builder extends helper_config {
+class submission_builder {
 
   /**
    * Helper function to simplify building of a submission. Does simple submissions that do not involve
@@ -303,7 +302,7 @@ class submission_builder extends helper_config {
       $loc['location:centroid_geom']=$array['sample:geom'];
     $submission = self::build_submission($loc, array('model'=>'location',
       'subModels'=>array('locations_website'=>array('fk'=>'location_id'))));
-    $request = parent::$base_url."index.php/services/data/save";
+    $request = data_entry_helper::$base_url."index.php/services/data/save";
     $postargs = 'submission='.urlencode(json_encode($submission));
     // Setting persist_auth allows the write tokens to be re-used
     $postargs .= '&persist_auth=true&auth_token='.$array['auth_token'];
@@ -376,7 +375,8 @@ class submission_builder extends helper_config {
         if ($fieldname==='image_upload') {
           // image_upload is a special case only used on the warehouse, so can move the file directly to its final place
           // @todo: Should this special case exist?
-          $uploadpath = dirname($_SERVER['SCRIPT_FILENAME']).'/'.(isset(parent::$indicia_upload_path) ? parent::$indicia_upload_path : 'upload/');
+          $uploadpath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
+            (isset(data_entry_helper::$indicia_upload_path) ? data_entry_helper::$indicia_upload_path : 'upload/');
           if (move_uploaded_file($file['tmp_name'], $uploadpath.$filename)) {
             // record the new file name, also note it in the $_POST data so it can be tracked after a validation failure
             $file['name'] = $filename;
@@ -391,10 +391,10 @@ class submission_builder extends helper_config {
           // to be moved to interim upload folder and will be sent to the warehouse after a successful
           // save.
           $values[$fieldname] = $filename;
-          $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-          $uploadpath = $uploadpath = helper_base::relative_client_helper_path().$interim_image_folder;
+          $interim_image_folder = isset(data_entry_helper::$interim_image_folder) ? data_entry_helper::$interim_image_folder : 'upload/';
+          $uploadpath = $uploadpath = helper_base::relative_client_helper_path() . $interim_image_folder;
           $tempFile = isset($file['tmp_name']) ? $file['tmp_name'] : '';
-          if (!move_uploaded_file($tempFile, $uploadpath.$filename))
+          if (!move_uploaded_file($tempFile, $uploadpath . $filename))
             throw new exception('Failed to move uploaded file from temporary location');
           $file['name'] = $filename;
         }

@@ -717,15 +717,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     });";
     drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
     data_entry_helper::add_resource('jquery_form');
-    //Display a loading panel when pages are loading.
-    //This is hidden and shown by jquery.
-    //Note I could not use the loading_block_start and loading_block_end
-    //functions in the data_entry_helper as these seem to display as the page
-    //was being loaded for display, where as I need it to display during actual
-    //processing.
-    global $indicia_templates;
-    $r = $indicia_templates['loading_block_start'];
-    $r .= $indicia_templates['loading_block_end'];
     $r .= parent::get_form($args, $nid);
     return $r;
   }
@@ -1817,10 +1808,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         } else {
           data_entry_helper::$javascript .= "formatter = '".$indicia_templates['taxon_label']."';\n";
         }
-        if (!empty(parent::$warehouse_proxy))
-          $url = parent::$warehouse_proxy."index.php/services/data";
-        else
-          $url = helper_base::$base_url."index.php/services/data";
+        $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
         data_entry_helper::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
         data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
         data_entry_helper::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20).";\n";

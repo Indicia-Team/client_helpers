@@ -254,8 +254,8 @@ class extension_ecmc_data_portal {
 
   public static function clone_effort_button($auth, $args, $tabalias, $options, $path) {
     $r = '<button type="button" id="clone-effort" disabled="disabled">Copy last effort</button>';
-    $resportingServerURL = (!empty(data_entry_helper::$warehouse_proxy))?data_entry_helper::$warehouse_proxy:data_entry_helper::$base_url.
-        'index.php/services/report/requestReport?report=reports_for_prebuilt_forms/marinelife/get_last_effort.xml&'.
+    $resportingServerURL = data_entry_helper::getProxiedBaseUrl() .
+        'index.php/services/report/requestReport?report=reports_for_prebuilt_forms/marinelife/get_last_effort.xml&' .
         'exclusions='.$options['exclusions'].'&callback=?';
     $nonce = $auth['read']['nonce'];
     $auth_token = $auth['read']['auth_token'];
