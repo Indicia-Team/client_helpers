@@ -1564,7 +1564,7 @@ class iform_wwt_colour_marked_report {
       if ($args['species_ctrl']=='tree_browser') {
         // change the node template to include images
         $indicia_templates['tree_browser_node']='<div>'.
-            '<img src="' . data_entry_helper::parent::getProxiedBaseUrl() . '/upload/thumb-{image_path}" alt="Image of {caption}" width="80" /></div>'.
+            '<img src="' . data_entry_helper::getProxiedBaseUrl() . '/upload/thumb-{image_path}" alt="Image of {caption}" width="80" /></div>'.
             '<span>{caption}</span>';
       }
       // Dynamically generate the species selection control required.
