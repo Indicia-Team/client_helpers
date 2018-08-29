@@ -586,6 +586,37 @@ class helper_base {
   }
 
   /**
+   * Returns the folder to store uploaded images in before submission.
+   *
+   * When an image has been uploaded on a form but not submitted to the
+   * warehouse, it is stored in this folder location temporarily.
+   *
+   * @param string $mode
+   *   Set to one of these options:
+   *   * fullpath - full path from root of the server disk.
+   *   * domain - path from the root of the domain.
+   *   * relative - path relative to the current script location (default)
+   *
+   * @return string
+   *   The folder location.
+   */
+  public static function getInterimImageFolder($mode = 'relative') {
+    $folder = isset(self::$interim_image_folder)
+      ? self::$interim_image_folder
+      : self::client_helper_path() . 'upload/';
+    switch ($mode) {
+      case 'fullpath':
+        return $_SERVER['DOCUMENT_ROOT'] . self::getRootFolder() . $folder;
+
+      case 'domain':
+        return self::getRootFolder() . $folder;
+
+      default:
+        return $folder;
+    }
+  }
+
+  /**
    * Utility function to insert a list of translated text items for use in JavaScript.
    *
    * @param string $group
@@ -1419,11 +1450,12 @@ JS;
    * @return string Error message, or true if successful.
    */
   public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
-    if ($readAuth==null) $readAuth=$_POST;
-    $interim_image_folder = isset(self::$interim_image_folder) ? self::$interim_image_folder : 'upload/';
-    $interim_path = dirname(__FILE__).'/'.$interim_image_folder;
-    if (!file_exists($interim_path.$path))
-      return "The file $interim_path$path does not exist and cannot be uploaded to the Warehouse.";
+    if ($readAuth == NULL) {
+      $readAuth = $_POST;
+    }
+    $interimPath = self::getInterimImageFolder('fullpath');
+    if (!file_exists($interimPath.$path))
+      return "The file $interimPath$path does not exist and cannot be uploaded to the Warehouse.";
     $serviceUrl = self ::$base_url . "index.php/services/$service";
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
     $postargs = array('name_is_guid' => 'true');
@@ -1434,7 +1466,7 @@ JS;
       $postargs['nonce'] = $readAuth['nonce'];
     if ($persist_auth)
       $postargs['persist_auth'] = 'true';
-    $file_to_upload = array('media_upload'=>'@'.realpath($interim_path.$path));
+    $file_to_upload = array('media_upload'=>'@'.realpath($interimPath.$path));
     $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
     $output = json_decode($response['output'], true);
     $r = true; // default is success
@@ -1448,7 +1480,7 @@ JS;
           $r = $output['error'];
       }
     }
-    unlink(realpath($interim_path.$path));
+    unlink(realpath($interimPath.$path));
     return $r;
   }
 
@@ -2560,9 +2592,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    * Internal function to ensure old image files are purged periodically.
    */
   protected static function _purgeImages() {
-    $interimImageFolder = self::relative_client_helper_path() .
-      (isset(self::$interim_image_folder) ? self::$interim_image_folder : 'upload/');
-    self::purgeFiles(self::$cache_chance_purge, $interimImageFolder, self::$interim_image_expiry);
+    self::purgeFiles(self::$cache_chance_purge, self::getInterimImageFolder(), self::$interim_image_expiry);
   }
 
   /**
@@ -2577,7 +2607,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    */
   private static function purgeFiles($chanceOfPurge, $folder, $timeout, $allowedFileCount=0) {
     // don't do this every time.
-    if (rand(1, $chanceOfPurge)===1) {
+    if (TRUE || rand(1, $chanceOfPurge)===1) {
       // First, get an array of files sorted by date
       $files = array();
       $dir =  opendir($folder);

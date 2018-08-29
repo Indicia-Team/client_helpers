@@ -26,9 +26,14 @@
   require('data_entry_helper.php');
 
   // Settings.
-  // Note the interim image folder setting may not be specified in which case use a default
-  $interim_image_folder = isset(data_entry_helper::$interim_image_folder) ? data_entry_helper::$interim_image_folder : 'upload/';
-  $targetDir = dirname(__FILE__) . '/' . $interim_image_folder;
+  if (isset($_GET['destination'])) {
+    // The upload path should be provided by the client as is configurable.
+    $targetDir = "$_SERVER[DOCUMENT_ROOT]$_GET[destination]";
+  }
+  else {
+    // If not provided, revert to the default.
+    $targetDir = data_entry_helper::getInterimImageFolder('fullpath');
+  }
   // Clenaup old .part upload files
   $cleanupTargetDir = true;
   // Max .part file age in seconds

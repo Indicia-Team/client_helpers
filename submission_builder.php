@@ -391,8 +391,7 @@ class submission_builder {
           // to be moved to interim upload folder and will be sent to the warehouse after a successful
           // save.
           $values[$fieldname] = $filename;
-          $interim_image_folder = isset(data_entry_helper::$interim_image_folder) ? data_entry_helper::$interim_image_folder : 'upload/';
-          $uploadpath = $uploadpath = helper_base::relative_client_helper_path() . $interim_image_folder;
+          $uploadpath = helper_base::getInterimImageFolder('fullpath');
           $tempFile = isset($file['tmp_name']) ? $file['tmp_name'] : '';
           if (!move_uploaded_file($tempFile, $uploadpath . $filename))
             throw new exception('Failed to move uploaded file from temporary location');

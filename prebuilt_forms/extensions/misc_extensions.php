@@ -702,4 +702,41 @@ JS;
     }
   }
 
+  public static function imports_grid($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('report_helper'));
+    $auth = report_helper::get_read_write_auth($args['website_id'], $args['password']);
+    report_helper::$javascript .= 'indiciaData.write = ' . json_encode($auth['write_tokens']) . ";\n";
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      [
+        'dataSource' => 'library/imports/occurrence_imports_list',
+        'columns' => [
+          [
+            'fieldname' => 'import_guid'
+          ],
+          [
+            'fieldname' => 'date_time',
+          ],
+          [
+            'fieldname' => 'imported_by',
+          ],
+          [
+            'fieldname' => 'records',
+            'template' => '{records}',
+          ],
+          [
+            'actions' => [
+              [
+                'caption' => 'delete records',
+                'javascript' => "indiciaFns.bulkDeleteOccurrences('{import_guid}');",
+              ],
+            ],
+          ],
+        ],
+      ],
+      $options
+    );
+    return report_helper::report_grid($reportOptions);
+  }
+
 }

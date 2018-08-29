@@ -1234,13 +1234,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
       if ($fext!='csv') throw new Exception('Uploaded file must be a csv file');
       // Generate a file id to store the upload as
       $destination = time().rand(0,1000).".".$fext;
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      //In the original import_helper code the upload folder was in the same folder as the php file, however this prebuilt form is a level down the folder
-      //hierarchy so we need to chop "prebuilt_forms" from the file path.
-      $uploadFolderPath=str_replace('prebuilt_forms','',dirname(__FILE__));
-      $interim_path = $uploadFolderPath.'/'.$interim_image_folder;
-      if (move_uploaded_file($file['tmp_name'], "$interim_path$destination")) {
-        return "$interim_path$destination";
+      $interimPath = helper_base::getInterimImageFolder('fullpath');
+      if (move_uploaded_file($file['tmp_name'], "$interimPath$destination")) {
+        return "$interimPath";
       }
     } elseif (isset($options['existing_file'])) {
       return $options['existing_file'];
@@ -1305,13 +1301,9 @@ class iform_plant_portal_user_data_importer extends helper_base {
    */
   protected static function send_file_to_warehouse_plant_portal_importer($path, $persist_auth=false, $readAuth = null, $service='data/handle_media',$model) {
     if ($readAuth==null) $readAuth=$_POST;
-    $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    //This code is slightly different for the Plant Portal importer. Customised because the importer php file is a prebuilt form, so we can't simply get the current
-    //directory as the Upload folder isn't actually there
-    $uploadFolderPath=str_replace('prebuilt_forms','',dirname(__FILE__));
-    $interim_path = $uploadFolderPath.'/'.$interim_image_folder;
-    if (!file_exists($interim_path.$path))
-      return "The file $interim_path$path does not exist and cannot be uploaded to the Warehouse.";
+    $interimPath = helper_base::getInterimImageFolder('fullpath');
+    if (!file_exists($interimPath.$path))
+      return "The file $interimPath does not exist and cannot be uploaded to the Warehouse.";
     $serviceUrl = parent::$base_url."index.php/services/".$service;
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
     $postargs = array('name_is_guid' => 'true');
@@ -1322,7 +1314,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       $postargs['nonce'] = $readAuth['nonce'];
     if ($persist_auth)
       $postargs['persist_auth'] = 'true';
-    $file_to_upload = array('media_upload'=>'@'.realpath($interim_path.$path));
+    $file_to_upload = array('media_upload'=>'@'.realpath($interimPath.$path));
     $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
     $output = json_decode($response['output'], true);
     $r = true; // default is success
@@ -1337,7 +1329,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       }
     }
     //remove local copy
-    unlink(realpath($interim_path.$path));
+    unlink(realpath($interimPath.$path));
     return $r;
   }
 

@@ -1040,26 +1040,23 @@ JS;
    */
   public static function file_box($options) {
     global $indicia_templates;
-    // Upload directory defaults to client_helpers/upload, but can be overriden.
-    $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    $relpath = self::getRootFolder() . self::client_helper_path();
-    //If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
+    // If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
     if (!empty($options['subType']))
-      self::$upload_file_types[$options['subType']]=self::$upload_file_types['image'];
+      self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
     // Allow options to be defaulted and overridden
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     $defaults = array(
       'id' => 'default',
-      'upload' => true,
+      'upload' => TRUE,
       'maxFileCount' => 4,
-      'autoupload' => false,
+      'autoupload' => FALSE,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => array('html5','flash','silverlight','html4'),
-      'autoupload' => true,
+      'autoupload' => TRUE,
       'imageWidth' => 200,
-      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
-      'destinationFolder' => $relpath . $interim_image_folder,
+      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
+      'destinationFolder' => self::getInterimImageFolder('domain'),
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
@@ -1067,7 +1064,7 @@ JS;
       'maxUploadSize' => self::convert_to_bytes(isset(parent::$maxUploadSize) ? parent::$maxUploadSize : '4M'),
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? array($options['subType']) : array('Image:Local'),
-      'fileTypes' => (object)self::$upload_file_types,
+      'fileTypes' => (object) self::$upload_file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path,
       'caption' => lang::get('Files'),
       'addBtnCaption' => lang::get('Add {1}'),
@@ -1080,8 +1077,9 @@ JS;
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     );
     $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes']===array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
-    if (isset(self::$final_image_folder_thumbs))
-      $defaults['finalImageFolderThumbs'] = $relpath . self::$final_image_folder_thumbs;
+    if (isset(self::$final_image_folder_thumbs)) {
+      $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
+    }
     $browser = self::get_browser_info();
     // Flash doesn't seem to work on IE6.
     if ($browser['name']=='msie' && $browser['version']<7)
@@ -1535,7 +1533,7 @@ JS;
       if (self::$form_mode==='ERRORS') {
         // The control is being reloaded after a validation failure. So we can display a thumbnail of the
         // already uploaded file, so the user knows not to re-upload.
-        $folder = isset(self::$interim_image_folder) ? self::$interim_image_folder : 'upload/';
+        $folder = self::getInterimImageFolder();
       } else {
         // image should be already on the warehouse
         $folder = self::get_uploaded_image_folder();
@@ -3260,12 +3258,12 @@ RIJS;
       self::add_resource('plupload');
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
+      $interimImageFolder = self::getInterimImageFolder('domain');
       $js_path = self::$js_path;
       self::$javascript .= <<<JS
 indiciaData.uploadSettings = {
   uploadScript: '{$relpath}upload.php',
-  destinationFolder: '{$relpath}{$interim_image_folder}',
+  destinationFolder: '{$interimImageFolder}',
   jsPath: '$js_path'
 JS;
       $langStrings = array(
@@ -6130,8 +6128,7 @@ if (errors$uniq.length>0) {
       if (is_array($output) && array_key_exists('success', $output))  {
         if (isset(self::$final_image_folder) && self::$final_image_folder!='warehouse') {
           // moving the files on the local machine. Find out where from and to
-          $interim_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
-            (isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/');
+          $interimImageFolder = self::getInterimImageFolder('fullpath');
           $final_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
             parent::$final_image_folder;
         }
@@ -6146,7 +6143,7 @@ if (errors$uniq.length>0) {
               // @todo Set PERSIST_AUTH false if last file
               $success = self::send_file_to_warehouse($item['path'], true, $writeTokens);
             } else {
-              $success = rename($interim_image_folder.$item['path'], $final_image_folder.$item['path']);
+              $success = rename($interimImageFolder.$item['path'], $final_image_folder.$item['path']);
             }
             if ($success !== true) {
               // Record all files that fail to move successfully.
@@ -7199,9 +7196,9 @@ HTML;
           $r .= '<li class="ui-state-error">Warning: The cache path setting points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
 
       }
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      if (!is_writeable(self::relative_client_helper_path() . $interim_image_folder))
-        $r .= '<li class="ui-state-error">The interim_image_folder setting points to a read only directory (' . $interim_image_folder . '). This will prevent image uploading.</li>';
+      $interimImageFolder = self::getInterimImageFolder();
+      if (!is_writeable($interimImageFolder))
+        $r .= '<li class="ui-state-error">The interim_image_folder setting points to a read only directory (' . $interimImageFolder . '). This will prevent image uploading.</li>';
       elseif ($fullInfo)
         $r .= '<li>Success: Interim image upload directory is writeable.</li>';
     }
@@ -7858,8 +7855,7 @@ HTML;
               $fext = array_pop($parts);
               // Generate a file id to store the image as
               $destination = time().rand(0,1000) . "." . $fext;
-              $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-              $uploadpath = self::relative_client_helper_path().$interim_image_folder;
+              $uploadpath = self::getInterimImageFolder();
               if (move_uploaded_file($fname, $uploadpath.$destination)) {
                 $r[] = array(
                   // Id is set only when saving over an existing record. This will always be a new record

@@ -1098,10 +1098,9 @@ TD;
         throw new Exception('Uploaded file must be a csv file');
       // Generate a file id to store the upload as
       $destination = time() . rand(0,1000) . "." . $fext;
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      $interim_path = dirname(__FILE__) . '/' . $interim_image_folder;
-      if (move_uploaded_file($file['tmp_name'], "$interim_path$destination")) {
-        return "$interim_path$destination";
+      $interimPath = self::getInterimImageFolder('fullpath');
+      if (move_uploaded_file($file['tmp_name'], "$interimPath$destination")) {
+        return "$interimPath$destination";
       }
     }
     elseif (isset($options['existing_file']))
