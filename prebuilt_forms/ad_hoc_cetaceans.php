@@ -172,7 +172,6 @@ class iform_ad_hoc_cetaceans {
     data_entry_helper::enable_validation('entry_form');
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
     $url = "$protocol://$_SERVER[SERVER_NAME]$_SERVER[REQUEST_URI]";
-    $r = data_entry_helper::loading_block_start();
     $r .= "<form method=\"post\" id=\"entry_form\" action=\"$url\">\n";
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     $r .= "<div id=\"controls\">\n";
@@ -388,7 +387,6 @@ class iform_ad_hoc_cetaceans {
     }
     $r .= "</fieldset></div>";
     $r .= "</form>";
-    $r .= data_entry_helper::loading_block_end();
     return $r;
   }
 

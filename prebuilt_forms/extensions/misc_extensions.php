@@ -1,5 +1,9 @@
 <?php
+
 /**
+ * @file
+ * A collection of miscellaneous extension controls for dynamic pages.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,50 +17,56 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @subpackage PrebuiltForms
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
- * Extension class that supplies general extension controls that can be used with any project.
+ * A collection of miscellaneous extension controls for dynamic pages.
+ *
+ * Extension class that supplies general extension controls that can be used
+ * with any dynamic report or data entry form by adding them to the user
+ * interface section.
  */
 class extension_misc_extensions {
 
   /**
    * General button link control can be placed on pages to link to another page.
-   * $options Options array with the following possibilities:<ul>
-   * <li><b>buttonLabel</b><br/>
-   * The label that appears on the button. Mandatory</li>
-   * <li><b>buttonLinkPath</b><br/>
-   * The page the button is linking to. Mandatory</li>
-   * <li><b>paramNameToPass</b><br/>
-   * The name of a static parameter to pass to the receiving page. Optional but requires paramValueToPass when in use</li>
-   * <li><b>paramValueToPass</b><br/>
-   * The value of the static parameter to pass to the receiving page. e.g. passing a static location_type_id. Optional but requires paramNameToPass when in use</li>
-   * User can also provide a value in braces to replace with the Drupal field for current user e.g. {field_indicia_user_id}</li>
-   * <li><b>onlyShowWhenLoggedInStatus</b><br/>
-   * If 1, then only show button for logged in users. If 2, only show link for users who are not logged in.
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * buttonLabel - The label that appears on the button. Mandatory.
+   *   * buttonLinkPath - The page the button is linking to. Mandatory.
+   *   * paramNameToPass - The name of a static parameter to pass to the
+   *     receiving page. Optional but requires paramValueToPass when in use.
+   *   * paramValueToPass - The value of the static parameter to pass to the
+   *     receiving page. e.g. passing a static location_type_id. Optional but
+   *     requires paramNameToPass when in use.
+   *   * User can also provide a value in braces to replace with the Drupal
+   *     field for current user e.g. {field_indicia_user_id}.
+   *   * onlyShowWhenLoggedInStatus - If 1, then only show button for logged in
+   *     users. If 2, only show link for users who are not logged in.
    */
   public static function button_link($auth, $args, $tabalias, $options, $path) {
     global $user;
-    //Check if we should only show button for logged in/or none logged in users
-    if ((!empty($options['onlyShowWhenLoggedInStatus'])&&
-           (($options['onlyShowWhenLoggedInStatus']==1 && $user->uid!=0)||
-           ($options['onlyShowWhenLoggedInStatus']==2 && $user->uid===0)||
-           ($options['onlyShowWhenLoggedInStatus']==false)))||
+    // Check if we should only show button for logged in/or none logged in
+    // users.
+    if ((!empty($options['onlyShowWhenLoggedInStatus']) &&
+           (($options['onlyShowWhenLoggedInStatus'] == 1 && $user->uid != 0) ||
+           ($options['onlyShowWhenLoggedInStatus'] == 2 && $user->uid === 0) ||
+           ($options['onlyShowWhenLoggedInStatus'] == FALSE)))||
         empty($options['onlyShowWhenLoggedInStatus'])) {
-      //Only display a button if the administrator has specified both a label and a link path for the button.
+      // Only display a button if the administrator has specified both a label
+      // and a link path for the button.
       if (!empty($options['buttonLabel'])&&!empty($options['buttonLinkPath'])) {
         if (!empty($options['paramNameToPass']) && !empty($options['paramValueToPass'])) {
-          //If the param value to pass is in braces, then collect the Drupal field where the name is between the braces e.g. field_indicia_user_id
-          if (substr($options['paramValueToPass'], 0, 1)==='{'&&substr($options['paramValueToPass'], -1)==='}') {
-            //Chop of the {}
-            $options['paramValueToPass']=substr($options['paramValueToPass'], 1, -1);
-            //hostsite_get_user_field doesn't want field or profile at the front.
+          // If the param value to pass is in braces, then collect the Drupal
+          // field where the name is between the braces e.g.
+          // field_indicia_user_id.
+          if (substr($options['paramValueToPass'], 0, 1) === '{'&&substr($options['paramValueToPass'], -1) === '}') {
+            // Chop off the {}.
+            $options['paramValueToPass'] = substr($options['paramValueToPass'], 1, -1);
+            // Hostsite_get_user_field doesn't want field or profile at the front.
             $prefix = 'profile_';
             if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
               $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
@@ -65,64 +75,72 @@ class extension_misc_extensions {
             if (substr($options['paramValueToPass'], 0, strlen($prefix)) == $prefix) {
               $options['paramValueToPass'] = substr($options['paramValueToPass'], strlen($prefix));
             }
-            $paramValueFromUserField=hostsite_get_user_field($options['paramValueToPass']);
-            //If we have collected the user field from the profile, then overwrite the existing value.
-            if (!empty($paramValueFromUserField))
-              $options['paramValueToPass']=$paramValueFromUserField;
+            $paramValueFromUserField = hostsite_get_user_field($options['paramValueToPass']);
+            // If we have collected the user field from the profile, then
+            // overwrite the existing value.
+            if (!empty($paramValueFromUserField)) {
+              $options['paramValueToPass'] = $paramValueFromUserField;
+            }
           }
-          $paramToPass=array($options['paramNameToPass']=>$options['paramValueToPass']);
+          $paramToPass = array($options['paramNameToPass'] => $options['paramValueToPass']);
         }
         $button = '<div>';
         $button .= '  <FORM>';
-        $button .= "    <INPUT TYPE=\"button\" VALUE=\"".lang::get($options['buttonLabel'])."\"";
-        //Button can still be used without a parameter to pass
+        $button .= "    <INPUT TYPE=\"button\" VALUE=\"" . lang::get($options['buttonLabel']) . "\"";
+        // Button can still be used without a parameter to pass.
         if (!empty($paramToPass)) {
           $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath']), $paramToPass) . "'\">";
-        } else {
+        }
+        else {
           $button .= "ONCLICK=\"window.location.href='" . hostsite_get_url(lang::get($options['buttonLinkPath'])) . "'\">";
         }
         $button .= '  </FORM>';
         $button .= '</div><br>';
-      } else {
+      }
+      else {
         drupal_set_message('A link button has been specified without a link path or button label, please fill in the @buttonLinkPath and @buttonLabel options');
         $button = '';
       }
       return $button;
-    } else
+    }
+    else {
       return '';
+    }
   }
 
   /**
    * General text link control can be placed on pages to link to another page.
-   * $options Options array with the following possibilities:<ul>
-   * <li><b>label</b><br/>
-   * The label that appears on the link. Mandatory</li>
-   * <li><b>linkPath</b><br/>
-   * The page to link to. Mandatory</li>
-   * <li><b>paramNameToPass</b><br/>
-   * The name of a static parameter to pass to the receiving page. Optional but requires paramValueToPass when in use</li>
-   * <li><b>paramValueToPass</b><br/>
-   * The value of the static parameter to pass to the receiving page. e.g. passing a static location_type_id. Optional but requires paramNameToPass when in use.
-   * User can also provide a value in braces to replace with the Drupal field for current user e.g. {field_indicia_user_id}</li>
-   * <li><b>onlyShowWhenLoggedInStatus</b><br/>
-   * If 1, then only show link for logged in users. If 2, only show link for users who are not logged in.
-   * <li><b>anchorId</b><br/>
-   * Optional id for anchor link. This might be useful, for example, if you want to reference the anchor with jQuery to set the path in real-time.
-   * </ul>
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * label - The label that appears on the link. Mandatory.
+   *   * linkPath< - The page to link to. Mandatory.
+   *   * paramNameToPass - The name of a static parameter to pass to the
+   *     receiving page. Optional but requires paramValueToPass when in use.
+   *   * paramValueToPass - The value of the static parameter to pass to the
+   *     receiving page. e.g. passing a static location_type_id. Optional but
+   *     requires paramNameToPass when in use. User can also provide a value
+   *     in braces to replace with the Drupal field for current user e.g.
+   *     {field_indicia_user_id}.
+   *   * onlyShowWhenLoggedInStatus - If 1, then only show link for logged in
+   *     users. If 2, only show link for users who are not logged in.
+   *   * anchorId - Optional id for anchor link. This might be useful, for
+   *     example, if you want to reference the anchor with jQuery to set the
+   *     path in real-time.
    */
   public static function text_link($auth, $args, $tabalias, $options, $path) {
     global $user;
     //Check if we should only show link for logged in/or none logged in users
     if ((!empty($options['onlyShowWhenLoggedInStatus'])&&
-           (($options['onlyShowWhenLoggedInStatus']==1 && $user->uid!=0)||
-           ($options['onlyShowWhenLoggedInStatus']==2 && $user->uid===0)||
-           ($options['onlyShowWhenLoggedInStatus']==false)))||
+           (($options['onlyShowWhenLoggedInStatus'] == 1 && $user->uid != 0) ||
+           ($options['onlyShowWhenLoggedInStatus'] == 2 && $user->uid === 0) ||
+           ($options['onlyShowWhenLoggedInStatus'] == FALSE))) ||
         empty($options['onlyShowWhenLoggedInStatus'])) {
       //Only display a link if the administrator has specified both a label and a link.
       if (!empty($options['label'])&&!empty($options['linkPath'])) {
         if (!empty($options['paramNameToPass']) && !empty($options['paramValueToPass'])) {
           //If the param value to pass is in braces, then collect the Drupal field where the name is between the braces e.g. field_indicia_user_id
-          if (substr($options['paramValueToPass'], 0, 1)==='{'&&substr($options['paramValueToPass'], -1)==='}') {
+          if (substr($options['paramValueToPass'], 0, 1) === '{'&&substr($options['paramValueToPass'], -1) === '}') {
             //Chop of the {}
             $options['paramValueToPass']=substr($options['paramValueToPass'], 1, -1);
             //hostsite_get_user_field doesn't want field or profile at the front.
@@ -142,28 +160,33 @@ class extension_misc_extensions {
           $paramToPass=array($options['paramNameToPass']=>$options['paramValueToPass']);
         }
         $button = '<div>';
-        //If an id option for the anchor is supplied then set the anchor id.
-        //This might be useful, for example, if you want to reference the anchor with jQuery to set the path in real-time.
+        // If an id option for the anchor is supplied then set the anchor id.
+        // This might be useful, for example, if you want to reference the
+        // anchor with jQuery to set the path in real-time.
         if (!empty($options['anchorId']))
           $button .= "  <a id=\"".$options['anchorId']."\" ";
         else
           $button .= "  <a  ";
-        //Button can still be used without a parameter to pass
+        // Button can still be used without a parameter to pass.
         if (!empty($paramToPass)) {
           $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath']), $paramToPass) . "\">";
-        } else {
+        }
+        else {
           $button .= "href=\"" . hostsite_get_url(lang::get($options['linkPath'])) . "\">";
         }
         $button .= lang::get($options['label']);
         $button .= '  </a>';
         $button .= '</div><br>';
-      } else {
+      }
+      else {
         drupal_set_message('A text link has been specified without a link path or label, please fill in the @linkPath and @label options');
         $button = '';
       }
       return $button;
-    } else
+    }
+    else {
       return '';
+    }
   }
 
   /**
@@ -172,7 +195,7 @@ class extension_misc_extensions {
    * Provide a setting called permissionName to identify the permission to check.
    */
   public static function js_has_permission($auth, $args, $tabalias, $options, $path) {
-    static $done_js_has_permission=false;
+    static $done_js_has_permission=FALSE;
     if (empty($options['permissionName']))
       return 'Please provide a setting @permissionName for the js_has_permission control.';
     $val = hostsite_user_has_permission($options['permissionName']) ? 'true' : 'false';
@@ -180,7 +203,7 @@ class extension_misc_extensions {
       data_entry_helper::$javascript .= "if (typeof indiciaData.permissions==='undefined') {
   indiciaData.permissions={};
 }\n";
-      $done_js_has_permission=true;
+      $done_js_has_permission = TRUE;
     }
     data_entry_helper::$javascript .= "indiciaData.permissions['$options[permissionName]']=$val;\n";
     return '';
@@ -192,23 +215,26 @@ class extension_misc_extensions {
    * Provide an option called fieldName to specify the field to obtain the value for.
    */
   public static function js_user_field($auth, $args, $tabalias, $options, $path) {
-    static $done_js_user_field=false;
+    static $done_js_user_field = FALSE;
     if (empty($options['fieldName']))
       return 'Please provide a setting @fieldName for the js_user_field control.';
     if (!function_exists('hostsite_get_user_field'))
       return 'Can\'t use the js_user_field extension without a hostsite_get_user_field function.';
     $val = hostsite_get_user_field($options['fieldName']);
-    if ($val===true)
-      $val='true';
-    elseif ($val===false)
-      $val='false';
-    elseif (is_string($val))
-      $val="'$val'";
+    if ($val === TRUE) {
+      $val = 'true';
+    }
+    elseif ($val === FALSE) {
+      $val = 'false';
+    }
+    elseif (is_string($val)) {
+      $val = "'$val'";
+    }
     if (!$done_js_user_field) {
       data_entry_helper::$javascript .= "if (typeof indiciaData.userFields==='undefined') {
   indiciaData.userFields={};
 }\n";
-      $done_js_user_field=true;
+      $done_js_user_field = TRUE;
     }
     data_entry_helper::$javascript .= "indiciaData.userFields['$options[fieldName]']=$val;\n";
     return '';
@@ -216,8 +242,9 @@ class extension_misc_extensions {
 
   public static function data_entry_helper_control($auth, $args, $tabalias, $options, $path) {
     $ctrl = $options['control'];
-    if (isset($options['extraParams']))
+    if (isset($options['extraParams'])) {
       $options['extraParams'] = $auth['read'] + $options['extraParams'];
+    }
     return data_entry_helper::$ctrl($options);
   }
 
@@ -568,7 +595,7 @@ $.getScript('$path$options[mapDataFile]');
 JS;
     return data_entry_helper::select($options);
   }
-  
+
   /**
    * Allows localised text to be inserted on the page.
    *
@@ -673,6 +700,43 @@ JS;
     else {
       return '';
     }
+  }
+
+  public static function imports_grid($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(array('report_helper'));
+    $auth = report_helper::get_read_write_auth($args['website_id'], $args['password']);
+    report_helper::$javascript .= 'indiciaData.write = ' . json_encode($auth['write_tokens']) . ";\n";
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      [
+        'dataSource' => 'library/imports/occurrence_imports_list',
+        'columns' => [
+          [
+            'fieldname' => 'import_guid'
+          ],
+          [
+            'fieldname' => 'date_time',
+          ],
+          [
+            'fieldname' => 'imported_by',
+          ],
+          [
+            'fieldname' => 'records',
+            'template' => '{records}',
+          ],
+          [
+            'actions' => [
+              [
+                'caption' => 'delete records',
+                'javascript' => "indiciaFns.bulkDeleteOccurrences('{import_guid}');",
+              ],
+            ],
+          ],
+        ],
+      ],
+      $options
+    );
+    return report_helper::report_grid($reportOptions);
   }
 
 }

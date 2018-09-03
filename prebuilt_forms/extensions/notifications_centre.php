@@ -95,10 +95,7 @@ class extension_notifications_centre {
         //The proxy url used when interacting with the occurrence comment table in the database.
         report_helper::$javascript .= "indiciaData.occurrence_comment_proxy_url = '".iform_ajaxproxy_url(null, 'occ-comment')."';\n";
         // The url used for direct access to data services.
-        if (!empty(data_entry_helper::$warehouse_proxy))
-          self::$dataServicesUrl = data_entry_helper::$warehouse_proxy."index.php/services/data";
-        else
-          self::$dataServicesUrl = data_entry_helper::$base_url."index.php/services/data";
+        self::$dataServicesUrl = data_entry_helper::getProxiedBaseUrl() . "index.php/services/data";
         report_helper::$javascript .= "indiciaData.data_services_url = '".self::$dataServicesUrl."';\n";
         //If the user clicks the Remove Notifications submit button, then a hidden field
         //called remove-notifications is set. We can check for this when the

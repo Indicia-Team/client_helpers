@@ -2006,4 +2006,48 @@ class extension_splash_extensions {
       return '<div id="no-plot-test" style="color:red">'.$options['warningMessage'].'</div><br>';
     }
   }
+
+  /*
+   * Display a grid of squares the user has entered data for
+   * $options Options array with the following possibilities:<ul>
+   * <li><b>userIdParamName</b><br/>
+   * What is the name of the param identifying the user in the URL param.</li>
+   * <li><b>limitToSurveyIds</b><br/>
+   * Comma separated list of survey IDs to limit the results to. Allows us to ignore data entered on Extra Species page not part of official project.</li>
+   * <li><b>ignoreSampleDatesBefore</b><br/>
+   * Ignore samples before this creation date.</li>
+   * <li><b>ignoreSquareDatesBefore</b><br/>
+   * Ignore squares before this creation date.</li>
+   */
+  public static function squares_user_has_entered_data_for($auth, $args, $tabAlias, $options) {
+    //
+    if (!empty($options['userIdParamName']) && !empty($_GET[$options['userIdParamName']]) 
+     && !empty($options['limitToSurveyIds']) && !empty($options['ignoreSampleDatesBefore']) 
+     && !empty($options['squareAdminPageLink']) && !empty($options['ignoreSquareDatesBefore'])) {
+      $r = '<h4>Squares user has entered data for</h4>';
+      $userIdParamName = $options['userIdParamName'];
+      iform_load_helpers(array('report_helper'));
+      $r .= report_helper::report_grid(array(
+        'id'=>'user-square-data-summary',
+        'readAuth' => $auth['read'],
+        'itemsPerPage'=>10,
+        'dataSource'=>'reports_for_prebuilt_forms/Splash/squares_user_has_entered_data_for',
+        'rowId'=>'id',
+        'ajax'=>true,
+        'mode'=>'report',
+        'extraParams'=>array(
+          'limit_survey_ids' => $options['limitToSurveyIds'],
+          'the_user_id' => $_GET[$userIdParamName],
+          'ignore_sample_dates_before' => $options['ignoreSampleDatesBefore'],
+          'ignore_square_dates_before' => $options['ignoreSquareDatesBefore'],
+          'square_admin_page_link' => $options['squareAdminPageLink'],
+          'website_id'=>$args['website_id']),
+      )); 
+    } else {
+      $r = 'Please check all the required options for the "squares_user_has_entered_data_for_grid" extension have been filled in.
+      Please fill in @limitToSurveyIds, @userIdParamName, @ignoreSampleDatesBefore, @ignoreSquareDatesBefore, @squareAdminPageLink<br><br>
+      If these options have been filled in, please make sure a user id param which matches the @userIdParamName option has been supplied in the URL.';
+    }
+    return $r;
+  }
 }

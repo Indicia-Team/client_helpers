@@ -55,7 +55,7 @@ class lang {
     global $default_terms;
     global $custom_terms;
     $output = $key;
-    $useHostsiteTranslation = function_exists('t') && !empty(helper_config::$delegate_translation_to_hostsite);
+    $useHostsiteTranslation = function_exists('t') && !empty(helper_base::$delegate_translation_to_hostsite);
     if (isset($custom_terms) && array_key_exists($key, $custom_terms)) {
       $output = $custom_terms[$key];
     }

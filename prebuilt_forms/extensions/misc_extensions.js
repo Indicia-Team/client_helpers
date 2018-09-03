@@ -59,4 +59,20 @@ jQuery(document).ready(function ($) {
       }
     }
   });
+
+  indiciaFns.bulkDeleteOccurrences = function bulkDeleteOccurrences(importGuid) {
+    var params = {
+      nonce: indiciaData.write.nonce,
+      auth_token: indiciaData.write.auth_token,
+      import_guid: importGuid
+    };
+    $.post({
+      url: indiciaData.warehouseUrl + 'index.php/services/data_utils/bulk_delete_occurrences',
+      data: params,
+      success: function (response) {
+        alert('Occurrences deleted');
+      },
+      dataType: 'json'
+    });
+  }
 });
