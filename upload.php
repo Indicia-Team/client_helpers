@@ -12,7 +12,10 @@
   // Only output real errors. We don't want warnings to break the JSON
   error_reporting(E_ERROR);
 
-  // HTTP headers for no cache etc
+  // HTTP headers for no cache & CORS etc
+  header('Access-Control-Allow-Origin: *');
+  header('Access-Control-Allow-Methods: GET, POST, PATCH, PUT, DELETE, OPTIONS');
+  header('Access-Control-Allow-Headers: Origin, Content-Type, X-Auth-Token'); 
   header('Content-type: text/html;');
   header("Expires: Mon, 26 Jul 1997 05:00:00 GMT");
   header("Last-Modified: " . gmdate("D, d M Y H:i:s") . " GMT");
@@ -27,9 +30,30 @@
   require('data_entry_helper.php');
 
   // Settings. 
-  // Note the interim image folder may not be in helper_config in which case use a default
-  $interim_image_folder = isset(helper_config::$interim_image_folder) ? helper_config::$interim_image_folder : 'upload/';
-  $targetDir = dirname(__FILE__) . '/' . $interim_image_folder;
+  // Get drupal & iForm module folders path
+  $rootpath=realpath('');
+  $rootpath=str_replace('\\','/',$rootpath);
+  $sites_pos=strpos($rootpath,'/sites');
+  $module_pos=strpos($rootpath,'/modules');
+  if($sites_pos && $module_pos){
+    $site_folder=substr($rootpath, 0, $sites_pos+6);
+    $url_folder=substr($rootpath, $sites_pos+7, $module_pos-$sites_pos-7);
+  }
+  if(isset($site_folder) && isset($url_folder) && $url_folder==='all'){
+    //if site uses the default folder.
+    $default_folder = $site_folder.'/default/files';
+    $targetDir = $site_folder . '/default/files/indicia/upload/';
+   }
+  else if (isset($url_folder) && $url_folder!=='all') {
+    //if site doesn't use default folder
+        $targetDir = $site_folder .'/'. $url_folder . '/files/indicia/upload/';
+    }
+  else{
+    //this is for Non-drupal sites.
+      // Note the interim image folder may not be in helper_config in which case use a default
+      $interim_image_folder = isset(helper_config::$interim_image_folder) ? helper_config::$interim_image_folder : 'upload/';
+      $targetDir = dirname(__FILE__) . '/' . $interim_image_folder;
+  }
   // Clenaup old .part upload files
   $cleanupTargetDir = true; 
   // Max .part file age in seconds
