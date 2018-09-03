@@ -23,7 +23,6 @@
 /**
  * Link in other required php files.
  */
-require_once 'helper_config.php';
 require_once 'helper_base.php';
 require_once 'submission_builder.php';
 
@@ -193,18 +192,10 @@ class data_entry_helper extends helper_base {
     elseif (!isset($options['defaultCaption'])) {
       $options['defaultCaption'] = '';
     }
-
-    if (!empty(parent::$warehouse_proxy)) {
-      $warehouseUrl = parent::$warehouse_proxy;
-    }
-    else {
-      $warehouseUrl = parent::$base_url;
-    }
     $options = array_merge(array(
       'template' => 'autocomplete',
-      'url' => isset($options['report'])
-        ? $warehouseUrl . "index.php/services/report/requestReport"
-        : $warehouseUrl . "index.php/services/data/" . $options['table'],
+      'url' => parent::getProxiedBaseUrl() . 'index.php/services/' .
+        (isset($options['report']) ? 'report/requestReport' : "data/$options[table]"),
       // Escape the ids for jQuery selectors.
       'escaped_input_id' => self::jq_esc($options['inputId']),
       'escaped_id' => self::jq_esc($options['id']),
@@ -1049,26 +1040,23 @@ JS;
    */
   public static function file_box($options) {
     global $indicia_templates;
-    $relpath = self::getRootFolder() . self::client_helper_path();
-    // Upload directory defaults to client_helpers/upload, but can be overriden.
-    $interim_image_folder = !empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
-    //If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
+    // If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
     if (!empty($options['subType']))
-      self::$upload_file_types[$options['subType']]=self::$upload_file_types['image'];
+      self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
     // Allow options to be defaulted and overridden
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     $defaults = array(
       'id' => 'default',
-      'upload' => true,
+      'upload' => TRUE,
       'maxFileCount' => 4,
-      'autoupload' => false,
+      'autoupload' => FALSE,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => array('html5','flash','silverlight','html4'),
-      'autoupload' => true,
+      'autoupload' => TRUE,
       'imageWidth' => 200,
-      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
-      'destinationFolder' => $interim_image_folder,
+      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
+      'destinationFolder' => self::getInterimImageFolder('domain'),
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
@@ -1076,7 +1064,7 @@ JS;
       'maxUploadSize' => self::convert_to_bytes(isset(parent::$maxUploadSize) ? parent::$maxUploadSize : '4M'),
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? array($options['subType']) : array('Image:Local'),
-      'fileTypes' => (object)self::$upload_file_types,
+      'fileTypes' => (object) self::$upload_file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path,
       'caption' => lang::get('Files'),
       'addBtnCaption' => lang::get('Add {1}'),
@@ -1089,8 +1077,9 @@ JS;
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     );
     $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes']===array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
-    if (isset(self::$final_image_folder_thumbs))
-      $defaults['finalImageFolderThumbs'] = $relpath . self::$final_image_folder_thumbs;
+    if (isset(self::$final_image_folder_thumbs)) {
+      $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
+    }
     $browser = self::get_browser_info();
     // Flash doesn't seem to work on IE6.
     if ($browser['name']=='msie' && $browser['version']<7)
@@ -1269,27 +1258,26 @@ JS;
     // We need to see if there is a resource in the resource list for any special files required by this driver. This
     // will do nothing if the resource is absent.
     self::add_resource('georeference_'.$options['driver']);
+    $settings = [
+      'autoCollapseResults' => $options['autoCollapseResults'] ? 't' : 'f',
+    ];
     foreach ($options as $key=>$value) {
       // if any of the options are for the georeferencer driver, then we must set them in the JavaScript.
       if (substr($key, 0, 6)=='georef') {
-        self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.$key='$value';\n";
+        $settings[$key] = $value;
       }
     }
-    if ($options['driver'] === 'google_places')
-      self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings.google_api_key=\''.self::$google_api_key."';\n";
-    // If the lookup service driver uses cross domain JavaScript, this setting provides
-    // a path to a simple PHP proxy script on the server.
-    self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.proxy='".
-      self::getRootFolder() . self::client_helper_path() . "proxy.php';\n\n";
-    self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.autoCollapseResults='".($options['autoCollapseResults'] ? 't' : 'f') . "';\n";
-    // for the indicia_locations driver, pass through the read auth and url
-    if ($options['driver'] === 'indicia_locations') {
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.warehouseUrl='".self::$base_url."';\n";
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.auth_token='".$options['readAuth']['auth_token']."';\n";
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.nonce='".$options['readAuth']['nonce']."';\n";
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.public='".($options['public'] ? 't' : 'f') . "';\n";
+    // Google driver needs a key.
+    if ($options['driver'] === 'google_places') {
+      $settings['google_api_key'] = self::$google_api_key;
+    }
+    // The indicia_locations driver needs the warehouse URL.
+    elseif ($options['driver'] === 'indicia_locations') {
+      $settings['warehouseUrl'] = self::$base_url;
+      $settings['public'] = $options['public'] ? 't' : 'f';
       self::add_resource('json');
     }
+    self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings = ' . json_encode($settings) . ";\n";
     if ($options['autoCollapseResults']) {
       // no need for close button on results list
       $options['closeButton']='';
@@ -1545,7 +1533,7 @@ JS;
       if (self::$form_mode==='ERRORS') {
         // The control is being reloaded after a validation failure. So we can display a thumbnail of the
         // already uploaded file, so the user knows not to re-upload.
-        $folder = !empty(self::$interim_image_folder) ? self::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
+        $folder = self::getInterimImageFolder();
       } else {
         // image should be already on the warehouse
         $folder = self::get_uploaded_image_folder();
@@ -3270,12 +3258,12 @@ RIJS;
       self::add_resource('plupload');
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
-      $interim_image_folder = !empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
+      $interimImageFolder = self::getInterimImageFolder('domain');
       $js_path = self::$js_path;
       self::$javascript .= <<<JS
 indiciaData.uploadSettings = {
   uploadScript: '{$relpath}upload.php',
-  destinationFolder: '{$interim_image_folder}',
+  destinationFolder: '{$interimImageFolder}',
   jsPath: '$js_path'
 JS;
       $langStrings = array(
@@ -3684,10 +3672,7 @@ JS;
         } else {
           self::$javascript .= "formatter = '".$indicia_templates['taxon_label']."';\n";
         }
-        if (!empty(parent::$warehouse_proxy))
-          $url = parent::$warehouse_proxy."index.php/services/data";
-        else
-          $url = parent::$base_url."index.php/services/data";
+        $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
         self::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20) . ";\n";
@@ -4979,10 +4964,7 @@ $('#sensitive-blur').change(function() {
     global $indicia_templates;
     self::add_resource('treeview_async');
     // Declare the data service
-    if (!empty(parent::$warehouse_proxy))
-      $url = parent::$warehouse_proxy."index.php/services/data";
-    else
-      $url = parent::$base_url."index.php/services/data";
+    $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
     // Setup some default values
     $options = array_merge(array(
       'valueField'=>$options['captionField'],
@@ -5804,17 +5786,13 @@ HTML;
     $parentControlId = str_replace(':','\\\\:',$options['parentControlId']);
     $escapedId = str_replace(':','\\\\:',$options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
-    if (!empty(parent::$warehouse_proxy))
-      $base_url = parent::$warehouse_proxy;
-    else
-      $base_url = parent::$base_url;
     if (!empty($options['report'])) {
-      $url = $base_url."index.php/services/report/requestReport";
+      $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
       $request = "$url?report=".$options['report'].".xml&mode=json&reportSource=local&callback=?";
       $query = $options['filterField'] . '="+$(this).val()+"';
     }
     else {
-      $url = $base_url."index.php/services/data";
+      $url = parent::getProxiedBaseUrl() . "index.php/services/data";
       $request = "$url/".$options['table']."?mode=json&callback=?";
       $inArray = array('val');
       if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
@@ -6079,54 +6057,6 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * <p>Allows the demarcation of the start of a region of the page HTML to be declared which will be replaced by
-   * a loading message whilst the page is loading.</p>
-   * <p>If JavaScript is disabled then this has no effect. Note that hiding the block is achieved by setting
-   * it's left to move it off the page, rather than display: none. This is because OpenLayers won't initialise
-   * properly on a div that is display none.</p>
-   * <p><b>Warning.</b> To use this function, always insert a call to dump_header in the <head> element of your
-   * HTML page to ensure that JQuery is loaded first. Otherwise this will not work.</p>
-   *
-   * @return string HTML and JavaScript to insert into the page at the start of the block
-   * which is replaced by a loading panel while the page is loading.
-   */
-  public static function loading_block_start() {
-    global $indicia_templates;
-    self::add_resource('jquery_ui');
-    // For clean code, the jquery_ui stuff should have gone out in the page header, but just in case.
-    // Don't bother from inside Drupal, since the header is added after the page code runs
-    if (!in_array('jquery_ui', self::$dumped_resources) && !defined('DRUPAL_BOOTSTRAP_CONFIGURATION')) {
-      $r = self::internal_dump_resources(array('jquery_ui'));
-      array_push(self::$dumped_resources, 'jquery_ui');
-    } else {
-      $r = '';
-    }
-    $r .= $indicia_templates['loading_block_start'];
-    return $r;
-  }
-
-  /**
-   * Allows the demarcation of the end of a region of the page HTML to be declared which will be replaced by
-   * a loading message whilst the page is loading.
-   *
-   * @return string HTML and JavaScript to insert into the page at the start of the block
-   * which is replaced by a loading panel while the page is loading.
-   */
-  public static function loading_block_end() {
-    global $indicia_templates;
-    // First hide the message, then hide the form, slide it into view, then show it.
-    // This script must precede the other scripts onload, otherwise they may have problems because
-    // of assumptions that the controls are visible.
-    self::$onload_javascript = "$('.loading-panel').remove();\n".
-      "var panel=$('.loading-hide')[0];\n".
-      "$(panel).hide();\n".
-      "$(panel).removeClass('loading-hide');\n".
-      "$(panel).fadeIn('slow');\n" .
-      self::$onload_javascript;
-    return $indicia_templates['loading_block_end'];
-  }
-
-  /**
    * Either takes the passed in submission, or creates it from the post data if this is null, and forwards
    * it to the data services for saving as a member of the entity identified.
    * @param string $entity Name of the top level entity being submitted, e.g. sample or occurrence.
@@ -6198,8 +6128,7 @@ if (errors$uniq.length>0) {
       if (is_array($output) && array_key_exists('success', $output))  {
         if (isset(self::$final_image_folder) && self::$final_image_folder!='warehouse') {
           // moving the files on the local machine. Find out where from and to
-          $interim_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
-            (!empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/');
+          $interimImageFolder = self::getInterimImageFolder('fullpath');
           $final_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
             parent::$final_image_folder;
         }
@@ -6214,7 +6143,7 @@ if (errors$uniq.length>0) {
               // @todo Set PERSIST_AUTH false if last file
               $success = self::send_file_to_warehouse($item['path'], true, $writeTokens);
             } else {
-              $success = rename($interim_image_folder.$item['path'], $final_image_folder.$item['path']);
+              $success = rename($interimImageFolder.$item['path'], $final_image_folder.$item['path']);
             }
             if ($success !== true) {
               // Record all files that fail to move successfully.
@@ -7222,11 +7151,11 @@ HTML;
           $r .= '<li class="ui-state-error">Warning: The cUrl PHP library could not access the Indicia Warehouse. The error was reported as:';
           $r .= $curl_check['output'].'<br/>';
           $r .= 'Please ensure that this web server is not prevented from accessing the server identified by the ' .
-            'helper_config.php $base_url setting by a firewall. The current setting is '.parent::$base_url.'</li>';
+            '$base_url setting by a firewall. The current setting is ' . parent::$base_url . '</li>';
         } else {
           $r .= '<li class="ui-widget ui-state-error">Warning: A request sent to the Indicia Warehouse URL did not respond as expected. ' .
-            'Please ensure that the helper_config.php $base_url setting is correct. ' .
-            'The current setting is '.parent::$base_url.'<br></li>';
+            'Please ensure that the $base_url setting is correct. ' .
+            'The current setting is ' . parent::$base_url . '<br></li>';
         }
       }
       $missing_configs = array();
@@ -7236,26 +7165,26 @@ HTML;
       // don't test $indicia_upload_path and $interim_image_folder as they are assumed to be upload/ if missing.
       self::check_config('$geoserver_url', isset(self::$geoserver_url), empty(self::$geoserver_url), $missing_configs, $blank_configs);
       if (substr(self::$geoserver_url, 0, 4) != 'http') {
-        $r .= '<li class="ui-widget ui-state-error">Warning: The $geoserver_url setting in helper_config.php should include the protocol (e.g. http://).</li>';
+        $r .= '<li class="ui-widget ui-state-error">Warning: The $geoserver_url setting should include the protocol (e.g. http://).</li>';
       }
       self::check_config('$google_api_key', isset(self::$google_api_key), empty(self::$google_api_key), $missing_configs, $blank_configs);
       self::check_config('$bing_api_key', isset(self::$bing_api_key), empty(self::$bing_api_key), $missing_configs, $blank_configs);
       // Warn the user of the missing ones - the important bit.
       if (count($missing_configs)>0) {
-        $r .= '<li class="ui-widget ui-state-error">Error: The following configuration entries are missing from helper_config.php : '.
+        $r .= '<li class="ui-widget ui-state-error">Error: The following configuration entries are missing: '.
           implode(', ', $missing_configs).'. This may prevent the data_entry_helper class from functioning normally.</li>';
       }
       // Also warn them of blank ones - not so important as it should only affect the one area of functionality
       if (count($blank_configs)>0) {
-        $r .= '<li class="ui-widget ui-state-error">Warning: The following configuration entries are not specified in helper_config.php : '.
+        $r .= '<li class="ui-widget ui-state-error">Warning: The following configuration entries are not specified: '.
           implode(', ', $blank_configs).'. This means the respective areas of functionality will not be available.</li>';
       }
       // Test we have a writeable cache directory
       $cacheFolder = parent::$cache_folder ? parent::$cache_folder : self::relative_client_helper_path() . 'cache/';
       if (!is_dir($cacheFolder)) {
-        $r .= '<li class="ui-state-error">The cache path setting in helper_config.php points to a missing directory. This will result in slow form loading performance.</li>';
+        $r .= '<li class="ui-state-error">The cache path setting points to a missing directory. This will result in slow form loading performance.</li>';
       } elseif (!is_writeable($cacheFolder)) {
-        $r .= '<li class="ui-state-error">The cache path setting in helper_config.php points to a read only directory (' . $cacheFolder . '). Please change it to writeable.</li>';
+        $r .= '<li class="ui-state-error">The cache path setting points to a read only directory (' . $cacheFolder . '). Please change it to writeable.</li>';
       } else {
         // need a proper test, as is_writeable can report true when the cache file can't be created.
         $handle = @fopen("$cacheFolder/test.txt", 'wb');
@@ -7264,13 +7193,12 @@ HTML;
           if ($fullInfo)
             $r .= '<li>Success: Cache directory is present and writeable.</li>';
         } else
-          $r .= '<li class="ui-state-error">Warning: The cache path setting in helper_config.php points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
+          $r .= '<li class="ui-state-error">Warning: The cache path setting points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
 
       }
-      $interim_image_folder = !empty(parent::$interim_image_folder) ? parent::$interim_image_folder : self::relative_client_helper_path() . 'upload/';
-      //Check if folder is writable or not.
-      if (!is_writeable($interim_image_folder))
-        $r .= '<li class="ui-state-error">The interim_image_folder setting in helper_config.php points to a read only directory (' . $interim_image_folder . '). This will prevent image uploading.</li>';
+      $interimImageFolder = self::getInterimImageFolder();
+      if (!is_writeable($interimImageFolder))
+        $r .= '<li class="ui-state-error">The interim_image_folder setting points to a read only directory (' . $interimImageFolder . '). This will prevent image uploading.</li>';
       elseif ($fullInfo)
         $r .= '<li>Success: Interim image upload directory is writeable.</li>';
     }
@@ -7279,15 +7207,22 @@ HTML;
   }
 
   /**
-   * Checks a configuration setting in the helper_config.php file. If it is missing or blank
-   * then it is added to an array so that the caller can decide what to do.
-   * @param string $name Name of the configuration parameter.
-   * @param boolean $isset Is the parameter set?
-   * @param boolean $empty Is the parameter empty?
-   * @param array $missing_configs Configuration settings that are missing are added to this array.
-   * @param array $blank_configs Configuration settings that are empty are added to this array.
+   * Checks a configuration setting.
+
+   * If it is missing or blank then it is added to an array so that the caller
+   * can decide what to do.
+
+   * @param string $name
+   *   Name of the configuration parameter.
+   * @param bool $isset
+   *   Is the parameter set?
+   * @param bool $empty Is the parameter empty?
+   * @param array $missing_configs
+   *   Configuration settings that are missing are added to this array.
+   * @param array
+   *   $blank_configs Configuration settings that are empty are added to this array.
    */
-  private static function check_config($name, $isset, $empty, &$missing_configs, &$blank_configs) {
+  private static function check_config($name, $isset, $empty, array &$missing_configs, array &$blank_configs) {
     if (!$isset) {
       array_push($missing_configs, $name);
     } else if ($empty) {
@@ -7920,8 +7855,7 @@ HTML;
               $fext = array_pop($parts);
               // Generate a file id to store the image as
               $destination = time().rand(0,1000) . "." . $fext;
-              $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-              $uploadpath = self::relative_client_helper_path().$interim_image_folder;
+              $uploadpath = self::getInterimImageFolder();
               if (move_uploaded_file($fname, $uploadpath.$destination)) {
                 $r[] = array(
                   // Id is set only when saving over an existing record. This will always be a new record
@@ -7953,7 +7887,7 @@ HTML;
 
   /**
    * Validation rule to test if an uploaded file is allowed by file size.
-   * File sizes are obtained from the helper_config maxUploadSize, and defined as:
+   * File sizes are obtained from the $maxUploadSize setting, and defined as:
    * SB, where S is the size (1, 15, 300, etc) and
    * B is the byte modifier: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes.
    * Eg: to limit the size to 1MB or less, you would use "1M".
@@ -7961,8 +7895,7 @@ HTML;
    * @param array $file Item from the $_FILES array.
    * @return bool True if the file size is acceptable, otherwise false.
    */
-  public static function check_upload_size(array $file)
-  {
+  public static function check_upload_size(array $file) {
     if ((int) $file['error'] !== UPLOAD_ERR_OK)
       return TRUE;
 
