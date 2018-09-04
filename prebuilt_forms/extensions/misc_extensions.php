@@ -709,6 +709,7 @@ JS;
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       [
+        'id' => 'imports-grid',
         'dataSource' => 'library/imports/occurrence_imports_list',
         'columns' => [
           [
