@@ -137,7 +137,7 @@ class extension_splash_extensions {
         'no_vice_county_found_message'=>$noViceCountyFoundMessage,
         'user_square_attr_id'=>$userSquareAttrId);
     $reportOptions = array(
-      'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
+      'dataSource'=>'projects/npms/get_my_squares_and_plots',
       'readAuth'=>$auth['read'],
       'mode'=>'report',
       'extraParams' => $extraParamForSquarePlotReports
@@ -236,7 +236,7 @@ class extension_splash_extensions {
                         'no_vice_county_found_message'=>$noViceCountyFoundMessage,
                         'user_square_attr_id'=>$userSquareAttrId);
     $reportOptions = array(
-      'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_that_have_plots',
+      'dataSource'=>'projects/npms/get_my_squares_that_have_plots',
       'readAuth'=>$auth['read'],
       'mode'=>'report',
       'extraParams' => $extraParamForSquarePlotReports
@@ -266,7 +266,7 @@ class extension_splash_extensions {
         //Get square and plot data for sample
         $sampleData = data_entry_helper::get_report_data(
           array(
-            'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_for_sample',
+            'dataSource'=>'projects/npms/get_square_for_sample',
             'readAuth'=>$auth['read'],
             'mode'=>'report',
             'extraParams' => array('sample_id'=>$_GET['sample_id'])
@@ -282,7 +282,7 @@ class extension_splash_extensions {
             'only_show_my_useable_plots_squares'=>true);
         $squareAndPlotData = data_entry_helper::get_report_data(
           array(
-            'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
+            'dataSource'=>'projects/npms/get_my_squares_and_plots',
             'readAuth'=>$auth['read'],
             'mode'=>'report',
             'extraParams' => $extraParamForSquarePlotReports
@@ -322,7 +322,7 @@ class extension_splash_extensions {
       //Need a report to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
       if (!empty($_GET['sample_id'])) {
         $squareData = data_entry_helper::get_report_data(array(
-          'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_for_sample',
+          'dataSource'=>'projects/npms/get_square_for_sample',
           'readAuth'=>$auth['read'],
           'extraParams'=>array('sample_id'=>$_GET['sample_id'])
         ));
@@ -356,7 +356,7 @@ class extension_splash_extensions {
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
       $options['extraParams']['user_square_attr_id']=$userSquareAttrId;
-      $options['report']='reports_for_prebuilt_forms/Splash/get_plots_for_square_id';
+      $options['report']='projects/npms/get_plots_for_square_id';
       $options['extraParams']['current_user_id']=$currentUserId;
       if (!empty($options['plotNumberAttrId']))
         $options['extraParams']['plot_number_attr_id']=$options['plotNumberAttrId'];
@@ -373,7 +373,7 @@ class extension_splash_extensions {
       //whether the selected plot is private and set the sample privacy precision appropriately
       if (!empty($options['privatePlotAttrId'])) {
         $reportOptions = array(
-          'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
+          'dataSource'=>'projects/npms/get_my_squares_and_plots',
           'readAuth'=>$auth['read'],
           'extraParams'=>$extraParamForSquarePlotReports
         );
@@ -468,7 +468,7 @@ class extension_splash_extensions {
     iform_load_helpers(array('report_helper'));
     $reportOptions = array(
       'linkOnly'=>'true',
-      'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_details_for_square_id',
+      'dataSource'=>'projects/npms/get_square_details_for_square_id',
       'readAuth'=>$auth['read']
     );
     //Report that will return the type of the square selected by the user
@@ -477,7 +477,7 @@ class extension_splash_extensions {
 
     $reportOptions = array(
       'linkOnly'=>'true',
-      'dataSource'=>'reports_for_prebuilt_forms/Splash/get_plot_details',
+      'dataSource'=>'projects/npms/get_plot_details',
       'readAuth'=>$auth['read']
     );
     data_entry_helper::$javascript .= "indiciaData.plotReportRequest='".
@@ -668,7 +668,7 @@ class extension_splash_extensions {
     //The plot details page use's location_id as its parameter in edit mode
     if (!empty($_GET['location_id'])) {
       $reportOptions = array(
-        'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_name_for_plot_id',
+        'dataSource'=>'projects/npms/get_square_name_for_plot_id',
         'readAuth'=>$auth['read'],
         'extraParams' => array('website_id'=>$args['website_id'],
             'vice_county_location_attribute_id'=>$options['viceCountyLocationAttributeId'],
@@ -683,7 +683,7 @@ class extension_splash_extensions {
     //In add mode, the Plot Details page is given its parent square in the parent_square_id parameter, so use this to get the parent square name.
     if (!empty($_GET['dynamic-location_id'])||!empty($_GET['parent_square_id'])) {
       $reportOptions = array(
-        'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_details_for_square_id',
+        'dataSource'=>'projects/npms/get_square_details_for_square_id',
         'readAuth'=>$auth['read'],
         'extraParams' => array('website_id'=>$args['website_id'],
             'vice_county_location_attribute_id'=>$options['viceCountyLocationAttributeId'],
@@ -1139,7 +1139,7 @@ class extension_splash_extensions {
         ));
         if (empty($personData[0]['id'])) {
           $personData = data_entry_helper::get_report_data(array(
-            'dataSource'=>'reports_for_prebuilt_forms/Splash/get_person_for_email_address',
+            'dataSource'=>'projects/npms/get_person_for_email_address',
             'readAuth'=>$auth['read'],
             'extraParams'=>array('email_address' => $email)
           ));
@@ -1313,7 +1313,7 @@ class extension_splash_extensions {
           }
           //Try to get any existing data from the warehouse for the person and that attribute.
           $reportOptions = array(
-            'dataSource'=>'reports_for_prebuilt_forms/Splash/check_existing_person_attribute_values',
+            'dataSource'=>'projects/npms/check_existing_person_attribute_values',
             'readAuth'=>$auth['read'],
             'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$attributeId, 'person_id'=>$userData[0]['person_id']),
           );
@@ -1335,7 +1335,7 @@ class extension_splash_extensions {
           }
         }
         $reportOptions = array(
-          'dataSource'=>'reports_for_prebuilt_forms/Splash/check_existing_person_attribute_values',
+          'dataSource'=>'projects/npms/check_existing_person_attribute_values',
           'readAuth'=>$auth['read'],
           'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['over18AttrId'], 'person_id'=>$userData[0]['person_id']),
         );
@@ -1357,7 +1357,7 @@ class extension_splash_extensions {
           $convertedNewOver18UploadIdx++;
         }
         $reportOptions = array(
-          'dataSource'=>'reports_for_prebuilt_forms/Splash/check_existing_person_attribute_values',
+          'dataSource'=>'projects/npms/check_existing_person_attribute_values',
           'readAuth'=>$auth['read'],
           'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['dataAccessAttrId'], 'person_id'=>$userData[0]['person_id']),
         );
@@ -1637,7 +1637,7 @@ class extension_splash_extensions {
       $r .= data_entry_helper::location_select(array(
         'id' => 'location-select',
         'nocache' => true,
-        'report' => 'reports_for_prebuilt_forms/Splash/locations_for_add_location_drop_down',
+        'report' => 'projects/npms/locations_for_add_location_drop_down',
         'extraParams' => $auth['read'] + $extraParams,
         'blankText'=>'<' . lang::get('please select') . '>',
       ));
@@ -2028,7 +2028,7 @@ class extension_splash_extensions {
         'id'=>'user-square-data-summary',
         'readAuth' => $auth['read'],
         'itemsPerPage'=>10,
-        'dataSource'=>'reports_for_prebuilt_forms/Splash/squares_user_has_entered_data_for',
+        'dataSource'=>'projects/npms/squares_user_has_entered_data_for',
         'rowId'=>'id',
         'ajax'=>true,
         'mode'=>'report',

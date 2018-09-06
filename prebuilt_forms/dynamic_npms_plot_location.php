@@ -95,7 +95,7 @@ class iform_dynamic_npms_plot_location extends iform_dynamic_location {
         $currentUserId=0;
       //Get the squares/plots user has access to.
       $accessCheckData = data_entry_helper::get_report_data(array(
-        'dataSource'=>'reports_for_prebuilt_forms/Splash/get_my_squares_and_plots',
+        'dataSource'=>'projects/npms/get_my_squares_and_plots',
         'readAuth'=>$auth['read'],
         'extraParams'=>array('core_square_location_type_id'=>$args['square_location_type_id'],'additional_square_location_type_id'=>$args['square_location_type_id'],'current_user_id'=>$currentUserId,'user_square_attr_id'=>$args['user_square_attr_id'],'no_vice_county_found_message'=>'','vice_county_location_attribute_id'=>0,'pss_mode'=>true)
       )); 
