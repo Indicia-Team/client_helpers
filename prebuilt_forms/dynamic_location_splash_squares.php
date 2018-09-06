@@ -187,7 +187,7 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
       //Use a report to collect the names of the vice counties that intersect the square.
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
       $reportOptions = array(
-        'dataSource'=>'reports_for_prebuilt_forms/Splash/get_vice_county_names_for_grid_ref',
+        'dataSource'=>'projects/npms/get_vice_county_names_for_grid_ref',
         'readAuth'=>$readAuth,
         'extraParams' => array('website_id'=>$args['website_id'],
             'vice_county_location_type_id'=>$args['vice_county_location_type_id'],

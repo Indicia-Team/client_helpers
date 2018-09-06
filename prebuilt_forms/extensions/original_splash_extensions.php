@@ -160,7 +160,7 @@ class extension_original_splash_extensions {
     $noViceCountyFoundMessage=$options['noViceCountyFoundMessage'];
     $userSquareAttrId=$options['userSquareAttrId'];
     $reportOptions = array(
-      'dataSource'=>'reports_for_prebuilt_forms/Splash/original_splash_site_only/get_my_squares_that_have_plots',
+      'dataSource'=>'projects/npms/original_splash_site_only/get_my_squares_that_have_plots',
       'readAuth'=>$auth['read'],
       'mode'=>'report',
       'extraParams' => array('core_square_location_type_id'=>$coreSquareLocationTypeId,
@@ -185,7 +185,7 @@ class extension_original_splash_extensions {
       //Need a report to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
       if (!empty($_GET['sample_id'])) {
         $squareData = data_entry_helper::get_report_data(array(
-          'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_for_sample',
+          'dataSource'=>'projects/npms/get_square_for_sample',
           'readAuth'=>$auth['read'],
           'extraParams'=>array('sample_id'=>$_GET['sample_id'])
         ));
@@ -218,7 +218,7 @@ class extension_original_splash_extensions {
       $options['reportProvidesOrderBy']=true;
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
-      $options['report']='reports_for_prebuilt_forms/Splash/original_splash_site_only/get_plots_for_square_id';
+      $options['report']='projects/npms/original_splash_site_only/get_plots_for_square_id';
       $options['extraParams']['current_user_id']=$currentUserId;
       $options['extraParams']['user_square_attr_id']=$userSquareAttrId;
       //Create the drop-down for the plot
@@ -240,7 +240,7 @@ class extension_original_splash_extensions {
     iform_load_helpers(array('report_helper'));
     $reportOptions = array(
       'linkOnly'=>'true',
-      'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_details_for_square_id',
+      'dataSource'=>'projects/npms/get_square_details_for_square_id',
       'readAuth'=>$auth['read']
     );  
     //Report that will return the type of the square selected by the user
@@ -249,7 +249,7 @@ class extension_original_splash_extensions {
     
     $reportOptions = array(
       'linkOnly'=>'true',
-      'dataSource'=>'reports_for_prebuilt_forms/Splash/original_splash_site_only/get_plot_details',
+      'dataSource'=>'projects/npms/original_splash_site_only/get_plot_details',
       'readAuth'=>$auth['read']
     );  
     data_entry_helper::$javascript .= "indiciaData.plotReportRequest='".
@@ -434,7 +434,7 @@ class extension_original_splash_extensions {
     //The plot details page use's location_id as its parameter in edit mode
     if (!empty($_GET['location_id'])) {
       $reportOptions = array(
-        'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_name_for_plot_id',
+        'dataSource'=>'projects/npms/get_square_name_for_plot_id',
         'readAuth'=>$auth['read'],
         'extraParams' => array('website_id'=>$args['website_id'], 
             'vice_county_location_attribute_id'=>$options['viceCountyLocationAttributeId'], 
@@ -449,7 +449,7 @@ class extension_original_splash_extensions {
     //In add mode, the Plot Details page is given its parent square in the parent_square_id parameter, so use this to get the parent square name.
     if (!empty($_GET['dynamic-location_id'])||!empty($_GET['parent_square_id'])) {
       $reportOptions = array(
-        'dataSource'=>'reports_for_prebuilt_forms/Splash/get_square_details_for_square_id',
+        'dataSource'=>'projects/npms/get_square_details_for_square_id',
         'readAuth'=>$auth['read'],
         'extraParams' => array('website_id'=>$args['website_id'], 
             'vice_county_location_attribute_id'=>$options['viceCountyLocationAttributeId'], 

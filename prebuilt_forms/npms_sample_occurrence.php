@@ -324,7 +324,7 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
     // Find the samples for the squares the user has rights too
     $reportOptions=array(
       'readAuth' => $auth['read'],
-      'dataSource'=> 'reports_for_prebuilt_forms/Splash/npms_sample_occurrence_samples_2',
+      'dataSource'=> 'projects/npms/npms_sample_occurrence_samples_2',
       'extraParams'=>array(
         'survey_id' => $args['survey_id'],
         'person_square_attr_id' => $args['person_square_attr_id'],
