@@ -1957,6 +1957,11 @@ HTML;
       json_decode($_GET['options'], TRUE),
       empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
     );
+    helper_base::$is_ajax = TRUE;
+    echo "<script type=\"text/javascript\">\n";
+    echo helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript, helper_base::$onload_javascript,
+      FALSE, TRUE);
+    echo "</script>";
   }
 
   /**
