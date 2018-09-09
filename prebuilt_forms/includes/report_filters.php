@@ -959,6 +959,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $existing = '';
   $contexts = '';
   $contextDefs = array();
+  $customDefs = [];
   if (!empty($_GET['context_id'])) {
     $options['context_id'] = $_GET['context_id'];
   }
@@ -967,6 +968,16 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   if (!empty($_GET['filters_user_id'])) {
     $options['filters_user_id'] = $_GET['filters_user_id'];
+  }
+  if (!empty($options['customFilters'])) {
+    foreach ($options['customFilters'] as $idx => $filter) {
+      $filterData[] = [
+        'id' => "custom-$idx",
+        'title' => $filter['title'],
+        'defines_permissions' => isset($filter['defines_permissions']) ? $filter['defines_permissions'] : 'f',
+      ];
+      $customDefs["custom-$idx"] = $filter['definition'];
+    }
   }
   // Add some preset filters in.
   // If in the warehouse we don't need to worry about user specific preferences when setting up milestones.
@@ -1116,11 +1127,11 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       }
       $r .= "<form action=\"$reloadPath\" method=\"post\" >";
       $r .= data_entry_helper::select(array(
-          'label' => lang::get('Select filter type'),
-          'fieldname' => 'filter:sharing',
-          'lookupValues' => $options['adminCanSetSharingTo'],
-          'afterControl' => '<input type="submit" value="Go"/>',
-          'default' => $options['sharingCode'],
+        'label' => lang::get('Select filter type'),
+        'fieldname' => 'filter:sharing',
+        'lookupValues' => $options['adminCanSetSharingTo'],
+        'afterControl' => '<input type="submit" value="Go"/>',
+        'default' => $options['sharingCode'],
       ));
       $r .= '</form>';
     }
@@ -1135,6 +1146,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
         '</span></div><span class="changed" style="display:none" title="' .
         lang::get('This filter has been changed') . '">*</span>';
     $r .= '<div>';
+    if ($customDefs) {
+      data_entry_helper::$javascript .= "indiciaData.filterCustomDefs = " . json_encode($customDefs) . ";\n";
+    }
     if ($contexts) {
       data_entry_helper::$javascript .= "indiciaData.filterContextDefs = " . json_encode($contextDefs) . ";\n";
       if (count($contextDefs) > 1) {
