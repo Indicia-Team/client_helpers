@@ -807,14 +807,23 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
   protected static function removeDuplicateAttrs(&$list) {
     // First build a list of the different types of attribute and work out
     // the highest taxon_rank_sort_order (i.e. the lowest rank) which has
-    // attributes for each attribute type.
+    // attributes for each attribute type. Whilst doing this we can also
+    // discard duplicates, e.g. if same attribute linked at several taxonomic
+    // levels.
     $attrTypeSortOrders = [];
-    foreach ($list as $attr) {
-      $attrTypeKey = self::getAttrTypeKey($attr);
-      if (!empty($attrTypeKey)) {
-        if (!array_key_exists($attrTypeKey, $attrTypeSortOrders) ||
-            (integer) $attr['attr_taxon_rank_sort_order'] > $attrTypeSortOrders[$attrTypeKey]) {
-          $attrTypeSortOrders[$attrTypeKey] = (integer) $attr['attr_taxon_rank_sort_order'];
+    $attrIds = [];
+    foreach ($list as $idx => $attr) {
+      if (in_array($attr['attribute_id'], $attrIds)) {
+        unset($list[$idx]);
+      }
+      else {
+        $attrIds[] = $attr['attribute_id'];
+        $attrTypeKey = self::getAttrTypeKey($attr);
+        if (!empty($attrTypeKey)) {
+          if (!array_key_exists($attrTypeKey, $attrTypeSortOrders) ||
+              (integer) $attr['attr_taxon_rank_sort_order'] > $attrTypeSortOrders[$attrTypeKey]) {
+            $attrTypeSortOrders[$attrTypeKey] = (integer) $attr['attr_taxon_rank_sort_order'];
+          }
         }
       }
     }
