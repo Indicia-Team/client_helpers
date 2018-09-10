@@ -323,6 +323,7 @@ class data_entry_helper extends helper_base {
               'termlist_id' => $def['termlist_id'],
               'view' => 'cache',
               'orderby' => isset($def['orderby']) ? $def['orderby'] : 'term',
+              'allow_data_entry' => 't',
             ),
           ));
           foreach ($termlistData as $term) {
@@ -3766,7 +3767,11 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     static $doneAddLinkPopup=false;
     $typeTermData = self::get_population_data(array(
       'table'=>'termlists_term',
-      'extraParams'=>$options['readAuth']+array('view'=>'cache', 'termlist_title'=>'Media types', 'columns'=>'id,term')
+      'extraParams'=>$options['readAuth']+array(
+        'view' => 'cache',
+        'termlist_title' => 'Media types',
+        'allow_data_entry' => 't',
+        'columns' => 'id,term')
     ));
     $typeTermIdLookup = array();
     foreach ($typeTermData as $record) {
@@ -7725,9 +7730,9 @@ HTML;
             }
           }
         }
-        if($ctrl=='autocomplete' && isset($attrOptions['default'])){
+        if ($ctrl === 'autocomplete' && isset($attrOptions['default'])) {
           // two options: we could be using the id or the meaning_id.
-          if($lookUpKey === 'id') {
+          if ($lookUpKey === 'id') {
             $attrOptions['defaultCaption'] = $item['displayValue'];
           }
           else {
@@ -7755,7 +7760,7 @@ HTML;
           'table'=>'termlists_term',
           'captionField'=>'term',
           'valueField'=>$lookUpKey,
-          'extraParams' => array_merge($options['extraParams'] + $dataSvcParams))));
+          'extraParams' => array_merge(['allow_data_entry' => 't'], $options['extraParams'], $dataSvcParams))));
         break;
       default:
         if ($item) {
