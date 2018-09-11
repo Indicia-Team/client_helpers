@@ -1661,7 +1661,7 @@ indiciaData.rowIdToReselect = false;
      * custom species lists.
      */
     $('#redet-from-full-list').change(function () {
-      if ($('#redet-from-full-list').attr('checked')) {
+      if ($('#redet-from-full-list:checked').length) {
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: indiciaData.mainTaxonListId });
       } else {
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: currRec.extra.taxon_list_id });
