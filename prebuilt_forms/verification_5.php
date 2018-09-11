@@ -705,7 +705,7 @@ idlist=';
     ));
     $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
     if ($taxon_list_id) {
-      data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
+      data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id;\n";
       $r .= data_entry_helper::checkbox(array(
         'fieldname' => 'redet-from-full-list',
         'label' => lang::get('Search all species'),
