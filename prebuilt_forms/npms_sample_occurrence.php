@@ -571,6 +571,11 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
         $keyToCreate = implode(':', $parts);
         $elementsToAdd[$keyToCreate] = $value;
       }
+      //Remove any sample pictures, as we don't want these preloaded
+      if ($parts[0] === 'sample_medium') {
+        // We'll be deleting this
+        $keysToDelete[] = $key;
+      }
     }
     //Don't clone the date as the date on survey 2 will always be different
     $keysToDelete[]='sample:date_start';
