@@ -255,7 +255,7 @@ class iform_subscribe_species_alert {
     $mapOptions = iform_map_get_map_options($args, $auth['read']);
     $map = map_helper::map_panel($mapOptions);
     global $indicia_templates;
-    return str_replace(array('{col-1}', '{col-2}'), array($form, $map), $indicia_templates['two-col-50']);
+    return str_replace(array('{col-1}', '{col-2}', '{attr}'), array($form, $map, ''), $indicia_templates['two-col-50']);
   }
 
   /**

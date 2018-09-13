@@ -222,7 +222,7 @@ if ($("#{escapedId} option").length===0) {
   'report_picker' => '<div id="{id}" {class}>{reports}<div class="report-metadata"></div><button type="button" id="picker-more">{moreinfo}</button><div class="ui-helper-clearfix"></div></div>',
   'report_download_link' => '<div class="report-download-link"><a href="{link}">{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
-  'two-col-50' => '<div class="two columns"><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
+  'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
   'loading_overlay' => '<div class="loading-overlay"></div>',
   'report-table' => '<table{class}>{content}</table>',
   'report-thead' => '<thead{class}>{content}</thead>',
@@ -633,8 +633,8 @@ indiciaData.lang.$group = {};
 
 JS;
     foreach ($strings as $key => $text) {
-        self::$javascript .= "indiciaData.lang.$group.$key = '" .
-        str_replace("'", "\'", lang::get($text)) . "';\n";
+      self::$javascript .= "indiciaData.lang.$group.$key = '" .
+      str_replace("'", "\'", lang::get($text)) . "';\n";
     }
   }
 

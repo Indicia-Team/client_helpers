@@ -7655,7 +7655,12 @@ HTML;
             'controlWrapTemplate' => 'justControl',
           ]);
           $toControl = self::$ctrl($toAttrOptions);
-          $output = str_replace(['{col-1}', '{col-2}'], [$output, $toControl], $indicia_templates['two-col-50']);
+          $wrapperId = 'range-wrap-' . str_replace(':', '-', $attrOptions[fieldname]);
+          $output = str_replace(
+            ['{col-1}', '{col-2}', '{attrs}'],
+            [$output, $toControl, " id=\"$wrapperId\""],
+            $indicia_templates['two-col-50']
+          );
         }
         break;
       case 'Boolean':

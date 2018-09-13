@@ -680,7 +680,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     if (count($cols)>0) {
       $cols[] = $html;
       // a splitter in the structure so put the stuff so far in a 50% width left float div, and the stuff that follows in a 50% width right float div.
-      $html = str_replace(array('{col-1}', '{col-2}'), $cols, $indicia_templates['two-col-50']);
+      $html = str_replace(array('{col-1}', '{col-2}', '{attrs}'), array_merge($cols, ['']), $indicia_templates['two-col-50']);
       if(count($cols)>2){
         unset($cols[1]);
         unset($cols[0]);
