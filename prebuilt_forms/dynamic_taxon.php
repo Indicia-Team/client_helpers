@@ -653,7 +653,12 @@ HTML;
    */
   protected static function get_control_taxondynamicattributes($auth, $args, $tabAlias, $options) {
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_taxon');
-    data_entry_helper::$javascript .= "indiciaData.ajaxUrl=\"$ajaxUrl\";\n";
+    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+    data_entry_helper::$javascript .= <<<JS
+indiciaData.ajaxUrl='$ajaxUrl';
+indiciaData.userLang = '$language';
+
+JS;
     // Create a div to hold the controls, pre-populated only when loading
     // existing data.
     $r = '';
@@ -710,7 +715,7 @@ HTML;
    * @return string
    *   Controls as an HTML string.
    */
-  private static function getDynamicAttrs($readAuth, $taxonListId, $ttlId, $options) {
+  private static function getDynamicAttrs($readAuth, $taxonListId, $ttlId, $options, $language = NULL) {
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $attrs = self::getDynamicAttrsList($readAuth, $taxonListId, $ttlId);
     $r = '';
@@ -741,7 +746,7 @@ HTML;
       $lastOuterBlock = $attr['outer_block_name'];
       $values = json_decode($attr['values']);
       $options['extraParams'] = $readAuth;
-      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr);
+      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
         $attr['id'] = "taxAttr:$attr[attribute_id]";
         $attr['fieldname'] = "taxAttr:$attr[attribute_id]";
@@ -782,10 +787,8 @@ HTML;
       $readAuth,
       $_GET['taxon_list_id'],
       $_GET['taxa_taxon_list_id'],
-      json_decode($_GET['stage_termlists_term_ids']),
-      $_GET['type'],
       json_decode($_GET['options'], TRUE),
-      empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
+      $_GET['language']
     );
   }
 

@@ -23,6 +23,7 @@ jQuery(document).ready(function docReady($) {
             '&type=' + type +
             '&stage_termlists_term_ids=' + JSON.stringify(sexStageVals) +
             '&validate_against_taxa=' + (indiciaData.validateAgainstTaxa ? 't' : 'f') +
+            '&language=' + indiciaData.userLang +
             '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]), null,
           function getAttrsReportCallback(data) {
             // Ensure page level onload functions don't run again.

@@ -7436,14 +7436,19 @@ HTML;
    *   Either caption or description depending on what is being translated.
    * @param array $attr
    *   Custom attribute array loaded from data services.
+   * @param string $language
+   *   3 character language code. If NULL, then the current user's language
+   *   will be used.
    *
    * @return string
    *   Translated caption.
    */
-  public static function getTranslatedAttrField($field, array $attr) {
+  public static function getTranslatedAttrField($field, array $attr, $language = NULL) {
     require_once 'prebuilt_forms/includes/language_utils.php';
     if (!empty($attr[$field . '_i18n']) && function_exists('hostsite_get_user_field')) {
-      $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+      if (!$language) {
+        $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+      }
       $otherLanguages = json_decode($attr[$field . '_i18n'], TRUE);
       if (isset($otherLanguages[$language])) {
         return $otherLanguages[$language];

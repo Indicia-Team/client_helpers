@@ -1815,9 +1815,12 @@ HTML;
     unset($options['types']);
     unset($options['validateAgainstTaxa']);
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_sample_occurrence');
+    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
     data_entry_helper::$javascript .= <<<JS
 indiciaData.ajaxUrl="$ajaxUrl";
 indiciaData.validateAgainstTaxa = $validateAgainstTaxa;
+indiciaData.userLang = '$language';
+
 JS;
 
     // If loading existing data, we need to know the sex/stage attrs so we can
@@ -1892,7 +1895,8 @@ JS;
    * @return string
    *   Controls as an HTML string.
    */
-  private static function getDynamicAttrs($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $options, $occurrenceId = NULL) {
+  private static function getDynamicAttrs($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $options,
+      $occurrenceId = NULL, $language = NULL) {
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $attrs = self::getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId);
     $prefix = $type === 'sample' ? 'smp' : 'occ';
@@ -1924,7 +1928,7 @@ JS;
       $lastOuterBlock=$attr['outer_block_name'];
       $values = json_decode($attr['values']);
       $options['extraParams'] = $readAuth;
-      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr);
+      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
         $attr['id'] = "{$prefix}Attr:$attr[attribute_id]";
         $attr['fieldname'] = "{$prefix}Attr:$attr[attribute_id]";
@@ -1968,7 +1972,8 @@ JS;
       json_decode($_GET['stage_termlists_term_ids']),
       $_GET['type'],
       json_decode($_GET['options'], TRUE),
-      empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
+      empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id'],
+      $_GET['language']
     );
     helper_base::$is_ajax = TRUE;
     echo "<script type=\"text/javascript\">\n";
