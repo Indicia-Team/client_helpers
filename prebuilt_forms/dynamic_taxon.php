@@ -741,6 +741,7 @@ HTML;
       $lastOuterBlock = $attr['outer_block_name'];
       $values = json_decode($attr['values']);
       $options['extraParams'] = $readAuth;
+      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr);
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
         $attr['id'] = "taxAttr:$attr[attribute_id]";
         $attr['fieldname'] = "taxAttr:$attr[attribute_id]";

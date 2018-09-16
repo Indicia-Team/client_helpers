@@ -1797,17 +1797,29 @@ HTML;
    * which can be set to a JSON array containing either occurrence and/or
    * sample depending on which type of custom attributes to load. Defaults to
    * ["occurrence"] but you might want to include "sample" in the array when
-   * there are taxon specific habitat attributes for example. Any other options
-   * are passed through to the controls.
+   * there are taxon specific habitat attributes for example.
+   *
+   * Set the @validateAgainstTaxa option to true to enable validation of
+   * attribute values against the equivalent attributes defined for the taxon
+   * which requires the warehouse attribute_sets module to be enabled and
+   * configured.
+   *
+   * Any other options are passed through to the controls.
    *
    * @return string
    *   HTML for the div.
    */
   protected static function get_control_speciesdynamicattributes($auth, $args, $tabAlias, $options) {
     $types = isset($options['types']) ? $options['types'] : ['occurrence'];
+    $validateAgainstTaxa = empty($options['validateAgainstTaxa']) ? 'false' : 'true';
     unset($options['types']);
+    unset($options['validateAgainstTaxa']);
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_sample_occurrence');
-    data_entry_helper::$javascript .= "indiciaData.ajaxUrl=\"$ajaxUrl\";\n";
+    data_entry_helper::$javascript .= <<<JS
+indiciaData.ajaxUrl="$ajaxUrl";
+indiciaData.validateAgainstTaxa = $validateAgainstTaxa;
+JS;
+
     // If loading existing data, we need to know the sex/stage attrs so we can
     // find the value to filter to when retrieving attrs.
     if (!empty(self::$loadedOccurrenceId)) {
@@ -1912,6 +1924,7 @@ HTML;
       $lastOuterBlock=$attr['outer_block_name'];
       $values = json_decode($attr['values']);
       $options['extraParams'] = $readAuth;
+      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr);
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
         $attr['id'] = "{$prefix}Attr:$attr[attribute_id]";
         $attr['fieldname'] = "{$prefix}Attr:$attr[attribute_id]";
@@ -1946,8 +1959,8 @@ HTML;
    * Attribute HTML is echoed to the client.
    */
   public static function ajax_dynamicattrs($website_id, $password) {
-    iform_load_helpers(['data_entry_helper']);
-    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    iform_load_helpers(['report_helper']);
+    $readAuth = report_helper::get_read_auth($website_id, $password);
     echo self::getDynamicAttrs(
       $readAuth,
       $_GET['survey_id'],
@@ -1959,6 +1972,24 @@ HTML;
     );
     helper_base::$is_ajax = TRUE;
     echo "<script type=\"text/javascript\">\n";
+    if (!empty($_GET['validate_against_taxa'])) {
+      $r = report_helper::get_report_data([
+        'dataSource' => "library/$_GET[type]_attributes/$_GET[type]_attributes_for_taxon_with_taxon_validation_rules",
+        'readAuth' => $readAuth,
+        'extraParams' => ['taxa_taxon_list_id' => $_GET['taxa_taxon_list_id']],
+      ]);
+      if (!empty($r)) {
+        $data = json_encode($r);
+        $typeAbbr = $_GET['type'] === 'occurrence' ? 'occ' : 'smp';
+        $langExpected = lang::get('Expected values for {1}');
+        helper_base::addLanguageStringsToJs('dynamicattrs', ['expected' => 'Expected values for {1}']);
+        report_helper::$javascript .= <<<JS
+indiciaData.{$typeAbbr}TaxonValidationRules = $data;
+indiciaFns.applyTaxonValidationRules('$typeAbbr', '$_GET[type]');
+
+JS;
+      }
+    }
     echo helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript, helper_base::$onload_javascript,
       FALSE, TRUE);
     echo "</script>";

@@ -7440,7 +7440,7 @@ HTML;
    * @return string
    *   Translated caption.
    */
-  private static function getTranslatedAttrField($field, array $attr) {
+  public static function getTranslatedAttrField($field, array $attr) {
     require_once 'prebuilt_forms/includes/language_utils.php';
     if (!empty($attr[$field . '_i18n']) && function_exists('hostsite_get_user_field')) {
       $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
