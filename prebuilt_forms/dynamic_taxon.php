@@ -721,6 +721,9 @@ JS;
     $r = '';
     $lastOuterBlock = '';
     $lastInnerBlock = '';
+    $attrSpecificOptions = [];
+    $defAttrOptions = ['extraParams' => $readAuth];
+    self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
     foreach ($attrs as $attr) {
       // Create fieldsets for the innner and outer block.
       if ($lastOuterBlock !== $attr['outer_block_name']) {
@@ -747,22 +750,24 @@ JS;
       $values = json_decode($attr['values']);
       $options['extraParams'] = $readAuth;
       $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
+      $baseAttrId = "taxAttr:$attr[attribute_id]";
+      $ctrlOptions = self::extract_ctrl_multi_value_options($baseAttrId, $defAttrOptions, $attrSpecificOptions);
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
-        $attr['id'] = "taxAttr:$attr[attribute_id]";
+        $attr['id'] = $baseAttrId;
         $attr['fieldname'] = "taxAttr:$attr[attribute_id]";
         $attr['default'] = $attr['default_value'];
         $attr['displayValue'] = $attr['default_value_caption'];
         $attr['defaultUpper'] = $attr['default_upper_value'];
-        $r .= data_entry_helper::outputAttribute($attr, $options);
+        $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
       }
       else {
         foreach ($values as $value) {
-          $attr['id'] = "taxAttr:$attr[attribute_id]:$value->id";
+          $attr['id'] = "$baseAttrId:$value->id";
           $attr['fieldname'] = "taxAttr:$attr[attribute_id]:$value->id";
           $attr['default'] = $value->raw_value;
           $attr['displayValue'] = $value->value;
           $attr['defaultUpper'] = $value->upper_value;
-          $r .= data_entry_helper::outputAttribute($attr, $options);
+          $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
         }
       }
     }

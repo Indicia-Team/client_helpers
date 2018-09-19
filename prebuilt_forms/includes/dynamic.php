@@ -262,6 +262,76 @@ class iform_dynamic {
     return $r;
   }
 
+  /**
+   * For groups of attributes output together, prepare their options.
+   *
+   * Either for [*] elements in a form which output all remaining custom
+   * attributes, or for dynamic attribute groups linked to the chosen taxon,
+   * the options list can contain options which apply to all (e.g.
+   * @class=this-class) or options which only apply to one attribute control,
+   * (e.g. @occAttr:123|class=that-class). This prepares the array of default
+   * options to apply to all, plus a list of the attribute specific options.
+   *
+   * @param array $options
+   *   List of options passed to the control block.
+   * @param array $defAttrOptions
+   *   Returns the list of default options to apply to all controls.
+   * @param array $attrSpecificOptions
+   *   Returns the list of controls that have custom options, each containing
+   *   an associative array of the options to apply.
+   */
+  protected static function prepare_multi_attribute_options(array $options, array &$defAttrOptions, array &$attrSpecificOptions) {
+    foreach ($options as $option => $value) {
+      $optionId = explode('|', $option);
+      if (count($optionId) === 1) {
+        $defAttrOptions[$option] = apply_user_replacements($value);
+      }
+      elseif (count($optionId) === 2) {
+        if (!isset($attrSpecificOptions[$optionId[0]])) {
+          $attrSpecificOptions[$optionId[0]] = [];
+        }
+        $attrSpecificOptions[$optionId[0]][$optionId[1]] = apply_user_replacements($value);
+      }
+    }
+  }
+
+  /**
+   * Prepares the list of options for a single attribute control in a group.
+   *
+   * Either for [*] elements in a form which output all remaining custom
+   * attributes, or for dynamic attribute groups linked to the chosen taxon,
+   * prepares the options for a single control.
+   *
+   * @param string $baseAttrId
+   *   The attribute control's ID, excluding the part which identifies an
+   *   existing database record, e.g. occAttr:123 (not occAttr:123:456).
+   * @param array $defAttrOptions
+   *   List of default options to apply to all controls.
+   * @param array $attrSpecificOptions
+   *   List of controls that have custom options, each containing an
+   *   associative array of the options to apply.
+   *
+   * @return array
+   *   Options array for this control
+   */
+  protected function extract_ctrl_multi_value_options($baseAttrId, array $defAttrOptions, array $attrSpecificOptions) {
+    $ctrlOptions = array_merge($defAttrOptions);
+    if (!empty($attrSpecificOptions[$baseAttrId])) {
+      // Make sure extraParams is merged.
+      if (!empty($ctrlOptions['extraParams']) && !empty($attrSpecificOptions[$baseAttrId]['extraParams'])) {
+        $attrSpecificOptions[$baseAttrId]['extraParams'] = array_merge(
+          $ctrlOptions['extraParams'],
+          $attrSpecificOptions[$baseAttrId]['extraParams']
+        );
+      }
+      $ctrlOptions = array_merge(
+        $ctrlOptions,
+        $attrSpecificOptions[$baseAttrId]
+      );
+    }
+    return $ctrlOptions;
+  }
+
   protected static function get_form_html($args, $auth, $attributes) {
     global $indicia_templates;
     $r = call_user_func(array(self::$called_class, 'getHeader'), $args);
