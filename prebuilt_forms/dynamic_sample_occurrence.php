@@ -1981,7 +1981,7 @@ JS;
       $_GET['language']
     );
     helper_base::$is_ajax = TRUE;
-    echo "<script type=\"text/javascript\">\n";
+
     if (!empty($_GET['validate_against_taxa'])) {
       $r = report_helper::get_report_data([
         'dataSource' => "library/$_GET[type]_attributes/$_GET[type]_attributes_for_taxon_with_taxon_validation_rules",
@@ -2000,9 +2000,21 @@ indiciaFns.applyTaxonValidationRules('$typeAbbr', '$_GET[type]');
 JS;
       }
     }
-    echo helper_base::get_scripts(helper_base::$javascript, helper_base::$late_javascript, helper_base::$onload_javascript,
-      FALSE, TRUE);
-    echo "</script>";
+
+    $scripts = helper_base::get_scripts(
+      helper_base::$javascript,
+      helper_base::$late_javascript,
+      helper_base::$onload_javascript,
+      FALSE, TRUE
+    );
+    if ($scripts) {
+      echo <<<JS
+<script type="text/javascript">
+$scripts
+</script>
+
+JS;
+    }
   }
 
   /**
