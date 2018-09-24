@@ -3,6 +3,13 @@ jQuery(document).ready(function docReady($) {
   var taxonRestrictionInputSelectors = '#occurrence\\:taxa_taxon_list_id, ' + sexStageInputSelectors;
   var hasDynamicAttrs = $('.species-dynamic-attributes').length > 0;
 
+  // Declare a hook for functions that call when dynamic content updated.
+  // For example:
+  // indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
+  //   $(div).prepend('<h1>' + type + '</h1>');
+  // });
+  indiciaFns.hookDynamicAttrsAfterLoad = [];
+
   function changeTaxonRestrictionInputs() {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
     var sexStageAttrs = $(sexStageInputSelectors);
@@ -29,6 +36,9 @@ jQuery(document).ready(function docReady($) {
             // Ensure page level onload functions don't run again.
             indiciaData.onloadFns = [];
             $(div).html(data);
+            $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
+              this(div, type);
+            });
           }
         );
       });
