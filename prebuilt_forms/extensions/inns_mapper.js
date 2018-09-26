@@ -35,7 +35,7 @@ jQuery(document).ready(function docReady($) {
     $.ajax({
       dataType: 'jsonp',
       url: indiciaData.read.url + 'index.php/services/report/requestReport?' +
-        'report=library/samples/filterable_explore_list.xml' +
+        'report=projects/inns_mapper/treatment_info.xml' +
         '&reportSource=local&sample_id=' + id +
         '&smpattrs=572,573,574,575,576,577,578' +
         '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
@@ -43,28 +43,32 @@ jQuery(document).ready(function docReady($) {
       success: function(data) {
         var info = {
           Date: data[0].date,
-          Mapref: data[0].entered_sref
+          Mapref: data[0].entered_sref,
+          Source: data[0].source
         };
-        if (data[0].attr_sample_572 !== null) {
-          info.Duration = data[0].attr_sample_572
-          if (data[0].attr_sample_term_578 != null) {
-            info.Duration += ' ' + data[0].attr_sample_term_578;
+        if (data[0].duration !== null) {
+          info.Duration = data[0].duration;
+          if (data[0].duration_units != null) {
+            info.Duration += ' ' + data[0].duration_units;
           }
         }
-        if (data[0].attr_sample_term_573 !== null) {
-          info.Method = data[0].attr_sample_term_573;
+        if (data[0].method !== null) {
+          info.Method = data[0].method;
         }
-        if (data[0].attr_sample_term_574 !== null) {
-          info['Species treated'] = data[0].attr_sample_term_574;
+        if (data[0].species !== null) {
+          info['Species treated'] = data[0].species;
         }
-        if (data[0].attr_sample_term_575 !== null) {
-          info.Removal = data[0].attr_sample_term_575;
+        if (data[0].removal !== null) {
+          info.Removal = data[0].removal;
         }
-        if (data[0].attr_sample_term_576 !== null) {
-          info['Treatement performed by'] = data[0].attr_sample_term_576;
+        if (data[0].treatment !== null) {
+          info['Treatment performed by'] = data[0].treatment;
         }
-        if (data[0].attr_sample_577 !== null) {
-          info['Materials used'] = data[0].attr_sample_577;
+        if (data[0].materials !== null) {
+          info['Materials used'] = data[0].materials;
+        }
+        if (data[0].comment !== null) {
+          info['Other comments'] = data[0].comment;
         }
         var output = '<h3>Selected treatment details</h3><ul>';
         $.each(info, function(key, val) {
