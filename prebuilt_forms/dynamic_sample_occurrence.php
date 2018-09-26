@@ -1867,11 +1867,12 @@ JS;
    * @return array
    *   List of attribute data.
    */
-  private static function getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId = NULL) {
+  private static function getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language, $occurrenceId = NULL) {
     $params = [
       'survey_id' => $surveyId,
       'taxa_taxon_list_id' => $ttlId,
       'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
+      'language' => $language,
     ];
     if (!empty($stageTermlistsTermIds)) {
       $params['stage_termlists_term_ids'] = implode(',', $stageTermlistsTermIds);
@@ -1899,34 +1900,34 @@ JS;
       $occurrenceId = NULL, $language = NULL) {
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     require_once 'includes/dynamic.php';
-    $attrs = self::getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $occurrenceId);
+    $attrs = self::getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language, $occurrenceId);
     $prefix = $type === 'sample' ? 'smp' : 'occ';
     $r = '';
-    $lastOuterBlock = '';
-    $lastInnerBlock = '';
+    $fieldsetTracking = [
+      'l1_category' => '',
+      'l2_category' => '',
+      'outer_block_name' => '',
+      'inner_block_name' => '',
+    ];
+    $fieldsetFieldNames = array_keys($fieldsetTracking);
     $attrSpecificOptions = [];
     $defAttrOptions = ['extraParams' => $readAuth];
     self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
     foreach ($attrs as $attr) {
-      // Create fieldsets for the innner and outer block.
-      if ($lastOuterBlock !== $attr['outer_block_name']) {
-        if (!empty($lastInnerBlock)) {
-          $r .= '</fieldset>';
+      // Output any nested fieldsets required.
+      foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
+        if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
+          for ($i = $idx + 1; $i < count($fieldsetTracking); $i++) {
+            if ($fieldsetTracking[$fieldsetFieldNames[$i]] !== '') {
+              $r .= '</fieldset>';
+              $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
+            }
+          }
+          if (!empty($attr[$fieldsetFieldName])) {
+            $r .= '<fieldset><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
+          }
+          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
         }
-        if (!empty($lastOuterBlock)) {
-          $r .= '</fieldset>';
-        }
-        if (!empty($attr['outer_block_name']))
-          $r .= '<fieldset><legend>' . lang::get($attr['outer_block_name']) . '</legend>';
-        if (!empty($attr['inner_block_name']))
-          $r .= '<fieldset><legend>' . lang::get($attr['inner_block_name']) . '</legend>';
-      }
-      elseif ($lastInnerBlock !== $attr['inner_block_name']) {
-        if (!empty($lastInnerBlock)) {
-          $r .= '</fieldset>';
-        }
-        if (!empty($attr['inner_block_name']))
-          $r .= '<fieldset><legend>' . lang::get($attr['inner_block_name']) . '</legend>';
       }
       $lastInnerBlock=$attr['inner_block_name'];
       $lastOuterBlock=$attr['outer_block_name'];
@@ -1953,11 +1954,10 @@ JS;
         }
       }
     }
-    if (!empty($lastInnerBlock)) {
-      $r .= '</fieldset>';
-    }
-    if (!empty($lastOuterBlock)) {
-      $r .= '</fieldset>';
+    foreach ($fieldsetTracking as $fieldsetName) {
+      if (!empty($fieldsetName)) {
+        $r .= '</fieldset>';
+      }
     }
     return $r;
   }
