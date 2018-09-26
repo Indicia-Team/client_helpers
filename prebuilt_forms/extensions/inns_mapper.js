@@ -37,7 +37,6 @@ jQuery(document).ready(function docReady($) {
       url: indiciaData.read.url + 'index.php/services/report/requestReport?' +
         'report=projects/inns_mapper/treatment_info.xml' +
         '&reportSource=local&sample_id=' + id +
-        '&smpattrs=572,573,574,575,576,577,578' +
         '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
         '&mode=json&callback=?',
       success: function(data) {

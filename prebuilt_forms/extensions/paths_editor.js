@@ -89,13 +89,15 @@ jQuery(document).ready(function ($) {
    * @param path array of geometries defining the route.
    */
   function addWalk(path) {
-    walkLayer.addFeatures([new OpenLayers.Feature.Vector(path, {}, {strokeColor: "blue", strokeWidth: 6})]);
+    walkLayer.removeAllFeatures();
+    walkLayer.addFeatures([new OpenLayers.Feature.Vector(path, {}, { strokeColor: 'blue', strokeWidth: 6 })]);
     copyGeomToSref(path);
   }
 
   function ensureClickedOnPath(clickPointFeature) {
+    var found = false;
+    var clickLayer = indiciaData.mapdiv.map.editLayer;
     if (clickPointFeature.geometry.CLASS_NAME === "OpenLayers.Geometry.Point") {
-      var found=false, clickLayer = indiciaData.mapdiv.map.editLayer;
       if (clickLayer.features.length === 3) {
         // 3rd click, so we are retrying. Remove the first attempt.
         clickLayer.removeFeatures([clickPointFeature.layer.features[0], clickPointFeature.layer.features[1]]);
@@ -229,16 +231,17 @@ jQuery(document).ready(function ($) {
         });
       }
       addWalk(finalGeom);
+      clickLayer.removeFeatures(clickLayer.features[0]);
     } else {
       alert("The start and end points you clicked on don't seem to be connected. Please try again.");
     }
   }
 
   function onPointAdded(evt) {
-    var doingOtherDraw=false;
+    var doingOtherDraw = false;
     $.each(indiciaData.mapdiv.map.controls, function() {
-      if (this.active && (this.displayClass==='olControlDrawFeaturePath' || this.displayClass==='olControlDrawFeaturePolygon')) {
-        doingOtherDraw=true;
+      if (this.active && (this.displayClass === 'olControlDrawFeaturePath' || this.displayClass === 'olControlDrawFeaturePolygon')) {
+        doingOtherDraw = true;
         copyGeomToSref(evt.features[0].geometry);
       }
     });
