@@ -1854,7 +1854,12 @@ JS;
       }
       // Other options need to pass through to AJAX loaded controls.
       $optsJson = json_encode($options);
-      data_entry_helper::$javascript .= "indiciaData.dynamicAttrOptions$type=$optsJson;\n";
+      data_entry_helper::$javascript .= <<<JS
+indiciaData.dynamicAttrOptions$type=$optsJson;
+$.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
+  this($('.species-dynamic-attrs.attr-type-$type'), '$type');
+});
+JS;
       // Add a container div.
       $r .= "<div class=\"species-dynamic-attributes attr-type-$type\">$controls</div>";
     }
@@ -1929,8 +1934,6 @@ JS;
           $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
         }
       }
-      $lastInnerBlock=$attr['inner_block_name'];
-      $lastOuterBlock=$attr['outer_block_name'];
       $values = json_decode($attr['values']);
       $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
       $baseAttrId = "{$prefix}Attr:$attr[attribute_id]";
@@ -1944,13 +1947,20 @@ JS;
         $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
       }
       else {
+        $doneValues = [];
         foreach ($values as $value) {
-          $attr['id'] = "$baseAttrId:$value->id";
-          $attr['fieldname'] = "{$prefix}Attr:$attr[attribute_id]:$value->id";
-          $attr['default'] = $value->raw_value;
-          $attr['displayValue'] = $value->value;
-          $attr['defaultUpper'] = $value->upper_value;
-          $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
+          // Values may be duplicated if an attribute is linked to a taxon
+          // twice in the taxon hierarchy, so we mitigate against it here
+          // (otherwise SQL would be complex)
+          if (!in_array($value->id, $doneValues)) {
+            $attr['id'] = "$baseAttrId:$value->id";
+            $attr['fieldname'] = "taxAttr:$attr[attribute_id]:$value->id";
+            $attr['default'] = $value->raw_value;
+            $attr['displayValue'] = $value->value;
+            $attr['defaultUpper'] = $value->upper_value;
+            $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
+            $doneValues[] = $value->id;
+          }
         }
       }
     }

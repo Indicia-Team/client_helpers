@@ -1,4 +1,12 @@
 jQuery(document).ready(function docReady($) {
+
+  // Declare a hook for functions that call when dynamic content updated.
+  // For example:
+  // indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
+  //   $(div).prepend('<h1>' + type + '</h1>');
+  // });
+  indiciaFns.hookDynamicAttrsAfterLoad = [];
+
   function changeTaxonRestrictionInputs() {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
     if ($('#taxa_taxon_list\\:parent_id').val() !== '') {
@@ -12,6 +20,9 @@ jQuery(document).ready(function docReady($) {
             '&options=' + JSON.stringify(indiciaData.dynamicAttrOptions), null,
           function getAttrsReportCallback(data) {
             $(div).html(data);
+            $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
+              this(div);
+            });
           }
         );
       });
