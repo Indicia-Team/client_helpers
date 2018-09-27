@@ -236,7 +236,9 @@ if ($("#{escapedId} option").length===0) {
   'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
 <div id="review-map-container"></div>
 <div{contentClass}{contentId}></div>
-</div>'
+</div>',
+  'dataValueList' => '<div class="detail-panel" id="{id}"><h3>{title}</h3><div class="record-details-fields ui-helper-clearfix">{content}</div></div>',
+  'dataValue' => '<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>'
 );
 
 

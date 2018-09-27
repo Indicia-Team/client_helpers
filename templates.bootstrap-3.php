@@ -23,3 +23,7 @@ $indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-default';
 
 // Message boxes
 $indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div>';
+
+// Rows in a list of key-value pairs.
+$indicia_templates['dataValueList'] = '<div class="detail-panel" id="{id}"><h3>{title}</h3><dl class="dl-horizontal">{content}</dl></div>';
+$indicia_templates['dataValue'] = '<dt>{caption}</dt><dd>{value}</dd>';
