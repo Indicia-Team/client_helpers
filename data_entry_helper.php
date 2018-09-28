@@ -7701,7 +7701,7 @@ HTML;
           $attrOptions['class'] = $options['class'];
         $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'cache', 'sharing' => 'editing');
         if (array_key_exists('language', $options)) {
-          $dataSvcParams = $dataSvcParams + array('iso'=>$options['language']);
+          $dataSvcParams = $dataSvcParams + array('language_iso'=>$options['language']);
         }
         if (!array_key_exists('orderby', $options['extraParams'])) {
           $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order');
