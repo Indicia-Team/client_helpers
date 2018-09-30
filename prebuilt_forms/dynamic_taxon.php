@@ -737,6 +737,13 @@ JS;
     $defAttrOptions = ['extraParams' => $readAuth];
     self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
     foreach ($attrs as $attr) {
+      //Padding in pixels, start at zero, far left for heading
+      $fieldsetHeaderPaddingTracker=0;
+      $paddingAmount=50;
+      //When atributes are drawn, they must always be padded more than the heading
+      $attrPaddingAmount=$fieldsetHeaderPaddingTracker+$paddingAmount;
+      //Start with a quite a large header for the fieldset, then for each sub-heading we increase it to make it smaller (as it uses HTML <h> tag)
+      $headerSize=3;
       // Output any nested fieldsets required.
       foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
         if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
@@ -747,7 +754,12 @@ JS;
             }
           }
           if (!empty($attr[$fieldsetFieldName])) {
-            $r .= '<fieldset><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
+            //Draw fieldset heading
+            $r .= '<fieldset style="padding-left: '.$fieldsetHeaderPaddingTracker.'px;"><h'.$headerSize.'>' . lang::get($attr[$fieldsetFieldName]) . '</h'.$headerSize.'>';
+            // Once heading is drawn, the next one will decrease in size and be padded further from left 
+            //(remembering the headerSize relates to the html <h> tag which decreases in size as number increases)
+            $headerSize=$headerSize+1;
+            $fieldsetHeaderPaddingTracker=$fieldsetHeaderPaddingTracker+$paddingAmount;
           }
           $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
         }
@@ -763,7 +775,7 @@ JS;
         $attr['default'] = $attr['default_value'];
         $attr['displayValue'] = $attr['default_value_caption'];
         $attr['defaultUpper'] = $attr['default_upper_value'];
-        $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
+        $r .= '<div style="padding-left: '.$attrPaddingAmount.'px;">'.data_entry_helper::outputAttribute($attr, $ctrlOptions).'</div>';
       }
       else {
         $doneValues = [];
@@ -777,7 +789,7 @@ JS;
             $attr['default'] = $value->raw_value;
             $attr['displayValue'] = $value->value;
             $attr['defaultUpper'] = $value->upper_value;
-            $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
+            $r .= '<div style="padding-left: '.$attrPaddingAmount.'px;">'.data_entry_helper::outputAttribute($attr, $ctrlOptions).'</div>';
             $doneValues[] = $value->id;
           }
         }
