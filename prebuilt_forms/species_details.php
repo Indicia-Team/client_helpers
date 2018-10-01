@@ -843,25 +843,23 @@ HTML
   protected static function get_control_speciesphotos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
     data_entry_helper::add_resource('fancybox');
+    $options = array_merge([
+      'imageSize' => 'thumb',
+      'itemsPerPage' => 6,
+      'galleryColCount' => 2,
+    ], $options);
     global $user;
-    //default an items per page if not set by administrator
-    if (empty($options['itemsPerPage']) || $options['itemsPerPage'] == NULL) {
-      $options['itemsPerPage'] = 6;
-    }
-    //default a column count if not set by administrator
-    if (empty($options['galleryColCount']) || $options['galleryColCount'] == NULL) {
-      $options['galleryColCount'] = 3;
-    }
-    //Use this report to return the photos
+    global $indicia_templates;
+    // Use this report to return the photos.
     $reportName = 'library/taxa/species_notes_and_images';
     $reportResults = report_helper::report_grid(array(
       'readAuth' => $auth['read'],
-      'dataSource'=> $reportName,
+      'dataSource' => $reportName,
       'itemsPerPage' => $options['itemsPerPage'],
       'columns' => array(
         array(
           'fieldname' => 'the_text',
-          'template' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}thumb-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>'
+          'template' => str_replace('{imageSize}', $options['imageSize'], $indicia_templates['speciesDetailsThumbnail']),
         )
       ),
       'mode' => 'report',
@@ -869,9 +867,9 @@ HTML
       'includeAllColumns' => false,
       'headers' => false,
       'galleryColCount' => $options['galleryColCount'],
-      'extraParams'=>array(
-        'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
-        'taxon_meaning_id'=>self::$taxon_meaning_id,
+      'extraParams' => array(
+        'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
+        'taxon_meaning_id' => self::$taxon_meaning_id,
       )
     ));
     return '<div class="detail-panel" id="detail-panel-speciesphotos"><h3>' . lang::get('Photos and media') . '</h3>' .

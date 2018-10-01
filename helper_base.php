@@ -238,7 +238,8 @@ if ($("#{escapedId} option").length===0) {
 <div{contentClass}{contentId}></div>
 </div>',
   'dataValueList' => '<div class="detail-panel" id="{id}"><h3>{title}</h3><div class="record-details-fields ui-helper-clearfix">{content}</div></div>',
-  'dataValue' => '<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>'
+  'dataValue' => '<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>',
+  'speciesDetailsThumbnail' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
 );
 
 

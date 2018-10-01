@@ -2283,7 +2283,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
    *     data.
    *   * extraParams - Array of additional key value pairs to attach to the
    *     request.
-   *   * linkOnl - Pass true to return a link to the report data request rather
+   *   * linkOnly - Pass true to return a link to the report data request rather
    *     than the data itself. Default false.
    *   * sharing - Assuming the report has been written to take account of
    *     website sharing agreements, set this to define the task you are
