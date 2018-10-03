@@ -619,8 +619,10 @@ NEWFUNCS;
         if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
             ($surveyFieldMap['survey_id']==$survey_id || $surveyFieldMap['survey_id']=="*" /* Used for locations */)) {
           $allowedFields = self::explode_lines($surveyFieldMap['fields']);
-          $trimEqualsValue = create_function('&$val', '$tokens = explode("=",$val); $val=$tokens[0];');
-          array_walk($allowedFields, $trimEqualsValue);
+          array_walk($allowedFields, function(&$val) {
+            $tokens = explode("=",$val);
+            $val = $tokens[0];
+          });
           $fields = array_intersect_key($fields, array_combine($allowedFields, $allowedFields));
         }
       }
