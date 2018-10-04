@@ -1044,10 +1044,20 @@ indiciaData.rowIdToReselect = false;
     $.post(request,
       'report=' + encodeURIComponent(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) +
       '&params=' + encodeURIComponent(JSON.stringify(params)) +
-      '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus,
-      function (response) {
-        indiciaData.reports.verification.grid_verification_grid.reload(true);
-        alert(response + ' records processed');
+      '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus +
+      '&dryrun=true',
+      function (proposedChanges) {
+        if (confirm(proposedChanges + ' records will be affected. Are you sure you want to proceed?')) {
+          $.post(request,
+            'report=' + encodeURIComponent(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) +
+            '&params=' + encodeURIComponent(JSON.stringify(params)) +
+            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus,
+            function (affected) {
+              indiciaData.reports.verification.grid_verification_grid.reload(true);
+              alert(affected + ' records processed');
+            }
+          );
+        }
       }
     );
     $.fancybox.close();
@@ -1241,10 +1251,19 @@ indiciaData.rowIdToReselect = false;
           ignoreParams = $('.quick-verify-popup input[name=ignore-checks]:checked').length > 0 ? 'true' : 'false';
           $.post(request,
             'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
-            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus,
-            function (response) {
-              indiciaData.reports.verification.grid_verification_grid.reload();
-              alert(response + ' records processed');
+            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus +
+            '&dryrun=true',
+            function (proposedChanges) {
+              if (confirm(proposedChanges + ' records will be affected. Are you sure you want to proceed?')) {
+                $.post(request,
+                  'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
+                  '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus,
+                  function (affected) {
+                    indiciaData.reports.verification.grid_verification_grid.reload();
+                    alert(affected + ' records processed');
+                  }
+                );
+              }
             }
           );
           $.fancybox.close();
