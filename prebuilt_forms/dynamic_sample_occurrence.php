@@ -1938,6 +1938,9 @@ JS;
       $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
       $baseAttrId = "{$prefix}Attr:$attr[attribute_id]";
       $ctrlOptions = self::extract_ctrl_multi_value_options($baseAttrId, $defAttrOptions, $attrSpecificOptions);
+      if ($language) {
+        $ctrlOptions['language'] = $language;
+      }
       if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
         $attr['id'] = $baseAttrId;
         $attr['fieldname'] = "{$prefix}Attr:$attr[attribute_id]";
