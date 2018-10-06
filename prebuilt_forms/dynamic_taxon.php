@@ -742,8 +742,6 @@ JS;
       $paddingAmount=50;
       //When atributes are drawn, they must always be padded more than the heading
       $attrPaddingAmount=$fieldsetHeaderPaddingTracker+$paddingAmount;
-      //Start with a quite a large header for the fieldset, then for each sub-heading we increase it to make it smaller (as it uses HTML <h> tag)
-      $headerSize=3;
       // Output any nested fieldsets required.
       foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
         if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
@@ -753,15 +751,21 @@ JS;
               $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
             }
           }
+          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
+          // If it is a level two heading, then reduce its size and indent (we are using html <h> tag so bigger numbers are smaller)
+          if (!empty($fieldsetTracking['l2_category'])) {
+            $headerSize=4;
+            $fieldsetHeaderPaddingTracker=$fieldsetHeaderPaddingTracker+$paddingAmount;
+          // Else it is a main heading and is bigger without indentation
+          } else {
+          	$headerSize=3;
+            $fieldsetHeaderPaddingTracker=0;
+          }
           if (!empty($attr[$fieldsetFieldName])) {
             //Draw fieldset heading
             $r .= '<fieldset style="padding-left: '.$fieldsetHeaderPaddingTracker.'px;"><h'.$headerSize.'>' . lang::get($attr[$fieldsetFieldName]) . '</h'.$headerSize.'>';
-            // Once heading is drawn, the next one will decrease in size and be padded further from left 
-            //(remembering the headerSize relates to the html <h> tag which decreases in size as number increases)
-            $headerSize=$headerSize+1;
-            $fieldsetHeaderPaddingTracker=$fieldsetHeaderPaddingTracker+$paddingAmount;
+
           }
-          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
         }
       }
       $values = json_decode($attr['values']);
