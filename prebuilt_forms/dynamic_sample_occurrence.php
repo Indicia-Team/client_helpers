@@ -2369,31 +2369,34 @@ else
     // Can't call getGridMode in this context as we might not have the $_GET value to indicate grid
     if (isset($values['speciesgridmapmode']))
       $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values);
-    else if (isset($values['gridmode'])) {
+    else {
       // Work out the attributes that are for abundance, so could contain a zero
       $connection = iform_get_connection_details($nid);
       $readAuth = data_entry_helper::get_read_auth($connection['website_id'], $connection['password']);
-      $abundanceAttrs = array();
-      $occAttrs = self::getAttributesForEntity('occurrence', $args, $readAuth,
-        isset(self::$loadedOccurrenceId) ? self::$loadedOccurrenceId : '');
+      $abundanceAttrs = [];
+      $occIdToLoad = isset(self::$loadedOccurrenceId) ? self::$loadedOccurrenceId : '';
+      $occAttrs = self::getAttributesForEntity('occurrence', $args, $readAuth, $occIdToLoad);
       foreach ($occAttrs as &$attr) {
         if ($attr['system_function']==='sex_stage_count') {
           // If we have any lookups, we need to load the terms so we can compare the data properly
           // as term Ids are never zero
           if ($attr['data_type']==='L') {
-            $attr['terms'] = data_entry_helper::get_population_data(array(
+            $attr['terms'] = data_entry_helper::get_population_data([
               'table' => 'termlists_term',
-              'extraParams' => $readAuth + array('termlist_id' => $attr['termlist_id'], 'view' => 'cache', 'columns' => 'id,term'),
+              'extraParams' => $readAuth + ['termlist_id' => $attr['termlist_id'], 'view' => 'cache', 'columns' => 'id,term'],
               'cachePerUser' => false
-            ));
+            ]);
           }
           $abundanceAttrs[$attr['attributeId']] = $attr;
         }
       }
-      $submission = data_entry_helper::build_sample_occurrences_list_submission($values, false, $abundanceAttrs);
+      if (isset($values['gridmode'])) {
+        $submission = data_entry_helper::build_sample_occurrences_list_submission($values, false, $abundanceAttrs);
+      }
+      else {
+        $submission = data_entry_helper::build_sample_occurrence_submission($values, $abundanceAttrs);
+      }
     }
-    else
-      $submission = data_entry_helper::build_sample_occurrence_submission($values);
     foreach ($extensions as $extension) {
       $class_method = explode('.', "$extension");
       require_once("extensions/$class_method[0].php");
