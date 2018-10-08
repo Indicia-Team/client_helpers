@@ -7660,7 +7660,7 @@ HTML;
             'controlWrapTemplate' => 'justControl',
           ]);
           $toControl = self::$ctrl($toAttrOptions);
-          $wrapperId = 'range-wrap-' . str_replace(':', '-', $attrOptions[fieldname]);
+          $wrapperId = 'range-wrap-' . str_replace(':', '-', $attrOptions['fieldname']);
           $output = str_replace(
             ['{col-1}', '{col-2}', '{attrs}'],
             [$output, $toControl, " id=\"$wrapperId\""],
