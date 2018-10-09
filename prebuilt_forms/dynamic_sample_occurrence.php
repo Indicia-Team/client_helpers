@@ -1995,7 +1995,7 @@ JS;
     );
     helper_base::$is_ajax = TRUE;
 
-    if (!empty($_GET['validate_against_taxa'])) {
+    if (!empty($_GET['validate_against_taxa']) && $_GET['validate_against_taxa'] === 't') {
       $r = report_helper::get_report_data([
         'dataSource' => "library/$_GET[type]_attributes/$_GET[type]_attributes_for_taxon_with_taxon_validation_rules",
         'readAuth' => $readAuth,

@@ -60,7 +60,10 @@ jQuery(document).ready(function enablePdf($) {
       filename: indiciaData.printSettings.fileName,
       margin: [0.5, 0.5],
       image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: { dpi: 192, letterRendering: true },
+      html2canvas: {
+        dpi: 192,
+        letterRendering: true
+      },
       jsPDF: {
         orientation: $('#pdf-format').val(),
         unit: 'cm',
