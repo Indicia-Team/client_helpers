@@ -2100,7 +2100,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   public static function explode_lines_key_value_pairs($value) {
     preg_match_all("/([^=\r\n]+)=([^\r\n]+)/", $value, $pairs);
     $pairs[1] = array_map('trim', $pairs[1]);
-    $pairs[1] = array_map('trim', $pairs[2]);
+    $pairs[2] = array_map('trim', $pairs[2]);
     if (count($pairs[1]) == count($pairs[2]) && count($pairs[1]) != 0) {
       return array_combine($pairs[1], $pairs[2]);
     } else {
