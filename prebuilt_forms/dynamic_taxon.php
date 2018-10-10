@@ -683,6 +683,7 @@ JS;
       $optsJson = json_encode($options);
       data_entry_helper::$javascript .= <<<JS
 indiciaData.dynamicAttrOptions=$optsJson;
+// Call any load hooks.
 $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
   this($('.taxon-dynamic-attrs'));
 });

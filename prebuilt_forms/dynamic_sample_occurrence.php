@@ -1856,6 +1856,7 @@ JS;
       $optsJson = json_encode($options);
       data_entry_helper::$javascript .= <<<JS
 indiciaData.dynamicAttrOptions$type=$optsJson;
+// Call any load hooks.
 $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
   this($('.species-dynamic-attrs.attr-type-$type'), '$type');
 });
