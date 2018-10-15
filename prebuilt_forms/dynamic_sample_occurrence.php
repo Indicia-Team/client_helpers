@@ -1958,7 +1958,7 @@ JS;
           // (otherwise SQL would be complex)
           if (!in_array($value->id, $doneValues)) {
             $attr['id'] = "$baseAttrId:$value->id";
-            $attr['fieldname'] = "taxAttr:$attr[attribute_id]:$value->id";
+            $attr['fieldname'] = "$baseAttrId:$value->id";
             $attr['default'] = $value->raw_value;
             $attr['displayValue'] = $value->value;
             $attr['defaultUpper'] = $value->upper_value;
