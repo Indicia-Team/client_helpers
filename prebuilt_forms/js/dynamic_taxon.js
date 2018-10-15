@@ -1,11 +1,11 @@
-jQuery(document).ready(function docReady($) {
+// Declare a hook for functions that call when dynamic content updated.
+// For example:
+// indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
+//   $(div).prepend('<h1>' + type + '</h1>');
+// });
+indiciaFns.hookDynamicAttrsAfterLoad = [];
 
-  // Declare a hook for functions that call when dynamic content updated.
-  // For example:
-  // indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
-  //   $(div).prepend('<h1>' + type + '</h1>');
-  // });
-  indiciaFns.hookDynamicAttrsAfterLoad = [];
+jQuery(document).ready(function docReady($) {
 
   function changeTaxonRestrictionInputs() {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
