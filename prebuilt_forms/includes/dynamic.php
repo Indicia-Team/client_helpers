@@ -909,4 +909,89 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     }
   }
 
+  /**
+   * Builds the output for a set of dynamically taxon-linked attributes.
+   *
+   * @return string
+   *   HTML output.
+   */
+  protected static function getDynamicAttrsOutput($prefix, $readAuth, $attrs, $options) {
+    $fieldsetTracking = [
+      'l1_category' => '',
+      'l2_category' => '',
+      'outer_block_name' => '',
+      'inner_block_name' => '',
+    ];
+    $fieldsetFieldNames = array_keys($fieldsetTracking);
+    $attrSpecificOptions = [];
+    $defAttrOptions = ['extraParams' => $readAuth];
+    self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
+    $r = '';
+    foreach ($attrs as $attr) {
+      // Output any nested fieldsets required.
+      foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
+        if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
+          for ($i = $idx + 1; $i < count($fieldsetTracking); $i++) {
+            if ($fieldsetTracking[$fieldsetFieldNames[$i]] !== '') {
+              $r .= '</fieldset>';
+              $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
+            }
+          }
+          if (!empty($attr[$fieldsetFieldName])) {
+            $r .= '<fieldset class="attrs-container"><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
+          }
+          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
+        }
+      }
+      $values = json_decode($attr['values']);
+      $baseAttrId = "{$prefix}Attr:$attr[attribute_id]";
+      $ctrlOptions = self::extract_ctrl_multi_value_options($baseAttrId, $defAttrOptions, $attrSpecificOptions);
+      if ($language) {
+        $ctrlOptions['language'] = $language;
+      }
+      $attr['id'] = $baseAttrId;
+      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
+      $attr['fieldname'] = $baseAttrId;
+      if ($attr['multi_value'] === 'f') {
+        if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
+          $attr['default'] = $attr['default_value'];
+          $attr['displayValue'] = $attr['default_value_caption'];
+          $attr['defaultUpper'] = $attr['default_upper_value'];
+        }
+        else {
+          $value = $values[0];
+          $attr['default'] = $value->raw_value;
+          $attr['displayValue'] = $value->value;
+          $attr['defaultUpper'] = $values->upper_value;
+        }
+      }
+      else {
+        $doneValues = [];
+        $default = [];
+        foreach ($values as $value) {
+          // Values may be duplicated if an attribute is linked to a taxon
+          // twice in the taxon hierarchy, so we mitigate against it here
+          // (otherwise SQL would be complex)
+          if (!in_array($value->id, $doneValues)) {
+            $default[] = [
+              'fieldname' => "$baseAttrId:$value->id",
+              'default' => $value->raw_value,
+              'defaultUpper' => NULL,
+              'caption' => $value->value,
+            ];
+            $doneValues[] = $value->id;
+          }
+        }
+        $attr['default'] = $default;
+      }
+      $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
+    }
+    foreach ($fieldsetTracking as $fieldsetName) {
+      if (!empty($fieldsetName)) {
+        $r .= '</fieldset>';
+      }
+    }
+    return $r;
+  }
+
 }

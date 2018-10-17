@@ -726,78 +726,7 @@ JS;
   private static function getDynamicAttrs($readAuth, $taxonListId, $ttlId, $options, $language = NULL) {
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $attrs = self::getDynamicAttrsList($readAuth, $taxonListId, $language, $ttlId);
-    $r = '';
-    $fieldsetTracking = [
-      'l1_category' => '',
-      'l2_category' => '',
-      'outer_block_name' => '',
-      'inner_block_name' => '',
-    ];
-    $fieldsetFieldNames = array_keys($fieldsetTracking);
-    $attrSpecificOptions = [];
-    $defAttrOptions = ['extraParams' => $readAuth];
-    self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
-    foreach ($attrs as $attr) {
-      //Padding in pixels, start at zero, far left for heading
-      $fieldsetHeaderPaddingTracker=0;
-      $paddingAmount=50;
-      //When atributes are drawn, they must always be padded more than the heading
-      $attrPaddingAmount=$fieldsetHeaderPaddingTracker+$paddingAmount;
-      // Output any nested fieldsets required.
-      foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
-        if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
-          for ($i = $idx + 1; $i < count($fieldsetTracking); $i++) {
-            if ($fieldsetTracking[$fieldsetFieldNames[$i]] !== '') {
-              $r .= '</fieldset>';
-              $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
-            }
-          }
-          if (!empty($attr[$fieldsetFieldName])) {
-            $r .= '<fieldset class="attrs-container"><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
-          }
-          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
-        }
-      }
-      $values = json_decode($attr['values']);
-      $options['extraParams'] = $readAuth;
-      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
-      $baseAttrId = "taxAttr:$attr[attribute_id]";
-      $ctrlOptions = self::extract_ctrl_multi_value_options($baseAttrId, $defAttrOptions, $attrSpecificOptions);
-      if ($language) {
-        $ctrlOptions['language'] = $language;
-      }
-      if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
-        $attr['id'] = $baseAttrId;
-        $attr['fieldname'] = "taxAttr:$attr[attribute_id]";
-        $attr['default'] = $attr['default_value'];
-        $attr['displayValue'] = $attr['default_value_caption'];
-        $attr['defaultUpper'] = $attr['default_upper_value'];
-        $r .= '<div style="padding-left: '.$attrPaddingAmount.'px;">'.data_entry_helper::outputAttribute($attr, $ctrlOptions).'</div>';
-      }
-      else {
-        $doneValues = [];
-        foreach ($values as $value) {
-          // Values may be duplicated if an attribute is linked to a taxon
-          // twice in the taxon hierarchy, so we mitigate against it here
-          // (otherwise SQL would be complex)
-          if (!in_array($value->id, $doneValues)) {
-            $attr['id'] = "$baseAttrId:$value->id";
-            $attr['fieldname'] = "taxAttr:$attr[attribute_id]:$value->id";
-            $attr['default'] = $value->raw_value;
-            $attr['displayValue'] = $value->value;
-            $attr['defaultUpper'] = $value->upper_value;
-            $r .= '<div style="padding-left: '.$attrPaddingAmount.'px;">'.data_entry_helper::outputAttribute($attr, $ctrlOptions).'</div>';
-            $doneValues[] = $value->id;
-          }
-        }
-      }
-    }
-    foreach ($fieldsetTracking as $fieldsetName) {
-      if (!empty($fieldsetName)) {
-        $r .= '</fieldset>';
-      }
-    }
-    return $r;
+    return self::getDynamicAttrsOutput('tax', $readAuth, $attrs, $options);
   }
 
   /**
