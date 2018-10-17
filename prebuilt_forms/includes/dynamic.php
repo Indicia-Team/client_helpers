@@ -915,7 +915,8 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
    * @return string
    *   HTML output.
    */
-  protected static function getDynamicAttrsOutput($prefix, $readAuth, $attrs, $options) {
+  protected static function getDynamicAttrsOutput($prefix, $readAuth, $attrs, $options, $language) {
+    // A tracker for the 4 possible levels of fieldset so we can detect changes.
     $fieldsetTracking = [
       'l1_category' => '',
       'l2_category' => '',
@@ -928,15 +929,19 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
     $r = '';
     foreach ($attrs as $attr) {
-      // Output any nested fieldsets required.
+      // Output any nested fieldsets required. Iterate through the possible 4
+      // levels.
       foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
+        // Is there a change at this level?
         if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
-          for ($i = $idx + 1; $i < count($fieldsetTracking); $i++) {
-            if ($fieldsetTracking[$fieldsetFieldNames[$i]] !== '') {
+          // Unwind all the fieldsets that are open at this level and below.
+          for ($i = $idx; $i < count($fieldsetTracking); $i++) {
+            if (!empty($fieldsetTracking[$fieldsetFieldNames[$i]])) {
               $r .= '</fieldset>';
               $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
             }
           }
+          // Open a new fieldset for this level, if one is needed.
           if (!empty($attr[$fieldsetFieldName])) {
             $r .= '<fieldset class="attrs-container"><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
           }

@@ -726,7 +726,7 @@ JS;
   private static function getDynamicAttrs($readAuth, $taxonListId, $ttlId, $options, $language = NULL) {
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $attrs = self::getDynamicAttrsList($readAuth, $taxonListId, $language, $ttlId);
-    return self::getDynamicAttrsOutput('tax', $readAuth, $attrs, $options);
+    return self::getDynamicAttrsOutput('tax', $readAuth, $attrs, $options, $language);
   }
 
   /**

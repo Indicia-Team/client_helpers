@@ -1907,7 +1907,7 @@ JS;
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $attrs = self::getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language, $occurrenceId);
     $prefix = $type === 'sample' ? 'smp' : 'occ';
-    return self::getDynamicAttrsOutput($prefix, $readAuth, $attrs, $options);
+    return self::getDynamicAttrsOutput($prefix, $readAuth, $attrs, $options, $language);
   }
 
   /**
