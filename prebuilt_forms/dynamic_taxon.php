@@ -752,21 +752,10 @@ JS;
               $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
             }
           }
-          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
-          // If it is a level two heading, then reduce its size and indent (we are using html <h> tag so bigger numbers are smaller)
-          if (!empty($fieldsetTracking['l2_category'])) {
-            $headerSize=4;
-            $fieldsetHeaderPaddingTracker=$fieldsetHeaderPaddingTracker+$paddingAmount;
-          // Else it is a main heading and is bigger without indentation
-          } else {
-          	$headerSize=3;
-            $fieldsetHeaderPaddingTracker=0;
-          }
           if (!empty($attr[$fieldsetFieldName])) {
-            //Draw fieldset heading
-            $r .= '<fieldset style="padding-left: '.$fieldsetHeaderPaddingTracker.'px;"><h'.$headerSize.'>' . lang::get($attr[$fieldsetFieldName]) . '</h'.$headerSize.'>';
-
+            $r .= '<fieldset class="attrs-container"><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
           }
+          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
         }
       }
       $values = json_decode($attr['values']);

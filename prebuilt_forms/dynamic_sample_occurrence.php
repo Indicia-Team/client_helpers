@@ -1930,7 +1930,7 @@ JS;
             }
           }
           if (!empty($attr[$fieldsetFieldName])) {
-            $r .= '<fieldset><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
+            $r .= '<fieldset class="attrs-container"><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
           }
           $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
         }
