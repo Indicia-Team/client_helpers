@@ -7724,7 +7724,7 @@ HTML;
           $dataSvcParams = $dataSvcParams + array('language_iso'=>$options['language']);
         }
         if (!array_key_exists('orderby', $options['extraParams'])) {
-          $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order');
+          $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order,term');
         }
         // control for lookup list can be overriden in function call options
         if(array_key_exists('lookUpListCtrl', $options)){
