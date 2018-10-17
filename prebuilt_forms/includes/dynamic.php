@@ -314,7 +314,7 @@ class iform_dynamic {
    * @return array
    *   Options array for this control
    */
-  protected function extract_ctrl_multi_value_options($baseAttrId, array $defAttrOptions, array $attrSpecificOptions) {
+  protected static function extract_ctrl_multi_value_options($baseAttrId, array $defAttrOptions, array $attrSpecificOptions) {
     $ctrlOptions = array_merge($defAttrOptions);
     if (!empty($attrSpecificOptions[$baseAttrId])) {
       // Make sure extraParams is merged.
