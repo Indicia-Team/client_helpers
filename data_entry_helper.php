@@ -7613,7 +7613,7 @@ HTML;
       'extraParams' => array(),
     ), $options);
     if (!empty($options['useDescriptionAsHelpText'])) {
-      $options['helpText'] = $options['helpText'] ?: $item['description'];
+      $options['helpText'] = empty($options['helpText']) ? $item['description'] : $options['helpText'];
     }
     $attrOptions = array(
       'fieldname'=>$item['fieldname'],
