@@ -675,8 +675,6 @@ JS;
    * <li>treeview</li>
    * <li>treeview_async</li>
    * <li>googlemaps</li>
-   * <li>multimap</li>
-   * <li>virtualearth</li>
    * <li>fancybox</li>
    * <li>treeBrowser</li>
    * <li>defaultStylesheet</li>
@@ -788,7 +786,6 @@ JS;
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
         'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
             (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key))),
-        'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
         'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
