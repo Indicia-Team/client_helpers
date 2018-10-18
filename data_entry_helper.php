@@ -1995,7 +1995,7 @@ JS;
    * <li><b>presetLayers</b><br/>
    * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
    * 'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'bing_os',
-   * 'osm' (for OpenStreetMap), 'osm_th' (for OpenStreetMap Tiles@Home).</li>
+   * 'osm' (for OpenStreetMap).</li>
    * <li><b>edit</b><br/>
    * True or false to include the edit controls for picking spatial references.</li>
    * <li><b>locate</b><br/>
