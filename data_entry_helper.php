@@ -6199,15 +6199,15 @@ if (errors$uniq.length>0) {
    * @param boolean $include_if_any_data If true, then any list entry which has any data
    * set will be included in the submission. This defaults to false, unless the grid was
    * created with rowInclusionCheck=hasData in the grid options.
-   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
+   * @param array $zeroAttrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zero_values Set to an array of values which are considered to indicate a
+   * @param array $zeroValues Set to an array of values which are considered to indicate a
    * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
    * array('0','None','Absent').
    */
   public static function wrap_species_checklist($arr, $include_if_any_data=false,
-                                                $zero_attrs = true, $zero_values=array('0','None','Absent')){
+                                                $zeroAttrs = true, $zeroValues=array('0','None','Absent')){
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
     } else {
@@ -6288,7 +6288,7 @@ if (errors$uniq.length>0) {
           true : $include_if_any_data;
       // determine if this record is for presence, absence or nothing
       $present = self::wrap_species_checklist_record_present($record, $include_if_any_data,
-        $zero_attrs, $zero_values, $hasDataIgnoreAttrs);
+        $zeroAttrs, $zeroValues, $hasDataIgnoreAttrs);
       if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
         if ($present===null)
           // checkboxes do not appear if not checked. If uncheck, delete record.
@@ -6385,10 +6385,10 @@ if (errors$uniq.length>0) {
    * @param boolean $include_if_any_data If true, then any list entry which has any data
    * set will be included in the submission. This defaults to false, unless the grid was
    * created with rowInclusionCheck=hasData in the grid options.
-   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
+   * @param array $zeroAttrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zero_values Set to an array of values which are considered to indicate a
+   * @param array $zeroValues Set to an array of values which are considered to indicate a
    * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
    * array('0','None','Absent').
    * @param array Array of grid ids to ignore when building sub-samples for occurrences, useful for creating
@@ -6396,7 +6396,7 @@ if (errors$uniq.length>0) {
    * to the species grid.
    */
     public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data=false,
-          $zero_attrs = true, $zero_values=array('0','None','Absent'), $gridsToExclude=array()){
+          $zeroAttrs = true, $zeroValues=array('0','None','Absent'), $gridsToExclude=array()){
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
     } else {
@@ -6445,7 +6445,7 @@ if (errors$uniq.length>0) {
       $sampleIDX = $record['occurrence:sampleIDX'];
       unset($record['occurrence:sampleIDX']);
       $present = self::wrap_species_checklist_record_present($record, $include_if_any_data,
-        $zero_attrs, $zero_values, array());
+        $zeroAttrs, $zeroValues, array());
       if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
         if ($present===null)
           // checkboxes do not appear if not checked. If uncheck, delete record.
@@ -6861,11 +6861,21 @@ HTML;
   /**
    * Helper function to simplify building of a submission that contains a single sample
    * and occurrence record.
-   * @param array $values List of the posted values to create the submission from. Each entry's
-   * key should be occurrence:fieldname, sample:fieldname, occAttr:n, smpAttr:n, taxAttr:n
-   * or psnAttr:n to be correctly identified.
+   * @param array $values
+   *   List of the posted values to create the submission from. Each entry's
+   *   key should be occurrence:fieldname, sample:fieldname, occAttr:n,
+   *   smpAttr:n, taxAttr:n or psnAttr:n to be correctly identified.
+   * @param array|bool $zeroAttrs
+   *   Set to an array of attribute defs keyed by attribute ID that can be
+   *   treated as abundances. Alternatively set to true to treat all occurrence
+   *   custom attributes as possible zero abundance indicators.
+   * @param array $zeroValues
+   *   Set to an array of values which are considered to indicate a zero
+   *   abundance record if found for one of the zero_attrs. Values are
+   *   case-insensitive. Defaults to array('0','None','Absent').
    */
-  public static function build_sample_occurrence_submission($values) {
+  public static function build_sample_occurrence_submission($values,
+      $zeroAttrs = true, $zeroValues=['0','None','Absent']) {
     $structure = array(
       'model' => 'sample',
       'subModels' => array(
@@ -6878,6 +6888,13 @@ HTML;
         'occurrence_medium' => array('fk' => 'occurrence_id')
       );
     }
+    if (empty($values['occurrence:zero_abundance'])) {
+      // Default the zero abundance field if an abundance attr indicates absence.
+      $present = self::wrap_species_checklist_record_present($values, TRUE, $zeroAttrs, $zeroValues, []);
+      if ($present === FALSE) {
+        $values['occurrence:zero_abundance'] = 't';
+      }
+    }
     return submission_builder::build_submission($values, $structure);
   }
 
@@ -6885,27 +6902,30 @@ HTML;
    * Helper function to simplify building of a submission that contains a single sample
    * and multiple occurrences records generated by a species_checklist control.
    *
-   * @param array $values List of the posted values to create the submission from.
-   * @param boolean $include_if_any_data If true, then any list entry which has any data
-   * set will be included in the submission. Set this to true when hiding the select checkbox
-   * in the grid.
-   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
-   * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
-   * as possible zero abundance indicators.
-   * @param array $zero_values Set to an array of values which are considered to indicate a
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
-   * array('0','None','Absent').
-   * of values that can be treated as meaning a zero abundance record. E.g.
-   * array('
-
-   * @return array Sample submission array
+   * @param array $values
+   *   List of the posted values to create the submission from.
+   * @param boolean $include_if_any_data
+   *   If true, then any list entry which has any data set will be included in
+   *   the submission. Set this to true when hiding the select checkbox in the
+   *   grid.
+   * @param array|bool $zeroAttrs
+   *   Set to an array of attribute defs keyed by attribute ID that can be
+   *   treated as abundances. Alternatively set to true to treat all occurrence
+   *   custom attributes as possible zero abundance indicators.
+   * @param array $zeroValues
+   *   Set to an array of values which are considered to indicate a zero
+   *   abundance record if found for one of the zero_attrs. Values are
+   *   case-insensitive. Defaults to array('0','None','Absent').
+   *
+   * @return array
+   *   Sample submission array
    */
   public static function build_sample_occurrences_list_submission($values, $include_if_any_data=false,
-                                                                  $zero_attrs = true, $zero_values=array('0','None','Absent')) {
+      $zeroAttrs = true, array $zeroValues=['0','None','Absent']) {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $occurrences = data_entry_helper::wrap_species_checklist($values, $include_if_any_data,
-      $zero_attrs, $zero_values);
+      $zeroAttrs, $zeroValues);
 
     // Add the occurrences in as subModels without overwriting others such as a sample image
     if (array_key_exists('subModels', $sampleMod)) {
@@ -6926,10 +6946,10 @@ HTML;
    * @param boolean $include_if_any_data If true, then any list entry which has any data
    * set will be included in the submission. Set this to true when hiding the select checkbox
    * in the grid.
-   * @param array $zero_attrs Set to an array of attribute defs keyed by attribute ID that can be
+   * @param array $zeroAttrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zero_values Set to an array of values which are considered to indicate a
+   * @param array $zeroValues Set to an array of values which are considered to indicate a
    * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
    * array('0','None','Absent').
    * of values that can be treated as meaning a zero abundance record. E.g.
@@ -6938,12 +6958,12 @@ HTML;
    * @return array Sample submission array
    */
   public static function build_sample_subsamples_occurrences_submission($values, $include_if_any_data=false,
-                                                                        $zero_attrs = true, $zero_values=array('0','None','Absent'))
+                                                                        $zeroAttrs = true, $zeroValues=array('0','None','Absent'))
   {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $subModels = data_entry_helper::wrap_species_checklist_with_subsamples($values, $include_if_any_data,
-      $zero_attrs, $zero_values);
+      $zeroAttrs, $zeroValues);
 
     // Add the subsamples/occurrences in as subModels without overwriting others such as a sample image
     if (array_key_exists('subModels', $sampleMod)) {

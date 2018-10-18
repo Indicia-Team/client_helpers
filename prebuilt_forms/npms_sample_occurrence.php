@@ -339,14 +339,10 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
     // Cycle through each sample associated with the user's squares and
     // find out if current user created it
     foreach ($mySamples as $sampleData) {
-      if ($sampleData['sample_id1']===$_GET['sample_id']&&
-        (!empty($sampleData['created_by_id1'])&&$sampleData['created_by_id1']===$iUserId)) {
+      if ($sampleData['sample_id']===$_GET['sample_id']&&
+        (!empty($sampleData['created_by_id'])&&$sampleData['created_by_id']===$iUserId)) {
         $userCreatedSample=true; 
       } 
-      if ($sampleData['sample_id2']===$_GET['sample_id']&&
-          (!empty($sampleData['created_by_id2'])&&$sampleData['created_by_id2']===$iUserId)) {
-        $userCreatedSample=true;  
-      }  
     }
     // Lock form if past locking date
     // This is always the message shown if this has happened regardless if they created sample or not
@@ -439,27 +435,21 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
 
   /**
    * Override function to include actions to add or edit the linked sample
-   * Depends upon a report existing, e.g. npms_sample_occurrence_samples, that 
-   * returns the fields done1 and done2 where
-   * done1 is true if there is no second sample linked to the first and
-   * done2 is true when there is a second sample.
+   * Depends upon a report existing, e.g. npms_sample_occurrence_samples_2, that 
+   * returns the field show_add_sample_2 where
+   * show_add_sample_2 is true if there is no second sample linked to the first 
    */
   protected static function getReportActions() {
     return array(array('display' => 'Actions', 
-                       'actions' => array(array('caption' => lang::get('Edit Survey 1'), 
+                       'actions' => array(array('caption' => lang::get('Edit this Survey'), 
                                                 'url'=>'{currentUrl}', 
-                                                'urlParams' => array('edit' => '', 'sample_id' => '{sample_id1}')
+                                                'urlParams' => array('edit' => '', 'sample_id' => '{sample_id}')
                                                ),
-                                          array('caption' => lang::get('Add Survey 2'), 
+                                          array('caption' => lang::get('Add a Survey 2'), 
                                                 'url'=>'{currentUrl}', 
-                                                'urlParams' => array('new' => '', 'sample_id' => '{sample_id1}'),
-                                                'visibility_field' => 'done1'
-                                               ),
-                                          array('caption' => lang::get('Edit Survey 2'), 
-                                                'url'=>'{currentUrl}', 
-                                                'urlParams' => array('edit' => '', 'sample_id' => '{sample_id2}'),
-                                                'visibility_field' => 'done2'
-                                               ),
+                                                'urlParams' => array('new' => '', 'sample_id' => '{sample_id}'),
+                                                'visibility_field' => 'show_add_sample_2'
+                                          )
     )));
   }
   
