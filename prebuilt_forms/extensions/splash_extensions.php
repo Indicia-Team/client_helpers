@@ -856,8 +856,6 @@ class extension_splash_extensions {
       map_helper::$javascript .= "indiciaData.pssMode=true;\n";
     }
     map_helper::$javascript .= "indiciaData.noSizeWarning='Please select plot type from the drop-down.';\n";
-    //In edit mode, we need to manually load the plot geom
-    map_helper::$javascript .= "$('#imp-boundary-geom').val($('#imp-geom').val());\n";
     //On NPMS/PSS system there is a checkbox for enhanced mode (when this isn't selected, plots are not configurable and default to a 3 x 3 square.
     //Note that on splash there is no enhanced mode so plots are fully configurable.
     if (!empty($options['enhancedModeCheckboxAttrId']))
