@@ -457,6 +457,7 @@ class iform_easy_download {
       'itemsPerPage'=>$limit
     ));
     header("Location: $url");
+    exit;
   }
 
   /**

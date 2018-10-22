@@ -13,19 +13,17 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package  Client
- * @author  Indicia Team
- * @license  http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link   http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
  * Link in other required php files.
  */
-require_once('lang.php');
-require_once('helper_config.php');
-require_once('data_entry_helper.php');
-require_once('secure_msg.php');
+require_once 'lang.php';
+require_once 'data_entry_helper.php';
+require_once 'secure_msg.php';
 
 /**
  * Provides a helper to:-
@@ -33,8 +31,6 @@ require_once('secure_msg.php');
  * <li>provide composite HTML widgets for use on sites</li>
  * <li>make requests to core for access control and user management.</li>
  * </ol>
- *
- * @package  Client
  */
 
 class user_helper extends helper_base {
@@ -56,7 +52,7 @@ class user_helper extends helper_base {
    * <li><b>action_url</b><br/>
    * Required. String defining the URL which the login data will be sent to for processing.</li>
    * <li><b>control_method</b><br/>
-   * Optional. String defining the http method (either post or get) to be used to send the data for processing. 
+   * Optional. String defining the http method (either post or get) to be used to send the data for processing.
    * 'post' is strongly recommended as it avoids showing the password in the browser address box. Default is 'post'.</li>
    * <li><b>control_id</b><br/>
    * Optional. String defining the id for the enclosing <form>. Default is 'indicia-login-control'.</li>
@@ -194,7 +190,7 @@ class user_helper extends helper_base {
    	$class = (array_key_exists('button_class', $options)) ? ' class="'.$options['button_class'].'"' : '';
     $r .= '<input type="submit" name="'.$fieldname.'" id="'.$fieldname.'" value="'.$label.'"'
       .str_replace('{class}', $class, '{class} />')."\n";
-     
+
     $r .= '</form>'."\n";
     return $r;
   }
@@ -203,19 +199,19 @@ class user_helper extends helper_base {
    * Helper function to output the HTML for a forgotten password form widget.
    * This is a composite control which presents a configurable collection of input and
    * display controls to support a forgotten password request on a web page.
-   * The control is wrapped with a <form> element but you need to specify where the 
+   * The control is wrapped with a <form> element but you need to specify where the
    * request should be sent for processing.
    *
    * All the elements in the control are wrapped within a <form> with an id of indicia-forgotten-password-control
    * so if you don't wish to specify classes on all the sub elements you can style them using
    * CSS selectors such as
-   * #indicia-forgotten-password-control input[type="text"] 
+   * #indicia-forgotten-password-control input[type="text"]
    *
    * @param array $options Options array with the following possibilities:<ul>
    * <li><b>action_url</b><br/>
    * Required. String defining the URL which the login data will be sent to for processing.</li>
    * <li><b>control_method</b><br/>
-   * Optional. String defining the http method (either post or get) to be used to send the data for processing. 
+   * Optional. String defining the http method (either post or get) to be used to send the data for processing.
    * Default is 'post'.</li>
    * <li><b>control_id</b><br/>
    * Optional. String defining the id for the enclosing <form>. Default is 'indicia-forgotten-password-control'.</li>
@@ -229,10 +225,10 @@ class user_helper extends helper_base {
    * Default is 'Forgotten password user details'. Todo: make this default language aware?</li>
    * <li><b>login_text</b><br/>
    * Optional. Explainatory text to be shown before the fields. If 'show_fieldset' is true,
-   * the text will be inside the fieldset. 
-   * Default is <i>'You may enter either your user name or your email address in the field below, 
-   * and an email will be sent to you. In this email will be a link to a webpage which will 
-   * allow you to enter a new password. This ensures that only a person with access to your 
+   * the text will be inside the fieldset.
+   * Default is <i>'You may enter either your user name or your email address in the field below,
+   * and an email will be sent to you. In this email will be a link to a webpage which will
+   * allow you to enter a new password. This ensures that only a person with access to your
    * registered email account will be able to change your password.'</i>.  Todo: make this default language aware?</li>
    * <li><b>name_label</b><br/>
    * Optional. Text for the username field label. Defaults to 'User Name or Email Address'.
@@ -281,7 +277,7 @@ class user_helper extends helper_base {
       $legend_label = (array_key_exists('legend_label', $options)) ? $options['legend_label'] : 'Forgotten password user details';
       $r .= '<legend>'.$legend_label.'</legend>'."\n";
     }
-    $text = (array_key_exists('forgotten_password_text', $options)) ? $options['forgotten_password_text'] : 
+    $text = (array_key_exists('forgotten_password_text', $options)) ? $options['forgotten_password_text'] :
     'You may enter either your user name or your email address in the field below, '.
     'and an email will be sent to you. In this email will be a link to a webpage which will '.
     'allow you to enter a new password. This ensures that only a person with access to your '.
@@ -308,11 +304,11 @@ class user_helper extends helper_base {
       $class = (array_key_exists('links_class', $options)) ? ' class="'.$options['links_class'].'"' : '';
       $r .= '<br /><a href="'.$options['login_uri'].'"'.$class.'>'.$label.'</a>'."\n";
    	}
-     
+
     $r .= '</form>'."\n";
     return $r;
   }
-  
+
   /**
    * Sends a request to the indicia core module to ask if the login credentials
    * are valid for this website.
@@ -364,7 +360,7 @@ class user_helper extends helper_base {
    * <li>registration_datetime</li>
    * <li>last_login_datetime</li>
    * <li>preferred_sref_system</li>
-   * </ul> 
+   * </ul>
    * This is only returned if the 'getprofile' option is true in the request options.</li>
    * </ul>
    */
@@ -373,7 +369,7 @@ class user_helper extends helper_base {
     // encrypt and seal the sensitive data
     $secrets = array("username" => $username, "password" => $password, "options" => $options);
     $sealed = secure_msg::seal($secrets, $website_password);
-     
+
     // send authentication request to indicia core
     $url = self::$base_url."index.php/services/site_user/authenticate_user";
     $postargs = array(secure_msg::SEALED => $sealed, "auth_token" => $readAuth['auth_token'],
@@ -381,13 +377,13 @@ class user_helper extends helper_base {
     $response = self::http_post($url, $postargs);
     // decrypt response
     $output = secure_msg::unseal_response($response['output'], $website_password);
-     
+
     // return result
     return $output;
   }
-    
+
   /**
-   * Sends a request to the indicia core module to send an email to the user 
+   * Sends a request to the indicia core module to send an email to the user
    * directing them to the password reset process.
    *
    * @param string $userid Required.
@@ -404,7 +400,7 @@ class user_helper extends helper_base {
    * @return array containing:<ul>
    * <li>The 'user_id' key hold the user_id for the authenticated user,
    * or '0' if the login credentials are not valid for this website.</li>
-   * <li>The 'site_role' as a string 'User', 'Editor' or 'Admin'. 
+   * <li>The 'site_role' as a string 'User', 'Editor' or 'Admin'.
    * This is only returned if the 'getrole' option is true in the request options.</li>
    * </ul>
    */
@@ -415,14 +411,14 @@ class user_helper extends helper_base {
     $postargs = 'userid='.$userid.'&options='.json_encode($options).
     '&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'];
     $response = self::http_post($url, $postargs);
-     
+
     // return result
     $result = json_decode($response['output'], TRUE);
     return $result;
   }
-    
+
   /**
-   * Sends a request to the indicia core module to get profile data for 
+   * Sends a request to the indicia core module to get profile data for
    * supplied user on requesting website.
    *
    * @param integer $user_id Required.
@@ -461,10 +457,10 @@ class user_helper extends helper_base {
     $url = self::$base_url."index.php/services/site_user/get_user_profile/".$user_id;
     $postargs = 'auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'];
     $response = self::http_post($url, $postargs);
-     
+
     // return result
     $result = json_decode($response['output'], TRUE);
     return $result;
   }
-  
+
 }

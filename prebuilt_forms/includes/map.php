@@ -33,81 +33,81 @@
 function iform_map_get_map_parameters() {
   $r = array(
     array(
-      'name'=>'map_centroid_lat',
-      'caption'=>'Centre of Map Latitude',
-      'description'=>'WGS84 Latitude of the initial map centre point, in decimal form. Set to "default" to use the settings '.
+      'name' => 'map_centroid_lat',
+      'caption' => 'Centre of Map Latitude',
+      'description' => 'WGS84 Latitude of the initial map centre point, in decimal form. Set to "default" to use the settings '.
           'defined in the IForm Settings page.',
-      'type'=>'text_input',
-      'group'=>'Initial Map View',
-      'default'=>'default'
+      'type' => 'text_input',
+      'group' => 'Initial Map View',
+      'default' => 'default'
     ),
     array(
-      'name'=>'map_centroid_long',
-      'caption'=>'Centre of Map Longitude',
-      'description'=>'WGS84 Longitude of the initial map centre point, in decimal form. Set to "default" to use the settings defined in the IForm Settings page.',
-      'type'=>'text_input',
-      'group'=>'Initial Map View',
-      'default'=>'default'
+      'name' => 'map_centroid_long',
+      'caption' => 'Centre of Map Longitude',
+      'description' => 'WGS84 Longitude of the initial map centre point, in decimal form. Set to "default" to use the settings defined in the IForm Settings page.',
+      'type' => 'text_input',
+      'group' => 'Initial Map View',
+      'default' => 'default'
     ),
     array(
-      'name'=>'map_zoom',
-      'caption'=>'Map Zoom Level',
-      'description'=>'Zoom level of the initially displayed map. Set to "default" to use the settings defined in the IForm Settings page.',
-      'type'=>'text_input',
-      'group'=>'Initial Map View',
-      'default'=>'default'
+      'name' => 'map_zoom',
+      'caption' => 'Map Zoom Level',
+      'description' => 'Zoom level of the initially displayed map. Set to "default" to use the settings defined in the IForm Settings page.',
+      'type' => 'text_input',
+      'group' => 'Initial Map View',
+      'default' => 'default'
     ),
     array(
-      'name'=>'map_width',
-      'caption'=>'Map Width',
-      'description'=>'Width in pixels of the map, or a css specification for the width, e.g. 75%.',
-      'type'=>'text_input',
-      'group'=>'Initial Map View',
-      'default'=>'100%'
+      'name' => 'map_width',
+      'caption' => 'Map Width',
+      'description' => 'Width in pixels of the map, or a css specification for the width, e.g. 75%.',
+      'type' => 'text_input',
+      'group' => 'Initial Map View',
+      'default' => '100%'
     ),
     array(
-      'name'=>'map_height',
-      'caption'=>'Map Height (px)',
-      'description'=>'Height in pixels of the map.',
-      'type'=>'int',
-      'group'=>'Initial Map View',
+      'name' => 'map_height',
+      'caption' => 'Map Height (px)',
+      'description' => 'Height in pixels of the map.',
+      'type' => 'int',
+      'group' => 'Initial Map View',
       'default'=>600
     ),
     array(
-      'name'=>'remember_pos',
-      'caption'=>'Remember Position',
-      'description'=>'Tick this box to get the map to remember it\'s last position when reloading the page. This uses cookies so cookies must be enabled for it to work and '.
+      'name' => 'remember_pos',
+      'caption' => 'Remember Position',
+      'description' => 'Tick this box to get the map to remember it\'s last position when reloading the page. This uses cookies so cookies must be enabled for it to work and '.
           'you must notify your users to ensure you comply with European cookie law.',
-      'type'=>'checkbox',
-      'required'=>false,
-      'group'=>'Initial Map View'
+      'type' => 'checkbox',
+      'required' => FALSE,
+      'group' => 'Initial Map View'
     ),
     array(
       'name' => 'location_boundary_id',
       'caption' => 'Location boundary to draw',
       'description' => 'ID of a location whose boundary should be shown on the map (e.g. to define the perimeter of a survey area).',
       'type' => 'textfield',
-      'group'=>'Initial Map View',
-      'required'=>false
+      'group' => 'Initial Map View',
+      'required' => FALSE,
     ),
     array(
-      'name'=>'preset_layers',
-      'caption'=>'Preset Base Layers',
-      'description'=>'Select the preset base layers that are available for the map. When using Google map layers, please ensure you adhere to the '.
+      'name' => 'preset_layers',
+      'caption' => 'Preset Base Layers',
+      'description' => 'Select the preset base layers that are available for the map. When using Google map layers, please ensure you adhere to the '.
           '<a href="http://code.google.com/apis/maps/terms.html">Google Maps/Google Earth APIs Terms of Service</a>. When using the Bing map layers, '.
           'please ensure that you read and adhere to the <a href="http://www.microsoft.com/maps/product/terms.html">Bing Maps terms of use</a>. '.
           'The Microsoft Virtual Earth layer is now mapped to the Bing Aerial layer so is provided for backwards compatibility only. You can '.
           'sort the layers into the order you require by dragging and dropping the layer labels.',
-      'type'=>'list',
+      'type' => 'list',
       'options' => array(
         'google_physical' => 'Google Physical',
         'google_streets' => 'Google Streets',
         'google_hybrid' => 'Google Hybrid',
         'google_satellite' => 'Google Satellite',
-        'virtual_earth' => 'Microsoft Virtual Earth',
         'bing_aerial' => 'Bing Aerial',
         'bing_hybrid' => 'Bing Hybrid',
         'bing_shaded' => 'Bing Shaded',
+        'bing_os' => 'Bing Ordnance Survey',
         'osm' => 'OpenStreetMap',
         'otm' => 'OpenTopoMap',
         'os_leisure' => 'OS Leisure',
@@ -116,41 +116,41 @@ function iform_map_get_map_parameters() {
         'os_light' => 'OS Light',
         'os_night' => 'OS Night',
       ),
-      'sortable'=>true,
-      'group'=>'Base Map Layers',
-      'required'=>false
+      'sortable' => TRUE,
+      'group' => 'Base Map Layers',
+      'required' => FALSE
     ),
     array(
       'name' => 'wms_base_title',
       'caption' => 'Additional WMS Base Layer Caption',
       'description' => 'Caption to display for the optional WMS base map layer',
       'type' => 'textfield',
-      'group'=>'Base Map Layers',
-      'required'=>false
+      'group' => 'Base Map Layers',
+      'required' => FALSE
     ),
     array(
       'name' => 'wms_base_url',
       'caption' => 'Additional WMS Base Layer Service URL',
       'description' => 'URL of the WMS service to display for the optional WMS base map layer',
       'type' => 'textfield',
-      'group'=>'Base Map Layers',
-      'required'=>false
+      'group' => 'Base Map Layers',
+      'required' => FALSE
     ),
     array(
       'name' => 'wms_base_layer',
       'caption' => 'Additional WMS Base Layer Name',
       'description' => 'Layername of the WMS service layer for the optional WMS base map layer',
       'type' => 'textfield',
-      'group'=>'Base Map Layers',
-      'required'=>false
+      'group' => 'Base Map Layers',
+      'required' => FALSE
     ),
     array(
       'name' => 'tile_cache_layers',
       'caption' => 'Tile cache JSON',
       'description' => 'JSON describing the tile cache layers to make available. For advanced users only.',
       'type' => 'textarea',
-      'group'=>'Advanced Base Map Layers',
-      'required'=>false
+      'group' => 'Advanced Base Map Layers',
+      'required' => FALSE
     ),
     array(
       'name' => 'openlayers_options',
@@ -158,8 +158,8 @@ function iform_map_get_map_parameters() {
       'description' => 'JSON describing the options to pass through to OpenLayers. For advanced users only, leave blank
           for default behaviour.',
       'type' => 'textarea',
-      'group'=>'Advanced Base Map Layers',
-      'required'=>false
+      'group' => 'Advanced Base Map Layers',
+      'required' => FALSE
     ),
     array(
       'name' => 'indicia_wms_layers',
@@ -167,8 +167,8 @@ function iform_map_get_map_parameters() {
       'description' => 'List of WMS feature type names, one per line, which are installed on the GeoServer and are to be added to the map as overlays. ' .
          'Optionally, prefix the feature type name with a title to appear in the layer switcher using the form title = feature-name.',
       'type' => 'textarea',
-      'group'=>'Other Map Settings',
-      'required'=>false
+      'group' => 'Other Map Settings',
+      'required' => FALSE
     ),
     array(
       'name' => 'standard_controls',
@@ -177,22 +177,22 @@ function iform_map_get_map_parameters() {
          'hoverFeatureHighlight, clearEditLayer, modifyFeature, graticule, fullscreen. If using a data entry form and you add drawPolygon or drawLine controls then your '.
          'form will support recording against polygons and lines as well as grid references and points.',
       'type' => 'textarea',
-      'group'=>'Other Map Settings',
-      'required'=>false,
+      'group' => 'Other Map Settings',
+      'required' => FALSE,
       'default'=>"layerSwitcher\npanZoomBar"
     )
   );
   // Check for easy login module to allow integration into profile locations.
   if (!function_exists('hostsite_module_exists') || hostsite_module_exists('easy_login')) {
     $r[] = array(
-      'name'=>'display_user_profile_location',
-      'caption'=>'Display location from user profile',
-      'description'=>'Tick this box to display the outline of the user\'s preferred recording location from the user '.
+      'name' => 'display_user_profile_location',
+      'caption' => 'Display location from user profile',
+      'description' => 'Tick this box to display the outline of the user\'s preferred recording location from the user '.
           'account on the map. The map will be centred and zoomed to this location on first usage. This option has no effect if '.
           '"Location boundary to draw" is ticked.',
-      'type'=>'checkbox',
-      'required'=>false,
-      'group'=>'Initial Map View'
+      'type' => 'checkbox',
+      'required' => FALSE,
+      'group' => 'Initial Map View'
     );
   }
   return $r;
@@ -205,39 +205,39 @@ function iform_map_get_map_parameters() {
 function iform_map_get_georef_parameters() {
   return array(
     array(
-      'name'=>'georefPreferredArea',
-      'caption'=>'Preferred area for georeferencing.',
-      'description'=>'Preferred area to look within when trying to resolve a place name. For example set this to the region name you are recording within. Can be left blank to not specify '.
+      'name' => 'georefPreferredArea',
+      'caption' => 'Preferred area for georeferencing.',
+      'description' => 'Preferred area to look within when trying to resolve a place name. For example set this to the region name you are recording within. Can be left blank to not specify '.
           'in which case users can add a comma plus the region to search if needed, e.g. "wimborne, Dorset".',
-      'type'=>'string',
-      'default'=>'',
-      'group'=>'Georeferencing',
-      'siteSpecific'=>true,
-      'required'=>false
+      'type' => 'string',
+      'default' => '',
+      'group' => 'Georeferencing',
+      'siteSpecific' => TRUE,
+      'required' => FALSE
     ),
     array(
-      'name'=>'georefCountry',
-      'caption'=>'Preferred country for georeferencing.',
-      'description'=>'Preferred country to look within when trying to resolve a place name. Can be left blank to not specify, in which case users can add a comma then the country to search. ',
-      'type'=>'string',
-      'default'=>'United Kingdom',
-      'group'=>'Georeferencing',
-      'siteSpecific'=>true,
-      'required'=>false
+      'name' => 'georefCountry',
+      'caption' => 'Preferred country for georeferencing.',
+      'description' => 'Preferred country to look within when trying to resolve a place name. Can be left blank to not specify, in which case users can add a comma then the country to search. ',
+      'type' => 'string',
+      'default' => 'United Kingdom',
+      'group' => 'Georeferencing',
+      'siteSpecific' => TRUE,
+      'required' => FALSE
     ),
     array(
-      'name'=>'georefDriver',
-      'caption'=>'Web service used for georeferencing',
-      'description'=>'Choose the web service used for resolving place names to points on the map. Each web-service has a '.
+      'name' => 'georefDriver',
+      'caption' => 'Web service used for georeferencing',
+      'description' => 'Choose the web service used for resolving place names to points on the map. Each web-service has a '.
            'different set of characteristics.',
-      'type'=>'select',
-      'default'=>'google_places',
+      'type' => 'select',
+      'default' => 'google_places',
       'options' => array(
         'google_places' => 'Google Places API text search.',
         'geoportal_lu' => 'ACT Geoportal Luxembourg (for places in Luxumbourg)',
         'indicia_locations' => 'Search the Indicia locations list.'
       ),
-      'group'=>'Georeferencing'
+      'group' => 'Georeferencing'
     )
   );
 }
@@ -300,12 +300,12 @@ function iform_map_get_map_options($args, $readAuth) {
       if ($separatorPos !== FALSE) {
         // A title is present.
         $title = trim(substr($layer, 0, $separatorPos));
-        $feature = trim(substr($layer, $separatorPos + 1)); 
+        $feature = trim(substr($layer, $separatorPos + 1));
         $options['indiciaWMSLayers'][$title] = $feature;
       }
       else {
         $options['indiciaWMSLayers'][] = $layer;
-      }      
+      }
     }
   }
   // set up standard control list if supplied
@@ -326,7 +326,7 @@ function iform_map_get_map_options($args, $readAuth) {
     $options['proxy'] = data_entry_helper::getRootFolder(true) . hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
   }
   // And a single location boundary if defined
-  if (!empty($args['location_boundary_id'])) 
+  if (!empty($args['location_boundary_id']))
     $location = $args['location_boundary_id'];
   elseif (isset($args['display_user_profile_location']) && $args['display_user_profile_location']) {
     $location = hostsite_get_user_field('location');
@@ -382,12 +382,13 @@ function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
 SCRIPT;
   // Note, since the following moves the map, we want it to be the first mapInitialisationHook
   data_entry_helper::$javascript .= <<<SCRIPT
+indiciaData.mapZoomPlanned = true;
 indiciaFns.zoomToBounds = function(mapdiv, bounds) {
-  // Skip zoom to loaded bounds if already zoomed to a report output, remembering a position set in a cookie, or 
+  // Skip zoom to loaded bounds if already zoomed to a report output, remembering a position set in a cookie, or
   // loading an initial feature (e.g. viewing an edited record)
   if (
       (typeof mapdiv.settings.zoomMapToOutput==="undefined" || mapdiv.settings.zoomMapToOutput===false) &&
-      (typeof $.cookie === 'undefined' || $.cookie('maplon')===null || mapdiv.settings.rememberPos===false) && 
+      (typeof $.cookie === 'undefined' || $.cookie('maplon')===null || mapdiv.settings.rememberPos===false) &&
       !mapdiv.settings.initialFeatureWkt
       ) {
     if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {
@@ -419,7 +420,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     }
   });
   $.each(features, function() {
-    this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};  
+    this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};
     this.style.fillOpacity=0;
     if (mapdiv.map.projection.getCode() != mapdiv.indiciaProjection.getCode()) {
       feature.geometry.transform(mapdiv.indiciaProjection, mapdiv.map.projection);

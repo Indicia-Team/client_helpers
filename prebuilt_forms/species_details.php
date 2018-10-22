@@ -14,15 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
-require_once('includes/dynamic.php');
-require_once('includes/report.php');
+require_once 'includes/dynamic.php';
+require_once 'includes/report.php';
 
 /**
  * Displays the details of a single taxon. Takes an taxa_taxon_list_id in the URL and displays the following using a configurable
@@ -30,9 +28,7 @@ require_once('includes/report.php');
  * Species Details including custom attributes
  * An Explore Species' Records button that links to a custom URL
  * Any photos of occurrences with the same meaning as the taxon
- * A map displaying occurrences of taxa with the same meaning as the taxon
- * @package    Client
- * @subpackage PrebuiltForms
+ * A map displaying occurrences of taxa with the same meaning as the taxon.
  */
 class iform_species_details extends iform_dynamic {
 
@@ -42,26 +38,28 @@ class iform_species_details extends iform_dynamic {
   private static $taxonomy = array();
   private static $taxa_taxon_list_id;
   private static $taxon_meaning_id;
-    
-  /** 
-   * Return the form metadata. 
-   * @return array The definition of the form.
+
+  /**
+   * Return the form metadata.
+   *
+   * @return array
+   *   The definition of the form.
    */
   public static function get_species_details_definition() {
     return array(
-      'title'=>'View details of a species',
+      'title' => 'View details of a species',
       'category' => 'Utilities',
-      'description'=>'A summary view of a species including records. Pass a parameter in the URL called taxon, ' .
+      'description' => 'A summary view of a species including records. Pass a parameter in the URL called taxon, ' .
         'containing a taxa_taxon_list_id which defines which species to show.',
-      'recommended' => true
+      'recommended' => TRUE,
     );
   }
-  
-  /** 
-   * Return an array of parameters for the edit tab. 
+
+  /**
+   * Return an array of parameters for the edit tab.
    * @return array The parameters for the form.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     $retVal = array_merge(
       iform_map_get_map_parameters(),
       array(array(
@@ -138,7 +136,7 @@ class iform_species_details extends iform_dynamic {
 [speciesdetails]
 [photos]
 [explore]
-| 
+|
 [map]',
         'group' => 'User Interface'
       ),
@@ -243,70 +241,70 @@ class iform_species_details extends iform_dynamic {
     );
     return $retVal;
   }
-  
-   
+
+
   /**
    * Override the getHidden function.
-   * getForm in dynamic.php will now call this and return an empty array when creating a list of hidden input 
+   * getForm in dynamic.php will now call this and return an empty array when creating a list of hidden input
    * controls for form submission as this functionality is not being used for the Species Details page.
    * @package    Client
    * @subpackage PrebuiltForms
-   */ 
+   */
   protected static function getHidden() {
     return NULL;
-  } 
-  
-  
+  }
+
+
   /**
    * Override the getMode function.
    * getForm in dynamic.php will now call this and return an empty array when creating a mode list
    * as this functionality is not being used for the Species Details page.
    * @package    Client
    * @subpackage PrebuiltForms
-   */ 
+   */
   protected static function getMode() {
     return array();
   }
-   
-  
+
+
  /**
   * Override the getAttributes function.
   * getForm in dynamic.php will now call this and return an empty array when creating an attributes list
   * as this functionality is not being used for the Species Details page.
   * @package    Client
   * @subpackage PrebuiltForms
-  */ 
+  */
  protected static function getAttributes() {
    return array();
  }
- 
+
   /**
    * Override the get_form_html function.
    * getForm in dynamic.php will now call this.
    * Vary the display of the page based on the interface type
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
-   */ 
+   */
   protected static function get_form_html($args, $auth, $attributes) {
     if (empty($_GET['taxa_taxon_list_id']) && empty($_GET['taxon_meaning_id'])) {
       return 'This form requires a taxa_taxon_list_id or taxon_meaning_id parameter in the URL.';
     }
-    
+
     self::get_names($auth);
     hostsite_set_page_title(lang::get('Summary details for {1}', self::$preferred));
 
     return parent::get_form_html($args, $auth, $attributes);
   }
-  
+
   /**
    * Obtains details of all names for this species from the database.
    */
   protected static function get_names($auth) {
-    iform_load_helpers(array('report_helper')); 
-    self::$preferred=lang::get('Unknown');
+    iform_load_helpers(array('report_helper'));
+    self::$preferred = lang::get('Unknown');
     //Get all the different names for the species
-    $extraParams = array('sharing'=>'reporting');
+    $extraParams = array('sharing' => 'reporting');
     if (isset($_GET['taxa_taxon_list_id'])) {
       $extraParams['taxa_taxon_list_id'] = $_GET['taxa_taxon_list_id'];
       self::$taxa_taxon_list_id=$_GET['taxa_taxon_list_id'];
@@ -317,28 +315,30 @@ class iform_species_details extends iform_dynamic {
     }
     $species_details = report_helper::get_report_data(array(
       'readAuth' => $auth['read'],
-      'class'=>'species-details-fields',
-      'dataSource'=>'library/taxa/taxon_names',
-      'useCache' => false,
-      'extraParams'=>$extraParams
+      'class' => 'species-details-fields',
+      'dataSource' => 'library/taxa/taxon_names',
+      'useCache' => FALSE,
+      'extraParams' => $extraParams,
     ));
     foreach ($species_details as $speciesData) {
-      if ($speciesData['preferred']==='t') {
+      if ($speciesData['preferred'] === 't') {
         self::$preferred = $speciesData['taxon'];
         if (!isset(self::$taxon_meaning_id))
           self::$taxon_meaning_id = $speciesData['taxon_meaning_id'];
         if (!isset(self::$taxa_taxon_list_id)) {
-          self::$taxa_taxon_list_id = $speciesData['id'];          
+          self::$taxa_taxon_list_id = $speciesData['id'];
         }
       }
-      elseif ($speciesData['language_iso']==='lat')
+      elseif ($speciesData['language_iso'] === 'lat') {
         self::$synonyms[] = $speciesData['taxon'];
-      else
+      }
+      else {
         self::$commonNames[] = $speciesData['taxon'];
+      }
     }
     /* Fix a problem on the fungi-without-borders site where providing a
-       taxa_taxon_list_id doesn't work (the system would try and return all records). 
-       This makes sense because the cache_table doesn't have a taxa_taxon_list_id. 
+       taxa_taxon_list_id doesn't work (the system would try and return all records).
+       This makes sense because the cache_table doesn't have a taxa_taxon_list_id.
        However, I am not sure why this is fine on other sites when the $extraParams
        are the same. At worst these two lines make the page more robust. */
     if (!empty($extraParams['taxa_taxon_list_id']))
@@ -355,18 +355,25 @@ class iform_species_details extends iform_dynamic {
       self::$taxonomy[] = $taxon[0]['family_taxon'];
   }
 
-  
+
   /**
    * Draw the Species Details section of the page.
-   * @return string The output html string.
-   * 
-   * @package    Client
-   * @subpackage PrebuiltForms
+   *
+   * Available options include:
+   * * @includeAttributes - defaults to true. If false, then the custom
+   *   attributes are not included in the block.
+   *
+   * @return string
+   *   The output html string.
    */
   protected static function get_control_speciesdetails($auth, $args, $tabalias, $options) {
-    $fields=helper_base::explode_lines($args['fields']);
-    $fieldsLower=helper_base::explode_lines(strtolower($args['fields']));
-    
+    global $indicia_templates;
+    $options = array_merge([
+      'includeAttributes' => TRUE,
+    ], $options);
+    $fields = helper_base::explode_lines($args['fields']);
+    $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
+
     //If the user sets the option to exclude particular fields then we set to the hide flag
     //on the name types they have specified.
     if ($args['operator']=='not in') {
@@ -385,7 +392,7 @@ class iform_species_details extends iform_dynamic {
           $hideTaxonomy = true;
       }
     }
-    
+
     //If the user sets the option to only include particular fields then we set to the hide flag
     //to true unless they have specified the name type.
     if ($args['operator']=='in') {
@@ -407,56 +414,128 @@ class iform_species_details extends iform_dynamic {
     //Draw the names on the page
     $details_report = self::draw_names($auth['read'], $hidePreferred, $hideCommon, $hideSynonym, $hideTaxonomy);
 
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>';
-
-    //draw any custom attributes for the species added by the user
-    $attrs_report = report_helper::freeform_report(array(
-      'readAuth' => $auth['read'],
-      'class'=>'species-details-fields',
-      'dataSource'=>'library/taxa/taxon_attributes_with_hiddens',
-      'bands'=>array(array('content'=>$attrsTemplate)),
-      'extraParams'=>array(
-        'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
-        //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
-        'attrs'=>strtolower(self::convert_array_to_set($fields)),
-        'testagainst'=>$args['testagainst'],
-        'operator'=>$args['operator'],
-        'sharing'=>'reporting'
-      )
-    ));
-
-    $r = '<div class="detail-panel" id="detail-panel-speciesdetails"><h3>'.lang::get('Species Details').'</h3><div class="record-details-fields ui-helper-clearfix">';
-    //draw the species names and custom attributes
-    if (isset($details_report))
+    if ($options['includeAttributes']) {
+      //draw any custom attributes for the species added by the user
+      $attrs_report = report_helper::freeform_report(array(
+        'readAuth' => $auth['read'],
+        'class' => 'species-details-fields',
+        'dataSource' => 'library/taxa/taxon_attributes_with_hiddens',
+        'bands' => array(array('content'=>$indicia_templates['dataValue'])),
+        'extraParams' => array(
+          'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
+          //the SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
+          'attrs' => strtolower(self::convert_array_to_set($fields)),
+          'testagainst' => $args['testagainst'],
+          'operator' => $args['operator'],
+          'sharing' => 'reporting'
+        )
+      ));
+    }
+    $r = '';
+    // Draw the species names and custom attributes.
+    if (isset($details_report)) {
       $r .= $details_report;
-    if (isset($attrs_report))
+    }
+    if (isset($attrs_report)) {
       $r .= $attrs_report;
-    $r .= '</div></div>';
-    return $r;
+    }
+    return str_replace(
+      ['{id}', '{title}', '{content}'],
+      ['detail-panel-speciesdetails', lang::get('Species Details'), $r],
+      $indicia_templates['dataValueList']
+    );
   }
-  
+
   /**
    * Draw the names in the Species Details section of the page.
-   * @return string The output html.
-   * 
-   * @package    Client
-   * @subpackage PrebuiltForms
+   *
+   * @return string
+   *   The output html.
    */
   protected static function draw_names($auth, $hidePreferred, $hideCommon, $hideSynonym, $hideTaxonomy) {
-    $attrsTemplate='<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>';
+    global $indicia_templates;
     $r = '';
-    if (!$hidePreferred)
-      $r .= str_replace(array('{caption}','{value}'), array(lang::get('Species name'), self::$preferred), $attrsTemplate);
-    if ($hideCommon == false && !empty(self::$commonNames)) {
-      $label = (count(self::$commonNames)===1) ? 'Common name' : 'Common names';
-      $r .= str_replace(array('{caption}','{value}'), array(lang::get($label), implode(', ', self::$commonNames)), $attrsTemplate);
+    if (!$hidePreferred) {
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get('Species name'), self::$preferred), $indicia_templates['dataValue']);
     }
-    if ($hideSynonym == false && !empty(self::$synonyms)) {
-      $label = (count(self::$synonyms)===1) ? 'Synonym' : 'Synonyms';
-      $r .= str_replace(array('{caption}','{value}'), array(lang::get($label), implode(', ', self::$synonyms)), $attrsTemplate);
+    if ($hideCommon == FALSE && !empty(self::$commonNames)) {
+      $label = (count(self::$commonNames) === 1) ? 'Common name' : 'Common names';
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get($label), implode(', ', self::$commonNames)), $indicia_templates['dataValue']);
     }
-    if ($hideTaxonomy == false && !empty(self::$taxonomy)) {
-      $r .= str_replace(array('{caption}','{value}'), array(lang::get('Taxonomy'), implode(' :: ', self::$taxonomy)), $attrsTemplate);
+    if ($hideSynonym == FALSE && !empty(self::$synonyms)) {
+      $label = (count(self::$synonyms) === 1) ? 'Synonym' : 'Synonyms';
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get($label), implode(', ', self::$synonyms)), $indicia_templates['dataValue']);
+    }
+    if ($hideTaxonomy == FALSE && !empty(self::$taxonomy)) {
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get('Taxonomy'), implode(' :: ', self::$taxonomy)), $indicia_templates['dataValue']);
+    }
+    return $r;
+  }
+
+  /**
+   * Undocumented function
+   *
+   * Available options include:
+   * * @includeCaptions - set to 0 to exclude attribute captions from the
+   *   grouped data.
+   *
+   * @return string
+   *   Html for the description.
+   */
+  protected static function get_control_attributedescription($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
+    $options = array_merge([
+      'includeCaptions' => '1',
+    ], $options);
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $args['param_presets'] = '';
+    $args['param_defaults'] = '';
+    $params = [
+      'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
+    ];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      [
+        'sharing' => $sharing,
+        'readAuth' => $auth['read'],
+        'dataSource' => 'reports_for_prebuilt_forms/species_details/species_attr_description',
+        'extraParams' => $params,
+        'wantCount' => '0',
+      ]
+    );
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
+    $data = report_helper::get_report_data($reportOptions);
+    $r = '';
+    $currentHeading = '';
+    $currentHeadingContent = '';
+    foreach ($data as $idx => $row) {
+      if ($row['category'] !== $currentHeading) {
+        if (!empty($currentHeadingContent)) {
+          $r .= str_replace(
+            ['{id}', '{title}', '{content}'],
+            ["detail-panel-description-$idx", $currentHeading, $currentHeadingContent],
+            $indicia_templates['dataValueList']
+          );
+          $currentHeadingContent = '';
+        }
+        $currentHeading = $row['category'];
+      }
+      $currentHeadingContent .= str_replace(
+        array('{caption}', '{value}'),
+        array($row['subcategory'], $row['values']),
+        $indicia_templates['dataValue']
+      );
+    }
+    if (!empty($currentHeadingContent)) {
+      $r .= str_replace(
+        ['{id}', '{title}', '{content}'],
+        ["detail-panel-description-$idx", $currentHeading, $currentHeadingContent],
+        $indicia_templates['dataValueList']
+      );
     }
     return $r;
   }
@@ -464,7 +543,7 @@ class iform_species_details extends iform_dynamic {
   /**
    * Draw Photos section of the page.
    * @return string The output report grid.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
@@ -474,12 +553,12 @@ class iform_species_details extends iform_dynamic {
     $options = array_merge(array(
       'itemsPerPage' => 20,
       'imageSize' => 'thumb',
-      'class' => 'detail-gallery'
+      'class' => 'media-gallery',
     ), $options);
-    
+
     //Use this report to return the photos
     $reportName = 'library/occurrence_images/filterable_explore_list';
-    return 
+    return
       '<div class="detail-panel" id="detail-panel-photos"><h3>'.lang::get('Photos and media').'</h3>' .
       report_helper::freeform_report(array(
       'readAuth' => $auth['read'],
@@ -488,8 +567,8 @@ class iform_species_details extends iform_dynamic {
       'class' => $options['class'],
       'header'=>'<ul>',
       'footer'=>'</ul>' .
-          '<p class="helpText">' . 
-          lang::get('*Icons in the top corner of photos show the verification status of the underlying records.') . 
+          '<p class="helpText">' .
+          lang::get('*Icons in the top corner of photos show the verification status of the underlying records.') .
           '</p>',
       'bands'=>array(array('content'=><<<HTML
 <li class="gallery-item">
@@ -500,18 +579,19 @@ class iform_species_details extends iform_dynamic {
   {caption}
 </li>
 HTML
-)),   
+)),
       'emptyText' => '<p>No photos or media files available</p>',
       'mode' => 'report',
       'autoParamsForm' => false,
       'extraParams' => array(
-        'taxon_meaning_list'=> self::$taxon_meaning_id,
-        'smpattrs'=>'',
-        'occattrs'=>'',
-        'sharing'=>'reporting',
-        'status' => '!R'
+        'taxon_meaning_list' => self::$taxon_meaning_id,
+        'smpattrs' => '',
+        'occattrs' => '',
+        'sharing' => 'reporting',
+        'status' => '!R',
+        'limit' => $options['itemsPerPage'],
       )
-    )).'</div>';
+    )) . '</div>';
   }
 
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
@@ -553,18 +633,19 @@ HTML
       'extraParams' => $extraParams
     )).'</div>';
   }
-  
+
   /**
    * Draw Map section of the page.
    * @return string The output map panel.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    //Draw a distribution map by calling Indicia report when Geoserver isn't available
-    if (isset($options['noGeoserver'])&&$options['noGeoserver']===true) {
-      return self::mapwithoutgeoserver($auth, $args, $tabalias, $options);
+    // Draw a distribution map by calling Indicia report when Geoserver isn't
+    // available
+    if (isset($options['noGeoserver']) && $options['noGeoserver'] === true) {
+      return self::mapWithoutGeoserver($auth, $args, $tabalias, $options);
     }
     iform_load_helpers(array('map_helper', 'data_entry_helper'));
     global $user;
@@ -575,13 +656,13 @@ HTML
     $olOptions = iform_map_get_ol_options($args);
     $url = map_helper::$geoserver_url.'wms';
     // Get the style if there is one selected
-    $style = $args["wms_style"] ? ", styles: '".$args["wms_style"]."'" : '';   
+    $style = $args["wms_style"] ? ", styles: '".$args["wms_style"]."'" : '';
     map_helper::$onload_javascript .= "\n    var filter='website_id=".$args['website_id']."';";
 
     $layerTitle = str_replace('{species}', self::get_best_name(), $args['layer_title']);
     map_helper::$onload_javascript .= "\n    filter += ' AND taxon_meaning_id=".self::$taxon_meaning_id."';\n";
 
-    if ($args['cql_filter']) 
+    if ($args['cql_filter'])
       map_helper::$onload_javascript .= "\n    filter += ' AND(".str_replace("'","\'",$args['cql_filter']).")';\n";
 
     $layerTitle = str_replace("'","\'",$layerTitle);
@@ -601,7 +682,7 @@ HTML
       $options['proxy'] = data_entry_helper::getRootFolder(true) .
           hostsite_get_config_value('iform', 'proxy_path', 'proxy') . '&url=';
     }
-   
+
     // output a legend
     if (isset($args['include_layer_list_types']))
       $layerTypes = explode(',', $args['include_layer_list_types']);
@@ -615,7 +696,7 @@ HTML
         'includeHiddenLayers' => true,
         'layerTypes' => $layerTypes
       ));
-    
+
     $r .= map_helper::map_panel($options, $olOptions);
     $r .= '</div>';
 
@@ -625,18 +706,18 @@ HTML
         map_helper::$javascript .= "setTimeout('window.location=\"".$args['load_on_refresh']."\";', ".$args['refresh_timer']."*1000 );\n";
       else
         map_helper::$javascript .= "setTimeout('window.location.reload( false );', ".$args['refresh_timer']."*1000 );\n";
-    }    
-    return $r;  
+    }
+    return $r;
   }
-  
+
   /**
    * Draw a distribution map by calling Indicia report when Geoserver isn't available
    * @return string The output map panel.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
-  protected static function mapwithoutgeoserver($auth, $args, $tabalias, $options) {
+  protected static function mapWithoutGeoserver($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('map_helper', 'report_helper'));
     if (isset($options['hoverShowsDetails'])) {
       $options['hoverShowsDetails'] = TRUE;
@@ -651,25 +732,23 @@ HTML
         $args['location_boundary_id'] = $_GET['filter-location_id'];
       }
     }
-    // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
+    // aAlow us to call iform_report_get_report_options to get a default report setup, then override report_name
     $args['report_name'] = '';
     $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    $params= array(
-      'taxa_taxon_list_id' => $_GET['taxa_taxon_list_id'],
-      'taxon_meaning_id' => $_GET['taxon_meaning_id'],
+    $params = array(
+      'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
       'sharing' => 'reporting',
-      'allow_confidential' => $args['allow_confidential'] ? 1 : 0,
-      'allow_sensitive_full_precision' => $args['allow_sensitive_full_precision'] ? 1 : 0,
-      'allow_unreleased' => $args['allow_unreleased'] ? 1 : 0,
       'reportGroup' => 'dynamic',
       'autoParamsForm' => FALSE,
       'sharing' => $sharing,
-      'readAuth' => $auth['read'],
       'rememberParamsReportGroup' => 'dynamic',
       'clickableLayersOutputMode' => 'report',
       'rowId' => 'occurrence_id',
       'ajax' => TRUE,
     );
+    $args['param_presets'] = '';
+    $args['param_defaults'] = '';
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
@@ -678,10 +757,7 @@ HTML
         'sharing' => $sharing,
         'readAuth' => $auth['read'],
         'dataSource' => 'reports_for_prebuilt_forms/species_details/species_record_data',
-        'rememberParamsReportGroup' => 'dynamic',
-        'clickableLayersOutputMode' => 'report',
-        'rowId' => 'occurrence_id',
-        'extraParams' => $params
+        'extraParams' => $params,
       )
     );
     // Ensure supplied extraParams are merged, not overwritten.
@@ -707,22 +783,22 @@ HTML
     $r .= map_helper::map_panel($options, $olOptions);
     return $r;
   }
-  
+
   /**
    * Retrieves the best name to display for a species.
    */
   protected static function get_best_name() {
     return (count(self::$commonNames)>0) ? self::$commonNames[0] : self::$preferred;
   }
- 
+
   /**
    * Draw the explore button on the page.
    * @return string The output HTML string.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
-  protected static function get_control_explore($auth, $args) { 
+  protected static function get_control_explore($auth, $args) {
     if (!empty($args['explore_url']) && !empty($args['explore_param_name'])) {
       $url = $args['explore_url'];
       if (strcasecmp(substr($url, 0, 12), '{rootfolder}')!==0 && strcasecmp(substr($url, 0, 4), 'http')!==0)
@@ -732,11 +808,11 @@ HTML
       $url .= $args['explore_param_name'] . '=' . self::$taxon_meaning_id;
       $r='<a class="button" href="'.$url.'">' . lang::get('Explore records of {1}', self::get_best_name()) . '</a>';
     }
-    else 
+    else
       throw new exception('The page has been setup to use an explore records button, but an "Explore URL" or "Explore Parameter Name" has not been specified.');
     return $r;
   }
- 
+
   /*
    * Control gets the description of a taxon and displays it on the screen.
    */
@@ -758,34 +834,32 @@ HTML
       return '<div class="detail-panel" id="detail-panel-speciesnotes"><h3>'.
           lang::get('Species Notes').'</h3><p>'.$reportResult[0]['the_text'].'</p></div>';
   }
-  
+
   /*
-   * Control returns all the images associated with a particular taxon meaning in the taxon_images table. 
-   * These are the the general dictionary images of a species as opposed to the photos control which returns photos 
+   * Control returns all the images associated with a particular taxon meaning in the taxon_images table.
+   * These are the the general dictionary images of a species as opposed to the photos control which returns photos
    * associated with occurrences of this species.
    */
   protected static function get_control_speciesphotos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
     data_entry_helper::add_resource('fancybox');
+    $options = array_merge([
+      'imageSize' => 'thumb',
+      'itemsPerPage' => 6,
+      'galleryColCount' => 2,
+    ], $options);
     global $user;
-    //default an items per page if not set by administrator
-    if (empty($options['itemsPerPage']) || $options['itemsPerPage'] == NULL) {
-      $options['itemsPerPage'] = 6;
-    }  
-    //default a column count if not set by administrator
-    if (empty($options['galleryColCount']) || $options['galleryColCount'] == NULL) {
-      $options['galleryColCount'] = 3;
-    }    
-    //Use this report to return the photos
+    global $indicia_templates;
+    // Use this report to return the photos.
     $reportName = 'library/taxa/species_notes_and_images';
     $reportResults = report_helper::report_grid(array(
       'readAuth' => $auth['read'],
-      'dataSource'=> $reportName,
+      'dataSource' => $reportName,
       'itemsPerPage' => $options['itemsPerPage'],
       'columns' => array(
         array(
           'fieldname' => 'the_text',
-          'template' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}thumb-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>'
+          'template' => str_replace('{imageSize}', $options['imageSize'], $indicia_templates['speciesDetailsThumbnail']),
         )
       ),
       'mode' => 'report',
@@ -793,74 +867,74 @@ HTML
       'includeAllColumns' => false,
       'headers' => false,
       'galleryColCount' => $options['galleryColCount'],
-      'extraParams'=>array(
-        'taxa_taxon_list_id'=>self::$taxa_taxon_list_id,
-        'taxon_meaning_id'=>self::$taxon_meaning_id,
+      'extraParams' => array(
+        'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
+        'taxon_meaning_id' => self::$taxon_meaning_id,
       )
-    ));    
-    return '<div class="detail-panel" id="detail-panel-speciesphotos"><h3>' . lang::get('Photos and media') . '</h3>' . 
+    ));
+    return '<div class="detail-panel" id="detail-panel-speciesphotos"><h3>' . lang::get('Photos and media') . '</h3>' .
         $reportResults . '</div>';
   }
-  
+
   /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
   protected static function getArgDefaults($args) {
     if (!isset($args['interface']) || empty($args['interface']))
       $args['interface'] = 'one_page';
-    
+
     if (!isset($args['hide_fields']) || empty($args['hide_fields']))
       $args['hide_fields'] = '';
-    
+
     if (!isset($args['structure']) || empty($args['structure'])) {
-      $args['structure'] = 
+      $args['structure'] =
 '=General=
 [speciesdetails]
 [photos]
 [explore]
-| 
+|
 [map]';
     }
-    return $args;      
-  }   
-  
+    return $args;
+  }
+
   /**
    * Disable save buttons for this form class. Not a data entry form...
-   * @return boolean 
+   * @return boolean
    */
   protected static function include_save_buttons() {
-    return FALSE;  
+    return FALSE;
   }
-  
+
   /**
    * Used to convert an array of attributes to a string formatted like a set,
    * this is then used by the species_data_attributes_with_hiddens report to return
    * custom attributes which aren't in the hidden attributes list.
    * @return string The set of hidden custom attributes.
-   * 
+   *
    * @package    Client
    * @subpackage PrebuiltForms
    */
   protected static function convert_array_to_set($theArray) {
     return "'".implode("','", str_replace("'", "''", $theArray))."'";
   }
-  
+
   /**
    * Override the standard header as this is not an HTML form.
    */
   protected static function getHeader($args) {
     return '';
   }
-  
+
   /**
    * Override the standard footer as this is not an HTML form.
    */
   protected static function getFooter($args) {
     return '';
   }
-  
+
   /**
    * Override some default behaviour in dynamic.
    */
@@ -868,4 +942,3 @@ HTML
     return '';
   }
 }
-?>

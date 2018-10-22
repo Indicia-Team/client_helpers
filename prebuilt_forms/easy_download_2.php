@@ -643,6 +643,7 @@ class iform_easy_download_2 {
       $url = $proxy_path . $url;
     }
     header("Location: $url");
+    exit;
   }
   
   /**

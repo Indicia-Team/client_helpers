@@ -24,7 +24,7 @@
  * Prebuilt Indicia data entry form for WWT Colour-marked wildfowl.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
  * NB relies on the individuals and associations optional module being enabled in the warehouse.
- * 
+ *
  * @package    Client
  * @subpackage PrebuiltForms
  * @link http://code.google.com/p/indicia/wiki/PrebuiltFormWWTColourMarkedRecords
@@ -40,13 +40,13 @@ class iform_wwt_colour_marked_report {
   protected static $subjectObservationIds = array();
 
   protected static $auth = array();
-  
+
   protected static $mode;
-  
+
   protected static $node;
-  
+
   protected static $submission = array();
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -58,16 +58,16 @@ class iform_wwt_colour_marked_report {
       'description'=>'A data entry form reporting observations of colour-marked individuals.'
     );
   }
-  
+
   /* TODO
-   *  
+   *
    *   Survey List
    *     Put in "loading" message functionality.
    *    Add a map and put samples on it, clickable
-   *  
+   *
    *  Sort out {common}.
-   * 
-   * The report paging will not be converted to use LIMIT & OFFSET because we want the full list returned so 
+   *
+   * The report paging will not be converted to use LIMIT & OFFSET because we want the full list returned so
    * we can display all the subject observations on the map.
    * When displaying transects, we should display children locations as well as parent.
    */
@@ -75,7 +75,7 @@ class iform_wwt_colour_marked_report {
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {    
+  public static function get_parameters() {
     $retVal = array_merge(
       iform_map_get_map_parameters(),
       iform_map_get_georef_parameters(),
@@ -196,7 +196,7 @@ class iform_wwt_colour_marked_report {
           'default' => false,
           'required' => false,
           'group' => 'User Interface'
-        ),    
+        ),
         array(
           'name' => 'grid_report',
           'caption' => 'Grid Report',
@@ -215,7 +215,7 @@ class iform_wwt_colour_marked_report {
           'default' => 10,
           'group' => 'User Interface'
         ),
-        
+
         array(
           'name'=>'save_button_below_all_pages',
           'caption'=>'Save button below all pages?',
@@ -302,7 +302,7 @@ class iform_wwt_colour_marked_report {
           'name'=>'species_names_filter',
           'caption'=>'Species Names Filter',
           'description'=>'Select the filter to apply to the species names which are available to choose from.',
-          'type'=>'select',          
+          'type'=>'select',
           'options' => array(
             'all' => 'All names are available',
             'language' => 'Only allow selection of species using common names in the user\'s language',
@@ -311,7 +311,7 @@ class iform_wwt_colour_marked_report {
           ),
           'default' => 'all',
           'group'=>'Species'
-        ),        
+        ),
         array(
           'name'=>'spatial_systems',
           'caption'=>'Allowed Spatial Ref Systems',
@@ -706,7 +706,7 @@ class iform_wwt_colour_marked_report {
     );
     return $retVal;
   }
-  
+
   public static function get_perms($nid, $args) {
     return array(
       'IForm n'.$nid.' enter data by proxy',
@@ -725,7 +725,7 @@ class iform_wwt_colour_marked_report {
     self::getArgDefaults($args);
 
     self::$nid = $nid;
-    
+
     // if we use locks, we want them to be distinct for each drupal user
     if (function_exists('profile_load_profile')) { // check we are in drupal
       global $user;
@@ -733,7 +733,7 @@ class iform_wwt_colour_marked_report {
         indicia.locks.setUser ('".$user->uid."');
       }\n";
     }
-    
+
     // hard-wire some 'dynamic' options to simplify the form. Todo: take out the dynamic code for these
     $args['subjectAccordion'] = false;
     $args['emailShow'] = false;
@@ -747,15 +747,15 @@ class iform_wwt_colour_marked_report {
     $args['loctoolsLocTypeID'] = 0;
     $args['subject_observation_confidential'] = false;
     $args['observation_images'] = false;
-    
+
     // Get authorisation tokens to update and read from the Warehouse.
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    $svcUrl = self::warehouseUrl().'index.php/services';
+    $svcUrl = data_entry_helper::getProxiedBaseUrl().'index.php/services';
     self::$auth = $auth;
-    
+
     drupal_add_js(iform_media_folder_path() . 'js/jquery.form.js', 'module');
-    
-    $mode = (isset($args['no_grid']) && $args['no_grid']) 
+
+    $mode = (isset($args['no_grid']) && $args['no_grid'])
         ? MODE_NEW_SAMPLE // default mode when no_grid set to true - display new sample
         : MODE_GRID; // default mode when no grid set to false - display grid of existing data
                 // mode MODE_EXISTING: display existing sample
@@ -783,13 +783,13 @@ class iform_wwt_colour_marked_report {
       // single subject_observation case
       $loadedSubjectObservationId = $_GET['subject_observation_id'];
       self::$subjectObservationIds = array($loadedSubjectObservationId);
-    } 
+    }
     if ($mode!=MODE_EXISTING && array_key_exists('newSample', $_GET)) {
       $mode = MODE_NEW_SAMPLE;
       data_entry_helper::$entity_to_load = array();
     } // else default to mode MODE_GRID or MODE_NEW_SAMPLE depending on no_grid parameter
     self::$mode = $mode;
-    // default mode  MODE_GRID : display grid of the samples to add a new one 
+    // default mode  MODE_GRID : display grid of the samples to add a new one
     // or edit an existing one.
     if($mode ==  MODE_GRID) {
       $r = '';
@@ -816,8 +816,8 @@ class iform_wwt_colour_marked_report {
        ,'survey_id'=>$args['survey_id']
       ), false);
       $tabs = array('#sampleList'=>lang::get('LANG_Main_Samples_Tab'));
-      if($args['includeLocTools'] 
-        && function_exists('iform_loctools_checkaccess') 
+      if($args['includeLocTools']
+        && function_exists('iform_loctools_checkaccess')
         && iform_loctools_checkaccess($nid,'admin')) {
         $tabs['#setLocations'] = lang::get('LANG_Allocate_Locations');
       }
@@ -832,8 +832,8 @@ class iform_wwt_colour_marked_report {
         $r .= data_entry_helper::tab_header(array('tabs'=>$tabs));
       }
       $r .= "<div id=\"sampleList\">".call_user_func(array(get_called_class(), 'getSampleListGrid'), $args, $nid, $auth, $attributes)."</div>";
-      if($args['includeLocTools'] 
-        && function_exists('iform_loctools_checkaccess') 
+      if($args['includeLocTools']
+        && function_exists('iform_loctools_checkaccess')
         && iform_loctools_checkaccess($nid,'admin')) {
         $r .= '
   <div id="setLocations">
@@ -878,7 +878,7 @@ class iform_wwt_colour_marked_report {
     }
     // from this point on, we are MODE_EXISTING or MODE_NEW_SAMPLE
     if ($mode == MODE_EXISTING && is_null(data_entry_helper::$entity_to_load)) { // only load if not in error situation
-      // Displaying an existing sample. If we know the subject_observation ID, and don't know the sample ID 
+      // Displaying an existing sample. If we know the subject_observation ID, and don't know the sample ID
       // then we must get the sample id from the subject_observation data.
       if ($loadedSubjectObservationId && !$loadedSampleId) {
         data_entry_helper::load_existing_record($auth['read'], 'subject_observation', $loadedSubjectObservationId);
@@ -901,14 +901,14 @@ class iform_wwt_colour_marked_report {
     if (!empty($args['sample_method_id']))
       $attrOpts['sample_method_id']=$args['sample_method_id'];
     $attributes = data_entry_helper::getAttributes($attrOpts, false);
-    // Check if Recorder details is included as a control. 
+    // Check if Recorder details is included as a control.
     // If so, remove the recorder attributes from the $attributes array so not output anywhere else.
     $arr = helper_base::explode_lines($args['structure']);
     if (in_array('[recorder details]', $arr)) {
       $attrCount = count($attributes);
       for ($i = 0; $i < $attrCount; $i++) {
-        if (strcasecmp($attributes[$i]['caption'], 'first name')===0 
-        || strcasecmp($attributes[$i]['caption'], 'last name')===0 
+        if (strcasecmp($attributes[$i]['caption'], 'first name')===0
+        || strcasecmp($attributes[$i]['caption'], 'last name')===0
         || strcasecmp($attributes[$i]['caption'], 'email')===0) {
           unset($attributes[$i]);
         }
@@ -950,7 +950,7 @@ class iform_wwt_colour_marked_report {
       .'onclick="window.location.href=\''.url('node/'.($nid->nid), array('query' => 'newSample')).'\'">';
     // clear all padlocks button
     $r .= ' <input type="button" class="ui-state-default ui-corner-all" value="'.lang::get('Clear All Padlocks').'" '
-      .'onclick="if (indicia && indicia.locks) indicia.locks.unlockRegion(\'body\');">';    
+      .'onclick="if (indicia && indicia.locks) indicia.locks.unlockRegion(\'body\');">';
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
     $hiddens = $auth['write'].
           "<input type=\"hidden\" id=\"read_auth_token\" name=\"read_auth_token\" value=\"".$auth['read']['auth_token']."\" />\n".
@@ -961,13 +961,13 @@ class iform_wwt_colour_marked_report {
       $hiddens .= '<input type="hidden" name="sample:sample_method_id" value="'.$args['sample_method_id'].'"/>';
     }
     if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
-      $hiddens .= "<input type=\"hidden\" id=\"sample:id\" name=\"sample:id\" value=\"".data_entry_helper::$entity_to_load['sample:id']."\" />\n";    
+      $hiddens .= "<input type=\"hidden\" id=\"sample:id\" name=\"sample:id\" value=\"".data_entry_helper::$entity_to_load['sample:id']."\" />\n";
     }
     // request automatic JS validation
     if (!isset($args['clientSideValidation']) || $args['clientSideValidation']) {
       data_entry_helper::enable_validation('entry_form');
       // override the default invalidHandler to activate the first accordion panels which has an error
-      global $indicia_templates;  
+      global $indicia_templates;
       $indicia_templates['invalid_handler_javascript'] = "function(form, validator) {
           var tabselected=false;
           var accordion$=jQuery('.ui-accordion');
@@ -993,9 +993,9 @@ class iform_wwt_colour_marked_report {
             });
           });
         }";
-      // By default, validate doesn't validate any ':hidden' fields, 
+      // By default, validate doesn't validate any ':hidden' fields,
       // but we need to validate hidden with display: none; fields in accordions
-      data_entry_helper::$javascript .= "jQuery.validator.setDefaults({ 
+      data_entry_helper::$javascript .= "jQuery.validator.setDefaults({
         ignore: \"input[type='hidden']\"
       });\n";
     }
@@ -1034,7 +1034,7 @@ class iform_wwt_colour_marked_report {
           // if no translation provided, we'll just use the standard heading
           $tabtitle = $tab;
         }
-        $headerOptions['tabs']['#'.$alias] = $tabtitle;        
+        $headerOptions['tabs']['#'.$alias] = $tabtitle;
       }
       $r .= data_entry_helper::tab_header($headerOptions);
       data_entry_helper::enable_tabs(array(
@@ -1043,7 +1043,7 @@ class iform_wwt_colour_marked_report {
           'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==true
       ));
     }
-    
+
     // Output the dynamic tab content
     $pageIdx = 0;
     foreach ($tabHtml as $tab=>$tabContent) {
@@ -1052,20 +1052,20 @@ class iform_wwt_colour_marked_report {
       $r .= '<div id="'.$tabalias.'">'."\n";
       // For wizard include the tab title as a header.
       if ($args['interface']=='wizard') {
-        $r .= '<h1>'.$headerOptions['tabs']['#'.$tabalias].'</h1>';        
+        $r .= '<h1>'.$headerOptions['tabs']['#'.$tabalias].'</h1>';
       }
-      $r .= $tabContent;    
-      // Add any buttons required at the bottom of the tab   
+      $r .= $tabContent;
+      // Add any buttons required at the bottom of the tab
       if ($args['interface']=='wizard') {
         $r .= data_entry_helper::wizard_buttons(array(
           'divId'=>'controls',
           'page'=>$pageIdx===0 ? 'first' : (($pageIdx==count($tabHtml)-1) ? 'last' : 'middle')
-        ));        
+        ));
       } elseif ($pageIdx==count($tabHtml)-1 && !($args['interface']=='tabs' && $args['save_button_below_all_pages']))
-        // last part of a non wizard interface must insert a save button, unless it is tabbed interface with save button beneath all pages 
-        $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" id=\"save-button\" value=\"".lang::get('LANG_Save')."\" />\n";      
+        // last part of a non wizard interface must insert a save button, unless it is tabbed interface with save button beneath all pages
+        $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" id=\"save-button\" value=\"".lang::get('LANG_Save')."\" />\n";
       $pageIdx++;
-      $r .= "</div>\n";      
+      $r .= "</div>\n";
     }
     $r .= "</div>\n";
     if ($args['interface']=='tabs' && $args['save_button_below_all_pages']) {
@@ -1073,20 +1073,20 @@ class iform_wwt_colour_marked_report {
     }
     if(!empty(data_entry_helper::$validation_errors)){
       $r .= data_entry_helper::dump_remaining_errors();
-    }   
+    }
     $r .= "</form>";
-    
+
     if (method_exists(get_called_class(), 'getTrailerHTML')) $r .= call_user_func(array(get_called_class(), 'getTrailerHTML'), true, $args);
     return $r;
   }
-  
+
   protected static function get_tab_html($tabs, $auth, $args, $attributes, $hiddens) {
     $defAttrOptions = array('extraParams'=>$auth['read']);
     if(isset($args['attribute_termlist_language_filter']) && $args['attribute_termlist_language_filter'])
         $defAttrOptions['language'] = iform_lang_iso_639_2($args['language']);
     $tabHtml = array();
     foreach ($tabs as $tab=>$tabContent) {
-      // keep track on if the tab actually has real content, so we can avoid floating instructions if all the controls 
+      // keep track on if the tab actually has real content, so we can avoid floating instructions if all the controls
       // were removed by user profile integration for example.
       $hasControls = false;
       // get a machine readable alias for the heading
@@ -1114,15 +1114,15 @@ class iform_wwt_colour_marked_report {
               $option = explode('=',substr($tabContent[$i],1));
               $options[$option[0]]=json_decode($option[1]);
               // if not json then need to use option value as it is
-              if ($options[$option[0]]=='') $options[$option[0]]=$option[1];            
+              if ($options[$option[0]]=='') $options[$option[0]]=$option[1];
             }
           }
-          if (method_exists(get_called_class(), $method)) { 
+          if (method_exists(get_called_class(), $method)) {
             $html .= call_user_func(array(get_called_class(), $method), $auth, $args, $tabalias, $options);
             $hasControls = true;
           } elseif (trim($component)==='[*]'){
-            // this outputs any custom attributes that remain for this tab. The custom attributes can be configured in the 
-            // settings text using something like @smpAttr:4|label=My label. The next bit of code parses these out into an 
+            // this outputs any custom attributes that remain for this tab. The custom attributes can be configured in the
+            // settings text using something like @smpAttr:4|label=My label. The next bit of code parses these out into an
             // array used when building the html.
             $blockOptions = array();
             foreach ($options as $option => $value) {
@@ -1136,22 +1136,22 @@ class iform_wwt_colour_marked_report {
             if (!empty($attrHtml))
               $hasControls = true;
             $html .= $attrHtml;
-          } else          
+          } else
             $html .= "The form structure includes a control called $component which is not recognised.<br/>";
-        }      
+        }
       }
       if (!empty($html) && $hasControls) {
         $tabHtml[$tab] = $html;
       }
     }
     return $tabHtml;
-  }  
-  
+  }
+
   /**
    * Finds the list of all tab names that are going to be required, either by the form
    * structure, or by custom attributes.
    */
-  protected static function get_all_tabs($structure, $attrTabs) {    
+  protected static function get_all_tabs($structure, $attrTabs) {
     $structureArr = helper_base::explode_lines($structure);
     $structureTabs = array();
     foreach ($structureArr as $component) {
@@ -1159,7 +1159,7 @@ class iform_wwt_colour_marked_report {
         $currentTab = substr($matches[0], 1, -1);
         $structureTabs[$currentTab] = array();
       } else {
-        if (!isset($currentTab)) 
+        if (!isset($currentTab))
           throw new Exception('The form structure parameter must start with a tab title, e.g. =Species=');
         $structureTabs[$currentTab][] = $component;
       }
@@ -1175,7 +1175,7 @@ class iform_wwt_colour_marked_report {
     // Maybe there is a better way to do this?
     $allTabs = array();
     foreach($structureTabs as $tab => $tabContent) {
-      if ($tab=='*') 
+      if ($tab=='*')
         $allTabs += $attrTabs;
       else {
         $allTabs[$tab] = $tabContent;
@@ -1183,8 +1183,8 @@ class iform_wwt_colour_marked_report {
     }
     return $allTabs;
   }
-  
-  /** 
+
+  /**
    * Get the map control.
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
@@ -1202,23 +1202,23 @@ class iform_wwt_colour_marked_report {
       $options['standardControls']=array('layerSwitcher','panZoom');
     return data_entry_helper::map_panel($options, $olOptions);
   }
-  
+
   /*
-   * helper function to reload data for existing sample 
+   * helper function to reload data for existing sample
    * @param $loadedSampleId Required. id for required sample.
    * if not supplied, all subject_observations in the sample are loaded
-   * @return array of data values matching the form control names. 
+   * @return array of data values matching the form control names.
    */
   private static function reload_form_data($loadedSampleId, $args, $auth) {
     $form_data = array();
     if (!$loadedSampleId) { // required
       return $form_data;
     }
-    
+
     // load the sample
     data_entry_helper::load_existing_record($auth['read'], 'sample', $loadedSampleId);
     $form_data = array_merge(data_entry_helper::$entity_to_load, $form_data);
-    
+
     // if we have a subject_observation, then we just load that,
     // otherwise we need all the subjects_observations in the sample
     $filter = array();
@@ -1226,7 +1226,7 @@ class iform_wwt_colour_marked_report {
       $filter = array('id'=>self::$subjectObservationIds[0]);
       self::$subjectObservationIds = array();
     }
-  
+
     // load the subject_observation(s) for this sample
     $options = array(
       'table' => 'subject_observation',
@@ -1245,7 +1245,7 @@ class iform_wwt_colour_marked_report {
         $form_data[$fieldprefix.$key] = $subjectObservation[$key];
       }
     }
-  
+
     // load the subject_observation_attribute(s) for this sample
     $query = array('in'=>array('subject_observation_id', self::$subjectObservationIds));
     $filter = array('query'=>json_encode($query),);
@@ -1268,7 +1268,7 @@ class iform_wwt_colour_marked_report {
         }
       }
     }
-    
+
     // load the occurrence(s) for this sample
     $query = array('in'=>array('subject_observation_id', self::$subjectObservationIds));
     $filter = array('query'=>json_encode($query),);
@@ -1336,7 +1336,7 @@ class iform_wwt_colour_marked_report {
         }
       }
     }
-    
+
     // load the identifiers_subject_observation(s) for this sample
     $query = array('in'=>array('subject_observation_id', self::$subjectObservationIds));
     $filter = array('query'=>json_encode($query),);
@@ -1346,7 +1346,7 @@ class iform_wwt_colour_marked_report {
       'nocache' => true,
     );
     $isos = data_entry_helper::get_population_data($options);
-    
+
     // load the identifiers_subject_observation_attributes(s) for this sample
     $isoIds = array();
     foreach ($isos as $iso) {
@@ -1360,7 +1360,7 @@ class iform_wwt_colour_marked_report {
       'nocache' => true,
     );
     $isoAttrs = data_entry_helper::get_population_data($options);
-    
+
     // load the identifier(s) for this sample
     $identifierIds = array();
     foreach ($isos as $iso) {
@@ -1374,7 +1374,7 @@ class iform_wwt_colour_marked_report {
       'nocache' => true,
     );
     $identifiers = data_entry_helper::get_population_data($options);
-    
+
     // load the identifier_attributes(s) for this sample
     $query = array('in'=>array('identifier_id', $identifierIds));
     $filter = array('query'=>json_encode($query),);
@@ -1454,7 +1454,7 @@ class iform_wwt_colour_marked_report {
       $filterLines = helper_base::explode_lines($args['taxon_filter']);
       if ($args['multiple_subject_observation_mode'] !== 'single' && $args['taxon_filter_field']!=='taxon_group' && count($filterLines)===1) {
         // The form is configured for filtering by taxon name or meaning id. If there is only one specified then the form
-        // cannot display a species checklist, as there is no point. So, convert our preferred taxon name or meaning ID to find the 
+        // cannot display a species checklist, as there is no point. So, convert our preferred taxon name or meaning ID to find the
         // preferred taxa_taxon_list_id from the selected checklist, and then output a hidden ID.
         if (empty($args['list_id']))
           throw new exception(lang::get('Please configure the Initial Species List parameter to define which list the species to record is selected from.'));
@@ -1474,16 +1474,16 @@ class iform_wwt_colour_marked_report {
         if (count($response)===0)
           throw new exception(lang::get('Failed to find the single species that this form is setup to record in the defined list.'));
         if (count($response)>1)
-          throw new exception(lang::get('This form is setup for single species recording, but more than one species with the same name exists in the list.'));          
+          throw new exception(lang::get('This form is setup for single species recording, but more than one species with the same name exists in the list.'));
         return '<input type="hidden" name="'.$fieldPrefix.'occurrence:taxa_taxon_list_id" value="'.$response[0]['id']."\"/>\n";
       }
     }
-    if (call_user_func(array(get_called_class(), 'getGridMode'), $args)) {      
-      // multiple species being input via a grid      
+    if (call_user_func(array(get_called_class(), 'getGridMode'), $args)) {
+      // multiple species being input via a grid
       $species_ctrl_opts=array_merge(array(
           'listId'=>$args['list_id'],
           'label'=>lang::get('occurrence:taxa_taxon_list_id'),
-          'columns'=>1,          
+          'columns'=>1,
           'extraParams'=>$extraParams,
           'survey_id'=>$args['survey_id'],
           'occurrenceComment'=>$args['occurrence_comment'],
@@ -1491,7 +1491,7 @@ class iform_wwt_colour_marked_report {
           'occurrenceImages'=>$args['observation_images'],
           'PHPtaxonLabel' => true,
           'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), // used for termlists in attributes
-          'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),          
+          'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),
       ), $options);
       if ($args['extra_list_id']) $species_ctrl_opts['lookupListId']=$args['extra_list_id'];
       if (!empty($args['taxon_filter_field']) && !empty($args['taxon_filter'])) {
@@ -1501,7 +1501,7 @@ class iform_wwt_colour_marked_report {
       if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths']=explode(',', $args['col_widths']);
       call_user_func(array(get_called_class(), 'build_grid_taxon_label_function'), $args);
       call_user_func(array(get_called_class(), 'build_grid_autocomplete_function'), $args);
-      
+
       // Start by outputting a hidden value that tells us we are using a grid when the data is posted,
       // then output the grid control
       return '<input type="hidden" value="true" name="gridmode" />'.
@@ -1511,7 +1511,7 @@ class iform_wwt_colour_marked_report {
       // A single species entry control of some kind
       if ($args['extra_list_id']=='')
         $extraParams['taxon_list_id'] = $args['list_id'];
-      // @todo At the moment the autocomplete control does not support 2 lists. So use just the extra list. Should 
+      // @todo At the moment the autocomplete control does not support 2 lists. So use just the extra list. Should
       // update to support 2 lists.
       elseif ($args['species_ctrl']=='autocomplete')
         $extraParams['taxon_list_id'] = empty($args['extra_list_id']) ? $args['list_id'] : $args['extra_list_id'];
@@ -1520,7 +1520,7 @@ class iform_wwt_colour_marked_report {
       if (!empty($args['taxon_filter_field']) && !empty($args['taxon_filter']))
         // filter the taxa available to record
         $query = array('in'=>array($args['taxon_filter_field'], helper_base::explode_lines($args['taxon_filter'])));
-      else 
+      else
         $query = array();
       // Apply the species names filter to the single species picker control
       if (isset($args['species_names_filter'])) {
@@ -1537,7 +1537,7 @@ class iform_wwt_colour_marked_report {
             break;
         }
       }
-      if (count($query)) 
+      if (count($query))
         $extraParams['query'] = json_encode($query);
       $species_ctrl_opts=array_merge(array(
           'label'=>lang::get('occurrence:taxa_taxon_list_id'),
@@ -1564,16 +1564,16 @@ class iform_wwt_colour_marked_report {
       if ($args['species_ctrl']=='tree_browser') {
         // change the node template to include images
         $indicia_templates['tree_browser_node']='<div>'.
-            '<img src="'.self::warehouseUrl().'/upload/thumb-{image_path}" alt="Image of {caption}" width="80" /></div>'.
+            '<img src="' . data_entry_helper::getProxiedBaseUrl() . '/upload/thumb-{image_path}" alt="Image of {caption}" width="80" /></div>'.
             '<span>{caption}</span>';
       }
       // Dynamically generate the species selection control required.
       return call_user_func(array('data_entry_helper', $args['species_ctrl']), $species_ctrl_opts);
     }
   }
-  
+
   /**
-   * Function to map from the species_names_filter argument to the speciesNamesFilterMode required by the 
+   * Function to map from the species_names_filter argument to the speciesNamesFilterMode required by the
    * checklist grid. For legacy reasons they don't quite match.
    */
   protected static function getSpeciesNameFilterMode($args) {
@@ -1588,13 +1588,13 @@ class iform_wwt_colour_marked_report {
     // default is no species name filter.
     return false;
   }
-  
+
   /**
    * Build a PHP function  to format the species added to the grid according to the form parameters
    * autocomplete_include_both_names and autocomplete_include_taxon_group.
    */
   protected static function build_grid_autocomplete_function($args) {
-    global $indicia_templates;  
+    global $indicia_templates;
     // always include the searched name
     $fn = "function(item) { \n".
         "  var r;\n".
@@ -1620,13 +1620,13 @@ class iform_wwt_colour_marked_report {
     // Set it into the indicia templates
     $indicia_templates['format_species_autocomplete_fn'] = $fn;
   }
-  
+
   /**
    * Build a JavaScript function  to format the autocomplete item list according to the form parameters
    * autocomplete_include_both_names and autocomplete_include_taxon_group.
    */
   protected static function build_grid_taxon_label_function($args) {
-    global $indicia_templates;  
+    global $indicia_templates;
     // always include the searched name
     $php = '$r="";'."\n".
         'if ("{language}"=="lat") {'."\n".
@@ -1650,7 +1650,7 @@ class iform_wwt_colour_marked_report {
     // Set it into the indicia templates
     $indicia_templates['taxon_label'] = $php;
   }
-  
+
   /**
    * Get the sample comment control
    */
@@ -1658,9 +1658,9 @@ class iform_wwt_colour_marked_report {
     return data_entry_helper::textarea(array_merge(array(
       'fieldname'=>'sample:comment',
       'label'=>lang::get('Overall Comment')
-    ), $options)); 
+    ), $options));
   }
-  
+
   /**
    * Get the observation comment control
    */
@@ -1670,11 +1670,11 @@ class iform_wwt_colour_marked_report {
       'fieldname'=>$fieldPrefix.'subject_observation:comment',
       'label'=>lang::get('Any information you might like to add'),
       'class'=>'control-width-5',
-    ), $options)); 
+    ), $options));
   }
-  
+
   /**
-   * Get the add sample comment control. This is for additional comments by other people after the 
+   * Get the add sample comment control. This is for additional comments by other people after the
    * colour-marked individual has been reported.
    */
   private static function get_control_showaddedsamplecomments($auth, $args, $tabalias, $options) {
@@ -1689,15 +1689,15 @@ class iform_wwt_colour_marked_report {
         'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
         'autoParamsForm' => true,
         'extraParams' => array(
-          'sample_id'=>data_entry_helper::$entity_to_load['sample:id'], 
+          'sample_id'=>data_entry_helper::$entity_to_load['sample:id'],
         )
-      ));    
+      ));
     }
     return $r;
   }
-  
+
   /**
-   * Get the add sample comment control. This is for additional comments by other people after the 
+   * Get the add sample comment control. This is for additional comments by other people after the
    * colour-marked individual has been reported.
    */
   private static function get_control_addsamplecomment($auth, $args, $tabalias, $options) {
@@ -1705,14 +1705,14 @@ class iform_wwt_colour_marked_report {
       'fieldname'=>'sample_comment:comment',
       'label'=>lang::get('Add a comment about this report'),
       'class'=>'control-width-6',
-    ), $options)); 
+    ), $options));
   }
-  
+
   /**
    * Get the block of custom attributes at the species (occurrence) level
    */
   private static function get_control_speciesattributes($auth, $args, $tabalias, $options) {
-    if (!(call_user_func(array(get_called_class(), 'getGridMode'), $args))) {  
+    if (!(call_user_func(array(get_called_class(), 'getGridMode'), $args))) {
       // Add any dynamically generated controls
       $attrArgs = array(
          'valuetable'=>'occurrence_attribute_value',
@@ -1735,7 +1735,7 @@ class iform_wwt_colour_marked_report {
           'label'=>lang::get('Record Comment')
         ));
       if ($args['subject_observation_confidential'])
-        $r .= data_entry_helper::select(array('fieldname'=>'sc:-idx-::occurrence:sensitivity_precision', 
+        $r .= data_entry_helper::select(array('fieldname'=>'sc:-idx-::occurrence:sensitivity_precision',
             'lookupValues' => array('Reduce precision to' => array('100'=>'100m', '1000'=>'1km', '2000'=>'2km', '10000'=>'10km', '100000'=>'100km')),
             'blankText' => lang::get('Not sensitive')
         ));
@@ -1752,12 +1752,12 @@ class iform_wwt_colour_marked_report {
         $r .= data_entry_helper::file_box($opts);
       }
       return $r;
-    } else 
+    } else
       // in grid mode the attributes are embedded in the grid.
       return '';
   }
-  
-  /** 
+
+  /**
    * Get the date control.
    */
   private static function get_control_date($auth, $args, $tabalias, $options) {
@@ -1775,8 +1775,8 @@ class iform_wwt_colour_marked_report {
       'default' => isset($args['defaults']['sample:date']) ? $args['defaults']['sample:date'] : ''
     ), $options));
   }
-  
-  /** 
+
+  /**
    * Get the spatial reference control.
    */
   private static function get_control_spatialreference($auth, $args, $tabalias, $options) {
@@ -1791,8 +1791,8 @@ class iform_wwt_colour_marked_report {
       'systems' => $systems,
     ), $options));
   }
-  
-  /** 
+
+  /**
    * Get the location name control.
    */
   private static function get_control_locationname($auth, $args, $tabalias, $options) {
@@ -1802,8 +1802,8 @@ class iform_wwt_colour_marked_report {
       'class' => 'control-width-5'
     ), $options));
   }
-  
-  /** 
+
+  /**
    * Get the location search control.
    */
   private static function get_control_placesearch($auth, $args, $tabalias, $options) {
@@ -1827,8 +1827,8 @@ class iform_wwt_colour_marked_report {
   /**
    * Get the control for the record status.
    */
-  private static function get_control_recordstatus($auth, $args) {    
-    $default = isset(data_entry_helper::$entity_to_load['occurrence:record_status']) ? 
+  private static function get_control_recordstatus($auth, $args) {
+    $default = isset(data_entry_helper::$entity_to_load['occurrence:record_status']) ?
         data_entry_helper::$entity_to_load['occurrence:record_status'] :
         isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
     $values = array('I', 'C'); // not initially doing V=Verified
@@ -1843,8 +1843,8 @@ class iform_wwt_colour_marked_report {
     }
     $r .= "</select><br/>\n";
       return $r;
-  }   
-    
+  }
+
   /**
    * Get the block of sample custom attributes for the recorder
    */
@@ -1895,17 +1895,17 @@ class iform_wwt_colour_marked_report {
     if (!hostsite_user_has_permission('IForm n'.self::$nid.' enter data by proxy')) {
       $attrHtml .= '</div>';
     }
-  
+
     return $attrHtml;
   }
-  
+
   /*
    * Get the species picker with selected colour identifier controls
    */
-  
+
   private static function get_control_speciesidentifier($auth, $args, $tabalias, $options) {
-    static $taxIdx = 0; 
-    
+    static $taxIdx = 0;
+
     // we need to control which items are lockable if locking requested
     if (!empty($options['lockable']) && $options['lockable']==true) {
       $options['identifiers_lockable'] = $options['lockable'];
@@ -1913,7 +1913,7 @@ class iform_wwt_colour_marked_report {
       $options['identifiers_lockable'] = '';
     }
     unset($options['lockable']);
-    
+
     // get the identifier type data
     $filter = array(
       'termlist_external_key' => 'indicia:assoc:identifier_type',
@@ -1923,14 +1923,14 @@ class iform_wwt_colour_marked_report {
       'extraParams' => $auth['read'] + $filter,
     );
     $options['identifierTypes'] = data_entry_helper::get_population_data($dataOpts);
-    
+
     // get the identifier attribute type data
     $dataOpts = array(
       'table' => 'identifier_attribute',
       'extraParams' => $auth['read'],
     );
     $options['idnAttributeTypes'] = data_entry_helper::get_population_data($dataOpts);
-    
+
     // set up the known system types for identifier attributes
     $options['baseColourId'] = -1;
     $options['textColourId'] = -1;
@@ -1954,14 +1954,14 @@ class iform_wwt_colour_marked_report {
         }
       }
     }
-    
+
     // get the subject observation attribute type data
     $dataOpts = array(
       'table' => 'subject_observation_attribute',
       'extraParams' => $auth['read'],
     );
     $options['sjoAttributeTypes'] = data_entry_helper::get_population_data($dataOpts);
-    
+
     // set up the known system types for subject_observation attributes
     $options['attachmentId'] = -1;
     $options['genderId'] = -1;
@@ -1985,14 +1985,14 @@ class iform_wwt_colour_marked_report {
         }
       }
     }
-    
+
     // get the identifiers subject observation attribute type data
     $dataOpts = array(
       'table' => 'identifiers_subject_observation_attribute',
       'extraParams' => $auth['read'],
     );
     $options['isoAttributeTypes'] = data_entry_helper::get_population_data($dataOpts);
-    
+
     // set up the known system types for subject_observation attributes
     $options['conditionsId'] = -1;
     foreach ($options['isoAttributeTypes'] as $isoAttributeType) {
@@ -2004,10 +2004,10 @@ class iform_wwt_colour_marked_report {
         }
       }
     }
-    
+
     // throw an exception if any of the required custom attributes is missing
     $errorMessages = array();
-    foreach (array('baseColourId', 'textColourId', 'sequenceId', 'positionId', 
+    foreach (array('baseColourId', 'textColourId', 'sequenceId', 'positionId',
       'attachmentId', 'genderId', 'stageId', 'lifeStatusId', 'conditionsId', ) as $attrId) {
       if ($options[$attrId]===-1) {
         $errorMessages[] = lang::get('Required custom attribute for '.$attrId.' has not been found. '
@@ -2018,7 +2018,7 @@ class iform_wwt_colour_marked_report {
       $errorMessage = implode('<br />', $errorMessages);
       throw new exception($errorMessage);
     }
-    
+
     // configure the identifiers javascript
     // write it late so it happens after any locked values are applied
     if (!$options['inNewIndividual']) {
@@ -2035,7 +2035,7 @@ class iform_wwt_colour_marked_report {
         '".($args['subjectAccordion'] ? 'true' : 'false')."'\n".
         ");\n";
     }
-    
+
     $r = '';
     $options['fieldprefix'] = 'idn:'.$taxIdx.':';
     if (!$options['inNewIndividual']) {;
@@ -2046,7 +2046,7 @@ class iform_wwt_colour_marked_report {
     } else {
       $r .= '<h3 id="'.$options['fieldprefix'].'individual:header" class="individual_header" data-heading="'.lang::get('Colour-marked Individual').' '.($taxIdx+1).'">'.lang::get('Colour-marked Individual').' '.($taxIdx+1).'</h3>';
     }
-    
+
     $r .= '<div id="'.$options['fieldprefix'].'individual:panel" class="individual_panel ui-corner-all">';
     $r .= '<div class="ui-helper-clearfix">';
     $r .= '<fieldset id="'.$options['fieldprefix'].'individual:fieldset" class="taxon_individual ui-corner-all">';
@@ -2054,15 +2054,15 @@ class iform_wwt_colour_marked_report {
     // output the hiddens
     if (isset(data_entry_helper::$entity_to_load[$options['fieldprefix'].'subject_observation:id'])) {
       $r .= '<input type="hidden" id="'.$options['fieldprefix'].'subject_observation:id" name="'.$options['fieldprefix'].'subject_observation:id" '.
-        'value="'.data_entry_helper::$entity_to_load[$options['fieldprefix'].'subject_observation:id'].'" />'."\n";    
+        'value="'.data_entry_helper::$entity_to_load[$options['fieldprefix'].'subject_observation:id'].'" />'."\n";
     }
     if (isset(data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrences_subject_observation:id'])) {
       $r .= '<input type="hidden" id="'.$options['fieldprefix'].'occurrences_subject_observation:id" name="'.$options['fieldprefix'].'occurrences_subject_observation:id" '.
-        'value="'.data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrences_subject_observation:id'].'" />'."\n";    
+        'value="'.data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrences_subject_observation:id'].'" />'."\n";
     }
     if (isset(data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrence:id'])) {
       $r .= '<input type="hidden" id="'.$options['fieldprefix'].'occurrence:id" name="'.$options['fieldprefix'].'occurrence:id" '.
-        'value="'.data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrence:id'].'" />'."\n";    
+        'value="'.data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrence:id'].'" />'."\n";
     }
     // Check if Record Status is included as a control. If not, then add it as a hidden.
     $arr = helper_base::explode_lines($args['structure']);
@@ -2070,17 +2070,17 @@ class iform_wwt_colour_marked_report {
       if (isset(data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrence:record_status'])) {
         $value = data_entry_helper::$entity_to_load[$options['fieldprefix'].'occurrence:record_status'];
       } else {
-        $value = isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C'; 
+        $value = isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
       }
       $r .= '<input type="hidden" id="'.$options['fieldprefix'].'occurrence:record_status" '.
-        'name="'.$options['fieldprefix'].'occurrence:record_status" value="'.$value.'" />'."\n";    
+        'name="'.$options['fieldprefix'].'occurrence:record_status" value="'.$value.'" />'."\n";
     }
     // add subject type and count as a hidden
     $value = '';
     if (isset(data_entry_helper::$entity_to_load[$options['fieldprefix'].'subject_observation:subject_type_id'])) {
       $value = data_entry_helper::$entity_to_load[$options['fieldprefix'].'subject_observation:subject_type_id'];
     } else if (isset($args['subject_type_id'])) {
-      $value = $args['subject_type_id']; 
+      $value = $args['subject_type_id'];
     }
     if ($value!=='') {
       $r .= '<input type="hidden" id="'.$options['fieldprefix'].'subject_observation:subject_type_id" '.
@@ -2089,7 +2089,7 @@ class iform_wwt_colour_marked_report {
     if (isset(data_entry_helper::$entity_to_load[$options['fieldprefix'].'subject_observation:count'])) {
       $value = data_entry_helper::$entity_to_load[$options['fieldprefix'].'subject_observation:count'];
     } else  {
-      $value = '1'; 
+      $value = '1';
     }
     if ($value!=='') {
       $r .= '<input type="hidden" id="'.$options['fieldprefix'].'subject_observation:count" '.
@@ -2114,7 +2114,7 @@ class iform_wwt_colour_marked_report {
       $autoJavascript = '';
     }
     unset($options['lockable']);
-    
+
     // gender
     if ($options['genderId'] > 0
       && !empty($args['request_gender_values'])
@@ -2211,10 +2211,10 @@ class iform_wwt_colour_marked_report {
       ), $options));
       unset($options['lockable']);
     }
-    
+
     // output each required identifier
     $r .= '<div id="'.$options['fieldprefix'].'accordion" class="idn-accordion">';
-    
+
     // setup and call function for neck collar
     $options['identifierName'] = '';
     $options['identifierTypeId'] = '';
@@ -2242,7 +2242,7 @@ class iform_wwt_colour_marked_report {
     if (!empty($args['neck_collar_regex'])) {
       unset($options['seq_format_class']);
     }
-    
+
     // setup and call function for left enscribed colour ring
     $options['identifierName'] = '';
     $options['identifierTypeId'] = '';
@@ -2270,7 +2270,7 @@ class iform_wwt_colour_marked_report {
     if (!empty($args['enscribed_colour_ring_regex'])) {
       unset($options['seq_format_class']);
     }
-    
+
     // setup and call function for right enscribed colour ring
     $options['identifierName'] = '';
     $options['identifierTypeId'] = '';
@@ -2298,7 +2298,7 @@ class iform_wwt_colour_marked_report {
     if (!empty($args['enscribed_colour_ring_regex'])) {
       unset($options['seq_format_class']);
     }
-    
+
     // setup and call function for metal ring
     $options['identifierName'] = '';
     $options['identifierTypeId'] = '';
@@ -2325,11 +2325,11 @@ class iform_wwt_colour_marked_report {
     if (!empty($args['metal_ring_regex'])) {
       unset($options['seq_format_class']);
     }
-    
+
     unset($options['seq_maxlength']);
-    
+
     $r .= '</div>'; // end of identifier accordion
-      
+
     // other devices (trackers etc.)
     if ($options['attachmentId'] > 0
         && !empty($args['other_devices'])
@@ -2361,19 +2361,19 @@ class iform_wwt_colour_marked_report {
         'extraParams' => $extraParams,
       ), $options));
     }
-    
+
     // subject_observation comment
     if ($args['observation_comment']) {
       $r .= self::get_control_observationcomment($auth, $args, $tabalias, $options);
     }
-    
+
     $r .= '</fieldset>';
     // output identifier visualisations
     $r .= '<div id="idn:'.$taxIdx.':neck-collar:colourbox" class="neck-collar-indentifier-colourbox ui-corner-all">&nbsp;</div>';
     $r .= '<div id="idn:'.$taxIdx.':colour-left:colourbox" class="colour-left-indentifier-colourbox ui-corner-all">&nbsp;</div>';
     $r .= '<div id="idn:'.$taxIdx.':colour-right:colourbox" class="colour-right-indentifier-colourbox ui-corner-all">&nbsp;</div>';
     $r .= '</div>'; // close clearfix div
-    
+
     // occurrence images
     $opts = array(
       'table'=>'idn:'.$taxIdx.':'.'occurrence_image',
@@ -2391,12 +2391,12 @@ class iform_wwt_colour_marked_report {
       $opts['codeGenerated'] = 'php';
     }
     $r .= data_entry_helper::file_box($opts);
-    
+
     // remove bird button - don't show if bird is being edited or only bird on the form
     $r .= '<input type="button" id="idn:0:remove-individual" class="idn-remove-individual" value="'.lang::get('Remove This Bird').'" />';
-    
+
     $r .= '</div>';
-    
+
     // recursive call to get a template for the 'individual panel' markup for a new observation so we can add another bird
     if (!$options['inNewIndividual']) {
       $r .= '</div>';
@@ -2410,7 +2410,7 @@ class iform_wwt_colour_marked_report {
       $photoJavascript = data_entry_helper::file_box($opts);
       data_entry_helper::$entity_to_load = $temp;
       unset($options['inNewIndividual']);
-        
+
       data_entry_helper::$javascript .= "window.indicia.wwt.newIndividual = '".str_replace(array('\'', "\n"), array('\\\'', ' '), $new_individual)."';\n";
       // save the javascript needed for an additional colour-marked individual
       // process it to sanitise the string and remove comments (works now but not 100% reliable)
@@ -2423,13 +2423,13 @@ class iform_wwt_colour_marked_report {
 
     return $r;
   }
-  
+
   /*
    * Get the colour identifier control
    */
-  
+
   private static function get_control_identifier($auth, $args, $tabalias, $options) {
-    
+
     $fieldPrefix = !empty($options['fieldprefix']) ? $options['fieldprefix'] : '';
     $r = '';
     $r .= '<h3 id="'.$fieldPrefix.'header" class="idn:accordion:header"><a href="#">'.$options['identifierName'].'</a></h2>';
@@ -2440,9 +2440,9 @@ class iform_wwt_colour_marked_report {
     $r .= '<input type="hidden" name="'.$fieldPrefix.'identifier:id" id="'.$fieldPrefix.'identifier:id" class="identifier_id" value="'.$val.'" />'."\n";
     if (isset(data_entry_helper::$entity_to_load[$fieldPrefix.'identifiers_subject_observation:id'])) {
       $r .= '<input type="hidden" id="'.$fieldPrefix.'identifiers_subject_observation:id" name="'.$fieldPrefix.'identifiers_subject_observation:id" '.
-        'value="'.data_entry_helper::$entity_to_load[$fieldPrefix.'identifiers_subject_observation:id'].'" />'."\n";    
+        'value="'.data_entry_helper::$entity_to_load[$fieldPrefix.'identifiers_subject_observation:id'].'" />'."\n";
     }
-    
+
     // checkbox - (now hidden by CSS, probably should refactor to hidden input?)
     $r .= data_entry_helper::checkbox(array_merge(array(
       // 'label' => lang::get('Is this identifier being recorded?'),
@@ -2450,7 +2450,7 @@ class iform_wwt_colour_marked_report {
       'fieldname' => $fieldPrefix.'identifier:checkbox',
       'class'=>'identifier_checkbox identifierRequired noDuplicateIdentifiers',
     ), $options));
-      
+
     // loop through the requested attributes and output an appropriate control
     $classes = $options['class'];
     foreach ($options['attrList'] as $attribute) {
@@ -2502,7 +2502,7 @@ class iform_wwt_colour_marked_report {
         $attr_name = 'sequence';
         $options['maxlength'] = $options['seq_maxlength'] ? $options['seq_maxlength'] : '';
         if ($options['seq_format_class']) {
-          $options['class'] = empty($options['class']) ? $options['seq_format_class'] : 
+          $options['class'] = empty($options['class']) ? $options['seq_format_class'] :
             (strstr($options['class'], $options['seq_format_class']) ? $options['class'] : $options['class'].' '.$options['seq_format_class']);
         }
       } elseif ($attribute['attrType']==='iso' && $options['conditionsId']==$attribute['typeId']) {
@@ -2518,7 +2518,7 @@ class iform_wwt_colour_marked_report {
       }
 
       // add classes as identifiers
-      $options['class'] = empty($options['class']) ? $options['classprefix'].$attr_name : 
+      $options['class'] = empty($options['class']) ? $options['classprefix'].$attr_name :
         (strstr($options['class'], $options['classprefix'].$attr_name) ? $options['class'] : $options['class'].' '.$options['classprefix'].$attr_name);
       $options['class'] = $options['class'].' idn-'.$attr_name;
       if ($attribute['attrType']==='idn' && ($options['baseColourId']==$attribute['typeId'] || $options['textColourId']==$attribute['typeId'])) {
@@ -2528,7 +2528,7 @@ class iform_wwt_colour_marked_report {
       if ($attribute['attrType']==='idn' && $options['sequenceId']==$attribute['typeId']) {
         $options['class'] = strstr($options['class'], 'identifier_sequence') ? $options['class'] : $options['class'].' identifier_sequence';
       }
-    
+
       if (!empty($attribute['hidden']) && $attribute['hidden']===true) {
         $dataType = 'H'; // hidden
         if (!empty($attribute['hiddenValue'])) {
@@ -2539,7 +2539,7 @@ class iform_wwt_colour_marked_report {
       } else {
         $dataType = $attrType['data_type'];
       }
-      
+
       // output an appropriate control for the attribute data type
       switch ($dataType) {
         case 'D':
@@ -2626,11 +2626,11 @@ class iform_wwt_colour_marked_report {
 
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
@@ -2659,17 +2659,17 @@ class iform_wwt_colour_marked_report {
     $submission = self::add_observation_submissions($submission, $values, $args);
     // add new sample comment
     $submission = self::add_sample_comment_submissions($submission, $values);
-    
+
     if (isset($args['debug_info']) && $args['debug_info']) {
       self::$submission = $submission;
     }
     return($submission);
   }
-  
+
   /**
    * Adds the sample comment data to the submission array from the form values.
-   * @param array $sample The sample submission. 
-   * @param array $values Associative array of form data values. 
+   * @param array $sample The sample submission.
+   * @param array $values Associative array of form data values.
    * @return array Submission structure with the sample comment added.
    */
   private static function add_sample_comment_submissions($sample, $values) {
@@ -2681,12 +2681,12 @@ class iform_wwt_colour_marked_report {
     }
     return $sample;
   }
-  
+
   /**
    * Adds the observation data and identifiers (if new) to the submission array from the form values.
-   * @param array $sample The sample submission. 
-   * @param array $values Associative array of form data values. 
-   * @param array $args Associative array of form configuration parameters. 
+   * @param array $sample The sample submission.
+   * @param array $values Associative array of form data values.
+   * @param array $args Associative array of form configuration parameters.
    * @return array Submission structure with observations/identifiers added.
    */
   private static function add_observation_submissions($sample, $values, $args) {
@@ -2710,7 +2710,7 @@ class iform_wwt_colour_marked_report {
       );
       $matches = data_entry_helper::get_population_data($queryOptions);
     }
-    
+
     // get submission for each observation and add it to the sample submission
     $keys = preg_grep('/^idn:[0-9]+:occurrence:taxa_taxon_list_id$/', array_keys($values));
     foreach ( $keys as $key )
@@ -2726,7 +2726,7 @@ class iform_wwt_colour_marked_report {
       $so = submission_builder::build_submission($values, array('model'=>'subject_observation',));
       // create submodel for join to occurrence and add it
       $oso = self::build_occurrence_observation_submission($values);
-      $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $oso,);      
+      $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $oso,);
       // create submodel for each join to identifier (plus identifier models if new) and add it
       foreach (array('neck-collar', 'colour-left', 'colour-right', 'metal') as $identifier_type) {
         $ident_keys = preg_grep('/^idn:'.$idx.':'.$identifier_type.':(identifier|identifiers_subject_observation|idnAttr|isoAttr):/', array_keys($values));
@@ -2754,20 +2754,20 @@ class iform_wwt_colour_marked_report {
     }
     return $sample;
   }
-    
+
   /**
    * Builds a submission for occurrences_subject_observation join data from the form values.
-   * @param array $values Associative array of form data values. 
+   * @param array $values Associative array of form data values.
    * @return array occurences_subject_observation Submission structure.
    */
   private static function build_occurrence_observation_submission($values) {
     // provide defaults if these keys not present
     $values = array_merge(array(
       ), $values);
-    
+
     // build submission
     $submission = submission_builder::build_submission($values, array('model'=>'occurrences_subject_observation',));
-      
+
     // add super model for occurrence
     // provide defaults if these keys not present
     $values = array_merge(array(
@@ -2779,15 +2779,15 @@ class iform_wwt_colour_marked_report {
     $submission['superModels'] = array(
       array('fkId' => 'occurrence_id', 'model' => $occ,),
     );
-    
+
     return $submission;
   }
-  
+
   /**
-   * Builds a submission for identifiers_subject_observation join data 
+   * Builds a submission for identifiers_subject_observation join data
    * from the form values. Also adds identifier if it doesn't exist.
-   * @param array $values Associative array of form data values. 
-   * @param array $matches Associative array of stored identifiers which match submitted values. 
+   * @param array $values Associative array of form data values.
+   * @param array $matches Associative array of stored identifiers which match submitted values.
    * @param array $so The subject_observation submission we are adding to
    * @return array subject_observation Submission structure with identifier data added.
    */
@@ -2804,7 +2804,7 @@ class iform_wwt_colour_marked_report {
         $identifier_status = $match['status'];
       }
     }
-    
+
     // see if we have any updates on the isoAttr
     $isoAttrUpdated = count(preg_grep('/^isoAttr:[0-9]+$/', array_keys($values))) > 0;
     if (!$isoAttrUpdated) {
@@ -2816,7 +2816,7 @@ class iform_wwt_colour_marked_report {
         }
       }
     }
-      
+
     // this identifier exists but its identity has been changed
     if ($old_id>0 && $old_id!==$new_id) {
       // unlink the old identifier
@@ -2825,7 +2825,7 @@ class iform_wwt_colour_marked_report {
         $values, array('model'=>'identifiers_subject_observation',));
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $iso,);
     }
-    
+
     // identifier submitted, has been edited and matches an existing identifier
     if ($set && $new_id>0 && $old_id!==$new_id) {
       // create link to the new matching identifier
@@ -2844,7 +2844,7 @@ class iform_wwt_colour_marked_report {
         $values, array('model'=>'identifiers_subject_observation',));
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $iso,);
     }
-    
+
     // identifier submitted and doesn't match an existing identifier
     if ($set && $new_id===0) {
       // create new link to a new identifier which we also create here
@@ -2885,7 +2885,7 @@ class iform_wwt_colour_marked_report {
       );
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $iso,);
     }
-    
+
     // identifier exists and is unchanged but has iso attributes which have changed
     if ($old_id>0 && $old_id===$new_id && $isoAttrUpdated) {
       // update link to trigger update to isoAttr
@@ -2893,30 +2893,30 @@ class iform_wwt_colour_marked_report {
         $values, array('model'=>'identifiers_subject_observation',));
       $so['subModels'][] = array('fkId' => 'subject_observation_id', 'model' => $iso,);
     }
-    
+
     return $so;
   }
-  
+
   /**
    * Retrieves a list of the css files that this form requires in addition to the standard
    * Drupal, theme or Indicia ones.
-   * 
+   *
    * @return array List of css files to include for this form.
    */
   public static function get_css() {
     return array();
   }
-  
+
   /**
    * Convert the unstructured textarea of default values into a structured array.
    */
   protected static function parse_defaults(&$args) {
     $result=array();
     if (isset($args['defaults']))
-      $result = helper_base::explode_lines_key_value_pairs($args['defaults']);     
+      $result = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $args['defaults']=$result;
   }
-  
+
   /**
    * Returns true if this form should be displaying a multiple subject observation entry grid.
    */
@@ -2925,18 +2925,18 @@ class iform_wwt_colour_marked_report {
     if ($args['multiple_subject_observation_mode']=='either') {
       // Either we are in grid mode because we were instructed to externally, or because the form is reloading
       // after a validation failure with a hidden input indicating grid mode.
-      return isset($_GET['gridmode']) || 
+      return isset($_GET['gridmode']) ||
           isset(data_entry_helper::$entity_to_load['gridmode']) ||
           ((array_key_exists('sample_id', $_GET) && $_GET['sample_id']!='{sample_id}') &&
            (!array_key_exists('subject_observation_id', $_GET) || $_GET['subject_observation_id']=='{subject_observation_id}'));
     } else
-      return 
+      return
           // a form saved using a previous version might not have this setting, so default to grid mode=true
           (!isset($args['multiple_subject_observation_mode'])) ||
           // Are we fixed in grid mode?
           $args['multiple_subject_observation_mode']=='multi';
   }
-  
+
   /**
    * When viewing the list of samples for this user, get the grid to insert into the page.
    */
@@ -2982,39 +2982,32 @@ class iform_wwt_colour_marked_report {
       'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
       'autoParamsForm' => true,
       'extraParams' => array(
-        'survey_id'=>$args['survey_id'], 
+        'survey_id'=>$args['survey_id'],
         'userID'=>$userId,
       )
-    ));    
-    $r .= '<form>';    
+    ));
+    $r .= '<form>';
     if (isset($args['multiple_subject_observation_mode']) && $args['multiple_subject_observation_mode']=='either') {
       $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Single').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'newSample')).'\'">';
       $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample_Grid').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'newSample&gridmode')).'\'">';
     } else {
-      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'newSample')).'\'">';    
+      $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.($node->nid), array('query' => 'newSample')).'\'">';
     }
     $r .= '</form>';
     return $r;
   }
-  
+
   /**
-   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the 
+   * When a form version is upgraded introducing new parameters, old forms will not get the defaults for the
    * parameters unless the Edit and Save button is clicked. So, apply some defaults to keep those old forms
    * working.
    */
   protected function getArgDefaults(&$args) {
   }
-  
+
   protected function getReportActions() {
-    return array(array('display' => 'Actions', 'actions' => 
+    return array(array('display' => 'Actions', 'actions' =>
         array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}','subject_observation_id'=>'{subject_observation_id}')))));
-  }
-  
-  /*
-   * helper function to return a proxy-aware warehouse url
-   */
-  protected function warehouseUrl() {
-    return !empty(data_entry_helper::$warehouse_proxy) ? data_entry_helper::$warehouse_proxy : data_entry_helper::$base_url;
   }
 }
 

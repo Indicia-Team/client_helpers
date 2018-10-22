@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -30,7 +31,7 @@ require_once('includes/report.php');
  */
 class iform_report_chart {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -43,7 +44,7 @@ class iform_report_chart {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -148,7 +149,7 @@ class iform_report_chart {
     "dataLabelNudge":{"title":"Pie Data Label Nudge", "type":"number","desc":"Number of pixels to slide the label away from (+) or toward (-) the center of the pie."},
     "dataLabelCenterOn":{"title":"Pie Data Label Centre On", "type":"bool","desc":"Check to center the data label at its position."},
     "startAngle":{"title":"Pie Start Angle", "type":"int","desc":"Angle to start drawing pie in degrees."}
-  }  
+  }
 }',
           'required' => false,
           'group'=>'Advanced Chart Options'
@@ -364,7 +365,7 @@ class iform_report_chart {
    */
   public static function get_form($args, $nid, $response) {
     iform_load_helpers(array('report_helper', 'map_helper'));
-    $auth = report_helper::get_read_auth($args['website_id'], $args['password']); 
+    $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
     $chartOptions = iform_report_get_report_options($args, $auth);
     $chartOptions = array_merge($chartOptions, array(
       'id' => 'chart-div',
@@ -396,27 +397,27 @@ class iform_report_chart {
       $axesOptions = trim($args['axes_options']);
       $chartOptions['axesOptions'] = json_decode($axesOptions, true);
     }
-    
+
     //User has elected for parameters form only
     if ($args['output']==='form')
       $chartOptions['paramsOnly']=true;
     else {
       if (isset($chartOptions['paramsOnly']))
         unset($chartOptions['paramsOnly']);
-    } 
-    //User has elected for parameters form only or 
+    }
+    //User has elected for parameters form only or
     //both the chart and parameters form together
     if ($args['output']==='form'||$args['output']==='default')
       $chartOptions['completeParamsForm']=true;
     else {
       if (isset($chartOptions['completeParamsForm']))
         unset($chartOptions['completeParamsForm']);
-    }  
+    }
     //User has elected for the chart only
     if ($args['output']==='output') {
       $chartOptions['autoParamsForm']=false;
     }
-    
+
     $r = '<br/>'.report_helper::report_chart($chartOptions);
     return $r;
   }

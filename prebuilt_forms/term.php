@@ -22,14 +22,14 @@
 
 /**
  * A term editor.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_term {
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_term_definition() {
@@ -39,12 +39,12 @@ class iform_term {
       'description'=>'A simple page for editing terms in a warehouse termlist.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
           'name'=>'termlist_id',
@@ -72,7 +72,7 @@ class iform_term {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -89,13 +89,13 @@ class iform_term {
     $r .= $auth['write'];
     data_entry_helper::$entity_to_load = array();
     if (!empty($_GET['termlists_term_id'])) {
-      data_entry_helper::load_existing_record($auth['read'], 'termlists_term', $_GET['termlists_term_id']); 
+      data_entry_helper::load_existing_record($auth['read'], 'termlists_term', $_GET['termlists_term_id']);
       // map fields to their appropriate supermodels
       data_entry_helper::$entity_to_load['term:term'] = data_entry_helper::$entity_to_load['termlists_term:term'];
       data_entry_helper::$entity_to_load['term:id'] = data_entry_helper::$entity_to_load['termlists_term:term_id'];
       data_entry_helper::$entity_to_load['meaning:id'] = data_entry_helper::$entity_to_load['termlists_term:meaning_id'];
       if (function_exists('hostsite_set_page_title'))
-        hostsite_set_page_title(lang::get('Edit {1}', data_entry_helper::$entity_to_load['term:term'])); 
+        hostsite_set_page_title(lang::get('Edit {1}', data_entry_helper::$entity_to_load['term:term']));
     }
     $r .= data_entry_helper::hidden_text(array(
       'fieldname' => 'website_id',
@@ -113,14 +113,14 @@ class iform_term {
       'default' => 't'
     ));
     $r .= data_entry_helper::hidden_text(array(
-      'fieldname' => 'term:id'      
+      'fieldname' => 'term:id'
     ));
     $r .= data_entry_helper::hidden_text(array(
       'fieldname' => 'term:language_id',
       'default' => $args['language_id']
     ));
     $r .= data_entry_helper::hidden_text(array(
-      'fieldname' => 'meaning:id'      
+      'fieldname' => 'meaning:id'
     ));
     // request automatic JS validation
     data_entry_helper::enable_validation('entry_form');
@@ -137,8 +137,8 @@ class iform_term {
     self::set_breadcrumb($args);
     return $r;
   }
-  
-  /** 
+
+  /**
    * If we know the page to return to, we can set the page breadcrumb.
    */
   protected static function set_breadcrumb($args) {
@@ -147,7 +147,7 @@ class iform_term {
       hostsite_set_breadcrumb($breadcrumb);
     }
   }
-  
+
   protected static function get_reload_path () {
     $reload = data_entry_helper::get_reload_link_parts();
     unset($reload['params']['termlists_terms_id']);
@@ -160,11 +160,11 @@ class iform_term {
     }
     return $reloadPath;
   }
-  
+
   /**
-   * Handles the construction of a submission array from a set of form values. 
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * Handles the construction of a submission array from a set of form values.
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {

@@ -959,6 +959,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   $existing = '';
   $contexts = '';
   $contextDefs = array();
+  $customDefs = [];
   if (!empty($_GET['context_id'])) {
     $options['context_id'] = $_GET['context_id'];
   }
@@ -967,6 +968,16 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   if (!empty($_GET['filters_user_id'])) {
     $options['filters_user_id'] = $_GET['filters_user_id'];
+  }
+  if (!empty($options['customFilters'])) {
+    foreach ($options['customFilters'] as $idx => $filter) {
+      $filterData[] = [
+        'id' => "custom-$idx",
+        'title' => $filter['title'],
+        'defines_permissions' => isset($filter['defines_permissions']) ? $filter['defines_permissions'] : 'f',
+      ];
+      $customDefs["custom-$idx"] = $filter['definition'];
+    }
   }
   // Add some preset filters in.
   // If in the warehouse we don't need to worry about user specific preferences when setting up milestones.
@@ -1116,11 +1127,11 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       }
       $r .= "<form action=\"$reloadPath\" method=\"post\" >";
       $r .= data_entry_helper::select(array(
-          'label' => lang::get('Select filter type'),
-          'fieldname' => 'filter:sharing',
-          'lookupValues' => $options['adminCanSetSharingTo'],
-          'afterControl' => '<input type="submit" value="Go"/>',
-          'default' => $options['sharingCode']
+        'label' => lang::get('Select filter type'),
+        'fieldname' => 'filter:sharing',
+        'lookupValues' => $options['adminCanSetSharingTo'],
+        'afterControl' => '<input type="submit" value="Go"/>',
+        'default' => $options['sharingCode'],
       ));
       $r .= '</form>';
     }
@@ -1135,6 +1146,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
         '</span></div><span class="changed" style="display:none" title="' .
         lang::get('This filter has been changed') . '">*</span>';
     $r .= '<div>';
+    if ($customDefs) {
+      data_entry_helper::$javascript .= "indiciaData.filterCustomDefs = " . json_encode($customDefs) . ";\n";
+    }
     if ($contexts) {
       data_entry_helper::$javascript .= "indiciaData.filterContextDefs = " . json_encode($contextDefs) . ";\n";
       if (count($contextDefs) > 1) {
@@ -1157,6 +1171,18 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       // A context filter is loaded initially. It doesn't need to be set in the fixedFilterParamsToApply since the
       // report filter panel enforces the correct context is applied at all times.
       report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $contextFilter);
+    }
+    // Remove bits of the definition that shouldn't go in as a report filter
+    // parameter as they contain arrays.
+    $definitionKeysToExcludeFromFilter = [
+      'taxon_group_names',
+      'higher_taxa_taxon_list_names',
+      'taxa_taxon_list_names',
+      'taxon_designation_list_names',
+    ];
+    foreach ($definitionKeysToExcludeFromFilter as $key) {
+      unset(report_helper::$initialFilterParamsToApply[$key]);
+      unset(report_helper::$initialFilterParamsToApply["{$key}_context"]);
     }
     $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";
@@ -1344,7 +1370,7 @@ HTML;
       $optionParams[substr($key, 7)] = $value;
     }
   }
-  $allParams = array_merge($optionParams, $getParams);
+  $allParams = array_merge(['quality' => '!R'], $optionParams, $getParams);
   if (!empty($allParams)) {
     report_helper::$initialFilterParamsToApply = array_merge(report_helper::$initialFilterParamsToApply, $allParams);
     $json = json_encode($allParams);
@@ -1361,7 +1387,7 @@ HTML;
 if ($('#select-filter').val()) {
   loadFilter($('#select-filter').val(), $getParams);
 } else {
-  applyFilterToReports(false);
+  indiciaFns.applyFilterToReports(false);
 }
 
 JS;

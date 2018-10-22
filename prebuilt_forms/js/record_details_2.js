@@ -1,5 +1,5 @@
 
-(function enclosed($) {
+jQuery(document).ready(function docReady($) {
   function showComment(comment, username) {
     var html = '<div class="comment">';
     var c = comment.replace(/\n/g, '<br/>');
@@ -13,7 +13,7 @@
     $('#comment-list').prepend(html);
   }
 
-  indiciaFns.saveComment = function (occurrenceId) {
+  indiciaFns.saveComment = function saveComment(occurrenceId) {
     var data = {
       website_id: indiciaData.website_id,
       'occurrence_comment:occurrence_id': occurrenceId,
@@ -24,7 +24,7 @@
     $.post(
       indiciaData.ajaxFormPostUrl.replace('occurrence', 'occ-comment'),
       data,
-      function (response) {
+      function commentResponse(response) {
         if (typeof response.error === 'undefined') {
           showComment($('#comment-text').val(), indiciaData.username);
           $('#comment-text').val('');
@@ -63,5 +63,5 @@
     layer.features[0].style = null;
     layer.redraw();
   });
-})(jQuery);
+});
 

@@ -459,7 +459,7 @@ NEWFUNCS;
               duplicateStore[duplicateStoreIndex] = select.value;
               duplicateStoreIndex++;
             }
-             
+
           }
           valueStore[valueStoreIndex] = select.value;
           valueStoreIndex++;
@@ -619,8 +619,10 @@ NEWFUNCS;
         if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
             ($surveyFieldMap['survey_id']==$survey_id || $surveyFieldMap['survey_id']=="*" /* Used for locations */)) {
           $allowedFields = self::explode_lines($surveyFieldMap['fields']);
-          $trimEqualsValue = create_function('&$val', '$tokens = explode("=",$val); $val=$tokens[0];');
-          array_walk($allowedFields, $trimEqualsValue);
+          array_walk($allowedFields, function(&$val) {
+            $tokens = explode("=",$val);
+            $val = $tokens[0];
+          });
           $fields = array_intersect_key($fields, array_combine($allowedFields, $allowedFields));
         }
       }
@@ -708,13 +710,8 @@ NEWFUNCS;
         $post['user_id'] = hostsite_get_user_field('indicia_user_id');
       $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
       $response = self::http_post($request, $post);
-      if (!isset($response['output']) || $response['output'] != 'OK')
+      if (!isset($response['output']) || $response['output'] != 'OK') {
         return "Could not upload the mappings metadata. <br/>" . print_r($response, TRUE);
-      if (!empty(parent::$warehouse_proxy)) {
-        $warehouseUrl = parent::$warehouse_proxy;
-      }
-      else {
-        $warehouseUrl = parent::$base_url;
       }
       self::$onload_javascript .= "
     /**
@@ -724,7 +721,7 @@ NEWFUNCS;
     uploadChunk = function() {
       var limit=50;
       $.ajax({
-        url: '" . $warehouseUrl . "index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=" . $options['model'] . "',
+        url: '" . parent::getProxiedBaseUrl() . "index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=" . $options['model'] . "',
         dataType: 'jsonp',
         success: function(response) {
           total = total + response.uploaded;
@@ -951,7 +948,7 @@ NEWFUNCS;
      * The value is an array of regexes that the system will automatically match against.
      */
     $alternatives = array(
-      "sample:entered sref" => array("/(sample)?(spatial|grid)ref(erence)?/"),
+      "sample:entered sref" => array("/(sample)?((spatial|grid|map)ref(erence)?|lat(\/?)lon(g?))/"),
       "occurrence_2:taxa taxon list (from controlled termlist)" => array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "occurrence:taxa taxon list (from controlled termlist)" => array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "sample:location name" => array("/(site|location)(name)?/"),
@@ -1016,9 +1013,9 @@ NEWFUNCS;
       $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
       $r .= <<<TD
 <td class="centre">
-<input type="checkbox" name="$inputName" class="rememberField" id="$inputName" value="1"$checked 
-  onclick="if (!this.checked) { $('#RememberAll').removeAttr('checked'); }" 
-  title="If checked, your selection for this particular column will be saved and automatically selected during future 
+<input type="checkbox" name="$inputName" class="rememberField" id="$inputName" value="1"$checked
+  onclick="if (!this.checked) { $('#RememberAll').removeAttr('checked'); }"
+  title="If checked, your selection for this particular column will be saved and automatically selected during future
     imports. Any alterations you make to this default selection in the future will also be remembered until you deselect
     the checkbox.">
 </td>
@@ -1103,10 +1100,9 @@ TD;
         throw new Exception('Uploaded file must be a csv file');
       // Generate a file id to store the upload as
       $destination = time() . rand(0,1000) . "." . $fext;
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      $interim_path = dirname(__FILE__) . '/' . $interim_image_folder;
-      if (move_uploaded_file($file['tmp_name'], "$interim_path$destination")) {
-        return "$interim_path$destination";
+      $interimPath = self::getInterimImageFolder('fullpath');
+      if (move_uploaded_file($file['tmp_name'], "$interimPath$destination")) {
+        return "$interimPath$destination";
       }
     }
     elseif (isset($options['existing_file']))

@@ -36,7 +36,7 @@ require_once('includes/user.php');
  */
 class iform_ukbms_section_plot {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -178,7 +178,7 @@ class iform_ukbms_section_plot {
       		'required' => false,
       		'group' => 'Report Settings'
       	),
-      		
+
       	array(
       		'name'=>'locationTypesFilter',
       		'caption'=>'Restrict locations to types',
@@ -264,7 +264,7 @@ class iform_ukbms_section_plot {
       		'default' => 'none',
       		'group' => 'Data Handling'
       	),
-      		
+
         array(
           'name' => 'width',
           'caption' => 'Chart Width',
@@ -309,7 +309,7 @@ class iform_ukbms_section_plot {
         "sequence":[{"type":"str"}]
     },
     "highlightColor":{"type":"str","desc":"A colour to use when highlighting an area on a filled line plot."}
-  }  
+  }
 }',
           'required' => false,
           'group'=>'Chart Options'
@@ -484,17 +484,17 @@ class iform_ukbms_section_plot {
     // Branch Manager: all sites allocated to me via CMS User or Branch CMS User
     // Admin: all sites.
     // assume if a sensitive site is allocated to a user, they have permission to see it.
-  	// note that when in user specific mode it returns the list currently assigned to the user: it does not give 
+  	// note that when in user specific mode it returns the list currently assigned to the user: it does not give
   	// locations which the user previously recorded data against, but is no longer allocated to.
     global $user;
     $userUID = $user->uid;
     $manager = (isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission']));
-    	
+
     $ctrl = '<label class="location-select-label">'.lang::get('Site').':</label>';
 
     $cmsAttr = $args['cmsLocAttrId'];
     $branchCmsAttr = $args['branchCmsLocAttrId'];
-    
+
     $locationListArgs=array(// 'nocache'=>true,
     		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '',
     				'locattrs'=>(!empty($args['sensitivityLocAttrId']) ? $args['sensitivityLocAttrId'] : '')),
@@ -502,14 +502,14 @@ class iform_ukbms_section_plot {
             'readAuth' => $readAuth,
             'caching' => true,
             'dataSource' => 'library/locations/locations_list');
-	// could use locattrs to fetch sensitive 
+	// could use locattrs to fetch sensitive
     $attrArgs = array(
     		'valuetable'=>'location_attribute_value',
     		'attrtable'=>'location_attribute',
     		'key'=>'location_id',
     		'fieldprefix'=>'locAttr',
     		'extraParams'=>$readAuth);
-    
+
     // loop through all entries in the locationTypesFilter, and build an array of locations.
     $locationTypeLookUpValues = array();
     $default = false;
@@ -564,13 +564,13 @@ class iform_ukbms_section_plot {
       			$locationIDList[] = $attr['location_id'];
       	}
       	$locationListArgs['extraParams']['idlist'] = implode(',', $locationIDList);
-      	
+
       	if(isset($args['sensitivityAccessPermission']) && $args['sensitivityAccessPermission']!="" &&
       			!hostsite_user_has_permission($args['sensitivityAccessPermission']) &&
       			!empty($args['sensitivityLocAttrId'])) {
       		$locationListArgs['extraParams']['attr_location_'.$args['sensitivityLocAttrId']] = '0';
       	}
-      	
+
         if($locationListArgs['extraParams']['idlist'] != '') {
   	    	$locationList = report_helper::get_report_data($locationListArgs);
       	} else $locationList = array();
@@ -594,7 +594,7 @@ class iform_ukbms_section_plot {
       			$name.($options['surveyMapping'][$location_type_id]['includeSref'] ? ' ('.$locs[$id]['centroid_sref'].')' : '').
       			'</option>';
       	}
-      } else 
+      } else
       	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('No sites available').'&gt;</option>';
       $ctrl .='</select>';
     }
@@ -634,7 +634,7 @@ class iform_ukbms_section_plot {
   			'<option value="" class="location-select-option" >&lt;'.lang::get('No data loaded yet').'&gt;</option>' .
   			'</select>';
   }
-  
+
   private static function _copy_args($args, &$options, $list){
     foreach($list as $arg){
       if(isset($args[$arg]) && $args[$arg]!="")
@@ -668,7 +668,7 @@ class iform_ukbms_section_plot {
   	$r .= '</select>';
   	return $r;
   }
-  
+
   private static function _get_sorted_termlist_terms($auth, $key, $filter){
     $terms = helper_base::get_termlist_terms($auth, $key, $filter);
     $retVal = array();
@@ -687,7 +687,7 @@ class iform_ukbms_section_plot {
            'title="'.lang::get('Click this button to fetch the data from the database in order to display the graph. You must specify a year and site combination before you can fetch the data.').'" '.
            '/>';
   }
-  
+
   private static function _build_primary_toolbar($args, $auth, $nid, &$options)
   {
   	/* NB only interested in complete data picture - not user specific */
@@ -717,11 +717,11 @@ class iform_ukbms_section_plot {
   public static function get_form($args, $arg2, $response) {
     global $user;
     $retVal = '';
-    
+
     if(isset($args['nidvsnode']) && $args['nidvsnode'])
     	$nid = $arg2;
     else $nid = $arg2->nid;
-    
+
     if($user->uid<=0) { // we are assuming Drupal.
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
     }
@@ -729,7 +729,7 @@ class iform_ukbms_section_plot {
     if (!function_exists('hostsite_module_exists') || !hostsite_module_exists('easy_login')) {
       return('<p>'.lang::get('This form must be used with the easy_login module.').'</p>');
     }
-    
+
     iform_load_helpers(array('report_helper'));
     data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::add_resource('jqplot');
@@ -737,7 +737,7 @@ class iform_ukbms_section_plot {
     data_entry_helper::add_resource('jqplot_category_axis_renderer');
     data_entry_helper::add_resource('jquery_cookie');
     $renderer='$.jqplot.BarRenderer';
-    
+
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
 
     // ISO Date - Mon=1, Sun=7
@@ -754,7 +754,7 @@ class iform_ukbms_section_plot {
 			($allWeekNumberFilter[1] != '' && (intval($allWeekNumberFilter[1])!=$allWeekNumberFilter[1] || $allWeekNumberFilter[1]<$allWeekNumberFilter[0] || $allWeekNumberFilter[1]>52))) {
 				return ("CONFIG ERROR: Invalid format for All Weeks definition: ".$options['allWeeks']);
 	}
-    
+
     $options = array(
       'dataSource' => $args['report_name'],
       'mode' => 'report',
@@ -801,7 +801,7 @@ class iform_ukbms_section_plot {
       $options['extraParams']['occattrs']=$args['countOccAttrId'];
     } else
     	$options['extraParams']['occattrs']='';
- 
+
     if (function_exists('hostsite_get_user_field')) {
     	// If the host environment (e.g. Drupal module) can tell us which Indicia user is logged in, pass that
     	// to the report call as it might be required for filters.
@@ -811,15 +811,15 @@ class iform_ukbms_section_plot {
     // taxon_list_id=51
     if(isset($args['taxonList']) && $args['taxonList']!='')
     	$options['extraParams']['taxon_list_id']=$args['taxonList'];
-    
+
     foreach($options['extraParams'] as $key => $value) {
     	$options['reportExtraParams'] .= '&'.$key.'='.$value;
     }
-    
+
     // This is specifically a bar type
 	//    		if (isset($series['trendline']))
 	//    			data_entry_helper::add_resource('jqplot_trendline');
-    
+
     $opts = array();
     $rendererOptions = trim($args['renderer_options']);
     if (!empty($rendererOptions))
@@ -838,7 +838,7 @@ class iform_ukbms_section_plot {
     	if (!empty($options[$settings]))
     		$opts[$key] = $options[$settings];
     }
-    
+
     // X axis values are going to be section names, Y is the count.
     // Going to be 2 series max - one for each species.
     $axesOptions = trim($args['axes_options']);
@@ -849,7 +849,7 @@ class iform_ukbms_section_plot {
     $axesOptions['xaxis']['ticks'] = array();
     $opts['axes'] = $axesOptions;
     $options['opts'] = $opts;
-    
+
     // We need to fudge the json so the renderer class is not a string
     data_entry_helper::$javascript .= "
 uspPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot.CanvasAxisLabelRenderer"','"$.jqplot.BarRenderer"'), array('$.jqplot.CategoryAxisRenderer','$.jqplot.CanvasAxisLabelRenderer','$.jqplot.BarRenderer'), json_encode($options)) . ");
@@ -858,7 +858,7 @@ uspPrepChart(" . str_replace(array('"$.jqplot.CategoryAxisRenderer"','"$.jqplot.
     $heightStyle = (!empty($options['height']) ? "height: $options[height]px;" : '');
     $widthStyle = "width: 100%;";
     // Add controls first: set up a control bar
-    
+
     $retVal .= "\n".'<table id="primary-controls-table" class="ui-widget ui-widget-content ui-corner-all controls-table">' .
     				'<thead class="ui-widget-header">' .
 	    				self::_build_primary_toolbar($args, $auth, $nid, $options) .

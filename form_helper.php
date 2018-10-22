@@ -26,7 +26,6 @@
  * Link in other required php files.
  */
 require_once 'lang.php';
-require_once 'helper_config.php';
 require_once 'helper_base.php';
 
 /**
@@ -70,8 +69,23 @@ class form_helper extends helper_base {
     while (FALSE !== ($file = readdir($dir))) {
       $parts = explode('.', $file);
       if ($file != "." && $file != ".." && strtolower($parts[count($parts) - 1]) === 'php') {
-        require_once $path . 'prebuilt_forms/' . $file;
         $file_tokens = explode('.', $file);
+        try {
+          require_once $path . 'prebuilt_forms/' . $file;
+        }
+        catch (Throwable $e) {
+          // Add a stub to tell the user this form is broken. Recommended so it
+          // is not hidden away.
+          $forms['Broken forms'][$file_tokens[0]] = [
+            'title' => "$file_tokens[0] has a syntax error",
+            'recommended' => TRUE,
+          ];
+          if (!isset($recommendedForms['Broken forms'])) {
+            $recommendedForms['Broken forms'] = [];
+          }
+          $recommendedForms['Broken forms'][] = $file_tokens[0];
+          continue;
+        }
         ob_start();
         if (is_callable(array('iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition'))) {
           $definition = call_user_func(array('iform_' . $file_tokens[0], 'get_' . $file_tokens[0] . '_definition'));
@@ -114,7 +128,7 @@ class form_helper extends helper_base {
       $availableForms = array('' => '<Please select a category first>');
     }
     closedir($dir);
-    // Mkes an assoc array from the categories.
+    // Makes an assoc array from the categories.
     $categories = array_merge(
       array('' => '<Please select>'),
       array_combine(array_keys($forms), array_keys($forms))

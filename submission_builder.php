@@ -23,7 +23,6 @@
  * Link in other required php files.
  */
 require_once('lang.php');
-require_once('helper_config.php');
 require_once('data_entry_helper.php');
 
 /**
@@ -32,7 +31,7 @@ require_once('data_entry_helper.php');
  * @package  Client
  */
 
-class submission_builder extends helper_config {
+class submission_builder {
 
   /**
    * Helper function to simplify building of a submission. Does simple submissions that do not involve
@@ -178,7 +177,7 @@ class submission_builder extends helper_config {
           $sa['fields'][$key] = array('value' => $value);
         } elseif ($attrEntity && (strpos($key, "$attrEntity:")===0) && substr_count($key, ':')<4) {
           // Skip fields smpAttr:atrrId:attrValId:uniqueIdx:controlname because :controlname indicates this is the extra control used for autocomplete, not the data to post.
-          // Custom attribute data can also go straight into the submission for the "master" table. Array data might need 
+          // Custom attribute data can also go straight into the submission for the "master" table. Array data might need
           // special handling to link it to existing database records.
           if (is_array($value) && count($value)>0) {
             // The value is an array
@@ -303,7 +302,7 @@ class submission_builder extends helper_config {
       $loc['location:centroid_geom']=$array['sample:geom'];
     $submission = self::build_submission($loc, array('model'=>'location',
       'subModels'=>array('locations_website'=>array('fk'=>'location_id'))));
-    $request = parent::$base_url."index.php/services/data/save";
+    $request = data_entry_helper::$base_url."index.php/services/data/save";
     $postargs = 'submission='.urlencode(json_encode($submission));
     // Setting persist_auth allows the write tokens to be re-used
     $postargs .= '&persist_auth=true&auth_token='.$array['auth_token'];
@@ -351,9 +350,21 @@ class submission_builder extends helper_config {
    * contain an image upload (as long as a suitable entity is available to store the image in).
    */
   public static function wrap_with_images($values, $modelName, $fieldPrefix=null) {
-    // Now search for an input control values which imply that an image file will need to be 
+    // Now search for an input control values which imply that an image file will need to be
     // either moved to the warehouse, or if already on the warehouse, processed to create
     // thumbnails.
+    switch ($modelName) {
+      case 'taxon_meaning':
+        $mediaModelName = 'taxon';
+        break;
+
+      case 'taxon':
+        $mediaModelName = '-';
+        break;
+
+      default:
+        $mediaModelName = $modelName;
+    }
     foreach ($_FILES as $fieldname => &$file) {
       if ($file['name'] && is_string($file['name'])) {
         // Get the original file's extension
@@ -364,7 +375,8 @@ class submission_builder extends helper_config {
         if ($fieldname==='image_upload') {
           // image_upload is a special case only used on the warehouse, so can move the file directly to its final place
           // @todo: Should this special case exist?
-          $uploadpath = dirname($_SERVER['SCRIPT_FILENAME']).'/'.(isset(parent::$indicia_upload_path) ? parent::$indicia_upload_path : 'upload/');
+          $uploadpath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
+            (isset(data_entry_helper::$indicia_upload_path) ? data_entry_helper::$indicia_upload_path : 'upload/');
           if (move_uploaded_file($file['tmp_name'], $uploadpath.$filename)) {
             // record the new file name, also note it in the $_POST data so it can be tracked after a validation failure
             $file['name'] = $filename;
@@ -372,16 +384,16 @@ class submission_builder extends helper_config {
             // This is the final file destination, so create the image files.
             Image::create_image_files($uploadpath, $filename);
           }
-        } elseif (preg_match('/^('.$modelName.':)?[a-z_]+_path$/', $fieldname)) {
+        }
+        elseif (preg_match('/^('.$mediaModelName.':)?[a-z_]+_path$/', $fieldname)) {
           // image fields can be of form {model}:{qualifier}_path (e.g. group:logo_path) if they are
           // directly embedded in the entity, rather than in a child media entity. These files need
           // to be moved to interim upload folder and will be sent to the warehouse after a successful
           // save.
           $values[$fieldname] = $filename;
-          $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-          $uploadpath = $uploadpath = helper_base::relative_client_helper_path().$interim_image_folder;
+          $uploadpath = helper_base::getInterimImageFolder('fullpath');
           $tempFile = isset($file['tmp_name']) ? $file['tmp_name'] : '';
-          if (!move_uploaded_file($tempFile, $uploadpath.$filename))
+          if (!move_uploaded_file($tempFile, $uploadpath . $filename))
             throw new exception('Failed to move uploaded file from temporary location');
           $file['name'] = $filename;
         }
@@ -390,11 +402,11 @@ class submission_builder extends helper_config {
     // Get the parent model into JSON
     $modelWrapped = self::wrap($values, $modelName, $fieldPrefix);
 
-    // Build sub-models for the media files. Don't post to the warehouse until after validation success. This 
+    // Build sub-models for the media files. Don't post to the warehouse until after validation success. This
     // also moves any simple uploaded files to the interim image upload folder.
-    $media = data_entry_helper::extract_media_data($values, $modelName.'_medium', true, true);
+    $media = data_entry_helper::extract_media_data($values, $mediaModelName.'_medium', true, true);
     foreach ($media as $item) {
-      $wrapped = self::wrap($item, $modelName.'_medium');
+      $wrapped = self::wrap($item, $mediaModelName.'_medium');
       $modelWrapped['subModels'][] = array(
         'fkId' => $modelName.'_id',
         'model' => $wrapped

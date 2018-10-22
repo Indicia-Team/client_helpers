@@ -14,22 +14,21 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
-require_once('helper_config.php');
-require_once('lang.php');
-require_once("libcurlEmulator/libcurlemu.inc.php");
+if (file_exists(dirname(__FILE__) . '/helper_config.php')) {
+  require_once 'helper_config.php';
+}
+require_once 'lang.php';
+require_once 'libcurlEmulator/libcurlemu.inc.php';
 
 global $indicia_templates;
 
 /**
  * Provides control templates to define the output of the data entry helper class.
- *
- * @package	Client
  */
 $indicia_templates = array(
   'blank' => '',
@@ -58,6 +57,8 @@ $indicia_templates = array(
     // Classes applied to <a> when styled like a button
   'anchorButtonClass' => 'ui-state-default ui-corner-all indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
+  // Message boxes
+  'messageBox' => '<div class="page-notice ui-state-highlight ui-corner-all">{message}</div>',
   // Lock icons.
   'lock_icon' => '<span id="{id}_lock" class="unset-lock">&nbsp;</span>',
   'lock_javascript' => "indicia.locks.initControls (
@@ -111,15 +112,6 @@ $indicia_templates = array(
     "document.write('</div>');".
     "\n/* ]]> */</script>",
   'tab_header' => "<ul>{tabs}</ul>\n",
-  'loading_block_start' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-      'document.write(\'<div class="ui-widget ui-widget-content ui-corner-all loading-panel" >'.
-      '<img src="'.helper_config::$base_url.'media/images/ajax-loader2.gif" />'.
-      lang::get('loading')."...</div>');\n".
-      'document.write(\'<div class="loading-hide">\');'.
-      "\n/* ]]> */</script>\n",
-  'loading_block_end' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-      "document.write('</div>');\n".
-      "/* ]]> */</script>",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
   'single_species_taxon_label' => '{taxon}',
@@ -230,7 +222,7 @@ if ($("#{escapedId} option").length===0) {
   'report_picker' => '<div id="{id}" {class}>{reports}<div class="report-metadata"></div><button type="button" id="picker-more">{moreinfo}</button><div class="ui-helper-clearfix"></div></div>',
   'report_download_link' => '<div class="report-download-link"><a href="{link}">{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
-  'two-col-50' => '<div class="two columns"><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
+  'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
   'loading_overlay' => '<div class="loading-overlay"></div>',
   'report-table' => '<table{class}>{content}</table>',
   'report-thead' => '<thead{class}>{content}</thead>',
@@ -244,7 +236,10 @@ if ($("#{escapedId} option").length===0) {
   'review_input' => '<div{class}{id}><div{headerClass}{headerId}>{caption}</div>
 <div id="review-map-container"></div>
 <div{contentClass}{contentId}></div>
-</div>'
+</div>',
+  'dataValueList' => '<div class="detail-panel" id="{id}"><h3>{title}</h3><div class="record-details-fields ui-helper-clearfix">{content}</div></div>',
+  'dataValue' => '<div class="field ui-helper-clearfix"><span>{caption}:</span><span>{value}</span></div>',
+  'speciesDetailsThumbnail' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
 );
 
 
@@ -253,7 +248,88 @@ if ($("#{escapedId} option").length===0) {
  * resource management.
  * @package Client
  */
-class helper_base extends helper_config {
+class helper_base {
+
+  /*
+   * Variables that can be specified in helper_config.php, or should be set by
+   * the host system.
+   */
+
+  /**
+   * Base URL of the warehouse we are linked to.
+   *
+   * @var string
+   */
+  public static $base_url = '';
+
+  /**
+   * Path to proxy script for calls to the warehouse.
+   *
+   * Allows the warehouse to sit behind a firewall only accessible from the
+   * server.
+   *
+   * @var string
+   */
+  public static $warehouse_proxy = NULL;
+
+  /**
+   * Base URL of the GeoServer we are linked to if GeoServer is used.
+   *
+   * @var string
+   */
+  public static $geoserver_url = '';
+
+  /**
+   * A temporary location for uploaded images.
+   *
+   * Images are stored here when uploaded by a recording form but before they
+   * are sent to the warehouse.
+   *
+   * @var string
+   */
+  public static $interim_image_folder;
+
+  /**
+   * Google API key for place searches.
+   *
+   * @var string
+   */
+  public static $google_api_key = '';
+
+  /**
+   * Google Maps JavaScript API key.
+   *
+   * @var string
+   */
+  public static $google_maps_api_key = '';
+
+  /**
+   * Bing Maps API key.
+   *
+   * @var string
+   */
+  public static $bing_api_key = '';
+
+  /**
+   * Ordnance Survey Maps API key.
+   *
+   * @var string
+   */
+  public static $os_api_key = '';
+
+  /**
+   * Setting which allows the host site (e.g. Drupal) handle translation.
+   *
+   * For example, when TRUE, a call to lang::get() is delegated to Drupal's t()
+   * function.
+   *
+   * @var bool
+   */
+  public static $delegate_translation_to_hostsite = FALSE;
+
+  /*
+   * End of ariables that can be specified in helper_config.php.
+   */
 
   /**
    * @var boolean Flag set to true if returning content for an AJAX request. This allows the javascript to be returned
@@ -311,12 +387,6 @@ class helper_base extends helper_config {
    * @var string Path to Indicia cache folder. Defaults to client_helpers/cache.
    */
   public static $cache_folder = false;
-
-  /**
-   * @var string Path to proxy script for calls to the warehouse (optional, allows the warehouse to sit behind a firewall only accessible
-   * from the server).
-   */
-  public static $warehouse_proxy = null;
 
   /**
    * @var array List of resources that have already been dumped out, so we don't duplicate them. For example, if the
@@ -465,16 +535,6 @@ class helper_base extends helper_config {
    */
   public static $data = array();
 
-  /**
-   * @var string Google API key. Placed here rather than helper_config.php, as only recently introduced.
-   */
-  public static $google_api_key = '';
-
-  /**
-   * @var string Google Maps API key. Placed here rather than helper_config.php, as only recently introduced.
-   */
-  public static $google_maps_api_key = '';
-
   /*
    * Global format for display of dates such as sample date, date attributes in Drupal.
    * Note this only affects the loading of the date itself when a form in edit mode loads, the format displayed as soon as the
@@ -520,6 +580,46 @@ class helper_base extends helper_config {
   protected static $indiciaFnsDone = false;
 
   /**
+   * Returns the URL to access the warehouse by, respecting proxy settings.
+   *
+   * @return string
+   */
+  public static function getProxiedBaseUrl() {
+    return empty(self::$warehouse_proxy) ? self::$base_url : self::$warehouse_proxy;
+  }
+
+  /**
+   * Returns the folder to store uploaded images in before submission.
+   *
+   * When an image has been uploaded on a form but not submitted to the
+   * warehouse, it is stored in this folder location temporarily.
+   *
+   * @param string $mode
+   *   Set to one of these options:
+   *   * fullpath - full path from root of the server disk.
+   *   * domain - path from the root of the domain.
+   *   * relative - path relative to the current script location (default)
+   *
+   * @return string
+   *   The folder location.
+   */
+  public static function getInterimImageFolder($mode = 'relative') {
+    $folder = isset(self::$interim_image_folder)
+      ? self::$interim_image_folder
+      : self::client_helper_path() . 'upload/';
+    switch ($mode) {
+      case 'fullpath':
+        return getcwd() . '/' . $folder;
+
+      case 'domain':
+        return self::getRootFolder() . $folder;
+
+      default:
+        return $folder;
+    }
+  }
+
+  /**
    * Utility function to insert a list of translated text items for use in JavaScript.
    *
    * @param string $group
@@ -536,8 +636,8 @@ indiciaData.lang.$group = {};
 
 JS;
     foreach ($strings as $key => $text) {
-        self::$javascript .= "indiciaData.lang.$group.$key = '" .
-        str_replace("'", "\'", lang::get($text)) . "';\n";
+      self::$javascript .= "indiciaData.lang.$group.$key = '" .
+      str_replace("'", "\'", lang::get($text)) . "';\n";
     }
   }
 
@@ -575,8 +675,6 @@ JS;
    * <li>treeview</li>
    * <li>treeview_async</li>
    * <li>googlemaps</li>
-   * <li>multimap</li>
-   * <li>virtualearth</li>
    * <li>fancybox</li>
    * <li>treeBrowser</li>
    * <li>defaultStylesheet</li>
@@ -635,7 +733,7 @@ JS;
   public static function get_resources()
   {
     if (self::$resource_list===null) {
-      $base = parent::$base_url;
+      $base = self::$base_url;
       if (!self::$js_path) {
         self::$js_path = $base.'media/js/';
       } else if (substr(self::$js_path,-1)!="/") {
@@ -688,7 +786,6 @@ JS;
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
         'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
             (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key))),
-        'virtualearth' => array('javascript' => array("$protocol://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.1")),
         'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
         'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
@@ -779,7 +876,13 @@ JS;
     if (self::$validation_errors!==null) {
        if (array_key_exists($fieldname, self::$validation_errors)) {
          $errorKey = $fieldname;
-       } elseif (substr($fieldname, -4)=='date') {
+       }
+       elseif ($fieldname === 'sample:location_id' && array_key_exists('sample:location_name', self::$validation_errors)) {
+         // Location autocompletes can have a linked location ID or a freetext
+         // location name, so outptu both errors against the control.
+         $errorKey = 'sample:location_name';
+       }
+       elseif (substr($fieldname, -4)=='date') {
           // For date fields, we also include the type, start and end validation problems
           if (array_key_exists($fieldname.'_start', self::$validation_errors)) {
             $errorKey = $fieldname.'_start';
@@ -888,12 +991,7 @@ JS;
    */
   public static function get_uploaded_image_folder() {
     if (!isset(self::$final_image_folder) || self::$final_image_folder=='warehouse') {
-      if (!empty(self::$warehouse_proxy)) {
-        $warehouseUrl = self::$warehouse_proxy;
-      } else {
-        $warehouseUrl = self::$base_url;
-      }
-      return $warehouseUrl.(isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
+      return self::getProxiedBaseUrl() . (isset(self::$indicia_upload_path) ? self::$indicia_upload_path : 'upload/');
     } else {
       return self::getRootFolder() . self::client_helper_path() . self::$final_image_folder;
     }
@@ -1352,12 +1450,13 @@ JS;
    * @return string Error message, or true if successful.
    */
   public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
-    if ($readAuth==null) $readAuth=$_POST;
-    $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    $interim_path = dirname(__FILE__).'/'.$interim_image_folder;
-    if (!file_exists($interim_path.$path))
-      return "The file $interim_path$path does not exist and cannot be uploaded to the Warehouse.";
-    $serviceUrl = parent::$base_url."index.php/services/".$service;
+    if ($readAuth == NULL) {
+      $readAuth = $_POST;
+    }
+    $interimPath = self::getInterimImageFolder('fullpath');
+    if (!file_exists($interimPath.$path))
+      return "The file $interimPath$path does not exist and cannot be uploaded to the Warehouse.";
+    $serviceUrl = self ::$base_url . "index.php/services/$service";
     // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
     $postargs = array('name_is_guid' => 'true');
     // attach authentication details
@@ -1367,7 +1466,7 @@ JS;
       $postargs['nonce'] = $readAuth['nonce'];
     if ($persist_auth)
       $postargs['persist_auth'] = 'true';
-    $file_to_upload = array('media_upload'=>'@'.realpath($interim_path.$path));
+    $file_to_upload = array('media_upload'=>'@'.realpath($interimPath.$path));
     $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
     $output = json_decode($response['output'], true);
     $r = true; // default is success
@@ -1381,7 +1480,7 @@ JS;
           $r = $output['error'];
       }
     }
-    unlink(realpath($interim_path.$path));
+    unlink(realpath($interimPath.$path));
     return $r;
   }
 
@@ -1413,7 +1512,7 @@ JS;
   public static function get_auth($website_id, $password) {
     self::$website_id = $website_id;
     $postargs = "website_id=$website_id";
-    $response = self::http_post(parent::$base_url.'index.php/services/security/get_nonce', $postargs);
+    $response = self::http_post(self::$base_url . 'index.php/services/security/get_nonce', $postargs);
     if (isset($response['status'])) {
       if ($response['status'] === 404) {
         throw new Exception(lang::get('The warehouse URL {1} was not found. Either the warehouse is down or the ' .
@@ -1580,10 +1679,6 @@ JS;
           }
           if (isset($resourceList[$resource]['javascript'])) {
             foreach ($resourceList[$resource]['javascript'] as $j) {
-              // if enabling fancybox, link it up
-              if (strpos($j, 'fancybox.')!==false) {
-                self::$javascript .= "jQuery('a.fancybox').fancybox();\n";
-              }
               // look out for a condition that this script is IE only.
               if (substr($j, 0, 4)=='[IE]'){
               	$libraries .= "<!--[if IE]><script type=\"text/javascript\" src=\"".substr($j, 4)."\"></script><![endif]-->\n";
@@ -1612,23 +1707,30 @@ JS;
    */
   public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper=false, $closure=false) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
+      $proxyUrl = self::relative_client_helper_path() . 'proxy.php';
       $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
       $script = $includeWrapper ? "<script type='text/javascript'>/* <![CDATA[ */\n" : "";
       $script .= $closure ? "(function ($) {\n" : "";
       $script .= "
 indiciaData.imagesPath='" . self::$images_path . "';
 indiciaData.warehouseUrl='" . self::$base_url . "';
+indiciaData.proxyUrl='$proxyUrl';
 indiciaData.protocol='$protocol';
 indiciaData.jQuery = jQuery; //saving the current version of jQuery
 ";
-      if(!empty(self::$website_id)) // not on warehouse
-          $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
+      if (!empty(self::$website_id)) {
+        // not on warehouse
+        $script .= "indiciaData.website_id = " . self::$website_id . ";\n";
+        if (function_exists('hostsite_get_user_field')) {
+          $userId = hostsite_get_user_field('indicia_user_id');
+          if ($userId) {
+            $script .= "indiciaData.user_id = $userId;\n";
+          }
+        }
+      }
 
       if (self::$js_read_tokens) {
-        if (!empty(parent::$warehouse_proxy))
-          self::$js_read_tokens['url'] = parent::$warehouse_proxy;
-        else
-          self::$js_read_tokens['url'] = self::$base_url;
+        self::$js_read_tokens['url'] = self::getProxiedBaseUrl();
         $script .= "indiciaData.read = ".json_encode(self::$js_read_tokens).";\n";
       }
       if (!empty($javascript) || !empty($late_javascript)) {
@@ -1994,9 +2096,8 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    */
   public static function explode_lines_key_value_pairs($value) {
     preg_match_all("/([^=\r\n]+)=([^\r\n]+)/", $value, $pairs);
-    $trim = create_function('&$val', '$val = trim($val);');
-    array_walk($pairs[1], $trim);
-    array_walk($pairs[2], $trim);
+    $pairs[1] = array_map('trim', $pairs[1]);
+    $pairs[2] = array_map('trim', $pairs[2]);
     if (count($pairs[1]) == count($pairs[2]) && count($pairs[1]) != 0) {
       return array_combine($pairs[1], $pairs[2]);
     } else {
@@ -2060,7 +2161,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           lang::get($options['fieldname']));
     }
     // Convert these rules into jQuery format.
-    return self::convert_to_jquery_val_metadata($rules, $options);
+    return self::converToJqueryValMetadata($rules, $options);
   }
 
   /**
@@ -2108,41 +2209,55 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   * @return string Validation metadata classes to add to the input element.
   * @todo Implement a more complete list of validation rules.
   */
-  protected static function convert_to_jquery_val_metadata($rules, $options) {
+  protected static function converToJqueryValMetadata($rules, $options) {
     $converted = array();
     foreach ($rules as $rule) {
       // Detect the rules that can simply be passed through
       $rule = trim($rule);
-      if    ($rule=='required'
-          || $rule=='dateISO'
-          || $rule=='email'
-          || $rule=='url'
-          || $rule=='time'
-          || $rule=='integer') {
-        $converted[] = $rule.':true';
-      // Now any rules which need parsing or conversion
-      } elseif ($rule=='date' && !isset($options['allowVagueDates']) ||
-            (isset($options['allowVagueDates']) && $options['allowVagueDates']===false)) {
+      $mappings = [
+        'required' => ['jqRule' => 'required'],
+        'dateISO' => ['jqRule' => 'dateISO'],
+        'email' => ['jqRule' => 'email'],
+        'url' => ['jqRule' => 'url'],
+        'time' => ['jqRule' => 'time'],
+        'integer' => ['jqRule' => 'integer'],
+        'digit' => ['jqRule' => 'digits'],
+        'numeric' => ['jqRule' => 'number'],
+        'maximum' => ['jqRule' => 'max', 'valRegEx' => '-?\d+'],
+        'minimum' => ['jqRule' => 'min', 'valRegEx' => '-?\d+'],
+        'mingridref' => ['jqRule' => 'mingridref', 'valRegEx' => '\d+'],
+        'maxgridref' => ['jqRule' => 'maxgridref', 'valRegEx' => '\d+'],
+        'regex' => ['jqRule' => 'pattern', 'valRegEx' => '-?\d+'],
+      ];
+      $arr = explode('[', $rule);
+      $ruleName = $arr[0];
+      if (!empty($mappings[$ruleName])) {
+        $config = $mappings[$ruleName];
+        if (isset($config['valRegEx'])) {
+          if (preg_match("/$ruleName\[(?P<val>$config[valRegEx])\]/", $rule, $matches)) {
+            $converted[] = "$config[jqRule]:$matches[val]";
+          }
+        }
+        else {
+          $converted[] = "$config[jqRule]:true";
+        }
+      } elseif ($ruleName === 'date' && !isset($options['allowVagueDates']) ||
+            (isset($options['allowVagueDates']) && $options['allowVagueDates'] === false)) {
+        // Special case for dates where validation disabled when vague dates enabled.
         $converted[] = 'customDate:true';
-      } elseif ($rule=='digit') {
-        $converted[] = 'digits:true';
-      } elseif ($rule=='numeric') {
-        $converted[] = 'number:true';
-      // the next test uses a regexp named expression to find the digit in a maximum rule (maximum[10])
-      } elseif (preg_match('/maximum\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'max:'.$matches['val'];
-      // and again for minimum rules
-      } elseif (preg_match('/minimum\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'min:'.$matches['val'];
-      } elseif (preg_match('/regex\[(?P<val>.+)\]/', $rule, $matches)) {
-        $converted[] = 'pattern:'. $matches['val'];
-      } elseif (preg_match('/mingridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'mingridref:'.$matches['val'];
-      } elseif (preg_match('/maxgridref\[(?P<val>-?\d+)\]/', $rule, $matches)) {
-        $converted[] = 'maxgridref:'.$matches['val'];
+      } elseif ($ruleName === 'length' && preg_match("/length\[(?P<val>\d+(,\d+)?)\]/", $rule, $matches)) {
+        // Special case for length Kohana rule which can map to jQuery minlenth
+        // and maxlength rules.
+        $range = explode(',', $matches['val']);
+        if (count($range === 1)) {
+          $converted[] = "maxlength:$range[0]";
+        } elseif (count($range === 2)) {
+          $converted[] = "minlength:$range[0]";
+          $converted[] = "maxlength:$range[1]";
+        }
       }
     }
-    if (count($converted) == 0) {
+    if (count($converted) === 0) {
       return '';
     } else {
       return '{'. implode(', ', $converted) .'}';
@@ -2261,7 +2376,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $useCache = !self::$nocache && !isset($_GET['nocache']) && !empty($options['caching']) && $options['caching'];
     if ($useCache) {
       // Get the URL params, so we know what the unique thing is we are caching.
-      $parsedURL = parse_url(parent::$base_url.$request);
+      $parsedURL = parse_url(self::$base_url . $request);
       parse_str($parsedURL["query"], $cacheOpts);
       unset($cacheOpts['auth_token']);
       unset($cacheOpts['nonce']);
@@ -2280,9 +2395,9 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     }
     if (!isset($response) || $response===FALSE) {
       $postArgs = null;
-      $parsedURL=parse_url(parent::$base_url.$request);
+      $parsedURL=parse_url(self::$base_url . $request);
       parse_str($parsedURL["query"], $postArgs);
-      $url = explode('?', parent::$base_url . $request);
+      $url = explode('?', self::$base_url . $request);
       $newURL = array($url[0]);
 
       $getArgs = array();
@@ -2472,8 +2587,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    * Internal function to ensure old image files are purged periodically.
    */
   protected static function _purgeImages() {
-    $interimImageFolder = self::relative_client_helper_path() . (isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/');
-    self::purgeFiles(self::$cache_chance_purge, $interimImageFolder, self::$interim_image_expiry);
+    self::purgeFiles(self::$cache_chance_purge, self::getInterimImageFolder(), self::$interim_image_expiry);
   }
 
   /**
@@ -2488,7 +2602,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    */
   private static function purgeFiles($chanceOfPurge, $folder, $timeout, $allowedFileCount=0) {
     // don't do this every time.
-    if (rand(1, $chanceOfPurge)===1) {
+    if (TRUE || rand(1, $chanceOfPurge)===1) {
       // First, get an array of files sorted by date
       $files = array();
       $dir =  opendir($folder);
@@ -2566,5 +2680,36 @@ if(!function_exists('get_called_class')) {
     }
     while ($matches[1] == 'parent'  && $matches[1]);
     return $matches[1];
+  }
+}
+
+// If a helper_config class is specified, then copy over the settings.
+if (class_exists('helper_config')) {
+  if (isset(helper_config::$base_url)) {
+    helper_base::$base_url = helper_config::$base_url;
+  }
+  if (isset(helper_config::$warehouse_proxy)) {
+    helper_base::$warehouse_proxy = helper_config::$warehouse_proxy;
+  }
+  if (isset(helper_config::$geoserver_url)) {
+    helper_base::$geoserver_url = helper_config::$geoserver_url;
+  }
+  if (isset(helper_config::$interim_image_folder)) {
+    helper_base::$interim_image_folder = helper_config::$interim_image_folder;
+  }
+  if (isset(helper_config::$google_api_key)) {
+    helper_base::$google_api_key = helper_config::$google_api_key;
+  }
+  if (isset(helper_config::$google_maps_api_key)) {
+    helper_base::$google_maps_api_key = helper_config::$google_maps_api_key;
+  }
+  if (isset(helper_config::$bing_api_key)) {
+    helper_base::$bing_api_key = helper_config::$bing_api_key;
+  }
+  if (isset(helper_config::$os_api_key)) {
+    helper_base::$os_api_key = helper_config::$os_api_key;
+  }
+  if (isset(helper_config::$delegate_translation_to_hostsite)) {
+    helper_base::$delegate_translation_to_hostsite = helper_config::$delegate_translation_to_hostsite;
   }
 }

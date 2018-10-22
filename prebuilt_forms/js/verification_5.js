@@ -289,25 +289,38 @@ indiciaData.rowIdToReselect = false;
   }
 
   function recorderQueryEmailForm() {
+    var r;
     setupRecordCheckEmail(indiciaData.email_subject_send_to_recorder, indiciaData.email_body_send_to_recorder);
-    return '<form id="email-form" class="popup-form"><fieldset>' +
-      '<legend>' + indiciaData.popupTranslations.tab_email + '</legend>' +
+    r = '<form id="email-form" class="popup-form"><fieldset>' +
+      '<legend>' + indiciaData.popupTranslations.tab_email + '</legend>';
+    r += '<div class="verify-template-container"> ' +
+      '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
+      '<select class="verify-template" >' +
+      '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
+    r +=
       '<label>To:</label><input type="text" id="email-to" class="email required" value="' + email.to + '"/><br />' +
       '<label>Subject:</label><input type="text" id="email-subject" class="required" value="' + email.subject + '"/><br />' +
-      '<label>Body:</label><textarea id="email-body" class="required">' + email.body + '</textarea><br />' +
+      '<label>Body:</label><textarea id="email-body" class="required templatable-comment">' + email.body + '</textarea><br />' +
       '<input type="submit" class="default-button" ' +
       'value="' + indiciaData.popupTranslations.sendEmail + '" />' +
       '</fieldset></form>';
+    return r;
   }
 
   function recorderQueryCommentForm() {
     var workflow = (indiciaData.workflowEnabled &&
                     indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1);
-    return '<form class="popup-form"><fieldset><legend>Add new query</legend>' +
+    var r = '<form class="popup-form"><fieldset><legend>Add new query</legend>';
+    r += '<div class="verify-template-container"> ' +
+    '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
+    '<select class="verify-template" >' +
+    '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
+    r +=
       (workflow ? '<label><input type="checkbox" id="query-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' : '') +
-      '<textarea id="query-comment-text" rows="30"></textarea><br>' +
+      '<textarea id="query-comment-text" rows="30" class="templatable-comment"></textarea><br>' +
       '<button type="button" class="default-button" onclick="indiciaFns.saveComment(jQuery(\'#query-comment-text\').val(), null, jQuery(\'#query-confidential:checked\').length, null, \'t\', true); jQuery.fancybox.close();">' +
       'Add query to comments log</button></fieldset></form>';
+    return r;
   }
 
   function popupTabs(tabs) {
@@ -327,6 +340,7 @@ indiciaData.rowIdToReselect = false;
 
   function popupQueryForm(html) {
     $.fancybox(html);
+    loadVerificationTemplates('Q');
     if ($('#popup-tabs')) {
       $('#popup-tabs').tabs();
     }
@@ -337,13 +351,13 @@ indiciaData.rowIdToReselect = false;
     html += recorderQueryCommentForm();
     popupQueryForm(html);
   }
-  
+
   /*
    * Saves the authorisation token for the Record Comment Quick Reply page into the database
    * so that it is saved against the occurrence id
    * @param string authorisationNumber
    * @return boolean indicates if database was successfully written to or not
-   * 
+   *
    */
   function saveAuthorisationNumberToDb(authorisationNumber, occurrenceId) {
     var data = {
@@ -354,7 +368,7 @@ indiciaData.rowIdToReselect = false;
     $.post(
       indiciaData.ajaxFormPostUrl.replace('occurrence', 'comment_quick_reply_page_auth'),
       data,
-      function (data) {      
+      function (data) {
         if (typeof data.error !== "undefined") {
           alert(data.error);
         }
@@ -367,7 +381,7 @@ indiciaData.rowIdToReselect = false;
   function sendEmail() {
     var authorisationWriteToDbResult;
     var autoRemoveLink =false;
-    //If the email isn't for an occurrence or the setup options are missing 
+    //If the email isn't for an occurrence or the setup options are missing
     //then then we won't be writing an auth to the DB, and we will want to remove the link from the email body
     if (!indiciaData.commentQuickReplyPageLinkURL||!indiciaData.commentQuickReplyPageLinkLabel||!occurrenceId) {
       autoRemoveLink=true;
@@ -376,7 +390,7 @@ indiciaData.rowIdToReselect = false;
       var personIdentifierParam;
       // Note: The quick reply page does actually support supplying a user_id parameter to it, however we don't do that in practice here as
       // we don't actually know if the user has an account (we would also have to collect the user_id for the entered email)
-      personIdentifierParam='&email_address='+email.to;  
+      personIdentifierParam='&email_address='+email.to;
       //Need an authorisation unique string in URL, this is linked to the occurrence.
       //Only if correct auth and occurrence_id combination are present does the Record Comment Quick Reply page display
       var authorisationNumber = makeAuthNumber();
@@ -395,12 +409,12 @@ indiciaData.rowIdToReselect = false;
     // Replace the text token from the email with the actual link or remove the link if
     // A. We couldn't write the authorisation to the database
     // B. The system is requesting we remove the link (perhaps the required options are not filled in)
-    if (authorisationWriteToDbResult!=='failure' && autoRemoveLink===false) {  
+    if (authorisationWriteToDbResult!=='failure' && autoRemoveLink===false) {
       email.body = email.body
             .replace('%commentQuickReplyPageLink%', commentQuickReplyPageLink);
     } else {
       email.body = email.body
-            .replace('%commentQuickReplyPageLink%', '');  
+            .replace('%commentQuickReplyPageLink%', '');
     }
     $.post(
       indiciaData.ajaxUrl + '/email/' + indiciaData.nid + urlSep,
@@ -419,7 +433,7 @@ indiciaData.rowIdToReselect = false;
       }
     );
   }
-  
+
   /*
    * Create a random authorisation number to pass to the Record Comment Quick Reply page
    * (This page sits outside the Warehouse)
@@ -748,7 +762,7 @@ indiciaData.rowIdToReselect = false;
         null,
         function (data) {
           $('#media-tab').html(data);
-          $('#media-tab a.fancybox').fancybox();
+          $('#media-tab a.fancybox').fancybox({ afterLoad: indiciaFns.afterFancyboxLoad });
         }
       );
     }
@@ -824,17 +838,17 @@ indiciaData.rowIdToReselect = false;
       function (data) {
         if (data.length > 0) {
           for (i = 0; i < data.length; i++) {
-            $('#verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
+            $('.verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
           }
-          $('#verify-template').data('data', data);
+          $('.verify-template').data('data', data);
         } else {
-          $('#verify-template-container').hide();
+          $('.verify-template-container').hide();
         }
       }
     );
-    $('#verify-template').change(function () {
-      var templateID = $('#verify-template').val();
-      var data = $('#verify-template').data('data');
+    $('.verify-template').change(function () {
+      var templateID = $('.verify-template').val();
+      var data = $('.verify-template').data('data');
       var substitute = function (item) {
         // The currRec is populated from the details report reports_for_prebuilt_forms/verification_5/record_data
         var conversions = {
@@ -877,7 +891,7 @@ indiciaData.rowIdToReselect = false;
       };
       for (i = 0; i < data.length; i++) {
         if (data[i].id === templateID) {
-          $('#verify-comment').val(substitute(data[i].template));
+          $('.templatable-comment').val(substitute(data[i].template));
         }
       }
     });
@@ -888,11 +902,11 @@ indiciaData.rowIdToReselect = false;
     var html = '<form id="redet-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.redetermine + '</legend>';
     html += '<div id="redet-dropdown-popup-ctnr"></div>';
-    html += '<div id="verify-template-container"> ' +
+    html += '<div class="verify-template-container"> ' +
     '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
-    '<select id="verify-template" >' +
+    '<select class="verify-template" >' +
     '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
-    html += '<label class="auto">Comment:</label><textarea id="verify-comment" rows="5" cols="80"></textarea><br />' +
+    html += '<label class="auto">Comment:</label><textarea id="verify-comment" class="templatable-comment" rows="5" cols="80"></textarea><br />' +
       '<input type="submit" class="default-button" value="' +
       indiciaData.popupTranslations.redetermine + '" />' +
       '</fieldset></form>';
@@ -933,13 +947,13 @@ indiciaData.rowIdToReselect = false;
     html = '<fieldset class="popup-form status-form">' +
       '<legend><span class="icon status-' + status + substatus + '"></span>' +
       indiciaData.popupTranslations.title.replace('{1}', '<strong>' + statusLabel(status, substatus)) + '</strong></legend>';
-    html += '<div id="verify-template-container"> ' +
+    html += '<div class="verify-template-container"> ' +
       '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
-      '<select id="verify-template" >' +
+      '<select class="verify-template" >' +
       '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
 
     html += '<label class="auto">' + indiciaData.popupTranslations.commentLabel + ':</label>' +
-      '<textarea id="verify-comment" rows="5" cols="80"></textarea><br />';
+      '<textarea id="verify-comment" class="templatable-comment" rows="5" cols="80"></textarea><br />';
 
     html += '<label class="auto">' + indiciaData.popupTranslations.referenceLabel + ':</label>' +
       '<input type="text" id="verify-reference" value=""><br />' +
@@ -953,7 +967,7 @@ indiciaData.rowIdToReselect = false;
     $.fancybox(html);
     if (multimode) {
       // Doing multiple records, so can't use templates
-      $('#verify-template-container').hide();
+      $('.verify-template-container').hide();
     } else {
       loadVerificationTemplates(status + substatus);
     }
@@ -1030,10 +1044,20 @@ indiciaData.rowIdToReselect = false;
     $.post(request,
       'report=' + encodeURIComponent(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) +
       '&params=' + encodeURIComponent(JSON.stringify(params)) +
-      '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus,
-      function (response) {
-        indiciaData.reports.verification.grid_verification_grid.reload(true);
-        alert(response + ' records processed');
+      '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus +
+      '&dryrun=true',
+      function (proposedChanges) {
+        if (confirm(proposedChanges + ' records will be affected. Are you sure you want to proceed?')) {
+          $.post(request,
+            'report=' + encodeURIComponent(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) +
+            '&params=' + encodeURIComponent(JSON.stringify(params)) +
+            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreRules + substatus,
+            function (affected) {
+              indiciaData.reports.verification.grid_verification_grid.reload(true);
+              alert(affected + ' records processed');
+            }
+          );
+        }
       }
     );
     $.fancybox.close();
@@ -1129,6 +1153,7 @@ indiciaData.rowIdToReselect = false;
     var verifyGridButtons = '<button type="button" class="default-button verify-grid-trusted tools-btn" id="verify-grid-trusted">Review grid</button>' +
         '<button type="button" id="btn-multiple" title="Select this tool to tick off a list of records and action all of the ticked records in one go">Review tick list</button>',
       trustedHtml;
+    $('#verification-grid').height($(document).height() - $('#verification-grid').offset().top - 50);
     $('#filter-build').after(verifyGridButtons);
     $('#verify-grid-trusted').click(function () {
       var settings = indiciaData.reports.verification.grid_verification_grid[0].settings;
@@ -1226,10 +1251,19 @@ indiciaData.rowIdToReselect = false;
           ignoreParams = $('.quick-verify-popup input[name=ignore-checks]:checked').length > 0 ? 'true' : 'false';
           $.post(request,
             'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
-            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus,
-            function (response) {
-              indiciaData.reports.verification.grid_verification_grid.reload();
-              alert(response + ' records processed');
+            '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus +
+            '&dryrun=true',
+            function (proposedChanges) {
+              if (confirm(proposedChanges + ' records will be affected. Are you sure you want to proceed?')) {
+                $.post(request,
+                  'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource) + '&params=' + encodeURI(JSON.stringify(params)) +
+                  '&user_id=' + indiciaData.userId + '&ignore=' + ignoreParams + substatus,
+                  function (affected) {
+                    indiciaData.reports.verification.grid_verification_grid.reload();
+                    alert(affected + ' records processed');
+                  }
+                );
+              }
             }
           );
           $.fancybox.close();
@@ -1646,7 +1680,7 @@ indiciaData.rowIdToReselect = false;
      * custom species lists.
      */
     $('#redet-from-full-list').change(function () {
-      if ($('#redet-from-full-list').attr('checked')) {
+      if ($('#redet-from-full-list:checked').length) {
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: indiciaData.mainTaxonListId });
       } else {
         $('#redet\\:taxon').setExtraParams({ taxon_list_id: currRec.extra.taxon_list_id });

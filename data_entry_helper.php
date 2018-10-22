@@ -23,7 +23,6 @@
 /**
  * Link in other required php files.
  */
-require_once 'helper_config.php';
 require_once 'helper_base.php';
 require_once 'submission_builder.php';
 
@@ -193,18 +192,10 @@ class data_entry_helper extends helper_base {
     elseif (!isset($options['defaultCaption'])) {
       $options['defaultCaption'] = '';
     }
-
-    if (!empty(parent::$warehouse_proxy)) {
-      $warehouseUrl = parent::$warehouse_proxy;
-    }
-    else {
-      $warehouseUrl = parent::$base_url;
-    }
     $options = array_merge(array(
       'template' => 'autocomplete',
-      'url' => isset($options['report'])
-        ? $warehouseUrl . "index.php/services/report/requestReport"
-        : $warehouseUrl . "index.php/services/data/" . $options['table'],
+      'url' => parent::getProxiedBaseUrl() . 'index.php/services/' .
+        (isset($options['report']) ? 'report/requestReport' : "data/$options[table]"),
       // Escape the ids for jQuery selectors.
       'escaped_input_id' => self::jq_esc($options['inputId']),
       'escaped_id' => self::jq_esc($options['id']),
@@ -332,6 +323,7 @@ class data_entry_helper extends helper_base {
               'termlist_id' => $def['termlist_id'],
               'view' => 'cache',
               'orderby' => isset($def['orderby']) ? $def['orderby'] : 'term',
+              'allow_data_entry' => 't',
             ),
           ));
           foreach ($termlistData as $term) {
@@ -550,26 +542,31 @@ $('#$escaped').change(function(e) {
     if (substr($options['fieldname'],-2) !='[]')
       $options['fieldname'] .= '[]';
 
-    if ($options['addToTable']===true) {
-      // prepare options for updating the source table
-      $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname'])-2);
+    if ($options['addToTable'] === true) {
+      // Prepare options for updating the source table.
+      $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname']) - 2);
       if (preg_match('/^[a-z]{3}Attr\:[1-9][0-9]*$/', $options['basefieldname'])) {
-        switch (substr($options['basefieldname'],0,3)) {
+        switch (substr($options['basefieldname'], 0, 3)) {
           case 'loc':
             $options['mainEntity'] = 'location';
             break;
+
           case 'occ':
             $options['mainEntity'] = 'occurrence';
             break;
+
           case 'smp':
             $options['mainEntity'] = 'sample';
             break;
+
           case 'srv':
             $options['mainEntity'] = 'survey';
             break;
+
           case 'psn':
             $options['mainEntity'] = 'person';
             break;
+
           default:
             $options['mainEntity'] = '';
         }
@@ -583,18 +580,18 @@ $('#$escaped').change(function(e) {
       $options['subListAdd'] = '';
     }
 
-    // prepare embedded search control for add bar panel
+    // Prepare embedded search control for add bar panel.
     $list_options = $options;
     unset($list_options['helpText']);
-    $list_options['id'] = $list_options['id'].':search';
+    $list_options['id'] = "$list_options[id]:search";
     $list_options['fieldname'] = $list_options['id'];
-    $list_options['default']='';
-    $list_options['lockable']=null;
-    $list_options['label'] = null;
+    $list_options['default'] = '';
+    $list_options['lockable'] = NULL;
+    $list_options['label'] = NULL;
     $list_options['controlWrapTemplate'] = 'justControl';
     if (!empty($options['selectMode']) && $options['selectMode'])
       $list_options['selectMode']=true;
-    // set up add panel
+    // Set up add panel.
     $control = $options['autocompleteControl'];
     $options['panel_control'] = self::$control($list_options);
 
@@ -602,7 +599,7 @@ $('#$escaped').change(function(e) {
     $options['inputId'] = $options['id'].':'.$options['captionField'];
     $options = array_merge(array(
       'template' => 'sub_list',
-      // Escape the ids for jQuery selectors
+      // Escape the ids for jQuery selectors.
       'escaped_input_id' => self::jq_esc($options['inputId']),
       'escaped_id' => self::jq_esc($options['id']),
       'escaped_captionField' => self::jq_esc($options['captionField'])
@@ -698,12 +695,12 @@ JS;
    * @return string HTML to insert into the page for the checkbox control.
    */
   public static function training($options) {
-    // The fieldname is fixed for the specific purpose of this control
+    // The fieldname is fixed for the specific purpose of this control.
     $options['fieldname'] = 'training';
-    // Apply default options which may be overriden by supplied values
+    // Apply default options which may be overriden by supplied values.
     $options = array_merge(array(
-      'default' => true,
-      'disabled' => true,
+      'default' => TRUE,
+      'disabled' => TRUE,
       'label' => 'Training mode',
       'helpText' => 'Records submitted in training mode are segregated from genuine records. ',
       'template' => 'training'
@@ -712,10 +709,11 @@ JS;
     $options = self::check_options($options);
     // Be flexible about the value to accept as meaning checked.
     $v = $options['default'];
-    if ($v==='on' || $v === 1 || $v === '1' || $v === 't' || $v === true) {
+    if ($v === 'on' || $v === 1 || $v === '1' || $v === 't' || $v === TRUE) {
       $options['checked'] = ' checked="checked"';
       $options['default'] = 1;
-    } else {
+    }
+    else {
       $options['checked'] = '';
       $options['default'] = 0;
     }
@@ -723,7 +721,8 @@ JS;
     if ($options['disabled']) {
       $options['disabled'] = ' disabled="disabled"';
       $options['hiddenValue'] = $options['default'];
-    } else {
+    }
+    else {
       $options['disabled'] = '';
       $options['hiddenValue'] = 0;
     }
@@ -733,72 +732,53 @@ JS;
   /**
    * Helper function to generate a list of checkboxes from a Indicia core service query.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control. Defaults to inline when not sortable.</li>
-   * <li><b>table</b><br/>
-   * Required. Table name to get data from for the select options.</li>
-   * <li><b>captionField</b><br/>
-   * Optional. Field to draw values to show in the control from. Required unless lookupValues is specified.</li>
-   * <li><b>valueField</b><br/>
-   * Optional. Field to draw values to return from the control from. Defaults
-   * to the value of captionField. </li>
-   * <li><b>otherItemId</b><br/>
-   * Optional. The termlists_terms id of the checkbox_group item that will be considered as "Other".
-   * When this checkbox is selected then another textbox is displayed allowing specific details relating to the
-   * Other item to be entered. The otherValueAttrId and otherTextboxLabel options must be specified to use this feature.</li>
-   * <li><b>otherValueAttrId</b><br/>
-   * Optional. The attribute id where the "Other" text will be stored, e.g. smpAttr:10. See otherItemId option
-   * description. This attribute's control does not need to be explicitly added to the form - it will be
-   * autogenerated.</li>
-   * <li><b>otherTextboxLabel</b><br/>
-   * Optional. The label for the "Other" textbox. See otherItemId, otherValueAttrId option descriptions.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the group is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>sortable</b></br>
-   * Set to true to allow drag sorting of the list of checkboxes. If sortable, then the layout will be a vertical
-   * column of checkboxes rather than inline.
-   * </li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>check_or_radio_group</b></br>
-   * Container element for the group of checkboxes.
-   * </li>
-   * <li><b>check_or_radio_group_item</b></br>
-   * Template for the HTML element used for each item in the group.
-   * </li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **fieldname** - Required. The name of the database field this control is bound to.
+   *   * **id** - Optional. The id to assign to the HTML control. If not assigned the fieldname is used.
+   *   * **default** - Optional. The default value to assign to the control. This is verridden when reloading a record
+   *     with existing data for this control.
+   *   * **class** - Optional. CSS class names to add to the control. Defaults to inline when not sortable.
+   *   * **table** - Required. Table name to get data from for the select options.
+   *   * **captionField** - Optional. Field to draw values to show in the control from. Required unless lookupValues is
+   *     specified.
+   *   * **valueField** - Optional. Field to draw values to return from the control from. Defaults to the value of
+   *     captionField.
+   *   * **otherItemId** - Optional. The termlists_terms id of the checkbox_group item that will be considered as
+   *     "Other". When this checkbox is selected then another textbox is displayed allowing specific details relating to
+   *     the Other item to be entered. The otherValueAttrId and otherTextboxLabel options must be specified to use this
+   *     feature.
+   *   * **otherValueAttrId** - Optional. The attribute id where the "Other" text will be stored, e.g. smpAttr:10. See
+   *     otherItemId option description. This attribute's control does not need to be explicitly added to the form - it
+   *     will be autogenerated.
+   *   * **otherTextboxLabel** - Optional. The label for the "Other" textbox. See otherItemId, otherValueAttrId option
+   *     descriptions.
+   *   * **extraParams** - Optional. Associative array of items to pass via the query string to the service. This
+   *     should at least contain the read authorisation array.
+   *   * **lookupValues** - If the group is to be populated with a fixed list of values, rather than via a service call,
+   *     then the values can be passed into this parameter as an associated array of key=>caption.
+   *   * **cachetimeout** - Optional. Specifies the number of seconds before the data cache times out - i.e. how long
+   *     after a request for data to the Indicia Warehouse before a new request will refetch the data, rather than use a
+   *     locally stored (cached) copy of the previous request. This speeds things up and reduces the loading on the
+   *     Indicia Warehouse. Defaults to the global website-wide value; if this is not specified then 1 hour.
+   *   * **template** - Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
+   *     for the outer control.
+   *   * **itemTemplate** - Optional. If specified, specifies the name of the template (in global $indicia_templates) to
+   *     use for each item in the control.
+   *   * **captionTemplate** - Optional and only relevant when loading content from a data service call. Specifies the
+   *     template used to build the caption, with each database field represented as {fieldname}.
+   *   * **sortable** - Set to true to allow drag sorting of the list of checkboxes. If sortable, then the layout will
+   *     be a vertical column of checkboxes rather than inline.
+   *   * **termImageSize** - Optional. Set to an Indicia image size preset (normally thumb, med or original) to include
+   *     term images in the output.
+   *   The output of this control can be configured using the following templates:
+   *   * **check_or_radio_group** - Container element for the group of checkboxes.
+   *   * **check_or_radio_group_item** - Template for the HTML element used for each item in the group.
    *
-   * @return string HTML to insert into the page for the group of checkboxes.
+   * @return string
+   *   HTML to insert into the page for the group of checkboxes.
    */
-  public static function checkbox_group($options) {
+  public static function checkbox_group(array $options) {
     $options = self::check_options($options);
     $options = array_merge(array(
       'class'=>empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
@@ -1061,26 +1041,23 @@ JS;
    */
   public static function file_box($options) {
     global $indicia_templates;
-    // Upload directory defaults to client_helpers/upload, but can be overriden.
-    $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-    $relpath = self::getRootFolder() . self::client_helper_path();
-    //If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
+    // If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
     if (!empty($options['subType']))
-      self::$upload_file_types[$options['subType']]=self::$upload_file_types['image'];
+      self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
     // Allow options to be defaulted and overridden
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     $defaults = array(
       'id' => 'default',
-      'upload' => true,
+      'upload' => TRUE,
       'maxFileCount' => 4,
-      'autoupload' => false,
+      'autoupload' => FALSE,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
       'runtimes' => array('html5','flash','silverlight','html4'),
-      'autoupload' => true,
+      'autoupload' => TRUE,
       'imageWidth' => 200,
-      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]/" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
-      'destinationFolder' => $relpath . $interim_image_folder,
+      'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
+      'destinationFolder' => self::getInterimImageFolder('domain'),
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
@@ -1088,7 +1065,7 @@ JS;
       'maxUploadSize' => self::convert_to_bytes(isset(parent::$maxUploadSize) ? parent::$maxUploadSize : '4M'),
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? array($options['subType']) : array('Image:Local'),
-      'fileTypes' => (object)self::$upload_file_types,
+      'fileTypes' => (object) self::$upload_file_types,
       'imgPath' => empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path,
       'caption' => lang::get('Files'),
       'addBtnCaption' => lang::get('Add {1}'),
@@ -1101,8 +1078,9 @@ JS;
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     );
     $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes']===array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
-    if (isset(self::$final_image_folder_thumbs))
-      $defaults['finalImageFolderThumbs'] = $relpath . self::$final_image_folder_thumbs;
+    if (isset(self::$final_image_folder_thumbs)) {
+      $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
+    }
     $browser = self::get_browser_info();
     // Flash doesn't seem to work on IE6.
     if ($browser['name']=='msie' && $browser['version']<7)
@@ -1149,16 +1127,19 @@ JS;
         ));
         $mediaTypeIdLimiter = $typeTermData[0]['id'];
       }
-      // add in any reloaded items, when editing or after validation failure
+      // Add in any reloaded items, when editing or after validation failure.
       if (self::$entity_to_load) {
-        //If we only want to display media of a particular type, then supply this as a parameter when extracting the media.
+        // If we only want to display media of a particular type, then supply
+        // this as a parameter when extracting the media.
         if (!empty($mediaTypeIdLimiter)) {
           $images = self::extract_media_data(self::$entity_to_load,
             isset($options['loadExistingRecordKey']) ? $options['loadExistingRecordKey'] : $options['table'],
-            false,
-            false,
-            $mediaTypeIdLimiter);
-        } else {
+            FALSE,
+            FALSE,
+            $mediaTypeIdLimiter
+          );
+        }
+        else {
           $images = self::extract_media_data(self::$entity_to_load,
             isset($options['loadExistingRecordKey']) ? $options['loadExistingRecordKey'] : $options['table']);
         }
@@ -1278,27 +1259,26 @@ JS;
     // We need to see if there is a resource in the resource list for any special files required by this driver. This
     // will do nothing if the resource is absent.
     self::add_resource('georeference_'.$options['driver']);
+    $settings = [
+      'autoCollapseResults' => $options['autoCollapseResults'] ? 't' : 'f',
+    ];
     foreach ($options as $key=>$value) {
       // if any of the options are for the georeferencer driver, then we must set them in the JavaScript.
       if (substr($key, 0, 6)=='georef') {
-        self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.$key='$value';\n";
+        $settings[$key] = $value;
       }
     }
-    if ($options['driver'] === 'google_places')
-      self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings.google_api_key=\''.self::$google_api_key."';\n";
-    // If the lookup service driver uses cross domain JavaScript, this setting provides
-    // a path to a simple PHP proxy script on the server.
-    self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.proxy='".
-      self::getRootFolder() . self::client_helper_path() . "proxy.php';\n\n";
-    self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.autoCollapseResults='".($options['autoCollapseResults'] ? 't' : 'f') . "';\n";
-    // for the indicia_locations driver, pass through the read auth and url
-    if ($options['driver'] === 'indicia_locations') {
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.warehouseUrl='".self::$base_url."';\n";
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.auth_token='".$options['readAuth']['auth_token']."';\n";
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.nonce='".$options['readAuth']['nonce']."';\n";
-      self::$javascript .= "$.fn.indiciaMapPanel.georeferenceLookupSettings.public='".($options['public'] ? 't' : 'f') . "';\n";
+    // Google driver needs a key.
+    if ($options['driver'] === 'google_places') {
+      $settings['google_api_key'] = self::$google_api_key;
+    }
+    // The indicia_locations driver needs the warehouse URL.
+    elseif ($options['driver'] === 'indicia_locations') {
+      $settings['warehouseUrl'] = self::$base_url;
+      $settings['public'] = $options['public'] ? 't' : 'f';
       self::add_resource('json');
     }
+    self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings = ' . json_encode($settings) . ";\n";
     if ($options['autoCollapseResults']) {
       // no need for close button on results list
       $options['closeButton']='';
@@ -1554,7 +1534,7 @@ JS;
       if (self::$form_mode==='ERRORS') {
         // The control is being reloaded after a validation failure. So we can display a thumbnail of the
         // already uploaded file, so the user knows not to re-upload.
-        $folder = isset(self::$interim_image_folder) ? self::$interim_image_folder : 'upload/';
+        $folder = self::getInterimImageFolder();
       } else {
         // image should be already on the warehouse
         $folder = self::get_uploaded_image_folder();
@@ -1906,7 +1886,10 @@ JS;
    * characters as literal.
    * <li><b>selectedItemTemplate</b><br/>
    * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li></ul>
+   * for the selected item in the control.</li>
+   * <li><b>termImageSize</b><br/>
+   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
+   * output.</li>
    * </ul>
    *
    * @return string HTML to insert into the page for the listbox control.
@@ -2002,9 +1985,8 @@ JS;
    * @param array $options Options array with the following possibilities:<ul>
    * <li><b>presetLayers</b><br/>
    * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
-   * 'google_satellite', 'openlayers_wms', 'nasa_mosaic', 'virtual_earth' (deprecated, use bing_aerial),
-   * 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'multimap_default', 'multimap_landranger',
-   * 'osm' (for OpenStreetMap), 'osm_th' (for OpenStreetMap Tiles@Home).</li>
+   * 'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'bing_os',
+   * 'osm' (for OpenStreetMap).</li>
    * <li><b>edit</b><br/>
    * True or false to include the edit controls for picking spatial references.</li>
    * <li><b>locate</b><br/>
@@ -2236,6 +2218,9 @@ JS;
    * <li><b>captionTemplate</b><br/>
    * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
    * with each database field represented as {fieldname}.</li>
+   * <li><b>termImageSize</b><br/>
+   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
+   * output.</li>
    * </ul>
    * The output of this control can be configured using the following templates:
    * <ul>
@@ -2363,7 +2348,11 @@ JS;
    * characters as literal.
    * <li><b>selectedItemTemplate</b><br/>
    * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li></ul>
+   * for the selected item in the control.</li>
+   * <li><b>termImageSize</b><br/>
+   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
+   * output.</li>
+   * </ul>
    *
    * @return string HTML code for a select control.
    */
@@ -3260,12 +3249,12 @@ RIJS;
       self::add_resource('plupload');
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
+      $interimImageFolder = self::getInterimImageFolder('domain');
       $js_path = self::$js_path;
       self::$javascript .= <<<JS
 indiciaData.uploadSettings = {
   uploadScript: '{$relpath}upload.php',
-  destinationFolder: '{$relpath}{$interim_image_folder}',
+  destinationFolder: '{$interimImageFolder}',
   jsPath: '$js_path'
 JS;
       $langStrings = array(
@@ -3674,10 +3663,7 @@ JS;
         } else {
           self::$javascript .= "formatter = '".$indicia_templates['taxon_label']."';\n";
         }
-        if (!empty(parent::$warehouse_proxy))
-          $url = parent::$warehouse_proxy."index.php/services/data";
-        else
-          $url = parent::$base_url."index.php/services/data";
+        $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
         self::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20) . ";\n";
@@ -3771,7 +3757,11 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     static $doneAddLinkPopup=false;
     $typeTermData = self::get_population_data(array(
       'table'=>'termlists_term',
-      'extraParams'=>$options['readAuth']+array('view'=>'cache', 'termlist_title'=>'Media types', 'columns'=>'id,term')
+      'extraParams'=>$options['readAuth']+array(
+        'view' => 'cache',
+        'termlist_title' => 'Media types',
+        'allow_data_entry' => 't',
+        'columns' => 'id,term')
     ));
     $typeTermIdLookup = array();
     foreach ($typeTermData as $record) {
@@ -4969,10 +4959,7 @@ $('#sensitive-blur').change(function() {
     global $indicia_templates;
     self::add_resource('treeview_async');
     // Declare the data service
-    if (!empty(parent::$warehouse_proxy))
-      $url = parent::$warehouse_proxy."index.php/services/data";
-    else
-      $url = parent::$base_url."index.php/services/data";
+    $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
     // Setup some default values
     $options = array_merge(array(
       'valueField'=>$options['captionField'],
@@ -5423,30 +5410,68 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   }
 
   /**
+   * Returns mappings from loaded view data to the control fieldnames.
+   *
+   * @return array
+   *   Array of mappings from view field names to form control field names.
+   */
+  private static function getControlFieldKeyMappings() {
+    return [
+      'sample:wkt' => 'sample:geom',
+      'taxa_taxon_list:taxon' => 'taxon:taxon',
+      'taxa_taxon_list:authority' => 'taxon:authority',
+      'taxa_taxon_list:taxon_attribute' => 'taxon:attribute',
+      'taxa_taxon_list:language_id' => 'taxon:language_id',
+      'taxa_taxon_list:taxon_group_id' => 'taxon:taxon_group_id',
+      'taxa_taxon_list:taxon_rank_id' => 'taxon:taxon_rank_id',
+      'taxa_taxon_list:description_in_list' => 'taxa_taxon_list:description',
+      'taxa_taxon_list:general_description' => 'taxon:description',
+      'taxa_taxon_list:external_key' => 'taxon:external_key',
+      'taxa_taxon_list:search_code' => 'taxon:search_code',
+    ];
+  }
+
+  /**
+   * Build array of form data from loaded record query.
+   *
    * Version of load_existing_record which accepts an already queried record array from the database
    * as an input parameter.
-   * @param array $record Record loaded from the db
-   * @param array $readAuth Read authorisation tokens
-   * @param string $entity Name of the entity to load data from.
-   * @param integer $id ID of the database record to load
-   * @param string $view Name of the view to load attributes from, normally 'list' or 'detail'.
-   * @param boolean $sharing Defaults to false. If set to the name of a sharing task
-   * (reporting, peer_review, verification, data_flow, moderation or editing), then the record can be
-   * loaded from another client website if a sharing agreement is in place.
-   * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
-   * @param boolean $loadImages If set to true, then image information is loaded as well.
+   *
+   * @param array $record
+   *   Record loaded from the db.
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param string $entity
+   *   Name of the entity to load data from.
+   * @param integer $id
+   *   ID of the database record to load.
+   * @param string $view
+   *   Name of the view to load attributes from, normally 'list' or 'detail'.
+   * @param boolean $sharing
+   *   Defaults to false. If set to the name of a sharing task (reporting,
+   *   peer_review, verification, data_flow, moderation or editing), then the
+   *   record can be loaded from another client website if a sharing agreement
+   *   is in place.
+   *   @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
+   * @param boolean $loadImages
+   *   If set to true, then image information is loaded as well.
+   *
    * @throws Exception
    */
   public static function load_existing_record_from($record, $readAuth, $entity, $id, $view = 'detail', $sharing = false, $loadImages = false) {
-    if (isset($record['error'])) throw new Exception($record['error']);
-    // set form mode
-    if (self::$form_mode===null) self::$form_mode = 'RELOAD';
-    // populate the entity to load with the record data
-    foreach($record as $key => $value) {
-      self::$entity_to_load["$entity:$key"] = $value;
+    if (isset($record['error'])) {
+      throw new Exception($record['error']);
     }
-    if ($entity=='sample') {
-      self::$entity_to_load['sample:geom'] = self::$entity_to_load['sample:wkt']; // value received from db in geom is not WKT, which is assumed by all the code.
+    // set form mode
+    if (self::$form_mode===null) {
+      self::$form_mode = 'RELOAD';
+    }
+    $mappings = self::getControlFieldKeyMappings();
+    // populate the entity to load with the record data
+    foreach ($record as $key => $value) {
+      self::$entity_to_load[array_key_exists("$entity:$key", $mappings) ? $mappings["$entity:$key"] : "$entity:$key"] = $value;
+    }
+    if ($entity === 'sample') {
       // If the date is a vague date, use the string formatted by the db.
       // @todo Would allow better localisation if the vague date formatting could be applied on the client.
       self::$entity_to_load['sample:date'] = empty(self::$entity_to_load['sample:display_date']) ?
@@ -5456,25 +5481,32 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         $d = new DateTime(self::$entity_to_load['sample:date']);
         self::$entity_to_load['sample:date'] = $d->format(self::$date_format);
       }
-    } elseif ($entity=='occurrence') {
+    } elseif ($entity === 'occurrence') {
       // prepare data to work in autocompletes
       if (!empty(self::$entity_to_load['occurrence:taxon']) && empty(self::$entity_to_load['occurrence:taxa_taxon_list:taxon']))
         self::$entity_to_load['occurrence:taxa_taxon_list_id:taxon'] = self::$entity_to_load['occurrence:taxon'];
     }
     if ($loadImages) {
-      $images = self::get_population_data(array(
-        'table' => $entity . '_medium',
-        'extraParams' => $readAuth + array($entity . '_id' => $id),
+      // Taxon images are linked via meaning rather than the entity ID.
+      $mediaEntity = $entity === 'taxa_taxon_list' ? 'taxon_medium' : "{$entity}_medium";
+      $filter = $entity === 'taxa_taxon_list'
+        ? ['taxon_meaning_id' => self::$entity_to_load['taxa_taxon_list:taxon_meaning_id']]
+        : [$entity . '_id' => $id];
+      $images = self::get_population_data([
+        'table' => $mediaEntity,
+        'extraParams' => $readAuth + $filter,
         'nocache' => true,
-        'sharing' => $sharing
-      ));
-      if (isset($images['error'])) throw new Exception($images['error']);
+        'sharing' => $sharing,
+      ]);
+      if (isset($images['error'])) {
+        throw new Exception($images['error']);
+      }
       foreach($images as $image) {
-        self::$entity_to_load[$entity . '_medium:id:' . $image['id']]  = $image['id'];
-        self::$entity_to_load[$entity . '_medium:path:' . $image['id']] = $image['path'];
-        self::$entity_to_load[$entity . '_medium:caption:' . $image['id']] = $image['caption'];
-        self::$entity_to_load[$entity . '_medium:media_type:' . $image['id']] = $image['media_type'];
-        self::$entity_to_load[$entity . '_medium:media_type_id:' . $image['id']] = $image['media_type_id'];
+        self::$entity_to_load["$mediaEntity:id:$image[id]"]  = $image['id'];
+        self::$entity_to_load["$mediaEntity:path:$image[id]"] = $image['path'];
+        self::$entity_to_load["$mediaEntity:caption:$image[id]"] = $image['caption'];
+        self::$entity_to_load["$mediaEntity:media_type:$image[id]"] = $image['media_type'];
+        self::$entity_to_load["$mediaEntity:media_type_id:$image[id]"] = $image['media_type_id'];
       }
     }
   }
@@ -5677,6 +5709,15 @@ $('div#$escaped_divId').indiciaTreeBrowser({
             // If an array field and we are loading an existing value, then the value needs to store the db ID otherwise we loose the link
             if ($itemFieldname)
               $value .= ":$itemFieldname";
+            if (!empty($record['preferred_image_path']) && !empty($options['termImageSize'])) {
+              $baseUrl = self::$base_url;
+              $preset = $options['termImageSize'] === 'original' ? '' : "$options[termImageSize]-";
+              $caption .= <<<HTML
+<a href="{$baseUrl}upload/$record[preferred_image_path]" class="fancybox">
+  <img src="{$baseUrl}upload/$preset$record[preferred_image_path]" />
+</a>
+HTML;
+            }
             $item = str_replace(
               array('{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
               array($value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
@@ -5740,17 +5781,13 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     $parentControlId = str_replace(':','\\\\:',$options['parentControlId']);
     $escapedId = str_replace(':','\\\\:',$options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
-    if (!empty(parent::$warehouse_proxy))
-      $base_url = parent::$warehouse_proxy;
-    else
-      $base_url = parent::$base_url;
     if (!empty($options['report'])) {
-      $url = $base_url."index.php/services/report/requestReport";
+      $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
       $request = "$url?report=".$options['report'].".xml&mode=json&reportSource=local&callback=?";
       $query = $options['filterField'] . '="+$(this).val()+"';
     }
     else {
-      $url = $base_url."index.php/services/data";
+      $url = parent::getProxiedBaseUrl() . "index.php/services/data";
       $request = "$url/".$options['table']."?mode=json&callback=?";
       $inArray = array('val');
       if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
@@ -6015,54 +6052,6 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * <p>Allows the demarcation of the start of a region of the page HTML to be declared which will be replaced by
-   * a loading message whilst the page is loading.</p>
-   * <p>If JavaScript is disabled then this has no effect. Note that hiding the block is achieved by setting
-   * it's left to move it off the page, rather than display: none. This is because OpenLayers won't initialise
-   * properly on a div that is display none.</p>
-   * <p><b>Warning.</b> To use this function, always insert a call to dump_header in the <head> element of your
-   * HTML page to ensure that JQuery is loaded first. Otherwise this will not work.</p>
-   *
-   * @return string HTML and JavaScript to insert into the page at the start of the block
-   * which is replaced by a loading panel while the page is loading.
-   */
-  public static function loading_block_start() {
-    global $indicia_templates;
-    self::add_resource('jquery_ui');
-    // For clean code, the jquery_ui stuff should have gone out in the page header, but just in case.
-    // Don't bother from inside Drupal, since the header is added after the page code runs
-    if (!in_array('jquery_ui', self::$dumped_resources) && !defined('DRUPAL_BOOTSTRAP_CONFIGURATION')) {
-      $r = self::internal_dump_resources(array('jquery_ui'));
-      array_push(self::$dumped_resources, 'jquery_ui');
-    } else {
-      $r = '';
-    }
-    $r .= $indicia_templates['loading_block_start'];
-    return $r;
-  }
-
-  /**
-   * Allows the demarcation of the end of a region of the page HTML to be declared which will be replaced by
-   * a loading message whilst the page is loading.
-   *
-   * @return string HTML and JavaScript to insert into the page at the start of the block
-   * which is replaced by a loading panel while the page is loading.
-   */
-  public static function loading_block_end() {
-    global $indicia_templates;
-    // First hide the message, then hide the form, slide it into view, then show it.
-    // This script must precede the other scripts onload, otherwise they may have problems because
-    // of assumptions that the controls are visible.
-    self::$onload_javascript = "$('.loading-panel').remove();\n".
-      "var panel=$('.loading-hide')[0];\n".
-      "$(panel).hide();\n".
-      "$(panel).removeClass('loading-hide');\n".
-      "$(panel).fadeIn('slow');\n" .
-      self::$onload_javascript;
-    return $indicia_templates['loading_block_end'];
-  }
-
-  /**
    * Either takes the passed in submission, or creates it from the post data if this is null, and forwards
    * it to the data services for saving as a member of the entity identified.
    * @param string $entity Name of the top level entity being submitted, e.g. sample or occurrence.
@@ -6134,8 +6123,7 @@ if (errors$uniq.length>0) {
       if (is_array($output) && array_key_exists('success', $output))  {
         if (isset(self::$final_image_folder) && self::$final_image_folder!='warehouse') {
           // moving the files on the local machine. Find out where from and to
-          $interim_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
-            (isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/');
+          $interimImageFolder = self::getInterimImageFolder('fullpath');
           $final_image_folder = dirname($_SERVER['SCRIPT_FILENAME']) . '/' . self::relative_client_helper_path().
             parent::$final_image_folder;
         }
@@ -6150,7 +6138,7 @@ if (errors$uniq.length>0) {
               // @todo Set PERSIST_AUTH false if last file
               $success = self::send_file_to_warehouse($item['path'], true, $writeTokens);
             } else {
-              $success = rename($interim_image_folder.$item['path'], $final_image_folder.$item['path']);
+              $success = rename($interimImageFolder.$item['path'], $final_image_folder.$item['path']);
             }
             if ($success !== true) {
               // Record all files that fail to move successfully.
@@ -7178,11 +7166,11 @@ HTML;
           $r .= '<li class="ui-state-error">Warning: The cUrl PHP library could not access the Indicia Warehouse. The error was reported as:';
           $r .= $curl_check['output'].'<br/>';
           $r .= 'Please ensure that this web server is not prevented from accessing the server identified by the ' .
-            'helper_config.php $base_url setting by a firewall. The current setting is '.parent::$base_url.'</li>';
+            '$base_url setting by a firewall. The current setting is ' . parent::$base_url . '</li>';
         } else {
           $r .= '<li class="ui-widget ui-state-error">Warning: A request sent to the Indicia Warehouse URL did not respond as expected. ' .
-            'Please ensure that the helper_config.php $base_url setting is correct. ' .
-            'The current setting is '.parent::$base_url.'<br></li>';
+            'Please ensure that the $base_url setting is correct. ' .
+            'The current setting is ' . parent::$base_url . '<br></li>';
         }
       }
       $missing_configs = array();
@@ -7192,26 +7180,26 @@ HTML;
       // don't test $indicia_upload_path and $interim_image_folder as they are assumed to be upload/ if missing.
       self::check_config('$geoserver_url', isset(self::$geoserver_url), empty(self::$geoserver_url), $missing_configs, $blank_configs);
       if (substr(self::$geoserver_url, 0, 4) != 'http') {
-        $r .= '<li class="ui-widget ui-state-error">Warning: The $geoserver_url setting in helper_config.php should include the protocol (e.g. http://).</li>';
+        $r .= '<li class="ui-widget ui-state-error">Warning: The $geoserver_url setting should include the protocol (e.g. http://).</li>';
       }
       self::check_config('$google_api_key', isset(self::$google_api_key), empty(self::$google_api_key), $missing_configs, $blank_configs);
       self::check_config('$bing_api_key', isset(self::$bing_api_key), empty(self::$bing_api_key), $missing_configs, $blank_configs);
       // Warn the user of the missing ones - the important bit.
       if (count($missing_configs)>0) {
-        $r .= '<li class="ui-widget ui-state-error">Error: The following configuration entries are missing from helper_config.php : '.
+        $r .= '<li class="ui-widget ui-state-error">Error: The following configuration entries are missing: '.
           implode(', ', $missing_configs).'. This may prevent the data_entry_helper class from functioning normally.</li>';
       }
       // Also warn them of blank ones - not so important as it should only affect the one area of functionality
       if (count($blank_configs)>0) {
-        $r .= '<li class="ui-widget ui-state-error">Warning: The following configuration entries are not specified in helper_config.php : '.
+        $r .= '<li class="ui-widget ui-state-error">Warning: The following configuration entries are not specified: '.
           implode(', ', $blank_configs).'. This means the respective areas of functionality will not be available.</li>';
       }
       // Test we have a writeable cache directory
       $cacheFolder = parent::$cache_folder ? parent::$cache_folder : self::relative_client_helper_path() . 'cache/';
       if (!is_dir($cacheFolder)) {
-        $r .= '<li class="ui-state-error">The cache path setting in helper_config.php points to a missing directory. This will result in slow form loading performance.</li>';
+        $r .= '<li class="ui-state-error">The cache path setting points to a missing directory. This will result in slow form loading performance.</li>';
       } elseif (!is_writeable($cacheFolder)) {
-        $r .= '<li class="ui-state-error">The cache path setting in helper_config.php points to a read only directory (' . $cacheFolder . '). Please change it to writeable.</li>';
+        $r .= '<li class="ui-state-error">The cache path setting points to a read only directory (' . $cacheFolder . '). Please change it to writeable.</li>';
       } else {
         // need a proper test, as is_writeable can report true when the cache file can't be created.
         $handle = @fopen("$cacheFolder/test.txt", 'wb');
@@ -7220,12 +7208,12 @@ HTML;
           if ($fullInfo)
             $r .= '<li>Success: Cache directory is present and writeable.</li>';
         } else
-          $r .= '<li class="ui-state-error">Warning: The cache path setting in helper_config.php points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
+          $r .= '<li class="ui-state-error">Warning: The cache path setting points to a directory that I can\'t write a file into (' . $cacheFolder . '). Please change it to writeable.</li>';
 
       }
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      if (!is_writeable(self::relative_client_helper_path() . $interim_image_folder))
-        $r .= '<li class="ui-state-error">The interim_image_folder setting in helper_config.php points to a read only directory (' . $interim_image_folder . '). This will prevent image uploading.</li>';
+      $interimImageFolder = self::getInterimImageFolder();
+      if (!is_writeable($interimImageFolder))
+        $r .= '<li class="ui-state-error">The interim_image_folder setting points to a read only directory (' . $interimImageFolder . '). This will prevent image uploading.</li>';
       elseif ($fullInfo)
         $r .= '<li>Success: Interim image upload directory is writeable.</li>';
     }
@@ -7234,15 +7222,22 @@ HTML;
   }
 
   /**
-   * Checks a configuration setting in the helper_config.php file. If it is missing or blank
-   * then it is added to an array so that the caller can decide what to do.
-   * @param string $name Name of the configuration parameter.
-   * @param boolean $isset Is the parameter set?
-   * @param boolean $empty Is the parameter empty?
-   * @param array $missing_configs Configuration settings that are missing are added to this array.
-   * @param array $blank_configs Configuration settings that are empty are added to this array.
+   * Checks a configuration setting.
+
+   * If it is missing or blank then it is added to an array so that the caller
+   * can decide what to do.
+
+   * @param string $name
+   *   Name of the configuration parameter.
+   * @param bool $isset
+   *   Is the parameter set?
+   * @param bool $empty Is the parameter empty?
+   * @param array $missing_configs
+   *   Configuration settings that are missing are added to this array.
+   * @param array
+   *   $blank_configs Configuration settings that are empty are added to this array.
    */
-  private static function check_config($name, $isset, $empty, &$missing_configs, &$blank_configs) {
+  private static function check_config($name, $isset, $empty, array &$missing_configs, array &$blank_configs) {
     if (!$isset) {
       array_push($missing_configs, $name);
     } else if ($empty) {
@@ -7303,7 +7298,7 @@ HTML;
     self::add_resource('json');
     if (isset($options['website_ids'])) {
       $query['in']['website_id']=$options['website_ids'];
-    } elseif ($options['attrtable']!=='person_attribute') {
+    } elseif ($options['attrtable'] !== 'person_attribute' && $options['attrtable'] !== 'taxa_taxon_list_attribute') {
       $surveys = array(NULL);
       if (isset($options['survey_id'])) {
         $surveys[] = $options['survey_id'];
@@ -7347,6 +7342,11 @@ HTML;
         'sharing' => $sharing
       ), $options['extraParams'])
     );
+    // Taxon, sample or occurrence attributes default to exclude taxon linked attrs.
+    if (in_array($options['attrtable'], ['taxa_taxon_list_attribute', 'occurrence_attribute', 'sample_attribute'])
+        && !isset($attrOptions['extraParams']['taxon_restrictions'])) {
+      $attrOptions['extraParams']['taxon_restrictions'] = 'NULL';
+    }
     $response = self::get_population_data($attrOptions);
     if (array_key_exists('error', $response))
       return $response;
@@ -7365,20 +7365,22 @@ HTML;
       $valueResponse = self::get_population_data($existingValuesOptions);
       if (array_key_exists('error', $valueResponse))
         return $valueResponse;
-    } else
+    } else {
       $valueResponse = array();
+    }
     foreach ($response as $item) {
       $itemId=$item['id'];
       unset($item['id']);
       $item['fieldname']=$options['fieldprefix'].':'.$itemId.($item['multi_value'] == 't' ? '[]' : '');
       $item['id']=$options['fieldprefix'].':'.$itemId;
       $item['untranslatedCaption']=$item['caption'];
-      $item['caption'] = self::getTranslatedAttrCaption($item);
-      $item['default'] = self::attributes_get_default($item);
+      $item['caption'] = self::getTranslatedAttrField('caption', $item);
+      $item['description'] = self::getTranslatedAttrField('description', $item);
+      self::attributePrepareDatabaseDefaultForControl($item);
       $item['attributeId'] = $itemId;
       $item['values'] = array();
-      if(count($valueResponse) > 0){
-        foreach ($valueResponse as $value){
+      if(count($valueResponse) > 0) {
+        foreach ($valueResponse as $value) {
           $attrId = $value[$options['attrtable'].'_id'];
           if($attrId == $itemId && $value['id']) {
             if ($item['data_type'] === 'D' && isset($value['value']) && preg_match('/^(\d{4})/', $value['value'])) {
@@ -7396,22 +7398,29 @@ HTML;
               //If not date we need to use the raw_value, items like drop-downs won't reload correctly without this
               $defaultValue = $value['raw_value'];
             }
+            $defaultUpper = ($item['data_type'] === 'I' || $item['data_type'] === 'F') && $item['allow_ranges'] === 't'
+              ? $value['upper_value'] : NULL;
             // for multilanguage look ups we get > 1 record for the same attribute.
             $fieldname = $options['fieldprefix'].':'.$itemId.':'.$value['id'];
             $found = false;
             foreach ($item['values'] as $prev)
               if($prev['fieldname'] == $fieldname && $prev['default'] == $value['raw_value'])
                 $found = true;
-            if(!$found)
-              $item['values'][] = array('fieldname' => $options['fieldprefix'].':'.$itemId.':'.$value['id'],
-                                'default' => $defaultValue, 'caption'=>$value['value']);
+            if (!$found)
+              $item['values'][] = array(
+                'fieldname' => $options['fieldprefix'].':'.$itemId.':'.$value['id'],
+                'default' => $defaultValue,
+                'defaultUpper' => $defaultUpper,
+                'caption'=>$value['value']
+              );
             $item['displayValue'] = $value['value']; //bit of a bodge but not using multivalue for this at the moment.
           }
         }
       }
-      if(count($item['values'])>=1 && $item['multi_value'] != 't'){
+      if(count($item['values'])>=1 && $item['multi_value'] != 't') {
         $item['fieldname'] = $item['values'][0]['fieldname'];
         $item['default'] = $item['values'][0]['default'];
+        $item['defaultUpper'] = $item['values'][0]['defaultUpper'];
       }
       if($item['multi_value'] == 't'){
         $item['default'] = $item['values'];
@@ -7426,57 +7435,74 @@ HTML;
   }
 
   /**
-   * Returns the translation for a custom attribute caption.
+   * Returns the translation for a custom attribute caption or description.
    *
    * Allows translation to occur on the server side or client side. If the
-   * server supplies a list of terms in the caption_i18n field and there is
+   * server supplies a list of terms in the *_i18n field and there is
    * a match for the user's language, then that is used. Otherwise defaults to
    * the client helpers lamg::get function.
    *
+   * @param string $field
+   *   Either caption or description depending on what is being translated.
    * @param array $attr
    *   Custom attribute array loaded from data services.
+   * @param string $language
+   *   3 character language code. If NULL, then the current user's language
+   *   will be used.
    *
    * @return string
    *   Translated caption.
    */
-  private static function getTranslatedAttrCaption(array $attr) {
+  public static function getTranslatedAttrField($field, array $attr, $language = NULL) {
     require_once 'prebuilt_forms/includes/language_utils.php';
-    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
-    if (!empty($attr['caption_i18n'])) {
-      $otherLanguages = json_decode($attr['caption_i18n'], TRUE);
+    if (!empty($attr[$field . '_i18n']) && function_exists('hostsite_get_user_field')) {
+      if (!$language) {
+        $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+      }
+      $otherLanguages = json_decode($attr[$field . '_i18n'], TRUE);
       if (isset($otherLanguages[$language])) {
         return $otherLanguages[$language];
       }
-      else {
-        return lang::get($attr['caption']);
-      }
     }
-    else {
-      return lang::get($attr['caption']);
-    }
+    return empty($attr[$field]) ? '' : lang::get($attr[$field]);
   }
 
   /**
    * For a single sample or occurrence attribute array loaded from the database, find the
    * appropriate default value depending on the data type.
-   * @param array $item The attribute's definition array.
+   *
+   * @param array $item
+   *   The attribute's definition array.
    * @todo Handle vague dates. At the moment we just use the start date.
    */
-  private static function attributes_get_default($item) {
+  private static function attributePrepareDatabaseDefaultForControl(&$item) {
     switch ($item['data_type']) {
       case 'T':
-        return $item['default_text_value'];
+        $item['default'] = $item['default_text_value'];
+        break;
+
       case 'F':
-        return $item['default_float_value'];
+        $item['default'] = $item['default_float_value'];
+        break;
+
       case 'I':
       case 'L':
       case 'B':
-        return $item['default_int_value'];
+        $item['default'] = $item['default_int_value'];
+        break;
+
       case 'D':
       case 'V':
-        return $item['default_date_start_value'];
+        $item['default'] = $item['default_date_start_value'];
+        break;
+
       default:
-        return '';
+        $item['default'] =  '';
+    }
+    // Load defaults if the attribute has a range value.
+    if (($item['data_type'] === 'I' || $item['data_type'] === 'F')
+        && array_key_exists('allow_ranges', $item) && $item['allow_ranges'] === 't') {
+      $item['defaultUpper'] = $item['default_upper_value'];
     }
   }
 
@@ -7539,6 +7565,9 @@ HTML;
    *    booleanCtrl - radio or checkbox for boolean attribute output, default is checkbox. Can also be a checkbox_group, used to
    *    allow selection of both yes and no, e.g. on a filter form.
    *    language - iso 639:3 code for the language to output for terms in a termlist. If not set no language filter is used.
+   *    useDescriptionAsHelpText - set to true to load descriptions from server side attribute definitions into the
+   *    helpText.
+   *    attrImageSize - 'thumb', 'med' or 'original' to display the server defined attribute image alongside the caption.
    * @return string HTML to insert into the page for the control.
    * @todo full handling of the control_type. Only works for text data at the moment.
    */
@@ -7570,9 +7599,13 @@ HTML;
   }
 
   private static function internalOutputAttribute($item, $options) {
+    global $indicia_templates;
     $options = array_merge(array(
-      'extraParams' => array()
+      'extraParams' => array(),
     ), $options);
+    if (!empty($options['useDescriptionAsHelpText'])) {
+      $options['helpText'] = empty($options['helpText']) ? $item['description'] : $options['helpText'];
+    }
     $attrOptions = array(
       'fieldname'=>$item['fieldname'],
       'id'=>$item['id'],
@@ -7588,6 +7621,9 @@ HTML;
         $validation[] = 'integer';
       }
       $attrOptions['validation']=array_merge(isset($attrOptions['validation'])?$attrOptions['validation']:array(), $validation);
+    }
+    if (!empty($item['system_function'])) {
+      $attrOptions['class'] = (empty($attrOptions['class']) ? '' : "$attrOptions[class] ") . "system-function-$item[system_function]";
     }
     if(isset($item['default']) && $item['default']!="")
       $attrOptions['default']= $item['default'];
@@ -7618,9 +7654,29 @@ HTML;
       // flow through
       case 'Float':
       case 'F':
-        if (!isset($ctrl))
-          $ctrl='text_input';
+        $ctrl = empty($ctrl) ? 'text_input' : $ctrl;
         $output = self::$ctrl($attrOptions);
+        if (isset($item['allow_ranges']) && $item['allow_ranges'] === 't') {
+          // An output attribute might be used for a genuine record value, or
+          // the default value in the attribute's configuration - the pattern
+          // of the field name differs for each.
+          $fieldname = $attrOptions['fieldname'] === 'default_value' ?
+            'default_upper_value' : "$attrOptions[fieldname]:upper";
+          $toAttrOptions = array_merge($attrOptions, [
+            'label' => 'to',
+            'fieldname' => $fieldname,
+            'id' => $fieldname,
+            'default' => empty($item['defaultUpper']) ? '' : $item['defaultUpper'],
+            'controlWrapTemplate' => 'justControl',
+          ]);
+          $toControl = self::$ctrl($toAttrOptions);
+          $wrapperId = 'range-wrap-' . str_replace(':', '-', $attrOptions['fieldname']);
+          $output = str_replace(
+            ['{col-1}', '{col-2}', '{attrs}'],
+            [$output, $toControl, " id=\"$wrapperId\""],
+            $indicia_templates['two-col-50']
+          );
+        }
         break;
       case 'Boolean':
       case 'B':
@@ -7653,12 +7709,12 @@ HTML;
         }
         if (array_key_exists('class', $options))
           $attrOptions['class'] = $options['class'];
-        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'detail', 'sharing' => 'editing');
+        $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'cache', 'sharing' => 'editing');
         if (array_key_exists('language', $options)) {
-          $dataSvcParams = $dataSvcParams + array('iso'=>$options['language']);
+          $dataSvcParams = $dataSvcParams + array('language_iso'=>$options['language']);
         }
         if (!array_key_exists('orderby', $options['extraParams'])) {
-          $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order');
+          $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order,term');
         }
         // control for lookup list can be overriden in function call options
         if(array_key_exists('lookUpListCtrl', $options)){
@@ -7694,29 +7750,42 @@ HTML;
             }
           }
         }
-        if($ctrl=='autocomplete' && isset($attrOptions['default'])){
+        if ($ctrl === 'autocomplete' && isset($attrOptions['default'])) {
           // two options: we could be using the id or the meaning_id.
-          if($lookUpKey=='id'){
+          if ($lookUpKey === 'id') {
             $attrOptions['defaultCaption'] = $item['displayValue'];
-          } else {
+          }
+          else {
             $termOptions = array(
               'table'=>'termlists_term',
-              'extraParams'=> $options['extraParams'] + $dataSvcParams);
-            $termOptions['extraParams']['meaning_id']=$attrOptions['default'];
+              'extraParams'=> $options['extraParams'] + $dataSvcParams,
+            );
+            $termOptions['extraParams']['meaning_id'] = $attrOptions['default'];
             $response = self::get_population_data($termOptions);
             if(count($response)>0)
               $attrOptions['defaultCaption'] = $response[0]['term'];
           }
         }
+        if (!empty($options['attrImageSize']) && !empty($item['image_path'])) {
+          $baseUrl = self::$base_url;
+          $preset = $options['attrImageSize'] === 'original' ? '' : "$options[attrImageSize]-";
+          $output .= <<<HTML
+<a href="{$baseUrl}upload/$item[image_path]" class="fancybox">
+  <img src="{$baseUrl}upload/$preset$item[image_path]" />
+</a>
+HTML;
+
+        }
         $output .= call_user_func(array(get_called_class(), $ctrl), array_merge($attrOptions, array(
           'table'=>'termlists_term',
           'captionField'=>'term',
           'valueField'=>$lookUpKey,
-          'extraParams' => array_merge($options['extraParams'] + $dataSvcParams))));
+          'extraParams' => array_merge(['allow_data_entry' => 't'], $options['extraParams'], $dataSvcParams))));
         break;
       default:
-        if ($item)
+        if ($item) {
           $output = '<strong>UNKNOWN DATA TYPE "'.$item['data_type'].'" FOR ID:'.$item['id'].' CAPTION:'.$item['caption'].'</strong><br />';
+        }
         else
           $output = '<strong>Requested attribute is not available</strong><br />';
         break;
@@ -7811,8 +7880,7 @@ HTML;
               $fext = array_pop($parts);
               // Generate a file id to store the image as
               $destination = time().rand(0,1000) . "." . $fext;
-              $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-              $uploadpath = self::relative_client_helper_path().$interim_image_folder;
+              $uploadpath = self::getInterimImageFolder();
               if (move_uploaded_file($fname, $uploadpath.$destination)) {
                 $r[] = array(
                   // Id is set only when saving over an existing record. This will always be a new record
@@ -7844,7 +7912,7 @@ HTML;
 
   /**
    * Validation rule to test if an uploaded file is allowed by file size.
-   * File sizes are obtained from the helper_config maxUploadSize, and defined as:
+   * File sizes are obtained from the $maxUploadSize setting, and defined as:
    * SB, where S is the size (1, 15, 300, etc) and
    * B is the byte modifier: (B)ytes, (K)ilobytes, (M)egabytes, (G)igabytes.
    * Eg: to limit the size to 1MB or less, you would use "1M".
@@ -7852,8 +7920,7 @@ HTML;
    * @param array $file Item from the $_FILES array.
    * @return bool True if the file size is acceptable, otherwise false.
    */
-  public static function check_upload_size(array $file)
-  {
+  public static function check_upload_size(array $file) {
     if ((int) $file['error'] !== UPLOAD_ERR_OK)
       return TRUE;
 

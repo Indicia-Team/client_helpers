@@ -162,8 +162,12 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                 "&nbsp;&nbsp;<strong>[species map summary]</strong> - a read only grid showing a summary of the data entered using the species map control.<br/>" .
                 "&nbsp;&nbsp;<strong>[species attributes]</strong> - any custom attributes for the occurrence, if not using the grid. Also includes a file upload " .
                     "box and sensitivity input control if relevant. The attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they " .
-                    "default to 1600. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
+                    "default to 1600. Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the server into the help text displayed " .
+                    "with the control. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
                     "and outputs all attributes irrespective of the form block or tab. For finer control of the output, see the [occAttr:n], [photos] and [sensitivity] controls.<br/>" .
+                "&nbsp;&nbsp;<strong>[species dynamic attributes]</strong> - any custom attributes that have been configured to only show for certain branches " .
+                    "of the taxonomic hierarchy. Set @types to an array containing either sample or occurrence to limit the block of attributes to those associated " .
+                    "at the sample or occurrence level only.<br/>" .
                 "&nbsp;&nbsp;<strong>[date]</strong> - a sample must always have a date.<br/>" .
                 "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location select/autocomplete controls<br/>" .
                 "&nbsp;&nbsp;<strong>[spatial reference]</strong> - a sample must always have a spatial reference.<br/>" .
@@ -206,8 +210,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             "<strong>[smpAttr:<i>n</i>]</strong> is used to insert a particular custom sample attribute identified by its ID number<br/>" .
             "<strong>[occAttr:<i>n</i>]</strong> is used to insert a particular custom occurrence attribute identified by its ID number when inputting single records at a time. " .
             "Or use [species attributes] to output the whole lot.<br/>" .
-            "For any attribute controls you can set the default value to load from a parameter provided in the URL query string. Set " .
-            "@urlParam to the name of the parameter in the URL which will contain the default value.<br/>" .
+            "For any attribute controls you can:<br/>" .
+            " * Set the default value to load from a parameter provided in the URL query string by setting @urlParam to " .
+            "   the name of the parameter in the URL which will contain the default value.<br/>" .
+            " * Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the server into the help text displayed with the control.<br/>" .
+            " * Set @attrImageSize = 'thumb', 'med' or 'original' to display the image defined for the attribute on the server alongside the caption.<br/>" .
             "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>" .
             "<strong>|</strong> is used insert a split so that controls before the split go into a left column and controls after the split go into a right column.<br/>" .
             "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
@@ -1158,7 +1165,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         data_entry_helper::$javascript .= "$('#hide-$fieldset').append($('#$fieldset'));\n";
         // capture new row events on the grid
         data_entry_helper::$javascript .= "hook_species_checklist_new_row.push(function(data) {
-  if (data.preferred_name=='$tokens[0]') {
+  if (data.preferred_taxon === '$tokens[0]') {
     $('#click-$fieldset').fancybox({closeBtn: false}).trigger('click');
   }
 });\n";
@@ -1763,6 +1770,187 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   }
 
   /**
+   * Returns a div for dynamic attributes.
+   *
+   * Returns div into which any attributes associated with the chosen taxon
+   * and/or stage will be inserted. JavaScript is added to the page which
+   * detects a chosen taxon (single record forms only) and adds the appropriate
+   * attributes. If loading an existing record, then the attributes are
+   * pre-loaded into the div.
+   *
+   * The [species dynamic attributes] control can be called with a @types option
+   * which can be set to a JSON array containing either occurrence and/or
+   * sample depending on which type of custom attributes to load. Defaults to
+   * ["occurrence"] but you might want to include "sample" in the array when
+   * there are taxon specific habitat attributes for example.
+   *
+   * Set the @validateAgainstTaxa option to true to enable validation of
+   * attribute values against the equivalent attributes defined for the taxon
+   * which requires the warehouse attribute_sets module to be enabled and
+   * configured.
+   *
+   * Any other options are passed through to the controls.
+   *
+   * @return string
+   *   HTML for the div.
+   */
+  protected static function get_control_speciesdynamicattributes($auth, $args, $tabAlias, $options) {
+    $types = isset($options['types']) ? $options['types'] : ['occurrence'];
+    $validateAgainstTaxa = empty($options['validateAgainstTaxa']) ? 'false' : 'true';
+    unset($options['types']);
+    unset($options['validateAgainstTaxa']);
+    $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_sample_occurrence');
+    $language = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+    data_entry_helper::$javascript .= <<<JS
+indiciaData.ajaxUrl="$ajaxUrl";
+indiciaData.validateAgainstTaxa = $validateAgainstTaxa;
+indiciaData.userLang = '$language';
+
+JS;
+
+    // If loading existing data, we need to know the sex/stage attrs so we can
+    // find the value to filter to when retrieving attrs.
+    if (!empty(self::$loadedOccurrenceId)) {
+      self::load_custom_occattrs($auth['read'], $args['survey_id']);
+      $stageTermlistTermIds = [];
+      foreach (self::$occAttrs as $attr) {
+        if (!empty($attr['default']) && ($attr['system_function'] === 'sex'
+            || $attr['system_function'] === 'stage'
+            || $attr['system_function'] === 'sex_stage')) {
+          $stageTermlistTermIds[] = $attr['default'];
+        }
+      }
+    }
+    // For each type (occurrence/sample) create a div to hold the controls,
+    // pre-populated only when loading existing data.
+    $r = '';
+    foreach ($types as $type) {
+      $controls = '';
+      if (!empty(self::$loadedOccurrenceId)) {
+        $controls = self::getDynamicAttrs(
+          $auth['read'],
+          $args['survey_id'],
+          data_entry_helper::$entity_to_load['occurrence:taxa_taxon_list_id'],
+          $stageTermlistTermIds,
+          $type,
+          $options,
+          self::$loadedOccurrenceId
+        );
+      }
+      // Other options need to pass through to AJAX loaded controls.
+      $optsJson = json_encode($options);
+      data_entry_helper::$javascript .= <<<JS
+indiciaData.dynamicAttrOptions$type=$optsJson;
+// Call any load hooks.
+$.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
+  this($('.species-dynamic-attrs.attr-type-$type'), '$type');
+});
+JS;
+      // Add a container div.
+      $r .= "<div class=\"species-dynamic-attributes attr-type-$type\">$controls</div>";
+    }
+    return $r;
+  }
+
+  /**
+   * Retrieves a list of dynamically loaded attributes from the database.
+   *
+   * @return array
+   *   List of attribute data.
+   */
+  private static function getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language, $occurrenceId = NULL) {
+    $params = [
+      'survey_id' => $surveyId,
+      'taxa_taxon_list_id' => $ttlId,
+      'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
+      'language' => $language,
+    ];
+    if (!empty($stageTermlistsTermIds)) {
+      $params['stage_termlists_term_ids'] = implode(',', $stageTermlistsTermIds);
+    }
+    if (!empty($occurrenceId)) {
+      $params['occurrence_id'] = $occurrenceId;
+    }
+    $r = report_helper::get_report_data([
+      'dataSource' => "library/{$type}_attributes/{$type}_attributes_for_form",
+      'readAuth' => $readAuth,
+      'extraParams' => $params,
+      'caching' => FALSE,
+    ]);
+    self::removeDuplicateAttrs($r);
+    return $r;
+  }
+
+  /**
+   * Retrieves a list of dynamically loaded attributes as control HTML.
+   *
+   * @return string
+   *   Controls as an HTML string.
+   */
+  private static function getDynamicAttrs($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $options,
+      $occurrenceId = NULL, $language = NULL) {
+    iform_load_helpers(['data_entry_helper', 'report_helper']);
+    $attrs = self::getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language, $occurrenceId);
+    $prefix = $type === 'sample' ? 'smp' : 'occ';
+    return self::getDynamicAttrsOutput($prefix, $readAuth, $attrs, $options, $language);
+  }
+
+  /**
+   * Ajax handler to retrieve the dynamic attrs for a taxon.
+   *
+   * Attribute HTML is echoed to the client.
+   */
+  public static function ajax_dynamicattrs($website_id, $password) {
+    iform_load_helpers(['report_helper']);
+    $readAuth = report_helper::get_read_auth($website_id, $password);
+    echo self::getDynamicAttrs(
+      $readAuth,
+      $_GET['survey_id'],
+      $_GET['taxa_taxon_list_id'],
+      json_decode($_GET['stage_termlists_term_ids']),
+      $_GET['type'],
+      json_decode($_GET['options'], TRUE),
+      empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id'],
+      $_GET['language']
+    );
+    helper_base::$is_ajax = TRUE;
+
+    if (!empty($_GET['validate_against_taxa']) && $_GET['validate_against_taxa'] === 't') {
+      $r = report_helper::get_report_data([
+        'dataSource' => "library/$_GET[type]_attributes/$_GET[type]_attributes_for_taxon_with_taxon_validation_rules",
+        'readAuth' => $readAuth,
+        'extraParams' => ['taxa_taxon_list_id' => $_GET['taxa_taxon_list_id']],
+      ]);
+      if (!empty($r)) {
+        $data = json_encode($r);
+        $typeAbbr = $_GET['type'] === 'occurrence' ? 'occ' : 'smp';
+        $langExpected = lang::get('Expected values for {1}');
+        helper_base::addLanguageStringsToJs('dynamicattrs', ['expected' => 'Expected values for {1}']);
+        report_helper::$javascript .= <<<JS
+indiciaData.{$typeAbbr}TaxonValidationRules = $data;
+indiciaFns.applyTaxonValidationRules('$typeAbbr', '$_GET[type]');
+
+JS;
+      }
+    }
+
+    $scripts = helper_base::get_scripts(
+      helper_base::$javascript,
+      helper_base::$late_javascript,
+      helper_base::$onload_javascript,
+      FALSE, TRUE
+    );
+    if ($scripts) {
+      echo <<<JS
+<script type="text/javascript">
+$scripts
+</script>
+
+JS;
+    }
+  }
+
+  /**
    * Get the date control.
    */
   protected static function get_control_date($auth, $args, $tabAlias, $options) {
@@ -1984,7 +2172,7 @@ else
    */
   protected static function get_control_recordernames($auth, $args, $tabAlias, $options) {
     //We don't need to touch the control in edit mode. Make the current user's name the default in add mode if the user has selected that option.
-    if (empty($_GET['sample_id']) && !empty($options['defaultToCurrentUser'])&& $options['defaultToCurrentUser']==true) {
+    if (empty($_GET['sample_id']) && empty($_GET['occurrence_id']) && !empty($options['defaultToCurrentUser'])&& $options['defaultToCurrentUser']==true) {
       $defaultUserData = data_entry_helper::get_report_data(array(
         'dataSource' => 'library/users/get_people_details_for_website_or_user',
         'readAuth' => $auth['read'],
@@ -2010,7 +2198,7 @@ else
   protected static function get_control_recordstatus($auth, $args) {
     $default = isset(data_entry_helper::$entity_to_load['occurrence:record_status']) ?
         data_entry_helper::$entity_to_load['occurrence:record_status'] :
-        isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
+        (isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C');
     $values = array('I', 'C'); // not initially doing V=Verified
     $r = '<label for="occurrence:record_status">'.lang::get('LANG_Record_Status_Label')."</label>\n";
     $r .= '<select id="occurrence:record_status" name="occurrence:record_status">';
@@ -2276,9 +2464,13 @@ else
    * Load the list of occurrence attributes into a static variable.
    *
    * By maintaining a single list of attributes we can track which have already been output.
-   * @param array $readAuth Read authorisation tokens.
-   * @param integer $surveyId ID of the survey to load occurrence attributes for.
-   * @return array List of occurrence attribute definitions.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param integer $surveyId
+   *   ID of the survey to load occurrence attributes for.
+   * @return array
+   *   List of occurrence attribute definitions.
    */
   protected static function load_custom_occattrs($readAuth, $surveyId) {
     if (!isset(self::$occAttrs)) {
@@ -2340,15 +2532,26 @@ else
     $r = '';
     if(self::$mode === self::MODE_EXISTING_RO) return $r; // don't allow users to submit if in read only mode.
     $r .= '<input type="submit" class="' . $indicia_templates['buttonHighlightedClass'] . '" id="save-button" value="'.lang::get('Submit')."\" />\n";
-    if (!empty(self::$loadedSampleId) && $args['multiple_occurrence_mode']==='single') {
+    if (!empty(self::$loadedSampleId)) {
       // use a button here, not input, as Chrome does not post the input value
-      $r .= '<button type="submit" class="' . $indicia_templates['buttonWarningClass'] . '" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
-      data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
-        if (!confirm(\"Are you sure you want to delete this record?\")) {
-          e.preventDefault();
-          return false;
-        }
-      });\n";
+      $formType = $args['multiple_occurrence_mode'] === 'single' ? lang::get('record') : lang::get('list of records');
+      $btnLabel = lang::get('Delete {1}', $formType);
+      $r .= <<<HTML
+<button type="submit" class="$indicia_templates[buttonWarningClass]" id="delete-button" name="delete-button" value="delete" >
+  $btnLabel
+</button>
+
+HTML;
+      $msg = str_replace("'", "\'", lang::get('Are you sure you want to delete this {1}?', $formType));
+      data_entry_helper::$javascript .= <<<JS
+$('#delete-button').click(function(e) {
+  if (!confirm('$msg')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+JS;
     }
     return $r;
   }
