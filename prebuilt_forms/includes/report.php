@@ -193,7 +193,8 @@ function iform_report_get_report_options($args, $readAuth) {
   require_once('user.php');
   $presets = get_options_array_with_user_data($args['param_presets']);
   $defaults = get_options_array_with_user_data($args['param_defaults']);
-  $ignores = isset($args['param_ignores']) ? helper_base::explode_lines($args['param_ignores']) : array();
+  $ignores = (isset($args['param_ignores']) && trim($args['param_ignores']) != '') ?
+    helper_base::explode_lines($args['param_ignores']) : array();
   $param_lookup_extras = array();
   if (isset($args['param_lookup_extras'])) {
     $paramlx = helper_base::explode_lines($args['param_lookup_extras']);
