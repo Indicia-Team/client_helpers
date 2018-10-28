@@ -7836,10 +7836,11 @@ HTML;
             $pathPos = strlen($key)-5;
           }
         }
-        if ($pathPos !==false && ($modelName === null || $modelName == substr($key, 0, strlen($modelName)) ||
+        if ($pathPos !==false && ($modelName === NULL || $modelName == substr($key, 0, strlen($modelName)) ||
             $legacyModelName == substr($key, 0, strlen($legacyModelName)))) {
           $prefix = substr($key, 0, $pathPos);
-          $thisMediaTypeId=isset($values[$prefix.':media_type_id'.$uniqueId]) ? utf8_encode($values[$prefix.':media_type_id'.$uniqueId]) : '';
+          $thisMediaTypeId = isset($values[$prefix.':media_type_id'.$uniqueId]) ?
+            $values[$prefix.':media_type_id'.$uniqueId] : '';
           //Only extract the media if we are extracting media of any type or the data matches the type we are wanting to extract
           if ($thisMediaTypeId==$mediaTypeIdToExtract||$mediaTypeIdToExtract===null) {
             $mediaValues = array(
@@ -7848,12 +7849,12 @@ HTML;
                   $values[$prefix.':id'.$uniqueId] : '',
               'path' => $value,
               'caption' => isset($values[$prefix.':caption'.$uniqueId]) ?
-                  utf8_encode($values[$prefix.':caption'.$uniqueId]) : ''
+                  $values[$prefix.':caption'.$uniqueId] : ''
             );
             if (!empty($thisMediaTypeId)) {
               $mediaValues['media_type_id'] = $thisMediaTypeId;
               $mediaValues['media_type'] = isset($values[$prefix . ':media_type' . $uniqueId]) ?
-                utf8_encode($values[$prefix . ':media_type' . $uniqueId]) : '';
+                $values[$prefix . ':media_type' . $uniqueId] : '';
             }
             // if deleted = 't', add it to array so image is marked deleted
             if (isset($values[$prefix.':deleted'.$uniqueId]) && $values[$prefix.':deleted'.$uniqueId] === 't') {
