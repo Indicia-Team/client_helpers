@@ -2,10 +2,10 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
 
 (function ($) {
   "use strict";
-  
-  var rowRequest=null, occurrence_id = null, currRec = null, urlSep, validator, speciesLayers = [], 
+
+  var rowRequest=null, occurrence_id = null, currRec = null, urlSep, validator, speciesLayers = [],
       trustsCounter, multimode=false, email = {to:'', subject:'', body:'', type:''}, redetermining=false;
-      
+
   mapInitialisationHooks.push(function(div) {
     // nasty hack to fix a problem where these layers get stuck and won't reload after pan/zoom on IE & Chrome
     div.map.events.register('moveend', null, function() {
@@ -56,7 +56,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
         $('#record-details-content').show();
         if ($row.parents('tbody').length !== 0) {
           // point the comments tabs to the correct AJAX call for the selected occurrence.
-          indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('comments'), 'comments-tab-tab', 
+          indiciaFns.setTabHref($('#record-details-tabs'), indiciaData.detailsTabs.indexOf('comments'), 'comments-tab-tab',
               indiciaData.ajaxUrl + '/comments/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrence_id);
           // reload current tabs
           $('#record-details-tabs').tabs('load', indiciaFns.activeTab($('#record-details-tabs')));
@@ -231,7 +231,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
     //Send an email
     // use an AJAX call to get the server to send the email
     $.post(
-      indiciaData.ajaxUrl + '/email' + urlSep,
+      indiciaData.ajaxUrl + '/email/' + indiciaData.nid,
       email,
       function (response) {
         if (response === 'OK') {
@@ -330,7 +330,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
     $('#btn-multiple').after($('#verify-buttons-inner'));
     $('#verify-buttons-inner button').removeAttr('disabled');
   }
-    
+
   // Callback for the report grid. Use to fill in the tickboxes if in multiple mode.
   verificationGridLoaded = function() {
     if (multimode) {
@@ -345,7 +345,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
       } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'experience') {
         if (currRec.extra.created_by_id==='1') {
           $('#experience-div').html('No experience information available. This record does not have the required information for other records by the same recorder to be extracted.');
-        } 
+        }
         else {
           $.get(
             indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep +
@@ -393,7 +393,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
   }
 
   function setStatus(status, redetermine) {
-    if (typeof redetermine==="undefined") 
+    if (typeof redetermine==="undefined")
       redetermine = false;
     var helpText='', html;
     if (multimode && $('.check-row:checked').length>1) {
@@ -439,14 +439,14 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
     });
     showTab();
   });
-  
+
   function verifyRecordSet(trusted) {
     var request, params=indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords();
     //If doing trusted only, this through as a report parameter.
     if (trusted) {
       params.quality_context="T";
     }
-    request = indiciaData.ajaxUrl + '/bulk_verify/'+indiciaData.nid;
+    request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
     $.post(request,
       'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
       '&user_id='+indiciaData.userId+'&ignore='+$('.grid-verify-popup input[name=ignore-checks-trusted]').attr('checked'),
@@ -480,7 +480,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
               indiciaData.reports.verification.grid_verification_grid[0].settings.recordCount + ' records, not just the current page.</p>';
       trustedHtml += '<button type="button" class="default-button" id="verify-trusted-button">Verify trusted records</button>';
       trustedHtml += '<button type="button" class="default-button" id="verify-all-button">Verify all records</button></div>';
-      
+
       $.fancybox(trustedHtml);
       $('#verify-trusted-button').click(function() {verifyRecordSet(true);});
       $('#verify-all-button').click(function() {verifyRecordSet(false);});
@@ -500,7 +500,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
         popupHtml += '<label><input type="radio" name="quick-option" value="recorder"/> Verify grid\'s records by <span class="quick-user">'+currRec.extra.recorder+'</span></label><br/>'+
             '<label><input type="radio" name="quick-option" value="species-recorder" /> Verify grid\'s records of <span class="quick-taxon">'+currRec.extra.taxon+
             '</span> by <span class="quick-user">'+currRec.extra.recorder+'</span></label><br/>';
-      } 
+      }
       else if (currRec.extra.recorder!=='' && currRec.extra.recorder!==null && currRec.extra.input_by_surname!==null && currRec.extra.created_by_id!=='1') {
         popupHtml += '<p class="helpText">Because the recorder, ' + currRec.extra.recorder + ', is not linked to a logged in user, quick verification tools cannot filter to records by this recorder.</p>';
       }
@@ -521,7 +521,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
           }
           // We now have parameters that can be applied to a report and we know the report, so we can ask the warehouse
           // to verify the occurrences provided by the report that match the filter.
-          request = indiciaData.ajaxUrl + '/bulk_verify/'+indiciaData.nid;
+          request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
           $.post(request,
               'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
                   '&user_id='+indiciaData.userId+'&ignore='+$('.quick-verify-popup input[name=ignore-checks]').attr('checked'),
@@ -802,11 +802,11 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
     });
 
     indiciaFns.bindTabsActivate($('#record-details-tabs'), showTab);
-    
+
     $('#btn-verify').click(function () {
       setStatus('V');
     });
-    
+
     $('#btn-edit-verify').click(function () {
       setStatus('V', true);
     });
@@ -818,7 +818,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
     $('#btn-query').click(function () {
       setStatus('D');
     });
-    
+
     $('#btn-multiple').click(function() {
       multimode=!multimode;
       if (multimode) {
@@ -848,7 +848,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
 
   //Function to draw any existing trusts from the database
   function drawExistingTrusts() {
-    var getTrustsReport = indiciaData.read.url +'/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&callback=?', 
+    var getTrustsReport = indiciaData.read.url +'/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&callback=?',
         getTrustsReportParameters = {
           'user_id':currRec.extra.created_by_id,
           'survey_id':currRec.extra.survey_id,

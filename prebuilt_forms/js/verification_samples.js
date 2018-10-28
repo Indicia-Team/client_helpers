@@ -332,7 +332,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     //Send an email
     // use an AJAX call to get the server to send the email
     $.post(
-      indiciaData.ajaxUrl + '/email' + urlSep,
+      indiciaData.ajaxUrl + '/email/' + indiciaData.nid,
       email,
       function (response) {
         if (response === 'OK') {
