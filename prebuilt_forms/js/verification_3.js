@@ -277,7 +277,7 @@ if(!Array.indexOf){
     //Send an email
     // use an AJAX call to get the server to send the email
     $.post(
-      indiciaData.ajaxUrl + '/email',
+      indiciaData.ajaxUrl + '/email/' + indiciaData.nid,
       email,
       function (response) {
         if (response === 'OK') {
@@ -438,7 +438,7 @@ if(!Array.indexOf){
 
     //Use jQuery to add a button to the top of the verification page. Use this button to access the popup
     //which allows you to verify all trusted records.
-    var verifyAllTrustedButton = '<input type="button" value="..." class="default-button verify-grid-trusted tools-btn" id="verify-grid-trusted"/>', 
+    var verifyAllTrustedButton = '<input type="button" value="..." class="default-button verify-grid-trusted tools-btn" id="verify-grid-trusted"/>',
         trustedHtml, request;
     $('#verification-params #run-report').before(verifyAllTrustedButton);
     $('#verify-grid-trusted').click(function() {
@@ -456,7 +456,7 @@ if(!Array.indexOf){
         //We pass "trusted" as a parameter to the existing verification_list_3 report which has been adjusted
         //to handle verification of all trusted records.
         params.records="trusted";
-        request = indiciaData.ajaxUrl + '/bulk_verify/'+indiciaData.nid;
+        request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
         $.post(request,
           'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
           '&user_id='+indiciaData.userId+'&ignore='+$('.trusted-verify-popup input[name=ignore-checks-trusted]').attr('checked'),
@@ -498,7 +498,7 @@ if(!Array.indexOf){
           }
           // We now have parameters that can be applied to a report and we know the report, so we can ask the warehouse
           // to verify the occurrences provided by the report that match the filter.
-          request = indiciaData.ajaxUrl + '/bulk_verify/'+indiciaData.nid;
+          request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
           $.post(request,
               'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
                   '&user_id='+indiciaData.userId+'&ignore='+$('.quick-verify-popup input[name=ignore-checks]').attr('checked'),
@@ -768,9 +768,9 @@ if(!Array.indexOf){
         selectRow(row);
       }
     });
-    
+
     indiciaFns.bindTabsActivate($('#record-details-tabs'), showTab);
-    
+
     $('#btn-verify').click(function () {
       setStatus('V');
     });
@@ -796,7 +796,7 @@ if(!Array.indexOf){
   //Function to draw any existing trusts from the database
   drawExistingTrusts = function drawExistingTrusts() {
     "use strict";
-    var getTrustsReport = indiciaData.indiciaSvc +'/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&callback=?', 
+    var getTrustsReport = indiciaData.indiciaSvc +'/index.php/services/report/requestReport?report=library/user_trusts/get_user_trust_for_record.xml&mode=json&callback=?',
         getTrustsReportParameters = {
           'user_id':currRec.extra.created_by_id,
           'survey_id':currRec.extra.survey_id,
