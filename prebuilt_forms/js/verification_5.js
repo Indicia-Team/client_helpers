@@ -417,7 +417,7 @@ indiciaData.rowIdToReselect = false;
             .replace('%commentQuickReplyPageLink%', '');
     }
     $.post(
-      indiciaData.ajaxUrl + '/email/' + indiciaData.nid + urlSep,
+      indiciaData.ajaxUrl + '/email/' + indiciaData.nid,
       email,
       function (response) {
         if (response === 'OK') {

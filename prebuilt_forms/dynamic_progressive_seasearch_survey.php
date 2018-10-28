@@ -784,12 +784,12 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
   /*
    * We save using ajax to avoid the need to reload pages all the time when saving (can choose to reload if required using configuration)
    */
-  public static function ajax_save($website_id, $password, $node) {
+  public static function ajax_save($website_id, $password, $nid) {
     iform_load_helpers(array('data_entry_helper'));
+    $node = node_load($nid);
     //Build submission or get a warning/Error
     $ModelOrWarning = self::build_three_level_sample_with_occ_submission($_POST,$website_id, $password,$node->params['gpx_data_attr_id'],$node->params['dive_start_time_attr_id'],$node->params['exif_date_time_attr_id'],$node->params['image_media_type_id']);
     if (empty($ModelOrWarning['fatalSubmissionError'])) {
-      $node = node_load($nid);
       $conn = iform_get_connection_details($node);
       $postargs = "website_id=".$conn['website_id'];
       $response = data_entry_helper::http_post(data_entry_helper::$base_url.'/index.php/services/security/get_nonce', $postargs, false);

@@ -385,11 +385,13 @@ class iform_data_services {
 
   /**
    * An ajax handler which returns the surveys that are available for a given sharing type.
-   * @param type $website_id
-   * @param type $password
-   * @param type $node
+   *
+   * @param int $website_id
+   * @param int $password
+   * @param int $node
+   *   Node ID.
    */
-  public static function ajax_surveys_for_sharing_type($website_id, $password, $node) {
+  public static function ajax_surveys_for_sharing_type($website_id, $password, $nid) {
     iform_load_helpers(array('data_entry_helper'));
     // @todo filter by the available context filters if appropriate
     $readAuth = array(

@@ -543,22 +543,22 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   }
 
   protected static function get_control_standardparams($auth, $args, $tabalias, $options) {
-    self::$applyUserPrefs=FALSE;
+    self::$applyUserPrefs = FALSE;
     $options = array_merge(array(
       'allowSave' => TRUE,
       'sharing' => empty($args['sharing']) ? 'reporting' : $args['sharing']
     ), $options);
     if ($args['redirect_on_success'])
-      $options['redirect_on_success']=hostsite_get_url($args['redirect_on_success']);
+      $options['redirect_on_success'] = hostsite_get_url($args['redirect_on_success']);
     // any preset params on the report page should be loaded as initial settings for the filter.
     if (!empty($args['param_presets'])) {
       $params = data_entry_helper::explode_lines_key_value_pairs($args['param_presets']);
-      foreach ($params as $key=>$val) {
+      foreach ($params as $key => $val) {
         if (!isset($options["filter-$key"]))
-          $options["filter-$key"]=$val;
+          $options["filter-$key"] = $val;
       }
     }
-    foreach ($options as $key=>&$value) {
+    foreach ($options as $key => &$value) {
       $value = apply_user_replacements($value);
     }
     if ($options['allowSave'] && !function_exists('iform_ajaxproxy_url'))
@@ -572,8 +572,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   }
 
   /**
-   * Disable save buttons for this form class. Not a data entry form...
-   * @return boolean
+   * Disable save buttons for this form class. Not a data entry form.
+   *
+   * @return bool
+   *   Always return FALSE.
    */
   protected static function include_save_buttons() {
     return FALSE;
@@ -583,28 +585,38 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    * Ajax handler to provide the content for the details of a single record.
    */
   public static function ajax_get_feature_popup_details($website_id, $password, $nid) {
-      require_once 'extensions/misc_extensions.php';
-      // TODO extend to include images back from report.
-      $columns = array('taxon','source','date','date_start','date_end','date_type','recorder');
-      $params = hostsite_get_node_field_value($nid, 'params');
-      $details_report = 'library/occurrences/filterable_explore_list';
-      iform_load_helpers(array('report_helper'));
-      $readAuth = report_helper::get_read_auth($website_id, $password);
-      $options = array(
-          'dataSource' => $details_report,
-          'readAuth' => $readAuth,
-          'sharing' => 'verification',
-          'extraParams' => array('idlist' => $_GET['occurrence_ids'], 'columns' => implode(',',$columns))
-      );
-      $reportData = report_helper::get_report_data($options);
-      // Set some values which must exist in the record.
-      if(count($reportData) === 0) {
-        echo "";
-        return;
-      }
-      header('Content-type: application/json');
-      echo json_encode($reportData);
+    require_once 'extensions/misc_extensions.php';
+    // TODO extend to include images back from report.
+    $columns = [
+      'taxon',
+      'source',
+      'date',
+      'date_start',
+      'date_end',
+      'date_type',
+      'recorder',
+    ];
+    $params = hostsite_get_node_field_value($nid, 'params');
+    $details_report = 'library/occurrences/filterable_explore_list';
+    iform_load_helpers(array('report_helper'));
+    $readAuth = report_helper::get_read_auth($website_id, $password);
+    $options = [
+      'dataSource' => $details_report,
+      'readAuth' => $readAuth,
+      'sharing' => 'verification',
+      'extraParams' => [
+        'idlist' => $_GET['occurrence_ids'],
+        'columns' => implode(',', $columns),
+      ],
+    ];
+    $reportData = report_helper::get_report_data($options);
+    // Set some values which must exist in the record.
+    if (count($reportData) === 0) {
+      echo '';
       return;
+    }
+    header('Content-type: application/json');
+    echo json_encode($reportData);
   }
 
 }
