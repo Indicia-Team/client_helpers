@@ -7615,14 +7615,18 @@ HTML;
     if (!empty($options['useDescriptionAsHelpText'])) {
       $options['helpText'] = empty($options['helpText']) ? $item['description'] : $options['helpText'];
     }
-    $attrOptions = array(
-      'fieldname'=>$item['fieldname'],
-      'id'=>$item['id'],
-      'disabled'=>'');
-    if (isset($item['caption']))
-      $attrOptions['label']=$item['caption']; // no need to translate, as that has already been done by getAttributes. Untranslated caption is in field untranslatedCaption
+    $attrOptions = [
+      'fieldname' => $item['fieldname'],
+      'id' => $item['id'],
+      'disabled' => '',
+    ];
+    if (isset($item['caption'])) {
+      // No need to translate, as that has already been done by getAttributes.
+      // Untranslated caption is in field untranslatedCaption.
+      $attrOptions['label'] = $item['caption'];
+    }
     $attrOptions = array_merge($attrOptions, $options);
-    // build validation rule classes from the attribute data
+    // Build validation rule classes from the attribute data.
     $validation = isset($item['validation_rules']) ? explode("\n", $item['validation_rules']) : [];
     if (empty($options['control_type']) || $options['control_type'] === 'text_input') {
       if ($item['data_type'] === 'I' && !in_array('integer', $validation)) {
