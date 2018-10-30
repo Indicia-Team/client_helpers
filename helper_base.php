@@ -2161,7 +2161,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           lang::get($options['fieldname']));
     }
     // Convert these rules into jQuery format.
-    return self::converToJqueryValMetadata($rules, $options);
+    return self::convertToJqueryValMetadata($rules, $options);
   }
 
   /**
@@ -2209,7 +2209,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   * @return string Validation metadata classes to add to the input element.
   * @todo Implement a more complete list of validation rules.
   */
-  protected static function converToJqueryValMetadata($rules, $options) {
+  protected static function convertToJqueryValMetadata($rules, $options) {
     $converted = array();
     foreach ($rules as $rule) {
       // Detect the rules that can simply be passed through
