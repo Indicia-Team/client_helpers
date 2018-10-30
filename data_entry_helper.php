@@ -7623,13 +7623,20 @@ HTML;
       $attrOptions['label']=$item['caption']; // no need to translate, as that has already been done by getAttributes. Untranslated caption is in field untranslatedCaption
     $attrOptions = array_merge($attrOptions, $options);
     // build validation rule classes from the attribute data
-    if (isset($item['validation_rules'])) {
-      $validation = explode("\n", $item['validation_rules']);
-      if ($item['data_type'] === 'I' && !in_array('integer', $validation) &&
-        (empty($options['control_type']) || $options['control_type'] === 'text_input')) {
+    $validation = isset($item['validation_rules']) ? explode("\n", $item['validation_rules']) : [];
+    if (empty($options['control_type']) || $options['control_type'] === 'text_input') {
+      if ($item['data_type'] === 'I' && !in_array('integer', $validation)) {
         $validation[] = 'integer';
       }
-      $attrOptions['validation']=array_merge(isset($attrOptions['validation'])?$attrOptions['validation']:array(), $validation);
+      if ($item['data_type'] === 'F' && !in_array('float', $validation)) {
+        $validation[] = 'numeric';
+      }
+    }
+    if (!empty($validation)) {
+      $attrOptions['validation'] = array_merge(
+        isset($attrOptions['validation']) ? $attrOptions['validation'] : [],
+        $validation
+      );
     }
     if (!empty($item['system_function'])) {
       $attrOptions['class'] = (empty($attrOptions['class']) ? '' : "$attrOptions[class] ") . "system-function-$item[system_function]";
