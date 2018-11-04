@@ -494,6 +494,7 @@ class iform_species_details extends iform_dynamic {
       'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
       'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
       'include_captions' => $options['includeCaptions'] ? '1' : '0',
+      'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
     ];
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
