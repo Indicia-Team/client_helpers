@@ -192,14 +192,16 @@ class import_helper extends helper_base {
 
   /**
    * Outputs the form for mapping columns to the import fields.
-   * @param array $options Options array passed to the import control.
+   *
+   * @param array $options
+   *   Options array passed to the import control.
    */
-  private static function upload_mappings_form($options) {
-    ini_set('auto_detect_line_endings',1);
+  private static function upload_mappings_form(array $options) {
+    ini_set('auto_detect_line_endings', 1);
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
     self::add_resource('jquery_ui');
-    $filename=basename($_SESSION['uploaded_file']);
+    $filename = basename($_SESSION['uploaded_file']);
     // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
     // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
     if (isset($options['presetSettings'])) {
@@ -216,26 +218,29 @@ class import_helper extends helper_base {
       // These fields would confuse the association detection logic.
       foreach ($settings as $key => $value) {
         $parts = explode(':', $key);
-        if ($parts[0]==$options['model'] . '_association' || $parts[0]==$options['model'] . '_2')
+        if ($parts[0] === $options['model'] . '_association' || $parts[0] === $options['model'] . '_2') {
           unset($settings[$key]);
+        }
       }
     }
-    // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
+    // Only want defaults that actually have a value - others can be set on a
+    // per-row basis by mapping to a column.
     foreach ($settings as $key => $value) {
       if (empty($value)) {
         unset($settings[$key]);
       }
     }
-    // cache the mappings
+    // Cache the mappings.
     $metadata = array(
       'settings' => json_encode($settings),
-      'importMergeFields' => (isset($options['importMergeFields']) ? $options['importMergeFields'] : json_encode(array()))
+      'importMergeFields' => json_encode(isset($options['importMergeFields']) ? $options['importMergeFields'] : []),
     );
     $post = array_merge($options['auth']['write_tokens'], $metadata);
     $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
     $response = self::http_post($request, $post);
-    if (!isset($response['output']) || $response['output'] != 'OK')
+    if (!isset($response['output']) || $response['output'] != 'OK') {
       return "Could not upload the settings metadata. <br/>" . print_r($response, TRUE);
+    }
     $request = parent::$base_url . "index.php/services/import/get_import_fields/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
     // include survey and website information in the request if available, as this limits the availability of custom attributes
@@ -257,8 +262,7 @@ class import_helper extends helper_base {
     if (!empty($settings['survey_id']))
       self::limitFields($fields, $options, $settings['survey_id']);
     if (isset($options['importMergeFields']) && $options['importMergeFields'] != '' && $options['importMergeFields'] != '{}' && $options['importMergeFields'] != '[]') {
-      $importMergeFields = json_decode($options['importMergeFields']);
-      foreach ($importMergeFields as $modelSpec) {
+      foreach ($options['importMergeFields'] as $modelSpec) {
         if (!isset($modelSpec->model) || ($modelSpec->model = $options['model'])) {
           foreach ($modelSpec->fields as $fieldSpec) {
             foreach ($fieldSpec->virtualFields as $subFieldSpec) {
@@ -373,7 +377,7 @@ class import_helper extends helper_base {
 // When a mapping is changed, this makes sure the options in the lookupSelects are valid for the new combination
 var presetFields = [];
 function check_lookup_options() {
-  $(".lookupCheckboxes").removeAttr("checked");
+  $(".in-lookup").hide();
   $('.lookupSelects').each(function(idx, select) {
     $(select).find('option[value!=""]').each(function(idx, option) {
       var fields = JSON.parse($(option).val()), field;
@@ -389,8 +393,9 @@ function check_lookup_options() {
             }
           } else field = fields[i].fieldName;
           // If fields are part of the special grouping, then all must be present
-          allFound &= (presetFields.indexOf(fields[i].fieldName) >= 0 || presetFields.indexOf(field) >= 0  ||
-                        $('.import-mappings-table select').filter('[value="'+field.replace(':', '\\:')+'"],[value^="'+field.replace(':', '\\:')+'\\:"],[value="'+fields[i].fieldName.replace(':', '\\:')+'"]').length > 0);
+          allFound &= (presetFields.indexOf(fields[i].fieldName) >= 0
+            || presetFields.indexOf(field) >= 0
+            || $('.import-mappings-table select option:selected').filter('[value="'+field.replace(':', '\\:')+'"],[value^="'+field.replace(':', '\\:')+'\\:"],[value="'+fields[i].fieldName.replace(':', '\\:')+'"]').length > 0);
         }
       }
       if (allFound) {
@@ -418,8 +423,8 @@ function check_lookup_options() {
               field = "fk_" + field;
             }
           } else field = fields[i].fieldName;
-          var rows = $('.import-mappings-table select').filter('[value="'+field.replace(':', '\\:')+'"],[value^="'+field.replace(':', '\\:')+'\\:"],[value="'+fields[i].fieldName.replace(':', '\\:')+'"]').closest('tr');
-          rows.find(".lookupCheckboxes").attr("checked", "checked");
+          var rows = $('.import-mappings-table select option:selected').filter('[value="'+field.replace(':', '\\:')+'"],[value^="'+field.replace(':', '\\:')+'\\:"],[value="'+fields[i].fieldName.replace(':', '\\:')+'"]').closest('tr');
+          rows.find(".in-lookup").show();
         };
       };
     };
@@ -459,7 +464,7 @@ NEWFUNCS;
               duplicateStore[duplicateStoreIndex] = select.value;
               duplicateStoreIndex++;
             }
-             
+
           }
           valueStore[valueStoreIndex] = select.value;
           valueStoreIndex++;
@@ -1016,9 +1021,9 @@ NEWFUNCS;
       $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
       $r .= <<<TD
 <td class="centre">
-<input type="checkbox" name="$inputName" class="rememberField" id="$inputName" value="1"$checked 
-  onclick="if (!this.checked) { $('#RememberAll').removeAttr('checked'); }" 
-  title="If checked, your selection for this particular column will be saved and automatically selected during future 
+<input type="checkbox" name="$inputName" class="rememberField" id="$inputName" value="1"$checked
+  onclick="if (!this.checked) { $('#RememberAll').removeAttr('checked'); }"
+  title="If checked, your selection for this particular column will be saved and automatically selected during future
     imports. Any alterations you make to this default selection in the future will also be remembered until you deselect
     the checkbox.">
 </td>
@@ -1026,10 +1031,13 @@ TD;
     }
     if ($includeLookups) {
       $checkboxName = preg_replace('/[^A-Za-z0-9]/', '_', $column) . '.Lookup';
+      $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
       $r .= <<<TD
 <td class="centre">
-<input type="checkbox" name="$checkboxName" class="lookupCheckboxes" id="$checkboxName" value="1" disabled="disabled"
-  title="If checked, this field is used to lookup the relevant record in the database.">
+<img style="display: none; width: 16px; height: 16px"
+  class="in-lookup"
+  src="$imgPath/nuvola/ok-16px.png"
+  alt="This field is used to lookup the relevant record in the database.">
 </td>
 TD;
     }
@@ -1043,9 +1051,9 @@ TD;
       $r .= "\"$column\"";
       $r .=  "<br/><form><input type='checkbox' id='$column.OnlyShowMatches' value='1' onclick='
        if (this.checked) {
-         $(\".$optionID\").hide();
+         jQuery(\".$optionID\").hide();
        } else {
-         $(\".$optionID\").show();
+         jQuery(\".$optionID\").show();
       }'
       > Only show likely matches in drop-down<br></form></td></tr>";
     }
