@@ -297,7 +297,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $conn = iform_get_connection_details($nid);
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/dynamic_report_explorer') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     return parent::get_form($args, $nid);
   }
 

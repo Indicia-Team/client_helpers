@@ -13,7 +13,7 @@ jQuery(document).ready(function docReady($) {
       $.each($('.taxon-dynamic-attributes'), function loadAttrDiv() {
         var div = this;
         // 0 is a fake nid, since we don't care.
-        $.get(indiciaData.ajaxUrl + '/dynamicattrs/0' + urlSep +
+        $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'taxon_list_id=' + $('#taxa_taxon_list\\:taxon_list_id').val() +
             '&taxa_taxon_list_id=' + $('#taxa_taxon_list\\:parent_id').val() +
             '&language=' + indiciaData.userLang +

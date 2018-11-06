@@ -516,7 +516,6 @@ $('#entry_form').submit(function() {
         hostsite_get_user_field('indicia_user_id') . "]').closest('li').children('span').remove();\n";
     }
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/group_edit') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     return $r;
   }
 

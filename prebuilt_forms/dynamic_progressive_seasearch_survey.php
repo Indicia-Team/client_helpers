@@ -606,7 +606,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     //Don't use a submit button, as we are saving after each stage of the wizard, so just save on every Next button click. Use additional wizard page at the end as a
     //finish confirmation page, this doesn't need submitting.
     data_entry_helper::$javascript .= "$('#tab-submit').hide();\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     //Use ajax saving so that we can save without full page reload on a lot of pages.
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/dynamic_progressive_seasearch_survey')."\";\n";
     $paramsSeparator=variable_get('clean_url', 0) ? '?' : '&';
