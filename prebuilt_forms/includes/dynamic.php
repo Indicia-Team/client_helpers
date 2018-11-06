@@ -198,28 +198,30 @@ class iform_dynamic {
     return $perms;
   }
 
-    /**
+  /**
    * Return the generated form output.
-   * @return Form HTML.
+   *
+   * @return string
+   *   Form HTML.
    */
   public static function get_form($args, $nid) {
-    data_entry_helper::$website_id=$args['website_id'];
+    data_entry_helper::$website_id = $args['website_id'];
     if (!empty($args['high_volume']) && $args['high_volume']) {
       // node level caching for most page hits
-      $cached = data_entry_helper::cache_get(array('node'=>$nid), HIGH_VOLUME_CACHE_TIMEOUT);
-      if ($cached!==false) {
+      $cached = data_entry_helper::cache_get(['node' => $nid], HIGH_VOLUME_CACHE_TIMEOUT);
+      if ($cached !== FALSE) {
         $cached = explode('|!|', $cached);
         data_entry_helper::$javascript = $cached[1];
         data_entry_helper::$late_javascript = $cached[2];
         data_entry_helper::$onload_javascript = $cached[3];
-        data_entry_helper::$required_resources = json_decode($cached[4], true);
+        data_entry_helper::$required_resources = json_decode($cached[4], TRUE);
         return $cached[0];
       }
     }
     self::$nid = $nid;
     self::$called_class = 'iform_' . hostsite_get_node_field_value($nid, 'iform');
 
-    // Convert parameter, defaults, into structured array
+    // Convert parameter, defaults, into structured array.
     self::parse_defaults($args);
     // Supply parameters that may be missing after form upgrade
     if (method_exists(self::$called_class, 'getArgDefaults'))
@@ -575,23 +577,24 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     for ($i = 0; $i < count($tabContent); $i++) {
       $component = trim($tabContent[$i]);
       if (preg_match('/\A\?[^�]*\?\z/', $component) === 1) {
-        // Component surrounded by ? so represents a help text
+        // Component surrounded by ? so represents a help text.
         $helpText = substr($component, 1, -1);
         $html .= str_replace('{message}', lang::get($helpText), $indicia_templates['messageBox']);
       } elseif (preg_match('/\A\[[^�]*\]\z/', $component) === 1) {
         // Component surrounded by [] so represents a control or control block
-        // Anything following the component that starts with @ is an option to pass to the control
-        $options = array();
-        while ($i < count($tabContent)-1 && substr($tabContent[$i+1],0,1)=='@' || trim($tabContent[$i])==='') {
+        // Anything following the component that starts with @ is an option to
+        // pass to the control.
+        $options = [];
+        while ($i < count($tabContent) - 1 && substr($tabContent[$i+1], 0, 1) === '@' || trim($tabContent[$i]) === '') {
           $i++;
           // ignore empty lines
-          if (trim($tabContent[$i])!=='') {
+          if (trim($tabContent[$i]) !== '') {
             $option = explode('=', substr($tabContent[$i],1), 2);
-            if (!isset($option[1])||$option[1]==='false')
-              $options[$option[0]]=FALSE;
+            if (!isset($option[1])||$option[1] === 'false')
+              $options[$option[0]] = FALSE;
             else {
-              $options[$option[0]]=json_decode($option[1], TRUE);
-              // if not json then need to use option value as it is
+              $options[$option[0]] = json_decode($option[1], TRUE);
+              // if not json then need to use option value as it is.
               if ($options[$option[0]]=='') $options[$option[0]]=$option[1];
             }
             // urlParam is special as it loads the control's default value from $_GET
