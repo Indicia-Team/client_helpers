@@ -968,6 +968,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
         }
         else {
           $value = $values[0];
+          $attr['fieldname'] = "$baseAttrId:$value->id";
           $attr['default'] = $value->raw_value;
           $attr['displayValue'] = $value->value;
           $attr['defaultUpper'] = $value->upper_value;
