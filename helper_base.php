@@ -529,9 +529,6 @@ class helper_base extends helper_config {
    */
   public static function addLanguageStringsToJs($group, array $strings) {
       self::$javascript .= <<<JS
-if (typeof indiciaData.lang === "undefined") {
-  indiciaData.lang = {};
-}
 indiciaData.lang.$group = {};
 
 JS;
@@ -539,6 +536,23 @@ JS;
         self::$javascript .= "indiciaData.lang.$group.$key = '" .
         str_replace("'", "\'", lang::get($text)) . "';\n";
     }
+  }
+
+  /**
+   * Utility function to convert a list of strings into translated strings.
+   *
+   * @param array $strings
+   *   Associative array of keys and texts to translate.
+   *
+   * @return array
+   *   Associative array of translated strings keyed by untranslated string.
+   */
+  public static function getTranslations(array $strings) {
+    $r = [];
+    foreach ($strings as $string) {
+      $r[$string] = lang::get($string);
+    }
+    return $r;
   }
 
   /**
@@ -559,6 +573,7 @@ JS;
    * <li>clearLayer</li>
    * <li>addrowtogrid</li>
    * <li>speciesFilterPopup</li>
+   * <li>import</li>
    * <li>indiciaMapPanel</li>
    * <li>indiciaMapEdit</li>
    * <li>postcode_search</li>
@@ -677,6 +692,7 @@ JS;
         'locationFinder' => array('deps' =>array('indiciaMapEdit'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.locationFinder.js")),
         'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."createPersonalSites.js")),
         'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
+        'import' => array('javascript' => array(self::$js_path . "import.js")),
         'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
         'jquery_cookie' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."jquery.cookie.js")),
         'jquery_ui' => array('deps' => array('jquery'), 'stylesheets' => array("$indicia_theme_path$indicia_theme/jquery-ui.custom.css"), 'javascript' => array(self::$js_path."jquery-ui.custom.min.js", self::$js_path."jquery-ui.effects.js")),
