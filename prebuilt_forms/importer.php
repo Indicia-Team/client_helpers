@@ -293,7 +293,7 @@ class iform_importer {
         'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], TRUE),
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
         'skipMappingIfPossible' => $args['skipMappingIfPossible'],
-        'importMergeFields' => $args['importMergeFields']
+        'importMergeFields' => $args['importMergeFields'],
       );
       $r = import_helper::importer($options);
     }
