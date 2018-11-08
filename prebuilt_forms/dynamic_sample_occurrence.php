@@ -682,8 +682,10 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         // Does the group filter define a site or boundary for the recording? If so and the form
         // is not locked to a boundary, we need to show it and limit the map extent.
         // This code grabs the first available value from the list of fields that could hold the value
-        $locationIDToLoad = @$filterDef->indexed_location_list ?: @$filterDef->indexed_location_id ?:
-            @$filterDef->location_list ?: @$filterDef->location_id;
+        $locationIDToLoad = @$filterDef->indexed_location_list
+          ?: @$filterDef->indexed_location_id
+          ?: @$filterDef->location_list
+          ?: @$filterDef->location_id;
 
         if ($locationIDToLoad) {
           $response = data_entry_helper::get_population_data(array(

@@ -1076,9 +1076,11 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
         $selected = (!empty($options['context_id']) && $options['context_id']==='default') ? 'selected="selected" ' : '';
         $contexts .= "<option value=\"default\" $selected>".lang::get('My verification records')."</option>";
         $def = array();
-        if ($location_id)
-          // User profile geographic limits should always be based on an indexed location.
-          $def['indexed_location_id'] = $location_id;
+        if ($location_id) {
+          // User profile geographic limits should always be based on an
+          // indexed location.
+          $def['indexed_location_list'] = $location_id;
+        }
         if ($taxon_group_ids) {
           $def['taxon_group_list'] = implode(',', $taxon_group_ids);
           $def['taxon_group_names'] = array();

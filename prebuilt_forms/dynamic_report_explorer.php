@@ -346,15 +346,14 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     if (isset($options['hoverShowsDetails'])) {
       $options['hoverShowsDetails'] = TRUE;
     }
-    // $_GET data for standard params can override displayed location
-    if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
+    // $_GET data for standard params can override displayed location.
+    $locationIDToLoad = @$_GET['filter-indexed_location_list']
+      ?: @$_GET['filter-indexed_location_id']
+      ?: @$_GET['filter-location_list']
+      ?: @$_GET['filter-location_id'];
+    if (!empty($locationIDToLoad) && preg_match('/^\d+$/', $locationIDToLoad)) {
       $args['display_user_profile_location'] = FALSE;
-      if (!empty($_GET['filter-indexed_location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-indexed_location_id'];
-      }
-      elseif (!empty($_GET['filter-location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-location_id'];
-      }
+      $args['location_boundary_id'] = $locationIDToLoad;
     }
     $r = '';
     if (!empty($options['dataSource'])) {
