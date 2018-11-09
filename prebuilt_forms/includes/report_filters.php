@@ -51,7 +51,6 @@ class filter_what extends FilterBase {
    */
   public function get_controls($readAuth, $options) {
     $r = '';
-    $familySortOrder = empty($options['familySortOrder']) ? 180 : $options['familySortOrder'];
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE)
       $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
@@ -60,13 +59,7 @@ class filter_what extends FilterBase {
     // Data_entry_helper::tab_header breaks inside fancybox. So output manually.
     $r .= '<ul>' .
         '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>' . lang::get('Species groups') . '</span></a></li>';
-    if ($familySortOrder !== 'off') {
-      $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>' . lang::get('Families and other higher taxa') . '</span></a></li>';
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species and lower taxa') . '</span></a></li>';
-    }
-    else {
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species') . '</span></a></li>';
-    }
+    $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species or higher taxa') . '</span></a></li>';
     $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>' .
         '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>' .
         '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
@@ -110,31 +103,9 @@ class filter_what extends FilterBase {
       'addToTable' => FALSE
     ));
     $r .= "</div>\n";
-    if ($familySortOrder !== 'off') {
-      $r .= '<div id="families-tab">' . "\n";
-      $r .= '<p>' . lang::get('Search for and build a list of families or other higher taxa to include') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-      $subListOptions = array(
-        'fieldname' => 'higher_taxa_taxon_list_list',
-        'autocompleteControl' => 'species_autocomplete',
-        'captionField' => 'searchterm',
-        'captionFieldInEntity' => 'searchterm',
-        'speciesIncludeBothNames' => TRUE,
-        'speciesIncludeTaxonGroup' => TRUE,
-        'valueField' => 'preferred_taxa_taxon_list_id',
-        'extraParams' => $baseParams + array(
-          'preferred' => 't',
-          'max_taxon_rank_sort_order' => $familySortOrder,
-        ),
-        'addToTable' => FALSE,
-      );
-      $r .= data_entry_helper::sub_list($subListOptions);
-      $r .= "</div>\n";
-    }
     $r .= '<div id="species-tab">' . "\n";
-    $r .= '<p>' . lang::get('Search for and build a list of species or genera to include.') . '</p>' .
+    $r .= '<p>' . lang::get('Search for and build a list of species or higher taxa to include.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-    $rankFilter = $familySortOrder === 'off' ? array() : array('min_taxon_rank_sort_order' => $familySortOrder + 1);
     $subListOptions = array(
       'fieldname' => 'taxa_taxon_list_list',
       'autocompleteControl' => 'species_autocomplete',
@@ -143,8 +114,8 @@ class filter_what extends FilterBase {
       'speciesIncludeBothNames' => TRUE,
       'speciesIncludeTaxonGroup' => TRUE,
       'valueField' => 'preferred_taxa_taxon_list_id',
-      'extraParams' => $baseParams + $rankFilter,
-      'addToTable' => FALSE
+      'extraParams' => $baseParams,
+      'addToTable' => FALSE,
     );
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
