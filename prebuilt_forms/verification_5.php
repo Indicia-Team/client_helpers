@@ -684,25 +684,34 @@ idlist=';
    */
   private static function hidden_redetermination_dropdown($readAuth) {
     $r = '<div id="redet-dropdown-ctnr" style="display: none"><div id="redet-dropdown">';
-    $r .= data_entry_helper::species_autocomplete(array(
+    $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    if ($taxon_list_id) {
+      global $indicia_templates;
+      $r .= '<div class="redet-partial-list">' .
+        str_replace('{message}', lang::get('Redet partial list info'), $indicia_templates['messageBox']) .
+        '</div>';
+    }
+    $r .= data_entry_helper::species_autocomplete([
       'fieldname' => 'redet',
       'label' => lang::get('New determination'),
       'labelClass' => 'auto',
       'helpText' => lang::get('Enter a new determination for this record before verifying it. The previous determination will be stored with the record.'),
-      'extraParams' => $readAuth + array('taxon_list_id' => 1), // taxon list ID will be updated when it is used
+      // Taxon list ID will be updated when it is used.
+      'extraParams' => $readAuth + ['taxon_list_id' => 1],
       'speciesIncludeBothNames' => TRUE,
       'speciesIncludeTaxonGroup' => TRUE,
-      'validation' => array('required')
-    ));
-    $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+      'validation' => ['required'],
+    ]);
     if ($taxon_list_id) {
       data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
-      $r .= data_entry_helper::checkbox(array(
-        'fieldname' => 'redet-from-full-list',
-        'label' => lang::get('Search all species'),
-        'labelClass' => 'auto',
-        'helpText' => lang::get('Check this box if you want to redetermine to a different species group.')
-      ));
+      $r .= '<div class="redet-partial-list">' .
+        data_entry_helper::checkbox([
+          'fieldname' => 'redet-from-full-list',
+          'label' => lang::get('Search all species'),
+          'labelClass' => 'auto',
+          'helpText' => lang::get('Check this box if you want to redetermine to a different species group.'),
+        ]) .
+        '</div>';
     }
     $r .= '</div></div>';
     return $r;

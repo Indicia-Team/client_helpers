@@ -25,6 +25,12 @@ global $custom_terms;
  * Language terms for the verification_5 form.
  */
 
-$custom_terms = array(
-  'Report output' => 'All records in verification grid'
-);
+$custom_terms = [
+  'Report output' => 'All records in verification grid',
+];
+
+$custom_terms['Redet partial list info'] = <<<TXT
+This record was originally input using a taxon checklist which may not be a complete list of all species. If you cannot
+find the species you wish to redetermine it to using the search box below, then please tick the "Search all species"
+checkbox and try again.
+TXT;
