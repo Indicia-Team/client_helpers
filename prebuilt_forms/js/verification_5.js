@@ -925,9 +925,9 @@ indiciaData.rowIdToReselect = false;
     $('#redet-dropdown').appendTo($('#redet-dropdown-popup-ctnr'));
     // Hide the full list checkbox if same as current record or full list not known
     if (typeof indiciaData.mainTaxonListId === 'undefined' || parseInt(currRec.extra.taxon_list_id) === indiciaData.mainTaxonListId) {
-      $('#ctrl-wrap-redet-from-full-list').hide();
+      $('.redet-partial-list').hide();
     } else {
-      $('#ctrl-wrap-redet-from-full-list').show();
+      $('#redet-partial-list').show();
       $('#redet-from-full-list').removeAttr('checked');
     }
     validator = $('#redet-form').validate({});
