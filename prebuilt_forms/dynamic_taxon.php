@@ -226,6 +226,30 @@ TXT;
   protected static function getEntity($args, $auth) {
     data_entry_helper::$entity_to_load = [];
     data_entry_helper::load_existing_record($auth['read'], 'taxa_taxon_list', $_GET['taxa_taxon_list_id'], 'detail', FALSE, TRUE);
+    // The page is designed to load from a preferred name, not a synonym. So
+    // switch the loaded entity if necessary.
+    if (data_entry_helper::$entity_to_load['taxa_taxon_list:preferred'] === 'f') {
+      $records = data_entry_helper::get_population_data([
+        'table' => 'taxa_taxon_list',
+        'extraParams' => $auth['read'] + [
+          'taxon_meaning_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:taxon_meaning_id'],
+          'preferred' => 't',
+          'view' => 'detail',
+        ],
+        'nocache' => TRUE,
+        'sharing' => FALSE,
+      ]);
+      if (empty($records)) {
+        throw new exception(lang::get('The record you are trying to load does not exist.'));
+      }
+      $_GET['taxa_taxon_list_id'] = $records[0]['id'];
+      data_entry_helper::load_existing_record_from(
+        $records[0],
+        $auth['read'],
+        'taxa_taxon_list',
+        $records[0]['id']
+      );
+    }
     // Load common names and synonyms.
     $otherNames = data_entry_helper::get_population_data([
       'table' => 'taxa_taxon_list',
@@ -301,8 +325,8 @@ HTML;
     if (isset(data_entry_helper::$entity_to_load['taxa_taxon_list:id'])) {
       $defaults = [
         'taxa_taxon_list_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:id'],
-        'taxon_id' => data_entry_helper::$entity_to_load['taxon:id'],
-        'taxon_meaning_id' => data_entry_helper::$entity_to_load['taxon_meaning:id'],
+        'taxon_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:taxon_id'],
+        'taxon_meaning_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:taxon_meaning_id'],
       ];
       $r .= <<<HTML
 <input type="hidden" id="taxa_taxon_list:id" name="taxa_taxon_list:id" value="$defaults[taxa_taxon_list_id]" />
