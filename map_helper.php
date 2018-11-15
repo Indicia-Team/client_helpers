@@ -532,7 +532,7 @@ SCRIPT;
     }
     if ($options['includeIcons'])
       self::$javascript .= "if (layer.isBaseLayer) {
-    layerHtml += '<img src=\"".self::getRootFolder() . self::client_helper_path()."../media/images/map.png\" width=\"16\" height=\"16\"/>';
+    layerHtml += '<img src=\"" . self::getRootFolder() . self::client_helper_path() . "../media/images/map.png\" width=\"16\" height=\"16\"/>';
   } else if (layer instanceof OpenLayers.Layer.WMS) {
     layerHtml += '<img src=\"' + layer.url + '?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&WIDTH=16&HEIGHT=16&LAYER='+layer.params.LAYERS+'&Format=image/jpeg'+
       '&STYLE='+layer.params.STYLES +'\" alt=\"'+layer.name+'\"/>';
@@ -542,7 +542,7 @@ SCRIPT;
   } else {
     layerHtml += '<div></div>';
   }\n";
-    self::$javascript .= "  layerHtml += '<span class=\"layer-title\">' + layer.name + '</span>';
+  self::$javascript .= "  layerHtml += '<label for=\"switch-'+layer.id.replace(/\./g,'-')+'\" class=\"layer-title\">' + layer.name + '</label>';
   return layerHtml;
 }\n";
     if ($options['includeSwitchers'])
