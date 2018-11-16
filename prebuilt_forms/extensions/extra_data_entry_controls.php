@@ -153,7 +153,7 @@ class extension_extra_data_entry_controls {
       'default' => $options['association_type_id'],
     ));
     $options['extraParams'] += $auth['read'];
-    $options['extraParms']['taxon_list_id'] = $options['taxon_list_id'];
+    $options['extraParams']['taxon_list_id'] = $options['taxon_list_id'];
     $r .= data_entry_helper::species_autocomplete($options);
     // Flag to tell the submission build code to run code to include the
     // association.
