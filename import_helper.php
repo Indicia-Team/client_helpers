@@ -248,7 +248,7 @@ class import_helper extends helper_base {
     // Cache the mappings.
     $metadata = array(
       'settings' => json_encode($settings),
-      'importMergeFields' => json_encode(isset($options['importMergeFields']) ? $options['importMergeFields'] : []),
+      'importMergeFields' => isset($options['importMergeFields']) ? $options['importMergeFields'] : json_encode([]),
     );
     $post = array_merge($options['auth']['write_tokens'], $metadata);
     $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
