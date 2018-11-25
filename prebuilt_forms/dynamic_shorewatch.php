@@ -425,7 +425,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
       ));
     }
     $verifiedDataDetected=false;
-    if (!empty($sightingsData)) {
+    if ($roleType != 'data manager' && !empty($sightingsData)) {
       //If any verified sightings are found then put page into read-only mode.
       foreach ($sightingsData as $sightingData) {
         if ($verifiedDataDetected===false) {         
