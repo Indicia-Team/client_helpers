@@ -245,10 +245,19 @@ class import_helper extends helper_base {
         unset($settings[$key]);
       }
     }
-    // Cache the mappings.
-    $metadata = array(
+    // Cache the mappings
+    // deal with API change: original form sent in options as json_encoded strings:
+    // now assumed as class/objects
+    if(isset($options['importMergeFields']) && is_string($options['importMergeFields'])) {
+        $options['importMergeFields'] = json_decode($options['importMergeFields']);
+    }
+    if(isset($options['synonymProcessing']) && is_string($options['synonymProcessing'])) {
+        $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
+    }
+    $metadata = array( // handed to metadata storage as json encoded strings
       'settings' => json_encode($settings),
-      'importMergeFields' => json_encode(isset($options['importMergeFields']) ? $options['importMergeFields'] : []),
+      'importMergeFields' => json_encode(isset($options['importMergeFields']) ? $options['importMergeFields'] : []), // comes from form already json encoded
+      'synonymProcessing' => json_encode(isset($options['synonymProcessing']) ? $options['synonymProcessing'] : new stdClass()), // comes from form already json encoded
     );
     $post = array_merge($options['auth']['write_tokens'], $metadata);
     $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
@@ -307,11 +316,18 @@ class import_helper extends helper_base {
         }
       }
     }
+    if (isset($options['synonymProcessing'])) {
+        $synonymProcessing = $options['synonymProcessing'];
+        if (isset($synonymProcessing->separateSynonyms) && $synonymProcessing->separateSynonyms === TRUE) {
+            $fields['synonym:tracker'] = lang::get("Main record vs Synonym");
+            $fields['synonym:identifier'] = lang::get("Field to group records together");
+        }
+    }
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], TRUE);
     if (!is_array($responseIds)) {
-      return "curl request to $request failed. Response " . print_r($response, TRUE);
+        return "curl request to $request failed. Response " . print_r($response, TRUE);
     }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
     $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys($settings)) : array();
@@ -327,7 +343,7 @@ class import_helper extends helper_base {
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     // If the user checked the Remember All checkbox need to remember this setting.
-    $checkedRememberAll = isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
+    $checkedRememberAll = isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';
     $r = <<<HTML
 <form method="post" id="entry_form" action="$reloadpath" class="iform">
   <p>{$t['column_mapping_instructions']}</p>

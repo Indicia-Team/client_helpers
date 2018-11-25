@@ -224,6 +224,44 @@ class iform_importer {
           }]
         }'
       ),
+      array(
+        'name' => 'synonymProcessing',
+        'caption' => 'Synonym Processing',
+        'description' => 'Use this control to define how synonyms are handled. Currently only relevant for taxa imports.',
+        'type' => 'jsonwidget',
+        'schema' => '{
+          "type":"map",
+          "title":"Synonym Processing",
+          "desc":"Synonym Processing Definition",
+          "mapping": {
+            "separateSynonyms": {
+              "title":"Separate Synonyms",
+              "type":"bool",
+              "desc":"Are synonyms going to be input on separate rows?",
+            },
+            "mainValues": {
+              "type":"seq",
+              "title":"Main Record values",
+              "desc":"There is a special column in the import used to identify which records are the main records and which are the synonyms. This is the list of values for the main records.",
+              "sequence": [{
+                "type":"str",
+                "title":"Main Record Value",
+                "desc":"A value used to identify a main record.",
+              }]
+            },
+            "synonymValues": {
+              "type":"seq",
+              "title":"Synonym Record values",
+              "desc":"There is a special column in the import used to identify which records are the main records and which are the synonyms. This is the list of values for the synonym records.",
+              "sequence": [{
+                "type":"str",
+                "title":"Synonym Record Value",
+                "desc":"A value used to identify a synonym record.",
+              }]
+            },
+          },
+        }'
+      ),
     );
   }
 
@@ -243,6 +281,7 @@ class iform_importer {
       'onlyAllowMappedFields' => TRUE,
       'skipMappingIfPossible' => FALSE,
       'importMergeFields' => array(),
+      'synonymProcessing' => new stdClass(),
     ), $args);
     $auth = import_helper::get_read_write_auth($args['website_id'], $args['password']);
     group_authorise_form($args, $auth['read']);
@@ -294,6 +333,8 @@ class iform_importer {
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
         'skipMappingIfPossible' => $args['skipMappingIfPossible'],
         'importMergeFields' => $args['importMergeFields'],
+        'synonymProcessing' => $args['synonymProcessing'],
+        'switches' => array('activate_global_sample_method' => 't'),
       );
       $r = import_helper::importer($options);
     }
