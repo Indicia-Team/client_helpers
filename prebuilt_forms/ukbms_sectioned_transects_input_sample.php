@@ -285,7 +285,8 @@ class iform_ukbms_sectioned_transects_input_sample {
       "mapping": {
         "taxon": {"type":"str","title":"Taxon","desc":"Taxon: included for commenting purposes only."},
         "taxon_meaning_id": {"type":"str","title":"Taxon Meaning ID","required":true,"desc":"Meaning ID of the Taxon."},
-        "walk_limit": {"type":"str","title":"Walk Limit","desc":"The maximum number of the species on a single walk, across all sections in the walk."},
+        "walk_limit": {"type":"str","title":"Walk Limit","desc":"The threshold number of the species on a single walk, across all sections in the walk: any value above this will trigger a confirmation dialog."},
+        "section_limit": {"type":"str","title":"Section Limit","desc":"The threshold number of the species on a single transect section: any value above this will trigger a confirmation dialog."},
       }
     }
   ]
@@ -943,6 +944,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $args['return_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
 
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/ukbms_sectioned_transects_input_sample') . "\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
 
     if (((isset($_REQUEST['page']) && $_REQUEST['page']==='mainSample') || isset($_REQUEST['occurrences'])) && !isset(data_entry_helper::$validation_errors) && !isset($response['error'])) {
       // we have just saved the sample page, so move on to the occurrences list,
@@ -1219,7 +1221,8 @@ class iform_ukbms_sectioned_transects_input_sample {
         'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : array()),
         'taxon_column' => (isset($args['taxon_column']) ? $args['taxon_column'] : 'taxon'),
         'verificationTitle' => lang::get('Warnings'),
-        'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk exceeds the expected maximum ({{ limit }})'),
+        'verificationSectionLimitMessage' => lang::get('The value entered for this taxon on this transect section ({{ value }}) exceeds the expected maximum ({{ limit }})'),
+        'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk ({{ total }}) exceeds the expected maximum ({{ limit }})'),
         'outOfRangeVerification' => array()
     );
 
