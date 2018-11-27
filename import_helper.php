@@ -81,6 +81,8 @@ class import_helper extends helper_base {
    */
 
   public static function importer($options) {
+    self::add_resource('jquery_ui');
+    self::add_resource('import');
     if (isset($_GET['total'])) {
       return self::upload_result($options);
     }
@@ -201,8 +203,6 @@ class import_helper extends helper_base {
     if (!file_exists($_SESSION['uploaded_file'])) {
       return lang::get('upload_not_available');
     }
-    self::add_resource('jquery_ui');
-    self::add_resource('import');
     $t = self::getTranslations([
       'Because you are looking up existing records to import into, required field validation will only be applied when the new data are merged into the existing data during import.',
       'Column in CSV File',
@@ -577,7 +577,6 @@ JS;
    * @param array $mappings List of column title to field mappings
    */
   private static function run_upload($options, $mappings) {
-    self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
     $filename=basename($_SESSION['uploaded_file']);
