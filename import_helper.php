@@ -388,7 +388,7 @@ HTML;
         $colCount ++;
         $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
-        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings, count($existingDataLookupOptions) > 0); // this also create TDs for the remember checkboxes etc
+        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings, count($existingDataLookupOptions) > 0, $options['allowDataDeletions']); // this also create TDs for the remember checkboxes etc
         $r .= "</select></td></tr>\n";
       }
     }
@@ -711,11 +711,24 @@ JS;
    * @param array  $fields List of the available possible import columns
    * @param string $column The name of the column from the CSV file currently being worked on.
    * @param array $autoFieldMappings An array containing the automatic field mappings for the page.
+   * @param boolean $allowDataDeletions Should the importer allow data to be removed.
    */
-  private static function get_column_options($model, $fields, $column, $autoFieldMappings, $includeLookups) {
+  private static function get_column_options($model, $fields, $column, $autoFieldMappings, $includeLookups, $allowDataDeletions=false) {
     $skipped = array('id', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
       'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning', 'deleted', 'image_path'
     );
+    if ($allowDataDeletions==true) {
+      // If we want to be able to delete data, then no longer skip Deleted column.
+      foreach ($skipped as $idx=>$itemToSkip) {
+        if ($itemToSkip==='deleted') {
+          unset($skipped[$idx]);
+        }
+      }
+      // We never want to delete at the term level (needs to be termlists_term) so always remove this option
+      if (array_key_exists('term:deleted',$fields)) {
+        unset($fields['term:deleted']);
+      }
+    }
     //strip the column of spaces for use in html ids
     $idColumn = str_replace(" ", "", $column);
     $r = '';

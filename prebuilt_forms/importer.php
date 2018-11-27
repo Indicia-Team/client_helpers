@@ -73,6 +73,13 @@ class iform_importer {
         'required' => FALSE
       ),
       array(
+        'name' => 'allowDataDeletions',
+        'caption' => 'Allow deletions?',
+        'description' => 'Should the Deleted flag be exposed as a column mapping field during the import process.',
+        'type' => 'boolean',
+        'default' => FALSE
+      ),
+      array(
         'name' => 'presetSettings',
         'caption' => 'Preset Settings',
         'description' => 'Provide a list of predetermined settings which the user does not need to specify, one on each line in the form name=value. ' .
@@ -278,6 +285,7 @@ class iform_importer {
     $args = array_merge(array(
       'occurrenceAssociations' => FALSE,
       'fieldMap' => array(),
+      'allowDataDeletions' => FALSE,
       'onlyAllowMappedFields' => TRUE,
       'skipMappingIfPossible' => FALSE,
       'importMergeFields' => array(),
@@ -328,6 +336,7 @@ class iform_importer {
         'model' => $model,
         'auth' => $auth,
         'presetSettings' => $presets,
+        'allowDataDeletions' => $args['allowDataDeletions'],
         'occurrenceAssociations' => $args['occurrenceAssociations'],
         'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], TRUE),
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
