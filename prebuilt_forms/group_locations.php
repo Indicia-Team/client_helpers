@@ -181,7 +181,7 @@ class iform_group_locations {
     // the grid and refresh the drop down.
     // @todo set destination after saving added site
     $map = map_helper::map_panel(iform_map_get_map_options($args, $readAuth), iform_map_get_ol_options($args));
-    $r = str_replace(array('{col-1}', '{col-2}'), array($leftcol, $map), $indicia_templates['two-col-50']);
+    $r = str_replace(array('{col-1}', '{col-2}', '{attrs}'), array($leftcol, $map, ''), $indicia_templates['two-col-50']);
     data_entry_helper::$javascript .= "indiciaData.group_id=$_GET[group_id];\n";
     return $r;
   }

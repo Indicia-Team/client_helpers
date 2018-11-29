@@ -89,13 +89,15 @@ jQuery(document).ready(function ($) {
    * @param path array of geometries defining the route.
    */
   function addWalk(path) {
-    walkLayer.addFeatures([new OpenLayers.Feature.Vector(path, {}, {strokeColor: "blue", strokeWidth: 6})]);
+    walkLayer.removeAllFeatures();
+    walkLayer.addFeatures([new OpenLayers.Feature.Vector(path, {}, { strokeColor: 'blue', strokeWidth: 6 })]);
     copyGeomToSref(path);
   }
 
   function ensureClickedOnPath(clickPointFeature) {
+    var found = false;
+    var clickLayer = indiciaData.mapdiv.map.editLayer;
     if (clickPointFeature.geometry.CLASS_NAME === "OpenLayers.Geometry.Point") {
-      var found=false, clickLayer = indiciaData.mapdiv.map.editLayer;
       if (clickLayer.features.length === 3) {
         // 3rd click, so we are retrying. Remove the first attempt.
         clickLayer.removeFeatures([clickPointFeature.layer.features[0], clickPointFeature.layer.features[1]]);
@@ -229,16 +231,17 @@ jQuery(document).ready(function ($) {
         });
       }
       addWalk(finalGeom);
+      clickLayer.removeFeatures(clickLayer.features[0]);
     } else {
       alert("The start and end points you clicked on don't seem to be connected. Please try again.");
     }
   }
 
   function onPointAdded(evt) {
-    var doingOtherDraw=false;
+    var doingOtherDraw = false;
     $.each(indiciaData.mapdiv.map.controls, function() {
-      if (this.active && (this.displayClass==='olControlDrawFeaturePath' || this.displayClass==='olControlDrawFeaturePolygon')) {
-        doingOtherDraw=true;
+      if (this.active && (this.displayClass === 'olControlDrawFeaturePath' || this.displayClass === 'olControlDrawFeaturePolygon')) {
+        doingOtherDraw = true;
         copyGeomToSref(evt.features[0].geometry);
       }
     });
@@ -261,17 +264,17 @@ jQuery(document).ready(function ($) {
   mapInitialisationHooks.push(function (div) {
     // If we have a path template layer loaded on the map, then we want to configure the controls to pick up the start and
     // end of paths.
-    if (typeof indiciaData.wantPathEditor!=="undefined") {
+    if (typeof indiciaData.wantPathEditor !== 'undefined') {
       var snap;
       walkLayer = new OpenLayers.Layer.Vector('Your walk', {
-        style: {strokeColor: "red", strokeWidth: 5},
+        style: { strokeColor: 'red', strokeWidth: 5 },
         sphericalMercator: true,
         displayInLayerSwitcher: false
       });
       div.map.addLayer(walkLayer);
       snap = new OpenLayers.Control.Snapping({
         layer: div.map.editLayer,
-        targets: [{layer: indiciaData.reportlayer, tolerance: 20}]
+        targets: [{ layer: indiciaData.reportlayer, tolerance: 20 }]
       });
       div.map.addControl(snap);
       snap.activate();
@@ -280,12 +283,12 @@ jQuery(document).ready(function ($) {
       });
     }
     if (typeof indiciaData.showParentSampleGeom!=="undefined") {
-      var f, styleMap = new OpenLayers.StyleMap({strokeColor:"#0000FF", fillOpacity: 0.2}),
-          layer = new OpenLayers.Layer.Vector('Data entered so far', {styleMap: styleMap});
+      var f, styleMap = new OpenLayers.StyleMap({ strokeColor: '#0000FF', fillOpacity: 0.2 }),
+          layer = new OpenLayers.Layer.Vector('Data entered so far', { styleMap: styleMap });
       div.map.addLayer(layer);
       f = new OpenLayers.Feature.Vector(
         OpenLayers.Geometry.fromWKT(indiciaData.showParentSampleGeom),
-        {type: "boundary"}
+        { type: 'boundary' }
       );
       layer.addFeatures([f]);
       if (typeof indiciaData.showChildSampleGeoms!=="undefined") {
@@ -299,31 +302,38 @@ jQuery(document).ready(function ($) {
       }
       div.map.zoomToExtent(layer.getDataExtent());
     }
-    // event handler for the select_map_control button click
+    // Event handler for the select_map_control button click.
     $('button.select_map_control').click(function() {
-      var control = $(this).attr('data-control'),
-        // convert control name to the expected display class
-        controlDisplayClass = 'olControl' + control.charAt(0).toUpperCase() + control.slice(1),
-        minzoomlevel = $(this).attr('data-minzoomlevel') ? $(this).attr('data-minzoomlevel') : 0;
-      if (minzoomlevel && div.map.getZoom()<minzoomlevel) {
+      var control = $(this).attr('data-control');
+      // convert control name to the expected display class
+      var controlDisplayClass = 'olControl' + control.charAt(0).toUpperCase() + control.slice(1);
+      var minzoomlevel = $(this).attr('data-minzoomlevel') ? $(this).attr('data-minzoomlevel') : 0;
+      if (minzoomlevel && div.map.getZoom() < minzoomlevel) {
         alert('Please zoom in a bit further before attempting to define your walk.');
         return;
       }
       $.each(div.map.controls, function() {
-        if (this.displayClass.split(' ').indexOf(controlDisplayClass)!==-1) {
+        if (this.displayClass.split(' ').indexOf(controlDisplayClass) !== -1) {
           this.activate();
-        } else if (this.displayClass.match(/^olControlDrawFeature/)) {
+          if (controlDisplayClass === 'olControlModifyFeature' && div.map.editLayer.features.length) {
+            this.selectFeature(div.map.editLayer.features[0]);
+          }
+        } else if (this.displayClass.match(/^olControl(Draw|Modify)Feature/)) {
           this.deactivate();
         }
-
       });
-      div.map.editLayer.removeAllFeatures();
-      walkLayer.removeAllFeatures();
-      if (typeof indiciaData[$(this).attr('id')]!=="undefined") {
-        $(this).after('<p>' + indiciaData[$(this).attr('id')] + '</p>');
-        delete indiciaData[$(this).attr('id')];
+      if (controlDisplayClass !== 'olControlModifyFeature') {
+        div.map.editLayer.removeAllFeatures();
+        walkLayer.removeAllFeatures();
+      }
+      if (typeof indiciaData[$(this).attr('id')] !== 'undefined') {
+        if (typeof indiciaData[$(this).attr('id')].selector === 'undefined') {
+          $(this).after('<p class="map-control-instruct">' + indiciaData[$(this).attr('id')].instruction + '</p>');
+        } else {
+          $(indiciaData[$(this).attr('id')].selector).html(indiciaData[$(this).attr('id')].instruction);
+          $(indiciaData[$(this).attr('id')].selector).show();
+        }
       }
     });
   });
-
 });

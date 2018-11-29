@@ -21,18 +21,18 @@
  */
 
 require_once ('includes/report_filters.php');
- 
+
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
- * A quick and easy way to download data you have access to. 
+ * A quick and easy way to download data you have access to.
  */
 class iform_easy_download {
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_easy_download_definition() {
@@ -43,12 +43,12 @@ class iform_easy_download {
       'helpLink'=>'https://indicia-docs.readthedocs.org/en/latest/site-building/iform/prebuilt-forms/easy-download.html'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'permission',
@@ -251,9 +251,9 @@ class iform_easy_download {
         'required'=>false,
         'default'=>20000
       )
-    ); 
+    );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -285,12 +285,12 @@ class iform_easy_download {
       return 'This download page is configured so that no filter options are available.';
     if (count($formats)===0)
       return 'This download page is configured so that no download format options are available.';
-    
+
     if (!empty($_POST))
       self::do_download($args, $nid);
-    
+
     iform_load_helpers(array('data_entry_helper'));
-    $reload = data_entry_helper::get_reload_link_parts();  
+    $reload = data_entry_helper::get_reload_link_parts();
     $reloadPath = $reload['path'];
     if(count($reload['params'])) $reloadPath .= '?'.helper_base::array_to_query_string($reload['params']);
     $r = '<form method="POST" action="'.$reloadPath.'">';
@@ -311,7 +311,7 @@ class iform_easy_download {
         'lookupValues' => $filters,
         'default'=>(empty($_POST['user-filter']) ? 'mine' : $_POST['user-filter'])
       ));
-    } 
+    }
     if (empty($args['survey_id'])) {
       // A survey picker when downloading my data
       $r .= '<div id="survey_all">';
@@ -434,13 +434,13 @@ class iform_easy_download {
     elseif ($_POST['format']===lang::get('NBN Format'))
       self::do_data_services_download($args, $nid, 'nbn');
   }
-  
+
   private static function do_data_services_download($args, $nid, $format) {
     iform_load_helpers(array('report_helper'));
     $conn = iform_get_connection_details($nid);
     $readAuth = data_entry_helper::get_read_auth($conn['website_id'], $conn['password']);
-    if (preg_match('/^library\/occurrences\/filterable/', $args["report_$format"])) 
-      $filter = self::build_filter($args, $readAuth, $format, true);  
+    if (preg_match('/^library\/occurrences\/filterable/', $args["report_$format"]))
+      $filter = self::build_filter($args, $readAuth, $format, true);
     else
       $filter = self::build_filter($args, $readAuth, $format, false);
     global $indicia_templates;
@@ -457,6 +457,7 @@ class iform_easy_download {
       'itemsPerPage'=>$limit
     ));
     header("Location: $url");
+    exit;
   }
 
   /**
@@ -485,21 +486,21 @@ class iform_easy_download {
       $taxon_groups_expertise = array();
       $surveys_expertise = array();
     }
-    // We are downloading either a configured survey, a selected single survey, or the surveys the 
-    // user can see. The field name used will depend on which of the survey selects were active - 
+    // We are downloading either a configured survey, a selected single survey, or the surveys the
+    // user can see. The field name used will depend on which of the survey selects were active -
     // either we are selecting from a list of surveys the user is an expert for, or a list of
     // all surveys.
     $surveyFieldName='survey_id_'.(preg_match('/^expert/', $filterToApply) ? 'expert' : 'all');
     if (empty($args['survey_id'])) {
       $surveys = empty($_POST[$surveyFieldName]) ? implode(',', $surveys_expertise) : $_POST[$surveyFieldName];
-    } else 
+    } else
       // survey to load is preconfigured for the form
       $surveys = $args['survey_id'];
     $ownData=$filterToApply==='mine' ? 1 : 0;
     // depending on if we are using the old explore report format or the new filterable format, the filter field names differ
     $userIdField = $useStandardParams ? 'user_id' : 'currentUser';
     $myRecordsField = $useStandardParams ? 'my_records' : 'ownData';
-    $locationIdField = $useStandardParams ? 'indexed_location_id' : 'location_id';
+    $locationIdField = $useStandardParams ? 'indexed_location_list' : 'location_list';
     $surveysListField = $useStandardParams ? 'survey_list' : 'surveys';
     $taxonGroupListField = $useStandardParams ? 'taxon_group_list' : 'taxon_groups';
     $filters = array_merge(
@@ -522,11 +523,11 @@ class iform_easy_download {
     }
     if (!empty($_POST['date_from']) && $_POST['date_from']!==lang::get('Click here'))
       $filters['date_from']=$_POST['date_from'];
-    else if (!$useStandardParams) 
+    else if (!$useStandardParams)
       $filters['date_from']='';
     if (!empty($_POST['date_to']) && $_POST['date_to']!==lang::get('Click here'))
       $filters['date_to']=$_POST['date_to'];
-    else if (!$useStandardParams) 
+    else if (!$useStandardParams)
       $filters['date_to']='';
     // now, if they have a verification context filter in force, then apply it
     $filters = array_merge(
@@ -558,7 +559,7 @@ class iform_easy_download {
           }
           break;
         }
-      }      
+      }
     }
     return $filters;
   }

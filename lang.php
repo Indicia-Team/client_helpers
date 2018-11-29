@@ -55,7 +55,7 @@ class lang {
     global $default_terms;
     global $custom_terms;
     $output = $key;
-    $useHostsiteTranslation = function_exists('t') && !empty(helper_config::$delegate_translation_to_hostsite);
+    $useHostsiteTranslation = function_exists('t') && !empty(helper_base::$delegate_translation_to_hostsite);
     if (isset($custom_terms) && array_key_exists($key, $custom_terms)) {
       $output = $custom_terms[$key];
     }
@@ -126,7 +126,6 @@ class lang {
    */
   private static function applyDrupalTranslation($output, array $args) {
     // Now do any replacements using any additional function arguments.
-    $args = func_get_args();
     $tArgs = [];
     if (count($args) > 1) {
       // Get rid of the first argument, it is the language string key.
@@ -135,7 +134,7 @@ class lang {
       $argkeys = [];
       foreach ($args as $arg) {
         $argkeys[] = '/\{' . (count($argkeys) + 1) . '\}/';
-        $tArgs['@arg' . (count($argkeys) + 1)] = $arg;
+        $tArgs['@arg' . (count($argkeys) + 1)] = $arg[0];
       }
       // Convert the indicia style args to Drupal style ones.
       $output = preg_replace($argkeys, array_keys($tArgs), $output);

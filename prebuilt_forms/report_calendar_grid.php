@@ -34,11 +34,11 @@ class iform_report_calendar_grid {
 
   /* This is the URL parameter used to pass the location_id filter through */
   private static $locationKey = 'locationID';
-  
+
   /* This is the URL parameter used to pass the location_type_id filter through */
   /* This may be prefixed by the report group */
   private static $locationTypeKey = 'location_type_id';
-  
+
   /* This is the URL parameter used to pass the year filter through */
   private static $yearKey = 'year';
 
@@ -47,10 +47,10 @@ class iform_report_calendar_grid {
 
   // internal key, not used on URL: maps the location_id to a url extension.
   private static $URLExtensionKey = 'URLExtension';
-  
+
   private static $siteUrlParams = array();
 
-  /** 
+  /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -62,13 +62,13 @@ class iform_report_calendar_grid {
       'helpLink' => 'http://code.google.com/p/indicia/wiki/PrebuiltFormReportCalendarGrid'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
   public static function get_parameters() {
-    return 
+    return
       array(
         array(
           'name'=>'report_name',
@@ -218,7 +218,7 @@ class iform_report_calendar_grid {
                          'To the end of this will be appended "&sample_id=&lt;n&gt;".',
           'type'=>'string',
           'group' => 'Report Settings'
-        ), 
+        ),
         array(
           'name' => 'footer',
           'caption' => 'Footer',
@@ -305,7 +305,7 @@ class iform_report_calendar_grid {
     }
     return self::$siteUrlParams;
   }
-  
+
   public static function get_sorted_termlist_terms($auth, $key, $filter){
   	$terms = helper_base::get_termlist_terms($auth, $key, $filter);
   	$retVal = array();
@@ -338,7 +338,7 @@ jQuery('#".$ctrlid."').change(function(){
     if(isset($presets['survey_id'])) {
       self::$siteUrlParams[self::$SurveyKey]['value'] = $presets['survey_id'];
     }
-    
+
     if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
       $types = explode(',',$args['locationTypesFilter']);
       $types1=array();
@@ -378,7 +378,7 @@ jQuery('#".$ctrlid."').change(function(){
     }
     return '';
   }
-  
+
   private static function location_control($args, $readAuth, $nid)
   {
     global $user;
@@ -398,7 +398,7 @@ jQuery('#".$ctrlid."').change(function(){
         'fieldprefix'=>'locAttr',
         'extraParams'=>$readAuth,
         'survey_id'=>$siteUrlParams[self::$SurveyKey]['value']);
-    if (!empty($presets['location_type_id'])) 
+    if (!empty($presets['location_type_id']))
       $attrArgs['location_type_id'] = $presets['location_type_id'];
     if($siteUrlParams[self::$locationTypeKey]['value']!="")
       $attrArgs['location_type_id'] = $siteUrlParams[self::$locationTypeKey]['value'];
@@ -467,7 +467,7 @@ jQuery('#".$ctrlid."').change(function(){
   // Future enhancement? manager user access right who can see all walks by all people, with a person filter drop down.
   // Future enhancement? Download list of surveys used as basis for calendar
     global $user;
-    
+
     $logged_in = $user->uid>0;
     if(!$logged_in) {
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
@@ -478,11 +478,11 @@ jQuery('#".$ctrlid."').change(function(){
     }
     iform_load_helpers(array('report_helper'));
     $auth = report_helper::get_read_auth($args['website_id'], $args['password']);
-    
+
     $grid = self::location_type_control($args, $auth, $nid).
             (isset($args['includeLocationFilter']) && $args['includeLocationFilter'] ?
               self::location_control($args, $auth, $nid) : '');
-    
+
     /* survey_id should be set in param_presets $args entry.  */
     $reportOptions = self::get_report_calendar_options($args, $auth);
     // get the grid output before outputting the download link, so we can check if the download link is needed.
@@ -500,7 +500,7 @@ jQuery('#".$ctrlid."').change(function(){
       $reportOptions['weekNumberFilter']= $args['weekNumberFilter'];
     }
     $reportOptions['buildLinkFunc']=array('iform_report_calendar_grid', 'build_link');
-    
+
     $siteUrlParams = self::get_site_url_params($args);
     $extensions = array($siteUrlParams[self::$URLExtensionKey]['value']);
     $reportOptions['existingURL'] = self::get_url($args['existingURL'], $extensions);
@@ -518,7 +518,7 @@ jQuery('#".$ctrlid."').change(function(){
     $grid .= report_helper::report_calendar_grid($reportOptions);
     return $grid;
   }
-  
+
   private static function get_url($url, $extensions) {
     $split = strpos($url, '?');
     // convert the query parameters into an array
@@ -526,7 +526,7 @@ jQuery('#".$ctrlid."').change(function(){
     $getsAssoc = array();
     foreach ($gets as $get) {
 //    	var_dump($get);
-    	 
+
       $tokens = explode('=', $get);
       if (count($tokens)===1) $tokens[] = '';
       $getsAssoc[$tokens[0]] = $tokens[1];
@@ -544,5 +544,5 @@ jQuery('#".$ctrlid."').change(function(){
       $path .= (strpos($path, '?') === false ? '?' : '&').$key.'='.$value;
     return $path;
   }
-  
+
 }

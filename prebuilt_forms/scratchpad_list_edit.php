@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -22,13 +23,13 @@
 
 /**
  * Form for editing a scratchpad list (a list of pointers to entities in the database, e.g. a list of species or locations).
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_scratchpad_list_edit {
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -41,12 +42,12 @@ class iform_scratchpad_list_edit {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'entity',
@@ -84,7 +85,7 @@ class iform_scratchpad_list_edit {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -226,15 +227,14 @@ HTML;
       $r .= "\n<button id=\"scratchpad-cancel\" type=\"button\">$cancelLabel</button>\n";
     $r .= "</form>\n";
     data_entry_helper::$javascript .= 'indiciaData.scratchpadSettings = ' . json_encode($options) . ";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/scratchpad_list_edit')."\";\n";
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {

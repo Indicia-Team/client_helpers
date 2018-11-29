@@ -285,7 +285,8 @@ class iform_ukbms_sectioned_transects_input_sample {
       "mapping": {
         "taxon": {"type":"str","title":"Taxon","desc":"Taxon: included for commenting purposes only."},
         "taxon_meaning_id": {"type":"str","title":"Taxon Meaning ID","required":true,"desc":"Meaning ID of the Taxon."},
-        "walk_limit": {"type":"str","title":"Walk Limit","desc":"The maximum number of the species on a single walk, across all sections in the walk."},
+        "walk_limit": {"type":"str","title":"Walk Limit","desc":"The threshold number of the species on a single walk, across all sections in the walk: any value above this will trigger a confirmation dialog."},
+        "section_limit": {"type":"str","title":"Section Limit","desc":"The threshold number of the species on a single transect section: any value above this will trigger a confirmation dialog."},
       }
     }
   ]
@@ -1220,7 +1221,8 @@ class iform_ukbms_sectioned_transects_input_sample {
         'species_sort' => (!empty($args['species_sort']) ? json_decode($args['species_sort'], true) : array()),
         'taxon_column' => (isset($args['taxon_column']) ? $args['taxon_column'] : 'taxon'),
         'verificationTitle' => lang::get('Warnings'),
-        'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk exceeds the expected maximum ({{ limit }})'),
+        'verificationSectionLimitMessage' => lang::get('The value entered for this taxon on this transect section ({{ value }}) exceeds the expected maximum ({{ limit }})'),
+        'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk ({{ total }}) exceeds the expected maximum ({{ limit }})'),
         'outOfRangeVerification' => array()
     );
 
@@ -1946,7 +1948,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $info = array();
     $ruleTypesDone = array('WithoutPolygon' => false, 'PeriodWithinYear' => false);
 
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(array('data_entry_helper', 'report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
 
     $cttl = data_entry_helper::get_population_data(array(

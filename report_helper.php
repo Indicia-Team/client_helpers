@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package	Client
- * @author	Indicia Team
- * @license	http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link 	http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
@@ -261,6 +260,8 @@ class report_helper extends helper_base {
   * in their default state, since the columns array will be empty.</li>
   * <li><b>headers</b>
   * Should a header row be included? Defaults to true.
+  * <li><b>sortable</b>
+  * If a header is included, should columns which allow sorting be sortable by clicking? Defaults to true.
   * <li><b>galleryColCount</b>
   * If set to a value greater than one, then each grid row will contain more than one record of data from the database, allowing
   * a gallery style view to be built. Defaults to 1.
@@ -388,7 +389,6 @@ class report_helper extends helper_base {
   */
   public static function report_grid($options) {
     global $indicia_templates;
-    global $user;
     self::add_resource('fancybox');
     $sortAndPageUrlParams = self::get_report_grid_sort_page_url_params($options);
     $options = self::get_report_grid_options($options);
@@ -452,7 +452,7 @@ class report_helper extends helper_base {
             $caption = empty($field['display']) ? $field['fieldname'] : lang::get($field['display']);
           }
 
-          if (isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
+          if ($options['sortable'] && isset($field['fieldname']) && !(isset($field['img']) && $field['img'] == 'true')) {
             if (empty($field['orderby'])) {
               $field['orderby'] = $field['fieldname'];
             }
@@ -494,15 +494,15 @@ class report_helper extends helper_base {
             switch ($field['datatype']) {
               case 'text':
               case 'species':
-                $title=lang::get("{1} text begins with ... search. Use * as a wildcard.", $caption);
+                $title=lang::get("Search for {1} text begins with .... Use * as a wildcard.", $caption);
                 break;
               case 'date':
-                $title=lang::get("{1} search. Search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
+                $title=lang::get("Search on {1} - search for an exact date or use a vague date such as a year to select a range of dates.", $caption);
                 break;
-              default: $title=lang::get("{1} search. Either enter an exact number, use >, >=, <, or <= before the number to filter for ".
+              default: $title=lang::get("Search on {1} - either enter an exact number, use >, >=, <, or <= before the number to filter for ".
                       "{1} more or less than your search value, or enter a range such as 1000-2000.", $caption);
             }
-            $title = htmlspecialchars(lang::get('Type here to filter.').' '.$title);
+            $title = htmlspecialchars(lang::get('Type here to filter then press Tab or Return to apply the filter.').' '.$title);
             //Filter, which when clicked, displays a popup with a series of checkboxes representing a distinct set of data from a column on the report.
             //The user can then deselect these checkboxes to remove data from the report.
             if (!empty($options['includePopupFilter'])&&$options['includePopupFilter']===true) {
@@ -560,7 +560,7 @@ class report_helper extends helper_base {
           'nonce='.$options['readAuth']['nonce'],
           'auth_token='.$options['readAuth']['auth_token'],
           (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
-          $user->uid,
+          hostsite_get_user_field('id'),
           self::$website_id
         ), $options['footer']
       );
@@ -827,10 +827,7 @@ $callToCallback}";
       // Now AJAXify the grid
       self::add_resource('reportgrid');
       global $indicia_templates;
-      if (!empty(parent::$warehouse_proxy))
-        $warehouseUrl = parent::$warehouse_proxy;
-      else
-        $warehouseUrl = parent::$base_url;
+      $warehouseUrl = parent::getProxiedBaseUrl();
       $rootFolder = self::getRootFolder() . (empty($pathParam) ? '' : "?$pathParam=");
       if (isset($options['sharing'])) {
         $options['extraParams']['sharing']=$options['sharing'];
@@ -846,7 +843,6 @@ $callToCallback}";
       $fixedParams = json_encode($options['extraParams'], JSON_FORCE_OBJECT);
       $immutableParams = json_encode($options['immutableParams'], JSON_FORCE_OBJECT);
       self::$javascript .= "
-if (typeof indiciaData.reports==='undefined') { indiciaData.reports={}; }
 if (typeof indiciaData.reports.$group==='undefined') { indiciaData.reports.$group={}; }
 indiciaFns.simpleTooltip('input.col-filter','tooltip');
 indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
@@ -881,6 +877,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langNext: '" . lang::get('next') . "',
   langLast: '" . lang::get('last') . "',
   langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
+  langHideInfo: '" . lang::get('Hide info') . "',
   noRecords: '" . lang::get('No records')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";
@@ -906,6 +903,9 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
     }
     if ($options['ajax'] && $options['autoloadAjax']) {
       self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(true);\n";
+    }
+    elseif (!$options['ajax']) {
+      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.setupPagerEvents();\n";
     }
     return $r;
   }
@@ -1825,6 +1825,10 @@ JS;
   * Default true. Defines that the map will automatically zoom to show the records. If using AJAX then note that the
   * zoom will happen after initial page load and the map will zoom again if several pages of records are loaded.
   * </li>
+  * <li><b>minMapReportZoom</b>
+  * If set to a map zoom level (typically from 1-18) then the map does not show
+  * the report output until zoomed to this level.
+  * </li>
   * <li><b>featureDoubleOutlineColour</b>
   * If set to a CSS colour class, then feature outlines will be doubled up, for example a 1 pixel dark outline
   * over a 3 pixel light outline, creating a line halo effect which can make the map clearer.
@@ -1841,6 +1845,7 @@ JS;
       'extraParams' => '',
       'featureDoubleOutlineColour' => '',
       'dataSourceLoRes' => '',
+      'minMapReportZoom' => 'false',
     ), $options);
     $options = self::get_report_grid_options($options);
 
@@ -2085,28 +2090,26 @@ JS;
           ]);
           self::$javascript .= <<<JS
 indiciaData.mapDataSource = $mapDataSource;
+indiciaData.minMapReportZoom = $options[minMapReportZoom];
 mapInitialisationHooks.push(function(div) {
-  var wantToMap =
-    typeof indiciaData.filter === 'undefined' ||
-    typeof indiciaData.filter.def.indexed_location_id === 'undefined' ||
-    indiciaData.filter.def.indexed_location_id === '';
+  var wantToMap = typeof indiciaData.mapZoomPlanned === 'undefined';
   // Find the best report grid to use as a map report controller.
-  $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
-    if (typeof indiciaData.mapReportControllerGrid === 'undefined') {
-      // Use the first grid to contol the map report...
-      indiciaData.mapReportControllerGrid = grid;
-    }
-    if (grid[0].settings.linkFilterToMap) {
-      // ...Unless there is a better filter linked grid.
-      indiciaData.mapReportControllerGrid = grid;
-      // Only need one grid to draw the map.
-      return false;
-    }
-  });
-  if (wantToMap && typeof indiciaData.reports !== 'undefined') {
-    if (typeof indiciaData.mapReportControllerGrid !== 'undefined') {
-      indiciaData.mapReportControllerGrid.mapRecords();
-    }
+  if (typeof indiciaData.reports.$options[reportGroup] !== 'undefined') {
+    $.each(indiciaData.reports.$options[reportGroup], function(idx, grid) {
+      if (typeof indiciaData.mapReportControllerGrid === 'undefined') {
+        // Use the first grid to contol the map report...
+        indiciaData.mapReportControllerGrid = grid;
+      }
+      if (grid[0].settings.linkFilterToMap) {
+        // ...Unless there is a better filter linked grid.
+        indiciaData.mapReportControllerGrid = grid;
+        // Only need one grid to draw the map.
+        return false;
+      }
+    });
+  }
+  if (wantToMap && typeof indiciaData.mapReportControllerGrid !== 'undefined') {
+    indiciaData.mapReportControllerGrid.mapRecords();
   }
   if (indiciaData.mapDataSource.loRes !== '') {
     // hook up a zoom and pan handler so we can switch reports.
@@ -2260,46 +2263,47 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
   }
 
   /**
-   * Method that retrieves the data from a report or a table/view, ready to display in a chart or grid.
-   * Respects the filters and columns $_GET variables generated by a grid's filter form when JavaScript is disabled.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>mode</b><br/>
-   * Defaults to report, which means report data is being loaded. Set to direct to load data directly from an entity's view.
-   * </li>
-   * <li><b>dataSource</b><br/>
-   * Name of the report or entity being queried. If set to 'static', then provide an option staticData containing
-   * an array of preloaded report data to return, which can be used to override report data fetches for reporting
-   * components.
-   * <li><b>readAuth</b><br/>
-   * Read authentication tokens.
-   * </li>
-   * <li><b>filters</b><br/>
-   * Array of key value pairs to include as a filter against the data.
-   * </li>
-   * <li><b>extraParams</b><br/>
-   * Array of additional key value pairs to attach to the request.
-   * </li>
-   * <li><b>linkOnly</b><br/>
-   * Pass true to return a link to the report data request rather than the data itself. Default false.
-   * </li>
-   * <li><b>sharing</b>
-   * Assuming the report has been written to take account of website sharing agreements, set this to define the task
-   * you are performing with the report and therefore the type of sharing to allow. Options are reporting (default),
-   * verification, moderation, peer_review, data_flow, editing, website (this website only) or me (my data only).</li>
-   * <li><b>UserId</b>
-   * If sharing=me, then this must contain the Indicia user ID of the user to return data for.
-   * <li><b>caching</b>
-   * If true, then the response will be cached and the cached copy used for future calls. Default false.
-   * If 'store' then although the response is not fetched from a cache, the response will be stored in the cache for possible
-   * later use.
-   * </li>
-   * <li><b>cachePerUser</b>
-   * Default true. Because a report automatically receives the user_id of a user as a parameter, if the user is linked to the warehouse,
-   * report caching will be granular to the user level. That is, if a user loads a report and another user loads the same report, the
-   * cache is not used because they have different user IDs. Set this to false to make the cache entry global so that all users will receive
-   * the same copy of the report. Generally you should only use this on reports that are non-user specific.
-   * </li>
-   * </ul>
+   * Retrieve report data.
+   *
+   * Method that retrieves the data from a report or a table/view, ready to
+   * display in a chart or grid. Respects the filters and columns $_GET
+   * variables generated by a grid's filter form when JavaScript is disabled.
+   * Also automatically respects the user's current training mode setting.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * mode - Defaults to report, which means report data is being loaded.
+   *     Set to direct to load data directly from an entity's view.
+   *   * dataSource - Name of the report or entity being queried. If set to
+   *     'static', then provide an option staticData containing an array of
+   *     preloaded report data to return, which can be used to override report
+   *     data fetches for reporting components.
+   *   * readAuth - Read authentication tokens.
+   *   * filters - Array of key value pairs to include as a filter against the
+   *     data.
+   *   * extraParams - Array of additional key value pairs to attach to the
+   *     request.
+   *   * linkOnly - Pass true to return a link to the report data request rather
+   *     than the data itself. Default false.
+   *   * sharing - Assuming the report has been written to take account of
+   *     website sharing agreements, set this to define the task you are
+   *     performing with the report and therefore the type of sharing to allow.
+   *     verification, moderation, peer_review, data_flow, editing, website
+   *     (this website only) or me (my data only).
+   *   * UserId - If sharing=me, then this must contain the Indicia user ID of
+   *     the user to return data for.
+   *   * caching - If true, then the response will be cached and the cached
+   *     copy used for future calls. Default false. If 'store' then although
+   *     the response is not fetched from a cache, the response will be stored
+   *     in the cache for possible later use.
+   *   * cachePerUser - Default true. Because a report automatically receives
+   *     the user_id of a user as a parameter, if the user is linked to the
+   *     warehouse, report caching will be granular to the user level. That is,
+   *     if a user loads a report and another user loads the same report, the
+   *     cache is not used because they have different user IDs. Set this to
+   *     false to make the cache entry global so that all users will receive
+   *     the same copy of the report. Generally you should only use this on
+   *     reports that are non-user specific.
    *
    * @param string $extra Any additional parameters to append to the request URL, for example orderby, limit or offset.
    * @return mixed If linkOnly is set in the options, returns the link string, otherwise returns the response as an array.
@@ -2307,9 +2311,15 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
   public static function get_report_data($options, $extra='') {
     if ($options['dataSource']==='static' && isset($options['staticData']))
       return $options['staticData'];
+    $options = array_merge([
+      'mode' => 'report',
+      'format' => 'json',
+      'extraParams' => [],
+    ], $options);
+    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
+      $options['extraParams']['training'] = 'true';
+    }
     $query = array();
-    if (!isset($options['mode'])) $options['mode']='report';
-    if (!isset($options['format'])) $options['format']='json';
     if ($options['mode']=='report') {
       $serviceCall = 'report/requestReport?report='.$options['dataSource'].'.xml&reportSource=local&'.
           (isset($options['filename']) ? 'filename='.$options['filename'].'&' : '');
@@ -2327,9 +2337,9 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
     if (!empty($extra) && substr($extra, 0, 1)!=='&')
       $extra = '&'.$extra;
     $request = 'index.php/services/'.
-        $serviceCall.
-        'mode='.$options['format'].'&nonce='.$options['readAuth']['nonce'].
-        '&auth_token='.$options['readAuth']['auth_token'].
+        $serviceCall .
+        'mode=' . $options['format'] . '&nonce=' . $options['readAuth']['nonce'] .
+        '&auth_token=' . $options['readAuth']['auth_token'] .
         $extra;
     if (isset($options['filters'])) {
       foreach ($options['filters'] as $key=>$value) {
@@ -2342,13 +2352,12 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
         }
       }
     }
-    if (!empty($query))
+    if (!empty($query)) {
       $request .= "&query=".urlencode(json_encode($query));
-    if (isset($options['extraParams'])) {
-      foreach ($options['extraParams'] as $key=>$value) {
-        // Must urlencode the keys and parameters, as things like spaces cause curl to hang.
-        $request .= '&'.urlencode($key).'='.urlencode($value);
-      }
+    }
+    foreach ($options['extraParams'] as $key => $value) {
+      // Must urlencode the keys and parameters, as things like spaces cause curl to hang.
+      $request .= '&' . urlencode($key) . '=' . urlencode($value);
     }
     // Pass through the type of data sharing
     if (isset($options['sharing']))
@@ -2357,7 +2366,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       $request .= '&user_id='.$options['userId'];
     if (isset($options['linkOnly']) && $options['linkOnly']) {
       // a link must be proxied as can be used client-site
-      return (empty(parent::$warehouse_proxy) ? parent::$base_url : parent::$warehouse_proxy).$request;
+      return parent::getProxiedBaseUrl() . $request;
     }
     return self::_get_cached_services_call($request, $options);
   }
@@ -2661,26 +2670,27 @@ if (typeof mapSettingsHooks!=='undefined') {
       'altRowClass' => 'odd',
       'columns' => array(),
       'galleryColCount' => 1,
-      'headers' => true,
-      'includeAllColumns' => true,
-      'autoParamsForm' => true,
-      'paramsOnly' => false,
+      'headers' => TRUE,
+      'sortable' => TRUE,
+      'includeAllColumns' => TRUE,
+      'autoParamsForm' => TRUE,
+      'paramsOnly' => FALSE,
       'extraParams' => array(),
       'immutableParams' => array(),
-      'completeParamsForm' => true,
+      'completeParamsForm' => TRUE,
       'callback' => '',
       'paramsFormButtonCaption' => 'Run Report',
-      'paramsInMapToolbar' => false,
+      'paramsInMapToolbar' => FALSE,
       'view' => 'list',
       'caching' => isset($options['paramsOnly']) && $options['paramsOnly'],
-      'sendOutputToMap' => false,
-      'zoomMapToOutput' => true,
-      'ajax' => false,
-      'autoloadAjax' => true,
-      'linkFilterToMap' => true,
-      'pager' => true,
+      'sendOutputToMap' => FALSE,
+      'zoomMapToOutput' => TRUE,
+      'ajax' => FALSE,
+      'autoloadAjax' => TRUE,
+      'linkFilterToMap' => TRUE,
+      'pager' => TRUE,
       'imageThumbPreset' => 'thumb',
-      'includeColumnsPicker' => false
+      'includeColumnsPicker' => FALSE,
     ), $options);
     // if using AJAX we are only loading parameters and columns, so may as well use local cache
     if ($options['ajax'])
@@ -3066,7 +3076,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
    * @param array $options Options array passed to the control.
    */
   private static function get_report_calendar_grid_options($options) {
-    global $user;
+    $userId = hostsite_get_user_field('id');
     $options = array_merge(array(
       'mode' => 'report',
       'id' => 'calendar-report-output', // this needs to be set explicitly when more than one report on a page
@@ -3083,20 +3093,22 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue, removeparam) {
     $options["extraParams"] = array_merge(array(
       'date_from' => $options["year"].'-01-01',
       'date_to' => $options["year"].'-12-31',
-      'user_id' => $user->uid, // Initially CMS User, changed to Indicia User later if in Easy Login mode.
-      'cms_user_id' => $user->uid, // CMS User, not Indicia User.
+      'user_id' => $userId, // Initially CMS User, changed to Indicia User later if in Easy Login mode.
+      'cms_user_id' => $userId, // CMS User, not Indicia User.
       'smpattrs' => ''), $options["extraParams"]);
-    $options['my_user_id'] = $user->uid; // Initially CMS User, changed to Indicia User later if in Easy Login mode.
+    $options['my_user_id'] = $userId; // Initially CMS User, changed to Indicia User later if in Easy Login mode.
     // Note for the calendar reports, the user_id is assumed to be the CMS user id as recorded in the CMS User ID attribute,
     // not the Indicia user id.
     if (function_exists('hostsite_get_user_field') && $options["extraParams"]['user_id'] == $options["extraParams"]['cms_user_id']) {
       $indicia_user_id = hostsite_get_user_field('indicia_user_id');
-      if($indicia_user_id)
+      if ($indicia_user_id) {
         $options["extraParams"]['user_id'] = $indicia_user_id;
-      if($options['my_user_id']){ // false switches this off.
+      }
+      if ($options['my_user_id']) { // false switches this off.
         $user_id = hostsite_get_user_field('indicia_user_id', false, false, $options['my_user_id']);
-        if(!empty($user_id))
+        if(!empty($user_id)) {
           $options['my_user_id'] = $user_id;
+        }
       }
     }
     return $options;

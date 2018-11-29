@@ -234,7 +234,7 @@ ul.gallery li {
   display: inline-block;
 }
 /* line 149, sass/verification_5.scss */
-.popup-form #verify-template-container label {
+.popup-form .verify-template-container label {
   display: inline-block;
 }
 /* line 152, sass/verification_5.scss */

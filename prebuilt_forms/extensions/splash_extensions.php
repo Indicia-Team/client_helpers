@@ -382,7 +382,7 @@ class extension_splash_extensions {
       return $r;
     }
   }
-
+  
   /*
    * The Splash Location Select control allows selection of a square/plot on the first tab of data entry,
    * but these are then not visible to the user on the other tabs. This control takes what is in the Splash Location Select
@@ -1763,6 +1763,7 @@ class extension_splash_extensions {
     self::user_site_delete($postUrl,$args);
     return $r;
   }
+
   /*
    * Decide if we need to send an information email to user when they allocate themselves a location, 
    * or do we need to send email to support on location removal
@@ -1850,6 +1851,7 @@ class extension_splash_extensions {
     $r .= '</select>';
     return '<label>User : </label>'.$r.'<br>';
   }
+
   /*
    * Setup the sending of the location allocation email to the person allocated the location if required.
    */
@@ -1885,6 +1887,7 @@ class extension_splash_extensions {
       }
     }
   }
+
   /*
    * Optionally send email to user when location is assigned to them
    */
@@ -1915,7 +1918,7 @@ class extension_splash_extensions {
       watchdog('iform', 'Location '.$action.' email failed to '.$username.' '.$emailTo);
     }
   }
-  
+
   //The map pages uses node specific javascript that is very similar to the javascript functions found in
   //add_locations_to_user in this file (we couldn't call this code for re-use).
   //Use a simple function to supply the required indiciaData for that node specific javascript

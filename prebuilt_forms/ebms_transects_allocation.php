@@ -27,8 +27,8 @@
  */
 class iform_ebms_transects_allocation {
 
-  /** 
-   * Return the form metadata. 
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_ebms_transects_allocation_definition() {
@@ -41,7 +41,7 @@ class iform_ebms_transects_allocation {
 
   // TODO add allocation be person attribute functionality
   //      need to check if ajaxProxy can handle people attributes.
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -106,7 +106,7 @@ class iform_ebms_transects_allocation {
     	return 'The IForm AJAX Proxy module must be enabled for this form to work.';
     $auth = array();
     $current = self::_identify_current_type($args, $auth); // config object
-    
+
   	data_entry_helper::add_resource('jquery_ui');
     $settings = array(
     	'grid_id' => 'site-allocation-grid-'.$nid,
@@ -118,7 +118,7 @@ class iform_ebms_transects_allocation {
     	'select_all_class' => 'select-all-button',
     	'deselect_all_class' => 'deselect-all-button',
     	'auth' => $auth,
-    	'base_url' => !empty(data_entry_helper::$warehouse_proxy) ? data_entry_helper::$warehouse_proxy : data_entry_helper::$base_url,
+    	'base_url' => data_entry_helper::getProxiedBaseUrl(),
     	'config' => $current,
     	'alt_row_class' => 'odd',
     	'ajax_location_post_URL' => url('iform/ajax/ebms_transects_allocation') . '/saveLocationAttribute/' . $nid,
@@ -154,7 +154,7 @@ class iform_ebms_transects_allocation {
       $args['website_id'] = $config[$selected]->website_id;
       $args['password'] = $config[$selected]->website_password;
     }
-       
+
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $config[$selected]->index = $selected;
     if(!empty($config[$selected]->regional_control_location_type)) {
@@ -173,7 +173,7 @@ class iform_ebms_transects_allocation {
       $config[$selected]->location_type_ids[] = $term['id'];
     if(empty($config[$selected]->attr_id) || count($config[$selected]->location_types) == 0)
       throw new exception("Form configuration error: missing attr_id for allocation index ".$selected);
-    
+
     return $config[$selected];
   }
 
@@ -230,7 +230,7 @@ class iform_ebms_transects_allocation {
            	)) .
     		'</th>';
   }
-  
+
   private static function _location_control($auth, $args, $nid, $settings) {
     if(empty($settings['config']->regional_control_location_type))
       return '<th>' .
@@ -372,5 +372,5 @@ class iform_ebms_transects_allocation {
   	header('Content-type: application/json');
   	echo json_encode(array('response' => $response));
   }
-  
+
 }

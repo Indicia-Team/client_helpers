@@ -24,13 +24,13 @@ require_once 'includes/map.php';
 
 /**
  * Provides a form for subscribing to receive a notification when a certain species is recorded.
- * 
+ *
  * @package    Client
  * @subpackage PrebuiltForms
  */
 class iform_subscribe_species_alert {
-  
-  /** 
+
+  /**
    * Return the form metadata. Note the title of this method includes the name of the form file. This ensures
    * that if inheritance is used in the forms, subclassed forms don't return their parent's form definition.
    *
@@ -45,14 +45,14 @@ class iform_subscribe_species_alert {
             'when that species is recorded or verified.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array_merge(
-      iform_map_get_map_parameters(), 
+      iform_map_get_map_parameters(),
       array(
         array(
           'fieldname'=>'list_id',
@@ -96,7 +96,7 @@ class iform_subscribe_species_alert {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    *
@@ -255,7 +255,7 @@ class iform_subscribe_species_alert {
     $mapOptions = iform_map_get_map_options($args, $auth['read']);
     $map = map_helper::map_panel($mapOptions);
     global $indicia_templates;
-    return str_replace(array('{col-1}', '{col-2}'), array($form, $map), $indicia_templates['two-col-50']);
+    return str_replace(array('{col-1}', '{col-2}', '{attr}'), array($form, $map, ''), $indicia_templates['two-col-50']);
   }
 
   /**
@@ -310,13 +310,13 @@ class iform_subscribe_species_alert {
       $params['taxon_meaning_id'] = $_POST['species_alert:taxon_meaning_id'];
     $url .= data_entry_helper::array_to_query_string($params, true);
     $result = data_entry_helper::http_post($url);
-    if ($result['result']) 
+    if ($result['result'])
       hostsite_show_message(lang::get('Your subscription has been saved.'));
     else {
       hostsite_show_message(lang::get('There was a problem saving your subscription.'));
       if (function_exists('watchdog')) {
         watchdog('iform', 'Species alert error on save: '.print_r($result, true));
-      } 
+      }
     }
   }
 

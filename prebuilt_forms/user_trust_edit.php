@@ -22,13 +22,13 @@
 
 /**
  * A page for editing or creating a user trust for verification.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_user_trust_edit {
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -39,16 +39,16 @@ class iform_user_trust_edit {
       'description'=>'A form for creating or editing user trusts.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
-    return array(      
+  public static function get_parameters() {
+    return array(
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -64,7 +64,7 @@ class iform_user_trust_edit {
     // apply defaults
     $args=array_merge(array(
     ), $args);
-    $reloadPath = self::getReloadPath();   
+    $reloadPath = self::getReloadPath();
     data_entry_helper::$website_id=$args['website_id'];
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     if (!empty($_GET['user_trust_id'])) {
@@ -158,12 +158,12 @@ class iform_user_trust_edit {
     ));
     $col2 .= '</div>';
     $col2 .= '</div>';
-    $r .= str_replace(array('{col-1}', '{col-2}'), array($col1, $col2), $indicia_templates['two-col-50']);
+    $r .= str_replace(array('{col-1}', '{col-2}', '{attrs}'), array($col1, $col2, ''), $indicia_templates['two-col-50']);
     $r .= '</fieldset>';
     $r .= '<input type="submit" class="indicia-button" id="save-button" value="'.
-        (empty(data_entry_helper::$entity_to_load['user_trust_id:id']) ? 
+        (empty(data_entry_helper::$entity_to_load['user_trust_id:id']) ?
         lang::get('Grant trust') : lang::get('Update trust settings'))
-        ."\" />\n";    
+        ."\" />\n";
     if (!empty($_GET['user_trust_id'])) {
       $r .= '<input type="submit" class="indicia-button" id="delete-button" name="delete-button" value="'.lang::get('Revoke this trust')."\" />\n";
       data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
@@ -177,7 +177,7 @@ class iform_user_trust_edit {
     data_entry_helper::enable_validation('entry_form');
     return $r;
   }
-  
+
   /**
    * Converts the posted form values for a group into a warehouse submission.
    * @param array $values Form values
@@ -190,10 +190,10 @@ class iform_user_trust_edit {
     );
     return submission_builder::build_submission($values, $struct);
   }
-  
-  /** 
+
+  /**
    * Retrieve the path to the current page, so the form can submit to itself.
-   * @return string 
+   * @return string
    */
   private static function getReloadPath () {
     $reload = data_entry_helper::get_reload_link_parts();
@@ -207,7 +207,7 @@ class iform_user_trust_edit {
     }
     return $reloadPath;
   }
-  
+
   /**
    * Fetch an existing user trust's information from the database when editing.
    * @param integer $id User trust ID
@@ -219,7 +219,7 @@ class iform_user_trust_edit {
       'extraParams'=>$auth['read']+array('view'=>'detail', 'id'=>$_GET['user_trust_id']),
       'nocache'=>true
     ));
-      
+
     data_entry_helper::$entity_to_load = array(
       'user_trust:id' => $trust[0]['id'],
       'user_trust:user_id' => $trust[0]['user_id'],
@@ -230,7 +230,7 @@ class iform_user_trust_edit {
       'user_trust:taxon_group_id:title' => $trust[0]['taxon_group'],
       'user_trust:location_id' => $trust[0]['location_id'],
       'user_trust:location_id:name' => $trust[0]['location'],
-      
+
     );
   }
 

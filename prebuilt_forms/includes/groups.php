@@ -106,8 +106,12 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
     if ($key) {
       $value = is_array($value) ? json_encode($value) : $value;
       $defstring .= "{$key}_context=$value\n";
-      if (!empty($value) && $key === 'indexed_location_id' || $key === 'indexed_location_list'
-        || $key === 'location_id' || $key === 'location_list') {
+      if (!empty($value) && in_array($key, [
+        'indexed_location_id',
+        'indexed_location_list',
+        'location_id',
+        'location_list',
+      ])) {
         $args['location_boundary_id'] = $value;
       }
       elseif (!empty($value) && $key === 'searchArea') {

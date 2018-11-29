@@ -455,7 +455,6 @@ class iform_data_services {
     require_once('includes/user.php');
     $params = get_options_array_with_user_data($additionalParamText);
     $params = array_merge($params, self::build_params($args));
-    $conn = iform_get_connection_details($nid);
 
     global $indicia_templates;
     // let's just get the URL, not the whole anchor element

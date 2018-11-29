@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,11 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link http://code.google.com/p/indicia/
  */
 
 require_once('includes/dynamic.php');
@@ -298,7 +297,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $conn = iform_get_connection_details($nid);
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/dynamic_report_explorer') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     return parent::get_form($args, $nid);
   }
 
@@ -348,42 +346,44 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     if (isset($options['hoverShowsDetails'])) {
       $options['hoverShowsDetails'] = TRUE;
     }
-    // $_GET data for standard params can override displayed location
-    if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
+    // $_GET data for standard params can override displayed location.
+    $locationIDToLoad = @$_GET['filter-indexed_location_list']
+      ?: @$_GET['filter-indexed_location_id']
+      ?: @$_GET['filter-location_list']
+      ?: @$_GET['filter-location_id'];
+    if (!empty($locationIDToLoad) && preg_match('/^\d+$/', $locationIDToLoad)) {
       $args['display_user_profile_location'] = FALSE;
-      if (!empty($_GET['filter-indexed_location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-indexed_location_id'];
+      $args['location_boundary_id'] = $locationIDToLoad;
+    }
+    $r = '';
+    if (!empty($options['dataSource'])) {
+      // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
+      $args['report_name'] = '';
+      $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+      $reportOptions = array_merge(
+        iform_report_get_report_options($args, $auth['read']),
+        array(
+          'reportGroup' => 'dynamic',
+          'autoParamsForm' => FALSE,
+          'sharing' => $sharing,
+          'readAuth' => $auth['read'],
+          'dataSource' => $options['dataSource'],
+          'rememberParamsReportGroup' => 'dynamic',
+          'clickableLayersOutputMode' => 'report',
+          'rowId' => 'occurrence_id',
+          'ajax' => TRUE,
+        )
+      );
+      // Ensure supplied extraParams are merged, not overwritten.
+      if (!empty($options['extraParams'])) {
+        $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
       }
-      elseif (!empty($_GET['filter-location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-location_id'];
+      $reportOptions = array_merge($reportOptions, $options);
+      if (self::$applyUserPrefs) {
+        iform_report_apply_explore_user_own_preferences($reportOptions);
       }
+      $r = report_helper::report_map($reportOptions);
     }
-    // allow us to call iform_report_get_report_options to get a default report setup, then override report_name
-    $args['report_name'] = '';
-    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
-    $reportOptions = array_merge(
-      iform_report_get_report_options($args, $auth['read']),
-      array(
-        'reportGroup' => 'dynamic',
-        'autoParamsForm' => FALSE,
-        'sharing' => $sharing,
-        'readAuth' => $auth['read'],
-        'dataSource' => $options['dataSource'],
-        'rememberParamsReportGroup' => 'dynamic',
-        'clickableLayersOutputMode' => 'report',
-        'rowId' => 'occurrence_id',
-        'ajax' => TRUE,
-      )
-    );
-    // Ensure supplied extraParams are merged, not overwritten.
-    if (!empty($options['extraParams'])) {
-      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
-    }
-    $reportOptions = array_merge($reportOptions, $options);
-    if (self::$applyUserPrefs) {
-      iform_report_apply_explore_user_own_preferences($reportOptions);
-    }
-    $r = report_helper::report_map($reportOptions);
     $options = array_merge(
       iform_map_get_map_options($args, $auth['read']),
       array(
@@ -570,10 +570,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   }
 
   /**
-   * Disable save buttons for this form class as not a data entry form.
+   * Disable save buttons for this form class. Not a data entry form.
    *
    * @return bool
-   *   Always returns FALSE.
+   *   Always return FALSE.
    */
   protected static function include_save_buttons() {
     return FALSE;
@@ -596,7 +596,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     ];
     $params = hostsite_get_node_field_value($nid, 'params');
     $details_report = 'library/occurrences/filterable_explore_list';
-    iform_load_helpers(['report_helper']);
+    iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = [
       'dataSource' => $details_report,
@@ -610,7 +610,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $reportData = report_helper::get_report_data($options);
     // Set some values which must exist in the record.
     if (count($reportData) === 0) {
-      echo "";
+      echo '';
       return;
     }
     header('Content-type: application/json');

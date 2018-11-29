@@ -245,10 +245,19 @@ class import_helper extends helper_base {
         unset($settings[$key]);
       }
     }
-    // Cache the mappings.
-    $metadata = array(
+    // Cache the mappings
+    // deal with API change: original form sent in options as json_encoded strings:
+    // now assumed as class/objects
+    if(isset($options['importMergeFields']) && is_string($options['importMergeFields'])) {
+        $options['importMergeFields'] = json_decode($options['importMergeFields']);
+    }
+    if(isset($options['synonymProcessing']) && is_string($options['synonymProcessing'])) {
+        $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
+    }
+    $metadata = array( // handed to metadata storage as json encoded strings
       'settings' => json_encode($settings),
-      'importMergeFields' => isset($options['importMergeFields']) ? $options['importMergeFields'] : json_encode([]),
+      'importMergeFields' => json_encode(isset($options['importMergeFields']) ? $options['importMergeFields'] : []), // comes from form already json encoded
+      'synonymProcessing' => json_encode(isset($options['synonymProcessing']) ? $options['synonymProcessing'] : new stdClass()), // comes from form already json encoded
     );
     $post = array_merge($options['auth']['write_tokens'], $metadata);
     $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
@@ -307,11 +316,18 @@ class import_helper extends helper_base {
         }
       }
     }
+    if (isset($options['synonymProcessing'])) {
+        $synonymProcessing = $options['synonymProcessing'];
+        if (isset($synonymProcessing->separateSynonyms) && $synonymProcessing->separateSynonyms === TRUE) {
+            $fields['synonym:tracker'] = lang::get("Main record vs Synonym");
+            $fields['synonym:identifier'] = lang::get("Field to group records together");
+        }
+    }
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], TRUE);
     if (!is_array($responseIds)) {
-      return "curl request to $request failed. Response " . print_r($response, TRUE);
+        return "curl request to $request failed. Response " . print_r($response, TRUE);
     }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
     $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys($settings)) : array();
@@ -327,7 +343,7 @@ class import_helper extends helper_base {
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     // If the user checked the Remember All checkbox need to remember this setting.
-    $checkedRememberAll = isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
+    $checkedRememberAll = isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';
     $r = <<<HTML
 <form method="post" id="entry_form" action="$reloadpath" class="iform">
   <p>{$t['column_mapping_instructions']}</p>
@@ -372,7 +388,7 @@ HTML;
         $colCount ++;
         $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
-        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings, count($existingDataLookupOptions) > 0); // this also create TDs for the remember checkboxes etc
+        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings, count($existingDataLookupOptions) > 0, $options['allowDataDeletions']); // this also create TDs for the remember checkboxes etc
         $r .= "</select></td></tr>\n";
       }
     }
@@ -526,8 +542,10 @@ JS;
         if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
             ($surveyFieldMap['survey_id']==$survey_id || $surveyFieldMap['survey_id']=="*" /* Used for locations */)) {
           $allowedFields = self::explode_lines($surveyFieldMap['fields']);
-          $trimEqualsValue = create_function('&$val', '$tokens = explode("=",$val); $val=$tokens[0];');
-          array_walk($allowedFields, $trimEqualsValue);
+          array_walk($allowedFields, function(&$val) {
+            $tokens = explode("=",$val);
+            $val = $tokens[0];
+          });
           $fields = array_intersect_key($fields, array_combine($allowedFields, $allowedFields));
         }
       }
@@ -614,13 +632,8 @@ JS;
         $post['user_id'] = hostsite_get_user_field('indicia_user_id');
       $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
       $response = self::http_post($request, $post);
-      if (!isset($response['output']) || $response['output'] != 'OK')
+      if (!isset($response['output']) || $response['output'] != 'OK') {
         return "Could not upload the mappings metadata. <br/>" . print_r($response, TRUE);
-      if (!empty(parent::$warehouse_proxy)) {
-        $warehouseUrl = parent::$warehouse_proxy;
-      }
-      else {
-        $warehouseUrl = parent::$base_url;
       }
       self::$onload_javascript .= "
     /**
@@ -630,7 +643,7 @@ JS;
     uploadChunk = function() {
       var limit=50;
       $.ajax({
-        url: '" . $warehouseUrl . "index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=" . $options['model'] . "',
+        url: '" . parent::getProxiedBaseUrl() . "index.php/services/import/upload?offset='+total+'&limit='+limit+'&filepos='+filepos+'&uploaded_csv=$filename&model=" . $options['model'] . "',
         dataType: 'jsonp',
         success: function(response) {
           total = total + response.uploaded;
@@ -697,11 +710,24 @@ JS;
    * @param array  $fields List of the available possible import columns
    * @param string $column The name of the column from the CSV file currently being worked on.
    * @param array $autoFieldMappings An array containing the automatic field mappings for the page.
+   * @param boolean $allowDataDeletions Should the importer allow data to be removed.
    */
-  private static function get_column_options($model, $fields, $column, $autoFieldMappings, $includeLookups) {
+  private static function get_column_options($model, $fields, $column, $autoFieldMappings, $includeLookups, $allowDataDeletions=false) {
     $skipped = array('id', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
       'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning', 'deleted', 'image_path'
     );
+    if ($allowDataDeletions==true) {
+      // If we want to be able to delete data, then no longer skip Deleted column.
+      foreach ($skipped as $idx=>$itemToSkip) {
+        if ($itemToSkip==='deleted') {
+          unset($skipped[$idx]);
+        }
+      }
+      // We never want to delete at the term level (needs to be termlists_term) so always remove this option
+      if (array_key_exists('term:deleted',$fields)) {
+        unset($fields['term:deleted']);
+      }
+    }
     //strip the column of spaces for use in html ids
     $idColumn = str_replace(" ", "", $column);
     $r = '';
@@ -857,7 +883,7 @@ JS;
      * The value is an array of regexes that the system will automatically match against.
      */
     $alternatives = array(
-      "sample:entered sref" => array("/(sample)?(spatial|grid)ref(erence)?/"),
+      "sample:entered sref" => array("/(sample)?((spatial|grid|map)ref(erence)?|lat(\/?)lon(g?))/"),
       "occurrence_2:taxa taxon list (from controlled termlist)" => array("/(2nd|second)(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "occurrence:taxa taxon list (from controlled termlist)" => array("/(species(latin)?|taxon(latin)?|latin)(name)?/"),
       "sample:location name" => array("/(site|location)(name)?/"),
@@ -1012,10 +1038,9 @@ TD;
         throw new Exception('Uploaded file must be a csv file');
       // Generate a file id to store the upload as
       $destination = time() . rand(0,1000) . "." . $fext;
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      $interim_path = dirname(__FILE__) . '/' . $interim_image_folder;
-      if (move_uploaded_file($file['tmp_name'], "$interim_path$destination")) {
-        return "$interim_path$destination";
+      $interimPath = self::getInterimImageFolder('fullpath');
+      if (move_uploaded_file($file['tmp_name'], "$interimPath$destination")) {
+        return "$interimPath$destination";
       }
     }
     elseif (isset($options['existing_file']))
