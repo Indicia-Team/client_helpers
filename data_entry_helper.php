@@ -5603,7 +5603,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       $request .= '&attrs='.$options['attrs'];
     if (!isset($options['caching']))
       $options['caching'] = true; // default
-    return self::_get_cached_services_call($request, $options);
+    return self::getCachedServicesCall($request, $options);
   }
 
   /**
