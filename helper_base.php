@@ -223,7 +223,7 @@ if ($("#{escapedId} option").length===0) {
   'report_download_link' => '<div class="report-download-link"><a href="{link}">{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
   'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
-  'loading_overlay' => '<div class="loading-overlay"></div>',
+  'loading_overlay' => '<div class="loading-spinner"><div>Loading...</div></div>',
   'report-table' => '<table{class}>{content}</table>',
   'report-thead' => '<thead{class}>{content}</thead>',
   'report-thead-tr' => '<tr{class}{title}>{content}</tr>',
@@ -2337,20 +2337,26 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
   /**
-   * Utility function for external access to the iform cache.
+   * Utility function for access to the iform cache.
    *
-   * @param array $cacheOpts Options array which defines the cache "key", i.e. the unique set of options being cached.
-   * @param integer $cacheTimeout Timeout in seconds, if overriding the default cache timeout.
-   * @param boolean $random Should a random element be introduced to prevent simultaneous expiry of multiple
-   * caches? Default true.
-   * @return mixed String read from the cache, or false if not read.
+   * @param array $cacheOpts
+   *   Options array which defines the cache "key", i.e. the unique set of
+   *   options being cached.
+   * @param integer $cacheTimeout
+   *   Timeout in seconds, if overriding the default cache timeout.
+   * @param boolean $random
+   *   Should a random element be introduced to prevent simultaneous expiry of
+   *   multiple caches? Default true.
+   *
+   * @return mixed
+   *   String read from the cache, or false if not read.
    */
   public static function cache_get($cacheOpts, $cacheTimeout=0, $random=true) {
     if (!$cacheTimeout)
-      $cacheTimeout = self::_getCacheTimeOut(array());
+      $cacheTimeout = self::getCacheTimeOut(array());
     $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
-    $r = self::_getCachedResponse($cacheFile, $cacheTimeout, $cacheOpts, $random);
+    $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
+    $r = self::getCachedResponse($cacheFile, $cacheTimeout, $cacheOpts, $random);
     return $r === false ? $r : $r['output'];
   }
 
@@ -2363,10 +2369,10 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    */
   public static function cache_set($cacheOpts, $toCache, $cacheTimeout=0) {
     if (!$cacheTimeout)
-      $cacheTimeout = self::_getCacheTimeOut(array());
+      $cacheTimeout = self::getCacheTimeOut(array());
     $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
-    self::_cacheResponse($cacheFile, array('output' => $toCache), $cacheOpts);
+    $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeout);
+    self::cacheResponse($cacheFile, array('output' => $toCache), $cacheOpts);
   }
 
   /**
@@ -2383,7 +2389,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    *
    * @throws \Exception
    */
-  protected static function _get_cached_services_call($request, $options) {
+  protected static function getCachedServicesCall($request, $options) {
     $cacheLoaded = FALSE;
     // allow use of the legacy nocache parameter.
     if (isset($options['nocache']) && $options['nocache'] === TRUE) {
@@ -2401,10 +2407,10 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         unset($cacheOpts['user_id']);
       }
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-      $cacheTimeOut = self::_getCacheTimeOut($options);
-      $cacheFile = self::_getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
-      if ($options['caching']!=='store') {
-      	$response = self::_getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+      $cacheTimeOut = self::getCacheTimeOut($options);
+      $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
+      if ($options['caching'] !== 'store') {
+      	$response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response !== FALSE)
           $cacheLoaded = TRUE;
       }
@@ -2452,22 +2458,24 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     }
     // Only cache valid responses and when not already cached
     if ($useCache && !isset($r['error']) && !$cacheLoaded) {
-      self::_cacheResponse($cacheFile, $response, $cacheOpts, $options['caching']==='store');
+      self::cacheResponse($cacheFile, $response, $cacheOpts);
     }
-    self::_purgeCache();
-    self::_purgeImages();
+    self::purgeCache();
+    self::purgeImages();
     return $r;
   }
 
   /**
-   * Protected function to fetch a validated timeout value from passed in options array.
+   * Fetch a validated timeout value from passed in options array.
    *
-   * @param array $options Options array with the following possibilities:
-   * * **cachetimeout** - Optional. The length in seconds before the cache times out and is refetched.
-   * @return Timeout in number of seconds, else FALSE if data is not to be cached.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **cachetimeout** - Optional. The length in seconds before the cache
+   *     times out and is refetched.
+   * @return int
+   *   Timeout in number of seconds, else FALSE if data is not to be cached.
    */
-  protected static function _getCacheTimeOut($options)
-  {
+  private static function getCacheTimeOut($options) {
     if (is_numeric(self::$cache_timeout) && self::$cache_timeout > 0) {
       $ret_value = self::$cache_timeout;
     } else {
@@ -2484,14 +2492,20 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
   /**
-   * Protected function to generate a filename to be used as the cache file for this data
-   * @param string $path directory path for file
-   * @param array $options Options array : contents are used along with md5 to generate the filename.
-   * @param integer $timeout - will be false if no caching to take place
-   * @return string filename, else FALSE if data is not to be cached.
+   * Protected function to generate a filename to be used for a cache file.
+   *
+   * @param string $path
+   *   Directory path for file.
+   * @param array $options
+   *   Options array : contents are used along with md5 to generate the
+   *   filename.
+   * @param integer $timeout
+   *   Will be false if no caching to take place.
+   *
+   * @return string
+   *   Filename, else FALSE if data is not to be cached.
    */
-  protected static function _getCacheFileName($path, $options, $timeout)
-  {
+  private static function getCacheFileName($path, $options, $timeout) {
     /* If timeout is not set, we're not caching */
     if (!$timeout)
       return false;
@@ -2518,14 +2532,16 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    *   caches? Default true.
    *
    * @return array
-   *   Equivalent of call to http_post, else FALSE if data is not to be cached.
+   *   Equivalent of call to http_post, else FALSE if data not read from the
+   *   cache.
    */
-  protected static function _getCachedResponse($file, $timeout, $options, $random=true) {
+  private static function getCachedResponse($file, $timeout, $options, $random=true) {
     // Note the random element, we only timeout a cached file sometimes.
+    $timeout = 1;
     $wantToCache = $timeout !== false;
     $haveFile = $file && is_file($file);
     $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
-    $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file)!==1);
+    $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
     if ($wantToCache && $haveFile && ($fresh || $randomSurvival)) {
       $response = array();
       $handle = fopen($file, 'rb');
@@ -2538,36 +2554,24 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       if ($tags == self::array_to_query_string($options)."\n") {
         return($response);
       }
-    } else {
-      self::_timeOutCacheFile($file, $timeout);
     }
-    return false;
+    return FALSE;
   }
 
   /**
-   * Protected function to remove a cache file if it has timed out.
+   * Protected function to create a cache file if it doesn't already exist.
    *
    * @param string $file
-   *   Cache file to be removed, includes path
-   * @param number $timeout
-   *   Will be false if no caching to take place.
+   *   Cache file to be removed, includes path - will be false if no caching to
+   *   take place
+   * @param array $response
+   *   Http_post return value.
+   * @param array $options
+   *   Options array : contents used to tag what this data is.
    */
-  protected static function _timeOutCacheFile($file, $timeout) {
-    if ($file && is_file($file) && filemtime($file) < (time() - $timeout)) {
-      unlink($file);
-    }
-  }
-
-  /**
-   * Protected function to create a cache file provided it does not already exist.
-   * @param string $file Cache file to be removed, includes path - will be false if no caching to take place
-   * @param array $response http_post return value
-   * @param array $options Options array : contents used to tag what this data is.
-   */
-  protected static function _cacheResponse($file, $response, $options, $force=false)
-  {
+  private static function cacheResponse($file, $response, $options) {
     // need to create the file as a binary event - so create a temp file and move across.
-    if ($file && (!is_file($file) || $force) && isset($response['output'])) {
+    if ($file && isset($response['output'])) {
       $handle = fopen($file.getmypid(), 'wb');
       fputs($handle, self::array_to_query_string($options)."\n");
       fwrite($handle, $response['output']);
@@ -2594,7 +2598,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   /**
    * Internal function to ensure old cache files are purged periodically.
    */
-  protected static function _purgeCache() {
+  private static function purgeCache() {
     $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
     self::purgeFiles(self::$cache_chance_purge, $cacheFolder, self::$cache_timeout * 5, self::$cache_allowed_file_count);
   }
@@ -2602,7 +2606,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   /**
    * Internal function to ensure old image files are purged periodically.
    */
-  protected static function _purgeImages() {
+  private static function purgeImages() {
     self::purgeFiles(self::$cache_chance_purge, self::getInterimImageFolder(), self::$interim_image_expiry);
   }
 
