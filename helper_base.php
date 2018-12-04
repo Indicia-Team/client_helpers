@@ -223,7 +223,7 @@ if ($("#{escapedId} option").length===0) {
   'report_download_link' => '<div class="report-download-link"><a href="{link}">{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
   'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
-  'loading_overlay' => '<div class="loading-spinner"><div>Loading...</div></div>',
+  'loading_overlay' => '<div class="loading-spinner" style="display: none"><div>Loading...</div></div>',
   'report-table' => '<table{class}>{content}</table>',
   'report-thead' => '<thead{class}>{content}</thead>',
   'report-thead-tr' => '<tr{class}{title}>{content}</tr>',
