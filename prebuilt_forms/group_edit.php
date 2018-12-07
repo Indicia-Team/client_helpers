@@ -1149,6 +1149,7 @@ $('#entry_form').submit(function() {
       'group:description' => $group['description'],
       'group:from_date' => $group['from_date'],
       'group:to_date' => $group['to_date'],
+      'group:view_full_precision' => $group['view_full_precision'],
       'group:private_records' => $group['private_records'],
       'group:filter_id' => $group['filter_id'],
       'group:logo_path' => $group['logo_path'],
