@@ -1348,8 +1348,9 @@ JS;
     // If not language filtered, then limit to preferred, otherwise we could get
     // multiple children.
     // @todo This should probably be set by the caller, not here.
-    if (!isset($options['extraParams']['iso']))
-      $options['extraParams']['preferred']='t';
+    if (!isset($options['extraParams']['iso']) && !isset($options['extraParams']['language_iso'])) {
+      $options['extraParams']['preferred'] = 't';
+    }
     // Get the data for the control. Not Ajax populated at the moment. We either populate the lookupValues for the top level control
     // or store in the childData for output into JavaScript
     $items = self::get_population_data($options);
@@ -5698,8 +5699,9 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       }
       $response = self::get_population_data($options);
       // if the response is empty, and a language has been set, try again without the language but asking for the preferred values.
-      if(count($response)==0 && array_key_exists('iso', $options['extraParams'])){
+      if(count($response)==0 && array_key_exists('iso', $options['extraParams']) || array_key_exists('language_iso', $options['extraParams'])){
         unset($options['extraParams']['iso']);
+        unset($options['extraParams']['language_iso']);
         $options['extraParams']['preferred']='t';
         $response = self::get_population_data($options);
       }
