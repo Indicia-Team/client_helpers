@@ -750,15 +750,18 @@ JS;
     $labelList = array();
     $itWasSaved[$column] = 0;
     foreach ($fields as $field => $caption) {
-      if (strpos($field,":"))
-        list($prefix,$fieldname)=explode(':',$field);
-      else {
-        $prefix=$model;
-        $fieldname=$field;
+      if (strpos($field, ":")) {
+        list($prefix, $fieldname) = explode(':', $field);
       }
-      // Skip the metadata fields
-      if (!in_array($fieldname, $skipped)) {
-        // make a clean looking caption
+      else {
+        $prefix = $model;
+        $fieldname = $field;
+      }
+      // Skip the metadata fields, plus ID field unless in the main model. We
+      // don't want an import to break the links between records by changing
+      // FKs.
+      if (($prefix === $model || $fieldname !== 'id') && !in_array($fieldname, $skipped)) {
+        // Make a clean looking caption.
         $caption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
         /*
          * The following creates an array called $labelList which is a list of all captions
@@ -779,24 +782,25 @@ JS;
       }
     }
     $labelList = array_count_values($labelList);
-    $multiMatch=array();
+    $multiMatch = array();
     foreach ($fields as $field => $caption) {
-      if (strpos($field,":"))
-        list($prefix,$fieldname)=explode(':',$field);
-      else {
-        $prefix=$model;
-        $fieldname=$field;
+      if (strpos($field, ":")) {
+        list($prefix, $fieldname) = explode(':', $field);
       }
-      // make a clean looking default caption. This could be provided by the $fields array, or we have to construct it.
+      else {
+        $prefix = $model;
+        $fieldname = $field;
+      }
+      // Make a clean looking default caption. This could be provided by the $fields array, or we have to construct it.
       $defaultCaption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
       // Allow the default caption to be translated or overridden by language files.
-      $translatedCaption=self::translate_field($field, $defaultCaption);
-      //need a version of the caption without "from controlled termlist" as we ignore that for matching.
-      $strippedScreenCaption = str_replace(" (from controlled termlist)","",$translatedCaption);
-      $fieldname=str_replace(array('fk_', '_id'), array('', ''), $fieldname);
+      $translatedCaption = self::translate_field($field, $defaultCaption);
+      // Need a version of the caption without "from controlled termlist" as we ignore that for matching.
+      $strippedScreenCaption = str_replace(" (from controlled termlist)", "", $translatedCaption);
+      $fieldname = str_replace(array('fk_', '_id'), array('', ''), $fieldname);
       unset($option);
-      // Skip the metadata fields
-      if (!in_array($fieldname, $skipped)) {
+      // Skip the metadata fields and ID fields not in the main model.
+      if (($prefix === $model || $fieldname !== 'id') && !in_array($fieldname, $skipped)) {
         $selected = FALSE;
         //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
         //This means only the first occurrence for the needle is exploded which is desirable in the situation as the field caption
