@@ -388,7 +388,14 @@ HTML;
         $colCount ++;
         $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
-        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings, count($existingDataLookupOptions) > 0, $options['allowDataDeletions']); // this also create TDs for the remember checkboxes etc
+        $r .= self::getColumnOptions(
+          $options['model'],
+          $unlinked_fields,
+          $column,
+          $autoFieldMappings,
+          count($existingDataLookupOptions) > 0,
+          array_key_exists('allowDataDeletions', $options) ? $options['allowDataDeletions'] : FALSE
+        );
         $r .= "</select></td></tr>\n";
       }
     }
@@ -700,38 +707,45 @@ JS;
   }
 
   /**
-   * Returns a list of columns as an list of <options> for inclusion in an HTML drop down,
-   * loading the columns from a model that are available to import data into
-   * (excluding the id and metadata). Triggers the handling of remembered checkboxes and the
-   * associated labelling.
-   * This method also attempts to automatically find a match for the columns based on a number of rules
-   * and gives the user the chance to save their settings for use the next time they do an import.
-   * @param string $model Name of the model
-   * @param array  $fields List of the available possible import columns
-   * @param string $column The name of the column from the CSV file currently being worked on.
-   * @param array $autoFieldMappings An array containing the automatic field mappings for the page.
-   * @param boolean $allowDataDeletions Should the importer allow data to be removed.
+   * Retrieve column options for import.
+   *
+   * Returns a list of columns as an list of <options> for inclusion in an HTML
+   * drop down, loading the columns from a model that are available to import
+   * data into (excluding the id and metadata). Triggers the handling of
+   * remembered checkboxes and the associated labelling.
+   *
+   * This method also attempts to automatically find a match for the columns
+   * based on a number of rules and gives the user the chance to save their
+   * settings for use the next time they do an import.
+   *
+   * @param string $model
+   *   Name of the model.
+   * @param array $fields
+   *   List of the available possible import columns.
+   * @param string $column
+   *   The name of the column from the CSV file currently being worked on.
+   * @param array $autoFieldMappings
+   *   An array containing the automatic field mappings for the page.
+   * @param bool $includeLookups
+   *   Should information on which columns are used for lookup be shown.
+   * @param bool $allowDataDeletions
+   *   Should the importer allow data to be removed.
    */
-  private static function get_column_options($model, $fields, $column, $autoFieldMappings, $includeLookups, $allowDataDeletions=false) {
-    $skipped = array('id', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
-      'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning', 'deleted', 'image_path'
-    );
-    if ($allowDataDeletions==true) {
-      // If we want to be able to delete data, then no longer skip Deleted column.
-      foreach ($skipped as $idx=>$itemToSkip) {
-        if ($itemToSkip==='deleted') {
-          unset($skipped[$idx]);
-        }
-      }
-      // We never want to delete at the term level (needs to be termlists_term) so always remove this option
-      if (array_key_exists('term:deleted',$fields)) {
-        unset($fields['term:deleted']);
-      }
+  private static function getColumnOptions($model, $fields, $column, $autoFieldMappings, $includeLookups, $allowDataDeletions = FALSE) {
+    $skipped = [
+      'image_path', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
+      'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning',
+    ];
+    // Also skip deleted column if allow deletions disallowed.
+    if (!$allowDataDeletions) {
+      $skipped[] = 'deleted';
     }
-    //strip the column of spaces for use in html ids
+    // We never want to delete at the term level (needs to be termlists_term).
+    unset($fields['term:deleted']);
+    // Strip the column of spaces for use in HTML ids.
     $idColumn = str_replace(" ", "", $column);
     $r = '';
-    $heading='';
+    $heading = '';
     $labelListIndex = 0;
     $labelList = array();
     $itWasSaved[$column] = 0;
@@ -931,7 +945,7 @@ JS;
   }
 
   /**
-   * Used by the get_column_options to draw the items that appear once for each of the import columns on the import page.
+   * Used by the getColumnOptions to draw the items that appear once for each of the import columns on the import page.
    * These are the checkboxes, the warning the drop-down setting was saved and also the non-unique match warning
    * @param string $r The HTML to be returned.
    * @param string $column Column from the import CSV file we are currently working with
@@ -988,7 +1002,7 @@ TD;
   }
 
   /**
-   * Used by the get_column_options method to add "from controlled termlist" to the appropriate captions
+   * Used by the getColumnOptions method to add "from controlled termlist" to the appropriate captions
    * in the drop-downs on the import page.
    * @param string $caption The drop-down item currently being worked on
    * @param string $prefix Caption prefix
