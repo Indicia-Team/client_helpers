@@ -7747,7 +7747,7 @@ HTML;
         }
         // control for lookup list can be overriden in function call options
         if (array_key_exists('lookUpListCtrl', $attrOptions)){
-          $attrOptions = $options['lookUpListCtrl'];
+          $ctrl = $attrOptions['lookUpListCtrl'];
         } else {
           // or specified by the attribute in survey details
           if (isset($item['control_type']) &&

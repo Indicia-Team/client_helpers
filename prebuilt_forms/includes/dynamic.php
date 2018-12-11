@@ -621,7 +621,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
           $options = array_merge($options, data_entry_helper::$data['structureControlOverrides'][$component]);
         if (count($parts)===1 && method_exists(self::$called_class, $method)) {
           //outputs a control for which a specific output function has been written.
-          $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, $options);
+          $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, array_merge($defAttrOptions, $options));
           $hasControls = true;
         }
         elseif (count($parts)===2) {
