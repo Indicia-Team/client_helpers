@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link http://code.google.com/p/indicia/
@@ -61,8 +60,6 @@ require_once 'submission_builder.php';
  * * lockable - Adds a padlock icon after the control which can be used to lock the control's value. The value will then
  *   be remembered and redisplayed in the control each time the form is shown until the control is unlocked or the end
  *   of the browser session. This option will not work for password controls.
- *
- * @package Client
  */
 class data_entry_helper extends helper_base {
 
@@ -96,7 +93,7 @@ class data_entry_helper extends helper_base {
    *
    * @var array
    */
-  public static $handled_attributes=array();
+  public static $handled_attributes = array();
 
   /**********************************/
   /* Start of main controls section */
@@ -317,7 +314,8 @@ class data_entry_helper extends helper_base {
       }
       if ($def['datatype'] === 'lookup') {
         $minified = array();
-        // No matter if the lookup comes from the db, or from a local array, we want it in the same minimal format.
+        // No matter if the lookup comes from the db, or from a local array,
+        // we want it in the same minimal format.
         if (!empty($def['termlist_id'])) {
           $termlistData = self::get_population_data(array(
             'table' => 'termlists_term',
@@ -345,7 +343,7 @@ class data_entry_helper extends helper_base {
         $lookupData["tl$idx"] = $minified;
         self::$javascript .= "indiciaData.tl$idx=" . json_encode($minified) . ";\n";
       }
-      // checkbox groups output a second row of cells for each checkbox label
+      // Checkbox groups output a second row of cells for each checkbox label.
       $rowspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? 1 : 2;
       $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($termlistData) : 1;
       // Add default class if none provided.
@@ -527,24 +525,25 @@ $('#$escaped').change(function(e) {
   public static function sub_list($options) {
     global $indicia_templates;
     self::add_resource('sub_list');
-    static $sub_list_idx=0; // unique ID for all sublists
-    // checks essential options, uses fieldname as id default and
-    // loads defaults if error or edit
+    static $sub_list_idx = 0; // unique ID for all sublists
+    // Checks essential options, uses fieldname as id default and loads
+    // defaults if error or edit.
     $options = self::check_options($options);
     $options = array_merge(array(
-      'addToTable' => true,
+      'addToTable' => TRUE,
       'autocompleteControl' => 'autocomplete'
     ), $options);
-    if ($options['addToTable']===true) {
-      // we can only work with the caption field
+    if ($options['addToTable'] === TRUE) {
+      // We can only work with the caption field.
       $options['captionField'] = 'caption';
     }
-    // this control submits many values with the same control name so add [] to fieldname
-    // so PHP puts multiple submitted values in an array
-    if (substr($options['fieldname'],-2) !='[]')
+    // This control submits many values with the same control name so add [] to
+    // fieldname so PHP puts multiple submitted values in an array
+    if (substr($options['fieldname'], -2) !== '[]') {
       $options['fieldname'] .= '[]';
+    }
 
-    if ($options['addToTable'] === true) {
+    if ($options['addToTable'] === TRUE) {
       // Prepare options for updating the source table.
       $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname']) - 2);
       if (preg_match('/^[a-z]{3}Attr\:[1-9][0-9]*$/', $options['basefieldname'])) {
@@ -574,8 +573,7 @@ $('#$escaped').change(function(e) {
         }
       }
       if (empty($options['mainEntity'])) {
-        // addToTable only works with custom attributes
-        // TODO, raise an error to developer
+        // AddToTable only works with custom attributes
       }
       $options['subListAdd'] = self::mergeParamsIntoTemplate($options, 'sub_list_add');
     } else {
@@ -591,13 +589,14 @@ $('#$escaped').change(function(e) {
     $list_options['lockable'] = NULL;
     $list_options['label'] = NULL;
     $list_options['controlWrapTemplate'] = 'justControl';
-    if (!empty($options['selectMode']) && $options['selectMode'])
-      $list_options['selectMode']=true;
+    if (!empty($options['selectMode']) && $options['selectMode']) {
+      $list_options['selectMode'] = TRUE;
+    }
     // Set up add panel.
     $control = $options['autocompleteControl'];
     $options['panel_control'] = self::$control($list_options);
 
-    // prepare other main control options
+    // Prepare other main control options.
     $options['inputId'] = $options['id'].':'.$options['captionField'];
     $options = array_merge(array(
       'template' => 'sub_list',
@@ -620,7 +619,8 @@ JS;
       foreach ($options['default'] as $item) {
         $items .= str_replace(array('{caption}', '{value}', '{fieldname}'),
           array($item['caption'], $item['default'], $item['fieldname']),
-          $indicia_templates['sub_list_item']);
+          $indicia_templates['sub_list_item']
+        );
         // a hidden input to put a blank in the submission if it is deleted
         $r .= "<input type=\"hidden\" value=\"\" name=\"$item[fieldname]\">";
       }
@@ -700,13 +700,13 @@ JS;
     // The fieldname is fixed for the specific purpose of this control.
     $options['fieldname'] = 'training';
     // Apply default options which may be overriden by supplied values.
-    $options = array_merge(array(
+    $options = array_merge([
       'default' => TRUE,
       'disabled' => TRUE,
       'label' => 'Training mode',
       'helpText' => 'Records submitted in training mode are segregated from genuine records. ',
-      'template' => 'training'
-    ), $options);
+      'template' => 'training',
+    ], $options);
     // Apply standard options and update default value if loading existing record
     $options = self::check_options($options);
     // Be flexible about the value to accept as meaning checked.
@@ -783,7 +783,7 @@ JS;
   public static function checkbox_group(array $options) {
     $options = self::check_options($options);
     $options = array_merge(array(
-      'class'=>empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
+      'class' => empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
     ), $options);
     if (substr($options['fieldname'],-2) !='[]')
       $options['fieldname'] .= '[]';
@@ -798,10 +798,11 @@ JS;
           if (!empty($options['lookupValues'][$option]))
             $sorted[$option] = $options['lookupValues'][$option];
         }
-        // now the unticked ones in original order
+        // Now the unticked ones in original order.
         foreach ($options['lookupValues'] as $option => $caption) {
-          if (!isset($sorted[$option]))
-            $sorted[$option]=$caption;
+          if (!isset($sorted[$option])) {
+            $sorted[$option] = $caption;
+          }
         }
         $options['lookupValues']=$sorted;
       }
@@ -852,14 +853,15 @@ JS;
     $options = self::check_options($options);
     $options = array_merge(array(
       'dateFormat' => 'dd/mm/yy',
-      'allowVagueDates'=>false,
+      'allowVagueDates'=>FALSE,
       'default' => '',
-      'isFormControl' => true
+      'isFormControl' => TRUE
     ), $options);
-    if (!isset($options['showButton']))
+    if (!isset($options['showButton'])) {
       // vague dates best with the button
-      $options['showButton']=$options['allowVagueDates'];
-    $vague=$options['allowVagueDates'] ? ' vague' : '';
+      $options['showButton'] = $options['allowVagueDates'];
+    }
+    $vague = $options['allowVagueDates'] ? ' vague' : '';
     if (!isset($options['placeholder']))
       $options['placeholder'] = $options['showButton'] ? lang::get("Pick or type a$vague date") : lang::get('Click here');
     self::add_resource('jquery_ui');
