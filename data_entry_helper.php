@@ -1343,19 +1343,29 @@ JS;
     $options = array_merge(array(
       'id' => 'select-'.rand(0,10000),
       'blankText' => '<please select>',
-      'extraParams' => array()
+      'extraParams' => array(),
+      'preferredIdField' => 'preferred_termlists_term_id',
     ), $options);
-    // If not language filtered, then limit to preferred, otherwise we could get
-    // multiple children.
+    // If not language filtered, then limit to preferred, otherwise we could
+    // get multiple children.
     // @todo This should probably be set by the caller, not here.
     if (!isset($options['extraParams']['iso']) && !isset($options['extraParams']['language_iso'])) {
       $options['extraParams']['preferred'] = 't';
     }
-    // Get the data for the control. Not Ajax populated at the moment. We either populate the lookupValues for the top level control
-    // or store in the childData for output into JavaScript
+    // Get the data for the control. Not Ajax populated at the moment.
     $items = self::get_population_data($options);
-    $lookupValues=array();
-    $childData=array();
+    $lookupValues = [];
+    $childData = [];
+    // Prepare a mapping from preferred to term in this language where
+    // appropriate. This will allow us to map from parent_id (always preferred)
+    // to the non-preferred term in this language when building a hierarchy.
+    $prefMappings = [];
+    foreach ($items as $item) {
+      $prefId = empty($item[$options['preferredIdField']]) ? $item[$options['valueField']] : $item[$options['preferredIdField']];
+      $prefMappings[$prefId] = $item[$options['valueField']];
+    }
+    // Convert the list of data items into arrays required for control
+    // population.
     foreach ($items as $item) {
       $itemValue = $item[$options['valueField']];
       if (isset($options['captionTemplate'])) {
@@ -1364,15 +1374,21 @@ JS;
       else {
         $itemCaption = $item[$options['captionField']];
       }
-
+      // We either populate the lookupValues for the top level control or store
+      // in the childData for output into JavaScript
       if (empty($item['parent_id']))
         $lookupValues[$itemValue] = $itemCaption;
       else {
-        // not a top level item, so put in a data array we can store in JSON.
+        // Not a top level item, so put in a data array we can store in JSON.
+        // Use the mappings from preferred ID to ID in this language to ensure
+        // the parents can be found.
         if (!isset($childData[$item['parent_id']])) {
-          $childData[$item['parent_id']] = array();
+          $childData[$prefMappings[$item['parent_id']]] = array();
         }
-        $childData[$item['parent_id']][] = array('id' => $itemValue, 'caption' => $itemCaption);
+        $childData[$prefMappings[$item['parent_id']]][] = array(
+          'id' => $itemValue,
+          'caption' => $itemCaption
+        );
       }
     }
     // build an ID with just alphanumerics, that we can use to keep JavaScript function and data names unique
@@ -1407,7 +1423,7 @@ JS;
     $indicia_templates['select'] = $oldTemplate;
     // jQuery safe version of the Id.
     $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
-    // output a hidden input that contains the value to post.
+    // Output a hidden input that contains the value to post.
     $hiddenOptions = array('id' => 'fld-'.$options['id'], 'fieldname'=>$fieldname, 'default'=>self::check_default_value($options['fieldname']));
     if (isset($options['default']))
       $hiddenOptions['default'] = $options['default'];
@@ -1478,15 +1494,8 @@ JS;
     // now we have the tree, work backwards to select each item
     thisselect = $('#$safeId');
     while (tree.length>0) {
-      toselect=tree.pop();
-      $.each(thisselect.find('option'), function(idx, option) {
-        if ($(option).val()===toselect) {
-          if (!$(option).attr('selected')) {
-            $(option).attr('selected',true);
-            thisselect.trigger('change');
-          }
-        }
-      });
+      toselect = tree.pop();
+      thisselect.val(toselect).change();
       thisselect = thisselect.next();
     }
   }) ();
