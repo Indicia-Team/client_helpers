@@ -79,12 +79,14 @@ class data_entry_helper extends helper_base {
   /**
    * Field values remembered between form reloads using a cookie.
    *
-   * List of fields that are to be stored in a cookie and reloaded the next time a form is accessed. These
-   * are populated by implementing a hook function called indicia_define_remembered_fields which calls
-   * set_remembered_fields.
-   * @var Array
+   * List of fields that are to be stored in a cookie and reloaded the next
+   * time a form is accessed. These are populated by implementing a hook
+   * function called indicia_define_remembered_fields which calls
+   * setRememberedFields.
+   *
+   * @var array
    */
-  private static $remembered_fields = NULL;
+  private static $rememberedFields = NULL;
 
   /**
    * IDs for attributes that have already been output on the current form.
@@ -1164,72 +1166,78 @@ JS;
         // Insert this script at the beginning, because it must be done before the tabs are initialised or the
         // first tab cannot fire the event
         self::$javascript = $javascript . self::$javascript;
-      }	else
+      }	else {
         self::$onload_javascript .= $javascript;
+      }
     }
-    // Output a placeholder div for the jQuery plugin. Also output a normal file input for the noscripts
-    // version.
-    $r = '<div class="file-box" id="'.$containerId.'"></div><noscript>'.self::image_upload(array(
-        'label' => $options['caption'],
-        // Convert table into a pseudo field name for the images
-        'id' => $options['id'],
-        'fieldname' => str_replace('_', ':', $options['table'])
-      )).'</noscript>';
+    // Output a placeholder div for the jQuery plugin. Also output a normal
+    // file input for the noscripts version.
+    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>'.self::image_upload(array(
+      'label' => $options['caption'],
+      // Convert table into a pseudo field name for the images
+      'id' => $options['id'],
+      'fieldname' => str_replace('_', ':', $options['table'])
+    )) . '</noscript>';
     $r .= self::add_link_popup($options);
     return $r;
   }
 
   /**
-   * Generates a text input control with a search button that looks up an entered place against a georeferencing
-   * web service. The control is automatically linked to any map panel added to the page.
+   * Generates a text input control with a search button that looks up an
+   * entered place against a georeferencing web service. The control is
+   * automatically linked to any map panel added to the page.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>georeference_lookup</b></br>
-   * Template which outputs the HTML for the georeference search input, button placehold and container
-   * for the list of search results. The default template uses JavaScript to write the output, so that
-   * this control is removed from the page if JavaScript is disabled as it will have no functionality.
-   * </li>
-   * <li><b>button</b></br>
-   * HTML template for the buttons used.
-   * </li>
-   * </ul>
    *
-   * @param array $options Options array with the following possibilities:
-   * <ul>
-   * <li><b>fieldname</b><br/>
-   * Optional. The name of the database field this control is bound to if any.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>georefPreferredArea</b><br/>
-   * Optional. Hint provided to the locality search service as to which area to look for the place name in. Any example usage of this
-   * would be to set it to the name of a region for a survey based in that region. Note that this is only a hint, and the search
-   * service may still return place names outside the region. Defaults to gb.</li>
-   * <li><b>georefCountry</b><br/>
-   * Optional. Hint provided to the locality search service as to which country to look for the place name in. Defaults to United Kingdom.</li>
-   * <li><b>georefLang</b><br/>
-   * Optional. Language to request place names in. Defaults to en-EN for English place names.</li>
-   * <li><b>readAuth</b><br/>
-   * Optional. Read authentication tokens for the Indicia warehouse if using the indicia_locations driver setting.</li>
-   * <li><b>driver</b><br/>
-   * Optional. Driver to use for the georeferencing operation. Supported options are:<br/>
-   *   google_places - uses the Google Places API text search service. Default.<br/>
-   *   geoportal_lu - Use the Luxembourg specific place name search provided by geoportal.lu.
-   *   indicia_locations - Use the list of locations available to the current website in Indicia as a search list.
-   * </li>
-   * <li><b>public</b><br/>
-   * Optional. If using the indicia_locations driver, then set this to true to include public (non-website specific)
-   * locations in the search results. Defaults to false.
-   * </li>
-   * <li><b>autoCollapseResults</b><br/>
-   * Optional. If a list of possible matches are found, does selecting a match automatically fold up the results? Defaults to false.
-   * </li>
-   * </ul>
+   * * *georeference_lookup* - Template which outputs the HTML for the
+   *   georeference search input, button placehold and container for the list
+   *   of search results. The default template uses JavaScript to write the
+   *   output, so that this control is removed from the page if JavaScript is
+   *   disabled as it will have no functionality.
+   * * *button* - HTML template for the buttons used.
    *
-   * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search API Terms of Use.
-   * @link http://code.google.com/p/indicia/wiki/GeoreferenceLookupDrivers Documentation for the driver architecture.
-   * @return string HTML to insert into the page for the georeference lookup control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * *fieldname* - Optional. The name of the database field this control is
+   *     bound to if any.
+   *   * *class* - Optional. CSS class names to add to the control.
+   *   * *georefPreferredArea* - Optional. Hint provided to the locality search
+   *     service as to which area to look for the place name in. Any example
+   *     usage of this would be to set it to the name of a region for a survey
+   *     based in that region. Note that this is only a hint, and the search
+   *     service may still return place names outside the region. Defaults to
+   *     gb.
+   *   * *georefCountry* - Optional. Hint provided to the locality search
+   *     service as to which country to look for the place name in. Defaults to
+   *     United Kingdom.
+   *   * *georefLang* - Optional. Language to request place names in. Defaults
+   *     to en-EN for English place names.
+   *   * *readAuth* - Optional. Read authentication tokens for the Indicia
+   *     warehouse if using the indicia_locations driver setting.</li>
+   *   * *driver* - Optional. Driver to use for the georeferencing operation.
+   *     Supported options are:
+   *     * google_places - uses the Google Places API text search service.
+   *       Default.
+   *     * geoportal_lu - Use the Luxembourg specific place name search
+   *       provided by geoportal.lu.
+   *     * indicia_locations - Use the list of locations available to the
+   *       current website in Indicia as a search list.
+   *   * *public* - Optional. If using the indicia_locations driver, then set
+   *     this to true to include public (non-website specific) locations in the
+   *     search results. Defaults to false.
+   *   * *<autoCollapseResults></autoCollapseResults> - Optional. If a list of
+   *     possible matches are found, does selecting a match automatically fold
+   *     up the results? Defaults to false.
+   *
+   * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search
+   * API Terms of Use.
+   * @link http://code.google.com/p/indicia/wiki/GeoreferenceLookupDrivers
+   * Documentation for the driver architecture.
+   *
+   * @return string
+   *   HTML to insert into the page for the georeference lookup control.
    */
-  public static function georeference_lookup($options) {
+  public static function georeference_lookup(array $options) {
     $options = self::check_options($options);
     global $indicia_templates;
     $options = array_merge(array(
@@ -1239,8 +1247,8 @@ JS;
         'href' => '#',
         'id' => 'imp-georef-search-btn',
         'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
-        'caption'=>lang::get('Search'),
-        'title' => ''
+        'caption' => lang::get('Search'),
+        'title' => '',
       )),
       'public' => false,
       'autoCollapseResults' => false,
@@ -6075,24 +6083,29 @@ if (errors$uniq.length>0) {
   /**
    * Either takes the passed in submission, or creates it from the post data if this is null, and forwards
    * it to the data services for saving as a member of the entity identified.
-   * @param string $entity Name of the top level entity being submitted, e.g. sample or occurrence.
-   * @param array $submission The wrapped submission structure. If null, then this is automatically constructer
-   * from the form data in $_POST.
-   * @param array $writeTokens Array containing auth_token and nonce for the write operation, plus optionally persist_auth=true
-   * to prevent the authentication tokens from expiring after use. If null then the values are read from $_POST.
+
+   * @param string $entity
+   *   Name of the top level entity being submitted, e.g. sample or occurrence.
+   * @param array $submission
+   *   The wrapped submission structure. If null, then this is automatically
+   *   constructed from the form data in $_POST.
+   * @param array $writeTokens
+   *   Array containing auth_token and nonce for the write operation, plus
+   *   optionally persist_auth=true to prevent the authentication tokens from
+   *   expiring after use. If null then the values are read from $_POST.
    */
   public static function forward_post_to($entity, $submission = null, $writeTokens = null) {
     if (self::$validation_errors==null) {
-      $remembered_fields = self::get_remembered_fields();
+      $rememberedFields = self::getRememberedFields();
 
       if ($submission == null)
         $submission = submission_builder::wrap($_POST, $entity);
-      if ($remembered_fields !== null) {
+      if ($rememberedFields !== null) {
         // the form is configured to remember fields
         if ( (!isset($_POST['cookie_optin'])) || ($_POST['cookie_optin'] === '1') ) {
           // if given a choice, the user opted for fields to be remembered
           $arr=array();
-          foreach ($remembered_fields as $field) {
+          foreach ($rememberedFields as $field) {
             if (!empty($_POST[$field]))
               $arr[$field]=$_POST[$field];
           }
@@ -7112,10 +7125,10 @@ HTML;
    * not empty is used.
    */
   public static function check_default_value($id) {
-    $remembered_fields = self::get_remembered_fields();
+    $rememberedFields = self::getRememberedFields();
     if (self::$entity_to_load!=null && array_key_exists($id, self::$entity_to_load)) {
       return self::$entity_to_load[$id];
-    } else if ($remembered_fields !== null && in_array($id, $remembered_fields) && array_key_exists('indicia_remembered', $_COOKIE)) {
+    } else if ($rememberedFields !== null && in_array($id, $rememberedFields) && array_key_exists('indicia_remembered', $_COOKIE)) {
       $arr = unserialize($_COOKIE['indicia_remembered']);
       if (isset($arr[$id]))
         return $arr[$id];
@@ -8000,21 +8013,23 @@ HTML;
 
   /**
    * Provides access to a list of remembered field values from the last time the form was used.
-   * Accessor for the $remembered_fields variable. This is a list of the fields on the form
+   * Accessor for the $rememberedFields variable. This is a list of the fields on the form
    * which are to be remembered the next time the form is loaded, e.g. for values that do not change
    * much from record to record. This creates the list on demand, by calling a hook indicia_define_remembered_fields
-   * if it exists. indicia_define_remembered_fields should call data_entry_helper::set_remembered_fields to give it
+   * if it exists. indicia_define_remembered_fields should call data_entry_helper::setRememberedFields to give it
    * an array of field names.
    * Note that this hook architecture is required to allow the list of remembered fields to be made available
    * before the form is constructed, since it is used by the code which saves a submitted form to store the
    * remembered field values in a cookie.
-   * @return Array List of the fields to remember.
+
+   * @return array
+   *   List of the fields to remember.
    */
-  public static function get_remembered_fields() {
-    if (self::$remembered_fields == null && function_exists('indicia_define_remembered_fields')) {
+  public static function getRememberedFields() {
+    if (self::$rememberedFields == null && function_exists('indicia_define_remembered_fields')) {
       indicia_define_remembered_fields();
     }
-    return self::$remembered_fields;
+    return self::$rememberedFields;
   }
 
   /**
@@ -8023,8 +8038,8 @@ HTML;
    * @see get_rememebered_fields
    * @param $arr Array of field names
    */
-  public static function set_remembered_fields($arr) {
-    self::$remembered_fields = $arr;
+  public static function setRememberedFields($arr) {
+    self::$rememberedFields = $arr;
   }
 
   /**

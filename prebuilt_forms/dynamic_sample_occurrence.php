@@ -2582,7 +2582,7 @@ function indicia_define_remembered_fields() {
   global $remembered;
   $remembered = trim($remembered);
   if (!empty($remembered))
-    data_entry_helper::set_remembered_fields(helper_base::explode_lines($remembered));
+    data_entry_helper::setRememberedFields(helper_base::explode_lines($remembered));
 }
 
 

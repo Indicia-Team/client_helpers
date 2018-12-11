@@ -265,8 +265,8 @@ EOD
             "&nbsp;&nbsp;<strong>[location name]</strong> - a text box to enter
             a place name.
             <br/>
-            &nbsp;&nbsp;<strong>[location autocomplete]</strong> - an 
-            autocomplete control for picking a stored location. A spatial 
+            &nbsp;&nbsp;<strong>[location autocomplete]</strong> - an
+            autocomplete control for picking a stored location. A spatial
             reference is still required.
             <br/>
             &nbsp;&nbsp;<strong>[location url param]</strong> - a set of hidden
@@ -278,13 +278,13 @@ EOD
             for picking a stored location. A spatial reference is still
             required.
             <br/>
-            &nbsp;&nbsp;<strong>[location map]</strong> - combines location 
+            &nbsp;&nbsp;<strong>[location map]</strong> - combines location
             select, map and spatial reference controls for recording only at
             stored locations.
             <br/>
             &nbsp;&nbsp;<strong>[photos]</strong> - use when in single record
             entry mode to provide a control for uploading occurrence photos.
-            Alternatively use the [species attributes] control to output all 
+            Alternatively use the [species attributes] control to output all
             input controls for the species automatically. The [photos] control
             overrides the setting <strong>Occurrence Images</strong>.
             <br/>
@@ -1716,7 +1716,7 @@ EOD
     global $remembered;
     $remembered = trim($remembered);
     if (!empty($remembered)) {
-      data_entry_helper::set_remembered_fields(helper_base::explode_lines($remembered));
+      data_entry_helper::setRememberedFields(helper_base::explode_lines($remembered));
     }
   }
 
