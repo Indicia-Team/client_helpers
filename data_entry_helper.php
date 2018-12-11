@@ -7735,21 +7735,19 @@ HTML;
         break;
       case 'Lookup List':
       case 'L':
-        if(!array_key_exists('noBlankText', $options)){
-          $attrOptions = $attrOptions + array('blankText' => (array_key_exists('blankText', $options)? $options['blankText'] : ''));
+        if(!array_key_exists('noBlankText', $attrOptions)){
+          $attrOptions = $attrOptions + array('blankText' => (array_key_exists('blankText', $attrOptions)? $attrOptions['blankText'] : ''));
         }
-        if (array_key_exists('class', $options))
-          $attrOptions['class'] = $options['class'];
         $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'cache', 'sharing' => 'editing');
-        if (array_key_exists('language', $options)) {
+        if (array_key_exists('language', $attrOptions)) {
           $dataSvcParams = $dataSvcParams + array('language_iso'=>$options['language']);
         }
-        if (!array_key_exists('orderby', $options['extraParams'])) {
+        if (!array_key_exists('orderby', $attrOptions['extraParams'])) {
           $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order,term');
         }
         // control for lookup list can be overriden in function call options
-        if(array_key_exists('lookUpListCtrl', $options)){
-          $ctrl = $options['lookUpListCtrl'];
+        if (array_key_exists('lookUpListCtrl', $attrOptions)){
+          $attrOptions = $options['lookUpListCtrl'];
         } else {
           // or specified by the attribute in survey details
           if (isset($item['control_type']) &&
