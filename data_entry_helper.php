@@ -5708,7 +5708,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       }
       $response = self::get_population_data($options);
       // if the response is empty, and a language has been set, try again without the language but asking for the preferred values.
-      if(count($response)==0 && array_key_exists('iso', $options['extraParams']) || array_key_exists('language_iso', $options['extraParams'])){
+      if(count($response) === 0 &&
+          (array_key_exists('iso', $options['extraParams']) || array_key_exists('language_iso', $options['extraParams']))) {
         unset($options['extraParams']['iso']);
         unset($options['extraParams']['language_iso']);
         $options['extraParams']['preferred']='t';
@@ -7735,15 +7736,15 @@ HTML;
         break;
       case 'Lookup List':
       case 'L':
-        if(!array_key_exists('noBlankText', $attrOptions)){
+        if (!array_key_exists('noBlankText', $attrOptions)){
           $attrOptions = $attrOptions + array('blankText' => (array_key_exists('blankText', $attrOptions)? $attrOptions['blankText'] : ''));
         }
         $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'cache', 'sharing' => 'editing');
         if (array_key_exists('language', $attrOptions)) {
-          $dataSvcParams = $dataSvcParams + array('language_iso'=>$options['language']);
+          $dataSvcParams = $dataSvcParams + array('language_iso' => $attrOptions['language']);
         }
         if (!array_key_exists('orderby', $attrOptions['extraParams'])) {
-          $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order,term');
+          $dataSvcParams = $dataSvcParams + array('orderby' => 'sort_order,term');
         }
         // control for lookup list can be overriden in function call options
         if (array_key_exists('lookUpListCtrl', $attrOptions)){
