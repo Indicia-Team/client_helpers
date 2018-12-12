@@ -447,6 +447,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @return HTML string
    */
   public static function get_form($args, $nid, $response) {
+    iform_load_helpers(array('import_helper'));
     //Array of arrays. Array of codes to indicate the various error types that can be encountered.
     //The flags indicate the states required to end up in the error situation. The number 2 indicates
     //multiples. For intance 'existingPlot'=>1 indicates multiple existing plots, whilst 'existingPlot'=>2
@@ -573,7 +574,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
    * @param array $options Options array passed to the import control.
    */
   private static function import_settings_form($args,$options) {
-    $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
+    $_SESSION['uploaded_file'] = import_helper::get_uploaded_file($options);
     // by this time, we should always have an existing file
     if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
     $request = parent::$base_url."index.php/services/plant_portal_import/get_plant_portal_import_settings/".$options['model'];
@@ -1327,48 +1328,7 @@ TD;
     }
     return $caption;
   }
-  /**
-   * Method to upload the file in the $_FILES array, or return the existing file if already uploaded.
-   * @param array $options Options array passed to the import control.
-   * @return string
-   * @throws \Exception
-   * @access private
-   */
-  private static function get_uploaded_file($options) {
-    if (!isset($options['existing_file']) && !isset($_POST['import_step'])) {
-      // No existing file, but on the first step, so the $_POST data must contain the single file.
-      if (count($_FILES)!=1) throw new Exception('There must be a single file uploaded to import');
-      // reset gets the first array element
-      $file = reset($_FILES);
-      // Get the original file's extension
-      $parts = explode(".",$file['name']);
-      $fext = array_pop($parts);
-      if ($fext!='csv') throw new Exception('Uploaded file must be a csv file');
-      // Generate a file id to store the upload as
-      $destination = time().rand(0,1000).".".$fext;
-      $interim_image_folder = isset(parent::$interim_image_folder) ? parent::$interim_image_folder : 'upload/';
-      //In the original import_helper code the upload folder was in the same folder as the php file, however this prebuilt form is a level down the folder
-      //hierarchy so we need to chop "prebuilt_forms" from the file path.
-      $uploadFolderPath=str_replace('prebuilt_forms','',dirname(__FILE__));
-      $interim_path = $uploadFolderPath.'/'.$interim_image_folder;
-      if (move_uploaded_file($file['tmp_name'], "$interim_path$destination")) {
-        return "$interim_path$destination";
-      }
-    } elseif (isset($options['existing_file'])) {
-      return $options['existing_file'];
-    }
-    return isset($_POST['existing_file']) ? $_POST['existing_file'] : '';
-  }
-  /**
-   * Humanize a piece of text by inserting spaces instead of underscores, and making first letter
-   * of each phrase a capital.
-   *
-   * @param string $text The text to alter.
-   * @return string The altered string.
-   */
-  private static function processLabel($text) {
-    return ucFirst(preg_replace('/[\s_]+/', ' ', $text));
-  }
+  
   /**
    * Private method to build a single select option for the model field options.
    * Option is selected if selected=caption (case insensitive).

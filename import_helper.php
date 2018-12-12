@@ -890,7 +890,7 @@ TD;
    * @throws \Exception
    * @access private
    */
-  private static function get_uploaded_file($options) {
+  public static function get_uploaded_file($options) {
     if (!isset($options['existing_file']) && !isset($_POST['import_step'])) {
       // No existing file, but on the first step, so the $_POST data must contain the single file.
       if (count($_FILES)!=1) throw new Exception('There must be a single file uploaded to import');
