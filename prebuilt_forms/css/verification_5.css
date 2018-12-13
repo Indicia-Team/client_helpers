@@ -319,12 +319,16 @@ ul.gallery li {
 #record-details-toolbar {
   padding: 2px;
   border: solid silver 2px;
+  position: relative;
 }
 
 /* line 215, sass/verification_5.scss */
 #record-details-tabs {
   font-size: 80%;
   position: relative;
+}
+#record-details-tabs .ui-tabs-panel {
+  min-height: 150px;
 }
 /* line 222, sass/verification_5.scss */
 #record-details-tabs #details-tab table td.header {

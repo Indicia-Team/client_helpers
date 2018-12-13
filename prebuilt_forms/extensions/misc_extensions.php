@@ -692,7 +692,7 @@ JS;
       $flags[] = lang::get('confidential');
     }
     if ($options['record']['release_status'] !== 'R') {
-      $flags[] = lang::get($options['record']['release_status'] === 'U' ? 'unreleased' : 'pending review');
+      $flags[] = lang::get($options['record']['release_status'] === 'P' ? 'pending release' : 'unreleased');
     }
     if (!empty($flags)) {
       return '<div id="record-flags"><span>' . implode('</span><span>', $flags) . '</span></div>';

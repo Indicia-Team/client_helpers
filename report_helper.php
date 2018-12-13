@@ -2368,7 +2368,7 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
       // a link must be proxied as can be used client-site
       return parent::getProxiedBaseUrl() . $request;
     }
-    return self::_get_cached_services_call($request, $options);
+    return self::getCachedServicesCall($request, $options);
   }
 
   /**

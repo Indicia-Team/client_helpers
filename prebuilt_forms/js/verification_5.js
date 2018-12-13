@@ -104,7 +104,9 @@ indiciaData.rowIdToReselect = false;
     $(tr).addClass('selected');
     $('#btn-edit-record').attr('href', path + sep + 'occurrence_id=' + occurrenceId);
     // make it clear things are loading
-    $('#chart-div').css('opacity', 0.15);
+    if ($('#record-details-toolbar .loading-spinner').length === 0) {
+      $('#record-details-toolbar').append('<div class="loading-spinner"><div>Loading...</div></div>');
+    }
     rowRequest = $.getJSON(
       indiciaData.ajaxUrl + '/details/' + indiciaData.nid + urlSep + 'occurrence_id=' + occurrenceId,
       null,
@@ -196,6 +198,7 @@ indiciaData.rowIdToReselect = false;
         if (typeof callback !== 'undefined') {
           callback(tr);
         }
+        $('#record-details-toolbar .loading-spinner').remove();
       }
     );
   }
@@ -722,15 +725,24 @@ indiciaData.rowIdToReselect = false;
         if ($('#context-filter').length > 0) {
           params += '&context_id=' + $('#context-filter option:selected').val();
         }
+        // make it clear things are loading
+        if ($('#experience-div .loading-spinner').length === 0) {
+          $('#experience-div').append('<div class="loading-spinner"><div>Loading...</div></div>');
+        }
         $.get(
           indiciaData.ajaxUrl + '/experience/' + indiciaData.nid + urlSep + params,
           null,
           function success(data) {
+            // Note that this clears the loading spinner.
             $('#experience-div').html(data);
           }
         );
       }
     } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'phenology') {
+      // Make it clear we are loading.
+      if ($('#chart-div .loading-spinner').length === 0) {
+        $('#chart-div').append('<div class="loading-spinner"><div>Loading...</div></div>');
+      }
       $.getJSON(
         indiciaData.ajaxUrl + '/phenology/' + indiciaData.nid + urlSep +
         'external_key=' + currRec.extra.taxon_external_key +
@@ -752,10 +764,12 @@ indiciaData.rowIdToReselect = false;
               yaxis: { 'min': 0 }
             }
           });
-          $('#chart-div').css('opacity', 1);
         }
       );
     } else if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'media') {
+      if ($('#media-tab .loading-spinner').length === 0) {
+        $('#media-tab').append('<div class="loading-spinner"><div>Loading...</div></div>');
+      }
       $.get(
         indiciaData.ajaxUrl + '/media/' + indiciaData.nid + urlSep +
         'occurrence_id=' + occurrenceId + '&sample_id=' + currRec.extra.sample_id,
