@@ -2265,9 +2265,9 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         // Special case for length Kohana rule which can map to jQuery minlenth
         // and maxlength rules.
         $range = explode(',', $matches['val']);
-        if (count($range === 1)) {
+        if (count($range) === 1) {
           $converted[] = "maxlength:$range[0]";
-        } elseif (count($range === 2)) {
+        } elseif (count($range) === 2) {
           $converted[] = "minlength:$range[0]";
           $converted[] = "maxlength:$range[1]";
         }
