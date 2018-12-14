@@ -4027,7 +4027,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         $defaultOptionLabel=lang::get("Input species from the form's default {1}.", lang::get($type));
       }
       $defaultOptionLabel = str_replace("'", "\'", $defaultOptionLabel);
-      if (count($options['usersPreferredGroups'])) {
+      if (!empty($options['usersPreferredGroups'])) {
         self::$javascript .= 'indiciaData.usersPreferredTaxonGroups = [' . implode(',', $options['usersPreferredGroups']) . "];\n";
       }
       self::addLanguageStringsToJs('speciesChecklistFilter', [
