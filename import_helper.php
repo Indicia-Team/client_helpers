@@ -757,10 +757,8 @@ JS;
         $prefix = $model;
         $fieldname = $field;
       }
-      // Skip the metadata fields, plus ID field unless in the main model. We
-      // don't want an import to break the links between records by changing
-      // FKs.
-      if (($prefix === $model || $fieldname !== 'id') && !in_array($fieldname, $skipped)) {
+      // Skip the metadata fields.
+      if (!in_array($fieldname, $skipped)) {
         // Make a clean looking caption.
         $caption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
         /*
@@ -799,8 +797,8 @@ JS;
       $strippedScreenCaption = str_replace(" (from controlled termlist)", "", $translatedCaption);
       $fieldname = str_replace(array('fk_', '_id'), array('', ''), $fieldname);
       unset($option);
-      // Skip the metadata fields and ID fields not in the main model.
-      if (($prefix === $model || $fieldname !== 'id') && !in_array($fieldname, $skipped)) {
+      // Skip the metadata fields.
+      if (!in_array($fieldname, $skipped)) {
         $selected = FALSE;
         //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
         //This means only the first occurrence for the needle is exploded which is desirable in the situation as the field caption
