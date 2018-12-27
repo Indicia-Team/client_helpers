@@ -503,22 +503,31 @@ class filter_occurrence_id extends FilterBase {
    */
   public function get_controls() {
     $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Record ID'),
       'fieldname' => 'occurrence_id_op',
-      'lookupValues' => array(
+      'lookupValues' => [
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most')
-      ),
-      'controlWrapTemplate' => 'justControl'
-    ));
-    $r .= data_entry_helper::text_input(array(
+        '<=' => lang::get('is at most'),
+      ],
+      'controlWrapTemplate' => 'justControl',
+    ]);
+    $r .= data_entry_helper::text_input([
       'fieldname' => 'occurrence_id',
       'class' => 'control-width-2',
-      'controlWrapTemplate' => 'justControl'
-    ));
+      'controlWrapTemplate' => 'justControl',
+      'helpText' => lang::get('Filter by the system assigned record ID.'),
+    ]);
     $r .= '</div>';
+    $r .= '<div>' . lang::get('or') . '</div>';
+    $r .= data_entry_helper::text_input([
+      'label' => lang::get('External key is'),
+      'fieldname' => 'occurrence_external_key',
+      'class' => 'control-width-2',
+      'helpText' => lang::get("Filter by a key assigned by the record's originating system - for imported records."),
+    ]);
+
     return $r;
   }
 
