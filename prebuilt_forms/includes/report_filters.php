@@ -1159,9 +1159,25 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     }
     $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";
-    $r .= '<button type="button" id="filter-apply">' . lang::get('Apply') . '</button>';
-    $r .= '<button type="button" id="filter-reset" class="disabled">' . lang::get('Reset') . '</button>';
-    $r .= '<button type="button" id="filter-build">' . lang::get('Create a filter') . '</button></div>';
+    global $indicia_templates;
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-apply',
+      'title' => lang::get('Apply filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Apply'),
+    ]);
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-reset',
+      'title' => lang::get('Reset filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Reset'),
+    ]);
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-build',
+      'title' => lang::get('Create a custom filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Create a filter'),
+    ]);
     $r .= '</div>';
     $r .= '<div id="filter-details" style="display: none">';
     $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/close-22px.png" width="22" height="22" alt="Close filter builder" title="' .
