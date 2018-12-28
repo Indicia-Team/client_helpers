@@ -1187,7 +1187,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
       'caption' => lang::get('Create a filter'),
     ]);
-    $r .= '</div>';
+    $r .= '</div></div>';
     $r .= '<div id="filter-details" style="display: none">';
     $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/close-22px.png" width="22" height="22" alt="Close filter builder" title="' .
         lang::get('Close filter builder') . '" class="button" id="filter-done"/>' . "\n";
