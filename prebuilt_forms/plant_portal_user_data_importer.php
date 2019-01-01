@@ -1328,7 +1328,48 @@ TD;
     }
     return $caption;
   }
-  
+
+  /**
+   * Method to upload the file in the $_FILES array, or return the existing file if already uploaded.
+   * @param array $options Options array passed to the import control.
+   * @return string
+   * @throws \Exception
+   * @access private
+   */
+  private static function get_uploaded_file($options) {
+    if (!isset($options['existing_file']) && !isset($_POST['import_step'])) {
+      // No existing file, but on the first step, so the $_POST data must contain the single file.
+      if (count($_FILES)!=1)
+        throw new Exception('There must be a single file uploaded to import');
+      // reset gets the first array element
+      $file = reset($_FILES);
+      // Get the original file's extension
+      $parts = explode(".",$file['name']);
+      $fext = array_pop($parts);
+      if ($fext!='csv')
+        throw new Exception('Uploaded file must be a csv file');
+      // Generate a file id to store the upload as
+      $destination = time() . rand(0,1000) . "." . $fext;
+      $interimPath = self::getInterimImageFolder('fullpath');
+      if (move_uploaded_file($file['tmp_name'], "$interimPath$destination")) {
+        return "$interimPath$destination";
+      }
+    }
+    elseif (isset($options['existing_file']))
+      return $options['existing_file'];
+    return isset($_POST['existing_file']) ? $_POST['existing_file'] : '';
+  }
+
+  /**
+   * Humanize a piece of text by inserting spaces instead of underscores, and making first letter
+   * of each phrase a capital.
+   *
+   * @param string $text The text to alter.
+   * @return string The altered string.
+   */
+  private static function processLabel($text) {
+    return ucFirst(preg_replace('/[\s_]+/', ' ', $text));
+  }
   /**
    * Private method to build a single select option for the model field options.
    * Option is selected if selected=caption (case insensitive).
@@ -1413,6 +1454,56 @@ TD;
     //remove local copy
     if ($removeLocalCopy==true) {
       unlink(realpath($interim_path.$path));
+    }
+    return $r;
+  }*/
+
+    /**
+   * Takes a file that has been uploaded to the client website upload folder, and moves it to the warehouse upload folder using the
+   * data services.
+   *
+   * @param string $path Path to the file to upload, relative to the interim image path folder (normally the
+   * client_helpers/upload folder.
+   * @param boolean $persist_auth Allows the write nonce to be preserved after sending the file, useful when several files
+   * are being uploaded.
+   * @param array $readAuth Read authorisation tokens, if not supplied then the $_POST array should contain them.
+   * @param string $service Path to the service URL used. Default is data/handle_media, but could be import/upload_csv.
+   * @return string Error message, or true if successful.
+   */
+  protected static function send_file_to_warehouse_plant_portal_importer($path, $persist_auth=false, $readAuth = null, $service='data/handle_media',$removeLocalCopy=true) {
+    if ($readAuth == NULL) {
+      $readAuth = $_POST;
+    }
+    $interimPath = self::getInterimImageFolder('fullpath');
+    if (!file_exists($interimPath.$path))
+      return "The file $interimPath$path does not exist and cannot be uploaded to the Warehouse.";
+    $serviceUrl = self ::$base_url . "index.php/services/$service";
+    // This is used by the file box control which renames uploaded files using a guid system, so disable renaming on the server.
+    $postargs = array('name_is_guid' => 'true');
+    // attach authentication details
+    if (array_key_exists('auth_token', $readAuth))
+      $postargs['auth_token'] = $readAuth['auth_token'];
+    if (array_key_exists('nonce', $readAuth))
+      $postargs['nonce'] = $readAuth['nonce'];
+    if ($persist_auth)
+      $postargs['persist_auth'] = 'true';
+    $file_to_upload = array('media_upload'=>'@'.realpath($interimPath.$path));
+    $response = self::http_post($serviceUrl, $file_to_upload + $postargs);
+    $output = json_decode($response['output'], true);
+    $r = true; // default is success
+    if (is_array($output)) {
+      //an array signals an error
+      if (array_key_exists('error', $output)) {
+        // return the most detailed bit of error information
+        if (isset($output['errors']['media_upload']))
+          $r = $output['errors']['media_upload'];
+        else
+          $r = $output['error'];
+      }
+    }
+    //remove local copy
+    if ($removeLocalCopy==true) {
+      unlink(realpath($interimPath.$path));
     }
     return $r;
   }
@@ -2366,7 +2457,7 @@ TD;
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $r =  "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"alert('running 3'); window.location = '$reloadpath;\">\n";
+    $r =  "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n";
     foreach ($settingFields as $field=>$value) {
       if (!empty($settingFields[$field])) {
         if (!empty($value) && $field!=='import_step' && $field !=='submit') {
