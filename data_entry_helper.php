@@ -1689,15 +1689,6 @@ JS;
     $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : null;
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
       $caption = self::$entity_to_load['sample:location_name'];
-    if (empty($caption) && !empty($options['default'])) {
-      $thisLoc = self::get_population_data([
-        'table' => 'location',
-        'extraParams' => $options['extraParams'] + ['id' => $options['default']]
-      ]);
-      if (count($thisLoc)) {
-        $caption = $thisLoc[0]['name'];
-      }
-    }
     $options = array_merge(array(
       'table' => 'location',
       'fieldname' => 'sample:location_id',

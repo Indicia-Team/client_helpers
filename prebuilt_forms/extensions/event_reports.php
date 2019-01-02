@@ -141,7 +141,7 @@ class extension_event_reports {
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
-        'dataSource' => 'library/occurrence_images/filterable_explore_list_minimal',
+        'dataSource' => 'library/occurrence_images/filterable_explore_list',
         'bands' => array(array('content'=>
           '<div class="gallery-item status-{record_status} certainty-{certainty} ">'.
           '<a class="fancybox" href="{imageFolder}{media}"><img src="{imageFolder}thumb-{media}" title="{taxon}" alt="{taxon}"/><br/>{formatted}</a></div>')),

@@ -717,14 +717,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
             $optionId = explode('|', $option);
             if(count($optionId) > 1) {
               // Found an option like @smpAttr:4|label=My label
-              if (!isset($attrSpecificOptions[$optionId[0]])) {
-                $attrSpecificOptions[$optionId[0]]=array();
-              }
-              // Ensure default extraParams (such as auth tokens) not
-              // overwritten by a custom option.
-              if ($optionId[1] === 'extraParams') {
-                $value = array_merge($defAttrOptions['extraParams'], (array)$value);
-              }
+              if (!isset($attrSpecificOptions[$optionId[0]])) $attrSpecificOptions[$optionId[0]]=array();
               $attrSpecificOptions[$optionId[0]][$optionId[1]] = apply_user_replacements($value);
             }
             else {
