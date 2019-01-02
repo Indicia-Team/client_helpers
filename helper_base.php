@@ -55,7 +55,7 @@ $indicia_templates = array(
   'buttonHighlightedClass' => 'indicia-button',
   'buttonWarningClass' => 'indicia-button',
     // Classes applied to <a> when styled like a button
-  'anchorButtonClass' => 'ui-state-default ui-corner-all indicia-button',
+  'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   // Message boxes
   'messageBox' => '<div class="page-notice ui-state-highlight ui-corner-all">{message}</div>',
