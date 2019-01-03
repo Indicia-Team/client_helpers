@@ -505,8 +505,8 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     if (self::$applyUserPrefs) {
       iform_report_apply_explore_user_own_preferences($reportOptions);
     }
-    $data = report_helper::get_report_data($reportOptions);
-    report_helper::$javascript .= "indiciaData.$options[name] = " . json_encode($data) . ";\n";
+    report_helper::request_report($response, $reportOptions, $currentParamValues, FALSE);
+    report_helper::$javascript .= "indiciaData.$options[name] = " . json_encode($response['records']) . ";\n";
     return '';
   }
 
