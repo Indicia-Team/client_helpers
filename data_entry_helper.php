@@ -2741,7 +2741,7 @@ JS;
       'valueField' => 'taxa_taxon_list_id',
       'formatFunction'=>empty($indicia_templates['format_species_autocomplete_fn']) ? $indicia_templates['taxon_label'] : $indicia_templates['format_species_autocomplete_fn'],
       'outputPreferredNameToSelector' => false,
-      'duplicateCheckFields' => array('taxon', 'taxa_taxon_list_id')
+      'duplicateCheckFields' => array('taxon', 'taxon_meaning_id')
     ), $options);
     $options['extraParams'] += self::getSpeciesNamesFilter($options);
     if (!empty($options['default']) && empty($options['defaultCaption'])) {
