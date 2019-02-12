@@ -729,7 +729,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing']),
+        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
       ));
       if (count($sources) > 1) {
         $r .= '<div id="filter-websites" class="filter-popup-columns"><h3>' . lang::get('Websites') . '</h3><p>' .
@@ -758,7 +758,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing']),
+        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
       ));
       $titleToDisplay = 'fulltitle';
     }
@@ -925,9 +925,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $options['sharing'] = report_filters_sharing_code_to_full_term($options['sharing']);
   $options['sharingCode'] = report_filters_full_term_to_sharing_code($options['sharing']);
-  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation|editing)$/', $options['sharing'])) {
-    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow, moderation or ' .
-        "editing (currently $options[sharing]).";
+  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation|editing|me)$/', $options['sharing'])) {
+    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow, moderation, ' .
+        "editing or me (currently $options[sharing]).";
   }
   report_helper::add_resource('reportfilters');
   report_helper::add_resource('validation');
