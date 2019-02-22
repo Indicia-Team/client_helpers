@@ -2243,7 +2243,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         'minimum' => ['jqRule' => 'min', 'valRegEx' => '-?\d+'],
         'mingridref' => ['jqRule' => 'mingridref', 'valRegEx' => '\d+'],
         'maxgridref' => ['jqRule' => 'maxgridref', 'valRegEx' => '\d+'],
-        'regex' => ['jqRule' => 'pattern', 'valRegEx' => '-?\d+'],
+        'regex' => ['jqRule' => 'pattern', 'valRegEx' => '.*'],
       ];
       $arr = explode('[', $rule);
       $ruleName = $arr[0];
