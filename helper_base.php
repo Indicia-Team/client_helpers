@@ -721,13 +721,13 @@ JS;
    * <li>sref_handlers_4326</li>
    * <li>sref_handlers_osgb</li>
    * <li>sref_handlers_osie</li>
+   * <li>font_awesome</li>
    * </ul>
    */
-  public static function add_resource($resource)
-  {
+  public static function add_resource($resource) {
     // Ensure indiciaFns is always the first resource added
     if (!self::$indiciaFnsDone) {
-      self::$indiciaFnsDone = true;
+      self::$indiciaFnsDone = TRUE;
       self::add_resource('indiciaFns');
     }
     $resourceList = self::get_resources();
@@ -861,6 +861,9 @@ JS;
             'javascript' => array(self::$js_path.'drivers/sref/osgb.js')),
         'sref_handlers_osie' => array(
             'javascript' => array(self::$js_path.'drivers/sref/osie.js')),
+        'font_awesome' => [
+          'stylesheets' => ['https://use.fontawesome.com/releases/v5.7.2/css/all.css']
+        ],
       );
     }
     return self::$resource_list;
