@@ -1547,6 +1547,9 @@ JS;
     // Keep a non-random cache for 10 minutes. It MUST be shorter than the normal cache lifetime so this expires more frequently.
     $r = self::cache_get(array('readauth-wid'=>$website_id), 600, false);
     if ($r===false) {
+      if (empty(self::$base_url)) {
+        throw new Exception(lang::get('Indicia configuration is incorrect. Warehouse URL is not configured.'));
+      }
       $postargs = "website_id=$website_id";
       $response = self::http_post(self::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
       if (isset($response['status'])) {
