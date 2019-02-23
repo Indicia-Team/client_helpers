@@ -516,7 +516,6 @@ $('#entry_form').submit(function() {
         hostsite_get_user_field('indicia_user_id') . "]').closest('li').children('span').remove();\n";
     }
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/group_edit') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     return $r;
   }
 
@@ -1150,6 +1149,7 @@ $('#entry_form').submit(function() {
       'group:description' => $group['description'],
       'group:from_date' => $group['from_date'],
       'group:to_date' => $group['to_date'],
+      'group:view_full_precision' => $group['view_full_precision'],
       'group:private_records' => $group['private_records'],
       'group:filter_id' => $group['filter_id'],
       'group:logo_path' => $group['logo_path'],

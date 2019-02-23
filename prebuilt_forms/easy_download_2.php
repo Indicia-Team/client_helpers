@@ -21,13 +21,13 @@
  */
 
 require_once ('includes/report_filters.php');
- 
+
 /**
- * 
- * 
+ *
+ *
  * @package Client
  * @subpackage PrebuiltForms
- * A quick and easy way to download data you have access to. 
+ * A quick and easy way to download data you have access to.
  */
 class iform_easy_download_2 {
 
@@ -35,9 +35,9 @@ class iform_easy_download_2 {
    * @var array List of sets of filters loaded from the db, one per sharing type code.
    */
   private static $filterSets=array();
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_easy_download_2_definition() {
@@ -50,12 +50,12 @@ class iform_easy_download_2 {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'download_my_records',
@@ -336,7 +336,7 @@ class iform_easy_download_2 {
       )
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -402,7 +402,7 @@ class iform_easy_download_2 {
         'lookupValues' => array(),
         'class' => 'control-width-5'
       ));
-    } else 
+    } else
       $r .= '<input type="hidden" name="survey_id" value="'.$args['survey_id'].'"/>';
     // Let the user pick the date range to download.
     $r .= data_entry_helper::select(array(
@@ -449,12 +449,11 @@ class iform_easy_download_2 {
     }
     $r .= '<input type="submit" value="'.lang::get('Download').'"/></form>';
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.hostsite_get_url('iform/ajax/easy_download_2')."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "'.$nid."\";\n";
     data_entry_helper::$javascript.="setAvailableDownloadFilters();\n";
     return $r;
-  } 
-  
-  /** 
+  }
+
+  /**
    * Works out the list of download type options available to the user. This is the list
    * of sharing modes they have permission for, combined with any filters defined for the user
    * which define their permissions for that sharing type.
@@ -548,9 +547,9 @@ class iform_easy_download_2 {
     }
     return $r;
   }
-  
-  /** 
-   * Works out the list of download format options available to the user. This depends on the 
+
+  /**
+   * Works out the list of download format options available to the user. This depends on the
    * permissions settings in the form configuration
    * @param array $args Form parameters
    * @return array Associative array of download formats
@@ -564,14 +563,15 @@ class iform_easy_download_2 {
     }
     return $r;
   }
-  
+
   /**
    * An ajax handler which returns the surveys that are available for a given sharing type.
    * @param type $website_id
    * @param type $password
-   * @param type $node
+   * @param int $nid
+   *   Node ID.
    */
-  public static function ajax_surveys_for_sharing_type($website_id, $password, $node) {
+  public static function ajax_surveys_for_sharing_type($website_id, $password, $nid) {
     iform_load_helpers(array('data_entry_helper'));
     // @todo filter by the available context filters if appropriate
     $readAuth = array(
@@ -584,11 +584,11 @@ class iform_easy_download_2 {
       'sharing'=>self::expand_sharing_mode($_GET['sharing_type'])
     ));
     $r = array();
-    foreach ($surveys as $survey) 
+    foreach ($surveys as $survey)
       $r["survey-$survey[id]"]="$survey[website] &gt; $survey[title]";
     echo json_encode($r);
   }
-  
+
   /**
    * Performs the download.
    * @global array $indicia_templates
@@ -615,13 +615,13 @@ class iform_easy_download_2 {
     $params = self::build_params($args);
     $params = array_merge($params, get_options_array_with_user_data($additionalParamText));
     $conn = iform_get_connection_details($nid);
-    
+
     global $indicia_templates;
     // let's just get the URL, not the whole anchor element
     $indicia_templates['report_download_link'] = '{link}';
     $limit = ($args['limit']==0 ? '' : $args['limit']); // unlimited or limited
     $sharing = substr($_POST['download-type'], 0, 1);
-    
+
     $url = report_helper::report_download_link(array(
       'readAuth'=>data_entry_helper::$js_read_tokens,
       'dataSource'=>$report,
@@ -645,7 +645,7 @@ class iform_easy_download_2 {
     header("Location: $url");
     exit;
   }
-  
+
   /**
    * Expand a single character sharing mode code (e.g. R) to the full term (e.g. reporting).
    * @param string $sharing Sharing mode code to expand.
@@ -667,7 +667,7 @@ class iform_easy_download_2 {
         return 'editing';
     }
   }
-  
+
   /**
    * Builds the parameters array to apply which filters the download report according to the report type, subfilter,
    * date range and survey selected.
@@ -695,7 +695,7 @@ class iform_easy_download_2 {
       if ($survey_ids)
         $params['survey_list_context']=implode(',', unserialize($survey_ids));
       $_POST['download-type']='V';
-    } 
+    }
     elseif (preg_match('/^[RPVDM] my$/', $_POST['download-type'])) {
       // autogenerated context for my records
       $params['my_records_context']=1;
@@ -724,7 +724,7 @@ class iform_easy_download_2 {
         (strlen($_POST['download-type'])>1 || !empty($_POST['download-subfilter']))) {
       // use the saved filters system to filter the records
       $filterData = self::load_filter_set($sharing);
-      if (preg_match('/^[RPVDM] filter (\d+)$/', $_POST['download-type'], $matches)) 
+      if (preg_match('/^[RPVDM] filter (\d+)$/', $_POST['download-type'], $matches))
         // download type includes a context filter from the database
         self::apply_filter_to_params($filterData, $matches[1], '_context', $params);
       if (!empty($_POST['download-subfilter'])) {
@@ -741,7 +741,7 @@ class iform_easy_download_2 {
       $params[$datePrefix.'date_to']=$_POST['date_to'];
     return $params;
   }
-  
+
   /**
    * Loads the definition of a saved filter onto the params we are using to filter the report.
    * @param array $filterData List of filters loaded from the db
@@ -766,8 +766,8 @@ class iform_easy_download_2 {
       }
     }
   }
-  
-  /** 
+
+  /**
    * Declare the list of permissions we've got set up to pass to the CMS' permissions code.
    * @param int $nid Node ID, not used
    * @param array $args Form parameters array, used to extract the defined permissions.
@@ -804,13 +804,13 @@ class iform_easy_download_2 {
     if (!empty($args['custom_formats'])) {
       $customFormats = json_decode($args['custom_formats'], true);
       foreach ($customFormats as $idx=>$format) {
-        if (!empty($format['permission'])) 
+        if (!empty($format['permission']))
           $perms[$format['permission']]='';
       }
     }
     return array_keys($perms);
   }
-  
+
   /**
    * Loads the set of report filters available for a given sharing type code. Avoids multiple loads.
    * @param string $sharingTypeCode A sharing mode, i.e. R(eporting), M(oderation), V(erification), P(eer review) or D(ata flow).
@@ -821,5 +821,5 @@ class iform_easy_download_2 {
       self::$filterSets[$sharingTypeCode]=report_filters_load_existing(data_entry_helper::$js_read_tokens, $sharingTypeCode);
     return self::$filterSets[$sharingTypeCode];
   }
-  
+
 }

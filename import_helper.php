@@ -81,6 +81,8 @@ class import_helper extends helper_base {
    */
 
   public static function importer($options) {
+    self::add_resource('jquery_ui');
+    self::add_resource('import');
     if (isset($_GET['total'])) {
       return self::upload_result($options);
     }
@@ -192,14 +194,29 @@ class import_helper extends helper_base {
 
   /**
    * Outputs the form for mapping columns to the import fields.
-   * @param array $options Options array passed to the import control.
+   *
+   * @param array $options
+   *   Options array passed to the import control.
    */
-  private static function upload_mappings_form($options) {
-    ini_set('auto_detect_line_endings',1);
-    if (!file_exists($_SESSION['uploaded_file']))
+  private static function upload_mappings_form(array $options) {
+    ini_set('auto_detect_line_endings', 1);
+    if (!file_exists($_SESSION['uploaded_file'])) {
       return lang::get('upload_not_available');
-    self::add_resource('jquery_ui');
-    $filename=basename($_SESSION['uploaded_file']);
+    }
+    $t = self::getTranslations([
+      'Because you are looking up existing records to import into, required field validation will only be applied when the new data are merged into the existing data during import.',
+      'Column in CSV File',
+      'column_mapping_instructions',
+      'Maps to attribute',
+      'Tasks',
+      'The following database attributes must be matched to a column in your import file before you can continue',
+      'There are currently two or more drop-downs allocated to the same value.',
+      'Used in lookup of existing data?',
+    ]);
+    self::addLanguageStringsToJs('import', [
+      'not_imported' => 'Not imported',
+    ]);
+    $filename = basename($_SESSION['uploaded_file']);
     // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
     // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
     if (isset($options['presetSettings'])) {
@@ -212,30 +229,42 @@ class import_helper extends helper_base {
       $settings = $_POST;
     }
     if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
-      // when not using associations make sure that the association fields are not passed through.
+      // When not using associations make sure that the association fields are not passed through.
       // These fields would confuse the association detection logic.
       foreach ($settings as $key => $value) {
         $parts = explode(':', $key);
-        if ($parts[0]==$options['model'] . '_association' || $parts[0]==$options['model'] . '_2')
+        if ($parts[0] === $options['model'] . '_association' || $parts[0] === $options['model'] . '_2') {
           unset($settings[$key]);
+        }
       }
     }
-    // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
+    // Only want defaults that actually have a value - others can be set on a
+    // per-row basis by mapping to a column.
     foreach ($settings as $key => $value) {
       if (empty($value)) {
         unset($settings[$key]);
       }
     }
-    // cache the mappings
-    $metadata = array(
+    // Cache the mappings
+    // deal with API change: original form sent in options as json_encoded strings:
+    // now assumed as class/objects
+    if(isset($options['importMergeFields']) && is_string($options['importMergeFields'])) {
+        $options['importMergeFields'] = json_decode($options['importMergeFields']);
+    }
+    if(isset($options['synonymProcessing']) && is_string($options['synonymProcessing'])) {
+        $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
+    }
+    $metadata = array( // handed to metadata storage as json encoded strings
       'settings' => json_encode($settings),
-      'importMergeFields' => (isset($options['importMergeFields']) ? $options['importMergeFields'] : json_encode(array()))
+      'importMergeFields' => json_encode(isset($options['importMergeFields']) ? $options['importMergeFields'] : []), // comes from form already json encoded
+      'synonymProcessing' => json_encode(isset($options['synonymProcessing']) ? $options['synonymProcessing'] : new stdClass()), // comes from form already json encoded
     );
     $post = array_merge($options['auth']['write_tokens'], $metadata);
     $request = parent::$base_url . "index.php/services/import/cache_upload_metadata?uploaded_csv=$filename";
     $response = self::http_post($request, $post);
-    if (!isset($response['output']) || $response['output'] != 'OK')
+    if (!isset($response['output']) || $response['output'] != 'OK') {
       return "Could not upload the settings metadata. <br/>" . print_r($response, TRUE);
+    }
     $request = parent::$base_url . "index.php/services/import/get_import_fields/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
     // include survey and website information in the request if available, as this limits the availability of custom attributes
@@ -257,8 +286,7 @@ class import_helper extends helper_base {
     if (!empty($settings['survey_id']))
       self::limitFields($fields, $options, $settings['survey_id']);
     if (isset($options['importMergeFields']) && $options['importMergeFields'] != '' && $options['importMergeFields'] != '{}' && $options['importMergeFields'] != '[]') {
-      $importMergeFields = json_decode($options['importMergeFields']);
-      foreach ($importMergeFields as $modelSpec) {
+      foreach ($options['importMergeFields'] as $modelSpec) {
         if (!isset($modelSpec->model) || ($modelSpec->model = $options['model'])) {
           foreach ($modelSpec->fields as $fieldSpec) {
             foreach ($fieldSpec->virtualFields as $subFieldSpec) {
@@ -271,7 +299,7 @@ class import_helper extends helper_base {
                 if ($lastMatch && $keyParts[0] != $parts[0]) {
                   $lastMatch = FALSE;
                   $newFields[$fieldSpec->fieldName . ':' . $subFieldSpec->fieldNameSuffix] = lang::get($subFieldSpec->description) .
-                      ' (' . lang::get('merged to form ') . lang::get($fieldSpec->description) . ')';
+                      ' (' . lang::get('merged to form {1}', lang::get($fieldSpec->description)) . ')';
                 }
                 else if (!$lastMatch && $keyParts[0] === $parts[0]) {
                   $lastMatch = TRUE;
@@ -280,7 +308,7 @@ class import_helper extends helper_base {
               }
               if ($lastMatch) {
                 $newFields[$fieldSpec->fieldName . ':' . $subFieldSpec->fieldNameSuffix] = lang::get($subFieldSpec->description) .
-                    ' (' . lang::get('merged to form ') . lang::get($fieldSpec->description) . ')';
+                    ' (' . lang::get('merged to form {1}', lang::get($fieldSpec->description)) . ')';
               }
               $fields = $newFields;
             }
@@ -288,15 +316,24 @@ class import_helper extends helper_base {
         }
       }
     }
+    if (isset($options['synonymProcessing'])) {
+        $synonymProcessing = $options['synonymProcessing'];
+        if (isset($synonymProcessing->separateSynonyms) && $synonymProcessing->separateSynonyms === TRUE) {
+            $fields['synonym:tracker'] = lang::get("Main record vs Synonym");
+            $fields['synonym:identifier'] = lang::get("Field to group records together");
+        }
+    }
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], TRUE);
-    if (!is_array($responseIds))
-      return "curl request to $request failed. Response " . print_r($response, TRUE);
+    if (!is_array($responseIds)) {
+        return "curl request to $request failed. Response " . print_r($response, TRUE);
+    }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
     $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys($settings)) : array();
     $unlinked_fields = !empty($preset_fields) ? array_diff_key($fields, array_combine($preset_fields, $preset_fields)) : $fields;
-    // only use the required fields that are available for selection - the rest are handled somehow else
+    // Only use the required fields that are available for selection - the rest
+    // are handled somehow else.
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
     $handle = fopen($_SESSION['uploaded_file'], "r");
     $columns = fgetcsv($handle, 1000, ",");
@@ -305,13 +342,18 @@ class import_helper extends helper_base {
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
-    //  if the user checked the Remember All checkbox need to remember this setting
-    $checkedRememberAll=isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';;
-    $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadpath\" class=\"iform\">\n" .
-      '<p>' . lang::get('column_mapping_instructions') . '</p>' .
-      '<div class="ui-helper-clearfix import-mappings-table"><table class="ui-widget ui-widget-content">' .
-      '<thead class="ui-widget-header">' .
-      "<tr><th>" . lang::get('Column in CSV File') . "</th><th>" . lang::get('Maps to attribute') . "</th>";
+    // If the user checked the Remember All checkbox need to remember this setting.
+    $checkedRememberAll = isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';
+    $r = <<<HTML
+<form method="post" id="entry_form" action="$reloadpath" class="iform">
+  <p>{$t['column_mapping_instructions']}</p>
+  <div class="ui-helper-clearfix import-mappings-table">
+    <table class="ui-widget ui-widget-content">
+      <thead class="ui-widget-header">
+        <tr><th>{$t['Column in CSV File']}</th><th>{$t['Maps to attribute']}</th>
+HTML;
+
+
 
     if (self::$rememberingMappings) {
       $r .= "<th>" . lang::get('Remember choice?') .
@@ -335,7 +377,7 @@ class import_helper extends helper_base {
     }
 
     if (count($existingDataLookupOptions) > 0) {
-      $r .= "<th>" . lang::get('Used in lookup of existing data?') . "</th>";
+      $r .= "<th>{$t['Used in lookup of existing data?']}</th>";
     }
 
     $r .= '</tr></thead><tbody>';
@@ -346,16 +388,40 @@ class import_helper extends helper_base {
         $colCount ++;
         $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
-        $r .= self::get_column_options($options['model'], $unlinked_fields, $column, $autoFieldMappings, count($existingDataLookupOptions) > 0); // this also create TDs for the remember checkboxes etc
+        $r .= self::getColumnOptions(
+          $options['model'],
+          $unlinked_fields,
+          $column,
+          $autoFieldMappings,
+          count($existingDataLookupOptions) > 0,
+          array_key_exists('allowDataDeletions', $options) ? $options['allowDataDeletions'] : FALSE
+        );
         $r .= "</select></td></tr>\n";
       }
     }
-    $r .= '</tbody>';
-    $r .= '</table>';
-    $r .= '<div id="required-instructions" class="import-mappings-instructions"><h2>' . lang::get('Tasks') . '</h2><span>' .
-      lang::get('The following database attributes must be matched to a column in your import file before you can continue') . ':</span><ul></ul><br/></div>';
-    $r .= '<div id="duplicate-instructions" class="import-mappings-instructions"><span id="duplicate-instruct">' .
-      lang::get('There are currently two or more drop-downs allocated to the same value.') . '</span><ul></ul><br/></div></div>';
+    $r .= <<<HTML
+      </tbody>
+    </table>
+    <div id="import-mappings-instructions">
+      <h2>$t[Tasks]</h2>
+      <div id="required-instructions">
+        <span>{$t['The following database attributes must be matched to a column in your import file before you can continue']}</span>
+        <ul></ul>
+        <br/>
+      </div>
+      <div id="updating-instructions">
+        <span>{$t['Because you are looking up existing records to import into, required field validation will only be applied when the new data are merged into the existing data during import.']}</span>
+        <br/>
+      </div>
+      <div id="duplicate-instructions">
+        <span id="duplicate-instruct">{$t['There are currently two or more drop-downs allocated to the same value.']}</span>
+        <ul></ul>
+        <br/>
+      </div>
+    </div>
+  </div>
+
+HTML;
 
     if (count($existingDataLookupOptions) > 0) {
       $r .= '<fieldset><legend>' . lang::get('Lookup of existing records') . '</legend>';
@@ -369,71 +435,17 @@ class import_helper extends helper_base {
         $r .= "</select><br/>";
       }
       $r .= "</fieldset>";
-      self::$javascript .= <<<NEWFUNCS
-// When a mapping is changed, this makes sure the options in the lookupSelects are valid for the new combination
-var presetFields = [];
-function check_lookup_options() {
-  $(".lookupCheckboxes").removeAttr("checked");
-  $('.lookupSelects').each(function(idx, select) {
-    $(select).find('option[value!=""]').each(function(idx, option) {
-      var fields = JSON.parse($(option).val()), field;
-      var allFound = true;
-      for(var i = 0; allFound && i < fields.length; i++) {
-        if (typeof(fields[i].notInMappings) === 'undefined' || fields[i].notInMappings !== true) {
-          if (fields[i].fieldName.indexOf('_id') >= 0) {
-            field = fields[i].fieldName.replace('_id','');
-            if (field.indexOf(':') >= 0) {
-              field = field.replace(':', ':fk_');
-            } else {
-              field = "fk_" + field;
-            }
-          } else field = fields[i].fieldName;
-          // If fields are part of the special grouping, then all must be present
-          allFound &= (presetFields.indexOf(fields[i].fieldName) >= 0 || presetFields.indexOf(field) >= 0  ||
-                        $('.import-mappings-table select').filter('[value="'+field.replace(':', '\\:')+'"],[value^="'+field.replace(':', '\\:')+'\\:"],[value="'+fields[i].fieldName.replace(':', '\\:')+'"]').length > 0);
-        }
-      }
-      if (allFound) {
-        if ($(option).attr('disabled') === 'disabled') {
-          $(option).removeAttr('disabled');
-        }
-      } else {
-        if ($(option).attr('disabled') !== 'disabled') {
-          if ($(select).val() === $(option).val()) {
-            $(select).val('');
-          }
-          $(option).attr('disabled', 'disabled');
-        }
-      }
-    });
-    if ($(this).val() != "") {
-      var fields = JSON.parse($(this).val()), field;
-      for(var i = 0; i < fields.length; i++) {
-        if (typeof(fields[i].notInMappings) === 'undefined' || fields[i].notInMappings !== true) {
-          if (fields[i].fieldName.indexOf('_id') >= 0) {
-            field = fields[i].fieldName.replace('_id','');
-            if (field.indexOf(':') >= 0) {
-              field = field.replace(':', ':fk_');
-            } else {
-              field = "fk_" + field;
-            }
-          } else field = fields[i].fieldName;
-          var rows = $('.import-mappings-table select').filter('[value="'+field.replace(':', '\\:')+'"],[value^="'+field.replace(':', '\\:')+'\\:"],[value="'+fields[i].fieldName.replace(':', '\\:')+'"]').closest('tr');
-          rows.find(".lookupCheckboxes").attr("checked", "checked");
-        };
-      };
-    };
-  });
-}
-$('.lookupSelects').change(check_lookup_options);
+      self::$javascript .= <<<JS
+indiciaData.presetFields = [];
+indiciaData.enableExistingDataLookup = true;
 
-NEWFUNCS;
+JS;
       foreach ($settings as $key => $value) {
-        self::$javascript .= "presetFields.push(\"" . $key . "\");\n";
+        self::$javascript .= "indiciaData.presetFields.push(\"$key\");\n";
       }
     }
     else {
-      self::$javascript .= "function check_lookup_options() {};\n";
+      self::$javascript .= "indiciaData.enableExistingDataLookup = false;\n";
     }
 
     $r .= '<input type="hidden" name="import_step" value="2" />';
@@ -443,106 +455,24 @@ NEWFUNCS;
       // Abort the mappings page as we don't need it
       return self::run_upload($options, self::$automaticMappings);
     }
-
-    self::$javascript .= "function detect_duplicate_fields() {
-      var valueStore = [];
-      var duplicateStore = [];
-      var valueStoreIndex = 0;
-      var duplicateStoreIndex = 0;
-      $.each($('.import-mappings-table select'), function(i, select) {
-        if (valueStoreIndex==0) {
-          valueStore[valueStoreIndex] = select.value;
-          valueStoreIndex++;
-        } else {
-          for(i=0; i<valueStoreIndex; i++) {
-            if (select.value==valueStore[i] && select.value != '<" . lang::get('Not imported') . ">') {
-              duplicateStore[duplicateStoreIndex] = select.value;
-              duplicateStoreIndex++;
-            }
-
-          }
-          valueStore[valueStoreIndex] = select.value;
-          valueStoreIndex++;
-        }
-      })
-      if (duplicateStore.length==0) {
-        DuplicateAllowsUpload = 1;
-        $('#duplicate-instruct').css('display', 'none');
-      } else {
-        DuplicateAllowsUpload = 0;
-        $('#duplicate-instruct').css('display', 'inline');
-      }
-    }\n";
-    self::$javascript .= "function update_required_fields() {
-      // copy the list of required fields
-      var fields = $.extend(true, {}, required_fields),
-          sampleVagueDates = [],
-          locationReference = false,
-          fieldTokens, thisValue;
-      $('#required-instructions li').remove();
-      // strip out the ones we have already allocated
-      $.each($('.import-mappings-table select'), function(i, select) {
-        thisValue = select.value;
-        // If there are several options of how to search a single lookup then they
-        // are identified by a 3rd token, e.g. occurrence:fk_taxa_taxon_list:search_code.
-        // These cases fulfil the needs of a required field so we can remove them.
-        fieldTokens = thisValue.split(':');
-        if (fieldTokens.length>2) {
-          fieldTokens.pop();
-          thisValue = fieldTokens.join(':');
-        }
-        delete fields[thisValue];
-        // special case for vague dates - if we have a complete sample vague date, then can strike out the sample:date required field
-        if (select.value.substr(0,12)=='sample:date_') {
-          sampleVagueDates.push(thisValue);
-        }
-        // and another special case for samples: can either include the sref or a foreign key reference to a location.
-        if (select.value.substr(0,18)=='sample:fk_location') { // catches the code based fk as well
-          locationReference = true;
-        }
-      });
-      if (sampleVagueDates.length==3) {
-        // got a full vague date, so can remove the required date field
-        delete fields['sample:date'];
-      }
-      if (locationReference) {
-        // got a location foreign key reference, so can remove the required entered sref fields
-        delete fields['sample:entered_sref'];
-        delete fields['sample:entered_sref_system']
-      }
-      var output = '';
-      $.each(fields, function(field, caption) {
-        output += '<li>'+caption+'</li>';
-      });
-      if (output==='') {
-        $('#required-instructions').css('display', 'none');
-        RequiredAllowsUpload = 1;
-      } else {
-        $('#required-instructions').css('display', 'inline');
-        RequiredAllowsUpload = 0;
-      }
-      if (RequiredAllowsUpload == 1 && DuplicateAllowsUpload == 1) {
-        $('#submit').attr('disabled', false);
-      } else {
-        $('#submit').attr('disabled', true);
-      }
-      $('#required-instructions ul').html(output);
-    }\n";
     self::$javascript .= "required_fields={};\n";
     foreach ($unlinked_required_fields as $field) {
       $caption = $unlinked_fields[$field];
       if (empty($caption)) {
         $tokens = explode(':', $field);
-        $fieldname = $tokens[count($tokens)-1];
+        $fieldname = $tokens[count($tokens) - 1];
         $caption = lang::get(self::processLabel(preg_replace(array('/^fk_/', '/_id$/'), array('', ''), $fieldname)));
       }
       $caption = self::translate_field($field, $caption);
       self::$javascript .= "required_fields['$field']='$caption';\n";
     }
-    self::$javascript .= "detect_duplicate_fields();\n";
-    self::$javascript .= "update_required_fields();\n";
-    self::$javascript .= "check_lookup_options();\n";
-    self::$javascript .= "$('.import-mappings-table select').change(function() {detect_duplicate_fields(); update_required_fields(); check_lookup_options();});\n";
+    self::$onload_javascript .= <<<JS
+// Initial setup.
+indiciaFns.detectDuplicateFields();
+indiciaFns.updateRequiredFields();
+indiciaFns.checkLookupOptions();
+
+JS;
     return $r;
   }
 
@@ -672,7 +602,6 @@ NEWFUNCS;
    * @param array $mappings List of column title to field mappings
    */
   private static function run_upload($options, $mappings) {
-    self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
     $filename=basename($_SESSION['uploaded_file']);
@@ -778,38 +707,59 @@ NEWFUNCS;
   }
 
   /**
-   * Returns a list of columns as an list of <options> for inclusion in an HTML drop down,
-   * loading the columns from a model that are available to import data into
-   * (excluding the id and metadata). Triggers the handling of remembered checkboxes and the
-   * associated labelling.
-   * This method also attempts to automatically find a match for the columns based on a number of rules
-   * and gives the user the chance to save their settings for use the next time they do an import.
-   * @param string $model Name of the model
-   * @param array  $fields List of the available possible import columns
-   * @param string $column The name of the column from the CSV file currently being worked on.
-   * @param array $autoFieldMappings An array containing the automatic field mappings for the page.
+   * Retrieve column options for import.
+   *
+   * Returns a list of columns as an list of <options> for inclusion in an HTML
+   * drop down, loading the columns from a model that are available to import
+   * data into (excluding the id and metadata). Triggers the handling of
+   * remembered checkboxes and the associated labelling.
+   *
+   * This method also attempts to automatically find a match for the columns
+   * based on a number of rules and gives the user the chance to save their
+   * settings for use the next time they do an import.
+   *
+   * @param string $model
+   *   Name of the model.
+   * @param array $fields
+   *   List of the available possible import columns.
+   * @param string $column
+   *   The name of the column from the CSV file currently being worked on.
+   * @param array $autoFieldMappings
+   *   An array containing the automatic field mappings for the page.
+   * @param bool $includeLookups
+   *   Should information on which columns are used for lookup be shown.
+   * @param bool $allowDataDeletions
+   *   Should the importer allow data to be removed.
    */
-  private static function get_column_options($model, $fields, $column, $autoFieldMappings, $includeLookups) {
-    $skipped = array('id', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
-      'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning', 'deleted', 'image_path'
-    );
-    //strip the column of spaces for use in html ids
+  private static function getColumnOptions($model, $fields, $column, $autoFieldMappings, $includeLookups, $allowDataDeletions = FALSE) {
+    $skipped = [
+      'image_path', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
+      'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning',
+    ];
+    // Also skip deleted column if allow deletions disallowed.
+    if (!$allowDataDeletions) {
+      $skipped[] = 'deleted';
+    }
+    // We never want to delete at the term level (needs to be termlists_term).
+    unset($fields['term:deleted']);
+    // Strip the column of spaces for use in HTML ids.
     $idColumn = str_replace(" ", "", $column);
     $r = '';
-    $heading='';
+    $heading = '';
     $labelListIndex = 0;
     $labelList = array();
     $itWasSaved[$column] = 0;
     foreach ($fields as $field => $caption) {
-      if (strpos($field,":"))
-        list($prefix,$fieldname)=explode(':',$field);
-      else {
-        $prefix=$model;
-        $fieldname=$field;
+      if (strpos($field, ":")) {
+        list($prefix, $fieldname) = explode(':', $field);
       }
-      // Skip the metadata fields
+      else {
+        $prefix = $model;
+        $fieldname = $field;
+      }
+      // Skip the metadata fields.
       if (!in_array($fieldname, $skipped)) {
-        // make a clean looking caption
+        // Make a clean looking caption.
         $caption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
         /*
          * The following creates an array called $labelList which is a list of all captions
@@ -830,23 +780,24 @@ NEWFUNCS;
       }
     }
     $labelList = array_count_values($labelList);
-    $multiMatch=array();
+    $multiMatch = array();
     foreach ($fields as $field => $caption) {
-      if (strpos($field,":"))
-        list($prefix,$fieldname)=explode(':',$field);
-      else {
-        $prefix=$model;
-        $fieldname=$field;
+      if (strpos($field, ":")) {
+        list($prefix, $fieldname) = explode(':', $field);
       }
-      // make a clean looking default caption. This could be provided by the $fields array, or we have to construct it.
+      else {
+        $prefix = $model;
+        $fieldname = $field;
+      }
+      // Make a clean looking default caption. This could be provided by the $fields array, or we have to construct it.
       $defaultCaption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
       // Allow the default caption to be translated or overridden by language files.
-      $translatedCaption=self::translate_field($field, $defaultCaption);
-      //need a version of the caption without "from controlled termlist" as we ignore that for matching.
-      $strippedScreenCaption = str_replace(" (from controlled termlist)","",$translatedCaption);
-      $fieldname=str_replace(array('fk_', '_id'), array('', ''), $fieldname);
+      $translatedCaption = self::translate_field($field, $defaultCaption);
+      // Need a version of the caption without "from controlled termlist" as we ignore that for matching.
+      $strippedScreenCaption = str_replace(" (from controlled termlist)", "", $translatedCaption);
+      $fieldname = str_replace(array('fk_', '_id'), array('', ''), $fieldname);
       unset($option);
-      // Skip the metadata fields
+      // Skip the metadata fields.
       if (!in_array($fieldname, $skipped)) {
         $selected = FALSE;
         //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
@@ -996,7 +947,7 @@ NEWFUNCS;
   }
 
   /**
-   * Used by the get_column_options to draw the items that appear once for each of the import columns on the import page.
+   * Used by the getColumnOptions to draw the items that appear once for each of the import columns on the import page.
    * These are the checkboxes, the warning the drop-down setting was saved and also the non-unique match warning
    * @param string $r The HTML to be returned.
    * @param string $column Column from the import CSV file we are currently working with
@@ -1023,10 +974,13 @@ TD;
     }
     if ($includeLookups) {
       $checkboxName = preg_replace('/[^A-Za-z0-9]/', '_', $column) . '.Lookup';
+      $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
       $r .= <<<TD
 <td class="centre">
-<input type="checkbox" name="$checkboxName" class="lookupCheckboxes" id="$checkboxName" value="1" disabled="disabled"
-  title="If checked, this field is used to lookup the relevant record in the database.">
+<img style="display: none; width: 16px; height: 16px"
+  class="in-lookup"
+  src="$imgPath/nuvola/ok-16px.png"
+  alt="This field is used to lookup the relevant record in the database.">
 </td>
 TD;
     }
@@ -1040,9 +994,9 @@ TD;
       $r .= "\"$column\"";
       $r .=  "<br/><form><input type='checkbox' id='$column.OnlyShowMatches' value='1' onclick='
        if (this.checked) {
-         $(\".$optionID\").hide();
+         jQuery(\".$optionID\").hide();
        } else {
-         $(\".$optionID\").show();
+         jQuery(\".$optionID\").show();
       }'
       > Only show likely matches in drop-down<br></form></td></tr>";
     }
@@ -1050,7 +1004,7 @@ TD;
   }
 
   /**
-   * Used by the get_column_options method to add "from controlled termlist" to the appropriate captions
+   * Used by the getColumnOptions method to add "from controlled termlist" to the appropriate captions
    * in the drop-downs on the import page.
    * @param string $caption The drop-down item currently being worked on
    * @param string $prefix Caption prefix
@@ -1086,7 +1040,7 @@ TD;
    * @throws \Exception
    * @access private
    */
-  private static function get_uploaded_file($options) {
+  public static function get_uploaded_file($options) {
     if (!isset($options['existing_file']) && !isset($_POST['import_step'])) {
       // No existing file, but on the first step, so the $_POST data must contain the single file.
       if (count($_FILES)!=1)

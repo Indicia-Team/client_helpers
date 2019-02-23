@@ -226,6 +226,30 @@ TXT;
   protected static function getEntity($args, $auth) {
     data_entry_helper::$entity_to_load = [];
     data_entry_helper::load_existing_record($auth['read'], 'taxa_taxon_list', $_GET['taxa_taxon_list_id'], 'detail', FALSE, TRUE);
+    // The page is designed to load from a preferred name, not a synonym. So
+    // switch the loaded entity if necessary.
+    if (data_entry_helper::$entity_to_load['taxa_taxon_list:preferred'] === 'f') {
+      $records = data_entry_helper::get_population_data([
+        'table' => 'taxa_taxon_list',
+        'extraParams' => $auth['read'] + [
+          'taxon_meaning_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:taxon_meaning_id'],
+          'preferred' => 't',
+          'view' => 'detail',
+        ],
+        'nocache' => TRUE,
+        'sharing' => FALSE,
+      ]);
+      if (empty($records)) {
+        throw new exception(lang::get('The record you are trying to load does not exist.'));
+      }
+      $_GET['taxa_taxon_list_id'] = $records[0]['id'];
+      data_entry_helper::load_existing_record_from(
+        $records[0],
+        $auth['read'],
+        'taxa_taxon_list',
+        $records[0]['id']
+      );
+    }
     // Load common names and synonyms.
     $otherNames = data_entry_helper::get_population_data([
       'table' => 'taxa_taxon_list',
@@ -301,8 +325,8 @@ HTML;
     if (isset(data_entry_helper::$entity_to_load['taxa_taxon_list:id'])) {
       $defaults = [
         'taxa_taxon_list_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:id'],
-        'taxon_id' => data_entry_helper::$entity_to_load['taxon:id'],
-        'taxon_meaning_id' => data_entry_helper::$entity_to_load['taxon_meaning:id'],
+        'taxon_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:taxon_id'],
+        'taxon_meaning_id' => data_entry_helper::$entity_to_load['taxa_taxon_list:taxon_meaning_id'],
       ];
       $r .= <<<HTML
 <input type="hidden" id="taxa_taxon_list:id" name="taxa_taxon_list:id" value="$defaults[taxa_taxon_list_id]" />
@@ -726,89 +750,7 @@ JS;
   private static function getDynamicAttrs($readAuth, $taxonListId, $ttlId, $options, $language = NULL) {
     iform_load_helpers(['data_entry_helper', 'report_helper']);
     $attrs = self::getDynamicAttrsList($readAuth, $taxonListId, $language, $ttlId);
-    $r = '';
-    $fieldsetTracking = [
-      'l1_category' => '',
-      'l2_category' => '',
-      'outer_block_name' => '',
-      'inner_block_name' => '',
-    ];
-    $fieldsetFieldNames = array_keys($fieldsetTracking);
-    $attrSpecificOptions = [];
-    $defAttrOptions = ['extraParams' => $readAuth];
-    self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
-    foreach ($attrs as $attr) {
-      //Padding in pixels, start at zero, far left for heading
-      $fieldsetHeaderPaddingTracker=0;
-      $paddingAmount=50;
-      //When atributes are drawn, they must always be padded more than the heading
-      $attrPaddingAmount=$fieldsetHeaderPaddingTracker+$paddingAmount;
-      // Output any nested fieldsets required.
-      foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
-        if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
-          for ($i = $idx + 1; $i < count($fieldsetTracking); $i++) {
-            if ($fieldsetTracking[$fieldsetFieldNames[$i]] !== '') {
-              $r .= '</fieldset>';
-              $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
-            }
-          }
-          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
-          // If it is a level two heading, then reduce its size and indent (we are using html <h> tag so bigger numbers are smaller)
-          if (!empty($fieldsetTracking['l2_category'])) {
-            $headerSize=4;
-            $fieldsetHeaderPaddingTracker=$fieldsetHeaderPaddingTracker+$paddingAmount;
-          // Else it is a main heading and is bigger without indentation
-          } else {
-          	$headerSize=3;
-            $fieldsetHeaderPaddingTracker=0;
-          }
-          if (!empty($attr[$fieldsetFieldName])) {
-            //Draw fieldset heading
-            $r .= '<fieldset style="padding-left: '.$fieldsetHeaderPaddingTracker.'px;"><h'.$headerSize.'>' . lang::get($attr[$fieldsetFieldName]) . '</h'.$headerSize.'>';
-
-          }
-        }
-      }
-      $values = json_decode($attr['values']);
-      $options['extraParams'] = $readAuth;
-      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
-      $baseAttrId = "taxAttr:$attr[attribute_id]";
-      $ctrlOptions = self::extract_ctrl_multi_value_options($baseAttrId, $defAttrOptions, $attrSpecificOptions);
-      if ($language) {
-        $ctrlOptions['language'] = $language;
-      }
-      if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
-        $attr['id'] = $baseAttrId;
-        $attr['fieldname'] = "taxAttr:$attr[attribute_id]";
-        $attr['default'] = $attr['default_value'];
-        $attr['displayValue'] = $attr['default_value_caption'];
-        $attr['defaultUpper'] = $attr['default_upper_value'];
-        $r .= '<div style="padding-left: '.$attrPaddingAmount.'px;">'.data_entry_helper::outputAttribute($attr, $ctrlOptions).'</div>';
-      }
-      else {
-        $doneValues = [];
-        foreach ($values as $value) {
-          // Values may be duplicated if an attribute is linked to a taxon
-          // twice in the taxon hierarchy, so we mitigate against it here
-          // (otherwise SQL would be complex)
-          if (!in_array($value->id, $doneValues)) {
-            $attr['id'] = "$baseAttrId:$value->id";
-            $attr['fieldname'] = "taxAttr:$attr[attribute_id]:$value->id";
-            $attr['default'] = $value->raw_value;
-            $attr['displayValue'] = $value->value;
-            $attr['defaultUpper'] = $value->upper_value;
-            $r .= '<div style="padding-left: '.$attrPaddingAmount.'px;">'.data_entry_helper::outputAttribute($attr, $ctrlOptions).'</div>';
-            $doneValues[] = $value->id;
-          }
-        }
-      }
-    }
-    foreach ($fieldsetTracking as $fieldsetName) {
-      if (!empty($fieldsetName)) {
-        $r .= '</fieldset>';
-      }
-    }
-    return $r;
+    return self::getDynamicAttrsOutput('tax', $readAuth, $attrs, $options, $language);
   }
 
   /**

@@ -263,7 +263,7 @@ HTML;
     );
     return <<<HTML
 <div class="ui-helper-clearfix"></div>
-<div id="timeControls">'.
+<div id="timeControls">
   <div id="timeSlider"></div>
   <div id="time-lapse-toolbar">
     <span id="dotControlLabel">$t[dotSize] :</span>
@@ -272,7 +272,7 @@ HTML;
     <button id="playMap">play</button>
     <button id="end">go to end</button>
     <span id="dateControlLabel">$t[currentDate] :</span>
-    <span id="displayDate" ></span>'.
+    <span id="displayDate" ></span>
   </div>
 </div>
 

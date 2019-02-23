@@ -351,7 +351,14 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     // adds them to a table in the order they are in that taxon list
     // any that are left are swept up by another function.
     $.each(taxonList, function(idx, species) {
-      addGridRow(species, speciesTableSelector, tabIDX);
+      var existing = false;
+      $.each(formOptions.sections, function(idx, section) {
+        var key = formOptions.subSamples[section.code] + ':' + species.taxon_meaning_id;
+        if (typeof formOptions.existingOccurrences[key] !== "undefined")
+          existing = true;
+      });
+      if (existing === true || species.taxon_rank_sort_order === null || species.taxon_rank_sort_order >= formOptions.speciesMinRank[tabIDX])
+        addGridRow(species, speciesTableSelector, tabIDX);
     });
   }
   
@@ -700,8 +707,15 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
         }
         total = getRowTotal(evt.target);
         taxon_meaning_id = parseInt($(row).attr('id').substring(4));
+        if (checkSectionLimit(taxon_meaning_id, $(selector).val())) {
+          warnings.push(formOptions.verificationSectionLimitMessage
+                .replace('{{ value }}', $(selector).val())
+                .replace('{{ limit }}', sectionLimitAsText(taxon_meaning_id)));
+        }
         if (checkWalkLimit(taxon_meaning_id, total)) {
-          warnings.push(formOptions.verificationWalkLimitMessage.replace('{{ limit }}', walkLimitAsText(taxon_meaning_id)));
+          warnings.push(formOptions.verificationWalkLimitMessage
+                .replace('{{ total }}', total)
+                .replace('{{ limit }}', walkLimitAsText(taxon_meaning_id)));
         }
         if (warnings.length > 0) {
           $('#warning-dialog-list').empty()
@@ -937,6 +951,16 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     });
   }
 
+  checkSectionLimit = function (taxon_meaning_id, value) {
+    for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
+      if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
+          typeof formOptions.outOfRangeVerification[i].section_limit !== "undefined") {
+        return formOptions.outOfRangeVerification[i].section_limit < value;
+      }
+    };
+    return false;
+  }
+
   checkWalkLimit = function (taxon_meaning_id, total) {
     for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
       if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
@@ -945,6 +969,16 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
       }
     };
     return false;
+  }
+
+  sectionLimitAsText = function (taxon_meaning_id) {
+    for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
+      if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
+          typeof formOptions.outOfRangeVerification[i].section_limit !== "undefined") {
+        return formOptions.outOfRangeVerification[i].section_limit;
+      }
+    };
+    return 'NA';
   }
 
   walkLimitAsText = function (taxon_meaning_id) {

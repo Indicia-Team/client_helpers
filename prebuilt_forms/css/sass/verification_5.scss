@@ -210,11 +210,16 @@ ul.gallery li {
 #record-details-toolbar {
   padding: 2px;
   border: solid silver 2px;
+  position: relative;
 }
 
 #record-details-tabs {
   font-size: 80%;
   position: relative;
+
+  .ui-tabs-panel {
+    min-height: 150px;
+  }
 
   #details-tab {
     table {

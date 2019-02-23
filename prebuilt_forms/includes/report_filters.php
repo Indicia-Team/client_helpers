@@ -51,7 +51,6 @@ class filter_what extends FilterBase {
    */
   public function get_controls($readAuth, $options) {
     $r = '';
-    $familySortOrder = empty($options['familySortOrder']) ? 180 : $options['familySortOrder'];
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE)
       $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
@@ -60,13 +59,7 @@ class filter_what extends FilterBase {
     // Data_entry_helper::tab_header breaks inside fancybox. So output manually.
     $r .= '<ul>' .
         '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>' . lang::get('Species groups') . '</span></a></li>';
-    if ($familySortOrder !== 'off') {
-      $r .= '<li id="families-tab-tab"><a href="#families-tab" rel="address:families-tab"><span>' . lang::get('Families and other higher taxa') . '</span></a></li>';
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species and lower taxa') . '</span></a></li>';
-    }
-    else {
-      $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species') . '</span></a></li>';
-    }
+    $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species or higher taxa') . '</span></a></li>';
     $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>' .
         '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>' .
         '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
@@ -110,31 +103,9 @@ class filter_what extends FilterBase {
       'addToTable' => FALSE
     ));
     $r .= "</div>\n";
-    if ($familySortOrder !== 'off') {
-      $r .= '<div id="families-tab">' . "\n";
-      $r .= '<p>' . lang::get('Search for and build a list of families or other higher taxa to include') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-      $subListOptions = array(
-        'fieldname' => 'higher_taxa_taxon_list_list',
-        'autocompleteControl' => 'species_autocomplete',
-        'captionField' => 'searchterm',
-        'captionFieldInEntity' => 'searchterm',
-        'speciesIncludeBothNames' => TRUE,
-        'speciesIncludeTaxonGroup' => TRUE,
-        'valueField' => 'preferred_taxa_taxon_list_id',
-        'extraParams' => $baseParams + array(
-          'preferred' => 't',
-          'max_taxon_rank_sort_order' => $familySortOrder,
-        ),
-        'addToTable' => FALSE,
-      );
-      $r .= data_entry_helper::sub_list($subListOptions);
-      $r .= "</div>\n";
-    }
     $r .= '<div id="species-tab">' . "\n";
-    $r .= '<p>' . lang::get('Search for and build a list of species or genera to include.') . '</p>' .
+    $r .= '<p>' . lang::get('Search for and build a list of species or higher taxa to include.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-    $rankFilter = $familySortOrder === 'off' ? array() : array('min_taxon_rank_sort_order' => $familySortOrder + 1);
     $subListOptions = array(
       'fieldname' => 'taxa_taxon_list_list',
       'autocompleteControl' => 'species_autocomplete',
@@ -143,8 +114,8 @@ class filter_what extends FilterBase {
       'speciesIncludeBothNames' => TRUE,
       'speciesIncludeTaxonGroup' => TRUE,
       'valueField' => 'preferred_taxa_taxon_list_id',
-      'extraParams' => $baseParams + $rankFilter,
-      'addToTable' => FALSE
+      'extraParams' => $baseParams,
+      'addToTable' => FALSE,
     );
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
@@ -532,22 +503,31 @@ class filter_occurrence_id extends FilterBase {
    */
   public function get_controls() {
     $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Record ID'),
       'fieldname' => 'occurrence_id_op',
-      'lookupValues' => array(
+      'lookupValues' => [
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most')
-      ),
-      'controlWrapTemplate' => 'justControl'
-    ));
-    $r .= data_entry_helper::text_input(array(
+        '<=' => lang::get('is at most'),
+      ],
+      'controlWrapTemplate' => 'justControl',
+    ]);
+    $r .= data_entry_helper::text_input([
       'fieldname' => 'occurrence_id',
       'class' => 'control-width-2',
-      'controlWrapTemplate' => 'justControl'
-    ));
+      'controlWrapTemplate' => 'justControl',
+      'helpText' => lang::get('Filter by the system assigned record ID.'),
+    ]);
     $r .= '</div>';
+    $r .= '<div>' . lang::get('or') . '</div>';
+    $r .= data_entry_helper::text_input([
+      'label' => lang::get('External key is'),
+      'fieldname' => 'occurrence_external_key',
+      'class' => 'control-width-2',
+      'helpText' => lang::get("Filter by a key assigned by the record's originating system - for imported records."),
+    ]);
+
     return $r;
   }
 
@@ -749,7 +729,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing']),
+        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
       ));
       if (count($sources) > 1) {
         $r .= '<div id="filter-websites" class="filter-popup-columns"><h3>' . lang::get('Websites') . '</h3><p>' .
@@ -778,7 +758,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing']),
+        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
       ));
       $titleToDisplay = 'fulltitle';
     }
@@ -945,9 +925,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $options['sharing'] = report_filters_sharing_code_to_full_term($options['sharing']);
   $options['sharingCode'] = report_filters_full_term_to_sharing_code($options['sharing']);
-  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation|editing)$/', $options['sharing'])) {
-    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow, moderation or ' .
-        "editing (currently $options[sharing]).";
+  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation|editing|me)$/', $options['sharing'])) {
+    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow, moderation, ' .
+        "editing or me (currently $options[sharing]).";
   }
   report_helper::add_resource('reportfilters');
   report_helper::add_resource('validation');
@@ -1076,9 +1056,11 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
         $selected = (!empty($options['context_id']) && $options['context_id']==='default') ? 'selected="selected" ' : '';
         $contexts .= "<option value=\"default\" $selected>".lang::get('My verification records')."</option>";
         $def = array();
-        if ($location_id)
-          // User profile geographic limits should always be based on an indexed location.
-          $def['indexed_location_id'] = $location_id;
+        if ($location_id) {
+          // User profile geographic limits should always be based on an
+          // indexed location.
+          $def['indexed_location_list'] = $location_id;
+        }
         if ($taxon_group_ids) {
           $def['taxon_group_list'] = implode(',', $taxon_group_ids);
           $def['taxon_group_names'] = array();
@@ -1186,10 +1168,26 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     }
     $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";
-    $r .= '<button type="button" id="filter-apply">' . lang::get('Apply') . '</button>';
-    $r .= '<button type="button" id="filter-reset" class="disabled">' . lang::get('Reset') . '</button>';
-    $r .= '<button type="button" id="filter-build">' . lang::get('Create a filter') . '</button></div>';
-    $r .= '</div>';
+    global $indicia_templates;
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-apply',
+      'title' => lang::get('Apply filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Apply'),
+    ]);
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-reset',
+      'title' => lang::get('Reset filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Reset'),
+    ]);
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-build',
+      'title' => lang::get('Create a custom filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Create a filter'),
+    ]);
+    $r .= '</div></div>';
     $r .= '<div id="filter-details" style="display: none">';
     $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/close-22px.png" width="22" height="22" alt="Close filter builder" title="' .
         lang::get('Close filter builder') . '" class="button" id="filter-done"/>' . "\n";

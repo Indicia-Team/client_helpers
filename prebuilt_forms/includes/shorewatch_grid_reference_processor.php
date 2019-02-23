@@ -37,7 +37,7 @@
     else
       drupal_set_message('Please set the page to "gridmode"');
     //The parent sample method is always effort for Shorewatch
-    $submission['fields']['sample_method_id']=$args['effort'];
+    $submission['fields']['sample_method_id']['value']=$args['effort'];
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     //Get the platform height which is stored against the location itself.
     $locationAttributeValueRow = data_entry_helper::get_population_data(array(

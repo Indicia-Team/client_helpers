@@ -661,23 +661,41 @@ idlist=';
    *   HTML
    */
   private static function otherActionButtons($imgPath) {
+    global $indicia_templates;
+
     $r = '<div id="other-actions" class="buttons-row">';
     // @todo Following button needs to be disabled if recorder cannot be contacted (email or notifications system). Exclude global emails like iSpot.
     // @todo Query icon - question mark in speech bubble
-    $r .= '<button type="button" id="btn-query" class="default-button" title="' .
-      lang::get('Raise a query against this record with the recorder') . '">' . lang::get('Query') . '</button>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-query',
+      'title' => lang::get('Raise a query against this record with the recorder'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Query'),
+    ]);
     // @todo Email icon with motion lines or arrow
     // send details to expert
-    $r .= '<button type="button" id="btn-email-expert" class="default-button" title="' .
-      lang::get('Email the record details to another expert for their opinion') . '">' . lang::get('Send to expert') . '</button>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-email-expert',
+      'title' => lang::get('Email the record details to another expert for their opinion'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Send to expert'),
+    ]);
     // @todo icon
-    $r .= '<button type="button" id="btn-redetermine" class="default-button" title="' .
-      lang::get('Propose a new determination for this record.') . '">' . lang::get('Redet.') . '</button>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-redetermine',
+      'title' => lang::get('Propose a new determination for this record.'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Redet.'),
+    ]);
     // @todo following needs to be disabled if record is not on iRecord.
-    $r .= '<a id="btn-edit-record" class="button default-button" title="' .
+    $r .= '<a id="btn-edit-record" class="' . $indicia_templates['anchorButtonClass'] . '" title="' .
       lang::get('Edit the record on its original data entry form.') . '">' . lang::get('Edit') . '</a>';
-    $r .= '<button type="button" id="btn-log-response" class="default-button" title="' .
-      lang::get('Log an email or other response.') . '">' . lang::get('Log Reply') . '</a>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-log-response',
+      'title' => lang::get('Log an email or other response.'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Log reply'),
+    ]);
     $r .= '</div>';
     return $r;
   }
@@ -693,25 +711,34 @@ idlist=';
    */
   private static function hidden_redetermination_dropdown($readAuth) {
     $r = '<div id="redet-dropdown-ctnr" style="display: none"><div id="redet-dropdown">';
-    $r .= data_entry_helper::species_autocomplete(array(
+    $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+    if ($taxon_list_id) {
+      global $indicia_templates;
+      $r .= '<div class="redet-partial-list">' .
+        str_replace('{message}', lang::get('Redet partial list info'), $indicia_templates['messageBox']) .
+        '</div>';
+    }
+    $r .= data_entry_helper::species_autocomplete([
       'fieldname' => 'redet',
       'label' => lang::get('New determination'),
       'labelClass' => 'auto',
       'helpText' => lang::get('Enter a new determination for this record before verifying it. The previous determination will be stored with the record.'),
-      'extraParams' => $readAuth + array('taxon_list_id' => 1), // taxon list ID will be updated when it is used
+      // Taxon list ID will be updated when it is used.
+      'extraParams' => $readAuth + ['taxon_list_id' => 1],
       'speciesIncludeBothNames' => TRUE,
       'speciesIncludeTaxonGroup' => TRUE,
-      'validation' => array('required')
-    ));
-    $taxon_list_id = hostsite_get_config_value('iform', 'master_checklist_id', 0);
+      'validation' => ['required'],
+    ]);
     if ($taxon_list_id) {
-      data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id;\n";
-      $r .= data_entry_helper::checkbox(array(
-        'fieldname' => 'redet-from-full-list',
-        'label' => lang::get('Search all species'),
-        'labelClass' => 'auto',
-        'helpText' => lang::get('Check this box if you want to redetermine to a different species group.')
-      ));
+      data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
+      $r .= '<div class="redet-partial-list">' .
+        data_entry_helper::checkbox([
+          'fieldname' => 'redet-from-full-list',
+          'label' => lang::get('Search all species'),
+          'labelClass' => 'auto',
+          'helpText' => lang::get('Check this box if you want to redetermine to a different species group.'),
+        ]) .
+        '</div>';
     }
     $r .= '</div></div>';
     return $r;
@@ -807,7 +834,6 @@ idlist=';
             'tablet-landscape' => 1300,
           ),
         ),
-        'includeColumnsPicker' => TRUE,
       )
     );
     array_unshift($opts['columns'], array(
@@ -872,7 +898,6 @@ HTML
     $r = str_replace(array('{grid}', '{log}', '{paramsForm}'), array($grid, $log, $params),
         self::getTemplateWithMap($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();
-    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.userId = "' . $indicia_user_id . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "' . $link['path'] . "\";\n";

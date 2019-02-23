@@ -539,7 +539,7 @@ class iform_mnhnl_citizen_science_1 {
    *   Form arguments.
    */
   public static function indicia_define_remembered_fields($args) {
-    data_entry_helper::set_remembered_fields(array(
+    data_entry_helper::setRememberedFields(array(
       'smpAttr:' . $args['first_name_attr_id'],
       'smpAttr:' . $args['surname_attr_id'],
       'smpAttr:' . $args['email_attr_id'],

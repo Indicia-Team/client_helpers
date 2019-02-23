@@ -1,11 +1,11 @@
-jQuery(document).ready(function docReady($) {
+// Declare a hook for functions that call when dynamic content updated.
+// For example:
+// indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
+//   $(div).prepend('<h1>' + type + '</h1>');
+// });
+indiciaFns.hookDynamicAttrsAfterLoad = [];
 
-  // Declare a hook for functions that call when dynamic content updated.
-  // For example:
-  // indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
-  //   $(div).prepend('<h1>' + type + '</h1>');
-  // });
-  indiciaFns.hookDynamicAttrsAfterLoad = [];
+jQuery(document).ready(function docReady($) {
 
   function changeTaxonRestrictionInputs() {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
@@ -13,7 +13,7 @@ jQuery(document).ready(function docReady($) {
       $.each($('.taxon-dynamic-attributes'), function loadAttrDiv() {
         var div = this;
         // 0 is a fake nid, since we don't care.
-        $.get(indiciaData.ajaxUrl + '/dynamicattrs/0' + urlSep +
+        $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'taxon_list_id=' + $('#taxa_taxon_list\\:taxon_list_id').val() +
             '&taxa_taxon_list_id=' + $('#taxa_taxon_list\\:parent_id').val() +
             '&language=' + indiciaData.userLang +

@@ -97,6 +97,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
                   "&nbsp;&nbsp;<strong>[reportgrid]</strong> - outputs report content in tabular form.<br/>".
                   "&nbsp;&nbsp;<strong>[reportchart]</strong> - outputs report content in chart form.<br/>".
                   "&nbsp;&nbsp;<strong>[reportfreeform]</strong> - outputs report content in flexible HTML.<br/>".
+                  "&nbsp;&nbsp;<strong>[reportaddtojs]</strong> - outputs report data to JavaScript for use by custom " .
+                    "code. The data are added to the indiciaData object, in a property with the name given in the " .
+                    "@name option.<br/>".
               "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). ".
               "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
               "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
@@ -297,7 +300,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $conn = iform_get_connection_details($nid);
     self::$auth = array('read' => data_entry_helper::get_read_auth($conn['website_id'], $conn['password']));
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/dynamic_report_explorer') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
     return parent::get_form($args, $nid);
   }
 
@@ -347,15 +349,14 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     if (isset($options['hoverShowsDetails'])) {
       $options['hoverShowsDetails'] = TRUE;
     }
-    // $_GET data for standard params can override displayed location
-    if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
+    // $_GET data for standard params can override displayed location.
+    $locationIDToLoad = @$_GET['filter-indexed_location_list']
+      ?: @$_GET['filter-indexed_location_id']
+      ?: @$_GET['filter-location_list']
+      ?: @$_GET['filter-location_id'];
+    if (!empty($locationIDToLoad) && preg_match('/^\d+$/', $locationIDToLoad)) {
       $args['display_user_profile_location'] = FALSE;
-      if (!empty($_GET['filter-indexed_location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-indexed_location_id'];
-      }
-      elseif (!empty($_GET['filter-location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-location_id'];
-      }
+      $args['location_boundary_id'] = $locationIDToLoad;
     }
     $r = '';
     if (!empty($options['dataSource'])) {
@@ -472,6 +473,43 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     return report_helper::freeform_report($reportOptions);
   }
 
+  /**
+   * A control which dumps the data for a report into the JavaScript.
+   *
+   * Provides no output itself, but facilitates JavaScript which needs to
+   * access report data by adding the data to the indiciaData object. The name
+   * of the entry in indiciaData must be specified in a @name option. Other
+   * options are identical to other report controls.
+   *
+   * @return string
+   *   Empty HTML for the control.
+   */
+  protected static function get_control_reportaddtojs($auth, $args, $tabalias, $options) {
+    if (empty($options['name'])) {
+      return 'The Report Add to JS control requires a @name parameter.';
+    }
+    iform_load_helpers(array('report_helper'));
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      [
+        'reportGroup' => 'dynamic',
+        'sharing' => $sharing,
+      ]
+    );
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
+    $reportOptions = array_merge($reportOptions, $options);
+    if (self::$applyUserPrefs) {
+      iform_report_apply_explore_user_own_preferences($reportOptions);
+    }
+    report_helper::request_report($response, $reportOptions, $currentParamValues, FALSE);
+    report_helper::$javascript .= "indiciaData.$options[name] = " . json_encode($response['records']) . ";\n";
+    return '';
+  }
+
   /*
    * Report chart control.
    * Currently take its parameters from $options in the Form Structure.
@@ -543,22 +581,22 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   }
 
   protected static function get_control_standardparams($auth, $args, $tabalias, $options) {
-    self::$applyUserPrefs=FALSE;
+    self::$applyUserPrefs = FALSE;
     $options = array_merge(array(
       'allowSave' => TRUE,
       'sharing' => empty($args['sharing']) ? 'reporting' : $args['sharing']
     ), $options);
     if ($args['redirect_on_success'])
-      $options['redirect_on_success']=hostsite_get_url($args['redirect_on_success']);
+      $options['redirect_on_success'] = hostsite_get_url($args['redirect_on_success']);
     // any preset params on the report page should be loaded as initial settings for the filter.
     if (!empty($args['param_presets'])) {
       $params = data_entry_helper::explode_lines_key_value_pairs($args['param_presets']);
-      foreach ($params as $key=>$val) {
+      foreach ($params as $key => $val) {
         if (!isset($options["filter-$key"]))
-          $options["filter-$key"]=$val;
+          $options["filter-$key"] = $val;
       }
     }
-    foreach ($options as $key=>&$value) {
+    foreach ($options as $key => &$value) {
       $value = apply_user_replacements($value);
     }
     if ($options['allowSave'] && !function_exists('iform_ajaxproxy_url'))
@@ -572,8 +610,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   }
 
   /**
-   * Disable save buttons for this form class. Not a data entry form...
-   * @return boolean
+   * Disable save buttons for this form class. Not a data entry form.
+   *
+   * @return bool
+   *   Always return FALSE.
    */
   protected static function include_save_buttons() {
     return FALSE;
@@ -583,28 +623,38 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    * Ajax handler to provide the content for the details of a single record.
    */
   public static function ajax_get_feature_popup_details($website_id, $password, $nid) {
-      require_once 'extensions/misc_extensions.php';
-      // TODO extend to include images back from report.
-      $columns = array('taxon','source','date','date_start','date_end','date_type','recorder');
-      $params = hostsite_get_node_field_value($nid, 'params');
-      $details_report = 'library/occurrences/filterable_explore_list';
-      iform_load_helpers(array('report_helper'));
-      $readAuth = report_helper::get_read_auth($website_id, $password);
-      $options = array(
-          'dataSource' => $details_report,
-          'readAuth' => $readAuth,
-          'sharing' => 'verification',
-          'extraParams' => array('idlist' => $_GET['occurrence_ids'], 'columns' => implode(',',$columns))
-      );
-      $reportData = report_helper::get_report_data($options);
-      // Set some values which must exist in the record.
-      if(count($reportData) === 0) {
-        echo "";
-        return;
-      }
-      header('Content-type: application/json');
-      echo json_encode($reportData);
+    require_once 'extensions/misc_extensions.php';
+    // TODO extend to include images back from report.
+    $columns = [
+      'taxon',
+      'source',
+      'date',
+      'date_start',
+      'date_end',
+      'date_type',
+      'recorder',
+    ];
+    $params = hostsite_get_node_field_value($nid, 'params');
+    $details_report = 'library/occurrences/filterable_explore_list';
+    iform_load_helpers(array('report_helper'));
+    $readAuth = report_helper::get_read_auth($website_id, $password);
+    $options = [
+      'dataSource' => $details_report,
+      'readAuth' => $readAuth,
+      'sharing' => 'verification',
+      'extraParams' => [
+        'idlist' => $_GET['occurrence_ids'],
+        'columns' => implode(',', $columns),
+      ],
+    ];
+    $reportData = report_helper::get_report_data($options);
+    // Set some values which must exist in the record.
+    if (count($reportData) === 0) {
+      echo '';
       return;
+    }
+    header('Content-type: application/json');
+    echo json_encode($reportData);
   }
 
 }

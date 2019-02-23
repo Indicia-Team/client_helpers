@@ -1,14 +1,14 @@
+// Declare a hook for functions that call when dynamic content updated.
+// For example:
+// indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
+//   $(div).prepend('<h1>' + type + '</h1>');
+// });
+indiciaFns.hookDynamicAttrsAfterLoad = [];
+
 jQuery(document).ready(function docReady($) {
   var sexStageInputSelectors = '.system-function-sex, .system-function-stage, .system-function-sex_stage';
   var taxonRestrictionInputSelectors = '#occurrence\\:taxa_taxon_list_id, ' + sexStageInputSelectors;
   var hasDynamicAttrs = $('.species-dynamic-attributes').length > 0;
-
-  // Declare a hook for functions that call when dynamic content updated.
-  // For example:
-  // indiciaFns.hookDynamicAttrsAfterLoad.push(function(div, type) {
-  //   $(div).prepend('<h1>' + type + '</h1>');
-  // });
-  indiciaFns.hookDynamicAttrsAfterLoad = [];
 
   function changeTaxonRestrictionInputs() {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
@@ -24,7 +24,7 @@ jQuery(document).ready(function docReady($) {
         var type = $(this).hasClass('attr-type-sample') ? 'sample' : 'occurrence';
         var div = this;
         // 0 is a fake nid, since we don't care.
-        $.get(indiciaData.ajaxUrl + '/dynamicattrs/0' + urlSep +
+        $.get(indiciaData.ajaxUrl + '/dynamicattrs/' + indiciaData.nid + urlSep +
             'survey_id=' + $('#survey_id').val() +
             '&taxa_taxon_list_id=' + $('#occurrence\\:taxa_taxon_list_id').val() +
             '&type=' + type +

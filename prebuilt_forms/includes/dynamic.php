@@ -198,28 +198,30 @@ class iform_dynamic {
     return $perms;
   }
 
-    /**
+  /**
    * Return the generated form output.
-   * @return Form HTML.
+   *
+   * @return string
+   *   Form HTML.
    */
   public static function get_form($args, $nid) {
-    data_entry_helper::$website_id=$args['website_id'];
+    data_entry_helper::$website_id = $args['website_id'];
     if (!empty($args['high_volume']) && $args['high_volume']) {
       // node level caching for most page hits
-      $cached = data_entry_helper::cache_get(array('node'=>$nid), HIGH_VOLUME_CACHE_TIMEOUT);
-      if ($cached!==false) {
+      $cached = data_entry_helper::cache_get(['node' => $nid], HIGH_VOLUME_CACHE_TIMEOUT);
+      if ($cached !== FALSE) {
         $cached = explode('|!|', $cached);
         data_entry_helper::$javascript = $cached[1];
         data_entry_helper::$late_javascript = $cached[2];
         data_entry_helper::$onload_javascript = $cached[3];
-        data_entry_helper::$required_resources = json_decode($cached[4], true);
+        data_entry_helper::$required_resources = json_decode($cached[4], TRUE);
         return $cached[0];
       }
     }
     self::$nid = $nid;
     self::$called_class = 'iform_' . hostsite_get_node_field_value($nid, 'iform');
 
-    // Convert parameter, defaults, into structured array
+    // Convert parameter, defaults, into structured array.
     self::parse_defaults($args);
     // Supply parameters that may be missing after form upgrade
     if (method_exists(self::$called_class, 'getArgDefaults'))
@@ -314,7 +316,7 @@ class iform_dynamic {
    * @return array
    *   Options array for this control
    */
-  protected function extract_ctrl_multi_value_options($baseAttrId, array $defAttrOptions, array $attrSpecificOptions) {
+  protected static function extract_ctrl_multi_value_options($baseAttrId, array $defAttrOptions, array $attrSpecificOptions) {
     $ctrlOptions = array_merge($defAttrOptions);
     if (!empty($attrSpecificOptions[$baseAttrId])) {
       // Make sure extraParams is merged.
@@ -575,23 +577,24 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
     for ($i = 0; $i < count($tabContent); $i++) {
       $component = trim($tabContent[$i]);
       if (preg_match('/\A\?[^�]*\?\z/', $component) === 1) {
-        // Component surrounded by ? so represents a help text
+        // Component surrounded by ? so represents a help text.
         $helpText = substr($component, 1, -1);
         $html .= str_replace('{message}', lang::get($helpText), $indicia_templates['messageBox']);
       } elseif (preg_match('/\A\[[^�]*\]\z/', $component) === 1) {
         // Component surrounded by [] so represents a control or control block
-        // Anything following the component that starts with @ is an option to pass to the control
-        $options = array();
-        while ($i < count($tabContent)-1 && substr($tabContent[$i+1],0,1)=='@' || trim($tabContent[$i])==='') {
+        // Anything following the component that starts with @ is an option to
+        // pass to the control.
+        $options = [];
+        while ($i < count($tabContent) - 1 && substr($tabContent[$i+1], 0, 1) === '@' || trim($tabContent[$i]) === '') {
           $i++;
           // ignore empty lines
-          if (trim($tabContent[$i])!=='') {
+          if (trim($tabContent[$i]) !== '') {
             $option = explode('=', substr($tabContent[$i],1), 2);
-            if (!isset($option[1])||$option[1]==='false')
-              $options[$option[0]]=FALSE;
+            if (!isset($option[1])||$option[1] === 'false')
+              $options[$option[0]] = FALSE;
             else {
-              $options[$option[0]]=json_decode($option[1], TRUE);
-              // if not json then need to use option value as it is
+              $options[$option[0]] = json_decode($option[1], TRUE);
+              // if not json then need to use option value as it is.
               if ($options[$option[0]]=='') $options[$option[0]]=$option[1];
             }
             // urlParam is special as it loads the control's default value from $_GET
@@ -618,7 +621,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
           $options = array_merge($options, data_entry_helper::$data['structureControlOverrides'][$component]);
         if (count($parts)===1 && method_exists(self::$called_class, $method)) {
           //outputs a control for which a specific output function has been written.
-          $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, $options);
+          $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, array_merge($defAttrOptions, $options));
           $hasControls = true;
         }
         elseif (count($parts)===2) {
@@ -714,14 +717,7 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
             $optionId = explode('|', $option);
             if(count($optionId) > 1) {
               // Found an option like @smpAttr:4|label=My label
-              if (!isset($attrSpecificOptions[$optionId[0]])) {
-                $attrSpecificOptions[$optionId[0]]=array();
-              }
-              // Ensure default extraParams (such as auth tokens) not
-              // overwritten by a custom option.
-              if ($optionId[1] === 'extraParams') {
-                $value = array_merge($defAttrOptions['extraParams'], (array)$value);
-              }
+              if (!isset($attrSpecificOptions[$optionId[0]])) $attrSpecificOptions[$optionId[0]]=array();
               $attrSpecificOptions[$optionId[0]][$optionId[1]] = apply_user_replacements($value);
             }
             else {
@@ -907,6 +903,97 @@ $('#".data_entry_helper::$validated_form_id."').submit(function() {
         unset($list[$idx]);
       }
     }
+  }
+
+  /**
+   * Builds the output for a set of dynamically taxon-linked attributes.
+   *
+   * @return string
+   *   HTML output.
+   */
+  protected static function getDynamicAttrsOutput($prefix, $readAuth, $attrs, $options, $language) {
+    // A tracker for the 4 possible levels of fieldset so we can detect changes.
+    $fieldsetTracking = [
+      'l1_category' => '',
+      'l2_category' => '',
+      'outer_block_name' => '',
+      'inner_block_name' => '',
+    ];
+    $fieldsetFieldNames = array_keys($fieldsetTracking);
+    $attrSpecificOptions = [];
+    $defAttrOptions = ['extraParams' => $readAuth];
+    self::prepare_multi_attribute_options($options, $defAttrOptions, $attrSpecificOptions);
+    $r = '';
+    foreach ($attrs as $attr) {
+      // Output any nested fieldsets required. Iterate through the possible 4
+      // levels.
+      foreach ($fieldsetFieldNames as $idx => $fieldsetFieldName) {
+        // Is there a change at this level?
+        if ($fieldsetTracking[$fieldsetFieldName] !== $attr[$fieldsetFieldName]) {
+          // Unwind all the fieldsets that are open at this level and below.
+          for ($i = $idx; $i < count($fieldsetTracking); $i++) {
+            if (!empty($fieldsetTracking[$fieldsetFieldNames[$i]])) {
+              $r .= '</fieldset>';
+              $fieldsetTracking[$fieldsetFieldNames[$i]] = '';
+            }
+          }
+          // Open a new fieldset for this level, if one is needed.
+          if (!empty($attr[$fieldsetFieldName])) {
+            $r .= '<fieldset class="attrs-container"><legend>' . lang::get($attr[$fieldsetFieldName]) . '</legend>';
+          }
+          $fieldsetTracking[$fieldsetFieldName] = $attr[$fieldsetFieldName];
+        }
+      }
+      $values = json_decode($attr['values']);
+      $baseAttrId = "{$prefix}Attr:$attr[attribute_id]";
+      $ctrlOptions = self::extract_ctrl_multi_value_options($baseAttrId, $defAttrOptions, $attrSpecificOptions);
+      if ($language) {
+        $ctrlOptions['language'] = $language;
+      }
+      $attr['id'] = $baseAttrId;
+      $attr['caption'] = data_entry_helper::getTranslatedAttrField('caption', $attr, $language);
+      $attr['fieldname'] = $baseAttrId;
+      if ($attr['multi_value'] === 'f') {
+        if (empty($values) || (count($values) === 1 && $values[0] === NULL)) {
+          $attr['default'] = $attr['default_value'];
+          $attr['displayValue'] = $attr['default_value_caption'];
+          $attr['defaultUpper'] = $attr['default_upper_value'];
+        }
+        else {
+          $value = $values[0];
+          $attr['fieldname'] = "$baseAttrId:$value->id";
+          $attr['default'] = $value->raw_value;
+          $attr['displayValue'] = $value->value;
+          $attr['defaultUpper'] = $value->upper_value;
+        }
+      }
+      else {
+        $doneValues = [];
+        $default = [];
+        foreach ($values as $value) {
+          // Values may be duplicated if an attribute is linked to a taxon
+          // twice in the taxon hierarchy, so we mitigate against it here
+          // (otherwise SQL would be complex)
+          if (!in_array($value->id, $doneValues)) {
+            $default[] = [
+              'fieldname' => "$baseAttrId:$value->id",
+              'default' => $value->raw_value,
+              'defaultUpper' => NULL,
+              'caption' => $value->value,
+            ];
+            $doneValues[] = $value->id;
+          }
+        }
+        $attr['default'] = $default;
+      }
+      $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
+    }
+    foreach ($fieldsetTracking as $fieldsetName) {
+      if (!empty($fieldsetName)) {
+        $r .= '</fieldset>';
+      }
+    }
+    return $r;
   }
 
 }

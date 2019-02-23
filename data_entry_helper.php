@@ -14,7 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link http://code.google.com/p/indicia/
@@ -61,8 +60,6 @@ require_once 'submission_builder.php';
  * * lockable - Adds a padlock icon after the control which can be used to lock the control's value. The value will then
  *   be remembered and redisplayed in the control each time the form is shown until the control is unlocked or the end
  *   of the browser session. This option will not work for password controls.
- *
- * @package Client
  */
 class data_entry_helper extends helper_base {
 
@@ -79,12 +76,14 @@ class data_entry_helper extends helper_base {
   /**
    * Field values remembered between form reloads using a cookie.
    *
-   * List of fields that are to be stored in a cookie and reloaded the next time a form is accessed. These
-   * are populated by implementing a hook function called indicia_define_remembered_fields which calls
-   * set_remembered_fields.
-   * @var Array
+   * List of fields that are to be stored in a cookie and reloaded the next
+   * time a form is accessed. These are populated by implementing a hook
+   * function called indicia_define_remembered_fields which calls
+   * setRememberedFields.
+   *
+   * @var array
    */
-  private static $remembered_fields = NULL;
+  private static $rememberedFields = NULL;
 
   /**
    * IDs for attributes that have already been output on the current form.
@@ -94,7 +93,7 @@ class data_entry_helper extends helper_base {
    *
    * @var array
    */
-  public static $handled_attributes=array();
+  public static $handled_attributes = array();
 
   /**********************************/
   /* Start of main controls section */
@@ -315,7 +314,8 @@ class data_entry_helper extends helper_base {
       }
       if ($def['datatype'] === 'lookup') {
         $minified = array();
-        // No matter if the lookup comes from the db, or from a local array, we want it in the same minimal format.
+        // No matter if the lookup comes from the db, or from a local array,
+        // we want it in the same minimal format.
         if (!empty($def['termlist_id'])) {
           $termlistData = self::get_population_data(array(
             'table' => 'termlists_term',
@@ -343,7 +343,7 @@ class data_entry_helper extends helper_base {
         $lookupData["tl$idx"] = $minified;
         self::$javascript .= "indiciaData.tl$idx=" . json_encode($minified) . ";\n";
       }
-      // checkbox groups output a second row of cells for each checkbox label
+      // Checkbox groups output a second row of cells for each checkbox label.
       $rowspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? 1 : 2;
       $colspan = isset($def['control']) && $def['control'] === 'checkbox_group' ? count($termlistData) : 1;
       // Add default class if none provided.
@@ -525,24 +525,25 @@ $('#$escaped').change(function(e) {
   public static function sub_list($options) {
     global $indicia_templates;
     self::add_resource('sub_list');
-    static $sub_list_idx=0; // unique ID for all sublists
-    // checks essential options, uses fieldname as id default and
-    // loads defaults if error or edit
+    static $sub_list_idx = 0; // unique ID for all sublists
+    // Checks essential options, uses fieldname as id default and loads
+    // defaults if error or edit.
     $options = self::check_options($options);
     $options = array_merge(array(
-      'addToTable' => true,
+      'addToTable' => TRUE,
       'autocompleteControl' => 'autocomplete'
     ), $options);
-    if ($options['addToTable']===true) {
-      // we can only work with the caption field
+    if ($options['addToTable'] === TRUE) {
+      // We can only work with the caption field.
       $options['captionField'] = 'caption';
     }
-    // this control submits many values with the same control name so add [] to fieldname
-    // so PHP puts multiple submitted values in an array
-    if (substr($options['fieldname'],-2) !='[]')
+    // This control submits many values with the same control name so add [] to
+    // fieldname so PHP puts multiple submitted values in an array
+    if (substr($options['fieldname'], -2) !== '[]') {
       $options['fieldname'] .= '[]';
+    }
 
-    if ($options['addToTable'] === true) {
+    if ($options['addToTable'] === TRUE) {
       // Prepare options for updating the source table.
       $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname']) - 2);
       if (preg_match('/^[a-z]{3}Attr\:[1-9][0-9]*$/', $options['basefieldname'])) {
@@ -572,8 +573,7 @@ $('#$escaped').change(function(e) {
         }
       }
       if (empty($options['mainEntity'])) {
-        // addToTable only works with custom attributes
-        // TODO, raise an error to developer
+        // AddToTable only works with custom attributes
       }
       $options['subListAdd'] = self::mergeParamsIntoTemplate($options, 'sub_list_add');
     } else {
@@ -589,13 +589,14 @@ $('#$escaped').change(function(e) {
     $list_options['lockable'] = NULL;
     $list_options['label'] = NULL;
     $list_options['controlWrapTemplate'] = 'justControl';
-    if (!empty($options['selectMode']) && $options['selectMode'])
-      $list_options['selectMode']=true;
+    if (!empty($options['selectMode']) && $options['selectMode']) {
+      $list_options['selectMode'] = TRUE;
+    }
     // Set up add panel.
     $control = $options['autocompleteControl'];
     $options['panel_control'] = self::$control($list_options);
 
-    // prepare other main control options
+    // Prepare other main control options.
     $options['inputId'] = $options['id'].':'.$options['captionField'];
     $options = array_merge(array(
       'template' => 'sub_list',
@@ -618,7 +619,8 @@ JS;
       foreach ($options['default'] as $item) {
         $items .= str_replace(array('{caption}', '{value}', '{fieldname}'),
           array($item['caption'], $item['default'], $item['fieldname']),
-          $indicia_templates['sub_list_item']);
+          $indicia_templates['sub_list_item']
+        );
         // a hidden input to put a blank in the submission if it is deleted
         $r .= "<input type=\"hidden\" value=\"\" name=\"$item[fieldname]\">";
       }
@@ -698,13 +700,13 @@ JS;
     // The fieldname is fixed for the specific purpose of this control.
     $options['fieldname'] = 'training';
     // Apply default options which may be overriden by supplied values.
-    $options = array_merge(array(
+    $options = array_merge([
       'default' => TRUE,
       'disabled' => TRUE,
       'label' => 'Training mode',
       'helpText' => 'Records submitted in training mode are segregated from genuine records. ',
-      'template' => 'training'
-    ), $options);
+      'template' => 'training',
+    ], $options);
     // Apply standard options and update default value if loading existing record
     $options = self::check_options($options);
     // Be flexible about the value to accept as meaning checked.
@@ -781,7 +783,7 @@ JS;
   public static function checkbox_group(array $options) {
     $options = self::check_options($options);
     $options = array_merge(array(
-      'class'=>empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
+      'class' => empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
     ), $options);
     if (substr($options['fieldname'],-2) !='[]')
       $options['fieldname'] .= '[]';
@@ -796,10 +798,11 @@ JS;
           if (!empty($options['lookupValues'][$option]))
             $sorted[$option] = $options['lookupValues'][$option];
         }
-        // now the unticked ones in original order
+        // Now the unticked ones in original order.
         foreach ($options['lookupValues'] as $option => $caption) {
-          if (!isset($sorted[$option]))
-            $sorted[$option]=$caption;
+          if (!isset($sorted[$option])) {
+            $sorted[$option] = $caption;
+          }
         }
         $options['lookupValues']=$sorted;
       }
@@ -850,14 +853,15 @@ JS;
     $options = self::check_options($options);
     $options = array_merge(array(
       'dateFormat' => 'dd/mm/yy',
-      'allowVagueDates'=>false,
+      'allowVagueDates'=>FALSE,
       'default' => '',
-      'isFormControl' => true
+      'isFormControl' => TRUE
     ), $options);
-    if (!isset($options['showButton']))
+    if (!isset($options['showButton'])) {
       // vague dates best with the button
-      $options['showButton']=$options['allowVagueDates'];
-    $vague=$options['allowVagueDates'] ? ' vague' : '';
+      $options['showButton'] = $options['allowVagueDates'];
+    }
+    $vague = $options['allowVagueDates'] ? ' vague' : '';
     if (!isset($options['placeholder']))
       $options['placeholder'] = $options['showButton'] ? lang::get("Pick or type a$vague date") : lang::get('Click here');
     self::add_resource('jquery_ui');
@@ -1164,72 +1168,78 @@ JS;
         // Insert this script at the beginning, because it must be done before the tabs are initialised or the
         // first tab cannot fire the event
         self::$javascript = $javascript . self::$javascript;
-      }	else
+      }	else {
         self::$onload_javascript .= $javascript;
+      }
     }
-    // Output a placeholder div for the jQuery plugin. Also output a normal file input for the noscripts
-    // version.
-    $r = '<div class="file-box" id="'.$containerId.'"></div><noscript>'.self::image_upload(array(
-        'label' => $options['caption'],
-        // Convert table into a pseudo field name for the images
-        'id' => $options['id'],
-        'fieldname' => str_replace('_', ':', $options['table'])
-      )).'</noscript>';
+    // Output a placeholder div for the jQuery plugin. Also output a normal
+    // file input for the noscripts version.
+    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>'.self::image_upload(array(
+      'label' => $options['caption'],
+      // Convert table into a pseudo field name for the images
+      'id' => $options['id'],
+      'fieldname' => str_replace('_', ':', $options['table'])
+    )) . '</noscript>';
     $r .= self::add_link_popup($options);
     return $r;
   }
 
   /**
-   * Generates a text input control with a search button that looks up an entered place against a georeferencing
-   * web service. The control is automatically linked to any map panel added to the page.
+   * Generates a text input control with a search button that looks up an
+   * entered place against a georeferencing web service. The control is
+   * automatically linked to any map panel added to the page.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>georeference_lookup</b></br>
-   * Template which outputs the HTML for the georeference search input, button placehold and container
-   * for the list of search results. The default template uses JavaScript to write the output, so that
-   * this control is removed from the page if JavaScript is disabled as it will have no functionality.
-   * </li>
-   * <li><b>button</b></br>
-   * HTML template for the buttons used.
-   * </li>
-   * </ul>
    *
-   * @param array $options Options array with the following possibilities:
-   * <ul>
-   * <li><b>fieldname</b><br/>
-   * Optional. The name of the database field this control is bound to if any.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>georefPreferredArea</b><br/>
-   * Optional. Hint provided to the locality search service as to which area to look for the place name in. Any example usage of this
-   * would be to set it to the name of a region for a survey based in that region. Note that this is only a hint, and the search
-   * service may still return place names outside the region. Defaults to gb.</li>
-   * <li><b>georefCountry</b><br/>
-   * Optional. Hint provided to the locality search service as to which country to look for the place name in. Defaults to United Kingdom.</li>
-   * <li><b>georefLang</b><br/>
-   * Optional. Language to request place names in. Defaults to en-EN for English place names.</li>
-   * <li><b>readAuth</b><br/>
-   * Optional. Read authentication tokens for the Indicia warehouse if using the indicia_locations driver setting.</li>
-   * <li><b>driver</b><br/>
-   * Optional. Driver to use for the georeferencing operation. Supported options are:<br/>
-   *   google_places - uses the Google Places API text search service. Default.<br/>
-   *   geoportal_lu - Use the Luxembourg specific place name search provided by geoportal.lu.
-   *   indicia_locations - Use the list of locations available to the current website in Indicia as a search list.
-   * </li>
-   * <li><b>public</b><br/>
-   * Optional. If using the indicia_locations driver, then set this to true to include public (non-website specific)
-   * locations in the search results. Defaults to false.
-   * </li>
-   * <li><b>autoCollapseResults</b><br/>
-   * Optional. If a list of possible matches are found, does selecting a match automatically fold up the results? Defaults to false.
-   * </li>
-   * </ul>
+   * * *georeference_lookup* - Template which outputs the HTML for the
+   *   georeference search input, button placehold and container for the list
+   *   of search results. The default template uses JavaScript to write the
+   *   output, so that this control is removed from the page if JavaScript is
+   *   disabled as it will have no functionality.
+   * * *button* - HTML template for the buttons used.
    *
-   * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search API Terms of Use.
-   * @link http://code.google.com/p/indicia/wiki/GeoreferenceLookupDrivers Documentation for the driver architecture.
-   * @return string HTML to insert into the page for the georeference lookup control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * *fieldname* - Optional. The name of the database field this control is
+   *     bound to if any.
+   *   * *class* - Optional. CSS class names to add to the control.
+   *   * *georefPreferredArea* - Optional. Hint provided to the locality search
+   *     service as to which area to look for the place name in. Any example
+   *     usage of this would be to set it to the name of a region for a survey
+   *     based in that region. Note that this is only a hint, and the search
+   *     service may still return place names outside the region. Defaults to
+   *     gb.
+   *   * *georefCountry* - Optional. Hint provided to the locality search
+   *     service as to which country to look for the place name in. Defaults to
+   *     United Kingdom.
+   *   * *georefLang* - Optional. Language to request place names in. Defaults
+   *     to en-EN for English place names.
+   *   * *readAuth* - Optional. Read authentication tokens for the Indicia
+   *     warehouse if using the indicia_locations driver setting.</li>
+   *   * *driver* - Optional. Driver to use for the georeferencing operation.
+   *     Supported options are:
+   *     * google_places - uses the Google Places API text search service.
+   *       Default.
+   *     * geoportal_lu - Use the Luxembourg specific place name search
+   *       provided by geoportal.lu.
+   *     * indicia_locations - Use the list of locations available to the
+   *       current website in Indicia as a search list.
+   *   * *public* - Optional. If using the indicia_locations driver, then set
+   *     this to true to include public (non-website specific) locations in the
+   *     search results. Defaults to false.
+   *   * *<autoCollapseResults></autoCollapseResults> - Optional. If a list of
+   *     possible matches are found, does selecting a match automatically fold
+   *     up the results? Defaults to false.
+   *
+   * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search
+   * API Terms of Use.
+   * @link http://code.google.com/p/indicia/wiki/GeoreferenceLookupDrivers
+   * Documentation for the driver architecture.
+   *
+   * @return string
+   *   HTML to insert into the page for the georeference lookup control.
    */
-  public static function georeference_lookup($options) {
+  public static function georeference_lookup(array $options) {
     $options = self::check_options($options);
     global $indicia_templates;
     $options = array_merge(array(
@@ -1239,8 +1249,8 @@ JS;
         'href' => '#',
         'id' => 'imp-georef-search-btn',
         'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
-        'caption'=>lang::get('Search'),
-        'title' => ''
+        'caption' => lang::get('Search'),
+        'title' => '',
       )),
       'public' => false,
       'autoCollapseResults' => false,
@@ -1343,18 +1353,29 @@ JS;
     $options = array_merge(array(
       'id' => 'select-'.rand(0,10000),
       'blankText' => '<please select>',
-      'extraParams' => array()
+      'extraParams' => array(),
+      'preferredIdField' => 'preferred_termlists_term_id',
     ), $options);
-    // If not language filtered, then limit to preferred, otherwise we could get
-    // multiple children.
+    // If not language filtered, then limit to preferred, otherwise we could
+    // get multiple children.
     // @todo This should probably be set by the caller, not here.
-    if (!isset($options['extraParams']['iso']))
-      $options['extraParams']['preferred']='t';
-    // Get the data for the control. Not Ajax populated at the moment. We either populate the lookupValues for the top level control
-    // or store in the childData for output into JavaScript
+    if (!isset($options['extraParams']['iso']) && !isset($options['extraParams']['language_iso'])) {
+      $options['extraParams']['preferred'] = 't';
+    }
+    // Get the data for the control. Not Ajax populated at the moment.
     $items = self::get_population_data($options);
-    $lookupValues=array();
-    $childData=array();
+    $lookupValues = [];
+    $childData = [];
+    // Prepare a mapping from preferred to term in this language where
+    // appropriate. This will allow us to map from parent_id (always preferred)
+    // to the non-preferred term in this language when building a hierarchy.
+    $prefMappings = [];
+    foreach ($items as $item) {
+      $prefId = empty($item[$options['preferredIdField']]) ? $item[$options['valueField']] : $item[$options['preferredIdField']];
+      $prefMappings[$prefId] = $item[$options['valueField']];
+    }
+    // Convert the list of data items into arrays required for control
+    // population.
     foreach ($items as $item) {
       $itemValue = $item[$options['valueField']];
       if (isset($options['captionTemplate'])) {
@@ -1363,15 +1384,21 @@ JS;
       else {
         $itemCaption = $item[$options['captionField']];
       }
-
+      // We either populate the lookupValues for the top level control or store
+      // in the childData for output into JavaScript
       if (empty($item['parent_id']))
         $lookupValues[$itemValue] = $itemCaption;
       else {
-        // not a top level item, so put in a data array we can store in JSON.
+        // Not a top level item, so put in a data array we can store in JSON.
+        // Use the mappings from preferred ID to ID in this language to ensure
+        // the parents can be found.
         if (!isset($childData[$item['parent_id']])) {
-          $childData[$item['parent_id']] = array();
+          $childData[$prefMappings[$item['parent_id']]] = array();
         }
-        $childData[$item['parent_id']][] = array('id' => $itemValue, 'caption' => $itemCaption);
+        $childData[$prefMappings[$item['parent_id']]][] = array(
+          'id' => $itemValue,
+          'caption' => $itemCaption
+        );
       }
     }
     // build an ID with just alphanumerics, that we can use to keep JavaScript function and data names unique
@@ -1406,7 +1433,7 @@ JS;
     $indicia_templates['select'] = $oldTemplate;
     // jQuery safe version of the Id.
     $safeId = preg_replace('/[:]/', '\\\\\\:', $options['id']);
-    // output a hidden input that contains the value to post.
+    // Output a hidden input that contains the value to post.
     $hiddenOptions = array('id' => 'fld-'.$options['id'], 'fieldname'=>$fieldname, 'default'=>self::check_default_value($options['fieldname']));
     if (isset($options['default']))
       $hiddenOptions['default'] = $options['default'];
@@ -1477,15 +1504,8 @@ JS;
     // now we have the tree, work backwards to select each item
     thisselect = $('#$safeId');
     while (tree.length>0) {
-      toselect=tree.pop();
-      $.each(thisselect.find('option'), function(idx, option) {
-        if ($(option).val()===toselect) {
-          if (!$(option).attr('selected')) {
-            $(option).attr('selected',true);
-            thisselect.trigger('change');
-          }
-        }
-      });
+      toselect = tree.pop();
+      thisselect.val(toselect).change();
       thisselect = thisselect.next();
     }
   }) ();
@@ -1669,15 +1689,6 @@ JS;
     $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : null;
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
       $caption = self::$entity_to_load['sample:location_name'];
-    if (empty($caption) && !empty($options['default'])) {
-      $thisLoc = self::get_population_data([
-        'table' => 'location',
-        'extraParams' => $options['extraParams'] + ['id' => $options['default']]
-      ]);
-      if (count($thisLoc)) {
-        $caption = $thisLoc[0]['name'];
-      }
-    }
     $options = array_merge(array(
       'table' => 'location',
       'fieldname' => 'sample:location_id',
@@ -1994,9 +2005,8 @@ JS;
    * @param array $options Options array with the following possibilities:<ul>
    * <li><b>presetLayers</b><br/>
    * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
-   * 'google_satellite', 'openlayers_wms', 'nasa_mosaic', 'virtual_earth' (deprecated, use bing_aerial),
-   * 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'multimap_default', 'multimap_landranger',
-   * 'osm' (for OpenStreetMap), 'osm_th' (for OpenStreetMap Tiles@Home).</li>
+   * 'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid, 'bing_shaded', 'bing_os',
+   * 'osm' (for OpenStreetMap).</li>
    * <li><b>edit</b><br/>
    * True or false to include the edit controls for picking spatial references.</li>
    * <li><b>locate</b><br/>
@@ -2731,7 +2741,7 @@ JS;
       'valueField' => 'taxa_taxon_list_id',
       'formatFunction'=>empty($indicia_templates['format_species_autocomplete_fn']) ? $indicia_templates['taxon_label'] : $indicia_templates['format_species_autocomplete_fn'],
       'outputPreferredNameToSelector' => false,
-      'duplicateCheckFields' => array('taxon', 'taxa_taxon_list_id')
+      'duplicateCheckFields' => array('taxon', 'taxon_meaning_id')
     ), $options);
     $options['extraParams'] += self::getSpeciesNamesFilter($options);
     if (!empty($options['default']) && empty($options['defaultCaption'])) {
@@ -3464,7 +3474,7 @@ JS;
           $row .= "<input type=\"hidden\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\"/>";
         else
           // this includes a control to force out a 0 value when the checkbox is unchecked.
-          $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"0\"/>".
+          $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" value=\"0\"/>".
             "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\" $checked />";
         // If we have a grid ID attribute, output a hidden
         if (!empty($options['gridIdAttributeId'])) {
@@ -4008,7 +4018,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         $defaultOptionLabel=lang::get("Input species from the form's default {1}.", lang::get($type));
       }
       $defaultOptionLabel = str_replace("'", "\'", $defaultOptionLabel);
-      if (count($options['usersPreferredGroups'])) {
+      if (!empty($options['usersPreferredGroups'])) {
         self::$javascript .= 'indiciaData.usersPreferredTaxonGroups = [' . implode(',', $options['usersPreferredGroups']) . "];\n";
       }
       self::addLanguageStringsToJs('speciesChecklistFilter', [
@@ -5604,7 +5614,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       $request .= '&attrs='.$options['attrs'];
     if (!isset($options['caching']))
       $options['caching'] = true; // default
-    return self::_get_cached_services_call($request, $options);
+    return self::getCachedServicesCall($request, $options);
   }
 
   /**
@@ -5699,8 +5709,10 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       }
       $response = self::get_population_data($options);
       // if the response is empty, and a language has been set, try again without the language but asking for the preferred values.
-      if(count($response)==0 && array_key_exists('iso', $options['extraParams'])){
+      if(count($response) === 0 &&
+          (array_key_exists('iso', $options['extraParams']) || array_key_exists('language_iso', $options['extraParams']))) {
         unset($options['extraParams']['iso']);
+        unset($options['extraParams']['language_iso']);
         $options['extraParams']['preferred']='t';
         $response = self::get_population_data($options);
       }
@@ -6064,24 +6076,29 @@ if (errors$uniq.length>0) {
   /**
    * Either takes the passed in submission, or creates it from the post data if this is null, and forwards
    * it to the data services for saving as a member of the entity identified.
-   * @param string $entity Name of the top level entity being submitted, e.g. sample or occurrence.
-   * @param array $submission The wrapped submission structure. If null, then this is automatically constructer
-   * from the form data in $_POST.
-   * @param array $writeTokens Array containing auth_token and nonce for the write operation, plus optionally persist_auth=true
-   * to prevent the authentication tokens from expiring after use. If null then the values are read from $_POST.
+
+   * @param string $entity
+   *   Name of the top level entity being submitted, e.g. sample or occurrence.
+   * @param array $submission
+   *   The wrapped submission structure. If null, then this is automatically
+   *   constructed from the form data in $_POST.
+   * @param array $writeTokens
+   *   Array containing auth_token and nonce for the write operation, plus
+   *   optionally persist_auth=true to prevent the authentication tokens from
+   *   expiring after use. If null then the values are read from $_POST.
    */
   public static function forward_post_to($entity, $submission = null, $writeTokens = null) {
     if (self::$validation_errors==null) {
-      $remembered_fields = self::get_remembered_fields();
+      $rememberedFields = self::getRememberedFields();
 
       if ($submission == null)
         $submission = submission_builder::wrap($_POST, $entity);
-      if ($remembered_fields !== null) {
+      if ($rememberedFields !== null) {
         // the form is configured to remember fields
         if ( (!isset($_POST['cookie_optin'])) || ($_POST['cookie_optin'] === '1') ) {
           // if given a choice, the user opted for fields to be remembered
           $arr=array();
-          foreach ($remembered_fields as $field) {
+          foreach ($rememberedFields as $field) {
             if (!empty($_POST[$field]))
               $arr[$field]=$_POST[$field];
           }
@@ -7101,10 +7118,10 @@ HTML;
    * not empty is used.
    */
   public static function check_default_value($id) {
-    $remembered_fields = self::get_remembered_fields();
+    $rememberedFields = self::getRememberedFields();
     if (self::$entity_to_load!=null && array_key_exists($id, self::$entity_to_load)) {
       return self::$entity_to_load[$id];
-    } else if ($remembered_fields !== null && in_array($id, $remembered_fields) && array_key_exists('indicia_remembered', $_COOKIE)) {
+    } else if ($rememberedFields !== null && in_array($id, $rememberedFields) && array_key_exists('indicia_remembered', $_COOKIE)) {
       $arr = unserialize($_COOKIE['indicia_remembered']);
       if (isset($arr[$id]))
         return $arr[$id];
@@ -7614,23 +7631,34 @@ HTML;
       'extraParams' => array(),
     ), $options);
     if (!empty($options['useDescriptionAsHelpText'])) {
-      $options['helpText'] = $options['helpText'] ?: $item['description'];
+      $options['helpText'] = empty($options['helpText']) ? $item['description'] : $options['helpText'];
     }
-    $attrOptions = array(
-      'fieldname'=>$item['fieldname'],
-      'id'=>$item['id'],
-      'disabled'=>'');
-    if (isset($item['caption']))
-      $attrOptions['label']=$item['caption']; // no need to translate, as that has already been done by getAttributes. Untranslated caption is in field untranslatedCaption
+    $attrOptions = [
+      'fieldname' => $item['fieldname'],
+      'id' => $item['id'],
+      'disabled' => '',
+    ];
+    if (isset($item['caption'])) {
+      // No need to translate, as that has already been done by getAttributes.
+      // Untranslated caption is in field untranslatedCaption.
+      $attrOptions['label'] = $item['caption'];
+    }
     $attrOptions = array_merge($attrOptions, $options);
-    // build validation rule classes from the attribute data
-    if (isset($item['validation_rules'])) {
-      $validation = explode("\n", $item['validation_rules']);
-      if ($item['data_type'] === 'I' && !in_array('integer', $validation) &&
-        (empty($options['control_type']) || $options['control_type'] === 'text_input')) {
+    // Build validation rule classes from the attribute data.
+    $validation = isset($item['validation_rules']) ? explode("\n", $item['validation_rules']) : [];
+    if (empty($options['control_type']) || $options['control_type'] === 'text_input') {
+      if ($item['data_type'] === 'I' && !in_array('integer', $validation)) {
         $validation[] = 'integer';
       }
-      $attrOptions['validation']=array_merge(isset($attrOptions['validation'])?$attrOptions['validation']:array(), $validation);
+      if ($item['data_type'] === 'F' && !in_array('float', $validation)) {
+        $validation[] = 'numeric';
+      }
+    }
+    if (!empty($validation)) {
+      $attrOptions['validation'] = array_merge(
+        isset($attrOptions['validation']) ? $attrOptions['validation'] : [],
+        $validation
+      );
     }
     if (!empty($item['system_function'])) {
       $attrOptions['class'] = (empty($attrOptions['class']) ? '' : "$attrOptions[class] ") . "system-function-$item[system_function]";
@@ -7714,21 +7742,19 @@ HTML;
         break;
       case 'Lookup List':
       case 'L':
-        if(!array_key_exists('noBlankText', $options)){
-          $attrOptions = $attrOptions + array('blankText' => (array_key_exists('blankText', $options)? $options['blankText'] : ''));
+        if (!array_key_exists('noBlankText', $attrOptions)){
+          $attrOptions = $attrOptions + array('blankText' => (array_key_exists('blankText', $attrOptions)? $attrOptions['blankText'] : ''));
         }
-        if (array_key_exists('class', $options))
-          $attrOptions['class'] = $options['class'];
         $dataSvcParams = array('termlist_id' => $item['termlist_id'], 'view' => 'cache', 'sharing' => 'editing');
-        if (array_key_exists('language', $options)) {
-          $dataSvcParams = $dataSvcParams + array('language_iso'=>$options['language']);
+        if (array_key_exists('language', $attrOptions)) {
+          $dataSvcParams = $dataSvcParams + array('language_iso' => $attrOptions['language']);
         }
-        if (!array_key_exists('orderby', $options['extraParams'])) {
-          $dataSvcParams = $dataSvcParams + array('orderby'=>'sort_order');
+        if (!array_key_exists('orderby', $attrOptions['extraParams'])) {
+          $dataSvcParams = $dataSvcParams + array('orderby' => 'sort_order,term');
         }
         // control for lookup list can be overriden in function call options
-        if(array_key_exists('lookUpListCtrl', $options)){
-          $ctrl = $options['lookUpListCtrl'];
+        if (array_key_exists('lookUpListCtrl', $attrOptions)){
+          $ctrl = $attrOptions['lookUpListCtrl'];
         } else {
           // or specified by the attribute in survey details
           if (isset($item['control_type']) &&
@@ -7837,10 +7863,11 @@ HTML;
             $pathPos = strlen($key)-5;
           }
         }
-        if ($pathPos !==false && ($modelName === null || $modelName == substr($key, 0, strlen($modelName)) ||
+        if ($pathPos !==false && ($modelName === NULL || $modelName == substr($key, 0, strlen($modelName)) ||
             $legacyModelName == substr($key, 0, strlen($legacyModelName)))) {
           $prefix = substr($key, 0, $pathPos);
-          $thisMediaTypeId=isset($values[$prefix.':media_type_id'.$uniqueId]) ? utf8_encode($values[$prefix.':media_type_id'.$uniqueId]) : '';
+          $thisMediaTypeId = isset($values[$prefix.':media_type_id'.$uniqueId]) ?
+            $values[$prefix.':media_type_id'.$uniqueId] : '';
           //Only extract the media if we are extracting media of any type or the data matches the type we are wanting to extract
           if ($thisMediaTypeId==$mediaTypeIdToExtract||$mediaTypeIdToExtract===null) {
             $mediaValues = array(
@@ -7849,12 +7876,12 @@ HTML;
                   $values[$prefix.':id'.$uniqueId] : '',
               'path' => $value,
               'caption' => isset($values[$prefix.':caption'.$uniqueId]) ?
-                  utf8_encode($values[$prefix.':caption'.$uniqueId]) : ''
+                  $values[$prefix.':caption'.$uniqueId] : ''
             );
             if (!empty($thisMediaTypeId)) {
               $mediaValues['media_type_id'] = $thisMediaTypeId;
               $mediaValues['media_type'] = isset($values[$prefix . ':media_type' . $uniqueId]) ?
-                utf8_encode($values[$prefix . ':media_type' . $uniqueId]) : '';
+                $values[$prefix . ':media_type' . $uniqueId] : '';
             }
             // if deleted = 't', add it to array so image is marked deleted
             if (isset($values[$prefix.':deleted'.$uniqueId]) && $values[$prefix.':deleted'.$uniqueId] === 't') {
@@ -7979,21 +8006,23 @@ HTML;
 
   /**
    * Provides access to a list of remembered field values from the last time the form was used.
-   * Accessor for the $remembered_fields variable. This is a list of the fields on the form
+   * Accessor for the $rememberedFields variable. This is a list of the fields on the form
    * which are to be remembered the next time the form is loaded, e.g. for values that do not change
    * much from record to record. This creates the list on demand, by calling a hook indicia_define_remembered_fields
-   * if it exists. indicia_define_remembered_fields should call data_entry_helper::set_remembered_fields to give it
+   * if it exists. indicia_define_remembered_fields should call data_entry_helper::setRememberedFields to give it
    * an array of field names.
    * Note that this hook architecture is required to allow the list of remembered fields to be made available
    * before the form is constructed, since it is used by the code which saves a submitted form to store the
    * remembered field values in a cookie.
-   * @return Array List of the fields to remember.
+
+   * @return array
+   *   List of the fields to remember.
    */
-  public static function get_remembered_fields() {
-    if (self::$remembered_fields == null && function_exists('indicia_define_remembered_fields')) {
+  public static function getRememberedFields() {
+    if (self::$rememberedFields == null && function_exists('indicia_define_remembered_fields')) {
       indicia_define_remembered_fields();
     }
-    return self::$remembered_fields;
+    return self::$rememberedFields;
   }
 
   /**
@@ -8002,8 +8031,8 @@ HTML;
    * @see get_rememebered_fields
    * @param $arr Array of field names
    */
-  public static function set_remembered_fields($arr) {
-    self::$remembered_fields = $arr;
+  public static function setRememberedFields($arr) {
+    self::$rememberedFields = $arr;
   }
 
   /**

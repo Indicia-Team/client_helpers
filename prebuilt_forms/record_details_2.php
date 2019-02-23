@@ -301,6 +301,7 @@ Record ID',
     $test = $args['operator'] === 'in';
     $availableFields = array(
       'occurrence_id' => lang::get('Record ID'),
+      'occurrence_external_key' => lang::get('Record external key'),
       'preferred_taxon' => lang::get('Recommended name'),
       'common_name' => lang::get('Common name'),
       'taxon' => lang::get('Name as entered'),

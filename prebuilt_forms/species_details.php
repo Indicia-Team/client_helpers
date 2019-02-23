@@ -476,7 +476,7 @@ class iform_species_details extends iform_dynamic {
    * Undocumented function
    *
    * Available options include:
-   * * @includeCaptions - set to 0 to exclude attribute captions from the
+   * * @includeCaptions - set to false to exclude attribute captions from the
    *   grouped data.
    *
    * @return string
@@ -485,7 +485,7 @@ class iform_species_details extends iform_dynamic {
   protected static function get_control_attributedescription($auth, $args, $tabalias, $options) {
     global $indicia_templates;
     $options = array_merge([
-      'includeCaptions' => '1',
+      'includeCaptions' => TRUE,
     ], $options);
     $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
     $args['param_presets'] = '';
@@ -493,6 +493,8 @@ class iform_species_details extends iform_dynamic {
     $params = [
       'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
       'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
+      'include_captions' => $options['includeCaptions'] ? '1' : '0',
+      'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
     ];
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
@@ -517,7 +519,11 @@ class iform_species_details extends iform_dynamic {
         if (!empty($currentHeadingContent)) {
           $r .= str_replace(
             ['{id}', '{title}', '{content}'],
-            ["detail-panel-description-$idx", $currentHeading, $currentHeadingContent],
+            [
+              "detail-panel-description-$idx",
+              $currentHeading,
+              $currentHeadingContent,
+            ],
             $indicia_templates['dataValueList']
           );
           $currentHeadingContent = '';
@@ -533,7 +539,11 @@ class iform_species_details extends iform_dynamic {
     if (!empty($currentHeadingContent)) {
       $r .= str_replace(
         ['{id}', '{title}', '{content}'],
-        ["detail-panel-description-$idx", $currentHeading, $currentHeadingContent],
+        [
+          "detail-panel-description-$idx",
+          $currentHeading,
+          $currentHeadingContent,
+        ],
         $indicia_templates['dataValueList']
       );
     }
@@ -542,10 +552,9 @@ class iform_species_details extends iform_dynamic {
 
   /**
    * Draw Photos section of the page.
-   * @return string The output report grid.
    *
-   * @package    Client
-   * @subpackage PrebuiltForms
+   * @return string
+   *   The output report grid.
    */
   protected static function get_control_photos($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
@@ -556,21 +565,23 @@ class iform_species_details extends iform_dynamic {
       'class' => 'media-gallery',
     ), $options);
 
-    //Use this report to return the photos
+    // Use this report to return the photos.
     $reportName = 'library/occurrence_images/filterable_explore_list';
     return
-      '<div class="detail-panel" id="detail-panel-photos"><h3>'.lang::get('Photos and media').'</h3>' .
+      '<div class="detail-panel" id="detail-panel-photos"><h3>' . lang::get('Photos and media') . '</h3>' .
       report_helper::freeform_report(array(
       'readAuth' => $auth['read'],
-      'dataSource'=> $reportName,
+      'dataSource' => $reportName,
       'itemsPerPage' => $options['itemsPerPage'],
       'class' => $options['class'],
-      'header'=>'<ul>',
-      'footer'=>'</ul>' .
+      'header' => '<ul>',
+      'footer' => '</ul>' .
           '<p class="helpText">' .
           lang::get('*Icons in the top corner of photos show the verification status of the underlying records.') .
           '</p>',
-      'bands'=>array(array('content'=><<<HTML
+      'bands' => [
+        [
+          'content' => <<<HTML
 <li class="gallery-item">
   <a href="{imageFolder}{media}" class="fancybox single">
     <img src="{imageFolder}$options[imageSize]-{media}" />
@@ -579,10 +590,11 @@ class iform_species_details extends iform_dynamic {
   {caption}
 </li>
 HTML
-)),
+        ],
+      ],
       'emptyText' => '<p>No photos or media files available</p>',
       'mode' => 'report',
-      'autoParamsForm' => false,
+      'autoParamsForm' => FALSE,
       'extraParams' => array(
         'taxon_meaning_list' => self::$taxon_meaning_id,
         'smpattrs' => '',
@@ -722,15 +734,14 @@ HTML
     if (isset($options['hoverShowsDetails'])) {
       $options['hoverShowsDetails'] = TRUE;
     }
-    // $_GET data for standard params can override displayed location
-    if (isset($_GET['filter-location_id']) || isset($_GET['filter-indexed_location_id'])) {
+    // $_GET data for standard params can override displayed location.
+    $locationIDToLoad = @$_GET['filter-indexed_location_list']
+      ?: @$_GET['filter-indexed_location_id']
+      ?: @$_GET['filter-location_list']
+      ?: @$_GET['filter-location_id'];
+    if (!empty($locationIDToLoad) && preg_match('/^\d+$/', $locationIDToLoad)) {
       $args['display_user_profile_location'] = FALSE;
-      if (!empty($_GET['filter-indexed_location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-indexed_location_id'];
-      }
-      elseif (!empty($_GET['filter-location_id'])) {
-        $args['location_boundary_id'] = $_GET['filter-location_id'];
-      }
+      $args['location_boundary_id'] = $locationIDToLoad;
     }
     // aAlow us to call iform_report_get_report_options to get a default report setup, then override report_name
     $args['report_name'] = '';

@@ -80,9 +80,8 @@ class map_helper extends helper_base {
    * </li>
    * <li><b>presetLayers</b><br/>
    * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
-   * 'google_satellite', 'openlayers_wms', 'nasa_mosaic', 'virtual_earth' (deprecated, use bing_aerial),
-   * 'bing_aerial', 'bing_hybrid', 'bing_shaded', 'osm' (for OpenStreetMap), 'osm_th' (for OpenStreetMap Tiles@Home),
-   * 'os_outdoor', 'os_road', 'os_light', 'os_night', 'os_leisure'.
+   * 'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid', 'bing_shaded',
+   * 'bing_os', 'osm' (for OpenStreetMap), 'os_outdoor', 'os_road', 'os_light', 'os_night', 'os_leisure'.
  * </li>
    * <li><b>tilecacheLayers</b><br/>
    * Array of layer definitions for tilecaches, which are pre-cached background tiles. They are less flexible but much faster
@@ -259,75 +258,77 @@ class map_helper extends helper_base {
    * <li><b>gridRefHintInFooter</b><br/>
    * Defaults to true. If there is a grid ref hint, should it go in the footer area of the map? If so, there is no need to add an element id grid-ref-hint to the page.</li>
    * </ul>
-   * @param array $olOptions Optional array of settings for the OpenLayers map object. If overriding the projection or
-   * displayProjection settings, just pass the EPSG number, e.g. 27700.
+   * @param array $olOptions
+   *   Optional array of settings for the OpenLayers map object. If overriding
+   *   the projection or displayProjection settings, just pass the EPSG number,
+   *   e.g. 27700.
    */
-  public static function map_panel($options, $olOptions = array()) {
+  public static function map_panel($options, array $olOptions = []) {
     if (!$options) {
       return '<div class="error">Form error. No options supplied to the map_panel method.</div>';
-    } else {
+    }
+    else {
       global $indicia_templates;
-      $presetLayers = array();
-      // If the caller has not specified the background layers, then default to the ones we have an API key for.
+      $presetLayers = [];
+      // If the caller has not specified the background layers, then default to
+      // the ones we have an API key for.
       if (!array_key_exists('presetLayers', $options)) {
         $presetLayers[] = 'google_satellite';
         $presetLayers[] = 'google_hybrid';
         $presetLayers[] = 'google_physical';
-        $presetLayers[] = 'virtual_earth';
         $presetLayers[] = 'osm';
       }
-      $options = array_merge(array(
-          'indiciaSvc' => parent::getProxiedBaseUrl(),
-          'indiciaGeoSvc' => self::$geoserver_url,
-          'divId' => 'map',
-          'class' => '',
-          'width' => 600,
-          'height' => 470,
-          'presetLayers' => $presetLayers,
-          'jsPath' => self::$js_path,
-          'clickForSpatialRef' => true,
-          'gridRefHintInFooter' => true,
-          'gridRefHint' => false
-      ), $options);
-      // When using tilecache layers, the open layers defaults cannot be used. The caller must take control of
-      // openlayers settings.
+      $options = array_merge([
+        'indiciaSvc' => parent::getProxiedBaseUrl(),
+        'indiciaGeoSvc' => self::$geoserver_url,
+        'divId' => 'map',
+        'class' => '',
+        'width' => 600,
+        'height' => 470,
+        'presetLayers' => $presetLayers,
+        'jsPath' => self::$js_path,
+        'clickForSpatialRef' => TRUE,
+        'gridRefHintInFooter' => TRUE,
+        'gridRefHint' => FALSE,
+      ], $options);
+      // When using tilecache layers, the open layers defaults cannot be used.
+      // The caller must take control of openlayers settings.
       if (isset($options['tilecacheLayers'])) {
-        $options['useOlDefaults'] = false;
+        $options['useOlDefaults'] = FALSE;
       }
 
-      //width and height may be numeric, which is interpreted as pixels, or a css string, e.g. '50%'
-      //width in % is causing problems with panning in Firefox currently. 13/3/2010.
-
+      // Width and height may be numeric, which is interpreted as pixels, or a
+      // css string, e.g. '50%'.
       if (is_numeric($options['height']))
         $options['height'] .= 'px';
       if (is_numeric($options['width']))
         $options['width'] .= 'px';
 
       if (array_key_exists('readAuth', $options)) {
-        // Convert the readAuth into a query string so it can pass straight to the JS class.
-        $options['readAuth']='&'.self::array_to_query_string($options['readAuth']);
+        // Convert the readAuth into a query string so it can pass straight to
+        // the JS class.
+        $options['readAuth'] = '&' . self::array_to_query_string($options['readAuth']);
         str_replace('&', '&amp;', $options['readAuth']);
       }
 
-      // convert textual true/false to boolean equivalents.
-      foreach($options as $key=>$value){
-        if($options[$key]==="false") $options[$key]=false;
-        else if($options[$key]==="true") $options[$key]=true;
+      // Convert textual true/false to boolean equivalents.
+      foreach ($options as $key => $value) {
+        if ($options[$key] === "false") {
+          $options[$key] = FALSE;
+        }
+        elseif ($options[$key] === "true") {
+          $options[$key] = TRUE;
+        }
       }
 
-      // Autogenerate the links to the various mapping libraries as required
+      // Autogenerate the links to the various mapping libraries as required.
       if (array_key_exists('presetLayers', $options)) {
-        foreach ($options['presetLayers'] as $layer)
-        {
+        foreach ($options['presetLayers'] as $layer) {
           $a = explode('_', $layer);
           $a = strtolower($a[0]);
           switch ($a) {
             case 'google':
               self::add_resource('googlemaps');
-              break;
-
-            case 'virtual':
-              self::add_resource('virtualearth');
               break;
           }
           if ($a === 'bing' && (!isset(self::$bing_api_key) || empty(self::$bing_api_key))) {
@@ -343,58 +344,65 @@ class map_helper extends helper_base {
         }
       }
 
-      // This resource has a dependency on the googlemaps resource so has to be added afterwards.
+      // This resource has a dependency on the googlemaps resource so has to be
+      // added afterwards.
       self::add_resource('indiciaMapPanel');
       if (array_key_exists('standardControls', $options)) {
-        if (in_array('graticule', $options['standardControls']))
+        if (in_array('graticule', $options['standardControls'])) {
           self::add_resource('graticule');
-        if (in_array('clearEditLayer', $options['standardControls']))
+        }
+        if (in_array('clearEditLayer', $options['standardControls'])) {
           self::add_resource('clearLayer');
+        }
       }
       // We need to fudge the JSON passed to the JavaScript class so it passes any actual layers, functions
       // and controls, not the string class names.
-      $json_insert='';
-      $js_entities=array('controls', 'layers', 'clickableLayers');
-      foreach($js_entities as $entity) {
+      $json_insert = '';
+      $js_entities = ['controls', 'layers', 'clickableLayers'];
+      foreach ($js_entities as $entity) {
         if (array_key_exists($entity, $options)) {
-          $json_insert .= ',"'.$entity.'":['.implode(',', $options[$entity]).']';
+          $json_insert .= ',"' . $entity . '":[' . implode(',', $options[$entity]) . ']';
           unset($options[$entity]);
         }
       }
-      // Same for 'clickableLayersOutputFn'
+      // Same for 'clickableLayersOutputFn'.
       if (isset($options['clickableLayersOutputFn'])) {
-        $json_insert .= ',"clickableLayersOutputFn":'.$options['clickableLayersOutputFn'];
+        $json_insert .= ',"clickableLayersOutputFn":' . $options['clickableLayersOutputFn'];
         unset($options['clickableLayersOutputFn']);
       }
 
-      // Same for 'customClickFn'
+      // Same for 'customClickFn'.
       if (isset($options['customClickFn'])) {
-        $json_insert .= ',"customClickFn":'.$options['customClickFn'];
+        $json_insert .= ',"customClickFn":' . $options['customClickFn'];
         unset($options['customClickFn']);
       }
 
-      // make a copy of the options to pass into JavaScript, with a few entries removed.
+      // Make a copy of the options to pass into JavaScript, with a few entries
+      // removed.
       $jsoptions = array_merge($options);
       unset($jsoptions['setupJs']);
       unset($jsoptions['tabDiv']);
-      if (isset(self::$bing_api_key))
+      if (isset(self::$bing_api_key)) {
         $jsoptions['bing_api_key'] = self::$bing_api_key;
-      if (isset(self::$os_api_key))
+      }
+      if (isset(self::$os_api_key)) {
         $jsoptions['os_api_key'] = self::$os_api_key;
-      $json=substr(json_encode($jsoptions), 0, -1).$json_insert.'}';
-      $olOptions = array_merge(array(
+      }
+      $json = substr(json_encode($jsoptions), 0, -1) . $json_insert . '}';
+      $olOptions = array_merge([
         'theme' => self::$js_path . 'theme/default/style.css'
-      ), $olOptions);
-      $json .= ','.json_encode($olOptions);
+      ], $olOptions);
+      $json .= ',' . json_encode($olOptions);
       $javascript = '';
       $mapSetupJs = '';
       if (isset($options['setupJs'])) {
         $mapSetupJs .= $options['setupJs']."\n";
       }
-      $mapSetupJs .= "jQuery('#".$options['divId']."').indiciaMapPanel($json);\n";
-      // trigger a change event on the sref if it's set in case locking in use. This will draw the polygon on the map.
+      $mapSetupJs .= "jQuery('#$options[divId]').indiciaMapPanel($json);\n";
+      // Trigger a change event on the sref if it's set in case locking in use.
+      // This will draw the polygon on the map.
       $srefId = empty($options['srefId']) ? '$.fn.indiciaMapPanel.defaults.srefId' : "'{$options['srefId']}'";
-      if(!(isset($options['switchOffSrefRetrigger']) && $options['switchOffSrefRetrigger'] == true)){
+      if (!(isset($options['switchOffSrefRetrigger']) && $options['switchOffSrefRetrigger'] == true)){
         $mapSetupJs .= <<<JS
 var srefId = $srefId;
 if (srefId && $('#' + srefId).length && $('#' + srefId).val()!==''
@@ -524,7 +532,7 @@ SCRIPT;
     }
     if ($options['includeIcons'])
       self::$javascript .= "if (layer.isBaseLayer) {
-    layerHtml += '<img src=\"".self::getRootFolder() . self::client_helper_path()."../media/images/map.png\" width=\"16\" height=\"16\"/>';
+    layerHtml += '<img src=\"" . self::getRootFolder() . self::client_helper_path() . "../media/images/map.png\" width=\"16\" height=\"16\"/>';
   } else if (layer instanceof OpenLayers.Layer.WMS) {
     layerHtml += '<img src=\"' + layer.url + '?SERVICE=WMS&VERSION=1.1.1&REQUEST=GetLegendGraphic&WIDTH=16&HEIGHT=16&LAYER='+layer.params.LAYERS+'&Format=image/jpeg'+
       '&STYLE='+layer.params.STYLES +'\" alt=\"'+layer.name+'\"/>';
@@ -534,7 +542,7 @@ SCRIPT;
   } else {
     layerHtml += '<div></div>';
   }\n";
-    self::$javascript .= "  layerHtml += '<span class=\"layer-title\">' + layer.name + '</span>';
+  self::$javascript .= "  layerHtml += '<label for=\"switch-'+layer.id.replace(/\./g,'-')+'\" class=\"layer-title\">' + layer.name + '</label>';
   return layerHtml;
 }\n";
     if ($options['includeSwitchers'])

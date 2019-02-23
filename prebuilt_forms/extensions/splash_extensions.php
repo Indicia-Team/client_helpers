@@ -264,7 +264,7 @@ class extension_splash_extensions {
       //If the user does have plots and is in edit mode then doing following
       if (!empty($_GET['sample_id'])) {
         //Get square and plot data for sample
-        $sampleData = data_entry_helper::get_report_data(
+        $selectedSquareAndPlotInfo = data_entry_helper::get_report_data(
           array(
             'dataSource'=>'projects/npms/get_square_for_sample',
             'readAuth'=>$auth['read'],
@@ -293,7 +293,7 @@ class extension_splash_extensions {
         //Cycle through the plots (the report also returns squares but those are redundant for this test)
         foreach ($squareAndPlotData as $squareOrPlot) {
           //If we find a matching one, and it has been approved then the user owns the plot
-          if ($sampleData[0]['plot_id']==$squareOrPlot['id'] && ($squareOrPlot['allocation_updater']!=$squareOrPlot['allocated_to'])) {
+          if ($selectedSquareAndPlotInfo[0]['plot_id']==$squareOrPlot['id'] && ($squareOrPlot['allocation_updater']!=$squareOrPlot['allocated_to'])) {
             $ownsPlot=true;
           }
         }
@@ -303,7 +303,7 @@ class extension_splash_extensions {
               $options['noSquareRightsMessage']= "This plot sample is locked. This is because you are no longer the owner of this plot, or you are the owner of the plot and it is pending approval.";
             }
             $options['noSquareRightsMessage']=$options['noSquareRightsMessage'].
-                    '<br><br>The square is <b>'.$sampleData[0]['square_name'].'</b> and the plot is <b>'.$sampleData[0]['plot_name'].'.</b><br><br>';
+                    '<br><br>The square is <b>'.$selectedSquareAndPlotInfo[0]['square_name'].'</b> and the plot is <b>'.$selectedSquareAndPlotInfo[0]['plot_name'].'.</b><br><br>';
             data_entry_helper::$javascript="
               $(window).load(function() {
                 $('[id*=_lock]').remove();\n $('.remove-row').remove();\n
@@ -319,14 +319,9 @@ class extension_splash_extensions {
       foreach($rawData as $rawRow) {
           $squaresData[$rawRow['id']]=$rawRow['name'];
       }
-      //Need a report to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
+      //Need report data to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
       if (!empty($_GET['sample_id'])) {
-        $squareData = data_entry_helper::get_report_data(array(
-          'dataSource'=>'projects/npms/get_square_for_sample',
-          'readAuth'=>$auth['read'],
-          'extraParams'=>array('sample_id'=>$_GET['sample_id'])
-        ));
-        $defaultSquareSelection=$squareData[0]['id'];
+        $defaultSquareSelection=$selectedSquareAndPlotInfo[0]['id'];
       } else {
         $defaultSquareSelection='';
       }
@@ -856,8 +851,6 @@ class extension_splash_extensions {
       map_helper::$javascript .= "indiciaData.pssMode=true;\n";
     }
     map_helper::$javascript .= "indiciaData.noSizeWarning='Please select plot type from the drop-down.';\n";
-    //In edit mode, we need to manually load the plot geom
-    map_helper::$javascript .= "$('#imp-boundary-geom').val($('#imp-geom').val());\n";
     //On NPMS/PSS system there is a checkbox for enhanced mode (when this isn't selected, plots are not configurable and default to a 3 x 3 square.
     //Note that on splash there is no enhanced mode so plots are fully configurable.
     if (!empty($options['enhancedModeCheckboxAttrId']))

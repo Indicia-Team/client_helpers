@@ -33,14 +33,9 @@
  */
 function group_authorise_form($args, $readAuth) {
   if (!empty($args['limit_to_group_id']) && $args['limit_to_group_id'] !== (empty($_GET['group_id']) ? '' : $_GET['group_id'])) {
-    if (empty($_GET['group_id'])) {
-      hostsite_access_denied();
-    }
-    else {
-      // Page owned by a different group, so throw them out.
-      hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert', true);
-      hostsite_goto_page('<front>');
-    }
+    // Page owned by a different group, so throw them out.
+    hostsite_show_message(lang::get('This page is a private recording group page which you cannot access.'), 'alert', true);
+    hostsite_goto_page('<front>');
   }
   $gu = array();
   if (!empty($_GET['group_id'])) {
@@ -106,8 +101,12 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
     if ($key) {
       $value = is_array($value) ? json_encode($value) : $value;
       $defstring .= "{$key}_context=$value\n";
-      if (!empty($value) && $key === 'indexed_location_id' || $key === 'indexed_location_list'
-        || $key === 'location_id' || $key === 'location_list') {
+      if (!empty($value) && in_array($key, [
+        'indexed_location_id',
+        'indexed_location_list',
+        'location_id',
+        'location_list',
+      ])) {
         $args['location_boundary_id'] = $value;
       }
       elseif (!empty($value) && $key === 'searchArea') {
@@ -115,7 +114,7 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
         require_once 'map.php';
         iform_map_zoom_to_geom($value, lang::get('Boundary'));
       }
-      elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && strpos($value, ',') === FALSE) {
+      elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && !empty($value) && strpos($value, ',') === FALSE) {
         // If the report is locked to a single taxon group, then we don't
         // need taxonomy columns.
         $args['skipped_report_columns'] = array('taxon_group', 'taxonomy');
