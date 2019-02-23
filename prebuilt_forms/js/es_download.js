@@ -71,8 +71,13 @@ jQuery(document).ready(function docReady($) {
         indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep + 'format=csv&scroll',
         $('#query').val(),
         function success(data) {
-          updateProgress(data);
-          doPages(data);
+          if (typeof data.code !== 'undefined' && data.code === 401) {
+            alert('ElasticSearch alias configuration user or secret incorrect in the form configuration.');
+            $('.progress-container').hide();
+          } else {
+            updateProgress(data);
+            doPages(data);
+          }
         },
         'json'
       );

@@ -140,7 +140,7 @@ HTML;
     $postData = file_get_contents('php://input');
     $urlParams = array_merge($_GET);
     unset($urlParams['q']);
-    $session = curl_init(helper_base::$base_url . 'index.php/services/rest/' . $params['endpoint'] . '/_search?' . http_build_query($urlParams));
+    $session = curl_init(hostsite_get_config_value('iform', 'base_url') . 'index.php/services/rest/' . $params['endpoint'] . '/_search?' . http_build_query($urlParams));
     $query = [
       'query' => [
         'bool' => [
