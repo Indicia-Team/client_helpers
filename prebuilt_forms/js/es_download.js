@@ -39,7 +39,9 @@ jQuery(document).ready(function docReady($) {
       // Post to the ES proxy. Pass scroll_id parameter to request the next
       // chunk of the dataset.
       $.post(
-        indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep + 'scroll_id=' + data.scroll_id,
+        indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep +
+          'scroll_id=' + data.scroll_id +
+          '&warehouse_url=' + indiciaData.warehouseUrl,
         $('#query').val(),
         function success(response) {
           updateProgress(response);
@@ -68,7 +70,8 @@ jQuery(document).ready(function docReady($) {
       // Post to the ES proxy. Pass scroll parameter to initiate loading the
       // dataset a chunk at a time.
       $.post(
-        indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep + 'format=csv&scroll',
+        indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep + 'format=csv&scroll' +
+          '&warehouse_url=' + indiciaData.warehouseUrl,
         $('#query').val(),
         function success(data) {
           if (typeof data.code !== 'undefined' && data.code === 401) {
