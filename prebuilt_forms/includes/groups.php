@@ -119,7 +119,7 @@ function group_apply_report_limits(array &$args, $readAuth, $nid, $isMember) {
         require_once 'map.php';
         iform_map_zoom_to_geom($value, lang::get('Boundary'));
       }
-      elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && strpos($value, ',') === FALSE) {
+      elseif (($key === 'taxon_group_id' || $key === 'taxon_group_list') && !empty($value) && strpos($value, ',') === FALSE) {
         // If the report is locked to a single taxon group, then we don't
         // need taxonomy columns.
         $args['skipped_report_columns'] = array('taxon_group', 'taxonomy');

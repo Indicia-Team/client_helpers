@@ -2750,7 +2750,7 @@ JS;
       'valueField' => 'taxa_taxon_list_id',
       'formatFunction'=>empty($indicia_templates['format_species_autocomplete_fn']) ? $indicia_templates['taxon_label'] : $indicia_templates['format_species_autocomplete_fn'],
       'outputPreferredNameToSelector' => false,
-      'duplicateCheckFields' => array('taxon', 'taxa_taxon_list_id')
+      'duplicateCheckFields' => array('taxon', 'taxon_meaning_id')
     ), $options);
     $options['extraParams'] += self::getSpeciesNamesFilter($options);
     if (!empty($options['default']) && empty($options['defaultCaption'])) {
@@ -4027,7 +4027,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         $defaultOptionLabel=lang::get("Input species from the form's default {1}.", lang::get($type));
       }
       $defaultOptionLabel = str_replace("'", "\'", $defaultOptionLabel);
-      if (count($options['usersPreferredGroups'])) {
+      if (!empty($options['usersPreferredGroups'])) {
         self::$javascript .= 'indiciaData.usersPreferredTaxonGroups = [' . implode(',', $options['usersPreferredGroups']) . "];\n";
       }
       self::addLanguageStringsToJs('speciesChecklistFilter', [

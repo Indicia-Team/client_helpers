@@ -661,23 +661,41 @@ idlist=';
    *   HTML
    */
   private static function otherActionButtons($imgPath) {
+    global $indicia_templates;
+
     $r = '<div id="other-actions" class="buttons-row">';
     // @todo Following button needs to be disabled if recorder cannot be contacted (email or notifications system). Exclude global emails like iSpot.
     // @todo Query icon - question mark in speech bubble
-    $r .= '<button type="button" id="btn-query" class="default-button" title="' .
-      lang::get('Raise a query against this record with the recorder') . '">' . lang::get('Query') . '</button>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-query',
+      'title' => lang::get('Raise a query against this record with the recorder'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Query'),
+    ]);
     // @todo Email icon with motion lines or arrow
     // send details to expert
-    $r .= '<button type="button" id="btn-email-expert" class="default-button" title="' .
-      lang::get('Email the record details to another expert for their opinion') . '">' . lang::get('Send to expert') . '</button>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-email-expert',
+      'title' => lang::get('Email the record details to another expert for their opinion'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Send to expert'),
+    ]);
     // @todo icon
-    $r .= '<button type="button" id="btn-redetermine" class="default-button" title="' .
-      lang::get('Propose a new determination for this record.') . '">' . lang::get('Redet.') . '</button>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-redetermine',
+      'title' => lang::get('Propose a new determination for this record.'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Redet.'),
+    ]);
     // @todo following needs to be disabled if record is not on iRecord.
-    $r .= '<a id="btn-edit-record" class="button default-button" title="' .
+    $r .= '<a id="btn-edit-record" class="' . $indicia_templates['anchorButtonClass'] . '" title="' .
       lang::get('Edit the record on its original data entry form.') . '">' . lang::get('Edit') . '</a>';
-    $r .= '<button type="button" id="btn-log-response" class="default-button" title="' .
-      lang::get('Log an email or other response.') . '">' . lang::get('Log Reply') . '</a>';
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'btn-log-response',
+      'title' => lang::get('Log an email or other response.'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Log reply'),
+    ]);
     $r .= '</div>';
     return $r;
   }

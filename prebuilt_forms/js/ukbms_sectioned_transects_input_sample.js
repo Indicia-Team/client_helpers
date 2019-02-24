@@ -351,7 +351,14 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     // adds them to a table in the order they are in that taxon list
     // any that are left are swept up by another function.
     $.each(taxonList, function(idx, species) {
-      addGridRow(species, speciesTableSelector, tabIDX);
+      var existing = false;
+      $.each(formOptions.sections, function(idx, section) {
+        var key = formOptions.subSamples[section.code] + ':' + species.taxon_meaning_id;
+        if (typeof formOptions.existingOccurrences[key] !== "undefined")
+          existing = true;
+      });
+      if (existing === true || species.taxon_rank_sort_order === null || species.taxon_rank_sort_order >= formOptions.speciesMinRank[tabIDX])
+        addGridRow(species, speciesTableSelector, tabIDX);
     });
   }
   

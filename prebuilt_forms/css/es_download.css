@@ -1,0 +1,33 @@
+/* Progress spinner */
+.progress-container {
+  width: 180px;
+  margin: auto;
+  position: relative;
+  display: none; }
+  .progress-container svg {
+    height: 180px;
+    width: 180px; }
+  .progress-container .progress-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    top: 80px; }
+
+/* Download file box */
+#files {
+  display: none;
+  -webkit-box-shadow: 6px 7px 8px 1px silver;
+  -moz-box-shadow: 6px 7px 8px 1px silver;
+  box-shadow: 6px 7px 8px 1px silver;
+  width: 240px;
+  padding: 20px;
+  margin: auto;
+  /* Font aweswome file icon */ }
+  #files .fas {
+    font-size: 30px;
+    margin-right: 10px; }
+
+/*# sourceMappingURL=es_download.css.map */

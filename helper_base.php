@@ -55,7 +55,7 @@ $indicia_templates = array(
   'buttonHighlightedClass' => 'indicia-button',
   'buttonWarningClass' => 'indicia-button',
     // Classes applied to <a> when styled like a button
-  'anchorButtonClass' => 'ui-state-default ui-corner-all indicia-button',
+  'anchorButtonClass' => 'indicia-button',
   'submitButton' => '<input id="{id}" type="submit"{class} name="{name}" value="{caption}" />',
   // Message boxes
   'messageBox' => '<div class="page-notice ui-state-highlight ui-corner-all">{message}</div>',
@@ -721,13 +721,13 @@ JS;
    * <li>sref_handlers_4326</li>
    * <li>sref_handlers_osgb</li>
    * <li>sref_handlers_osie</li>
+   * <li>font_awesome</li>
    * </ul>
    */
-  public static function add_resource($resource)
-  {
+  public static function add_resource($resource) {
     // Ensure indiciaFns is always the first resource added
     if (!self::$indiciaFnsDone) {
-      self::$indiciaFnsDone = true;
+      self::$indiciaFnsDone = TRUE;
       self::add_resource('indiciaFns');
     }
     $resourceList = self::get_resources();
@@ -861,6 +861,9 @@ JS;
             'javascript' => array(self::$js_path.'drivers/sref/osgb.js')),
         'sref_handlers_osie' => array(
             'javascript' => array(self::$js_path.'drivers/sref/osie.js')),
+        'font_awesome' => [
+          'stylesheets' => ['https://use.fontawesome.com/releases/v5.7.2/css/all.css']
+        ],
       );
     }
     return self::$resource_list;
@@ -1560,6 +1563,9 @@ JS;
     // Keep a non-random cache for 10 minutes. It MUST be shorter than the normal cache lifetime so this expires more frequently.
     $r = self::cache_get(array('readauth-wid'=>$website_id), 600, false);
     if ($r===false) {
+      if (empty(self::$base_url)) {
+        throw new Exception(lang::get('Indicia configuration is incorrect. Warehouse URL is not configured.'));
+      }
       $postargs = "website_id=$website_id";
       $response = self::http_post(self::$base_url.'index.php/services/security/get_read_nonce', $postargs, false);
       if (isset($response['status'])) {
@@ -2243,7 +2249,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         'minimum' => ['jqRule' => 'min', 'valRegEx' => '-?\d+'],
         'mingridref' => ['jqRule' => 'mingridref', 'valRegEx' => '\d+'],
         'maxgridref' => ['jqRule' => 'maxgridref', 'valRegEx' => '\d+'],
-        'regex' => ['jqRule' => 'pattern', 'valRegEx' => '-?\d+'],
+        'regex' => ['jqRule' => 'pattern', 'valRegEx' => '.*'],
       ];
       $arr = explode('[', $rule);
       $ruleName = $arr[0];

@@ -97,6 +97,9 @@ class iform_dynamic_report_explorer extends iform_dynamic {
                   "&nbsp;&nbsp;<strong>[reportgrid]</strong> - outputs report content in tabular form.<br/>".
                   "&nbsp;&nbsp;<strong>[reportchart]</strong> - outputs report content in chart form.<br/>".
                   "&nbsp;&nbsp;<strong>[reportfreeform]</strong> - outputs report content in flexible HTML.<br/>".
+                  "&nbsp;&nbsp;<strong>[reportaddtojs]</strong> - outputs report data to JavaScript for use by custom " .
+                    "code. The data are added to the indiciaData object, in a property with the name given in the " .
+                    "@name option.<br/>".
               "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page (alpha-numeric characters only). ".
               "If the page interface type is set to one page, then each tab/page name is displayed as a seperate section on the page. ".
               "Note that in one page mode, the tab/page names are not displayed on the screen.<br/>".
@@ -468,6 +471,43 @@ class iform_dynamic_report_explorer extends iform_dynamic {
       iform_report_apply_explore_user_own_preferences($reportOptions);
     self::$reportCount++;
     return report_helper::freeform_report($reportOptions);
+  }
+
+  /**
+   * A control which dumps the data for a report into the JavaScript.
+   *
+   * Provides no output itself, but facilitates JavaScript which needs to
+   * access report data by adding the data to the indiciaData object. The name
+   * of the entry in indiciaData must be specified in a @name option. Other
+   * options are identical to other report controls.
+   *
+   * @return string
+   *   Empty HTML for the control.
+   */
+  protected static function get_control_reportaddtojs($auth, $args, $tabalias, $options) {
+    if (empty($options['name'])) {
+      return 'The Report Add to JS control requires a @name parameter.';
+    }
+    iform_load_helpers(array('report_helper'));
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      [
+        'reportGroup' => 'dynamic',
+        'sharing' => $sharing,
+      ]
+    );
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
+    $reportOptions = array_merge($reportOptions, $options);
+    if (self::$applyUserPrefs) {
+      iform_report_apply_explore_user_own_preferences($reportOptions);
+    }
+    report_helper::request_report($response, $reportOptions, $currentParamValues, FALSE);
+    report_helper::$javascript .= "indiciaData.$options[name] = " . json_encode($response['records']) . ";\n";
+    return '';
   }
 
   /*

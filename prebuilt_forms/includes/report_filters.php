@@ -503,22 +503,31 @@ class filter_occurrence_id extends FilterBase {
    */
   public function get_controls() {
     $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Record ID'),
       'fieldname' => 'occurrence_id_op',
-      'lookupValues' => array(
+      'lookupValues' => [
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most')
-      ),
-      'controlWrapTemplate' => 'justControl'
-    ));
-    $r .= data_entry_helper::text_input(array(
+        '<=' => lang::get('is at most'),
+      ],
+      'controlWrapTemplate' => 'justControl',
+    ]);
+    $r .= data_entry_helper::text_input([
       'fieldname' => 'occurrence_id',
       'class' => 'control-width-2',
-      'controlWrapTemplate' => 'justControl'
-    ));
+      'controlWrapTemplate' => 'justControl',
+      'helpText' => lang::get('Filter by the system assigned record ID.'),
+    ]);
     $r .= '</div>';
+    $r .= '<div>' . lang::get('or') . '</div>';
+    $r .= data_entry_helper::text_input([
+      'label' => lang::get('External key is'),
+      'fieldname' => 'occurrence_external_key',
+      'class' => 'control-width-2',
+      'helpText' => lang::get("Filter by a key assigned by the record's originating system - for imported records."),
+    ]);
+
     return $r;
   }
 
@@ -720,7 +729,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing']),
+        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
       ));
       if (count($sources) > 1) {
         $r .= '<div id="filter-websites" class="filter-popup-columns"><h3>' . lang::get('Websites') . '</h3><p>' .
@@ -749,7 +758,7 @@ class filter_source extends FilterBase {
         'readAuth' => $readAuth,
         'caching' => TRUE,
         'cachePerUser' => FALSE,
-        'extraParams' => array('sharing' => $options['sharing']),
+        'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
       ));
       $titleToDisplay = 'fulltitle';
     }
@@ -916,9 +925,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   }
   $options['sharing'] = report_filters_sharing_code_to_full_term($options['sharing']);
   $options['sharingCode'] = report_filters_full_term_to_sharing_code($options['sharing']);
-  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation|editing)$/', $options['sharing'])) {
-    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow, moderation or ' .
-        "editing (currently $options[sharing]).";
+  if (!preg_match('/^(reporting|peer_review|verification|data_flow|moderation|editing|me)$/', $options['sharing'])) {
+    return 'The @sharing option must be one of reporting, peer_review, verification, data_flow, moderation, ' .
+        "editing or me (currently $options[sharing]).";
   }
   report_helper::add_resource('reportfilters');
   report_helper::add_resource('validation');
@@ -1159,10 +1168,26 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
     }
     $r .= '<label for="select-filter">' . lang::get('Filter:') . '</label><select id="select-filter"><option value="" selected="selected">' .
         lang::get('Select filter') . "...</option>$existing</select>";
-    $r .= '<button type="button" id="filter-apply">' . lang::get('Apply') . '</button>';
-    $r .= '<button type="button" id="filter-reset" class="disabled">' . lang::get('Reset') . '</button>';
-    $r .= '<button type="button" id="filter-build">' . lang::get('Create a filter') . '</button></div>';
-    $r .= '</div>';
+    global $indicia_templates;
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-apply',
+      'title' => lang::get('Apply filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Apply'),
+    ]);
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-reset',
+      'title' => lang::get('Reset filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Reset'),
+    ]);
+    $r .= helper_base::apply_static_template('button', [
+      'id' => 'filter-build',
+      'title' => lang::get('Create a custom filter'),
+      'class' => ' class="' . $indicia_templates['buttonDefaultClass'] . '"',
+      'caption' => lang::get('Create a filter'),
+    ]);
+    $r .= '</div></div>';
     $r .= '<div id="filter-details" style="display: none">';
     $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/close-22px.png" width="22" height="22" alt="Close filter builder" title="' .
         lang::get('Close filter builder') . '" class="button" id="filter-done"/>' . "\n";

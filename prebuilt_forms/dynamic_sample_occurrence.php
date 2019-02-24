@@ -832,7 +832,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       }
     }
     else {
-      // single record entry mode. We want to load the occurrence entity and to know the sample ID.
+      // Single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
             $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', TRUE);
@@ -1052,7 +1052,8 @@ HTML;
       if (empty(data_entry_helper::$entity_to_load['sample:group_title'])) {
         data_entry_helper::$entity_to_load['sample:group_title'] = self::$group['title'];
       }
-      // if a possibility of confusion when using this form, add info to clarify which group you are posting to
+      // If a possibility of confusion when using this form, add info to
+      // clarify which group you are posting to
       if (empty(self::$limitToGroupId)) {
         $msg = empty(self::$loadedSampleId) ?
             'The records you enter using this form will be added to the <strong>{1}</strong> group.' :
@@ -1107,11 +1108,12 @@ HTML;
       $value = isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
       $r .= '<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="' . $value . '" />' . PHP_EOL;
     }
-    if (!empty($args['defaults']['occurrence:release_status']))
+    if (!empty($args['defaults']['occurrence:release_status'])) {
       $r .= '<input type="hidden" id="occurrence:release_status" name="occurrence:release_status" value="' . $args['defaults']['occurrence:release_status'] . '" />' . PHP_EOL;
+    }
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
     if ($gridMode) {
-      $r .= '<input type="hidden" value="true" name="gridmode" />' . "\n";
+      $r .= '<input type="hidden" value="true" name="gridmode" />';
     }
     return $r;
   }
