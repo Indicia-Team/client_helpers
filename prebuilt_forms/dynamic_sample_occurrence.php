@@ -822,19 +822,20 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $response = data_entry_helper::get_population_data(array(
             'table' => 'occurrence',
             'extraParams' => $auth['read'] + array('id' => self::$loadedOccurrenceId, 'view' => 'detail'),
-            'caching' => false,
+            'caching' => FALSE,
             'sharing' => 'editing'
         ));
         if (count($response) !== 0) {
-          //we found an occurrence so use it to detect the sample
+          // We found an occurrence so use it to detect the sample.
           self::$loadedSampleId = $response[0]['sample_id'];
         }
       }
-    } else {
-      // single record entry mode. We want to load the occurrence entity and to know the sample ID.
+    }
+    else {
+      // Single record entry mode. We want to load the occurrence entity and to know the sample ID.
       if (self::$loadedOccurrenceId) {
         data_entry_helper::load_existing_record(
-            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+            $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', TRUE);
         if (isset($args['multiple_occurrence_mode']) && $args['multiple_occurrence_mode'] === 'either') {
           // Loading a single record into a form that can do single or multi. Switch to multi if the sample contains
           // more than one occurrence.
@@ -845,11 +846,11 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
                 'view' => 'detail',
                 'limit' => 2
               ),
-            'caching' => false,
+            'caching' => FALSE,
             'sharing' => 'editing'
           ));
           if (count($response) > 1) {
-            data_entry_helper::$entity_to_load['gridmode'] = true;
+            data_entry_helper::$entity_to_load['gridmode'] = TRUE;
             // Swapping to grid mode for edit, so use species list as the grid's extra species list rather than load the
             // whole lot.
             if (!empty($args['list_id']) && empty($args['extra_list_id'])) {
@@ -863,19 +864,19 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         $response = data_entry_helper::get_population_data(array(
           'table' => 'occurrence',
           'extraParams' => $auth['read'] + array('sample_id' => self::$loadedSampleId, 'view' => 'detail'),
-          'caching' => false,
+          'caching' => FALSE,
           'sharing' => 'editing'
         ));
         self::$loadedOccurrenceId = $response[0]['id'];
         data_entry_helper::load_existing_record_from(
-            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', true);
+            $response[0], $auth['read'], 'occurrence', self::$loadedOccurrenceId, 'detail', 'editing', TRUE);
       }
       self::$loadedSampleId = data_entry_helper::$entity_to_load['occurrence:sample_id'];
     }
 
-    // Load the sample record
+    // Load the sample record.
     if (self::$loadedSampleId) {
-      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', true);
+      data_entry_helper::load_existing_record($auth['read'], 'sample', self::$loadedSampleId, 'detail', 'editing', TRUE);
       // If there is a parent sample and we are not force loading the child sample then load it next so the details
       // overwrite the child sample.
       if (!empty(data_entry_helper::$entity_to_load['sample:parent_id']) && empty($args['never_load_parent_sample'])) {
@@ -886,18 +887,23 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     }
     // Ensure that if we are used to load a different survey's data, then we get the correct survey attributes. We can
     // change args because the caller passes by reference.
-    $args['survey_id']=data_entry_helper::$entity_to_load['sample:survey_id'];
-    $args['sample_method_id']=data_entry_helper::$entity_to_load['sample:sample_method_id'];
-    // enforce that people only access their own data, unless explicitly have permissions
+    $args['survey_id'] = data_entry_helper::$entity_to_load['sample:survey_id'];
+    $args['sample_method_id'] = data_entry_helper::$entity_to_load['sample:sample_method_id'];
+    // Enforce that people only access their own data, unless explicitly
+    // have permissions.
     $editor = !empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']);
-    if($editor) return;
+    if ($editor) {
+      return;
+    }
     $readOnly = !empty($args['ro_permission']) && hostsite_user_has_permission($args['ro_permission']);
     if (function_exists('hostsite_get_user_field') &&
         data_entry_helper::$entity_to_load['sample:created_by_id'] != hostsite_get_user_field('indicia_user_id')) {
-      if($readOnly)
+      if ($readOnly) {
         self::$mode = self::MODE_EXISTING_RO;
-      else
+      }
+      else {
         throw new exception(lang::get('Attempt to access a record you did not create'));
+      }
     }
   }
 
@@ -1019,35 +1025,43 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
 
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
-    $r = $auth['write'].
-          "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"" . $args['website_id']."\" />\n" .
-          "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"" . $args['survey_id']."\" />\n";
+    $r = <<<HTML
+$auth[write]
+<input type="hidden" id="website_id" name="website_id" value="$args[website_id]" />
+<input type="hidden" id="survey_id" name="survey_id" value="$args[survey_id]" />
+
+HTML;
     if (!empty($args['sample_method_id'])) {
-      $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $args['sample_method_id'].'"/>' . PHP_EOL;
+      $r .= '<input type="hidden" name="sample:sample_method_id" value="' . $args['sample_method_id'] . '"/>' . PHP_EOL;
     }
     if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
       $r .= '<input type="hidden" id="sample:id" name="sample:id" value="' . data_entry_helper::$entity_to_load['sample:id'] . '" />' . PHP_EOL;
     }
-    if (isset(data_entry_helper::$entity_to_load['occurrence:id'])) {
+    $gridMode = call_user_func(array(self::$called_class, 'getGridMode'), $args);
+    if (isset(data_entry_helper::$entity_to_load['occurrence:id']) && !$gridMode) {
       $r .= '<input type="hidden" id="occurrence:id" name="occurrence:id" value="' . data_entry_helper::$entity_to_load['occurrence:id'] . '" />' . PHP_EOL;
     }
     $r .= self::get_group_licence_html();
     if (!empty(data_entry_helper::$entity_to_load['sample:group_id'])) {
-      $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"" . data_entry_helper::$entity_to_load['sample:group_id']."\" />\n";
-      // If the group does not release it's records, set the release_status flag
-      if (self::$group['private_records']==='t')
+      $r .= "<input type=\"hidden\" id=\"group_id\" name=\"sample:group_id\" value=\"" . data_entry_helper::$entity_to_load['sample:group_id'] . "\" />\n";
+      // If the group does not release it's records, set the release_status
+      // flag.
+      if (self::$group['private_records'] === 't') {
         $r .= "<input type=\"hidden\" id=\"occurrence:release_status\" name=\"occurrence:release_status\" value=\"U\" />\n";
+      }
       if (empty(data_entry_helper::$entity_to_load['sample:group_title'])) {
         data_entry_helper::$entity_to_load['sample:group_title'] = self::$group['title'];
       }
-      // if a possibility of confusion when using this form, add info to clarify which group you are posting to
+      // If a possibility of confusion when using this form, add info to
+      // clarify which group you are posting to
       if (empty(self::$limitToGroupId)) {
         $msg = empty(self::$loadedSampleId) ?
             'The records you enter using this form will be added to the <strong>{1}</strong> group.' :
             'The records on this form are part of the <strong>{1}</strong> group.';
         $r .= '<p>' . lang::get($msg, data_entry_helper::$entity_to_load['sample:group_title']) . '</p>';
       }
-    } elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
+    }
+    elseif (self::$availableForGroups && !isset(data_entry_helper::$entity_to_load['sample:id'])) {
       // Group enabled form being used to add new records, but no group specified in URL path, so give
       // the user a chance to pick from their list of possible groups for this form.
       // Get the list of possible groups they might be posting into using this form. To do this we need the page
@@ -1066,7 +1080,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         )
       ));
       // Output a drop down so they can select the appropriate group.
-      if (count($possibleGroups)>1) {
+      if (count($possibleGroups) > 1) {
         $options = array('' => lang::get('Ad-hoc non-group records'));
         foreach ($possibleGroups as $group) {
           $options[$group['id']] = "$group[group_type]: $group[title]";
@@ -1077,7 +1091,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
             'fieldname' => 'sample:group_id',
             'lookupValues' => $options
         ));
-      } elseif (count($possibleGroups)===1) {
+      }
+      elseif (count($possibleGroups) === 1) {
         $r .= data_entry_helper::radio_group(array(
             'label' => lang::get('Post to {1}', $possibleGroups[0]['title']),
             'labelClass' => 'auto',
@@ -1093,11 +1108,13 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       $value = isset($args['defaults']['occurrence:record_status']) ? $args['defaults']['occurrence:record_status'] : 'C';
       $r .= '<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="' . $value . '" />' . PHP_EOL;
     }
-    if (!empty($args['defaults']['occurrence:release_status']))
+    if (!empty($args['defaults']['occurrence:release_status'])) {
       $r .= '<input type="hidden" id="occurrence:release_status" name="occurrence:release_status" value="' . $args['defaults']['occurrence:release_status'] . '" />' . PHP_EOL;
+    }
     $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
-    if ($args['multiple_occurrence_mode']==='multi')
+    if ($gridMode) {
       $r .= '<input type="hidden" value="true" name="gridmode" />';
+    }
     return $r;
   }
 

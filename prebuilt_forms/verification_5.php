@@ -834,6 +834,7 @@ idlist=';
             'tablet-landscape' => 1300,
           ),
         ),
+        'includeColumnsPicker' => TRUE,
       )
     );
     array_unshift($opts['columns'], array(
