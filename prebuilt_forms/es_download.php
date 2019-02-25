@@ -139,33 +139,38 @@ HTML;
     $params = hostsite_get_node_field_value($nid, 'params');
     $postData = file_get_contents('php://input');
     $urlParams = array_merge($_GET);
+    $initialScroll = array_key_exists('scroll', $_GET);
     unset($urlParams['q']);
     unset($urlParams['warehouse_url']);
-    $session = curl_init($_GET['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search?' . http_build_query($urlParams));
-    $query = [
-      'query' => [
-        'bool' => [
-          'must' => [
-            'query_string' => [
-              'query' => $postData,
-              'analyze_wildcard' => TRUE,
-              'default_field' => '*',
+    unset($urlParams['scroll']);
+    $url = $_GET['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search?' . http_build_query($urlParams);
+    if ($initialScroll) {
+      $url .= '&scroll=true ';
+    }
+    $session = curl_init($url);
+    if (!empty($postData)) {
+      $query = [
+        'query' => [
+          'bool' => [
+            'must' => [
+              'query_string' => [
+                'query' => $postData,
+                'analyze_wildcard' => TRUE,
+                'default_field' => '*',
+              ],
             ],
           ],
         ],
-      ],
-    ];
-    if (!empty($postData)) {
+      ];
       curl_setopt($session, CURLOPT_POST, 1);
       curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($query));
-    }
-    if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-      curl_setopt($session, CURLOPT_CUSTOMREQUEST, $_SERVER['REQUEST_METHOD']);
     }
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
       "Authorization: USER:$params[user]:SECRET:$params[secret]",
     ]);
+    curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
+    curl_setopt($session, CURLOPT_SSL_VERIFYPEER, false);
     curl_setopt($session, CURLOPT_HEADER, FALSE);
     curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
     // Do the POST and then close the session.
