@@ -567,7 +567,7 @@ JS;
   private static function expand_ids_to_fks($arr) {
     $ids = preg_grep('/_id$/', $arr);
     foreach ($ids as &$id) {
-      $id = str_replace('_id', '', $id);
+      $id = preg_replace('/_id$/', '', $id);
       if (strpos($id, ':') === FALSE) {
         $id = "fk_$id";
       }
@@ -795,7 +795,7 @@ JS;
       $translatedCaption = self::translate_field($field, $defaultCaption);
       // Need a version of the caption without "from controlled termlist" as we ignore that for matching.
       $strippedScreenCaption = str_replace(" (from controlled termlist)", "", $translatedCaption);
-      $fieldname = str_replace(array('fk_', '_id'), array('', ''), $fieldname);
+      $fieldname = preg_replace(['/^fk_/', '/_id$/'], ['', ''], $fieldname);
       unset($option);
       // Skip the metadata fields.
       if (!in_array($fieldname, $skipped)) {
@@ -1016,11 +1016,11 @@ TD;
     $captionSuffix = (substr($prefix,strlen($prefix)-2,2)=='_2' ? // in a association situation with a second record
                        ' (2)' : '');
     if (empty($caption)) {
-      if (substr($fieldname,0,3)=='fk_') {
+      if (substr($fieldname,0,3) === 'fk_') {
         $captionSuffix .= ' (' . lang::get('from controlled termlist') . ')';
       }
-      $fieldname=str_replace(array('fk_', '_id'), array('', ''), $fieldname);
-      if ($prefix==$model || $prefix=="metaFields" || $prefix==substr($fieldname,0,strlen($prefix))) {
+      $fieldname = preg__replace(['/^fk_/', '/_id$/'], ['', ''], $fieldname);
+      if ($prefix === $model || $prefix=="metaFields" || $prefix==substr($fieldname,0,strlen($prefix))) {
         $caption = self::processLabel($fieldname) . $captionSuffix;
       }
       else {
