@@ -71,7 +71,7 @@ jQuery(document).ready(function docReady($) {
       // dataset a chunk at a time.
       $.post(
         indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep + 'format=csv&scroll' +
-          '&warehouse_url=' + indiciaData.warehouseUrl,
+          '&warehouse_url=' + encodeURIComponent(indiciaData.warehouseUrl),
         $('#query').val(),
         function success(data) {
           if (typeof data.code !== 'undefined' && data.code === 401) {
