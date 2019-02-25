@@ -1252,29 +1252,30 @@ JS;
         'caption' => lang::get('Search'),
         'title' => '',
       )),
-      'public' => false,
-      'autoCollapseResults' => false,
-      'isFormControl' => true
+      'public' => FALSE,
+      'autoCollapseResults' => FALSE,
+      'isFormControl' => TRUE,
     ), $options);
     if ($options['driver'] === 'geoplanet') {
       return 'The GeoPlanet place search service is no longer supported';
     }
     if (($options['driver'] === 'google_places' && empty(self::$google_api_key))) {
-      // can't use place search without the driver API key
+      // Can't use place search without the driver API key
       return 'The georeference lookup control requires an API key configured for the place search API in use.<br/>';
     }
     self::add_resource('indiciaMapPanel');
     // dynamically build a resource to link us to the driver js file.
-    self::$required_resources[] = 'georeference_default_'.$options['driver'];
+    self::$required_resources[] = 'georeference_default_' . $options['driver'];
     // We need to see if there is a resource in the resource list for any special files required by this driver. This
     // will do nothing if the resource is absent.
-    self::add_resource('georeference_'.$options['driver']);
+    self::add_resource('georeference_' . $options['driver']);
     $settings = [
       'autoCollapseResults' => $options['autoCollapseResults'] ? 't' : 'f',
     ];
-    foreach ($options as $key=>$value) {
-      // if any of the options are for the georeferencer driver, then we must set them in the JavaScript.
-      if (substr($key, 0, 6)=='georef') {
+    foreach ($options as $key => $value) {
+      // If any of the options are for the georeferencer driver, then we must
+      // set them in the JavaScript.
+      if (substr($key, 0, 6) === 'georef') {
         $settings[$key] = $value;
       }
     }
@@ -1288,14 +1289,20 @@ JS;
       $settings['public'] = $options['public'] ? 't' : 'f';
       self::add_resource('json');
     }
-    self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings = ' . json_encode($settings) . ";\n";
+    self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings = $.extend($.fn.indiciaMapPanel.georeferenceLookupSettings, ' . json_encode($settings) . ");\n";
     if ($options['autoCollapseResults']) {
-      // no need for close button on results list
-      $options['closeButton']='';
-    } else {
-      // want a close button on the results list
-      $options['closeButton'] = self::apply_replacements_to_template($indicia_templates['button'],
-        array('href' => '#', 'id' => 'imp-georef-close-btn', 'class' => '', 'caption'=>lang::get('Close the search results'), 'title' => ''));
+      // No need for close button on results list.
+      $options['closeButton'] = '';
+    }
+    else {
+      // Want a close button on the results list.
+      $options['closeButton'] = self::apply_replacements_to_template($indicia_templates['button'], [
+        'href' => '#',
+        'id' => 'imp-georef-close-btn',
+        'class' => '',
+        'caption' => lang::get('Close the search results'),
+        'title' => ''
+      ]);
     }
     return self::apply_template('georeference_lookup', $options);
   }

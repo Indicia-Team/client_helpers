@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,25 +14,23 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Media
- * @author  Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link http://code.google.com/p/indicia/
  */
 
 
 $url = $_GET['url'];
 
-if (strpos($url, "?")!==false){
-  $url=$url."&";
-} else {
-  $url=$url."?";
+if (strpos($url, "?") !== FALSE) {
+  $url = $url . "&";
+}
+else {
+  $url = $url . "?";
 }
 
-$found = false;
+$found = FALSE;
 $proxyParams = array("url");
-foreach($_GET AS $key => $value)
-{
+foreach ($_GET as $key => $value) {
   // Do not copy the url param, only everything after it. Must include blanks in this so that reports know when they
   // get passed a blank param.
   if ($found) {
@@ -39,73 +38,73 @@ foreach($_GET AS $key => $value)
     $value = urlencode($value);
     $url = $url . "$key=$value&";
   }
-  if ($key == "url"){
-    $found = true;
+  if ($key == "url") {
+    $found = TRUE;
   }
 }
 $url = str_replace('\"', '"', $url);
 $url = str_replace(' ', '%20', $url);
-
 $session = curl_init($url);
 // Set the POST options.
 $httpHeader = array();
-$postData = file_get_contents( "php://input" );
-if (empty($postData))
+$postData = file_get_contents('php://input');
+if (empty($postData)) {
   $postData = $_POST;
+}
 if (!empty($postData)) {
   curl_setopt($session, CURLOPT_POST, 1);
   curl_setopt($session, CURLOPT_POSTFIELDS, $postData);
-  // post contains a raw XML document?
-  if (is_string($postData) && substr($postData, 0, 1)=='<') {
-    $httpHeader[]='Content-Type: text/xml';
+  // Post contains a raw XML document?
+  if (is_string($postData) && substr($postData, 0, 1) === '<') {
+    $httpHeader[] = 'Content-Type: text/xml';
   }
 }
-if (count($httpHeader)>0) {
+if (count($httpHeader) > 0) {
   curl_setopt($session, CURLOPT_HTTPHEADER, $httpHeader);
 }
 
-curl_setopt($session, CURLOPT_HEADER, true);
-curl_setopt($session, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($session, CURLOPT_HEADER, TRUE);
+curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
 curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-curl_setopt($session, CURLOPT_SSL_VERIFYPEER, false);
+curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
 
 
-// Do the POST and then close the session
+// Do the POST and then close the session.
 $response = curl_exec($session);
-if (curl_errno($session) || strpos($response, 'HTTP/1.1 200 OK')===false) {
-  echo 'cUrl POST request failed. Please check cUrl is installed on the server.';
-  if (curl_errno($session))
-  echo 'Error number: '.curl_errno($session).'';
+if (curl_errno($session)) {
+  echo "cUrl POST request failed. Please check cUrl is installed on the server.\n";
+  echo 'Error number: ' . curl_errno($session) . "\n";
   echo "Server response ";
   echo $response;
-} else {
+}
+else {
   $offset = strpos($response, "\r\n\r\n");
   $headers = curl_getinfo($session);
 
-  if (strpos($headers['content_type'], '/') !== false) {
+  if (strpos($headers['content_type'], '/') !== FALSE) {
     $arr = explode('/', $headers['content_type']);
     $fileType = array_pop($arr);
-    if (strpos($fileType, ';') !== false) {
+    if (strpos($fileType, ';') !== FALSE) {
       $arr = explode(';', $fileType);
       $fileType = $arr[0];
     }
-    if($fileType == 'comma-separated-values') {
+    if ($fileType === 'comma-separated-values') {
       $fileType = 'csv';
     }
-    // if a 'filename' is specified in the original URL params, then the client is expecting the attachement to have this name.
-    header('Content-Disposition: attachment; filename="'.(isset($_GET['filename']) ? $_GET['filename'] : 'download'). '.' . $fileType . '"');
+    // If a 'filename' is specified in the original URL params, then the client
+    // is expecting the attachement to have this name.
+    header('Content-Disposition: attachment; filename="' . (isset($_GET['filename']) ? $_GET['filename'] : 'download') . '.' . $fileType . '"');
 
-    if ($fileType == 'csv') {
-      // output a byte order mark for proper CSV UTF-8
+    if ($fileType === 'csv') {
+      // Output a byte order mark for proper CSV UTF-8.
       echo chr(239) . chr(187) . chr(191);
     }
   }
   if (array_key_exists('charset', $headers)) {
-    $headers['content_type'] .= '; '.$headers['charset'];
+    $headers['content_type'] .= '; ' . $headers['charset'];
   }
   header('Content-type: ' . $headers['content_type']);
-
-  // last part of response is the actual data
+  // Last part of response is the actual data.
   $arr = explode("\r\n\r\n", $response);
   echo array_pop($arr);
 }
