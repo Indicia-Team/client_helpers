@@ -13,7 +13,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link http://code.google.com/p/indicia/
@@ -83,7 +82,7 @@ $default_terms = array(
   'dd:sample:entered_sref' => 'Grid ref or other spatial ref',
   'dd:sample:entered_sref_system' => 'Spatial reference system',
 
-  // import model name/field name prefix overrides.
+  // Import model name/field name prefix overrides.
   'smpAttr' => 'Sample custom attributes',
   'occAttr' => 'Occurrence custom attributes',
   'locAttr' => 'Location custom attributes',
@@ -95,9 +94,9 @@ $default_terms = array(
   'Click to Filter Where' => 'Define the geographic area, site or map reference to include',
   'Click to Filter When' => 'Define a date range for records to include',
   'Click to Filter Who' => 'Define whose records to include',
-  'Click to Filter Occurrence_id' => 'Select records by record ID',
+  'Click to Filter Occ_id' => 'Select records by record ID',
   'Click to Filter Quality' => 'Select records based on quality criteria such as verification status or presence of photos',
-  'Click to Filter Source' => 'Select records based on source website, survey or input form'
+  'Click to Filter Source' => 'Select records based on source website, survey or input form',
 );
 
 // Some bigger bits of text better handled with HEREDOC.
