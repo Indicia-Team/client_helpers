@@ -330,39 +330,44 @@ class extension_event_reports {
     return self::league_table($auth, $args, $options, $entity, 'filterable_record_counts_league', $label, 'Records');
   }
 
-  private static function league_table($auth, $args, $options, $entity, $report, $label, $countOf='Species') {
+  private static function league_table($auth, $args, $options, $entity, $report, $label, $countOf = 'Species') {
     iform_load_helpers(array('report_helper'));
-    if ($entity==='users')
-      $indiciaUserId=hostsite_get_user_field('indicia_user_id');
-    elseif ($entity==='locations')
-      $userLocationId=hostsite_get_user_field('location');
+    if ($entity === 'users') {
+      $indiciaUserId = hostsite_get_user_field('indicia_user_id');
+    }
+    elseif ($entity === 'locations') {
+      $userLocationId = hostsite_get_user_field('location');
+    }
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
         'dataSource' => "library/$entity/$report",
         'limit' => 20,
-        'autoParamsForm' => false,
-        'caching' => true,
-        'cachePerUser' => false
+        'autoParamsForm' => FALSE,
+        'caching' => TRUE,
+        'cachePerUser' => FALSE
       ),
       $options
     );
-    $reportOptions['extraParams']['limit']=$reportOptions['limit'];
+    $reportOptions['extraParams']['limit'] = $reportOptions['limit'];
     $rows = report_helper::get_report_data($reportOptions);
+    if (isset($rows['records'])) {
+      $rows = $rows['records'];
+    }
     $r = self::output_title($options);
     $r .= "<table class=\"league\"><thead><th>Pos</th><th>$label</th><th>$countOf</th></thead><tbody>";
     if (count($rows)) {
       $pos = 1;
       $lastVal = $rows[0]['value'];
       foreach ($rows as $idx => $row) {
-        if ($row['value']<$lastVal) {
-          $pos = $idx+1; // +1 because zero indexed $idx
+        if ($row['value'] < $lastVal) {
+          $pos = $idx + 1; // +1 because zero indexed $idx
           $lastVal = $row['value'];
         }
-        $class='';
-        if (($entity==='users' && $indiciaUserId==$row['id'])
-            || ($entity==='locations' && $userLocationId==$row['id']))
-          $class=' class="ui-state-highlight"';
+        $class = '';
+        if (($entity === 'users' && $indiciaUserId == $row['id'])
+            || ($entity === 'locations' && $userLocationId == $row['id']))
+          $class = ' class="ui-state-highlight"';
         $r .= "<tr$class><td>$pos</td><td>$row[name]</td><td>$row[value]</td></tr>\n";
       }
     } else {
