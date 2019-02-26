@@ -347,8 +347,8 @@ class iform_dynamic {
     $customAttributeTabs = get_attribute_tabs($attributes);
     $tabs = self::get_all_tabs($args['structure'], $customAttributeTabs);
     if (isset($tabs['-'])) {
-      $hasControls=false;
-      $r .= self::get_tab_content($auth, $args, '-', $tabs['-'], 'above-tabs', $attributes, $hasControls);
+      $hasControls = FALSE;
+      $r .= self::get_tab_content($auth, $args, '-', $tabs['-'], NULL, $attributes, $hasControls);
       unset($tabs['-']);
     }
 
@@ -357,56 +357,60 @@ class iform_dynamic {
     $tabHtml = self::get_tab_html($tabs, $auth, $args, $attributes, $firstTabExtras);
     // Output the dynamic tab headers.
     if ($args['interface'] !== 'one_page') {
-      $headerOptions = array('tabs'=>array());
-      foreach ($tabHtml as $tab=>$tabContent) {
+      $headerOptions = array('tabs' => array());
+      foreach ($tabHtml as $tab => $tabContent) {
         $alias = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
         $tabtitle = lang::get("LANG_Tab_$alias");
         if ($tabtitle === "LANG_Tab_$alias") {
-          // if no translation provided, we'll just use the standard heading
+          // If no translation provided, we'll just use the standard heading.
           $tabtitle = $tab;
         }
         $headerOptions['tabs']['#tab-' . $alias] = $tabtitle;
       }
       $r .= data_entry_helper::tab_header($headerOptions);
       data_entry_helper::enable_tabs(array(
-          'divId' => 'controls',
-          'style' => $args['interface'],
-          'progressBar' => isset($args['tabProgress']) && $args['tabProgress'] == true,
-          'progressBarOptions' => isset($args['progressBarOptions']) ? $args['progressBarOptions'] : array(),
-          'navButtons' => isset($args['force_next_previous']) && $args['force_next_previous']
+        'divId' => 'controls',
+        'style' => $args['interface'],
+        'progressBar' => isset($args['tabProgress']) && $args['tabProgress'] == TRUE,
+        'progressBarOptions' => isset($args['progressBarOptions']) ? $args['progressBarOptions'] : array(),
+        'navButtons' => isset($args['force_next_previous']) && $args['force_next_previous'],
       ));
     }
     else {
-      // ensure client side validation is activated if requested on single page forms. This is done in the enable_tabs bit above.
-      // This is useful if we have custom client side validation.
+      // Ensure client side validation is activated if requested on single page
+      // forms. This is done in the enable_tabs bit above. This is useful if we
+      // have custom client side validation.
       if (isset(data_entry_helper::$validated_form_id)) {
         data_entry_helper::$javascript .= "
-$('#".data_entry_helper::$validated_form_id."').submit(function() {
-  var tabinputs = $('#".data_entry_helper::$validated_form_id."').find('input,select,textarea').not(':disabled,[name=\"\"],.scTaxonCell,.inactive');
-  var tabtaxoninputs = $('#".data_entry_helper::$validated_form_id." .scTaxonCell').find('input,select').not(':disabled');
+$('#" . data_entry_helper::$validated_form_id . "').submit(function() {
+  var tabinputs = $('#" . data_entry_helper::$validated_form_id . "').find('input,select,textarea').not(':disabled,[name=\"\"],.scTaxonCell,.inactive');
+  var tabtaxoninputs = $('#" . data_entry_helper::$validated_form_id . " .scTaxonCell').find('input,select').not(':disabled');
   if ((tabinputs.length>0 && !tabinputs.valid()) || (tabtaxoninputs.length>0 && !tabtaxoninputs.valid())) {
-    alert('".lang::get('Before you can save the data on this form, some of the values in the input boxes need checking. '.
-            'These have been highlighted on the form for you.')."');
+    alert('" . lang::get('Before you can save the data on this form, some of the values in the input boxes need checking. ' .
+            'These have been highlighted on the form for you.') . "');
     return false;
   }
   return true;
 });\n";
       }
     }
-    // Output the dynamic tab content
+    // Output the dynamic tab content.
     $pageIdx = 0;
     $singleSpeciesLabel = self::$singleSpeciesName;
-    foreach ($tabHtml as $tab=>$tabContent) {
-      // get a machine readable alias for the heading
-      $tabalias = 'tab-'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
+    foreach ($tabHtml as $tab => $tabContent) {
+      // Get a machine readable alias for the heading.
+      $tabalias = 'tab-' . preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
       $r .= "<div id=\"$tabalias\">\n";
-      //We only want to show the single species message to the user if they have selected the option and we are in single species mode.
-      //We also want to only show it on the species tab otherwise in 'All one page' mode it will appear multiple times.
-      if (isset($args['single_species_message']) && $args['single_species_message'] && $tabalias=='tab-species' && isset($singleSpeciesLabel))
-        $r .= '<div class="page-notice ui-state-highlight ui-corner-all">'.lang::get('You are submitting a record of {1}', $singleSpeciesLabel).'</div>';
+      // We only want to show the single species message to the user if they
+      // have selected the option and we are in single species mode. We also
+      // want to only show it on the species tab otherwise in 'All one page'
+      // mode it will appear multiple times.
+      if (isset($args['single_species_message']) && $args['single_species_message'] && $tabalias === 'tab-species' && isset($singleSpeciesLabel)) {
+        $r .= '<div class="page-notice ui-state-highlight ui-corner-all">' . lang::get('You are submitting a record of {1}', $singleSpeciesLabel) . '</div>';
+      }
       // For wizard include the tab title as a header.
-      if ($args['interface']=='wizard') {
-        $r .= '<h1>'.$headerOptions['tabs']['#'.$tabalias].'</h1>';
+      if ($args['interface'] === 'wizard') {
+        $r .= '<h1>' . $headerOptions['tabs']['#'.$tabalias] . '</h1>';
       }
       $r .= $tabContent;
       if (isset($args['verification_panel']) && $args['verification_panel'] && $pageIdx==count($tabHtml)-1)
