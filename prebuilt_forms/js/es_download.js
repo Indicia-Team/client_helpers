@@ -34,24 +34,45 @@ jQuery(document).ready(function docReady($) {
    *   Response body from the ES proxy containing progress data.
    */
   function doPages(data) {
-    var sep = indiciaData.ajaxUrl.match(/\?/) ? '&' : '?';
+    var filterClauses = [];
+    var filter;
+    var date;
+    var hours;
+    var minutes;
     if (data.done < data.total) {
       // Post to the ES proxy. Pass scroll_id parameter to request the next
       // chunk of the dataset.
-      $.post(
-        indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep +
-          'scroll_id=' + data.scroll_id +
-          '&warehouse_url=' + indiciaData.warehouseUrl,
-        $('#query').val(),
-        function success(response) {
+      $.ajax({
+        url: indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid,
+        type: 'post',
+        data: {
+          warehouse_url: indiciaData.warehouseUrl,
+          scroll_id: data.scroll_id
+        },
+        success: function success(response) {
           updateProgress(response);
           doPages(response);
         },
-        'json'
-      );
+        dataType: 'json'
+      });
     } else {
-      done = true;
-      $('#files').append('<div><a href="' + data.filename + '"><span class="fas fa-file-csv"></span>Download file</div>');
+      if ($('#query').val().trim() !== '') {
+        filterClauses.push($('#query').val().trim());
+      }
+      if ($('#higher_geography').val().trim() !== '') {
+        filterClauses.push('location: ' + $('#higher_geography').val().trim());
+      }
+      date = new Date();
+      date.setTime(date.getTime() + (45 * 60 * 1000));
+      hours = '0' + date.getHours();
+      hours = hours.substr(hours.length - 2);
+      minutes = '0' + date.getMinutes();
+      minutes = minutes.substr(minutes.length - 2);
+      filter = filterClauses.length === 0 ? '. ' : ' for query: <pre>' + filterClauses.join('\n') + '</pre>';
+      $('#files').append('<div><a href="' + data.filename + '">' +
+        '<span class="fas fa-file-archive"></span>' +
+        'Download .zip file</a><br/>' +
+        'File containing ' + data.total + ' occurrences' + filter + 'Available until ' + hours + ':' + minutes + '</div>');
       $('#files').fadeIn('med');
     }
   }
@@ -69,11 +90,16 @@ jQuery(document).ready(function docReady($) {
     if ($('#es-settings').valid()) {
       // Post to the ES proxy. Pass scroll parameter to initiate loading the
       // dataset a chunk at a time.
-      $.post(
-        indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid + sep + 'format=csv&scroll' +
-          '&warehouse_url=' + encodeURIComponent(indiciaData.warehouseUrl),
-        $('#query').val(),
-        function success(data) {
+      $.ajax({
+        url: indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid,
+        type: 'post',
+        data: {
+          warehouse_url: indiciaData.warehouseUrl,
+          scroll: 'true',
+          query: $('#query').val(),
+          higher_geography: $('#higher_geography').val()
+        },
+        success: function success(data) {
           if (typeof data.code !== 'undefined' && data.code === 401) {
             alert('ElasticSearch alias configuration user or secret incorrect in the form configuration.');
             $('.progress-container').hide();
@@ -82,8 +108,8 @@ jQuery(document).ready(function docReady($) {
             doPages(data);
           }
         },
-        'json'
-      );
+        dataType: 'json'
+      });
     }
   });
 });
