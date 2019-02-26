@@ -902,7 +902,12 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
       self::$javascript .= "});\n";
     }
     if ($options['ajax'] && $options['autoloadAjax']) {
-      self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.ajaxload(true);\n";
+      self::$onload_javascript .= <<<JS
+if (!indiciaData.reports.$group.{$uniqueName}[0].settings.populated) {
+  indiciaData.reports.$group.$uniqueName.ajaxload(true);
+}
+
+JS;
     }
     elseif (!$options['ajax']) {
       self::$onload_javascript .= "indiciaData.reports.$group.$uniqueName.setupPagerEvents();\n";

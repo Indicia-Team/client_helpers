@@ -191,11 +191,12 @@ function iform_report_get_report_parameters() {
  *
  * Uses to the report settings provided in the configuration of a prebuilt form
  * to determin the settings required for a report.
- *
- * @global <type> $indicia_templates
+
  * @param string $args
  * @param <type> $readAuth
- * @return string
+ *
+ * @return array
+ *   Options for the report request.
  */
 function iform_report_get_report_options($args, $readAuth) {
   // Handle auto_params_form for backwards compatibility.
@@ -322,14 +323,14 @@ function iform_report_get_report_options($args, $readAuth) {
 }
 
 /**
- * Takes a set of report parameters and applies preferences from the user's 
- * EasyLogin profile to the report parameters. Assumes parameters called 
- * ownData, ownLocality, ownGroups. See the library/occurrences/explore_list 
+ * Takes a set of report parameters and applies preferences from the user's
+ * EasyLogin profile to the report parameters. Assumes parameters called
+ * ownData, ownLocality, ownGroups. See the library/occurrences/explore_list
  * report for an example.
  */
 function iform_report_apply_explore_user_own_preferences(&$reportOptions) {
   $allParams = array_merge($reportOptions['paramDefaults'], $reportOptions['extraParams']);
-  /* Unless ownData explicitly set, we either default it to unchecked, or we 
+  /* Unless ownData explicitly set, we either default it to unchecked, or we
     set it unchecked and hidden if the user account is not on the warehouse. */
   if (!array_key_exists('ownData', $allParams)) {
     $indicia_user_id = hostsite_get_user_field('indicia_user_id');
@@ -350,7 +351,7 @@ function iform_report_apply_explore_user_own_preferences(&$reportOptions) {
     else
       $reportOptions['extraParams']['ownLocality'] = 0;
   }
-  /* Unless ownGroups explicitly set, we either default it to checked, or we 
+  /* Unless ownGroups explicitly set, we either default it to checked, or we
     set it unchecked and hidden if the user account has no taxon groups set. */
   if (!array_key_exists('ownGroups', $allParams)) {
     $taxon_groups = hostsite_get_user_field('taxon_groups');
