@@ -390,19 +390,19 @@ class map_helper extends helper_base {
       }
       $json = substr(json_encode($jsoptions), 0, -1) . $json_insert . '}';
       $olOptions = array_merge([
-        'theme' => self::$js_path . 'theme/default/style.css'
+        'theme' => self::$js_path . 'theme/default/style.css',
       ], $olOptions);
       $json .= ',' . json_encode($olOptions);
       $javascript = '';
       $mapSetupJs = '';
       if (isset($options['setupJs'])) {
-        $mapSetupJs .= $options['setupJs']."\n";
+        $mapSetupJs .= "$options[setupJs]\n";
       }
       $mapSetupJs .= "jQuery('#$options[divId]').indiciaMapPanel($json);\n";
       // Trigger a change event on the sref if it's set in case locking in use.
       // This will draw the polygon on the map.
       $srefId = empty($options['srefId']) ? '$.fn.indiciaMapPanel.defaults.srefId' : "'{$options['srefId']}'";
-      if (!(isset($options['switchOffSrefRetrigger']) && $options['switchOffSrefRetrigger'] == true)){
+      if (!(isset($options['switchOffSrefRetrigger']) && $options['switchOffSrefRetrigger'] == TRUE)) {
         $mapSetupJs .= <<<JS
 var srefId = $srefId;
 if (srefId && $('#' + srefId).length && $('#' + srefId).val()!==''
@@ -437,27 +437,29 @@ var mapTabHandler = function(event, ui) {
 indiciaFns.bindTabsActivate($($('#$options[tabDiv]').parent()), mapTabHandler);
 
 SCRIPT;
-        // Insert this script at the beginning, because it must be done before the tabs are initialised or the
-        // first tab cannot fire the event
+        // Insert this script at the beginning, because it must be done before
+        // the tabs are initialised or the first tab cannot fire the event.
         self::$javascript = $javascript . self::$javascript;
       }
-      $options['suffixTemplate']='blank';
+      $options['suffixTemplate'] = 'blank';
       self::$onload_javascript .= $mapSetupJs;
       $r = str_replace('{content}', self::apply_template('map_panel', $options), $indicia_templates['jsWrap']);
       if ($options['gridRefHintInFooter'] && $options['gridRefHint']) {
-        $div = '<div id="map-footer" class="grid-ref-hints ui-helper-clearfix" style="width: '.$options['width'].'" ' .
+        $div = '<div id="map-footer" class="grid-ref-hints ui-helper-clearfix" style="width: ' . $options['width'] . '" ' .
             'title="When you hover the mouse over the map, the grid reference is displayed here. Hold the minus key or plus key when clicking on the map ' .
             'to decrease or increase the grid square precision respectively.">';
-        if ($options['clickForSpatialRef'])
+        if ($options['clickForSpatialRef']) {
           $r .= $div . '<h3>' . lang::get('Click to set map ref') . '</h3>' .
               '<div class="grid-ref-hint hint-minus">' .
-                  '<span class="label"></span><span class="data"></span> <span>('.lang::get('hold -').')</span></div>' .
+                  '<span class="label"></span><span class="data"></span> <span>(' . lang::get('hold -') . ')</span></div>' .
               '<div class="grid-ref-hint hint-normal"><span class="label"> </span><span class="data"></span></div>' .
               '<div class="grid-ref-hint hint-plus">' .
-                  '<span class="label"></span><span class="data"></span> <span>('.lang::get('hold +').')</span></div>';
-        else
+                  '<span class="label"></span><span class="data"></span> <span>(' . lang::get('hold +') . ')</span></div>';
+        }
+        else {
           $r .= $div . '<h3>' . lang::get('Map ref at pointer') . '</h3>' .
               '<div class="grid-ref-hint hint-normal"><span class="label"></span><span class="data"></span></div>';
+        }
         $r .= '</div>';
       }
       return $r;
@@ -495,26 +497,29 @@ SCRIPT;
   public static function layer_list($options) {
     $options = array_merge(array(
       'id' => 'layers',
-      'includeIcons' => true,
-      'includeSwitchers' => false,
-      'includeHiddenLayers' => false,
-      'layerTypes' => array('base','overlay'),
-      'class'=>'',
-      'prefix'=>'',
-      'suffix'=>''
+      'includeIcons' => TRUE,
+      'includeSwitchers' => FALSE,
+      'includeHiddenLayers' => FALSE,
+      'layerTypes' => array('base', 'overlay'),
+      'class' => '',
+      'prefix' => '',
+      'suffix' => '',
     ), $options);
-    $options['class'] .= (empty($options['class']) ? '' : ' ').'layer_list';
-    $r = '<div class="'.$options['class'].'" id="'.$options['id'].'" class="ui-widget ui-widget-content ui-corner-all">';
-    $r .= $options['prefix']."\n<ul>";
-    $r .= "</ul>\n".$options['suffix']."</div>";
-    $funcSuffix = str_replace('-','_',$options['id']);
+    $options['class'] .= (empty($options['class']) ? '' : ' ') . 'layer_list';
+    $r = '<div class="' . $options['class'] . '" id="' . $options['id'] . '" class="ui-widget ui-widget-content ui-corner-all">';
+    $r .= "$options[prefix]\n<ul>";
+    $r .= "</ul>\n" . $options['suffix'] . "</div>";
+    $funcSuffix = str_replace('-', '_', $options['id']);
     self::$javascript .= "function getLayerHtml_$funcSuffix(layer, div) {\n  ";
-    if (!$options['includeHiddenLayers'])
+    if (!$options['includeHiddenLayers']) {
       self::$javascript .= "if (!layer.visibility) {return '';}\n  ";
-    if (!in_array('base', $options['layerTypes']))
+    }
+    if (!in_array('base', $options['layerTypes'])) {
       self::$javascript .= "if (layer.isBaseLayer) {return '';}\n  ";
-    if (!in_array('overlay', $options['layerTypes']))
+    }
+    if (!in_array('overlay', $options['layerTypes'])) {
       self::$javascript .= "if (!layer.isBaseLayer) {return '';}\n  ";
+    }
     self::$javascript .= "var layerHtml = '<li id=\"'+layer.id.replace(/\./g,'-')+'\">';\n  ";
     if ($options['includeSwitchers']) {
       self::$javascript .= "
@@ -522,7 +527,7 @@ SCRIPT;
   var type='', name='';
   if (layer.isBaseLayer) {
     type='radio';
-    name='base-".$options['id']."';
+    name='base-" . $options['id'] . "';
   } else {
     type='checkbox';
     name='base-'+layer.id.replace(/\./g,'-');
