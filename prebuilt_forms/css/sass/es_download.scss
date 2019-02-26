@@ -2,7 +2,7 @@ $diameter: 180px;
 $progress-font-size: 20px;
 $progress-font-colour: white;
 $shadow-colour: silver;
-$file-box-width: 240px;
+$file-box-width: 400px;
 $file-box-padding: 20px;
 $file-box-icon-size: 30px;
 
@@ -33,12 +33,34 @@ $file-box-icon-size: 30px;
   -webkit-box-shadow: 6px 7px 8px 1px $shadow-colour;
   -moz-box-shadow: 6px 7px 8px 1px $shadow-colour;
   box-shadow: 6px 7px 8px 1px $shadow-colour;
-  width: $file-box-width;
+  max-width: $file-box-width;
   padding: $file-box-padding;
   margin: auto;
+  > div {
+    border: dashed silver 1px;
+    margin: $file-box-icon-size / 3;
+    padding: $file-box-icon-size / 3;
+    pre {
+      background: #f4f4f4;
+      border: 1px solid #ddd;
+      border-left: 3px solid #f36d33;
+      color: #666;
+      page-break-inside: avoid;
+      font-family: monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      margin: $file-box-icon-size / 3 0 0 0;
+      max-width: 100%;
+      overflow: auto;
+      padding: $file-box-icon-size / 3;
+      display: block;
+      word-wrap: break-word;
+    }
+  }
   /* Font aweswome file icon */
   .fas {
     font-size: $file-box-icon-size;
     margin-right: $file-box-icon-size / 3;
   }
+
 }

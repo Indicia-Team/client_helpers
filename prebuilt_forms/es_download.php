@@ -82,8 +82,13 @@ class iform_es_download {
     $r = '<form id="es-settings">';
     $r .= data_entry_helper::textarea([
       'fieldname' => 'query',
-      'label' => 'Query string',
-      'helpText' => 'E.g. "Lasius", "2007" or "taxon.family:Apidae". <a href="https://github.com/Indicia-Team/support_files/blob/master/Elasticsearch/document-structure.md" target="_top">Available fields...</a>',
+      'label' => lang::get('Query string'),
+      'helpText' => lang::get('LANG_Helptext_query'),
+    ]);
+    $r .= data_entry_helper::text_input([
+      'fieldname' => 'higher_geography',
+      'label' => lang::get('Limit to location'),
+      'helpText' => lang::get('LANG_Helptext_higher_geography'),
     ]);
     $r .= str_replace(
       [
@@ -137,27 +142,45 @@ HTML;
    */
   public static function ajax_proxy($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
-    $postData = file_get_contents('php://input');
-    $urlParams = array_merge($_GET);
-    $initialScroll = array_key_exists('scroll', $_GET);
-    unset($urlParams['q']);
-    unset($urlParams['warehouse_url']);
-    unset($urlParams['scroll']);
-    $url = $_GET['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search?' . http_build_query($urlParams);
+    $initialScroll = array_key_exists('scroll', $_POST);
+    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search?format=csv';
     if ($initialScroll) {
-      $url .= '&scroll=true ';
+      $url .= '&scroll';
+    }
+    else {
+      $url .= '&scroll_id=' . $_POST['scroll_id'];
     }
     $session = curl_init($url);
-    if (!empty($postData)) {
+    if (!empty(trim($_POST['query'])) || !empty(trim($_POST['higher_geography']))) {
+      $queries = [];
+      if (!empty(trim($_POST['query']))) {
+        $queries[] = [
+          'query_string' => [
+            'query' => trim($_POST['query']),
+            'analyze_wildcard' => TRUE,
+            'default_field' => '*',
+          ]
+        ];
+      }
+      if (!empty(trim($_POST['higher_geography']))) {
+        $queries[] = [
+          'nested' => [
+            'path' => 'location.higher_geography',
+            'query' => [
+              'bool' => [
+                'must' => [
+                  ['match' => ['location.higher_geography.name' => trim($_POST['higher_geography'])]],
+                ],
+              ],
+            ],
+          ]
+        ];
+      }
       $query = [
         'query' => [
           'bool' => [
             'must' => [
-              'query_string' => [
-                'query' => $postData,
-                'analyze_wildcard' => TRUE,
-                'default_field' => '*',
-              ],
+              $queries,
             ],
           ],
         ],
@@ -170,7 +193,7 @@ HTML;
       "Authorization: USER:$params[user]:SECRET:$params[secret]",
     ]);
     curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-    curl_setopt($session, CURLOPT_SSL_VERIFYPEER, false);
+    curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($session, CURLOPT_HEADER, FALSE);
     curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
     // Do the POST and then close the session.
