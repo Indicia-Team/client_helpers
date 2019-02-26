@@ -492,7 +492,7 @@ class filter_who extends FilterBase {
 /**
  * Class defining a "id" filter - record selection by known id.
  */
-class filter_occurrence_id extends FilterBase {
+class filter_occ_id extends FilterBase {
 
   public function getTitle() {
     return lang::get('Record ID');
@@ -502,10 +502,10 @@ class filter_occurrence_id extends FilterBase {
    * Define the HTML required for this filter's UI panel.
    */
   public function get_controls() {
-    $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
+    $r = '<div id="ctrl-wrap-occ_id" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select([
       'label' => lang::get('Record ID'),
-      'fieldname' => 'occurrence_id_op',
+      'fieldname' => 'occ_id_op',
       'lookupValues' => [
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
@@ -514,7 +514,7 @@ class filter_occurrence_id extends FilterBase {
       'controlWrapTemplate' => 'justControl',
     ]);
     $r .= data_entry_helper::text_input([
-      'fieldname' => 'occurrence_id',
+      'fieldname' => 'occ_id',
       'class' => 'control-width-2',
       'controlWrapTemplate' => 'justControl',
       'helpText' => lang::get('Filter by the system assigned record ID.'),
@@ -536,7 +536,7 @@ class filter_occurrence_id extends FilterBase {
 /**
  * Class defining a "id" filter - sample selection by known id.
  */
-class filter_sample_id extends FilterBase {
+class filter_smp_id extends FilterBase {
 
   public function getTitle() {
     return lang::get('Sample ID');
@@ -546,10 +546,10 @@ class filter_sample_id extends FilterBase {
    * Define the HTML required for this filter's UI panel.
    */
   public function get_controls() {
-    $r = '<div id="ctrl-wrap-occurrence_id" class="form-row ctrl-wrap">';
+    $r = '<div id="ctrl-wrap-smp_id" class="form-row ctrl-wrap">';
     $r .= data_entry_helper::select(array(
       'label' => lang::get('Sample ID'),
-      'fieldname' => 'sample_id_op',
+      'fieldname' => 'smp_id_op',
       'lookupValues' => array(
         '=' => lang::get('is'),
         '>=' => lang::get('is at least'),
@@ -558,7 +558,7 @@ class filter_sample_id extends FilterBase {
       'controlWrapTemplate' => 'justControl',
     ));
     $r .= data_entry_helper::text_input(array(
-      'fieldname' => 'sample_id',
+      'fieldname' => 'smp_id',
       'class' => 'control-width-2',
       'controlWrapTemplate' => 'justControl',
     ));
@@ -1212,9 +1212,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'filter_where' => new filter_where(),
       'filter_when' => new filter_when(),
       'filter_who' => new filter_who(),
-      'filter_occurrence_id' => new filter_occurrence_id(),
+      'filter_occ_id' => new filter_occ_id(),
       'filter_quality' => new filter_quality(),
-      'filter_source' => new filter_source()
+      'filter_source' => new filter_source(),
     );
   }
   elseif ($options['entity'] === 'sample') {
@@ -1222,9 +1222,9 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
       'filter_where' => new filter_where(),
       'filter_when' => new filter_when(),
       'filter_who' => new filter_who(),
-      'filter_sample_id' => new filter_sample_id(),
+      'filter_smp_id' => new filter_smp_id(),
       'filter_quality' => new filter_quality_sample(),
-      'filter_source' => new filter_source()
+      'filter_source' => new filter_source(),
     );
   }
   if (!empty($options['filterTypes'])) {
