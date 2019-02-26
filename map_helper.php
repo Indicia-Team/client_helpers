@@ -416,8 +416,8 @@ JS;
       // we have to set use the mapTabLoaded and windowLoaded to track when these events are fired, and only
       // load the map when BOTH the events have fired.
       if (isset($options['tabDiv'])) {
-        $divId = preg_replace('/[^a-zA-Z0-9]/', '', $options['divId']);
         $javascript .= <<<SCRIPT
+indiciaData.mapZoomPlanned = true;
 var mapTabHandler = function(event, ui) {
   panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
   if (typeof indiciaData.mapdiv !== 'undefined' && $(indiciaData.mapdiv).parents('#'+panel.id).length) {
