@@ -1019,7 +1019,7 @@ TD;
       if (substr($fieldname,0,3) === 'fk_') {
         $captionSuffix .= ' (' . lang::get('from controlled termlist') . ')';
       }
-      $fieldname = preg__replace(['/^fk_/', '/_id$/'], ['', ''], $fieldname);
+      $fieldname = preg_replace(['/^fk_/', '/_id$/'], ['', ''], $fieldname);
       if ($prefix === $model || $prefix=="metaFields" || $prefix==substr($fieldname,0,strlen($prefix))) {
         $caption = self::processLabel($fieldname) . $captionSuffix;
       }
