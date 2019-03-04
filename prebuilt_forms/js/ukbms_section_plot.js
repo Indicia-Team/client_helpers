@@ -210,9 +210,12 @@ var reportOptions;
 
     $('#'+reportOptions.species1SelectID+',#'+reportOptions.species2SelectID+',#'+reportOptions.weekNumSelectID).change(function(){
       var week = $('#'+reportOptions.weekNumSelectID).val(),
-          seriesData = [];
+          seriesData = [],
+          yMax = 0,
+          yTickinterval;
 
       reportOptions.opts.series = [];
+      reportOptions.opts.axes.yaxis.ticks = [];
       $('#'+reportOptions.id).empty(); // can we destroy?
       $('#'+reportOptions.id).data('jqplot','N');
 
@@ -229,12 +232,35 @@ var reportOptions;
 //        reportOptions.opts.title.text += reportOptions.weekLabel + ' ' + week;   
       }
       if($('#'+reportOptions.species1SelectID).val() != '') {
+        $.each(reportOptions.values[$('#'+reportOptions.species1SelectID).val()][week], function(idx, val) {
+          yMax = Math.max(yMax, val);
+        });
         reportOptions.opts.series.push({"show":true,"label":$('#'+reportOptions.species1SelectID+' option:selected').text(),"showlabel":true});
         seriesData.push(reportOptions.values[$('#'+reportOptions.species1SelectID).val()][week]);
       }
       if($('#'+reportOptions.species2SelectID).val() != '') {
+        $.each(reportOptions.values[$('#'+reportOptions.species2SelectID).val()][week], function(idx, val) {
+          yMax = Math.max(yMax, val);
+        });
         reportOptions.opts.series.push({"show":true,"label":$('#'+reportOptions.species2SelectID+' option:selected').text(),"showlabel":true});
         seriesData.push(reportOptions.values[$('#'+reportOptions.species2SelectID).val()][week]);
+      }
+      var yTickinterval;
+      if (yMax < 10) {
+        yTickinterval = 1;
+        yMax = yMax < 4 ? 4 : yMax;
+      } else {
+        var scale = Math.ceil(Math.log10(yMax));
+        if (yMax/Math.pow(10, scale) > 0.5) {
+          yTickinterval = Math.pow(10, scale-1);
+        } else if (yMax/Math.pow(10, scale) > 0.2) {
+          yTickinterval = 0.5*Math.pow(10,scale-1);
+        } else {
+          yTickinterval = 0.2*Math.pow(10,scale-1);
+        }
+      }
+      for(i=0; i<=yMax+yTickinterval; i += yTickinterval) {
+        reportOptions.opts.axes.yaxis.ticks.push(i);
       }
       if(seriesData.length == 0) {
         $('#'+reportOptions.id).append('<p class="graph-body-warning">'+reportOptions.selectPrompt+'</p>');
