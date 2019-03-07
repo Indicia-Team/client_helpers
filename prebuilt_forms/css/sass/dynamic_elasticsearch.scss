@@ -1,0 +1,92 @@
+$colour-even-row: #f7f7f7;
+$colour-odd-row: transparent;
+$colour-hover-row-bg: #fff899;
+$colour-hover-row: #333333;
+$colour-select-row: #ffffff;
+$colour-select-row-bg: #3333ee;
+
+@mixin fa-box($border-color, $fill-color, $color) {
+  border: solid $border-color 1px;
+  border-radius: 2px;
+  background-color: $fill-color;
+  color: $color;
+}
+
+.fas, .far {
+  margin: 3px;
+  padding: 1px;
+  &.fa-check-circle {
+    color: green;
+  }
+  &.fa-check-double {
+    @include fa-box(green, green, white);
+  }
+  &.fa-check {
+    @include fa-box(green, white, green);
+  }
+  &.fa-times-circle {
+    color: red;
+  }
+  &.fa-times {
+    @include fa-box(red, white, red);
+    &.status-R5 {
+      @include fa-box(red, red, white);
+    }
+  }
+}
+table.es-data-grid {
+  thead {
+    .fa-sort {
+      opacity: 0.3;
+      &:hover {
+        opacity: 1;
+      }
+    }
+    .es-filter-row {
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        margin: 0;
+      }
+    }
+  }
+  tbody {
+    tr {
+      &:nth-child(even), &:nth-child(even) td {
+        background-color: $colour-even-row;
+      }
+      &:nth-child(odd), &:nth-child(odd) td {
+        background-color: $colour-odd-row;
+      }
+      &:hover, &:hover td {
+        color: $colour-hover-row;
+        background-color: $colour-hover-row-bg;
+      }
+      &.selected, &.selected td {
+        color: $colour-select-row;
+        background-color: $colour-select-row-bg;
+      }
+    }
+  }
+}
+
+.es-output-map {
+  height: 400px;
+}
+
+.record-details {
+  th {
+    width: 200px;
+  }
+}
+
+.comment-popup {
+  label {
+    display: block;
+    width: auto;
+  }
+  textarea {
+    min-width: 300px;
+    min-height: 250px;
+  }
+}

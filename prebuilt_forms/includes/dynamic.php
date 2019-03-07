@@ -584,25 +584,34 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         // Component surrounded by ? so represents a help text.
         $helpText = substr($component, 1, -1);
         $html .= str_replace('{message}', lang::get($helpText), $indicia_templates['messageBox']);
-      } elseif (preg_match('/\A\[[^�]*\]\z/', $component) === 1) {
+      }
+      elseif (preg_match('/\A\[[^�]*\]\z/', $component) === 1) {
         // Component surrounded by [] so represents a control or control block
         // Anything following the component that starts with @ is an option to
         // pass to the control.
         $options = [];
-        while ($i < count($tabContent) - 1 && substr($tabContent[$i+1], 0, 1) === '@' || trim($tabContent[$i]) === '') {
+        while ($i < count($tabContent) - 1 && substr($tabContent[$i + 1], 0, 1) === '@' || trim($tabContent[$i]) === '') {
           $i++;
-          // ignore empty lines
+          // Ignore empty lines.
           if (trim($tabContent[$i]) !== '') {
-            $option = explode('=', substr($tabContent[$i],1), 2);
+            $option = explode('=', substr($tabContent[$i], 1), 2);
+            if (substr(trim($option[1]), 0, 4) === '<!--') {
+              $option[1] = preg_replace('/^<!\-\-/', '', trim($option[1]));
+              while (substr(trim($option[1]), -3) !== '-->' && $i < count($tabContent) - 1) {
+                $i++;
+                $option[1] .= "\n" . $tabContent[$i];
+              }
+              $option[1] = preg_replace('/\-\->$/', '', trim($option[1]));
+            }
             if (!isset($option[1])||$option[1] === 'false')
               $options[$option[0]] = FALSE;
             else {
               $options[$option[0]] = json_decode($option[1], TRUE);
-              // if not json then need to use option value as it is.
-              if ($options[$option[0]]=='') $options[$option[0]]=$option[1];
+              // If not json then need to use option value as it is.
+              if ($options[$option[0]] == '') $options[$option[0]] = $option[1];
             }
-            // urlParam is special as it loads the control's default value from $_GET
-            if ($option[0]==='urlParam' && isset($_GET[$option[1]]))
+            // UrlParam is special as it loads the control's default value from $_GET.
+            if ($option[0] === 'urlParam' && isset($_GET[$option[1]]))
               $options['default'] = $_GET[$option[1]];
             // label and helpText should both get translated
             if (preg_match('/^([a-z]{3}Attr:\d+\|)?label$/', $option[0])) {
