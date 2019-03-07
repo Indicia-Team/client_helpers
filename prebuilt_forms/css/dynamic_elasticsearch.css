@@ -48,6 +48,17 @@ table.es-data-grid tbody tr.selected, table.es-data-grid tbody tr.selected td {
 .es-output-map {
   height: 500px; }
 
+.verification-buttons * {
+  display: inline-block;
+  vertical-align: middle; }
+.verification-buttons button {
+  background: none;
+  box-shadow: none;
+  color: black;
+  text-shadow: none;
+  min-height: 25px;
+  margin: 8px 8px; }
+
 .record-details th {
   width: 200px; }
 

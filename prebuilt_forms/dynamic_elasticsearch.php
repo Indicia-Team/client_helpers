@@ -93,6 +93,13 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'group' => 'ElasticSearch Settings',
       ],
       [
+        'name' => 'warehouse_prefix',
+        'caption' => 'Warehouse ID prefix',
+        'description' => 'Prefix given to numeric IDs to make them unique on the index.',
+        'type' => 'text_input',
+        'group' => 'ElasticSearch Settings',
+      ],
+      [
         'name' => 'filter_json',
         'caption' => 'Filter JSON - Filter',
         'description' => 'JSON ',
@@ -354,9 +361,15 @@ HTML;
     helper_base::add_resource('fancybox');
     return <<<HTML
 <div class="verification-buttons" style="display: none;" data-es-output-config="$encodedOptions">
-  <button class="verify" data-status="V"><span class="far fa-check-circle"></span>Accept</button>
-  <button class="verify" data-status="C3"><span class="fas fa-question"></span>Plausible</button>
-  <button class="verify" data-status="R"><span class="far fa-times-circle"></span>Reject</button>
+Actions:
+  <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
+  <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
+  <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
+  <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
+  <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-question status-C3"></span></button>
+  <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
+  <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
+  <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
 </div>
 HTML;
   }
@@ -546,8 +559,8 @@ HTML;
   public static function ajax_esproxyupdate($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
     $occurrenceId = $_POST['id'];
-    $warehouse = 'jvb';
-    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . "/doc/$warehouse|$occurrenceId/_update";
+    watchdog('debug', json_encode($params));
+    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . "/doc/$params[warehouse_prefix]$occurrenceId/_update";
     $doc = ['doc' => array_merge($_POST['doc'])];
     self::curlPost($url, $doc, $params);
   }
