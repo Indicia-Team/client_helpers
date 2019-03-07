@@ -871,6 +871,7 @@ JS;
             'https://unpkg.com/leaflet@1.4.0/dist/leaflet.js',
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket-leaflet.min.js',
+            self::$js_path . 'leaflet.heat/dist/leaflet-heat.js',
           ],
         ],
       );
