@@ -722,6 +722,7 @@ JS;
    * <li>sref_handlers_osgb</li>
    * <li>sref_handlers_osie</li>
    * <li>font_awesome</li>
+   * <li>leaflet</li>
    * </ul>
    */
   public static function add_resource($resource) {
@@ -863,6 +864,14 @@ JS;
             'javascript' => array(self::$js_path.'drivers/sref/osie.js')),
         'font_awesome' => [
           'stylesheets' => ['https://use.fontawesome.com/releases/v5.7.2/css/all.css']
+        ],
+        'leaflet' => [
+          'stylesheets' => ['https://unpkg.com/leaflet@1.4.0/dist/leaflet.css'],
+          'javascript' => [
+            'https://unpkg.com/leaflet@1.4.0/dist/leaflet.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket-leaflet.min.js',
+          ],
         ],
       );
     }
