@@ -1,0 +1,61 @@
+.fas, .far {
+  margin: 3px;
+  padding: 1px; }
+  .fas.fa-check-circle, .far.fa-check-circle {
+    color: green; }
+  .fas.fa-check-double, .far.fa-check-double {
+    border: solid green 1px;
+    border-radius: 2px;
+    background-color: green;
+    color: white; }
+  .fas.fa-check, .far.fa-check {
+    border: solid green 1px;
+    border-radius: 2px;
+    background-color: white;
+    color: green; }
+  .fas.fa-times-circle, .far.fa-times-circle {
+    color: red; }
+  .fas.fa-times, .far.fa-times {
+    border: solid red 1px;
+    border-radius: 2px;
+    background-color: white;
+    color: red; }
+    .fas.fa-times.status-R5, .far.fa-times.status-R5 {
+      border: solid red 1px;
+      border-radius: 2px;
+      background-color: red;
+      color: white; }
+
+table.es-data-grid thead .fa-sort {
+  opacity: 0.3; }
+  table.es-data-grid thead .fa-sort:hover {
+    opacity: 1; }
+table.es-data-grid thead .es-filter-row input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0; }
+table.es-data-grid tbody tr:nth-child(even), table.es-data-grid tbody tr:nth-child(even) td {
+  background-color: #f7f7f7; }
+table.es-data-grid tbody tr:nth-child(odd), table.es-data-grid tbody tr:nth-child(odd) td {
+  background-color: transparent; }
+table.es-data-grid tbody tr:hover, table.es-data-grid tbody tr:hover td {
+  color: #333333;
+  background-color: #fff899; }
+table.es-data-grid tbody tr.selected, table.es-data-grid tbody tr.selected td {
+  color: #ffffff;
+  background-color: #3333ee; }
+
+.es-output-map {
+  height: 400px; }
+
+.record-details th {
+  width: 200px; }
+
+.comment-popup label {
+  display: block;
+  width: auto; }
+.comment-popup textarea {
+  min-width: 300px;
+  min-height: 250px; }
+
+/*# sourceMappingURL=dynamic_elasticsearch.css.map */
