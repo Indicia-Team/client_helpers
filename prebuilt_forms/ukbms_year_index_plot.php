@@ -555,6 +555,8 @@ class iform_ukbms_year_index_plot {
       	$ctrl .= '<option value="" class="location-select-option" >&lt;'.lang::get('No sites available').'&gt;</option>';
       $ctrl .='</select>';
     }
+    if(!array_key_exists($default, $locationTypeLookUpValues))
+        $default=array_keys($locationTypeLookUpValues)[0];
     // default location type is the first in the list, so populate its locations as default as well.
     if(count($locationTypeLookUpValues)>1){
     	$ctrl = data_entry_helper::select(array(
