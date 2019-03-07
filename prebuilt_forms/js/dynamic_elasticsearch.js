@@ -82,6 +82,7 @@
     var valuePath = doc;
     var fieldPath = field.split('.');
     var values = [];
+    var info = '';
     if (field === '#status_icon#') {
       return indiciaFns.getEsStatusIcon(doc);
     }
@@ -90,6 +91,19 @@
         return doc.event.date_start + ' - ' + doc.event.date_end;
       }
       return doc.event.date_start;
+    }
+    if (field === '#locality#') {
+      if (doc.location.verbatim_locality) {
+        info += '<div>' + doc.location.verbatim_locality + '</div>';
+        if (doc.location.higher_geography) {
+          info += '<ul>';
+          $.each(doc.location.higher_geography, function eachPlace() {
+            info += '<li>' + this.type + ': ' + this.name + '</li>';
+          });
+          info += '</ul>';
+        }
+      }
+      return info;
     }
     if (field === '#metadata_icons#') {
       if (typeof doc.metadata.licence_code !== 'undefined') {
@@ -756,8 +770,9 @@
         addRow(rows, doc, 'Metadata', '#metadata_icons#');
         addRow(rows, doc, 'Accepted name', 'taxon.accepted_name');
         addRow(rows, doc, 'Status', '#status_icon#');
-        addRow(rows, doc, 'Output map ref', 'location.output_sref');
         addRow(rows, doc, 'Date', '#date#');
+        addRow(rows, doc, 'Output map ref', 'location.output_sref');
+        addRow(rows, doc, 'Location', '#locality#');
         addRow(rows, doc, 'Taxonomy', ['taxon.phylum', 'taxon.order', 'taxon.family'], ' :: ');
         addRow(rows, doc, 'Submitted on', 'metadata.created_on');
         addRow(rows, doc, 'Last updated on', 'metadata.updated_on');
@@ -863,6 +878,7 @@
       data: data,
       success: function success(response) {
         if (typeof response.error !== 'undefined') {
+          console.log(response);
           alert('ElasticSearch update failed');
         } else {
           $(dataGrid).esDataGrid('hideRowAndMoveNext');
@@ -929,6 +945,20 @@
         var status = $(popup).attr('data-status');
         saveVerifyComment(id, status[0], status[1], $(popup).find('textarea').val());
         $.fancybox.close();
+      });
+      $(el).find('.l1').hide();
+      $(el).find('.toggle').click(function toggleClick(e) {
+        if ($(e.currentTarget).hasClass('fa-toggle-on')) {
+          $(e.currentTarget).removeClass('fa-toggle-on');
+          $(e.currentTarget).addClass('fa-toggle-off');
+          $(el).find('.l2').hide();
+          $(el).find('.l1').show();
+        } else {
+          $(e.currentTarget).removeClass('fa-toggle-off');
+          $(e.currentTarget).addClass('fa-toggle-on');
+          $(el).find('.l1').hide();
+          $(el).find('.l2').show();
+        }
       });
     },
     on: function on(event, handler) {
