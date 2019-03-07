@@ -330,6 +330,10 @@ HTML;
     $dataOptions = self::getOptionsForJs($options, [
       'styles',
       'showSelectedRow',
+      'applyBoundsTo',
+      'initialLat',
+      'initialLng',
+      'initialZoom',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     // Escape the source so it can output as an attribute.
@@ -446,7 +450,7 @@ HTML;
         'query' => [
           'terms' => ['location.higher_geography.id' => explode(',', $data)],
         ],
-      ]
+      ],
     ];
   }
 

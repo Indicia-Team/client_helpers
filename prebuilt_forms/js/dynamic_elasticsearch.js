@@ -144,7 +144,10 @@
    * Declare default settings.
    */
   var defaults = {
-    initialBoundsSet: false
+    initialBoundsSet: false,
+    initialLat: 54.093409,
+    initialLng: -2.89479,
+    initialZoom: 5
   };
 
   var selectedRowMarker;
@@ -162,6 +165,10 @@
     switch (config.type) {
       case 'circle':
         el.outputLayers[sourceId].addLayer(L.circle(location, config.options));
+        break;
+
+      case 'heat':
+        el.outputLayers[sourceId].addLatLng([location.lat, location.lon, metric]);
         break;
 
       default:
@@ -198,14 +205,19 @@
         $.extend(el.settings, options);
       }
 
-      el.map = L.map(el.id).setView([51.505, -0.09], 13);
+      el.map = L.map(el.id).setView([el.settings.initialLat, el.settings.initialLng], el.settings.initialZoom);
       base = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
       });
       baseMaps = { 'Base map': base };
       base.addTo(el.map);
       $.each(source, function eachSource(id, title) {
-        var group = L.featureGroup();
+        var group;
+        if (el.settings.styles[id].type !== 'undefined' && el.settings.styles[id].type === 'heat') {
+          group = L.heatLayer([], { radius: 10 });
+        } else {
+          group = L.featureGroup();
+        }
         // Leaflet wants layers keyed by title.
         overlays[title] = group;
         // Plugin wants them keyed by source ID.
@@ -216,7 +228,7 @@
       L.control.layers(baseMaps, overlays).addTo(el.map);
     },
     /*
-     * Populate the data grid with ElasticSearch response data.
+     * Populate the map with ElasticSearch response data.
      *
      * @param obj sourceSettings
      *   Settings for the data source used to generate the response.
@@ -228,8 +240,12 @@
     populate: function populate(sourceSettings, response) {
       var el = this;
       var buckets;
-      var maxMetric = 100;
-      el.outputLayers[sourceSettings.id].clearLayers();
+      var maxMetric = 10;
+      if (typeof el.outputLayers[sourceSettings.id].clearLayers !== 'undefined') {
+        el.outputLayers[sourceSettings.id].clearLayers();
+      } else {
+        el.outputLayers[sourceSettings.id].setLatLngs([]);
+      }
       // Are there document hits to map?
       $.each(response.hits.hits, function eachHit() {
         var latlon = this._source.location.point.split(',');
@@ -241,12 +257,12 @@
         if (typeof buckets !== 'undefined') {
           $.each(buckets, function eachBucket() {
             var count = indiciaFns.findVal(this, 'count');
-            maxMetric = Math.max(Math.log(count), maxMetric);
+            maxMetric = Math.max(Math.sqrt(count), maxMetric);
           });
           $.each(buckets, function eachBucket() {
             var location = indiciaFns.findVal(this, 'location');
             var count = indiciaFns.findVal(this, 'count');
-            var metric = Math.round((Math.log(count) / maxMetric) * 20000);
+            var metric = Math.round((Math.sqrt(count) / maxMetric) * 20000);
             if (typeof location !== 'undefined') {
               addFeature(el, sourceSettings.id, location, metric);
             }
@@ -254,8 +270,11 @@
         }
       }
       if (sourceSettings.initialMapBounds && !$(el)[0].settings.initialBoundsSet) {
-        el.map.fitBounds(el.outputLayers[sourceSettings.id].getBounds());
-        $(el)[0].settings.initialBoundsSet = true;
+        if (typeof el.outputLayers[sourceSettings.id].getLayers !== 'undefined' &&
+            el.outputLayers[sourceSettings.id].getLayers().length > 0) {
+          el.map.fitBounds(el.outputLayers[sourceSettings.id].getBounds());
+          $(el)[0].settings.initialBoundsSet = true;
+        }
       }
     },
 
@@ -299,7 +318,7 @@
    */
   $.fn.esMap = function buildEsMap(methodOrOptions) {
     var passedArgs = arguments;
-    $.each(this, function callOnEachGrid() {
+    $.each(this, function callOnEachOutput() {
       if (methods[methodOrOptions]) {
         // Call a declared method.
         return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
@@ -971,6 +990,7 @@ jQuery(document).ready(function docReady($) {
       bool_queries: [],
       user_filters: []
     };
+    var bounds;
     if (source.settings.size) {
       data.size = source.settings.size;
     }
@@ -1001,16 +1021,22 @@ jQuery(document).ready(function docReady($) {
       });
     });
     if (source.settings.aggregation) {
+      // Find the map bounds.
+      $.each($('.es-output-map'), function() {
+        if ($(this)[0].settings.applyBoundsTo === source.settings.id) {
+          bounds = $(this)[0].map.getBounds();
+        }
+      });
       indiciaFns.setValIfEmpty(source.settings.aggregation, 'geo_bounding_box', {
         ignore_unmapped: true,
         'location.point': {
           top_left: {
-            lat: 56.273595,
-            lon: -2.307615
+            lat: bounds.getNorth(),
+            lon: bounds.getWest()
           },
           bottom_right: {
-            lat: 49.612545000000004,
-            lon: 4.143555
+            lat: bounds.getSouth(),
+            lon: bounds.getEast()
           }
         }
       });
