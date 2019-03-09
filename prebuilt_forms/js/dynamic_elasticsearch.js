@@ -988,6 +988,7 @@
         }
       }
     };
+    $(el).find('.loading-spinner').show();
     $.ajax({
       url: indiciaData.ajaxUrl + '/esproxy_rawsearch/' + indiciaData.nid,
       type: 'post',
@@ -1002,6 +1003,7 @@
           html += '<h3>Experience for ' + doc.taxon.group + '</h3>';
           html += getExperienceAggregation(response.aggregations, 'group');
           $(el).find('.recorder-experience').html(html);
+          $(el).find('.loading-spinner').hide();
         }
       },
       dataType: 'json'
