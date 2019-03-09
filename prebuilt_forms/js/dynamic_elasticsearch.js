@@ -805,7 +805,9 @@
       $.each(this[type + '_status_filtered_age'].buckets, function eachYear() {
         minYear = Math.min(minYear, this.key);
         maxYear = Math.max(maxYear, this.key);
-        matrix[status][this.key] = this.doc_count;
+        if (typeof matrix[status] !== 'undefined') {
+          matrix[status][this.key] = this.doc_count;
+        }
       });
     });
     html += '<strong>Total records:</strong> ' + data[type + '_status'].doc_count;
