@@ -805,7 +805,9 @@
       $.each(this[type + '_status_filtered_age'].buckets, function eachYear() {
         minYear = Math.min(minYear, this.key);
         maxYear = Math.max(maxYear, this.key);
-        matrix[status][this.key] = this.doc_count;
+        if (typeof matrix[status] !== 'undefined') {
+          matrix[status][this.key] = this.doc_count;
+        }
       });
     });
     html += '<strong>Total records:</strong> ' + data[type + '_status'].doc_count;
@@ -986,6 +988,7 @@
         }
       }
     };
+    $(el).find('.loading-spinner').show();
     $.ajax({
       url: indiciaData.ajaxUrl + '/esproxy_rawsearch/' + indiciaData.nid,
       type: 'post',
@@ -1000,6 +1003,7 @@
           html += '<h3>Experience for ' + doc.taxon.group + '</h3>';
           html += getExperienceAggregation(response.aggregations, 'group');
           $(el).find('.recorder-experience').html(html);
+          $(el).find('.loading-spinner').hide();
         }
       },
       dataType: 'json'
