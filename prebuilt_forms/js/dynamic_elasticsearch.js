@@ -9,11 +9,16 @@
     V: 'far fa-check-circle',
     V1: 'fas fa-check-double',
     V2: 'fas fa-check',
-    C: 'far fa-square',
+    C: 'fas fa-clock',
     C3: 'fas fa-question',
     R: 'far fa-times-circle',
     R4: 'fas fa-times',
-    R5: 'fas fa-times'
+    R5: 'fas fa-times',
+    // Additional flags
+    Q: 'far fa-comment',
+    A: 'far fa-comments',
+    Sensitive: 'fas fa-exclamation-circle',
+    Confidential: 'fas fa-exclamation-triangle'
   };
 
   indiciaData.statusTooltips = {
@@ -24,41 +29,94 @@
     C3: 'Plausible',
     R: 'Not accepted',
     R4: 'Not accepted :: unable to verify',
-    R5: 'Not accepted :: incorrect'
+    R5: 'Not accepted :: incorrect',
+    // Additional flags
+    Q: 'Queried',
+    A: 'Answered',
+    Sensitive: 'Sensitive',
+    Confidential: 'Confidential'
+  };
+
+  indiciaData.ruleIcons = {
+    WithoutPolygon: 'fas fa-globe',
+    PeriodWithinYear: 'far fa-calendar-times',
+    default: 'fas fa-ruler',
+    pass: 'fas fa-thumbs-up',
+    fail: 'fas fa-thumbs-down',
+    pending: 'fas fa-cog',
+    checksDisabled: 'fas fa-eye-slash'
   };
 
   /**
    * Function to flag an output plugin as failed.
    */
   indiciaFns.controlFail = function controlFail(el, msg) {
-    $(el).before('<p class="alert alert-danger"><span class="fas fa-exclamation-triangle fa-2x"></span>Error loading control</p>');
+    $(el).before('<p class="alert alert-danger">' +
+      '<span class="fas fa-exclamation-triangle fa-2x"></span>Error loading control' +
+      '</p>');
     throw new Error(msg);
   };
 
   /**
    * Utility function to retrieve status icon HTML from a status code.
    *
-   * @param object status
-   *   Primary character status code
-   * @param object substatus
-   *   Secondary character status code
+   * @param object flags
+   *   Array of flags, including any of:
+   *   * status
+   *   * substatus
+   *   * query
+   *   * sensitive
+   *   * confidential
+   * @param string iconClass
+   *   Additional class to add to the icons, e.g. fa-2x.
    */
-  indiciaFns.getEsStatusIconFromStatus = function getEsStatusIconFromStatus(status, substatus) {
-    var combined = status + (substatus === null || substatus === '0' ? '' : substatus);
-    if (typeof indiciaData.statusIcons[combined] !== 'undefined') {
-      return '<span title="' + indiciaData.statusTooltips[combined] + '" class="' + indiciaData.statusIcons[combined] + ' status-' + combined + '"></span>';
+  indiciaFns.getEsStatusIcons = function getEsStatusIcons(flags, iconClass) {
+    var html = '';
+    var fullStatus;
+    var classes = [];
+    if (flags.status) {
+      fullStatus = flags.status + (!flags.substatus || flags.substatus === '0' ? '' : flags.substatus);
+      classes.push(indiciaData.statusIcons[fullStatus]);
+      if (iconClass) {
+        classes.push(iconClass);
+      }
+      classes.push('status-' + flags.status + (!flags.substatus || flags.substatus === '0' ? '' : flags.substatus));
+      if (typeof indiciaData.statusIcons[fullStatus] !== 'undefined') {
+        html += '<span title="' + indiciaData.statusTooltips[fullStatus] + '" class="' + classes.join(' ') + '"></span>';
+      }
     }
-    return '';
+    if (flags.query) {
+      classes = [indiciaData.statusIcons[flags.query]];
+      if (iconClass) {
+        classes.push(iconClass);
+      }
+      html += '<span title="' + indiciaData.statusTooltips[flags.query] + '" class="' + classes.join(' ') + '"></span>';
+    }
+    return html;
   };
 
-  /**
-   * Utility function to retrieve status icon HTML from a doc.
-   *
-   * @param object doc
-   *   Document source from ElasticSearch.
-   */
-  indiciaFns.getEsStatusIcon = function getEsStatusIcon(doc) {
-    return indiciaFns.getEsStatusIconFromStatus(doc.identification.verification_status, doc.identification.verification_substatus);
+  indiciaFns.getDataCleanerIcons = function getDataCleanerIcons(autoChecks) {
+    var icons = [];
+    if (autoChecks.enabled === 'false') {
+      icons.push('<span title="Automatic rule checks will not be applied to records in this dataset." class="' + indiciaData.ruleIcons.checksDisabled + '"></span>');
+    } else if (autoChecks.result === 'true') {
+      icons.push('<span title="All automatic rule checks passed." class="' + indiciaData.ruleIcons.pass + '"></span>');
+    } else if (autoChecks.result === 'false') {
+      if (autoChecks.output.length > 0) {
+        icons = ['<span title="The following automatic rule checks were triggered for this record." class="' + indiciaData.ruleIcons.fail + '"></span>'];
+        // Add an icon for each rule violation.
+        $.each(autoChecks.output, function eachViolation() {
+          // Set a default for any other rules.
+          var icon = indiciaData.ruleIcons.hasOwnProperty(this.rule_type)
+            ? indiciaData.ruleIcons[this.rule_type] : indiciaData.ruleIcons.default;
+          icons.push('<span title="' + this.message + '" class="' + icon + '"></span>');
+        });
+      }
+    } else {
+      // Not yet checked.
+      icons.push('<span title="Record not yet checked against rules." class="' + indiciaData.ruleIcons.pending + '"></span>');
+    }
+    return icons.join('');
   };
 
   indiciaFns.findVal = function i(object, key) {
@@ -82,8 +140,18 @@
     var valuePath = doc;
     var fieldPath = field.split('.');
     var values = [];
-    if (field === '#status_icon#') {
-      return indiciaFns.getEsStatusIcon(doc);
+    var info = '';
+    if (field === '#status_icons#') {
+      return indiciaFns.getEsStatusIcons({
+        status: doc.identification.verification_status,
+        substatus: doc.identification.verification_substatus,
+        query: doc.identification.query ? doc.identification.query : '',
+        sensitive: doc.metadata.sensitive,
+        confidential: doc.metadata.confidential
+      });
+    }
+    if (field === '#data_cleaner_icons#') {
+      return indiciaFns.getDataCleanerIcons(doc.identification.auto_checks);
     }
     if (field === '#date#') {
       if (doc.event.date_start !== doc.event.date_end) {
@@ -91,9 +159,22 @@
       }
       return doc.event.date_start;
     }
+    if (field === '#locality#') {
+      if (doc.location.verbatim_locality) {
+        info += '<div>' + doc.location.verbatim_locality + '</div>';
+        if (doc.location.higher_geography) {
+          info += '<ul>';
+          $.each(doc.location.higher_geography, function eachPlace() {
+            info += '<li>' + this.type + ': ' + this.name + '</li>';
+          });
+          info += '</ul>';
+        }
+      }
+      return info;
+    }
     if (field === '#metadata_icons#') {
       if (typeof doc.metadata.licence_code !== 'undefined') {
-        values.push('<span class="alert alert-warning">doc.metadata.licence_code</span>');
+        values.push('<span class="alert alert-warning">' + doc.metadata.licence_code + '</span>');
       }
       if (doc.metadata.sensitive === 'true') {
         values.push('<span class="alert alert-danger">Sensitive</span>');
@@ -419,6 +500,40 @@
         source.populate();
       });
     });
+
+    $(el).find('.multiselect-switch').click(function clickMultiselectSwitch() {
+      var table = $(this).closest('table');
+      if ($(table).hasClass('multiselect-mode')) {
+        $(table).removeClass('multiselect-mode');
+        $(table).find('.multiselect-cell').remove();
+        $('.verification-buttons-wrap').append($('.verification-buttons'));
+        $('.verification-buttons .single-only').show();
+      } else {
+        $(table).addClass('multiselect-mode');
+        $(table).find('thead tr').prepend(
+          '<th class="multiselect-cell" />'
+        );
+        $(table).find('thead tr:first-child th:first-child').append(
+          '<input type="checkbox" class="multiselect-all" />'
+        );
+        $(table).find('tbody tr').prepend(
+          '<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>'
+        );
+        $(table).closest('div').prepend(
+          $('.verification-buttons')
+        );
+        $('.verification-buttons .single-only').hide();
+      }
+    });
+
+    indiciaFns.on('click', '.multiselect-all', {}, function(e) {
+      var table = $(e.currentTarget).closest('table');
+      if ($(e.currentTarget).is(':checked')) {
+        table.find('.multiselect').prop('checked', true);
+      } else {
+        $(table).find('.multiselect').prop('checked', false);
+      }
+    });
   };
 
   /**
@@ -435,7 +550,6 @@
       var header;
       var headerRow;
       var filterRow;
-      var sortButton;
       var el = this;
       indiciaData.esOutputPlugins.push('dataGrid');
       el.settings = $.extend({}, defaults);
@@ -461,11 +575,17 @@
         if (el.settings.columnTitles !== false) {
           headerRow = $('<tr/>').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
-            sortButton = el.settings.sortable === false ||
-              typeof indiciaData.esMappings[this.field] === 'undefined' ||
-              !indiciaData.esMappings[this.field].sort_field
-              ? '' : '<span class="sort fas fa-sort"></span>';
-            $('<th class="col-' + idx + '" data-col="' + idx + '">' + this.caption + sortButton + '</th>').appendTo(headerRow);
+            var heading = this.caption;
+
+            if (el.settings.sortable !== false &&
+                typeof indiciaData.esMappings[this.field] !== 'undefined' &&
+                indiciaData.esMappings[this.field].sort_field) {
+              heading += '<span class="sort fas fa-sort"></span>';
+            }
+            if (this.multiselect) {
+              heading += '<span title="Enable multiple selection mode" class="fas fa-list multiselect-switch"></span>';
+            }
+            $('<th class="col-' + idx + '" data-col="' + idx + '">' + heading + '</th>').appendTo(headerRow);
           });
         }
         // Output header row for filtering.
@@ -504,16 +624,22 @@
       var el = this;
       var fromRowIndex = typeof data.from === 'undefined' ? 1 : (data.from + 1);
       $(el).find('tbody tr').remove();
+      $(el).find('.multiselect-all').prop('checked', false);
       $.each(response.hits.hits, function eachHit() {
         var hit = this;
         var cells = [];
         var row;
         var media;
+        if ($(el).find('table.multiselect-mode').length) {
+          cells.push('<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>');
+        }
         $.each(el.settings.columns, function eachColumn(idx) {
           var doc = hit._source;
           var value;
           var rangeValue;
           var match;
+          var sizeClass;
+          var fieldClass = 'field-' + this.field.replace('.', '--').replace('_', '-');
           value = indiciaFns.getValueForField(doc, this.field);
           if (this.range_field) {
             rangeValue = indiciaFns.getValueForField(doc, this.range_field);
@@ -523,6 +649,8 @@
           }
           if (value && this.media) {
             media = '';
+            // Tweak image sizes if more than 1.
+            sizeClass = value.length === 1 ? 'single' : 'multi';
             $.each(value, function eachFile(i, file) {
               // Check if an extenral URL.
               match = file.match(/^http(s)?:\/\/(www\.)?([a-z(\.kr)]+)/);
@@ -531,31 +659,40 @@
                 if (file.match(/^https:\/\/static\.inaturalist\.org/)) {
                   media += '<a ' +
                     'href="' + file.replace('/square.', '/large.') + '" ' +
-                    'class="inaturalist fancybox"><img src="' + file + '" /></a>';
+                    'class="inaturalist fancybox" rel="group-' + doc.id + '">' +
+                    '<img class="' + sizeClass + '" src="' + file + '" /></a>';
                 } else {
                   media += '<a ' +
                     'href="' + file + '" class="social-icon ' + match[3].replace('.', '') + '"></a>';
                 }
               } else if ($.inArray(file.split('.').pop(), ['mp3', 'wav']) > -1) {
                 // Audio files can have a player control.
-                media += '<audio controls src="' + indiciaData.warehouseUrl + 'upload/' + file + '" type="audio/mpeg"/>';
+                media += '<audio controls ' +
+                  'src="' + indiciaData.warehouseUrl + 'upload/' + file + '" type="audio/mpeg"/>';
               } else {
                 // Standard link to Indicia image.
                 media += '<a ' +
                   'href="' + indiciaData.warehouseUrl + 'upload/' + file + '" ' +
-                  'class="fancybox"><img src="' +
-                indiciaData.warehouseUrl + 'upload/thumb-' + file + '" /></a>';
+                  'class="fancybox" rel="group-' + doc.id + '">' +
+                  '<img class="' + sizeClass + '" src="' + indiciaData.warehouseUrl + 'upload/thumb-' + file + '" />' +
+                  '</a>';
               }
             });
             value = media;
           }
-          cells.push('<td class="col-' + idx + '">' + value + '</td>');
+          cells.push('<td class="col-' + idx + ' ' + fieldClass + '">' + value + '</td>');
         });
-        row = $('<tr>' + cells.join('') + '</tr>').appendTo($(el).find('tbody'));
+        row = $('<tr class="data-row">' + cells.join('') + '</tr>').appendTo($(el).find('tbody'));
         $(row).attr('data-doc-source', JSON.stringify(hit._source));
       });
-      $(el).find('tfoot .showing').html('Showing ' + fromRowIndex +
-        ' to ' + (fromRowIndex + (response.hits.hits.length - 1)) + ' of ' + response.hits.total);
+      // Set up the count info in the footer.
+      if (response.hits.hits.length > 0) {
+        $(el).find('tfoot .showing').html('Showing ' + fromRowIndex +
+          ' to ' + (fromRowIndex + (response.hits.hits.length - 1)) + ' of ' + response.hits.total);
+      } else {
+        $(el).find('tfoot .showing').html('No hits');
+      }
+      // Enable or disable the paging buttons.
       if (fromRowIndex > 1) {
         $(el).find('.pager .prev').removeAttr('disabled');
       } else {
@@ -566,7 +703,8 @@
       } else {
         $(el).find('.pager .next').attr('disabled', 'disabled');
       }
-      $.each(callbacks['populate'], function() {
+      // Fire any population callbacks.
+      $.each(callbacks.populate, function eachCallback() {
         this(el);
       });
     },
@@ -579,16 +717,34 @@
     hideRowAndMoveNext: function hideRowAndMoveNext() {
       var oldSelected = $(this).find('tr.selected');
       var newSelected;
-      if ($(oldSelected).next('tr').length > 0) {
-        newSelected = $(oldSelected).next('tr');
-      } else if ($(oldSelected).prev('tr').length > 0) {
-        newSelected = $(oldSelected).prev('tr');
+      var sources;
+      var showingLabel = $(this).find('.showing');
+      if ($(this).find('table.multiselect-mode').length > 0) {
+        $.each($(this).find('input.multiselect:checked'), function eachRow() {
+          $(this).closest('tr').remove();
+        });
+      } else {
+        if ($(oldSelected).next('tr').length > 0) {
+          newSelected = $(oldSelected).next('tr');
+        } else if ($(oldSelected).prev('tr').length > 0) {
+          newSelected = $(oldSelected).prev('tr');
+        }
+        $(oldSelected).remove();
+        if (typeof newSelected !== 'undefined') {
+          newSelected.addClass('.selected');
+          $(newSelected).click();
+        }
       }
-      $(oldSelected).removeClass('selected');
-      $(oldSelected).hide();
-      if (typeof newSelected !== 'undefined') {
-        newSelected.addClass('.selected');
-        $(newSelected).click();
+      // Repopulate the grid if now empty.
+      if ($(this).find('table tbody tr').length === 0) {
+        sources = JSON.parse($(this).attr('data-es-source'));
+        $.each(sources, function eachSource(sourceId) {
+          var source = indiciaData.esSourceObjects[sourceId];
+          source.populate();
+        });
+      } else {
+        // Update the paging info if some rows left.
+        showingLabel.html(showingLabel.html().replace(/\d+ of /, $(this).find('tbody tr.data-row').length + ' of '));
       }
     }
   };
@@ -630,8 +786,75 @@
 
   var dataGrid;
 
+  // Info for tracking loaded tabs.
   var loadedCommentsOcurrenceId = 0;
   var loadedAttrsOcurrenceId = 0;
+  var loadedExperienceOcurrenceId = 0;
+
+  var getExperienceAggregation = function getExperienceAggregation(data, type) {
+    var html = '';
+    var minYear = 9999;
+    var maxYear = 0;
+    var yr;
+    var matrix = { C: {}, V: {}, R: {} };
+    var buckets;
+    var indicatorSize;
+    var total;
+    $.each(data[type + '_status'][type + '_status_filtered'].buckets, function eachStatus() {
+      var status = this.key;
+      $.each(this[type + '_status_filtered_age'].buckets, function eachYear() {
+        minYear = Math.min(minYear, this.key);
+        maxYear = Math.max(maxYear, this.key);
+        matrix[status][this.key] = this.doc_count;
+      });
+    });
+    html += '<strong>Total records:</strong> ' + data[type + '_status'].doc_count;
+    if (minYear < 9999) {
+      html += '<table><thead><tr><th>Year</th>'
+        + '<th>Verified</th>' +
+        '<th>Other</th>' +
+        '<th>Rejected</th>' +
+        '</tr></thead>';
+      for (yr = maxYear; yr >= Math.max(minYear, maxYear - 2); yr--) {
+        html += '<tr>';
+        html += '<th scope="row">' + yr + '</th>';
+        buckets = {
+          V: typeof matrix.V[yr] !== 'undefined' ? matrix.V[yr] : 0,
+          C: typeof matrix.C[yr] !== 'undefined' ? matrix.C[yr] : 0,
+          R: typeof matrix.R[yr] !== 'undefined' ? matrix.R[yr] : 0
+        };
+        total = buckets.C + buckets.V + buckets.R;
+        indicatorSize = Math.min(80, total * 2);
+        html += '<td>' + buckets.V + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.V / total)) + 'px;"></span></td>';
+        html += '<td>' + buckets.C + '<span class="exp-C" style="width: ' + (indicatorSize * (buckets.C / total)) + 'px;"></span></td>';
+        html += '<td>' + buckets.R + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.R / total)) + 'px;"></span></td>';
+        html += '</tr>';
+      }
+      if (maxYear - minYear > 3) {
+        buckets = {
+          V: 0,
+          C: 0,
+          R: 0
+        };
+        for (yr = minYear; yr <= maxYear - 3; yr++) {
+          buckets.V += typeof matrix.V[yr] !== 'undefined' ? matrix.V[yr] : 0;
+          buckets.C += typeof matrix.C[yr] !== 'undefined' ? matrix.C[yr] : 0;
+          buckets.R += typeof matrix.R[yr] !== 'undefined' ? matrix.R[yr] : 0;
+        }
+        html += '<tr>';
+        html += '<th scope="row">Other years</th>';
+        total = buckets.C + buckets.V + buckets.R;
+        indicatorSize = Math.min(80, total * 2);
+        html += '<td>' + buckets.V + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.V / total)) + 'px;"></span></td>';
+        html += '<td>' + buckets.C + '<span class="exp-C" style="width: ' + (indicatorSize * (buckets.C / total)) + 'px;"></span></td>';
+        html += '<td>' + buckets.R + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.R / total)) + 'px;"></span></td>';
+        html += '</tr>';
+      }
+      html += '<tbody>';
+      html += '</tbody></table>';
+    }
+    return html;
+  };
 
   var loadComments = function loadComments(el, occurrenceId) {
     // Check not already loaded.
@@ -645,13 +868,22 @@
       data: { occurrence_id: occurrenceId },
       success: function success(response) {
         $(el).find('.comments').html('');
-        $.each(response, function eachComment() {
-          var statusIcon = indiciaFns.getEsStatusIconFromStatus(this.record_status, this.record_substatus);
-          $('<div class="panel panel-info">' +
-            '<div class="panel-heading">' + statusIcon + this.person_name + ' ' + this.updated_on + '</div>' +
-            '<div class="panel-body">' + this.comment + '</div>' +
-            '</div').appendTo($(el).find('.comments'));
-        });
+        if (response.length === 0) {
+          $('<div class="alert alert-info">There are no comments for this record.</div>')
+            .appendTo($(el).find('.comments'));
+        } else {
+          $.each(response, function eachComment() {
+            var statusIcon = indiciaFns.getEsStatusIcons({
+              status: this.record_status,
+              substatus: this.record_substatus,
+              query: this.query === 't' ? 'Q' : null
+            }, 'fa-2x');
+            $('<div class="panel panel-info">' +
+              '<div class="panel-heading">' + statusIcon + this.person_name + ' ' + this.updated_on + '</div>' +
+              '<div class="panel-body">' + this.comment + '</div>' +
+              '</div').appendTo($(el).find('.comments'));
+          });
+        }
       },
       dataType: 'json'
     });
@@ -684,13 +916,118 @@
     });
   };
 
+  var loadExperience = function loadExperience(el, doc) {
+    var data;
+    // Check not already loaded.
+    if (loadedExperienceOcurrenceId === doc.id) {
+      return;
+    }
+    loadedExperienceOcurrenceId = doc.id;
+    data = {
+      warehouse_url: indiciaData.warehouseUrl,
+      size: 0,
+      query: {
+        term: { 'metadata.created_by_id': doc.metadata.created_by_id }
+      },
+      aggs: {
+        group_status: {
+          filter: {
+            term: { 'taxon.group.keyword': doc.taxon.group }
+          },
+          aggs: {
+            group_status_filtered: {
+              terms: {
+                field: 'identification.verification_status',
+                size: 10,
+                order: {
+                  _count: 'desc'
+                }
+              },
+              aggs: {
+                group_status_filtered_age: {
+                  terms: {
+                    field: 'event.year',
+                    size: 5,
+                    order: {
+                      _key: 'desc'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        species_status: {
+          filter: {
+            term: { 'taxon.accepted_taxon_id': doc.taxon.accepted_taxon_id }
+          },
+          aggs: {
+            species_status_filtered: {
+              terms: {
+                field: 'identification.verification_status',
+                size: 10,
+                order: {
+                  _count: 'desc'
+                }
+              },
+              aggs: {
+                species_status_filtered_age: {
+                  terms: {
+                    field: 'event.year',
+                    size: 5,
+                    order: {
+                      _key: 'desc'
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    };
+    $.ajax({
+      url: indiciaData.ajaxUrl + '/esproxy_rawsearch/' + indiciaData.nid,
+      type: 'post',
+      data: data,
+      success: function success(response) {
+        var html = '';
+        if (typeof response.error !== 'undefined') {
+          alert('ElasticSearch query failed');
+        } else {
+          html += '<h3>Experience for <span class="field-taxon--accepted-name">' + doc.taxon.accepted_name + '</span></h3>';
+          html += getExperienceAggregation(response.aggregations, 'species');
+          html += '<h3>Experience for ' + doc.taxon.group + '</h3>';
+          html += getExperienceAggregation(response.aggregations, 'group');
+          $(el).find('.recorder-experience').html(html);
+        }
+      },
+      dataType: 'json'
+    });
+  };
+
   var loadCurrentTabAjax = function loadCurrentTabAjax(el) {
     var selectedTr = $(dataGrid).find('tr.selected');
     var doc;
+    var activeTab = indiciaFns.activeTab($(el).find('.tabs'));
     if (selectedTr.length > 0) {
       doc = JSON.parse(selectedTr.attr('data-doc-source'));
-      loadComments(el, doc.id);
-      loadAttributes(el, doc.id);
+      switch (activeTab) {
+        case 0:
+          loadAttributes(el, doc.id);
+          break;
+
+        case 1:
+          loadComments(el, doc.id);
+          break;
+
+        case 2:
+          loadExperience(el, doc);
+          break;
+
+        default:
+          throw new Error('Invalid tab index');
+      }
     }
   };
 
@@ -705,9 +1042,10 @@
     // Always treat fields as array so code can be consistent.
     var fieldArr = Array.isArray(fields) ? fields : [fields];
     $.each(fieldArr, function eachField(i, field) {
+      var fieldClass = 'field-' + field.replace('.', '--').replace('_', '-').replace('#', '-');
       item = indiciaFns.getValueForField(doc, field);
       if (item !== '') {
-        values.push(item);
+        values.push('<span class="' + fieldClass + '">' + item + '</span>');
       }
     });
     value = values.join(separator);
@@ -749,16 +1087,23 @@
       $(el).find('.tabs').tabs({
         activate: tabActivate
       });
+      // Clean tabs
+      $('.ui-tabs-nav').removeClass('ui-widget-header');
+      $('.ui-tabs-nav').removeClass('ui-corner-all');
       $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect(dataGrid, tr) {
         var doc = JSON.parse($(tr).attr('data-doc-source'));
         var rows = [];
         addRow(rows, doc, 'ID', 'id');
         addRow(rows, doc, 'Metadata', '#metadata_icons#');
-        addRow(rows, doc, 'Accepted name', 'taxon.accepted_name');
-        addRow(rows, doc, 'Status', '#status_icon#');
-        addRow(rows, doc, 'Output map ref', 'location.output_sref');
-        addRow(rows, doc, 'Date', '#date#');
+        addRow(rows, doc, 'Given name', ['taxon.taxon_name', 'taxon.taxon_name_authorship'], ' ');
+        addRow(rows, doc, 'Accepted name', ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
+        addRow(rows, doc, 'Common name', 'taxon.vernacular_name');
         addRow(rows, doc, 'Taxonomy', ['taxon.phylum', 'taxon.order', 'taxon.family'], ' :: ');
+        addRow(rows, doc, 'Status', '#status_icons#');
+        addRow(rows, doc, 'Checks', '#data_cleaner_icons#');
+        addRow(rows, doc, 'Date', '#date#');
+        addRow(rows, doc, 'Output map ref', 'location.output_sref');
+        addRow(rows, doc, 'Location', '#locality#');
         addRow(rows, doc, 'Submitted on', 'metadata.created_on');
         addRow(rows, doc, 'Last updated on', 'metadata.updated_on');
         addRow(rows, doc, 'Dataset', ['metadata.website.title', 'metadata.survey.title', 'metadata.group.title'], ' :: ');
@@ -826,65 +1171,130 @@
 
   var dataGrid;
 
-  var saveVerifyComment = function saveVerifyComment(occurrenceId, status, substatus, comment) {
+  var saveVerifyComment = function saveVerifyComment(occurrenceIds, status, comment) {
+    var commentToSave;
     var data = {
       website_id: indiciaData.website_id,
-      'occurrence:id': occurrenceId,
-      user_id: indiciaData.userId,
-      'occurrence:record_status': status,
-      'occurrence_comment:comment': comment,
-      'occurrence:record_decision_source': 'H'
+      user_id: indiciaData.userId
     };
-    if (substatus) {
-      data['occurrence:record_substatus'] = substatus;
-    }
-    $.post(
-      indiciaData.ajaxFormPostSingleVerify,
-      data,
-      function success() {
+    var doc = {
+      identification: {}
+    };
+    var indiciaPostUrl;
+    if (status.status) {
+      indiciaPostUrl = indiciaData.ajaxFormPostSingleVerify;
+      commentToSave = comment.trim() === ''
+        ? indiciaData.statusTooltips[status.status]
+        : comment.trim();
+      $.extend(data, {
+        'occurrence:ids': occurrenceIds.join(','),
+        'occurrence:record_decision_source': 'H',
+        'occurrence:record_status': status.status[0],
+        'occurrence_comment:comment': commentToSave
+      });
+      doc.identification.verification_status = status.status[0];
+      if (status.status.length > 1) {
+        data['occurrence:record_substatus'] = status.status[1];
+        doc.identification.verification_substatus = status.status[1];
+      }
+      // Post update to Indicia.
+      $.post(
+        indiciaPostUrl,
+        data,
+        function success() {
 
-      }
-    );
-    data = {
-      id: occurrenceId,
-      warehouse_url: indiciaData.warehouseUrl,
-      doc: {
-        identification: {
-          verification_status: status
         }
-      }
-    };
-    if (substatus) {
-      data.doc.identification.verification_substatus = substatus;
+      );
+    } else if (status.query) {
+      // No bulk API for query updates at the moment, so process one at a time.
+      indiciaPostUrl = indiciaData.ajaxFormPostComment;
+      doc.identification.query = status.query;
+      commentToSave = comment.trim() === ''
+        ? 'This record has been queried.'
+        : comment.trim();
+      $.each(occurrenceIds, function eachOccurrence() {
+        $.extend(data, {
+          'occurrence_comment:query': 't',
+          'occurrence_comment:occurrence_id': this,
+          'occurrence_comment:comment': commentToSave
+        });
+        // Post update to Indicia.
+        $.post(
+          indiciaPostUrl,
+          data,
+          function success() {
+
+          }
+        );
+      });
     }
+
+    // Now post update to ElasticSearch.
+    data = {
+      ids: occurrenceIds,
+      warehouse_url: indiciaData.warehouseUrl,
+      doc: doc
+    };
     $.ajax({
-      url: indiciaData.ajaxUrl + '/esproxyupdate/' + indiciaData.nid,
+      url: indiciaData.ajaxUrl + '/esproxy_updateids/' + indiciaData.nid,
       type: 'post',
       data: data,
       success: function success(response) {
         if (typeof response.error !== 'undefined') {
+          console.log(response);
           alert('ElasticSearch update failed');
         } else {
+          if (response.updated !== occurrenceIds.length) {
+            alert('An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.');
+          }
           $(dataGrid).esDataGrid('hideRowAndMoveNext');
+          $(dataGrid).find('.multiselect-all').prop('checked', false);
         }
       },
       dataType: 'json'
     });
   };
 
-  var setStatus = function setStatus(status) {
-    var selectedTr = $(dataGrid).find('tr.selected');
+  var commentPopup = function commentPopup(status) {
     var doc;
     var fs;
-    if (selectedTr.length > 0) {
-      doc = JSON.parse(selectedTr.attr('data-doc-source'));
-      fs = $('<fieldset class="comment-popup" data-id="' + doc.id + '" data-status="' + status + '">');
-      $('<legend><span class="' + indiciaData.statusIcons[status] + '"></span>Set status to ' + indiciaData.statusTooltips[status] + '</legend>').appendTo(fs);
-      $('<label for="comment-textarea">Provide any comments here:</label>').appendTo(fs);
-      $('<textarea id="comment-textarea">').appendTo(fs);
-      $('<button class="btn btn-primary">Save</button>').appendTo(fs);
-      $.fancybox(fs);
+    var heading;
+    var statusData = [];
+    var overallStatus = status.status ? status.status : status.query;
+    var selectedTrs = $(dataGrid).find('table').hasClass('multiselect-mode')
+      ? $(dataGrid).find('.multiselect:checked').closest('tr')
+      : $(dataGrid).find('tr.selected');
+    var ids = [];
+    if (selectedTrs.length === 0) {
+      alert('There are no selected records');
+      return;
     }
+    $.each(selectedTrs, function eachRow() {
+      doc = JSON.parse($(this).attr('data-doc-source'));
+      ids.push(parseInt(doc.id, 10));
+    });
+    if (status.status) {
+      statusData.push('data-status="' + status.status + '"');
+    }
+    if (status.query) {
+      statusData.push('data-query="' + status.query + '"');
+    }
+    fs = $('<fieldset class="comment-popup" data-ids="' + JSON.stringify(ids) + '" ' + statusData.join('') + '>');
+    if (selectedTrs.length > 1) {
+      heading = status.status
+        ? 'Set status to ' + indiciaData.statusTooltips[overallStatus] + ' for ' + selectedTrs.length + ' records'
+        : 'Query ' + selectedTrs.length + ' records';
+      $('<div class="alert alert-info">You are updating multiple records!</alert>').appendTo(fs);
+    } else {
+      heading = status.status
+        ? 'Set status to ' + indiciaData.statusTooltips[overallStatus]
+        : 'Query this record';
+    }
+    $('<legend><span class="' + indiciaData.statusIcons[overallStatus] + ' fa-2x"></span>' + heading + '</legend>').appendTo(fs);
+    $('<label for="comment-textarea">Add the following comment:</label>').appendTo(fs);
+    $('<textarea id="comment-textarea">').appendTo(fs);
+    $('<button class="btn btn-primary">Save</button>').appendTo(fs);
+    $.fancybox(fs);
   };
 
   /**
@@ -892,7 +1302,7 @@
    */
   var methods = {
     /**
-     * Initialise the myPlugin plugin.
+     * Initialise the esVerificationButtons plugin.
      *
      * @param array options
      */
@@ -914,21 +1324,54 @@
       }
       dataGrid = $('#' + el.settings.showSelectedRow);
       $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect() {
-        $(el).show();
+        $('.verification-buttons-wrap').show();
       });
       $(dataGrid).esDataGrid('on', 'populate', function rowSelect() {
-        $(el).hide();
+        $('.verification-buttons-wrap').hide();
       });
       $(el).find('button.verify').click(function buttonClick(e) {
         var status = $(e.currentTarget).attr('data-status');
-        setStatus(status);
+        commentPopup({ status: status });
+      });
+      $(el).find('button.query').click(function buttonClick(e) {
+        var query = $(e.currentTarget).attr('data-query');
+        commentPopup({ query: query });
+      });
+      $(el).find('button.edit').click(function buttonClick() {
+        var selectedTr = $(dataGrid).find('tr.selected');
+        var doc;
+        var sep = indiciaData.editPath.indexOf('?') === -1 ? '?' : '&';
+        if (selectedTr.length > 0) {
+          doc = JSON.parse(selectedTr.attr('data-doc-source'));
+          window.location = indiciaData.editPath + sep + 'occurrence_id=' + doc.id;
+        }
       });
       indiciaFns.on('click', '.comment-popup button', {}, function onClickSave(e) {
         var popup = $(e.currentTarget).closest('.comment-popup');
-        var id = $(popup).attr('data-id');
-        var status = $(popup).attr('data-status');
-        saveVerifyComment(id, status[0], status[1], $(popup).find('textarea').val());
+        var ids = JSON.parse($(popup).attr('data-ids'));
+        var statusData = {};
+        if ($(popup).attr('data-status')) {
+          statusData.status = $(popup).attr('data-status');
+        }
+        if ($(popup).attr('data-query')) {
+          statusData.query = $(popup).attr('data-query');
+        }
+        saveVerifyComment(ids, statusData, $(popup).find('textarea').val());
         $.fancybox.close();
+      });
+      $(el).find('.l1').hide();
+      $(el).find('.toggle').click(function toggleClick(e) {
+        if ($(e.currentTarget).hasClass('fa-toggle-on')) {
+          $(e.currentTarget).removeClass('fa-toggle-on');
+          $(e.currentTarget).addClass('fa-toggle-off');
+          $(el).find('.l2').hide();
+          $(el).find('.l1').show();
+        } else {
+          $(e.currentTarget).removeClass('fa-toggle-off');
+          $(e.currentTarget).addClass('fa-toggle-on');
+          $(el).find('.l1').hide();
+          $(el).find('.l2').show();
+        }
       });
     },
     on: function on(event, handler) {
@@ -1050,7 +1493,7 @@ jQuery(document).ready(function docReady($) {
       });
     }
     $.ajax({
-      url: indiciaData.ajaxUrl + '/esproxy/' + indiciaData.nid,
+      url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
       type: 'post',
       data: data,
       success: function success(response) {

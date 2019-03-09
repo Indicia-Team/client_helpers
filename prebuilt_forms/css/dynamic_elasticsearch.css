@@ -1,7 +1,7 @@
 .fas, .far {
   margin: 3px;
   padding: 1px; }
-  .fas.fa-check-circle, .far.fa-check-circle {
+  .fas.fa-check-circle, .fas.fa-thumbs-up, .far.fa-check-circle, .far.fa-thumbs-up {
     color: green; }
   .fas.fa-check-double, .far.fa-check-double {
     border: solid green 1px;
@@ -25,6 +25,10 @@
       border-radius: 2px;
       background-color: red;
       color: white; }
+  .fas.fa-thumbs-down, .fas.fa-exclamation, .fas.fa-exclamation-circle, .fas.fa-exclamation-triangle, .far.fa-thumbs-down, .far.fa-exclamation, .far.fa-exclamation-circle, .far.fa-exclamation-triangle {
+    color: red; }
+  .fas.fa-eye-slash, .fas.fa-cog, .fas.fa-clock, .far.fa-eye-slash, .far.fa-cog, .far.fa-clock {
+    color: silver; }
 
 table.es-data-grid thead .fa-sort {
   opacity: 0.3; }
@@ -44,18 +48,73 @@ table.es-data-grid tbody tr:hover, table.es-data-grid tbody tr:hover td {
 table.es-data-grid tbody tr.selected, table.es-data-grid tbody tr.selected td {
   color: #ffffff;
   background-color: #3333ee; }
+table.es-data-grid tbody tr img {
+  max-height: 60px;
+  border-radius: 4px;
+  margin: 0 2px;
+  box-shadow: #aaa 0px 2px 4px 0px; }
+  table.es-data-grid tbody tr img.multi {
+    max-height: 45px; }
 
 .es-output-map {
   height: 500px; }
 
-.record-details th {
-  width: 200px; }
+.verification-buttons * {
+  display: inline-block;
+  vertical-align: middle; }
+.verification-buttons button {
+  border: none;
+  background: none;
+  box-shadow: none;
+  color: black;
+  text-shadow: none;
+  min-height: 25px;
+  margin: 8px 8px; }
+  .verification-buttons button:hover {
+    background: silver; }
+.verification-buttons .sep {
+  height: 20px;
+  width: 1px;
+  background-color: silver;
+  margin: 0 8px; }
+
+.details-container .empty-message .fa-2x {
+  margin: 0.5em; }
+.details-container .ui-tabs-nav {
+  border-bottom: solid silver 1px; }
+.details-container .ui-tabs .ui-tabs-panel {
+  padding: 8px; }
+.details-container .record-details th {
+  width: 200px;
+  padding: 0 0.5em; }
+.details-container .record-details td {
+  padding: 0 0.5em; }
+.details-container .record-details .fas, .details-container .record-details .far {
+  font-size: 130%; }
+.details-container .recorder-experience th {
+  width: 25%; }
+.details-container .recorder-experience td span {
+  margin-left: 15px;
+  display: inline-block;
+  height: 15px;
+  border-radius: 4px;
+  box-shadow: #aaa 0px 2px 4px 0px; }
+  .details-container .recorder-experience td span.exp-V {
+    background-color: green; }
+  .details-container .recorder-experience td span.exp-C {
+    background-color: silver; }
+  .details-container .recorder-experience td span.exp-R {
+    background-color: red; }
 
 .comment-popup label {
   display: block;
   width: auto; }
 .comment-popup textarea {
   min-width: 300px;
+  width: 100%;
   min-height: 250px; }
+
+.field-taxon--accepted-name {
+  font-style: italic; }
 
 /*# sourceMappingURL=dynamic_elasticsearch.css.map */

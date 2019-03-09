@@ -22,7 +22,7 @@
 require_once 'includes/dynamic.php';
 
 /**
- *
+ * A prebuilt form for dynamically construction ElasticSearch content.
  */
 class iform_dynamic_elasticsearch extends iform_dynamic {
 
@@ -93,6 +93,13 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'group' => 'ElasticSearch Settings',
       ],
       [
+        'name' => 'warehouse_prefix',
+        'caption' => 'Warehouse ID prefix',
+        'description' => 'Prefix given to numeric IDs to make them unique on the index.',
+        'type' => 'text_input',
+        'group' => 'ElasticSearch Settings',
+      ],
+      [
         'name' => 'filter_json',
         'caption' => 'Filter JSON - Filter',
         'description' => 'JSON ',
@@ -128,25 +135,36 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'group' => 'Filter Settings',
         'default' => '',
       ],
+      [
+        'name' => 'edit_path',
+        'caption' => 'Edit path',
+        'description' => 'Path to a generic editing page.',
+        'type' => 'text_input',
+        'required' => FALSE,
+        'group' => 'Path Settings',
+      ],
     ];
   }
 
   /**
-   * Override the get_form to fetch our own auth tokens. This skips the write auth as it is unnecessary,
-   * which makes the tokens cachable therefore faster. It does mean that $auth['write'] will not be available.
+   *
    */
   public static function get_form($args, $nid) {
     $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_elasticsearch');
     self::getMappings($nid);
     $mappings = json_encode(self::$esMappings);
-    $url = iform_ajaxproxy_url($nid, 'single_verify');
+    $verifyUrl = iform_ajaxproxy_url($nid, 'list_verify');
+    $commentUrl = iform_ajaxproxy_url($nid, 'occ-comment');
     $userId = hostsite_get_user_field('indicia_user_id');
+    $editPath = empty($args['edit_path']) ? '' : helper_base::getRootFolder(TRUE) . $args['edit_path'];
     data_entry_helper::$javascript .= <<<JS
 indiciaData.ajaxUrl = '$ajaxUrl';
 indiciaData.esSources = [];
 indiciaData.esMappings = $mappings;
 indiciaData.userId = $userId;
-indiciaData.ajaxFormPostSingleVerify = "$url&user_id=$userId&sharing=verification";
+indiciaData.ajaxFormPostSingleVerify = "$verifyUrl&user_id=$userId&sharing=verification";
+indiciaData.ajaxFormPostComment = "$commentUrl&user_id=$userId&sharing=verification";
+indiciaData.editPath = "$editPath";
 
 JS;
     helper_base::add_resource('font_awesome');
@@ -254,7 +272,7 @@ JS;
    * Options:
    * * @filterJson - required.
    * * @boolType - must, must_not, should or filter. Default must.
-   * * @label
+   * * @label.
    *
    * @return string
    *   Control HTML
@@ -283,7 +301,7 @@ JS;
       'id' => "es-user-filter-" . self::$controlIndex,
       'definesPermissions' => FALSE,
     ], $options);
-    $filterData = report_filters_load_existing($auth['read'], $options['sharingCode']);
+    $filterData = report_filters_load_existing($auth['read'], $options['sharingCode'], TRUE);
     $optionArr = [];
     foreach ($filterData as $filter) {
       if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
@@ -351,12 +369,28 @@ HTML;
       'showSelectedRow',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
+    $optionalButtonArray = [];
+    if (!empty($args['edit_path'])) {
+      $optionalButtonArray[] = '<button class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></button>';
+    }
+    $optionalButtons = implode("\n  ", $optionalButtonArray);
     helper_base::add_resource('fancybox');
     return <<<HTML
-<div class="verification-buttons" style="display: none;" data-es-output-config="$encodedOptions">
-  <button class="verify" data-status="V"><span class="far fa-check-circle"></span>Accept</button>
-  <button class="verify" data-status="C3"><span class="fas fa-question"></span>Plausible</button>
-  <button class="verify" data-status="R"><span class="far fa-times-circle"></span>Reject</button>
+<div class="verification-buttons-wrap" style="display: none;">
+  <div class="verification-buttons" data-es-output-config="$encodedOptions">
+  Actions:
+    <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
+    <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
+    <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
+    <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
+    <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-question status-C3"></span></button>
+    <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
+    <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
+    <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+    <span class="sep"></span>
+    <button class="query" data-query="Q" title="Query this record"><span class="far fa-comment query-Q"></span></button>
+    $optionalButtons
+  </div>
 </div>
 HTML;
   }
@@ -370,11 +404,12 @@ HTML;
     helper_base::add_resource('tabs');
     return <<<HTML
 <div class="details-container" data-es-output-config="$encodedOptions">
-  <div class="empty-message alert alert-info">Select a row to view details</div>
+  <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
       <li><a href="#tabs-details">Details</a></li>
       <li><a href="#tabs-comments">Comments</a></li>
+      <li><a href="#tabs-recorder-experience">Recorder experience</a></li>
     </ul>
     <div id="tabs-details">
       <div class="record-details">
@@ -384,13 +419,47 @@ HTML;
       <div class="comments">
       </div>
     </div>
+    <div id="tabs-recorder-experience">
+      <div class="recorder-experience">
+      </div>
+    </div>
   </div>
 </div>
 
 HTML;
   }
 
-  private static function applyUserFilters($readAuth, $query, &$bool) {
+  private static function getDefinitionVal($definition, array $params) {
+    foreach ($params as $param) {
+      if (!empty($definition[$param])) {
+        return $definition[$param];
+      }
+    }
+    return '';
+  }
+
+  /**
+   * Converts Indicia style filters in proxy request to ES query syntax.
+   *
+   * Support for filter definitions is incomplete. Currently only the following
+   * parameters are converted:
+   * * website_list
+   * * survey_list
+   * * group_id
+   * * taxon_group_list
+   * * higher_taxa_taxon_list_list
+   * * taxa_taxon_list_list
+   * * indexed_location_list.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $query
+   *   Query passed in proxy request, which may contain an array of
+   *   user_filters (filter IDs) to convert.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFilters(array $readAuth, array $query, array &$bool) {
     foreach ($query['user_filters'] as $userFilter) {
       $filterData = data_entry_helper::get_population_data([
         'table' => 'filter',
@@ -399,59 +468,175 @@ HTML;
         ] + $readAuth,
       ]);
       $definition = json_decode($filterData[0]['definition'], TRUE);
-      if (!empty($definition['taxon_group_list'])) {
-        self::applyUserFiltersTaxonGroupList($readAuth, $definition['taxon_group_list'], $bool);
-      }
-      if (!empty($definition['higher_taxa_taxon_list_list'])) {
-        self::applyUserFiltersTaxaTaxonList($readAuth, $definition['higher_taxa_taxon_list_list'], $bool);
-      }
-      if (!empty($definition['taxa_taxon_list_list'])) {
-        self::applyUserFiltersTaxaTaxonList($readAuth, $definition['taxa_taxon_list_list'], $bool);
-      }
-      if (!empty($definition['indexed_location_list'])) {
-        self::applyUserFiltersIndexedLocationList($readAuth, $definition['indexed_location_list'], $bool);
-      }
+      self::applyUserFiltersWebsiteList($readAuth, $definition, ['website_list', 'website_id'], $bool);
+      self::applyUserFiltersSurveyList($readAuth, $definition, ['survey_list', 'survey_id'], $bool);
+      self::applyUserFiltersGroupId($readAuth, $definition, ['group_id'], $bool);
+      self::applyUserFiltersTaxonGroupList($readAuth, $definition, ['taxon_group_list', 'taxon_group_id'], $bool);
+      self::applyUserFiltersTaxaTaxonList($readAuth, $definition, [
+        'taxa_taxon_list_list',
+        'higher_taxa_taxon_list_list',
+        'taxa_taxon_list_id',
+        'higher_taxa_taxon_list_id',
+      ], $bool);
+      self::applyUserFiltersIndexedLocationList($readAuth, $definition, [
+        'indexed_location_list',
+        'indexed_location_id',
+      ], $bool);
     }
   }
 
-  private static function applyUserFiltersTaxonGroupList($readAuth, $data, &$bool) {
-    $groupData = data_entry_helper::get_population_data([
-      'table' => 'taxon_group',
-      'extraParams' => [
-        'query' => json_encode(['in' => ['id' => explode(',', $data)]]),
-      ] + $readAuth,
-    ]);
-    $groups = [];
-    foreach ($groupData as $group) {
-      $groups[] = $group['title'];
+  /**
+   * Converts an Indicia filter definition website_list to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersWebsiteList(array $readAuth, array $definition, array $params, array &$bool) {
+    $value = self::getDefinitionVal($definition, $params);
+    if (!empty($value)) {
+      $bool['must'][] = [
+        'terms' => ['metadata.website.id' => explode(',', $value)],
+      ];
     }
-    $bool['must'][] = ['terms' => ['taxon.group.keyword' => $groups]];
   }
 
-  private static function applyUserFiltersTaxaTaxonList($readAuth, $data, &$bool) {
-    $taxonData = data_entry_helper::get_population_data([
-      'table' => 'taxa_taxon_list',
-      'extraParams' => [
-        'view' => 'cache',
-        'query' => json_encode(['in' => ['id' => explode(',', $data)]]),
-      ] + $readAuth,
-    ]);
-    $keys = [];
-    foreach ($taxonData as $taxon) {
-      $keys[] = $taxon['external_key'];
+  /**
+   * Converts an Indicia filter definition survey_list to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersSurveyList(array $readAuth, array $definition, array $params, array &$bool) {
+    $value = self::getDefinitionVal($definition, $params);
+    if (!empty($value)) {
+      $bool['must'][] = [
+        'terms' => ['metadata.survey.id' => explode(',', $value)],
+      ];
     }
-    $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
   }
 
-  private static function applyUserFiltersIndexedLocationList($readAuth, $data, &$bool) {
-    $bool['must'][] = [
-      'nested' => [
-        'path' => 'location.higher_geography',
-        'query' => [
-          'terms' => ['location.higher_geography.id' => explode(',', $data)],
+  /**
+   * Converts an Indicia filter definition group_id to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersGroupId(array $readAuth, array $definition, array $params, array &$bool) {
+    $value = self::getDefinitionVal($definition, $params);
+    if (!empty($value)) {
+      $bool['must'][] = [
+        'terms' => ['metadata.group.id' => explode(',', $value)],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition taxon_group_list to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersTaxonGroupList(array $readAuth, array $definition, array $params, array &$bool) {
+    $value = self::getDefinitionVal($definition, $params);
+    if (!empty($value)) {
+      $groupData = data_entry_helper::get_population_data([
+        'table' => 'taxon_group',
+        'extraParams' => [
+          'query' => json_encode(['in' => ['id' => explode(',', $value)]]),
+        ] + $readAuth,
+      ]);
+      $groups = [];
+      foreach ($groupData as $group) {
+        $groups[] = $group['title'];
+      }
+      $bool['must'][] = ['terms' => ['taxon.group.keyword' => $groups]];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition taxa_taxon_list_list to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersTaxaTaxonList(array $readAuth, array $definition, array $params, array &$bool) {
+    $value = self::getDefinitionVal($definition, $params);
+    if (!empty($value)) {
+      $taxonData = data_entry_helper::get_population_data([
+        'table' => 'taxa_taxon_list',
+        'extraParams' => [
+          'view' => 'cache',
+          'query' => json_encode(['in' => ['id' => explode(',', $value)]]),
+        ] + $readAuth,
+      ]);
+      $keys = [];
+      foreach ($taxonData as $taxon) {
+        $keys[] = $taxon['external_key'];
+      }
+      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition indexed_location_list to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersIndexedLocationList(array $readAuth, array $definition, array $params, array &$bool) {
+    $value = self::getDefinitionVal($definition, $params);
+    if (!empty($value)) {
+      $bool['must'][] = [
+        'nested' => [
+          'path' => 'location.higher_geography',
+          'query' => [
+            'terms' => ['location.higher_geography.id' => explode(',', $value)],
+          ],
         ],
-      ],
-    ];
+      ];
+    }
   }
 
   /**
@@ -503,7 +688,7 @@ HTML;
     echo json_encode($reportData);
   }
 
-  public static function ajax_esproxy($website_id, $password, $nid) {
+  public static function ajax_esproxy_searchbyparams($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
     $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
     $query = array_merge($_POST);
@@ -528,7 +713,6 @@ HTML;
 
     }
     unset($query['bool_queries']);
-    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
     if (!empty($query['user_filters'])) {
       $readAuth = data_entry_helper::get_read_auth($website_id, $password);
       self::applyUserFilters($readAuth, $query, $bool);
@@ -543,12 +727,49 @@ HTML;
     self::curlPost($url, $query, $params);
   }
 
-  public static function ajax_esproxyupdate($website_id, $password, $nid) {
+  /**
+   * A search proxy that passes through the data as is.
+   */
+  public static function ajax_esproxy_rawsearch($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
-    $occurrenceId = $_POST['id'];
-    $warehouse = 'jvb';
-    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . "/doc/$warehouse|$occurrenceId/_update";
-    $doc = ['doc' => array_merge($_POST['doc'])];
+    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
+    $query = array_merge($_POST);
+    unset($query['warehouse_url']);
+    self::curlPost($url, $query, $params);
+  }
+
+  public static function ajax_esproxy_updateids($website_id, $password, $nid) {
+    $params = hostsite_get_node_field_value($nid, 'params');
+    watchdog('debug', json_encode($params));
+    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . "/_update_by_query";
+    $scripts = [];
+    if (!empty($_POST['doc']['identification']['verification_status'])) {
+      $scripts[] = "ctx._source.identification.verification_status = '" . $_POST['doc']['identification']['verification_status'] . "'";
+    }
+    if (!empty($_POST['doc']['identification']['verification_substatus'])) {
+      $scripts[] = "ctx._source.identification.verification_substatus = '" . $_POST['doc']['identification']['verification_substatus'] . "'";
+    }
+    if (!empty($_POST['doc']['identification']['query'])) {
+      $scripts[] = "ctx._source.identification.query = '" . $_POST['doc']['identification']['query'] . "'";
+    }
+    $_ids = [];
+    // Convert Indicia IDs to the document _ids for ES.
+    foreach ($_POST['ids'] as $id) {
+      $_ids[] = $params['warehouse_prefix'] . $id;
+    }
+    $doc = [
+      'script' => [
+        'source' => implode("; ", $scripts),
+        'lang' => 'painless',
+      ],
+      'query' => [
+        'terms' => [
+          '_id' => $_ids,
+        ],
+      ],
+    ];
+    watchdog('debug', $url);
+    watchdog('debug', json_encode($doc));
     self::curlPost($url, $doc, $params);
   }
 
