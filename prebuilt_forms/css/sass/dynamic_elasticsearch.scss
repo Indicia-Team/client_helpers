@@ -15,7 +15,7 @@ $colour-select-row-bg: #3333ee;
 .fas, .far {
   margin: 3px;
   padding: 1px;
-  &.fa-check-circle {
+  &.fa-check-circle, &.fa-thumbs-up {
     color: green;
   }
   &.fa-check-double {
@@ -32,6 +32,12 @@ $colour-select-row-bg: #3333ee;
     &.status-R5 {
       @include fa-box(red, red, white);
     }
+  }
+  &.fa-thumbs-down, &.fa-exclamation, &.fa-exclamation-circle, &.fa-exclamation-triangle {
+    color: red;
+  }
+  &.fa-eye-slash, &.fa-cog, &.fa-clock {
+    color: silver;
   }
 }
 table.es-data-grid {
@@ -66,6 +72,15 @@ table.es-data-grid {
         color: $colour-select-row;
         background-color: $colour-select-row-bg;
       }
+      img {
+        max-height: 60px;
+        border-radius: 4px;
+        margin: 0 2px;
+        box-shadow: #aaa 0px 2px 4px 0px;
+        &.multi {
+          max-height: 45px;
+        }
+      }
     }
   }
 }
@@ -80,18 +95,71 @@ table.es-data-grid {
     vertical-align: middle;
   }
   button {
+    border: none;
     background: none;
     box-shadow: none;
     color: black;
     text-shadow: none;
     min-height: 25px;
     margin: 8px 8px;
+    &:hover {
+      background: silver;
+    }
+  }
+  .sep {
+    height: 20px;
+    width: 1px;
+    background-color: silver;
+    margin: 0 8px;
   }
 }
 
-.record-details {
-  th {
-    width: 200px;
+.details-container {
+  .empty-message {
+    .fa-2x {
+      margin: 0.5em;
+    }
+  }
+  .ui-tabs-nav {
+    border-bottom: solid silver 1px;
+  }
+  .ui-tabs .ui-tabs-panel {
+    padding: 8px;
+  }
+  .record-details {
+    th {
+      width: 200px;
+      padding: 0 0.5em;
+    }
+    td {
+      padding: 0 0.5em;
+    }
+    .fas, .far {
+      font-size: 130%;
+    }
+  }
+  .recorder-experience {
+    th {
+      width: 25%;
+    }
+    td {
+      span {
+        margin-left: 15px;
+        display: inline-block;
+        height: 15px;
+        border-radius: 4px;
+        box-shadow: #aaa 0px 2px 4px 0px;
+        &.exp-V {
+          background-color: green;
+        }
+        &.exp-C {
+          background-color: silver;
+        }
+        &.exp-R {
+          background-color: red;
+        }
+      }
+    }
   }
 }
 
@@ -102,6 +170,11 @@ table.es-data-grid {
   }
   textarea {
     min-width: 300px;
+    width: 100%;
     min-height: 250px;
   }
+}
+
+.field-taxon--accepted-name {
+  font-style: italic;
 }
