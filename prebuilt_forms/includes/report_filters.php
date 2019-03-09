@@ -935,7 +935,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   if (function_exists('hostsite_add_library')) {
     hostsite_add_library('collapse');
   }
-  $filterData = report_filters_load_existing($readAuth, $options['sharingCode']);
+  $filterData = report_filters_load_existing($readAuth, $options['sharingCode'], TRUE);
   $existing = '';
   $contexts = '';
   $contextDefs = array();
@@ -1397,8 +1397,11 @@ JS;
 
 /**
  * Gets the report data for the list of existing filters this user can access.
+ *
+ * $param bool $caching
+ *   Pass TRUE to enable caching for faster responses.
  */
-function report_filters_load_existing($readAuth, $sharing) {
+function report_filters_load_existing($readAuth, $sharing, $caching = FALSE) {
   if (function_exists('hostsite_get_user_field')) {
     $userId = hostsite_get_user_field('indicia_user_id');
   }
@@ -1413,13 +1416,14 @@ function report_filters_load_existing($readAuth, $sharing) {
     require_once DOCROOT . 'client_helpers/report_helper.php';
   }
   $filters = report_helper::get_report_data(array(
-    'dataSource' => 'library/filters/filters_list',
+    'dataSource' => 'library/filters/filters_list_minimal',
     'readAuth' => $readAuth,
+    'caching' => $caching,
     'extraParams' => array(
       'filter_sharing_mode' => $sharing,
       'defines_permissions' => '',
-      'filter_user_id' => $userId
-    )
+      'filter_user_id' => $userId,
+    ),
   ));
   return $filters;
 }
