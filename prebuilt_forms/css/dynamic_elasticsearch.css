@@ -83,7 +83,8 @@ table.es-data-grid tbody tr img {
 .details-container .ui-tabs-nav {
   border-bottom: solid silver 1px; }
 .details-container .ui-tabs .ui-tabs-panel {
-  padding: 8px; }
+  padding: 8px;
+  min-height: 150px; }
 .details-container .record-details th {
   width: 200px;
   padding: 0 0.5em; }
@@ -91,20 +92,23 @@ table.es-data-grid tbody tr img {
   padding: 0 0.5em; }
 .details-container .record-details .fas, .details-container .record-details .far {
   font-size: 130%; }
-.details-container .recorder-experience th {
-  width: 25%; }
-.details-container .recorder-experience td span {
-  margin-left: 15px;
-  display: inline-block;
-  height: 15px;
-  border-radius: 4px;
-  box-shadow: #aaa 0px 2px 4px 0px; }
-  .details-container .recorder-experience td span.exp-V {
-    background-color: green; }
-  .details-container .recorder-experience td span.exp-C {
-    background-color: silver; }
-  .details-container .recorder-experience td span.exp-R {
-    background-color: red; }
+.details-container .recorder-experience {
+  position: relative;
+  min-height: 150px; }
+  .details-container .recorder-experience th {
+    width: 25%; }
+  .details-container .recorder-experience td span {
+    margin-left: 15px;
+    display: inline-block;
+    height: 15px;
+    border-radius: 4px;
+    box-shadow: #aaa 0px 2px 4px 0px; }
+    .details-container .recorder-experience td span.exp-V {
+      background-color: green; }
+    .details-container .recorder-experience td span.exp-C {
+      background-color: silver; }
+    .details-container .recorder-experience td span.exp-R {
+      background-color: red; }
 
 .comment-popup label {
   display: block;

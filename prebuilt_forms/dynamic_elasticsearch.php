@@ -421,6 +421,7 @@ HTML;
     </div>
     <div id="tabs-recorder-experience">
       <div class="recorder-experience">
+        <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
       </div>
     </div>
   </div>

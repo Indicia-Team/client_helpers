@@ -125,6 +125,7 @@ table.es-data-grid {
   }
   .ui-tabs .ui-tabs-panel {
     padding: 8px;
+    min-height: 150px;
   }
   .record-details {
     th {
@@ -139,6 +140,8 @@ table.es-data-grid {
     }
   }
   .recorder-experience {
+    position: relative;
+    min-height: 150px;
     th {
       width: 25%;
     }
