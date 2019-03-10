@@ -1,19 +1,44 @@
-/*eslint no-underscore-dangle: ["error", { "allow": ["_source", "_latlng"] }]*/
+/**
+ * Indicia, the OPAL Online Recording Toolkit.
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
+ *
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/indicia-team/client_helpers
+ */
+
+ /* eslint no-underscore-dangle: ["error", { "allow": ["_source", "_latlng"] }]*/
 
 (function enclose($) {
   'use strict';
 
+  /**
+   * Keep track of a list of all the plugin instances that output something.
+   */
   indiciaData.esOutputPlugins = [];
 
-  indiciaData.statusIcons = {
-    V: 'far fa-check-circle',
-    V1: 'fas fa-check-double',
-    V2: 'fas fa-check',
-    C: 'fas fa-clock',
-    C3: 'fas fa-question',
-    R: 'far fa-times-circle',
-    R4: 'fas fa-times',
-    R5: 'fas fa-times',
+  /**
+   * Font Awesome icon and other classes for record statuses and flags.
+   */
+  indiciaData.statusClasses = {
+    V: 'far fa-check-circle status-V',
+    V1: 'fas fa-check-double status-V1',
+    V2: 'fas fa-check status-V2',
+    C: 'fas fa-clock status-C',
+    C3: 'fas fa-question status-C3',
+    R: 'far fa-times-circle status-R',
+    R4: 'fas fa-times status-R4',
+    R5: 'fas fa-times status-R5',
     // Additional flags
     Q: 'far fa-comment',
     A: 'far fa-comments',
@@ -21,15 +46,18 @@
     Confidential: 'fas fa-exclamation-triangle'
   };
 
-  indiciaData.statusTooltips = {
+  /**
+   * Messages for record statuses and other flags.
+   */
+  indiciaData.statusMsgs = {
     V: 'Accepted',
-    V1: 'Accepted :: correct',
-    V2: 'Accepted :: considered correct',
+    V1: 'Accepted as correct',
+    V2: 'Accepted as considered correct',
     C: 'Pending review',
     C3: 'Plausible',
     R: 'Not accepted',
-    R4: 'Not accepted :: unable to verify',
-    R5: 'Not accepted :: incorrect',
+    R4: 'Not accepted as unable to verify',
+    R5: 'Not accepted as incorrect',
     // Additional flags
     Q: 'Queried',
     A: 'Answered',
@@ -37,9 +65,13 @@
     Confidential: 'Confidential'
   };
 
-  indiciaData.ruleIcons = {
+  /**
+   * Font Awesome icon classes for verification automatic check rules.
+   */
+  indiciaData.ruleClasses = {
     WithoutPolygon: 'fas fa-globe',
     PeriodWithinYear: 'far fa-calendar-times',
+    IdentificationDifficulty: 'fas fa-microscope',
     default: 'fas fa-ruler',
     pass: 'fas fa-thumbs-up',
     fail: 'fas fa-thumbs-down',
@@ -49,6 +81,13 @@
 
   /**
    * Function to flag an output plugin as failed.
+   *
+   * Places an error message before the plugin instance then throws a message.
+   *
+   * @param object el
+   *   Plugin element.
+   * @param string msg
+   *   Failure message.
    */
   indiciaFns.controlFail = function controlFail(el, msg) {
     $(el).before('<p class="alert alert-danger">' +
@@ -69,54 +108,40 @@
    *   * confidential
    * @param string iconClass
    *   Additional class to add to the icons, e.g. fa-2x.
+   *
+   * @return string
+   *   HTML for the icons.
    */
   indiciaFns.getEsStatusIcons = function getEsStatusIcons(flags, iconClass) {
     var html = '';
     var fullStatus;
-    var classes = [];
+
+    var addIcon = function addIcon(flag) {
+      var classes = [];
+      if (typeof indiciaData.statusClasses[flag] !== 'undefined') {
+        classes = [indiciaData.statusClasses[flag]];
+        if (iconClass) {
+          classes.push(iconClass);
+        }
+        html += '<span title="' + indiciaData.statusMsgs[flag] + '" class="' + classes.join(' ') + '"></span>';
+      }
+    };
+    // Add the record status icon.
     if (flags.status) {
       fullStatus = flags.status + (!flags.substatus || flags.substatus === '0' ? '' : flags.substatus);
-      classes.push(indiciaData.statusIcons[fullStatus]);
-      if (iconClass) {
-        classes.push(iconClass);
-      }
-      classes.push('status-' + flags.status + (!flags.substatus || flags.substatus === '0' ? '' : flags.substatus));
-      if (typeof indiciaData.statusIcons[fullStatus] !== 'undefined') {
-        html += '<span title="' + indiciaData.statusTooltips[fullStatus] + '" class="' + classes.join(' ') + '"></span>';
-      }
+      addIcon(fullStatus);
     }
+    // Add other metadata icons as required.
     if (flags.query) {
-      classes = [indiciaData.statusIcons[flags.query]];
-      if (iconClass) {
-        classes.push(iconClass);
-      }
-      html += '<span title="' + indiciaData.statusTooltips[flags.query] + '" class="' + classes.join(' ') + '"></span>';
+      addIcon(flags.query);
+    }
+    if (flags.sensitive && flags.sensitive !== 'false') {
+      addIcon('Sensitive');
+    }
+    if (flags.confidential && flags.confidential !== 'false') {
+      addIcon('Confidential');
     }
     return html;
-  };
-
-  indiciaFns.getDataCleanerIcons = function getDataCleanerIcons(autoChecks) {
-    var icons = [];
-    if (autoChecks.enabled === 'false') {
-      icons.push('<span title="Automatic rule checks will not be applied to records in this dataset." class="' + indiciaData.ruleIcons.checksDisabled + '"></span>');
-    } else if (autoChecks.result === 'true') {
-      icons.push('<span title="All automatic rule checks passed." class="' + indiciaData.ruleIcons.pass + '"></span>');
-    } else if (autoChecks.result === 'false') {
-      if (autoChecks.output.length > 0) {
-        icons = ['<span title="The following automatic rule checks were triggered for this record." class="' + indiciaData.ruleIcons.fail + '"></span>'];
-        // Add an icon for each rule violation.
-        $.each(autoChecks.output, function eachViolation() {
-          // Set a default for any other rules.
-          var icon = indiciaData.ruleIcons.hasOwnProperty(this.rule_type)
-            ? indiciaData.ruleIcons[this.rule_type] : indiciaData.ruleIcons.default;
-          icons.push('<span title="' + this.message + '" class="' + icon + '"></span>');
-        });
-      }
-    } else {
-      // Not yet checked.
-      icons.push('<span title="Record not yet checked against rules." class="' + indiciaData.ruleIcons.pending + '"></span>');
-    }
-    return icons.join('');
   };
 
   indiciaFns.findVal = function i(object, key) {
@@ -135,13 +160,13 @@
     return value;
   };
 
-  indiciaFns.getValueForField = function getValueForField(doc, field) {
-    var i;
-    var valuePath = doc;
-    var fieldPath = field.split('.');
-    var values = [];
-    var info = '';
-    if (field === '#status_icons#') {
+  /**
+   * A list of functions which provide special handling for special fields that
+   * can be extracted from an ElasticSearch doc.
+   */
+  indiciaFns.fieldConvertors = {
+    // Record status and other flag icons.
+    status_icons: function statusIcons(doc) {
       return indiciaFns.getEsStatusIcons({
         status: doc.identification.verification_status,
         substatus: doc.identification.verification_substatus,
@@ -149,17 +174,42 @@
         sensitive: doc.metadata.sensitive,
         confidential: doc.metadata.confidential
       });
-    }
-    if (field === '#data_cleaner_icons#') {
-      return indiciaFns.getDataCleanerIcons(doc.identification.auto_checks);
-    }
-    if (field === '#date#') {
+    },
+    // Data cleaner automatic rule check result icons.
+    data_cleaner_icons: function dataCleanerIcons(doc) {
+      var autoChecks = doc.identification.auto_checks;
+      var icons = [];
+      if (autoChecks.enabled === 'false') {
+        icons.push('<span title="Automatic rule checks will not be applied to records in this dataset." class="' + indiciaData.ruleClasses.checksDisabled + '"></span>');
+      } else if (autoChecks.result === 'true') {
+        icons.push('<span title="All automatic rule checks passed." class="' + indiciaData.ruleClasses.pass + '"></span>');
+      } else if (autoChecks.result === 'false') {
+        if (autoChecks.output.length > 0) {
+          icons = ['<span title="The following automatic rule checks were triggered for this record." class="' + indiciaData.ruleClasses.fail + '"></span>'];
+          // Add an icon for each rule violation.
+          $.each(autoChecks.output, function eachViolation() {
+            // Set a default for any other rules.
+            var icon = indiciaData.ruleClasses.hasOwnProperty(this.rule_type)
+              ? indiciaData.ruleClasses[this.rule_type] : indiciaData.ruleClasses.default;
+            icons.push('<span title="' + this.message + '" class="' + icon + '"></span>');
+          });
+        }
+      } else {
+        // Not yet checked.
+        icons.push('<span title="Record not yet checked against rules." class="' + indiciaData.ruleClasses.pending + '"></span>');
+      }
+      return icons.join('');
+    },
+    // Format dates, with handling of range dates.
+    date: function date(doc) {
       if (doc.event.date_start !== doc.event.date_end) {
         return doc.event.date_start + ' - ' + doc.event.date_end;
       }
       return doc.event.date_start;
-    }
-    if (field === '#locality#') {
+    },
+    // A list of higher geographic areas in the doc.
+    locality: function locality(doc) {
+      var info;
       if (doc.location.verbatim_locality) {
         info += '<div>' + doc.location.verbatim_locality + '</div>';
         if (doc.location.higher_geography) {
@@ -172,24 +222,39 @@
       }
       return info;
     }
-    if (field === '#metadata_icons#') {
-      if (typeof doc.metadata.licence_code !== 'undefined') {
-        values.push('<span class="alert alert-warning">' + doc.metadata.licence_code + '</span>');
-      }
-      if (doc.metadata.sensitive === 'true') {
-        values.push('<span class="alert alert-danger">Sensitive</span>');
-      }
-      if (doc.metadata.confidential === 'true') {
-        values.push('<span class="alert alert-danger">Confidential</span>');
-      }
-      return values.join('');
+  };
+
+  /**
+   * Retrieves a field value from the document.
+   *
+   * @param object doc
+   *   Document read from ElasticSearch.
+   * @param string field
+   *   Name of the field. Either a path to the field in the document (such as
+   *   taxon.accepted_name) or a special field name surrounded by # characters,
+   *   e.g. #locality.
+   */
+  indiciaFns.getValueForField = function getValueForField(doc, field) {
+    var i;
+    var valuePath = doc;
+    var fieldPath = field.split('.');
+    // Special field handlers are in the list of convertors.
+    if (typeof indiciaFns.fieldConvertors[field.replace(/^#(.+)#$/, '$1')] !== 'undefined') {
+      return indiciaFns.fieldConvertors[field.replace(/^#(.+)#$/, '$1')](doc);
     }
+    // If not a special field, work down the document hierarchy according to
+    // the field's path components.
     for (i = 0; i < fieldPath.length; i++) {
       if (typeof valuePath[fieldPath[i]] === 'undefined') {
         valuePath = '';
         break;
       }
       valuePath = valuePath[fieldPath[i]];
+    }
+    // Reformat date fields to user-friendly format.
+    // @todo Localisation for non-UK dates.
+    if (field.match(/_on$/)) {
+      valuePath = valuePath.replace(/(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}).*/, '$3/$2/$1 $4:$5');
     }
     return valuePath;
   };
@@ -231,6 +296,10 @@
     initialZoom: 5
   };
 
+  /**
+   * Variable to hold the marker used to highlight the currently selected row
+   * in a linked dataGrid.
+   */
   var selectedRowMarker;
 
   var addFeature = function addFeature(el, sourceId, location, metric) {
@@ -244,14 +313,15 @@
       config.options.stroke = false;
     }
     switch (config.type) {
+      // Circle markers on layer.
       case 'circle':
         el.outputLayers[sourceId].addLayer(L.circle(location, config.options));
         break;
-
+      // Leaflet.heat powered heat maps.
       case 'heat':
         el.outputLayers[sourceId].addLatLng([location.lat, location.lon, metric]);
         break;
-
+      // Default layer type is markers.
       default:
         el.outputLayers[sourceId].addLayer(L.marker(location, config.options));
     }
@@ -1098,11 +1168,11 @@
         var doc = JSON.parse($(tr).attr('data-doc-source'));
         var rows = [];
         addRow(rows, doc, 'ID', 'id');
-        addRow(rows, doc, 'Metadata', '#metadata_icons#');
         addRow(rows, doc, 'Given name', ['taxon.taxon_name', 'taxon.taxon_name_authorship'], ' ');
         addRow(rows, doc, 'Accepted name', ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
         addRow(rows, doc, 'Common name', 'taxon.vernacular_name');
         addRow(rows, doc, 'Taxonomy', ['taxon.phylum', 'taxon.order', 'taxon.family'], ' :: ');
+        addRow(rows, doc, 'Licence', 'metadata.licence_code');
         addRow(rows, doc, 'Status', '#status_icons#');
         addRow(rows, doc, 'Checks', '#data_cleaner_icons#');
         addRow(rows, doc, 'Date', '#date#');
@@ -1188,7 +1258,7 @@
     if (status.status) {
       indiciaPostUrl = indiciaData.ajaxFormPostSingleVerify;
       commentToSave = comment.trim() === ''
-        ? indiciaData.statusTooltips[status.status]
+        ? indiciaData.statusMsgs[status.status]
         : comment.trim();
       $.extend(data, {
         'occurrence:ids': occurrenceIds.join(','),
@@ -1286,15 +1356,15 @@
     fs = $('<fieldset class="comment-popup" data-ids="' + JSON.stringify(ids) + '" ' + statusData.join('') + '>');
     if (selectedTrs.length > 1) {
       heading = status.status
-        ? 'Set status to ' + indiciaData.statusTooltips[overallStatus] + ' for ' + selectedTrs.length + ' records'
+        ? 'Set status to ' + indiciaData.statusMsgs[overallStatus] + ' for ' + selectedTrs.length + ' records'
         : 'Query ' + selectedTrs.length + ' records';
       $('<div class="alert alert-info">You are updating multiple records!</alert>').appendTo(fs);
     } else {
       heading = status.status
-        ? 'Set status to ' + indiciaData.statusTooltips[overallStatus]
+        ? 'Set status to ' + indiciaData.statusMsgs[overallStatus]
         : 'Query this record';
     }
-    $('<legend><span class="' + indiciaData.statusIcons[overallStatus] + ' fa-2x"></span>' + heading + '</legend>').appendTo(fs);
+    $('<legend><span class="' + indiciaData.statusClasses[overallStatus] + ' fa-2x"></span>' + heading + '</legend>').appendTo(fs);
     $('<label for="comment-textarea">Add the following comment:</label>').appendTo(fs);
     $('<textarea id="comment-textarea">').appendTo(fs);
     $('<button class="btn btn-primary">Save</button>').appendTo(fs);
