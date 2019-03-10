@@ -1167,10 +1167,16 @@
       $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect(dataGrid, tr) {
         var doc = JSON.parse($(tr).attr('data-doc-source'));
         var rows = [];
+        var acceptedNameAnnotation = doc.taxon.taxon_name === doc.taxon.accepted_name
+          ? ' (as recorded)' : '';
+        var vernaculardNameAnnotation = doc.taxon.taxon_name === doc.taxon.vernacular_name
+          ? ' (as recorded)' : '';
         addRow(rows, doc, 'ID', 'id');
-        addRow(rows, doc, 'Given name', ['taxon.taxon_name', 'taxon.taxon_name_authorship'], ' ');
-        addRow(rows, doc, 'Accepted name', ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
-        addRow(rows, doc, 'Common name', 'taxon.vernacular_name');
+        if (doc.taxon.taxon_name !== doc.taxon.accepted_name && doc.taxon.taxon_name !== doc.taxon.vernacular_name) {
+          addRow(rows, doc, 'Given name', ['taxon.taxon_name', 'taxon.taxon_name_authorship'], ' ');
+        }
+        addRow(rows, doc, 'Accepted name' + acceptedNameAnnotation, ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
+        addRow(rows, doc, 'Common name' + vernaculardNameAnnotation, 'taxon.vernacular_name');
         addRow(rows, doc, 'Taxonomy', ['taxon.phylum', 'taxon.order', 'taxon.family'], ' :: ');
         addRow(rows, doc, 'Licence', 'metadata.licence_code');
         addRow(rows, doc, 'Status', '#status_icons#');
