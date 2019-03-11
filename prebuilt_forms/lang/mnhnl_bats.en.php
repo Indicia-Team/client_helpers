@@ -47,7 +47,7 @@ $custom_terms = array(
 	// 'Site name' is unchanged in English
 	// 'Actions' is unchanged in English
 // Reports
-    'LANG_Data_Download' => 'These reports provide details of the data entered in the survey. All data is in CSV format, suitable for uploading into Excel.',
+	'LANG_Data_Download' => 'These reports provide details of the data entered in the survey.',
 // Locations
 	// 'Existing locations' is unchanged in English
 	'LANG_Location_Label' => 'Location',

@@ -154,9 +154,7 @@ indiciaData.holidayLocationLayer = false;
         holidayLocationStyle    = new OpenLayers.Style(),
         holidayLocationRule     = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Yellow'}, baseStyle) }),
         holidayLocationStyleMap,
-        labelRule = new OpenLayers.Rule({
-            maxScaleDenominator: 1000000,
-            symbolizer: {
+        labelRule = new OpenLayers.Rule({ symbolizer: {
                 label : '${name}',
                 fontSize: '16px',
                 fontFamily: 'Verdana, Arial, Helvetica,sans-serif',
@@ -164,8 +162,8 @@ indiciaData.holidayLocationLayer = false;
                 fontColor: '#000000',
                 labelAlign: 'cb',
                 labelYOffset: '10'
-            }
-        });
+        }
+      });
 
     unassignedLocationStyle.addRules([unassignedLocationRule, labelRule]);
     unassignedLocationStyleMap          = new OpenLayers.StyleMap({'default': unassignedLocationStyle});

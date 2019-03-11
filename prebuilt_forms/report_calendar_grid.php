@@ -512,10 +512,9 @@ jQuery('#".$ctrlid."').change(function(){
     }
     $reportOptions['newURL'] = self::get_url($args['newURL'], $extensions);
     if (isset($args['footer']))
-      $reportOptions['footer'] = $args['footer'];
+    	$reportOptions['footer'] = $args['footer'];
     if(isset($args['first_year']) && $args['first_year']!='')
-      $reportOptions['first_year'] = $args['first_year'];
-//    drupal_set_message(print_r($reportOptions, true));
+    	$reportOptions['first_year'] = $args['first_year'];
     $grid .= report_helper::report_calendar_grid($reportOptions);
     return $grid;
   }

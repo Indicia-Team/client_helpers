@@ -200,73 +200,30 @@ class iform_mnhnl_bats extends iform_mnhnl_dynamic_1 {
   }
 
   protected static function getExtraGridModeTabsSub($retTabs, $readAuth, $args, $attributes, $rep1, $rep2, $rep3) {
-    $canAccessDownloads = isset($args['download_permission']) && $args['download_permission']!="" && hostsite_user_has_permission($args['download_permission']);
-    $canAccessSites = isset($args['sites_permission']) && $args['sites_permission']!="" && hostsite_user_has_permission($args['sites_permission']);
-    if(!$canAccessDownloads && !$canAccessSites) return('');
-    if(!$retTabs) {
-      $r = array();
-      if($canAccessDownloads) $r['#downloads'] = lang::get('Reports');
-      if($canAccessSites) $r['#locations'] = lang::get('LANG_Locations');
-      return $r;
-    }
-    $r = '';
-    if($canAccessDownloads) {
-      $confirmedLocationTypeID = iform_mnhnl_getTermID(parent::$auth, 'indicia:location_types',$args['SecondaryLocationTypeTerm']);
-      $submittedLocationTypeID = iform_mnhnl_getTermID(parent::$auth, 'indicia:location_types',$args['LocationTypeTerm']);
-      // When a location is created it is created as the Primary location type: this is the new Submitted location for bats.
-      // When the location is checked by an admin, or is flagged as such in the initial upload, it is changed to the Secondary Location type: this is the old Confirmed type.
-      $communeAttr = iform_mnhnl_getAttrID(parent::$auth, $args, 'location', 'Commune');
-      $communeFilter = '';
-      if ($communeAttr) {
-          $communeAttrValues = data_entry_helper::get_population_data(array(
-              'table' => 'location_attribute_value',
-              'extraParams' => $readAuth + array('location_attribute_id' => $communeAttr, 'view'=>'list'),
-          ));
-          
-          $communeAttrValues = array_unique(array_map(
-              function($record) { return is_object($record) ? $record.value : $record['value']; },
-              $communeAttrValues
-          ));
-          natcasesort($communeAttrValues);
-          $options = array_map(
-              function($commune) { return '<option value="'.$commune.'">'.$commune.'</option>'; },
-              $communeAttrValues
-          );
-          $communeFilter = '<label for="commune-filter">'.lang::get('Filter by Commune').'</filter>' .
-              '<select id="commune-filter"><option value="">'.lang::get('All Communes').'</option>'.(implode('',$options)).'</select><br/>';
-          data_entry_helper::$javascript .= "
-$('#commune-filter').change(function() {
-  $('#downloads [name=params]').each(function(idx, elem) {
-    var params = JSON.parse($(elem).val());
-    params.commune = $('#commune-filter').val();
-    params.commune_attr = ".$communeAttr.";
-    $(elem).val(JSON.stringify(params));
-  });
-});
-$('#commune-filter').change();
-";
-      }
-      $r = '<div id="downloads" ><p>'.lang::get('LANG_Data_Download').'</p>'.$communeFilter.'
-      <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/'.$rep1.'&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv&filename='.$args['reportFilenamePrefix'].'sitesreport">
-        <input type="hidden" name="params" value=\'{"website_id":'.$args['website_id'].', "survey_id":'.$args['survey_id'].', "primary_loc_type_id":'.$submittedLocationTypeID.', "primary_name":"'.lang::get('LANG_Location_Type_Primary').'", "secondary_loc_type_id":'.$confirmedLocationTypeID.', "secondary_name":"'.lang::get('LANG_Location_Type_Secondary').'"}\' />
-        <label>'.lang::get('Sites report').':</label><input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('Download').'">
-      </form>
-      <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/'.$rep2.'&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv&filename='.$args['reportFilenamePrefix'].'conditionsreport">
-        <input type="hidden" name="params" value=\'{"website_id":'.$args['website_id'].', "survey_id":'.$args['survey_id'].', "primary_loc_type_id":'.$submittedLocationTypeID.', "primary_name":"'.lang::get('LANG_Location_Type_Primary').'", "secondary_loc_type_id":'.$confirmedLocationTypeID.', "secondary_name":"'.lang::get('LANG_Location_Type_Secondary').'"}\' />
-        <label>'.lang::get('Conditions report').':</label><input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('Download').'">
-      </form>
-      <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/'.$rep3.'&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv&filename='.$args['reportFilenamePrefix'].'speciesreport">
-        <input type="hidden" name="params" value=\'{"website_id":'.$args['website_id'].', "survey_id":'.$args['survey_id'].', "primary_loc_type_id":'.$submittedLocationTypeID.', "primary_name":"'.lang::get('LANG_Location_Type_Primary').'", "secondary_loc_type_id":'.$confirmedLocationTypeID.', "secondary_name":"'.lang::get('LANG_Location_Type_Secondary').'"}\' />
-        <label>'.lang::get('Species report').':</label><input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('Download').'">
-      </form>
-    </div>';
-    }
-    if($canAccessSites) {
-        $r .= iform_mnhnl_locModTool(parent::$auth, $args, parent::$node);
-        $r .= self::getSiteTypeJS(parent::$auth, $args);
-        self::communeJS(parent::$auth, $args);
-        self::set_code_functionality(parent::$auth, $args, true);
-    }
+    $isAdmin = isset($args['edit_permission']) && $args['edit_permission']!="" && hostsite_user_has_permission($args['edit_permission']);
+    if(!$isAdmin) return('');
+    if(!$retTabs) return array('#downloads' => lang::get('Reports'), '#locations' => lang::get('LANG_Locations'));
+    $confirmedLocationTypeID = iform_mnhnl_getTermID(parent::$auth, 'indicia:location_types',$args['SecondaryLocationTypeTerm']);
+    $submittedLocationTypeID = iform_mnhnl_getTermID(parent::$auth, 'indicia:location_types',$args['LocationTypeTerm']);
+    // When a location is created it is created as the Primary location type: this is the new Submitted location for bats.
+    // When the location is checked by an admin, or is flagged as such in the initial upload, it is changed to the Secondary Location type: this is the old Confirmed type.
+    $r= '<div id="downloads" ><p>'.lang::get('LANG_Data_Download').'</p>
+    <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/'.$rep1.'&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv&filename='.$args['reportFilenamePrefix'].'sitesreport">
+      <input type="hidden" name="params" value=\'{"website_id":'.$args['website_id'].', "survey_id":'.$args['survey_id'].', "primary_loc_type_id":'.$submittedLocationTypeID.', "primary_name":"'.lang::get('LANG_Location_Type_Primary').'", "secondary_loc_type_id":'.$confirmedLocationTypeID.', "secondary_name":"'.lang::get('LANG_Location_Type_Secondary').'"}\' />
+      <label>'.lang::get('Sites report').':</label><input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('Download').'">
+    </form>
+    <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/'.$rep2.'&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv&filename='.$args['reportFilenamePrefix'].'conditionsreport">
+      <input type="hidden" name="params" value=\'{"website_id":'.$args['website_id'].', "survey_id":'.$args['survey_id'].', "primary_loc_type_id":'.$submittedLocationTypeID.', "primary_name":"'.lang::get('LANG_Location_Type_Primary').'", "secondary_loc_type_id":'.$confirmedLocationTypeID.', "secondary_name":"'.lang::get('LANG_Location_Type_Secondary').'"}\' />
+      <label>'.lang::get('Conditions report').':</label><input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('Download').'">
+    </form>
+    <form method="post" action="'.data_entry_helper::$base_url.'/index.php/services/report/requestReport?report=reports_for_prebuilt_forms/MNHNL/'.$rep3.'&reportSource=local&auth_token='.$readAuth['auth_token'].'&nonce='.$readAuth['nonce'].'&mode=csv&filename='.$args['reportFilenamePrefix'].'speciesreport">
+      <input type="hidden" name="params" value=\'{"website_id":'.$args['website_id'].', "survey_id":'.$args['survey_id'].', "primary_loc_type_id":'.$submittedLocationTypeID.', "primary_name":"'.lang::get('LANG_Location_Type_Primary').'", "secondary_loc_type_id":'.$confirmedLocationTypeID.', "secondary_name":"'.lang::get('LANG_Location_Type_Secondary').'"}\' />
+      <label>'.lang::get('Species report').':</label><input type="submit" class="ui-state-default ui-corner-all" value="'.lang::get('Download').'">
+    </form>
+  </div>'.iform_mnhnl_locModTool(parent::$auth, $args, parent::$node);
+    $r .= self::getSiteTypeJS(parent::$auth, $args);
+    self::communeJS(parent::$auth, $args);
+    self::set_code_functionality(parent::$auth, $args, true);
     return $r;
   }
 
@@ -277,46 +234,28 @@ $('#commune-filter').change();
     $siteTypeTermList = helper_base::get_termlist_terms($auth, intval($siteTypeAttr['termlist_id']), array('Other'));
     $siteTypeOtherAttrID=iform_mnhnl_getAttrID($auth, $args, 'location', 'site type other');
     if (!$siteTypeOtherAttrID) return lang::get("This form must be used with a survey that has the 'site type other' location attribute associated with it.");
-    // this needs to handle site type as radio (bats1) or checkbox (bats2) or now select
-    // type-required is only used for checkboxes - radio ones can use required as per normal.
-    data_entry_helper::$javascript .= "
-var siteTypeControls = jQuery('[name=locAttr\\:".$siteTypeAttrID."],[name=locAttr\\:".$siteTypeAttrID."\\[\\]],[name^=locAttr\\:".$siteTypeAttrID."\\:]').not(':hidden');
-
-var siteTypeControls_change = function(){
-  var otherSelected;
+  	// this needs to handle site type as radio (bats1) or checkbox (bats2)
+  	// type-required is only used for checkboxes - radio ones can use required as per normal.
+  	data_entry_helper::$javascript .= "
+var myTerms = jQuery('[name=locAttr\\:".$siteTypeAttrID."],[name=locAttr\\:".$siteTypeAttrID."\\[\\]],[name^=locAttr\\:".$siteTypeAttrID."\\:]').not(':hidden');
+myTerms_change = function(){
   if(jQuery('.type-required').filter('[checked]').length > 0)
     jQuery('.type-required').removeClass('ui-state-error').next('p.inline-error').remove();
   // for a radio button the change is fired on the newly checked button
   // for a checkbox button the change is fired on the button itself
-  if(siteTypeControls.length > 1)
-    otherSelected = siteTypeControls
-                .filter('[value=".$siteTypeTermList[0]['meaning_id']."],[value^=".$siteTypeTermList[0]['meaning_id']."\\:]')
-                .filter(':checked');
-  else
-    otherSelected = siteTypeControls.find('option')
-                .filter('[value=".$siteTypeTermList[0]['meaning_id']."],[value^=".$siteTypeTermList[0]['meaning_id']."\\:]')
-                .filter(':selected');
-
-  if(otherSelected.length>0)
+  var attrs = jQuery('[name=locAttr\\:".$siteTypeAttrID."],[name=locAttr\\:".$siteTypeAttrID."\\[\\]],[name^=locAttr\\:".$siteTypeAttrID."\\:]').filter('[value=".$siteTypeTermList[0]['meaning_id']."],[value^=".$siteTypeTermList[0]['meaning_id']."\\:]').filter('[checked]');
+  if(attrs.length>0)
     jQuery('[name=locAttr\\:".$siteTypeOtherAttrID."],[name^=locAttr\\:".$siteTypeOtherAttrID."\\:]').addClass('required').removeAttr('readonly');
   else
     jQuery('[name=locAttr\\:".$siteTypeOtherAttrID."],[name^=locAttr\\:".$siteTypeOtherAttrID."\\:]').removeClass('required').val('').attr('readonly',true);
 };
-
 var other = jQuery('[name=locAttr\\:".$siteTypeOtherAttrID."],[name^=locAttr\\:".$siteTypeOtherAttrID."\\:]');
 other.next('br').remove();
 other.prev('label').remove();
 other.removeClass('wide').remove(); // remove Other field, then bolt in after the 'other' selection.
-
-siteTypeControls.change(siteTypeControls_change);
-if(siteTypeControls.length > 1)
-  siteTypeControls.filter('[value=".$siteTypeTermList[0]['meaning_id']."],[value^=".$siteTypeTermList[0]['meaning_id']."\\:]').parent().append(other);
-else
-  siteTypeControls.after(other);
-
-// If the controls are checkboxes, add the special validation to ensure at least one is set
-if(siteTypeControls.filter(':checkbox').length>0){
-  siteTypeControls.addClass('type-required');
+myTerms.change(myTerms_change).filter('[value=".$siteTypeTermList[0]['meaning_id']."],[value^=".$siteTypeTermList[0]['meaning_id']."\\:]').parent().append(other);
+if(myTerms.filter(':checkbox').length>0){
+  myTerms.addClass('type-required');
   other.after('<span class=\"deh-required\">*</span>');
   $.validator.addMethod('type-required', function(value, element){
     var valid = jQuery('.type-required').filter('[checked]').length > 0 || element != jQuery('.type-required').eq(0)[0];
@@ -326,9 +265,7 @@ if(siteTypeControls.filter(':checkbox').length>0){
     return valid;
   }, \"".lang::get('At least one site type entry must be selected.')."\");
 }
-
-// set initial state 
-siteTypeControls_change();
+myTerms_change();
 ";
     return '';
   }
@@ -436,17 +373,18 @@ jQuery('[name^=smpAttr]').filter(':checkbox').filter('[value=".$args['disturbanc
 
     if (self::$mode != self::MODE_EXISTING_RO) {
       data_entry_helper::$late_javascript .= "
-$.validator.addMethod('fillgroup', function(value, element){
-  var valid = jQuery(element).closest('tr').find(':text').not('[value=]').length > 0 ||
-  jQuery(element).closest('tr').find(':checkbox').filter('[checked]').length > 0;
-  // when this field is changed and becomes valid, remove the error codes on all the associated fields.
-  if(valid){
+    $.validator.addMethod('fillgroup', function(value, element){
+    var valid = jQuery(element).closest('tr').find(':text').not('[value=]').length > 0 ||
+    jQuery(element).closest('tr').find(':checkbox').filter('[checked]').length > 0;
+    // when this field is changed and becomes valid, remove the error codes on all the associated fields.
+    if(valid){
     $(element).removeClass('ui-state-error');
     var to_valid = $(element).closest('tr').find('.fillgroup').filter('.ui-state-error');
     if(to_valid.length) to_valid.removeClass('ui-state-error').valid();
-  }
-  return valid;
-}, \"".lang::get('validation_fillgroup')."\");";
+    }
+    return valid;
+    },
+    \"".lang::get('validation_fillgroup')."\");";
 
       data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
@@ -578,11 +516,11 @@ $.validator.addMethod('no_observation', function(arg1, arg2){
 jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:',$rule[0])."\\:]').addClass('".$rule[$i]."');";
           }
     }
-//    if (array_key_exists('sample:id', data_entry_helper::$entity_to_load))
-//      data_entry_helper::$late_javascript .= "
-//setupButtons($('#controls'), 1);
-//setupButtons($('#controls'), 2);
-//setupButtons($('#controls'), 0);";
+    if (array_key_exists('sample:id', data_entry_helper::$entity_to_load))
+      data_entry_helper::$late_javascript .= "
+setupButtons($('#controls'), 1);
+setupButtons($('#controls'), 2);
+setupButtons($('#controls'), 0);";
     $smpAttributes = data_entry_helper::getAttributes(array(
         'valuetable'=>'sample_attribute_value'
        ,'attrtable'=>'sample_attribute'
@@ -660,7 +598,7 @@ hook_set_defaults=function(){
     if(self::$mode === self::MODE_EXISTING_RO) $options['disabled']=true;
   	$retVal = iform_mnhnl_lux5kgridControl($auth, $args, parent::$node, array_merge(
       array('initLoadArgs' => '{initial: true}'), $options));
-    self::set_code_functionality($auth, $args, hostsite_user_has_permission($args['sites_permission']));
+    self::set_code_functionality($auth, $args, hostsite_user_has_permission($args['edit_permission']));
     return $retVal;
   }
 
@@ -682,7 +620,7 @@ hook_set_defaults=function(){
               version: '1.1.0'
       		  ,propertyNames: [\"".$parts[6]."\"]
 });
-fillCommune = function(a1) {
+fillCommune = function(a1){
   if(a1.error && (typeof a1.error.success == 'undefined' || a1.error.success == false)){
     alert(\"".lang::get('LANG_CommuneLookUpFailed')."\");
     return;
@@ -1136,273 +1074,6 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
   }
 
   /**
-   * Get the control for species CSV upload.
-   */
-  protected static function get_control_speciesupload($auth, $args, $tabalias, $options) {
-//      $r = '<br/><label for="upload" class="auto-width">' . lang::get('Select *.csv (comma separated values) file of species details to upload') . ': </label>';
-//      $r .= '<input type="file" name="species_upload" id="species_upload"/>';
-//      return $r;
-      
-      global $indicia_templates;
-      
-      $indicia_templates['species_upload'] = '<input type="file" id="{id}" name="{fieldname}" accept="csv" {title}/>'."\n";
-      $options = array(
-          'id' => 'species_upload',
-          'fieldname' => 'species_upload',
-          'label' => lang::get('Select *.csv (comma separated values) file of species details to upload'),
-      );
-      $r = self::apply_template('species_upload', $options);
-      return $r;
-  }
-
-  public static function get_validation_errors($values, $args) {
-      $errors = array();
-      // We are checking any uploaded file format: if no file, no errors.
-      if (count($_FILES)!=1)
-          return;
-      $file = reset($_FILES);
-      if($file['error'] == UPLOAD_ERR_NO_FILE) return;
-      // Get the original file's extension
-      $parts = explode(".",$file['name']);
-      $fext = array_pop($parts);
-      if ($fext!='csv')
-        $errors['species_upload'] = lang::get("Original file must have a .csv extension");
-      if(count($errors))
-        return $errors;
-      $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-      $_SESSION['uploaded_file'] = $file['tmp_name'];
-      $handle = fopen($_SESSION['uploaded_file'], "r");
-      $columns = fgetcsv($handle, 1000, ",");
-      $attrArgs = array(
-          'valuetable'=>'occurrence_attribute_value',
-          'attrtable'=>'occurrence_attribute',
-          'key'=>'occurrence_id',
-          'fieldprefix'=>'occAttr',
-          'extraParams'=>$readAuth,
-          'survey_id'=>$args['survey_id']
-      );
-      $occurrenceAttributes = data_entry_helper::getAttributes($attrArgs, false); // this does not get values
-      $columns = array_map(function($column) {
-          if(strcasecmp($column, '')===0) return -3;
-          if(strcasecmp($column, 'Species')===0) return -2;
-          if($column == 'Remarks' || $column == 'Comment') return -1; // this is optional
-          for($i = 0; $i < count($occurrenceAttributes); $i++) {
-              if($occurrenceAttributes[$i]['untranslatedCaption'] === $column)
-                  return $occurrenceAttributes[$i]['attributeId'];
-          }
-          return -4;
-      } , $columns);
-      while(count($columns) >0 && $columns[count($columns)-1] == -3)
-          array_pop($columns);
-      if(in_array(-3, $columns))
-          $errors['species_upload'] = str_replace('@1', implode(',',
-            array_map(function($n) { return $n+1; }, array_keys($columns, -3))),
-            lang::get("Blank column header(s) in row 1 at position(s) @1"));
-      if(!in_array(-2, $columns))
-        $errors['species_upload'] = lang::get("No Species column detected");
-      if(count(array_keys($columns, -2)) > 1)
-        $errors['species_upload'] = str_replace('@1', implode(',',
-              array_map(function($n) { return $n+1; }, array_keys($columns, -2))),
-              lang::get("Multiple Species columns detected as positions @1"));
-      if(in_array(-4, $columns))
-          $errors['species_upload'] = str_replace('@1', implode(',',
-            array_map(function($n) { return $n+1; }, array_keys($columns, -4))),
-            lang::get("Unrecognised column header(s) in row 1 at position(s) @1"));
-      if(count(array_keys($columns, -1)) > 1)
-          $errors['species_upload'] = str_replace('@1', implode(',',
-                  array_map(function($n) { return $n+1; }, array_keys($columns, -2))),
-                  lang::get("Multiple Comment/Remarks columns detected as positions @1"));
-      if(count($errors))
-          return $errors;
-
-      $taxa_list_args = array(
-              'table' => 'taxa_taxon_list',
-              'extraParams' => $readAuth +  array(
-                  'preferred' => 't',
-                  "view" => "cache",
-                  'taxon_list_id' => $args['extra_list_id']
-              )
-          );
-          
-      $taxaRecords = data_entry_helper::get_population_data($taxa_list_args);
-
-      for($i = 0; $i < count($occurrenceAttributes); $i++) {
-          if($occurrenceAttributes[$i]['data_type']==='L') {
-              $occurrenceAttributes[$i]['terms'] = data_entry_helper::get_population_data(array(
-                  'table' => 'termlists_term',
-                  'extraParams' => $readAuth + array(
-                      'view' => 'cache',
-                      'termlist_id' => $occurrenceAttributes[$i]['termlist_id'],
-                      'preferred' => 't',
-                      'columns' => 'id,term'
-                  )
-              ));
-          }
-      }
-
-      $rowCount=1;
-      while ( ($row = fgetcsv($handle) ) !== FALSE ) {
-          foreach($columns as $idx=>$code) {
-              switch($code) {
-                  case -4: break; // unrecognised column won't occur as causes an error prior to this.
-                  case -3: break; // blank column won't occur as causes an error prior to this.
-                  case -2: // species
-                      $found = FALSE;
-                      foreach($taxaRecords as $taxaRecord) {
-                          $found |= ($row[$idx] === $taxaRecord['taxon']);
-                      }
-                      if(!$found)
-                          $errors['species_upload'] = str_replace(array('@1','@2'),
-                              array($row[$idx],$rowCount),
-                              lang::get("Unrecognised species @1 on row @2"));
-                      break;
-                  case -1: break; // comment - any value acceptable.
-                  default:
-                      for($i = 0; $i < count($occurrenceAttributes); $i++) {
-                          if($occurrenceAttributes[$i]['attributeId'] === $column) {
-                              switch($occurrenceAttributes[$i]['data_type']) {
-                                  case 'D': break; // TODO : currently ignore specific date format
-                                  case 'V': break; // TODO : currently ignore vague date format
-                                  case 'F': break; // TODO : currently ignore float format
-                                  case 'T': break; // TODO : currently ignore text format
-                                  case 'L':
-                                      $found = FALSE;
-                                      foreach($occurrenceAttributes[$i]['terms'] as $term) {
-                                          $found |= ($row[$idx] === $term['term']);
-                                      }
-                                      if(!$found)
-                                          $errors['species_upload'] = str_replace(array('@1', '@2'),
-                                              array($rowCount, $idx+1),
-                                              lang::get("Unrecognised lookup value on row @1, column @2"));
-                                      break;
-                                  case 'I':
-                                      $value = (int)$row[$idx];
-                                      if($value != $row[$idx] || $value < 0) // TODO add proper validation
-                                          $errors['species_upload'] = str_replace(array('@1', '@2'),
-                                              array($rowCount, $idx+1),
-                                              lang::get("Invalid integer on row @1, column @2"));
-                                      break;
-                              }
-                          }
-                      }
-                      break;
-              }
-          }
-          $rowCount++;
-      }
-      return $errors;
-  }
-
-  public static function wrap_occurrence_csv_file(&$occurrences, $args) {
-      // No error checking: this will all be done in the validation function above.
-      // Bizarrely, the submission generation is done before the validation.
-      $errors = array();
-      // We are checking any uploaded file format: if no file, no errors.
-      if (count($_FILES)!=1)
-          return;
-      $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-      $file = reset($_FILES);
-      if($file['error'] == UPLOAD_ERR_NO_FILE) return;
-      // Get the original file's extension
-      $_SESSION['uploaded_file'] = $file['tmp_name'];
-      $handle = fopen($_SESSION['uploaded_file'], "r");
-      $columns = fgetcsv($handle, 1000, ",");
-      $attrArgs = array(
-          'valuetable'=>'occurrence_attribute_value',
-          'attrtable'=>'occurrence_attribute',
-          'key'=>'occurrence_id',
-          'fieldprefix'=>'occAttr',
-          'extraParams'=>$readAuth,
-          'survey_id'=>$args['survey_id']
-      );
-      $occurrenceAttributes = data_entry_helper::getAttributes($attrArgs, false); // this does not get values
-      $columns = array_map(function($column) {
-          if($column === '') return -3;
-          if($column === 'Species') return -2;
-          if($column === 'Remarks' || $column === 'Comment') return -1; // this is optional
-          for($i = 0; $i < count($occurrenceAttributes); $i++) {
-            if($occurrenceAttributes[$i]['untranslatedCaption'] === $column);
-              return $occurrenceAttributes[$i]['attributeId'];
-          }
-          return -4;
-        } , $columns);
-      while(count($columns) >0 && $columns[count($columns)-1] == -3)
-        array_pop($columns);
-      if(in_array(-4, $columns)) return;
-      if(in_array(-3, $columns)) return;
-      if(!in_array(-2, $columns) || count(array_keys($columns, -2)) > 1) return;
-      if(count(array_keys($columns, -1)) > 1) return;
-
-      $taxa_list_args = array(
-          'table' => 'taxa_taxon_list',
-          'extraParams' => $readAuth +  array(
-              'preferred' => 't',
-              "view" => "cache",
-              'taxon_list_id' => $args['extra_list_id']
-          )
-      );
-      
-      $taxaRecords = data_entry_helper::get_population_data($taxa_list_args);
-      
-      for($i = 0; $i < count($occurrenceAttributes); $i++) {
-          if($occurrenceAttributes[$i]['data_type']==='L') {
-              $occurrenceAttributes[$i]['terms'] = data_entry_helper::get_population_data(array(
-                  'table' => 'termlists_term',
-                  'extraParams' => $readAuth + array(
-                      'view' => 'cache',
-                      'termlist_id' => $occurrenceAttributes[$i]['termlist_id'],
-                      'preferred' => 't',
-                      'columns' => 'id,term'
-                  )
-              ));
-          }
-      }
-
-      while ( ($row = fgetcsv($handle) ) !== FALSE ) {
-        $occurrence = array(
-          'id' => 'occurrence',
-          'fields' => array('website_id' => array('value' => $args['website_id'])),
-        );
-        foreach($columns as $idx=>$code) {
-          switch($code) {
-            case -4: break; // unrecognised column won't occur as causes an error prior to this.
-            case -3: break; // blank column won't occur as causes an error prior to this.
-            case -2: // species
-              $found = FALSE;
-              foreach($taxaRecords as $taxaRecord) {
-                if($row[$idx] === $taxaRecord['taxon'])
-                  $occurrence['fields']['taxa_taxon_list_id'] = array('value' => $taxaRecord['preferred_taxa_taxon_list_id']);
-              }
-              break;
-            case -1:
-              $occurrence['fields']['comment']=array('value' => $row[$idx]);
-              break;
-            default:
-              for($i = 0; $i < count($occurrenceAttributes); $i++) {
-                if($occurrenceAttributes[$i]['attributeId'] === $column) {
-                  switch($occurrenceAttributes[$i]['data_type']) {
-                    case 'L':
-                      $found = FALSE;
-                      foreach($occurrenceAttributes[$i]['terms'] as $term) {
-                        if ($row[$idx] === $term['term']) {
-                          $occurrence['fields']['occAttr:'.$occurrenceAttributes[$i]['attributeId']] = array('value' => $term['meaning_id']);
-                        }
-                      }
-                      break;
-                    case 'I':
-                      $occurrence['fields']['occAttr:'.$occurrenceAttributes[$i]['attributeId']] = array('value' => (int)$row[$idx]);
-                      break;
-                  }
-                }
-              }
-              break;
-          }
-        }
-        $occurrences[] = array('fkId' => 'sample_id','model' => $occurrence);
-      }
-  }
-  
-  /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
@@ -1429,7 +1100,6 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
         $occurrences = data_entry_helper::wrap_species_checklist($values);
       else
         $occurrences = submission_builder::wrap_with_images($values, 'occurrence');
-      self::wrap_occurrence_csv_file($occurrences, $args);
       // when a non admin selects an existing location they can not modify it or its attributes and the location record does not form part of the submission
       if (isset($values['location:location_type_id'])){
         if(count($occurrences)>0)

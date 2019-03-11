@@ -373,39 +373,4 @@ class iform_ebms_transects_allocation {
   	echo json_encode(array('response' => $response));
   }
 
-  public static function ajax_downloadSiteAllocations($website_id, $password, $nid) {
-      // UKBMS Issue 80
-      // Requirement: a report to output the square, allocated recorder (user name, proper name), email address, branch and county
-      // Have to do this in 2 stages, as the allocation within UKBMS is via the CMS user ID, not the Indicia ID, so
-      // the link to the user name etc is not held on the warehouse.
-      // Step 1: get the data from the warehouse: 
-      iform_load_helpers(array('data_entry_helper'));
-      $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-      
-//      <param name='locattrs' display='Location attribute list' description='Comma separated list of location attribute IDs to include' datatype='locattrs' default=''/>
-
-      $params = [
-          'region_type_id' => $surveyId, // Region Location Type
-          'location_type_id' => $ttlId, // Region Location Type
-      ];
-      $r = report_helper::get_report_data([
-            'dataSource' => "library/{$type}_attributes/{$type}_attributes_for_form",
-            'readAuth' => $readAuth,
-            'extraParams' => $params,
-            'caching' => FALSE,
-          ]);
-      
-      $r = array();
-      foreach ($surveys as $survey)
-          $r[$survey['id']]=$survey['title'];
-          echo json_encode($r);
-          
-      // Step 2: get all the users from the Drupal site, and merge their data in.
-      $conn = iform_get_connection_details($nid);
-      iform_load_helpers(array('data_entry_helper'));
-
-      header('Content-type: application/json');
-      echo json_encode(array('response' => $response));
-  }
-  
 }

@@ -239,8 +239,6 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     // drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/sectioned_transects_edit_transect.js");
     drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/sectioned_transects_edit_transect.css");
 
-    $r = '<div class="loading-spinner"><div>Loading...</div></div>';
-
     $checks=self::check_prerequisites();
     $args = self::getArgDefaults($args);
     if ($checks!==true)
@@ -432,7 +430,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         $settings['sections']["S$i"]=null;
       }
     }
-    $r .= '<div id="controls">';
+    $r = '<div id="controls">';
     $headerOptions = array('tabs'=>array('#site-details'=>lang::get('Site Details')));
     if ($settings['locationId']) {
       $headerOptions['tabs']['#your-route'] = lang::get('Your Route');
