@@ -519,10 +519,15 @@ class helper_base {
   public static $cache_chance_refresh_file=10;
 
   /**
-   * @var integer On average, every 1 in $cache_chance_purge times the Warehouse is called for data, all files
-   * older than 5 times the cache_timeout will be purged, apart from the most recent $cache_allowed_file_count files.
+   * Chance of a cache purge evemt.
+   *
+   * On average, every 1 in $cache_chance_purge times the Warehouse is called
+   * for data, all files older than 5 times the cache_timeout will be purged,
+   * apart from the most recent $cache_allowed_file_count files.
+   *
+   * @var int
    */
-  public static $cache_chance_purge=100;
+  public static $cache_chance_purge = 500;
 
   /**
    * @var integer Number of recent files allowed in the cache which the cache will not bother clearing during a deletion operation.
@@ -2616,29 +2621,29 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    */
   private static function purgeCache() {
     $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    self::purgeFiles(self::$cache_chance_purge, $cacheFolder, self::$cache_timeout * 5, self::$cache_allowed_file_count);
+    self::purgeFiles($cacheFolder, self::$cache_timeout * 5, self::$cache_allowed_file_count);
   }
 
   /**
    * Internal function to ensure old image files are purged periodically.
    */
   private static function purgeImages() {
-    self::purgeFiles(self::$cache_chance_purge, self::getInterimImageFolder(), self::$interim_image_expiry);
+    self::purgeFiles(self::getInterimImageFolder(), self::$interim_image_expiry);
   }
 
   /**
    * Performs a periodic purge of cached or interim image upload files.
-   * @param integer $chanceOfPurge Indicates the chance of a purge happening. 1 causes a purge
-   * every time the function is called, 10 means there is a 1 in 10 chance, etc.
-   * @param string $folder Path to the folder to purge cache files from.
-   * @param integer $timeout Age of files in seconds before they will be considered for
-   * purging.
-   * @param integer $allowedFileCount Number of most recent files to not bother purging
-   * from the cache.
+   *
+   * @param string $folder
+   *   Path to the folder to purge cache files from.
+   * @param integer $timeout
+   *   Age of files in seconds before they will be considered for purging.
+   * @param integer $allowedFileCount
+   *   Number of most recent files to not bother purging from the cache.
    */
-  private static function purgeFiles($chanceOfPurge, $folder, $timeout, $allowedFileCount=0) {
-    // don't do this every time.
-    if (TRUE || rand(1, $chanceOfPurge)===1) {
+  private static function purgeFiles($folder, $timeout, $allowedFileCount=0) {
+    // Don't do this every time.
+    if (rand(1, self::$cache_chance_purge) === 1) {
       // First, get an array of files sorted by date
       $files = array();
       $dir =  opendir($folder);
@@ -2646,27 +2651,29 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $exclude = array('.', '..', '.htaccess', 'web.config', '.gitignore');
       if ($dir) {
         while ($filename = readdir($dir)) {
-          if (is_dir($filename) || in_array($filename, $exclude))
+          if (in_array($filename, $exclude) || !is_file($filename)) {
             continue;
+          }
           $lastModified = filemtime($folder . $filename);
           $files[] = array($folder .$filename, $lastModified);
         }
       }
-      // sort the file array by date, oldest first
+      // Sort the file array by date, oldest first.
       usort($files, array('helper_base', 'DateCmp'));
-      // iterate files, ignoring the number of files we allow in the cache without caring.
+      // Iterate files, ignoring the number of files we allow in the cache
+      // without caring.
       for ($i=0; $i<count($files)-$allowedFileCount; $i++) {
-        // if we have reached a file that is not old enough to expire, don't go any further
+        // If we have reached a file that is not old enough to expire, don't go
+        // any further.
         if ($files[$i][1] > (time() - $timeout)) {
           break;
         }
-        // clear out the old file
+        // Clear out the old file.
         if (is_file($files[$i][0]))
           unlink($files[$i][0]);
       }
     }
   }
-
 
   /**
    * A custom PHP sorting function which uses the 2nd element in the compared array to
