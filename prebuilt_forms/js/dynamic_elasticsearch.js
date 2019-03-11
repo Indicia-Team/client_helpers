@@ -436,28 +436,31 @@
         if ($('#' + settings.showSelectedRow).length === 0) {
           indiciaFns.controlFail(el, 'Invalid grid ID in @showSelectedRow parameter');
         }
-        $('#' + settings.showSelectedRow).esDataGrid('on', 'rowSelect', function onRowSelect(gridEl, tr) {
-          var doc = JSON.parse($(tr).attr('data-doc-source'));
-          var wkt = new Wkt.Wkt();
-          var obj;
-          wkt.read(doc.location.geom);
-          obj = wkt.toObject({
-            color: '#AA0000',
-            weight: 3,
-            opacity: 1.0,
-            fillColor: '#AA0000',
-            fillOpacity: 0.2
-          });
-          obj.addTo(el.map);
-          if (typeof selectedRowMarker !== 'undefined') {
+        $('#' + settings.showSelectedRow).esDataGrid('on', 'rowSelect', function onRowSelect(tr) {
+          if (selectedRowMarker) {
             selectedRowMarker.removeFrom(el.map);
           }
-          selectedRowMarker = obj;
-          // Pan and zoom the map. Method differs for points vs polygons.
-          if (wkt.type === 'polygon') {
-            el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
-          } else {
-            el.map.setView(obj._latlng, 11);
+          selectedRowMarker = null;
+          if (tr) {
+            var doc = JSON.parse($(tr).attr('data-doc-source'));
+            var wkt = new Wkt.Wkt();
+            var obj;
+            wkt.read(doc.location.geom);
+            obj = wkt.toObject({
+              color: '#AA0000',
+              weight: 3,
+              opacity: 1.0,
+              fillColor: '#AA0000',
+              fillOpacity: 0.2
+            });
+            obj.addTo(el.map);
+            selectedRowMarker = obj;
+            // Pan and zoom the map. Method differs for points vs polygons.
+            if (wkt.type === 'polygon') {
+              el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
+            } else {
+              el.map.setView(obj._latlng, 11);
+            }
           }
         });
       }
@@ -512,7 +515,7 @@
       $(tr).closest('tbody').find('tr.selected').removeClass('selected');
       $(tr).addClass('selected');
       $.each(callbacks.rowSelect, function eachCallback() {
-        this(el, tr);
+        this(tr);
       });
     });
 
@@ -785,12 +788,14 @@
       callbacks[event].push(handler);
     },
     hideRowAndMoveNext: function hideRowAndMoveNext() {
-      var oldSelected = $(this).find('tr.selected');
+      var grid = this;
+      var oldSelected = $(grid).find('tr.selected');
       var newSelected;
       var sources;
-      var showingLabel = $(this).find('.showing');
-      if ($(this).find('table.multiselect-mode').length > 0) {
-        $.each($(this).find('input.multiselect:checked'), function eachRow() {
+      var showingLabel = $(grid).find('.showing');
+
+      if ($(grid).find('table.multiselect-mode').length > 0) {
+        $.each($(grid).find('input.multiselect:checked'), function eachRow() {
           $(this).closest('tr').remove();
         });
       } else {
@@ -801,21 +806,24 @@
         }
         $(oldSelected).remove();
         if (typeof newSelected !== 'undefined') {
-          newSelected.addClass('.selected');
-          $(newSelected).click();
+          newSelected.addClass('selected');
         }
       }
       // Repopulate the grid if now empty.
-      if ($(this).find('table tbody tr').length === 0) {
-        sources = JSON.parse($(this).attr('data-es-source'));
+      if ($(grid).find('table tbody tr').length === 0) {
+        sources = JSON.parse($(grid).attr('data-es-source'));
         $.each(sources, function eachSource(sourceId) {
           var source = indiciaData.esSourceObjects[sourceId];
           source.populate();
         });
       } else {
         // Update the paging info if some rows left.
-        showingLabel.html(showingLabel.html().replace(/\d+ of /, $(this).find('tbody tr.data-row').length + ' of '));
+        showingLabel.html(showingLabel.html().replace(/\d+ of /, $(grid).find('tbody tr.data-row').length + ' of '));
       }
+      // Fire callbacks for selected row.
+      $.each(callbacks.rowSelect, function eachCallback() {
+        this($(grid).find('tr.selected').length === 0 ? null : $(grid).find('tr.selected')[0]);
+      });
     }
   };
 
@@ -1164,35 +1172,42 @@
       // Clean tabs
       $('.ui-tabs-nav').removeClass('ui-widget-header');
       $('.ui-tabs-nav').removeClass('ui-corner-all');
-      $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect(dataGrid, tr) {
-        var doc = JSON.parse($(tr).attr('data-doc-source'));
+      $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect(tr) {
+        var doc;
         var rows = [];
-        var acceptedNameAnnotation = doc.taxon.taxon_name === doc.taxon.accepted_name
-          ? ' (as recorded)' : '';
-        var vernaculardNameAnnotation = doc.taxon.taxon_name === doc.taxon.vernacular_name
-          ? ' (as recorded)' : '';
-        addRow(rows, doc, 'ID', 'id');
-        if (doc.taxon.taxon_name !== doc.taxon.accepted_name && doc.taxon.taxon_name !== doc.taxon.vernacular_name) {
-          addRow(rows, doc, 'Given name', ['taxon.taxon_name', 'taxon.taxon_name_authorship'], ' ');
+        var acceptedNameAnnotation;
+        var vernaculardNameAnnotation;
+        if (tr) {
+          doc = JSON.parse($(tr).attr('data-doc-source'));
+          acceptedNameAnnotation = doc.taxon.taxon_name === doc.taxon.accepted_name ? ' (as recorded)' : '';
+          vernaculardNameAnnotation = doc.taxon.taxon_name === doc.taxon.vernacular_name ? ' (as recorded)' : '';
+          addRow(rows, doc, 'ID', 'id');
+          if (doc.taxon.taxon_name !== doc.taxon.accepted_name && doc.taxon.taxon_name !== doc.taxon.vernacular_name) {
+            addRow(rows, doc, 'Given name', ['taxon.taxon_name', 'taxon.taxon_name_authorship'], ' ');
+          }
+          addRow(rows, doc, 'Accepted name' + acceptedNameAnnotation, ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
+          addRow(rows, doc, 'Common name' + vernaculardNameAnnotation, 'taxon.vernacular_name');
+          addRow(rows, doc, 'Taxonomy', ['taxon.phylum', 'taxon.order', 'taxon.family'], ' :: ');
+          addRow(rows, doc, 'Licence', 'metadata.licence_code');
+          addRow(rows, doc, 'Status', '#status_icons#');
+          addRow(rows, doc, 'Checks', '#data_cleaner_icons#');
+          addRow(rows, doc, 'Date', '#date#');
+          addRow(rows, doc, 'Output map ref', 'location.output_sref');
+          addRow(rows, doc, 'Location', '#locality#');
+          addRow(rows, doc, 'Submitted on', 'metadata.created_on');
+          addRow(rows, doc, 'Last updated on', 'metadata.updated_on');
+          addRow(rows, doc, 'Dataset', ['metadata.website.title', 'metadata.survey.title', 'metadata.group.title'], ' :: ');
+          $(recordDetails).html('<table><tbody>' + rows.join('') + '</tbody></table>');
+          $(recordDetails).append('<div class="attrs"></div>');
+          $(el).find('.empty-message').hide();
+          $(el).find('.tabs').show();
+          // Load Ajax content depending on the tab.
+          loadCurrentTabAjax(el);
+        } else {
+          // If no row selected, hide the details tabs.
+          $(el).find('.empty-message').show();
+          $(el).find('.tabs').hide();
         }
-        addRow(rows, doc, 'Accepted name' + acceptedNameAnnotation, ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
-        addRow(rows, doc, 'Common name' + vernaculardNameAnnotation, 'taxon.vernacular_name');
-        addRow(rows, doc, 'Taxonomy', ['taxon.phylum', 'taxon.order', 'taxon.family'], ' :: ');
-        addRow(rows, doc, 'Licence', 'metadata.licence_code');
-        addRow(rows, doc, 'Status', '#status_icons#');
-        addRow(rows, doc, 'Checks', '#data_cleaner_icons#');
-        addRow(rows, doc, 'Date', '#date#');
-        addRow(rows, doc, 'Output map ref', 'location.output_sref');
-        addRow(rows, doc, 'Location', '#locality#');
-        addRow(rows, doc, 'Submitted on', 'metadata.created_on');
-        addRow(rows, doc, 'Last updated on', 'metadata.updated_on');
-        addRow(rows, doc, 'Dataset', ['metadata.website.title', 'metadata.survey.title', 'metadata.group.title'], ' :: ');
-        $(recordDetails).html('<table><tbody>' + rows.join('') + '</tbody></table>');
-        $(recordDetails).append('<div class="attrs"></div>');
-        $(el).find('.empty-message').hide();
-        $(el).find('.tabs').show();
-        // Load Ajax content depending on the tab.
-        loadCurrentTabAjax(el);
       });
       $(dataGrid).esDataGrid('on', 'populate', function rowSelect() {
         $(el).find('.empty-message').show();
@@ -1403,8 +1418,12 @@
         indiciaFns.controlFail(el, 'Missing showSelectedRow config for table.');
       }
       dataGrid = $('#' + el.settings.showSelectedRow);
-      $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect() {
-        $('.verification-buttons-wrap').show();
+      $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect(tr) {
+        if (tr) {
+          $('.verification-buttons-wrap').show();
+        } else {
+          $('.verification-buttons-wrap').hide();
+        }
       });
       $(dataGrid).esDataGrid('on', 'populate', function rowSelect() {
         $('.verification-buttons-wrap').hide();
