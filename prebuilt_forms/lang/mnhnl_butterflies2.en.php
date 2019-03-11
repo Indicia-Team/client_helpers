@@ -63,8 +63,8 @@ $custom_terms = array(
 	'LANG_LocationModTool_CommentLabel'=>'Comment',
 	'LANG_LocModTool_ParentLabel'=>'New site square',
 
-	'LANG_Data_Download' => 'These reports provide details of the data entered in the survey.',
-	
+    'LANG_Data_Download' => 'These reports provide details of the data entered in the survey. All data is in CSV format, suitable for uploading into Excel.',
+    
 	'LANG_TooFewPoints' => 'There are too few points in this polygon - there must be at least 3.',
 	'LANG_TooFewLinePoints' => 'There are too few points in this line - there must be at least 2.',
 	'LANG_CentreOutsideParent'=>'Warning: the centre of your new site is outside the square.',

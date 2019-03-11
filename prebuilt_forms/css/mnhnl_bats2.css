@@ -176,3 +176,6 @@ div.olControlEditingToolbar  {
   margin-top: 7px;
   margin-right: 20px;
 }
+.tag-list-hidden {
+  display: none;
+}

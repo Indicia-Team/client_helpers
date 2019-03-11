@@ -73,3 +73,50 @@ table tr.datarow td {
   vertical-align: top;
   font-weight: bold;
 }
+
+
+
+.dropdown {
+  overflow: hidden;
+  border: solid 1px silver;
+  background-color: white;
+}
+
+.dropdown div
+{
+  vertical-align: middle;
+  display: inline-block;
+}
+
+.dropdown .droptag {
+  font-family: inherit;
+  margin: 0 1em 0 1em;
+}
+
+.dropdown div.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 80px;
+  z-index: 1;
+}
+
+.dropdown-content a {
+  float: none;
+  display: block;
+  text-align: left;
+  border: none;
+}
+
+.dropdown-content a:hover {
+  background-color: #ddd;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+.dropdown .ui-icon-container {
+  display: inline-block;
+  border-left: solid 1px silver;
+}

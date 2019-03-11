@@ -44,7 +44,23 @@
 function iform_mnhnl_getParameters() {
   return
       array(
-        array(
+          array(
+              'name' => 'sites_permission',
+              'caption' => 'Permission required for accessing the global sites tab',
+              'description' => 'Set to the name of a permission which is required in order to be able to view and edit the entire sites list.',
+              'type' => 'text_input',
+              'required'=>false,
+              'default' => 'indicia data admin'
+          ),
+          array(
+              'name' => 'download_permission',
+              'caption' => 'Permission required for download data',
+              'description' => 'Set to the name of a permission which is required in order to be able to download data.',
+              'type' => 'text_input',
+              'required'=>false,
+              'default' => 'indicia data admin'
+          ),
+          array(
           'name'=>'locationMode',
           'caption'=>'Location Mode',
           'description'=>'Describes the main method of handling locations',
@@ -515,7 +531,7 @@ function iform_mnhnl_recordernamesControl($node, $auth, $args, $tabalias, $optio
       'lookupValues'=>$userlist
       ,'validation'=>array('required')
     ), $options));
-    return $r."<span id='RecorderInstructions'>".lang::get('LANG_RecorderInstructions')."</span><br />";
+    return $r.(lang::get('LANG_RecorderInstructions') !== '' ? "<span id='RecorderInstructions'>".lang::get('LANG_RecorderInstructions')."</span><br />" : "");
   }
 
 function iform_mnhnl_lux5kgridControl($auth, $args, $node, $options) {
@@ -4054,12 +4070,12 @@ function iform_mnhnl_getTermID($auth,$termListExtKey,$term){
 }
 function iform_mnhnl_locationmodule_lateJS($auth, $args, $tabalias, $options) {
 // If entity to load is set, then we are highlighting an existing location, can't modify, but can start drawing another site.
-  if(isset(data_entry_helper::$entity_to_load['location:id'])){
-    data_entry_helper::$late_javascript .= "
-setupButtons($('#controls'), 1);
-setupButtons($('#controls'), 2);
-setupButtons($('#controls'), 0);";
-  };
+//  if(isset(data_entry_helper::$entity_to_load['location:id'])){
+//    data_entry_helper::$late_javascript .= "
+//setupButtons($('#controls'), 1);
+//setupButtons($('#controls'), 2);
+//setupButtons($('#controls'), 0);";
+//  };
   return '';
 }
   
@@ -4148,8 +4164,12 @@ function iform_mnhnl_addCancelButton($interface = 'tabs'){
     case 'wizard':
         data_entry_helper::$javascript .= "\njQuery('<div class=\"ui-widget-content ui-state-default ui-corner-all indicia-button tab-cancel\"><span><a href=\"".iform_mnhnl_getReloadPath()."\">".lang::get('LANG_Cancel')."</a></span></div>').appendTo('.buttons');\n";
         break;
-    default:
+    case 'tabs':
         data_entry_helper::$javascript .= "\njQuery('<a href=\"".iform_mnhnl_getReloadPath()."\"><input type=\"button\" name=\"cancel\" value=\"".lang::get('LANG_Cancel')."\" /></a>').appendTo('#controls > div');\n";
+        break;
+    case 'one_page':
+    default :
+        data_entry_helper::$javascript .= "\njQuery('#controls > div').filter(':last').append('<a href=\"".iform_mnhnl_getReloadPath()."\"><input type=\"button\" name=\"cancel\" value=\"".lang::get('LANG_Cancel')."\" class=\"indicia-button tab-cancel\" /></a>');\n";
         break;
   }
 }
@@ -4164,7 +4184,7 @@ function iform_mnhnl_addCancelButton($interface = 'tabs'){
 function iform_mnhnl_listLocations($auth, $args) {
   global $user;
 
-  if(!empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission']))
+  if(!empty($args['sites_permission']) && hostsite_user_has_permission($args['sites_permission']))
     return 'all';
 
   if(empty($args['uses_location_assignment']) || !$args['uses_location_assignment']) // no user location assignment so access to all.

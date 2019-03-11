@@ -184,6 +184,21 @@ class iform_mnhnl_bats2 extends iform_mnhnl_bats {
   protected static function get_control_customJS($auth, $args, $tabalias, $options) {
     iform_mnhnl_addCancelButton($args['interface']);
     
+    if($args['interface']=="one_page") {
+      data_entry_helper::$javascript .= "
+$('label[for=imp-georef-search]')
+    .before('<button id=\"toggle-map-btn\" type=\"button\" title=\"\" class=\"indicia-button\">" .
+    lang::get("Toggle Display of Map") . "</button><br/>');
+$('#toggle-map-btn').click(function() {
+  if($('#map-container:visible').length > 0) {
+    $('#map-container,label[for=imp-georef-search],#imp-georef-search,#imp-georef-search-btn').hide();
+  } else {
+    $('#map-container,label[for=imp-georef-search],#imp-georef-search,#imp-georef-search-btn').show();
+    $('#map')[0].map.updateSize();
+  }
+});
+";
+    }
     $r = self::getSiteTypeJS(parent::$auth, $args);
     data_entry_helper::$javascript .= "
 if($.browser.msie && $.browser.version < 9)
@@ -191,36 +206,104 @@ if($.browser.msie && $.browser.version < 9)
     this.blur();
     this.focus();
 });\n";
-    // Move the date after the Institution
+    // Move the date after the Institution: assume this is a select.
     $institutionAttrID=iform_mnhnl_getAttrID($auth, $args, 'sample', 'Institution');
     if($institutionAttrID) {
       data_entry_helper::$javascript .= "
-var institutionAttr = jQuery('[name=smpAttr\\:".$institutionAttrID."],[name^=smpAttr\\:".$institutionAttrID."\\:],[name^=smpAttr\\:".$institutionAttrID."\\[\\]]').not(':hidden').eq(0).closest('.control-box').next();
+var institutionAttr = jQuery('[name=smpAttr\\:".$institutionAttrID."],[name^=smpAttr\\:".$institutionAttrID."\\:]');
+
 var recorderField = jQuery('#sample\\\\:recorder_names');
 var recorderLabel = recorderField.prev().filter('label');
 var recorderRequired = recorderField.next();
 recorderRequired.next().filter('br').remove();
-var recorderText = recorderRequired.next();
-recorderText.next().filter('br').remove();
-recorderText.next().filter('br').remove();
-institutionAttr.after('<br/>');
-institutionAttr.after('<br/>');
-institutionAttr.after(recorderText);
-institutionAttr.after('<br/>');
-institutionAttr.after(recorderRequired);
-institutionAttr.after(recorderField);
-institutionAttr.after(recorderLabel);
 var dateField = jQuery('#sample\\\\:date');
 var dateLabel = dateField.prev().filter('label');
 var dateRequired = dateField.next();
 dateRequired.next().filter('br').remove();
+
+// this is done in reverse order
+institutionAttr.after('<br/>');
+institutionAttr.after(recorderRequired);
+institutionAttr.after(recorderField);
+institutionAttr.after(recorderLabel);
 institutionAttr.after('<br/>');
 institutionAttr.after(dateRequired);
 institutionAttr.after(dateField);
 institutionAttr.after(dateLabel);
+institutionAttr.after('<br/>');
 ";
     }
-    
+
+    // Special tag type controls for Observers and Target species:
+    // Assume original control for observers is multiselect select
+    // TODO add CSS for tag-list-item and tag-list-hidden
+    // TODO check required flag: add validation
+    data_entry_helper::$javascript .= "
+$('select[name=sample\\:recorder_names\\[\\]]').before('<span id=\"observer-list\" class=\"control-box\"></span><span class=\"deh-required\">*</span><br/>');
+$('select[name=sample\\:recorder_names\\[\\]] option').each(function(idx, elem) {
+  var val = $(elem).val(),
+      visible = $(elem).filter(':selected').length > 0;
+  if(visible || val == '') $(elem).remove();
+  if(val == '') return;
+  $('#observer-list').append('<nobr class=\"tag-list-item ' + (visible ? 'tag-list-hidden' : '') +
+        '\"><span><input type=\"checkbox\" name=\"sample:recorder_names[]\" ' +
+        'id=\"sample:recorder_names:' + idx + '\" value=\"' +
+        val + '\" class=\"recorder-required ' + (idx === 0 ? 'first-item' : '') + '\" ' +
+        (visible ? 'checked=\"checked\"' : '') + '><label for=\"sample:recorder_names:' + idx +
+        '\">' + val + '</label></span></nobr>');
+});
+$('select[name=sample\\:recorder_names\\[\\]]').before('<label for=\"add-observer-select\">" .
+    lang::get("Add observer to list: ") . "</label>');
+$('select[name=sample\\:recorder_names\\[\\]]').attr('id','add-observer-select').attr('name','').removeAttr('size')
+    .removeAttr('multiple').removeAttr('class').prepend('<option value=\"\">" .
+    lang::get("&lt;Pick an observer to add to the list&gt;") . "</option>').val('').next('.deh-required').remove();
+$('#add-observer-select').change(function() {
+  if($(this).val() !== '') {
+    $('#observer-list [value='+$(this).val()+']').attr('checked','checked').closest('nobr').removeClass('tag-list-hidden');
+    $('#add-observer-select [value='+$(this).val()+']').remove();
+  }
+  $(this).val('');
+});
+$.validator.addMethod('recorder-required', function(value, element){
+  var valid = jQuery('.recorder-required').filter('[checked]').length > 0;
+  if(valid){
+    jQuery('.recorder-required').removeClass('ui-state-error').next('p.inline-error').remove();
+    jQuery('#add-observer-select').removeClass('ui-state-error');
+  } else
+    jQuery('#add-observer-select').addClass('ui-state-error');
+  return valid;
+}, \"".lang::get('At least one observer must be selected.')."\");
+
+";
+    // Assume original control for target species attribute is checkbox list
+    // Not mandatory: no validation needed.
+    $targetAttrID=iform_mnhnl_getAttrID($auth, $args, 'sample', 'Target Species');
+    if($targetAttrID) {
+        data_entry_helper::$javascript .= "
+$('[name=smpAttr\\:".$targetAttrID."],[name^=smpAttr\\:".$targetAttrID."\\:],[name^=smpAttr\\:".$targetAttrID."\\[\\]]').eq(0).closest('.control-box').attr('id', 'target-species-list')
+    .after('<br/><label for=\"add-target-species-select\">" .
+    lang::get("Add target species to list: ") . "</label><select id=\"add-target-species-select\"><option value=\"\">" .
+    lang::get("&lt;Pick a target species to add to the list&gt;") . "</option></select>');
+
+$('[name=smpAttr\\:".$targetAttrID."],[name^=smpAttr\\:".$targetAttrID."\\:],[name^=smpAttr\\:".$targetAttrID."\\[\\]]').not(':hidden').each(function(idx, elem) {
+  var val = $(elem).val(),
+      visible = $(elem).filter(':checked').length > 0,
+      label = $(elem).next('label')[0].innerText;
+  $(elem).closest('nobr').addClass('tag-list-item');
+  if(!visible) {
+    $('#add-target-species-select').append('<option value=\"' + val +'\">' + label + '</option>');
+    $(elem).closest('nobr').addClass('tag-list-hidden');
+  }
+});
+$('#add-target-species-select').change(function() {
+  if($(this).val() !== '') {
+    $('#target-species-list [value='+$(this).val()+']').attr('checked','checked').closest('nobr').removeClass('tag-list-hidden');
+    $('#add-target-species-select [value='+$(this).val()+']').remove();
+  }
+  $(this).val('');
+});
+";
+    }
     // Break up the Disturbances: makes assumptions on format, and assumes that we are doing a checkbox list
     if (!empty($args['addBreaks'])) {
       $addBreakSpecs = explode(';', $args['addBreaks']);

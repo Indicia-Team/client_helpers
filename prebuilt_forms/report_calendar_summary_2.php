@@ -1401,11 +1401,43 @@ jQuery('#".$ctrlid."').change(function(){
 
   private static function year_control($args, $readAuth, $nid, &$options)
   {
+    $r = "";
     switch($args['dateFilter']){
       case 'none': return '';
       default: // case year
         // Add year paginator where it can have an impact for both tables and plots.
         $siteUrlParams = self::get_site_url_params($args);
+        $extraParams = $readAuth + array(
+            'survey_id' => $siteUrlParams[self::$SurveyKey],
+            'columns' => 'id,display_date',
+            'view' => 'detail',
+            'parent_id' => 'NULL',
+            'limit' => 1,
+            'orderby' => 'date_start',
+            'caching' => $siteUrlParams[self::$cacheKey]['value'],
+        );
+        
+        if(isset($args['includeLocationFilter']) &&
+                $args['includeLocationFilter'] &&
+                $siteUrlParams[self::$locationKey]['value'] !== '') {
+            // add a location filter to the sample list if appropriate
+            $extraParams['location_id'] = $siteUrlParams[self::$locationKey]['value'];
+        }
+        if(isset($args['includeUserFilter']) &&
+                $args['includeUserFilter'] &&
+                $siteUrlParams[self::$userKey]['value']!="" &&
+                $siteUrlParams[self::$userKey]['value']!="branch") {
+            // Assume easy login
+            // add a user filter to the sample list if appropriate
+            $account = user_load(intval($siteUrlParams[self::$userKey]['value'])); /* this loads the field_ fields, so no need for profile_load_profile */
+            if(isset($account->profile_indicia_user_id))
+                $extraParams['created_by_id'] = $account->profile_indicia_user_id;
+        }
+        // Get the oldest sample
+        $response = data_entry_helper::get_population_data(array(
+          'table' => 'sample',
+          'extraParams' => $extraParams,
+        ));
         $reloadUrl = data_entry_helper::get_reload_link_parts();
         // find the names of the params we must not include
         foreach ($reloadUrl['params'] as $key => $value) {
@@ -1413,11 +1445,38 @@ jQuery('#".$ctrlid."').change(function(){
             $reloadUrl['path'] .= (strpos($reloadUrl['path'],'?')===false ? '?' : '&')."$key=$value";
           }
         }
-        $param=(strpos($reloadUrl['path'],'?')===false ? '?' : '&').self::$yearKey.'=';
-        $r = '<th><a id="year-control-previous" title="'.($siteUrlParams[self::$yearKey]['value']-1).'" rel="nofollow" href="'.$reloadUrl['path'].$param.($siteUrlParams[self::$yearKey]['value']-1).'" class="ui-datepicker-prev ui-corner-all"><span class="ui-icon ui-icon-circle-triangle-w">'.lang::get('Prev').'</span></a></th><th><span class="thisYear">'.$siteUrlParams[self::$yearKey]['value'].'</span></th>';
-        if($siteUrlParams[self::$yearKey]['value']<date('Y')){
-          $r .= '<th><a id="year-control-next" title="'.($siteUrlParams[self::$yearKey]['value']+1).'" rel="nofollow" href="'.$reloadUrl['path'].$param.($siteUrlParams[self::$yearKey]['value']+1).'" class="ui-datepicker-next ui-corner-all"><span class="ui-icon ui-icon-circle-triangle-\">'.lang::get('Next').'</span></a></th>';
+        if(count($response)) {
+          $ctrlid = 'calendar-year-select-'.$nid;
+          $oldest = date_create_from_format ( 'Y-m-d' , $response[0]['display_date'] );
+          $first_year = $oldest->format('Y');
+          $param=(strpos($reloadUrl['path'],'?')===false ? '?' : '&').self::$yearKey.'=';
+          if($first_year < $siteUrlParams[self::$yearKey]['value']) {
+              $r = '<th><a id="year-control-previous" title="' . ($siteUrlParams[self::$yearKey]['value']-1) .
+                    '" rel="nofollow" href="' . $reloadUrl['path'] . $param . ($siteUrlParams[self::$yearKey]['value']-1) .
+                    '" class="ui-datepicker-prev ui-corner-all"><span class="ui-icon ui-icon-circle-triangle-w">' .
+                    lang::get('Prev') . '</span></a></th>';
+          } else $r .= '<th/>';
+
+          $r .='<th><label for="'.$ctrlid.'" class="year-select-label">'.lang::get('Year').
+                ': </label><select id="'.$ctrlid.'" class="year-select">';
+          if($siteUrlParams[self::$yearKey]['value'] > date('Y') || $siteUrlParams[self::$yearKey]['value'] < $first_year)
+              $r .= '<option value='.$siteUrlParams[self::$yearKey]['value'].' class="year-select-option"' .
+              ' selected="selected" >' . $siteUrlParams[self::$yearKey]['value'] .
+              '</option>'.PHP_EOL;
+          for($i = date('Y'); $i >= $first_year; $i--)
+              $r .= '<option value='.$i.' class="year-select-option '.
+                      '" '.($siteUrlParams[self::$yearKey]['value']==$i ? 'selected="selected" ' : '').'>' . $i .
+                      '</option>'."\n";
+          $r .='</select></th>';
+
+          self::set_up_control_change($ctrlid, self::$yearKey, array());
+        } else
+          $r = "<th/><th><span class=\"thisYear\">" . ($siteUrlParams[self::$yearKey]['value']) . "</span></th>";
+
+        if($siteUrlParams[self::$yearKey]['value'] < date('Y')){
+            $r .= '<th><a id="year-control-next" title="'.($siteUrlParams[self::$yearKey]['value']+1).'" rel="nofollow" href="'.$reloadUrl['path'].$param.($siteUrlParams[self::$yearKey]['value']+1).'" class="ui-datepicker-next ui-corner-all"><span class="ui-icon ui-icon-circle-triangle-e">'.lang::get('Next').'</span></a></th>';
         } else $r .= '<th/>';
+
         $options['year'] = $siteUrlParams[self::$yearKey]['value'];
         // ISO Date d/m/Y, due to change in report engine
         $options['date_start'] = '01/01/'.$siteUrlParams[self::$yearKey]['value'];

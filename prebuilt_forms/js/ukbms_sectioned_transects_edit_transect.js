@@ -4,7 +4,7 @@ var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncP
 (function ($) {
 /*
  * The following functions are utility functions within this file..
- */
+ *
   syncPost = function(url, data) {
     $.ajax({
       type: 'POST',
@@ -18,18 +18,22 @@ var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncP
       async: false // cannot be asynchronous otherwise we navigate away from the page too early
     });
   };
+*/
 
+  /*
+   * What this form must be able to do from JS:
+   * load a section's details into the route and details tabs when a (needs to clear the data first)
+   */
+// No asynchronous functionality
 clearSection = function() {
-  $('#section-location-id').val('');
-  $('#section-location-sref').val('');
-  $('#section-location-system,#section-location-system-select').val('');
-  // remove exiting errors:
+  // there is no section name
+  $('#section-location-id,#section-location-sref,#section-location-system,#section-location-system-select').val('');
+  // remove existing errors:
   $('#section-form').find('.inline-error').remove();
   $('#section-form').find('.ui-state-error').removeClass('ui-state-error');
-  var nameparts;
   // loop through form controls to make sure they do not have the value id (as these will be new values)
-  $.each($('#section-form').find(':input[name]'), function(idx, ctrl) {
-    nameparts = $(ctrl).attr('name').split(':');
+  $.each($('#section-form').find(':input[name]'), function(idx, ctrl) { // Selects all input, textarea, select and button elements.
+    var nameparts = $(ctrl).attr('name').split(':');
     if (nameparts[0]==='locAttr') {
       if (nameparts.length===3) {
         $(ctrl).attr('name', nameparts[0] + ':' + nameparts[1]);
@@ -45,130 +49,151 @@ clearSection = function() {
     }
   });
 };
+
 /*
- * This only loads the section data details: this is the third tab, it does not deal 
- * with the route tab.
+ * This only loads the section data details: this is the third tab, it does not deal with the route tab.
+ * Spinner displayed whilst data is being loaded.
  */
 loadSectionDetails = function(section) {
   clearSection();
-  if (typeof indiciaData.sections[section]!=="undefined") { // previously existing section.
+  if (typeof indiciaData.sections[section]!=="undefined") {
+    // previously existing section.
     $('#section-details-tab').show();
-	$('.complete-route-details').removeAttr('disabled');
+    $('.complete-route-details').removeAttr('disabled');
     $('#section-location-id').val(indiciaData.sections[section].id);
     // if the systems on the section and main location do not match, copy the the system and sref from the main site.
     if(indiciaData.sections[section].system !== $('#imp-sref-system').val()) {
-        $('#section-location-sref').val($('#imp-sref').val());
-        $('#section-location-system,#section-location-system-select').val($('#imp-sref-system').val());
+      $('#section-location-sref').val($('#imp-sref').val());
+      $('#section-location-system,#section-location-system-select').val($('#imp-sref-system').val());
     } else {
-        $('#section-location-sref').val(indiciaData.sections[section].sref);
-        $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
+      $('#section-location-sref').val(indiciaData.sections[section].sref);
+      $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
     }
+    // fetch all the attribute details, setting the value ID as well as the value itself.
+    $('.loading-spinner').show();
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
         "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
         function(data) {
-          var attrname;
           $.each(data, function(idx, attr) {
-            attrname = 'locAttr:'+attr.location_attribute_id;
-            if (attr.id!==null) {
-              attrname += ':'+attr.id;
-            }
+            var attrname = 'locAttr:'+attr.location_attribute_id + (attr.id !== null ? ':'+attr.id : '');
             // special handling for checking radios
             if ($('input:radio#locAttr\\:'+attr.location_attribute_id+'\\:0').length>0) {
-              var radioidx=0;
+              var radioidx=0, radio;
               // name the radios with the existing value id
-              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0) {
-                $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).attr('name',attrname);
-                radioidx++;
+              while ((radio = $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+(radioidx++))).length>0) {
+                radio.attr('name',attrname);
+                if (radio.val() === attr.raw_value) {
+                  radio.attr('checked', true);
+                }
               }
-              radioidx=0;
-              // check the correct radio
-              while ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
-                  $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()!==attr.raw_value) {
-                radioidx++;
-              }
-              if ($('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).length>0 && 
-                  $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).val()===attr.raw_value) {
-                $('#section-form #locAttr\\:'+attr.location_attribute_id+'\\:'+radioidx).attr('checked', true);
-              }
-            } else if ($('#section-form #fld-locAttr\\:'+attr.location_attribute_id).length>0) {
-              // a hierarchy select outputs a fld control, which needs a special case
-              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
-              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
-              // check the option is already in the drop down.
-              if ($('#section-form #locAttr\\:'+attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
-                // no - we'll just put it in at the top level
-                // @todo - should really now fetch the top level in the hierarchy then select that.
-                $('#section-form #locAttr\\:'+attr.location_attribute_id).append('<option value="' + 
-                    attr.raw_value + '">' + attr.value + '</option>');
-              }
+            } else { // UKBMS does not use heirarchical controls
               $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
-            } else {              
-              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
               $('#section-form #locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
             }
           });
+          $('.loading-spinner').hide();
         }
     );
   } else {
-	  $('#section-details-tab').hide();
-	  $('.complete-route-details').attr('disabled','disabled');
+    // new section: section record does not exist: do not show details: have to enter section route first
+    $('#section-details-tab').hide();
+    $('.complete-route-details').attr('disabled','disabled');
   }
 };
 
+/**
+ * When a section is updated, there are details on the parent transect that must be updated.
+ * In particular, the attribute which holds the total length of the transect must be set to the sum of all the
+ * individual section lengths. (This is provisional on attributes existing for these two quantities)
+ * newNumSections indicates the new number of scetions, if this is changing. If not changing false is supplied
+ * if it is changing, then the form is reloaded: this makes tracking of the changes to section numbers easier if one is
+ * added or removed (e.g. in the section selector).
+ */
 updateTransectDetails = function(newNumSections) {
+
+  var save = (newNumSections !== false); // definitely saving if the number of sections has changed.
+  var renameAutoCalc = false; // do we need to add the attribute value id to the end of the transect length attribute?
+
   var transectLen = 0;
   var numSections = parseInt($('[name='+indiciaData.numSectionsAttrName.replace(/:/g,'\\:')+']').val(),10);
   var ldata = {'location:id':$('#location\\:id').val(), 'website_id':indiciaData.website_id};
-  var save = (newNumSections !== false);
-  var renameAutoCalc = false;
   
-  if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
-		indiciaData.autocalcTransectLengthAttrId &&
-		indiciaData.autocalcSectionLengthAttrId) {
-	// add all sections lengths together
-	for(var i = 1; i <= numSections; i++){
-		if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
-			transectLen += indiciaData.sections['S'+i].sectionLen;
-		}
-	}
-	// load into form.
+  if (indiciaData.autocalcTransectLengthAttrId &&
+        indiciaData.autocalcSectionLengthAttrId) {
+    // add all section lengths together
+    for(var i = 1; i <= numSections; i++){
+      if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
+        transectLen += indiciaData.sections['S'+i].sectionLen;
+      }
+    }
+    // load new value into form, and into data structure that will be used to save the transect information to warehouse.
     $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
     ldata[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
     save = renameAutoCalc = true;
   }
 
-  if(newNumSections !== false)
-    ldata[indiciaData.numSectionsAttrName] = ''+newNumSections;
-  
-  if(save)
-	  syncPost(indiciaData.ajaxFormPostUrl, ldata);
-  
   if(newNumSections !== false) {
-	window.onbeforeunload = null;
-	setTimeout(function(){
-		  window.location.reload(true);
-	});
-  } else if (renameAutoCalc && indiciaData.autocalcTransectLengthAttrName.split(':').length === 2) {
-    $.ajax({
-        type: 'GET',
-        url: indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?" +
-              "location_id=" + $('#location-id').val() +
-              "&location_attribute_id=" + indiciaData.autocalcTransectLengthAttrId +
-              "&mode=json&view=list&callback=?" +
-              "&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
-        success: function(data) {
-          if (data.length > 0) {
-            var attrname = 'locAttr:' +
-                           indiciaData.autocalcTransectLengthAttrId + ':' +
-                           data[0].id;
-            $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).attr('name', attrname);
-            indiciaData.autocalcTransectLengthAttrName = attrname;
-          }
-        },
-        dataType: 'json',
-        async: false
-      });
+    ldata[indiciaData.numSectionsAttrName] = ''+newNumSections;
   }
+
+  var reload = function (data) {
+        window.onbeforeunload = null;
+        setTimeout( function(){ window.location.reload(true); });
+      },
+      setTransectAttributeID = function (data) {
+        $.ajax({
+            type: 'GET',
+            url: indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?" +
+                  "location_id=" + $('#location-id').val() +
+                  "&location_attribute_id=" + indiciaData.autocalcTransectLengthAttrId +
+                  "&mode=json&view=list&callback=?" +
+                  "&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
+            success: function(data) {
+              if (data.length > 0) {
+                var attrname = 'locAttr:' +
+                               indiciaData.autocalcTransectLengthAttrId + ':' +
+                               data[0].id;
+                $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).attr('name', attrname);
+                indiciaData.autocalcTransectLengthAttrName = attrname;
+              }
+              $('.loading-spinner').hide();
+            },
+            dataType: 'json',
+            async: false
+          })
+      },
+      doNothing = function (data) {
+      },
+      whatToDo;
+
+  if(newNumSections !== false) {
+    // If there has been a change in the number of sections, reload the form
+    whatToDo = reload;
+  } else if (renameAutoCalc && indiciaData.autocalcTransectLengthAttrName.split(':').length === 2) {
+    // When a transect is saved initially, the transect length is not filled in, as there are no sections records defined.
+    // The first time a section is saved, the transect length is filled in on the parent transect and saved. We must go
+    // and fetch the ID of this attribute value if there is not to be a form reload.
+    whatToDo = setTransectAttributeID;
+  } else {
+    whatToDo = doNothing;
+  }
+
+  if(save) {
+    $('.loading-spinner').show();
+    $.ajax({
+      type: 'POST',
+      url: indiciaData.ajaxFormPostUrl,
+      data: ldata,
+      success: function (data) {
+        if (typeof(data.error)!=="undefined") {
+          alert(data.error);
+        }
+      },
+      dataType: 'json',
+    }).done(function(){
+      $('.loading-spinner').hide();
+    });
+  } // if not saving, no need to reload or set the attribute
 }
 
 /*
@@ -178,43 +203,45 @@ updateTransectDetails = function(newNumSections) {
 confirmSelectSection = function(section, doFeature, withCancel) {
   // continue to save if the route is either unchanged or user says no.
   if(typeof indiciaData.modifyFeature !== "undefined" &&
-		  indiciaData.modifyFeature.active && indiciaData.modifyFeature.modified)
-	  indiciaData.routeChanged = true;
+      indiciaData.modifyFeature.active && indiciaData.modifyFeature.modified) {
+    indiciaData.routeChanged = true;
+  }
   if(indiciaData.routeChanged === true) {
     var buttons =  { 
         "No":  function() { $(this).dialog('close');
-        	// replace the route with the previous one for this section.
-        	// At his point, indiciaData.currentSection should point to existing, previously selected section.
-        	var removeSections = [];
-        	var oldSection = [];
-        	var div = $('#route-map');
-        	div = div[0];
-    		if(typeof indiciaData.modifyFeature !== "undefined")
-    		    indiciaData.modifyFeature.deactivate();
-    		if(typeof indiciaData.drawFeature !== "undefined")
-    		    indiciaData.drawFeature.deactivate();
-		    indiciaData.navControl.activate(); // Nav control always exists
-        	$.each(div.map.editLayer.features, function(idx, feature) {
-        		if (feature.attributes.section===indiciaData.currentSection) {
-        			removeSections.push(feature);
-        		}
-        	});
-        	if (removeSections.length>0) {
-        		div.map.editLayer.removeFeatures(removeSections, {});
-        	}
-        	if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined') {
-        		oldSection.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom),
-            		            {section:indiciaData.currentSection, type:"boundary"}));
-        		div.map.editLayer.addFeatures(oldSection);
-        	} // dont worry about selection.
-        	indiciaData.routeChanged = false;
-        	checkIfSectionChanged(section, doFeature, withCancel);
+          // replace the route with the previous one for this section.
+          // At his point, indiciaData.currentSection should point to existing, previously selected section.
+          var removeSections = [];
+          var oldSection = [];
+          var div = $('#route-map')[0];
+          if(typeof indiciaData.modifyFeature !== "undefined") {
+            indiciaData.modifyFeature.deactivate();
+          }
+          if(typeof indiciaData.drawFeature !== "undefined") {
+            indiciaData.drawFeature.deactivate();
+          }
+          indiciaData.navControl.activate(); // Nav control always exists
+          $.each(div.map.editLayer.features, function(idx, feature) {
+            if (feature.attributes.section===indiciaData.currentSection) {
+              removeSections.push(feature);
+            }
+          });
+          if (removeSections.length>0) {
+            div.map.editLayer.removeFeatures(removeSections, {});
+          }
+          if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined') {
+            oldSection.push(new OpenLayers.Feature.Vector(OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom),
+                                {section:indiciaData.currentSection, type:"boundary"}));
+            div.map.editLayer.addFeatures(oldSection);
+          } // dont worry about selection.
+          indiciaData.routeChanged = false;
+          checkIfSectionChanged(section, doFeature, withCancel);
         },
         "Yes": function() { $(this).dialog('close');
-        	saveRoute();
-        	indiciaData.routeChanged = false;
-        	checkIfSectionChanged(section, doFeature, withCancel);
-        } // synchronous for bit that matters. 
+          saveRoute();
+          indiciaData.routeChanged = false;
+          checkIfSectionChanged(section, doFeature, withCancel);
+        }
     };
     if(withCancel) {
       buttons.Cancel = function() { $(this).dialog('close'); };
@@ -222,9 +249,12 @@ confirmSelectSection = function(section, doFeature, withCancel) {
     // display dialog and drive from its button events.
     var dialog = $('<p>'+(withCancel ? indiciaData.routeChangeConfirmCancel : indiciaData.routeChangeConfirm) +'</p>').dialog({ title: "Save Route Data?", buttons: buttons });
   } else {
-	  checkIfSectionChanged(section, doFeature, withCancel);
+    checkIfSectionChanged(section, doFeature, withCancel);
   }
 };
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 checkIfSectionChanged = function(section, doFeature, withCancel) {
   if(indiciaData.sectionDetailsChanged === true) {
     var buttons =  { 
@@ -346,10 +376,10 @@ deleteSection = function(section) {
   // section comes in like "S1"
   // TODO Add progress bar
   $('<p>Please wait whilst the section and its walk data are removed, the subsequent sections renumbered, and the number of sections counter on the Transect changed. The page will reload automatically when complete.</p>').dialog({ title: "Please Wait",
-	  	buttons: {"OK": function() {
-	  		$( this ).dialog('close');}}});
+      buttons: {"OK": function() { $( this ).dialog('close'); }}});
 
   $('.remove-section').addClass('waiting-button');
+
   // if it has been saved, delete any subsamples lodged against it.
   if(typeof indiciaData.sections[section] !== "undefined"){
     $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +

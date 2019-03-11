@@ -51,8 +51,8 @@ $custom_terms = array(
 	'Actions' => 'Actions',
 	'Delete'=>'Supprimer',
 // Reports
-	'LANG_Data_Download' => 'These reports provide details of the data entered in the survey.',
-// Locations
+    'LANG_Data_Download' => 'These reports provide details of the data entered in the survey. All data is in CSV format, suitable for uploading into Excel.',
+    // Locations
 	'Existing locations' => 'Sites existants',
 	'LANG_Location_Label' => 'Location',
 	'LANG_Location_Name' => 'Nom du site',
