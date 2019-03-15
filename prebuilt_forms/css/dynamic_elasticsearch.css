@@ -13,6 +13,8 @@
     border-radius: 2px;
     background-color: white;
     color: green; }
+  .fas.fa-check-square, .far.fa-check-square {
+    color: orange; }
   .fas.fa-times-circle, .far.fa-times-circle {
     color: red; }
   .fas.fa-times, .far.fa-times {
@@ -63,13 +65,14 @@ table.es-data-grid tbody tr img {
   display: inline-block;
   vertical-align: middle; }
 .verification-buttons button {
+  font-size: 120%;
   border: none;
   background: none;
   box-shadow: none;
   color: black;
   text-shadow: none;
   min-height: 25px;
-  margin: 8px 8px; }
+  margin: 4px; }
   .verification-buttons button:hover {
     background: silver; }
 .verification-buttons .sep {
@@ -78,8 +81,6 @@ table.es-data-grid tbody tr img {
   background-color: silver;
   margin: 0 8px; }
 
-.details-container .empty-message .fa-2x {
-  margin: 0.5em; }
 .details-container .ui-tabs-nav {
   border-bottom: solid silver 1px; }
 .details-container .ui-tabs .ui-tabs-panel {

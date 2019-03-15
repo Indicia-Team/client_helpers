@@ -17,10 +17,11 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
- /* eslint no-underscore-dangle: ["error", { "allow": ["_source", "_latlng"] }]*/
+ /* eslint no-underscore-dangle: ["error", { "allow": ["_id", "_source", "_latlng"] }]*/
 
-(function enclose($) {
+(function enclose() {
   'use strict';
+  var $ = jQuery;
 
   /**
    * Keep track of a list of all the plugin instances that output something.
@@ -35,13 +36,13 @@
     V1: 'fas fa-check-double status-V1',
     V2: 'fas fa-check status-V2',
     C: 'fas fa-clock status-C',
-    C3: 'fas fa-question status-C3',
+    C3: 'fas fa-check-square status-C3',
     R: 'far fa-times-circle status-R',
     R4: 'fas fa-times status-R4',
     R5: 'fas fa-times status-R5',
     // Additional flags
-    Q: 'far fa-comment',
-    A: 'far fa-comments',
+    Q: 'fas fa-question-circle',
+    A: 'fas fa-reply',
     Sensitive: 'fas fa-exclamation-circle',
     Confidential: 'fas fa-exclamation-triangle'
   };
@@ -162,7 +163,7 @@
 
   /**
    * A list of functions which provide special handling for special fields that
-   * can be extracted from an ElasticSearch doc.
+   * can be extracted from an Elasticsearch doc.
    */
   indiciaFns.fieldConvertors = {
     // Record status and other flag icons.
@@ -200,6 +201,18 @@
       }
       return icons.join('');
     },
+    higher_geography: function higherGeography(doc, params) {
+      var output = '';
+      if (doc.location.higher_geography) {
+        $.each(doc.location.higher_geography, function() {
+          if (this.type === params[0]) {
+            output = this[params[1]];
+            return false;
+          }
+        });
+      }
+      return output;
+    },
     // Format dates, with handling of range dates.
     date: function date(doc) {
       if (doc.event.date_start !== doc.event.date_end) {
@@ -209,7 +222,7 @@
     },
     // A list of higher geographic areas in the doc.
     locality: function locality(doc) {
-      var info;
+      var info = '';
       if (doc.location.verbatim_locality) {
         info += '<div>' + doc.location.verbatim_locality + '</div>';
         if (doc.location.higher_geography) {
@@ -221,6 +234,12 @@
         }
       }
       return info;
+    },
+    // A simple output of website and survey ID.
+    datasource_code: function datasourceCode(doc) {
+      return '<abbr title="' + doc.metadata.website.title + ' | ' + doc.metadata.survey.title + '">' +
+        doc.metadata.website.id + '|' + doc.metadata.survey.id +
+        '</abbr>';
     }
   };
 
@@ -228,7 +247,7 @@
    * Retrieves a field value from the document.
    *
    * @param object doc
-   *   Document read from ElasticSearch.
+   *   Document read from Elasticsearch.
    * @param string field
    *   Name of the field. Either a path to the field in the document (such as
    *   taxon.accepted_name) or a special field name surrounded by # characters,
@@ -238,9 +257,15 @@
     var i;
     var valuePath = doc;
     var fieldPath = field.split('.');
+    var convertor;
     // Special field handlers are in the list of convertors.
-    if (typeof indiciaFns.fieldConvertors[field.replace(/^#(.+)#$/, '$1')] !== 'undefined') {
-      return indiciaFns.fieldConvertors[field.replace(/^#(.+)#$/, '$1')](doc);
+    if (field.match(/^#/)) {
+      // Find the convertor definition between the hashes. If there are
+      // colons, stuff that follows the first colon are parameters.
+      convertor = field.replace(/^#(.+)#$/, '$1').split(':');
+      if (typeof indiciaFns.fieldConvertors[convertor[0]] !== 'undefined') {
+        return indiciaFns.fieldConvertors[convertor[0]](doc, convertor.slice(1));
+      }
     }
     // If not a special field, work down the document hierarchy according to
     // the field's path components.
@@ -277,14 +302,15 @@
     });
     return value;
   };
-}(jQuery));
+}());
 
 
 /**
  * Output plugin for data grids.
  */
-(function esMapPlugin($) {
+(function esMapPlugin() {
   'use strict';
+  var $ = jQuery;
 
   /**
    * Declare default settings.
@@ -379,12 +405,12 @@
       L.control.layers(baseMaps, overlays).addTo(el.map);
     },
     /*
-     * Populate the map with ElasticSearch response data.
+     * Populate the map with Elasticsearch response data.
      *
      * @param obj sourceSettings
      *   Settings for the data source used to generate the response.
      * @param obj response
-     *   ElasticSearch response data.
+     *   Elasticsearch response data.
      * @param obj data
      *   Data sent in request.
      */
@@ -437,14 +463,16 @@
           indiciaFns.controlFail(el, 'Invalid grid ID in @showSelectedRow parameter');
         }
         $('#' + settings.showSelectedRow).esDataGrid('on', 'rowSelect', function onRowSelect(tr) {
+          var doc;
+          var wkt;
+          var obj;
           if (selectedRowMarker) {
             selectedRowMarker.removeFrom(el.map);
           }
           selectedRowMarker = null;
           if (tr) {
-            var doc = JSON.parse($(tr).attr('data-doc-source'));
-            var wkt = new Wkt.Wkt();
-            var obj;
+            doc = JSON.parse($(tr).attr('data-doc-source'));
+            wkt = new Wkt.Wkt();
             wkt.read(doc.location.geom);
             obj = wkt.toObject({
               color: '#AA0000',
@@ -486,21 +514,23 @@
     });
     return this;
   };
-}(jQuery));
+}());
 
 /**
  * Output plugin for data grids.
  */
-(function esDataGridPlugin($) {
+(function esDataGridPlugin() {
   'use strict';
+  var $ = jQuery;
 
   /**
    * Declare default settings.
    */
   var defaults = {
-    columnTitles: true,
-    filterRow: true,
-    pager: true,
+    actions: [],
+    includeColumnHeadings: true,
+    includeFilterRow: true,
+    includePager: true,
     sortable: true
   };
 
@@ -509,7 +539,7 @@
     populate: []
   };
 
-  var initHandlers = function initHandlers(el) {
+  function initHandlers(el) {
     indiciaFns.on('click', '#' + el.id + ' .es-data-grid tbody tr', {}, function onEsDataGridRowClick() {
       var tr = this;
       $(tr).closest('tbody').find('tr.selected').removeClass('selected');
@@ -526,7 +556,9 @@
         if (typeof source.settings.from === 'undefined') {
           source.settings.from = 0;
         }
-        source.settings.from += source.settings.size;
+        // Move to next page based on currently visible row count, in case some
+        // have been removed.
+        source.settings.from += $(el).find('tbody tr.data-row').length;
         source.populate();
       });
     });
@@ -599,7 +631,7 @@
       }
     });
 
-    indiciaFns.on('click', '.multiselect-all', {}, function(e) {
+    indiciaFns.on('click', '.multiselect-all', {}, function onClick(e) {
       var table = $(e.currentTarget).closest('table');
       if ($(e.currentTarget).is(':checked')) {
         table.find('.multiselect').prop('checked', true);
@@ -607,7 +639,48 @@
         $(table).find('.multiselect').prop('checked', false);
       }
     });
-  };
+  }
+
+  function getActionsForRow(actions, doc) {
+    var html = '';
+    $.each(actions, function eachActions() {
+      var item;
+      var link;
+      if (typeof this.title === 'undefined') {
+        html += '<span class="fas fa-times-circle error" title="Invalid action definition - missing title"></span>';
+      }
+      else {
+        if (this.iconClass) {
+          item = '<span class="' + this.iconClass + '" title="' + this.title + '"></span>';
+        } else {
+          item = this.title;
+        }
+        if (this.path) {
+          link = this.path.replace('{rootFolder}', indiciaData.rootFolder);
+          if (this.urlParams) {
+            link += link.indexOf('?') === -1 ? '?' : '&';
+            $.each(this.urlParams, function eachParam(name, value) {
+              // Find any field name replacements.
+              var fieldMatches = value.match(/\[(.*?)\]/g);
+              $.each(fieldMatches, function eachMatch(i, fieldToken) {
+                var dataVal;
+                // Cleanup the square brackets which are not part of the field name.
+                var field = fieldToken.replace(/\[/, '').replace(/\]/, '');
+                dataVal = indiciaFns.getValueForField(doc, field);
+                value = value.replace(fieldToken, dataVal);
+              });
+              console.log(value);
+              console.log(fieldMatches);
+              link += name + '=' + value;
+            });
+          }
+          item = '<a href="' + link + '" title="' + this.title + '">' + item + '</a>';
+        }
+        html += item;
+      }
+    });
+    return html;
+  }
 
   /**
    * Declare public methods.
@@ -622,7 +695,7 @@
       var table;
       var header;
       var headerRow;
-      var filterRow;
+      var includeFilterRow;
       var el = this;
       indiciaData.esOutputPlugins.push('dataGrid');
       el.settings = $.extend({}, defaults);
@@ -642,10 +715,10 @@
       // Build the elements required for the table.
       table = $('<table class="table es-data-grid" />').appendTo(el);
       // If we need any sort of header, add <thead>.
-      if (el.settings.columnTitles !== false || el.settings.filterRow !== false) {
+      if (el.settings.includeColumnHeadings !== false || el.settings.includeFilterRow !== false) {
         header = $('<thead/>').appendTo(table);
         // Output header row for column titles.
-        if (el.settings.columnTitles !== false) {
+        if (el.settings.includeColumnHeadings !== false) {
           headerRow = $('<tr/>').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
             var heading = this.caption;
@@ -660,12 +733,15 @@
             }
             $('<th class="col-' + idx + '" data-col="' + idx + '">' + heading + '</th>').appendTo(headerRow);
           });
+          if (el.settings.actions.length) {
+            $('<th class="col-actions">Actions</th>').appendTo(headerRow);
+          }
         }
         // Output header row for filtering.
-        if (el.settings.filterRow !== false) {
-          filterRow = $('<tr class="es-filter-row" />').appendTo(header);
+        if (el.settings.includeFilterRow !== false) {
+          includeFilterRow = $('<tr class="es-filter-row" />').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
-            var td = $('<td class="col-' + idx + '" data-col="' + idx + '"></td>').appendTo(filterRow);
+            var td = $('<td class="col-' + idx + '" data-col="' + idx + '"></td>').appendTo(includeFilterRow);
             // No filter input if this column has no mapping.
             if (typeof indiciaData.esMappings[this.field] !== 'undefined') {
               $('<input type="text">').appendTo(td);
@@ -676,7 +752,7 @@
       // We always want a table body for the data.
       $('<tbody />').appendTo(table);
       // Output a footer if we want a pager.
-      if (el.settings.pager) {
+      if (el.settings.includePager) {
         $('<tfoot><tr class="pager"><td colspan="' + el.settings.columns.length + '"><span class="showing"></span>' +
           '<span class="buttons"><button class="prev">Previous</button><button class="next">Next</button></span>' +
           '</td></tr></tfoot>').appendTo(table);
@@ -684,12 +760,12 @@
       initHandlers(el);
     },
     /**
-     * Populate the data grid with ElasticSearch response data.
+     * Populate the data grid with Elasticsearch response data.
      *
      * @param obj sourceSettings
      *   Settings for the data source used to generate the response.
      * @param obj response
-     *   ElasticSearch response data.
+     *   Elasticsearch response data.
      * @param obj data
      *   Data sent in request.
      */
@@ -703,11 +779,18 @@
         var cells = [];
         var row;
         var media;
+        var selectedClass;
+        var doc = hit._source;
+        if (el.settings.blockIdsOnNextLoad && $.inArray(hit._id, el.settings.blockIdsOnNextLoad) !== -1) {
+          // Skip the row if blocked. This is required because ES is only
+          // near-instantaneous, so if we take an action on a record then
+          // reload the grid, it is quite likely to re-appear.
+          return true;
+        }
         if ($(el).find('table.multiselect-mode').length) {
           cells.push('<td class="multiselect-cell"><input type="checkbox" class="multiselect" /></td>');
         }
         $.each(el.settings.columns, function eachColumn(idx) {
-          var doc = hit._source;
           var value;
           var rangeValue;
           var match;
@@ -755,9 +838,18 @@
           }
           cells.push('<td class="col-' + idx + ' ' + fieldClass + '">' + value + '</td>');
         });
-        row = $('<tr class="data-row">' + cells.join('') + '</tr>').appendTo($(el).find('tbody'));
+        if (el.settings.actions.length) {
+          cells.push('<td class="col-actions">' + getActionsForRow(el.settings.actions, doc) + '</td>');
+        }
+        selectedClass = (el.settings.selectIdsOnNextLoad && $.inArray(hit._id, el.settings.selectIdsOnNextLoad) !== -1)
+          ? ' selected' : '';
+        row = $('<tr class="data-row' + selectedClass + '" data-row-id="' + hit._id + '">'
+           + cells.join('') +
+           '</tr>').appendTo($(el).find('tbody'));
         $(row).attr('data-doc-source', JSON.stringify(hit._source));
       });
+      // Discard the list of IDs to block during this population as now done.
+      el.settings.blockIdsOnNextLoad = false;
       // Set up the count info in the footer.
       if (response.hits.hits.length > 0) {
         $(el).find('tfoot .showing').html('Showing ' + fromRowIndex +
@@ -780,6 +872,10 @@
       $.each(callbacks.populate, function eachCallback() {
         this(el);
       });
+      // Fire callbacks for selected row if any.
+      $.each(callbacks.rowSelect, function eachCallback() {
+        this($(el).find('tr.selected').length === 0 ? null : $(el).find('tr.selected')[0]);
+      });
     },
     on: function on(event, handler) {
       if (typeof callbacks[event] === 'undefined') {
@@ -790,39 +886,45 @@
     hideRowAndMoveNext: function hideRowAndMoveNext() {
       var grid = this;
       var oldSelected = $(grid).find('tr.selected');
-      var newSelected;
+      var newSelectedId;
       var sources;
       var showingLabel = $(grid).find('.showing');
+      var blocked = [];
 
       if ($(grid).find('table.multiselect-mode').length > 0) {
         $.each($(grid).find('input.multiselect:checked'), function eachRow() {
-          $(this).closest('tr').remove();
+          var tr = $(this).closest('tr');
+          blocked.push($(tr).attr('data-row-id'));
+          tr.remove();
         });
       } else {
         if ($(oldSelected).next('tr').length > 0) {
-          newSelected = $(oldSelected).next('tr');
+          newSelectedId = $(oldSelected).next('tr').attr('data-row-id');
         } else if ($(oldSelected).prev('tr').length > 0) {
-          newSelected = $(oldSelected).prev('tr');
+          newSelectedId = $(oldSelected).prev('tr').attr('data-row-id');
         }
+        blocked.push($(oldSelected).attr('data-row-id'));
         $(oldSelected).remove();
-        if (typeof newSelected !== 'undefined') {
-          newSelected.addClass('selected');
-        }
       }
-      // Repopulate the grid if now empty.
-      if ($(grid).find('table tbody tr').length === 0) {
-        sources = JSON.parse($(grid).attr('data-es-source'));
-        $.each(sources, function eachSource(sourceId) {
-          var source = indiciaData.esSourceObjects[sourceId];
+      sources = JSON.parse($(grid).attr('data-es-source'));
+      $.each(sources, function eachSource(sourceId) {
+        var source = indiciaData.esSourceObjects[sourceId];
+        if ($(grid).find('table tbody tr.data-row').length < source.settings.size * 0.75) {
+          $(grid)[0].settings.blockIdsOnNextLoad = blocked;
+          $(grid)[0].settings.selectIdsOnNextLoad = [newSelectedId];
           source.populate();
-        });
-      } else {
-        // Update the paging info if some rows left.
-        showingLabel.html(showingLabel.html().replace(/\d+ of /, $(grid).find('tbody tr.data-row').length + ' of '));
-      }
-      // Fire callbacks for selected row.
-      $.each(callbacks.rowSelect, function eachCallback() {
-        this($(grid).find('tr.selected').length === 0 ? null : $(grid).find('tr.selected')[0]);
+        } else {
+          // Update the paging info if some rows left.
+          showingLabel.html(showingLabel.html().replace(/\d+ of /, $(grid).find('tbody tr.data-row').length + ' of '));
+          // Immediately select the next row.
+          if (typeof newSelectedId !== 'undefined') {
+            $(grid).find('table tbody tr.data-row[data-row-id="' + newSelectedId + '"]').addClass('selected');
+          }
+          // Fire callbacks for selected row.
+          $.each(callbacks.rowSelect, function eachCallback() {
+            this($(grid).find('tr.selected').length === 0 ? null : $(grid).find('tr.selected')[0]);
+          });
+        }
       });
     }
   };
@@ -846,13 +948,14 @@
     });
     return this;
   };
-}(jQuery));
+}());
 
 /**
 * Output plugin for data grids.
 */
-(function esDetailsPane($) {
+(function esDetailsPane() {
   'use strict';
+  var $ = jQuery;
 
   /**
    * Declare default settings.
@@ -869,15 +972,55 @@
   var loadedAttrsOcurrenceId = 0;
   var loadedExperienceOcurrenceId = 0;
 
-  var getExperienceAggregation = function getExperienceAggregation(data, type) {
+  function getExperienceCells(buckets, userId, el, filter, yr) {
+    var total = buckets.C + buckets.V + buckets.R;
+    var indicatorSize;
+    var datedUrl;
+    var links;
+    var urls;
+    var settings = $(el)[0].settings;
+    var html = '';
+
+    if (settings.exploreUrl) {
+      datedUrl = settings.exploreUrl.replace('-userId-', userId);
+      if (yr) {
+        datedUrl = datedUrl
+          .replace('-df-', yr + '-01-01')
+          .replace('-dt-', yr + '-12-31');
+      } else {
+        datedUrl = datedUrl
+        .replace('-df-', '')
+        .replace('-dt-', '');
+      }
+      urls = {
+        V: datedUrl.replace('-q-', 'V'),
+        C: datedUrl.replace('-q-', 'P'),
+        R: datedUrl.replace('-q-', 'R')
+      };
+      links = {
+        V: buckets.V ? '<a target="_top" href="' + urls.V + '&' + filter + '">' + buckets.V + '</a>' : '0',
+        C: buckets.C ? '<a target="_top" href="' + urls.C + '&' + filter + '">' + buckets.C + '</a>' : '0',
+        R: buckets.R ? '<a target="_top" href="' + urls.R + '&' + filter + '">' + buckets.R + '</a>' : '0'
+      };
+    } else {
+      // No explore URL, so just output the numbers.
+      links = buckets;
+    }
+    indicatorSize = Math.min(80, total * 2);
+    html += '<td>' + links.V + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.V / total)) + 'px;"></span></td>';
+    html += '<td>' + links.C + '<span class="exp-C" style="width: ' + (indicatorSize * (buckets.C / total)) + 'px;"></span></td>';
+    html += '<td>' + links.R + '<span class="exp-R" style="width: ' + (indicatorSize * (buckets.R / total)) + 'px;"></span></td>';
+    return html;
+  }
+
+  function getExperienceAggregation(data, type, userId, filter, el) {
     var html = '';
     var minYear = 9999;
     var maxYear = 0;
     var yr;
     var matrix = { C: {}, V: {}, R: {} };
     var buckets;
-    var indicatorSize;
-    var total;
+
     $.each(data[type + '_status'][type + '_status_filtered'].buckets, function eachStatus() {
       var status = this.key;
       $.each(this[type + '_status_filtered_age'].buckets, function eachYear() {
@@ -903,33 +1046,23 @@
           C: typeof matrix.C[yr] !== 'undefined' ? matrix.C[yr] : 0,
           R: typeof matrix.R[yr] !== 'undefined' ? matrix.R[yr] : 0
         };
-        total = buckets.C + buckets.V + buckets.R;
-        indicatorSize = Math.min(80, total * 2);
-        html += '<td>' + buckets.V + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.V / total)) + 'px;"></span></td>';
-        html += '<td>' + buckets.C + '<span class="exp-C" style="width: ' + (indicatorSize * (buckets.C / total)) + 'px;"></span></td>';
-        html += '<td>' + buckets.R + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.R / total)) + 'px;"></span></td>';
+        html += getExperienceCells(buckets, userId, el, filter, yr);
         html += '</tr>';
       }
-      if (maxYear - minYear > 3) {
-        buckets = {
-          V: 0,
-          C: 0,
-          R: 0
-        };
-        for (yr = minYear; yr <= maxYear - 3; yr++) {
-          buckets.V += typeof matrix.V[yr] !== 'undefined' ? matrix.V[yr] : 0;
-          buckets.C += typeof matrix.C[yr] !== 'undefined' ? matrix.C[yr] : 0;
-          buckets.R += typeof matrix.R[yr] !== 'undefined' ? matrix.R[yr] : 0;
-        }
-        html += '<tr>';
-        html += '<th scope="row">Other years</th>';
-        total = buckets.C + buckets.V + buckets.R;
-        indicatorSize = Math.min(80, total * 2);
-        html += '<td>' + buckets.V + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.V / total)) + 'px;"></span></td>';
-        html += '<td>' + buckets.C + '<span class="exp-C" style="width: ' + (indicatorSize * (buckets.C / total)) + 'px;"></span></td>';
-        html += '<td>' + buckets.R + '<span class="exp-V" style="width: ' + (indicatorSize * (buckets.R / total)) + 'px;"></span></td>';
-        html += '</tr>';
+      buckets = {
+        V: 0,
+        C: 0,
+        R: 0
+      };
+      for (yr = minYear; yr <= maxYear; yr++) {
+        buckets.V += typeof matrix.V[yr] !== 'undefined' ? matrix.V[yr] : 0;
+        buckets.C += typeof matrix.C[yr] !== 'undefined' ? matrix.C[yr] : 0;
+        buckets.R += typeof matrix.R[yr] !== 'undefined' ? matrix.R[yr] : 0;
       }
+      html += '<tr>';
+      html += '<th scope="row">Total</th>';
+      html += getExperienceCells(buckets, userId, el, filter);
+      html += '</tr>';
       html += '<tbody>';
       html += '</tbody></table>';
     }
@@ -969,7 +1102,7 @@
     });
   };
 
-  var loadAttributes = function loadAttributes(el, occurrenceId) {
+  function loadAttributes(el, occurrenceId) {
     // Check not already loaded.
     if (loadedAttrsOcurrenceId === occurrenceId) {
       return;
@@ -994,12 +1127,19 @@
       },
       dataType: 'json'
     });
-  };
+  }
 
-  var loadExperience = function loadExperience(el, doc) {
+  function loadExperience(el, doc) {
     var data;
     // Check not already loaded.
     if (loadedExperienceOcurrenceId === doc.id) {
+      return;
+    }
+    if (doc.metadata.created_by_id === '1') {
+      $(el).find('.recorder-experience').html(
+        '<div class="alert alert-info"><span class="fas fa-info-circle"></span>' +
+          'Recorder was not logged in so experience cannot be loaded.</div>'
+      );
       return;
     }
     loadedExperienceOcurrenceId = doc.id;
@@ -1074,21 +1214,29 @@
       success: function success(response) {
         var html = '';
         if (typeof response.error !== 'undefined') {
-          alert('ElasticSearch query failed');
+          alert('Elasticsearch query failed');
+          $(el).find('.recorder-experience').html('<div class="alert alert-warning">Experience could not be loaded.</div>');
+          $(el).find('.loading-spinner').hide();
         } else {
           html += '<h3>Experience for <span class="field-taxon--accepted-name">' + doc.taxon.accepted_name + '</span></h3>';
-          html += getExperienceAggregation(response.aggregations, 'species');
+          html += getExperienceAggregation(response.aggregations, 'species', doc.metadata.created_by_id,
+            'filter-taxa_taxon_list_external_key_list=' + doc.taxon.accepted_taxon_id, el);
           html += '<h3>Experience for ' + doc.taxon.group + '</h3>';
-          html += getExperienceAggregation(response.aggregations, 'group');
+          html += getExperienceAggregation(response.aggregations, 'group', doc.metadata.created_by_id,
+            'filter-taxon_group_list=' + doc.taxon.group_id, el);
           $(el).find('.recorder-experience').html(html);
           $(el).find('.loading-spinner').hide();
         }
       },
+      error: function error(jqXHR, textStatus, errorThrown) {
+        console.log(errorThrown);
+        alert('Elasticsearch query failed');
+      },
       dataType: 'json'
     });
-  };
+  }
 
-  var loadCurrentTabAjax = function loadCurrentTabAjax(el) {
+  function loadCurrentTabAjax(el) {
     var selectedTr = $(dataGrid).find('tr.selected');
     var doc;
     var activeTab = indiciaFns.activeTab($(el).find('.tabs'));
@@ -1111,13 +1259,13 @@
           throw new Error('Invalid tab index');
       }
     }
-  };
+  }
 
-  var tabActivate = function tabActivate(event, ui) {
+  function tabActivate(event, ui) {
     loadCurrentTabAjax($(ui.newPanel).closest('.details-container'));
-  };
+  }
 
-  var addRow = function addRow(rows, doc, caption, fields, separator) {
+  function addRow(rows, doc, caption, fields, separator) {
     var values = [];
     var value;
     var item;
@@ -1134,7 +1282,7 @@
     if (typeof value !== 'undefined' && value !== '') {
       rows.push('<tr><th scope="row">' + caption + '</th><td>' + value + '</td></tr>');
     }
-  };
+  }
 
   /**
    * Declare public methods.
@@ -1194,6 +1342,8 @@
           addRow(rows, doc, 'Date', '#date#');
           addRow(rows, doc, 'Output map ref', 'location.output_sref');
           addRow(rows, doc, 'Location', '#locality#');
+          addRow(rows, doc, 'Sample comments', 'event.event_remarks');
+          addRow(rows, doc, 'Occurrence comments', 'occurrence.occurrence_remarks');
           addRow(rows, doc, 'Submitted on', 'metadata.created_on');
           addRow(rows, doc, 'Last updated on', 'metadata.updated_on');
           addRow(rows, doc, 'Dataset', ['metadata.website.title', 'metadata.survey.title', 'metadata.group.title'], ' :: ');
@@ -1202,7 +1352,7 @@
           $(el).find('.empty-message').hide();
           $(el).find('.tabs').show();
           // Load Ajax content depending on the tab.
-          loadCurrentTabAjax(el);
+          loadCurrentTabAjax($(el));
         } else {
           // If no row selected, hide the details tabs.
           $(el).find('.empty-message').show();
@@ -1244,13 +1394,14 @@
     });
     return this;
   };
-}(jQuery));
+}());
 
 /**
 * Output plugin for verification buttons.
 */
-(function esVerificationButtons($) {
+(function esVerificationButtons() {
   'use strict';
+  var $ = jQuery;
 
   /**
    * Declare default settings.
@@ -1324,7 +1475,7 @@
       });
     }
 
-    // Now post update to ElasticSearch.
+    // Now post update to Elasticsearch.
     data = {
       ids: occurrenceIds,
       warehouse_url: indiciaData.warehouseUrl,
@@ -1337,7 +1488,7 @@
       success: function success(response) {
         if (typeof response.error !== 'undefined') {
           console.log(response);
-          alert('ElasticSearch update failed');
+          alert('Elasticsearch update failed');
         } else {
           if (response.updated !== occurrenceIds.length) {
             alert('An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.');
@@ -1345,6 +1496,10 @@
           $(dataGrid).esDataGrid('hideRowAndMoveNext');
           $(dataGrid).find('.multiselect-all').prop('checked', false);
         }
+      },
+      error: function error(jqXHR, textStatus, errorThrown) {
+        console.log('Error thrown');
+        alert('Elasticsearch update failed');
       },
       dataType: 'json'
     });
@@ -1500,9 +1655,11 @@
     });
     return this;
   };
-}(jQuery));
+}());
 
-jQuery(document).ready(function docReady($) {
+jQuery(document).ready(function docReady() {
+  'use strict';
+  var $ = jQuery;
   function EsDataSource(settings) {
     var ds = this;
     ds.settings = settings;
@@ -1524,6 +1681,9 @@ jQuery(document).ready(function docReady($) {
     });
   }
 
+  /**
+   * Request a datasource to repopulate from current parameters.
+   */
   EsDataSource.prototype.populate = function datasourcePopulate() {
     var source = this;
     var data = {
@@ -1548,6 +1708,7 @@ jQuery(document).ready(function docReady($) {
           bool_clause: $(this).attr('data-es-bool-clause'),
           field: $(this).attr('data-es-field'),
           query_type: $(this).attr('data-es-query-type'),
+          query: $(this).attr('data-es-query'),
           value: $(this).val().trim()
         });
       }
@@ -1591,21 +1752,28 @@ jQuery(document).ready(function docReady($) {
         }
       });
     }
+    if ($('.permissions-filter').length > 0) {
+      data.permissions_filter = $('.permissions-filter').val();
+    }
     $.ajax({
       url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
       type: 'post',
       data: data,
       success: function success(response) {
-        if (typeof response.error !== 'undefined') {
-          alert('ElasticSearch query failed');
+        if (response.error || (response.code && response.code !== 200)) {
+          alert('Elasticsearch query failed');
         } else {
-          $.each(indiciaData.esOutputPlugins, function(i, plugin) {
+          $.each(indiciaData.esOutputPlugins, function eachPlugin(i, plugin) {
             var fn = 'es' + plugin.charAt(0).toUpperCase() + plugin.slice(1);
-            $.each(source.outputs[plugin], function() {
+            $.each(source.outputs[plugin], function eachOutput() {
               $(this)[fn]('populate', source.settings, response, data);
             });
           });
         }
+      },
+      error: function error(jqXHR, textStatus, errorThrown) {
+        console.log(errorThrown);
+        alert('Elasticsearch query failed');
       },
       dataType: 'json'
     });
@@ -1625,13 +1793,14 @@ jQuery(document).ready(function docReady($) {
     sourceObject.populate();
   });
 
-  $('.es-filter-param, .user-filter').change(function eachFilter() {
+  $('.es-filter-param, .user-filter, .permissions-filter').change(function eachFilter() {
     // Force map to updatea viewport for new data.
     $('.es-output-map')[0].settings.initialBoundsSet = false;
     // Reload all sources.
     $.each(indiciaData.esSourceObjects, function eachSource() {
+      // Reset to first page.
+      this.settings.from = 0;
       this.populate();
     });
   });
-
 });

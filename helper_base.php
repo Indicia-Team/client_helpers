@@ -242,7 +242,6 @@ if ($("#{escapedId} option").length===0) {
   'speciesDetailsThumbnail' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
 );
 
-
 /**
  * Base class for the report and data entry helpers. Provides several generally useful methods and also includes
  * resource management.
