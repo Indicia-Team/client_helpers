@@ -22,7 +22,7 @@
 require_once 'includes/dynamic.php';
 
 /**
- * A prebuilt form for dynamically construction ElasticSearch content.
+ * A prebuilt form for dynamically construction Elasticsearch content.
  */
 class iform_dynamic_elasticsearch extends iform_dynamic {
 
@@ -59,45 +59,45 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'options' => array(
           'tabs' => 'Tabs',
           'wizard' => 'Wizard',
-          'one_page' => 'All One Page',
+          'one_page' => 'All one page',
         ),
-        'group' => 'User Interface',
+        'group' => 'User interface',
         'default' => 'tabs',
       ],
       [
         'name' => 'structure',
-        'caption' => 'Form Structure',
+        'caption' => 'Form structure',
         'type' => 'textarea',
-        'group' => 'User Interface',
+        'group' => 'User interface',
         'default' => '',
       ],
       [
         'name' => 'endpoint',
         'caption' => 'Endpoint',
-        'description' => 'ElasticSearch endpoint declared in the REST API.',
+        'description' => 'Elasticsearch endpoint declared in the REST API.',
         'type' => 'text_input',
-        'group' => 'ElasticSearch Settings',
+        'group' => 'Elasticsearch settings',
       ],
       [
         'name' => 'user',
         'caption' => 'User',
-        'description' => 'REST API user with ElasticSearch access.',
+        'description' => 'REST API user with Elasticsearch access.',
         'type' => 'text_input',
-        'group' => 'ElasticSearch Settings',
+        'group' => 'Elasticsearch settings',
       ],
       [
         'name' => 'secret',
         'caption' => 'Secret',
         'description' => 'REST API user secret.',
         'type' => 'text_input',
-        'group' => 'ElasticSearch Settings',
+        'group' => 'Elasticsearch settings',
       ],
       [
         'name' => 'warehouse_prefix',
         'caption' => 'Warehouse ID prefix',
         'description' => 'Prefix given to numeric IDs to make them unique on the index.',
         'type' => 'text_input',
-        'group' => 'ElasticSearch Settings',
+        'group' => 'Elasticsearch settings',
       ],
       [
         'name' => 'filter_json',
@@ -105,7 +105,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'description' => 'JSON ',
         'type' => 'textarea',
         'required' => FALSE,
-        'group' => 'Filter Settings',
+        'group' => 'Filter settings',
         'default' => '',
       ],
       [
@@ -114,7 +114,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'description' => 'JSON ',
         'type' => 'textarea',
         'required' => FALSE,
-        'group' => 'Filter Settings',
+        'group' => 'Filter settings',
         'default' => '',
       ],
       [
@@ -123,7 +123,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'description' => 'JSON ',
         'type' => 'textarea',
         'required' => FALSE,
-        'group' => 'Filter Settings',
+        'group' => 'Filter settings',
         'default' => '',
       ],
       [
@@ -132,7 +132,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'description' => 'JSON ',
         'type' => 'textarea',
         'required' => FALSE,
-        'group' => 'Filter Settings',
+        'group' => 'Filter settings',
         'default' => '',
       ],
       [
@@ -141,7 +141,36 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'description' => 'Path to a generic editing page.',
         'type' => 'text_input',
         'required' => FALSE,
-        'group' => 'Path Settings',
+        'group' => 'Path settings',
+      ],
+      [
+        'name' => 'my_records_permission',
+        'caption' => 'My records download permission',
+        'description' => "Permission required to access download of user's records.",
+        'type' => 'text_input',
+        'required' => FALSE,
+        'group' => 'Permission settings',
+        'default' => 'access iform',
+      ],
+      [
+        'name' => 'all_records_permission',
+        'caption' => 'All records download permission',
+        'description' => 'Permission required to access download of all records that match the other filter criteria on the page.',
+        'type' => 'text_input',
+        'required' => FALSE,
+        'group' => 'Permission settings',
+        'default' => 'indicia data admin',
+      ],
+      [
+        'name' => 'location_collation_records_permission',
+        'caption' => 'Records in collated locality download permission',
+        'description' => 'Permission required to access download of all records fall inside a location the user ' .
+          'collates (e.g. a record centre staff member). Requires a field_location_collation integer field holding a ' .
+          'location ID in the user account.',
+        'type' => 'text_input',
+        'required' => FALSE,
+        'group' => 'Permission settings',
+        'default' => 'indicia data admin',
       ],
     ];
   }
@@ -157,6 +186,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
     $commentUrl = iform_ajaxproxy_url($nid, 'occ-comment');
     $userId = hostsite_get_user_field('indicia_user_id');
     $editPath = empty($args['edit_path']) ? '' : helper_base::getRootFolder(TRUE) . $args['edit_path'];
+    $rootFolder = helper_base::getRootFolder(TRUE);
     data_entry_helper::$javascript .= <<<JS
 indiciaData.ajaxUrl = '$ajaxUrl';
 indiciaData.esSources = [];
@@ -165,6 +195,7 @@ indiciaData.userId = $userId;
 indiciaData.ajaxFormPostSingleVerify = "$verifyUrl&user_id=$userId&sharing=verification";
 indiciaData.ajaxFormPostComment = "$commentUrl&user_id=$userId&sharing=verification";
 indiciaData.editPath = "$editPath";
+indiciaData.rootFolder = "$rootFolder";
 
 JS;
     helper_base::add_resource('font_awesome');
@@ -211,6 +242,15 @@ JS;
     curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
     // Do the POST and then close the session.
     $response = curl_exec($session);
+    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
+    if ($httpCode !== 200) {
+      $error = json_decode($response, TRUE);
+      $msg = !empty($error['message'])
+        ? $error['message']
+        : curl_errno($session) . ': ' . curl_error($session);
+      throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
+
+    }
     curl_close($session);
     $mappingData = json_decode($response, TRUE);
     $mappingData = array_pop($mappingData);
@@ -320,14 +360,74 @@ JS;
     return data_entry_helper::select($controlOptions);
   }
 
+  /**
+   * Output a selector for various high level permissions filtering options.
+   *
+   * Options available will depend on the permissions set on the Permissions
+   * section of the Edit tab.
+   */
+  protected static function get_control_permissionFilters($auth, $args, $tabalias, $options) {
+    $allowedTypes = [];
+    // Add My records download permission if allowed.
+    if (!empty($args['my_records_permission']) && hostsite_user_has_permission($args['my_records_permission'])) {
+      $allowedTypes['my'] = lang::get('My records');
+    }
+    // Add All records download permission if allowed.
+    if (!empty($args['all_records_permission']) && hostsite_user_has_permission($args['all_records_permission'])) {
+      $allowedTypes['all'] = lang::get('All records');
+    }
+    // Add collated location (e.g. LRC boundary) records download permission if allowed.
+    if (!empty($args['location_collation_records_permission'])
+        && hostsite_user_has_permission($args['location_collation_records_permission'])) {
+      $locationId = hostsite_get_user_field('location_collation');
+      $locationData = data_entry_helper::get_population_data([
+        'table' => 'location',
+        'extraParams' => $auth['read'] + ['id' => $locationId],
+      ]);
+      if (count($locationData) > 0) {
+        $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+      }
+    }
+    if (count($allowedTypes) === 1) {
+      $value = array_values($allowedTypes)[0];
+      return <<<HTML
+<input type="hidden" name="es-permissions-filter" value="$value" class="permissions-filter" />
+
+HTML;
+    }
+    else {
+      return data_entry_helper::select([
+        'fieldName' => 'es-permissions-filter',
+        'lookupValues' => $allowedTypes,
+        'class' => 'permissions-filter',
+      ]);
+    }
+  }
+
+  /**
+   * An Elasticsearch powered grid control.
+   *
+   * Options are:
+   * * source
+   * * columns
+   *   @todo Document the special field convertors.
+   *   @todo Make these consistent with those used in the scrolled download
+   *   CSV definition.
+   * * actions
+   * * includeColumnHeadings
+   * * includeFilterRow
+   * * includePager
+   * * sortable
+   */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
-    self::checkOptions('dataGrid', $options, ['source', 'columns'], ['columns']);
+    self::checkOptions('dataGrid', $options, ['source', 'columns'], ['columns', 'actions']);
     helper_base::add_resource('fancybox');
     $dataOptions = self::getOptionsForJs($options, [
       'columns',
-      'columnTitles',
-      'filterRow',
-      'pager',
+      'actions',
+      'includeColumnHeadings',
+      'includeFilterRow',
+      'includePager',
       'sortable',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
@@ -383,22 +483,48 @@ HTML;
     <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
     <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
     <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
-    <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-question status-C3"></span></button>
+    <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
     <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
     <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
     <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
     <span class="sep"></span>
-    <button class="query" data-query="Q" title="Query this record"><span class="far fa-comment query-Q"></span></button>
+    <button class="query" data-query="Q" title="Query this record"><span class="fas fa-question-circle query-Q"></span></button>
     $optionalButtons
   </div>
 </div>
 HTML;
   }
 
+  /**
+   * A tabbed control to show full record details and verification info.
+   *
+   * Supports the following options:
+   * * showSelectedRow - ID of the grid whose selected row should be shown.
+   *   Required.
+   * * explorePath - path to an Explore all records page that can be used to
+   *   show filtered records, e.g. the records underlying the data on the
+   *   experience tab. Optional.
+   */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
     self::checkOptions('recordDetails', $options, ['showSelectedRow'], []);
+    if (!empty($options['explorePath'])) {
+      $options['exploreUrl'] = hostsite_get_url(
+        $options['explorePath'],
+        [
+          'filter-quality' => '-q-',
+          'filter-date_from' => '-df-',
+          'filter-date_to' => '-dt-',
+          'filter-user_id' => '-userId-',
+          'filter-date_age' => '',
+          'filter-indexed_location_list' => '',
+          'filter-indexed_location_id' => '',
+          'filter-my_records' => 1,
+        ]
+      );
+    }
     $dataOptions = self::getOptionsForJs($options, [
       'showSelectedRow',
+      'exploreUrl',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     helper_base::add_resource('tabs');
@@ -420,9 +546,8 @@ HTML;
       </div>
     </div>
     <div id="tabs-recorder-experience">
-      <div class="recorder-experience">
-        <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
-      </div>
+      <div class="recorder-experience"></div>
+      <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
     </div>
   </div>
 </div>
@@ -430,13 +555,43 @@ HTML;
 HTML;
   }
 
-  private static function getDefinitionVal($definition, array $params) {
+  private static function getDefinitionFilter($definition, array $params) {
     foreach ($params as $param) {
       if (!empty($definition[$param])) {
-        return $definition[$param];
+        return [
+          'value' => $definition[$param],
+          'op' => empty($definition[$param . '_op']) ? FALSE : $definition[$param . '_op'],
+        ];
       }
     }
-    return '';
+    return [];
+  }
+
+  private static function applyPermissionsFilter(array $readAuth, array $query, array &$bool) {
+    if (!empty($_POST['permissions_filter'])) {
+      switch ($_POST['permissions_filter']) {
+        case 'my':
+          $bool['must'][] = [
+            'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+          ];
+          break;
+
+        case 'location_collation':
+          $bool['must'][] = [
+            'nested' => [
+              'path' => 'location.higher_geography',
+              'query' => [
+                'term' => ['location.higher_geography.id' => hostsite_get_user_field('location_collation')],
+              ],
+            ],
+          ];
+          break;
+
+        default:
+          // All records, no filter.
+      }
+
+    }
   }
 
   /**
@@ -444,13 +599,13 @@ HTML;
    *
    * Support for filter definitions is incomplete. Currently only the following
    * parameters are converted:
-   * * website_list
-   * * survey_list
+   * * website_list & website_list_op
+   * * survey_list & survey_list_op
    * * group_id
    * * taxon_group_list
    * * higher_taxa_taxon_list_list
    * * taxa_taxon_list_list
-   * * indexed_location_list.
+   * * indexed_location_list & indexed_location_list_op.
    *
    * @param array $readAuth
    *   Read authentication tokens.
@@ -500,10 +655,11 @@ HTML;
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWebsiteList(array $readAuth, array $definition, array $params, array &$bool) {
-    $value = self::getDefinitionVal($definition, $params);
-    if (!empty($value)) {
-      $bool['must'][] = [
-        'terms' => ['metadata.website.id' => explode(',', $value)],
+    $filter = self::getDefinitionFilter($definition, $params);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => ['metadata.website.id' => explode(',', $filter['value'])],
       ];
     }
   }
@@ -522,10 +678,11 @@ HTML;
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersSurveyList(array $readAuth, array $definition, array $params, array &$bool) {
-    $value = self::getDefinitionVal($definition, $params);
-    if (!empty($value)) {
-      $bool['must'][] = [
-        'terms' => ['metadata.survey.id' => explode(',', $value)],
+    $filter = self::getDefinitionFilter($definition, $params);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
       ];
     }
   }
@@ -544,10 +701,10 @@ HTML;
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersGroupId(array $readAuth, array $definition, array $params, array &$bool) {
-    $value = self::getDefinitionVal($definition, $params);
-    if (!empty($value)) {
+    $filter = self::getDefinitionFilter($definition, $params);
+    if (!empty($filter)) {
       $bool['must'][] = [
-        'terms' => ['metadata.group.id' => explode(',', $value)],
+        'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
       ];
     }
   }
@@ -566,19 +723,11 @@ HTML;
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersTaxonGroupList(array $readAuth, array $definition, array $params, array &$bool) {
-    $value = self::getDefinitionVal($definition, $params);
-    if (!empty($value)) {
-      $groupData = data_entry_helper::get_population_data([
-        'table' => 'taxon_group',
-        'extraParams' => [
-          'query' => json_encode(['in' => ['id' => explode(',', $value)]]),
-        ] + $readAuth,
-      ]);
-      $groups = [];
-      foreach ($groupData as $group) {
-        $groups[] = $group['title'];
-      }
-      $bool['must'][] = ['terms' => ['taxon.group.keyword' => $groups]];
+    $filter = self::getDefinitionFilter($definition, $params);
+    if (!empty($filter)) {
+      $bool['must'][] = [
+        'terms' => ['taxon.group_id' => explode(',', $filter['value'])],
+      ];
     }
   }
 
@@ -596,13 +745,13 @@ HTML;
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersTaxaTaxonList(array $readAuth, array $definition, array $params, array &$bool) {
-    $value = self::getDefinitionVal($definition, $params);
-    if (!empty($value)) {
+    $filter = self::getDefinitionFilter($definition, $params);
+    if (!empty($filter)) {
       $taxonData = data_entry_helper::get_population_data([
         'table' => 'taxa_taxon_list',
         'extraParams' => [
           'view' => 'cache',
-          'query' => json_encode(['in' => ['id' => explode(',', $value)]]),
+          'query' => json_encode(['in' => ['id' => explode(',', $filter['value'])]]),
         ] + $readAuth,
       ]);
       $keys = [];
@@ -627,13 +776,14 @@ HTML;
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersIndexedLocationList(array $readAuth, array $definition, array $params, array &$bool) {
-    $value = self::getDefinitionVal($definition, $params);
-    if (!empty($value)) {
-      $bool['must'][] = [
+    $filter = self::getDefinitionFilter($definition, $params);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
         'nested' => [
           'path' => 'location.higher_geography',
           'query' => [
-            'terms' => ['location.higher_geography.id' => explode(',', $value)],
+            'terms' => ['location.higher_geography.id' => explode(',', $filter['value'])],
           ],
         ],
       ];
@@ -644,7 +794,7 @@ HTML;
    * Ajax method which echoes custom attribute data to the client.
    *
    * At the moment, this info is built from the Indicia warehouse, not
-   * ElasticSearch.
+   * Elasticsearch.
    *
    * @param int $website_id
    *   Warehouse website ID.
@@ -691,6 +841,7 @@ HTML;
 
   public static function ajax_esproxy_searchbyparams($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
+    self::checkPermissionsFilter($params);
     $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
     $query = array_merge($_POST);
     unset($query['warehouse_url']);
@@ -708,17 +859,27 @@ HTML;
       unset($query['filters']);
     }
     foreach ($query['bool_queries'] as $qryConfig) {
-      if ($qryConfig['query_type'] === 'query_string') {
+      if (!empty($qryConfig['query'])) {
+        $bool[$qryConfig['bool_clause']][] = json_decode(
+          str_replace('#value#', $qryConfig['value'], $qryConfig['query']), TRUE
+        );
+      }
+      elseif ($qryConfig['query_type'] === 'term') {
+        $bool[$qryConfig['bool_clause']][] = ['term' => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif ($qryConfig['query_type'] === 'query_string') {
         $bool[$qryConfig['bool_clause']][] = ['query_string' => ['query' => $qryConfig['value']]];
       }
 
     }
     unset($query['bool_queries']);
+    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    self::applyPermissionsFilter($readAuth, $query, $bool);
     if (!empty($query['user_filters'])) {
-      $readAuth = data_entry_helper::get_read_auth($website_id, $password);
       self::applyUserFilters($readAuth, $query, $bool);
     }
     unset($query['user_filters']);
+    unset($query['permissions_filter']);
     $bool = array_filter($bool, function ($k) {
       return count($k) > 0;
     });
@@ -730,18 +891,27 @@ HTML;
 
   /**
    * A search proxy that passes through the data as is.
+   *
+   * Should only be used with aggregations where the size parameter is zero to
+   * avoid permissions issues.
    */
   public static function ajax_esproxy_rawsearch($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
     $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
     $query = array_merge($_POST);
     unset($query['warehouse_url']);
+    $query['size'] = 0;
     self::curlPost($url, $query, $params);
   }
 
+  /**
+   * Proxy method that receives a list of IDs to perform updates on in Elastic.
+   *
+   * Used by the verification system when in checklist mode to allow setting a
+   * comment and status on multiple records in one go.
+   */
   public static function ajax_esproxy_updateids($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
-    watchdog('debug', json_encode($params));
     $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . "/_update_by_query";
     $scripts = [];
     if (!empty($_POST['doc']['identification']['verification_status'])) {
@@ -769,16 +939,39 @@ HTML;
         ],
       ],
     ];
-    watchdog('debug', $url);
-    watchdog('debug', json_encode($doc));
     self::curlPost($url, $doc, $params);
   }
 
+  /**
+   * Confirm that a permissions filter in the request is allowed for the user.
+   *
+   * For example, permissions may be different for accessing my vs all records
+   * so this method checks against the Drupal permissions defined on the edit
+   * tab, ensuring calls to the proxy can't be easily hacked.
+   *
+   * @param array $params
+   *   Form parameters from the Edit tab which include permission settings.
+   */
+  private static function checkPermissionsFilter(array $params) {
+    $permissionsFilter = empty($_POST['permissions_filter']) ? 'all' : $_POST['permissions_filter'];
+    $validPermissionsFilter = [
+      'all',
+      'my',
+      'location_collation',
+    ];
+    if (!in_array($permissionsFilter, $validPermissionsFilter)
+        || !hostsite_user_has_permission($params[$permissionsFilter . '_records_permission'])) {
+      throw new Exception('Unauthorised');
+    }
+  }
+
+  /**
+   * A simple wrapper for the cUrl functionality to POST to Elastic.
+   */
   private static function curlPost($url, $data, $params) {
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
-    watchdog('es_post', json_encode($data));
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
       "Authorization: USER:$params[user]:SECRET:$params[secret]",

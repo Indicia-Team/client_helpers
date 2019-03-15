@@ -101,7 +101,7 @@ jQuery(document).ready(function docReady($) {
         },
         success: function success(data) {
           if (typeof data.code !== 'undefined' && data.code === 401) {
-            alert('ElasticSearch alias configuration user or secret incorrect in the form configuration.');
+            alert('Elasticsearch alias configuration user or secret incorrect in the form configuration.');
             $('.progress-container').hide();
           } else {
             updateProgress(data);

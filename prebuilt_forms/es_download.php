@@ -35,9 +35,9 @@ class iform_es_download {
    */
   public static function get_es_download_definition() {
     return array(
-      'title' => 'ElasticSearch downloader',
+      'title' => 'Elasticsearch downloader',
       'category' => 'Experimental',
-      'description' => 'Download from ElasticSearch. Experimental, may be subject to bugs and changes.',
+      'description' => 'Download from Elasticsearch. Experimental, may be subject to bugs and changes.',
     );
   }
 
@@ -52,23 +52,23 @@ class iform_es_download {
       [
         'name' => 'endpoint',
         'caption' => 'Endpoint',
-        'description' => 'ElasticSearch endpoint declared in the REST API.',
+        'description' => 'Elasticsearch endpoint declared in the REST API.',
         'type' => 'text_input',
-        'group' => 'ElasticSearch Settings',
+        'group' => 'Elasticsearch Settings',
       ],
       [
         'name' => 'user',
         'caption' => 'User',
-        'description' => 'REST API user with ElasticSearch access.',
+        'description' => 'REST API user with Elasticsearch access.',
         'type' => 'text_input',
-        'group' => 'ElasticSearch Settings',
+        'group' => 'Elasticsearch Settings',
       ],
       [
         'name' => 'secret',
         'caption' => 'Secret',
         'description' => 'REST API user secret.',
         'type' => 'text_input',
-        'group' => 'ElasticSearch Settings',
+        'group' => 'Elasticsearch Settings',
       ],
     ];
   }
@@ -135,7 +135,7 @@ HTML;
   }
 
   /**
-   * Proxy method for calls to ElasticSearch.
+   * Proxy method for calls to Elasticsearch.
    *
    * Attaches authorisation to the request. Also wraps the query string in an
    * appropriate request body.

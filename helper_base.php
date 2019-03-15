@@ -242,7 +242,6 @@ if ($("#{escapedId} option").length===0) {
   'speciesDetailsThumbnail' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
 );
 
-
 /**
  * Base class for the report and data entry helpers. Provides several generally useful methods and also includes
  * resource management.
@@ -812,11 +811,20 @@ JS;
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
         'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
         'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
-        'plupload' => array('deps' => array('jquery_ui','fancybox'), 'javascript' => array(
-            self::$js_path.'jquery.uploader.js', self::$js_path.'plupload/js/plupload.full.min.js')),
-        'jqplot' => array('stylesheets' => array(self::$js_path.'jqplot/jquery.jqplot.min.css'), 'javascript' => array(
-                self::$js_path.'jqplot/jquery.jqplot.min.js',
-                '[IE]'.self::$js_path.'jqplot/excanvas.js')),
+        'plupload' => [
+          'deps' => ['jquery_ui', 'fancybox'],
+          'javascript' => [
+            self::$js_path . 'jquery.uploader.js',
+            self::$js_path . 'plupload/js/plupload.full.min.js',
+          ]
+        ],
+        'jqplot' => [
+          'stylesheets' => [self::$js_path . 'jqplot/jquery.jqplot.min.css'],
+          'javascript' => [
+            self::$js_path . 'jqplot/jquery.jqplot.min.js',
+            '[IE]' . self::$js_path . 'jqplot/excanvas.js'
+          ],
+        ],
         'jqplot_bar' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.barRenderer.js')),
         'jqplot_pie' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.pieRenderer.js')),
         'jqplot_category_axis_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.categoryAxisRenderer.js')),

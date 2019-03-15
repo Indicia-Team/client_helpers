@@ -24,6 +24,9 @@ $colour-select-row-bg: #3333ee;
   &.fa-check {
     @include fa-box(green, white, green);
   }
+  &.fa-check-square {
+    color: orange;
+  }
   &.fa-times-circle {
     color: red;
   }
@@ -95,13 +98,14 @@ table.es-data-grid {
     vertical-align: middle;
   }
   button {
+    font-size: 120%;
     border: none;
     background: none;
     box-shadow: none;
     color: black;
     text-shadow: none;
     min-height: 25px;
-    margin: 8px 8px;
+    margin: 4px;
     &:hover {
       background: silver;
     }
@@ -115,11 +119,6 @@ table.es-data-grid {
 }
 
 .details-container {
-  .empty-message {
-    .fa-2x {
-      margin: 0.5em;
-    }
-  }
   .ui-tabs-nav {
     border-bottom: solid silver 1px;
   }

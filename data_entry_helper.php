@@ -7375,12 +7375,12 @@ HTML;
       $query['in']['restrict_to_location_type_id'] = $methods;
     }
 
+    // As of 2.0.0 the attribute views now sort according to the display weights, including blocks
     $attrOptions = array(
       'table'=>$options['attrtable'],
       'extraParams'=> array_merge(array(
         'deleted' => 'f',
         'website_deleted' => 'f',
-        'orderby'=>'weight',
         'query'=>json_encode($query),
         'sharing' => $sharing
       ), $options['extraParams'])
