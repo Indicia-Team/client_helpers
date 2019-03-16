@@ -35,9 +35,9 @@ class iform_es_download {
    */
   public static function get_es_download_definition() {
     return array(
-      'title' => 'Elasticsearch downloader',
-      'category' => 'Experimental',
-      'description' => 'Download from Elasticsearch. Experimental, may be subject to bugs and changes.',
+      'title' => 'Elasticsearch downloader (deprecated)',
+      'category' => 'Experimental - use Elasticsearch outputs (customisable) instead.',
+      'description' => 'Download from Elasticsearch. Deprecated, will be removed soon!',
     );
   }
 
