@@ -265,7 +265,7 @@ JS;
       'id' => "es-output-$controlName" . self::$controlIndex,
     ], $options);
     foreach ($requiredOptions as $option) {
-      if (empty($options[$option]) && $options[$option] !== FALSE) {
+      if (!isset($options[$option]) || $options[$option] === '') {
         throw new Exception("Control [$controlName] requires a parameter called @$option");
       }
     }
@@ -307,33 +307,8 @@ JS;
   }
 
   /**
-   * Retrieves a single parameter control for the Elasticsearch query.
-   *
-   * Options:
-   * * @filterJson - required.
-   * * @boolType - must, must_not, should or filter. Default must.
-   * * @label.
-   *
-   * @return string
-   *   Control HTML
+   * Output a selector for a user's registered filters.
    */
-  protected static function get_control_param($auth, $args, $tabalias, $options) {
-    $options = array_merge([
-      'boolType' => 'must',
-    ], $options);
-    if (empty($options['filterJson'])) {
-      throw new exception('@filterJson option must be set for [param]');
-    }
-    $ctrlOptions = [
-      'fieldname' => '',
-      'class' => 'param boolType-' . $options['boolType'],
-    ];
-    if (!empty($options['label'])) {
-      $ctrlOptions['label'] = $options['label'];
-    }
-    return data_entry_helper::text_input($ctrlOptions);
-  }
-
   protected static function get_control_userFilters($auth, $args, $tabalias, $options) {
     require_once 'includes/report_filters.php';
     self::$controlIndex++;
@@ -404,6 +379,69 @@ HTML;
     }
   }
 
+  protected static function get_control_download($auth, $args, $tabalias, $options) {
+    self::checkOptions('download', $options, ['source'], []);
+    global $indicia_templates;
+    $r = str_replace(
+      [
+        '{id}',
+        '{title}',
+        '{class}',
+        '{caption}',
+      ], [
+        '',
+        lang::get('Run the download'),
+        "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
+        lang::get('Download'),
+      ],
+      $indicia_templates['button']
+    );
+    $progress = <<<HTML
+<div class="progress-container">
+  <svg>
+    <circle class="circle"
+            cx="-90"
+            cy="90"
+            r="80"
+            style="stroke-dashoffset:503px;"
+            stroke-dasharray="503"
+            stroke-width="12px"
+            stroke="#2c7fb8"
+            fill="#7fcdbb"
+            transform="rotate(-90)" />
+      </g>
+      </text>
+  </svg>
+  <div class="progress-text"></div>
+</div>
+
+HTML;
+    $r .= str_replace(
+      [
+        '{attrs}',
+        '{col-1}',
+        '{col-2}',
+      ],
+      [
+        '',
+        $progress,
+        '<div class="files"><h2>' . lang::get('Files') . ':</h2></div>',
+      ],
+      $indicia_templates['two-col-50']);
+    // This does nothing at the moment - just a placeholder for if and when we
+    // add some download options.
+    $dataOptions = self::getOptionsForJs($options, []);
+    $encodedOptions = htmlspecialchars($dataOptions);
+    // Escape the source so it can output as an attribute.
+    $source = str_replace('"', '&quot;', json_encode($options['source']));
+    return <<<HTML
+<div id="$options[id]" class="es-output es-output-download" data-es-source="$source" data-es-output-config="$encodedOptions">
+  $r;
+</div>
+
+HTML;
+  }
+
   /**
    * An Elasticsearch powered grid control.
    *
@@ -429,6 +467,7 @@ HTML;
       'includeFilterRow',
       'includePager',
       'sortable',
+      'aggregation',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     // Escape the source so it can output as an attribute.
@@ -839,10 +878,7 @@ HTML;
     echo json_encode($reportData);
   }
 
-  public static function ajax_esproxy_searchbyparams($website_id, $password, $nid) {
-    $params = hostsite_get_node_field_value($nid, 'params');
-    self::checkPermissionsFilter($params);
-    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
+  private static function buildEsQueryFromRequest($website_id, $password) {
     $query = array_merge($_POST);
     unset($query['warehouse_url']);
     $bool = [
@@ -851,10 +887,12 @@ HTML;
       'must_not' => [],
       'filter' => [],
     ];
+    $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
+    $stringQueryTypes = ['query_string', 'simple_query_string'];
     if (isset($query['filters'])) {
       // Apply any filter row paramenters to the query.
       foreach ($query['filters'] as $field => $value) {
-        $bool['must'][] = ['match' => [$field => $value]];
+        $bool['must'][] = ['match_phrase_prefix' => [$field => $value]];
       }
       unset($query['filters']);
     }
@@ -864,11 +902,13 @@ HTML;
           str_replace('#value#', $qryConfig['value'], $qryConfig['query']), TRUE
         );
       }
-      elseif ($qryConfig['query_type'] === 'term') {
-        $bool[$qryConfig['bool_clause']][] = ['term' => [$qryConfig['field'] => $qryConfig['value']]];
+      elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
+        // One of the standard ES field based query types (e.g. term or match).
+        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
       }
-      elseif ($qryConfig['query_type'] === 'query_string') {
-        $bool[$qryConfig['bool_clause']][] = ['query_string' => ['query' => $qryConfig['value']]];
+      elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
+        // One of the ES query string based query types.
+        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
       }
 
     }
@@ -886,6 +926,14 @@ HTML;
     if (!empty($bool)) {
       $query['query'] = ['bool' => $bool];
     }
+    return $query;
+  }
+
+  public static function ajax_esproxy_searchbyparams($website_id, $password, $nid) {
+    $params = hostsite_get_node_field_value($nid, 'params');
+    self::checkPermissionsFilter($params);
+    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
+    $query = self::buildEsQueryFromRequest($website_id, $password);
     self::curlPost($url, $query, $params);
   }
 
@@ -901,6 +949,25 @@ HTML;
     $query = array_merge($_POST);
     unset($query['warehouse_url']);
     $query['size'] = 0;
+    self::curlPost($url, $query, $params);
+  }
+
+  /**
+   * A search proxy that handles build of a CSV download file.
+   */
+  public static function ajax_esproxy_download($website_id, $password, $nid) {
+    $params = hostsite_get_node_field_value($nid, 'params');
+    self::checkPermissionsFilter($params);
+    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
+    $query = self::buildEsQueryFromRequest($website_id, $password);
+    $initialScroll = !array_key_exists('scroll_id', $_POST);
+    if ($initialScroll) {
+      $url .= '?scroll';
+    }
+    else {
+      $url .= '?scroll_id=' . $_POST['scroll_id'];
+    }
+    watchdog('url', $url);
     self::curlPost($url, $query, $params);
   }
 
@@ -972,6 +1039,7 @@ HTML;
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
+    watchdog('post', $url . ': ' . json_encode($data));
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
       "Authorization: USER:$params[user]:SECRET:$params[secret]",

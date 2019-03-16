@@ -1,3 +1,50 @@
+/* Progress spinner */
+.progress-container {
+  width: 180px;
+  margin: auto;
+  position: relative;
+  display: none; }
+  .progress-container svg {
+    height: 180px;
+    width: 180px; }
+  .progress-container .progress-text {
+    position: absolute;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: white;
+    font-size: 20px;
+    top: 80px; }
+
+/* Download file box */
+.files {
+  display: none;
+  -webkit-box-shadow: 6px 7px 8px 1px silver;
+  -moz-box-shadow: 6px 7px 8px 1px silver;
+  box-shadow: 6px 7px 8px 1px silver;
+  max-width: 400px;
+  padding: 20px;
+  margin: auto; }
+  .files > div {
+    border: dashed silver 1px;
+    margin: 10px;
+    padding: 10px; }
+    .files > div pre {
+      background: #f4f4f4;
+      border: 1px solid #ddd;
+      border-left: 3px solid #f36d33;
+      color: #666;
+      page-break-inside: avoid;
+      font-family: monospace;
+      font-size: 15px;
+      line-height: 1.6;
+      margin: 10px 0 0 0;
+      max-width: 100%;
+      overflow: auto;
+      padding: 10px;
+      display: block;
+      word-wrap: break-word; }
+
 .fas, .far {
   margin: 3px;
   padding: 1px; }
@@ -36,10 +83,14 @@ table.es-data-grid thead .fa-sort {
   opacity: 0.3; }
   table.es-data-grid thead .fa-sort:hover {
     opacity: 1; }
-table.es-data-grid thead .es-filter-row input {
-  width: 100%;
-  box-sizing: border-box;
-  margin: 0; }
+table.es-data-grid thead .es-filter-row {
+  /* Position search value warning icon over input. */ }
+  table.es-data-grid thead .es-filter-row input {
+    width: 100%;
+    box-sizing: border-box;
+    margin: 0; }
+  table.es-data-grid thead .es-filter-row .fa-exclamation-circle {
+    margin-left: -20px; }
 table.es-data-grid tbody tr:nth-child(even), table.es-data-grid tbody tr:nth-child(even) td {
   background-color: #f7f7f7; }
 table.es-data-grid tbody tr:nth-child(odd), table.es-data-grid tbody tr:nth-child(odd) td {

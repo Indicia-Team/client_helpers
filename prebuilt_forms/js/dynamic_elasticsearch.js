@@ -26,7 +26,7 @@
   /**
    * Keep track of a list of all the plugin instances that output something.
    */
-  indiciaData.esOutputPlugins = [];
+  indiciaData.esOutputPluginClasses = [];
 
   /**
    * Font Awesome icon and other classes for record statuses and flags.
@@ -78,6 +78,15 @@
     fail: 'fas fa-thumbs-down',
     pending: 'fas fa-cog',
     checksDisabled: 'fas fa-eye-slash'
+  };
+
+  /**
+   * Keep track of a unique list of output plugin classes active on the page.
+   */
+  indiciaFns.registerOutputPluginClass = function registerOutputPluginClasses(name) {
+    if ($.inArray(name, indiciaData.esOutputPluginClasses) === -1) {
+      indiciaData.esOutputPluginClasses.push(name);
+    }
   };
 
   /**
@@ -145,7 +154,15 @@
     return html;
   };
 
-  indiciaFns.findVal = function i(object, key) {
+  /**
+   * Searches an object for a nested property.
+   *
+   * Useful for finding the buckets property of an aggregation for example.
+   *
+   * @return mixed
+   *   Property value.
+   */
+  indiciaFns.findVal = function findVal(object, key) {
     var value;
     Object.keys(object).some(function eachKey(k) {
       if (k === key) {
@@ -201,6 +218,10 @@
       }
       return icons.join('');
     },
+    // Output a higher geography value. The column should be configured with
+    // two parameters, the first is the type (e.g. Vice county) and the second
+    // the field to return (e.g. name, code). For example:
+    //  {"caption":"VC code","field":"#higher_geography:Vice County:code#"}
     higher_geography: function higherGeography(doc, params) {
       var output = '';
       if (doc.location.higher_geography) {
@@ -220,7 +241,8 @@
       }
       return doc.event.date_start;
     },
-    // A list of higher geographic areas in the doc.
+    // A summary of location information, including the given location name
+    // (verbatim locality) as well as list of higher geography.
     locality: function locality(doc) {
       var info = '';
       if (doc.location.verbatim_locality) {
@@ -240,6 +262,36 @@
       return '<abbr title="' + doc.metadata.website.title + ' | ' + doc.metadata.survey.title + '">' +
         doc.metadata.website.id + '|' + doc.metadata.survey.id +
         '</abbr>';
+    }
+  };
+
+  /**
+   * Special fields provided by field convertors are not searchable unless a
+   * dedicated function is provided to build an appropriate query string for
+   * the user input.
+   *
+   * This list could also potentially override the search behaviour for normal
+   * mapped fields.
+   *
+   * Builders should return false if the input text is not a valid filter.
+   * The builder can assume that the input text value is already trimmed.
+   */
+  indiciaFns.fieldConvertorQueryBuilders = {
+    // Handle datasource_code filtering in format website_id [| survey ID].
+    datasource_code: function datasourceCode(text) {
+      var parts;
+      var query;
+      if (text.match(/^\d+(\s*\|\s*\d*)?$/)) {
+        parts = text.split('|');
+        // Search always includes the website ID.
+        query = 'metadata.website.id:' + parts[0].trim();
+        // Search can optionally include the survey ID.
+        if (parts.length > 1 && parts[1].trim() !== '') {
+          query += 'AND metadata.survey.id:' + parts[1].trim();
+        }
+        return query;
+      }
+      return false;
     }
   };
 
@@ -302,8 +354,290 @@
     });
     return value;
   };
+
+  /**
+   * Build query data to send to ES proxy.
+   *
+   * Builds the data to post to the Elasticsearch search proxy to represent
+   * the current state of the form inputs on the page.
+   */
+  indiciaFns.getEsFormQueryData = function getEsFormQueryData(source) {
+    var data = {
+      warehouse_url: indiciaData.warehouseUrl,
+      filters: {},
+      bool_queries: [],
+      user_filters: []
+    };
+    var bounds;
+    if (source.settings.size) {
+      data.size = source.settings.size;
+    }
+    if (source.settings.from) {
+      data.from = source.settings.from;
+    }
+    if (source.settings.sort) {
+      data.sort = source.settings.sort;
+    }
+    $.each($('.es-filter-param'), function eachParam() {
+      if ($(this).val().trim() !== '') {
+        data.bool_queries.push({
+          bool_clause: $(this).attr('data-es-bool-clause'),
+          field: $(this).attr('data-es-field'),
+          query_type: $(this).attr('data-es-query-type'),
+          query: $(this).attr('data-es-query'),
+          value: $(this).val().trim()
+        });
+      }
+    });
+    $.each(source.outputs.dataGrid, function eachGrid() {
+      var filterRow = $(this).find('.es-filter-row');
+      // Remove search text format errors.
+      $(filterRow).find('.fa-exclamation-circle').remove();
+      // Build the filter required for values in each filter row input.
+      $.each($(filterRow).find('input'), function eachInput() {
+        var el = $(this).closest('.es-output');
+        var cell = $(this).closest('td');
+        var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
+        var fnQueryBuilder;
+        var query;
+        if ($(this).val().trim() !== '') {
+          if (typeof indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')] !== 'undefined') {
+            fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')];
+            query = fnQueryBuilder($(this).val().trim());
+            if (query === false) {
+              // Flag input as invalid.
+              $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
+            } else {
+              // Build the query for the input.
+              data.bool_queries.push({
+                bool_clause: 'must',
+                query_type: 'query_string',
+                value: query
+              });
+            }
+          } else {
+            // A normal mapped field with no special handling.
+            data.filters[col.field] = $(this).val().trim();
+          }
+        }
+      });
+    });
+    if (source.settings.aggregation) {
+      // Find the map bounds.
+      $.each($('.es-output-map'), function eachMap() {
+        if ($(this)[0].settings.applyBoundsTo === source.settings.id) {
+          bounds = $(this)[0].map.getBounds();
+        }
+      });
+      indiciaFns.setValIfEmpty(source.settings.aggregation, 'geo_bounding_box', {
+        ignore_unmapped: true,
+        'location.point': {
+          top_left: {
+            lat: bounds.getNorth(),
+            lon: bounds.getWest()
+          },
+          bottom_right: {
+            lat: bounds.getSouth(),
+            lon: bounds.getEast()
+          }
+        }
+      });
+      data.aggs = source.settings.aggregation;
+    }
+    if ($('.user-filter').length > 0) {
+      $.each($('.user-filter'), function eachUserFilter() {
+        if ($(this).val() !== '') {
+          data.user_filters.push($(this).val());
+        }
+      });
+    }
+    if ($('.permissions-filter').length > 0) {
+      data.permissions_filter = $('.permissions-filter').val();
+    }
+    return data;
+  }
 }());
 
+/**
+ * Output plugin for data downloads.
+ */
+(function esDownloadPlugin() {
+  'use strict';
+  var $ = jQuery;
+
+  /**
+   * Flag to track when file generation completed.
+   */
+  var done;
+
+  /**
+   * Declare default settings.
+   */
+  var defaults = {
+  };
+
+  /**
+   * Wind the progress spinner forward to a certain percentage.
+   *
+   * @param element el
+   *   The plugin instance's element.
+   * @param int progress
+   *   Progress percentage.
+   */
+  function animateTo(el, progress) {
+    var target = done ? 1006 : 503 + (progress * 503);
+    // Stop previous animations if we are making better progress through the
+    // download than 1 chunk per 0.5s. This allows the spinner to speed up.
+    $(el).find('.circle').stop(true);
+    $(el).find('.circle').animate({
+      'stroke-dasharray': target
+    }, {
+      duration: 500
+    });
+  }
+
+  /**
+   * Updates the progress text and spinner after receiving a response.
+   *
+   * @param element el
+   *   The plugin instance's element.
+   * @param obj response
+   *   Response body from the ES proxy containing progress data.
+   */
+  function updateProgress(el, response) {
+    $(el).find('.progress-text').text(response.done + ' of ' + response.total);
+    animateTo(el, response.done / response.total);
+  }
+
+  /**
+   * Recurse until all the pages of a chunked download are received.
+   *
+   * @param obj data
+   *   Response body from the ES proxy containing progress data.
+   */
+  function doPages(el, data) {
+    var date;
+    var hours;
+    var minutes;
+    if (data.done < data.total) {
+      // Post to the ES proxy. Pass scroll_id parameter to request the next
+      // chunk of the dataset.
+      $.ajax({
+        url: indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid,
+        type: 'post',
+        data: {
+          warehouse_url: indiciaData.warehouseUrl,
+          scroll_id: data.scroll_id
+        },
+        success: function success(response) {
+          updateProgress(el, response);
+          doPages(el, response);
+        },
+        dataType: 'json'
+      });
+    } else {
+      date = new Date();
+      date.setTime(date.getTime() + (45 * 60 * 1000));
+      hours = '0' + date.getHours();
+      hours = hours.substr(hours.length - 2);
+      minutes = '0' + date.getMinutes();
+      minutes = minutes.substr(minutes.length - 2);
+      $(el).find('.files').append('<div><a href="' + data.filename + '">' +
+        '<span class="fas fa-file-archive fa-2x"></span>' +
+        'Download .zip file</a><br/>' +
+        'File containing ' + data.total + ' occurrences. Available until ' + hours + ':' + minutes + '</div>');
+      $(el).find('.files').fadeIn('med');
+    }
+  }
+
+  function initHandlers(el) {
+    /**
+     * Download button click handler.
+     */
+    $(el).find('.do-download').click(function doDownload() {
+      var data;
+      var sources = JSON.parse($(el).attr('data-es-source'));
+      $.each(sources, function eachSource(sourceId) {
+        var source = indiciaData.esSourceObjects[sourceId];
+        $(el).find('.progress-container').show();
+        done = false;
+        $(el).find('.circle').attr('style', 'stroke-dashoffset: 503px');
+        $(el).find('.progress-text').text('Loading...');
+        data = indiciaFns.getEsFormQueryData(source);
+        // Post to the ES proxy.
+        $.ajax({
+          url: indiciaData.ajaxUrl + '/esproxy_download/' + indiciaData.nid,
+          type: 'post',
+          data: data,
+          success: function success(response) {
+            if (typeof response.code !== 'undefined' && response.code === 401) {
+              alert('Elasticsearch alias configuration user or secret incorrect in the form configuration.');
+              $('.progress-container').hide();
+            } else {
+              updateProgress(el, response);
+              doPages(el, response);
+            }
+          }
+        });
+      });
+    });
+  }
+
+  /**
+   * Declare public methods.
+   */
+  var methods = {
+
+    /**
+     * Initialise the esMap  plugin.
+     *
+     * @param array options
+     */
+    init: function init(options) {
+      var el = this;
+
+      indiciaFns.registerOutputPluginClass('download');
+      el.settings = $.extend({}, defaults);
+      // Apply settings passed in the HTML data-* attribute.
+      if (typeof $(el).attr('data-es-output-config') !== 'undefined') {
+        $.extend(el.settings, JSON.parse($(el).attr('data-es-output-config')));
+      }
+      // Apply settings passed to the constructor.
+      if (typeof options !== 'undefined') {
+        $.extend(el.settings, options);
+      }
+      initHandlers(el);
+    },
+
+    /*
+     * The download plugin doesn't do anything until requested.
+     */
+    populate: function populate() {
+      // Nothing to do.
+    }
+  };
+
+  /**
+   * Extend jQuery to declare esDownload method.
+   */
+  $.fn.esDownload = function buildEsDownload(methodOrOptions) {
+    var passedArgs = arguments;
+    $.each(this, function callOnEachDiv() {
+      if (methods[methodOrOptions]) {
+        // Call a declared method.
+        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+      } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
+        // Default to "init".
+        return methods.init.apply(this, passedArgs);
+      }
+      // If we get here, the wrong method was called.
+      $.error('Method ' + methodOrOptions + ' does not exist on jQuery.esDownload');
+      return true;
+    });
+    return this;
+  };
+
+}());
 
 /**
  * Output plugin for data grids.
@@ -328,7 +662,7 @@
    */
   var selectedRowMarker;
 
-  var addFeature = function addFeature(el, sourceId, location, metric) {
+  function addFeature(el, sourceId, location, metric) {
     var config = { type: 'marker', options: {} };
     if (typeof $(el)[0].settings.styles[sourceId] !== 'undefined') {
       $.extend(config, $(el)[0].settings.styles[sourceId]);
@@ -351,7 +685,42 @@
       default:
         el.outputLayers[sourceId].addLayer(L.marker(location, config.options));
     }
-  };
+  }
+
+  /**
+   * Select a grid row pans and optionally zooms the map.
+   */
+  function rowSelected(el, tr, zoom) {
+    var doc;
+    var wkt;
+    var obj;
+    if (selectedRowMarker) {
+      selectedRowMarker.removeFrom(el.map);
+    }
+    selectedRowMarker = null;
+    if (tr) {
+      doc = JSON.parse($(tr).attr('data-doc-source'));
+      wkt = new Wkt.Wkt();
+      wkt.read(doc.location.geom);
+      obj = wkt.toObject({
+        color: '#AA0000',
+        weight: 3,
+        opacity: 1.0,
+        fillColor: '#AA0000',
+        fillOpacity: 0.2
+      });
+      obj.addTo(el.map);
+      selectedRowMarker = obj;
+      // Pan and zoom the map. Method differs for points vs polygons.
+      if (!zoom) {
+        el.map.panTo(obj.getCenter());
+      } else if (wkt.type === 'polygon') {
+        el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
+      } else {
+        el.map.setView(obj.getCenter(), 11);
+      }
+    }
+  }
 
   /**
    * Declare public methods.
@@ -370,8 +739,7 @@
       var overlays = {};
       el.outputLayers = {};
 
-
-      indiciaData.esOutputPlugins.push('map');
+      indiciaFns.registerOutputPluginClass('map');
       el.settings = $.extend({}, defaults);
       // Apply settings passed in the HTML data-* attribute.
       if (typeof $(el).attr('data-es-output-config') !== 'undefined') {
@@ -383,11 +751,18 @@
       }
 
       el.map = L.map(el.id).setView([el.settings.initialLat, el.settings.initialLng], el.settings.initialZoom);
-      base = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+      baseMaps = {
+        OpenStreetMap: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }),
+        OpenTopoMap: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+          maxZoom: 17,
+          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+        })
+      };
+      $.each(baseMaps, function() {
+        this.addTo(el.map);
       });
-      baseMaps = { 'Base map': base };
-      base.addTo(el.map);
       $.each(source, function eachSource(id, title) {
         var group;
         if (el.settings.styles[id].type !== 'undefined' && el.settings.styles[id].type === 'heat') {
@@ -463,33 +838,10 @@
           indiciaFns.controlFail(el, 'Invalid grid ID in @showSelectedRow parameter');
         }
         $('#' + settings.showSelectedRow).esDataGrid('on', 'rowSelect', function onRowSelect(tr) {
-          var doc;
-          var wkt;
-          var obj;
-          if (selectedRowMarker) {
-            selectedRowMarker.removeFrom(el.map);
-          }
-          selectedRowMarker = null;
-          if (tr) {
-            doc = JSON.parse($(tr).attr('data-doc-source'));
-            wkt = new Wkt.Wkt();
-            wkt.read(doc.location.geom);
-            obj = wkt.toObject({
-              color: '#AA0000',
-              weight: 3,
-              opacity: 1.0,
-              fillColor: '#AA0000',
-              fillOpacity: 0.2
-            });
-            obj.addTo(el.map);
-            selectedRowMarker = obj;
-            // Pan and zoom the map. Method differs for points vs polygons.
-            if (wkt.type === 'polygon') {
-              el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
-            } else {
-              el.map.setView(obj._latlng, 11);
-            }
-          }
+          rowSelected(el, tr, false);
+        });
+        $('#' + settings.showSelectedRow).esDataGrid('on', 'rowDblClick', function onRowDblClick(tr) {
+          rowSelected(el, tr, true);
         });
       }
     }
@@ -536,6 +888,7 @@
 
   var callbacks = {
     rowSelect: [],
+    rowDblClick: [],
     populate: []
   };
 
@@ -545,6 +898,17 @@
       $(tr).closest('tbody').find('tr.selected').removeClass('selected');
       $(tr).addClass('selected');
       $.each(callbacks.rowSelect, function eachCallback() {
+        this(tr);
+      });
+    });
+
+    indiciaFns.on('dblclick', '#' + el.id + ' .es-data-grid tbody tr', {}, function onEsDataGridRowDblClick() {
+      var tr = this;
+      if (!$(tr).hasClass('selected')) {
+        $(tr).closest('tbody').find('tr.selected').removeClass('selected');
+        $(tr).addClass('selected');
+      }
+      $.each(callbacks.rowDblClick, function eachCallback() {
         this(tr);
       });
     });
@@ -574,6 +938,10 @@
         source.settings.from = Math.max(0, source.settings.from);
         source.populate();
       });
+    });
+
+    $('.es-filter-param').focus(function(e) {
+      console.log('focus');
     });
 
     $(el).find('.sort').click(function clickSort() {
@@ -662,16 +1030,15 @@
             $.each(this.urlParams, function eachParam(name, value) {
               // Find any field name replacements.
               var fieldMatches = value.match(/\[(.*?)\]/g);
+              var updatedVal = value;
               $.each(fieldMatches, function eachMatch(i, fieldToken) {
                 var dataVal;
                 // Cleanup the square brackets which are not part of the field name.
                 var field = fieldToken.replace(/\[/, '').replace(/\]/, '');
                 dataVal = indiciaFns.getValueForField(doc, field);
-                value = value.replace(fieldToken, dataVal);
+                updatedVal = value.replace(fieldToken, dataVal);
               });
-              console.log(value);
-              console.log(fieldMatches);
-              link += name + '=' + value;
+              link += name + '=' + updatedVal;
             });
           }
           item = '<a href="' + link + '" title="' + this.title + '">' + item + '</a>';
@@ -697,7 +1064,8 @@
       var headerRow;
       var includeFilterRow;
       var el = this;
-      indiciaData.esOutputPlugins.push('dataGrid');
+      var totalCols;
+      indiciaFns.registerOutputPluginClass('dataGrid');
       el.settings = $.extend({}, defaults);
       // Apply settings passed in the HTML data-* attribute.
       if (typeof $(el).attr('data-es-output-config') !== 'undefined') {
@@ -742,8 +1110,10 @@
           includeFilterRow = $('<tr class="es-filter-row" />').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
             var td = $('<td class="col-' + idx + '" data-col="' + idx + '"></td>').appendTo(includeFilterRow);
-            // No filter input if this column has no mapping.
-            if (typeof indiciaData.esMappings[this.field] !== 'undefined') {
+            // No filter input if this column has no mapping unless there is a
+            // special field function that can work out the query.
+            if (typeof indiciaData.esMappings[this.field] !== 'undefined'
+              || typeof indiciaFns.fieldConvertorQueryBuilders[this.field.replace(/#/g, '')] !== 'undefined') {
               $('<input type="text">').appendTo(td);
             }
           });
@@ -753,7 +1123,8 @@
       $('<tbody />').appendTo(table);
       // Output a footer if we want a pager.
       if (el.settings.includePager) {
-        $('<tfoot><tr class="pager"><td colspan="' + el.settings.columns.length + '"><span class="showing"></span>' +
+        totalCols = el.settings.columns.length + (el.settings.actions.length > 0 ? 1 : 0);
+        $('<tfoot><tr class="pager"><td colspan="' + totalCols + '"><span class="showing"></span>' +
           '<span class="buttons"><button class="prev">Previous</button><button class="next">Next</button></span>' +
           '</td></tr></tfoot>').appendTo(table);
       }
@@ -772,15 +1143,21 @@
     populate: function populate(sourceSettings, response, data) {
       var el = this;
       var fromRowIndex = typeof data.from === 'undefined' ? 1 : (data.from + 1);
+      var dataList;
       $(el).find('tbody tr').remove();
       $(el).find('.multiselect-all').prop('checked', false);
-      $.each(response.hits.hits, function eachHit() {
+      if ($(el)[0].settings.aggregation === true && typeof response.aggregations !== 'undefined') {
+        dataList = indiciaFns.findVal(response.aggregations, 'buckets');
+      } else {
+        dataList = response.hits.hits;
+      }
+      $.each(dataList, function eachHit() {
         var hit = this;
         var cells = [];
         var row;
         var media;
         var selectedClass;
-        var doc = hit._source;
+        var doc = hit._source ? hit._source : hit;
         if (el.settings.blockIdsOnNextLoad && $.inArray(hit._id, el.settings.blockIdsOnNextLoad) !== -1) {
           // Skip the row if blocked. This is required because ES is only
           // near-instantaneous, so if we take an action on a record then
@@ -1660,21 +2037,22 @@
 jQuery(document).ready(function docReady() {
   'use strict';
   var $ = jQuery;
+
   function EsDataSource(settings) {
     var ds = this;
     ds.settings = settings;
     // Prepare a structure to store the output plugins linked to this source.
     ds.outputs = {};
-    $.each(indiciaData.esOutputPlugins, function eachPlugin() {
+    $.each(indiciaData.esOutputPluginClasses, function eachPluginClass() {
       ds.outputs[this] = [];
     });
     $.each($('.es-output'), function eachOutput() {
       var el = this;
       var source = JSON.parse($(el).attr('data-es-source'));
       if (source.hasOwnProperty(ds.settings.id)) {
-        $.each(indiciaData.esOutputPlugins, function eachPlugin(i, plugin) {
-          if ($(el).hasClass('es-output-' + plugin)) {
-            ds.outputs[plugin].push(el);
+        $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
+          if ($(el).hasClass('es-output-' + pluginClass)) {
+            ds.outputs[pluginClass].push(el);
           }
         });
       }
@@ -1686,75 +2064,7 @@ jQuery(document).ready(function docReady() {
    */
   EsDataSource.prototype.populate = function datasourcePopulate() {
     var source = this;
-    var data = {
-      warehouse_url: indiciaData.warehouseUrl,
-      filters: {},
-      bool_queries: [],
-      user_filters: []
-    };
-    var bounds;
-    if (source.settings.size) {
-      data.size = source.settings.size;
-    }
-    if (source.settings.from) {
-      data.from = source.settings.from;
-    }
-    if (source.settings.sort) {
-      data.sort = source.settings.sort;
-    }
-    $.each($('.es-filter-param'), function eachParam() {
-      if ($(this).val().trim() !== '') {
-        data.bool_queries.push({
-          bool_clause: $(this).attr('data-es-bool-clause'),
-          field: $(this).attr('data-es-field'),
-          query_type: $(this).attr('data-es-query-type'),
-          query: $(this).attr('data-es-query'),
-          value: $(this).val().trim()
-        });
-      }
-    });
-    $.each(source.outputs.dataGrid, function eachGrid() {
-      $.each($(this).find('.es-filter-row input'), function eachInput() {
-        var el = $(this).closest('.es-output');
-        var cell = $(this).closest('td');
-        var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
-        if ($(this).val().trim() !== '') {
-          data.filters[col.field] = $(this).val().trim();
-        }
-      });
-    });
-    if (source.settings.aggregation) {
-      // Find the map bounds.
-      $.each($('.es-output-map'), function() {
-        if ($(this)[0].settings.applyBoundsTo === source.settings.id) {
-          bounds = $(this)[0].map.getBounds();
-        }
-      });
-      indiciaFns.setValIfEmpty(source.settings.aggregation, 'geo_bounding_box', {
-        ignore_unmapped: true,
-        'location.point': {
-          top_left: {
-            lat: bounds.getNorth(),
-            lon: bounds.getWest()
-          },
-          bottom_right: {
-            lat: bounds.getSouth(),
-            lon: bounds.getEast()
-          }
-        }
-      });
-      data.aggs = source.settings.aggregation;
-    }
-    if ($('.user-filter').length > 0) {
-      $.each($('.user-filter'), function eachUserFilter() {
-        if ($(this).val() !== '') {
-          data.user_filters.push($(this).val());
-        }
-      });
-    }
-    if ($('.permissions-filter').length > 0) {
-      data.permissions_filter = $('.permissions-filter').val();
-    }
+    var data = indiciaFns.getEsFormQueryData(source);
     $.ajax({
       url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
       type: 'post',
@@ -1763,9 +2073,9 @@ jQuery(document).ready(function docReady() {
         if (response.error || (response.code && response.code !== 200)) {
           alert('Elasticsearch query failed');
         } else {
-          $.each(indiciaData.esOutputPlugins, function eachPlugin(i, plugin) {
-            var fn = 'es' + plugin.charAt(0).toUpperCase() + plugin.slice(1);
-            $.each(source.outputs[plugin], function eachOutput() {
+          $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
+            var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
+            $.each(source.outputs[pluginClass], function eachOutput() {
               $(this)[fn]('populate', source.settings, response, data);
             });
           });
@@ -1779,6 +2089,7 @@ jQuery(document).ready(function docReady() {
     });
   };
 
+  $('.es-output-download').esDownload({});
   $('.es-output-dataGrid').esDataGrid({});
   $('.es-output-map').esMap({});
   $('.details-container').esDetailsPane({});
