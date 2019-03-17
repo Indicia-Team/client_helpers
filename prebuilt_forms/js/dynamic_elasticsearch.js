@@ -389,39 +389,41 @@
         });
       }
     });
-    $.each(source.outputs.dataGrid, function eachGrid() {
-      var filterRow = $(this).find('.es-filter-row');
-      // Remove search text format errors.
-      $(filterRow).find('.fa-exclamation-circle').remove();
-      // Build the filter required for values in each filter row input.
-      $.each($(filterRow).find('input'), function eachInput() {
-        var el = $(this).closest('.es-output');
-        var cell = $(this).closest('td');
-        var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
-        var fnQueryBuilder;
-        var query;
-        if ($(this).val().trim() !== '') {
-          if (typeof indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')] !== 'undefined') {
-            fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')];
-            query = fnQueryBuilder($(this).val().trim());
-            if (query === false) {
-              // Flag input as invalid.
-              $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
+    if (typeof source.outputs.dataGrid !== 'undefined') {
+      $.each(source.outputs.dataGrid, function eachGrid() {
+        var filterRow = $(this).find('.es-filter-row');
+        // Remove search text format errors.
+        $(filterRow).find('.fa-exclamation-circle').remove();
+        // Build the filter required for values in each filter row input.
+        $.each($(filterRow).find('input'), function eachInput() {
+          var el = $(this).closest('.es-output');
+          var cell = $(this).closest('td');
+          var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
+          var fnQueryBuilder;
+          var query;
+          if ($(this).val().trim() !== '') {
+            if (typeof indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')] !== 'undefined') {
+              fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')];
+              query = fnQueryBuilder($(this).val().trim());
+              if (query === false) {
+                // Flag input as invalid.
+                $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
+              } else {
+                // Build the query for the input.
+                data.bool_queries.push({
+                  bool_clause: 'must',
+                  query_type: 'query_string',
+                  value: query
+                });
+              }
             } else {
-              // Build the query for the input.
-              data.bool_queries.push({
-                bool_clause: 'must',
-                query_type: 'query_string',
-                value: query
-              });
+              // A normal mapped field with no special handling.
+              data.filters[col.field] = $(this).val().trim();
             }
-          } else {
-            // A normal mapped field with no special handling.
-            data.filters[col.field] = $(this).val().trim();
           }
-        }
+        });
       });
-    });
+    }
     if (source.settings.aggregation) {
       // Find the map bounds.
       $.each($('.es-output-map'), function eachMap() {
@@ -429,19 +431,21 @@
           bounds = $(this)[0].map.getBounds();
         }
       });
-      indiciaFns.setValIfEmpty(source.settings.aggregation, 'geo_bounding_box', {
-        ignore_unmapped: true,
-        'location.point': {
-          top_left: {
-            lat: bounds.getNorth(),
-            lon: bounds.getWest()
-          },
-          bottom_right: {
-            lat: bounds.getSouth(),
-            lon: bounds.getEast()
+      if ($('.es-output-map').length > 0) {
+        indiciaFns.setValIfEmpty(source.settings.aggregation, 'geo_bounding_box', {
+          ignore_unmapped: true,
+          'location.point': {
+            top_left: {
+              lat: bounds.getNorth(),
+              lon: bounds.getWest()
+            },
+            bottom_right: {
+              lat: bounds.getSouth(),
+              lon: bounds.getEast()
+            }
           }
-        }
-      });
+        });
+      }
       data.aggs = source.settings.aggregation;
     }
     if ($('.user-filter').length > 0) {
@@ -523,7 +527,7 @@
       // Post to the ES proxy. Pass scroll_id parameter to request the next
       // chunk of the dataset.
       $.ajax({
-        url: indiciaData.ajaxUrl + '/proxy/' + indiciaData.nid,
+        url: indiciaData.ajaxUrl + '/esproxy_download/' + indiciaData.nid,
         type: 'post',
         data: {
           warehouse_url: indiciaData.warehouseUrl,
@@ -559,6 +563,9 @@
       var sources = JSON.parse($(el).attr('data-es-source'));
       $.each(sources, function eachSource(sourceId) {
         var source = indiciaData.esSourceObjects[sourceId];
+        if (typeof source === 'undefined') {
+          indiciaFns.controlFail(el, 'Download source not found.');
+        }
         $(el).find('.progress-container').show();
         done = false;
         $(el).find('.circle').attr('style', 'stroke-dashoffset: 503px');
@@ -660,7 +667,7 @@
    * Variable to hold the marker used to highlight the currently selected row
    * in a linked dataGrid.
    */
-  var selectedRowMarker;
+  var selectedRowMarker = null;
 
   function addFeature(el, sourceId, location, metric) {
     var config = { type: 'marker', options: {} };
@@ -688,12 +695,27 @@
   }
 
   /**
-   * Select a grid row pans and optionally zooms the map.
+   * Thicken the borders of selected features when zoomed out to aid visibility.
+   */
+  function ensureFeatureClear(el, feature) {
+    var weight = Math.min(20, Math.max(1, 20 - (el.map.getZoom())));
+    var opacity = Math.min(1, Math.max(0.6, el.map.getZoom() / 18));
+    if (typeof feature.setStyle !== 'undefined') {
+      feature.setStyle({
+        weight: weight,
+        opacity: opacity
+      });
+    }
+  }
+
+  /**
+   * Select a grid row pans, optionally zooms and adds a marker.
    */
   function rowSelected(el, tr, zoom) {
     var doc;
     var wkt;
     var obj;
+    var centre;
     if (selectedRowMarker) {
       selectedRowMarker.removeFrom(el.map);
     }
@@ -703,24 +725,27 @@
       wkt = new Wkt.Wkt();
       wkt.read(doc.location.geom);
       obj = wkt.toObject({
-        color: '#AA0000',
-        weight: 3,
+        color: '#0000FF',
         opacity: 1.0,
-        fillColor: '#AA0000',
+        fillColor: '#0000FF',
         fillOpacity: 0.2
       });
+      ensureFeatureClear(el, obj);
       obj.addTo(el.map);
       selectedRowMarker = obj;
+      centre = typeof obj.getCenter === 'undefined' ? obj.getLatLng() : obj.getCenter();
       // Pan and zoom the map. Method differs for points vs polygons.
       if (!zoom) {
-        el.map.panTo(obj.getCenter());
+        el.map.panTo(centre);
       } else if (wkt.type === 'polygon') {
         el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
       } else {
-        el.map.setView(obj.getCenter(), 11);
+        el.map.setView(centre, 11);
       }
     }
   }
+
+
 
   /**
    * Declare public methods.
@@ -734,7 +759,6 @@
     init: function init(options) {
       var el = this;
       var source = JSON.parse($(el).attr('data-es-source'));
-      var base;
       var baseMaps;
       var overlays = {};
       el.outputLayers = {};
@@ -760,7 +784,7 @@
           attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
         })
       };
-      $.each(baseMaps, function() {
+      $.each(baseMaps, function eachBaseLayer() {
         this.addTo(el.map);
       });
       $.each(source, function eachSource(id, title) {
@@ -778,6 +802,11 @@
         group.addTo(el.map);
       });
       L.control.layers(baseMaps, overlays).addTo(el.map);
+      el.map.on('zoomend', function zoomEnd() {
+        if (selectedRowMarker !== null) {
+          ensureFeatureClear(el, selectedRowMarker);
+        }
+      });
     },
     /*
      * Populate the map with Elasticsearch response data.
@@ -2065,28 +2094,39 @@ jQuery(document).ready(function docReady() {
   EsDataSource.prototype.populate = function datasourcePopulate() {
     var source = this;
     var data = indiciaFns.getEsFormQueryData(source);
-    $.ajax({
-      url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
-      type: 'post',
-      data: data,
-      success: function success(response) {
-        if (response.error || (response.code && response.code !== 200)) {
-          alert('Elasticsearch query failed');
-        } else {
-          $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
-            var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
-            $.each(source.outputs[pluginClass], function eachOutput() {
-              $(this)[fn]('populate', source.settings, response, data);
-            });
-          });
-        }
-      },
-      error: function error(jqXHR, textStatus, errorThrown) {
-        console.log(errorThrown);
-        alert('Elasticsearch query failed');
-      },
-      dataType: 'json'
+    var needsPopulation = false;
+    // Check we have an output other than the download plugin, which only
+    // outputs when you click Download.
+    $.each(this.outputs, function(name) {
+      if (name !== 'download') {
+        needsPopulation = true;
+        return false;
+      }
     });
+    if (needsPopulation) {
+      $.ajax({
+        url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
+        type: 'post',
+        data: data,
+        success: function success(response) {
+          if (response.error || (response.code && response.code !== 200)) {
+            alert('Elasticsearch query failed');
+          } else {
+            $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
+              var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
+              $.each(source.outputs[pluginClass], function eachOutput() {
+                $(this)[fn]('populate', source.settings, response, data);
+              });
+            });
+          }
+        },
+        error: function error(jqXHR, textStatus, errorThrown) {
+          console.log(errorThrown);
+          alert('Elasticsearch query failed');
+        },
+        dataType: 'json'
+      });
+    }
   };
 
   $('.es-output-download').esDownload({});
@@ -2106,7 +2146,9 @@ jQuery(document).ready(function docReady() {
 
   $('.es-filter-param, .user-filter, .permissions-filter').change(function eachFilter() {
     // Force map to updatea viewport for new data.
-    $('.es-output-map')[0].settings.initialBoundsSet = false;
+    $.each($('.es-output-map'), function eachMap() {
+      this.settings.initialBoundsSet = false;
+    });
     // Reload all sources.
     $.each(indiciaData.esSourceObjects, function eachSource() {
       // Reset to first page.
