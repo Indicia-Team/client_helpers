@@ -436,7 +436,7 @@ HTML;
     $source = str_replace('"', '&quot;', json_encode($options['source']));
     return <<<HTML
 <div id="$options[id]" class="es-output es-output-download" data-es-source="$source" data-es-output-config="$encodedOptions">
-  $r;
+  $r
 </div>
 
 HTML;
@@ -673,10 +673,12 @@ HTML;
         'taxa_taxon_list_id',
         'higher_taxa_taxon_list_id',
       ], $bool);
+      self::applyUserFiltersTaxonRankSortOrder($readAuth, $definition, ['taxon_rank_sort_order'], $bool);
       self::applyUserFiltersIndexedLocationList($readAuth, $definition, [
         'indexed_location_list',
         'indexed_location_id',
       ], $bool);
+      self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
     }
   }
 
@@ -802,6 +804,48 @@ HTML;
   }
 
   /**
+   * Converts a filter definition taxon_rank_sort_order filter to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersTaxonRankSortOrder(array $readAuth, array $definition, array $params, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, $params);
+    // Filter op can be =, >= or <=.
+    if (!empty($filter)) {
+      if ($filter['op'] === '=') {
+        $bool['must'][] = [
+          'match' => [
+            'taxon.taxon_rank_sort_order' => [
+              'query' => $filter['value'],
+              'type' => 'phrase',
+            ],
+          ],
+        ];
+      }
+      else {
+        $gte = $filter['op'] === '>=' ? $filter['value'] : NULL;
+        $lte = $filter['op'] === '<=' ? $filter['value'] : NULL;
+        $bool['must'][] = [
+          'range' => [
+            'taxon.taxon_rank_sort_order' => [
+              'gte' => $gte,
+              'lte' => $lte,
+            ],
+          ],
+        ];
+      }
+    }
+  }
+
+  /**
    * Converts an Indicia filter definition indexed_location_list to an ES query.
    *
    * @param array $readAuth
@@ -817,7 +861,7 @@ HTML;
   private static function applyUserFiltersIndexedLocationList(array $readAuth, array $definition, array $params, array &$bool) {
     $filter = self::getDefinitionFilter($definition, $params);
     if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $boolClause = $filter['value'] === '0' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
         'nested' => [
           'path' => 'location.higher_geography',
@@ -826,6 +870,27 @@ HTML;
           ],
         ],
       ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition has_photos filter to an ES query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $params
+   *   List of parameter names that can be used for this type of filter
+   *   (allowing for deprecated names etc).
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersHasPhotos(array $readAuth, array $definition, array $params, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, $params);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = ['exists' => ['field' => 'occurrence.associated_media']];
     }
   }
 
@@ -864,6 +929,14 @@ HTML;
     echo json_encode($data);
   }
 
+  /**
+   * Ajax handler for the [recordDetails] comments tab.
+   *
+   * @param int $website_id
+   *   Warehouse website ID.
+   * @param string $password
+   *   Warehouse password.
+   */
   public static function ajax_comments($website_id, $password) {
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = array(
@@ -958,16 +1031,15 @@ HTML;
   public static function ajax_esproxy_download($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
     self::checkPermissionsFilter($params);
-    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search';
+    $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search?format=csv';
     $query = self::buildEsQueryFromRequest($website_id, $password);
     $initialScroll = !array_key_exists('scroll_id', $_POST);
     if ($initialScroll) {
-      $url .= '?scroll';
+      $url .= '&scroll';
     }
     else {
-      $url .= '?scroll_id=' . $_POST['scroll_id'];
+      $url .= '&scroll_id=' . $_POST['scroll_id'];
     }
-    watchdog('url', $url);
     self::curlPost($url, $query, $params);
   }
 
