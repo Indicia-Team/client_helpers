@@ -1706,7 +1706,7 @@ HTML;
    * @return string Either yes, no, maybe or unknown.
    * @throws \Exception
    */
-  public function ajax_do_they_see_notifications($website_id, $password) {
+  public static function ajax_do_they_see_notifications($website_id, $password) {
     iform_load_helpers(array('report_helper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $data = report_helper::get_report_data(array(
