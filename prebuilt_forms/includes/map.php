@@ -460,12 +460,18 @@ function iform_map_get_ol_options($args) {
  * @return array Options array for the georeferencer.
  */
 function iform_map_get_georef_options($args, $readAuth) {
-  return array(
-    'driver'=>$args['georefDriver'],
+  $args = array_merge([
+    'georefDriver' => '',
+    'georefPreferredArea' => '',
+    'georefCountry' => '',
+    'georefLang' => '',
+  ], $args);
+  return [
+    'driver' => $args['georefDriver'],
     'label' => lang::get('LANG_Georef_Label'),
     'georefPreferredArea' => $args['georefPreferredArea'],
     'georefCountry' => $args['georefCountry'],
     'georefLang' => $args['language'],
-    'readAuth' => $readAuth
-  );
+    'readAuth' => $readAuth,
+  ];
 }
