@@ -1227,9 +1227,11 @@ JS;
    *   * *public* - Optional. If using the indicia_locations driver, then set
    *     this to true to include public (non-website specific) locations in the
    *     search results. Defaults to false.
-   *   * *<autoCollapseResults></autoCollapseResults> - Optional. If a list of
-   *     possible matches are found, does selecting a match automatically fold
-   *     up the results? Defaults to false.
+   *   * *autoCollapseResults* - Optional. If a list of possible matches are
+   *     found, does selecting a match automatically fold up the results?
+   *     Defaults to false.
+   *   * *georefQueryMap* - if true, after a successful search behaves as if the map
+   *     query tool was clicked on the location on the map. Defaults to false.
    *
    * @link http://code.google.com/apis/ajaxsearch/terms.html Google AJAX Search
    * API Terms of Use.
@@ -1255,6 +1257,7 @@ JS;
       'public' => FALSE,
       'autoCollapseResults' => FALSE,
       'isFormControl' => TRUE,
+      'georefQueryMap' => FALSE,
     ), $options);
     if ($options['driver'] === 'geoplanet') {
       return 'The GeoPlanet place search service is no longer supported';

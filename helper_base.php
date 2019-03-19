@@ -1752,7 +1752,7 @@ JS;
    */
   public static function get_scripts($javascript, $late_javascript, $onload_javascript, $includeWrapper=false, $closure=false) {
     if (!empty($javascript) || !empty($late_javascript) || !empty($onload_javascript)) {
-      $proxyUrl = self::relative_client_helper_path() . 'proxy.php';
+      $proxyUrl = self::getRootFolder() . self::relative_client_helper_path() . 'proxy.php';
       $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS']==='off' ? 'http' : 'https';
       $script = $includeWrapper ? "<script type='text/javascript'>/* <![CDATA[ */\n" : "";
       $script .= $closure ? "(function ($) {\n" : "";

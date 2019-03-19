@@ -39,7 +39,8 @@ jQuery(document).ready(function docReady($) {
             $.each(indiciaFns.hookDynamicAttrsAfterLoad, function callHook() {
               this(div, type);
             });
-          }
+          },
+          'text'
         );
       });
     }
