@@ -369,6 +369,9 @@
       user_filters: []
     };
     var bounds;
+    var filterSourceGrid;
+    var filterSourceRow;
+    var thisDoc;
     if (source.settings.size) {
       data.size = source.settings.size;
     }
@@ -378,51 +381,101 @@
     if (source.settings.sort) {
       data.sort = source.settings.sort;
     }
-    $.each($('.es-filter-param'), function eachParam() {
-      if ($(this).val().trim() !== '') {
-        data.bool_queries.push({
-          bool_clause: $(this).attr('data-es-bool-clause'),
-          field: $(this).attr('data-es-field'),
-          query_type: $(this).attr('data-es-query-type'),
-          query: $(this).attr('data-es-query'),
-          value: $(this).val().trim()
-        });
-      }
-    });
-    if (typeof source.outputs.dataGrid !== 'undefined') {
-      $.each(source.outputs.dataGrid, function eachGrid() {
-        var filterRow = $(this).find('.es-filter-row');
-        // Remove search text format errors.
-        $(filterRow).find('.fa-exclamation-circle').remove();
-        // Build the filter required for values in each filter row input.
-        $.each($(filterRow).find('input'), function eachInput() {
-          var el = $(this).closest('.es-output');
-          var cell = $(this).closest('td');
-          var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
-          var fnQueryBuilder;
-          var query;
-          if ($(this).val().trim() !== '') {
-            if (typeof indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')] !== 'undefined') {
-              fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')];
-              query = fnQueryBuilder($(this).val().trim());
-              if (query === false) {
-                // Flag input as invalid.
-                $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
-              } else {
-                // Build the query for the input.
-                data.bool_queries.push({
-                  bool_clause: 'must',
-                  query_type: 'query_string',
-                  value: query
-                });
-              }
-            } else {
-              // A normal mapped field with no special handling.
-              data.filters[col.field] = $(this).val().trim();
-            }
-          }
+    if (source.settings.filterBoolClauses) {
+      // Using filter paremeter controls.
+      $.each(source.settings.filterBoolClauses, function eachBoolClause(type, filters) {
+        $.each(filters, function eachFilter() {
+          data.bool_queries.push({
+            bool_clause: type,
+            query_type: this.query_type,
+            field: this.field ? this.field : null,
+            query: this.query ? this.query : null,
+            value: this.value ? this.value : null
+          });
         });
       });
+    }
+    if (source.settings.filterSourceGrid && source.settings.filterField) {
+      // Using a grid row as a filter.
+      filterSourceGrid = $('#' + source.settings.filterSourceGrid);
+      if (filterSourceGrid.length === 0) {
+        alert('Invalid @filterSourceGrid setting for source. Grid with id="' +
+          source.settings.filterSourceGrid + '" does not exist.');
+      }
+      filterSourceRow = $(filterSourceGrid).find('tbody tr.selected');
+      if (filterSourceRow.length === 0) {
+        // Don't populate until a row selected.
+        data.bool_queries.push({
+          bool_clause: 'must',
+          query_type: 'match_none'
+        });
+      } else {
+        thisDoc = JSON.parse($(filterSourceRow).attr('data-doc-source'));
+        data.bool_queries.push({
+          bool_clause: 'must',
+          field: source.settings.filterField,
+          query_type: 'term',
+          value: indiciaFns.getValueForField(thisDoc, source.settings.filterField)
+        });
+      }
+    } else {
+      // Using filter paremeter controls.
+      $.each($('.es-filter-param'), function eachParam() {
+        if ($(this).val().trim() !== '') {
+          data.bool_queries.push({
+            bool_clause: $(this).attr('data-es-bool-clause'),
+            field: $(this).attr('data-es-field'),
+            query_type: $(this).attr('data-es-query-type'),
+            query: $(this).attr('data-es-query'),
+            value: $(this).val().trim()
+          });
+        }
+      });
+      if (typeof source.outputs.dataGrid !== 'undefined') {
+        $.each(source.outputs.dataGrid, function eachGrid() {
+          var filterRow = $(this).find('.es-filter-row');
+          // Remove search text format errors.
+          $(filterRow).find('.fa-exclamation-circle').remove();
+          // Build the filter required for values in each filter row input.
+          $.each($(filterRow).find('input'), function eachInput() {
+            var el = $(this).closest('.es-output');
+            var cell = $(this).closest('td');
+            var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
+            var fnQueryBuilder;
+            var query;
+            if ($(this).val().trim() !== '') {
+              if (typeof indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')] !== 'undefined') {
+                fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')];
+                query = fnQueryBuilder($(this).val().trim());
+                if (query === false) {
+                  // Flag input as invalid.
+                  $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
+                } else {
+                  // Build the query for the input.
+                  data.bool_queries.push({
+                    bool_clause: 'must',
+                    query_type: 'query_string',
+                    value: query
+                  });
+                }
+              } else {
+                // A normal mapped field with no special handling.
+                data.filters[col.field] = $(this).val().trim();
+              }
+            }
+          });
+        });
+      }
+      if ($('.user-filter').length > 0) {
+        $.each($('.user-filter'), function eachUserFilter() {
+          if ($(this).val() !== '') {
+            data.user_filters.push($(this).val());
+          }
+        });
+      }
+      if ($('.permissions-filter').length > 0) {
+        data.permissions_filter = $('.permissions-filter').val();
+      }
     }
     if (source.settings.aggregation) {
       // Find the map bounds.
@@ -448,18 +501,8 @@
       }
       data.aggs = source.settings.aggregation;
     }
-    if ($('.user-filter').length > 0) {
-      $.each($('.user-filter'), function eachUserFilter() {
-        if ($(this).val() !== '') {
-          data.user_filters.push($(this).val());
-        }
-      });
-    }
-    if ($('.permissions-filter').length > 0) {
-      data.permissions_filter = $('.permissions-filter').val();
-    }
     return data;
-  }
+  };
 }());
 
 /**
@@ -1953,6 +1996,17 @@
     $.fancybox(fs);
   };
 
+  function linkButtonClick(el, linkType) {
+    var selectedTr = $(dataGrid).find('tr.selected');
+    var doc;
+    var path = el.settings[linkType + 'Path']
+    var sep = path.indexOf('?') === -1 ? '?' : '&';
+    if (selectedTr.length > 0) {
+      doc = JSON.parse(selectedTr.attr('data-doc-source'));
+      window.location = path + sep + 'occurrence_id=' + doc.id;
+    }
+  }
+
   /**
    * Declare public methods.
    */
@@ -1997,14 +2051,11 @@
         var query = $(e.currentTarget).attr('data-query');
         commentPopup({ query: query });
       });
-      $(el).find('button.edit').click(function buttonClick() {
-        var selectedTr = $(dataGrid).find('tr.selected');
-        var doc;
-        var sep = indiciaData.editPath.indexOf('?') === -1 ? '?' : '&';
-        if (selectedTr.length > 0) {
-          doc = JSON.parse(selectedTr.attr('data-doc-source'));
-          window.location = indiciaData.editPath + sep + 'occurrence_id=' + doc.id;
-        }
+      $(el).find('button.edit').click(function editClick() {
+        linkButtonClick(el, 'edit');
+      });
+      $(el).find('button.view').click(function viewClick() {
+        linkButtonClick(el, 'view');
       });
       indiciaFns.on('click', '.comment-popup button', {}, function onClickSave(e) {
         var popup = $(e.currentTarget).closest('.comment-popup');
@@ -2086,46 +2137,57 @@ jQuery(document).ready(function docReady() {
         });
       }
     });
+    if (ds.settings.filterSourceGrid && ds.settings.filterField) {
+      $('#' + ds.settings.filterSourceGrid).esDataGrid('on', 'rowSelect', function onRowSelect(tr) {
+        if (tr) {
+          ds.populate();
+        }
+      });
+    }
   }
+
+  EsDataSource.prototype.lastRequest = null;
 
   /**
    * Request a datasource to repopulate from current parameters.
    */
   EsDataSource.prototype.populate = function datasourcePopulate() {
     var source = this;
-    var data = indiciaFns.getEsFormQueryData(source);
     var needsPopulation = false;
+    var request;
     // Check we have an output other than the download plugin, which only
     // outputs when you click Download.
-    $.each(this.outputs, function(name) {
-      if (name !== 'download') {
-        needsPopulation = true;
-        return false;
-      }
+    $.each(this.outputs, function eachOutput(name) {
+      needsPopulation = needsPopulation || name !== 'download';
     });
     if (needsPopulation) {
-      $.ajax({
-        url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
-        type: 'post',
-        data: data,
-        success: function success(response) {
-          if (response.error || (response.code && response.code !== 200)) {
-            alert('Elasticsearch query failed');
-          } else {
-            $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
-              var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
-              $.each(source.outputs[pluginClass], function eachOutput() {
-                $(this)[fn]('populate', source.settings, response, data);
+      request = indiciaFns.getEsFormQueryData(source);
+      // Don't repopulate if exactly the same request as already loaded.
+      if (JSON.stringify(request) !== JSON.stringify(this.lastRequest)) {
+        this.lastRequest = request;
+        $.ajax({
+          url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
+          type: 'post',
+          data: request,
+          success: function success(response) {
+            if (response.error || (response.code && response.code !== 200)) {
+              alert('Elasticsearch query failed');
+            } else {
+              $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
+                var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
+                $.each(source.outputs[pluginClass], function eachOutput() {
+                  $(this)[fn]('populate', source.settings, response, request);
+                });
               });
-            });
-          }
-        },
-        error: function error(jqXHR, textStatus, errorThrown) {
-          console.log(errorThrown);
-          alert('Elasticsearch query failed');
-        },
-        dataType: 'json'
-      });
+            }
+          },
+          error: function error(jqXHR, textStatus, errorThrown) {
+            console.log(errorThrown);
+            alert('Elasticsearch query failed');
+          },
+          dataType: 'json'
+        });
+      }
     }
   };
 

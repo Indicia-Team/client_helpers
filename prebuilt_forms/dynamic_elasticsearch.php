@@ -136,14 +136,6 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
         'default' => '',
       ],
       [
-        'name' => 'edit_path',
-        'caption' => 'Edit path',
-        'description' => 'Path to a generic editing page.',
-        'type' => 'text_input',
-        'required' => FALSE,
-        'group' => 'Path settings',
-      ],
-      [
         'name' => 'my_records_permission',
         'caption' => 'My records download permission',
         'description' => "Permission required to access download of user's records.",
@@ -185,7 +177,6 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
     $verifyUrl = iform_ajaxproxy_url($nid, 'list_verify');
     $commentUrl = iform_ajaxproxy_url($nid, 'occ-comment');
     $userId = hostsite_get_user_field('indicia_user_id');
-    $editPath = empty($args['edit_path']) ? '' : helper_base::getRootFolder(TRUE) . $args['edit_path'];
     $rootFolder = helper_base::getRootFolder(TRUE);
     data_entry_helper::$javascript .= <<<JS
 indiciaData.ajaxUrl = '$ajaxUrl';
@@ -194,7 +185,6 @@ indiciaData.esMappings = $mappings;
 indiciaData.userId = $userId;
 indiciaData.ajaxFormPostSingleVerify = "$verifyUrl&user_id=$userId&sharing=verification";
 indiciaData.ajaxFormPostComment = "$commentUrl&user_id=$userId&sharing=verification";
-indiciaData.editPath = "$editPath";
 indiciaData.rootFolder = "$rootFolder";
 
 JS;
@@ -262,7 +252,7 @@ JS;
   private static function checkOptions($controlName, &$options, $requiredOptions, $jsonOptions) {
     self::$controlIndex++;
     $options = array_merge([
-      'id' => "es-output-$controlName" . self::$controlIndex,
+      'id' => "es-$controlName-" . self::$controlIndex,
     ], $options);
     foreach ($requiredOptions as $option) {
       if (!isset($options[$option]) || $options[$option] === '') {
@@ -283,14 +273,7 @@ JS;
   }
 
   protected static function get_control_source($auth, $args, $tabalias, $options) {
-    if (empty($options['id'])) {
-      throw new exception('A [source] requires an @id option.');
-    }
-    if (!empty($options['aggregation'])) {
-      if (!is_object($options['aggregation']) && !is_array($options['aggregation'])) {
-        throw new exception('@aggregation option for [source] is not a valid JSON object.');
-      }
-    }
+    self::checkOptions('source', $options, ['id'], ['aggregation', 'filterBoolClauses']);
     $dataOptions = self::getOptionsForJs($options, [
       'id',
       'paged',
@@ -298,6 +281,9 @@ JS;
       'size',
       'aggregation',
       'initialMapBounds',
+      'filterBoolClauses',
+      'filterSourceGrid',
+      'filterField',
     ]);
     data_entry_helper::$javascript .= <<<JS
 indiciaData.esSources.push($dataOptions);
@@ -502,20 +488,39 @@ HTML;
 HTML;
   }
 
+  /**
+   * A panel containin buttons for record verification actions.
+   *
+   * @link
+   *
+   * @return string
+   *   Panel HTML;
+   */
   protected static function get_control_verificationButtons($auth, $args, $tabalias, $options) {
-    self::checkOptions('recordDetails', $options, ['showSelectedRow'], []);
+    self::checkOptions('verificationButtons', $options, ['showSelectedRow'], []);
+    if (!empty($options['editPath'])) {
+      $options['editPath'] = helper_base::getRootFolder(TRUE) . $options['editPath'];
+    }
+    if (!empty($options['viewPath'])) {
+      $options['viewPath'] = helper_base::getRootFolder(TRUE) . $options['viewPath'];
+    }
     $dataOptions = self::getOptionsForJs($options, [
       'showSelectedRow',
+      'editPath',
+      'viewPath',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     $optionalButtonArray = [];
-    if (!empty($args['edit_path'])) {
+    if (!empty($options['editPath'])) {
       $optionalButtonArray[] = '<button class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></button>';
+    }
+    if (!empty($options['viewPath'])) {
+      $optionalButtonArray[] = '<button class="view single-only" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></button>';
     }
     $optionalButtons = implode("\n  ", $optionalButtonArray);
     helper_base::add_resource('fancybox');
     return <<<HTML
-<div class="verification-buttons-wrap" style="display: none;">
+<div id="$options[id]" class="verification-buttons-wrap" style="display: none;">
   <div class="verification-buttons" data-es-output-config="$encodedOptions">
   Actions:
     <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
@@ -960,6 +965,7 @@ HTML;
       'must_not' => [],
       'filter' => [],
     ];
+    $basicQueryTypes = ['match_all', 'match_none'];
     $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
     if (isset($query['filters'])) {
@@ -974,6 +980,9 @@ HTML;
         $bool[$qryConfig['bool_clause']][] = json_decode(
           str_replace('#value#', $qryConfig['value'], $qryConfig['query']), TRUE
         );
+      }
+      elseif (in_array($qryConfig['query_type'], $basicQueryTypes)) {
+        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => new stdClass()];
       }
       elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
