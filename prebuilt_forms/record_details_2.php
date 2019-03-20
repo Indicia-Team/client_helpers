@@ -611,7 +611,7 @@ HTML;
    * @return string
    *   The output HTML string.
    */
-  protected static function get_control_comments($auth, $args) {
+  protected static function get_control_comments($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('data_entry_helper'));
     $r = '<div>';
     $params = [
@@ -645,6 +645,20 @@ HTML;
         $r .= '</div>';
         $c = str_replace("\n", '<br/>', $comment['comment']);
         $r .= "<div>$c</div>";
+        if (!empty($options['showCorrespondence']) && !empty($comment['correspondence_data'])) {
+          $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
+          $correspondenceData = json_decode($data, TRUE);
+          foreach ($correspondenceData as $type => $items) {
+            $r .= '<div class="correspondance">' . ucfirst($type) . '<br/>';
+            foreach ($items as $item) {
+              foreach ($item as $field => $value) {
+                $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
+                $r .= "<div>$field $value</div>";
+              }
+              $r .= '</div></div>';
+            }
+          }
+        }
         $r .= '</div>';
       }
     }
