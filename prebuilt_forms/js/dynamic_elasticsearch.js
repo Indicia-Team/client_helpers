@@ -498,7 +498,7 @@
           });
           indiciaFns.findAndSetValue(source.settings.aggregation, 'geohash_grid', {
             field: 'location.point',
-            precision: Math.min(Math.max(mapToFilterTo[0].map.getZoom() - 3, 3), 8)
+            precision: Math.min(Math.max(mapToFilterTo[0].map.getZoom() - 3, 4), 10)
           });
         }
       }
