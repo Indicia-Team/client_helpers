@@ -284,6 +284,7 @@ JS;
       'filterBoolClauses',
       'filterSourceGrid',
       'filterField',
+      'filterBoundsUsingMap',
     ]);
     data_entry_helper::$javascript .= <<<JS
 indiciaData.esSources.push($dataOptions);
@@ -473,7 +474,6 @@ HTML;
     $dataOptions = self::getOptionsForJs($options, [
       'styles',
       'showSelectedRow',
-      'applyBoundsTo',
       'initialLat',
       'initialLng',
       'initialZoom',

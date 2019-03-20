@@ -162,7 +162,7 @@
    * @return mixed
    *   Property value.
    */
-  indiciaFns.findVal = function findVal(object, key) {
+  indiciaFns.findValue = function findValue(object, key) {
     var value;
     Object.keys(object).some(function eachKey(k) {
       if (k === key) {
@@ -170,7 +170,23 @@
         return true;
       }
       if (object[k] && typeof object[k] === 'object') {
-        value = indiciaFns.findVal(object[k], key);
+        value = indiciaFns.findValue(object[k], key);
+        return value !== undefined;
+      }
+      return false;
+    });
+    return value;
+  };
+
+  indiciaFns.findAndSetValue = function findAndSetValue(object, key, updateValue) {
+    var value;
+    Object.keys(object).some(function eachKey(k) {
+      if (k === key) {
+        object[k] = updateValue;
+        return true;
+      }
+      if (object[k] && typeof object[k] === 'object') {
+        value = indiciaFns.findAndSetValue(object[k], key, updateValue);
         return value !== undefined;
       }
       return false;
@@ -336,25 +352,6 @@
     return valuePath;
   };
 
-  indiciaFns.setValIfEmpty = function setValIfEmpty(object, key, updateValue) {
-    var value;
-    Object.keys(object).some(function eachKey(k) {
-      if (k === key) {
-        value = object[k];
-        if (value.length === 0) {
-          object[k] = updateValue;
-        }
-        return true;
-      }
-      if (object[k] && typeof object[k] === 'object') {
-        value = indiciaFns.setValIfEmpty(object[k], key, updateValue);
-        return value !== undefined;
-      }
-      return false;
-    });
-    return value;
-  };
-
   /**
    * Build query data to send to ES proxy.
    *
@@ -368,6 +365,7 @@
       bool_queries: [],
       user_filters: []
     };
+    var mapToFilterTo;
     var bounds;
     var filterSourceGrid;
     var filterSourceRow;
@@ -478,26 +476,31 @@
       }
     }
     if (source.settings.aggregation) {
-      // Find the map bounds.
-      $.each($('.es-output-map'), function eachMap() {
-        if ($(this)[0].settings.applyBoundsTo === source.settings.id) {
-          bounds = $(this)[0].map.getBounds();
-        }
-      });
-      if ($('.es-output-map').length > 0) {
-        indiciaFns.setValIfEmpty(source.settings.aggregation, 'geo_bounding_box', {
-          ignore_unmapped: true,
-          'location.point': {
-            top_left: {
-              lat: bounds.getNorth(),
-              lon: bounds.getWest()
-            },
-            bottom_right: {
-              lat: bounds.getSouth(),
-              lon: bounds.getEast()
+      // Find the map bounds if limited to the viewport of a map.
+      if (source.settings.filterBoundsUsingMap) {
+        mapToFilterTo = $('#' + source.settings.filterBoundsUsingMap);
+        if (mapToFilterTo.length === 0 || !mapToFilterTo[0].map) {
+          alert('Data source incorrectly configured. @filterBoundsUsingMap does not point to a valid map.');
+        } else {
+          bounds = mapToFilterTo[0].map.getBounds();
+          indiciaFns.findAndSetValue(source.settings.aggregation, 'geo_bounding_box', {
+            ignore_unmapped: true,
+            'location.point': {
+              top_left: {
+                lat: bounds.getNorth(),
+                lon: bounds.getWest()
+              },
+              bottom_right: {
+                lat: bounds.getSouth(),
+                lon: bounds.getEast()
+              }
             }
-          }
-        });
+          });
+          indiciaFns.findAndSetValue(source.settings.aggregation, 'geohash_grid', {
+            field: 'location.point',
+            precision: Math.min(Math.max(mapToFilterTo[0].map.getZoom() - 3, 3), 8)
+          });
+        }
       }
       data.aggs = source.settings.aggregation;
     }
@@ -706,6 +709,10 @@
     initialZoom: 5
   };
 
+  var callbacks = {
+    moveend: []
+  };
+
   /**
    * Variable to hold the marker used to highlight the currently selected row
    * in a linked dataGrid.
@@ -850,6 +857,11 @@
           ensureFeatureClear(el, selectedRowMarker);
         }
       });
+      el.map.on('moveend', function moveEnd() {
+        $.each(callbacks.moveend, function eachCallback() {
+          this(el);
+        });
+      });
     },
     /*
      * Populate the map with Elasticsearch response data.
@@ -877,15 +889,15 @@
       });
       // Are there aggregations to map?
       if (typeof response.aggregations !== 'undefined') {
-        buckets = indiciaFns.findVal(response.aggregations, 'buckets');
+        buckets = indiciaFns.findValue(response.aggregations, 'buckets');
         if (typeof buckets !== 'undefined') {
           $.each(buckets, function eachBucket() {
-            var count = indiciaFns.findVal(this, 'count');
+            var count = indiciaFns.findValue(this, 'count');
             maxMetric = Math.max(Math.sqrt(count), maxMetric);
           });
           $.each(buckets, function eachBucket() {
-            var location = indiciaFns.findVal(this, 'location');
-            var count = indiciaFns.findVal(this, 'count');
+            var location = indiciaFns.findValue(this, 'location');
+            var count = indiciaFns.findValue(this, 'count');
             var metric = Math.round((Math.sqrt(count) / maxMetric) * 20000);
             if (typeof location !== 'undefined') {
               addFeature(el, sourceSettings.id, location, metric);
@@ -916,6 +928,16 @@
           rowSelected(el, tr, true);
         });
       }
+    },
+
+    /**
+     * Hook up event handlers.
+     */
+    on: function on(event, handler) {
+      if (typeof callbacks[event] === 'undefined') {
+        indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
+      }
+      callbacks[event].push(handler);
     }
   };
 
@@ -1219,7 +1241,7 @@
       $(el).find('tbody tr').remove();
       $(el).find('.multiselect-all').prop('checked', false);
       if ($(el)[0].settings.aggregation === true && typeof response.aggregations !== 'undefined') {
-        dataList = indiciaFns.findVal(response.aggregations, 'buckets');
+        dataList = indiciaFns.findValue(response.aggregations, 'buckets');
       } else {
         dataList = response.hits.hits;
       }
@@ -2118,6 +2140,12 @@ jQuery(document).ready(function docReady() {
   'use strict';
   var $ = jQuery;
 
+  /**
+   * Constructor for an EsDataSource.
+   *
+   * @param object settings
+   *   Datasource settings.
+   */
   function EsDataSource(settings) {
     var ds = this;
     ds.settings = settings;
@@ -2144,9 +2172,15 @@ jQuery(document).ready(function docReady() {
         }
       });
     }
+    // If limited to a map's bounds, redraw when the map is zoomed or panned.
+    if (ds.settings.filterBoundsUsingMap) {
+      $('#' + ds.settings.filterBoundsUsingMap).esMap('on', 'moveend', function onMoveEnd() {
+        ds.populate();
+      });
+    }
   }
 
-  EsDataSource.prototype.lastRequest = null;
+  EsDataSource.prototype.lastRequestStr = '';
 
   /**
    * Request a datasource to repopulate from current parameters.
@@ -2163,8 +2197,8 @@ jQuery(document).ready(function docReady() {
     if (needsPopulation) {
       request = indiciaFns.getEsFormQueryData(source);
       // Don't repopulate if exactly the same request as already loaded.
-      if (JSON.stringify(request) !== JSON.stringify(this.lastRequest)) {
-        this.lastRequest = request;
+      if (JSON.stringify(request) !== this.lastRequestStr) {
+        this.lastRequestStr = JSON.stringify(request);
         $.ajax({
           url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
           type: 'post',
