@@ -345,16 +345,23 @@ JS;
         $optionArr[$filter['id']] = $filter['title'];
       }
     }
-    $controlOptions = [
-      'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
-      'fieldname' => $options['id'],
-      'lookupValues' => $optionArr,
-      'class' => 'user-filter',
-    ];
-    if (!$options['definesPermissions']) {
-      $controlOptions['blankText'] = '- ' . lang::get('Please select') . ' - ';
+    if (count($optionArr) === 0) {
+      // No filters available. Until we support saving, doesn't make sense to
+      // show the control.
+      return '';
     }
-    return data_entry_helper::select($controlOptions);
+    else {
+      $controlOptions = [
+        'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
+        'fieldname' => $options['id'],
+        'lookupValues' => $optionArr,
+        'class' => 'user-filter',
+      ];
+      if (!$options['definesPermissions']) {
+        $controlOptions['blankText'] = '- ' . lang::get('Please select') . ' - ';
+      }
+      return data_entry_helper::select($controlOptions);
+    }
   }
 
   /**
@@ -704,6 +711,9 @@ HTML;
           'id' => $userFilter,
         ] + $readAuth,
       ]);
+      if (count($filterData) === 0) {
+        throw new exception("Filter with ID $userFilter could not be loaded.");
+      }
       $definition = json_decode($filterData[0]['definition'], TRUE);
       self::applyUserFiltersWebsiteList($readAuth, $definition, ['website_list', 'website_id'], $bool);
       self::applyUserFiltersSurveyList($readAuth, $definition, ['survey_list', 'survey_id'], $bool);
