@@ -23,6 +23,8 @@ require_once 'includes/dynamic.php';
 
 /**
  * A prebuilt form for dynamically construction Elasticsearch content.
+ *
+ * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html
  */
 class iform_dynamic_elasticsearch extends iform_dynamic {
 
@@ -31,15 +33,34 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
   private static $controlIndex = 0;
 
   /**
+   * Track control IDs so warning can be given if duplicate IDs are used.
+   *
+   * @var array
+   */
+  private static $controlIds = [];
+
+  /**
    * Return the form metadata.
    */
   public static function get_dynamic_elasticsearch_definition() {
+    $description = <<<HTML
+Provides a dynamically output page which links to an index of occurrence data in an <a href="https://www.elastic.co">
+Elasticseach</a> cluster.
+This page can generate controls for the following:
+<ul>
+  <li>filtering</li>
+  <li>downloading</li>
+  <li>tabulating</li>
+  <li>charting</li>
+  <li>mapping</li>
+  <li>verification</li>
+</ul>
+HTML;
     return array(
       'title' => 'Elasticsearch outputs (customisable)',
       'category' => 'Experimental',
-      'description' => 'Provides a dynamically output page which can generate controls for filtering, downloading, ' .
-        'tabulating, charting and mapping Elasticsearch content.',
-      'recommended' => TRUE,
+      'description' => $description,
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html',
     );
   }
 
@@ -254,6 +275,11 @@ JS;
     $options = array_merge([
       'id' => "es-$controlName-" . self::$controlIndex,
     ], $options);
+    // Fail if duplicate ID on page.
+    if (in_array($options['id'], self::$controlIds)) {
+      throw new Exception("Control ID $options[id] is duplicated in the page configuration");
+    }
+    self::$controlIds[] = $options['id'];
     foreach ($requiredOptions as $option) {
       if (!isset($options[$option]) || $options[$option] === '') {
         throw new Exception("Control [$controlName] requires a parameter called @$option");
@@ -261,7 +287,7 @@ JS;
     }
     foreach ($jsonOptions as $option) {
       if (!empty($options[$option]) && !is_object($options[$option]) && !is_array($options[$option])) {
-        throw new exception("@$option option for [$controlName] is not a valid JSON object.");
+        throw new Exception("@$option option for [$controlName] is not a valid JSON object.");
       }
     }
     // Source option can be either a single named source, or an array of key
@@ -272,6 +298,14 @@ JS;
     }
   }
 
+  /**
+   * Initialises the JavaScript required for an Elasticsearch data source.
+   *
+   * @link @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#source
+   *
+   * @return string
+   *   Empty string as no HTML required.
+   */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
     self::checkOptions('source', $options, ['id'], ['aggregation', 'filterBoolClauses']);
     $dataOptions = self::getOptionsForJs($options, [
@@ -290,6 +324,7 @@ JS;
 indiciaData.esSources.push($dataOptions);
 
 JS;
+    // A source is entirely JS driven - no HTML.
     return '';
   }
 
@@ -310,16 +345,23 @@ JS;
         $optionArr[$filter['id']] = $filter['title'];
       }
     }
-    $controlOptions = [
-      'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
-      'fieldname' => $options['id'],
-      'lookupValues' => $optionArr,
-      'class' => 'user-filter',
-    ];
-    if (!$options['definesPermissions']) {
-      $controlOptions['blankText'] = '- ' . lang::get('Please select') . ' - ';
+    if (count($optionArr) === 0) {
+      // No filters available. Until we support saving, doesn't make sense to
+      // show the control.
+      return '';
     }
-    return data_entry_helper::select($controlOptions);
+    else {
+      $controlOptions = [
+        'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
+        'fieldname' => $options['id'],
+        'lookupValues' => $optionArr,
+        'class' => 'user-filter',
+      ];
+      if (!$options['definesPermissions']) {
+        $controlOptions['blankText'] = '- ' . lang::get('Please select') . ' - ';
+      }
+      return data_entry_helper::select($controlOptions);
+    }
   }
 
   /**
@@ -338,7 +380,8 @@ JS;
     if (!empty($args['all_records_permission']) && hostsite_user_has_permission($args['all_records_permission'])) {
       $allowedTypes['all'] = lang::get('All records');
     }
-    // Add collated location (e.g. LRC boundary) records download permission if allowed.
+    // Add collated location (e.g. LRC boundary) records download permission if
+    // allowed.
     if (!empty($args['location_collation_records_permission'])
         && hostsite_user_has_permission($args['location_collation_records_permission'])) {
       $locationId = hostsite_get_user_field('location_collation');
@@ -552,6 +595,8 @@ HTML;
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
     self::checkOptions('recordDetails', $options, ['showSelectedRow'], []);
     if (!empty($options['explorePath'])) {
+      // Build  URL which overrides the default filters applied to many Explore
+      // pages in order to be able to apply out own filter.
       $options['exploreUrl'] = hostsite_get_url(
         $options['explorePath'],
         [
@@ -611,7 +656,7 @@ HTML;
     return [];
   }
 
-  private static function applyPermissionsFilter(array $readAuth, array $query, array &$bool) {
+  private static function applyPermissionsFilter(array &$bool) {
     if (!empty($_POST['permissions_filter'])) {
       switch ($_POST['permissions_filter']) {
         case 'my':
@@ -634,7 +679,6 @@ HTML;
         default:
           // All records, no filter.
       }
-
     }
   }
 
@@ -667,6 +711,9 @@ HTML;
           'id' => $userFilter,
         ] + $readAuth,
       ]);
+      if (count($filterData) === 0) {
+        throw new exception("Filter with ID $userFilter could not be loaded.");
+      }
       $definition = json_decode($filterData[0]['definition'], TRUE);
       self::applyUserFiltersWebsiteList($readAuth, $definition, ['website_list', 'website_id'], $bool);
       self::applyUserFiltersSurveyList($readAuth, $definition, ['survey_list', 'survey_id'], $bool);
@@ -996,7 +1043,7 @@ HTML;
     }
     unset($query['bool_queries']);
     $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-    self::applyPermissionsFilter($readAuth, $query, $bool);
+    self::applyPermissionsFilter($bool);
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
     }
@@ -1023,7 +1070,10 @@ HTML;
    * A search proxy that passes through the data as is.
    *
    * Should only be used with aggregations where the size parameter is zero to
-   * avoid permissions issues.
+   * avoid permissions issues, as it does not apply the basic permissions
+   * filter. For example a report page that shows "my records" may also include
+   * aggregated data across the entire dataset which is not limited by the page
+   * permissions.
    */
   public static function ajax_esproxy_rawsearch($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
