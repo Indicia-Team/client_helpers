@@ -263,19 +263,32 @@ Record ID',
       // If groups support is enabled, then do a count report to check access.
       $argArray = [];
       group_apply_report_limits($argArray, $readAuth, $nid, $isMember);
-      $accessCheck = report_helper::get_report_data(array(
+      $accessCheck = report_helper::get_report_data([
         'readAuth' => $readAuth,
         'dataSource' => 'library/occurrences/filterable_explore_list',
-        'extraParams' => get_options_array_with_user_data($argArray['param_presets']) + array(
+        'extraParams' => get_options_array_with_user_data($argArray['param_presets']) + [
           'occurrence_id' => $_GET['occurrence_id'],
           'wantCount' => '1',
           'wantRecords' => 0,
           'confidential' => $args['allow_confidential'] ? 'all' : 'f',
           'release_status' => $args['allow_unreleased'] ? 'A' : 'R',
-        ),
-      ));
+        ],
+      ]);
       if ($accessCheck['count'] === 0) {
-        return 'You do not have permission to view this record.';
+        // If the record has been redetermined out of this group, double check
+        // as it can be shown still if public.
+        $accessCheck = report_helper::get_report_data([
+          'readAuth' => $readAuth,
+          'dataSource' => 'library/occurrences/filterable_explore_list',
+          'extraParams' => $readAuth + [
+            'occurrence_id' => $_GET['occurrence_id'],
+            'wantCount' => '1',
+            'wantRecords' => 0,
+          ],
+        ]);
+        if ($accessCheck['count'] === 0) {
+          return 'You do not have permission to view this record.';
+        }
       }
     }
     data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
