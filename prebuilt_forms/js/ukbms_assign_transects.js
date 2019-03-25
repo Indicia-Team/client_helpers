@@ -50,6 +50,7 @@ indiciaData.holidayLocationLayer = false;
         var hasAction = false,
             parser = new OpenLayers.Format.WKT();
         $.each(data, function(_idx, site) {
+                data[_idx]['featureDistance'] = 0;
                 if (site['attr_location_' + indiciaData.holiday_attr_id] === null || !site['attr_location_' + indiciaData.holiday_attr_id]) {
                   return true;
                 }
