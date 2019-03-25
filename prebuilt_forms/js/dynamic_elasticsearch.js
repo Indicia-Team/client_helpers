@@ -466,7 +466,7 @@
       }
       if ($('.user-filter').length > 0) {
         $.each($('.user-filter'), function eachUserFilter() {
-          if ($(this).val() !== '') {
+          if ($(this).val()) {
             data.user_filters.push($(this).val());
           }
         });
