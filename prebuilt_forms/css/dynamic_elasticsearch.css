@@ -115,16 +115,18 @@ table.es-data-grid tbody tr img {
 .verification-buttons * {
   display: inline-block;
   vertical-align: middle; }
-.verification-buttons button {
+.verification-buttons button, .verification-buttons a {
   font-size: 120%;
   border: none;
+  border-radius: 4px;
   background: none;
   box-shadow: none;
   color: black;
   text-shadow: none;
   min-height: 25px;
-  margin: 4px; }
-  .verification-buttons button:hover {
+  margin: 4px;
+  padding: 6px; }
+  .verification-buttons button:hover, .verification-buttons a:hover {
     background: silver; }
 .verification-buttons .sep {
   height: 20px;

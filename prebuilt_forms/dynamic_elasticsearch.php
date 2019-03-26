@@ -199,14 +199,16 @@ HTML;
     $commentUrl = iform_ajaxproxy_url($nid, 'occ-comment');
     $userId = hostsite_get_user_field('indicia_user_id');
     $rootFolder = helper_base::getRootFolder(TRUE);
+    $dateFormat = helper_base::$date_format;
     data_entry_helper::$javascript .= <<<JS
 indiciaData.ajaxUrl = '$ajaxUrl';
 indiciaData.esSources = [];
 indiciaData.esMappings = $mappings;
 indiciaData.userId = $userId;
-indiciaData.ajaxFormPostSingleVerify = "$verifyUrl&user_id=$userId&sharing=verification";
-indiciaData.ajaxFormPostComment = "$commentUrl&user_id=$userId&sharing=verification";
-indiciaData.rootFolder = "$rootFolder";
+indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
+indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
+indiciaData.rootFolder = '$rootFolder';
+indiciaData.dateFormat = '$dateFormat';
 
 JS;
     helper_base::add_resource('font_awesome');
@@ -553,14 +555,14 @@ HTML;
       'viewPath',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
-    $optionalButtonArray = [];
+    $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalButtonArray[] = '<button class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></button>';
+      $optionalLinkArray[] = '<a class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></a>';
     }
     if (!empty($options['viewPath'])) {
-      $optionalButtonArray[] = '<button class="view single-only" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></button>';
+      $optionalLinkArray[] = '<a class="view single-only" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
     }
-    $optionalButtons = implode("\n  ", $optionalButtonArray);
+    $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
     return <<<HTML
 <div id="$options[id]" class="verification-buttons-wrap" style="display: none;">
@@ -576,7 +578,7 @@ HTML;
     <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
     <span class="sep"></span>
     <button class="query" data-query="Q" title="Query this record"><span class="fas fa-question-circle query-Q"></span></button>
-    $optionalButtons
+    $optionalLinks
   </div>
 </div>
 HTML;
