@@ -107,6 +107,33 @@
   };
 
   /**
+   * Convert an ES (ISO) date to local display format.
+   *
+   * @param string dateString
+   *   Date as returned from ES date field.
+   *
+   * @return string
+   *   Date formatted.
+   */
+  indiciaFns.formatDate = function formatDate(dateString) {
+    var date;
+    var month;
+    var day;
+    if (dateString.trim() === '') {
+      return '';
+    }
+    date = new Date(dateString);
+    month = (1 + date.getMonth()).toString();
+    month = month.length > 1 ? month : '0' + month;
+    day = date.getDate().toString();
+    day = day.length > 1 ? day : '0' + day;
+    return indiciaData.dateFormat
+      .replace('d', day)
+      .replace('m', month)
+      .replace('Y', date.getFullYear());
+  };
+
+  /**
    * Utility function to retrieve status icon HTML from a status code.
    *
    * @param object flags
@@ -195,11 +222,15 @@
   };
 
   /**
-   * A list of functions which provide special handling for special fields that
-   * can be extracted from an Elasticsearch doc.
+   * A list of functions which provide HTML generation for special fields.
+   *
+   * These are field values in HTML that can be extracted from an Elasticsearch
+   * doc which are not simple values.
    */
   indiciaFns.fieldConvertors = {
-    // Record status and other flag icons.
+    /**
+     * Record status and other flag icons.
+     */
     status_icons: function statusIcons(doc) {
       return indiciaFns.getEsStatusIcons({
         status: doc.identification.verification_status,
@@ -209,7 +240,10 @@
         confidential: doc.metadata.confidential
       });
     },
-    // Data cleaner automatic rule check result icons.
+
+    /**
+     * Data cleaner automatic rule check result icons.
+     */
     data_cleaner_icons: function dataCleanerIcons(doc) {
       var autoChecks = doc.identification.auto_checks;
       var icons = [];
@@ -234,31 +268,43 @@
       }
       return icons.join('');
     },
-    // Output a higher geography value. The column should be configured with
-    // two parameters, the first is the type (e.g. Vice county) and the second
-    // the field to return (e.g. name, code). For example:
-    //  {"caption":"VC code","field":"#higher_geography:Vice County:code#"}
+
+    /**
+     * Output the event date or date range.
+     */
+    event_date: function eventDate(doc) {
+      if (doc.event.date_start !== doc.event.date_end) {
+        return indiciaFns.formatDate(doc.event.date_start) + ' - ' + indiciaFns.formatDate(doc.event.date_end);
+      }
+      return indiciaFns.formatDate(doc.event.date_start);
+    },
+
+    /**
+     * Output a higher geography value.
+     *
+     * The column should be configured with two parameters, the first is the
+     * type (e.g. Vice county) and the second the field to return (e.g. name,
+     * code). For example:
+     * {"caption":"VC code","field":"#higher_geography:Vice County:code#"}
+     */
     higher_geography: function higherGeography(doc, params) {
       var output = '';
       if (doc.location.higher_geography) {
-        $.each(doc.location.higher_geography, function() {
+        $.each(doc.location.higher_geography, function eachGeography() {
           if (this.type === params[0]) {
             output = this[params[1]];
-            return false;
           }
         });
       }
       return output;
     },
-    // Format dates, with handling of range dates.
-    date: function date(doc) {
-      if (doc.event.date_start !== doc.event.date_end) {
-        return doc.event.date_start + ' - ' + doc.event.date_end;
-      }
-      return doc.event.date_start;
-    },
-    // A summary of location information, including the given location name
-    // (verbatim locality) as well as list of higher geography.
+
+    /**
+     * A summary of location information.
+     *
+     * Includes the given location name (verbatim locality) as well as list of
+     * higher geography.
+     */
     locality: function locality(doc) {
       var info = '';
       if (doc.location.verbatim_locality) {
@@ -273,7 +319,12 @@
       }
       return info;
     },
-    // A simple output of website and survey ID.
+
+    /**
+     * A simple output of website and survey ID.
+     *
+     * Has a hint to show the underlying titles.
+     */
     datasource_code: function datasourceCode(doc) {
       return '<abbr title="' + doc.metadata.website.title + ' | ' + doc.metadata.survey.title + '">' +
         doc.metadata.website.id + '|' + doc.metadata.survey.id +
@@ -289,11 +340,17 @@
    * This list could also potentially override the search behaviour for normal
    * mapped fields.
    *
-   * Builders should return false if the input text is not a valid filter.
+   * Builders should return:
+   * * false if the input text is not a valid filter.
+   * * a string suitable for use as a query_string.
+   * * an object that defines any filter suitable for adding to the bool
+   *   queries array.
    * The builder can assume that the input text value is already trimmed.
    */
   indiciaFns.fieldConvertorQueryBuilders = {
-    // Handle datasource_code filtering in format website_id [| survey ID].
+    /**
+     * Handle datasource_code filtering in format website_id [| survey ID].
+     */
     datasource_code: function datasourceCode(text) {
       var parts;
       var query;
@@ -308,7 +365,95 @@
         return query;
       }
       return false;
+    },
+
+    /**
+     * Event date filtering.
+     *
+     * Supports yyyy, mm/dd/yyyy or yyyy-mm-dd formats.
+     */
+    event_date: function eventDate(text) {
+      // A series of possible date patterns, with the info required to build
+      // a query string.
+      var tests = [
+        {
+          // yyyy format.
+          pattern: '(\\d{4})',
+          field: 'event.year',
+          format: '{1}'
+        },
+        {
+          // dd/mm/yyyy format.
+          pattern: '(\\d{2})\\/(\\d{2})\\/(\\d{4})',
+          field: 'event.date_start',
+          format: '{3}-{2}-{1}'
+        },
+        {
+          // yyyy-mm-dd format.
+          pattern: '(\\d{4})\\-(\\d{2})\\-(\\d{2})',
+          field: 'event.date_start',
+          format: '{1}-{2}-{3}'
+        }
+      ];
+      var filter = false;
+      // Loop the patterns to find a match.
+      $.each(tests, function eachTest() {
+        var regex = new RegExp('^' + this.pattern + '$');
+        var match = text.match(regex);
+        var value = this.format;
+        var i;
+        if (match) {
+          // Got a match, so reformat and build the filter string.
+          for (i = 1; i < match.length; i++) {
+            value = value.replace('{' + i + '}', match[i]);
+          }
+          filter = this.field + ':' + value;
+          // Abort the search.
+          return false;
+        }
+        return true;
+      });
+      return filter;
+    },
+
+    /**
+     * Builds a nested query for higher geography columns.
+     */
+    higher_geography: function higherGeography(text, params) {
+      var filter = {};
+      var query;
+      filter['location.higher_geography.' + params[1]] = text;
+      query = {
+        nested: {
+          path: 'location.higher_geography',
+          query: {
+            bool: {
+              must: [
+                { match: { 'location.higher_geography.type': params[0] } },
+                { match: filter }
+              ]
+            }
+          }
+        }
+      };
+      return {
+        bool_clause: 'must',
+        value: '',
+        query: JSON.stringify(query)
+      };
     }
+  };
+
+  /**
+   * Field convertors which allow sort on underlying fields are listed here.
+   */
+  indiciaData.fieldConvertorSortFields = {
+    //status_icons: []
+    //data_cleaner_icons: [],
+    event_date: ['event.date_start'],
+    //higher_geography: [],
+    //locality: [],
+    datasource_code: ['metadata.website.id', 'metadata.survey.id']
   };
 
   /**
@@ -441,15 +586,27 @@
             var col = $(el)[0].settings.columns[$(cell).attr('data-col')];
             var fnQueryBuilder;
             var query;
+            var fieldNameParts;
+            var fn;
             if ($(this).val().trim() !== '') {
-              if (typeof indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')] !== 'undefined') {
-                fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[col.field.replace(/#/g, '')];
-                query = fnQueryBuilder($(this).val().trim());
+              // If there is a special field name, break it into the name
+              // + parameters.
+              fieldNameParts = col.field.replace(/#/g, '').split(':');
+              // Remove the convertor name from the start of the array,
+              // leaving the parameters.
+              fn = fieldNameParts.shift();
+              if (typeof indiciaFns.fieldConvertorQueryBuilders[fn] !== 'undefined') {
+                // A special field with a convertor function.
+                fnQueryBuilder = indiciaFns.fieldConvertorQueryBuilders[fn];
+                query = fnQueryBuilder($(this).val().trim(), fieldNameParts);
                 if (query === false) {
                   // Flag input as invalid.
                   $(this).after('<span title="Invalid search text" class="fas fa-exclamation-circle"></span>');
+                } else if (typeof query === 'object') {
+                  // Query is an object, so use it as is.
+                  data.bool_queries.push(query);
                 } else {
-                  // Build the query for the input.
+                  // Query is a string, so treat as a query_string.
                   data.bool_queries.push({
                     bool_clause: 'must',
                     query_type: 'query_string',
@@ -1047,13 +1204,26 @@
         var idx = $(sortButton).closest('th').attr('data-col');
         var col = $(el)[0].settings.columns[idx];
         var sortDesc = $(sortButton).hasClass('fa-sort-up');
+        var fields;
+        var fieldName = col.field.replace(/#/g, '').split(':')[0];
         $(row).find('.sort.fas').removeClass('fa-sort-down');
         $(row).find('.sort.fas').removeClass('fa-sort-up');
         $(row).find('.sort.fas').addClass('fa-sort');
         $(sortButton).removeClass('fa-sort');
         $(sortButton).addClass('fa-sort-' + (sortDesc ? 'down' : 'up'));
         source.settings.sort = {};
-        source.settings.sort[indiciaData.esMappings[col.field].sort_field] = { order: sortDesc ? 'desc' : 'asc' };
+        if (indiciaData.esMappings[fieldName]) {
+          source.settings.sort[indiciaData.esMappings[fieldName].sort_field] = {
+            order: sortDesc ? 'desc' : 'asc'
+          };
+        } else if (indiciaData.fieldConvertorSortFields[fieldName]) {
+          fields = indiciaData.fieldConvertorSortFields[fieldName];
+          $.each(fields, function eachField() {
+            source.settings.sort[this] = {
+              order: sortDesc ? 'desc' : 'asc'
+            };
+          });
+        }
         source.populate();
       });
     });
@@ -1184,10 +1354,11 @@
           headerRow = $('<tr/>').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
             var heading = this.caption;
-
-            if (el.settings.sortable !== false &&
-                typeof indiciaData.esMappings[this.field] !== 'undefined' &&
-                indiciaData.esMappings[this.field].sort_field) {
+            var sortableField = typeof indiciaData.esMappings[this.field] !== 'undefined'
+              && indiciaData.esMappings[this.field].sort_field;
+            sortableField = sortableField
+              || indiciaData.fieldConvertorSortFields[this.field.replace(/#/g, '').split(':')[0]];
+            if (el.settings.sortable !== false && sortableField) {
               heading += '<span class="sort fas fa-sort"></span>';
             }
             if (this.multiselect) {
@@ -1207,7 +1378,7 @@
             // No filter input if this column has no mapping unless there is a
             // special field function that can work out the query.
             if (typeof indiciaData.esMappings[this.field] !== 'undefined'
-              || typeof indiciaFns.fieldConvertorQueryBuilders[this.field.replace(/#/g, '')] !== 'undefined') {
+              || typeof indiciaFns.fieldConvertorQueryBuilders[this.field.replace(/#/g, '').split(':')[0]] !== 'undefined') {
               $('<input type="text">').appendTo(td);
             }
           });
@@ -1274,7 +1445,7 @@
               value = value + ' to ' + rangeValue;
             }
           }
-          if (value && this.media) {
+          if (value && this.handler && this.handler === 'media') {
             media = '';
             // Tweak image sizes if more than 1.
             sizeClass = value.length === 1 ? 'single' : 'multi';
@@ -1810,7 +1981,7 @@
           addRow(rows, doc, 'Licence', 'metadata.licence_code');
           addRow(rows, doc, 'Status', '#status_icons#');
           addRow(rows, doc, 'Checks', '#data_cleaner_icons#');
-          addRow(rows, doc, 'Date', '#date#');
+          addRow(rows, doc, 'Date', '#event_date#');
           addRow(rows, doc, 'Output map ref', 'location.output_sref');
           addRow(rows, doc, 'Location', '#locality#');
           addRow(rows, doc, 'Sample comments', 'event.event_remarks');
@@ -2018,17 +2189,6 @@
     $.fancybox(fs);
   };
 
-  function linkButtonClick(el, linkType) {
-    var selectedTr = $(dataGrid).find('tr.selected');
-    var doc;
-    var path = el.settings[linkType + 'Path']
-    var sep = path.indexOf('?') === -1 ? '?' : '&';
-    if (selectedTr.length > 0) {
-      doc = JSON.parse(selectedTr.attr('data-doc-source'));
-      window.location = path + sep + 'occurrence_id=' + doc.id;
-    }
-  }
-
   /**
    * Declare public methods.
    */
@@ -2056,8 +2216,17 @@
       }
       dataGrid = $('#' + el.settings.showSelectedRow);
       $(dataGrid).esDataGrid('on', 'rowSelect', function rowSelect(tr) {
+        var sep;
+        var doc;
         if (tr) {
+          // Update the view and edit button hrefs. This allows the user to
+          // right click and open in a new tab, rather than have an active
+          // button.
+          doc = JSON.parse($(tr).attr('data-doc-source'));
           $('.verification-buttons-wrap').show();
+          sep = el.settings.viewPath.indexOf('?') === -1 ? '?' : '&';
+          $(el).find('.view').attr('href', el.settings.viewPath + sep + 'occurrence_id=' + doc.id);
+          $(el).find('.edit').attr('href', el.settings.editPath + sep + 'occurrence_id=' + doc.id);
         } else {
           $('.verification-buttons-wrap').hide();
         }
@@ -2072,12 +2241,6 @@
       $(el).find('button.query').click(function buttonClick(e) {
         var query = $(e.currentTarget).attr('data-query');
         commentPopup({ query: query });
-      });
-      $(el).find('button.edit').click(function editClick() {
-        linkButtonClick(el, 'edit');
-      });
-      $(el).find('button.view').click(function viewClick() {
-        linkButtonClick(el, 'view');
       });
       indiciaFns.on('click', '.comment-popup button', {}, function onClickSave(e) {
         var popup = $(e.currentTarget).closest('.comment-popup');
@@ -2241,7 +2404,7 @@ jQuery(document).ready(function docReady() {
   });
 
   $('.es-filter-param, .user-filter, .permissions-filter').change(function eachFilter() {
-    // Force map to updatea viewport for new data.
+    // Force map to update viewport for new data.
     $.each($('.es-output-map'), function eachMap() {
       this.settings.initialBoundsSet = false;
     });
