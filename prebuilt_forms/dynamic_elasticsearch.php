@@ -189,14 +189,19 @@ HTML;
   }
 
   /**
+   * Main build function to return the page HTML.
    *
+   * @param array $args
+   *   Page parameters.
+   * @param int $nid
+   *   Node ID.
    */
   public static function get_form($args, $nid) {
-    $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_elasticsearch');
+    // Retrieve the Elasticsearch mappings.
     self::getMappings($nid);
+    // Prepare the stuff we need to pass to the JavaScript.
     $mappings = json_encode(self::$esMappings);
-    $verifyUrl = iform_ajaxproxy_url($nid, 'list_verify');
-    $commentUrl = iform_ajaxproxy_url($nid, 'occ-comment');
+    $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_elasticsearch');
     $userId = hostsite_get_user_field('indicia_user_id');
     $rootFolder = helper_base::getRootFolder(TRUE);
     $dateFormat = helper_base::$date_format;
@@ -205,8 +210,6 @@ indiciaData.ajaxUrl = '$ajaxUrl';
 indiciaData.esSources = [];
 indiciaData.esMappings = $mappings;
 indiciaData.userId = $userId;
-indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
-indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
 indiciaData.rootFolder = '$rootFolder';
 indiciaData.dateFormat = '$dateFormat';
 
@@ -555,6 +558,14 @@ HTML;
       'viewPath',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
+    $userId = hostsite_get_user_field('indicia_user_id');
+    $verifyUrl = iform_ajaxproxy_url(self::$nid, 'list_verify');
+    $commentUrl = iform_ajaxproxy_url(self::$nid, 'occ-comment');
+    helper_base::$javascript .= <<<JS
+indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
+indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
+
+JS;
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></a>';
