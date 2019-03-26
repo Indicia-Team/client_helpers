@@ -1493,9 +1493,11 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       // store some globals that we need later when creating uploaders
       $relpath = data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path();
       $interimImageFolder = data_entry_helper::getInterimImageFolder('domain');
+      $relativeImageFolder = data_entry_helper::getImageRelativePath(),
       data_entry_helper::$javascript .= "indiciaData.uploadSettings = {\n";
       data_entry_helper::$javascript .= "  uploadScript: '" . $relpath . "upload.php',\n";
-      data_entry_helper::$javascript .= "  destinationFolder: '" . $interimImageFolder."',\n";
+      data_entry_helper::$javascript .= "  destinationFolder: '$interimImageFolder',\n";
+      data_entry_helper::$javascript .= "  relativeImageFolder: '$relativeImageFolder',\n";
       data_entry_helper::$javascript .= "  jsPath: '".data_entry_helper::$js_path."'";
       if (isset($options['resizeWidth'])) {
         data_entry_helper::$javascript .= ",\n  resizeWidth: ".$options['resizeWidth'];

@@ -30,10 +30,8 @@ header("Pragma: no-cache");
 require 'data_entry_helper.php';
 // Settings.
 if (isset($_GET['destination'])) {
-  // An IIS safe way to get DOCUMENT_ROOT.
-  $docRoot = substr($_SERVER['SCRIPT_FILENAME'], 0, -strlen($_SERVER['SCRIPT_NAME']));
   // The upload path should be provided by the client as is configurable.
-  $targetDir = "$docRoot$_GET[destination]";
+  $targetDir = "$_GET[destination]";
 }
 else {
   // If not provided, revert to the default.
