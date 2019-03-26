@@ -1078,6 +1078,34 @@ JS;
   }
 
   /**
+   * Relative path from a script in client_helpers to the image upload path.
+   *
+   * Can be passed to the uploader as a JS setting safely, wherease an absolute
+   * path would be a security risk.
+   *
+   * @return string
+   *   Relative path.
+   */
+  public static function getImageRelativePath() {
+    // Get the paths to the client helper folder and php file folder as an array of tokens.
+    $clientHelperFolder = explode(DIRECTORY_SEPARATOR, dirname(realpath(__FILE__)));
+    $imageFolder = explode(DIRECTORY_SEPARATOR, realpath(self::getInterimImageFolder('fullpath')));
+    // Find the first part of the paths that is not the same
+    for ($i = 0; $i < min(count($clientHelperFolder), count($imageFolder)); $i++) {
+      if ($imageFolder[$i] !== $clientHelperFolder[$i]) {
+        break;
+      }
+    }
+    // step back up the path to the point where the 2 paths differ
+    $path = str_repeat('../', count($clientHelperFolder) - $i);
+    // add back in the different part of the path to the client helper folder
+    for ($j = $i; $j < count($imageFolder); $j++) {
+      $path .= $imageFolder[$j] . '/';
+    }
+    return $path;
+  }
+
+  /**
    * Parameters forms are a quick way of specifying a simple form used to specify the input
    * parameters for a process. Returns the HTML required for a parameters form, e.g. the form
    * defined for input of report parameters or the default values for a csv import.

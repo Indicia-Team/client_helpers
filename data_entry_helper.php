@@ -1001,9 +1001,6 @@ JS;
    * array('html5','flash','silverlight','html4'), though flash is removed for Internet Explorer 6. You
    * should not normally need to change this.
    * </li>
-   * <li><b>destinationFolder</b><br/>
-   * Override the destination folder for uploaded files. You should not normally need to change this.
-   * </li>
    * <li><b>codeGenerated</b>
    * If set to all (default), then this returns the HTML required and also inserts JavaScript in the document onload event. However, if you
    * need to delay the loading of the control until a certain event, e.g. when a radio button is checked, then this can be set
@@ -1057,11 +1054,12 @@ JS;
       'autoupload' => FALSE,
       'msgUploadError' => lang::get('upload error'),
       'msgFileTooBig' => lang::get('file too big for warehouse'),
-      'runtimes' => array('html5','flash','silverlight','html4'),
+      'runtimes' => ['html5', 'flash', 'silverlight', 'html4'],
       'autoupload' => TRUE,
       'imageWidth' => 200,
       'uploadScript' => "$protocol://$_SERVER[HTTP_HOST]" . self::getRootFolder() . self::relative_client_helper_path() . 'upload.php',
       'destinationFolder' => self::getInterimImageFolder('domain'),
+      'relativeImageFolder' => self::getImageRelativePath(),
       'finalImageFolder' => self::get_uploaded_image_folder(),
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
@@ -3289,11 +3287,13 @@ RIJS;
       // store some globals that we need later when creating uploaders
       $relpath = self::getRootFolder() . self::client_helper_path();
       $interimImageFolder = self::getInterimImageFolder('domain');
+      $relativeImageFolder = self::getImageRelativePath();
       $js_path = self::$js_path;
       self::$javascript .= <<<JS
 indiciaData.uploadSettings = {
   uploadScript: '{$relpath}upload.php',
-  destinationFolder: '{$interimImageFolder}',
+  destinationFolder: '$interimImageFolder',
+  relativeImageFolder: '$relativeImageFolder'
   jsPath: '$js_path'
 JS;
       $langStrings = array(

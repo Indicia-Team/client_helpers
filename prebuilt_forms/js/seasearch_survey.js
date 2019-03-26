@@ -21,6 +21,7 @@ jQuery(document).ready(function($) {
       imageWidth : '200',
       uploadScript : indiciaData.uploadSettings.uploadScript,
       destinationFolder : indiciaData.uploadSettings.destinationFolder,
+      relativeImageFolder : indiciaData.uploadSettings.relativeImageFolder,
       finalImageFolder : indiciaData.warehouseUrl + 'upload/',
       jsPath : '/sites/all/modules/iform/media/js/',
       buttonTemplate : '<button id="{id}" type="button" title="{title}"{class}>{caption}</button>',
