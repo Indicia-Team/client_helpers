@@ -162,15 +162,17 @@ table.es-data-grid {
     display: inline-block;
     vertical-align: middle;
   }
-  button {
+  button, a {
     font-size: 120%;
     border: none;
+    border-radius: 4px;
     background: none;
     box-shadow: none;
     color: black;
     text-shadow: none;
     min-height: 25px;
     margin: 4px;
+    padding: 6px;
     &:hover {
       background: silver;
     }
