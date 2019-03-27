@@ -306,7 +306,7 @@ JS;
   /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#source
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[source]
    *
    * @return string
    *   Empty string as no HTML required.
@@ -485,18 +485,7 @@ HTML;
   /**
    * An Elasticsearch powered grid control.
    *
-   * Options are:
-   * * source
-   * * columns
-   *   @todo Document the special field convertors.
-   *   @todo Make these consistent with those used in the scrolled download
-   *   CSV definition.
-   * * columns
-   * * actions
-   * * includeColumnHeadings
-   * * includeFilterRow
-   * * includePager
-   * * sortable
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
    */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
     self::checkOptions(
@@ -508,7 +497,12 @@ HTML;
     if (empty($options['columns']) && empty($options['autogenColumns'])) {
       throw new Exception("Control [dataGrid] requires a parameter called @columns or must have @autogenColumns=true");
     }
-    helper_base::add_resource('footable');
+    helper_base::add_resource('indiciaFootableReport');
+    // Add footableSort for aggregation tables.
+    if (!empty($options['simpleAggregation']) || !empty($options['sourceTable'])) {
+      helper_base::add_resource('footableSort');
+    }
+    // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     $dataOptions = self::getOptionsForJs($options, [
       'columns',

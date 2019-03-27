@@ -1326,9 +1326,11 @@
       var table;
       var header;
       var headerRow;
-      var includeFilterRow;
+      var filterRow;
       var el = this;
       var totalCols;
+      var showingAggregation;
+      var footableSort;
       indiciaFns.registerOutputPluginClass('dataGrid');
       el.settings = $.extend({}, defaults);
       // Apply settings passed in the HTML data-* attribute.
@@ -1343,9 +1345,10 @@
       if (typeof el.settings.columns === 'undefined') {
         indiciaFns.controlFail(el, 'Missing columns config for table.');
       }
-
+      showingAggregation = el.settings.simpleAggregation || el.settings.sourceTable;
+      footableSort = showingAggregation && el.settings.sortable ? 'true' : 'false';
       // Build the elements required for the table.
-      table = $('<table class="table es-data-grid" />').appendTo(el);
+      table = $('<table class="table es-data-grid" data-sort="' + footableSort + '" />').appendTo(el);
       // If we need any sort of header, add <thead>.
       if (el.settings.includeColumnHeadings !== false || el.settings.includeFilterRow !== false) {
         header = $('<thead/>').appendTo(table);
@@ -1354,7 +1357,7 @@
           headerRow = $('<tr/>').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
             var heading = this.caption;
-            var footableHide = '';
+            var footableExtras = '';
             var sortableField = typeof indiciaData.esMappings[this.field] !== 'undefined'
               && indiciaData.esMappings[this.field].sort_field;
             sortableField = sortableField
@@ -1365,20 +1368,26 @@
             if (this.multiselect) {
               heading += '<span title="Enable multiple selection mode" class="fas fa-list multiselect-switch"></span>';
             }
+            // Extra data attrs to support footable.
             if (this['data-hide']) {
-              footableHide = ' data-hide="' + this['data-hide'] + '"';
+              footableExtras = ' data-hide="' + this['data-hide'] + '"';
             }
-            $('<th class="col-' + idx + '" data-col="' + idx + '"' + footableHide + '>' + heading + '</th>').appendTo(headerRow);
+            if (this['data-type']) {
+              footableExtras += ' data-type="' + this['data-type'] + '"';
+            }
+            $('<th class="col-' + idx + '" data-col="' + idx + '"' + footableExtras + '>' + heading + '</th>').appendTo(headerRow);
           });
           if (el.settings.actions.length) {
             $('<th class="col-actions">Actions</th>').appendTo(headerRow);
           }
         }
+        // Disable filter row for aggregations.
+        el.settings.includeFilterRow = el.settings.includeFilterRow && !showingAggregation;
         // Output header row for filtering.
-        if (el.settings.includeFilterRow !== false) {
-          includeFilterRow = $('<tr class="es-filter-row" />').appendTo(header);
+        if (el.settings.includeFilterRow !== false ) {
+          filterRow = $('<tr class="es-filter-row" />').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
-            var td = $('<td class="col-' + idx + '" data-col="' + idx + '"></td>').appendTo(includeFilterRow);
+            var td = $('<td class="col-' + idx + '" data-col="' + idx + '"></td>').appendTo(filterRow);
             // No filter input if this column has no mapping unless there is a
             // special field function that can work out the query.
             if (typeof indiciaData.esMappings[this.field] !== 'undefined'
@@ -2439,7 +2448,7 @@ jQuery(document).ready(function docReady() {
   $('.es-output-download').esDownload({});
   $('.es-output-dataGrid').esDataGrid({});
   // Also make grids responsive.
-  $('.es-data-grid').footable();
+  $('.es-output-dataGrid').indiciaFootableReport();
   $('.es-output-map').esMap({});
   $('.details-container').esDetailsPane({});
   $('.verification-buttons').esVerificationButtons({});
