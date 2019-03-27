@@ -201,7 +201,16 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
               'the attribute name followed by | then the option name, followed by = then the value. For example, smpAttr:1|class=control-width-5.',
           'type'=>'textarea',
       	  'group'=>'Transects Editor Settings'
-        )
+        ),
+        array(
+          'name'=>'contact_blocks',
+          'caption'=>'Form blocks to in the Contact details tab',
+          'description'=>'A list of the blocks which need to be placed in the Contact details tab.',
+          'type'=>'textarea',
+          'group'=>'Transects Editor Settings',
+          'siteSpecific'=>true,
+          'required'=>false
+        ),
 
     ));
     for($i= count($retVal)-1; $i>=0; $i--){
@@ -258,7 +267,8 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
       'canAllocBranch' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission']),
       // Allocations of Users are done by a person holding the managerPermission or the allocate Branch Manager.
       // The extra check on this for branch managers is done later
-      'canAllocUser' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission'])
+      'canAllocUser' => $args['managerPermission']=="" || hostsite_user_has_permission($args['managerPermission']),
+      'canAccessContact' => true,
     );
     // WARNING!!!! we are making the assumption that the attributes are defined to be the same for all the location_types.
     $settings['attributes'] = data_entry_helper::getAttributes(array(
@@ -321,6 +331,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         // Check whether I am a normal user and it is allocated to me, and also if I am a branch manager and it is allocated to me.
         $settings['canEditBody'] = false;
         $settings['canEditSections'] = false;
+        $settings['canAccessContact'] = false;
         if($args['allow_user_assignment'] &&
             count($settings['walks']) == 0 &&
             isset($settings['cmsUserAttr']['default']) &&
@@ -329,6 +340,16 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
             if($value['default'] == $user->uid) { // comparing string against int so no triple equals
               $settings['canEditBody'] = true;
               $settings['canEditSections'] = true;
+              break;
+            }
+          }
+        }
+        if($args['allow_user_assignment'] &&
+            isset($settings['cmsUserAttr']['default']) &&
+            !empty($settings['cmsUserAttr']['default'])) {
+          foreach($settings['cmsUserAttr']['default'] as $value) { // multi value
+            if($value['default'] == $user->uid) { // comparing string against int so no triple equals
+              $settings['canAccessContact'] = true;
               break;
             }
           }
@@ -342,6 +363,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
             if($value['default'] == $user->uid) { // comparing string against int so no triple equals
               $settings['canEditBody'] = true;
               $settings['canAllocUser'] = true;
+              $settings['canAccessContact'] = true;
               break;
             }
           }
@@ -431,11 +453,17 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
       }
     }
     $r = '<div id="controls">';
+    $contact='';
+    $siteTab = self::get_site_tab($auth, $args, $settings, $contact);
     $headerOptions = array('tabs'=>array('#site-details'=>lang::get('Site Details')));
     if ($settings['locationId']) {
       $headerOptions['tabs']['#your-route'] = lang::get('Your Route');
-      if(count($settings['section_attributes']) > 0)
+      if(count($settings['section_attributes']) > 0) {
         $headerOptions['tabs']['#section-details'] = lang::get('Section Details');
+      }
+      if($settings['canAccessContact'] && $contact !== '') {
+        $headerOptions['tabs']['#contact-details'] = lang::get('Contact Details');
+      }
     }
     if (count($headerOptions['tabs'])) {
       $r .= data_entry_helper::tab_header($headerOptions);
@@ -445,11 +473,14 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
           'progressBar' => isset($args['tabProgress']) && $args['tabProgress']==true
       ));
     }
-    $r .= self::get_site_tab($auth, $args, $settings);
+    $r .= $siteTab;
     if ($settings['locationId']) {
       $r .= self::get_your_route_tab($auth, $args, $settings);
-      if(count($settings['section_attributes']) > 0)
+      if(count($settings['section_attributes']) > 0) {
         $r .= self::get_section_details_tab($auth, $args, $settings);
+      }
+      if($settings['canAccessContact'] && $contact !== '')
+          $r .= self::get_contact_details_tab($auth, $args, $settings, $contact);
     }
     $r .= '</div>'; // controls
     data_entry_helper::enable_validation('input-form');
@@ -466,6 +497,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     // Inform JS where to post data to for AJAX form saving
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.self::$ajaxFormUrl."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostSampleUrl="'.self::$ajaxFormSampleUrl."\";\n";
+    data_entry_helper::$javascript .= 'indiciaData.website_id="'.$args['website_id']."\";\n";
     data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
     data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$auth['read']['nonce']."', auth_token: '".$auth['read']['auth_token']."'};\n";
     data_entry_helper::$javascript .= "indiciaData.currentSection = '';\n";
@@ -488,7 +520,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     return $r;
   }
 
-  private static function get_site_tab($auth, $args, $settings) {
+  private static function get_site_tab($auth, $args, $settings, &$contact) {
     $r = '<div id="site-details" class="ui-helper-clearfix">';
     $r .= '<form method="post" id="input-form">';
     $r .= $auth['write'];
@@ -664,6 +696,14 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
     	}
     }
 
+    // find the form blocks that need to go into the contact tab.
+    $contact = '';
+    if(isset($args['contact_blocks']) && $args['contact_blocks'] !== '') {
+        $contactBlocks = explode("\n", $args['contact_blocks']);
+        foreach ($contactBlocks as $block) {
+            $contact .= get_attribute_html($settings['attributes'], $args, array('extraParams'=>$auth['read']), $block, $blockOptions);
+        }
+    }
     // find the form blocks that need to go below the map.
     $bottom = '';
     $bottomBlocks = explode("\n", isset($args['bottom_blocks']) ? $args['bottom_blocks'] : '');
@@ -809,5 +849,24 @@ $('#delete-transect').click(deleteSurvey);
   	return $r;
   }
 
-
+  protected static function get_contact_details_tab($auth, $args, $settings, $contact) {
+      $r = '<div id="contact-details" class="ui-helper-clearfix">';
+      $r .= '<form method="post" id="input-form-2">';
+      $r .= $auth['write'];
+      $r .= '<fieldset><legend>'.lang::get('Contact Details').'</legend>';
+      $r .= '<input type="hidden" name="location:id" value="'.$settings['locationId'].'" />' . PHP_EOL;
+      $r .= '<input type="hidden" name="website_id" value="'.$args['website_id'].'" />' . PHP_EOL;
+      $r .= '<input type="hidden" name="location:centroid_sref_system" value="'.data_entry_helper::$entity_to_load['location:centroid_sref_system'].'" />' . PHP_EOL;
+      $r .= '<input type="hidden" name="location:centroid_sref" value="'.data_entry_helper::$entity_to_load['location:centroid_sref'].'" />' . PHP_EOL;
+      $r .= '<input type="hidden" name="location:centroid_geom" value="'.data_entry_helper::$entity_to_load['location:centroid_geom'].'" />' . PHP_EOL;
+      $r .= $contact;
+      if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
+          $r .= '<p>' . lang::get('LANG_DATA_PERMISSION') . '</p>';
+      }
+      $r .= '<input type="submit" value="'.lang::get('Save').'" class="form-button right" id="submit-contact" />';
+      $r .= '</fieldset></form>';
+      $r .= '</div>';
+      return $r;
+  }
+  
 }
