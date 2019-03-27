@@ -567,9 +567,9 @@
         if ($(this).val().trim() !== '') {
           data.bool_queries.push({
             bool_clause: $(this).attr('data-es-bool-clause'),
-            field: $(this).attr('data-es-field'),
+            field: $(this).attr('data-es-field') ? $(this).attr('data-es-field') : null,
             query_type: $(this).attr('data-es-query-type'),
-            query: $(this).attr('data-es-query'),
+            query: $(this).attr('data-es-query') ? $(this).attr('data-es-query') : null,
             value: $(this).val().trim()
           });
         }
@@ -2431,7 +2431,13 @@ jQuery(document).ready(function docReady() {
         // Now for each column, collect the rows.
         $.each(response.aggregations[aggs[0]].buckets, function eachOuterBucket() {
           var thisCol = this.key;
-          $.each(this[aggs[1]].buckets, function eachInnerBucket() {
+          var aggsPath = aggs[1].split(',');
+          var obj = this;
+          // Drill down the required level of nesting.
+          $.each(aggsPath, function eachPathLevel() {
+            obj = obj[this];
+          });
+          $.each(obj.buckets, function eachInnerBucket() {
             if (typeof data[this.key] === 'undefined') {
               data[this.key] = $.extend({}, colsTemplate);
               data[this.key].key = this.key;
