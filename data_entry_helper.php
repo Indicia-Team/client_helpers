@@ -3293,7 +3293,7 @@ RIJS;
 indiciaData.uploadSettings = {
   uploadScript: '{$relpath}upload.php',
   destinationFolder: '$interimImageFolder',
-  relativeImageFolder: '$relativeImageFolder'
+  relativeImageFolder: '$relativeImageFolder',
   jsPath: '$js_path'
 JS;
       $langStrings = array(
