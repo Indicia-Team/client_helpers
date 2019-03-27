@@ -1354,6 +1354,7 @@
           headerRow = $('<tr/>').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
             var heading = this.caption;
+            var footableHide = '';
             var sortableField = typeof indiciaData.esMappings[this.field] !== 'undefined'
               && indiciaData.esMappings[this.field].sort_field;
             sortableField = sortableField
@@ -1364,7 +1365,10 @@
             if (this.multiselect) {
               heading += '<span title="Enable multiple selection mode" class="fas fa-list multiselect-switch"></span>';
             }
-            $('<th class="col-' + idx + '" data-col="' + idx + '">' + heading + '</th>').appendTo(headerRow);
+            if (this['data-hide']) {
+              footableHide = ' data-hide="' + this['data-hide'] + '"';
+            }
+            $('<th class="col-' + idx + '" data-col="' + idx + '"' + footableHide + '>' + heading + '</th>').appendTo(headerRow);
           });
           if (el.settings.actions.length) {
             $('<th class="col-actions">Actions</th>').appendTo(headerRow);
@@ -1387,7 +1391,7 @@
       // We always want a table body for the data.
       $('<tbody />').appendTo(table);
       // Output a footer if we want a pager.
-      if (el.settings.includePager) {
+      if (el.settings.includePager && !(el.settings.sourceTable || el.settings.simpleAggregation)) {
         totalCols = el.settings.columns.length + (el.settings.actions.length > 0 ? 1 : 0);
         $('<tfoot><tr class="pager"><td colspan="' + totalCols + '"><span class="showing"></span>' +
           '<span class="buttons"><button class="prev">Previous</button><button class="next">Next</button></span>' +
@@ -1411,7 +1415,9 @@
       var dataList;
       $(el).find('tbody tr').remove();
       $(el).find('.multiselect-all').prop('checked', false);
-      if ($(el)[0].settings.aggregation === true && typeof response.aggregations !== 'undefined') {
+      if ($(el)[0].settings.sourceTable) {
+        dataList = response[$(el)[0].settings.sourceTable];
+      } else if ($(el)[0].settings.simpleAggregation === true && typeof response.aggregations !== 'undefined') {
         dataList = indiciaFns.findValue(response.aggregations, 'buckets');
       } else {
         dataList = response.hits.hits;
@@ -1855,7 +1861,8 @@
       data: data,
       success: function success(response) {
         var html = '';
-        if (typeof response.error !== 'undefined') {
+        if (typeof response.error !== 'undefined' || (response.code && response.code !== 200)) {
+          console.log(response);
           alert('Elasticsearch query failed');
           $(el).find('.recorder-experience').html('<div class="alert alert-warning">Experience could not be loaded.</div>');
           $(el).find('.loading-spinner').hide();
@@ -2128,7 +2135,7 @@
       type: 'post',
       data: data,
       success: function success(response) {
-        if (typeof response.error !== 'undefined') {
+        if (typeof response.error !== 'undefined' || (response.code && response.code !== 200)) {
           console.log(response);
           alert('Elasticsearch update failed');
         } else {
@@ -2370,6 +2377,8 @@ jQuery(document).ready(function docReady() {
             if (response.error || (response.code && response.code !== 200)) {
               alert('Elasticsearch query failed');
             } else {
+              // Build any configured output tables.
+              source.buildTableXY(response);
               $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
                 var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
                 $.each(source.outputs[pluginClass], function eachOutput() {
@@ -2388,8 +2397,49 @@ jQuery(document).ready(function docReady() {
     }
   };
 
+  /**
+   * ESDataSource function to tablify 2 tier aggregation responses.
+   *
+   * Use this method if there is an outer aggregation which corresponds to the
+   * table columns (X) and an inner aggregation which corresponds to the table
+   * rows (Y).
+   *
+   * @param object response
+   *   Response from an ES aggregation search request.
+   */
+  EsDataSource.prototype.buildTableXY = function buildTableXY(response) {
+    var source = this;
+    if (source.settings.buildTableXY) {
+      $.each(source.settings.buildTableXY, function eachTable(name, aggs) {
+        var data = {};
+        var colsTemplate = {
+          key: ''
+        };
+        // Collect the list of columns
+        $.each(response.aggregations[aggs[0]].buckets, function eachOuterBucket() {
+          colsTemplate[this.key] = 0;
+        });
+        // Now for each column, collect the rows.
+        $.each(response.aggregations[aggs[0]].buckets, function eachOuterBucket() {
+          var thisCol = this.key;
+          $.each(this[aggs[1]].buckets, function eachInnerBucket() {
+            if (typeof data[this.key] === 'undefined') {
+              data[this.key] = $.extend({}, colsTemplate);
+              data[this.key].key = this.key;
+            }
+            data[this.key][thisCol] = this.doc_count;
+          });
+        });
+        // Attach the data table to the response.
+        response[name] = data;
+      });
+    }
+  };
+
   $('.es-output-download').esDownload({});
   $('.es-output-dataGrid').esDataGrid({});
+  // Also make grids responsive.
+  $('.es-data-grid').footable();
   $('.es-output-map').esMap({});
   $('.details-container').esDetailsPane({});
   $('.verification-buttons').esVerificationButtons({});

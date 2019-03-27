@@ -306,19 +306,24 @@ JS;
   /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
-   * @link @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#source
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#source
    *
    * @return string
    *   Empty string as no HTML required.
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
-    self::checkOptions('source', $options, ['id'], ['aggregation', 'filterBoolClauses']);
+    self::checkOptions(
+      'source',
+      $options,
+      ['id'],
+      ['aggregation', 'filterBoolClauses', 'buildTableXY']
+    );
     $dataOptions = self::getOptionsForJs($options, [
       'id',
-      'paged',
       'from',
       'size',
       'aggregation',
+      'buildTableXY',
       'initialMapBounds',
       'filterBoolClauses',
       'filterSourceGrid',
@@ -486,6 +491,7 @@ HTML;
    *   @todo Document the special field convertors.
    *   @todo Make these consistent with those used in the scrolled download
    *   CSV definition.
+   * * columns
    * * actions
    * * includeColumnHeadings
    * * includeFilterRow
@@ -493,7 +499,16 @@ HTML;
    * * sortable
    */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
-    self::checkOptions('dataGrid', $options, ['source', 'columns'], ['columns', 'actions']);
+    self::checkOptions(
+      'dataGrid',
+      $options,
+      ['source'],
+      ['actions', 'columns']
+    );
+    if (empty($options['columns']) && empty($options['autogenColumns'])) {
+      throw new Exception("Control [dataGrid] requires a parameter called @columns or must have @autogenColumns=true");
+    }
+    helper_base::add_resource('footable');
     helper_base::add_resource('fancybox');
     $dataOptions = self::getOptionsForJs($options, [
       'columns',
@@ -502,7 +517,9 @@ HTML;
       'includeFilterRow',
       'includePager',
       'sortable',
-      'aggregation',
+      'simpleAggregation',
+      'sourceTable',
+      'autogenColumns',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     // Escape the source so it can output as an attribute.
