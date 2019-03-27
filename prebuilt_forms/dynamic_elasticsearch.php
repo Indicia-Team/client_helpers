@@ -189,14 +189,19 @@ HTML;
   }
 
   /**
+   * Main build function to return the page HTML.
    *
+   * @param array $args
+   *   Page parameters.
+   * @param int $nid
+   *   Node ID.
    */
   public static function get_form($args, $nid) {
-    $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_elasticsearch');
+    // Retrieve the Elasticsearch mappings.
     self::getMappings($nid);
+    // Prepare the stuff we need to pass to the JavaScript.
     $mappings = json_encode(self::$esMappings);
-    $verifyUrl = iform_ajaxproxy_url($nid, 'list_verify');
-    $commentUrl = iform_ajaxproxy_url($nid, 'occ-comment');
+    $ajaxUrl = hostsite_get_url('iform/ajax/dynamic_elasticsearch');
     $userId = hostsite_get_user_field('indicia_user_id');
     $rootFolder = helper_base::getRootFolder(TRUE);
     $dateFormat = helper_base::$date_format;
@@ -205,8 +210,6 @@ indiciaData.ajaxUrl = '$ajaxUrl';
 indiciaData.esSources = [];
 indiciaData.esMappings = $mappings;
 indiciaData.userId = $userId;
-indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
-indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
 indiciaData.rootFolder = '$rootFolder';
 indiciaData.dateFormat = '$dateFormat';
 
@@ -303,19 +306,24 @@ JS;
   /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
-   * @link @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#source
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[source]
    *
    * @return string
    *   Empty string as no HTML required.
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
-    self::checkOptions('source', $options, ['id'], ['aggregation', 'filterBoolClauses']);
+    self::checkOptions(
+      'source',
+      $options,
+      ['id'],
+      ['aggregation', 'filterBoolClauses', 'buildTableXY']
+    );
     $dataOptions = self::getOptionsForJs($options, [
       'id',
-      'paged',
       'from',
       'size',
       'aggregation',
+      'buildTableXY',
       'initialMapBounds',
       'filterBoolClauses',
       'filterSourceGrid',
@@ -477,20 +485,24 @@ HTML;
   /**
    * An Elasticsearch powered grid control.
    *
-   * Options are:
-   * * source
-   * * columns
-   *   @todo Document the special field convertors.
-   *   @todo Make these consistent with those used in the scrolled download
-   *   CSV definition.
-   * * actions
-   * * includeColumnHeadings
-   * * includeFilterRow
-   * * includePager
-   * * sortable
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
    */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
-    self::checkOptions('dataGrid', $options, ['source', 'columns'], ['columns', 'actions']);
+    self::checkOptions(
+      'dataGrid',
+      $options,
+      ['source'],
+      ['actions', 'columns']
+    );
+    if (empty($options['columns']) && empty($options['autogenColumns'])) {
+      throw new Exception("Control [dataGrid] requires a parameter called @columns or must have @autogenColumns=true");
+    }
+    helper_base::add_resource('indiciaFootableReport');
+    // Add footableSort for aggregation tables.
+    if (!empty($options['simpleAggregation']) || !empty($options['sourceTable'])) {
+      helper_base::add_resource('footableSort');
+    }
+    // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     $dataOptions = self::getOptionsForJs($options, [
       'columns',
@@ -499,7 +511,9 @@ HTML;
       'includeFilterRow',
       'includePager',
       'sortable',
-      'aggregation',
+      'simpleAggregation',
+      'sourceTable',
+      'autogenColumns',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     // Escape the source so it can output as an attribute.
@@ -555,6 +569,14 @@ HTML;
       'viewPath',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
+    $userId = hostsite_get_user_field('indicia_user_id');
+    $verifyUrl = iform_ajaxproxy_url(self::$nid, 'list_verify');
+    $commentUrl = iform_ajaxproxy_url(self::$nid, 'occ-comment');
+    helper_base::$javascript .= <<<JS
+indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
+indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
+
+JS;
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></a>';

@@ -148,7 +148,6 @@ class iform_ukbms_assign_transects {
     global $user;
 
     $userID = $user->uid;
-    // $userID = 5; // TODO remove
     
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
@@ -164,8 +163,17 @@ class iform_ukbms_assign_transects {
         $lookUpValues[$termDetails['id']] = $termDetails['term'];
     }
     
-
     $preLoad=array();
+    $headers = array();
+    $headers[] = 'MIME-Version: 1.0';
+    $headers[] = 'Content-type: text/html; charset=UTF-8;';
+    $emailFrom = variable_get('site_mail', '');
+    if (!empty($emailFrom)) {
+        $headers[] = 'From: '. $emailFrom;
+        $headers[] = 'Reply-To: '. $emailFrom;
+        $headers[] = 'Return-Path: '. $emailFrom;
+    }
+    $headers = implode("\r\n", $headers) . PHP_EOL;
     if ($_POST) {
         foreach($_POST as $key => $value) {
             if(preg_match("/^([a-z\_]+)\_(\d+)\_(\d+)$/", $key, $matches)) {
@@ -194,15 +202,17 @@ class iform_ukbms_assign_transects {
                             $locationName = $locationRecords[0]['name'];
                             // Replacements for the person's name and the location name tags in the subject and 
                             // message with the real location and person name.
-                            $subject = str_replace("{person_name}", $personName, $subject); 
-                            $subject = str_replace("{location_name}", $locationName, $subject); 
-                            $message = str_replace("{person_name}", $personName, $message); 
-                            $message = str_replace("{location_name}", $locationName, $message); 
-                            $sent = mail($emailTo, $subject, wordwrap($message, 70));
+                            $subject = str_replace(array("{person_name}", "{location_name}"),
+                                array($personName, $locationName),
+                                $subject); 
+                            $message = str_replace(array("{person_name}", "{location_name}"),
+                                array($personName, $locationName),
+                                $message);
+                            $sent = mail($emailTo, $subject, wordwrap($message, 70), $headers);
                             if ($sent) {
-                                drupal_set_message('Email sent succesfully');
+                                drupal_set_message('Management notification email sent succesfully');
                             } else {
-                                drupal_set_message('Email send failed');
+                                drupal_set_message('Management notification email send failed');
                             }
                         }
                         break;
@@ -240,15 +250,17 @@ class iform_ukbms_assign_transects {
                             $locationName = $locationRecords[0]['name'];
                             // Replacements for the person's name and the location name tags in the subject and 
                             // message with the real location and person name.
-                            $subject = str_replace("{person_name}", $personName, $subject); 
-                            $subject = str_replace("{location_name}", $locationName, $subject); 
-                            $message = str_replace("{person_name}", $personName, $message); 
-                            $message = str_replace("{location_name}", $locationName, $message); 
-                            $sent = mail($emailTo, $subject, wordwrap($message, 70));
+                            $subject = str_replace(array("{person_name}", "{location_name}"),
+                                array($personName, $locationName),
+                                $subject);
+                            $message = str_replace(array("{person_name}", "{location_name}"),
+                                array($personName, $locationName),
+                                $message);
+                            $sent = mail($emailTo, $subject, wordwrap($message, 70), $headers);
                             if ($sent) {
-                                drupal_set_message('Email sent succesfully');
+                                drupal_set_message('Management notification email sent succesfully');
                             } else {
-                                drupal_set_message('Email send failed');
+                                drupal_set_message('Management notification email send failed');
                             }
                         }
                         break;
@@ -266,17 +278,18 @@ class iform_ukbms_assign_transects {
     if(count($lookUpValues)>2) { // includes the "please select" empty option
         $help = t('Pick the site type you are interested in, then use the &quot;find place&quot; box to find a nearby town or village. Zoom and/or drag the map to pan to show the search area you are interested in. ' .
                   'Press the &quot;Search for Sites&quot; button to display the squares within the displayed area.') . '<br/>' .
-                  t('The first @limit squares will be displayed in a grid under the map, complete with a control indicating what action may be requested (e.g. for holiday squares it is possible to assign it to yourself, or de-assign it).', array('@limit' => $args['limit'])) . '<br/>' .
-                  t('When you have selected what actions you wish to carry out, click on the &quot;Carry out checked actions&quot; button.');
-        if($args['email'] !== null && $args['email'] !== '') {
+                  t('The closest @limit squares will be displayed in a grid under the map, complete with a control indicating what actions may be requested.', array('@limit' => $args['limit']));
+        if($userID > 0)
+            $help .= '<br/>' . t('When you have selected what action you wish to carry out, click on the &quot;Carry out checked actions&quot; button.');
+        if($userID > 0 && $args['email'] !== null && $args['email'] !== '') {
             $help .= '<br/>' . t('Note that an email will be sent to @email to provide management visibility of the Holiday square allocation.', array('@email' => $args['email']));
         }
-        $help .= '<br/>' . t('Key').':<ul>' .
-            '<li>'.t('Green : normal squares already allocated to you').'</li>'.
-            '<li>'.t('Blue : normal squares, allocated to other people').'</li>'.
-            '<li>'.t('Red : unallocated normal squares').'</li>'.
-            '<li>'.t('Yellow : holiday squares').'</li>'.
-            '</ul>';
+//        $help .= '<br/>' . t('Key').':<ul>' .
+//            '<li>'.t('Green : normal squares already allocated to you').'</li>'.
+//            '<li>'.t('Yellow : normal squares, allocated to other people').'</li>'.
+//            '<li>'.t('Red : unallocated normal squares').'</li>'.
+//            '<li>'.t('Blue : holiday squares').'</li>'.
+//            '</ul>';
         $r .= '<div class="ui-state-highlight page-notice ui-corner-all">'.$help.'</div>';
         $value = '';
         if ($_POST && array_key_exists('location:location_type_id', $_POST))
@@ -293,18 +306,19 @@ class iform_ukbms_assign_transects {
     } else {
         $help = t('Use the &quot;find place&quot; box to find a nearby town or village, then zoom and/or drag the map to pan to show the search area you are interested in. ' .
             'Press the &quot;Search for Sites&quot; button to display the squares within the displayed area.') . '<br/>' .
-            t('The first @limit squares will be displayed in a grid under the map, complete with a control indicating what action may be requested (e.g. for holiday squares it is possible to assign it to yourself, or de-assign it).', array('@limit' => $args['limit'])) .
-            t('When you have selected what actions you wish to carry out, click on the &quot;Carry out checked actions&quot; button.') . '<br/>' .
-            t('Currently this form is configured to handle @type sites only.', array('@type' => $typeTermIDs[0]['term']));
-        if($args['email'] !== null && $args['email'] !== '') {
+            t('The closest @limit squares will be displayed in a grid under the map, complete with a control indicating what action may be requested.', array('@limit' => $args['limit']));
+        if($userID > 0)
+            $help .= '<br/>' . t('When you have selected what action you wish to carry out, click on the &quot;Carry out checked actions&quot; button.');
+        $help .= '<br/>' . t('Currently this form is configured to handle @type sites only.', array('@type' => $typeTermIDs[0]['term']));
+        if($userID > 0 && $args['email'] !== null && $args['email'] !== '') {
             $help .= '<br/>' . ' ' . t('Note that an email will be sent to @email to provide management visibility of the Holiday square allocation.', array('@email' => $args['email']));
         }
-        $help .= '<br/>' . t('Key').':<ul>' .
-            '<li>'.t('Green : normal squares already allocated to you').'</li>'.
-            '<li>'.t('Blue : normal squares, allocated to other people').'</li>'.
-            '<li>'.t('Red : unallocated normal squares').'</li>'.
-            '<li>'.t('Yellow : holiday squares').'</li>'.
-            '</ul>';
+//        $help .= '<br/>' . t('Key').':<ul>' .
+//            '<li>'.t('Green : normal squares already allocated to you').'</li>'.
+//            '<li>'.t('Yellow : normal squares, allocated to other people').'</li>'.
+//            '<li>'.t('Red : unallocated normal squares').'</li>'.
+//            '<li>'.t('Blue : holiday squares').'</li>'.
+//            '</ul>';
         $r .= '<div class="ui-state-highlight page-notice ui-corner-all">'.$help.'</div>';
         $r .= '<input type="hidden" name="location:location_type_id" value="'.$typeTermIDs[0]['id'].'" />' . PHP_EOL;
     }
@@ -318,7 +332,7 @@ class iform_ukbms_assign_transects {
     $r .= map_helper::map_panel($options, $olOptions);
     $r .= '<button type="button" class="indicia-button" onclick="indiciaFns.displayFeatures([])">' . t('Search for Sites') . '</button>';
     $r .= '<table id="featureTable"><thead><tr><th>'.t('Site').
-            '</th><th>'.t('Holiday square?').
+//            '</th><th>'.t('Holiday square?').
             '</th><th>'.t('Status').
             '</th><th>'.t('Actions').
             '</th></thead><tbody id="featureTableBody"></tbody></table>'.
@@ -333,8 +347,9 @@ class iform_ukbms_assign_transects {
                                       'indiciaData.holiday_attr_id = ' . $args['holiday_attr_id'] . ';' . PHP_EOL .
                                       'indiciaData.indiciaSvc = "' . data_entry_helper::$base_url . '";' . PHP_EOL .
                                       'indiciaData.siteDetails = "' . hostsite_get_url('/site-details') . '";' . PHP_EOL .
-                                      'indiciaData.initFeatureIds = [' . implode(', ', $preLoad) . '];' . PHP_EOL ;
-
+                                      'indiciaData.initFeatureIds = [' . implode(', ', $preLoad) . '];' . PHP_EOL .
+                                      'indiciaData.user_id = ' . (($user_id = hostsite_get_user_field('indicia_user_id')) ? $user_id : 0) . ';' . PHP_EOL ;
+    
     return $r;
   }
 

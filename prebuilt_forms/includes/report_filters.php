@@ -935,7 +935,7 @@ function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
   if (function_exists('hostsite_add_library')) {
     hostsite_add_library('collapse');
   }
-  $filterData = report_filters_load_existing($readAuth, $options['sharingCode'], TRUE);
+  $filterData = report_filters_load_existing($readAuth, $options['sharingCode']);
   $existing = '';
   $contexts = '';
   $contextDefs = array();
