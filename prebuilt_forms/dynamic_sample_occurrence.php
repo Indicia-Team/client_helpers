@@ -1220,66 +1220,76 @@ HTML;
    */
   protected static function get_control_speciesmap($auth, $args, $tabAlias, $options) {
     // The ID must be done here so it can be accessed by both the species grid and the buttons.
-    $code = rand(0,1000);
-    $defaults = array('id' => 'species-grid-'.$code, 'buttonsId' => 'species-grid-buttons-'.$code);
+    $code = rand(0, 1000);
+    $defaults = array('id' => "species-grid-$code", 'buttonsId' => "species-grid-buttons-$code");
     $options = array_merge($defaults, $options);
 
     $gridmode = call_user_func(array(self::$called_class, 'getGridMode'), $args);
-    if(!$gridmode)
+    if (!$gridmode) {
       return "<b>The SpeciesMap control must be used in gridmode.</b><br/>";
-    // Force a new option
-    $options['speciesControlToUseSubSamples'] = true;
+    }
+    // Force a new option.
+    $options['speciesControlToUseSubSamples'] = TRUE;
     $options['base_url'] = data_entry_helper::$base_url;
-    //The filter can be a URL or on the edit tab, so do the processing to work out the filter to use
+    // The filter can be a URL or on the edit tab, so do the processing to work
+    // out the filter to use.
     $filterLines = self::get_species_filter($args);
-    // store in the argument so that it can be used elsewhere
+    // Store in the argument so that it can be used elsewhere.
     $args['taxon_filter'] = implode("\n", $filterLines);
-    //Single species mode only ever applies if we have supplied only one filter species and we aren't in taxon group mode
-    if ($args['taxon_filter_field']!=='taxon_group' && count($filterLines)===1 && ($args['multiple_occurrence_mode']!=='multi')) {
+    // Single species mode only ever applies if we have supplied only one
+    // filter species and we aren't in taxon group mode.
+    if ($args['taxon_filter_field'] !== 'taxon_group' && count($filterLines) === 1 && ($args['multiple_occurrence_mode'] !== 'multi')) {
       $response = self::get_single_species_data($auth, $args, $filterLines);
-      //Optional message to display the single species on the page
+      // Optional message to display the single species on the page.
       if ($args['single_species_message']) {
         self::$singleSpeciesName = data_entry_helper::apply_static_template('single_species_taxon_label', $response[0]);
       }
-      if (count($response)==0)
-        //if the response is empty there is no matching taxon, so clear the filter as we can try and display the checklist with all data
-        $args['taxon_filter']='';
-      elseif (count($response)==1)
-      //Keep the id of the single species in a hidden field for processing if in single species mode
-      // TBD
-      return '<input type="hidden" name="occurrence:taxa_taxon_list_id" value="'.$response[0]['id']."\"/>\n";
+      if (count($response) === 0) {
+        // If the response is empty there is no matching taxon, so clear the
+        // filter as we can try and display the checklist with all data.
+        $args['taxon_filter'] = '';
+      }
+      elseif (count($response) === 1) {
+        // Keep the id of the single species in a hidden field for processing
+        // if in single species mode.
+        // TBD.
+        return '<input type="hidden" name="occurrence:taxa_taxon_list_id" value="' . $response[0]['id'] . "\"/>\n";
+      }
     }
     $extraParams = $auth['read'];
-    // the imp-sref & imp-geom are within the dialog so it is updated.
+    // The imp-sref & imp-geom are within the dialog so it is updated.
     $speciesCtrl = self::get_control_species_checklist($auth, $args, $extraParams, $options); // this preloads the subsample data.
     $systems = explode(',', str_replace(' ', '', $args['spatial_systems']));
-    // note that this control only uses the first spatial reference system in the list.
-    $system = '<input type="hidden" id="imp-sref-system" name="sample:entered_sref_system" value="'.$systems[0].'" />';
-    // since we handle the system ourself, we need to include the system handled js files.
-    data_entry_helper::include_sref_handler_js(array($systems[0]=>''));
+    // Note that this control only uses the first spatial reference system in the list.
+    $system = '<input type="hidden" id="imp-sref-system" name="sample:entered_sref_system" value="' . $systems[0] . '" />';
+    // Since we handle the system ourself, we need to include the system
+    // handled js files.
+    data_entry_helper::include_sref_handler_js([$systems[0] => '']);
     $r = '';
     if (isset($options['sampleMethodId'])) {
       $args['sample_method_id'] = $options['sampleMethodId'];
       $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth['read']);
       foreach ($sampleAttrs as &$attr) {
-        $attr['fieldname'] = 'sc:n::'.$attr['fieldname'];
-        $attr['id'] = 'sc:n::'.$attr['id'];
+        $attr['fieldname'] = "sc:n::$attr[fieldname]";
+        $attr['id'] = "sc:n::$attr[id]";
       }
       $attrOptions = self::get_attr_specific_options($options);
-      $sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), null, $attrOptions);
-      $r .= '<div id="'.$options['id'].'-subsample-ctrls" style="display: none">'.$sampleCtrls.'</div>';
+      $sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), NULL, $attrOptions);
+      $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\">$sampleCtrls</div>";
     }
-    $r .= '<div id="'.$options['id'].'-container" style="display: none">'.
-           '<input type="hidden" id="imp-sref" />'. // a dummy to capture feedback from the map
-           '<input type="hidden" id="imp-geom" />'. // a dummy to capture feedback from the map
-           '<input type="hidden" name="sample:entered_sref" value="'.data_entry_helper::check_default_value('sample:entered_sref', '').'">'.
-           '<input type="hidden" name="sample:geom" value="'.data_entry_helper::check_default_value('sample:geom', '').'" >'.
-           $system.
-           '<div id="'.$options['id'].'-blocks">'.
-           self::get_control_speciesmap_controls($auth, $args, $options).
-           '</div>'.
-           '<input type="hidden" value="true" name="speciesgridmapmode" />'.
-           $speciesCtrl.
+    $r .= "<div id=\"$options[id]-container\" style=\"display: none\">" .
+           // A dummy to capture feedback from the map.
+           '<input type="hidden" id="imp-sref" />' .
+           // A dummy to capture feedback from the map.
+           '<input type="hidden" id="imp-geom" />' .
+           '<input type="hidden" name="sample:entered_sref" value="' . data_entry_helper::check_default_value('sample:entered_sref', '') . '">' .
+           '<input type="hidden" name="sample:geom" value="' . data_entry_helper::check_default_value('sample:geom', '') . '" >' .
+           $system .
+           "<div id=\"$options[id]-blocks\">" .
+           self::get_control_speciesmap_controls($auth, $args, $options) .
+           '</div>' .
+           '<input type="hidden" value="true" name="speciesgridmapmode" />' .
+           $speciesCtrl .
         '</div>';
     return $r;
   }
