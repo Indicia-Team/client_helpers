@@ -17,11 +17,24 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
- /* eslint no-underscore-dangle: ["error", { "allow": ["_id", "_source", "_latlng"] }]*/
+ /* eslint no-underscore-dangle: ["error", { "allow": ["_id", "_source", "_latlng"] }] */
+ /* eslint no-extend-native: ["error", { "exceptions": ["String"] }] */
 
 (function enclose() {
   'use strict';
   var $ = jQuery;
+
+  /**
+   * Extend the String class to simplify a column fieldname string.
+   *
+   * For special column handlers, a fieldname can be given as the following
+   * format:
+   * #fieldname:param1:param2:...#
+   * This function will return just fieldname.
+   */
+  String.prototype.simpleFieldName = function simpleFieldName() {
+    return this.replace(/#/g, '').split(':')[0];
+  };
 
   /**
    * Keep track of a list of all the plugin instances that output something.
@@ -205,6 +218,12 @@
     return value;
   };
 
+  /**
+   * Searches an object for a nested property and sets its value.
+   *
+   * @return mixed
+   *   Property value.
+   */
   indiciaFns.findAndSetValue = function findAndSetValue(object, key, updateValue) {
     var value;
     Object.keys(object).some(function eachKey(k) {
@@ -257,7 +276,7 @@
           // Add an icon for each rule violation.
           $.each(autoChecks.output, function eachViolation() {
             // Set a default for any other rules.
-            var icon = indiciaData.ruleClasses.hasOwnProperty(this.rule_type)
+            var icon = Object.prototype.hasOwnProperty.call(indiciaData.ruleClasses, this.rule_type)
               ? indiciaData.ruleClasses[this.rule_type] : indiciaData.ruleClasses.default;
             icons.push('<span title="' + this.message + '" class="' + icon + '"></span>');
           });
@@ -448,11 +467,12 @@
    * Field convertors which allow sort on underlying fields are listed here.
    */
   indiciaData.fieldConvertorSortFields = {
-    //status_icons: []
-    //data_cleaner_icons: [],
+    // Unsupported possibilities are commented out.
+    // status_icons: []
+    // data_cleaner_icons: [],
     event_date: ['event.date_start'],
-    //higher_geography: [],
-    //locality: [],
+    // higher_geography: [],
+    // locality: [],
     datasource_code: ['metadata.website.id', 'metadata.survey.id']
   };
 
@@ -673,6 +693,11 @@
   var $ = jQuery;
 
   /**
+   * Place to store public methods.
+   */
+  var methods;
+
+  /**
    * Flag to track when file generation completed.
    */
   var done;
@@ -796,7 +821,7 @@
   /**
    * Declare public methods.
    */
-  var methods = {
+  methods = {
 
     /**
      * Initialise the esMap  plugin.
@@ -846,7 +871,6 @@
     });
     return this;
   };
-
 }());
 
 /**
@@ -855,6 +879,11 @@
 (function esMapPlugin() {
   'use strict';
   var $ = jQuery;
+
+  /**
+   * Place to store public methods.
+   */
+  var methods;
 
   /**
    * Declare default settings.
@@ -952,12 +981,10 @@
     }
   }
 
-
-
   /**
    * Declare public methods.
    */
-  var methods = {
+  methods = {
     /**
      * Initialise the esMap  plugin.
      *
@@ -1127,6 +1154,11 @@
   var $ = jQuery;
 
   /**
+   * Place to store public methods.
+   */
+  var methods;
+
+  /**
    * Declare default settings.
    */
   var defaults = {
@@ -1191,10 +1223,6 @@
       });
     });
 
-    $('.es-filter-param').focus(function(e) {
-      console.log('focus');
-    });
-
     $(el).find('.sort').click(function clickSort() {
       var sortButton = this;
       var row = $(sortButton).closest('tr');
@@ -1205,7 +1233,7 @@
         var col = $(el)[0].settings.columns[idx];
         var sortDesc = $(sortButton).hasClass('fa-sort-up');
         var fields;
-        var fieldName = col.field.replace(/#/g, '').split(':')[0];
+        var fieldName = col.field.simpleFieldName();
         $(row).find('.sort.fas').removeClass('fa-sort-down');
         $(row).find('.sort.fas').removeClass('fa-sort-up');
         $(row).find('.sort.fas').addClass('fa-sort');
@@ -1273,6 +1301,17 @@
     });
   }
 
+  /**
+   * Retrieve any action links to attach to a dataGrid row.
+   *
+   * @param array actions
+   *   List of actions from configuration.
+   * @param object doc
+   *   The ES document for the row.
+   *
+   * @return string
+   *   Action link HTML.
+   */
   function getActionsForRow(actions, doc) {
     var html = '';
     $.each(actions, function eachActions() {
@@ -1280,8 +1319,7 @@
       var link;
       if (typeof this.title === 'undefined') {
         html += '<span class="fas fa-times-circle error" title="Invalid action definition - missing title"></span>';
-      }
-      else {
+      } else {
         if (this.iconClass) {
           item = '<span class="' + this.iconClass + '" title="' + this.title + '"></span>';
         } else {
@@ -1316,7 +1354,7 @@
   /**
    * Declare public methods.
    */
-  var methods = {
+  methods = {
     /**
      * Initialise the esDataGrid plugin.
      *
@@ -1361,7 +1399,7 @@
             var sortableField = typeof indiciaData.esMappings[this.field] !== 'undefined'
               && indiciaData.esMappings[this.field].sort_field;
             sortableField = sortableField
-              || indiciaData.fieldConvertorSortFields[this.field.replace(/#/g, '').split(':')[0]];
+              || indiciaData.fieldConvertorSortFields[this.field.simpleFieldName()];
             if (el.settings.sortable !== false && sortableField) {
               heading += '<span class="sort fas fa-sort"></span>';
             }
@@ -1391,7 +1429,7 @@
             // No filter input if this column has no mapping unless there is a
             // special field function that can work out the query.
             if (typeof indiciaData.esMappings[this.field] !== 'undefined'
-              || typeof indiciaFns.fieldConvertorQueryBuilders[this.field.replace(/#/g, '').split(':')[0]] !== 'undefined') {
+              || typeof indiciaFns.fieldConvertorQueryBuilders[this.field.simpleFieldName()] !== 'undefined') {
               $('<input type="text">').appendTo(td);
             }
           });
@@ -1506,6 +1544,7 @@
            + cells.join('') +
            '</tr>').appendTo($(el).find('tbody'));
         $(row).attr('data-doc-source', JSON.stringify(hit._source));
+        return true;
       });
       // Discard the list of IDs to block during this population as now done.
       el.settings.blockIdsOnNextLoad = false;
@@ -1617,10 +1656,16 @@
   var $ = jQuery;
 
   /**
+   * Place to store public methods.
+   */
+  var methods;
+
+  /**
    * Declare default settings.
    */
   var defaults = {
   };
+
   var callbacks = {
   };
 
@@ -1726,9 +1771,9 @@
       html += '</tbody></table>';
     }
     return html;
-  };
+  }
 
-  var loadComments = function loadComments(el, occurrenceId) {
+  function loadComments(el, occurrenceId) {
     // Check not already loaded.
     if (loadedCommentsOcurrenceId === occurrenceId) {
       return;
@@ -1759,7 +1804,7 @@
       },
       dataType: 'json'
     });
-  };
+  }
 
   function loadAttributes(el, occurrenceId) {
     // Check not already loaded.
@@ -1947,7 +1992,7 @@
   /**
    * Declare public methods.
    */
-  var methods = {
+  methods = {
     /**
      * Initialise the esDetailsPane plugin.
      *
@@ -1993,7 +2038,8 @@
           if (doc.taxon.taxon_name !== doc.taxon.accepted_name && doc.taxon.taxon_name !== doc.taxon.vernacular_name) {
             addRow(rows, doc, 'Given name', ['taxon.taxon_name', 'taxon.taxon_name_authorship'], ' ');
           }
-          addRow(rows, doc, 'Accepted name' + acceptedNameAnnotation, ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
+          addRow(rows, doc, 'Accepted name' + acceptedNameAnnotation,
+            ['taxon.accepted_name', 'taxon.accepted_name_authorship'], ' ');
           addRow(rows, doc, 'Common name' + vernaculardNameAnnotation, 'taxon.vernacular_name');
           addRow(rows, doc, 'Taxonomy', ['taxon.phylum', 'taxon.order', 'taxon.family'], ' :: ');
           addRow(rows, doc, 'Licence', 'metadata.licence_code');
@@ -2006,7 +2052,8 @@
           addRow(rows, doc, 'Occurrence comments', 'occurrence.occurrence_remarks');
           addRow(rows, doc, 'Submitted on', 'metadata.created_on');
           addRow(rows, doc, 'Last updated on', 'metadata.updated_on');
-          addRow(rows, doc, 'Dataset', ['metadata.website.title', 'metadata.survey.title', 'metadata.group.title'], ' :: ');
+          addRow(rows, doc, 'Dataset',
+            ['metadata.website.title', 'metadata.survey.title', 'metadata.group.title'], ' :: ');
           $(recordDetails).html('<table><tbody>' + rows.join('') + '</tbody></table>');
           $(recordDetails).append('<div class="attrs"></div>');
           $(el).find('.empty-message').hide();
@@ -2200,7 +2247,8 @@
         ? 'Set status to ' + indiciaData.statusMsgs[overallStatus]
         : 'Query this record';
     }
-    $('<legend><span class="' + indiciaData.statusClasses[overallStatus] + ' fa-2x"></span>' + heading + '</legend>').appendTo(fs);
+    $('<legend><span class="' + indiciaData.statusClasses[overallStatus] + ' fa-2x"></span>' + heading + '</legend>')
+      .appendTo(fs);
     $('<label for="comment-textarea">Add the following comment:</label>').appendTo(fs);
     $('<textarea id="comment-textarea">').appendTo(fs);
     $('<button class="btn btn-primary">Save</button>').appendTo(fs);
@@ -2338,7 +2386,7 @@ jQuery(document).ready(function docReady() {
     $.each($('.es-output'), function eachOutput() {
       var el = this;
       var source = JSON.parse($(el).attr('data-es-source'));
-      if (source.hasOwnProperty(ds.settings.id)) {
+      if (Object.prototype.hasOwnProperty.call(source, ds.settings.id)) {
         $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
           if ($(el).hasClass('es-output-' + pluginClass)) {
             ds.outputs[pluginClass].push(el);
