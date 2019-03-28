@@ -4256,6 +4256,12 @@ JS;
         }
         $r .= self::get_species_checklist_col_header($options['id']."-present-$i", lang::get('species_checklist.present'),
           $visibleColIdx, $options['colWidths'], $attrs);
+        if ($options['speciesControlToUseSubSamples']) {
+          // Need a dummy header for this cell even though never visible to
+          // keep things aligned after responsive changes.
+          $r .= self::get_species_checklist_col_header($options['id']."-sample-$i", '',
+            $visibleColIdx, $options['colWidths'], ' style="display:none" data-hide="all" data-ignore="true" data-editable="true"');
+        }
 
         // All attributes - may be hidden in responsive mode, depending upon
         // the settings in the responsiveCols array.
