@@ -1099,7 +1099,7 @@
   };
 
   /**
-   * Extend jQuery to declare esDataGrid method.
+   * Extend jQuery to declare esMap method.
    */
   $.fn.esMap = function buildEsMap(methodOrOptions) {
     var passedArgs = arguments;
@@ -1384,7 +1384,7 @@
         // Disable filter row for aggregations.
         el.settings.includeFilterRow = el.settings.includeFilterRow && !showingAggregation;
         // Output header row for filtering.
-        if (el.settings.includeFilterRow !== false ) {
+        if (el.settings.includeFilterRow !== false) {
           filterRow = $('<tr class="es-filter-row" />').appendTo(header);
           $.each(el.settings.columns, function eachColumn(idx) {
             var td = $('<td class="col-' + idx + '" data-col="' + idx + '"></td>').appendTo(filterRow);
@@ -1407,6 +1407,8 @@
           '</td></tr></tfoot>').appendTo(table);
       }
       initHandlers(el);
+      // Make grid responsive.
+      $(table).indiciaFootableReport();
     },
     /**
      * Populate the data grid with Elasticsearch response data.
@@ -2453,8 +2455,6 @@ jQuery(document).ready(function docReady() {
 
   $('.es-output-download').esDownload({});
   $('.es-output-dataGrid').esDataGrid({});
-  // Also make grids responsive.
-  $('.es-output-dataGrid').indiciaFootableReport();
   $('.es-output-map').esMap({});
   $('.details-container').esDetailsPane({});
   $('.verification-buttons').esVerificationButtons({});
