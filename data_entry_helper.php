@@ -7111,24 +7111,43 @@ HTML;
   }
 
   /**
-   * Retrieves any errors that have not been emitted alongside a form control and adds them to the page.
+   * Retrieves any errors that have not been emitted.
+   *
+   * Any errors that have not been emmitted elsewhere on the form are retrieved
+   * which will typically be related to attribtues which are required on the
+   * server side but where there are no matching controls on the form.
+   *
+   * If running inside Drupal then the errors are returned with explanation
+   * in a call to Drupal_set_message. Otherwise they are returned, normally for
+   * addition to the bottom of the form.
+   *
+   *
    * This is useful when added to the bottom of a form, because occasionally an error can be returned which is not associated with a form
    * control, so calling dump_errors with the inline option set to true will not emit the errors onto the page.
    * @return string HTML block containing the error information, built by concatenating the
    * validation_message template for each error.
    */
-  public static function dump_remaining_errors()
-  {
+  public static function dump_remaining_errors() {
     global $indicia_templates;
-    $r="";
-    if (self::$validation_errors!==null) {
+    $errors = [];
+    if (self::$validation_errors !== NULL) {
       foreach (self::$validation_errors as $errorKey => $error) {
         if (!in_array($error, self::$displayed_errors)) {
-          $r .= str_replace('{error}', lang::get($error), $indicia_templates['validation_message']);
-          $r .= "[".$errorKey."]";
+          $errors[] = lang::get($error) . '<br/>&nbsp;&nbsp;' . lang::get(' (related to attribute {1})', "[$errorKey]");
         }
       }
-      $r .= '<br/>';
+    }
+    $r = '';
+    if (count($errors)) {
+      $msg = <<<TXT
+Validation errors occurred when this form was submitted to the server. The form configuration may be incorrect as
+it appears the controls associated with these messages are missing from the form.
+TXT;
+      $r = lang::get($msg) . '<ul><li>' . implode($errors, '</li><li>') . '</li></ul>';
+      if (function_exists('hostsite_show_message')) {
+        hostsite_show_message($r, 'error');
+      }
+      return '';
     }
     return $r;
   }
