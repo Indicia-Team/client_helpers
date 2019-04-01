@@ -715,7 +715,26 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
       }
       // @todo Consider other types of species filter, e.g. family or species list?
     }
-    return parent::get_form_html($args, $auth, $attributes);
+    $r = parent::get_form_html($args, $auth, $attributes);
+    // Are there checked records being edited? If so, warn.
+    if (data_entry_helper::$checkedRecordsCount) {
+      if (data_entry_helper::$checkedRecordsCount === 1 && data_entry_helper::$uncheckedRecordsCount === 0) {
+        $msg = 'You are editing a record which has already been checked. Please only make changes if they are ' .
+          'important, otherwise the record will need to be rechecked.';
+      }
+      elseif (data_entry_helper::$checkedRecordsCount > 1 && data_entry_helper::$uncheckedRecordsCount === 0) {
+        $msg = 'You are editing a sample containing records which have already been checked. Please only make ' .
+        'changes if they are important, otherwise the records will need to be rechecked.';
+      }
+      else {
+        $msg = 'You are editing a sample containing some records which have already been checked. Changing details ' .
+          'relating to the visit will require all records to be rechecked but changing details relating to a single ' .
+          'species or other record attributes will only affect that record. Please only make changes if they are ' .
+          'important, otherwise the records will need to be rechecked.';
+      }
+      hostsite_show_message(lang::get($msg));
+    }
+    return $r;
   }
 
   /**
@@ -817,7 +836,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
   protected static function getEntity(&$args, $auth) {
     data_entry_helper::$entity_to_load = array();
     if ((call_user_func(array(self::$called_class, 'getGridMode'), $args))) {
-      // multi-record mode using a checklist grid. We really just need to know the sample ID.
+      // Multi-record mode using a checklist grid. We really just need to know
+      // the sample ID.
       if (self::$loadedOccurrenceId && !self::$loadedSampleId) {
         $response = data_entry_helper::get_population_data(array(
             'table' => 'occurrence',

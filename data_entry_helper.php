@@ -95,6 +95,20 @@ class data_entry_helper extends helper_base {
    */
   public static $handled_attributes = array();
 
+  /**
+   * Track need to warn user if on a form that has checked records.
+   *
+   * @var int
+   */
+  public static $checkedRecordsCount = 0;
+
+  /**
+   * Also track unchecked records to help make a sensible warning message.
+   *
+   * @var int
+   */
+  public static $uncheckedRecordsCount = 0;
+
   /**********************************/
   /* Start of main controls section */
   /**********************************/
@@ -2779,6 +2793,18 @@ JS;
         }
       });\n";
     }
+    // Existing records - check status in case there is a need to warn user.
+    if (isset(data_entry_helper::$entity_to_load['occurrence:id'])) {
+      $status = !empty(data_entry_helper::$entity_to_load['occurrence:record_status'])
+        ? data_entry_helper::$entity_to_load['occurrence:record_status']
+        : 'C';
+      if ($status === 'C') {
+        self::$checkedRecordsCount++;
+      }
+      else {
+        self::$uncheckedRecordsCount++;
+      }
+    }
     return self::autocomplete($options);
   }
 
@@ -3454,8 +3480,9 @@ JS;
         $editedRecord = isset($_GET['occurrence_id']) && $_GET['occurrence_id']==$existingRecordId;
         $editClass = $editedRecord ? ' edited-record ui-state-highlight' : '';
         $hasEditedRecord = $hasEditedRecord || $editedRecord;
-        // Verified records can be flagged with an icon
-        //Do an isset check as the npms_paths form for example uses the species checklist, but doesn't use an entity_to_load
+        // Verified records can be flagged with an icon.
+        // Do an isset check as the npms_paths form for example uses the
+        // species checklist, but doesn't use an entity_to_load.
         if (isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:record_status"])) {
           $status = self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:record_status"];
           if (preg_match('/[VDR]/', $status)) {
@@ -3470,6 +3497,10 @@ JS;
               $title = lang::get('This record has been {1}. Changing it will mean that it will need to be rechecked by an expert.', $label);
               $firstCell .= "<img alt=\"$label\" title=\"$title\" src=\"{$imgPath}nuvola/$img-16px.png\">";
             }
+            data_entry_helper::$checkedRecordsCount++;
+          }
+          else {
+            data_entry_helper::$uncheckedRecordsCount++;
           }
         }
         $row .= str_replace(array('{content}','{colspan}','{editClass}','{tableId}','{idx}'),
