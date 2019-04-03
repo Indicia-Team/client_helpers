@@ -892,7 +892,9 @@
     initialBoundsSet: false,
     initialLat: 54.093409,
     initialLng: -2.89479,
-    initialZoom: 5
+    initialZoom: 5,
+    baseLayer: 'OpenStreetMap',
+    cookies: true
   };
 
   var callbacks = {
@@ -981,6 +983,20 @@
     }
   }
 
+  function loadSettingsFromCookies(cookieNames) {
+    var val;
+    var settings = {};
+    if (typeof $.cookie !== 'undefined') {
+      $.each(cookieNames, function eachCookie() {
+        val = $.cookie(this);
+        if (val !== null && val !== 'undefined') {
+          settings[this] = val;
+        }
+      });
+    }
+    return settings;
+  }
+
   /**
    * Declare public methods.
    */
@@ -995,6 +1011,7 @@
       var source = JSON.parse($(el).attr('data-es-source'));
       var baseMaps;
       var overlays = {};
+      var layersControl;
       el.outputLayers = {};
 
       indiciaFns.registerOutputPluginClass('map');
@@ -1007,7 +1024,10 @@
       if (typeof options !== 'undefined') {
         $.extend(el.settings, options);
       }
-
+      // Apply settings stored in cookies.
+      if (el.settings.cookies) {
+        $.extend(el.settings, loadSettingsFromCookies(['initialLat', 'initialLong', 'initialZoom', 'baseLayer']));
+      }
       el.map = L.map(el.id).setView([el.settings.initialLat, el.settings.initialLng], el.settings.initialZoom);
       baseMaps = {
         OpenStreetMap: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1015,12 +1035,13 @@
         }),
         OpenTopoMap: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
           maxZoom: 17,
-          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+            '<a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> ' +
+            '(<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
         })
       };
-      $.each(baseMaps, function eachBaseLayer() {
-        this.addTo(el.map);
-      });
+      // Add the active base layer to the map.
+      baseMaps[el.settings.baseLayer].addTo(el.map);
       $.each(source, function eachSource(id, title) {
         var group;
         if (el.settings.styles[id].type !== 'undefined' && el.settings.styles[id].type === 'heat') {
@@ -1035,7 +1056,8 @@
         // Add the group to the map
         group.addTo(el.map);
       });
-      L.control.layers(baseMaps, overlays).addTo(el.map);
+      layersControl = L.control.layers(baseMaps, overlays);
+      layersControl.addTo(el.map);
       el.map.on('zoomend', function zoomEnd() {
         if (selectedRowMarker !== null) {
           ensureFeatureClear(el, selectedRowMarker);
@@ -1045,8 +1067,19 @@
         $.each(callbacks.moveend, function eachCallback() {
           this(el);
         });
+        if (typeof $.cookie !== 'undefined' && el.settings.cookies) {
+          $.cookie('initialLat', el.map.getCenter().lat);
+          $.cookie('initialLng', el.map.getCenter().lng);
+          $.cookie('initialZoom', el.map.getZoom());
+        }
       });
+      if (typeof $.cookie !== 'undefined' && el.settings.cookies) {
+        el.map.on('baselayerchange', function baselayerchange(layer) {
+          $.cookie('baseLayer', layer.name);
+        });
+      }
     },
+
     /*
      * Populate the map with Elasticsearch response data.
      *
