@@ -40,7 +40,10 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
   private static $controlIds = [];
 
   /**
-   * Return the form metadata.
+   * Return the page metadata.
+   *
+   * @return array
+   *   Form metadata.
    */
   public static function get_dynamic_elasticsearch_definition() {
     $description = <<<HTML
@@ -65,12 +68,16 @@ HTML;
   }
 
   /**
-   * Get the list of parameters for this form.
+   * Get the list of parameters for this form's Edit tab.
    *
    * @return array
    *   List of parameters that this form requires.
    */
   public static function get_parameters() {
+    $collationPermissionDescription = <<<TXT
+Permission required to access download of all records fall inside a location the user collates (e.g. a record centre
+staff member). Requires a field_location_collation integer field holding a location ID in the user account.
+TXT;
     return [
       [
         'name' => 'interface',
@@ -177,9 +184,7 @@ HTML;
       [
         'name' => 'location_collation_records_permission',
         'caption' => 'Records in collated locality download permission',
-        'description' => 'Permission required to access download of all records fall inside a location the user ' .
-          'collates (e.g. a record centre staff member). Requires a field_location_collation integer field holding a ' .
-          'location ID in the user account.',
+        'description' => $collationPermissionDescription,
         'type' => 'text_input',
         'required' => FALSE,
         'group' => 'Permission settings',
@@ -218,7 +223,23 @@ JS;
     return parent::get_form($args, $nid);
   }
 
-  private static function recurseMappings($data, &$mappings, $path = []) {
+  /**
+   * Converts nested mappings data from ES to a flat field list.
+   *
+   * ES returns the mappings for an index as a hierarchical structure
+   * representing the JSON document fields. This recursive function converts
+   * this structure to a flat associative array of fields and field
+   * configuration where the keys are the field names with their parent
+   * elements separated by periods.
+   *
+   * @param array $data
+   *   Mappings data structure retrieved from ES.
+   * @param array $mappings
+   *   Array which will be populated by the field list.
+   * @param array $path
+   *   Array of parent fields which define the path to the current element.
+   */
+  private static function recurseMappings(array $data, array &$mappings, array $path = []) {
     foreach ($data as $field => $config) {
       $thisPath = array_merge($path, [$field]);
       if (isset($config['properties'])) {
@@ -244,6 +265,14 @@ JS;
     }
   }
 
+  /**
+   * Retrieves the ES index mappings data.
+   *
+   * A list of mapped fields is stored in self::$esMappings.
+   *
+   * @param int $nid
+   *   Node ID, used to retrieve the node parameters which contain ES settings.
+   */
   private static function getMappings($nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
     $url = helper_base::$base_url . 'index.php/services/rest/' . $params['endpoint'] . '/_mapping/doc';
@@ -275,7 +304,25 @@ JS;
     self::$esMappings = $mappings;
   }
 
-  private static function checkOptions($controlName, &$options, $requiredOptions, $jsonOptions) {
+  /**
+   * Provide common option handling for controls.
+   *
+   * * Sets a unique ID for the control if not already set.
+   * * Checks that required options are all populated.
+   * * Checks that options which should contain JSON do so.
+   * * Source option converted to array if not already.
+   *
+   * @param string $controlName
+   *   Name of the type of control.
+   * @param array $options
+   *   Options passed to the control (key and value associative array). Will be
+   *   modified.
+   * @param array $requiredOptions
+   *   Array of option names which must have a value.
+   * @param array $jsonOptions
+   *   Array of option names which must contain JSON.
+   */
+  private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
     self::$controlIndex++;
     $options = array_merge([
       'id' => "es-$controlName-" . self::$controlIndex,
@@ -536,6 +583,7 @@ HTML;
       'initialLat',
       'initialLng',
       'initialZoom',
+      'cookies',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     // Escape the source so it can output as an attribute.
