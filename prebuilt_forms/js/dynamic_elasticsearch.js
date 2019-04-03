@@ -1849,11 +1849,11 @@
       url: indiciaData.ajaxUrl + '/attrs/' + indiciaData.nid,
       data: { occurrence_id: occurrenceId },
       success: function success(response) {
+        var attrsDiv = $(el).find('.record-details .attrs');
+        $(attrsDiv).html('');
         $.each(response, function eachHeading(title, attrs) {
           var table;
           var tbody;
-          var attrsDiv = $(el).find('.record-details .attrs');
-          $(attrsDiv).html('');
           $(attrsDiv).append('<h3>' + title + '</h3>');
           table = $('<table>').appendTo(attrsDiv);
           tbody = $('<tbody>').appendTo($(table));
