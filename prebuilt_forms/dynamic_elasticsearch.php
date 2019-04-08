@@ -773,6 +773,37 @@ HTML;
     return $r;
   }
 
+  /**
+   * A select box for choosing from a list of higher geography boundaries.
+   *
+   * Lists indexed locations for a given type.
+   *
+   * Options are:
+   *
+   * * @locationTypeId - ID of the location type of the locations to list. Must
+   *   be a type indexed by the spatial index builder module.
+   *
+   * @return string
+   *   Control HTML
+   */
+  protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
+    if (empty($options['locationTypeId']) || !preg_match('/^\d+$/', $options['locationTypeId'])) {
+      throw new Exception('An integer @locationTypeId parameter is required for the [higherGeographySelect] control');
+    }
+    $options = array_merge([
+      'id' => 'higher-geography-select',
+    ], $options);
+    return data_entry_helper::location_select([
+      'id' => $options['id'],
+      'class' => 'es-higher-geography-select',
+      'extraParams' => $auth['read'] + [
+        'location_type_id' => $options['locationTypeId'],
+        'orderby' => 'name',
+      ],
+      'blankText' => lang::get('<All locations shown>'),
+    ]);
+  }
+
   private static function getDefinitionFilter($definition, array $params) {
     foreach ($params as $param) {
       if (!empty($definition[$param])) {
