@@ -94,6 +94,19 @@
   };
 
   /**
+   * Initially populate the data sources.
+   */
+  indiciaFns.populateDataSources = function populateDataSources() {
+    // Build the source objects and run initial population.
+    indiciaData.esSourceObjects = {};
+    $.each(indiciaData.esSources, function eachSource() {
+      var sourceObject = new EsDataSource(this);
+      indiciaData.esSourceObjects[this.id] = sourceObject;
+      sourceObject.populate();
+    });
+  };
+
+  /**
    * Keep track of a unique list of output plugin classes active on the page.
    */
   indiciaFns.registerOutputPluginClass = function registerOutputPluginClasses(name) {
@@ -683,6 +696,138 @@
     }
     return data;
   };
+
+  /**
+   * Constructor for an EsDataSource.
+   *
+   * @param object settings
+   *   Datasource settings.
+   */
+  function EsDataSource(settings) {
+    var ds = this;
+    ds.settings = settings;
+    // Prepare a structure to store the output plugins linked to this source.
+    ds.outputs = {};
+    $.each(indiciaData.esOutputPluginClasses, function eachPluginClass() {
+      ds.outputs[this] = [];
+    });
+    $.each($('.es-output'), function eachOutput() {
+      var el = this;
+      var source = JSON.parse($(el).attr('data-es-source'));
+      if (Object.prototype.hasOwnProperty.call(source, ds.settings.id)) {
+        $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
+          if ($(el).hasClass('es-output-' + pluginClass)) {
+            ds.outputs[pluginClass].push(el);
+          }
+        });
+      }
+    });
+    if (ds.settings.filterSourceGrid && ds.settings.filterField) {
+      $('#' + ds.settings.filterSourceGrid).esDataGrid('on', 'rowSelect', function onRowSelect(tr) {
+        if (tr) {
+          ds.populate();
+        }
+      });
+    }
+    // If limited to a map's bounds, redraw when the map is zoomed or panned.
+    if (ds.settings.filterBoundsUsingMap) {
+      $('#' + ds.settings.filterBoundsUsingMap).esMap('on', 'moveend', function onMoveEnd() {
+        ds.populate();
+      });
+    }
+  }
+
+  EsDataSource.prototype.lastRequestStr = '';
+
+  /**
+   * Request a datasource to repopulate from current parameters.
+   */
+  EsDataSource.prototype.populate = function datasourcePopulate() {
+    var source = this;
+    var needsPopulation = false;
+    var request;
+    // Check we have an output other than the download plugin, which only
+    // outputs when you click Download.
+    $.each(this.outputs, function eachOutput(name) {
+      needsPopulation = needsPopulation || name !== 'download';
+    });
+    if (needsPopulation) {
+      request = indiciaFns.getEsFormQueryData(source);
+      // Don't repopulate if exactly the same request as already loaded.
+      if (JSON.stringify(request) !== this.lastRequestStr) {
+        this.lastRequestStr = JSON.stringify(request);
+        $.ajax({
+          url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
+          type: 'post',
+          data: request,
+          success: function success(response) {
+            if (response.error || (response.code && response.code !== 200)) {
+              alert('Elasticsearch query failed');
+            } else {
+              // Build any configured output tables.
+              source.buildTableXY(response);
+              $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
+                var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
+                $.each(source.outputs[pluginClass], function eachOutput() {
+                  $(this)[fn]('populate', source.settings, response, request);
+                });
+              });
+            }
+          },
+          error: function error(jqXHR, textStatus, errorThrown) {
+            console.log(errorThrown);
+            alert('Elasticsearch query failed');
+          },
+          dataType: 'json'
+        });
+      }
+    }
+  };
+
+  /**
+   * ESDataSource function to tablify 2 tier aggregation responses.
+   *
+   * Use this method if there is an outer aggregation which corresponds to the
+   * table columns (X) and an inner aggregation which corresponds to the table
+   * rows (Y).
+   *
+   * @param object response
+   *   Response from an ES aggregation search request.
+   */
+  EsDataSource.prototype.buildTableXY = function buildTableXY(response) {
+    var source = this;
+    if (source.settings.buildTableXY) {
+      $.each(source.settings.buildTableXY, function eachTable(name, aggs) {
+        var data = {};
+        var colsTemplate = {
+          key: ''
+        };
+        // Collect the list of columns
+        $.each(response.aggregations[aggs[0]].buckets, function eachOuterBucket() {
+          colsTemplate[this.key] = 0;
+        });
+        // Now for each column, collect the rows.
+        $.each(response.aggregations[aggs[0]].buckets, function eachOuterBucket() {
+          var thisCol = this.key;
+          var aggsPath = aggs[1].split(',');
+          var obj = this;
+          // Drill down the required level of nesting.
+          $.each(aggsPath, function eachPathLevel() {
+            obj = obj[this];
+          });
+          $.each(obj.buckets, function eachInnerBucket() {
+            if (typeof data[this.key] === 'undefined') {
+              data[this.key] = $.extend({}, colsTemplate);
+              data[this.key].key = this.key;
+            }
+            data[this.key][thisCol] = this.doc_count;
+          });
+        });
+        // Attach the data table to the response.
+        response[name] = data;
+      });
+    }
+  };
 }());
 
 /**
@@ -774,6 +919,7 @@
       hours = hours.substr(hours.length - 2);
       minutes = '0' + date.getMinutes();
       minutes = minutes.substr(minutes.length - 2);
+      $(el).find('.progress-container').addClass('download-done');
       $(el).find('.files').append('<div><a href="' + data.filename + '">' +
         '<span class="fas fa-file-archive fa-2x"></span>' +
         'Download .zip file</a><br/>' +
@@ -794,6 +940,7 @@
         if (typeof source === 'undefined') {
           indiciaFns.controlFail(el, 'Download source not found.');
         }
+        $(el).find('.progress-container').removeClass('download-done');
         $(el).find('.progress-container').show();
         done = false;
         $(el).find('.circle').attr('style', 'stroke-dashoffset: 503px');
@@ -892,7 +1039,9 @@
     initialBoundsSet: false,
     initialLat: 54.093409,
     initialLng: -2.89479,
-    initialZoom: 5
+    initialZoom: 5,
+    baseLayer: 'OpenStreetMap',
+    cookies: true
   };
 
   var callbacks = {
@@ -981,6 +1130,20 @@
     }
   }
 
+  function loadSettingsFromCookies(cookieNames) {
+    var val;
+    var settings = {};
+    if (typeof $.cookie !== 'undefined') {
+      $.each(cookieNames, function eachCookie() {
+        val = $.cookie(this);
+        if (val !== null && val !== 'undefined') {
+          settings[this] = val;
+        }
+      });
+    }
+    return settings;
+  }
+
   /**
    * Declare public methods.
    */
@@ -995,6 +1158,7 @@
       var source = JSON.parse($(el).attr('data-es-source'));
       var baseMaps;
       var overlays = {};
+      var layersControl;
       el.outputLayers = {};
 
       indiciaFns.registerOutputPluginClass('map');
@@ -1007,7 +1171,10 @@
       if (typeof options !== 'undefined') {
         $.extend(el.settings, options);
       }
-
+      // Apply settings stored in cookies.
+      if (el.settings.cookies) {
+        $.extend(el.settings, loadSettingsFromCookies(['initialLat', 'initialLong', 'initialZoom', 'baseLayer']));
+      }
       el.map = L.map(el.id).setView([el.settings.initialLat, el.settings.initialLng], el.settings.initialZoom);
       baseMaps = {
         OpenStreetMap: L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -1015,12 +1182,13 @@
         }),
         OpenTopoMap: L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
           maxZoom: 17,
-          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, <a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
+          attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, ' +
+            '<a href="http://viewfinderpanoramas.org">SRTM</a> | Map style: &copy; <a href="https://opentopomap.org">OpenTopoMap</a> ' +
+            '(<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
         })
       };
-      $.each(baseMaps, function eachBaseLayer() {
-        this.addTo(el.map);
-      });
+      // Add the active base layer to the map.
+      baseMaps[el.settings.baseLayer].addTo(el.map);
       $.each(source, function eachSource(id, title) {
         var group;
         if (el.settings.styles[id].type !== 'undefined' && el.settings.styles[id].type === 'heat') {
@@ -1035,7 +1203,8 @@
         // Add the group to the map
         group.addTo(el.map);
       });
-      L.control.layers(baseMaps, overlays).addTo(el.map);
+      layersControl = L.control.layers(baseMaps, overlays);
+      layersControl.addTo(el.map);
       el.map.on('zoomend', function zoomEnd() {
         if (selectedRowMarker !== null) {
           ensureFeatureClear(el, selectedRowMarker);
@@ -1045,8 +1214,19 @@
         $.each(callbacks.moveend, function eachCallback() {
           this(el);
         });
+        if (typeof $.cookie !== 'undefined' && el.settings.cookies) {
+          $.cookie('initialLat', el.map.getCenter().lat);
+          $.cookie('initialLng', el.map.getCenter().lng);
+          $.cookie('initialZoom', el.map.getZoom());
+        }
       });
+      if (typeof $.cookie !== 'undefined' && el.settings.cookies) {
+        el.map.on('baselayerchange', function baselayerchange(layer) {
+          $.cookie('baseLayer', layer.name);
+        });
+      }
     },
+
     /*
      * Populate the map with Elasticsearch response data.
      *
@@ -1448,6 +1628,7 @@
       // Make grid responsive.
       $(table).indiciaFootableReport();
     },
+
     /**
      * Populate the data grid with Elasticsearch response data.
      *
@@ -1816,11 +1997,11 @@
       url: indiciaData.ajaxUrl + '/attrs/' + indiciaData.nid,
       data: { occurrence_id: occurrenceId },
       success: function success(response) {
+        var attrsDiv = $(el).find('.record-details .attrs');
+        $(attrsDiv).html('');
         $.each(response, function eachHeading(title, attrs) {
           var table;
           var tbody;
-          var attrsDiv = $(el).find('.record-details .attrs');
-          $(attrsDiv).html('');
           $(attrsDiv).append('<h3>' + title + '</h3>');
           table = $('<table>').appendTo(attrsDiv);
           tbody = $('<tbody>').appendTo($(table));
@@ -2047,7 +2228,14 @@
           addRow(rows, doc, 'Checks', '#data_cleaner_icons#');
           addRow(rows, doc, 'Date', '#event_date#');
           addRow(rows, doc, 'Output map ref', 'location.output_sref');
-          addRow(rows, doc, 'Location', '#locality#');
+          if (el.settings.locationTypes) {
+            addRow(rows, doc, 'Location', 'location.verbatim_locality');
+            $.each(el.settings.locationTypes, function eachType() {
+              addRow(rows, doc, this, '#higher_geography:' + this + ':name#');
+            });
+          } else {
+            addRow(rows, doc, 'Location', '#locality#');
+          }
           addRow(rows, doc, 'Sample comments', 'event.event_remarks');
           addRow(rows, doc, 'Occurrence comments', 'occurrence.occurrence_remarks');
           addRow(rows, doc, 'Submitted on', 'metadata.created_on');
@@ -2369,152 +2557,12 @@ jQuery(document).ready(function docReady() {
   'use strict';
   var $ = jQuery;
 
-  /**
-   * Constructor for an EsDataSource.
-   *
-   * @param object settings
-   *   Datasource settings.
-   */
-  function EsDataSource(settings) {
-    var ds = this;
-    ds.settings = settings;
-    // Prepare a structure to store the output plugins linked to this source.
-    ds.outputs = {};
-    $.each(indiciaData.esOutputPluginClasses, function eachPluginClass() {
-      ds.outputs[this] = [];
-    });
-    $.each($('.es-output'), function eachOutput() {
-      var el = this;
-      var source = JSON.parse($(el).attr('data-es-source'));
-      if (Object.prototype.hasOwnProperty.call(source, ds.settings.id)) {
-        $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
-          if ($(el).hasClass('es-output-' + pluginClass)) {
-            ds.outputs[pluginClass].push(el);
-          }
-        });
-      }
-    });
-    if (ds.settings.filterSourceGrid && ds.settings.filterField) {
-      $('#' + ds.settings.filterSourceGrid).esDataGrid('on', 'rowSelect', function onRowSelect(tr) {
-        if (tr) {
-          ds.populate();
-        }
-      });
-    }
-    // If limited to a map's bounds, redraw when the map is zoomed or panned.
-    if (ds.settings.filterBoundsUsingMap) {
-      $('#' + ds.settings.filterBoundsUsingMap).esMap('on', 'moveend', function onMoveEnd() {
-        ds.populate();
-      });
-    }
-  }
-
-  EsDataSource.prototype.lastRequestStr = '';
-
-  /**
-   * Request a datasource to repopulate from current parameters.
-   */
-  EsDataSource.prototype.populate = function datasourcePopulate() {
-    var source = this;
-    var needsPopulation = false;
-    var request;
-    // Check we have an output other than the download plugin, which only
-    // outputs when you click Download.
-    $.each(this.outputs, function eachOutput(name) {
-      needsPopulation = needsPopulation || name !== 'download';
-    });
-    if (needsPopulation) {
-      request = indiciaFns.getEsFormQueryData(source);
-      // Don't repopulate if exactly the same request as already loaded.
-      if (JSON.stringify(request) !== this.lastRequestStr) {
-        this.lastRequestStr = JSON.stringify(request);
-        $.ajax({
-          url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
-          type: 'post',
-          data: request,
-          success: function success(response) {
-            if (response.error || (response.code && response.code !== 200)) {
-              alert('Elasticsearch query failed');
-            } else {
-              // Build any configured output tables.
-              source.buildTableXY(response);
-              $.each(indiciaData.esOutputPluginClasses, function eachPluginClass(i, pluginClass) {
-                var fn = 'es' + pluginClass.charAt(0).toUpperCase() + pluginClass.slice(1);
-                $.each(source.outputs[pluginClass], function eachOutput() {
-                  $(this)[fn]('populate', source.settings, response, request);
-                });
-              });
-            }
-          },
-          error: function error(jqXHR, textStatus, errorThrown) {
-            console.log(errorThrown);
-            alert('Elasticsearch query failed');
-          },
-          dataType: 'json'
-        });
-      }
-    }
-  };
-
-  /**
-   * ESDataSource function to tablify 2 tier aggregation responses.
-   *
-   * Use this method if there is an outer aggregation which corresponds to the
-   * table columns (X) and an inner aggregation which corresponds to the table
-   * rows (Y).
-   *
-   * @param object response
-   *   Response from an ES aggregation search request.
-   */
-  EsDataSource.prototype.buildTableXY = function buildTableXY(response) {
-    var source = this;
-    if (source.settings.buildTableXY) {
-      $.each(source.settings.buildTableXY, function eachTable(name, aggs) {
-        var data = {};
-        var colsTemplate = {
-          key: ''
-        };
-        // Collect the list of columns
-        $.each(response.aggregations[aggs[0]].buckets, function eachOuterBucket() {
-          colsTemplate[this.key] = 0;
-        });
-        // Now for each column, collect the rows.
-        $.each(response.aggregations[aggs[0]].buckets, function eachOuterBucket() {
-          var thisCol = this.key;
-          var aggsPath = aggs[1].split(',');
-          var obj = this;
-          // Drill down the required level of nesting.
-          $.each(aggsPath, function eachPathLevel() {
-            obj = obj[this];
-          });
-          $.each(obj.buckets, function eachInnerBucket() {
-            if (typeof data[this.key] === 'undefined') {
-              data[this.key] = $.extend({}, colsTemplate);
-              data[this.key].key = this.key;
-            }
-            data[this.key][thisCol] = this.doc_count;
-          });
-        });
-        // Attach the data table to the response.
-        response[name] = data;
-      });
-    }
-  };
-
   $('.es-output-download').esDownload({});
   $('.es-output-dataGrid').esDataGrid({});
   $('.es-output-map').esMap({});
   $('.details-container').esDetailsPane({});
   $('.verification-buttons').esVerificationButtons({});
   $('.es-output-map').esMap('bindGrids');
-
-  // Build the source objects and run initial population.
-  indiciaData.esSourceObjects = {};
-  $.each(indiciaData.esSources, function eachSource() {
-    var sourceObject = new EsDataSource(this);
-    indiciaData.esSourceObjects[this.id] = sourceObject;
-    sourceObject.populate();
-  });
 
   $('.es-filter-param, .user-filter, .permissions-filter').change(function eachFilter() {
     // Force map to update viewport for new data.

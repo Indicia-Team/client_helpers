@@ -40,7 +40,10 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
   private static $controlIds = [];
 
   /**
-   * Return the form metadata.
+   * Return the page metadata.
+   *
+   * @return array
+   *   Form metadata.
    */
   public static function get_dynamic_elasticsearch_definition() {
     $description = <<<HTML
@@ -65,12 +68,16 @@ HTML;
   }
 
   /**
-   * Get the list of parameters for this form.
+   * Get the list of parameters for this form's Edit tab.
    *
    * @return array
    *   List of parameters that this form requires.
    */
   public static function get_parameters() {
+    $collationPermissionDescription = <<<TXT
+Permission required to access download of all records fall inside a location the user collates (e.g. a record centre
+staff member). Requires a field_location_collation integer field holding a location ID in the user account.
+TXT;
     return [
       [
         'name' => 'interface',
@@ -177,9 +184,7 @@ HTML;
       [
         'name' => 'location_collation_records_permission',
         'caption' => 'Records in collated locality download permission',
-        'description' => 'Permission required to access download of all records fall inside a location the user ' .
-          'collates (e.g. a record centre staff member). Requires a field_location_collation integer field holding a ' .
-          'location ID in the user account.',
+        'description' => $collationPermissionDescription,
         'type' => 'text_input',
         'required' => FALSE,
         'group' => 'Permission settings',
@@ -215,10 +220,32 @@ indiciaData.dateFormat = '$dateFormat';
 
 JS;
     helper_base::add_resource('font_awesome');
-    return parent::get_form($args, $nid);
+    $r = parent::get_form($args, $nid);
+    // The following function must fire after the page content is built.
+    data_entry_helper::$onload_javascript .= <<<JS
+indiciaFns.populateDataSources();
+
+JS;
+    return $r;
   }
 
-  private static function recurseMappings($data, &$mappings, $path = []) {
+  /**
+   * Converts nested mappings data from ES to a flat field list.
+   *
+   * ES returns the mappings for an index as a hierarchical structure
+   * representing the JSON document fields. This recursive function converts
+   * this structure to a flat associative array of fields and field
+   * configuration where the keys are the field names with their parent
+   * elements separated by periods.
+   *
+   * @param array $data
+   *   Mappings data structure retrieved from ES.
+   * @param array $mappings
+   *   Array which will be populated by the field list.
+   * @param array $path
+   *   Array of parent fields which define the path to the current element.
+   */
+  private static function recurseMappings(array $data, array &$mappings, array $path = []) {
     foreach ($data as $field => $config) {
       $thisPath = array_merge($path, [$field]);
       if (isset($config['properties'])) {
@@ -244,6 +271,14 @@ JS;
     }
   }
 
+  /**
+   * Retrieves the ES index mappings data.
+   *
+   * A list of mapped fields is stored in self::$esMappings.
+   *
+   * @param int $nid
+   *   Node ID, used to retrieve the node parameters which contain ES settings.
+   */
   private static function getMappings($nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
     $url = helper_base::$base_url . 'index.php/services/rest/' . $params['endpoint'] . '/_mapping/doc';
@@ -275,7 +310,25 @@ JS;
     self::$esMappings = $mappings;
   }
 
-  private static function checkOptions($controlName, &$options, $requiredOptions, $jsonOptions) {
+  /**
+   * Provide common option handling for controls.
+   *
+   * * Sets a unique ID for the control if not already set.
+   * * Checks that required options are all populated.
+   * * Checks that options which should contain JSON do so.
+   * * Source option converted to array if not already.
+   *
+   * @param string $controlName
+   *   Name of the type of control.
+   * @param array $options
+   *   Options passed to the control (key and value associative array). Will be
+   *   modified.
+   * @param array $requiredOptions
+   *   Array of option names which must have a value.
+   * @param array $jsonOptions
+   *   Array of option names which must contain JSON.
+   */
+  private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
     self::$controlIndex++;
     $options = array_merge([
       'id' => "es-$controlName-" . self::$controlIndex,
@@ -395,12 +448,14 @@ JS;
     if (!empty($args['location_collation_records_permission'])
         && hostsite_user_has_permission($args['location_collation_records_permission'])) {
       $locationId = hostsite_get_user_field('location_collation');
-      $locationData = data_entry_helper::get_population_data([
-        'table' => 'location',
-        'extraParams' => $auth['read'] + ['id' => $locationId],
-      ]);
-      if (count($locationData) > 0) {
-        $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+      if ($locationId) {
+        $locationData = data_entry_helper::get_population_data([
+          'table' => 'location',
+          'extraParams' => $auth['read'] + ['id' => $locationId],
+        ]);
+        if (count($locationData) > 0) {
+          $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+        }
       }
     }
     if (count($allowedTypes) === 1) {
@@ -412,7 +467,7 @@ HTML;
     }
     else {
       return data_entry_helper::select([
-        'fieldName' => 'es-permissions-filter',
+        'fieldname' => 'es-permissions-filter',
         'lookupValues' => $allowedTypes,
         'class' => 'permissions-filter',
       ]);
@@ -445,9 +500,6 @@ HTML;
             r="80"
             style="stroke-dashoffset:503px;"
             stroke-dasharray="503"
-            stroke-width="12px"
-            stroke="#2c7fb8"
-            fill="#7fcdbb"
             transform="rotate(-90)" />
       </g>
       </text>
@@ -536,6 +588,7 @@ HTML;
       'initialLat',
       'initialLng',
       'initialZoom',
+      'cookies',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     // Escape the source so it can output as an attribute.
@@ -615,9 +668,12 @@ HTML;
    * * explorePath - path to an Explore all records page that can be used to
    *   show filtered records, e.g. the records underlying the data on the
    *   experience tab. Optional.
+   * * locationTypes - the record details pane will show all indexed location
+   *   types unless you provide an array of the type names that you would
+   *   like included, e.g. ["Country","Vice County"]. Optional.
    */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
-    self::checkOptions('recordDetails', $options, ['showSelectedRow'], []);
+    self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes']);
     if (!empty($options['explorePath'])) {
       // Build  URL which overrides the default filters applied to many Explore
       // pages in order to be able to apply out own filter.
@@ -638,6 +694,7 @@ HTML;
     $dataOptions = self::getOptionsForJs($options, [
       'showSelectedRow',
       'exploreUrl',
+      'locationTypes',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     helper_base::add_resource('tabs');
@@ -666,6 +723,54 @@ HTML;
 </div>
 
 HTML;
+  }
+
+  /**
+   * Retrieve parameters from the URL and add to the ES requests.
+   *
+   * Currently only supports taxon scratchpad list filtering.
+   *
+   * Options can include:
+   * * @taxon_scratchpad_list_id - set to false to disable filtering species by
+   *   a provided scratchpad list ID.
+   *
+   * @return string
+   *   Hidden input HTML which defines the appropriate filters.
+   */
+  protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'taxon_scratchpad_list_id' => TRUE,
+      // Other options, e.g. group_id or field params may be added in future.
+    ], $options);
+    $r = '';
+    if (!empty($options['taxon_scratchpad_list_id']) && !empty($_GET['taxon_scratchpad_list_id'])) {
+      // Check the parameter is valid.
+      $taxonScratchpadListId = $_GET['taxon_scratchpad_list_id'];
+      if (!preg_match('/^\d+$/', $taxonScratchpadListId)) {
+        hostsite_show_message(
+          lang::get('The taxon_scratchpad_list_id parameter should be a whole number which is the ID of a scratchpad list.'),
+          'warning'
+        );
+      }
+      // Load the scratchpad's list of taxa.
+      iform_load_helpers(['report_helper']);
+      $listEntries = report_helper::get_report_data([
+        'dataSource' => 'library/taxa/external_keys_for_scratchpad',
+        'readAuth' => $auth['read'],
+        'extraParams' => ['scratchpad_list_id' => $taxonScratchpadListId],
+      ]);
+      // Build a hidden input which causes filtering to this list.
+      $keys = [];
+      foreach ($listEntries as $row) {
+        $keys[] = $row['external_key'];
+      }
+      $keyJson = str_replace('"', '&quot;', json_encode($keys));
+      $r .= <<<HTML
+<input type="hidden" class="es-filter-param" value="$keyJson"
+  data-es-bool-clause="must" data-es-field="taxon.higher_taxon_ids" data-es-query-type="terms" />
+HTML;
+    }
+    return $r;
   }
 
   private static function getDefinitionFilter($definition, array $params) {
@@ -1038,6 +1143,7 @@ HTML;
     ];
     $basicQueryTypes = ['match_all', 'match_none'];
     $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
+    $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
     if (isset($query['filters'])) {
       // Apply any filter row paramenters to the query.
@@ -1058,6 +1164,10 @@ HTML;
       elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
         $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
+        // One of the standard ES field based query types (e.g. term or match).
+        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => [$qryConfig['field'] => json_decode($qryConfig['value'], TRUE)]];
       }
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.
@@ -1194,7 +1304,6 @@ HTML;
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
-    watchdog('post', $url . ': ' . json_encode($data));
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
       "Authorization: USER:$params[user]:SECRET:$params[secret]",
