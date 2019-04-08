@@ -776,7 +776,9 @@ HTML;
   /**
    * A select box for choosing from a list of higher geography boundaries.
    *
-   * Lists indexed locations for a given type.
+   * Lists indexed locations for a given type. When a location is chosen, the
+   * boundary is shown and the ES data is filtered to records which intersect
+   * the boundary.
    *
    * Options are:
    *
