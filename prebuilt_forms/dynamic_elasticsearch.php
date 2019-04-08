@@ -222,7 +222,7 @@ JS;
     helper_base::add_resource('font_awesome');
     $r = parent::get_form($args, $nid);
     // The following function must fire after the page content is built.
-    data_entry_helper::$javascript .= <<<JS
+    data_entry_helper::$onload_javascript .= <<<JS
 indiciaFns.populateDataSources();
 
 JS;
@@ -725,6 +725,54 @@ HTML;
 HTML;
   }
 
+  /**
+   * Retrieve parameters from the URL and add to the ES requests.
+   *
+   * Currently only supports taxon scratchpad list filtering.
+   *
+   * Options can include:
+   * * @taxon_scratchpad_list_id - set to false to disable filtering species by
+   *   a provided scratchpad list ID.
+   *
+   * @return string
+   *   Hidden input HTML which defines the appropriate filters.
+   */
+  protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'taxon_scratchpad_list_id' => TRUE,
+      // Other options, e.g. group_id or field params may be added in future.
+    ], $options);
+    $r = '';
+    if (!empty($options['taxon_scratchpad_list_id']) && !empty($_GET['taxon_scratchpad_list_id'])) {
+      // Check the parameter is valid.
+      $taxonScratchpadListId = $_GET['taxon_scratchpad_list_id'];
+      if (!preg_match('/^\d+$/', $taxonScratchpadListId)) {
+        hostsite_show_message(
+          lang::get('The taxon_scratchpad_list_id parameter should be a whole number which is the ID of a scratchpad list.'),
+          'warning'
+        );
+      }
+      // Load the scratchpad's list of taxa.
+      iform_load_helpers(['report_helper']);
+      $listEntries = report_helper::get_report_data([
+        'dataSource' => 'library/taxa/external_keys_for_scratchpad',
+        'readAuth' => $auth['read'],
+        'extraParams' => ['scratchpad_list_id' => $taxonScratchpadListId],
+      ]);
+      // Build a hidden input which causes filtering to this list.
+      $keys = [];
+      foreach ($listEntries as $row) {
+        $keys[] = $row['external_key'];
+      }
+      $keyJson = str_replace('"', '&quot;', json_encode($keys));
+      $r .= <<<HTML
+<input type="hidden" class="es-filter-param" value="$keyJson"
+  data-es-bool-clause="must" data-es-field="taxon.higher_taxon_ids" data-es-query-type="terms" />
+HTML;
+    }
+    return $r;
+  }
+
   private static function getDefinitionFilter($definition, array $params) {
     foreach ($params as $param) {
       if (!empty($definition[$param])) {
@@ -1095,6 +1143,7 @@ HTML;
     ];
     $basicQueryTypes = ['match_all', 'match_none'];
     $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
+    $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
     if (isset($query['filters'])) {
       // Apply any filter row paramenters to the query.
@@ -1115,6 +1164,10 @@ HTML;
       elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
         $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
+        // One of the standard ES field based query types (e.g. term or match).
+        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => [$qryConfig['field'] => json_decode($qryConfig['value'], TRUE)]];
       }
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.

@@ -35,9 +35,9 @@ class iform_scratchpad_list_edit {
    */
   public static function get_scratchpad_list_edit_definition() {
     return array(
-      'title'=>'Enter a scratchpad list',
+      'title' => 'Enter a scratchpad list',
       'category' => 'Data entry forms',
-      'description'=>'Form for creating or editing an existing scratchpad list. This allows creation of a list of ' .
+      'description' => 'Form for creating or editing an existing scratchpad list. This allows creation of a list of ' .
           'pointers to entities in the database, e.g. a list of species or locations',
       'recommended' => true
     );
@@ -50,38 +50,49 @@ class iform_scratchpad_list_edit {
   public static function get_parameters() {
     return array(
       array(
-        'name'=>'entity',
-        'caption'=>'Type of data to create a list for',
-        'description'=>'Select the type of data the scratchpad list will contain. ' .
+        'name' => 'entity',
+        'caption' => 'Type of data to create a list for',
+        'description' => 'Select the type of data the scratchpad list will contain. ' .
             'Currently only species or other taxa are supported.',
-        'type'=>'select',
-        'options'=>array(
+        'type' => 'select',
+        'options' => array(
           'taxa_taxon_list' => 'Species or other taxa',
         ),
-        'required'=>true
+        'required' => TRUE,
       ),
       array(
-        'name'=>'duplicates',
-        'caption'=>'Duplicate handling',
-        'description'=>'Select the type of data the scratchpad list will contain. ' .
+        'name' => 'scratchpad_type_id',
+        'caption' => 'Scratchpad type',
+        'description' => 'Select the type or category of scratchpad that new scratchpads will be saved as.',
+        'type' => 'select',
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
+        'extraParams' => array('termlist_external_key' => 'indicia:scratchpad_list_types'),
+        'required' => FALSE,
+      ),
+      array(
+        'name' => 'duplicates',
+        'caption' => 'Duplicate handling',
+        'description' => 'Select the type of data the scratchpad list will contain. ' .
           'Currently only species or other taxa are supported.',
-        'type'=>'select',
-        'options'=>array(
+        'type' => 'select',
+        'options' => array(
           'allow' => 'Allow duplicates',
           'highlight' => 'Allow duplicates but highlight them',
           'warn' => 'Allow duplicates but warn when they occur',
           'disallow' => 'Disallow duplicates',
         ),
         'default' => 'highlight',
-        'required'=>true
+        'required' => TRUE,
       ),
       array(
-        'name'=>'filters',
-        'caption'=>'Filters for search query',
-        'description'=>'Additional filters to apply to the search query, e.g. taxon_list_id=&lt;n&gt; to limit to a ' .
+        'name' => 'filters',
+        'caption' => 'Filters for search query',
+        'description' => 'Additional filters to apply to the search query, e.g. taxon_list_id=&lt;n&gt; to limit to a ' .
             'single list. Key=value pairs, one per line',
-        'type'=>'textarea',
-        'required'=>false
+        'type' => 'textarea',
+        'required' => FALSE,
       )
     );
   }
@@ -118,16 +129,22 @@ class iform_scratchpad_list_edit {
     $defaultList = '';
     $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     data_entry_helper::enable_validation('entry_form');
+    if (!empty($args['scratchpad_type_id'])) {
+      $r .= data_entry_helper::hidden_text([
+        'fieldname' => 'scratchpad_list:scratchpad_type_id',
+        'default' => $args['scratchpad_type_id'],
+      ]);
+    }
     if (!empty($_GET['scratchpad_list_id'])) {
       $list = data_entry_helper::get_population_data(array(
         'table' => 'scratchpad_list',
         'extraParams' => $auth['read'] + array('id' => $_GET['scratchpad_list_id']),
-        'caching' => false
+        'caching' => FALSE,
       ));
       $entries = data_entry_helper::get_population_data(array(
         'table' => 'scratchpad_list_entry',
         'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET['scratchpad_list_id']),
-        'caching' => false
+        'caching' => FALSE,
       ));
       $entryIds = [];
       $taxa = [];
