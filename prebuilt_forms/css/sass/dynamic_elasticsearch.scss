@@ -39,6 +39,17 @@ $file-box-icon-size: 30px;
     font-size: $progress-font-size;
     top: $diameter / 2 - $progress-font-size / 2;
   }
+  circle.circle {
+    stroke-width: 12px;
+    stroke: #49B8D3;
+    fill: #B1DBE5;
+  }
+  &.download-done {
+    circle.circle {
+      stroke: #49D3B8;
+      fill: #B1E5DB;
+    }
+  }
 }
 
 /* Download file box */
