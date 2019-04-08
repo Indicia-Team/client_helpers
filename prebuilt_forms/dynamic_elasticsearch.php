@@ -716,6 +716,38 @@ HTML;
 HTML;
   }
 
+  protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'taxon_scratchpad_list_id' => TRUE,
+      // Other options, e.g. group_id or field params may be added in future.
+    ], $options);
+    $r = '';
+    if (!empty($options['taxon_scratchpad_list_id']) && !empty($_GET[$options['taxon_scratchpad_list_id']])) {
+      $taxonScratchpadListId = $_GET[$options['taxon_scratchpad_list_id']];
+      if (!preg_match('/^\d+$/', $taxonScratchpadListId)) {
+        hostsite_show_message(
+          lang::get('The taxon_scratchpad_list_id parameter should be a whole number which is the ID of a scratchpad list.'),
+          'warning'
+        );
+      }
+      iform_load_helpers(['report_helper']);
+      $listEntries = report_helper::get_report_data([
+        'dataSource' => 'library/taxa/external_keys_for_scratchpad',
+        'readAuth' => $auth['read'],
+        'extraParams' => ['scratchpad_list_id' => $taxonScratchpadListId],
+      ]);
+      $keys = [];
+      foreach ($listEntries as $row) {
+        $keys[] = $row['external_key'];
+      }
+      $keyCsv = implode(',', $keys);
+      $r .= <<<HTML
+<input type="hidden" class="es-filter-param" value="$keyCsv"
+  data-es-bool-clause="must" data-es-field="taxon.higher_taxon_ids" data-es-query-type="terms" />
+HTML;
+    }
+  }
+
   private static function getDefinitionFilter($definition, array $params) {
     foreach ($params as $param) {
       if (!empty($definition[$param])) {
