@@ -220,7 +220,13 @@ indiciaData.dateFormat = '$dateFormat';
 
 JS;
     helper_base::add_resource('font_awesome');
-    return parent::get_form($args, $nid);
+    $r = parent::get_form($args, $nid);
+    // The following function must fire after the page content is built.
+    data_entry_helper::$javascript .= <<<JS
+indiciaFns.populateDataSources();
+
+JS;
+    return $r;
   }
 
   /**
@@ -442,12 +448,14 @@ JS;
     if (!empty($args['location_collation_records_permission'])
         && hostsite_user_has_permission($args['location_collation_records_permission'])) {
       $locationId = hostsite_get_user_field('location_collation');
-      $locationData = data_entry_helper::get_population_data([
-        'table' => 'location',
-        'extraParams' => $auth['read'] + ['id' => $locationId],
-      ]);
-      if (count($locationData) > 0) {
-        $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+      if ($locationId) {
+        $locationData = data_entry_helper::get_population_data([
+          'table' => 'location',
+          'extraParams' => $auth['read'] + ['id' => $locationId],
+        ]);
+        if (count($locationData) > 0) {
+          $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+        }
       }
     }
     if (count($allowedTypes) === 1) {
@@ -459,7 +467,7 @@ HTML;
     }
     else {
       return data_entry_helper::select([
-        'fieldName' => 'es-permissions-filter',
+        'fieldname' => 'es-permissions-filter',
         'lookupValues' => $allowedTypes,
         'class' => 'permissions-filter',
       ]);
@@ -492,9 +500,6 @@ HTML;
             r="80"
             style="stroke-dashoffset:503px;"
             stroke-dasharray="503"
-            stroke-width="12px"
-            stroke="#2c7fb8"
-            fill="#7fcdbb"
             transform="rotate(-90)" />
       </g>
       </text>
@@ -663,9 +668,12 @@ HTML;
    * * explorePath - path to an Explore all records page that can be used to
    *   show filtered records, e.g. the records underlying the data on the
    *   experience tab. Optional.
+   * * locationTypes - the record details pane will show all indexed location
+   *   types unless you provide an array of the type names that you would
+   *   like included, e.g. ["Country","Vice County"]. Optional.
    */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
-    self::checkOptions('recordDetails', $options, ['showSelectedRow'], []);
+    self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes']);
     if (!empty($options['explorePath'])) {
       // Build  URL which overrides the default filters applied to many Explore
       // pages in order to be able to apply out own filter.
@@ -686,6 +694,7 @@ HTML;
     $dataOptions = self::getOptionsForJs($options, [
       'showSelectedRow',
       'exploreUrl',
+      'locationTypes',
     ]);
     $encodedOptions = htmlspecialchars($dataOptions);
     helper_base::add_resource('tabs');
@@ -1274,7 +1283,6 @@ HTML;
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
-    watchdog('post', $url . ': ' . json_encode($data));
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
       "Authorization: USER:$params[user]:SECRET:$params[secret]",
