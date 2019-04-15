@@ -1,0 +1,9 @@
+tr.deleted {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.required:after {
+  content: "*";
+  color: red;
+}

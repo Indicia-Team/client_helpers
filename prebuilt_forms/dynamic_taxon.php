@@ -41,6 +41,7 @@ class iform_dynamic_taxon extends iform_dynamic {
       'category' => 'Data entry forms',
       'description' => 'A data entry form for defining species and higher taxa that will become available for data entry of occurrences.',
       'recommended' => TRUE,
+      'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html',
     ];
   }
 
@@ -58,28 +59,9 @@ appropriate. The following types of component can be specified. <br/>
 only)<br/>
 <strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form
 structure.<br/>
-<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined
-controls available: <br/>
-<strong>[taxon]</strong> - an input for the accepted taxon name.<br/>
-<strong>[language]</strong> - a drop down for selecting the language of the accepted name. Or, provide an option
-@code=lat (or other ISO code for a supported language) to force the name to saved as a particular language.<br/>
-<strong>[attribute]</strong> - an input for the taxon attribute (e.g. sensu lato).<br/>
-<strong>[authority]</strong> - a text input for the taxon name's authority information.<br/>
-<strong>[common names]</strong> - a text area for inputting a list of common names into.<br/>
-<strong>[synonyms]</strong> - a text area for inputting a list of synonyms.<br/>
-<strong>[parent]</strong> - a search box for choosing the taxon's parent. Alternatively the parent's ID can be forced by
-providing a URL parameter parent_id containing the parent's taxa_taxon_list_id.<br/>
-<strong>[taxon group]</strong> - a drop down for choosing the taxon group.<br/>
-<strong>[taxon rank]</strong> - a drop down for choosing the taxon rank.<br/>
-<strong>[description]</strong> - a text area for inputting a description which will be stored against the taxon.<br/>
-<strong>[description in list]</strong> - a text area for inputting a description which will be stored against the taxon
-within the context of this list.<br/>
-<strong>[external key]</strong> - an input for an externally provided key where the taxon is derived from an external
-source.<br/>
-<strong>[search code]</strong> - an input for a taxon search code.<br/>
-<strong>[sort order]</strong> - an input for a taxonomic sort order numeric value.<br/>
-<strong>[taxon dynamic attributes]</strong> - a placeholder where any dynamically linked attributes will be placed,
-e.g. attributes that are associated with one of the taxon's parents.<br/>
+<strong>[control name]</strong> indicates a predefined control is to be added to the form. Controls available are
+described in the <a href="https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html">
+Enter a taxon (customisable) documentation</a>.<br/>
 <strong>@option=value</strong> on the line(s) following any control allows you to override one of the options passed to
 the control. The options available depend on the control. For example @label=Abundance would set the untranslated label
 of a control to Abundance. Where the option value is an array, use valid JSON to encode the value. For example an array
@@ -348,6 +330,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#taxon
    */
   protected static function get_control_taxon($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::text_input(array_merge([
@@ -364,6 +348,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#attribute
    */
   protected static function get_control_attribute($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::text_input([
@@ -379,6 +365,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#authority
    */
   protected static function get_control_authority($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::text_input(array_merge([
@@ -395,6 +383,8 @@ HTML;
    * If an option @code is provided containing the ISO code of a supported
    * language, then a hidden input is returned with the language's ID.
    * Otherwise a drop down is returned so the user can choose.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#language
    *
    * @return string
    *   Control HTML.
@@ -432,6 +422,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#common-names
    */
   protected static function get_control_commonnames($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::textarea(array_merge([
@@ -449,6 +441,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#synonyms
    */
   protected static function get_control_synonyms($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::textarea(array_merge([
@@ -469,6 +463,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#parent
    */
   protected static function get_control_parent($auth, $args, $tabAlias, $options) {
     $parentId = NULL;
@@ -521,6 +517,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#taxon-group
    */
   protected static function get_control_taxongroup($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::select(array_merge([
@@ -542,6 +540,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#taxon-rank
    */
   protected static function get_control_taxonrank($auth, $args, $tabAlias, $options) {
     $r = data_entry_helper::select(array_merge([
@@ -562,6 +562,8 @@ HTML;
    *
    * @return string
    *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#photos
    */
   protected static function get_control_photos($auth, $args, $tabAlias, $options) {
     $opts = [
@@ -718,6 +720,104 @@ JS;
     return $r;
   }
 
+  protected static function loadTermlists($readAuth, $options, $keysToLoad) {
+    helper_base::add_resource('font_awesome');
+    $minified = [];
+    foreach ($keysToLoad as $key) {
+      if (!empty($options[$key])) {
+        $minified[$key] = [];
+        $termlistData = data_entry_helper::get_population_data([
+          'table' => 'termlists_term',
+          'extraParams' => $readAuth + [
+            'termlist_id' => $options[$key],
+            'view' => 'cache',
+            'orderby' => 'sort_order,term',
+            'allow_data_entry' => 't',
+          ],
+        ]);
+        foreach ($termlistData as $term) {
+          $minified[$key][] = [$term['id'], $term['term']];
+        }
+      }
+    }
+    $data = json_encode($minified);
+    data_entry_helper::$javascript .= <<<JS
+indiciaData.termlistData = $data;
+
+JS;
+  }
+
+  /**
+   * A grid for editing associations between taxa.
+   *
+   * Options include:
+   * * taxon_list_id - ID of the list that associated taxa can be looked up
+   *   from. Required.
+   * * association_type_id - termlist_term_id of the association type of
+   *   associations in the grid if they are all the same.
+   * * association_type_termlist_id - termlist_id of the termlists which the
+   *   association type of each association in the grid can be chosen from.
+   *   Either association_type_id or association_type_termlist_id must be
+   *   specified.
+   * * part_termlist_id - if specified then a column is added for selecting
+   *   the part of the other taxon affected by this association.
+   * * position_termlist_id - if specified then a column is added for selecting
+   *   the position on the other taxon affected by this association.
+   * * impact_termlist_id - if specified then a column is added for selecting
+   *   the impact on the other taxon of this association.
+   */
+  protected static function get_control_taxonassociations($auth, $args, $tabAlias, $options) {
+    self::checkOptionFormat('/^\d+$/', $options, [
+      'taxon_list_id',
+      'association_type_id',
+      'association_type_termlist_id',
+      'part_termlist_id',
+      'position_termlist_id',
+      'impact_termlist_id',
+    ], 'taxon associations');
+    if (empty($options['taxon_list_id'])) {
+      throw new exception('[taxon associations] control requires a @taxon_list_id parameter');
+    }
+    if (empty($options['association_type_id']) && empty($options['association_type_termlist_id'])) {
+      throw new exception('[taxon associations] control requires either a @association_type_id or ' .
+        '@association_type_termlist_id parameter');
+    }
+    self::loadTermlists($auth['read'], $options, [
+      'association_type_termlist_id',
+      'part_termlist_id',
+      'position_termlist_id',
+      'impact_termlist_id',
+    ]);
+    $dataOptions = self::getOptionsForJs($options, [
+      'taxon_list_id',
+      'association_type_id',
+    ], TRUE);
+    global $indicia_templates;
+    helper_base::addLanguageStringsToJs('taxonassoc', [
+      'btnAddNew' => 'Add a new association row',
+      'hdrAssocTaxon' => 'Associated taxon',
+      'hdrAssocType' => 'Association type',
+      'hdrAssocPart' => 'Part of associated organism',
+      'hdrAssocPosition' => 'Position on associated organism',
+      'hdrAssocImpact' => 'Impact on associated organism',
+      'hdrTaxon' => 'Taxon',
+      'pleaseSelectType' => 'Please select a type',
+      'taxonBeingEdited' => 'Taxon being edited',
+      'taxonPlaceholder' => 'Enter taxon name to add an association',
+    ]);
+    data_entry_helper::$javascript .= <<<JS
+indiciaData.templates = {
+  requiredsuffix: '$indicia_templates[requiredsuffix]'
+};
+$('.taxon-associations').taxonAssociations();
+
+JS;
+    return <<<HTML
+<div class="taxon-associations" data-config="$dataOptions"></div>
+
+HTML;
+  }
+
   /**
    * Retrieves a list of dynamically loaded attributes from the database.
    *
@@ -797,7 +897,42 @@ JS;
         'commonNames',
       ],
     ];
+    $doAssociations = !empty($values['process-associations']);
+    unset($values['process-associations']);
     $s = submission_builder::build_submission($values, $structure);
+    if ($doAssociations) {
+      $s['subModels'] = [];
+      $tmIdKeys = preg_grep('/^associated-taxon-tmId:/', array_keys($values));
+      foreach ($tmIdKeys as $key) {
+        if (!empty($values[$key])) {
+          $rowId = preg_replace('/^[a-zA-Z_\-:]+/', '', $key);
+          $fields = [
+            'to_taxon_meaning_id' => $values[$key],
+            'association_type_id' => $values["associated-taxon-typeId:$rowId"],
+            'part_id' => empty($values["associated-taxon-partId:$rowId"])
+              ? NULL : $values["associated-taxon-partId:$rowId"],
+            'position_id' => empty($values["associated-taxon-positionId:$rowId"])
+              ? NULL : $values["associated-taxon-positionId:$rowId"],
+            'impact_id' => empty($values["associated-taxon-impactId:$rowId"])
+              ? NULL : $values["associated-taxon-impactId:$rowId"],
+          ];
+          if (!empty($values["associated-taxon-id:$rowId"])) {
+            $fields['id'] = $values["associated-taxon-id:$rowId"];
+            if (!empty($values["associated-taxon-deleted:$rowId"])) {
+              $fields['deleted'] = 't';
+            }
+          }
+          $s['subModels'][] = [
+            'fkId' => 'from_taxon_meaning_id',
+            'fkField' => 'taxon_meaning_id',
+            'model' => [
+              'id' => 'taxon_association',
+              'fields' => $fields,
+            ],
+          ];
+        }
+      }
+    }
     return $s;
   }
 
