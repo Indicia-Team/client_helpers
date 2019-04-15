@@ -369,12 +369,13 @@ JS;
       'source',
       $options,
       ['id'],
-      ['aggregation', 'filterBoolClauses', 'buildTableXY']
+      ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
     );
     $dataOptions = self::getOptionsForJs($options, [
       'id',
       'from',
       'size',
+      'sort',
       'aggregation',
       'buildTableXY',
       'initialMapBounds',
