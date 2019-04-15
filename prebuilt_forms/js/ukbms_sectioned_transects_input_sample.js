@@ -955,7 +955,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
       if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
           typeof formOptions.outOfRangeVerification[i].section_limit !== "undefined") {
-        return formOptions.outOfRangeVerification[i].section_limit < value;
+        return parseInt(formOptions.outOfRangeVerification[i].section_limit, 10) < parseInt(value, 10);
       }
     };
     return false;
@@ -965,7 +965,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
       if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
           typeof formOptions.outOfRangeVerification[i].walk_limit !== "undefined") {
-        return formOptions.outOfRangeVerification[i].walk_limit < total;
+        return parseInt(formOptions.outOfRangeVerification[i].walk_limit, 10) < parseInt(total, 10);
       }
     };
     return false;
