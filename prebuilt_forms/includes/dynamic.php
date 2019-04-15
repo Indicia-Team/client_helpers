@@ -1016,4 +1016,55 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     return $r;
   }
 
+  /**
+   * Prepares options for a control are to be passed through to JavaScript.
+   *
+   * Picks the entries from the options array which are in $keysToPassThrough
+   * then returns a JSON encoded string that can be added to indiciaData.
+   *
+   * @param array $options
+   *   Control options array.
+   * @param array $keysToPassThrough
+   *   Array of the names of the options which are going to be passed into
+   *   JavaScript settings.
+   * @param bool $encodeSpecialChars
+   *   If set to true, then the result is encoded using htmlspecialchars()
+   *   e.g. for when the response is to be included in an HTML attribute.
+   *
+   * @return string
+   *   JSON encoded string.
+   */
+  protected static function getOptionsForJs(array $options, array $keysToPassThrough, $encodeSpecialChars = FALSE) {
+    $dataOptions = array_intersect_key($options, array_combine($keysToPassThrough, $keysToPassThrough));
+    $r = json_encode($dataOptions);
+    return $encodeSpecialChars ? htmlspecialchars($r) : $r;
+  }
+
+  /**
+   * Checks a subset of the options passed to a control against a pattern.
+   *
+   * E.g. could check the subset of options that should be integers against a
+   * regex to validate this. Throws errors when matches fail.
+   *
+   * @param string $regex
+   *   Regular expression that defines the pattern options must match.
+   * @param array $options
+   *   Control options.
+   * @param array $keysToCheck
+   *   List of option names that contain values that need to match the format.
+   * @param string $controlName
+   *   Name of the control used to provide meaningful feedback in any errors
+   *   raised.
+   */
+  protected static function checkOptionFormat($regex, $options, array $keysToCheck, $controlName) {
+    $toCheck = array_intersect_key($options, array_combine($keysToCheck, $keysToCheck));
+    foreach ($toCheck as $key => $value) {
+      if ($value !== '' && !preg_match($regex, $value)) {
+        throw new exception("Option @$key must be an integer for control [$controlName]");
+      }
+    }
+  }
+
+
+
 }
