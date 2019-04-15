@@ -369,12 +369,13 @@ JS;
       'source',
       $options,
       ['id'],
-      ['aggregation', 'filterBoolClauses', 'buildTableXY']
+      ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
     );
     $dataOptions = self::getOptionsForJs($options, [
       'id',
       'from',
       'size',
+      'sort',
       'aggregation',
       'buildTableXY',
       'initialMapBounds',
@@ -522,12 +523,9 @@ HTML;
       $indicia_templates['two-col-50']);
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
-    $dataOptions = self::getOptionsForJs($options, []);
-    $encodedOptions = htmlspecialchars($dataOptions);
-    // Escape the source so it can output as an attribute.
-    $source = str_replace('"', '&quot;', json_encode($options['source']));
+    $dataOptions = self::getOptionsForJs($options, [], TRUE);
     return <<<HTML
-<div id="$options[id]" class="es-output es-output-download" data-es-source="$source" data-es-output-config="$encodedOptions">
+<div id="$options[id]" class="es-output es-output-download" data-es-source="$source" data-es-output-config="$dataOptions">
   $r
 </div>
 
@@ -566,12 +564,11 @@ HTML;
       'simpleAggregation',
       'sourceTable',
       'autogenColumns',
-    ]);
-    $encodedOptions = htmlspecialchars($dataOptions);
+    ], TRUE);
     // Escape the source so it can output as an attribute.
     $source = str_replace('"', '&quot;', json_encode($options['source']));
     return <<<HTML
-<div id="$options[id]" class="es-output es-output-dataGrid" data-es-source="$source" data-es-output-config="$encodedOptions"></div>
+<div id="$options[id]" class="es-output es-output-dataGrid" data-es-source="$source" data-es-output-config="$dataOptions"></div>
 
 HTML;
   }
@@ -589,13 +586,12 @@ HTML;
       'initialLng',
       'initialZoom',
       'cookies',
-    ]);
-    $encodedOptions = htmlspecialchars($dataOptions);
+    ], TRUE);
     // Escape the source so it can output as an attribute.
     $source = str_replace('"', '&quot;', json_encode($options['source']));
 
     return <<<HTML
-<div id="$options[id]" class="es-output es-output-map" data-es-source="$source" data-es-output-config="$encodedOptions"></div>
+<div id="$options[id]" class="es-output es-output-map" data-es-source="$source" data-es-output-config="$dataOptions"></div>
 
 HTML;
   }
@@ -620,8 +616,7 @@ HTML;
       'showSelectedRow',
       'editPath',
       'viewPath',
-    ]);
-    $encodedOptions = htmlspecialchars($dataOptions);
+    ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url(self::$nid, 'list_verify');
     $commentUrl = iform_ajaxproxy_url(self::$nid, 'occ-comment');
@@ -641,7 +636,7 @@ JS;
     helper_base::add_resource('fancybox');
     return <<<HTML
 <div id="$options[id]" class="verification-buttons-wrap" style="display: none;">
-  <div class="verification-buttons" data-es-output-config="$encodedOptions">
+  <div class="verification-buttons" data-es-output-config="$dataOptions">
   Actions:
     <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
     <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
@@ -695,11 +690,10 @@ HTML;
       'showSelectedRow',
       'exploreUrl',
       'locationTypes',
-    ]);
-    $encodedOptions = htmlspecialchars($dataOptions);
+    ], TRUE);
     helper_base::add_resource('tabs');
     return <<<HTML
-<div class="details-container" data-es-output-config="$encodedOptions">
+<div class="details-container" data-es-output-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
@@ -771,6 +765,39 @@ HTML;
 HTML;
     }
     return $r;
+  }
+
+  /**
+   * A select box for choosing from a list of higher geography boundaries.
+   *
+   * Lists indexed locations for a given type. When a location is chosen, the
+   * boundary is shown and the ES data is filtered to records which intersect
+   * the boundary.
+   *
+   * Options are:
+   *
+   * * @locationTypeId - ID of the location type of the locations to list. Must
+   *   be a type indexed by the spatial index builder module.
+   *
+   * @return string
+   *   Control HTML
+   */
+  protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
+    if (empty($options['locationTypeId']) || !preg_match('/^\d+$/', $options['locationTypeId'])) {
+      throw new Exception('An integer @locationTypeId parameter is required for the [higherGeographySelect] control');
+    }
+    $options = array_merge([
+      'id' => 'higher-geography-select',
+    ], $options);
+    return data_entry_helper::location_select([
+      'id' => $options['id'],
+      'class' => 'es-higher-geography-select',
+      'extraParams' => $auth['read'] + [
+        'location_type_id' => $options['locationTypeId'],
+        'orderby' => 'name',
+      ],
+      'blankText' => lang::get('<All locations shown>'),
+    ]);
   }
 
   private static function getDefinitionFilter($definition, array $params) {
@@ -1333,11 +1360,6 @@ HTML;
 
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     return '';
-  }
-
-  private static function getOptionsForJs($options, $keysToPassThrough) {
-    $dataOptions = array_intersect_key($options, array_combine($keysToPassThrough, $keysToPassThrough));
-    return json_encode($dataOptions);
   }
 
 }

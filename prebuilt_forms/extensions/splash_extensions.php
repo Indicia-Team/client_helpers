@@ -117,8 +117,8 @@ class extension_splash_extensions {
    * The location type id of a core square</li>
    * <li><b>additionalSquareLocationTypeId</b><br/>
    * The location type id of an additional square</li>
-   * <li><b>privatePlotAttrId</b><br/>
-   * Optional attribute for the location attribute id which holds whether a plot is private. If supplied then when a private plot is selected
+   * <li><b>privatePlotsIdsList</b><br/>
+   * Optional comma separated list of private plot location IDs. If supplied then when a private plot is selected
    * as the location then all occurrences are set to have a privacy_precision=10000</li>
    * </ul>
    */
@@ -142,30 +142,12 @@ class extension_splash_extensions {
       'mode'=>'report',
       'extraParams' => $extraParamForSquarePlotReports
     );
-    if (!empty($options['privatePlotAttrId'])) {
-      self::set_private_plot_precision($auth, $args, $tabAlias, $options, $reportOptions, $extraParamForSquarePlotReports);
+    if (!empty($options['privatePlotsIdsList'])) {
+      $privatePlots=explode(',',$options['privatePlotsIdsList']);
+      data_entry_helper::$javascript .= '
+        private_plots_set_precision('.json_encode($privatePlots).');
+      ';
     }
-  }
-
-  /*
-   * When a private plot is selected by the user, we need to set a privacy precision
-   * on the occurrences
-   */
-  public static function set_private_plot_precision($auth, $args, $tabAlias, $options, $reportOptions,$extraParamForSquarePlotReports) {
-    $extraParamForSquarePlotReports=array_merge($extraParamForSquarePlotReports,array('private_plot_attr_id'=>$options['privatePlotAttrId'],'only_return_private_plots'=>true));
-    $reportOptions['extraParams']=$extraParamForSquarePlotReports;
-    //When the page initially loads, collect all the private plots that can be selected by the user, rather than
-    //load whether the plot is private when each selection is made.
-    $myPlotsAndSquares = data_entry_helper::get_report_data(
-      $reportOptions
-    );
-    $privatePlots=array();
-    foreach ($myPlotsAndSquares as $locationDataItem) {
-      $privatePlots[]=$locationDataItem['id'];
-    }
-    data_entry_helper::$javascript .= '
-    private_plots_set_precision('.json_encode($privatePlots).');
-    ';
   }
 
   /**
@@ -192,13 +174,15 @@ class extension_splash_extensions {
    * The location attribute id that holds a plot's Slope</li>
    * <li><b>ashAttributeId</b><br/>
    * The location attribute id that holds a plot's % Ash Coverage</li>
-   * <li><b>privatePlotAttrId</b><br/>
-   * Optional attribute for the location attribute id which holds whether a plot is private. If supplied then when a private plot is selected
-   * as the location then the sample is set to have a privacy precision=10000</li>
+   * <li><b>privatePlotsIdsList</b><br/>
+   * Optional comma separated list of private plot location IDs. If supplied then when a private plot is selected
+   * as the location then all occurrences are set to have a privacy_precision=10000</li>
    * <li><b>rowInclusionCheckModeHasData</b><br/>
-   * Optional. Supply this as true if the species grid is in rowInclusionCheck=hasData mode and you are using the privatePlotAttrId option.
+   * Optional. Supply this as true if the species grid is in rowInclusionCheck=hasData mode and you are using the privatePlotsIdsList option.</li>
    * <li><b>noPlotMessageInAlert</b><br/>
-   * Optional. Override the default message that is displayed if a user has not plots to select. This message is displayed in an alert box as well.
+   * Optional. Override the default message that is displayed if a user has not plots to select. This message is displayed in an alert box as well.</li>
+   * <li><b>adminUsersIndiciaUserIds</b><br/>
+   * Optional. Comma separated list of Indicia User IDs (not Drupal) of admin users who are allowed edit a sample regardless of whether they have been allocated the square and plot.</li>
    * </ul>
    */
   public static function splash_location_select($auth, $args, $tabAlias, $options) {
@@ -222,6 +206,11 @@ class extension_splash_extensions {
       drupal_set_message('Please fill in the @userSquareAttrId option for the splash_location_select control');
       return '';
     }
+    if (empty($options['adminUsersIndiciaUserIds'])) {
+      $adminUsersIndiciaUserIds=[];
+    } else {
+      $adminUsersIndiciaUserIds=explode(',',$options['adminUsersIndiciaUserIds']);
+    }
     $coreSquareLocationTypeId=$options['coreSquareLocationTypeId'];
     $additionalSquareLocationTypeId=$options['additionalSquareLocationTypeId'];
     $currentUserId=hostsite_get_user_field('indicia_user_id');
@@ -236,7 +225,7 @@ class extension_splash_extensions {
                         'no_vice_county_found_message'=>$noViceCountyFoundMessage,
                         'user_square_attr_id'=>$userSquareAttrId);
     $reportOptions = array(
-      'dataSource'=>'projects/npms/get_my_squares_that_have_plots',
+      'dataSource'=>'projects/npms/get_my_squares_that_have_plots_2',
       'readAuth'=>$auth['read'],
       'mode'=>'report',
       'extraParams' => $extraParamForSquarePlotReports
@@ -246,8 +235,8 @@ class extension_splash_extensions {
       $reportOptions['extraParams']=array_merge($reportOptions['extraParams'],['pss_mode'=>true]);
       data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly');";
     }
-    $rawData = data_entry_helper::get_report_data($reportOptions);
-    if (empty($rawData) && empty($_GET['sample_id'])) {
+    $rawSquarePlotData = data_entry_helper::get_report_data($reportOptions);
+    if (empty($rawSquarePlotData) && empty($_GET['sample_id'])) {
         //If the user doesn't have any plots and is in add mode, then hide the map and disable the Spatial Ref field so they can't continue
         if (!empty($options['noPlotMessageInAlert']))
           data_entry_helper::$javascript .= "alert('".$options['noPlotMessageInAlert']."');";
@@ -272,30 +261,18 @@ class extension_splash_extensions {
             'extraParams' => array('sample_id'=>$_GET['sample_id'])
           )
         );
-        $extraParamForSquarePlotReports=array(
-            'core_square_location_type_id'=>$coreSquareLocationTypeId,
-            'additional_square_location_type_id'=>$additionalSquareLocationTypeId,
-            'current_user_id'=>$currentUserId,
-            'vice_county_location_attribute_id'=>$viceCountyLocationAttributeId,
-            'no_vice_county_found_message'=>$noViceCountyFoundMessage,
-            'user_square_attr_id'=>$userSquareAttrId,
-            'only_show_my_useable_plots_squares'=>true);
-        $squareAndPlotData = data_entry_helper::get_report_data(
-          array(
-            'dataSource'=>'projects/npms/get_my_squares_and_plots',
-            'readAuth'=>$auth['read'],
-            'mode'=>'report',
-            'extraParams' => $extraParamForSquarePlotReports
-          )
-        );
         //Assume the user doesn't own a plot until we find that they do
         $ownsPlot=false;
         //Cycle through the plots (the report also returns squares but those are redundant for this test)
-        foreach ($squareAndPlotData as $squareOrPlot) {
+        foreach ($rawSquarePlotData as $squareOrPlot) {
           //If we find a matching one, and it has been approved then the user owns the plot
-          if ($selectedSquareAndPlotInfo[0]['plot_id']==$squareOrPlot['id'] && ($squareOrPlot['allocation_updater']!=$squareOrPlot['allocated_to'])) {
+          if ($selectedSquareAndPlotInfo[0]['plot_id']==$squareOrPlot['plot_id'] && $squareOrPlot['allocation_updater']!=$squareOrPlot['allocated_to']) {
             $ownsPlot=true;
           }
+        }
+        // If it is an admin user, we always want them to have access.
+        if (in_array($currentUserId,$adminUsersIndiciaUserIds)) {
+          $ownsPlot=true;
         }
         //If the plot is still marked as not owned by the user after tests, then warn the user that we are locking the plot
         if ($ownsPlot===false) {
@@ -316,8 +293,12 @@ class extension_splash_extensions {
       }
       //Convert the raw data in the report into array format suitable for the Select drop-down to user (an array of ID=>Name pairs)
       $squaresData=array();
-      foreach($rawData as $rawRow) {
+      foreach($rawSquarePlotData as $rawRow) {
           $squaresData[$rawRow['id']]=$rawRow['name'];
+      }
+      // Admin users probably won't be allocated a square, but we still want them to be able to make edits, so allocate them the square associated with the sample.
+      if (empty($squaresData) && in_array($currentUserId,$adminUsersIndiciaUserIds)) {
+        $squaresData[$selectedSquareAndPlotInfo[0]['id']]=$selectedSquareAndPlotInfo[0]['square_name'];
       }
       //Need report data to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
       if (!empty($_GET['sample_id'])) {
@@ -364,20 +345,16 @@ class extension_splash_extensions {
       //Create the mini report, not currently required on PSS site
       if (empty($options['pssMode']))
         $r .= self::plot_report_panel($auth,$options);
-      //If an attribute holding whether plots are private is supplied, then we want to return
-      //whether the selected plot is private and set the sample privacy precision appropriately
-      if (!empty($options['privatePlotAttrId'])) {
-        $reportOptions = array(
-          'dataSource'=>'projects/npms/get_my_squares_and_plots',
-          'readAuth'=>$auth['read'],
-          'extraParams'=>$extraParamForSquarePlotReports
-        );
-        self::set_private_plot_precision($auth, $args, $tabAlias, $options,$reportOptions,$extraParamForSquarePlotReports);
+      if (!empty($options['privatePlotsIdsList'])) {
+        $privatePlots=explode(',',$options['privatePlotsIdsList']);
+        data_entry_helper::$javascript .= '
+          private_plots_set_precision('.json_encode($privatePlots).');
+        ';
       }
       return $r;
     }
   }
-  
+
   /*
    * The Splash Location Select control allows selection of a square/plot on the first tab of data entry,
    * but these are then not visible to the user on the other tabs. This control takes what is in the Splash Location Select
@@ -1758,7 +1735,6 @@ class extension_splash_extensions {
     self::user_site_delete($postUrl,$args);
     return $r;
   }
-
   /*
    * Decide if we need to send an information email to user when they allocate themselves a location, 
    * or do we need to send email to support on location removal
@@ -1846,7 +1822,6 @@ class extension_splash_extensions {
     $r .= '</select>';
     return '<label>User : </label>'.$r.'<br>';
   }
-
   /*
    * Setup the sending of the location allocation email to the person allocated the location if required.
    */
@@ -1882,7 +1857,6 @@ class extension_splash_extensions {
       }
     }
   }
-
   /*
    * Optionally send email to user when location is assigned to them
    */
@@ -1913,7 +1887,7 @@ class extension_splash_extensions {
       watchdog('iform', 'Location '.$action.' email failed to '.$username.' '.$emailTo);
     }
   }
-
+  
   //The map pages uses node specific javascript that is very similar to the javascript functions found in
   //add_locations_to_user in this file (we couldn't call this code for re-use).
   //Use a simple function to supply the required indiciaData for that node specific javascript

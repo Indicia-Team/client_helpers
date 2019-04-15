@@ -78,6 +78,29 @@ class iform_dynamic_npms_plot_location extends iform_dynamic_location {
       return '<div><em>Please fill in the user squares attribute id argument</em></div>';
     return parent::get_form($args, $nid);
   }
+
+  /**
+   * Override the default submit buttons as delete needs to be hidden in summary mode.
+   */
+  protected static function getSubmitButtons($args) {
+    $r = '';
+    global $indicia_templates;
+    $r .= '<input type="submit" class="' . $indicia_templates['buttonDefaultClass'] . '" id="save-button" value="'.lang::get('Submit')."\" />\n";
+    if (!empty($_GET['location_id'])) {
+      //Don't display delete if in view only mode
+      if (empty($_GET['summary_mode']) || $_GET['summary_mode']=='false') {
+        // use a button here, not input, as Chrome does not post the input value
+        $r .= '<button type="submit" class="' . $indicia_templates['buttonWarningClass'] . '" id="delete-button" name="delete-button" value="delete" >'.lang::get('Delete')."</button>\n";
+        data_entry_helper::$javascript .= "$('#delete-button').click(function(e) {
+          if (!confirm(\"Are you sure you want to delete this location?\")) {
+            e.preventDefault();
+            return false;
+          }
+        });\n";
+      }
+    }
+    return $r;
+  }
   
   /*
    * Only load existing plot data if the user is assigned the plot

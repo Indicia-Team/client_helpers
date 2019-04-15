@@ -1054,6 +1054,13 @@
    */
   var selectedRowMarker = null;
 
+   /**
+   * Variable to hold the polygon used to highlight the currently selected
+   * location boundary when relevant.
+   */
+  var selectedFeature = null;
+
+
   function addFeature(el, sourceId, location, metric) {
     var config = { type: 'marker', options: {} };
     if (typeof $(el)[0].settings.styles[sourceId] !== 'undefined') {
@@ -1094,39 +1101,52 @@
   }
 
   /**
+   *
+   */
+  function showFeatureWkt(el, geom, zoom, style) {
+    var centre;
+    var wkt;
+    var obj;
+    wkt = new Wkt.Wkt();
+    wkt.read(geom);
+    var objStyle = {
+      color: '#0000FF',
+      opacity: 1.0,
+      fillColor: '#0000FF',
+      fillOpacity: 0.2
+    };
+    if (style) {
+      $.extend(objStyle, style);
+    }
+    obj = wkt.toObject(objStyle);
+    obj.addTo(el.map);
+    centre = typeof obj.getCenter === 'undefined' ? obj.getLatLng() : obj.getCenter();
+    // Pan and zoom the map. Method differs for points vs polygons.
+    if (!zoom) {
+      el.map.panTo(centre);
+    } else if (wkt.type === 'polygon') {
+      el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
+    } else {
+      el.map.setView(centre, 11);
+    }
+    return obj;
+  }
+
+  /**
    * Select a grid row pans, optionally zooms and adds a marker.
    */
   function rowSelected(el, tr, zoom) {
     var doc;
-    var wkt;
     var obj;
-    var centre;
     if (selectedRowMarker) {
       selectedRowMarker.removeFrom(el.map);
     }
     selectedRowMarker = null;
     if (tr) {
       doc = JSON.parse($(tr).attr('data-doc-source'));
-      wkt = new Wkt.Wkt();
-      wkt.read(doc.location.geom);
-      obj = wkt.toObject({
-        color: '#0000FF',
-        opacity: 1.0,
-        fillColor: '#0000FF',
-        fillOpacity: 0.2
-      });
+      obj = showFeatureWkt(el, doc.location.geom, zoom);
       ensureFeatureClear(el, obj);
-      obj.addTo(el.map);
       selectedRowMarker = obj;
-      centre = typeof obj.getCenter === 'undefined' ? obj.getLatLng() : obj.getCenter();
-      // Pan and zoom the map. Method differs for points vs polygons.
-      if (!zoom) {
-        el.map.panTo(centre);
-      } else if (wkt.type === 'polygon') {
-        el.map.fitBounds(obj.getBounds(), { maxZoom: 11 });
-      } else {
-        el.map.setView(centre, 11);
-      }
     }
   }
 
@@ -1292,6 +1312,31 @@
           rowSelected(el, tr, true);
         });
       }
+    },
+
+    /**
+     * Clears the selected feature boundary (e.g. a selected location).
+     */
+    clearFeature: function clearFeature() {
+      if (selectedFeature) {
+        selectedFeature.removeFrom($(this)[0].map);
+        selectedFeature = null;
+      }
+    },
+
+    /**
+     * Shows a selected feature boundary (e.g. a selected location).
+     * */
+    showFeature: function showFeature(geom, zoom) {
+      if (selectedFeature) {
+        selectedFeature.removeFrom($(this)[0].map);
+        selectedFeature = null;
+      }
+      selectedFeature = showFeatureWkt(this, geom, zoom, {
+        color: '#7700CC',
+        fillColor: '#7700CC',
+        fillOpacity: 0.1
+      });
     },
 
     /**
@@ -2557,6 +2602,37 @@ jQuery(document).ready(function docReady() {
   'use strict';
   var $ = jQuery;
 
+  // Hook up higher geography controls.
+  $('.es-higher-geography-select').addClass('es-filter-param');
+  $('.es-higher-geography-select').attr('data-es-bool-clause', 'must');
+  $('.es-higher-geography-select').attr('data-es-query', JSON.stringify({
+    nested: {
+      path: 'location.higher_geography',
+      query: {
+        bool: {
+          must: [
+            { match: { 'location.higher_geography.id': '#value#' } }
+          ]
+        }
+      }
+    }
+  }));
+  $('.es-higher-geography-select').change(function higherGeoSelectChange() {
+    if ($(this).val()) {
+      $.getJSON(indiciaData.warehouseUrl + 'index.php/services/report/requestReport?' +
+          'report=library/locations/location_boundary_projected.xml' +
+          '&reportSource=local&srid=4326&location_id=' + $(this).val() +
+          '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
+          '&mode=json&callback=?', function getLoc(data) {
+        $.each($('.es-output-map'), function eachMap() {
+          $(this).esMap('showFeature', data[0].boundary_geom, true);
+        });
+      });
+    } else {
+      $(this).esMap('clearFeature');
+    }
+  });
+
   $('.es-output-download').esDownload({});
   $('.es-output-dataGrid').esDataGrid({});
   $('.es-output-map').esMap({});
@@ -2576,4 +2652,5 @@ jQuery(document).ready(function docReady() {
       this.populate();
     });
   });
+
 });
