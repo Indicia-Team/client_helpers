@@ -279,6 +279,8 @@ class data_entry_helper extends helper_base {
    *     * datatype - The column's data type. Currently only text and lookup is supported.
    *     * termlist_id - If datatype=lookup, then provide the termlist_id of the list to load terms for as options in the
    *       control.
+   *     * hierarchical - set to true if the termlist is hierarchical. In this case terms shown in the drop down will
+   *       include all the ancestors, e.g. coastal->coastal lagoon, rather than just the child term.
    *     * unit - An optional unit label to display after the control (e.g. 'cm', 'kg').
    *     * regex - A regular expression which validates the controls input value.
    *     * default - default value for this control used for new rows
@@ -331,15 +333,31 @@ class data_entry_helper extends helper_base {
         // No matter if the lookup comes from the db, or from a local array,
         // we want it in the same minimal format.
         if (!empty($def['termlist_id'])) {
-          $termlistData = self::get_population_data(array(
-            'table' => 'termlists_term',
-            'extraParams' => $options['extraParams'] + array(
-              'termlist_id' => $def['termlist_id'],
-              'view' => 'cache',
-              'orderby' => isset($def['orderby']) ? $def['orderby'] : 'term',
-              'allow_data_entry' => 't',
-            ),
-          ));
+          if (empty($def['hierarchical'])) {
+            $termlistData = self::get_population_data([
+              'table' => 'termlists_term',
+              'extraParams' => $options['extraParams'] + [
+                'termlist_id' => $def['termlist_id'],
+                'view' => 'cache',
+                'orderby' => isset($def['orderby']) ? $def['orderby'] : 'sort_order,term',
+                'allow_data_entry' => 't',
+              ],
+            ]);
+          }
+          else {
+            $termlistData = self::get_report_data([
+              'dataSource' => '/library/terms/terms_list_with_hierarchy',
+              'extraParams' => [
+                'termlist_id' => $def['termlist_id'],
+              ],
+              'readAuth' => [
+                'auth_token' => $options['extraParams']['auth_token'],
+                'nonce' => $options['extraParams']['nonce'],
+              ],
+              'caching' => TRUE,
+              'cachePerUser' => FALSE,
+            ]);
+          }
           foreach ($termlistData as $term) {
             $minified[] = array($term['id'], $term['term']);
           }
@@ -1414,7 +1432,7 @@ JS;
         // Not a top level item, so put in a data array we can store in JSON.
         // Use the mappings from preferred ID to ID in this language to ensure
         // the parents can be found.
-        if (!isset($childData[$item['parent_id']])) {
+        if (!isset($childData[$prefMappings[$item['parent_id']]])) {
           $childData[$prefMappings[$item['parent_id']]] = array();
         }
         $childData[$prefMappings[$item['parent_id']]][] = array(

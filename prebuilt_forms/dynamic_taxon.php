@@ -767,6 +767,7 @@ JS;
    *   the impact on the other taxon of this association.
    */
   protected static function get_control_taxonassociations($auth, $args, $tabAlias, $options) {
+    helper_base::add_resource('autocomplete');
     self::checkOptionFormat('/^\d+$/', $options, [
       'taxon_list_id',
       'association_type_id',
