@@ -89,7 +89,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       $.ajax({
         dataType: 'jsonp',
         url: indiciaData.read.url + 'index.php/services/data/taxon_association' +
-          '?to_preferred=t&from_taxon_meaning_id=' + $('input[name="taxon_meaning\\:id"]').val() +
+          '?from_preferred=t&to_preferred=t&from_taxon_meaning_id=' + $('input[name="taxon_meaning\\:id"]').val() +
           '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
           '&mode=json&callback=?',
         success: function(data) {
@@ -210,6 +210,8 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       if (typeof indiciaData.termlistData.impact_termlist_id !== 'undefined') {
         $('<th>' + indiciaData.lang.taxonassoc.hdrAssocImpact + '</th>').appendTo(elems.thr);
       }
+      // Delete icon column.
+      $('<th></th>').appendTo(elems.thr);
       $('<th/>');
       elems.tbody = $('<tbody>').appendTo(elems.table);
       indiciaFns.on('change', '#taxon\\:taxon', {}, function onTaxonChange() {

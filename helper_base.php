@@ -660,6 +660,8 @@ JS;
   }
 
   /**
+   * Adds a resource to the page (e.g. a set of CSS and/or JS files).
+   *
    * Method to link up the external css or js files associated with a set of code.
    * This is normally called internally by the control methods to ensure the required
    * files are linked into the page so does not need to be called directly. However
@@ -668,68 +670,67 @@ JS;
    * Ensures each file is only linked once and that dependencies are included
    * first and in the order given.
    *
-   * @param string $resource Name of resource to link. The following options are available:
-   * <ul>
-   * <li>indiciaFns</li>
-   * <li>jquery</li>
-   * <li>openlayers</li>
-   * <li>graticule</li>
-   * <li>clearLayer</li>
-   * <li>addrowtogrid</li>
-   * <li>speciesFilterPopup</li>
-   * <li>import</li>
-   * <li>indiciaMapPanel</li>
-   * <li>indiciaMapEdit</li>
-   * <li>postcode_search</li>
-   * <li>locationFinder</li>
-   * <li>createPersonalSites</li>
-   * <li>autocomplete</li>
-   * <li>indicia_locks</li>
-   * <li>jquery_cookie</li>
-   * <li>jquery_ui</li>
-   * <li>jquery_ui_fr</li>
-   * <li>jquery_form</li>
-   * <li>json</li>
-   * <li>reportPicker</li>
-   * <li>treeview</li>
-   * <li>treeview_async</li>
-   * <li>googlemaps</li>
-   * <li>fancybox</li>
-   * <li>treeBrowser</li>
-   * <li>defaultStylesheet</li>
-   * <li>validation</li>
-   * <li>plupload</li>
-   * <li>jqplot</li>
-   * <li>jqplot_bar</li>
-   * <li>jqplot_pie</li>
-   * <li>jqplot_category_axis_renderer</li>
-   * <li>jqplot_canvas_axis_label_renderer</li>
-   * <li>jqplot_trendline</li>
-   * <li>reportgrid</li>
-   * <li>tabs</li>
-   * <li>wizardprogress</li>
-   * <li>spatialReports</li>
-   * <li>jsonwidget</li>
-   * <li>timeentry</li>
-   * <li>verification</li>
-   * <li>complexAttrGrid</li>
-   * <li>footable</li>
-   * <li>footableSort</li>
-   * <li>footableFilter</li>
-   * <li>indiciaFootableReport</li>
-   * <li>indiciaFootableChecklist</li>
-   * <li>html2pdf</li>
-   * <li>review_input</li>
-   * <li>sub_list</li>
-   * <li>georeference_default_geoportal_lu</li>
-   * <li>georeference_defaultgoogle_places</li>
-   * <li>georeference_default_indicia_locations</li>
-   * <li>sref_handlers_4326</li>
-   * <li>sref_handlers_osgb</li>
-   * <li>sref_handlers_osie</li>
-   * <li>font_awesome</li>
-   * <li>leaflet</li>
-   * </ul>
+   * @param string $resource
+   *   Name of resource to link. The following options are available:
+   *   * indiciaFns
+   *   * jquery
+   *   * openlayers
+   *   * graticule
+   *   * clearLayer
+   *   * addrowtogrid
+   *   * speciesFilterPopup
+   *   * import
+   *   * indiciaMapPanel
+   *   * indiciaMapEdit
+   *   * postcode_search
+   *   * locationFinder
+   *   * createPersonalSites
+   *   * autocomplete
+   *   * indicia_locks
+   *   * jquery_cookie
+   *   * jquery_ui
+   *   * jquery_ui_fr
+   *   * jquery_form
+   *   * json
+   *   * reportPicker
+   *   * treeview
+   *   * treeview_async
+   *   * googlemaps
+   *   * multimap
+   *   * virtualearth
+   *   * fancybox
+   *   * treeBrowser
+   *   * defaultStylesheet
+   *   * validation
+   *   * plupload
+   *   * jqplot
+   *   * jqplot_bar
+   *   * jqplot_pie
+   *   * jqplot_category_axis_renderer
+   *   * jqplot_canvas_axis_label_renderer
+   *   * jqplot_trendline
+   *   * reportgrid
+   *   * tabs
+   *   * wizardprogress
+   *   * spatialReports
+   *   * jsonwidget
+   *   * timeentry
+   *   * verification
+   *   * complexAttrGrid
+   *   * footable
+   *   * indiciaFootableReport
+   *   * indiciaFootableChecklist
+   *   * html2pdf
+   *   * review_input
+   *   * sub_list
+   *   * georeference_default_geoportal_lu
+   *   * georeference_defaultgoogle_places
+   *   * georeference_default_indicia_locations
+   *   * sref_handlers_4326
+   *   * sref_handlers_osgb
+   *   * sref_handlers_osie
+   *   * font_awesome
+   *   * leaflet
    */
   public static function add_resource($resource) {
     // Ensure indiciaFns is always the first resource added

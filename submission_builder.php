@@ -218,49 +218,58 @@ class submission_builder {
         }
       }
     }
-    foreach($complexAttrs as $attrKey=>$data) {
-      if ($data==='deleted')
-        $sa['fields'][$attrKey] = array('value' => '');
+    foreach ($complexAttrs as $attrKey => $data) {
+      if ($data === 'deleted') {
+        $sa['fields'][$attrKey] = ['value' => ''];
+      }
       else {
-        $sa['fields'][$attrKey] = array('value' => array());
+        $sa['fields'][$attrKey] = ['value' => []];
         $tokens = explode(':', $attrKey);
         $exists = count($tokens) === 3;
         $encoding = $array["complex-attr-grid-encoding-$tokens[0]-$tokens[1]"];
         foreach (array_values($data) as $row) {
-          // find any term submissions in form id:term, and split into 2 json fields. Also process checkbox groups into suitable array form.
-          $terms = array();
+          // Find any term submissions in form id:term, and split into 2 json
+          // fields. Also process checkbox groups into suitable array form.
+          $terms = [];
           foreach ($row as $key => &$val) {
             if (is_array($val)) {
-              // array from a checkbox_group
-              $subvals=array();
-              $subterms=array();
+              // Array from a checkbox_group.
+              $subvals = [];
+              $subterms = [];
               foreach ($val as $subval) {
-                $split=explode(':', $subval, 2);
-                $subvals[] =  $split[0];
-                $subterms[] =  $split[1];
+                $split = explode(':', $subval, 2);
+                $subvals[] = $split[0];
+                $subterms[] = $split[1];
               }
-              $val=$subvals;
-              $terms[$key.'_term']=$subterms;
-            } else {
+              $val = $subvals;
+              $terms[$key . '_term'] = $subterms;
+            }
+            else {
               if (preg_match('/^[0-9]+\:.+$/', $val)) {
-                $split=explode(':', $val, 2);
+                $split = explode(':', $val, 2);
                 $val = $split[0];
-                $terms[$key.'_term']=$split[1];
+                $terms[$key . '_term'] = $split[1];
               }
             }
           }
-          $row += $terms;
-          if (implode('', array_values($row))<>'') {
+          // JSON only - include the terms in the saved value.
+          if ($encoding === 'json') {
+            $row += $terms;
+          }
+          if (implode('', array_values($row)) <> '') {
             $encoded = $encoding === 'json' ? json_encode($row) : implode($encoding, $row);
-            if ($exists)
-              // existing value, so no need to send an array
+            if ($exists) {
+              // Existing value, so no need to send an array.
               $sa['fields'][$attrKey]['value'] = $encoded;
-            else
-              // could be multiple new values, so send an array
+            }
+            else {
+              // Could be multiple new values, so send an array.
               $sa['fields'][$attrKey]['value'][] = $encoded;
-          } elseif ($exists) {
-            // submitting an empty set for existing row, so deleted
-            $sa['fields'][$attrKey]=array('value'=>'');
+            }
+          }
+          elseif ($exists) {
+            // Submitting an empty set for existing row, so deleted.
+            $sa['fields'][$attrKey] = ['value' => ''];
           }
         }
       }
