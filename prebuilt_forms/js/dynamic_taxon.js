@@ -89,7 +89,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       $.ajax({
         dataType: 'jsonp',
         url: indiciaData.read.url + 'index.php/services/data/taxon_association' +
-          '?to_preferred=t&from_taxon_meaning_id=' + $('input[name="taxon_meaning\\:id"]').val() +
+          '?from_preferred=t&to_preferred=t&from_taxon_meaning_id=' + $('input[name="taxon_meaning\\:id"]').val() +
           '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
           '&mode=json&callback=?',
         success: function(data) {
