@@ -210,6 +210,8 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
       if (typeof indiciaData.termlistData.impact_termlist_id !== 'undefined') {
         $('<th>' + indiciaData.lang.taxonassoc.hdrAssocImpact + '</th>').appendTo(elems.thr);
       }
+      // Delete icon column.
+      $('<th></th>').appendTo(elems.thr);
       $('<th/>');
       elems.tbody = $('<tbody>').appendTo(elems.table);
       indiciaFns.on('change', '#taxon\\:taxon', {}, function onTaxonChange() {
