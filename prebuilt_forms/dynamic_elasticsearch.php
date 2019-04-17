@@ -524,6 +524,8 @@ HTML;
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
     $dataOptions = self::getOptionsForJs($options, [], TRUE);
+    // Escape the source so it can output as an attribute.
+    $source = str_replace('"', '&quot;', json_encode($options['source']));
     return <<<HTML
 <div id="$options[id]" class="es-output es-output-download" data-es-source="$source" data-es-output-config="$dataOptions">
   $r
@@ -1116,7 +1118,7 @@ HTML;
   public static function ajax_attrs($website_id, $password) {
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = array(
-      'dataSource' => 'reports_for_prebuilt_forms/verification_3/record_data_attributes',
+      'dataSource' => 'reports_for_prebuilt_forms/dynamic_elasticsearch/record_details',
       'readAuth' => $readAuth,
       // @todo Sharing should be dynamically set in a form parameter (use $nid param).
       'sharing' => 'verification',

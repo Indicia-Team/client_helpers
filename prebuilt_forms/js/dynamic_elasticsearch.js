@@ -2304,9 +2304,7 @@
         $(el).find('.tabs').hide();
       });
     },
-    otherPublicFunction: function otherPublicFunction() {
 
-    },
     on: function on(event, handler) {
       if (typeof callbacks[event] === 'undefined') {
         indiciaFns.controlFail(this, 'Invalid event handler requested for ' + event);
