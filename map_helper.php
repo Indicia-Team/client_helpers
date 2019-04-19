@@ -29,237 +29,244 @@ class map_helper extends helper_base {
 
   /**
    * Outputs a map panel.
-   * The map panel can be augmented by adding any of the following controls which automatically link themselves
-   * to the map:
-   * <ul>
-   * <li>{@link sref_textbox()}</li>
-   * <li>{@link sref_system_select()}</li>
-   * <li>{@link sref_and_system()}</li>
-   * <li>{@link georeference_lookup()}</li>
-   * <li>{@link location_select()}</li>
-   * <li>{@link location_autocomplete()}</li>
-   * <li>{@link postcode_textbox()}</li>
-   * </ul>
-   * To run JavaScript at the end of map initialisation, add a function to the global array
-   * called mapInitialisationHooks. Code cannot access the map at any previous point because
-   * maps may not be initialised when the page loads, e.g. if the map initialisation is
-   * delayed until the tab it is on is shown.
-   * To run JavaScript which updates any of the map settings, add a function to the
-   * mapSettingsHooks global array. For example this is used to configure the map by report
-   * parameters panels which need certain tools on the map.
-   * @param array $options Associative array of options to pass to the jQuery.indiciaMapPanel plugin.
-   * Has the following possible options:
-   * <ul><li><b>indiciaSvc</b><br/>
-   * </li>
-   * <li><b>indiciaGeoSvc</b><br/>
-   * </li>
-   * <li><b>readAuth</b><br/>
-   * Provides read authentication tokens for the warehouse. Only required when there is a location control linked to the warehouse associated with this map.
-   * </li>
-   * <li><b>height</b><br/>
-   * Height of the map panel, in pixels.
-   * </li>
-   * <li><b>width</b><br/>
-   * Width of the map panel, in pixels or as a percentage if followed by a % symbol.
-   * </li>
-   * <li><b>initial_lat</b><br/>
-   * Latitude of the centre of the initially displayed map, using WGS84.
-   * </li>
-   * <li><b>initial_long</b><br/>
-   * Longitude of the centre of the initially displayed map, using WGS84.
-   * </li>
-   * <li><b>initial_zoom</b><br/>
-   * </li>
-   * <li><b>scroll_wheel_zoom</b><br/>
-   * Does the scroll wheel zoom the map in and out when over the map? Defaults to true. When using the scroll wheel to look up and down a data entry form
-   * it can be easy to inadvertantly scroll the map, so it may be desirable to disable this feature in some cases.
-   * </li>
-   * <li><b>proxy</b><br/>
-   * </li>
-   * <li><b>displayFormat</b><br/>
-   * </li>
-   * <li><b>presetLayers</b><br/>
-   * Array of preset layers to include. Options are 'google_physical', 'google_streets', 'google_hybrid',
-   * 'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid', 'bing_shaded',
-   * 'bing_os', 'osm' (for OpenStreetMap), 'os_outdoor', 'os_road', 'os_light', 'os_night', 'os_leisure'.
- * </li>
-   * <li><b>tilecacheLayers</b><br/>
-   * Array of layer definitions for tilecaches, which are pre-cached background tiles. They are less flexible but much faster
-   * than typical WMS services. The array is associative, with the following keys:
-   *   caption - The display name of the layer
-   *   servers - array list of server URLs for the cache
-   *   layerName - the name of the layer within the cache
-   *   settings - any other settings that need to be passed to the tilecache, e.g. the server resolutions or file format.</li>
-   * <li><b>indiciaWMSLayers</b><br/>
-   * </li>
-   * <li><b>indiciaWFSLayers</b><br/>
-   * </li>
-   * <li><b>layers</b><br/>
-   * An array of JavaScript variables which point to additional OpenLayers layer objects to add to the map. The JavaScript for creating these layers
-   * can be added to data_entry_helper::$onload_javascript before calling the map_panel method.
-   * </li>
-   * <li><b>clickableLayers</b><br/>
-   * If support for clicking on a layer to provide info on the clicked objects is required, set this to an array containing the JavaScript variable
-   * names for the OpenLayers WMS layer objects you have created for the clickable layers. The JavaScript for creating these layers
-   * can be added to data_entry_helper::$onload_javascript before calling the map_panel method and they can be the same layers as those referred to in
-   * the layers parameter.
-   * </li>
-   * <li><b>clickableLayersOutputMode</b><br/>
-   * Set to popup to display the information retrieved from a click operation on a popup window, set to div to
-   * display the information in a specified HTML div, or to customFunction to call a JavaScript function
-   * after the click operation allowing custom functionality such as navigation to another page. Default
-   * is popup.
-   * </li>
-   * <li><b>clickableLayersOutputDiv</b><br/>
-   * ID of the HTML div to output information retrieved from a click operation into, if clickableLayersOutputMode
-   * is set to div.
-   * </li>
-   * <li><b>selectFeatureBufferProjection</b>
-   * Set this to the EPSG code of a projection to enable a control to be added to the map allowing the tolerance to be
-   * specified when clicking to select a feature on the map. E.g. set to 27700 for OSGB Easting/Northings.
-   * </li>
-   * <li><b>allowBox</b><br/>
-   * Default true. Set to false to disable drag boxes for selecting items on clickable layers. The advantage of this is that
-   * the drag boxes don't hinder attempts to drag the map to navigate.
-   * </li>
-   * <li><b>customClickFn</b>
-   * Set to the name of a global custom JavaScript function which will handle the event of clicking on the map if
-   * you want custom functionality. Provide this when clickableLayersOutputMode=customFunction. The function will
-   * receive a single parameter containing an array of features.
-   * </li>
-   * <li><b>clickableLayersOutputFn</b><br/>
-   * Allows overridding of the appearance of the output when clicking on the map for WMS or vector layers. Should be set to a
-   * JavaScript function name which takes a list of features and the map div as parameters, then returns the HTML to output.</li>
-   * <li><b>clickableLayersOutputColumns</b><br/>
-   * An associated array of column field names with column titles as the values which defines the columns that are output when clicking on a data point.
-   * If ommitted, then all columns are output using their original field names.
-   * </li>
-   * <li><b>locationLayerName</b><br/>
-   * If using a location select or autocomplete control, then set this to the name of a feature type exposed on GeoServer which contains the id, name and boundary
-   * geometry of each location that can be selected. Then when the user clicks on the map the system is able to automatically populate the locations control with the
-   * clicked on location. Ensure that the feature type is styled on GeoServer to appear as required, though it will be added to the map with semi-transparency. To use
-   * this feature ensure that a proxy is set, e.g. by using the Indicia Proxy module in Drupal.
-   * </li>
-   * <li><b>locationLayerFilter</b><br/>
-   * If using a location layer, then set this to a cql filter in order to select e.g. locations for a website or locations of a type.
-   * The filter can act on any fields in the feature type that locationLayerName refers to.
-   * </li>
-   * <li><b>controls</b><br/>
-   * </li>
-   * <li><b>toolbarDiv</b><br/>
-   * If set to 'map' then any required toolbuttons are output directly onto the map canvas (in the top right corner). Alternatively can be set to 'top',
-   * 'bottom' or the id of a div on the page to output them into.
-   * </li>
-   * <li><b>toolbarPrefix</b><br/>
-   * Content to include at the beginning of the map toolbar. Not applicable when the toolbar is added directly to the map.
-   * </li>
-   * <li><b>toolbarSuffix</b><br/>
-   * Content to include at the end of the map toolbar. Not applicable when the toolbar is added directly to the map.
-   * </li>
-   * <li><b>helpDiv</b><br/>
-   * Set to 'bottom' to add a div containing help hints below the map. Set to the name of a div to output help hints into that
-   * div. Otherwise no help hints are displayed.
-   * </li>
-   * <li><b>clickForSpatialRef</b><br/>
-   * Does clicking on the map set the spatial reference of the sample input controls on the form the map appears on (if any)?
-   * Defaults to true.
-   * </li>
-   * <li><b>allowPolygonRecording</b><br/>
-   * If a drawPolygon or drawLine control is present, do these set the spatial reference of the sample input controls on the form the map appears on (if any)?
-   * The spatial ref is set to the polygon centroid and the sample geometry is set to the polygon itself allowing polygons for records.
-   * </li>
-   * <li><b>editLayer</b><br/>
-   * </li>
-   * <li><b>editLayerName</b><br/>
-   * </li>
-   * <li><b>standardControls</b>
-   * An array of predefined controls that are added to the map. Select from:<br/>
-   *    layerSwitcher - a button in the corner of the map which opens a panel allowing selection of the visible layers.<br/>
-   *    drawPolygon - a tool for drawing polygons onto the map edit layer.<br/>
-   *    drawLine - a tool for drawing lines onto the map edit layer.<br/>
-   *    drawPoint - a tool for drawing points onto the map edit layer.<br/>
-   *    zoomBox - allow zooming to a bounding box, drawn whilst holding the shift key down. This functionality is provided by the panZoom and panZoomBar controls as well
-   *    so is only relevant when they are not selected.
-   *    panZoom - simple controls in the corner of the map for panning and zooming.
-   *    panZoomBar - controls in the corner of the map for panning and zooming, including a slide bar for zooming.
-   *    modifyFeature - a tool for selecting a feature on the map edit layer then editing the vertices of the feature.
-   *    selectFeature - a tool for selecting a feature on the map edit layer.
-   *    hoverFeatureHighlight - highlights the feature on the map edit layer which is under the mouse cursor position.
-   *    fullscreen - add a button allowing the map to be shown in full screen mode.
-   * Default is layerSwitcher, panZoom and graticule.
-   * </li>
-   * <li><b>initialFeatureWkt</b><br/>
-   * Well known text for a geometry to load onto the map at startup, normally corresponding to the geometry of the record
-   * being edited.
-   * </li>
-   * <li><b>initialBoundaryWkt</b><br/>
-   * Well known text for a geometry to load onto the map at startup, normally corresponding to the geometry of the boundary
-   * being edited (e.g. a site boundary).
-   * </li>
-   * <li><b>defaultSystem</b><br/>
-   * </li>
-   * <li><b>latLongFormat</b><br/>
-   * Override the format for display of lat long references. Select from D (decimal degrees, the default), DM (degrees and decimal minutes)
-   * or DMS (degrees, minutes and decimal seconds).</li>
-   * <li><b>srefId</b><br/>
-   * Override the id of the control that has the grid reference value
-   * </li>
-   * <li><b>srefSystemId</b><br/>
-   * Override the id of the control that has the spatial reference system value
-   * </li>
-   * <li><b>geomId</b><br/>
-   * </li>
-   * <li><b>clickedSrefPrecisionMin</b><br/>
-   * Specify the minimum precision allowed when clicking on the map to get a grid square. If not set then the grid square selected will increase to its maximum
-   * size as the map is zoomed out. E.g. specify 4 for a 1km British National Grid square.
-   * </li>
-   * <li><b>clickedSrefPrecisionMax</b><br/>
-   * Specify the maximum precision allowed when clicking on the map to get a grid square. If not set then the grid square selected will decrease to its minimum
-   * size as the map is zoomed in. E.g. specify 4 for a 1km British National Grid square.
-   * </li>
-   * <li><b>msgGeorefSelectPlace</b><br/>
-   * </li>
-   * <li><b>msgGeorefNothingFound</b><br/>
-   * </li>
-   * <li><b>msgSrefOutsideGrid</b><br/>
-   * Message displayed when point outside of grid reference range is clicked.
-   * </li>
-   * <li><b>msgSrefNotRecognised</b><br/>
-   * Message displayed when a grid reference is typed that is not recognised.
-   * </li>
-   * <li><b>maxZoom</b><br/>
-   * Limit the maximum zoom used when clicking on the map to set a point spatial reference. Use this to prevent over zooming on
-   * background maps.</li>
-   * <li><b>tabDiv</b><br/>
-   * If loading this control onto a set of tabs, specify the tab control's div ID here. This allows the control to
-   * automatically generate code which only generates the map when the tab is shown.</li>
-   * <li><b>setupJs</b><br/>
-   * When there is JavaScript to run before the map is initialised, put the JavaScript into this option. This allows the map to run the
-   * setup JavaScript just in time, immediately before the map is created. This avoids problems where the setup JavaScript causes the OpenLayers library
-   * to be initialised too earlier if the map is on a div.</li>
-   * <li><b>graticuleIntervalColours</b><br/>
-   * A list of possible graticule CSS colours corresponding to each graticule width.</li>
-   * <li><b>rememberPos</b><br/>
-   * Set to true to enable restoring the map position when the page is reloaded. Requires jquery.cookie plugin. As this feature
-   * requires cookies, you should notify your users in compliance with European cookie law if you use this option.</li>
-   * </ul>
-   * <li><b>helpDiv</b><br/>
-   * Set to bottom to output a help div under the map, or set to the ID of a div to output into.</li>
-   * <li><b>helpToPickPrecisionMin</b><br/>
-   * Set to a precision in metres (e.g. 10, 100, 1000) to provide help guiding the recorder to pick a grid square of at least that precision. Ensure that helpDiv is
-   * set when using this option.</li>
-   * <li><b>helpToPickPrecisionMax</b><br/>
-   * Set to a precision in metres (e.g. 10, 100, 1000) that the help system will accept as not requiring further refinement when a grid square of this precision is picked.</li>
-   * <li><b>helpToPickPrecisionSwitchAt</b><br/>
-   * Set to a precision in metres (e.g. 10, 100, 1000) that the map will switch to the satellite layer (if Google or Bing satellite layers active) when
-   * the recorder picks a grid square of at least that precision.</li>
-   * <li><b>gridRefHint</b><br/>
-   * Set to true to put the currently hovered over grid ref in an element with id grid-ref-hint. Use the next setting to automate adding this to the page.</li>
-   * <li><b>gridRefHintInFooter</b><br/>
-   * Defaults to true. If there is a grid ref hint, should it go in the footer area of the map? If so, there is no need to add an element id grid-ref-hint to the page.</li>
-   * <li><b>Graticules</b><br/>
-   * JSON to override the graticules defined for this map.</li>
-   * </ul>
+   *
+   * The map panel can be augmented by adding any of the following controls
+   * which automatically link themselves to the map:
+   * * {@link sref_textbox()}
+   * * {@link sref_system_select()}
+   * * {@link sref_and_system()}
+   * * {@link georeference_lookup()}
+   * * {@link location_select()}
+   * * {@link location_autocomplete()}
+   * * {@link postcode_textbox()}
+   * To run JavaScript at the end of map initialisation, add a function to the
+   * global array called mapInitialisationHooks. Code cannot access the map at
+   * any previous point because maps may not be initialised when the page loads,
+   * e.g. if the map initialisation is delayed until the tab it is on is shown.
+   * To run JavaScript which updates any of the map settings, add a function to
+   * the mapSettingsHooks global array. For example this is used to configure
+   * the map by report parameters panels which need certain tools on the map.
+   *
+   * @param array $options
+   *   Associative array of options to pass to the jQuery.indiciaMapPanel
+   *   plugin. Has the following possible options:
+   *   * indiciaSvc
+   *   * indiciaGeoSvc
+   *   * readAuth - Provides read authentication tokens for the warehouse. Only
+   *     required when there is a location control linked to the warehouse
+   *     associated with this map.
+   *   * height - Height of the map panel, in pixels.
+   *   * width - Width of the map panel, in pixels or as a percentage if
+   *     followed by a % symbol.
+   *   * initial_lat - Latitude of the centre of the initially displayed map,
+   *     using WGS84.
+   *   * initial_long - Longitude of the centre of the initially displayed map,
+   *     using WGS84.
+   *   * initial_zoom
+   *   * scroll_wheel_zoom - Does the scroll wheel zoom the map in and out when
+   *     over the map? Defaults to true. When using the scroll wheel to look up
+   *     and down a data entry form it can be easy to inadvertantly scroll the
+   *     map, so it may be desirable to disable this feature in some cases.
+   *   * proxy
+   *   * displayFormat
+   *   * presetLayers - Array of preset layers to include. Options are
+   *     'google_physical', 'google_streets', 'google_hybrid',
+   *     'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid',
+   *     'bing_shaded', 'bing_os', 'osm' (for OpenStreetMap), 'os_outdoor',
+   *     'os_road', 'os_light', 'os_night', 'os_leisure'.
+   *   * tilecacheLayers - Array of layer definitions for tilecaches, which are
+   *     pre-cached background tiles. They are less flexible but much faster
+   *     than typical WMS services. The array is associative, with the
+   *     following keys:
+   *     * caption - The display name of the layer
+   *     * servers - array list of server URLs for the cache
+   *     * layerName - the name of the layer within the cache
+   *     * settings - any other settings that need to be passed to the
+   *       tilecache, e.g. the server resolutions or file format.
+   *   * indiciaWMSLayers
+   *   * indiciaWFSLayers
+   *   * layers - An array of JavaScript variables which point to additional
+   *     OpenLayers layer objects to add to the map. The JavaScript for
+   *     creating these layers can be added to
+   *     data_entry_helper::$onload_javascript before calling the map_panel
+   *     method.
+   *   * clickableLayers - If support for clicking on a layer to provide info
+   *     on the clicked objects is required, set this to an array containing
+   *     the JavaScript variable names for the OpenLayers WMS layer objects you
+   *     have created for the clickable layers. The JavaScript for creating
+   *     these layers can be added to data_entry_helper::$onload_javascript
+   *     before calling the map_panel method and they can be the same layers as
+   *     those referred to in the layers parameter.
+   *   * clickableLayersOutputMode - Set to popup to display the information
+   *     retrieved from a click operation on a popup window, set to div to
+   *     display the information in a specified HTML div, or to customFunction
+   *     to call a JavaScript function after the click operation allowing
+   *     custom functionality such as navigation to another page. Default is
+   *     popup.
+   *   * clickableLayersOutputDiv - ID of the HTML div to output information
+   *     retrieved from a click operation into, if clickableLayersOutputMode
+   *     is set to div.
+   *   * selectFeatureBufferProjection - Set this to the EPSG code of a
+   *     projection to enable a control to be added to the map allowing the
+   *     tolerance to be specified when clicking to select a feature on the
+   *      map. E.g. set to 27700 for OSGB Easting/Northings.
+   *   * allowBox - Default true. Set to false to disable drag boxes for
+   *     selecting items on clickable layers. The advantage of this is that the
+   *     drag boxes don't hinder attempts to drag the map to navigate.
+   *   * customClickFn - Set to the name of a global custom JavaScript function
+   *     which will handle the event of clicking on the map if you want custom
+   *     functionality. Provide this when
+   *     clickableLayersOutputMode=customFunction. The function will receive a
+   *     single parameter containing an array of features.
+   *   * clickableLayersOutputFn - Allows overridding of the appearance of the
+   *      output when clicking on the map for WMS or vector layers. Should be
+   *     set to a JavaScript function name which takes a list of features and
+   *     the map div as parameters, then returns the HTML to output.
+   *   * clickableLayersOutputColumns - An associated array of column field
+   *     names with column titles as the values which defines the columns that
+   *     are output when clicking on a data point. If ommitted, then all
+   *     columns are output using their original field names.
+   *   * locationLayerName - If using a location select or autocomplete
+   *     control, then set this to the name of a feature type exposed on
+   *     GeoServer which contains the id, name and boundary geometry of each
+   *     location that can be selected. Then when the user clicks on the map
+   *     the system is able to automatically populate the locations control
+   *     with the clicked on location. Ensure that the feature type is styled
+   *     on GeoServer to appear as required, though it will be added to the map
+   *     with semi-transparency. To use this feature ensure that a proxy is
+   *     set, e.g. by using the Indicia Proxy module in Drupal.
+   *   * locationLayerFilter - If using a location layer, then set this to a
+   *     cql filter in order to select e.g. locations for a website or
+   *     locations of a type. The filter can act on any fields in the feature
+   *     type that locationLayerName refers to.
+   *   * controls
+   *   * toolbarDiv - If set to 'map' then any required toolbuttons are output
+   *     directly onto the map canvas (in the top right corner). Alternatively
+   *     can be set to 'top', 'bottom' or the id of a div on the page to output
+   *     them into.
+   *   * toolbarPrefix - Content to include at the beginning of the map
+   *     toolbar. Not applicable when the toolbar is added directly to the map.
+   *   * toolbarSuffix - Content to include at the end of the map toolbar. Not
+   *     applicable when the toolbar is added directly to the map.
+   *   * helpDiv - Set to 'bottom' to add a div containing help hints below the
+   *     map. Set to the name of a div to output help hints into that div.
+   *     Otherwise no help hints are displayed.
+   *   * clickForSpatialRef - Does clicking on the map set the spatial
+   *     reference of the sample input controls on the form the map appears on
+   *     (if any)? Defaults to true.
+   *   * allowPolygonRecording - If a drawPolygon or drawLine control is
+   *     present, do these set the spatial reference of the sample input
+   *     controls on the form the map appears on (if any)? The spatial ref is
+   *     set to the polygon centroid and the sample geometry is set to the
+   *     polygon itself allowing polygons for records.
+   *   * editLayer
+   *   * editLayerName
+   *   * standardControls - An array of predefined controls that are added to
+   *     the map. Select from:
+   *     * layerSwitcher - a button in the corner of the map which opens a
+   *       panel allowing selection of the visible layers.
+   *     * drawPolygon - a tool for drawing polygons onto the map edit layer.
+   *     * drawLine - a tool for drawing lines onto the map edit layer.
+   *     * drawPoint - a tool for drawing points onto the map edit layer.
+   *     * zoomBox - allow zooming to a bounding box, drawn whilst holding the
+   *       shift key down. This functionality is provided by the panZoom and
+   *       panZoomBar controls as well so is only relevant when they are not
+   *       selected.
+   *     * panZoom - simple controls in the corner of the map for panning and
+   *       zooming.
+   *     * panZoomBar - controls in the corner of the map for panning and
+   *       zooming, including a slide bar for zooming.
+   *     * modifyFeature - a tool for selecting a feature on the map edit layer
+   *       then editing the vertices of the feature.
+   *     * selectFeature - a tool for selecting a feature on the map edit
+   *       layer.
+   *     * hoverFeatureHighlight - highlights the feature on the map edit layer
+   *       which is under the mouse cursor position.
+   *     * fullscreen - add a button allowing the map to be shown in full
+   *       screen mode.
+   *     Default is layerSwitcher, panZoom and graticule.
+   *   * initialFeatureWkt - Well known text for a geometry to load onto the
+   *     map at startup, normally corresponding to the geometry of the record
+   *     being edited.
+   *   * initialBoundaryWkt - Well known text for a geometry to load onto the
+   *     map at startup, normally corresponding to the geometry of the boundary
+   *     being edited (e.g. a site boundary).
+   *   * defaultSystem
+   *   * latLongFormat - Override the format for display of lat long
+   *     references. Select from D (decimal degrees, the default), DM (degrees
+   *     and decimal minutes) or DMS (degrees, minutes and decimal seconds).
+   *   * srefId - Override the id of the control that has the grid reference
+   *     value
+   *   * srefSystemId - Override the id of the control that has the spatial
+   *     reference system value.
+   *   * geomId
+   *   * clickedSrefPrecisionMin - Specify the minimum precision allowed when
+   *     clicking on the map to get a grid square. If not set then the grid
+   *     square selected will increase to its maximum - size as the map is
+   *     zoomed out. E.g. specify 4 for a 1km British National Grid square.
+   *   * clickedSrefPrecisionMax - Specify the maximum precision allowed when
+   *     clicking on the map to get a grid square. If not set then the grid
+   *     square selected will decrease to its minimum size as the map is zoomed
+   *     in. E.g. specify 4 for a 1km British National Grid square.
+   *   * msgGeorefSelectPlace
+   *   * msgGeorefNothingFound
+   *   * msgSrefOutsideGrid - Message displayed when point outside of grid
+   *     reference range is clicked.
+   *   * msgSrefNotRecognised - Message displayed when a grid reference is
+   *     typed that is not recognised.
+   *   * maxZoom - Limit the maximum zoom used when clicking on the map to set
+   *     a point spatial reference. Use this to prevent over zooming on
+   *     background maps.
+   *   * tabDiv - If loading this control onto a set of tabs, specify the tab
+   *     control's div ID here. This allows the control to automatically
+   *     generate code which only generates the map when the tab is shown.
+   *   * setupJs - When there is JavaScript to run before the map is
+   *     initialised, put the JavaScript into this option. This allows the map
+   *     to run the setup JavaScript just in time, immediately before the map
+   *     is created. This avoids problems where the setup JavaScript causes the
+   *     OpenLayers library to be initialised too earlier if the map is on a
+   *     div.
+   *   * graticuleIntervalColours - A list of possible graticule CSS colours
+   *     corresponding to each graticule width.
+   *   * rememberPos - Set to true to enable restoring the map position when
+   *     the page is reloaded. Requires jquery.cookie plugin. As this feature
+   *     requires cookies, you should notify your users in compliance with
+   *     European cookie law if you use this option.
+   *   * helpDiv - Set to bottom to output a help div under the map, or set to
+   *     the ID of a div to output into.
+   *   * helpToPickPrecisionMin - Set to a precision in metres (e.g. 10, 100,
+   *     1000) to provide help guiding the recorder to pick a grid square of at
+   *     least that precision. Ensure that helpDiv is set when using this
+   *     option.
+   *   * helpToPickPrecisionMax - Set to a precision in metres (e.g. 10, 100,
+   *     1000) that the help system will accept as not requiring further
+   *     refinement when a grid square of this precision is picked.
+   *   * helpToPickPrecisionSwitchAt - Set to a precision in metres (e.g. 10,
+   *     100, 1000) that the map will switch to the satellite layer (if Google
+   *     or Bing satellite layers active) when the recorder picks a grid square
+   *     of at least that precision.
+   *   * gridRefHint - Set to true to put the currently hovered over grid ref
+   *     in an element with id grid-ref-hint. Use the next setting to automate
+   *     adding this to the page.
+   *   * gridRefHintInFooter - Defaults to true. If there is a grid ref hint,
+   *     should it go in the footer area of the map? If so, there is no need to
+   *     add an element id grid-ref-hint to the page.
+   *   * Graticules - JSON to override the graticules defined for this map.
+   *     Specify an object where the properties are the names of the projection
+   *     associated with the graticule and each property holds an object
+   *     defining the settings for the graticule shown when that projection is
+   *     selected. This should hold the following properties:
+   *     * projection - EPSG code for the graticule's projection.
+   *     * bounds - bounding box for the projection in the same projection. An
+   *       array of [left, bottom, right, top].
+   *     * intervals - an array of the grid sizes shown from largest to
+   *       smallest.
+   *     * intervalColours - a matching array of CSV colour definitions for
+   *       each grid size.
+   *     * lineWidth - a matching array of line widths in pixels for each grid
+   *       size.
+   *     * lineOpacity - a matching array of line opacities (0 to 1) for each
+   *       grid size.
    * @param array $olOptions
    *   Optional array of settings for the OpenLayers map object. If overriding
    *   the projection or displayProjection settings, just pass the EPSG number,
