@@ -251,7 +251,7 @@ class map_helper extends helper_base {
    *   * gridRefHintInFooter - Defaults to true. If there is a grid ref hint,
    *     should it go in the footer area of the map? If so, there is no need to
    *     add an element id grid-ref-hint to the page.
-   *   * Graticules - JSON to override the graticules defined for this map.
+   *   * graticules - JSON to override the graticules defined for this map.
    *     Specify an object where the properties are the names of the projection
    *     associated with the graticule and each property holds an object
    *     defining the settings for the graticule shown when that projection is
@@ -267,6 +267,10 @@ class map_helper extends helper_base {
    *       size.
    *     * lineOpacity - a matching array of line opacities (0 to 1) for each
    *       grid size.
+   *     If you specify one graticule per projection available on a recording
+   *     form, then the map will automatically switch to show the graticule
+   *     associated with the current projection. If you only specify a single
+   *     graticule then it will always be visible.
    * @param array $olOptions
    *   Optional array of settings for the OpenLayers map object. If overriding
    *   the projection or displayProjection settings, just pass the EPSG number,
