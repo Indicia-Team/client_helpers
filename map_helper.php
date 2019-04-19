@@ -257,6 +257,8 @@ class map_helper extends helper_base {
    * Set to true to put the currently hovered over grid ref in an element with id grid-ref-hint. Use the next setting to automate adding this to the page.</li>
    * <li><b>gridRefHintInFooter</b><br/>
    * Defaults to true. If there is a grid ref hint, should it go in the footer area of the map? If so, there is no need to add an element id grid-ref-hint to the page.</li>
+   * <li><b>Graticules</b><br/>
+   * JSON to override the graticules defined for this map.</li>
    * </ul>
    * @param array $olOptions
    *   Optional array of settings for the OpenLayers map object. If overriding
