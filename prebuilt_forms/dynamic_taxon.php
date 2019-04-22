@@ -802,6 +802,7 @@ JS;
       'hdrAssocPosition' => 'Position on associated organism',
       'hdrAssocImpact' => 'Impact on associated organism',
       'hdrTaxon' => 'Taxon',
+      'pleaseSelect' => 'Please select',
       'pleaseSelectType' => 'Please select a type',
       'taxonBeingEdited' => 'Taxon being edited',
       'taxonPlaceholder' => 'Enter taxon name to add an association',
@@ -815,6 +816,41 @@ $('.taxon-associations').taxonAssociations();
 JS;
     return <<<HTML
 <div class="taxon-associations" data-config="$dataOptions"></div>
+
+HTML;
+  }
+
+  /**
+   * A control for editing the designations associated with a taxon.
+   */
+  protected static function get_control_taxondesignations($auth, $args, $tabAlias, $options) {
+    helper_base::add_resource('jquery_ui');
+    $dataOptions = self::getOptionsForJs($options, [
+    ], TRUE);
+    helper_base::addLanguageStringsToJs('taxondesig', [
+      'btnAddNew' => 'Add new designation',
+      'hdrDesignation' => 'Designation',
+      'hdrStartDate' => 'Start date',
+      'hdrSource' => 'Source',
+      'hdrGeographicConstraint' => 'Geographic constraint',
+      'pleaseSelect' => 'Please select to add a designation',
+    ]);
+    $designationData = data_entry_helper::get_population_data([
+      'table' => 'taxon_designation',
+      'extraParams' => ['view' => 'detail'] + $auth['read'],
+    ]);
+    $designationList = [];
+    foreach ($designationData as $d) {
+      $designationList[$d['id']] = "$d[category]: $d[title]";
+    }
+    $designationJs = json_encode($designationList);
+    data_entry_helper::$javascript .= <<<JS
+indiciaData.designations = $designationJs;
+$('.taxon-designations').taxonDesignations();
+
+JS;
+    return <<<HTML
+<div class="taxon-designations" data-config="$dataOptions"></div>
 
 HTML;
   }
@@ -900,9 +936,13 @@ HTML;
     ];
     $doAssociations = !empty($values['process-associations']);
     unset($values['process-associations']);
+    $doDesignations = !empty($values['process-designations']);
+    unset($values['process-designations']);
     $s = submission_builder::build_submission($values, $structure);
-    if ($doAssociations) {
+    if ($doAssociations || $doDesignations) {
       $s['subModels'] = [];
+    }
+    if ($doAssociations) {
       $tmIdKeys = preg_grep('/^associated-taxon-tmId:/', array_keys($values));
       foreach ($tmIdKeys as $key) {
         if (!empty($values[$key])) {
@@ -928,6 +968,38 @@ HTML;
             'fkField' => 'taxon_meaning_id',
             'model' => [
               'id' => 'taxon_association',
+              'fields' => $fields,
+            ],
+          ];
+        }
+      }
+    }
+    if ($doDesignations) {
+      $tdKeys = preg_grep('/^taxon-designation-taxon_designation_id:/', array_keys($values));
+      foreach ($tdKeys as $key) {
+        if (!empty($values[$key])) {
+          $rowId = preg_replace('/^[a-zA-Z_\-:]+/', '', $key);
+          $fields = [
+            'taxon_designation_id' => $values[$key],
+            'taxon_id' => $values['taxon:id'],
+            'start_date' => empty($values["taxon-designation-start_date:$rowId"])
+              ? NULL : $values["taxon-designation-start_date:$rowId"],
+            'source' => empty($values["taxon-designation-source:$rowId"])
+              ? NULL : $values["taxon-designation-source:$rowId"],
+            'geographical_constraint' => empty($values["taxon-designation-geographical_constraint:$rowId"])
+              ? NULL : $values["taxon-designation-geographical_constraint:$rowId"],
+          ];
+          if (!empty($values["taxa_taxon_designation_id:$rowId"])) {
+            $fields['id'] = $values["taxa_taxon_designation_id:$rowId"];
+            if (!empty($values["designation-deleted:$rowId"])) {
+              $fields['deleted'] = 't';
+            }
+          }
+          $s['subModels'][] = [
+            'fkId' => 'taxon_id',
+            'fkField' => 'taxon_id',
+            'model' => [
+              'id' => 'taxa_taxon_designation',
               'fields' => $fields,
             ],
           ];
