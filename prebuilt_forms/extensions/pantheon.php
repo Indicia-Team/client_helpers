@@ -166,6 +166,7 @@ class extension_pantheon {
     $r .= '<li><a id="species-link" class="button" href="' . hostsite_get_url('species-for-sample') . '">Species list</a></li>
 <li><a id="guilds-link" class="button" href="' . hostsite_get_url('ecological-guilds') . '">Feeding guilds</a></li>
 <li><a id="habitats-resources-link" class="button" href="' . hostsite_get_url('habitats-resources') . '">Habitats &amp; resources</a></li>
+<li><a id="habitats-resources-link" class="button" href="' . hostsite_get_url('habitats-resources/isis-assemblages') . '">Assemblages</a></li>
 <li><a id="horus-link" class="button" href="' . hostsite_get_url('horus/quality-scores-overview') . '">Habitat scores</a></li>
 <li><a id="associations-link" class="button" href="' . hostsite_get_url('associations') . '">Associations</a></li>
 <li><a id="combined-summary" class="button" href="' . hostsite_get_url('combined-summary') . '">Combined summary</a></li>
