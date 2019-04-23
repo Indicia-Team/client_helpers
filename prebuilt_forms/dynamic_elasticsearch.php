@@ -313,6 +313,8 @@ JS;
   /**
    * Provide common option handling for controls.
    *
+   * * If attachToId specified, ensures that the control ID is set to the same
+   *   value.
    * * Sets a unique ID for the control if not already set.
    * * Checks that required options are all populated.
    * * Checks that options which should contain JSON do so.
@@ -330,9 +332,19 @@ JS;
    */
   private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
     self::$controlIndex++;
-    $options = array_merge([
-      'id' => "es-$controlName-" . self::$controlIndex,
-    ], $options);
+    if (!empty($options['attachToId'])) {
+      if (!empty($options['id']) && $options['id'] !== $options['attachToId']) {
+        throw new Exception("Control ID $options[id] @attachToId does not match the @id option value.");
+      }
+      // If attaching to an existing element, force the ID.
+      $options['id'] = $options['attachToId'];
+    }
+    else {
+      // Otherwise, generate a unique ID if not defined.
+      $options = array_merge([
+        'id' => "es-$controlName-" . self::$controlIndex,
+      ], $options);
+    }
     // Fail if duplicate ID on page.
     if (in_array($options['id'], self::$controlIds)) {
       throw new Exception("Control ID $options[id] is duplicated in the page configuration");
@@ -524,15 +536,9 @@ HTML;
       $indicia_templates['two-col-50']);
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
-    $dataOptions = self::getOptionsForJs($options, [], TRUE);
-    // Escape the source so it can output as an attribute.
-    $source = str_replace('"', '&quot;', json_encode($options['source']));
-    return <<<HTML
-<div id="$options[id]" class="es-output es-output-download" data-es-source="$source" data-es-output-config="$dataOptions">
-  $r
-</div>
+    $dataOptions = self::getOptionsForJs($options, [], empty($options['attachToId']));
+    return self::getControlContainer('download', $options, $dataOptions);
 
-HTML;
   }
 
   /**
@@ -567,13 +573,8 @@ HTML;
       'simpleAggregation',
       'sourceTable',
       'autogenColumns',
-    ], TRUE);
-    // Escape the source so it can output as an attribute.
-    $source = str_replace('"', '&quot;', json_encode($options['source']));
-    return <<<HTML
-<div id="$options[id]" class="es-output es-output-dataGrid" data-es-source="$source" data-es-output-config="$dataOptions"></div>
-
-HTML;
+    ], empty($options['attachToId']));
+    return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
   protected static function get_control_map($auth, $args, $tabalias, $options) {
@@ -589,14 +590,8 @@ HTML;
       'initialLng',
       'initialZoom',
       'cookies',
-    ], TRUE);
-    // Escape the source so it can output as an attribute.
-    $source = str_replace('"', '&quot;', json_encode($options['source']));
-
-    return <<<HTML
-<div id="$options[id]" class="es-output es-output-map" data-es-source="$source" data-es-output-config="$dataOptions"></div>
-
-HTML;
+    ], empty($options['attachToId']));
+    return self::getControlContainer('map', $options, $dataOptions);
   }
 
   protected static function get_control_templatedOutput($auth, $args, $tabalias, $options) {
@@ -606,12 +601,27 @@ HTML;
       'header',
       'footer',
       'repeatField',
-    ], TRUE);
+    ], empty($options['attachToId']));
+    return self::getControlContainer('templatedOutput', $options, $dataOptions);
+  }
+
+  private static function getControlContainer($controlName, $options, $dataOptions) {
+    if (!empty($options['attachToId'])) {
+      $source = json_encode($options['source']);
+      // Use JS to attach to an existing element.
+      helper_base::$javascript .= <<<JS
+$('#$options[attachToId]')
+  .addClass('es-output')
+  .addClass("es-output-$controlName")
+  .attr('data-es-source', '$source')
+  .attr('data-es-output-config', '$dataOptions')
+JS;
+      return '';
+    }
     // Escape the source so it can output as an attribute.
     $source = str_replace('"', '&quot;', json_encode($options['source']));
-
     return <<<HTML
-<div id="$options[id]" class="es-output es-output-templatedOutput" data-es-source="$source" data-es-output-config="$dataOptions"></div>
+<div id="$options[id]" class="es-output es-output-$controlName" data-es-source="$source" data-es-output-config="$dataOptions"></div>
 
 HTML;
   }
@@ -1223,7 +1233,8 @@ HTML;
 
     }
     unset($query['bool_queries']);
-    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    iform_load_helpers([]);
+    $readAuth = helper_base::get_read_auth($website_id, $password);
     self::applyPermissionsFilter($bool);
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
