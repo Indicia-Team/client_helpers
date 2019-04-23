@@ -48,7 +48,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
   public static function get_dynamic_elasticsearch_definition() {
     $description = <<<HTML
 Provides a dynamically output page which links to an index of occurrence data in an <a href="https://www.elastic.co">
-Elasticseach</a> cluster.
+Elasticsearch</a> cluster.
 This page can generate controls for the following:
 <ul>
   <li>filtering</li>
@@ -376,6 +376,7 @@ JS;
       'from',
       'size',
       'sort',
+      'filterPath',
       'aggregation',
       'buildTableXY',
       'initialMapBounds',
@@ -598,8 +599,25 @@ HTML;
 HTML;
   }
 
+  protected static function get_control_templatedOutput($auth, $args, $tabalias, $options) {
+    self::checkOptions('templatedOutput', $options, ['source', 'content'], []);
+    $dataOptions = self::getOptionsForJs($options, [
+      'content',
+      'header',
+      'footer',
+      'repeatField',
+    ], TRUE);
+    // Escape the source so it can output as an attribute.
+    $source = str_replace('"', '&quot;', json_encode($options['source']));
+
+    return <<<HTML
+<div id="$options[id]" class="es-output es-output-templatedOutput" data-es-source="$source" data-es-output-config="$dataOptions"></div>
+
+HTML;
+  }
+
   /**
-   * A panel containin buttons for record verification actions.
+   * A panel containing buttons for record verification actions.
    *
    * @link
    *
@@ -1330,6 +1348,16 @@ HTML;
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
   private static function curlPost($url, $data, $params) {
+    $allowedGetParams = ['filter_path'];
+    $getParams = [];
+    foreach ($allowedGetParams as $param) {
+      if (!empty($_GET[$param])) {
+        $getParams[$param] = $_GET[$param];
+      }
+    }
+    if (count($getParams)) {
+      $url .= '?' . http_build_query($getParams);
+    }
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));

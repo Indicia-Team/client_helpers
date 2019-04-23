@@ -746,6 +746,7 @@
     var source = this;
     var needsPopulation = false;
     var request;
+    var url;
     // Check we have an output other than the download plugin, which only
     // outputs when you click Download.
     $.each(this.outputs, function eachOutput(name) {
@@ -756,8 +757,15 @@
       // Don't repopulate if exactly the same request as already loaded.
       if (JSON.stringify(request) !== this.lastRequestStr) {
         this.lastRequestStr = JSON.stringify(request);
+        url = indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid;
+        // Pass through additional parameters to the request.
+        if (source.settings.filterPath) {
+          // Filter path allows limiting of content in the response.
+          url += url.indexOf('?') === false ? '?' : '&';
+          url += 'filter_path=' + source.settings.filterPath;
+        }
         $.ajax({
-          url: indiciaData.ajaxUrl + '/esproxy_searchbyparams/' + indiciaData.nid,
+          url: url,
           type: 'post',
           data: request,
           success: function success(response) {
@@ -1021,7 +1029,7 @@
 }());
 
 /**
- * Output plugin for data grids.
+ * Output plugin for maps.
  */
 (function esMapPlugin() {
   'use strict';
@@ -1875,7 +1883,117 @@
 }());
 
 /**
-* Output plugin for data grids.
+ * Output plugin for templated output.
+ */
+(function esTemplatedOutputPlugin() {
+  'use strict';
+  var $ = jQuery;
+
+  /**
+   * Place to store public methods.
+   */
+  var methods;
+
+  /**
+   * Declare default settings.
+   */
+  var defaults = {
+
+  };
+
+  /**
+   * Declare public methods.
+   */
+  methods = {
+    /**
+     * Initialise the esDataGrid plugin.
+     *
+     * @param array options
+     */
+    init: function init(options) {
+      var el = this;
+      indiciaFns.registerOutputPluginClass('templatedOutput');
+      el.settings = $.extend({}, defaults);
+      // Apply settings passed in the HTML data-* attribute.
+      if (typeof $(el).attr('data-es-output-config') !== 'undefined') {
+        $.extend(el.settings, JSON.parse($(el).attr('data-es-output-config')));
+      }
+      // Apply settings passed to the constructor.
+      if (typeof options !== 'undefined') {
+        $.extend(el.settings, options);
+      }
+    },
+
+    /*
+     * Populate the templatedOutput with Elasticsearch response data.
+     *
+     * @param obj sourceSettings
+     *   Settings for the data source used to generate the response.
+     * @param obj response
+     *   Elasticsearch response data.
+     * @param obj data
+     *   Data sent in request.
+     */
+    populate: function populate(sourceSettings, response) {
+      var el = this;
+      var outputRows = el.settings.repeatField
+        ? indiciaFns.getValueForField(response, el.settings.repeatField) : response;
+      // Find the list of replacement tokens (field names) that are in the
+      // content template.
+      var tokenRegex = /{{ ([a-z_\.]+) }}/g;
+      var tokens = [];
+      var matches;
+      while (matches = tokenRegex.exec(el.settings.content)) {
+        tokens.push(matches[1]);
+      }
+      if (el.settings.header) {
+        $('<div class="templatedOutput-header">' + el.settings.header + '</div>').appendTo(el);
+      }
+      // Convert non array output to array so can treat the same.
+      if (!Array.isArray(outputRows)) {
+        outputRows = [outputRows];
+      }
+
+      $.each(outputRows, function eachRow() {
+        var outputContent = el.settings.content;
+        var rowData = this;
+        var matches;
+        var value;
+        $.each(tokens, function() {
+          value = indiciaFns.getValueForField(rowData, this);
+          outputContent = outputContent.replace('{{ ' + this + ' }}', value);
+        });
+        el.append(outputContent);
+      });
+      if (el.settings.footer) {
+        $('<div class="templatedOutput-footer">' + el.settings.footer + '</div>').appendTo(el);
+      }
+    }
+  };
+
+  /**
+   * Extend jQuery to declare esTemplatedOutput method.
+   */
+  $.fn.esTemplatedOutput = function buildEsTemplatedOutput(methodOrOptions) {
+    var passedArgs = arguments;
+    $.each(this, function callOnEachGrid() {
+      if (methods[methodOrOptions]) {
+        // Call a declared method.
+        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+      } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
+        // Default to "init".
+        return methods.init.apply(this, passedArgs);
+      }
+      // If we get here, the wrong method was called.
+      $.error('Method ' + methodOrOptions + ' does not exist on jQuery.esTemplatedOutput');
+      return true;
+    });
+    return this;
+  };
+}());
+
+/**
+* Output plugin for the verification record details pane.
 */
 (function esDetailsPane() {
   'use strict';
@@ -2634,6 +2752,7 @@ jQuery(document).ready(function docReady() {
   $('.es-output-download').esDownload({});
   $('.es-output-dataGrid').esDataGrid({});
   $('.es-output-map').esMap({});
+  $('.es-output-templatedOutput').esTemplatedOutput({});
   $('.details-container').esDetailsPane({});
   $('.verification-buttons').esVerificationButtons({});
   $('.es-output-map').esMap('bindGrids');
