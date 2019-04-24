@@ -269,14 +269,9 @@ class map_helper extends helper_base {
     }
     else {
       global $indicia_templates;
-      $presetLayers = [];
-      // If the caller has not specified the background layers, then default to
-      // the ones we have an API key for.
-      if (!array_key_exists('presetLayers', $options)) {
-        $presetLayers[] = 'google_satellite';
-        $presetLayers[] = 'google_hybrid';
-        $presetLayers[] = 'google_physical';
-        $presetLayers[] = 'osm';
+      if (!array_key_exists('presetLayers', $options) or count($options['presetLayers']) == 0) {
+        //If no layers set default to OSM
+        $options['presetLayers'][] = "osm";
       }
       $options = array_merge([
         'indiciaSvc' => parent::getProxiedBaseUrl(),
@@ -285,7 +280,6 @@ class map_helper extends helper_base {
         'class' => '',
         'width' => 600,
         'height' => 470,
-        'presetLayers' => $presetLayers,
         'jsPath' => self::$js_path,
         'clickForSpatialRef' => TRUE,
         'gridRefHintInFooter' => TRUE,
@@ -326,10 +320,13 @@ class map_helper extends helper_base {
         foreach ($options['presetLayers'] as $layer) {
           $a = explode('_', $layer);
           $a = strtolower($a[0]);
-          switch ($a) {
-            case 'google':
-              self::add_resource('googlemaps');
-              break;
+          // switch ($a) {
+          //   case 'google':
+          //     self::add_resource('googlemaps');
+          //     break;
+          // }
+          if ($a === 'google' || substr($a, 0, 7) === 'dynamic') {
+            self::add_resource('googlemaps');
           }
           if ($a === 'bing' && (!isset(self::$bing_api_key) || empty(self::$bing_api_key))) {
             return '<p class="error">To use the Bing map layers, please ensure that you declare the $bing_api_key ' .
