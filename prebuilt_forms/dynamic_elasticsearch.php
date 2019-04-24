@@ -614,7 +614,8 @@ $('#$options[attachToId]')
   .addClass('es-output')
   .addClass("es-output-$controlName")
   .attr('data-es-source', '$source')
-  .attr('data-es-output-config', '$dataOptions')
+  .attr('data-es-output-config', '$dataOptions');
+
 JS;
       return '';
     }

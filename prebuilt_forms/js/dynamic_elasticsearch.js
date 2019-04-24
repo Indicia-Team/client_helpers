@@ -1957,13 +1957,12 @@
       $.each(outputRows, function eachRow() {
         var outputContent = el.settings.content;
         var rowData = this;
-        var matches;
         var value;
-        $.each(tokens, function() {
+        $.each(tokens, function eachToken() {
           value = indiciaFns.getValueForField(rowData, this);
           outputContent = outputContent.replace('{{ ' + this + ' }}', value);
         });
-        el.append(outputContent);
+        $(outputContent).appendTo(el);
       });
       if (el.settings.footer) {
         $('<div class="templatedOutput-footer">' + el.settings.footer + '</div>').appendTo(el);
