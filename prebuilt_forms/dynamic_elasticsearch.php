@@ -219,7 +219,7 @@ indiciaData.rootFolder = '$rootFolder';
 indiciaData.dateFormat = '$dateFormat';
 
 JS;
-    helper_base::add_resource('font_awesome');
+    helper_base::add_resource('datacomponents');
     $r = parent::get_form($args, $nid);
     // The following function must fire after the page content is built.
     data_entry_helper::$onload_javascript .= <<<JS
@@ -342,7 +342,7 @@ JS;
     else {
       // Otherwise, generate a unique ID if not defined.
       $options = array_merge([
-        'id' => "es-$controlName-" . self::$controlIndex,
+        'id' => "idc-$controlName-" . self::$controlIndex,
       ], $options);
     }
     // Fail if duplicate ID on page.
@@ -378,7 +378,7 @@ JS;
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
     self::checkOptions(
-      'source',
+      'esSource',
       $options,
       ['id'],
       ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
@@ -489,7 +489,7 @@ HTML;
   }
 
   protected static function get_control_download($auth, $args, $tabalias, $options) {
-    self::checkOptions('download', $options, ['source'], []);
+    self::checkOptions('esDownload', $options, ['source'], []);
     global $indicia_templates;
     $r = str_replace(
       [
@@ -537,12 +537,15 @@ HTML;
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
     $dataOptions = self::getOptionsForJs($options, [], empty($options['attachToId']));
-    return self::getControlContainer('download', $options, $dataOptions);
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcEsDownload({});
 
+JS;
+    return self::getControlContainer('esDownload', $options, $dataOptions);
   }
 
   /**
-   * An Elasticsearch powered grid control.
+   * An Elasticsearch or Indicia powered grid control.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
    */
@@ -574,11 +577,31 @@ HTML;
       'sourceTable',
       'autogenColumns',
     ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcDataGrid({});
+
+JS;
     return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
+  /**
+   * An Elasticsearch or Indicia powered map control.
+   *
+   * @deprecated Use leafletMap instead.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[map]
+   */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    self::checkOptions('map', $options, ['source'], ['styles']);
+    return self::get_control_leafletMap($auth, $args, $tabalias, $options);
+  }
+
+  /**
+   * An Elasticsearch or Indicia data powered Leaflet map control.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[map]
+   */
+  protected static function get_control_leafletMap($auth, $args, $tabalias, $options) {
+    self::checkOptions('leafletMap', $options, ['source'], ['styles']);
     $options = array_merge([
       'styles' => new stdClass(),
     ], $options);
@@ -591,7 +614,12 @@ HTML;
       'initialZoom',
       'cookies',
     ], empty($options['attachToId']));
-    return self::getControlContainer('map', $options, $dataOptions);
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcLeafletMap({});
+$('#$options[id]').idcLeafletMap('bindGrids');
+
+JS;
+    return self::getControlContainer('leafletMap', $options, $dataOptions);
   }
 
   protected static function get_control_templatedOutput($auth, $args, $tabalias, $options) {
@@ -602,6 +630,10 @@ HTML;
       'footer',
       'repeatField',
     ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcTemplatedOutput({});
+
+JS;
     return self::getControlContainer('templatedOutput', $options, $dataOptions);
   }
 
@@ -611,10 +643,10 @@ HTML;
       // Use JS to attach to an existing element.
       helper_base::$javascript .= <<<JS
 $('#$options[attachToId]')
-  .addClass('es-output')
-  .addClass("es-output-$controlName")
-  .attr('data-es-source', '$source')
-  .attr('data-es-output-config', '$dataOptions');
+  .addClass('idc-output')
+  .addClass("idc-output-$controlName")
+  .attr('data-idc-esSource', '$source')
+  .attr('data-idc-output-config', '$dataOptions');
 
 JS;
       return '';
@@ -622,7 +654,7 @@ JS;
     // Escape the source so it can output as an attribute.
     $source = str_replace('"', '&quot;', json_encode($options['source']));
     return <<<HTML
-<div id="$options[id]" class="es-output es-output-$controlName" data-es-source="$source" data-es-output-config="$dataOptions"></div>
+<div id="$options[id]" class="idc-output idc-output-$controlName" data-es-source="$source" data-idc-config="$dataOptions"></div>
 
 HTML;
   }
@@ -630,7 +662,7 @@ HTML;
   /**
    * A panel containing buttons for record verification actions.
    *
-   * @link
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[verificationButtons]
    *
    * @return string
    *   Panel HTML;
@@ -654,6 +686,7 @@ HTML;
     helper_base::$javascript .= <<<JS
 indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
 indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
+$('#$options[id]').idcVerificationButtons({});
 
 JS;
     $optionalLinkArray = [];
@@ -666,12 +699,12 @@ JS;
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
     return <<<HTML
-<div id="$options[id]" class="verification-buttons-wrap" style="display: none;">
-  <div class="verification-buttons" data-es-output-config="$dataOptions">
+<div id="$options[id]" class="idc-verification-buttons-wrap" style="display: none;" data-idc-config="$dataOptions">
+  <div class="idc-verification-buttons">
   Actions:
     <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
     <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-    <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
+    <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="far fa-check-double status-V1"></span></button>
     <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
     <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
     <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
@@ -699,7 +732,7 @@ HTML;
    *   like included, e.g. ["Country","Vice County"]. Optional.
    */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
-    self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes']);
+    self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes', 'externalKeyUrls']);
     if (!empty($options['explorePath'])) {
       // Build  URL which overrides the default filters applied to many Explore
       // pages in order to be able to apply out own filter.
@@ -721,10 +754,15 @@ HTML;
       'showSelectedRow',
       'exploreUrl',
       'locationTypes',
+      'externalKeyUrls',
     ], TRUE);
     helper_base::add_resource('tabs');
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcRecordDetailsPane({});
+
+JS;
     return <<<HTML
-<div class="details-container" data-es-output-config="$dataOptions">
+<div class="details-container" id="$options[id]" data-idc-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
