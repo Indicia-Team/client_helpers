@@ -902,6 +902,21 @@ JS;
             self::$js_path . 'leaflet.heat/dist/leaflet-heat.js',
           ],
         ],
+        'datacomponents' => [
+          'deps' => [
+            'font_awesome'
+          ],
+          'javascript' => [
+            self::$js_path . 'indicia.datacomponents/idc.core.js',
+            self::$js_path . 'indicia.datacomponents/idc.esDataSource.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.leafletMap.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.recordDetailsPane.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.templatedOutput.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
+          ],
+        ],
       );
     }
     return self::$resource_list;
@@ -1823,7 +1838,7 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
       }
       if (!empty($javascript) || !empty($late_javascript)) {
         if (!self::$is_ajax) {
-          $script .= "$(document).ready(function() {\n";
+          $script .= "\n$(document).ready(function() {\n";
         }
         $script .= <<<JS
 indiciaData.documentReady = 'started';
