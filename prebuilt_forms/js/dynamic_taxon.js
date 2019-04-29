@@ -6,7 +6,7 @@
 indiciaFns.hookDynamicAttrsAfterLoad = [];
 
 /**
- * Plugin for the taxon associatione grid.
+ * Plugin for the taxon associations grid.
  */
 (function taxonAssociationsPlugin() {
   'use strict';
@@ -28,6 +28,9 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
    */
   var elems = {};
 
+  /**
+   * Track total rows added to give each row unique ID.
+   */
   var rowCount = 0;
 
   function acParse(data) {
@@ -75,7 +78,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
 
   function addSelect(name, terms, tr) {
     var select = $('<select class="form-control" name="associated-taxon-' + name + 'Id:' + rowCount + '"></select>');
-    $('<option value="">&lt;Please select&gt;</option>').appendTo(select);
+    $('<option value="">&lt;' + indiciaData.lang.taxonassoc.pleaseSelect + '&gt;</option>').appendTo(select);
     $.each(terms, function eachListItem() {
       $('<option value="' + this[0] + '">' + this[1] + '</option>').appendTo(select);
     });
@@ -174,7 +177,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
    */
   methods = {
     /**
-     * Initialise the esMap  plugin.
+     * Initialise the taxonAssociations  plugin.
      *
      * @param array options
      */
@@ -269,7 +272,7 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
   };
 
   /**
-   * Extend jQuery to declare esMap method.
+   * Extend jQuery to declare taxonAssociations method.
    */
   $.fn.taxonAssociations = function taxonAssociations(methodOrOptions) {
     var passedArgs = arguments;
@@ -288,6 +291,164 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
     return this;
   };
 
+}());
+
+/**
+ * Plugin for the taxon designation grid.
+ */
+(function taxonDesignationsPlugin() {
+  'use strict';
+  var $ = jQuery;
+
+  /**
+   * Place to store public methods.
+   */
+  var methods;
+
+  /**
+   * Declare default settings.
+   */
+  var defaults = {
+  };
+
+  /**
+   * Table elements.
+   */
+  var elems = {};
+
+  /**
+   * Track total rows added to give each row unique ID.
+   */
+  var rowCount = 0;
+
+  var designationOptions = '';
+
+  function addRow(el) {
+    var tr;
+    rowCount++;
+    tr = $('<tr data-rowIndex="' + rowCount + '">').appendTo(elems.tbody);
+    $('<td><select class="form-control taxon-designation-taxon_designation_id" ' +
+      'name="taxon-designation-taxon_designation_id:' + rowCount + '">' +
+      '<option value="">&lt;' + indiciaData.lang.taxondesig.pleaseSelect + '&gt;</option>' +
+      designationOptions +
+      '</select></td>').appendTo(tr);
+    $('<td><input type="text" class="form-control taxon-designation-start_date" ' +
+      'name="taxon-designation-start_date:' + rowCount + '"></td>').appendTo(tr);
+    $('<td><input type="text" class="form-control taxon-designation-source" ' +
+      'name="taxon-designation-source:' + rowCount + '"></td>').appendTo(tr);
+    $('<td><input type="text" class="form-control taxon-designation-geographical_constraint" ' +
+      'name="taxon-designation-geographical_constraint:' + rowCount + '"></td>').appendTo(tr);
+    // Button to remove row.
+    $('<td><span class="fas fa-trash-alt taxon-designation-remove"></span></td>').appendTo(tr);
+    // Hook up datepicker.
+    $(tr).find('.taxon-designation-start_date').datepicker();
+    return tr;
+  }
+
+  function loadExistingRows(el) {
+    if ($('input[name="taxon\\:id"]').length > 0 && $('input[name="taxon\\:id"]').val() !== '') {
+      $.ajax({
+        dataType: 'jsonp',
+        url: indiciaData.read.url + 'index.php/services/data/taxa_taxon_designation' +
+          '?taxon_id=' + $('input[name="taxon\\:id"]').val() +
+          '&nonce=' + indiciaData.read.nonce + '&auth_token=' + indiciaData.read.auth_token +
+          '&mode=json&callback=?',
+        success: function(data) {
+          $.each(data, function eachData() {
+            var tr = addRow(el);
+            $('<input type="hidden" class="taxa_taxon_designation_id" name="taxa_taxon_designation_id:' + rowCount + '" value="' + this.id + '" />')
+              .appendTo($(tr).find('td:first-child'));
+            $('[name="taxon-designation-taxon_designation_id:' + rowCount + '"]').val(this.taxon_designation_id);
+            $('[name="taxon-designation-start_date:' + rowCount + '"]').val(this.start_date);
+            $('[name="taxon-designation-source:' + rowCount + '"]').val(this.source);
+            $('[name="taxon-designation-geographical_constraint:' + rowCount + '"]').val(this.geographical_constraint);
+          });
+          // add a blank row for new records
+          addRow(el);
+        }
+      });
+    }
+    else {
+      addRow(el);
+    }
+  }
+
+  /**
+   * Declare public methods.
+   */
+  methods = {
+    /**
+     * Initialise the taxonDesignations plugin.
+     *
+     * @param array options
+     */
+    init: function init(options) {
+      var el = this;
+
+      el.settings = $.extend({}, defaults);
+      // Apply settings passed in the HTML data-* attribute.
+      if (typeof $(el).attr('data-config') !== 'undefined') {
+        $.extend(el.settings, JSON.parse($(el).attr('data-config')));
+      }
+      // Apply settings passed to the constructor.
+      if (typeof options !== 'undefined') {
+        $.extend(el.settings, options);
+      }
+      // Tag the form submission so we know to process associations.
+      $('<input type="hidden" name="process-designations" value="1" />').appendTo(el);
+      elems.table = $('<table class="table">').appendTo(el);
+      elems.thead = $('<thead>').appendTo(elems.table);
+      elems.thr = $('<tr>').appendTo(elems.thead);
+      $('<th>' + indiciaData.lang.taxondesig.hdrDesignation + '</th>').appendTo(elems.thr);
+      $('<th>' + indiciaData.lang.taxondesig.hdrStartDate + '</th>').appendTo(elems.thr);
+      $('<th>' + indiciaData.lang.taxondesig.hdrSource + '</th>').appendTo(elems.thr);
+      $('<th>' + indiciaData.lang.taxondesig.hdrGeographicConstraint + '</th>').appendTo(elems.thr);
+      elems.tbody = $('<tbody>').appendTo(elems.table);
+      indiciaFns.on('click', '.taxon-designation-remove', {}, function removeDesig() {
+        var tr = $(this).closest('tr');
+        if (tr.find('.taxa_taxon_designation_id').length > 0) {
+          $(tr).find('td:first-child').append('<input type="hidden" name="designation-deleted:' +
+            $(tr).attr('data-rowindex') + '" value="t" />');
+          $(tr).addClass('deleted');
+        }
+        else {
+          $(this).closest('tr').remove();
+        }
+      });
+      $.each(indiciaData.designations, function(id, name) {
+        designationOptions += '<option value="' + id + '">' + name + '</option>';
+      });
+      loadExistingRows(el);
+      elems.button = $('<button type="button" class="btn btn-primary">' + indiciaData.lang.taxondesig.btnAddNew + '</button>')
+        .insertAfter($(elems.table));
+      $(elems.button).click(function addClick() {
+        if ($(elems.tbody).find('tr:last-child .taxon-designation-taxon_designation_id').val() !== '') {
+          addRow(el);
+        }
+        $(elems.tbody).find('tr:last-child .taxon-designation-taxon_designation_id').focus();
+      });
+    }
+  };
+
+  /**
+   * Extend jQuery to declare taxonDesignations method.
+   */
+  $.fn.taxonDesignations = function taxonDesignations(methodOrOptions) {
+    var passedArgs = arguments;
+    $.each(this, function callOnEachOutput() {
+      if (methods[methodOrOptions]) {
+        // Call a declared method.
+        return methods[methodOrOptions].apply(this, Array.prototype.slice.call(passedArgs, 1));
+      } else if (typeof methodOrOptions === 'object' || !methodOrOptions) {
+        // Default to "init".
+        return methods.init.apply(this, passedArgs);
+      }
+      // If we get here, the wrong method was called.
+      $.error('Method ' + methodOrOptions + ' does not exist on jQuery.taxonDesignations');
+      return true;
+    });
+    return this;
+  };
 }());
 
 jQuery(document).ready(function docReady($) {

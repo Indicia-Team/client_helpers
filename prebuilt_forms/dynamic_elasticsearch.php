@@ -48,7 +48,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
   public static function get_dynamic_elasticsearch_definition() {
     $description = <<<HTML
 Provides a dynamically output page which links to an index of occurrence data in an <a href="https://www.elastic.co">
-Elasticseach</a> cluster.
+Elasticsearch</a> cluster.
 This page can generate controls for the following:
 <ul>
   <li>filtering</li>
@@ -219,7 +219,7 @@ indiciaData.rootFolder = '$rootFolder';
 indiciaData.dateFormat = '$dateFormat';
 
 JS;
-    helper_base::add_resource('font_awesome');
+    helper_base::add_resource('datacomponents');
     $r = parent::get_form($args, $nid);
     // The following function must fire after the page content is built.
     data_entry_helper::$onload_javascript .= <<<JS
@@ -313,6 +313,8 @@ JS;
   /**
    * Provide common option handling for controls.
    *
+   * * If attachToId specified, ensures that the control ID is set to the same
+   *   value.
    * * Sets a unique ID for the control if not already set.
    * * Checks that required options are all populated.
    * * Checks that options which should contain JSON do so.
@@ -330,9 +332,19 @@ JS;
    */
   private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
     self::$controlIndex++;
-    $options = array_merge([
-      'id' => "es-$controlName-" . self::$controlIndex,
-    ], $options);
+    if (!empty($options['attachToId'])) {
+      if (!empty($options['id']) && $options['id'] !== $options['attachToId']) {
+        throw new Exception("Control ID $options[id] @attachToId does not match the @id option value.");
+      }
+      // If attaching to an existing element, force the ID.
+      $options['id'] = $options['attachToId'];
+    }
+    else {
+      // Otherwise, generate a unique ID if not defined.
+      $options = array_merge([
+        'id' => "idc-$controlName-" . self::$controlIndex,
+      ], $options);
+    }
     // Fail if duplicate ID on page.
     if (in_array($options['id'], self::$controlIds)) {
       throw new Exception("Control ID $options[id] is duplicated in the page configuration");
@@ -366,7 +378,7 @@ JS;
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
     self::checkOptions(
-      'source',
+      'esSource',
       $options,
       ['id'],
       ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
@@ -376,6 +388,7 @@ JS;
       'from',
       'size',
       'sort',
+      'filterPath',
       'aggregation',
       'buildTableXY',
       'initialMapBounds',
@@ -476,7 +489,7 @@ HTML;
   }
 
   protected static function get_control_download($auth, $args, $tabalias, $options) {
-    self::checkOptions('download', $options, ['source'], []);
+    self::checkOptions('esDownload', $options, ['source'], []);
     global $indicia_templates;
     $r = str_replace(
       [
@@ -485,7 +498,7 @@ HTML;
         '{class}',
         '{caption}',
       ], [
-        '',
+        $options['id'],
         lang::get('Run the download'),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
         lang::get('Download'),
@@ -493,7 +506,7 @@ HTML;
       $indicia_templates['button']
     );
     $progress = <<<HTML
-<div class="progress-container">
+<div class="progress-circle-container">
   <svg>
     <circle class="circle"
             cx="-90"
@@ -518,24 +531,21 @@ HTML;
       [
         '',
         $progress,
-        '<div class="files"><h2>' . lang::get('Files') . ':</h2></div>',
+        '<div class="idc-download-files"><h2>' . lang::get('Files') . ':</h2></div>',
       ],
       $indicia_templates['two-col-50']);
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
-    $dataOptions = self::getOptionsForJs($options, [], TRUE);
-    // Escape the source so it can output as an attribute.
-    $source = str_replace('"', '&quot;', json_encode($options['source']));
-    return <<<HTML
-<div id="$options[id]" class="es-output es-output-download" data-es-source="$source" data-es-output-config="$dataOptions">
-  $r
-</div>
+    $dataOptions = self::getOptionsForJs($options, [], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcEsDownload({});
 
-HTML;
+JS;
+    return self::getControlContainer('esDownload', $options, $dataOptions, $r);
   }
 
   /**
-   * An Elasticsearch powered grid control.
+   * An Elasticsearch or Indicia powered grid control.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
    */
@@ -566,17 +576,32 @@ HTML;
       'simpleAggregation',
       'sourceTable',
       'autogenColumns',
-    ], TRUE);
-    // Escape the source so it can output as an attribute.
-    $source = str_replace('"', '&quot;', json_encode($options['source']));
-    return <<<HTML
-<div id="$options[id]" class="es-output es-output-dataGrid" data-es-source="$source" data-es-output-config="$dataOptions"></div>
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcDataGrid({});
 
-HTML;
+JS;
+    return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
+  /**
+   * An Elasticsearch or Indicia powered map control.
+   *
+   * @deprecated Use leafletMap instead.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[map]
+   */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
-    self::checkOptions('map', $options, ['source'], ['styles']);
+    return self::get_control_leafletMap($auth, $args, $tabalias, $options);
+  }
+
+  /**
+   * An Elasticsearch or Indicia data powered Leaflet map control.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[map]
+   */
+  protected static function get_control_leafletMap($auth, $args, $tabalias, $options) {
+    self::checkOptions('leafletMap', $options, ['source'], ['styles']);
     $options = array_merge([
       'styles' => new stdClass(),
     ], $options);
@@ -588,20 +613,58 @@ HTML;
       'initialLng',
       'initialZoom',
       'cookies',
-    ], TRUE);
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcLeafletMap({});
+$('#$options[id]').idcLeafletMap('bindGrids');
+
+JS;
+    return self::getControlContainer('leafletMap', $options, $dataOptions);
+  }
+
+  protected static function get_control_templatedOutput($auth, $args, $tabalias, $options) {
+    self::checkOptions('templatedOutput', $options, ['source', 'content'], []);
+    $dataOptions = self::getOptionsForJs($options, [
+      'content',
+      'header',
+      'footer',
+      'repeatField',
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcTemplatedOutput({});
+
+JS;
+    return self::getControlContainer('templatedOutput', $options, $dataOptions);
+  }
+
+  private static function getControlContainer($controlName, $options, $dataOptions, $content='') {
+    if (!empty($options['attachToId'])) {
+      $source = json_encode($options['source']);
+      // Use JS to attach to an existing element.
+      helper_base::$javascript .= <<<JS
+$('#$options[attachToId]')
+  .addClass('idc-output')
+  .addClass("idc-output-$controlName")
+  .attr('data-idc-esSource', '$source')
+  .attr('data-idc-output-config', '$dataOptions');
+
+JS;
+      return '';
+    }
     // Escape the source so it can output as an attribute.
     $source = str_replace('"', '&quot;', json_encode($options['source']));
-
     return <<<HTML
-<div id="$options[id]" class="es-output es-output-map" data-es-source="$source" data-es-output-config="$dataOptions"></div>
+<div id="$options[id]" class="idc-output idc-output-$controlName" data-es-source="$source" data-idc-config="$dataOptions">
+  $content
+</div>
 
 HTML;
   }
 
   /**
-   * A panel containin buttons for record verification actions.
+   * A panel containing buttons for record verification actions.
    *
-   * @link
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[verificationButtons]
    *
    * @return string
    *   Panel HTML;
@@ -625,32 +688,38 @@ HTML;
     helper_base::$javascript .= <<<JS
 indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
 indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
+$('#$options[id]').idcVerificationButtons({});
 
 JS;
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = '<a class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></a>';
+      $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';
     }
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = '<a class="view single-only" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
+      $optionalLinkArray[] = '<a class="view" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
     return <<<HTML
-<div id="$options[id]" class="verification-buttons-wrap" style="display: none;">
-  <div class="verification-buttons" data-es-output-config="$dataOptions">
-  Actions:
-    <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-    <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-    <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
-    <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
-    <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
-    <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
-    <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
-    <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
-    <span class="sep"></span>
-    <button class="query" data-query="Q" title="Query this record"><span class="fas fa-question-circle query-Q"></span></button>
-    $optionalLinks
+<div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
+    <div class="selection-buttons-placeholder">
+      <div class="all-selected-buttons idc-verification-buttons-row">
+        Actions:
+        <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
+        <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="far fa-check-double status-V1"></span></button>
+        <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
+        <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
+        <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
+        <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
+        <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+        <span class="sep"></span>
+        <button class="query" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
+      </div>
+    </div>
+    <div class="single-record-buttons idc-verification-buttons-row">
+      $optionalLinks
+    </div>
   </div>
 </div>
 HTML;
@@ -670,7 +739,7 @@ HTML;
    *   like included, e.g. ["Country","Vice County"]. Optional.
    */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
-    self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes']);
+    self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes', 'externalKeyUrls']);
     if (!empty($options['explorePath'])) {
       // Build  URL which overrides the default filters applied to many Explore
       // pages in order to be able to apply out own filter.
@@ -692,10 +761,15 @@ HTML;
       'showSelectedRow',
       'exploreUrl',
       'locationTypes',
+      'externalKeyUrls',
     ], TRUE);
     helper_base::add_resource('tabs');
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcRecordDetailsPane({});
+
+JS;
     return <<<HTML
-<div class="details-container" data-es-output-config="$dataOptions">
+<div class="details-container" id="$options[id]" data-idc-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
@@ -1205,7 +1279,8 @@ HTML;
 
     }
     unset($query['bool_queries']);
-    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    iform_load_helpers([]);
+    $readAuth = helper_base::get_read_auth($website_id, $password);
     self::applyPermissionsFilter($bool);
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
@@ -1330,6 +1405,16 @@ HTML;
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
   private static function curlPost($url, $data, $params) {
+    $allowedGetParams = ['filter_path'];
+    $getParams = [];
+    foreach ($allowedGetParams as $param) {
+      if (!empty($_GET[$param])) {
+        $getParams[$param] = $_GET[$param];
+      }
+    }
+    if (count($getParams)) {
+      $url .= '?' . http_build_query($getParams);
+    }
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));

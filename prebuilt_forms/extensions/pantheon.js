@@ -185,13 +185,14 @@ jQuery(document).ready(function ($) {
         '</tr>';
       $('#quick-analysis-group tbody').append(row);
       // Animate the tab to show where it has gone.
-      $('#tab-quickanalysisgroup-tab span').animate({
+      $('#tab-subsamplegrouping-tab span').animate({
         'background-color': 'yellow'
       }, 200, function resetBackground() {
-        $('#tab-quickanalysisgroup-tab span').animate({
+        $('#tab-subsamplegrouping-tab span').animate({
           'background-color': 'transparent'
         }, 1000);
       });
+      alert('The list has been added to the sub-sample grouping tab.');
       $('#qa-group-actions button,#qa-group-actions input').removeAttr('disabled');
     }
   };
