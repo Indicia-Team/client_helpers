@@ -282,8 +282,8 @@ class map_helper extends helper_base {
     }
     else {
       global $indicia_templates;
-      if (!array_key_exists('presetLayers', $options) or count($options['presetLayers']) == 0) {
-        //If no layers set default to OSM
+      if (!array_key_exists('presetLayers', $options) or count($options['presetLayers']) === 0) {
+        // If no layers set default to OSM.
         $options['presetLayers'][] = "osm";
       }
       $options = array_merge([
@@ -333,11 +333,7 @@ class map_helper extends helper_base {
         foreach ($options['presetLayers'] as $layer) {
           $a = explode('_', $layer);
           $a = strtolower($a[0]);
-          // switch ($a) {
-          //   case 'google':
-          //     self::add_resource('googlemaps');
-          //     break;
-          // }
+          // Google also used in the dynamic1/2 layer pairing.
           if ($a === 'google' || substr($a, 0, 7) === 'dynamic') {
             self::add_resource('googlemaps');
           }
