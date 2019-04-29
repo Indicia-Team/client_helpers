@@ -693,28 +693,33 @@ $('#$options[id]').idcVerificationButtons({});
 JS;
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
-      $optionalLinkArray[] = '<a class="edit single-only" title="Edit this record"><span class="fas fa-edit"></span></a>';
+      $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';
     }
     if (!empty($options['viewPath'])) {
-      $optionalLinkArray[] = '<a class="view single-only" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
+      $optionalLinkArray[] = '<a class="view" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
     return <<<HTML
-<div id="$options[id]" class="idc-verification-buttons-wrap" style="display: none;" data-idc-config="$dataOptions">
-  <div class="idc-verification-buttons">
-  Actions:
-    <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-    <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-    <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="far fa-check-double status-V1"></span></button>
-    <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
-    <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
-    <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
-    <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
-    <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
-    <span class="sep"></span>
-    <button class="query" data-query="Q" title="Query this record"><span class="fas fa-question-circle query-Q"></span></button>
-    $optionalLinks
+<div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
+    <div class="selection-buttons-placeholder">
+      <div class="all-selected-buttons idc-verification-buttons-row">
+        Actions:
+        <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
+        <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
+        <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="far fa-check-double status-V1"></span></button>
+        <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
+        <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
+        <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
+        <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
+        <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+        <span class="sep"></span>
+        <button class="query" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
+      </div>
+    </div>
+    <div class="single-record-buttons idc-verification-buttons-row">
+      $optionalLinks
+    </div>
   </div>
 </div>
 HTML;
