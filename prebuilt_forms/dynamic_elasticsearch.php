@@ -498,7 +498,7 @@ HTML;
         '{class}',
         '{caption}',
       ], [
-        '',
+        $options['id'],
         lang::get('Run the download'),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
         lang::get('Download'),
@@ -506,7 +506,7 @@ HTML;
       $indicia_templates['button']
     );
     $progress = <<<HTML
-<div class="progress-container">
+<div class="progress-circle-container">
   <svg>
     <circle class="circle"
             cx="-90"
@@ -531,7 +531,7 @@ HTML;
       [
         '',
         $progress,
-        '<div class="files"><h2>' . lang::get('Files') . ':</h2></div>',
+        '<div class="idc-download-files"><h2>' . lang::get('Files') . ':</h2></div>',
       ],
       $indicia_templates['two-col-50']);
     // This does nothing at the moment - just a placeholder for if and when we
@@ -541,7 +541,7 @@ HTML;
 $('#$options[id]').idcEsDownload({});
 
 JS;
-    return self::getControlContainer('esDownload', $options, $dataOptions);
+    return self::getControlContainer('esDownload', $options, $dataOptions, $r);
   }
 
   /**
@@ -637,7 +637,7 @@ JS;
     return self::getControlContainer('templatedOutput', $options, $dataOptions);
   }
 
-  private static function getControlContainer($controlName, $options, $dataOptions) {
+  private static function getControlContainer($controlName, $options, $dataOptions, $content='') {
     if (!empty($options['attachToId'])) {
       $source = json_encode($options['source']);
       // Use JS to attach to an existing element.
@@ -654,7 +654,9 @@ JS;
     // Escape the source so it can output as an attribute.
     $source = str_replace('"', '&quot;', json_encode($options['source']));
     return <<<HTML
-<div id="$options[id]" class="idc-output idc-output-$controlName" data-es-source="$source" data-idc-config="$dataOptions"></div>
+<div id="$options[id]" class="idc-output idc-output-$controlName" data-es-source="$source" data-idc-config="$dataOptions">
+  $content
+</div>
 
 HTML;
   }
