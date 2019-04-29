@@ -343,10 +343,10 @@ function hideMapsIfOverridden() {
  * Handling for dynamic switching layers which are treated as one.
  */
 function combineDynamicMapLayers() {
-  //Tie the selection of the dynamic1 & dymanic2 checkboxes together
-  //and make one of them invisible.
-  var dyn1 = $("input[value='dynamic1']");
-  var dyn2 = $("input[value='dynamic2']");
+  // Tie the selection of the paired dynamic layer checkboxes together and make
+  // one of them invisible.
+  var dyn1 = $("input[value='dynamicOSleisureGoogleSat']");
+  var dyn2 = $("input[value='dynamicOSleisureGoogleSatZoomed']");
   dyn2.parent().hide(); //Parent list item
   dyn1.change(function dyn1Change() {
     dyn2.attr('checked', this.checked);
