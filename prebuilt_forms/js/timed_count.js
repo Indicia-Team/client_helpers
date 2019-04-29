@@ -46,6 +46,7 @@ bindSpeciesAutocomplete = function (selectorID, target, url, lookupListId, looku
   ctrl = $('#' + selectorID).autocomplete(url+'/taxa_taxon_list', {
       extraParams : extra_params,
       max : max,
+      mustMatch : true,
       parse: function(data) {
         var results = [];
         jQuery.each(data, function(i, item) { results[results.length] = {'data' : item, 'result' : item.taxon, 'value' : item.id}; });
