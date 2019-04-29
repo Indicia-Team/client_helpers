@@ -267,20 +267,34 @@ class form_helper extends helper_base {
    * by the picker.
    */
   private static function add_form_picker_js($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
-    self::$javascript .= "var prebuilt_forms = ".json_encode($forms).
-        ", prebuilt_group_forms = ".json_encode($groupForms).
-        ", prebuilt_recommended_forms = ".json_encode($coreForms).
-        ", showRecommended = " . ($showRecommendedPageTypes ? 'true' : 'false') . ";
+    $jsParams = [
+      'baseUrl' => self::$base_url,
+      'forms' => json_encode($forms),
+      'formParamsAjaxPath' => self::getRootFolder(FALSE) . self::client_helper_path() . 'prebuilt_forms_ajax.php',
+      'groupForms' => json_encode($groupForms),
+      'coreForms' => json_encode($coreForms),
+      'showRecommended' => $showRecommendedPageTypes ? 'true' : 'false',
+      'langEnterLoginAndForm' => lang::get('Please specify a website ID, password and select a form before proceeding.'),
+      'langFindOutMore' => lang::get('Find out more...'),
+      'langPleaseSelect' => lang::get('&lt;Please select&gt;'),
+      'langPleaseSelectCategory' => lang::get('&lt;Please select a category first&gt;'),
+    ];
+    self::$javascript .= <<<JS
+var prebuilt_forms = $jsParams[forms];
+var prebuilt_group_forms = $jsParams[groupForms];
+var prebuilt_recommended_forms = $jsParams[coreForms];
+var showRecommended = $jsParams[showRecommended];
+
 function setCategoryAndPageVisibility() {
   $.each($('#form-category-picker option'), function() {
     // Hide pages that are not recommended or not group pages, unless specifically allowed. Ignore the <please select> option.
-    if ($(this).attr('value')!=='') {
-      if (($('#available_for_groups:checked').length && typeof prebuilt_group_forms[$(this).attr('value')]==='undefined')
-          || ($('#recommended:checked').length && typeof prebuilt_recommended_forms[$(this).attr('value')]==='undefined')) {
+    if ($(this).attr('value') !== '') {
+      if (($('#available_for_groups:checked').length && typeof prebuilt_group_forms[$(this).attr('value')] === 'undefined')
+          || ($('#recommended:checked').length && typeof prebuilt_recommended_forms[$(this).attr('value')] === 'undefined')) {
         $(this).hide();
         $(this).attr('disabled', 'disabled');
         if ($(this).attr('selected')) {
-          $('#form-category-picker option[value=\"\"]').attr('selected',true);
+          $('#form-category-picker option[value=""]').attr('selected', TRUE);
         }
       } else {
         $(this).show();
@@ -290,6 +304,7 @@ function setCategoryAndPageVisibility() {
   });
   $('#form-category-picker').change();
 }
+
 function changeGroupEnabledStatus() {
   if ($('#available_for_groups:checked').length) {
     $('#ctrl-wrap-limit_to_group_id').slideDown();
@@ -309,11 +324,48 @@ $('#recommended').change(setCategoryAndPageVisibility);
 
 changeGroupEnabledStatus();
 
+/**
+ * Disallow base map layer selection if controlled by iform_user_ui_options.
+ */
+function hideMapsIfOverridden() {
+  // Hide the basemap selection options if the dynamic basemap layers override
+  // is used and this is *not* a verification form.
+  iformCategory = $('#form-category-picker option:selected').val();
+  if (iformCategory !== 'Verification' && indiciaData.basemapLayersOverride) {
+    $('#ctrl-wrap-preset_layers').hide();
+    $('#ctrl-wrap-preset_layers').after(
+      '<div class="alert alert-info">The base map layers are locked by the iform_user_ui_options module.</div>'
+    );
+  }
+}
+
+/**
+ * Handling for dynamic switching layers which are treated as one.
+ */
+function combineDynamicMapLayers() {
+  //Tie the selection of the dynamic1 & dymanic2 checkboxes together
+  //and make one of them invisible.
+  var dyn1 = $("input[value='dynamic1']");
+  var dyn2 = $("input[value='dynamic2']");
+  dyn2.parent().hide(); //Parent list item
+  dyn1.change(function dyn1Change() {
+    dyn2.attr('checked', this.checked);
+  });
+  dyn2.change(function dyn2Change() {
+    dyn1.attr('checked', this.checked);
+  });
+}
+
+combineDynamicMapLayers();
+hideMapsIfOverridden();
+
 $('#form-category-picker').change(function(e) {
-  var opts = '<option value=\"\">".lang::get('&lt;Please select&gt;')."</option>',
-    current = $('#form-picker').val(), isGroupPageType, isRecommendedPageType;
+  var opts = '<option value="">$jsParams[langPleaseSelect]</option>';
+  var current = $('#form-picker').val();
+  var isGroupPageType;
+  var isRecommendedPageType;
   if (typeof prebuilt_forms[e.currentTarget.value]==='undefined') {
-    $('#form-picker').html('<option value=\"\">".lang::get('&lt;Please select a category first&gt;')."</option>');
+    $('#form-picker').html('<option value="">$jsParams[langPleaseSelectCategory]</option>');
   } else {
     $.each(prebuilt_forms[e.currentTarget.value], function(form, def) {
       isGroupPageType = typeof prebuilt_group_forms[e.currentTarget.value]!=='undefined'
@@ -322,13 +374,13 @@ $('#form-category-picker').change(function(e) {
           && $.inArray(form, prebuilt_recommended_forms[e.currentTarget.value])>-1;
       if ((!$('#available_for_groups:checked').length || isGroupPageType)
           && (!$('#recommended:checked').length || isRecommendedPageType)) {
-        opts += '<option value=\"'+form+'\">'+def.title+'</option>';
+        opts += '<option value="'+form+'">'+def.title+'</option>';
       }
     });
     $('#form-picker').html(opts);
   }
   $('#form-picker').val(current);
-  if ($('#form-picker').val()!==current) {
+  if ($('#form-picker').val() !== current) {
     $('#form-picker').change();
   }
 });
@@ -339,14 +391,16 @@ $('#form-picker').change(function(e) {
   $('#form-params').html('');
   if ($(e.target).val()!=='') {
     def = prebuilt_forms[$('#form-category-picker').val()][$('#form-picker').val()];
-    if (typeof def.description !== 'undefined') {
-      details += '<p>'+def.description+'</p>';
-    }
-    if (typeof def.helpLink !== 'undefined') {
-      details += '<p><a href=\"'+def.helpLink+'\" target=\"_blank\">" . lang::get('Find out more...') . "</a></p>';
-    }
-    if (details!=='') {
-      details = '<div class=\"ui-state-highlight ui-corner-all page-notice\">' + details + '</div>';
+    if (def) {
+      if (def.description) {
+        details += '<p>'+def.description+'</p>';
+      }
+      if (typeof def.helpLink !== 'undefined') {
+        details += '<p><a href="' + def.helpLink + '" target="_blank">$jsParams[langFindOutMore]</a></p>';
+      }
+      if (details!=='') {
+        details = '<div class="ui-state-highlight ui-corner-all page-notice">' + details + '</div>';
+      }
     }
   }
   $('#form-def').hide().html(details).fadeIn();
@@ -354,16 +408,16 @@ $('#form-picker').change(function(e) {
 
 $('#load-params').click(function() {
   if ($('#form-picker').val()==='' || $('#website_id').val()==='' || $('#form-picker').val()==='') {
-    alert('" . lang::get('Please specify a website ID, password and select a form before proceeding.') . "');
+    alert('$jsParams[langEnterLoginAndForm]');
   } else {
-    if (typeof prebuilt_forms[$('#form-category-picker').val()][$('#form-picker').val()] !== \"undefined\") {
+    if (typeof prebuilt_forms[$('#form-category-picker').val()][$('#form-picker').val()] !== 'undefined') {
       // now use an Ajax request to get the form params
       $.post(
-        '" . self::getRootFolder(FALSE) . self::client_helper_path() . "prebuilt_forms_ajax.php',
+        '$jsParams[formParamsAjaxPath]',
         {form: $('#form-picker').val(),
             website_id: $('#website_id').val(),
             password: $('#password').val(),
-            base_url: '" . self::$base_url . "',
+            base_url: '$jsParams[baseUrl]',
             generator: $('meta').filter(function() {
               return typeof $(this).attr('name')!=='undefined' && $(this).attr('name').toLowerCase() === 'generator';
             }).attr('content')
@@ -371,13 +425,17 @@ $('#load-params').click(function() {
         function(data) {
           $('#form-params').hide().html(data).fadeIn();
           Drupal.attachBehaviors();
+          hideMapsIfOverridden();
+          combineDynamicMapLayers();
         }
       );
     } else {
       $('#form-params').hide();
     }
   }
-});\n";
+});
+
+JS;
   }
 
   /**
