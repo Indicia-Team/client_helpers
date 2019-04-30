@@ -1327,15 +1327,17 @@ HTML;
    */
   public static function ajax_esproxy_download($website_id, $password, $nid) {
     $params = hostsite_get_node_field_value($nid, 'params');
-    self::checkPermissionsFilter($params);
+    $isScrollToNextPage = array_key_exists('scroll_id', $_POST);
+    if (!$isScrollToNextPage) {
+      self::checkPermissionsFilter($params);
+    }
     $url = $_POST['warehouse_url'] . 'index.php/services/rest/' . $params['endpoint'] . '/_search?format=csv';
     $query = self::buildEsQueryFromRequest($website_id, $password);
-    $initialScroll = !array_key_exists('scroll_id', $_POST);
-    if ($initialScroll) {
-      $url .= '&scroll';
+    if ($isScrollToNextPage) {
+      $url .= '&scroll_id=' . $_POST['scroll_id'];
     }
     else {
-      $url .= '&scroll_id=' . $_POST['scroll_id'];
+      $url .= '&scroll';
     }
     self::curlPost($url, $query, $params);
   }
@@ -1389,6 +1391,7 @@ HTML;
    *   Form parameters from the Edit tab which include permission settings.
    */
   private static function checkPermissionsFilter(array $params) {
+
     $permissionsFilter = empty($_POST['permissions_filter']) ? 'all' : $_POST['permissions_filter'];
     $validPermissionsFilter = [
       'all',
