@@ -333,7 +333,7 @@ class map_helper extends helper_base {
         foreach ($options['presetLayers'] as $layer) {
           $a = explode('_', $layer);
           $a = strtolower($a[0]);
-          // Google also used in the dynamicOSleisureGoogleSat layer pairing.
+          // Google also used in the dynamicOSGoogleSat layer pairing.
           if ($a === 'google' || substr($a, 0, 7) === 'dynamic') {
             self::add_resource('googlemaps');
           }
