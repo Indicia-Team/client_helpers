@@ -461,7 +461,7 @@ HTML;
       $indicia_templates['two-col-50']);
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
-    $dataOptions = self::getOptionsForJs($options, [], empty($options['attachToId']));
+    $dataOptions = self::getOptionsForJs($options, ['source'], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcEsDownload({});
 
@@ -492,6 +492,7 @@ JS;
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     $dataOptions = self::getOptionsForJs($options, [
+      'source',
       'columns',
       'actions',
       'includeColumnHeadings',
@@ -532,6 +533,7 @@ JS;
     ], $options);
     helper_base::add_resource('leaflet');
     $dataOptions = self::getOptionsForJs($options, [
+      'source',
       'styles',
       'showSelectedRow',
       'initialLat',
@@ -555,6 +557,7 @@ JS;
   protected static function get_control_templatedOutput($auth, $args, $tabalias, $options) {
     self::checkOptions('templatedOutput', $options, ['source', 'content'], []);
     $dataOptions = self::getOptionsForJs($options, [
+      'source',
       'content',
       'header',
       'footer',
@@ -600,7 +603,7 @@ JS;
     // Escape the source so it can output as an attribute.
     $source = str_replace('"', '&quot;', json_encode($options['source']));
     return <<<HTML
-<div id="$options[id]" class="idc-output idc-output-$controlName" data-es-source="$source" data-idc-config="$dataOptions">
+<div id="$options[id]" class="idc-output idc-output-$controlName" data-idc-config="$dataOptions">
   $content
 </div>
 

@@ -22,7 +22,7 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
-class ElasticSearchProxyAbort extends Exception { };
+class ElasticsearchProxyAbort extends Exception { };
 
 class ElasticsearchProxyHelper {
 
@@ -30,7 +30,7 @@ class ElasticsearchProxyHelper {
 
   private static $esMappings;
 
-  public static function enableElasticsearchProxy($nid) {
+  public static function enableElasticsearchProxy($nid = NULL) {
     self::$config = hostsite_get_es_config($nid);
     helper_base::add_resource('datacomponents');
     // Retrieve the Elasticsearch mappings.
@@ -228,7 +228,7 @@ JS;
         || !hostsite_user_has_permission(self::$config['es'][$permissionsFilter . '_records_permission'])) {
       header("HTTP/1.1 401 Unauthorised");
       echo json_encode(['error' => "User does not have permission to $permissionsFilter records"]);
-      throw new ElasticSearchProxyAbort('Unauthorised');
+      throw new ElasticsearchProxyAbort('Unauthorised');
     }
   }
 

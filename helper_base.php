@@ -904,7 +904,8 @@ JS;
         ],
         'datacomponents' => [
           'deps' => [
-            'font_awesome'
+            'font_awesome',
+            'indiciaFootableReport',
           ],
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
