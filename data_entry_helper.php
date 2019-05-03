@@ -4634,7 +4634,10 @@ JS;
         'class' => $class,
         'controlWrapTemplate' => 'justControl',
         'extraParams' => $options['readAuth'],
-        'language' => $options['language'] // required for lists eg radio boxes: kept separate from options extra params as that is used to indicate filtering of species list by language
+        // Required for lists eg radio boxes: kept separate from options extra
+        // params as that is used to indicate filtering of species list by
+        // language
+        'language' => isset($options['language']) ? $options['language'] : '',
       );
       // Some undocumented checklist options that are applied to all attributes
       if(isset($options['lookUpKey'])) $ctrlOptions['lookUpKey'] = $options['lookUpKey'];
