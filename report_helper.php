@@ -943,10 +943,7 @@ JS;
   *   filter for taxon list 1.
   */
   public static function request_report(&$response, &$options, &$currentParamValues, $wantCount, $extras='') {
-    $extras .= '&wantColumns=1&wantParameters=1';
-    if ($wantCount) {
-      $extras .= '&wantCount=1';
-    }
+    $extras .= '&wantColumns=1&wantParameters=1&wantCount=' . ($wantCount ? '1' : '0');
     // Find the definitive list of parameters to exclude from the parameters returned by the API
     $options['paramsToExclude'] = array_keys(self::$filterParamsToGloballySkip);
     if (isset($options['ignoreParams'])) {
