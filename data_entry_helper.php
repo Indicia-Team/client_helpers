@@ -4801,44 +4801,43 @@ HTML;
    */
   public static function textarea($options) {
     $options = array_merge(array(
-      'cols'=>'80',
-      'rows'=>'4',
-      'isFormControl' => true
+      'cols' => '80',
+      'rows' => '4',
+      'isFormControl' => TRUE,
     ), self::check_options($options));
     return self::apply_template('textarea', $options);
   }
 
   /**
-   * Helper function to output an HTML text input. This includes re-loading of existing values
-   * and displaying of validation error messages.
+   * Helper function to output an HTML text input.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>readonly</b><br/>
-   * Optional. can be set to 'readonly="readonly"' to set this control as read only.</li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>text_input</b></br>
-   * HTML template used to generate the input element.
-   * </li>
-   * </ul>
+   * This includes re-loading of existing values and displaying of validation
+   * error messages.
    *
-   * @return string HTML to insert into the page for the text input control.
+   * @param array $options Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * readonly - Optional. can be set to 'readonly="readonly"' to set this
+   *     control as read only.
+   *
+   * The output of this control can be configured using the following
+   * templates:
+   * * text_input - HTML template used to generate the input element.
+   *
+   * @return string
+   *   HTML to insert into the page for the text input control.
    */
   public static function text_input($options) {
-    $options = array_merge(array(
-      'default'=>'',
-      'isFormControl' => true
-    ), self::check_options($options));
+    $options = array_merge([
+      'default' => '',
+      'isFormControl' => TRUE,
+    ], self::check_options($options));
     return self::apply_template('text_input', $options);
   }
 
@@ -7760,7 +7759,7 @@ TXT;
       $attrOptions['class'] = (empty($attrOptions['class']) ? '' : "$attrOptions[class] ") . "system-function-$item[system_function]";
     }
     if(isset($item['default']) && $item['default']!="")
-      $attrOptions['default']= $item['default'];
+      $attrOptions['default'] = $item['default'];
     //the following two lines are a temporary fix to allow a control_type to be specified via the form's user interface form structure
     if(isset($attrOptions['control_type']) && $attrOptions['control_type']!="")
       $item['control_type']= $attrOptions['control_type'];
