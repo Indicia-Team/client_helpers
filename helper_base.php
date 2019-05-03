@@ -2297,10 +2297,11 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $replaceTags=array();
     $replaceValues=array();
     foreach (array_keys($options) as $option) {
+      $value = is_array($options[$option]) || is_object($options[$option]) ? '' : $options[$option];
       array_push($replaceTags, '{'.$option.'}');
-      array_push($replaceValues, !is_array($options[$option]) && !is_object($options[$option]) ? $options[$option] : '');
+      array_push($replaceValues, $value);
       array_push($replaceTags, '{'.$option.'|escape}');
-      array_push($replaceValues, htmlspecialchars($options[$option]));
+      array_push($replaceValues, htmlspecialchars($value));
     }
     return str_replace($replaceTags, $replaceValues, $template);
   }
