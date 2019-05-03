@@ -2287,20 +2287,20 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   /**
    * Takes a template string (e.g. <div id="{id}">) and replaces the tokens with the equivalent values looked up from
    * the $options array. Tokens suffixed |escape have HTML escaping applied, e.g. <div id="{id}">{value|escape}</div>
-   * @param string $template The templatable string.
-   * @param string $options The array of items which can be merged into the template.
+   * @param string $template
+   *   The templatable string.
+   * @param array $options
+   *   The array of items which can be merged into the template.
    */
   protected static function apply_replacements_to_template($template, $options) {
     // Build an array of all the possible tags we could replace in the template.
     $replaceTags=array();
     $replaceValues=array();
     foreach (array_keys($options) as $option) {
-      if (!is_array($options[$option]) && !is_object($options[$option])) {
-        array_push($replaceTags, '{'.$option.'}');
-        array_push($replaceValues, $options[$option]);
-        array_push($replaceTags, '{'.$option.'|escape}');
-        array_push($replaceValues, htmlspecialchars($options[$option]));
-      }
+      array_push($replaceTags, '{'.$option.'}');
+      array_push($replaceValues, !is_array($options[$option]) && !is_object($options[$option]) ? $options[$option] : '');
+      array_push($replaceTags, '{'.$option.'|escape}');
+      array_push($replaceValues, htmlspecialchars($options[$option]));
     }
     return str_replace($replaceTags, $replaceValues, $template);
   }
