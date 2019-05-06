@@ -339,24 +339,6 @@ function hideMapsIfOverridden() {
   }
 }
 
-/**
- * Handling for dynamic switching layers which are treated as one.
- */
-function combineDynamicMapLayers() {
-  // Tie the selection of the paired dynamic layer checkboxes together and make
-  // one of them invisible.
-  var dyn1 = $("input[value='dynamicOSGoogleSat']");
-  var dyn2 = $("input[value='dynamicOSGoogleSatZoomed']");
-  dyn2.parent().hide(); //Parent list item
-  dyn1.change(function dyn1Change() {
-    dyn2.attr('checked', this.checked);
-  });
-  dyn2.change(function dyn2Change() {
-    dyn1.attr('checked', this.checked);
-  });
-}
-
-combineDynamicMapLayers();
 hideMapsIfOverridden();
 
 $('#form-category-picker').change(function(e) {
@@ -426,7 +408,6 @@ $('#load-params').click(function() {
           $('#form-params').hide().html(data).fadeIn();
           Drupal.attachBehaviors();
           hideMapsIfOverridden();
-          combineDynamicMapLayers();
         }
       );
     } else {
