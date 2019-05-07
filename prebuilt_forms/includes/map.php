@@ -235,6 +235,7 @@ function iform_map_get_georef_parameters() {
       'default' => 'google_places',
       'options' => array(
         'google_places' => 'Google Places API text search.',
+        'nominatim' => 'Nominatim API place search.',
         'geoportal_lu' => 'ACT Geoportal Luxembourg (for places in Luxumbourg)',
         'indicia_locations' => 'Search the Indicia locations list.'
       ),
