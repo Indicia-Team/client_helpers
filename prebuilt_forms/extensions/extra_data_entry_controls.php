@@ -111,7 +111,7 @@ class extension_extra_data_entry_controls {
       'type_fieldname' => 'occurrence_association:occurrence_type_id',
       'id_fieldname' => 'occurrence_association:id',
       'to_fieldname' => 'occurrence_association:to_occurrence_id',
-      'taxon_list_id' => $args['list_id'],
+      'taxon_list_id' => empty($args['list_id']) ? $args['extra_list_id'] : $args['list_id'],
       'extraParams' => [],
     ), $options);
     $options['fieldname'] .= ":$index";
@@ -153,7 +153,9 @@ class extension_extra_data_entry_controls {
       'default' => $options['association_type_id'],
     ));
     $options['extraParams'] += $auth['read'];
-    $options['extraParams']['taxon_list_id'] = $options['taxon_list_id'];
+    if (empty($options['extraParams']['taxon_list_id'])) {
+      $options['extraParams']['taxon_list_id'] = $options['taxon_list_id'];
+    }
     $r .= data_entry_helper::species_autocomplete($options);
     // Flag to tell the submission build code to run code to include the
     // association.
