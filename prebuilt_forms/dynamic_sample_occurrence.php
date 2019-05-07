@@ -14,19 +14,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers/
  */
 
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- *
- * @package Client
- * @subpackage PrebuiltForms
  */
 
 require_once 'includes/dynamic.php';
@@ -2296,6 +2291,65 @@ else
       }
     });";
     return $r;
+  }
+
+  /**
+   * Force senstivity on added records if the selected species in a given scratchpad.
+   * Options are:
+   * * @scratchpad_list_id - ID of the scratchpad_list containing the sensitive
+   *   taxa.
+   * * @taxon_list_ids - limit output to these lists (JSON). Will default to
+   *   those configured for the form.
+   * * @blur - level to blur to (100000, 10000, 2000, 1000).
+   */
+  protected static function get_control_sensitivityscratchpad($auth, $args, $tabalias, $options) {
+    if (empty($options['scratchpad_list_id']) || !preg_match('/^\d+$/', trim($options['scratchpad_list_id']))) {
+      throw new exception('The [sensitivity scratchpad] control needs an @scratchpad_list_id parameter containing ' .
+        'the ID of the scratchpad list to load');
+    }
+    helper_base::addLanguageStringsToJs('sensitivityScratchpad', [
+      'sensitiveMessage' => 'This species is sensitive so has been blurred for you.'
+    ]);
+    // Find the taxon lists this form uses. We can limit the taxa found
+    // accordingly.
+    $configuredLists = [];
+    if ($args['taxon_list_id']) {
+      $configuredLists[] = $args['taxon_list_id'];
+    }
+    if ($args['extra_list_id']) {
+      $configuredLists[] = $args['extra_list_id'];
+    }
+    $options = array_merge([
+      'blur' => 10000,
+      'taxon_list_ids' => $configuredLists,
+    ], $options);
+    if (!preg_match('/^(100|10|2|1)000$/', trim($options['blur']))) {
+      throw new exception('Invalid @blur setting for [sensitivity scratchpad]');
+    }
+    iform_load_helpers(['report_helper']);
+    $data = report_helper::get_report_data([
+      'dataSource' => 'library/taxa/taxa_taxon_list_ids_for_scratchpad',
+      'readAuth' => $auth['read'],
+      'extraParams' => [
+        'scratchpad_list_id' => $options['scratchpad_list_id'],
+        'taxon_list_ids' => implode(',', $options['taxon_list_ids']),
+      ],
+      'caching' => TRUE,
+      'cachePerUser' => FALSE,
+    ]);
+    $idArray = [];
+    foreach ($data as $row) {
+      $idArray[] = $row['taxa_taxon_list_id'];
+    }
+    $idJson = json_encode($idArray);
+    report_helper::$javascript .= <<<JS
+indiciaData.scratchpadBlursTo = $options[blur];
+indiciaData.scratchpadBlurList = $idJson;
+indiciaFns.enableScratchpadBlurList();
+
+JS;
+    // No control HTML required.
+    return '';
   }
 
   /**
