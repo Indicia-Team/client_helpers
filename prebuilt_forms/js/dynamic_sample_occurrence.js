@@ -83,4 +83,51 @@ jQuery(document).ready(function docReady($) {
     // On selection of a taxon or change of sex/stage attribute, load any dynamically linked attrs into the form.
     $(taxonRestrictionInputSelectors).change(changeTaxonRestrictionInputs);
   }
+
+  indiciaFns.enableScratchpadBlurList = function enableScratchpadBlurList() {
+    if (indiciaData.scratchpadBlurList && $('#occurrence\\:taxa_taxon_list_id').length > 0) {
+      $('#occurrence\\:taxa_taxon_list_id').change(function checkIfTaxonSensitive(e) {
+        var val = $(e.currentTarget).val();
+        if ($.inArray(val, indiciaData.scratchpadBlurList) !== -1) {
+          $('#sensitive-checkbox').prop('checked', 'checked');
+          $('#sensitive-checkbox').trigger('change');
+          $('#sensitive-blur').val(indiciaData.scratchpadBlursTo);
+          $('#sensitivity-controls').after('<div class="alert alert-warning">' +
+            indiciaData.lang.sensitivityScratchpad.sensitiveMessage + '</div>');
+        }
+      });
+    }
+    if (indiciaData.scratchpadBlurList && typeof hook_species_checklist_new_row !== 'undefined') {
+      hook_species_checklist_new_row.push(function checkAddedSpeciesSensitive(data, row) {
+        if ($.inArray(data.taxa_taxon_list_id, indiciaData.scratchpadBlurList) !== -1) {
+          var sensitivityControl = $(row).find('.scSensitivity');
+          var rect = sensitivityControl[0].getBoundingClientRect();
+          var tooltip = $('<div class="ui-tip below-left tip-sensitive">' +
+          indiciaData.lang.sensitivityScratchpad.sensitiveMessage + '</div>')
+            .appendTo('body');
+          var tooltipRect = tooltip[0].getBoundingClientRect();
+          $(sensitivityControl).val(indiciaData.scratchpadBlursTo);
+          // Position the tip.
+          if (tooltip.width() > 300) {
+            tooltip.css({ width: '300px' });
+          }
+          topPos = rect.bottom + 8;
+          if (topPos + tooltipRect.height > $(window).height()) {
+            topPos = rect.top - (tooltipRect.height + 4);
+          }
+          topPos += $(window).scrollTop();
+          // Fade the tip in and out.
+          tooltip.css({
+            display: 'none',
+            left: rect.right - tooltipRect.width,
+            top: topPos
+          }).fadeIn(400, function () {
+            $(this).delay(2000).fadeOut('slow', function() {
+              tooltip.remove();
+            });
+          });
+        }
+      });
+    }
+  }
 });
