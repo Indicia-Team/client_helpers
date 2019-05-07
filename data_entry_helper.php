@@ -1250,6 +1250,8 @@ JS;
    *     Supported options are:
    *     * google_places - uses the Google Places API text search service.
    *       Default.
+   *     * nominatim - Use the Nominatim place search API 
+   *       which uses OSM data https://wiki.openstreetmap.org/wiki/Nominatim
    *     * geoportal_lu - Use the Luxembourg specific place name search
    *       provided by geoportal.lu.
    *     * indicia_locations - Use the list of locations available to the
