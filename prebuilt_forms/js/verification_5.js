@@ -48,6 +48,7 @@ indiciaData.rowIdToReselect = false;
     }
     feature = new OpenLayers.Feature.Vector(geom);
     feature.attributes.type = 'selectedrecord';
+    feature.attributes.sref_precision = currRec.extra.sref_precision;
     indiciaData.mapdiv.removeAllFeatures(map.editLayer, 'selectedrecord');
     map.editLayer.addFeatures([feature]);
     // Force the correct style.
@@ -1029,13 +1030,24 @@ indiciaData.rowIdToReselect = false;
       strokeWidth: '${getstrokewidth}',
       fillOpacity: 0.5,
       strokeOpacity: 0.8,
-      pointRadius: 5
+      pointRadius: '${getpointradius}'
     }, {
       context: {
         getstrokewidth: function getstrokewidth(feature) {
           var width = feature.geometry.getBounds().right - feature.geometry.getBounds().left;
           var strokeWidth = (width === 0) ? 1 : 12 - (width / feature.layer.map.getResolution());
           return (strokeWidth < 2) ? 2 : strokeWidth;
+        },
+        getpointradius: function getpointradius(feature) {
+          var units;
+          if (typeof feature.attributes.sref_precision === 'undefined') {
+            return 5;
+          }
+          units = feature.attributes.sref_precision || 20;
+          if (feature.geometry.getCentroid().y > 4000000) {
+            units *= (feature.geometry.getCentroid().y / 8200000);
+          }
+          return Math.max(5, units / (feature.layer.map.getResolution()));
         }
       }
     });

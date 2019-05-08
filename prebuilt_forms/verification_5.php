@@ -1155,7 +1155,8 @@ HTML
         'taxon_external_key' => '',
         'taxon_meaning_id' => '',
         'record_status' => '',
-        'zero_abundance' => ''
+        'zero_abundance' => '',
+        'sref_precision' => '0',
     ), $reportData['records'][0]);
     // Build an array of all the data. This allows the JS to insert the data into emails etc. Note we
     // use an array rather than an assoc array to build the JSON, so that order is guaranteed.
@@ -1247,6 +1248,7 @@ HTML
     $extra['localities'] = $record['localities'];
     $extra['locality_ids'] = $record['locality_ids'];
     $extra['location_name'] = $record['location_name'];
+    $extra['sref_precision'] = $record['sref_precision'];
     $extra['query'] = $record['query'] === NULL ? '' : $record['query'];
     $extra['metadata'] = isset($record['metadata']) ? json_decode($record['metadata']) : json_decode('{}');
     header('Content-type: application/json');
