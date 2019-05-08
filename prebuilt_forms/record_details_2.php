@@ -606,6 +606,14 @@ HTML;
     if (isset(self::$record['geom'])) {
       $options['initialFeatureWkt'] = self::$record['geom'];
     }
+    if (!empty(self::$record['sref_precision'])) {
+      // Set radius if imprecise.
+      $p = self::$record['sref_precision'];
+      map_helper::$javascript .= <<<JS
+indiciaData.srefPrecision = $p;
+
+JS;
+    }
 
     if ($tabalias) {
       $options['tabDiv'] = $tabalias;
