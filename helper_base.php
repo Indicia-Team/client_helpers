@@ -1231,7 +1231,7 @@ JS;
         $fieldname=(isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '') .$key;
         self::add_resource('spatialReports');
         self::add_resource('clearLayer');
-        $javascript .= "  enableBuffering();\n";
+        $javascript .= "  indiciaFns.enableBuffering();\n";
         if ($options['inlineMapTools']) {
           $r .= '<label>'.$info['display'].':</label>';
           $r .= '<div class="control-box">Use the following tools to define the query area.<br/>'.
