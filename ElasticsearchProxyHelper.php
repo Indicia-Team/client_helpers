@@ -152,6 +152,12 @@ JS;
     if (!empty($_POST['doc']['identification']['query'])) {
       $scripts[] = "ctx._source.identification.query = '" . $_POST['doc']['identification']['query'] . "'";
     }
+    if (isset($_POST['doc']['metadata']['website']['id'])) {
+      $scripts[] = "ctx._source.metadata.website.id = '" . $_POST['doc']['metadata']['website']['id'] . "'";
+    }
+    if (empty($scripts)) {
+      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], true));
+    }
     $_ids = [];
     // Convert Indicia IDs to the document _ids for ES.
     foreach ($_POST['ids'] as $id) {
