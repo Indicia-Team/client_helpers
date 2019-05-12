@@ -16,7 +16,7 @@
  *
  * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link http://code.google.com/p/indicia/
+ * @link https://github.com/Indicia-Team/client_helpers
  */
 
 require_once 'includes/dynamic.php';
@@ -683,6 +683,9 @@ HTML;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[recordDetails]
    */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
+    $options = array_merge([
+      'allowRedetermination' => FALSE,
+    ], $options);
     self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes']);
     if (!empty($options['explorePath'])) {
       // Build  URL which overrides the default filters applied to many Explore
@@ -704,14 +707,15 @@ HTML;
     $dataOptions = self::getOptionsForJs($options, [
       'showSelectedRow',
       'exploreUrl',
-      'locationTypes'
+      'locationTypes',
+      'allowRedetermination',
     ], TRUE);
     helper_base::add_resource('tabs');
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcRecordDetailsPane({});
 
 JS;
-    return <<<HTML
+    $r = <<<HTML
 <div class="details-container" id="$options[id]" data-idc-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
@@ -736,6 +740,41 @@ JS;
 </div>
 
 HTML;
+    if ($options['allowRedetermination']) {
+      helper_base::add_resource('validation');
+      $redetUrl = iform_ajaxproxy_url(self::$nid, 'occurrence');
+      $userId = hostsite_get_user_field('indicia_user_id');
+      helper_base::$javascript .= <<<JS
+indiciaData.ajaxFormPostRedet = '$redetUrl&user_id=$userId&sharing=editing';
+
+JS;
+      $speciesInput = data_entry_helper::species_autocomplete([
+        'label' => lang::get('Redetermine to'),
+        'helpText' => lang::get('Select the new taxon name.'),
+        'fieldname' => 'redet-species',
+        'extraParams' => $auth['read'] + ['taxon_list_id' => 1],
+        'speciesIncludeAuthorities' => TRUE,
+        'speciesIncludeBothNames' => TRUE,
+        'speciesNameFilterMode' => 'preferred',
+        'validation' => ['required'],
+      ]);
+      $commentInput = data_entry_helper::textarea([
+        'label' => lang::get('Explanation comment'),
+        'helpText' => lang::get('Please give reasons why you are changing this record.'),
+        'fieldname' => 'redet-comment',
+      ]);
+      $r .= <<<HTML
+<div id="redet-panel-wrap" style="display: none">
+  <form id="redet-form">
+    $speciesInput
+    $commentInput
+    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
+    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
+  </form>
+</div>
+HTML;
+    }
+    return $r;
   }
 
   /**
