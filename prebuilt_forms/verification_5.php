@@ -736,7 +736,8 @@ idlist=';
           'fieldname' => 'redet-from-full-list',
           'label' => lang::get('Search all species'),
           'labelClass' => 'auto',
-          'helpText' => lang::get('Check this box if you want to redetermine to a different species group.'),
+          'helpText' => lang::get('This record was identified against a restricted list of taxa. Check this box if ' .
+              'you want to redetermine to a taxon selected from the unrestricted full list available.'),
         ]) .
         '</div>';
     }

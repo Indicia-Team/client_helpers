@@ -942,7 +942,7 @@ indiciaData.rowIdToReselect = false;
     if (typeof indiciaData.mainTaxonListId === 'undefined' || parseInt(currRec.extra.taxon_list_id) === indiciaData.mainTaxonListId) {
       $('.redet-partial-list').hide();
     } else {
-      $('#redet-partial-list').show();
+      $('.redet-partial-list').show();
       $('#redet-from-full-list').removeAttr('checked');
     }
     validator = $('#redet-form').validate({});
