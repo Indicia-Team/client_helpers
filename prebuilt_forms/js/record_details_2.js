@@ -48,13 +48,24 @@ jQuery(document).ready(function docReady($) {
       strokeWidth: '${getstrokewidth}',
       fillOpacity: 0.5,
       strokeOpacity: 0.8,
-      pointRadius: 5
+      pointRadius: '${getpointradius}'
     }, {
       context: {
         getstrokewidth: function getstrokewidth(feature) {
           var width = feature.geometry.getBounds().right - feature.geometry.getBounds().left;
           var strokeWidth = (width === 0) ? 1 : 12 - (width / feature.layer.map.getResolution());
           return (strokeWidth < 2) ? 2 : strokeWidth;
+        },
+        getpointradius: function getpointradius(feature) {
+          var units;
+          if (typeof indiciaData.srefPrecision === 'undefined') {
+            return 5;
+          }
+          units = indiciaData.srefPrecision || 20;
+          if (feature.geometry.getCentroid().y > 4000000) {
+            units *= (feature.geometry.getCentroid().y / 8200000);
+          }
+          return Math.max(5, units / (feature.layer.map.getResolution()));
         }
       }
     });

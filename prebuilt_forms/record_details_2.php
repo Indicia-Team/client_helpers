@@ -326,6 +326,7 @@ Record ID',
       'verifier' => lang::get('Verified by'),
       'date' => lang::get('Date'),
       'entered_sref' => lang::get('Grid ref'),
+      'sref_precision' => lang::get('Uncertainty (m)'),
       'occurrence_comment' => lang::get('Record comment'),
       'location_name' => lang::get('Site name'),
       'sample_comment' => lang::get('Sample comment'),
@@ -605,6 +606,14 @@ HTML;
     );
     if (isset(self::$record['geom'])) {
       $options['initialFeatureWkt'] = self::$record['geom'];
+    }
+    if (!empty(self::$record['sref_precision'])) {
+      // Set radius if imprecise.
+      $p = self::$record['sref_precision'];
+      map_helper::$javascript .= <<<JS
+indiciaData.srefPrecision = $p;
+
+JS;
     }
 
     if ($tabalias) {

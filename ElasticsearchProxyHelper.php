@@ -152,6 +152,12 @@ JS;
     if (!empty($_POST['doc']['identification']['query'])) {
       $scripts[] = "ctx._source.identification.query = '" . $_POST['doc']['identification']['query'] . "'";
     }
+    if (isset($_POST['doc']['metadata']['website']['id'])) {
+      $scripts[] = "ctx._source.metadata.website.id = '" . $_POST['doc']['metadata']['website']['id'] . "'";
+    }
+    if (empty($scripts)) {
+      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], true));
+    }
     $_ids = [];
     // Convert Indicia IDs to the document _ids for ES.
     foreach ($_POST['ids'] as $id) {
@@ -325,6 +331,9 @@ JS;
    *
    * Support for filter definitions is incomplete. Currently only the following
    * parameters are converted:
+   * * idlist
+   * * occ_id
+   * * occurrence_external_key
    * * website_list & website_list_op
    * * survey_list & survey_list_op
    * * group_id
@@ -353,40 +362,67 @@ JS;
         throw new exception("Filter with ID $userFilter could not be loaded.");
       }
       $definition = json_decode($filterData[0]['definition'], TRUE);
-      self::applyUserFiltersWebsiteList($readAuth, $definition, ['website_list', 'website_id'], $bool);
-      self::applyUserFiltersSurveyList($readAuth, $definition, ['survey_list', 'survey_id'], $bool);
-      self::applyUserFiltersGroupId($readAuth, $definition, ['group_id'], $bool);
-      self::applyUserFiltersTaxonGroupList($readAuth, $definition, ['taxon_group_list', 'taxon_group_id'], $bool);
-      self::applyUserFiltersTaxaTaxonList($readAuth, $definition, [
-        'taxa_taxon_list_list',
-        'higher_taxa_taxon_list_list',
-        'taxa_taxon_list_id',
-        'higher_taxa_taxon_list_id',
-      ], $bool);
-      self::applyUserFiltersTaxonRankSortOrder($readAuth, $definition, ['taxon_rank_sort_order'], $bool);
-      self::applyUserFiltersIndexedLocationList($readAuth, $definition, [
-        'indexed_location_list',
-        'indexed_location_id',
-      ], $bool);
+      self::applyUserFiltersOccId($definition, $bool);
+      self::applyUserFiltersOccExternalKey($definition, $bool);
+      self::applyUserFiltersWebsiteList($definition, $bool);
+      self::applyUserFiltersSurveyList($definition, $bool);
+      self::applyUserFiltersGroupId($definition, $bool);
+      self::applyUserFiltersTaxonGroupList($definition, $bool);
+      self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
+      self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
+      self::applyUserFiltersIndexedLocationList($definition, $bool);
       self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition idlist or occ_id to an ES query.
+   *
+   * Both occ_id and idlist are filters on occurrence.id so we treat them the
+   * same here.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersOccId(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['idlist', 'oc_id']);
+    $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+    if (!empty($filter)) {
+      $bool[$boolClause][] = [
+        'terms' => ['id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an filter definition occurrence_external_key to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersOccExternalKey(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['occurrence_external_key']);
+    if (!empty($filter)) {
+      $bool['must'][] = [
+        'terms' => ['occurrence.source_system_key' => explode(',', $filter['value'])],
+      ];
     }
   }
 
   /**
    * Converts an Indicia filter definition website_list to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersWebsiteList(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['website_list', 'website_id']);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
@@ -398,18 +434,13 @@ JS;
   /**
    * Converts an Indicia filter definition survey_list to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersSurveyList(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['survey_list', 'survey_id']);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
@@ -421,18 +452,13 @@ JS;
   /**
    * Converts an Indicia filter definition group_id to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersGroupId(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersGroupId(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['group_id']);
     if (!empty($filter)) {
       $bool['must'][] = [
         'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
@@ -443,18 +469,13 @@ JS;
   /**
    * Converts an Indicia filter definition taxon_group_list to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersTaxonGroupList(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersTaxonGroupList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['taxon_group_list', 'taxon_group_id']);
     if (!empty($filter)) {
       $bool['must'][] = [
         'terms' => ['taxon.group_id' => explode(',', $filter['value'])],
@@ -465,19 +486,22 @@ JS;
   /**
    * Converts an Indicia filter definition taxa_taxon_list_list to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
    */
-  private static function applyUserFiltersTaxaTaxonList(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersTaxaTaxonList(array $definition, array &$bool, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, [
+      'taxa_taxon_list_list',
+      'higher_taxa_taxon_list_list',
+      'taxa_taxon_list_id',
+      'higher_taxa_taxon_list_id',
+    ]);
     if (!empty($filter)) {
+      // Convert the IDs to external keys, stored in ES as taxon_ids.
       $taxonData = data_entry_helper::get_population_data([
         'table' => 'taxa_taxon_list',
         'extraParams' => [
@@ -496,18 +520,13 @@ JS;
   /**
    * Converts a filter definition taxon_rank_sort_order filter to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersTaxonRankSortOrder(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersTaxonRankSortOrder(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['taxon_rank_sort_order']);
     // Filter op can be =, >= or <=.
     if (!empty($filter)) {
       if ($filter['op'] === '=') {
@@ -538,18 +557,16 @@ JS;
   /**
    * Converts an Indicia filter definition indexed_location_list to an ES query.
    *
-   * @param array $readAuth
-   *   Read authentication tokens.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
-   * @param array $params
-   *   List of parameter names that can be used for this type of filter
-   *   (allowing for deprecated names etc).
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersIndexedLocationList(array $readAuth, array $definition, array $params, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, $params);
+  private static function applyUserFiltersIndexedLocationList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, [
+      'indexed_location_list',
+      'indexed_location_id',
+    ]);
     if (!empty($filter)) {
       $boolClause = $filter['value'] === '0' ? 'must_not' : 'must';
       $bool[$boolClause][] = [

@@ -267,17 +267,32 @@ class import_helper extends helper_base {
     }
     $request = parent::$base_url . "index.php/services/import/get_import_fields/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
-    // include survey and website information in the request if available, as this limits the availability of custom attributes
-    if (!empty($settings['website_id']))
+    // Include survey and website information in the request if available, as
+    // this limits the availability of custom attributes.
+    if (!empty($settings['website_id'])) {
       $request .= '&website_id=' . trim($settings['website_id']);
-    if (!empty($settings['survey_id']))
+    }
+    if (!empty($settings['survey_id'])) {
       $request .= '&survey_id=' . trim($settings['survey_id']);
-    if (!empty($settings['useAssociations']) && $settings['useAssociations'])
+    }
+    if (!empty($settings['useAssociations']) && $settings['useAssociations']) {
       $request .= '&use_associations=true';
-    if ($options['model'] == 'sample' && isset($settings['sample:sample_method_id']) && trim($settings['sample:sample_method_id']) != '')
+    }
+    if ($options['model'] === 'sample'
+        && isset($settings['sample:sample_method_id'])
+        && trim($settings['sample:sample_method_id']) !== '') {
       $request .= '&sample_method_id=' . trim($settings['sample:sample_method_id']);
-    else if ($options['model'] == 'location' && isset($settings['location:location_type_id']) && trim($settings['location:location_type_id']) != '')
+    }
+    elseif ($options['model'] === 'location'
+        && isset($settings['location:location_type_id'])
+        && trim($settings['location:location_type_id']) !== '') {
       $request .= '&location_type_id=' . trim($settings['location:location_type_id']);
+    }
+    elseif ($options['model'] === 'taxa_taxon_list'
+        && isset($settings['taxa_taxon_list:taxon_list_id'])
+        && trim($settings['taxa_taxon_list:taxon_list_id']) !== '') {
+      $request .= '&taxon_list_id=' . trim($settings['taxa_taxon_list:taxon_list_id']);
+    }
     $response = self::http_post($request, array());
     $fields = json_decode($response['output'], TRUE);
     if (!is_array($fields))

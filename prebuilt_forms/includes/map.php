@@ -235,6 +235,7 @@ function iform_map_get_georef_parameters() {
       'default' => 'google_places',
       'options' => array(
         'google_places' => 'Google Places API text search.',
+        'nominatim' => 'Nominatim API place search.',
         'geoportal_lu' => 'ACT Geoportal Luxembourg (for places in Luxumbourg)',
         'indicia_locations' => 'Search the Indicia locations list.'
       ),
@@ -431,9 +432,9 @@ mapInitialisationHooks.push(function(mapdiv) {
   var bounds=loclayer.getDataExtent();
   mapdiv.map.updateSize();
   indiciaData.initialBounds = bounds;
+  mapdiv.map.addLayer(loclayer);
   indiciaFns.zoomToBounds(mapdiv, bounds);
 $restrictExtentCode
-  mapdiv.map.addLayer(loclayer);
 });
 SCRIPT;
 }

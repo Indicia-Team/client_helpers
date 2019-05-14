@@ -724,7 +724,8 @@ JS;
    *   * review_input
    *   * sub_list
    *   * georeference_default_geoportal_lu
-   *   * georeference_defaultgoogle_places
+   *   * georeference_default_nominatim
+   *   * georeference_default_google_places
    *   * georeference_default_indicia_locations
    *   * sref_handlers_4326
    *   * sref_handlers_osgb
@@ -880,6 +881,8 @@ JS;
         'sub_list' => array('javascript' => array(self::$js_path . 'sub_list.js')),
         'georeference_default_geoportal_lu' => array(
             'javascript' => array(self::$js_path.'drivers/georeference/geoportal_lu.js')),
+        'georeference_default_nominatim' => array(
+              'javascript' => array(self::$js_path.'drivers/georeference/nominatim.js')),
         'georeference_default_google_places' => array(
             'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
         'georeference_default_indicia_locations' => array(
@@ -1228,7 +1231,7 @@ JS;
         $fieldname=(isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '') .$key;
         self::add_resource('spatialReports');
         self::add_resource('clearLayer');
-        $javascript .= "  enableBuffering();\n";
+        $javascript .= "  indiciaFns.enableBuffering();\n";
         if ($options['inlineMapTools']) {
           $r .= '<label>'.$info['display'].':</label>';
           $r .= '<div class="control-box">Use the following tools to define the query area.<br/>'.
