@@ -432,9 +432,9 @@ mapInitialisationHooks.push(function(mapdiv) {
   var bounds=loclayer.getDataExtent();
   mapdiv.map.updateSize();
   indiciaData.initialBounds = bounds;
+  mapdiv.map.addLayer(loclayer);
   indiciaFns.zoomToBounds(mapdiv, bounds);
 $restrictExtentCode
-  mapdiv.map.addLayer(loclayer);
 });
 SCRIPT;
 }
