@@ -310,7 +310,7 @@ Record ID',
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
     // Draw the Record Details, but only if they aren't requested as hidden by the administrator.
-    $attrsTemplate = '<div class="field ui-helper-clearfix"><span>{caption}:</span>{anchorfrom}<span{class}>{value|escape}</span>{anchorto}</div>';
+    $attrsTemplate = '<div class="field ui-helper-clearfix"><dt>{caption}:</dt>{anchorfrom}<dd{class}>{value|escape}</dd>{anchorto}</div>';
     $test = $args['operator'] === 'in';
     $availableFields = array(
       'occurrence_id' => lang::get('Record ID'),
@@ -421,13 +421,13 @@ Record ID',
       ));
     }
 
-    $r = '<div class="detail-panel" id="detail-panel-recorddetails"><h3>' . lang::get('Record Details') . '</h3>';
+    $r = '<dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails"><h3>' . lang::get('Record Details') . '</h3>';
 
     $r .= $details_report;
     if (isset($attrs_report)) {
       $r .= $attrs_report;
     }
-    $r .= '</div>';
+    $r .= '</dl>';
     return $r;
   }
 
