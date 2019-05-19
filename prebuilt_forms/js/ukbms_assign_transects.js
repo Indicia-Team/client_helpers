@@ -25,17 +25,13 @@ indiciaData.holidayLocationLayer = false;
 (function ($) {
   'use strict';
 
-  indiciaFns.displayFeatures = function(list) {
+  indiciaFns.populateFeatures = function(list) {
 
-    var bounds = indiciaData.holidayLocationLayer.map.getExtent(); // displayed extent.
-    var mapCentre = bounds.toGeometry().getCentroid();
     var type = $('[name=location\\:location_type_id]').val();
-//    indiciaData.unassignedLocationLayer.removeAllFeatures();
-//    indiciaData.myLocationLayer.removeAllFeatures();
-//    indiciaData.othersLocationLayer.removeAllFeatures();
     indiciaData.holidayLocationLayer.removeAllFeatures();
-    $('#featureTableBody tr').remove();
     if(type == '') return;
+
+    indiciaData.dialog = $('<p>Please wait whilst the holiday squares are loaded.</p>').dialog({ title: 'Loading...', buttons: { 'OK': function() { indiciaData.dialog.dialog('close'); }}});
 
     var report_URL = indiciaData.indiciaSvc + '/index.php/services/report/requestReport?report=library/locations/locations_list.xml' +
                         '&reportSource=local' +
@@ -44,145 +40,140 @@ indiciaData.holidayLocationLayer = false;
                         '&callback=?' +
                         '&location_type_id=' + type +
                         '&locattrs=' + indiciaData.cms_attr_id + ',' + indiciaData.holiday_attr_id +
-//                        '&attr_location_' + indiciaData.holiday_attr_id + '=true' +
+//                        '&attr_location_' + indiciaData.holiday_attr_id + '=1' +
                         '&orderby=name';
+
     $.getJSON(report_URL, function(data) {
-        var hasAction = false,
-            parser = new OpenLayers.Format.WKT();
+        var parser = new OpenLayers.Format.WKT();
         $.each(data, function(_idx, site) {
-                data[_idx]['featureDistance'] = 0;
-                if (site['attr_location_' + indiciaData.holiday_attr_id] === null || !site['attr_location_' + indiciaData.holiday_attr_id]) {
-                  return true;
-                }
-                if(list !== null && list.length > 0 && $.inArray(site.location_id, list) < 0)
-                    return;
-                var feature = parser.read(site.geom);
-                if (indiciaData.mapdiv.indiciaProjection.projCode !== indiciaData.mapdiv.map.projection.projCode){
-                    feature.geometry = feature.geometry.transform(div.indiciaProjection, indiciaData.mapdiv.map.projection);
-                }
-                data[_idx]['feature'] = feature;
-                data[_idx]['featureDistance'] = feature.geometry.distanceTo(mapCentre);
-                return true;
-        });
-        data.sort(function(a, b) {
-          return a['featureDistance'] - b['featureDistance'];
+          var feature = parser.read(site.geom);
+          if (indiciaData.mapdiv.indiciaProjection.projCode !== indiciaData.mapdiv.map.projection.projCode){
+            feature.geometry = feature.geometry.transform(div.indiciaProjection, indiciaData.mapdiv.map.projection);
+          }
+          data[_idx]['feature'] = feature;
+          return true;
         });
         $.each(data, function(_idx, site) {
 
-                if (site['attr_location_' + indiciaData.holiday_attr_id] === null || !site['attr_location_' + indiciaData.holiday_attr_id]) {
-                  return true;
-                }
-                var assignees = [],
-                    isAssignee = false,
-                    runningTotal = $('#featureTableBody tr').length,
-                    row = '<td>' +
-                        (typeof indiciaData.user_id === 'undefined' ? site.name :
-                          '<a target="_blank" href="' + indiciaData.siteDetails + '?id=' + site.location_id + '">' + site.name + '</a>') +
-                        '</td>';
-                if(list !== null && list.length > 0 && $.inArray(site.location_id, list) < 0)
-                    return;
-                // make sure that we can see the nearest holiday square. Data has been sorted into nearest first.
-                if($('#featureTableBody tr').length === 0) {
-                    bounds.extend(site['feature'].geometry.getCentroid());
-                    indiciaData.holidayLocationLayer.map.zoomToExtent(bounds);
-                }
-                var buildAction = function(command, label, site, userID, fullControl) {
+          if (site['attr_location_' + indiciaData.holiday_attr_id] === null || !site['attr_location_' + indiciaData.holiday_attr_id]) {
+            return true;
+          }
+          var assignees = [],
+              isAssignee = false;
+
+          if (site['attr_location_' + indiciaData.cms_attr_id] !== '' && site['attr_location_' + indiciaData.cms_attr_id] !== null) {
+            assignees = site['attr_location_' + indiciaData.cms_attr_id].split(',')
+            for(var i = 0; i < assignees.length; i++) {
+              assignees[i] = assignees[i].trim();
+              if(assignees[i] == indiciaData.userID) { // CMSID
+                isAssignee = true;
+                break;
+              }
+            }
+          }
+
+          if (site['attr_location_' + indiciaData.holiday_attr_id]) {
+            site['feature'].attributes.name = site.name;
+            site['feature'].attributes.id = site.location_id;
+            site['feature'].attributes.isAssignee = isAssignee;
+            if(isAssignee) {
+              site['feature'].renderIntent = 'mine';
+            }
+            indiciaData.holidayLocationLayer.addFeatures([site['feature']]); // features added even if too many for list
+          }
+
+          return true;
+        });
+
+        var extent = indiciaData.holidayLocationLayer.getDataExtent();
+        if(extent !== null) {
+          indiciaData.holidayLocationLayer.map.zoomToExtent(extent);
+        }
+        indiciaData.dialog.dialog('close');
+    });
+  }
+
+  indiciaFns.listClosestSites = function(list) {
+
+    var bounds = indiciaData.holidayLocationLayer.map.getExtent(); // displayed extent.
+    var mapCentre = bounds.toGeometry().getCentroid().transform(indiciaData.holidayLocationLayer.map.projection, 'EPSG:27700');
+    var centre = new OpenLayers.Feature.Vector(bounds.toGeometry().getCentroid(), {type: 'georef', temp: true});
+    indiciaData.holidayLocationLayer.map.editLayer.destroyFeatures();
+    indiciaData.holidayLocationLayer.map.editLayer.addFeatures([centre]);
+
+    $('#featureTable').show();
+    $('#featureTableBody tr').remove();
+    $('input.apply-actions-button').remove();
+
+    var features = indiciaData.holidayLocationLayer.features;
+    if (features.length === 0)
+      return;
+
+    $.each(features, function(_idx, feature) {
+      feature.attributes.featureDistance = Math.round(feature.geometry.clone().transform(indiciaData.holidayLocationLayer.map.projection, 'EPSG:27700').distanceTo(mapCentre));
+    });
+    features.sort(function(a, b) {
+      return a.attributes.featureDistance - b.attributes.featureDistance;
+    });
+    $.each(features, function(_idx, feature) {
+
+      var runningTotal = $('#featureTableBody tr').length,
+          row = '<td>' +
+                (typeof indiciaData.user_id === 'undefined' ? feature.attributes.name :
+                  '<a target="_blank" href="' + indiciaData.siteDetails + '?id=' + feature.attributes.id + '">' + feature.attributes.name + '</a>') +
+                '</td>';
+
+      // make sure that we can see the nearest holiday square. Data has been sorted into nearest first.
+      if(_idx === 0) { // Only zoom if the closest (first due to sorting) holiday square is outside the bounds.
+        if(!bounds.containsBounds(feature.geometry.getBounds())) {
+          bounds.extend(feature.geometry.getCentroid());
+          indiciaData.holidayLocationLayer.map.zoomToExtent(bounds);
+          bounds = indiciaData.holidayLocationLayer.map.getExtent(); // new displayed extent.
+        }
+      }
+
+      var buildAction = function(command, label, feature, userID, fullControl) {
                     if(fullControl)
-                        return '<td><input type="hidden" name="' + command + '_' + site.location_id+'_' +userID +
-                                '" value="0"><input type="checkbox" name="' + command + '_' + site.location_id+'_' +userID +
-                                '" id="' + command + '_' + site.location_id+'_' + userID +
-                                '" value="1"><label for="' + command + '_' + site.location_id+'_' + userID +'">' + label + '</label></td>';
+                        return '<td><input type="hidden" name="' + command + '_' + feature.attributes.id + '_' + userID +
+                                '" value="0"><input type="checkbox" name="' + command + '_' + feature.attributes.id +'_' + userID +
+                                '" id="' + command + '_' + feature.attributes.id +'_' + userID +
+                                '" value="1"><label for="' + command + '_' + feature.attributes.id+'_' + userID +'">' + label + '</label></td>';
                     else
-                        return '<td><input type="hidden" name="' + command + '_' + site.location_id+'_' +userID +
+                        return '<td><input type="hidden" name="' + command + '_' + feature.attributes.id+'_' +userID +
                                 '" value="0"></td>';
                 }
 
-                if (site['attr_location_' + indiciaData.cms_attr_id] !== '' && site['attr_location_' + indiciaData.cms_attr_id] !== null) {
-                    assignees = site['attr_location_' + indiciaData.cms_attr_id].split(',')
-                    for(var i = 0; i < assignees.length; i++) {
-                        assignees[i] = assignees[i].trim();
-                        if(assignees[i] == indiciaData.userID) {
-                            isAssignee = true;
-                            break;
-                        }
-                    }
-                }
+      row = row + '<td>' + feature.attributes.featureDistance + 'm</td>';
 
-                if(site['feature'].geometry.getBounds().intersectsBounds(bounds)) {
-                    site['feature'].attributes.name = site.name;
-                    site['feature'].attributes.id = site.location_id;
-                    
-                    if (site['attr_location_' + indiciaData.holiday_attr_id] !== null && site['attr_location_' + indiciaData.holiday_attr_id]) {
-                        indiciaData.holidayLocationLayer.addFeatures([site['feature']]); // features added even if too many for list
-                        if(typeof indiciaData.user_id === 'undefined') {
-                            row = row + /* '<td>Yes</td>' + */ '<td></td><td>Please login/register before requesting a holiday square.</td>';
-                        } else if(isAssignee) {
-                            row = row + /* '<td>Yes</td>' + */ '<td>Assigned to you</td>' + buildAction('unassign_holiday', 'Unassign', site, indiciaData.userID, true);
-                            hasAction = true;
-                        } else {
-                            row = row + /* '<td>Yes</td>' + */ '<td>Not assigned to you</td>' + buildAction('assign_holiday', 'Assign', site, indiciaData.userID, true);
-                            hasAction = true;
-                        }
-                    }
-                    /*
-                     else if (assignees.length === 0) {
-                        indiciaData.unassignedLocationLayer.addFeatures([site['feature']]); // features added even if too many for list
-                        row = row + '<td>No</td><td>Unassigned</td>' + buildAction('request_assign', 'Request assignment', site, indiciaData.userID, false);
-                    } else {
-                        if(isAssignee) {
-                            indiciaData.myLocationLayer.addFeatures([site['feature']]); // features added even if too many for list
-                            row = row + '<td>No</td><td>Assigned to you</td>' + buildAction('request_deassign', 'Request de-assignment', site, indiciaData.userID, false);
-                        } else {
-                            indiciaData.othersLocationLayer.addFeatures([site['feature']]); // features added even if too many for list
-                            row = row + '<td>No</td><td>Assigned to another</td>' + buildAction('request_assign', 'Request assignment', site, indiciaData.userID, false);
-                        }
-                    }
-                    */
-                    if(runningTotal < indiciaData.limit) {
-                        $('#featureTableBody').append('<tr>' + row + '</tr>');
-                    } else if(runningTotal === indiciaData.limit) {
-                        $('#featureTableBody').append('<tr><td colspan=4>Simultaneous features limit reached.</td></tr>');
-                    }
-                }
-                return true;
-        });
-        if(list !== null && list.length > 0) {
-/*                var extent = indiciaData.unassignedLocationLayer.getDataExtent(),
-                    nextextent = indiciaData.myLocationLayer.getDataExtent();
-                if(extent === null)
-                    extent = nextextent;
-                else if(nextextent !== null)
-                    extent.extend(nextextent);
-                nextextent = indiciaData.othersLocationLayer.getDataExtent();
-                if(extent === null)
-                    extent = nextextent;
-                else if(nextextent !== null)
-                    extent.extend(nextextent); */
-                var nextextent = indiciaData.holidayLocationLayer.getDataExtent();
-                if(extent === null)
-                    extent = nextextent;
-                else if(nextextent !== null)
-                    extent.extend(nextextent);
-                if(extent !== null)
-                    indiciaData.holidayLocationLayer.map.zoomToExtent(extent);
-        }
-        if(hasAction) {
-            $('#featureTableBody').append('<tr><td></td><td></td><td></td><td><input type="submit" value="Carry out checked actions"></td></tr>');
-        }
+      if(typeof indiciaData.user_id === 'undefined' || indiciaData.user_id===0) {
+         row = row + /* '<td>Yes</td>' + */ '<td></td><td>Please login/register before requesting a holiday square.</td>';
+      } else if(feature.attributes.isAssignee) {
+         row = row + /* '<td>Yes</td>' + */ '<td>Assigned to you</td>' + buildAction('unassign_holiday', 'Unassign', feature, indiciaData.userID, true);
+      } else {
+         row = row + /* '<td>Yes</td>' + */ '<td>Not assigned to you</td>' + buildAction('assign_holiday', 'Assign', feature, indiciaData.userID, true);
+      }
+      if(runningTotal < indiciaData.limit) {
+        $('#featureTableBody').append('<tr' + ($('#featureTableBody tr').length % 2 ? '' : ' class="odd"') + '>' + row + '</tr>');
+      }
+
+      return true;
     });
+    if(typeof indiciaData.user_id !== 'undefined' && indiciaData.user_id!==0) {
+      $('#featureTable').after('<input type="submit" class="indicia-button apply-actions-button" value="Carry out checked actions">');
+    }
   }
 
   mapInitialisationHooks.push(function (div) {
 
     var baseStyle               = { strokeWidth: 4, fillOpacity: 0 },
         unassignedLocationStyle = new OpenLayers.Style(),
-        unassignedLocationRule  = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Red'}, baseStyle) }),
+        unassignedLocationRule  = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Yellow'}, baseStyle) }),
         unassignedLocationStyleMap,
         myLocationStyle         = new OpenLayers.Style(),
-        myLocationRule          = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Green'}, baseStyle) }),
+        myLocationRule          = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Red'}, baseStyle) }),
         myLocationStyleMap,
         othersLocationStyle     = new OpenLayers.Style(),
-        othersLocationRule      = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Yellow'}, baseStyle) }),
+        othersLocationRule      = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Green'}, baseStyle) }),
         othersLocationStyleMap,
         holidayLocationStyle    = new OpenLayers.Style(),
         holidayLocationRule     = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Blue'}, baseStyle) }),
@@ -205,8 +196,9 @@ indiciaData.holidayLocationLayer = false;
     unassignedLocationStyleMap          = new OpenLayers.StyleMap({'default': unassignedLocationStyle});
     indiciaData.unassignedLocationLayer = new OpenLayers.Layer.Vector('Unassigned Sites', {styleMap: unassignedLocationStyleMap, displayInLayerSwitcher: true});
     div.map.addLayer(indiciaData.unassignedLocationLayer);
-
+*/
     myLocationStyle.addRules([myLocationRule, labelRule]);
+/*
     myLocationStyleMap                  = new OpenLayers.StyleMap({'default': myLocationStyle});
     indiciaData.myLocationLayer         = new OpenLayers.Layer.Vector('My Sites', {styleMap: myLocationStyleMap, displayInLayerSwitcher: true});
     div.map.addLayer(indiciaData.myLocationLayer);
@@ -217,13 +209,12 @@ indiciaData.holidayLocationLayer = false;
     div.map.addLayer(indiciaData.othersLocationLayer);
 */
     holidayLocationStyle.addRules([holidayLocationRule, labelRule]);
-    holidayLocationStyleMap             = new OpenLayers.StyleMap({'default': holidayLocationStyle});
+    holidayLocationStyleMap             = new OpenLayers.StyleMap({'default': holidayLocationStyle, 'mine': myLocationStyle});
     indiciaData.holidayLocationLayer    = new OpenLayers.Layer.Vector('Holiday Sites', {styleMap: holidayLocationStyleMap, displayInLayerSwitcher: true});
     div.map.addLayer(indiciaData.holidayLocationLayer);
 
-    if(indiciaData.initFeatureIds.length > 0) {
-        indiciaFns.displayFeatures(indiciaData.initFeatureIds);
-    }
+    indiciaFns.populateFeatures();
+
   });
 
 })(jQuery);
