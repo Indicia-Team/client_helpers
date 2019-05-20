@@ -236,7 +236,17 @@ class iform_verification_5 {
           ),
           'default' => 'verification',
           'group' => 'Report Settings',
-        ), array(
+        ),
+        array(
+          'name' => 'report_download_link',
+          'caption' => 'Report download link',
+          'description' => 'Include a link for downloading the current report grid containing the list of records.',
+          'type' => 'checkbox',
+          'group' => 'Report Settings',
+          'default' => FALSE,
+          'required' => FALSE,
+        ),
+        array(
           'name' => 'email_from_address',
           'caption' => 'Email from address',
           'description' => 'Specify the email address which emails should be sent from. This must be an address on ' .
@@ -828,6 +838,7 @@ idlist=';
         'ajax' => TRUE,
         'callback' => 'verificationGridLoaded',
         'rowClass' => $args['report_row_class'],
+        'downloadLink' => empty($args['report_download_link']) ? FALSE : TRUE,
         'responsiveOpts' => array(
           'breakpoints' => array(
             'phone' => 480,
