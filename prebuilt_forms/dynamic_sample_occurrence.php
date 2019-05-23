@@ -1160,15 +1160,28 @@ HTML;
   }
 
   /**
-   * Converts a licence code (e.g. CC-BY) to readable text.
+   * Converts a licence code (e.g. CC BY) to readable text.
    * @param string $code
    * @return string
    */
   private static function licence_code_to_text($code) {
-    return str_replace(
-      array('CC','BY','NC','0','OGL'),
-      array(lang::get('Creative Commons'), lang::get('By Attribution'), lang::get('Non-Commercial'),
-        lang::get(' (no rights reserved)'), lang::get('Open Government Licence')),
+    return str_replace([
+        'CC',
+        'BY',
+        'NC',
+        'ND',
+        'SA',
+        '0',
+        'OGL',
+      ], [
+        lang::get('Creative Commons'),
+        lang::get('By Attribution'),
+        lang::get('Non-Commercial'),
+        lang::get('No Derivatives'),
+        lang::get('Share Alike'),
+        lang::get(' (no rights reserved)'),
+        lang::get('Open Government Licence'),
+      ],
       $code
     );
   }

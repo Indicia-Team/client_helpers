@@ -523,7 +523,7 @@ Record ID',
       $class = ' class="ui-state-error"';
     }
     elseif ($field === 'licence_code') {
-      $class = ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"';
+      $class = ' class="licence licence-' . strtolower(str_replace(' ', '-', self::$record['licence_code'])) . '"';
     }
     else {
       $class = '';
