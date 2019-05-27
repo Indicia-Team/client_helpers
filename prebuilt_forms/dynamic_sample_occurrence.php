@@ -1089,6 +1089,7 @@ HTML;
       $possibleGroups = data_entry_helper::get_report_data(array(
         'dataSource' => 'library/groups/groups_for_page',
         'readAuth' => $auth['read'],
+        'caching' => TRUE,
         'extraParams' => array(
             'currentUser' => hostsite_get_user_field('indicia_user_id'),
             'path' => $reload['path']
