@@ -408,7 +408,7 @@ class iform_species_details extends iform_dynamic {
         elseif ($theField=='synonym names' || $theField=='synonym name'|| $theField=='synonym')
           $hideSynonym = false;
         elseif ($theField=='taxonomy')
-          $hideTaxonomy = true;
+          $hideTaxonomy = false;
       }
     }
     //Draw the names on the page
