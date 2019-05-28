@@ -2630,7 +2630,6 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
    */
   private static function getCachedResponse($file, $timeout, $options, $random=true) {
     // Note the random element, we only timeout a cached file sometimes.
-    $timeout = 1;
     $wantToCache = $timeout !== false;
     $haveFile = $file && is_file($file);
     $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
