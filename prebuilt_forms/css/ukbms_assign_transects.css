@@ -1,0 +1,14 @@
+
+button.allocation-search-button, input[type="submit"].apply-actions-button, input[type="button"].allocation-search-button {
+  width: 100%;
+  margin: 10px 0 10px 0;
+  font-size: 1.1em;
+}
+
+#featureTable {
+  width: 100%;
+  margin: 0 0 10px 0;
+}
+.ui-dialog {
+  z-index: 1000;
+}

@@ -304,13 +304,13 @@ Record ID',
    *   The output freeform report.
    */
   protected static function get_control_recorddetails($auth, $args, $tabalias, $options) {
+    global $indicia_templates;
     $options = array_merge(array(
       'dataSource' => 'reports_for_prebuilt_forms/record_details_2/record_data_attributes_with_hiddens'
     ), $options);
     $fields = helper_base::explode_lines($args['fields']);
     $fieldsLower = helper_base::explode_lines(strtolower($args['fields']));
     // Draw the Record Details, but only if they aren't requested as hidden by the administrator.
-    $attrsTemplate = '<div class="field ui-helper-clearfix"><span>{caption}:</span>{anchorfrom}<span{class}>{value|escape}</span>{anchorto}</div>';
     $test = $args['operator'] === 'in';
     $availableFields = array(
       'occurrence_id' => lang::get('Record ID'),
@@ -369,8 +369,6 @@ Record ID',
       if ($test === in_array(strtolower($caption), $fieldsLower) && !empty(self::$record[$field])) {
         $class = self::getFieldClass($field);
         $caption = self::$record[$field] === 'This record is sensitive' ? '' : $caption;
-        $anchorfrom = $field === 'licence_code' ? '<a href="' . self::$record['licence_url'] . '">' : '';
-        $anchorto = $field === 'licence_code' ? '</a>' : '';
         $value = lang::get(self::$record[$field]);
         // Italices latin names.
         if (($field === 'taxon' && self::$record['language_iso'] === 'lat')
@@ -383,10 +381,13 @@ Record ID',
         if ($field !== 'taxon' && $field !== 'preferred_taxon') {
           $value = htmlspecialchars($value);
         }
+        if ($field === 'licence_code') {
+          $value = '<a href="' . self::$record['licence_url'] . "\">$value</a>";
+        }
         $details_report .= str_replace(
-          array('{caption}', '{value|escape}', '{class}', '{anchorfrom}', '{anchorto}'),
-          array(lang::get($caption), $value, $class, $anchorfrom, $anchorto),
-          $attrsTemplate
+          array('{caption}', '{value}', '{class}'),
+          array(lang::get($caption), $value, $class),
+          $indicia_templates['dataValue']
         );
       }
     }
@@ -397,8 +398,8 @@ Record ID',
       $dateInfo .= lang::get(' and last updated on {1}', $updated);
     }
     if ($test === in_array('submission date', $fieldsLower)) {
-      $details_report .= str_replace(array('{caption}', '{value|escape}', '{class}', '{anchorfrom}', '{anchorto}'),
-          array(lang::get('Submission date'), $dateInfo, '', '', ''), $attrsTemplate);
+      $details_report .= str_replace(array('{caption}', '{value}', '{class}'),
+          array(lang::get('Submission date'), $dateInfo, ''), $indicia_templates['dataValue']);
     }
     $details_report .= '</div>';
 
@@ -408,7 +409,7 @@ Record ID',
         'readAuth' => $auth['read'],
         'class' => 'record-details-fields ui-helper-clearfix',
         'dataSource' => $options['dataSource'],
-        'bands' => array(array('content' => str_replace(array('{class}', '{anchorfrom}', '{anchorto}'), '', $attrsTemplate))),
+        'bands' => array(array('content' => str_replace(array('{class}'), '', $indicia_templates['dataValue']))),
         'extraParams' => array(
           'occurrence_id' => $_GET['occurrence_id'],
           // The SQL needs to take a set of the hidden fields, so this needs to be converted from an array.
@@ -421,13 +422,13 @@ Record ID',
       ));
     }
 
-    $r = '<div class="detail-panel" id="detail-panel-recorddetails"><h3>' . lang::get('Record Details') . '</h3>';
+    $r = '<h3>' . lang::get('Record Details') . '</h3><dl class="detail-panel dl-horizontal" id="detail-panel-recorddetails">';
 
     $r .= $details_report;
     if (isset($attrs_report)) {
       $r .= $attrs_report;
     }
-    $r .= '</div>';
+    $r .= '</dl>';
     return $r;
   }
 
@@ -522,7 +523,7 @@ Record ID',
       $class = ' class="ui-state-error"';
     }
     elseif ($field === 'licence_code') {
-      $class = ' class="licence licence-' . strtolower(self::$record['licence_code']) . '"';
+      $class = ' class="licence licence-' . strtolower(str_replace(' ', '-', self::$record['licence_code'])) . '"';
     }
     else {
       $class = '';

@@ -380,7 +380,7 @@ function iform_report_get_gallery_item($medium, $imageSize = 'thumb') {
     $info[] = "<div class=\"image-caption\">$medium[caption]</div>";
   }
   if (!empty($medium['licence_code'])) {
-    $code = strtolower($medium['licence_code']);
+    $code = strtolower(str_replace(' ', '-', $medium['licence_code']));
     $info[] = "<div class=\"licence licence-$code\">$medium[licence_title]</div>";
   }
   // If there is any info, build a pane to show it.

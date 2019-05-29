@@ -1089,6 +1089,7 @@ HTML;
       $possibleGroups = data_entry_helper::get_report_data(array(
         'dataSource' => 'library/groups/groups_for_page',
         'readAuth' => $auth['read'],
+        'caching' => TRUE,
         'extraParams' => array(
             'currentUser' => hostsite_get_user_field('indicia_user_id'),
             'path' => $reload['path']
@@ -1160,15 +1161,28 @@ HTML;
   }
 
   /**
-   * Converts a licence code (e.g. CC-BY) to readable text.
+   * Converts a licence code (e.g. CC BY) to readable text.
    * @param string $code
    * @return string
    */
   private static function licence_code_to_text($code) {
-    return str_replace(
-      array('CC','BY','NC','0','OGL'),
-      array(lang::get('Creative Commons'), lang::get('By Attribution'), lang::get('Non-Commercial'),
-        lang::get(' (no rights reserved)'), lang::get('Open Government Licence')),
+    return str_replace([
+        'CC',
+        'BY',
+        'NC',
+        'ND',
+        'SA',
+        '0',
+        'OGL',
+      ], [
+        lang::get('Creative Commons'),
+        lang::get('By Attribution'),
+        lang::get('Non-Commercial'),
+        lang::get('No Derivatives'),
+        lang::get('Share Alike'),
+        lang::get(' (no rights reserved)'),
+        lang::get('Open Government Licence'),
+      ],
       $code
     );
   }
@@ -2011,8 +2025,19 @@ JS;
 
   /**
    * Get the location control as an autocomplete.
-   * As well as the standard location_autocomplete options, set personSiteAttrId to the attribute ID of
-   * a multi-value person attribute used to link people to the sites they record at.
+   *
+   * If the form is configured to allow saving of personal sites, then this
+   * will revert to a text input in situations where the user is not logged on.
+   * This behaviour can be overridden using the @autocompleteIfLoggedOut as
+   * described below.
+   *
+   * As well as the standard location_autocomplete options, set:
+   * * @personSiteAttrId to the attribute ID of a multi-value person attribute
+   *   used to link people to the sites they record at.
+   * * @autocompleteIfLoggedOut - set to true to prevent this control reverting
+   *   to a text input if the user is logged out. Use an alternative report or
+   *   reporting filtering to prevent all the complete list of locations for
+   *   the website being available for selection.
    */
   protected static function get_control_locationautocomplete($auth, $args, $tabAlias, $options) {
     if (isset($options['extraParams'])) {
@@ -2031,10 +2056,11 @@ JS;
     if ((isset($args['users_manage_own_sites']) && $args['users_manage_own_sites'])
         || (!empty($_GET['group_id']))) {
       $userId = hostsite_get_user_field('indicia_user_id');
-      if (empty($userId)) {
+      if (empty($userId) && empty($options['autocompleteIfLoggedOut'])) {
         $location_list_args['fieldname'] = 'sample:location_name';
         return data_entry_helper::text_input($location_list_args);
       }
+      $userId = empty($userId) ? 0 : $userId;
       if (!empty($options['personSiteAttrId'])) {
         $location_list_args['extraParams']['user_id']=$userId;
         $location_list_args['extraParams']['person_site_attr_id']=$options['personSiteAttrId'];
