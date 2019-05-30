@@ -300,6 +300,9 @@ JS;
       ['id'],
       ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
     );
+    $options = array_merge([
+      'aggregationMapMode' => 'geoHash',
+    ], $options);
     $dataOptions = self::getOptionsForJs($options, [
       'id',
       'from',
@@ -307,6 +310,7 @@ JS;
       'sort',
       'filterPath',
       'aggregation',
+      'aggregationMapMode',
       'buildTableXY',
       'initialMapBounds',
       'filterBoolClauses',
