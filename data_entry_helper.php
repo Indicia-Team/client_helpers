@@ -1250,7 +1250,7 @@ JS;
    *     Supported options are:
    *     * google_places - uses the Google Places API text search service.
    *       Default.
-   *     * nominatim - Use the Nominatim place search API 
+   *     * nominatim - Use the Nominatim place search API
    *       which uses OSM data https://wiki.openstreetmap.org/wiki/Nominatim
    *     * geoportal_lu - Use the Luxembourg specific place name search
    *       provided by geoportal.lu.
@@ -2581,43 +2581,39 @@ JS;
 
   /**
    * Creates a textbox for entry of a spatial reference.
+   *
    * Also generates the hidden geom field required to properly post spatial data. The
    * box is automatically linked to a map_panel if one is added to the page.
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>sref_textbox</b></br>
-   * Template used for the text input box for the spatial reference.
-   * </li>
-   * <li><b>sref_textbox_latlong</b></br>
-   * Template used for the latitude and longitude input boxes when the splitLatLong option is set
-   * to true.
-   * </li>
-   * </ul>
+   * * sref_textbox - Template used for the text input box for the spatial
+   *   reference.
+   * * sref_textbox_latlong - Template used for the latitude and longitude
+   *   input boxes when the splitLatLong option is set to true.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldName</b><br/>
-   * Required. The name of the database field this control is bound to. Defaults to sample:entered_sref.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>defaultGeom</b><br/>
-   * Optional. The default geom (wkt) to store in a hidden input posted with the form data.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>splitLatLong</b><br/>
-   * Optional. If set to true, then 2 boxes are created, one for the latitude and one for the longitude.</li>
-   * <li><b>geomFieldname</b><br/>
-   * Optional. Fieldname to use for the geom (table:fieldname format) where the geom field is not
-   * just called geom, e.g. location:centroid_geom.</li>
-   * <li><b>minGridRef</b><br/>
-   * Optional. Set to a number to enforce grid references to be a certain precision, e.g. provide the value 6
-   * to enforce a minimum 6 figure grid reference.</li>
-   * <li><b>maxGridRef</b><br/>
-   * Optional. Set to a number to enforce grid references to less than a certain precision, e.g. provide the value 6
-   * to enforce a maximum 6 figure grid reference.</li>
-   * </ul>
+   * @param array $options Options array with the following possibilities:
+   * * fieldName - Required. The name of the database field this control is
+   *   bound to. Defaults to sample:entered_sref.
+   * * id - Optional. The id to assign to the HTML control. If not assigned the
+   *   fieldname is used.
+   * * default - Optional. The default value to assign to the control. This is
+   *   overridden when reloading a record with existing data for this control.
+   * * defaultGeom - Optional. The default geom (wkt) to store in a hidden
+   *   input posted with the form data.
+   * * class - Optional. CSS class names to add to the control.
+   * * splitLatLong - Optional. If set to true, then 2 boxes are created, one
+   *   for the latitude and one for the longitude.
+   * * geomFieldname - Optional. Fieldname to use for the geom (table:fieldname
+   *   format) where the geom field is not just called geom, e.g.
+   *   location:centroid_geom.
+   * * minGridRef - Optional. Set to a number to enforce grid references to be
+   *   a certain precision, e.g. provide the value 6 to enforce a minimum 6
+   *   figure grid reference.
+   * * maxGridRef - Optional. Set to a number to enforce grid references to
+   *   less than a certain precision, e.g. provide the value 6 to enforce a
+   *   maximum 6 figure grid reference.
+   * * findMeButton. Optional, default true. Provides a button for using the
+   *   user's current location (as reported by the browser) to populate the
+   *   input.
    *
    * @return string HTML to insert into the page for the spatial reference control.
    * @todo This does not work for reloading data at the moment, when using split lat long mode.
