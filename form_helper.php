@@ -294,7 +294,7 @@ function setCategoryAndPageVisibility() {
         $(this).hide();
         $(this).attr('disabled', 'disabled');
         if ($(this).attr('selected')) {
-          $('#form-category-picker option[value=""]').attr('selected', TRUE);
+          $('#form-category-picker option[value=""]').attr('selected', true);
         }
       } else {
         $(this).show();
