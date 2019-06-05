@@ -5,16 +5,16 @@ var occurrence_comment_submit;
 
 jQuery(document).ready(function($) {
   function postToServer(s, typeOfPost) {
-    if (typeOfPost==='occurrence') 
+    if (typeOfPost==='occurrence')
       $postUrl = indiciaData.baseUrl+'/?q=ajaxproxy&node='+indiciaData.nodeId+'&index=occurrence';
-    else if (typeOfPost==='occurrence_comment') 
+    else if (typeOfPost==='occurrence_comment')
       $postUrl = indiciaData.baseUrl+'/?q=ajaxproxy&node='+indiciaData.nodeId+'&index=occ-comment';
-    else if (typeOfPost==='notification') 
+    else if (typeOfPost==='notification')
       $postUrl = indiciaData.baseUrl+'/?q=ajaxproxy&node='+indiciaData.nodeId+'&index=notification';
-    else 
+    else
       $postUrl = indiciaData.baseUrl+'/?q=ajaxproxy&node='+indiciaData.nodeId+'&index=occurrence';
-    
-	  $.post($postUrl, 
+
+	  $.post($postUrl,
 		s,
 		function (data) {
       if (typeof data.error === 'undefined') {
@@ -29,12 +29,12 @@ jQuery(document).ready(function($) {
 		'json'
 	  );
 	}
-  
+
   //Set the release_status of an occurrence to released.
   //Can be called from the action column configuration on the edit tab.
 	release_record = function(id) {
     var confirmation = confirm('Do you really want to release the record with id '+id+'?');
-	  if (confirmation) { 
+	  if (confirmation) {
       var s = {
       "website_id":indiciaData.website_id,
       "occurrence:id":id,
@@ -45,41 +45,41 @@ jQuery(document).ready(function($) {
       return false;
     }
 	}
-  
+
   //Verify a record.
   //Can be called from the action column configuration on the edit tab.
   verify_record = function(id) {
     var confirmation = confirm('Do you really want to verify the record with id '+id+'?');
-    if (confirmation) { 
-      verify_reject_post_to_server(id, "V",indiciaData.verifiedTranslation); 
+    if (confirmation) {
+      verify_reject_post_to_server(id, "V",indiciaData.verifiedTranslation);
     } else {
       return false;
     }
 	}
-  
+
   //Reject a record.
   //Can be called from the action column configuration on the edit tab.
   reject_record = function(id) {
     var confirmation = confirm('Do you really want to reject the record with id '+id+'?');
-    if (confirmation) { 
-      verify_reject_post_to_server(id, "R",indiciaData.rejectedTranslation);  
+    if (confirmation) {
+      verify_reject_post_to_server(id, "R",indiciaData.rejectedTranslation);
     } else {
       return false;
     }
 	}
-  
+
   verify_reject_post_to_server = function(id,record_status,comment) {
     var s = {
       "website_id":indiciaData.website_id,
       "occurrence:id":id,
       "occurrence:record_status":record_status,
       "occurrence:release_status":"R",
-      'user_id': indiciaData.userId,
+      'user_id': indiciaData.user_id,
       'occurrence_comment:comment': comment
     };
     postToServer(s, 'occurrence');
   }
-  
+
   //Add an occurrence comment.
   //Can be called from the action column configuration on the edit tab.
   add_comment = function(id) {
@@ -92,17 +92,17 @@ jQuery(document).ready(function($) {
         '</fieldset>' +
       '</form>'
     );
-    $('#occurrence-comment-save-button').click(function(){ 
+    $('#occurrence-comment-save-button').click(function(){
       //Trim white space
       if (!$('#occurrence-comment').val().trim()) {
-        alert('Please enter an occurrence comment before saving.'); 
+        alert('Please enter an occurrence comment before saving.');
         return false;
       } else {
         occurrence_comment_submit(id);
       }
     });
   }
-  
+
   //Submit an occurrence comment to the database
   occurrence_comment_submit = function(id) {
       var dateObj = new Date();

@@ -591,7 +591,6 @@ idlist=';
     global $user;
     $auth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     data_entry_helper::$javascript .= 'indiciaData.username = "'.$user->name."\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.userId = "'.$indicia_user_id."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "'.$link['path']."\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="'.iform_ajaxproxy_url($nid, 'occurrence')."&user_id=$indicia_user_id&sharing=verification\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="'.url('iform/ajax/verification_3')."\";\n";

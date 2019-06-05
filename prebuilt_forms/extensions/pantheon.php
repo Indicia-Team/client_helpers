@@ -219,7 +219,6 @@ class extension_pantheon {
     $write = json_encode($auth['write_tokens']);
     report_helper::$javascript .= <<<JS
 indiciaData.imagesPath = '$imgPath';
-indiciaData.userId = $userId;
 indiciaData.write = $write;
 
 JS;

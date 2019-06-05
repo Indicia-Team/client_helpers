@@ -46,7 +46,6 @@ indiciaData.esProxyAjaxUrl = '$esProxyAjaxUrl';
 indiciaData.esSources = [];
 indiciaData.esMappings = $mappings;
 indiciaData.dateFormat = '$dateFormat';
-indiciaData.userId = $userId;
 indiciaData.rootFolder = '$rootFolder';
 
 JS;

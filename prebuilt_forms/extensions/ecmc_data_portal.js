@@ -1,7 +1,7 @@
 var drawPoints, saveSample, deleteSample;
 
 jQuery(document).ready(function($) {
-  
+
   /* Effort/sightings radio buttons */
   $('#points-params input:radio').change(function(e) {
     if (typeof indiciaData.reports!=="undefined") {
@@ -12,9 +12,9 @@ jQuery(document).ready(function($) {
     }
   });
   $('#points-params input:radio').change();
-  
-  /* Transect selection */ 
-  
+
+  /* Transect selection */
+
   function updateSelectedTransect() {
     // Make the add new buttons link to the correct transect sample
     $('#edit-effort,#edit-sighting').attr('href', $('#edit-effort').attr('href')
@@ -24,25 +24,25 @@ jQuery(document).ready(function($) {
       indiciaData.reports.dynamic.grid_report_grid_0.reload(true);
     }
   }
-  
+
   $('#transect-param').change(updateSelectedTransect);
   if ($('#transect-param').length>0) {
     updateSelectedTransect();
   }
-  
+
   /* New transect button */
-  
+
   $('#new-transect').click(function(e) {
     e.preventDefault();
     $('#popup-transect-id').val('');
     $.fancybox({"href":"#add-transect-popup"});
     return false;
   });
-  
+
   $('#transect-popup-cancel').click(function() {
     $.fancybox.close();
   });
-  
+
   $('#transect-popup-save').click(function() {
     if ($('#popup-transect-id').val()==='') {
       alert(indiciaData.langRequireTransectID);
@@ -52,15 +52,15 @@ jQuery(document).ready(function($) {
       alert(indiciaData.langRequireSampleType);
       return;
     }
-    var sample = {"website_id": indiciaData.websiteId, "user_id": indiciaData.userId, 
-        "survey_id": indiciaData.surveyId, "parent_id": indiciaData.surveySampleId, 
+    var sample = {"website_id": indiciaData.websiteId, "user_id": indiciaData.user_id,
+        "survey_id": indiciaData.surveyId, "parent_id": indiciaData.surveySampleId,
         "date": $('#popup-transect-date').val(), "sample_method_id":indiciaData.transectSampleMethodId,
         "entered_sref":indiciaData.sampleSref, "entered_sref_system": 4326
     };
-    sample['smpAttr:'+indiciaData.transectIdAttrId] = $('#popup-transect-id').val(); 
-    sample['smpAttr:'+indiciaData.sampleTypeAttrId] = $('#popup-sample-type').val(); 
-    $.post(indiciaData.saveSampleUrl, 
-      sample, 
+    sample['smpAttr:'+indiciaData.transectIdAttrId] = $('#popup-transect-id').val();
+    sample['smpAttr:'+indiciaData.sampleTypeAttrId] = $('#popup-sample-type').val();
+    $.post(indiciaData.saveSampleUrl,
+      sample,
       function (data) {
         if (typeof data.error === 'undefined') {
           alert('The transect has been saved. You can now add effort and sightings points for this transect.');
@@ -75,14 +75,14 @@ jQuery(document).ready(function($) {
       'json'
     );
   });
-  
+
   /* Add point buttons */
   $('.edit-point').click(function(e) {
     $(e.currentTarget).attr('href', $(e.currentTarget).attr('href').replace(/transect_sample_id=\d+/, 'transect_sample_id='+$('#transect-param').val()));
   });
-  
+
   function postToServer(s) {
-	  $.post(indiciaData.postUrl, 
+	  $.post(indiciaData.postUrl,
 		s,
 		function (data) {
 		  if (typeof data.error === 'undefined') {
@@ -104,7 +104,7 @@ jQuery(document).ready(function($) {
       postToServer(s);
     }
 	}
-  
+
   /* Lat long control stuff */
   if ($('#lat_long-lat').length>0) {
     var updateSref = function() {
@@ -120,18 +120,18 @@ jQuery(document).ready(function($) {
       $('#lat_long-long').val(coords[1]);
     }
   }
-  
+
   /* Dynamic redirection stuff */
   if ($('#ecmc-redirect').length===1) {
     var setRedirect=function() {
       switch ($('#next-action').val()) {
-        case 'effort': 
+        case 'effort':
           $('#ecmc-redirect').val('survey/points/edit-effort?parent_sample_id='+$('#parent_sample_id').val()+'&transect_sample_id='+$('#sample\\:parent_id').val());
           break;
-        case 'sighting': 
+        case 'sighting':
           $('#ecmc-redirect').val('survey/points/edit-sighting?parent_sample_id='+$('#parent_sample_id').val()+'&transect_sample_id='+$('#sample\\:parent_id').val());
           break;
-        case 'surveypoints': 
+        case 'surveypoints':
           $('#ecmc-redirect').val('survey/points-list');
           break;
       }
@@ -139,7 +139,7 @@ jQuery(document).ready(function($) {
     $('#next-action').change(setRedirect);
     setRedirect();
   }
-  
+
   drawPoints = function() {
     var geoms=[], shadeIdx, shadeHex, style = {
       strokeWidth: 1,
@@ -180,7 +180,7 @@ jQuery(document).ready(function($) {
     indiciaData.reportlayer.addFeatures([indiciaData.routeFeature]);
     indiciaData.reportlayer.redraw();
   };
-  
+
   saveSample = function(sampleId) {
     var utc=$('#input-time-'+sampleId).val(),
         localTimeValId=$('#input-localtime-val-id-'+sampleId).val(),
@@ -281,7 +281,7 @@ jQuery(document).ready(function($) {
     indiciaData.mapdiv.removeAllFeatures(indiciaData.reportlayer, 'route')
     indiciaData.reportlayer.addFeatures([new OpenLayers.Feature.Vector(new OpenLayers.Geometry.LineString(geoms), {type: 'route'}, style)]);
   }
-  
+
   // Change inputs on the transect points review screen will recolour to show they are edited.
   $('body').on('change', '.input-time,.input-lat,.input-long', function(e) {
     var sampleId = e.currentTarget.id.replace(/input\-(time|lat|long)\-/, ''),
@@ -308,5 +308,5 @@ jQuery(document).ready(function($) {
       }
     }
   });
-  
+
 });
