@@ -531,14 +531,10 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[leafletMap]
    */
   protected static function get_control_leafletMap($auth, $args, $tabalias, $options) {
-    self::checkOptions('leafletMap', $options, ['source'], ['styles']);
-    $options = array_merge([
-      'styles' => new stdClass(),
-    ], $options);
+    self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
     helper_base::add_resource('leaflet');
     $dataOptions = self::getOptionsForJs($options, [
-      'source',
-      'styles',
+      'layerConfig',
       'showSelectedRow',
       'initialLat',
       'initialLng',
@@ -592,20 +588,16 @@ JS;
    */
   private static function getControlContainer($controlName, array $options, $dataOptions, $content='') {
     if (!empty($options['attachToId'])) {
-      $source = json_encode($options['source']);
       // Use JS to attach to an existing element.
       helper_base::$javascript .= <<<JS
 $('#$options[attachToId]')
   .addClass('idc-output')
   .addClass("idc-output-$controlName")
-  .attr('data-idc-esSource', '$source')
   .attr('data-idc-output-config', '$dataOptions');
 
 JS;
       return '';
     }
-    // Escape the source so it can output as an attribute.
-    $source = str_replace('"', '&quot;', json_encode($options['source']));
     return <<<HTML
 <div id="$options[id]" class="idc-output idc-output-$controlName" data-idc-config="$dataOptions">
   $content
