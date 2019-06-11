@@ -2814,7 +2814,7 @@ JS;
       $status = !empty(data_entry_helper::$entity_to_load['occurrence:record_status'])
         ? data_entry_helper::$entity_to_load['occurrence:record_status']
         : 'C';
-      if ($status === 'C') {
+      if ($status === 'V' or $status === 'R') {
         self::$checkedRecordsCount++;
       }
       else {
