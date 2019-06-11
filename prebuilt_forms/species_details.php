@@ -619,6 +619,33 @@ HTML
       )
     )) . '</div>';
   }
+  
+  /*
+   * Gets a comma seperated list of taxa associated with the species by using the taxon_associations table
+   */  
+  protected static function get_control_taxonassociations($auth, $args, $tabalias, $options) {
+    $params = [
+      'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
+      'taxon_meaning_id' => empty($_GET['taxon_meaning_id']) ? '' : $_GET['taxon_meaning_id'],
+    ];
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      [
+        'readAuth' => $auth['read'],
+        'dataSource' => 'library/taxon_associations/get_taxon_associations_as_string',
+        'extraParams' => $params,
+        'wantCount' => '0',
+      ]
+    );
+    $data = report_helper::get_report_data($reportOptions);
+	if (!empty($data[0]['associated_taxa'])) {
+      $r = '<div class="detail-panel" id="detail-panel-taxonassociations"><h3>'.lang::get('Hosts').'</h3>';
+      $r .= '<div><i>'.$data[0]['associated_taxa'].'</i></div>';
+    } else {
+      $r = '';
+    }
+    return $r;
+  }
 
   protected static function get_control_occurrenceassociations($auth, $args, $tabalias, $options) {
     iform_load_helpers(array('report_helper'));
