@@ -486,8 +486,12 @@ JS;
       ['actions', 'columns']
     );
     if (empty($options['columns']) && empty($options['autogenColumns'])) {
-      throw new Exception("Control [dataGrid] requires a parameter called @columns or must have @autogenColumns=true");
+      throw new Exception('Control [dataGrid] requires a parameter called @columns or must have @autogenColumns=true');
     }
+    if (!empty($options['scrollY']) && !preg_match('/^\d+px$/', $options['scrollY'])) {
+      throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
+    }
+
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for aggregation tables.
     if (!empty($options['simpleAggregation']) || !empty($options['sourceTable'])) {
@@ -506,6 +510,7 @@ JS;
       'simpleAggregation',
       'sourceTable',
       'autogenColumns',
+      'scrollY',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcDataGrid({});
