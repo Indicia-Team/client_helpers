@@ -483,7 +483,7 @@ JS;
       'dataGrid',
       $options,
       ['source'],
-      ['actions', 'columns']
+      ['actions', 'columns', 'responsiveOptions']
     );
     if (empty($options['columns']) && empty($options['autogenColumns'])) {
       throw new Exception('Control [dataGrid] requires a parameter called @columns or must have @autogenColumns=true');
@@ -507,6 +507,7 @@ JS;
       'includeFilterRow',
       'includePager',
       'responsive',
+      'responsiveOptions',
       'sortable',
       'simpleAggregation',
       'sourceTable',
