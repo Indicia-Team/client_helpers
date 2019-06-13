@@ -506,6 +506,7 @@ JS;
       'includeColumnHeadings',
       'includeFilterRow',
       'includePager',
+      'responsive',
       'sortable',
       'simpleAggregation',
       'sourceTable',
