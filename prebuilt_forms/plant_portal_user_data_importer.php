@@ -2370,14 +2370,14 @@ TD;
     if (function_exists('hostsite_get_user_field'))
       $currentUserId = hostsite_get_user_field('indicia_user_id');
     $plotsAndPlotGroupsUserHasRightsTo['plotsUserHasRightsTo']= data_entry_helper::get_report_data(array(
-      'dataSource'=>'reports_for_prebuilt_forms/plant_portal/get_plots_from_groups_for_user',
+      'dataSource'=>'projects/plant_portal/get_plots_from_groups_for_user',
       'readAuth'=>$auth['read'],
       'extraParams'=>array(
                           'plot_group_permission_person_attr_id'=>$args['plot_group_permission_person_attr_id'],
                           'user_id'=>$currentUserId)
     ));
     $plotsAndPlotGroupsUserHasRightsTo['plotGroupsUserHasRightsTo']= data_entry_helper::get_report_data(array(
-      'dataSource'=>'reports_for_prebuilt_forms/plant_portal/get_groups_for_user',
+      'dataSource'=>'projects/plant_portal/get_groups_for_user',
       'readAuth'=>$auth['read'],
       'extraParams'=>array(
                           'group_permission_person_attr_id'=>$args['plot_group_permission_person_attr_id'],
