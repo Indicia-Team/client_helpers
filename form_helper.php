@@ -263,8 +263,10 @@ class form_helper extends helper_base {
 
   /**
    * Adds the JavaScript required to drive the prebuilt form picker.
-   * @param array $forms List of prebuilt forms and their associated settings required
-   * by the picker.
+   *
+   * @param array $forms
+   *   List of prebuilt forms and their associated settings required by the
+   *   picker.
    */
   private static function add_form_picker_js($forms, $groupForms, $coreForms, $showRecommendedPageTypes) {
     $jsParams = [
@@ -470,13 +472,15 @@ JS;
         'class' => '',
         'blankText' => '<' . lang::get('please select') . '>',
         'extraParams' => array(),
-        'readAuth' => $options['readAuth']
+        'readAuth' => $options['readAuth'],
       ), $control);
       $type = self::mapType($control);
 
       // Current form settings will overwrite the default.
       if (isset($options['currentSettings']) && isset($options['currentSettings'][$control['fieldname']])) {
-        $ctrlOptions['default'] = $options['currentSettings'][$control['fieldname']];
+        $fieldSetting = $options['currentSettings'][$control['fieldname']];
+        $ctrlOptions['default'] = is_string($fieldSetting) ?
+          htmlspecialchars($fieldSetting, ENT_QUOTES, 'UTF-8') : $fieldSetting;
       }
 
       $ctrlOptions['extraParams'] = array_merge($ctrlOptions['extraParams'], $options['readAuth']);
