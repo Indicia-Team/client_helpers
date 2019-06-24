@@ -297,7 +297,7 @@ class extension_splash_extensions {
           $squaresData[$rawRow['id']]=$rawRow['name'];
       }
       // Admin users probably won't be allocated a square, but we still want them to be able to make edits, so allocate them the square associated with the sample.
-      if (empty($squaresData) && in_array($currentUserId,$adminUsersIndiciaUserIds)) {
+      if (in_array($currentUserId,$adminUsersIndiciaUserIds)) {
         $squaresData[$selectedSquareAndPlotInfo[0]['id']]=$selectedSquareAndPlotInfo[0]['square_name'];
       }
       //Need report data to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
@@ -1751,15 +1751,12 @@ class extension_splash_extensions {
       $sendRemovalEmailToAdmin = true;
     }
     // Setup options for sending an email to the user on successful location assignment.
-    if (!empty($options['allocatedLocationEmailSubject']) && $options['allocatedLocationEmailSubject']==true
-            && !empty($options['allocatedLocationEmailMessage']) && $options['allocatedLocationEmailMessage']==true
+    if (!empty($options['allocatedLocationEmailSubject']) && !empty($options['allocatedLocationEmailMessage'])
             && $sendAllocationEmail==true) {
       self::setup_and_prepare_location_allocation_remove_email($auth,null,$options['allocatedLocationEmailSubject'], $options['allocatedLocationEmailMessage'], 'Allocate');
     }
-    if (!empty($options['removalLocationEmailSubject']) && $options['removalLocationEmailSubject']==true
-            && !empty($options['removalLocationEmailMessage']) && $options['removalLocationEmailMessage']==true
-            && !empty($options['npmsSupportEmail'])
-            && $sendRemovalEmailToAdmin==true) {
+    if (!empty($options['removalLocationEmailSubject'])&& !empty($options['removalLocationEmailMessage'])
+            && !empty($options['npmsSupportEmail']) && $sendRemovalEmailToAdmin==true) {
       self::setup_and_prepare_location_allocation_remove_email($auth, $options['npmsSupportEmail'],$options['removalLocationEmailSubject'], $options['removalLocationEmailMessage'], 'Remove');
     }
   }
@@ -1861,19 +1858,15 @@ class extension_splash_extensions {
    * Optionally send email to user when location is assigned to them
    */
   private static function send_location_allocation_or_removal_email($username, $subject, $message, $emailTo, $locationName, $type) {
+    global $user;
     //Replacements for the person's username and the location name tags in the message with the real location and person name.
     $message = str_replace("{username}", $username, $message);
     $message = str_replace("{location_name}", $locationName, $message);
     if (!empty(variable_get('site_mail', '')))
       $emailFrom=variable_get('site_mail', '');
-    if (!empty($emailFrom)) {
-      $sent = mail($emailTo, $subject, wordwrap($message, 70),
-          'From: '. $emailFrom . PHP_EOL .
-          'Reply-To: '. $emailFrom.
-          'Return-Path: '. $emailFrom);
-    } else {
-      $sent = mail($emailTo, $subject, wordwrap($message, 70));
-    }
+    else 
+      $emailFrom='support@npms.org.uk';
+    $sent = drupal_mail('iform', 'location_signup_removal_mail', $emailTo, user_preferred_language($user), array('body' => $message, 'subject' => $subject/*, 'headers' => array('Cc' => $header_cc, 'Bcc' => $header_bcc)*/), $emailFrom, TRUE);
     // Change the logging message depending on email purpose
     if ($type==='Allocate') {
       $action='signup';    
@@ -1881,7 +1874,7 @@ class extension_splash_extensions {
     if ($type==='Remove') {
       $action='removal';    
     }    
-    if ($sent) {
+    if ($sent['result']) {
       watchdog('iform', 'Location '.$action.' email sent to '.$username.' '.$emailTo);
     } else {
       watchdog('iform', 'Location '.$action.' email failed to '.$username.' '.$emailTo);
