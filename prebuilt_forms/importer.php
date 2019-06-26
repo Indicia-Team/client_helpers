@@ -269,6 +269,41 @@ class iform_importer {
           },
         }'
       ),
+      array(
+        'name'=>'importPreventCommitBehaviour',
+        'caption'=>'Importer Prevent Commit Behaviour',
+        'description'=>'<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. Please note: Functionality to update '
+        . 'existing data is currently disabled when this option is selected, only new data can be imported.'
+        . '<em>Only commit valid rows</em> - Import rows which do not error. '
+        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+        'type'=>'select',
+        'options'=>array(
+          'prevent' => 'Prevent all commits on error',
+          'partial_import' => 'Only commit valid rows',
+          'user_defined' => 'Allow user to choose'
+        ),
+        'required'=>true,
+        'default'=>'partial_import',
+        'group' => 'Import Behaviour'
+      ),
+      array(
+        'name'=>'importSampleLogic',
+        'caption'=>'Importer Sample Logic (only applicable when using the Species Records import type)',
+        'description'=>'<em>Verify using sample external key. Rows with the same sample external key must be consistent</em> - '.
+        'Allows verification of samples using the sample external key field to determine consistency between the import rows. Rows from same sample must still be placed on consecutive rows. '
+        . '<em>Do not use sample key verification</em> - Rows are placed into the same sample based on comparison of '
+          . 'sample related columns of consecutive rows without taking sample external key into account. '
+        . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
+        'type'=>'select',
+        'options'=>array(
+          'sample_ext_key' => 'Verify using sample external key. Rows with the same sample external key must be consistent',
+          'consecutive_rows' => 'Do not use sample key verification',
+          'user_defined' => 'Allow user to choose'
+        ),
+        'required'=>true,
+        'default'=>'consecutive_rows',
+        'group' => 'Import Behaviour'
+      )
     );
   }
 
@@ -280,6 +315,10 @@ class iform_importer {
    * @return HTML string
    */
   public static function get_form($args, $nid, $response) {
+    if (empty($args['importPreventCommitBehaviour']))
+      $args['importPreventCommitBehaviour']='partial_import';
+    if (empty($args['importSampleLogic']))
+      $args['importSampleLogic']='consecutive_rows'; 
     iform_load_helpers(array('import_helper'));
     // apply defaults
     $args = array_merge(array(
@@ -287,7 +326,7 @@ class iform_importer {
       'fieldMap' => array(),
       'allowDataDeletions' => FALSE,
       'onlyAllowMappedFields' => TRUE,
-      'skipMappingIfPossible' => FALSE,
+      'skipMappingIfPossible' => false,
       'importMergeFields' => array(),
       'synonymProcessing' => new stdClass(),
     ), $args);
@@ -341,6 +380,8 @@ class iform_importer {
         'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], TRUE),
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
         'skipMappingIfPossible' => $args['skipMappingIfPossible'],
+        'importPreventCommitBehaviour' => $args['importPreventCommitBehaviour'],
+        'importSampleLogic' => $args['importSampleLogic'],
         'importMergeFields' => $args['importMergeFields'],
         'synonymProcessing' => $args['synonymProcessing'],
         'switches' => array('activate_global_sample_method' => 't'),

@@ -1554,7 +1554,7 @@ JS;
    * @param string $service Path to the service URL used. Default is data/handle_media, but could be import/upload_csv.
    * @return string Error message, or true if successful.
    */
-  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media') {
+  public static function send_file_to_warehouse($path, $persist_auth=false, $readAuth = null, $service='data/handle_media', $removeLocalCopy=true) {
     if ($readAuth == NULL) {
       $readAuth = $_POST;
     }
@@ -1585,7 +1585,9 @@ JS;
           $r = $output['error'];
       }
     }
-    unlink(realpath($interimPath.$path));
+    if ($removeLocalCopy==true) {
+      unlink(realpath($interimPath.$path));
+    }
     return $r;
   }
 
