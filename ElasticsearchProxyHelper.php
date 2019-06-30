@@ -38,7 +38,6 @@ class ElasticsearchProxyHelper {
     // Prepare the stuff we need to pass to the JavaScript.
     $mappings = json_encode(self::$esMappings);
     $dateFormat = helper_base::$date_format;
-    $userId = hostsite_get_user_field('indicia_user_id');
     $rootFolder = helper_base::getRootFolder(TRUE);
     $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
     helper_base::$javascript .= <<<JS
@@ -247,37 +246,80 @@ JS;
       'must_not' => [],
       'filter' => [],
     ];
+    $nested = [
+      'occurrence.media',
+    ];
     $basicQueryTypes = ['match_all', 'match_none'];
     $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
     $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
-    if (isset($query['filters'])) {
-      // Apply any filter row paramenters to the query.
-      foreach ($query['filters'] as $field => $value) {
-        $bool['must'][] = ['match_phrase_prefix' => [$field => $value]];
+    if (isset($query['textFilters'])) {
+      // Apply any filter row parameters to the query.
+      foreach ($query['textFilters'] as $field => $value) {
+        // Exclamation mark reverses logic.
+        $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'must';
+        $value = preg_replace('/^!/', '', $value);
+        $bool[$logic][] = ['match_phrase_prefix' => [$field => $value]];
       }
-      unset($query['filters']);
+      unset($query['textFilters']);
+    }
+    if (isset($query['numericFilters'])) {
+      // Apply any filter row parameters to the query.
+      foreach ($query['numericFilters'] as $field => $value) {
+        $value = str_replace(' ', '', $value);
+        if (preg_match('/^(\d+(\.\d+)?)\-(\d+(\.\d+)?)$/', $value, $matches)) {
+          $bool['must'][] = [
+            'range' => [
+              $field => [
+                'gte' => $matches[1],
+                'lte' => $matches[3],
+              ],
+            ],
+          ];
+        }
+        else {
+          // Exclamation mark reverses logic.
+          $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'must';
+          $value = preg_replace('/^!/', '', $value);
+          $bool[$logic][] = ['match' => [$field => $value]];
+        }
+      }
+      unset($query['numericFilters']);
     }
     foreach ($query['bool_queries'] as $qryConfig) {
       if (!empty($qryConfig['query'])) {
-        $bool[$qryConfig['bool_clause']][] = json_decode(
+        $queryDef = json_decode(
           str_replace('#value#', $qryConfig['value'], $qryConfig['query']), TRUE
         );
       }
       elseif (in_array($qryConfig['query_type'], $basicQueryTypes)) {
-        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => new stdClass()];
+        $queryDef = [$qryConfig['query_type'] => new stdClass()];
       }
       elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
-        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+        $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
       }
       elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
-        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => [$qryConfig['field'] => json_decode($qryConfig['value'], TRUE)]];
+        $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => json_decode($qryConfig['value'], TRUE)]];
       }
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.
-        $bool[$qryConfig['bool_clause']][] = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
+        $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
+      }
+      if ($qryConfig['nested']) {
+        $bool['must'][] = [
+          'nested' => [
+            'path' => $qryConfig['nested'],
+            'query' => [
+              'bool' => [
+                $qryConfig['bool_clause'] => [$queryDef],
+              ],
+            ],
+          ],
+        ];
+      } else {
+        $bool[$qryConfig['bool_clause']][] = $queryDef;
       }
 
     }

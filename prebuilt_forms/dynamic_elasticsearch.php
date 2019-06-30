@@ -42,6 +42,154 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
    */
   private static $controlIds = [];
 
+  private const MAPPING_FIELDS = [
+    '@timestamp' => [
+      'caption' => 'Indexing timestamp',
+      'description' => 'Timestamp when the record was indexed into to the reporting system.',
+    ],
+    'id' => [
+      'caption' => 'ID',
+      'description' => 'Unique record ID.',
+    ],
+    'event.event_id' => [
+      'caption' => 'Sample ID',
+      'description' => 'Unique sample ID.',
+    ],
+    '#datasource_code#' => [
+      'caption' => 'Datasource codes',
+      'description' => 'Website and survey dataset the record is sourced from, in abbreviated encoded form.',
+    ],
+    '#status_icons#' => [
+      'caption' => 'Record status icons',
+      'description' => "Icons showing the record's verification status and sensitivity information.",
+    ],
+    '#data_cleaner_icons#' => [
+      'caption' => 'Automated checks',
+      'description' => "Icons showing the results of automated checks on the record.",
+    ],
+    '#event_date#' => [
+      'caption' => 'Date',
+      'description' => 'Date of the record',
+    ],
+    'event.day_of_year' => [
+      'caption' => 'Day of year',
+      'description' => 'Numeric day within the year of the record (1-366)',
+    ],
+    'event.month' => [
+      'caption' => 'Month',
+      'description' => 'Numeric month of the record',
+    ],
+    'event.year' => [
+      'caption' => 'Year',
+      'description' => 'Year of the record',
+    ],
+    'event.event_remarks' => [
+      'caption' => 'Sample comment',
+      'description' => 'Comment given for the sample by the recorder.',
+    ],
+    'event.habitat' => [
+      'caption' => 'Habitat',
+      'description' => 'Habitat recorded for the sample.',
+    ],
+    'event.recorded_by' => [
+      'caption' => 'Recorder name(s)',
+      'description' => 'Name of the people involved in the field record.',
+    ],
+    'event.sampling_protocol' => [
+      'caption' => 'Sample method',
+      'description' => 'Method for the sample if provided.',
+    ],
+    'identification.identified_by' => [
+      'caption' => 'Identified by',
+      'description' => 'Identifier (determiner) of the record.',
+    ],
+    'identification.recorder_certainty' => [
+      'caption' => 'Recorder certainty',
+      'description' => 'Certainty that the identification is correct as attributed by the recorder.',
+    ],
+    'identification.verification_decision_source' => [
+      'caption' => 'Verification decision source',
+      'description' => 'Either M for machine based verification or H for human verification decisions.',
+    ],
+    'taxon.name' => [
+      'caption' => 'Taxon name',
+      'description' => 'Name as recorded for the taxon.',
+    ],
+    'taxon.accepted_name' => [
+      'caption' => 'Accepted name',
+      'description' => 'Currently accepted name for the recorded taxon.',
+    ],
+    'taxon.vernacular_name' => [
+      'caption' => 'Common name',
+      'description' => 'Common name for the recorded taxon.',
+    ],
+    'taxon.group' => [
+      'caption' => 'Taxon group',
+      'description' => 'Taxon reporting group associated with the current identification of this record.',
+    ],
+    'taxon.kingdom' => [
+      'caption' => 'Kingdom',
+      'description' => 'Taxonomic kingdom associated with the current identification of this record.',
+    ],
+    'taxon.phylum' => [
+      'caption' => 'Phylum',
+      'description' => 'Taxonomic phylum associated with the current identification of this record.',
+    ],
+    'taxon.class' => [
+      'caption' => 'Class',
+      'description' => 'Taxonomic class associated with the current identification of this record.',
+    ],
+    'taxon.order' => [
+      'caption' => 'Order',
+      'description' => 'Taxonomic order associated with the current identification of this record.',
+    ],
+    'taxon.family' => [
+      'caption' => 'Family',
+      'description' => 'Taxonomic family associated with the current identification of this record.',
+    ],
+    'taxon.subfamily' => [
+      'caption' => 'Subfamily',
+      'description' => 'Taxonomic subfamily associated with the current identification of this record.',
+    ],
+    'taxon.taxon_rank' => [
+      'caption' => 'Taxon rank',
+      'description' => 'Taxonomic rank associated with the current identification of this record.',
+    ],
+    'taxon.genus' => [
+      'caption' => 'Genus',
+      'description' => 'Taxonomic genus associated with the current identification of this record.',
+    ],
+    'location.verbatim_locality' => [
+      'caption' => 'Location name',
+      'description' => 'Location name associated with the record.',
+    ],
+    'location.name' => [
+      'caption' => 'Location',
+      'description' => 'Location associated with the record where the record was linked to a defined location.',
+    ],
+    'location.location_id' => [
+      'caption' => 'Location ID',
+      'description' => 'Unique ID of the location associated with the record where the record was linked to a defined location.',
+    ],
+    'location.parent_name' => [
+      'caption' => 'Parent location',
+      'description' => 'Parent location associated with the record where the record was linked to a defined location which has a hierarchical parent.',
+    ],
+    'location.parent_location_id' => [
+      'caption' => 'Parent location ID',
+      'description' => 'Unique ID of the parent location associated with the record where the record was linked to a defined location which has a hierarchical parent.',
+    ],
+    'location.output_sref' => [
+      'caption' => 'Display spatial reference',
+      'description' => 'Spatial reference in the recommended local grid system.',
+    ],
+    'occurrence.media' => [
+      'caption' => 'Media',
+      'description' => 'Thumbnails for any occurrence photos and other media.',
+      'handler' => 'media',
+    ],
+  ];
+
   /**
    * Return the page metadata.
    *
@@ -315,6 +463,7 @@ JS;
       'initialMapBounds',
       'filterBoolClauses',
       'filterSourceGrid',
+      'filterSourceField',
       'filterField',
       'filterBoundsUsingMap',
     ]);
@@ -483,18 +632,42 @@ JS;
       'dataGrid',
       $options,
       ['source'],
-      ['actions', 'columns', 'responsiveOptions']
+      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources']
     );
-    if (empty($options['columns']) && empty($options['autogenColumns'])) {
-      throw new Exception('Control [dataGrid] requires a parameter called @columns or must have @autogenColumns=true');
+    if (empty($options['columns'])) {
+      throw new Exception('Control [dataGrid] requires a parameter called @columns.');
     }
     if (!empty($options['scrollY']) && !preg_match('/^\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
-
+    $options = array_merge([
+      'availableColumns' => !empty($options['aggregation']) ? [] : array_keys(self::MAPPING_FIELDS),
+    ], $options);
+    $columnsByField = [];
+    foreach ($options['columns'] as $columnDef) {
+      if (empty($columnDef['field'])) {
+        throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
+      }
+      $field = $columnDef['field'];
+      unset($columnDef['field']);
+      $columnsByField[$field] = $columnDef;
+    }
+    $options['columns'] = array_keys($columnsByField);
+    foreach ($options['availableColumns'] as $field) {
+      if (isset(self::MAPPING_FIELDS[$field])) {
+        if (!isset($columnsByField[$field])) {
+          $columnsByField[$field] = self::MAPPING_FIELDS[$field];
+        }
+        else {
+          $columnsByField[$field] = array_merge(self::MAPPING_FIELDS[$field], $columnsByField[$field]);
+        }
+      }
+    }
+    $options['availableColumnInfo'] = $columnsByField;
+    helper_base::add_resource('jquery_ui');
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for aggregation tables.
-    if (!empty($options['simpleAggregation']) || !empty($options['sourceTable'])) {
+    if ((!empty($options['aggregation']) && $options['aggregation'] === 'simple') || !empty($options['sourceTable'])) {
       helper_base::add_resource('footableSort');
     }
     // Fancybox for image popups.
@@ -502,17 +675,19 @@ JS;
     $dataOptions = self::getOptionsForJs($options, [
       'source',
       'columns',
+      'availableColumnInfo',
       'actions',
+      'cookies',
       'includeColumnHeadings',
       'includeFilterRow',
       'includePager',
       'responsive',
       'responsiveOptions',
       'sortable',
-      'simpleAggregation',
+      'aggregation',
       'sourceTable',
-      'autogenColumns',
       'scrollY',
+      'applyFilterRowToSources',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcDataGrid({});
@@ -550,6 +725,9 @@ JS;
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcLeafletMap({});
+
+JS;
+    helper_base::$late_javascript .= <<<JS
 $('#$options[id]').idcLeafletMap('bindGrids');
 
 JS;
@@ -847,18 +1025,16 @@ HTML;
     if (empty($options['locationTypeId']) || !preg_match('/^\d+$/', $options['locationTypeId'])) {
       throw new Exception('An integer @locationTypeId parameter is required for the [higherGeographySelect] control');
     }
+    $options['extraParams'] = array_merge([
+      'location_type_id' => $options['locationTypeId'],
+      'orderby' => 'name',
+    ], $options['extraParams'], $auth['read']);
     $options = array_merge([
       'id' => 'higher-geography-select',
-    ], $options);
-    return data_entry_helper::location_select([
-      'id' => $options['id'],
       'class' => 'es-higher-geography-select',
-      'extraParams' => $auth['read'] + [
-        'location_type_id' => $options['locationTypeId'],
-        'orderby' => 'name',
-      ],
       'blankText' => lang::get('<All locations shown>'),
-    ]);
+    ], $options);
+    return data_entry_helper::location_select($options);
   }
 
   /**
@@ -928,6 +1104,16 @@ HTML;
 
   protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
     return '';
+  }
+
+  /**
+   * Disable save buttons for this form class. Not a data entry form.
+   *
+   * @return bool
+   *   Always return FALSE.
+   */
+  protected static function include_save_buttons() {
+    return FALSE;
   }
 
 }
