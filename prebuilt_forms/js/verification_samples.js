@@ -394,7 +394,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     var data = {
       'website_id': indiciaData.website_id,
       'sample:id': smpId,
-      'user_id': indiciaData.userId,
+      'user_id': indiciaData.user_id,
       'sample:record_status': status,
       'sample_comment:comment': comment,
       'sample:record_decision_source': 'H'
@@ -501,7 +501,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
     request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
     $.post(request,
       'report=' + encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
-      '&user_id=' + indiciaData.userId,
+      '&user_id=' + indiciaData.user_id,
       function(response) {
         indiciaData.reports.verification.grid_verification_grid.reload(true);
         alert(response + ' records processed');

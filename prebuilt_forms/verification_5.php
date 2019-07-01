@@ -912,7 +912,6 @@ HTML
         self::getTemplateWithMap($args, $auth['read'], $opts['extraParams'], $opts['paramDefaults']));
     $link = data_entry_helper::get_reload_link_parts();
     data_entry_helper::$javascript .= 'indiciaData.username = "' . hostsite_get_user_field('name') . "\";\n";
-    data_entry_helper::$javascript .= 'indiciaData.userId = "' . $indicia_user_id . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.rootUrl = "' . $link['path'] . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxFormPostUrl="' . iform_ajaxproxy_url($nid, 'occurrence') . "&user_id=$indicia_user_id&sharing=$args[sharing]\";\n";
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/verification_5') . "\";\n";

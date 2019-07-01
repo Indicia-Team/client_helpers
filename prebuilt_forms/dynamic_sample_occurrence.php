@@ -2447,11 +2447,13 @@ JS;
       }
     }
     foreach ($extensions as $extension) {
-      $class_method = explode('.', "$extension");
-      require_once("extensions/$class_method[0].php");
-      $class_method[0] = "extension_$class_method[0]";
-      // array on 3rd parameter is a way of forcing pass by reference
-      call_user_func($class_method, $values, array(&$submission));
+      if (!empty($extension)) {
+        $class_method = explode('.', "$extension");
+        require_once("extensions/$class_method[0].php");
+        $class_method[0] = "extension_$class_method[0]";
+        // array on 3rd parameter is a way of forcing pass by reference
+        call_user_func($class_method, $values, array(&$submission));
+      }
     }
     return($submission);
   }

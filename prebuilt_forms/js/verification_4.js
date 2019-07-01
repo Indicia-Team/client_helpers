@@ -291,7 +291,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
     data = {
       'website_id': indiciaData.website_id,
       'occurrence:id': occId,
-      'user_id': indiciaData.userId,
+      'user_id': indiciaData.user_id,
       'occurrence:record_status': status,
       'occurrence_comment:comment': comment
     };
@@ -449,7 +449,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
     request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
     $.post(request,
       'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
-      '&user_id='+indiciaData.userId+'&ignore='+$('.grid-verify-popup input[name=ignore-checks-trusted]').attr('checked'),
+      '&user_id='+indiciaData.user_id+'&ignore='+$('.grid-verify-popup input[name=ignore-checks-trusted]').attr('checked'),
       function(response) {
         indiciaData.reports.verification.grid_verification_grid.reload(true);
         alert(response + ' records verified');
@@ -524,7 +524,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded;
           request = indiciaData.ajaxUrl + '/bulk_verify/' + indiciaData.nid;
           $.post(request,
               'report='+encodeURI(indiciaData.reports.verification.grid_verification_grid[0].settings.dataSource)+'&params='+encodeURI(JSON.stringify(params))+
-                  '&user_id='+indiciaData.userId+'&ignore='+$('.quick-verify-popup input[name=ignore-checks]').attr('checked'),
+                  '&user_id='+indiciaData.user_id+'&ignore='+$('.quick-verify-popup input[name=ignore-checks]').attr('checked'),
               function(response) {
                 indiciaData.reports.verification.grid_verification_grid.reload();
                 alert(response + ' records verified');

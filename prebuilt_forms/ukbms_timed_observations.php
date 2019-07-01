@@ -343,7 +343,7 @@ class iform_ukbms_timed_observations {
       // location ID also might be in the $_POST data after a validation save of a new record
       if (isset($_POST['sample:location_id'])) $locationId = $_POST['sample:location_id'];
     }
-    
+
     $url = explode('?', $args['my_obs_page'], 2);
     $params = NULL;
     $fragment = NULL;
@@ -432,9 +432,9 @@ class iform_ukbms_timed_observations {
       ));
     }
     // are there any option overrides for the custom attributes?
-    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options']) 
+    if (isset($args['custom_attribute_options']) && $args['custom_attribute_options'])
       $blockOptions = get_attr_options_array_with_user_data($args['custom_attribute_options']);
-    else 
+    else
       $blockOptions=array();
     $r .= get_attribute_html($attributes, $args, array('extraParams'=>$auth['read']), null, $blockOptions);
     $r .= '<input type="hidden" name="sample:sample_method_id" value="'.$sampleMethods[0]['id'].'" />';
@@ -469,7 +469,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       var feature = parser.read(indiciaData.sites[jQuery('#sample_location_id').val()].geom);
       indiciaData.SiteLayer.addFeatures([feature]);
       // for existing data we zoom on the site, not this parent location
-    } 
+    }
     jQuery('#sample_location_id').change(function(){
       indiciaData.SiteLayer.destroyFeatures();
       if(jQuery('#sample_location_id').val() != ''){
@@ -734,12 +734,12 @@ mapInitialisationHooks.push(function(mapdiv) {
       'fieldname'=>'sample:comment',
       'label'=>lang::get('Notes'),
       'helpText'=>lang::get("Use this space to input comments about this week's walk.")
-    ));    
+    ));
     $r .= '<input type="submit" value="'.lang::get('Submit').'" id="save-button"/></form>';
     $r .= '<br /><a href="'.$args['my_walks_page'].'" class="button">'.lang::get('Finish').'</a></div></div>';
     // enable validation on the comments form in order to include the simplified ajax queuing for the autocomplete.
     data_entry_helper::enable_validation('notes_form');
-    
+
     // A stub form for AJAX posting when we need to create an occurrence
     $r .= '<form style="display: none" id="occ-form" method="post" action="'.iform_ajaxproxy_url($nid, 'occurrence').'">';
     $r .= '<input name="website_id" value="'.$args['website_id'].'"/>';
@@ -776,7 +776,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       $filterLines = helper_base::explode_lines($args['taxon_filter_3']);
       data_entry_helper::$javascript .= "indiciaData.speciesList3FilterValues = ".json_encode($filterLines).";\n";
     }
-    
+
     data_entry_helper::$javascript .= "indiciaData.speciesList4 = ".(isset($args['taxon_list_id_4']) && $args['taxon_list_id_4'] != "" ? $args['taxon_list_id_4'] : "-1").";\n";
     if (!empty($args['taxon_filter_field_4']) && !empty($args['taxon_filter_4'])) {
       data_entry_helper::$javascript .= "indiciaData.speciesList4FilterField = '".$args['taxon_filter_field_4']."';\n";
@@ -793,9 +793,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     data_entry_helper::$javascript .= "indiciaData.sample = ".$sampleId.";\n";
     if (function_exists('hostsite_module_exists') && hostsite_module_exists('easy_login')) {
       data_entry_helper::$javascript .= "indiciaData.easyLogin = true;\n";
-      $userId = hostsite_get_user_field('indicia_user_id');
-      if (!empty($userId)) data_entry_helper::$javascript .= "indiciaData.UserID = ".$userId.";\n";
-      else return '<p>Easy Login active but could not identify user</p>'; // something is wrong 
+      else return '<p>Easy Login active but could not identify user</p>'; // something is wrong
     } else {
       data_entry_helper::$javascript .= "indiciaData.easyLogin = false;\n";
       data_entry_helper::$javascript .= "indiciaData.CMSUserAttrID = ".$cmsUserAttr['attributeId'] .";\n";
@@ -830,7 +828,7 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
   protected static function getAttributes($args, $auth) {
   	return self::getAttributesForSample($args, $auth, data_entry_helper::$entity_to_load['sample:id']);
   }
-  
+
   /**
    * Load the attributes for the sample defined by a supplied Id.
    */
@@ -852,7 +850,7 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
   	$attributes = data_entry_helper::getAttributes($attrOpts, false);
   	return $attributes;
   }
-  
+
 
   /**
    * Handles the construction of a submission array from a set of form values.
@@ -865,7 +863,7 @@ indiciaFns.bindTabsActivate(jQuery('#tabs'), function(event, ui) {
     $submission = submission_builder::build_submission($values, array('model' => 'sample'));
   	return($submission);
   }
-  
+
   /**
    * Override the form redirect to go back to My Walks after the grid is submitted. Leave default redirect (current page)
    * for initial submission of the parent sample.

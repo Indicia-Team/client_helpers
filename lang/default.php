@@ -111,12 +111,19 @@ match your columns to the available attributes where possible so check any autom
 <strong>Maps to attribute</strong> column before proceeding. If you plan to repeat imports from similar spreadsheets in
 future you can use the tickboxes to remember your choices.
 TEXT;
-$default_terms['download_error_file_instructions'] = <<<TEXT
+$default_terms['partial_commits_download_error_file_instructions'] = <<<TEXT
 As part of your upload was unsuccessful, download the generated CSV file which holds the rows of data that did not
 upload. Find the column called "Problem" which lists the associated error for each row. Correct the error, and then
 re-upload the CSV file containing <strong>only</strong> the rows of data which did not upload correctly. Please do not
 re-upload the whole dataset again.
 TEXT;
+$default_terms['no_commits_download_error_file_instructions'] = <<<TEXT
+'Problems have been found in your upload file. Please download the generated CSV file 
+ which holds the rows of data that did not upload and find the column called "Problem" which lists the associated 
+ error for each row. Once you have corrected all the errors in the <strong>original file</strong>, please re-upload the original file again. 
+ No rows will be uploaded to the database until all errors have been corrected.
+TEXT;
+
 $default_terms['gps_precision_instructions'] = <<<TEXT
 This is the precision (normally given as a radius in metres) reported by most GPS devices or phones. This field is
 only enabled for 10-figure OS grid references. These represent 1 m accuracy, however, this is normally associated with

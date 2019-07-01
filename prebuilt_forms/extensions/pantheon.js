@@ -224,7 +224,7 @@ jQuery(document).ready(function ($) {
     lists = listsInCurrentGroup();
     params = [
       encodeURIComponent($('#new-list-name').val().trim()),
-      indiciaData.userId,
+      indiciaData.user_id,
       encodeURIComponent('{' + lists.join(',') + '}')
     ];
     $.ajax({

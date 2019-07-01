@@ -26,19 +26,27 @@
 class extension_taxon_input_extras {
 
   /**
+   * Control for hints on selected species.
+   *
    * An extension control for dynamic forms that adds a box to output hints on any
    * species selected for addition to the species checklist grid. To use this control
    * provide a file called speciesHints.json in the Drupal file path, within the indicia
    * subfolder. This should contain a JSON object with the property names matching the
    * external keys of the taxa_taxon_list table, and the property values being the hint
    * string to show.
+   *
+   * Options can include:
+   * * @title  - Override the title of the box displaying the hints.
    */
   public static function add_species_hints($auth, $args, $tabalias, $options, $path) {
     // enable nice tooltips
     //drupal_add_library('system', 'ui.tooltip', true);
+    $options = array_merge([
+      'title' => 'Hints relating to species names entered',
+    ], $options);
     $filePath = hostsite_get_public_file_path();
     data_entry_helper::$javascript .= "initSpeciesHints('$filePath/indicia/speciesHints.json');\n";
-    return '<div id="species-hints-outer"><h3>' . lang::get('Hints relating to species names entered') . '</h3> ' .
+    return '<div id="species-hints-outer"><h3>' . lang::get($options['title']) . '</h3> ' .
         "<div id=\"species-hints\"></div></div>";
   }
 }

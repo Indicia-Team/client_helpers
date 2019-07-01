@@ -390,7 +390,7 @@ indiciaFns.zoomToBounds = function(mapdiv, bounds) {
   // loading an initial feature (e.g. viewing an edited record)
   if (
       (typeof mapdiv.settings.zoomMapToOutput==="undefined" || mapdiv.settings.zoomMapToOutput===false) &&
-      (typeof $.cookie === 'undefined' || $.cookie('maplon')===null || mapdiv.settings.rememberPos===false) &&
+      (typeof $.cookie === 'undefined' || $.cookie('maplongitude')===null || mapdiv.settings.rememberPos===false) &&
       !mapdiv.settings.initialFeatureWkt
       ) {
     if (mapdiv.map.getZoomForExtent(bounds) > mapdiv.settings.maxZoom) {

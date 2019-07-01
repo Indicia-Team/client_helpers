@@ -119,7 +119,6 @@ class extension_ecmc_data_portal {
     $url = iform_ajaxproxy_url(null, 'sample');
     data_entry_helper::$javascript .= "indiciaData.surveySampleId=$surveySampleId;\n";
     data_entry_helper::$javascript .= "indiciaData.websiteId=$args[website_id];\n";
-    data_entry_helper::$javascript .= "indiciaData.userId='$userId';\n";
     data_entry_helper::$javascript .= "indiciaData.surveyId='$sample[survey_id]';\n"; !!
     data_entry_helper::$javascript .= "indiciaData.sampleDate='$sample[date_start]';\n";
     data_entry_helper::$javascript .= "indiciaData.sampleSref='$sample[entered_sref]';\n";
