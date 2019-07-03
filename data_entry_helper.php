@@ -956,117 +956,94 @@ JS;
 
   /**
    * Outputs a file upload control suitable for linking images to records.
-   * The control allows selection of multiple files, and depending on the browser functionality it gives progress feedback.
-   * The control uses Silverlight, Flash or HTML5 to enhance the functionality where available. The output of the control
-   * can be configured by changing the content of the templates called file_box, file_box_initial_file_info,
+   *
+   * The control allows selection of multiple files, and depending on the
+   * browser functionality it gives progress feedback. The control uses
+   * Silverlight, Flash or HTML5 to enhance the functionality where available.
+   * The output of the control can be configured by changing the content of the
+   * templates called file_box, file_box_initial_file_info,
    * file_box_uploaded_image and button.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>table</b><br/>
-   * Name of the image table to upload images into, e.g. occurrence_medium, location_medium, sample_medium or taxon_medium.
-   * Defaults to occurrence_medium.
-   * </li>
-   * <li><b>loadExistingRecordKey</b><br/>
-   * Optional prefix for the information in the data_entry_helper::$entity_to_load to use for loading any existing images.
-   * Defaults to use the table option.
-   * </li>
-   * <li><b>id</b><br/>
-   * Optional. Provide a unique identifier for this image uploader control if more than one are required on the page.
-   * </li>
-   * <li><b>SubType</b><br/>
-   * Optional. The name of the image sub-type to limit the file box to e.g. Image:Local:Sketch
-   * </li>
-   * <li><b>caption</b><br/>
-   * Caption to display at the top of the uploader box. Defaults to the translated string for "Files".
-   * </li>
-   * <li><b>uploadSelectBtnCaption</b><br/>
-   * Set this to override the caption for the button for selecting files to upload.
-   * </li>
-   * <li><b>uploadStartBtnCaption</b><br/>
-   * Set this to override the caption for the start upload button, which is only visible if autoUpload is false.
-   * </li>
-   * <li><b>useFancybox</b><br/>
-   * Defaults to true. If true, then image previews use the Fancybox plugin to display a "lightbox" effect when clicked on.
-   * </li>
-   * <li><b>imageWidth</b><br/>
-   * Defaults to 200. Number of pixels wide the image previews should be.
-   * </li>
-   * <li><b>resizeWidth</b><br/>
-   * If set, then the file will be resized before upload using this as the maximum pixels width.
-   * </li>
-   * <li><b>resizeHeight</b><br/>
-   * If set, then the file will be resized before upload using this as the maximum pixels height.
-   * </li>
-   * <li><b>resizeQuality</b><br/>
-   * Defines the quality of the resize operation (from 1 to 100). Has no effect unless either resizeWidth or resizeHeight are non-zero.
-   * </li>
-   * <li><b>upload</b><br/>
-   * Boolean, defaults to true.
-   * </li>
-   * <li><b>maxFileCount</b><br/>
-   * Maximum number of files to allow upload for. Defaults to 4. Set to false to allow unlimited files.
-   * </li>
-   * <li><b>maxUploadSize</b><br/>
-   * Maximum file size to allow in bytes. This limits file selection. PHP settings on
-   * server may limit upload.
-   * </li>
-   * <li><b>autoupload</b><br/>
-   * Defaults to true. If false, then a button is displayed which the user must click to initiate upload of the files
-   * currently in the queue.
-   * </li>
-   * <li><b>msgUploadError</b><br/>
-   * Use this to override the message displayed for a generic file upload error.
-   * </li>
-   * <li><b>msgFileTooBig</b><br/>
-   * Use this to override the message displayed when the file is larger than the size limit allowed on the Warehouse.
-   * </li>
-   * <li><b>msgTooManyFiles</b><br/>
-   * Use this to override the message displayed when attempting to upload more files than the maxFileCount allows. Use a
-   * replacement string [0] to specify the maxFileCount value.
-   * </li>
-   * <li><b>uploadScript</b><br/>
-   * Specify the script used to handle image uploads on the server (relative to the client_helpers folder). You should not
-   * normally need to change this. Defaults to upload.php.
-   * </li>
-   * <li><b>runtimes</b><br/>
-   * Array of runtimes that the file upload component will use in order of priority. Defaults to
-   * array('html5','flash','silverlight','html4'), though flash is removed for Internet Explorer 6. You
-   * should not normally need to change this.
-   * </li>
-   * <li><b>codeGenerated</b>
-   * If set to all (default), then this returns the HTML required and also inserts JavaScript in the document onload event. However, if you
-   * need to delay the loading of the control until a certain event, e.g. when a radio button is checked, then this can be set
-   * to php to return just the php and ignore the JavaScript, or js to return the JavaScript instead of inserting it into
-   * document onload, in which case the php is ignored. this allows you to attach the JavaScript to any event you need to.
-   * </li>
-   * <li><b>tabDiv</b><br/>
-   * If loading this control onto a set of tabs, specify the tab control's div ID here. This allows the control to
-   * automatically generate code which only generates the uploader when the tab is shown, reducing problems in certain
-   * runtimes. This has no effect if codeGenerated is not left to the default state of all.
-   * </li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>file_box</b></br>
-   * Outputs the HTML container which will contain the upload button and images.
-   * </li>
-   * <li><b>file_box_initial_file_info</b></br>
-   * HTML which provides the outer container for each displayed image, including the header and
-   * remove file button. Has an element with class set to media-wrapper into which images
-   * themselves will be inserted.
-   * </li>
-   * <li><b>file_box_uploaded_image</b></br>
-   * Template for the HTML for each uploaded image, including the image, caption input
-   * and hidden inputs to define the link to the database. Will be inserted into the
-   * file_box_initial_file_info template's media-wrapper element.
-   * </li>
-   * <li><b>button</b></br>
-   * Template for the buttons used.
-   * </li>
-   * <li><b>readAuth</b><br/>
-   * Optional. Read authentication tokens for the Indicia warehouse if using the
-   * add_link_popup.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * table - Name of the image table to upload images into, e.g.
+   *     occurrence_medium, location_medium, sample_medium or taxon_medium.
+   *     Defaults to occurrence_medium.
+   *   * loadExistingRecordKey -  Optional prefix for the information in the
+   *     data_entry_helper::$entity_to_load to use for loading any existing
+   *     images. Defaults to use the table option.
+   *   * id - Optional. Provide a unique identifier for this image uploader
+   *     control if more than one are required on the page.
+   *   * subType - Optional. The name of the image sub-type to limit the file
+   *     box to e.g. Image:Local:Sketch
+   *   * caption - Caption to display at the top of the uploader box. Defaults
+   *     to the translated string for "Files".
+   *   * uploadSelectBtnCaption - Set this to override the caption for the
+   *     button for selecting files to upload.
+   *   * uploadStartBtnCaption - Set this to override the caption for the start
+   *     upload button, which is only visible if autoUpload is false.
+   *   * useFancybox - Defaults to true. If true, then image previews use the
+   *     Fancybox plugin to display a "lightbox" effect when clicked on.
+   *   * imageWidth - Defaults to 200. Number of pixels wide the image previews
+   *     should be.
+   *   * resizeWidth - If set, then the file will be resized before upload
+   *     using this as the maximum pixels width.
+   *   * resizeHeight - If set, then the file will be resized before upload
+   *     using this as the maximum pixels height.
+   *   * resizeQuality - Defines the quality of the resize operation (from 1 to
+   *     100). Has no effect unless either resizeWidth or resizeHeight are
+   *     non-zero.
+   *   * upload - Boolean, defaults to true.
+   *   * maxFileCount - Maximum number of files to allow upload for. Defaults
+   *     to 4. Set to false to allow unlimited files.
+   *   * maxUploadSize - Maximum file size to allow in bytes. This limits file
+   *     selection. PHP settings on server may limit upload.
+   *   * autoupload - Defaults to true. If false, then a button is displayed
+   *     which the user must click to initiate upload of the files currently in
+   *     the queue.
+   *   * msgUploadError - Use this to override the message displayed for a
+   *     generic file upload error.
+   *   * msgFileTooBig - Use this to override the message displayed when the
+   *     file is larger than the size limit allowed on the Warehouse.
+   *   * msgTooManyFiles - Use this to override the message displayed when
+   *     attempting to upload more files than the maxFileCount allows. Use a
+   *     replacement string [0] to specify the maxFileCount value.
+   *   * uploadScript - Specify the script used to handle image uploads on the
+   *     server (relative to the client_helpers folder). You should not
+   *     normally need to change this. Defaults to upload.php.
+   *   * runtimes - Array of runtimes that the file upload component will use
+   *     in order of priority. Defaults to `['html5', 'flash', 'silverlight',
+   *     'html4']`, though flash is removed for Internet Explorer 6. You should
+   *     not normally need to change this.
+   *   * codeGenerated - If set to all (default), then this returns the HTML
+   *     required and also inserts JavaScript in the document onload event.
+   *     However, if you need to delay the loading of the control until a
+   *     certain event, e.g. when a radio button is checked, then this can be
+   *     set to php to return just the php and ignore the JavaScript, or js to
+   *     return the JavaScript instead of inserting it into document onload, in
+   *     which case the php is ignored. this allows you to attach the
+   *     JavaScript to any event you need to.
+   *   * tabDiv - If loading this control onto a set of tabs, specify the tab
+   *     control's div ID here. This allows the control to automatically
+   *     generate code which only generates the uploader when the tab is shown,
+   *     reducing problems in certain runtimes. This has no effect if
+   *     codeGenerated is not left to the default state of all.
+   *
+   *   The output of this control can be configured using the following
+   *   templates:
+   *   * file_box - Outputs the HTML container which will contain the upload
+   *     button and images.
+   *   * file_box_initial_file_info - HTML which provides the outer container
+   *     for each displayed image, including the header and remove file button.
+   *     Has an element with class set to media-wrapper into which images
+   *     themselves will be inserted.
+   *   * file_box_uploaded_image - Template for the HTML for each uploaded
+   *     image, including the image, caption input and hidden inputs to define
+   *     the link to the database. Will be inserted into the
+   *     file_box_initial_file_info template's media-wrapper element.
+   *   * button - Template for the buttons used.
+   *   * readAuth - Optional. Read authentication tokens for the Indicia warehouse if using the
+   *     add_link_popup.
    *
    * @todo select file button pointer overriden by the flash shim
    * @todo if using a normal file input, after validation, the input needs to show that the file upload has worked.
@@ -1074,9 +1051,12 @@ JS;
    */
   public static function file_box($options) {
     global $indicia_templates;
-    // If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
-    if (!empty($options['subType']))
+    // If a subType option is supplied, it means we only want to load a
+    // particular media type, not just any old media associated with the
+    // sample.
+    if (!empty($options['subType'])) {
       self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
+    }
     // Allow options to be defaulted and overridden
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     $defaults = array(
@@ -1111,22 +1091,26 @@ JS;
       'msgUseAddFileBtn' => lang::get('Use the Add file button to select a file from your local disk. Files of type {1} are allowed.'),
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     );
-    $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes']===array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
+    $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes'] ===  array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
     if (isset(self::$final_image_folder_thumbs)) {
       $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
     }
     $browser = self::get_browser_info();
     // Flash doesn't seem to work on IE6.
-    if ($browser['name']=='msie' && $browser['version']<7)
+    if ($browser['name'] === 'msie' && $browser['version'] < 7) {
       $defaults['runtimes'] = array_diff($defaults['runtimes'], array('flash'));
-    if ($indicia_templates['file_box']!='')
+    }
+    if ($indicia_templates['file_box'] !== '') {
       $defaults['file_boxTemplate'] = $indicia_templates['file_box'];
-    if ($indicia_templates['file_box_initial_file_info']!='')
+    }
+    if ($indicia_templates['file_box_initial_file_info'] !== '') {
       $defaults['file_box_initial_file_infoTemplate'] = $indicia_templates['file_box_initial_file_info'];
-    if ($indicia_templates['file_box_uploaded_image']!='')
+    }
+    if ($indicia_templates['file_box_uploaded_image'] !== '') {
       $defaults['file_box_uploaded_imageTemplate'] = $indicia_templates['file_box_uploaded_image'];
+    }
     $options = array_merge($defaults, $options);
-    $options['id'] = $options['table'] .'-'. $options['id'];
+    $options['id'] = "$options[table]-$options[id]";
     $containerId = 'container-'.$options['id'];
 
     if ($options['codeGenerated']!='php') {
