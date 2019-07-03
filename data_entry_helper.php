@@ -1096,10 +1096,6 @@ JS;
       $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
     }
     $browser = self::get_browser_info();
-    // Flash doesn't seem to work on IE6.
-    if ($browser['name'] === 'msie' && $browser['version'] < 7) {
-      $defaults['runtimes'] = array_diff($defaults['runtimes'], array('flash'));
-    }
     if ($indicia_templates['file_box'] !== '') {
       $defaults['file_boxTemplate'] = $indicia_templates['file_box'];
     }
