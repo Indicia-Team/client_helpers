@@ -1589,31 +1589,32 @@ JS;
   }
 
   /**
-   * A control for building JSON strings, based on http://robla.net/jsonwidget/. Dynamically
-   * generates an input form for the JSON depending on a defined schema. This control
-   * is not normally used for typical Indicia forms, but is used by the prebuilt
-   * forms parameter entry forms for complex parameter structures such as the options
+   * JSON form parameters input control.
+   *
+   * Based on http://robla.net/jsonwidget/. Dynamically generates an input
+   * form for the JSON depending on a defined schema. This control is not
+   * normally used for typical Indicia forms, but is used by the prebuilt forms
+   * parameter entry forms for complex parameter structures such as the options
    * available for a chart.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * The name of the database or form parameter field this control is bound to, e.g. series_options.</li>
-   * <li><b>if</b>
-   * The HTML id of the output div.</li>
-   * <li><b>schema</b>
-   * Must be supplied with a schema string that defines the allowable structure of the JSON output. Schemas can be
-   * automatically built using the schema generator at
-   * http://robla.net/jsonwidget/example.php?sample=byexample&user=normal.</li>
-   * <li><b>class</b>
-   * Additional css class names to include on the outer div.</li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>jsonwidget</b></br>
-   * HTML template for outer container. The inner content is not templatable since it is created by the
-   * JavaScript control code.
-   * </li></ul>
-   * @return HTML string to insert in the form.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - The name of the database or form parameter field this
+   *     control is bound to, e.g. series_options.
+   *   * id - The HTML id of the output div.
+   *   * schema - Must be supplied with a schema string that defines the
+   *     allowable structure of the JSON output. Schemas can be automatically
+   *     built using the schema generator at
+   *     http://robla.net/jsonwidget/example.php?sample=byexample&user=normal.
+   *   * class - Additional css class names to include on the outer div.
+   *
+   * The output of this control can be configured using the following
+   * templates:
+   * * jsonwidget - HTML template for outer container. The inner content is
+   *   not templatable since it is created by the JavaScript control code.
+   *
+   * @return string
+   *   HTML string to insert in the form.
    */
   public static function jsonwidget($options) {
     $options = array_merge(array(
