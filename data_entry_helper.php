@@ -6274,11 +6274,11 @@ if (errors$uniq.length>0) {
    * as possible zero abundance indicators.
    * @param array $zeroValues
    *   Set to an array of lowercased values which are considered to indicate a
-   *   zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
-   * array('0','None','Absent').
+   *   zero abundance record if found for one of the zero_attrs. Values are lowercase. Defaults to
+   *   array('0','none','absent','not seen').
    */
   public static function wrap_species_checklist($arr, $include_if_any_data=false,
-                                                $zeroAttrs = true, $zeroValues=array('0','None','Absent')){
+                                                $zeroAttrs = true, $zeroValues=array('0','none','absent','not seen')){
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
     } else {
@@ -6460,14 +6460,14 @@ if (errors$uniq.length>0) {
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
    * @param array $zeroValues Set to an array of values which are considered to indicate a
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
-   * array('0','None','Absent').
+   * zero abundance record if found for one of the zero_attrs. Values are lowercase. Defaults to
+   * ['0','none','absent','not seen'].
    * @param array Array of grid ids to ignore when building sub-samples for occurrences, useful for creating
    * customised submissions that only need to build sub-samples for some grids. The grid id comes from the @id option given
    * to the species grid.
    */
-    public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data=false,
-          $zeroAttrs = true, $zeroValues=array('0','None','Absent'), $gridsToExclude=array()){
+    public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data = FALSE,
+          $zeroAttrs = true, $zeroValues=['0','none','absent','not seen'], $gridsToExclude = []) {
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
     } else {
@@ -6624,7 +6624,7 @@ if (errors$uniq.length>0) {
               }
             }
           }
-          if (in_array($value, $zeroValues))
+          if (in_array(strtolower($value), $zeroValues))
             $zeroCount++;
           else
             $nonZeroCount++;
@@ -6947,8 +6947,8 @@ HTML;
   /**
    * Build submission for sample + occurrence list.
    *
-   * Helper function to simplify building of a submission that contains a single sample
-   * and occurrence record.
+   * Helper function to simplify building of a submission that contains a
+   * single sample and occurrence record.
    *
    * @param array $values
    *   List of the posted values to create the submission from. Each entry's
@@ -6961,7 +6961,7 @@ HTML;
    * @param array $zeroValues
    *   Set to an array of values which are considered to indicate a zero
    *   abundance record if found for one of the zero_attrs. Values are
-   *   case-insensitive. Defaults to array('0','None','Absent').
+   *   case-insensitive. Defaults to ['0','none','absent','not seen'].
    *
    * @return array
    *   Submission data structure.
@@ -7007,13 +7007,13 @@ HTML;
    * @param array $zeroValues
    *   Set to an array of values which are considered to indicate a zero
    *   abundance record if found for one of the zero_attrs. Values are
-   *   case-insensitive. Defaults to array('0','None','Absent').
+   *   case-insensitive. Defaults to ['0','none','absent','not seen'].
    *
    * @return array
    *   Sample submission array
    */
   public static function build_sample_occurrences_list_submission($values, $include_if_any_data=false,
-      $zeroAttrs = true, array $zeroValues=['0','None','Absent']) {
+      $zeroAttrs = true, array $zeroValues=['0','none','absent','not seen']) {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $occurrences = data_entry_helper::wrap_species_checklist($values, $include_if_any_data,
@@ -7034,23 +7034,25 @@ HTML;
    * with multiple subsamples, each of which has multiple occurrences records, as generated
    * by a species_checklist control.
    *
-   * @param array $values List of the posted values to create the submission from.
-   * @param boolean $include_if_any_data If true, then any list entry which has any data
-   * set will be included in the submission. Set this to true when hiding the select checkbox
-   * in the grid.
+   * @param array $values
+   *   List of the posted values to create the submission from.
+   * @param boolean $include_if_any_data
+   *   If true, then any list entry which has any data set will be included in
+   *   the submission. Set this to true when hiding the select checkbox in the
+   *   grid.
    * @param array $zeroAttrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zeroValues Set to an array of values which are considered to indicate a
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
-   * array('0','None','Absent').
-   * of values that can be treated as meaning a zero abundance record. E.g.
-   * array('
+   * @param array $zeroValues
+   *   Set to an array of values which are considered to indicate a zero
+   *   abundance record if found for one of the zero_attrs. Values are case-
+   *   insensitive. Defaults to array('0','none','absent','not seen').
 
-   * @return array Sample submission array
+   * @return array
+   *   Sample submission array
    */
   public static function build_sample_subsamples_occurrences_submission($values, $include_if_any_data=false,
-                                                                        $zeroAttrs = true, $zeroValues=array('0','None','Absent'))
+      $zeroAttrs = true, $zeroValues=['0','none','absent','not seen'])
   {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
