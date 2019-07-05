@@ -6272,8 +6272,9 @@ if (errors$uniq.length>0) {
    * @param array $zeroAttrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zeroValues Set to an array of values which are considered to indicate a
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
+   * @param array $zeroValues
+   *   Set to an array of lowercased values which are considered to indicate a
+   *   zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
    * array('0','None','Absent').
    */
   public static function wrap_species_checklist($arr, $include_if_any_data=false,
@@ -6563,26 +6564,41 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * Test whether the data extracted from the $_POST for a species_checklist grid row refers to an occurrence record.
-   * @param array $record Record submission array from the form post.
-   * @param boolean $includeIfAnyData If set, then records are automatically created if any of the custom
-   * attributes are filled in.
-   * @param mixed $zeroAttrs Optional array of attribute defs keyed by attribute ID to restrict checks for
-   * zero abundance records to or pass true to check all attributes. Any lookup attributes must also have a
-   * terms key, containing an array of the lookup's terms (each having at least an id and term key).
-   * @param array $zeroValues Array of values to consider as zero, which might include localisations of words
-   * such as "absent" and "zero" as well as "0".
-   * @param array $hasDataIgnoreAttrs Array or attribute IDs to ignore when checking if record is present.
-   * @access Private
-   * @return boolean True if present, false if absent (zero abundance record), null if not defined in the data (no occurrence).
+   * Derive record presence/absence from data values.
+   *
+   * Test whether the data extracted from the $_POST for a species_checklist
+   * grid row refers to an occurrence record.
+   *
+   * @param array $record
+   *   Record submission array from the form post.
+   * @param boolean $includeIfAnyData
+   *   If set, then records are automatically created if any of the custom
+   *   attributes are filled in.
+   * @param mixed $zeroAttrs
+   *   Optional array of attribute defs keyed by attribute ID to restrict
+   *   checks for zero abundance records to or pass true to check all
+   *   attributes. Any lookup attributes must also have a terms key, containing
+   *   an array of the lookup's terms (each having at least an id and term key).
+   * @param array $zeroValues
+   *   Array of values to consider as zero, which might include localisations
+   *   of words such as "absent" and "zero" as well as "0". Must be lowercased.
+   * @param array $hasDataIgnoreAttrs
+   *   Array or attribute IDs to ignore when checking if record is present.
+   *
+   * @return bool
+   *   True if present, false if absent (zero abundance record), null if not
+   *   defined in the data (no occurrence).
    */
   public static function wrap_species_checklist_record_present($record, $includeIfAnyData, $zeroAttrs, $zeroValues, $hasDataIgnoreAttrs) {
-    // present should contain the ttl ID, or zero if the present box was unchecked
-    $gotTtlId=array_key_exists('present', $record) && $record['present']!='0';
-    // as we are working on a copy of the record, discard the ID and taxa_taxon_list_id so it is easy to check if there is any other data for the row.
+    // Present should contain the ttl ID, or zero if the present box was
+    // unchecked.
+    $gotTtlId = array_key_exists('present', $record) && $record['present']!='0';
+    // As we are working on a copy of the record, discard the ID and
+    // taxa_taxon_list_id so it is easy to check if there is any other data
+    // for the row.
     unset($record['id']);
     unset($record['present']); // stores ttl id
-    // also discard any attributes we included in $hasDataIgnoreAttrs
+    // Also discard any attributes we included in $hasDataIgnoreAttrs.
     foreach ($hasDataIgnoreAttrs as $attrID) {
       unset($record['occAttr:' . $attrID]);
     }
@@ -6929,8 +6945,11 @@ HTML;
   }
 
   /**
+   * Build submission for sample + occurrence list.
+   *
    * Helper function to simplify building of a submission that contains a single sample
    * and occurrence record.
+   *
    * @param array $values
    *   List of the posted values to create the submission from. Each entry's
    *   key should be occurrence:fieldname, sample:fieldname, occAttr:n,
@@ -6943,15 +6962,18 @@ HTML;
    *   Set to an array of values which are considered to indicate a zero
    *   abundance record if found for one of the zero_attrs. Values are
    *   case-insensitive. Defaults to array('0','None','Absent').
+   *
+   * @return array
+   *   Submission data structure.
    */
   public static function build_sample_occurrence_submission($values,
-      $zeroAttrs = true, $zeroValues=['0','None','Absent']) {
-    $structure = array(
+      $zeroAttrs = true, $zeroValues=['0','none','absent','not seen']) {
+    $structure = [
       'model' => 'sample',
-      'subModels' => array(
-        'occurrence' => array('fk' => 'sample_id')
-      )
-    );
+      'subModels' => [
+        'occurrence' => ['fk' => 'sample_id'],
+      ],
+    ];
     // Either an uploadable file, or a link to an external detail means include the submodel
     if (!empty($values['occurrence:image']) || !empty($values['occurrence_medium:external_details'])) {
       $structure['subModels']['occurrence']['subModels'] = array(
