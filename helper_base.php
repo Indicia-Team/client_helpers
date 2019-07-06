@@ -2505,7 +2505,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $cacheTimeOut = self::getCacheTimeOut($options);
       $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
       if ($options['caching'] !== 'store') {
-      	$response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response !== FALSE)
           $cacheLoaded = TRUE;
       }
@@ -2635,7 +2635,11 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $wantToCache = $timeout !== false;
     $haveFile = $file && is_file($file);
     $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
-    $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
+    if (filemtime($file) < (time() - $timeout * 3)) {
+      $randomSurvival = FALSE;
+    } else {
+      $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
+    }
     if ($wantToCache && $haveFile && ($fresh || $randomSurvival)) {
       $response = array();
       $handle = fopen($file, 'rb');
