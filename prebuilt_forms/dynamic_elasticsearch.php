@@ -654,7 +654,7 @@ JS;
     }
     $options['columns'] = array_keys($columnsByField);
     foreach ($options['availableColumns'] as $field) {
-      if (isset(self::MAPPING_FIELDS[$field])) {
+      if (array_key_exists($field, self::MAPPING_FIELDS)) {
         if (!isset($columnsByField[$field])) {
           $columnsByField[$field] = self::MAPPING_FIELDS[$field];
         }
