@@ -1969,9 +1969,9 @@ JS;
               $defStyleFns['fillOpacity'] = "getfillopacity: function(feature) {
                 return Math.max(0, feature.attributes.$col - feature.layer.map.zoom/100);
               }";
-              // When selected, a little bit more opaque.
+              // When selected, don't increase transparency as zoomed in.
               $selStyleFns['fillOpacity'] = "getfillopacity: function(feature) {
-                return Math.max(0, feature.attributes.$col - feature.layer.map.zoom/100 + 0.3);
+                return feature.attributes.$col;
               }";
             }
             elseif ($def['feature_style'] === 'graphicZIndex') {
