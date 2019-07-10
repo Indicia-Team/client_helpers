@@ -42,7 +42,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
    */
   private static $controlIds = [];
 
-  private const MAPPING_FIELDS = [
+  const MAPPING_FIELDS = [
     '@timestamp' => [
       'caption' => 'Indexing timestamp',
       'description' => 'Timestamp when the record was indexed into to the reporting system.',
