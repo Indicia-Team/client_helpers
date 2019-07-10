@@ -405,13 +405,17 @@ JS;
       $definition = json_decode($filterData[0]['definition'], TRUE);
       self::applyUserFiltersOccId($definition, $bool);
       self::applyUserFiltersOccExternalKey($definition, $bool);
+      self::applyUserFiltersSearchArea($definition, $bool);
+      self::applyUserFiltersLocationName($definition, $bool);
+      self::applyUserFiltersLocationList($definition, $bool);
+      self::applyUserFiltersIndexedLocationList($definition, $bool);
+      self::applyUserFiltersIndexedLocationTypeList($definition, $bool, $readAuth);
       self::applyUserFiltersWebsiteList($definition, $bool);
       self::applyUserFiltersSurveyList($definition, $bool);
       self::applyUserFiltersGroupId($definition, $bool);
       self::applyUserFiltersTaxonGroupList($definition, $bool);
       self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
       self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
-      self::applyUserFiltersIndexedLocationList($definition, $bool);
       self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
     }
   }
@@ -596,6 +600,52 @@ JS;
   }
 
   /**
+   * Converts an Indicia filter definition location_name to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersSearchArea(array $definition, array &$bool) {
+    // @todo Not implemented
+  }
+
+  /**
+   * Converts an Indicia filter definition location_name to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersLocationName(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['location_name']);
+    if (!empty($filter)) {
+      $bool['must'][] = ['match_phrase' => ['location.verbatim_locality' => $filter['value']]];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition location_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersLocationList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, [
+      'location_list',
+      'location_id',
+    ]);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = ['terms' => ['location.location_ids' => $filter['value']]];
+    }
+  }
+
+  /**
    * Converts an Indicia filter definition indexed_location_list to an ES query.
    *
    * @param array $definition
@@ -609,7 +659,7 @@ JS;
       'indexed_location_id',
     ]);
     if (!empty($filter)) {
-      $boolClause = $filter['value'] === '0' ? 'must_not' : 'must';
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
         'nested' => [
           'path' => 'location.higher_geography',
@@ -618,6 +668,47 @@ JS;
           ],
         ],
       ];
+    }
+  }
+
+  /**
+   * Converts a filter definition indexed_location_type_list to an ES query.
+   *
+   * Returns all records in locations of the given type(s).
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyUserFiltersIndexedLocationTypeList(array $definition, array &$bool, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, ['indexed_location_type_list']);
+    if (!empty($filter)) {
+      // Convert the location type IDs to terms that are used in the ES
+      // document.
+      $typeRows = data_entry_helper::get_population_data([
+        'table' => 'termlists_term',
+        'extraParams' => [
+          'id' => $filter,
+          'view' => 'cache',
+        ] + $readAuth,
+      ]);
+      $types = [];
+      foreach ($typeRows as $typeRow) {
+        $types[] = $typeRow['term'];
+      }
+      if (count($types) > 0) {
+        $bool['must'][] = [
+          'nested' => [
+            'path' => 'location.higher_geography',
+            'query' => [
+              'terms' => ['location.higher_geography.type' => $types],
+            ],
+          ],
+        ];
+      }
     }
   }
 
