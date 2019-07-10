@@ -2635,7 +2635,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $wantToCache = $timeout !== false;
     $haveFile = $file && is_file($file);
     $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
-    if (filemtime($file) < (time() - $timeout * 3)) {
+    if ($haveFile && filemtime($file) < (time() - $timeout * 3)) {
       $randomSurvival = FALSE;
     } else {
       $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
