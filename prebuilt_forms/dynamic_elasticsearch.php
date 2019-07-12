@@ -183,6 +183,10 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
       'caption' => 'Display spatial reference',
       'description' => 'Spatial reference in the recommended local grid system.',
     ],
+    '#lat_lon#' => [
+      'caption' => 'Lat/lon',
+      'description' => 'Latitude and longitude of the record.',
+    ],
     'occurrence.media' => [
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
