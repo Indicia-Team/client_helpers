@@ -22,7 +22,8 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
-class ElasticsearchProxyAbort extends Exception { };
+class ElasticsearchProxyAbort extends Exception {
+}
 
 class ElasticsearchProxyHelper {
 
@@ -393,11 +394,12 @@ JS;
    */
   private static function applyUserFilters(array $readAuth, array $query, array &$bool) {
     foreach ($query['user_filters'] as $userFilter) {
-      $filterData = data_entry_helper::get_population_data([
-        'table' => 'filter',
+      $filterData = data_entry_helper::get_report_data([
+        'dataSource' => '/library/filters/filter_with_transformed_searcharea',
         'extraParams' => [
-          'id' => $userFilter,
-        ] + $readAuth,
+          'filter_id' => $userFilter,
+        ],
+        'readAuth' => $readAuth,
       ]);
       if (count($filterData) === 0) {
         throw new exception("Filter with ID $userFilter could not be loaded.");
@@ -405,7 +407,7 @@ JS;
       $definition = json_decode($filterData[0]['definition'], TRUE);
       self::applyUserFiltersOccId($definition, $bool);
       self::applyUserFiltersOccExternalKey($definition, $bool);
-      self::applyUserFiltersSearchArea($definition, $bool);
+      self::applyUserFiltersSearchArea($filterData[0]['search_area'], $bool);
       self::applyUserFiltersLocationName($definition, $bool);
       self::applyUserFiltersLocationList($definition, $bool);
       self::applyUserFiltersIndexedLocationList($definition, $bool);
@@ -602,13 +604,22 @@ JS;
   /**
    * Converts an Indicia filter definition location_name to an ES query.
    *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
+   * @param string $searchArea
+   *   WKT for the searchArea in EPSG:4326.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersSearchArea(array $definition, array &$bool) {
-    // @todo Not implemented
+  private static function applyUserFiltersSearchArea($searchArea, array &$bool) {
+    if (!empty($searchArea)) {
+      $bool['must'][] = [
+        'geo_shape' => [
+          'location.geom' => [
+            'shape' => $searchArea,
+            'relation' => 'intersects',
+          ],
+        ],
+      ];
+    }
   }
 
   /**
