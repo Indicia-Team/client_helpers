@@ -484,6 +484,7 @@ JS;
     $options = array_merge([
       'id' => "es-user-filter-" . self::$controlIndex,
       'definesPermissions' => FALSE,
+      'sharingCode' => 'R',
     ], $options);
     $filterData = report_filters_load_existing($auth['read'], $options['sharingCode'], TRUE);
     $optionArr = [];
