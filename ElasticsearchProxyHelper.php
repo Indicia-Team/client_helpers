@@ -308,7 +308,7 @@ JS;
         // One of the ES query string based query types.
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
       }
-      if ($qryConfig['nested']) {
+      if (!empty($qryConfig['nested'])) {
         $bool['must'][] = [
           'nested' => [
             'path' => $qryConfig['nested'],
@@ -319,7 +319,8 @@ JS;
             ],
           ],
         ];
-      } else {
+      }
+      else {
         $bool[$qryConfig['bool_clause']][] = $queryDef;
       }
 
