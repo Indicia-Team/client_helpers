@@ -1,0 +1,8 @@
+#filter-bar * {
+  display: inline-block;
+  vertical-align: middle; }
+#filter-bar label {
+  width: auto;
+  margin: 0 4px 0 15px; }
+
+/*# sourceMappingURL=dynamic_elasticsearch.css.map */
