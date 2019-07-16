@@ -27,7 +27,7 @@
  */
 
 /**
- * Get the iso 639 code for the user's logged in language.
+ * Get the iso 639 code for the user's selected language.
  *
  * @return array
  *   3 character language code.
