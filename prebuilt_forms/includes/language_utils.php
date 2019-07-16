@@ -1,5 +1,9 @@
 <?php
+
 /**
+ * @file
+ * Language utility functions.
+ *
  * Indicia, the OPAL Online Recording Toolkit.
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,39 +17,38 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link http://code.google.com/p/indicia/
  */
 
 /**
  * List of methods that assist with Indicia and Drupal language interactions.
- * @package Client
- * @subpackage PrebuiltForms.
  */
 
 /**
  * Get the iso 639 code for the user's logged in language.
- * @return array 3 character language code
- * @todo Complete the list
+ *
+ * @return array
+ *   3 character language code.
+ *
+ * @todo Complete the list.
  */
-function iform_lang_iso_639_2($lang=null) {
+function iform_lang_iso_639_2($lang = NULL) {
   // @todo Check the following for Drupal 8 compatibility
-  if ($lang==null) {
-    global $language;
-    $lang = $language->language;
+  if (!$lang) {
+    $lang = hostsite_get_user_field('language');
   }
-  // If there is a sub-language, ignore it (e.g. en-GB becomes just en). 
+  // If there is a sub-language, ignore it (e.g. en-GB becomes just en).
   // @todo may want to handle sub-languages
   $lang = explode('-', $lang);
   $lang = $lang[0];
-  switch ($lang) {
-    case 'en' : return 'eng';
-    case 'de' : return 'deu';
-    case 'cs' : return 'cze';
-    case 'lb' : return 'ltz';
-    case 'fr' : return 'fra';
-  }
+  $list = [
+    'en' => 'eng',
+    'de' => 'deu',
+    'cs' => 'cze',
+    'lb' => 'ltz',
+    'fr' => 'fra',
+  ];
+  return $list[$lang];
 }
