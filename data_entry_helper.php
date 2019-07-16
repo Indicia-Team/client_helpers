@@ -5289,7 +5289,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'includeDeleteButton' => false,
       'controlWrapTemplate' => 'justControl'
     ), $options);
-    $options['class'] .= ' buttons';
+    $options['class'] .= ' buttons wizard-buttons';
     // Output the buttons
     $r = '<div class="'.$options['class'].'">';
     $buttonClass=$options['buttonClass'];
