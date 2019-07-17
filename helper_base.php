@@ -1374,12 +1374,7 @@ JS;
         $extraItems = explode(',', implode(':', array_slice($popOpts, 4)));
         foreach ($extraItems as $extraItem) {
           $extraItem = explode('=', $extraItem);
-          // If the population_call param uses a same parameter as the main report, then we need to swap it out. Before we do this we test
-          // that the population_call param needs replacing and isn't just a simple value 
-          // (i.e. it has a # symbol at either end like #survey_id# - this works in same way as replacements in the main report) 
-          if (substr($extraItem[1], 0, 1) === '#' && substr(strrev($extraItem[1]), 0, 1) === '#') {
-            $extraItem = self::replace_population_call_param_value_tags($extraItem, $options['extraParams']);
-          }
+          self::replacePopulationCallParamValueTags($options['extraParams'], $extraItem);
           $extras[$extraItem[0]] = $extraItem[1];
         }
       }
@@ -1457,21 +1452,31 @@ JS;
     return $r;
   }
 
-  /*
-   * Allows the user to provide params in a population_call lookup that use the param values provided to the main report.
-   * $extraItem Associative array Single item array containing the population_call param we are working on, and its value replacement tag
-   * $extraParams Associative array of params and values provided to main report
-   * @return array Associative array Single item array containing the population_call param we are working on and its value after replacement
+  /**
+   * Allows the user to provide params in a population_call lookup.
+   *
+   * If the population_call param uses a same parameter as the main report,
+   * then we need to swap it out. Before we do this we test that the
+   * population_call param needs replacing and isn't just a simple value (i.e.
+   * it has a # symbol at either end like #survey_id# - this works in same
+   * way as replacements in the main report).
+   *
+   * @param $extraParams
+   *   Associative array of params and values provided to main report.
+   * @param $extraItem array
+   *  Single item array containing the population_call param we are working on
+   *  and its value replacement tag. The value will be modified if a matching
+   *  report parameter is available.
+   *
+   * @return array
+   *   Single item array containing the population_call param we are working on
+   *   and its value after replacement.
    */
-  private static function replace_population_call_param_value_tags($extraItem, $extraParams) {
-    // Then Cycle through all the report params
-    foreach ($extraParams as $reportParamName => $reportParamValue) {
-      // If we find a report param that matches the population_call param then switch the value so the population_call param can use it
-      if ($extraItem[1]=='#'.$reportParamName.'#') {
-        $extraItem[1] = $reportParamValue;
-      }
+  private static function replacePopulationCallParamValueTags(array $extraParams, array &$extraItem) {
+    if (preg_match('/^#(?P<param>.*)#$/', $extraItem[1], $matches)
+        && array_key_exists($matches['param'], $extraParams)) {
+      $extraItem[1] = $extraParams[$matches['param']];
     }
-    return $extraItem;
   }
 
   /**
