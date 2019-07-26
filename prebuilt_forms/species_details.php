@@ -492,6 +492,10 @@ class iform_species_details extends iform_dynamic {
    * Available options include:
    * * @includeCaptions - set to false to exclude attribute captions from the
    *   grouped data.
+   *   @headingsToInclude - CSV list of heading names that are to be included.
+   *   @headingsToExclude - CSV list of heading names that are to be included (any items that appear in both headingsToInclude and headingsToExclude will be excluded).
+   *   @invertHeadingsToInclude - Set to true if you wish the list of heading to include to become a list of headings to
+   *   exclude instead.
    *
    * @return string
    *   Html for the description.
@@ -502,6 +506,16 @@ class iform_species_details extends iform_dynamic {
       'includeCaptions' => TRUE,
     ], $options);
     $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    if (!empty($options['headingsToInclude'])) {
+      $headingsToInclude = explode(',', $options['headingsToInclude']);
+    } else {
+      $headingsToInclude = array();
+    }
+    if (!empty($options['headingsToExclude'])) {
+      $headingsToExclude = explode(',', $options['headingsToExclude']);
+    } else {
+      $headingsToExclude = array();
+    }
     $args['param_presets'] = '';
     $args['param_defaults'] = '';
     $params = [
@@ -529,8 +543,42 @@ class iform_species_details extends iform_dynamic {
     $currentHeading = '';
     $currentHeadingContent = '';
     foreach ($data as $idx => $row) {
-      if ($row['category'] !== $currentHeading) {
-        if (!empty($currentHeadingContent)) {
+        if ($row['category'] !== $currentHeading) {
+          if (!empty($currentHeadingContent)) {
+            // Only display a section if
+            // - The user hasn't specified any options regarding which sections should be displayed
+            // - The user has specified to include the section, and not specified to exclude it
+            // - The user hasn't specified any options regarding what to include, and it isn't in the list of items to exclude.
+            if ($currentHeading === '' 
+                || (in_array($currentHeading, $headingsToInclude) && !in_array($currentHeading, $headingsToExclude))
+                || (empty($headingsToInclude) && !in_array($currentHeading, $headingsToExclude))  
+                || (empty($headingsToInclude) && empty($headingsToExclude))) {
+              $r .= str_replace(
+                ['{id}', '{title}', '{content}'],
+                [
+                  "detail-panel-description-$idx",
+                  $currentHeading,
+                  $currentHeadingContent,
+                ],
+                $indicia_templates['dataValueList']
+              );
+            }
+            $currentHeadingContent = '';
+          }
+          $currentHeading = $row['category'];
+        }
+        $currentHeadingContent .= str_replace(
+          array('{caption}', '{value}'),
+          array($row['subcategory'], $row['values']),
+          $indicia_templates['dataValue']
+        );
+   	  }
+      if (!empty($currentHeadingContent)) {
+        // See comment above for explanation of IF statement
+        if ($currentHeading === '' 
+            || (in_array($currentHeading, $headingsToInclude) && !in_array($currentHeading, $headingsToExclude))
+            || (empty($headingsToInclude) && !in_array($currentHeading, $headingsToExclude))  
+            || (empty($headingsToInclude) && empty($headingsToExclude))) {
           $r .= str_replace(
             ['{id}', '{title}', '{content}'],
             [
@@ -540,27 +588,8 @@ class iform_species_details extends iform_dynamic {
             ],
             $indicia_templates['dataValueList']
           );
-          $currentHeadingContent = '';
         }
-        $currentHeading = $row['category'];
       }
-      $currentHeadingContent .= str_replace(
-        array('{caption}', '{value}'),
-        array($row['subcategory'], $row['values']),
-        $indicia_templates['dataValue']
-      );
-    }
-    if (!empty($currentHeadingContent)) {
-      $r .= str_replace(
-        ['{id}', '{title}', '{content}'],
-        [
-          "detail-panel-description-$idx",
-          $currentHeading,
-          $currentHeadingContent,
-        ],
-        $indicia_templates['dataValueList']
-      );
-    }
     return $r;
   }
 
