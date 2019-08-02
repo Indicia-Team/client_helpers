@@ -5855,21 +5855,21 @@ HTML;
   private static function init_linked_lists($options) {
     global $indicia_templates;
     // setup JavaScript to do the population when the parent control changes
-    $parentControlId = str_replace(':','\\\\:',$options['parentControlId']);
-    $escapedId = str_replace(':','\\\\:',$options['id']);
+    $parentControlId = str_replace(':', '\\\\:', $options['parentControlId']);
+    $escapedId = str_replace(':','\\\\:', $options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
-      $request = "$url?report=".$options['report'].".xml&mode=json&reportSource=local&callback=?";
+      $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
       $query = $options['filterField'] . '="+$(this).val()+"';
     }
     else {
       $url = parent::getProxiedBaseUrl() . "index.php/services/data";
-      $request = "$url/".$options['table']."?mode=json&callback=?";
+      $request = "$url/$options[table]?mode=json&callback=?";
       $inArray = array('val');
       if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
         $inArray[] = null;
-      $query = urlencode(json_encode(array('in'=>array($options['filterField'], $inArray))));
+      $query = urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
       $query = 'query=' . str_replace('%22val%22', '"+$(this).val()+"', $query);
     }
     if (isset($options['parentControlLabel']))
@@ -5877,7 +5877,7 @@ HTML;
     else
       $instruct = lang::get('Awaiting selection...');
     if (array_key_exists('extraParams', $options)) {
-      $request .= '&'.self::array_to_query_string($options['extraParams']);
+      $request .= '&' . http_build_query($options['extraParams']);
     }
     // store default in JavaScript so we can load the correct value after AJAX population.
     if (!empty($options['default']) && preg_match('/^[0-9]+$/', $options['default']))
