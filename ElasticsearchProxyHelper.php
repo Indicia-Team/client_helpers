@@ -328,7 +328,7 @@ JS;
     unset($query['bool_queries']);
     // Apply a training mode filter.
     $bool['must'][] = [
-      'term' => ['metadata.trial' => hostsite_get_user_field('training', FALSE)],
+      'term' => ['metadata.trial' => hostsite_get_user_field('training') ? TRUE : FALSE],
     ];
     iform_load_helpers([]);
     $readAuth = helper_base::get_read_auth(self::$config['indicia']['website_id'], self::$config['indicia']['password']);
