@@ -5873,7 +5873,7 @@ HTML;
       $query = 'query=' . str_replace('%22val%22', '"+$(this).val()+"', $query);
     }
     if (isset($options['parentControlLabel']))
-      $instruct = str_replace('{0}', $options['parentControlLabel'], lang::get('Please select a {0} first'));
+      $instruct = lang::get('Please select a {1} first', $options['parentControlLabel']);
     else
       $instruct = lang::get('Awaiting selection...');
     if (array_key_exists('extraParams', $options)) {

@@ -173,26 +173,28 @@ $indicia_templates = array(
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
   'linked_list_javascript' => '
 {fn} = function() {
-  var placeHolder=" Loading... ";
-  $("#{escapedId}").addClass("ui-state-disabled").html("<option disabled>"+placeHolder+"</option>");
-  if ($(this).val() && $(this).val() != placeHolder) { // skip loading for placeholder text
+  var childSelect = $("#{escapedId}");
+  var parentSelect = $(this);
+  if (parentSelect.val()) {
     $.getJSON("{request}&{query}", function(data){
-      var $control = $("#{escapedId}"), selected;
-      $control.html("");
+      childSelect.find("option").remove();
       if (data.length>0) {
-        $control.removeClass("ui-state-disabled");
+        childSelect.removeClass("ui-state-disabled");
         if (data.length>1) {
-          $control.append("<option value=\"\">&lt;Please select&gt;</option>");
+          childSelect.append("<option value=\"\">&lt;Please select&gt;</option>");
         }
         $.each(data, function(i) {
-          selected = typeof indiciaData["default{escapedId}"]!=="undefined" && indiciaData["default{escapedId}"]==this.{valueField} ? \'" selected="selected\' : "";
-          $control.append("<option value=\"" + this.{valueField} + selected + "\">" + this.{captionField} + "</option>");
+          var selected = typeof indiciaData["default{escapedId}"]!=="undefined" && indiciaData["default{escapedId}"]==this.{valueField} ? \'" selected="selected\' : "";
+          childSelect.append("<option value=\"" + this.{valueField} + selected + "\">" + this.{captionField} + "</option>");
         });
       } else {
-        $control.html("<option disabled>{instruct}</option>");
+        childSelect.html("<option disabled>{instruct}</option>");
       }
-      $control.change();
+      childSelect.change();
     });
+  } else {
+    childSelect.addClass("ui-state-disabled").html("<option disabled>{instruct}</option>");
+    childSelect.change();
   }
 };
 $("#{parentControlId}").bind("change.indicia", {fn});
