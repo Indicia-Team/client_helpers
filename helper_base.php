@@ -173,23 +173,23 @@ $indicia_templates = array(
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
   'linked_list_javascript' => '
 {fn} = function() {
-var placeHolder=" Loading... ";
-  $("#{escapedId}").addClass("ui-state-disabled").html("<option>"+placeHolder+"</option>");
-  if ($(this).val() != placeHolder) { // skip loading for placeholder text
+  var placeHolder=" Loading... ";
+  $("#{escapedId}").addClass("ui-state-disabled").html("<option disabled>"+placeHolder+"</option>");
+  if ($(this).val() && $(this).val() != placeHolder) { // skip loading for placeholder text
     $.getJSON("{request}&{query}", function(data){
       var $control = $("#{escapedId}"), selected;
       $control.html("");
       if (data.length>0) {
         $control.removeClass("ui-state-disabled");
         if (data.length>1) {
-          $control.append("<option>&lt;Please select&gt;</option>");
+          $control.append("<option value=\"\">&lt;Please select&gt;</option>");
         }
         $.each(data, function(i) {
           selected = typeof indiciaData["default{escapedId}"]!=="undefined" && indiciaData["default{escapedId}"]==this.{valueField} ? \'" selected="selected\' : "";
           $control.append("<option value=\"" + this.{valueField} + selected + "\">" + this.{captionField} + "</option>");
         });
       } else {
-        $control.html("<option>{instruct}</option>");
+        $control.html("<option disabled>{instruct}</option>");
       }
       $control.change();
     });

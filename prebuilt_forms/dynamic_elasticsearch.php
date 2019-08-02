@@ -1020,26 +1020,47 @@ HTML;
    *
    * Options are:
    *
-   * * @locationTypeId - ID of the location type of the locations to list. Must
-   *   be a type indexed by the spatial index builder module.
+   * * @locationTypeId - Either a single ID of the location type of the
+   *   locations to list, or an array of IDs of location types where the
+   *   locations are hierarchical (parent first). Each type ID must be indexed
+   *   by the spatial index builder module.
    *
    * @return string
    *   Control HTML
    */
   protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
-    if (empty($options['locationTypeId']) || !preg_match('/^\d+$/', $options['locationTypeId'])) {
-      throw new Exception('An integer @locationTypeId parameter is required for the [higherGeographySelect] control');
+    if (empty($options['locationTypeId']) ||
+        (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId']))) {
+      throw new Exception('An integer or integer array @locationTypeId parameter is required for the [higherGeographySelect] control');
     }
-    $options['extraParams'] = array_merge([
-      'location_type_id' => $options['locationTypeId'],
-      'orderby' => 'name',
-    ], $options['extraParams'], $auth['read']);
+    $typeIds = is_array($options['locationTypeId']) ? $options['locationTypeId'] : [$options['locationTypeId']];
+    $r = '';
     $options = array_merge([
-      'id' => 'higher-geography-select',
       'class' => 'es-higher-geography-select',
       'blankText' => lang::get('<All locations shown>'),
+      'id' => 'higher-geography-select',
     ], $options);
-    return data_entry_helper::location_select($options);
+    $options['extraParams'] = array_merge([
+      'orderby' => 'name',
+    ], $options['extraParams'], $auth['read']);
+    $baseId = $options['id'];
+    foreach ($typeIds as $idx => $typeId) {
+      $options['extraParams']['location_type_id'] = $typeId;
+      if (count($typeIds) > 0) {
+        $options['id'] = "$baseId-$idx";
+        $options['class'] .= ' linked-select';
+      }
+      if ($idx > 0) {
+        $options['parentControlId'] = "$baseId-" . ($idx - 1);
+        if ($idx === 1) {
+          $options['parentControlLabel'] = $options['label'];
+          $options['filterField'] = 'parent_id';
+          unset($options['label']);
+        }
+      }
+      $r .= data_entry_helper::location_select($options);
+    }
+    return $r;
   }
 
   /**
