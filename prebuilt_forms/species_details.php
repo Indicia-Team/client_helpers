@@ -492,10 +492,10 @@ class iform_species_details extends iform_dynamic {
    * Available options include:
    * * @includeCaptions - set to false to exclude attribute captions from the
    *   grouped data.
-   *   @headingsToInclude - CSV list of heading names that are to be included.
-   *   @headingsToExclude - CSV list of heading names that are to be included (any items that appear in both headingsToInclude and headingsToExclude will be excluded).
-   *   @invertHeadingsToInclude - Set to true if you wish the list of heading to include to become a list of headings to
-   *   exclude instead.
+   *   @headingsToInclude - CSV list of heading names that are to be included. To include a particular sub-category only, supply the  
+   *   heading name and then a slash and then the sub-category name e.g.  the following includes just the hoglets sub-category
+   *   and the entire rabbits section @headingsToInclude=Hedgehogs/Hoglets,Rabbits
+   *   @headingsToExclude - Same as @headingsToInclude but items are exluded instead (any items that appear in both headingsToInclude and headingsToExclude will be excluded).
    *
    * @return string
    *   Html for the description.
@@ -516,6 +516,36 @@ class iform_species_details extends iform_dynamic {
     } else {
       $headingsToExclude = array();
     }
+    
+    $mainHeadingsToInclude = $subHeadingsToInclude = $mainHeadingsToExclude = $subHeadingsToExclude = array();
+    // Cycle through all the headings we want to include
+    foreach ($headingsToInclude as $headingSubCatToInclude) {
+      // See if a sub-category has been specified
+      if (strpos($headingSubCatToInclude, '/') !== false) {
+        // If a sub-category has been specified, then get the main heading and sub-category and save them
+        // (we still need the main heading as we need to display it, even if we are only going to be showing one of the sub-categories)
+        $headingSubCatSplit=explode('/',$headingSubCatToInclude);
+        $mainHeadingsToInclude[]=$headingSubCatSplit[0];  
+        $subHeadingsToInclude[]=$headingSubCatToInclude;  
+      } else {
+        // If we are including the whole section, then indicate this explicitely to the system using the word unlimited
+        $mainHeadingsToInclude[]=$headingSubCatToInclude;
+        $subHeadingsToInclude[]=$headingSubCatToInclude.'/unlimited';  
+      }
+    }
+
+    // Do similar for excluding, however in this case there is one difference, if we are exluding a sub-category, we don't automatically
+    // exclude the main heading as it is needed for the other sub-categories
+    foreach ($headingsToExclude as $headingSubCatToExclude) {
+      if (strpos($headingSubCatToExclude, '/') !== false) {
+        $headingSubCatSplit=explode('/',$headingSubCatToExclude);
+        $subHeadingsToExclude[]=$headingSubCatToExclude;  
+      } else {
+        $mainHeadingsToExclude[]=$headingSubCatToExclude;
+        $subHeadingsToExclude[]=$headingSubCatToExclude.'/unlimited';  
+      }
+    }
+
     $args['param_presets'] = '';
     $args['param_defaults'] = '';
     $params = [
@@ -550,9 +580,9 @@ class iform_species_details extends iform_dynamic {
             // - The user has specified to include the section, and not specified to exclude it
             // - The user hasn't specified any options regarding what to include, and it isn't in the list of items to exclude.
             if ($currentHeading === '' 
-                || (in_array($currentHeading, $headingsToInclude) && !in_array($currentHeading, $headingsToExclude))
-                || (empty($headingsToInclude) && !in_array($currentHeading, $headingsToExclude))  
-                || (empty($headingsToInclude) && empty($headingsToExclude))) {
+                || (in_array($currentHeading, $mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))
+                || (empty($mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))  
+                || (empty($mainHeadingsToInclude) && empty($mainHeadingsToExclude))) {
               $r .= str_replace(
                 ['{id}', '{title}', '{content}'],
                 [
@@ -567,18 +597,31 @@ class iform_species_details extends iform_dynamic {
           }
           $currentHeading = $row['category'];
         }
-        $currentHeadingContent .= str_replace(
-          array('{caption}', '{value}'),
-          array($row['subcategory'], $row['values']),
-          $indicia_templates['dataValue']
-        );
+        $currentHeadingAndSubCat=$currentHeading.'/'.$row['subcategory'];
+        // Only display a sub-category if
+        // - The sub-category is in the list of sub-categories to display and not in the list of sub-categories to exclude.
+        // - The user has not specified any options regarding sub-categories to include and the sub-category is not in the list to exclude
+        // - The user has not specified any options regarding sub-categories to include or exclude
+        // - The user has specified to include all sub-categories under a particular heading and the sub-category is not listed for exclusion
+        if  ($row['subcategory'] === '' ||
+            (in_array($currentHeadingAndSubCat, $subHeadingsToInclude) && !in_array($currentHeadingAndSubCat, $subHeadingsToExclude)) ||
+            (empty($subHeadingsToInclude) && !in_array($currentHeadingAndSubCat, $subHeadingsToExclude)) ||  
+            (empty($subHeadingsToInclude) && empty($subHeadingsToExclude)) ||
+            (in_array($currentHeading.'/unlimited', $subHeadingsToInclude) && !in_array($currentHeading.'/unlimited', $subHeadingsToExclude))   
+        ) {
+          $currentHeadingContent .= str_replace(
+            array('{caption}', '{value}'),
+            array($row['subcategory'], $row['values']),
+            $indicia_templates['dataValue']
+          );
+        }
    	  }
       if (!empty($currentHeadingContent)) {
-        // See comment above for explanation of IF statement
+        // See comments above for explanation of IF statement
         if ($currentHeading === '' 
-            || (in_array($currentHeading, $headingsToInclude) && !in_array($currentHeading, $headingsToExclude))
-            || (empty($headingsToInclude) && !in_array($currentHeading, $headingsToExclude))  
-            || (empty($headingsToInclude) && empty($headingsToExclude))) {
+            || (in_array($currentHeading, $mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))
+            || (empty($mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))  
+            || (empty($mainHeadingsToInclude) && empty($mainHeadingsToExclude))) {
           $r .= str_replace(
             ['{id}', '{title}', '{content}'],
             [
