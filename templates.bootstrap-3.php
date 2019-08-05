@@ -23,4 +23,4 @@ $indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-default';
 
 $indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div>';
 
-$indicia_templates['speciesDetailsThumbnail'] = '<div class="thumbnail"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>';
+$indicia_templates['speciesDetailsThumbnail'] = '<div class="thumbnail" style="width:150px; height:180px; white-space: nowrap; overflow: hidden; text-overflow:ellipsis; text-align:center;">{external_details}<a class="fancybox" rel="gallery" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>';
