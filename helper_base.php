@@ -171,37 +171,6 @@ $indicia_templates = array(
     '<input type="hidden" name="{mainEntity}:insert_captions_to_create" value="{table}" />',
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
-  'linked_list_javascript' => '
-{fn} = function() {
-  var childSelect = $("#{escapedId}");
-  var parentSelect = $(this);
-  if (parentSelect.val()) {
-    $.getJSON("{request}&{query}", function(data){
-      childSelect.find("option").remove();
-      if (data.length>0) {
-        childSelect.removeClass("ui-state-disabled");
-        if (data.length>1) {
-          childSelect.append("<option value=\"\">&lt;Please select&gt;</option>");
-        }
-        $.each(data, function(i) {
-          var selected = typeof indiciaData["default{escapedId}"]!=="undefined" && indiciaData["default{escapedId}"]==this.{valueField} ? \'" selected="selected\' : "";
-          childSelect.append("<option value=\"" + this.{valueField} + selected + "\">" + this.{captionField} + "</option>");
-        });
-      } else {
-        childSelect.html("<option disabled>{instruct}</option>");
-      }
-      childSelect.change();
-    });
-  } else {
-    childSelect.addClass("ui-state-disabled").html("<option disabled>{instruct}</option>");
-    childSelect.change();
-  }
-};
-$("#{parentControlId}").bind("change.indicia", {fn});
-if ($("#{escapedId} option").length===0) {
-  $("#{parentControlId}").trigger("change.indicia");
-}'."\n",
-
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
         'onblur="javascript:indiciaFns.decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
   'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
@@ -395,6 +364,13 @@ class helper_base {
    * site template includes JQuery set $dumped_resources[]='jquery'.
    */
   public static $dumped_resources=array();
+
+  /**
+   * Data to be added to the indiciaData JavaScript variable.
+   *
+   * @var array
+   */
+  public static $indiciaData = [];
 
   /**
    * @var string JavaScript text to be emitted after the data entry form. Each control that
@@ -1790,12 +1766,41 @@ JS;
     // Jquery validation js has to be added at this late stage, because only then do we know all the messages required.
     self::setup_jquery_validation_js();
     $dump = self::internal_dump_resources(self::$required_resources);
+    $dump .= self::getIndiciaData();
     $dump .= self::get_scripts(self::$javascript, self::$late_javascript, self::$onload_javascript, true, $closure);
     // ensure scripted JS does not output again if recalled.
     self::$javascript = "";
     self::$late_javascript = "";
     self::$onload_javascript = "";
     return $dump;
+  }
+
+  /**
+   * Retreives JavaScript required to initialise indiciaData.
+   *
+   * Builds JavaScript to initialise an object containing any data added to
+   * self::$indiciaData
+   *
+   * @return string
+   *   JavaScript.
+   */
+  public static function getIndiciaData() {
+    $r = [];
+    if (count(self::$indiciaData) > 0) {
+      foreach (self::$indiciaData as $key => $data) {
+        if (is_array($data)) {
+          $value = json_encode($data);
+        } elseif (is_string($data)) {
+          $data = str_replace("'", "\\'", $data);
+          $value = "'$data'";
+        } else {
+          $value = $data;
+        }
+        $r[] = "indiciaData.$key = $value;";
+      }
+      return implode("\n", $r);
+    }
+    return '';
   }
 
   /**
