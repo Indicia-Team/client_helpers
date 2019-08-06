@@ -888,6 +888,7 @@ JS;
           'deps' => [
             'font_awesome',
             'indiciaFootableReport',
+            'jquery_cookie',
           ],
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
