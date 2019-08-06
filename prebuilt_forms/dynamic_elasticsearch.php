@@ -183,6 +183,10 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
       'caption' => 'Display spatial reference',
       'description' => 'Spatial reference in the recommended local grid system.',
     ],
+    'location.coordinate_uncertainty_in_meters' => [
+      'caption' => 'Coordinate uncertainty in metres',
+      'description' => 'Uncertainty of a provided GPS point.',
+    ],
     '#lat_lon#' => [
       'caption' => 'Lat/lon',
       'description' => 'Latitude and longitude of the record.',
@@ -191,6 +195,22 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
       'handler' => 'media',
+    ],
+    'occurrence.sex' => [
+      'caption' => 'Sex',
+      'description' => 'Sex of the recorded organism',
+    ],
+    'occurrence.life_stage' => [
+      'caption' => 'Life stage',
+      'description' => 'Life stage of the recorded organism.',
+    ],
+    'occurrence.individual_count' => [
+      'caption' => 'Count',
+      'description' => 'Numeric abundance count of the recorded organism.',
+    ],
+    'occurrence.organism_quantity' => [
+      'caption' => 'Quantity',
+      'description' => 'Abundance of the recorded organism (numeric or text).',
     ],
   ];
 
