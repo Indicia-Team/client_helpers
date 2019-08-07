@@ -646,7 +646,16 @@ JS;
     $filter = self::getDefinitionFilter($definition, $params);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-      $bool[$boolClause][] = ['exists' => ['field' => 'occurrence.media']];
+      $bool[$boolClause][] = [
+        'nested' => [
+          'path' => 'occurrence.media',
+          'query' => [
+            'bool' => [
+              'must' => ['exists' => ['field' => 'occurrence.media']],
+            ],
+          ],
+        ],
+      ];
     }
   }
 
