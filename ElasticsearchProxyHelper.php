@@ -309,12 +309,15 @@ JS;
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
       }
       if (!empty($qryConfig['nested'])) {
-        $bool['must'][] = [
+        // Must not nested queries should be handled at outer level.
+        $outerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must_not' : 'must';
+        $innerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must' : $qryConfig['bool_clause'];
+        $bool[$outerBoolClause][] = [
           'nested' => [
             'path' => $qryConfig['nested'],
             'query' => [
               'bool' => [
-                $qryConfig['bool_clause'] => [$queryDef],
+                $innerBoolClause => [$queryDef],
               ],
             ],
           ],
