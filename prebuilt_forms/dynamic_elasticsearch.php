@@ -400,6 +400,38 @@ JS;
   }
 
   /**
+   * Applies token replacements to one or more values in the $options array.
+   *
+   * Tokens are of the format "{{ name }}" where the token name is one of the
+   * following:
+   * * indicia_user_id - the user's warehouse user ID.
+   * * a parameter from the URL query string.
+   *
+   * @param array $options
+   *   Control options.
+   * @param array $fields
+   *   List of the fields in the options array that replacements should be
+   *   applied to.
+   * @param array $jsonFields
+   *   Subset of $fields where the value should be a JSON object after
+   *   replacements are applied.
+   */
+  private static function applyReplacements(array &$options, array $fields, array $jsonFields) {
+    $replacements = ['{{ indicia_user_id }}' => hostsite_get_user_field('indicia_user_id')];
+    foreach ($_GET as $field => $value) {
+      $replacements["{{ $field }}"] = $value;
+    }
+    foreach ($fields as $field) {
+      if (!empty($options[$field])) {
+        $options[$field] = str_replace(array_keys($replacements), array_values($replacements), $options[$field]);
+      }
+      if (in_array($field, $jsonFields)) {
+        $options[$field] = json_decode($options[$field]);
+      }
+    }
+  }
+
+  /**
    * Provide common option handling for controls.
    *
    * * If attachToId specified, ensures that the control ID is set to the same
@@ -466,6 +498,7 @@ JS;
    *   Empty string as no HTML required.
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
+    self::applyReplacements($options, ['aggregation'], ['aggregation']);
     self::checkOptions(
       'esSource',
       $options,
@@ -986,76 +1019,145 @@ HTML;
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * Currently only supports taxon scratchpad list and sample_id filtering
-   * though additional filters can be configured via the @fieldFilters option.
+   * By default, the following filter parameters are supported:
+   * * taxa_taxo
+   * Additional filters can be configured via the @fieldFilters option.
    *
    * Options can include:
    * * @fieldFilters - use this option to override the list of simple mappings
    *   from URL parameters to Elasticsearch index fields. Pass an array keyed
-   *   by the URL parameter name to accept, where the value is an array
-   *   containing 'name' (Elasticsearch field name) and 'type'. If type is
-   *   set to integer then validates that the field supplied is an integer.
+   *   by the URL parameter name to accept, where the value is an array of
+   *   configuration items where each item defines how that parameter is to be
+   *   interpreted. Each configuration item has the following data values:
+   *   * name - Elasticsearch field name to filter
+   *   * type - optional. If set to integer then validates that the field
+   *     supplied is an integer.
+   *   * process - optional. possible values are:
+   *     * taxonIdsInScratchpad - the value is used as a scratchpad_list_id
+   *       which is used to look up a list of taxa. The value is replaced
+   *       by a list of taxon.taxon_ids for filtering to the entire list.
+   *     * taxonIdsInSample - the value is used as a sample_id which is used
+   *       to look up a list of taxa. The value is replaced by a list of
+   *       taxon.taxon_ids for filtering to the entire list.
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.
    */
   protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
+    self::checkOptions('urlParams', $options, [], ['fieldFilters']);
     $options = array_merge([
-      'taxon_scratchpad_list_id' => TRUE,
       'fieldFilters' => [
-        'taxa_taxon_list_id' => [
-          'name' => 'taxon.higher_taxon_ids',
-          'type' => 'integer',
-          'process' => 'taxonScratchpad',
+        'taxa_in_scratchpad_list_id' => [
+          [
+            'name' => 'taxon.higher_taxon_ids',
+            'type' => 'integer',
+            'process' => 'taxonIdsInScratchpad',
+          ],
+        ],
+        // For legacy configurations
+        'taxon_scratchpad_list_id' => [
+          [
+            'name' => 'taxon.higher_taxon_ids',
+            'type' => 'integer',
+            'process' => 'taxonIdsInScratchpad',
+          ],
         ],
         'sample_id' => [
-          'name' => 'event.event_id',
-          'type' => 'integer',
+          [
+            'name' => 'event.event_id',
+            'type' => 'integer',
+          ],
+        ],
+        'taxa_in_sample_id' => [
+          [
+            // Use accepted taxon ID so this is not a hierarchical query.
+            'name' => 'taxon.accepted_taxon_id',
+            'type' => 'integer',
+            'process' => 'taxonIdsInSample',
+          ],
         ],
       ],
       // Other options, e.g. group_id or field params may be added in future.
     ], $options);
     $r = '';
-    foreach ($options['fieldFilters'] as $field => $esField) {
+    foreach ($options['fieldFilters'] as $field => $esFieldList) {
       if (!empty($_GET[$field])) {
-        $value = trim($_GET[$field]);
-        if ($esField['type'] === 'integer') {
-          if (!preg_match('/^\d+$/', $value)) {
-            // Disable this filter.
-            $value = '-1';
-            hostsite_show_message(
-              "Data cannot be loaded because the value in the $field parameter is invalid",
-              'warning'
-            );
+        foreach ($esFieldList as $esField) {
+          $value = trim($_GET[$field]);
+          if ($esField['type'] === 'integer') {
+            if (!preg_match('/^\d+$/', $value)) {
+              // Disable this filter.
+              $value = '-1';
+              hostsite_show_message(
+                "Data cannot be loaded because the value in the $field parameter is invalid",
+                'warning'
+              );
+            }
           }
-        }
-        $queryType = 'term';
-        // Special processing for a taxon scratchpad ID.
-        if (isset($esField['process']) && $esField['process'] === 'taxonScratchpad') {
-          // Load the scratchpad's list of taxa.
-          iform_load_helpers(['report_helper']);
-          $listEntries = report_helper::get_report_data([
-            'dataSource' => 'library/taxa/external_keys_for_scratchpad',
-            'readAuth' => $auth['read'],
-            'extraParams' => ['scratchpad_list_id' => $value],
-          ]);
-          // Build a hidden input which causes filtering to this list.
-          $keys = [];
-          foreach ($listEntries as $row) {
-            $keys[] = $row['external_key'];
+          $queryType = 'term';
+          // Special processing for a taxon scratchpad ID.
+          if (isset($esField['process'])) {
+            if ($esField['process'] === 'taxonIdsInScratchpad') {
+              $value = self::convertValueToFilterList(
+                'library/taxa/external_keys_for_scratchpad',
+                ['scratchpad_list_id' => $value],
+                'external_key',
+                $auth
+              );
+            }
+            elseif ($esField['process'] === 'taxonIdsInSample') {
+              $value = self::convertValueToFilterList(
+                'library/taxa/external_keys_for_sample',
+                ['sample_id' => $value],
+                'external_key',
+                $auth
+              );
+            }
+            $queryType = 'terms';
           }
-          $value = str_replace('"', '&quot;', json_encode($keys));
-          $queryType = 'terms';
-        }
-        $r .= <<<HTML
+          $r .= <<<HTML
 <input type="hidden" class="es-filter-param" value="$value"
   data-es-bool-clause="must" data-es-field="$esField[name]" data-es-query-type="$queryType" />
 
 HTML;
+        }
       }
     }
-
     return $r;
+  }
+
+  /**
+   * Uses an Indicia report to convert a URL param to a list of filter values.
+   *
+   * For example, converts a scratchpad list ID to the list of taxa in the
+   * scratchpad list.
+   *
+   * @param string $report
+   *   Report path.
+   * @param array $params
+   *   List of parameters to pass to the report.
+   * @param string $outputField
+   *   Name of the field output by the report to build the list from.
+   * @param array $auth
+   *   Authorisation tokens.
+   *
+   * @return string
+   *   List for placing in the url param's hidden input attribute.
+   */
+  private static function convertValueToFilterList($report, array $params, $outputField, array $auth) {
+    // Load the scratchpad's list of taxa.
+    iform_load_helpers(['report_helper']);
+    $listEntries = report_helper::get_report_data([
+      'dataSource' => $report,
+      'readAuth' => $auth['read'],
+      'extraParams' => $params,
+    ]);
+    // Build a hidden input which causes filtering to this list.
+    $keys = [];
+    foreach ($listEntries as $row) {
+      $keys[] = $row[$outputField];
+    }
+    return str_replace('"', '&quot;', json_encode($keys));
   }
 
   /**
