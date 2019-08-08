@@ -986,11 +986,15 @@ HTML;
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * Currently only supports taxon scratchpad list filtering.
+   * Currently only supports taxon scratchpad list and sample_id filtering
+   * though additional filters can be configured via the @fieldFilters option.
    *
    * Options can include:
-   * * @taxon_scratchpad_list_id - set to false to disable filtering species by
-   *   a provided scratchpad list ID.
+   * * @fieldFilters - use this option to override the list of simple mappings
+   *   from URL parameters to Elasticsearch index fields. Pass an array keyed
+   *   by the URL parameter name to accept, where the value is an array
+   *   containing 'name' (Elasticsearch field name) and 'type'. If type is
+   *   set to integer then validates that the field supplied is an integer.
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.
@@ -998,36 +1002,59 @@ HTML;
   protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
     $options = array_merge([
       'taxon_scratchpad_list_id' => TRUE,
+      'fieldFilters' => [
+        'taxa_taxon_list_id' => [
+          'name' => 'taxon.higher_taxon_ids',
+          'type' => 'integer',
+          'process' => 'taxonScratchpad',
+        ],
+        'sample_id' => [
+          'name' => 'event.event_id',
+          'type' => 'integer',
+        ],
+      ],
       // Other options, e.g. group_id or field params may be added in future.
     ], $options);
     $r = '';
-    if (!empty($options['taxon_scratchpad_list_id']) && !empty($_GET['taxon_scratchpad_list_id'])) {
-      // Check the parameter is valid.
-      $taxonScratchpadListId = $_GET['taxon_scratchpad_list_id'];
-      if (!preg_match('/^\d+$/', $taxonScratchpadListId)) {
-        hostsite_show_message(
-          lang::get('The taxon_scratchpad_list_id parameter should be a whole number which is the ID of a scratchpad list.'),
-          'warning'
-        );
-      }
-      // Load the scratchpad's list of taxa.
-      iform_load_helpers(['report_helper']);
-      $listEntries = report_helper::get_report_data([
-        'dataSource' => 'library/taxa/external_keys_for_scratchpad',
-        'readAuth' => $auth['read'],
-        'extraParams' => ['scratchpad_list_id' => $taxonScratchpadListId],
-      ]);
-      // Build a hidden input which causes filtering to this list.
-      $keys = [];
-      foreach ($listEntries as $row) {
-        $keys[] = $row['external_key'];
-      }
-      $keyJson = str_replace('"', '&quot;', json_encode($keys));
-      $r .= <<<HTML
-<input type="hidden" class="es-filter-param" value="$keyJson"
-  data-es-bool-clause="must" data-es-field="taxon.higher_taxon_ids" data-es-query-type="terms" />
+    foreach ($options['fieldFilters'] as $field => $esField) {
+      if (!empty($_GET[$field])) {
+        $value = trim($_GET[$field]);
+        if ($esField['type'] === 'integer') {
+          if (!preg_match('/^\d+$/', $value)) {
+            // Disable this filter.
+            $value = '-1';
+            hostsite_show_message(
+              "Data cannot be loaded because the value in the $field parameter is invalid",
+              'warning'
+            );
+          }
+        }
+        $queryType = 'term';
+        // Special processing for a taxon scratchpad ID.
+        if (isset($esField['process']) && $esField['process'] === 'taxonScratchpad') {
+          // Load the scratchpad's list of taxa.
+          iform_load_helpers(['report_helper']);
+          $listEntries = report_helper::get_report_data([
+            'dataSource' => 'library/taxa/external_keys_for_scratchpad',
+            'readAuth' => $auth['read'],
+            'extraParams' => ['scratchpad_list_id' => $value],
+          ]);
+          // Build a hidden input which causes filtering to this list.
+          $keys = [];
+          foreach ($listEntries as $row) {
+            $keys[] = $row['external_key'];
+          }
+          $value = str_replace('"', '&quot;', json_encode($keys));
+          $queryType = 'terms';
+        }
+        $r .= <<<HTML
+<input type="hidden" class="es-filter-param" value="$value"
+  data-es-bool-clause="must" data-es-field="$esField[name]" data-es-query-type="$queryType" />
+
 HTML;
+      }
     }
+
     return $r;
   }
 
