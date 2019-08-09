@@ -1366,12 +1366,21 @@ TD;
       $mappingsAndSettings['mappings']=$adjustedAutomaticMappings;
     }
     //Collect mappings from a designated array in the post if available
-    if (!empty($_POST['mapping']))
+    if (!empty($_POST['mapping'])) {
       $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST['mapping']);
+    }
     //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
-    if (isset($_POST['setting']))
-      $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST);
+    if (isset($_POST['setting'])) {
+      // Ensure mappings are in the same order as the column headings.
+      $handle = fopen($_SESSION['uploaded_file'], "r");
+      $columns = fgetcsv($handle, 1000, ",");
+      foreach($columns as $column) {
+        if (isset($_POST[str_replace(" ", "_", $column)])) {
+          $mappingsAndSettings['mappings'][$column] = $_POST[str_replace(" ", "_", $column)];
+        }
+      }
+    }
     //The mappings should simply be the mappings, so remove any mappings or settings sub-arrays if these have become jumbled
     //up inside our mappings array
     if (!empty($mappingsAndSettings['mappings']['mapping']))
