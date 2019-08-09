@@ -422,11 +422,11 @@ JS;
       $replacements["{{ $field }}"] = $value;
     }
     foreach ($fields as $field) {
-      if (!empty($options[$field])) {
+      if (!empty($options[$field]) && is_string($options[$field])) {
         $options[$field] = str_replace(array_keys($replacements), array_values($replacements), $options[$field]);
-      }
-      if (in_array($field, $jsonFields)) {
-        $options[$field] = json_decode($options[$field]);
+        if (in_array($field, $jsonFields)) {
+          $options[$field] = json_decode($options[$field]);
+        }
       }
     }
   }
