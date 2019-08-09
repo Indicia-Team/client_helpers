@@ -1333,6 +1333,36 @@ TD;
       return $mappingsAndSettings;
   }
 
+  /**
+   * Clean and sort the mappings.
+   *
+   * Column mappings must be in the same order as the import file, so sort
+   * according to the columns in the file and discard any not in the file.
+   *
+   * @param array $mappings
+   *   Existing column mappings.
+   *
+   * @return array
+   *   Sorted and cleaned mappings.
+   */
+  private static function cleanMappings(array $mappings) {
+    if (empty($mappings)) {
+      return $mappings;
+    }
+    $correcedMappings = [];
+    // Ensure mappings are clean and in the same order as the column headings.
+    $handle = fopen($_SESSION['uploaded_file'], "r");
+    $columns = fgetcsv($handle, 1000, ",");
+    fclose($handle);
+    foreach($columns as $column) {
+      $internalColumn = str_replace(" ", "_", $column);
+      if (isset($mappings[$internalColumn])) {
+        $correcedMappings[$internalColumn] = $mappings[$internalColumn];
+      }
+    }
+    return $correcedMappings;
+  }
+
   //Collect the mappings and settings from various places depending on importer mode, wizard stage.
   //These can be held in variables, option variable, or the post. Collect as appropriate
   private static function get_mappings_and_settings($options) {
@@ -1372,15 +1402,9 @@ TD;
     //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
     if (isset($_POST['setting'])) {
-      // Ensure mappings are in the same order as the column headings.
-      $handle = fopen($_SESSION['uploaded_file'], "r");
-      $columns = fgetcsv($handle, 1000, ",");
-      foreach($columns as $column) {
-        if (isset($_POST[str_replace(" ", "_", $column)])) {
-          $mappingsAndSettings['mappings'][$column] = $_POST[str_replace(" ", "_", $column)];
-        }
-      }
+      $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST);
     }
+    $mappingsAndSettings['mappings'] = self::cleanMappings($mappingsAndSettings['mappings']);
     //The mappings should simply be the mappings, so remove any mappings or settings sub-arrays if these have become jumbled
     //up inside our mappings array
     if (!empty($mappingsAndSettings['mappings']['mapping']))
