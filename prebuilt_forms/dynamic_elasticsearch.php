@@ -1019,26 +1019,7 @@ HTML;
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * By default, the following filter parameters are supported:
-   * * taxa_taxo
-   * Additional filters can be configured via the @fieldFilters option.
-   *
-   * Options can include:
-   * * @fieldFilters - use this option to override the list of simple mappings
-   *   from URL parameters to Elasticsearch index fields. Pass an array keyed
-   *   by the URL parameter name to accept, where the value is an array of
-   *   configuration items where each item defines how that parameter is to be
-   *   interpreted. Each configuration item has the following data values:
-   *   * name - Elasticsearch field name to filter
-   *   * type - optional. If set to integer then validates that the field
-   *     supplied is an integer.
-   *   * process - optional. possible values are:
-   *     * taxonIdsInScratchpad - the value is used as a scratchpad_list_id
-   *       which is used to look up a list of taxa. The value is replaced
-   *       by a list of taxon.taxon_ids for filtering to the entire list.
-   *     * taxonIdsInSample - the value is used as a sample_id which is used
-   *       to look up a list of taxa. The value is replaced by a list of
-   *       taxon.taxon_ids for filtering to the entire list.
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[urlParams]
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.
