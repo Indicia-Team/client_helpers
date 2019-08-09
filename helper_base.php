@@ -171,35 +171,6 @@ $indicia_templates = array(
     '<input type="hidden" name="{mainEntity}:insert_captions_to_create" value="{table}" />',
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
-  'linked_list_javascript' => '
-{fn} = function() {
-var placeHolder=" Loading... ";
-  $("#{escapedId}").addClass("ui-state-disabled").html("<option>"+placeHolder+"</option>");
-  if ($(this).val() != placeHolder) { // skip loading for placeholder text
-    $.getJSON("{request}&{query}", function(data){
-      var $control = $("#{escapedId}"), selected;
-      $control.html("");
-      if (data.length>0) {
-        $control.removeClass("ui-state-disabled");
-        if (data.length>1) {
-          $control.append("<option>&lt;Please select&gt;</option>");
-        }
-        $.each(data, function(i) {
-          selected = typeof indiciaData["default{escapedId}"]!=="undefined" && indiciaData["default{escapedId}"]==this.{valueField} ? \'" selected="selected\' : "";
-          $control.append("<option value=\"" + this.{valueField} + selected + "\">" + this.{captionField} + "</option>");
-        });
-      } else {
-        $control.html("<option>{instruct}</option>");
-      }
-      $control.change();
-    });
-  }
-};
-$("#{parentControlId}").bind("change.indicia", {fn});
-if ($("#{escapedId} option").length===0) {
-  $("#{parentControlId}").trigger("change.indicia");
-}'."\n",
-
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
         'onblur="javascript:indiciaFns.decodePostcode(\'{linkedAddressBoxId}\');" />'."\n",
   'sref_textbox' => '<input type="text" id="{id}" name="{fieldname}" {class} {disabled} value="{default}" />' .
@@ -393,6 +364,13 @@ class helper_base {
    * site template includes JQuery set $dumped_resources[]='jquery'.
    */
   public static $dumped_resources=array();
+
+  /**
+   * Data to be added to the indiciaData JavaScript variable.
+   *
+   * @var array
+   */
+  public static $indiciaData = [];
 
   /**
    * @var string JavaScript text to be emitted after the data entry form. Each control that
@@ -910,6 +888,7 @@ JS;
           'deps' => [
             'font_awesome',
             'indiciaFootableReport',
+            'jquery_cookie',
           ],
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
@@ -1374,6 +1353,7 @@ JS;
         $extraItems = explode(',', implode(':', array_slice($popOpts, 4)));
         foreach ($extraItems as $extraItem) {
           $extraItem = explode('=', $extraItem);
+          self::replacePopulationCallParamValueTags($options['extraParams'], $extraItem);
           $extras[$extraItem[0]] = $extraItem[1];
         }
       }
@@ -1449,6 +1429,33 @@ JS;
       }
     }
     return $r;
+  }
+
+  /**
+   * Allows the user to provide params in a population_call lookup.
+   *
+   * If the population_call param uses a same parameter as the main report,
+   * then we need to swap it out. Before we do this we test that the
+   * population_call param needs replacing and isn't just a simple value (i.e.
+   * it has a # symbol at either end like #survey_id# - this works in same
+   * way as replacements in the main report).
+   *
+   * @param $extraParams
+   *   Associative array of params and values provided to main report.
+   * @param $extraItem array
+   *  Single item array containing the population_call param we are working on
+   *  and its value replacement tag. The value will be modified if a matching
+   *  report parameter is available.
+   *
+   * @return array
+   *   Single item array containing the population_call param we are working on
+   *   and its value after replacement.
+   */
+  private static function replacePopulationCallParamValueTags(array $extraParams, array &$extraItem) {
+    if (preg_match('/^#(?P<param>.*)#$/', $extraItem[1], $matches)
+        && array_key_exists($matches['param'], $extraParams)) {
+      $extraItem[1] = $extraParams[$matches['param']];
+    }
   }
 
   /**
@@ -1760,12 +1767,41 @@ JS;
     // Jquery validation js has to be added at this late stage, because only then do we know all the messages required.
     self::setup_jquery_validation_js();
     $dump = self::internal_dump_resources(self::$required_resources);
+    $dump .= self::getIndiciaData();
     $dump .= self::get_scripts(self::$javascript, self::$late_javascript, self::$onload_javascript, true, $closure);
     // ensure scripted JS does not output again if recalled.
     self::$javascript = "";
     self::$late_javascript = "";
     self::$onload_javascript = "";
     return $dump;
+  }
+
+  /**
+   * Retreives JavaScript required to initialise indiciaData.
+   *
+   * Builds JavaScript to initialise an object containing any data added to
+   * self::$indiciaData
+   *
+   * @return string
+   *   JavaScript.
+   */
+  public static function getIndiciaData() {
+    $r = [];
+    if (count(self::$indiciaData) > 0) {
+      foreach (self::$indiciaData as $key => $data) {
+        if (is_array($data)) {
+          $value = json_encode($data);
+        } elseif (is_string($data)) {
+          $data = str_replace("'", "\\'", $data);
+          $value = "'$data'";
+        } else {
+          $value = $data;
+        }
+        $r[] = "indiciaData.$key = $value;";
+      }
+      return implode("\n", $r);
+    }
+    return '';
   }
 
   /**
@@ -2505,7 +2541,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $cacheTimeOut = self::getCacheTimeOut($options);
       $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
       if ($options['caching'] !== 'store') {
-      	$response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
+        $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response !== FALSE)
           $cacheLoaded = TRUE;
       }
@@ -2635,7 +2671,11 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $wantToCache = $timeout !== false;
     $haveFile = $file && is_file($file);
     $fresh = $haveFile && filemtime($file) >= (time() - $timeout);
-    $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
+    if ($haveFile && filemtime($file) < (time() - $timeout * 3)) {
+      $randomSurvival = FALSE;
+    } else {
+      $randomSurvival = $random && (rand(1, self::$cache_chance_refresh_file) !== 1);
+    }
     if ($wantToCache && $haveFile && ($fresh || $randomSurvival)) {
       $response = array();
       $handle = fopen($file, 'rb');

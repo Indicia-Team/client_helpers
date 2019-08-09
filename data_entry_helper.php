@@ -956,117 +956,94 @@ JS;
 
   /**
    * Outputs a file upload control suitable for linking images to records.
-   * The control allows selection of multiple files, and depending on the browser functionality it gives progress feedback.
-   * The control uses Silverlight, Flash or HTML5 to enhance the functionality where available. The output of the control
-   * can be configured by changing the content of the templates called file_box, file_box_initial_file_info,
+   *
+   * The control allows selection of multiple files, and depending on the
+   * browser functionality it gives progress feedback. The control uses
+   * Silverlight, Flash or HTML5 to enhance the functionality where available.
+   * The output of the control can be configured by changing the content of the
+   * templates called file_box, file_box_initial_file_info,
    * file_box_uploaded_image and button.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>table</b><br/>
-   * Name of the image table to upload images into, e.g. occurrence_medium, location_medium, sample_medium or taxon_medium.
-   * Defaults to occurrence_medium.
-   * </li>
-   * <li><b>loadExistingRecordKey</b><br/>
-   * Optional prefix for the information in the data_entry_helper::$entity_to_load to use for loading any existing images.
-   * Defaults to use the table option.
-   * </li>
-   * <li><b>id</b><br/>
-   * Optional. Provide a unique identifier for this image uploader control if more than one are required on the page.
-   * </li>
-   * <li><b>SubType</b><br/>
-   * Optional. The name of the image sub-type to limit the file box to e.g. Image:Local:Sketch
-   * </li>
-   * <li><b>caption</b><br/>
-   * Caption to display at the top of the uploader box. Defaults to the translated string for "Files".
-   * </li>
-   * <li><b>uploadSelectBtnCaption</b><br/>
-   * Set this to override the caption for the button for selecting files to upload.
-   * </li>
-   * <li><b>uploadStartBtnCaption</b><br/>
-   * Set this to override the caption for the start upload button, which is only visible if autoUpload is false.
-   * </li>
-   * <li><b>useFancybox</b><br/>
-   * Defaults to true. If true, then image previews use the Fancybox plugin to display a "lightbox" effect when clicked on.
-   * </li>
-   * <li><b>imageWidth</b><br/>
-   * Defaults to 200. Number of pixels wide the image previews should be.
-   * </li>
-   * <li><b>resizeWidth</b><br/>
-   * If set, then the file will be resized before upload using this as the maximum pixels width.
-   * </li>
-   * <li><b>resizeHeight</b><br/>
-   * If set, then the file will be resized before upload using this as the maximum pixels height.
-   * </li>
-   * <li><b>resizeQuality</b><br/>
-   * Defines the quality of the resize operation (from 1 to 100). Has no effect unless either resizeWidth or resizeHeight are non-zero.
-   * </li>
-   * <li><b>upload</b><br/>
-   * Boolean, defaults to true.
-   * </li>
-   * <li><b>maxFileCount</b><br/>
-   * Maximum number of files to allow upload for. Defaults to 4. Set to false to allow unlimited files.
-   * </li>
-   * <li><b>maxUploadSize</b><br/>
-   * Maximum file size to allow in bytes. This limits file selection. PHP settings on
-   * server may limit upload.
-   * </li>
-   * <li><b>autoupload</b><br/>
-   * Defaults to true. If false, then a button is displayed which the user must click to initiate upload of the files
-   * currently in the queue.
-   * </li>
-   * <li><b>msgUploadError</b><br/>
-   * Use this to override the message displayed for a generic file upload error.
-   * </li>
-   * <li><b>msgFileTooBig</b><br/>
-   * Use this to override the message displayed when the file is larger than the size limit allowed on the Warehouse.
-   * </li>
-   * <li><b>msgTooManyFiles</b><br/>
-   * Use this to override the message displayed when attempting to upload more files than the maxFileCount allows. Use a
-   * replacement string [0] to specify the maxFileCount value.
-   * </li>
-   * <li><b>uploadScript</b><br/>
-   * Specify the script used to handle image uploads on the server (relative to the client_helpers folder). You should not
-   * normally need to change this. Defaults to upload.php.
-   * </li>
-   * <li><b>runtimes</b><br/>
-   * Array of runtimes that the file upload component will use in order of priority. Defaults to
-   * array('html5','flash','silverlight','html4'), though flash is removed for Internet Explorer 6. You
-   * should not normally need to change this.
-   * </li>
-   * <li><b>codeGenerated</b>
-   * If set to all (default), then this returns the HTML required and also inserts JavaScript in the document onload event. However, if you
-   * need to delay the loading of the control until a certain event, e.g. when a radio button is checked, then this can be set
-   * to php to return just the php and ignore the JavaScript, or js to return the JavaScript instead of inserting it into
-   * document onload, in which case the php is ignored. this allows you to attach the JavaScript to any event you need to.
-   * </li>
-   * <li><b>tabDiv</b><br/>
-   * If loading this control onto a set of tabs, specify the tab control's div ID here. This allows the control to
-   * automatically generate code which only generates the uploader when the tab is shown, reducing problems in certain
-   * runtimes. This has no effect if codeGenerated is not left to the default state of all.
-   * </li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>file_box</b></br>
-   * Outputs the HTML container which will contain the upload button and images.
-   * </li>
-   * <li><b>file_box_initial_file_info</b></br>
-   * HTML which provides the outer container for each displayed image, including the header and
-   * remove file button. Has an element with class set to media-wrapper into which images
-   * themselves will be inserted.
-   * </li>
-   * <li><b>file_box_uploaded_image</b></br>
-   * Template for the HTML for each uploaded image, including the image, caption input
-   * and hidden inputs to define the link to the database. Will be inserted into the
-   * file_box_initial_file_info template's media-wrapper element.
-   * </li>
-   * <li><b>button</b></br>
-   * Template for the buttons used.
-   * </li>
-   * <li><b>readAuth</b><br/>
-   * Optional. Read authentication tokens for the Indicia warehouse if using the
-   * add_link_popup.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * table - Name of the image table to upload images into, e.g.
+   *     occurrence_medium, location_medium, sample_medium or taxon_medium.
+   *     Defaults to occurrence_medium.
+   *   * loadExistingRecordKey -  Optional prefix for the information in the
+   *     data_entry_helper::$entity_to_load to use for loading any existing
+   *     images. Defaults to use the table option.
+   *   * id - Optional. Provide a unique identifier for this image uploader
+   *     control if more than one are required on the page.
+   *   * subType - Optional. The name of the image sub-type to limit the file
+   *     box to e.g. Image:Local:Sketch
+   *   * caption - Caption to display at the top of the uploader box. Defaults
+   *     to the translated string for "Files".
+   *   * uploadSelectBtnCaption - Set this to override the caption for the
+   *     button for selecting files to upload.
+   *   * uploadStartBtnCaption - Set this to override the caption for the start
+   *     upload button, which is only visible if autoUpload is false.
+   *   * useFancybox - Defaults to true. If true, then image previews use the
+   *     Fancybox plugin to display a "lightbox" effect when clicked on.
+   *   * imageWidth - Defaults to 200. Number of pixels wide the image previews
+   *     should be.
+   *   * resizeWidth - If set, then the file will be resized before upload
+   *     using this as the maximum pixels width.
+   *   * resizeHeight - If set, then the file will be resized before upload
+   *     using this as the maximum pixels height.
+   *   * resizeQuality - Defines the quality of the resize operation (from 1 to
+   *     100). Has no effect unless either resizeWidth or resizeHeight are
+   *     non-zero.
+   *   * upload - Boolean, defaults to true.
+   *   * maxFileCount - Maximum number of files to allow upload for. Defaults
+   *     to 4. Set to false to allow unlimited files.
+   *   * maxUploadSize - Maximum file size to allow in bytes. This limits file
+   *     selection. PHP settings on server may limit upload.
+   *   * autoupload - Defaults to true. If false, then a button is displayed
+   *     which the user must click to initiate upload of the files currently in
+   *     the queue.
+   *   * msgUploadError - Use this to override the message displayed for a
+   *     generic file upload error.
+   *   * msgFileTooBig - Use this to override the message displayed when the
+   *     file is larger than the size limit allowed on the Warehouse.
+   *   * msgTooManyFiles - Use this to override the message displayed when
+   *     attempting to upload more files than the maxFileCount allows. Use a
+   *     replacement string [0] to specify the maxFileCount value.
+   *   * uploadScript - Specify the script used to handle image uploads on the
+   *     server (relative to the client_helpers folder). You should not
+   *     normally need to change this. Defaults to upload.php.
+   *   * runtimes - Array of runtimes that the file upload component will use
+   *     in order of priority. Defaults to `['html5', 'flash', 'silverlight',
+   *     'html4']`, though flash is removed for Internet Explorer 6. You should
+   *     not normally need to change this.
+   *   * codeGenerated - If set to all (default), then this returns the HTML
+   *     required and also inserts JavaScript in the document onload event.
+   *     However, if you need to delay the loading of the control until a
+   *     certain event, e.g. when a radio button is checked, then this can be
+   *     set to php to return just the php and ignore the JavaScript, or js to
+   *     return the JavaScript instead of inserting it into document onload, in
+   *     which case the php is ignored. this allows you to attach the
+   *     JavaScript to any event you need to.
+   *   * tabDiv - If loading this control onto a set of tabs, specify the tab
+   *     control's div ID here. This allows the control to automatically
+   *     generate code which only generates the uploader when the tab is shown,
+   *     reducing problems in certain runtimes. This has no effect if
+   *     codeGenerated is not left to the default state of all.
+   *
+   *   The output of this control can be configured using the following
+   *   templates:
+   *   * file_box - Outputs the HTML container which will contain the upload
+   *     button and images.
+   *   * file_box_initial_file_info - HTML which provides the outer container
+   *     for each displayed image, including the header and remove file button.
+   *     Has an element with class set to media-wrapper into which images
+   *     themselves will be inserted.
+   *   * file_box_uploaded_image - Template for the HTML for each uploaded
+   *     image, including the image, caption input and hidden inputs to define
+   *     the link to the database. Will be inserted into the
+   *     file_box_initial_file_info template's media-wrapper element.
+   *   * button - Template for the buttons used.
+   *   * readAuth - Optional. Read authentication tokens for the Indicia warehouse if using the
+   *     add_link_popup.
    *
    * @todo select file button pointer overriden by the flash shim
    * @todo if using a normal file input, after validation, the input needs to show that the file upload has worked.
@@ -1074,9 +1051,12 @@ JS;
    */
   public static function file_box($options) {
     global $indicia_templates;
-    // If a subType option is supplied, it means we only want to load a particular media type, not just any old media associated with the sample
-    if (!empty($options['subType']))
+    // If a subType option is supplied, it means we only want to load a
+    // particular media type, not just any old media associated with the
+    // sample.
+    if (!empty($options['subType'])) {
       self::$upload_file_types[$options['subType']] = self::$upload_file_types['image'];
+    }
     // Allow options to be defaulted and overridden
     $protocol = empty($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off' ? 'http' : 'https';
     $defaults = array(
@@ -1111,22 +1091,22 @@ JS;
       'msgUseAddFileBtn' => lang::get('Use the Add file button to select a file from your local disk. Files of type {1} are allowed.'),
       'msgUseAddLinkBtn' => lang::get('Use the Add link button to add a link to information stored elsewhere on the internet. You can enter links from {1}.')
     );
-    $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes']===array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
+    $defaults['caption'] = (!isset($options['mediaTypes']) || $options['mediaTypes'] ===  array('Image:Local')) ? lang::get('Photos') : lang::get('Media files');
     if (isset(self::$final_image_folder_thumbs)) {
       $defaults['finalImageFolderThumbs'] = self::getRootFolder() . self::client_helper_path() . self::$final_image_folder_thumbs;
     }
     $browser = self::get_browser_info();
-    // Flash doesn't seem to work on IE6.
-    if ($browser['name']=='msie' && $browser['version']<7)
-      $defaults['runtimes'] = array_diff($defaults['runtimes'], array('flash'));
-    if ($indicia_templates['file_box']!='')
+    if ($indicia_templates['file_box'] !== '') {
       $defaults['file_boxTemplate'] = $indicia_templates['file_box'];
-    if ($indicia_templates['file_box_initial_file_info']!='')
+    }
+    if ($indicia_templates['file_box_initial_file_info'] !== '') {
       $defaults['file_box_initial_file_infoTemplate'] = $indicia_templates['file_box_initial_file_info'];
-    if ($indicia_templates['file_box_uploaded_image']!='')
+    }
+    if ($indicia_templates['file_box_uploaded_image'] !== '') {
       $defaults['file_box_uploaded_imageTemplate'] = $indicia_templates['file_box_uploaded_image'];
+    }
     $options = array_merge($defaults, $options);
-    $options['id'] = $options['table'] .'-'. $options['id'];
+    $options['id'] = "$options[table]-$options[id]";
     $containerId = 'container-'.$options['id'];
 
     if ($options['codeGenerated']!='php') {
@@ -1609,31 +1589,32 @@ JS;
   }
 
   /**
-   * A control for building JSON strings, based on http://robla.net/jsonwidget/. Dynamically
-   * generates an input form for the JSON depending on a defined schema. This control
-   * is not normally used for typical Indicia forms, but is used by the prebuilt
-   * forms parameter entry forms for complex parameter structures such as the options
+   * JSON form parameters input control.
+   *
+   * Based on http://robla.net/jsonwidget/. Dynamically generates an input
+   * form for the JSON depending on a defined schema. This control is not
+   * normally used for typical Indicia forms, but is used by the prebuilt forms
+   * parameter entry forms for complex parameter structures such as the options
    * available for a chart.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * The name of the database or form parameter field this control is bound to, e.g. series_options.</li>
-   * <li><b>if</b>
-   * The HTML id of the output div.</li>
-   * <li><b>schema</b>
-   * Must be supplied with a schema string that defines the allowable structure of the JSON output. Schemas can be
-   * automatically built using the schema generator at
-   * http://robla.net/jsonwidget/example.php?sample=byexample&user=normal.</li>
-   * <li><b>class</b>
-   * Additional css class names to include on the outer div.</li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>jsonwidget</b></br>
-   * HTML template for outer container. The inner content is not templatable since it is created by the
-   * JavaScript control code.
-   * </li></ul>
-   * @return HTML string to insert in the form.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - The name of the database or form parameter field this
+   *     control is bound to, e.g. series_options.
+   *   * id - The HTML id of the output div.
+   *   * schema - Must be supplied with a schema string that defines the
+   *     allowable structure of the JSON output. Schemas can be automatically
+   *     built using the schema generator at
+   *     http://robla.net/jsonwidget/example.php?sample=byexample&user=normal.
+   *   * class - Additional css class names to include on the outer div.
+   *
+   * The output of this control can be configured using the following
+   * templates:
+   * * jsonwidget - HTML template for outer container. The inner content is
+   *   not templatable since it is created by the JavaScript control code.
+   *
+   * @return string
+   *   HTML string to insert in the form.
    */
   public static function jsonwidget($options) {
     $options = array_merge(array(
@@ -1880,88 +1861,88 @@ JS;
 
   /**
    * An HTML list box control.
-   * Options can be either populated from a web-service call to the Warehouse, e.g. the contents of
-   * a termlist, or can be populated from a fixed supplied array. The list box can
-   * be linked to populate itself when an item is selected in another control by specifying the
-   * parentControlId and filterField options.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>listbox</b></br>
-   * HTML template used to generate the select element.
-   * </li>
-   * <li><b>listbox_item</b></br>
-   * HTML template used to generate each option element with the select element.
-   * </li>
-   * </ul>
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>table</b><br/>
-   * Table name to get data from for the select options if the select is being populated by a service call.</li>
-   * <li><b>captionField</b><br/>
-   * Field to draw values to show in the control from if the select is being populated by a service call.</li>
-   * <li><b>valueField</b><br/>
-   * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
-   * to the value of captionField.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array if the select is being populated by a service call.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the select is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.
-   * </li>
-   * <li><b>size</b><br/>
-   * Optional. Number of lines to display in the listbox. Defaults to 3.</li>
-   * <li><b>multiselect</b><br/>
-   * Optional. Allow multi-select in the list box. Defaults to false.</li>
-   * <li><b>parentControlId</b><br/>
-   * Optional. Specifies a parent control for linked lists. If specified then this control is not
-   * populated until the parent control's value is set. The parent control's value is used to
-   * filter this control's options against the field specified by filterField.</li>
-   * <li><b>parentControlLabel</b><br/>
-   * Optional. Specifies the label of the parent control in a set of linked lists. This allows the child list
-   * to display information about selecting the parent first.</li>
-   * <li><b>filterField</b><br/>
-   * Optional. Specifies the field to filter this control's content against when using a parent
-   * control value to set up linked lists. Defaults to parent_id though this is not active
-   * unless a parentControlId is specified.</li>
-   * <li><b>filterIncludesNulls</b><br/>
-   * Optional. Defaults to false. If true, then null values for the filter field are included in the filter results
-   * when using a linked list.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>listCaptionSpecialChars</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies whether to run the caption through
-   * htmlspecialchars. In some cases there may be format info in the caption, and in others we may wish to keep those
-   * characters as literal.
-   * <li><b>selectedItemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li>
-   * <li><b>termImageSize</b><br/>
-   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
-   * output.</li>
-   * </ul>
+   * Options can be either populated from a web-service call to the Warehouse,
+   * e.g. the contents of a termlist, or can be populated from a fixed
+   * supplied array. The list box can be linked to populate itself when an item
+   * is selected in another control by specifying the parentControlId and
+   * filterField options.
+   *
+   * The output of this control can be configured using the following
+   * templates:
+   * * listbox - HTML template used to generate the select element.
+   * * listbox_item - HTML template used to generate each option element with
+   *   the select element.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Table name to get data from for the select options if the
+   *     select is being populated by a service call.
+   *   * captionField - Field to draw values to show in the control from if the
+   *     select is being populated by a service call.
+   *   * valueField - Field to draw values to return from the control from if
+   *     the select is being populated by a service call. Defaults to the value
+   *     of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array if the select is being populated by a service
+   *     call.
+   *   * lookupValues - If the select is to be populated with a fixed list of
+   *     values, rather than via a service call, then the values can be passed
+   *     passed into this parameter as an associated array of key=>caption.
+   *   * size - Optional. Number of lines to display in the listbox. Defaults
+   *     to 3.
+   *   * multiselect - Optional. Allow multi-select in the list box. Defaults
+   *     to false.
+   *   * parentControlId - Optional. Specifies a parent control for linked
+   *     lists. If specified then this control is not populated until the
+   *     parent control's value is set. The parent control's value is used to
+   *     filter this control's options against the field specified by
+   *     filterField.
+   *   * parentControlLabel - Optional. Specifies the label of the parent
+   *     control in a set of linked lists. This allows the child list to
+   *     display information about selecting the parent first.
+   *   * filterField - Optional. Specifies the field to filter this control's
+   *     content against when using a parent control value to set up linked
+   *     lists. Defaults to parent_id though this is not active unless a
+   *     parentControlId is specified.
+   *   * filterIncludesNulls - Optional. Defaults to false. If true, then null
+   *     values for the filter field are included in the filter results when
+   *     using a linked list.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value, if this is not specified
+   *     then 1 hour.
+   *   * template - Optional. If specified, specifies the name of the template
+   *     (in global $indicia_templates) to use for the outer control.
+   *   * itemTemplate - Optional. If specified, specifies the name of the
+   *     template (in global $indicia_templates) to use for each item in the
+   *     control.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
+   *   * listCaptionSpecialChars - Optional and only relevant when loading
+   *     content from a data service call. Specifies whether to run the caption
+   *     through htmlspecialchars. In some cases there may be format info in
+   *     the caption, and in others we may wish to keep those characters as
+   *     literal.
+   *   * selectedItemTemplate - Optional. If specified, specifies the name of
+   *     the template (in global $indicia_templates) to use for the selected
+   *     item in the control.
+   *   * termImageSize - Optional. Set to an Indicia image size preset
+   *     (normally  thumb, med or original) to include term images in the
+   *     output.
    *
    * @return string HTML to insert into the page for the listbox control.
    */
@@ -2342,90 +2323,91 @@ JS;
   }
 
   /**
-   * Helper function to generate a select control from a Indicia core service query. The select control can
-   * be linked to populate itself when an item is selected in another control by specifying the
-   * parentControlId and filterField options.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>select</b></br>
-   * HTML template used to generate the select element.
-   * </li>
-   * <li><b>select_item</b></br>
-   * HTML template used to generate each option element with the select elements.
-   * </li>
-   * </ul>
+   * Helper function to generate a select control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>  *
-   * <li><b>table</b><br/>
-   * Table name to get data from for the select options if the select is being populated by a service call.</li>
-   * <li><b>report</b><br/>
-   * Report name to get data from for the select options if the select is being populated by a service call using a report.
-   * Mutually exclusive with the table option.</li>
-   * <li><b>captionField</b><br/>
-   * Field to draw values to show in the control from if the select is being populated by a service call.</li>
-   * <li><b>valueField</b><br/>
-   * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
-   * to the value of captionField.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array if the select is being populated by a service call.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the select is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.
-   * </li>
-   * <li><b>parentControlId</b><br/>
-   * Optional. Specifies a parent control for linked lists. If specified then this control is not
-   * populated until the parent control's value is set. The parent control's value is used to
-   * filter this control's options against the field specified by filterField.</li>
-   * <li><b>parentControlLabel</b><br/>
-   * Optional. Specifies the label of the parent control in a set of linked lists. This allows the child list
-   * to display information about selecting the parent first.</li>
-   * <li><b>filterField</b><br/>
-   * Optional. Specifies the field to filter this control's content against when using a parent
-   * control value to set up linked lists. Defaults to parent_id though this is not active
-   * unless a parentControlId is specified.</li>
-   * <li><b>filterIncludesNulls</b><br/>
-   * Optional. Defaults to false. If true, then null values for the filter field are included in the filter results
-   * when using a linked list.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>blankText</b><br/>
-   * Optional. If specified then the first option in the drop down is the blank text, used when there is no value.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>listCaptionSpecialChars</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies whether to run the caption through
-   * htmlspecialchars. In some cases there may be format info in the caption, and in others we may wish to keep those
-   * characters as literal.
-   * <li><b>selectedItemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li>
-   * <li><b>termImageSize</b><br/>
-   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
-   * output.</li>
-   * </ul>
+   * The select control can be linked to populate itself when an item is
+   * selected in another control by specifying the parentControlId and
+   * filterField options.
    *
-   * @return string HTML code for a select control.
+   * The output of this control can be configured using the following
+   * templates:
+   * * select - HTML template used to generate the select element.
+   * * select_item - HTML template used to generate each option element with
+   * the select elements.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Table name to get data from for the select options if the
+   *     select is being populated by a service call.
+   *   * report - Report name to get data from for the select options if the
+   *     select is being populated by a service call using a report. Mutually
+   *     exclusive with the table option.
+   *   * captionField - Field to draw values to show in the control from if the
+   *     select is being populated by a service call.
+   *   * valueField - Field to draw values to return from the control from if
+   *     the select is being populated by a service call. Defaults to the value
+   *     of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array if the select is being populated by a service
+   *     call.
+   *   * lookupValues - If the select is to be populated with a fixed list of
+   *     values, rather than via a service call, then the values can be passed
+   *     into this parameter as an associated array of key => caption.
+   *   * parentControlId - Optional. Specifies a parent control for linked
+   *     lists. If specified then this control is not populated until the
+   *     parent control's value is set. The parent control's value is used to
+   *     filter this control's options against the field specified by
+   *     filterField.
+   *   * parentControlLabel - Optional. Specifies the label of the parent
+   *     control in a set of linked lists. This allows the child list to
+   *     display information about selecting the parent first.
+   *   * filterField - Optional. Specifies the field to filter this control's
+   *     content against when using a parent control value to set up linked
+   *     lists. Defaults to parent_id though this is not active unless a
+   *     parentControlId is specified.
+   *   * filterIncludesNulls - Optional. Defaults to false. If true, then null
+   *     values for the filter field are included in the filter results when
+   *     using a linked list.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value, if this is not specified
+   *     then 1 hour.
+   *   * blankText - Optional. If specified then the first option in the drop
+   *     down is the blank text, used when there is no value.
+   *   * template - Optional. If specified, specifies the name of the template
+   *     (in global $indicia_templates) to use for the outer control.
+   *   * itemTemplate - Optional. If specified, specifies the name of the
+   *     template (in global $indicia_templates) to use for each item in the
+   *     control.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
+   *   * listCaptionSpecialChars - Optional and only relevant when loading
+   *     content from a data service call. Specifies whether to run the caption
+   *     through htmlspecialchars. In some cases there may be format info in
+   *     the caption, and in others we may wish to keep those characters as
+   *     literal.
+   *   * selectedItemTemplate - Optional. If specified, specifies the name of
+   *     the template (in global $indicia_templates) to use for the selected
+   *     item in the control.
+   *   * termImageSize - Optional. Set to an Indicia image size preset
+   *     (normally thumb, med or original) to include term images in the
+   *     output.
+   *
+   * @return string
+   *   HTML code for a select control.
    */
   public static function select($options)
   {
@@ -5308,7 +5290,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'includeDeleteButton' => false,
       'controlWrapTemplate' => 'justControl'
     ), $options);
-    $options['class'] .= ' buttons';
+    $options['class'] .= ' buttons wizard-buttons';
     // Output the buttons
     $r = '<div class="'.$options['class'].'">';
     $buttonClass=$options['buttonClass'];
@@ -5716,17 +5698,19 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     global $indicia_templates;
     self::add_resource('json');
     $options = array_merge(array(
-      'filterField'=>'parent_id',
-      'size'=>3
+      'filterField' => 'parent_id',
+      'size' => 3,
+      'hideChildrenUntilLoaded' => FALSE,
     ), $options);
     if (array_key_exists('parentControlId', $options) && empty(data_entry_helper::$entity_to_load[$options['parentControlId']])) {
       // no options for now
       $options['items'] = '';
-      self::init_linked_lists($options);
+      self::initLinkedLists($options);
     } else {
-      if (array_key_exists('parentControlId', $options))
+      if (array_key_exists('parentControlId', $options)) {
         // still want linked lists, even though we will have some items initially populated
-        self::init_linked_lists($options);
+        self::initLinkedLists($options);
+      }
       $lookupItems = self::get_list_items_from_options($options, 'selected');
       $options['items'] = "";
       if (array_key_exists('blankText', $options)) {
@@ -5871,41 +5855,49 @@ HTML;
    *
    * @param array Options array of the child linked list.
    */
-  private static function init_linked_lists($options) {
+  private static function initLinkedLists($options) {
     global $indicia_templates;
     // setup JavaScript to do the population when the parent control changes
-    $parentControlId = str_replace(':','\\\\:',$options['parentControlId']);
-    $escapedId = str_replace(':','\\\\:',$options['id']);
+    $parentControlId = str_replace(':', '\\\\:', $options['parentControlId']);
+    $escapedId = str_replace(':','\\\\:', $options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
-      $request = "$url?report=".$options['report'].".xml&mode=json&reportSource=local&callback=?";
+      $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
       $query = $options['filterField'] . '="+$(this).val()+"';
     }
     else {
       $url = parent::getProxiedBaseUrl() . "index.php/services/data";
-      $request = "$url/".$options['table']."?mode=json&callback=?";
+      $request = "$url/$options[table]?mode=json&callback=?";
       $inArray = array('val');
       if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
         $inArray[] = null;
-      $query = urlencode(json_encode(array('in'=>array($options['filterField'], $inArray))));
-      $query = 'query=' . str_replace('%22val%22', '"+$(this).val()+"', $query);
+      $query = urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
     }
     if (isset($options['parentControlLabel']))
-      $instruct = str_replace('{0}', $options['parentControlLabel'], lang::get('Please select a {0} first'));
+      $instruct = lang::get('Please select a {1} first', $options['parentControlLabel']);
     else
       $instruct = lang::get('Awaiting selection...');
     if (array_key_exists('extraParams', $options)) {
-      $request .= '&'.self::array_to_query_string($options['extraParams']);
+      $request .= '&' . http_build_query($options['extraParams']);
     }
     // store default in JavaScript so we can load the correct value after AJAX population.
     if (!empty($options['default']) && preg_match('/^[0-9]+$/', $options['default']))
       self::$javascript .= "indiciaData['default$escapedId']=$options[default];\n";
-    self::$javascript .= str_replace(
-      array('{fn}','{escapedId}','{request}','{query}','{valueField}','{captionField}','{filterField}','{parentControlId}', '{instruct}'),
-      array($fn, $escapedId, $request,$query,$options['valueField'],$options['captionField'],$options['filterField'],$parentControlId, $instruct),
-      $indicia_templates['linked_list_javascript']
-    );
+    if (!isset(self::$indiciaData['linkedSelects'])) {
+      self::$indiciaData['linkedSelects'] = [];
+    }
+    self::$indiciaData['linkedSelects'][] = [
+      'escapedId' => $escapedId,
+      'request' => $request,
+      'query' => $query,
+      'valueField' => $options['valueField'],
+      'captionField' => $options['captionField'],
+      'filterField' => $options['filterField'],
+      'parentControlId' => $parentControlId,
+      'instruct' => $instruct,
+      'hideChildrenUntilLoaded' => $options['hideChildrenUntilLoaded'],
+    ];
   }
 
   /**
@@ -6291,12 +6283,13 @@ if (errors$uniq.length>0) {
    * @param array $zeroAttrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zeroValues Set to an array of values which are considered to indicate a
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
-   * array('0','None','Absent').
+   * @param array $zeroValues
+   *   Set to an array of lowercased values which are considered to indicate a
+   *   zero abundance record if found for one of the zero_attrs. Values are lowercase. Defaults to
+   *   array('0','none','absent','not seen').
    */
   public static function wrap_species_checklist($arr, $include_if_any_data=false,
-                                                $zeroAttrs = true, $zeroValues=array('0','None','Absent')){
+                                                $zeroAttrs = true, $zeroValues=array('0','none','absent','not seen')){
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
     } else {
@@ -6478,14 +6471,14 @@ if (errors$uniq.length>0) {
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
    * @param array $zeroValues Set to an array of values which are considered to indicate a
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
-   * array('0','None','Absent').
+   * zero abundance record if found for one of the zero_attrs. Values are lowercase. Defaults to
+   * ['0','none','absent','not seen'].
    * @param array Array of grid ids to ignore when building sub-samples for occurrences, useful for creating
    * customised submissions that only need to build sub-samples for some grids. The grid id comes from the @id option given
    * to the species grid.
    */
-    public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data=false,
-          $zeroAttrs = true, $zeroValues=array('0','None','Absent'), $gridsToExclude=array()){
+    public static function wrap_species_checklist_with_subsamples($arr, $include_if_any_data = FALSE,
+          $zeroAttrs = true, $zeroValues=['0','none','absent','not seen'], $gridsToExclude = []) {
     if (array_key_exists('website_id', $arr)){
       $website_id = $arr['website_id'];
     } else {
@@ -6582,26 +6575,41 @@ if (errors$uniq.length>0) {
   }
 
   /**
-   * Test whether the data extracted from the $_POST for a species_checklist grid row refers to an occurrence record.
-   * @param array $record Record submission array from the form post.
-   * @param boolean $includeIfAnyData If set, then records are automatically created if any of the custom
-   * attributes are filled in.
-   * @param mixed $zeroAttrs Optional array of attribute defs keyed by attribute ID to restrict checks for
-   * zero abundance records to or pass true to check all attributes. Any lookup attributes must also have a
-   * terms key, containing an array of the lookup's terms (each having at least an id and term key).
-   * @param array $zeroValues Array of values to consider as zero, which might include localisations of words
-   * such as "absent" and "zero" as well as "0".
-   * @param array $hasDataIgnoreAttrs Array or attribute IDs to ignore when checking if record is present.
-   * @access Private
-   * @return boolean True if present, false if absent (zero abundance record), null if not defined in the data (no occurrence).
+   * Derive record presence/absence from data values.
+   *
+   * Test whether the data extracted from the $_POST for a species_checklist
+   * grid row refers to an occurrence record.
+   *
+   * @param array $record
+   *   Record submission array from the form post.
+   * @param boolean $includeIfAnyData
+   *   If set, then records are automatically created if any of the custom
+   *   attributes are filled in.
+   * @param mixed $zeroAttrs
+   *   Optional array of attribute defs keyed by attribute ID to restrict
+   *   checks for zero abundance records to or pass true to check all
+   *   attributes. Any lookup attributes must also have a terms key, containing
+   *   an array of the lookup's terms (each having at least an id and term key).
+   * @param array $zeroValues
+   *   Array of values to consider as zero, which might include localisations
+   *   of words such as "absent" and "zero" as well as "0". Must be lowercased.
+   * @param array $hasDataIgnoreAttrs
+   *   Array or attribute IDs to ignore when checking if record is present.
+   *
+   * @return bool
+   *   True if present, false if absent (zero abundance record), null if not
+   *   defined in the data (no occurrence).
    */
   public static function wrap_species_checklist_record_present($record, $includeIfAnyData, $zeroAttrs, $zeroValues, $hasDataIgnoreAttrs) {
-    // present should contain the ttl ID, or zero if the present box was unchecked
-    $gotTtlId=array_key_exists('present', $record) && $record['present']!='0';
-    // as we are working on a copy of the record, discard the ID and taxa_taxon_list_id so it is easy to check if there is any other data for the row.
+    // Present should contain the ttl ID, or zero if the present box was
+    // unchecked.
+    $gotTtlId = array_key_exists('present', $record) && $record['present']!='0';
+    // As we are working on a copy of the record, discard the ID and
+    // taxa_taxon_list_id so it is easy to check if there is any other data
+    // for the row.
     unset($record['id']);
     unset($record['present']); // stores ttl id
-    // also discard any attributes we included in $hasDataIgnoreAttrs
+    // Also discard any attributes we included in $hasDataIgnoreAttrs.
     foreach ($hasDataIgnoreAttrs as $attrID) {
       unset($record['occAttr:' . $attrID]);
     }
@@ -6627,7 +6635,7 @@ if (errors$uniq.length>0) {
               }
             }
           }
-          if (in_array($value, $zeroValues))
+          if (in_array(strtolower($value), $zeroValues))
             $zeroCount++;
           else
             $nonZeroCount++;
@@ -6948,8 +6956,11 @@ HTML;
   }
 
   /**
-   * Helper function to simplify building of a submission that contains a single sample
-   * and occurrence record.
+   * Build submission for sample + occurrence list.
+   *
+   * Helper function to simplify building of a submission that contains a
+   * single sample and occurrence record.
+   *
    * @param array $values
    *   List of the posted values to create the submission from. Each entry's
    *   key should be occurrence:fieldname, sample:fieldname, occAttr:n,
@@ -6961,16 +6972,19 @@ HTML;
    * @param array $zeroValues
    *   Set to an array of values which are considered to indicate a zero
    *   abundance record if found for one of the zero_attrs. Values are
-   *   case-insensitive. Defaults to array('0','None','Absent').
+   *   case-insensitive. Defaults to ['0','none','absent','not seen'].
+   *
+   * @return array
+   *   Submission data structure.
    */
   public static function build_sample_occurrence_submission($values,
-      $zeroAttrs = true, $zeroValues=['0','None','Absent']) {
-    $structure = array(
+      $zeroAttrs = true, $zeroValues=['0','none','absent','not seen']) {
+    $structure = [
       'model' => 'sample',
-      'subModels' => array(
-        'occurrence' => array('fk' => 'sample_id')
-      )
-    );
+      'subModels' => [
+        'occurrence' => ['fk' => 'sample_id'],
+      ],
+    ];
     // Either an uploadable file, or a link to an external detail means include the submodel
     if (!empty($values['occurrence:image']) || !empty($values['occurrence_medium:external_details'])) {
       $structure['subModels']['occurrence']['subModels'] = array(
@@ -7004,13 +7018,13 @@ HTML;
    * @param array $zeroValues
    *   Set to an array of values which are considered to indicate a zero
    *   abundance record if found for one of the zero_attrs. Values are
-   *   case-insensitive. Defaults to array('0','None','Absent').
+   *   case-insensitive. Defaults to ['0','none','absent','not seen'].
    *
    * @return array
    *   Sample submission array
    */
   public static function build_sample_occurrences_list_submission($values, $include_if_any_data=false,
-      $zeroAttrs = true, array $zeroValues=['0','None','Absent']) {
+      $zeroAttrs = true, array $zeroValues=['0','none','absent','not seen']) {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     $occurrences = data_entry_helper::wrap_species_checklist($values, $include_if_any_data,
@@ -7031,23 +7045,25 @@ HTML;
    * with multiple subsamples, each of which has multiple occurrences records, as generated
    * by a species_checklist control.
    *
-   * @param array $values List of the posted values to create the submission from.
-   * @param boolean $include_if_any_data If true, then any list entry which has any data
-   * set will be included in the submission. Set this to true when hiding the select checkbox
-   * in the grid.
+   * @param array $values
+   *   List of the posted values to create the submission from.
+   * @param boolean $include_if_any_data
+   *   If true, then any list entry which has any data set will be included in
+   *   the submission. Set this to true when hiding the select checkbox in the
+   *   grid.
    * @param array $zeroAttrs Set to an array of attribute defs keyed by attribute ID that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zeroValues Set to an array of values which are considered to indicate a
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
-   * array('0','None','Absent').
-   * of values that can be treated as meaning a zero abundance record. E.g.
-   * array('
+   * @param array $zeroValues
+   *   Set to an array of values which are considered to indicate a zero
+   *   abundance record if found for one of the zero_attrs. Values are case-
+   *   insensitive. Defaults to array('0','none','absent','not seen').
 
-   * @return array Sample submission array
+   * @return array
+   *   Sample submission array
    */
   public static function build_sample_subsamples_occurrences_submission($values, $include_if_any_data=false,
-                                                                        $zeroAttrs = true, $zeroValues=array('0','None','Absent'))
+      $zeroAttrs = true, $zeroValues=['0','none','absent','not seen'])
   {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');

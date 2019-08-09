@@ -776,7 +776,7 @@ class filter_source extends FilterBase {
       'readAuth' => $readAuth,
       'caching' => TRUE,
       'cachePerUser' => FALSE,
-      'extraParams' => array('sharing' => $options['sharing']),
+      'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
     );
     // If in the warehouse then we are only interested in the website for the milestone we are editing.
     if (isset($options['website_id'])) {
@@ -864,8 +864,9 @@ class filter_source extends FilterBase {
  * @param int $website_id
  *   The current website's warehouse ID.
  * @param string $hiddenStuff
- *   Output parameter which will contain the hidden popup HTML that will be shown using fancybox during filter editing.
- *   Should be appended AFTER any form element on the page as nested forms are not allowed.
+ *   Output parameter which will contain the hidden popup HTML that will be
+ *   shown using fancybox during filter editing. Should be appended AFTER any
+ *   form element on the page as nested forms are not allowed.
  *
  * @return string
  *   HTML for the report filter panel
@@ -873,7 +874,7 @@ class filter_source extends FilterBase {
  * @throws \exception
  *   If attempting to use an unrecognised filter preset.
  */
-function report_filter_panel($readAuth, $options, $website_id, &$hiddenStuff) {
+function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStuff) {
   if (function_exists('iform_load_helpers')) {
     iform_load_helpers(array('report_helper'));
   }
@@ -1281,11 +1282,11 @@ HTML;
         'captionField' => 'person_name',
         'formatFunction' => "function(item) { return item.person_name + ' (' + item.email_address + ')'; }",
         'extraParams' => $readAuth + array('view' => 'detail'),
-        'class' => 'control-width-5'
+        'class' => 'control-width-5',
       ));
       $r .= data_entry_helper::textarea(array(
         'label' => lang::get('Description'),
-        'fieldname' => 'filter:description'
+        'fieldname' => 'filter:description',
       ));
     }
     $r .= '<img src="' . data_entry_helper::$images_path . 'nuvola/save-22px.png" width="22" height="22" alt="Save filter" title="Save filter" class="button" id="filter-save"/>';
@@ -1293,12 +1294,13 @@ HTML;
   }
   $r .= '</div></div>'; // toolbar + clearfix
   if (!empty($options['filters_user_id'])) {
-    // If we are preloading based on a filter user ID, we need to get the information now so that the sharing mode can be known
-    // when loading controls.
+    // If we are preloading based on a filter user ID, we need to get the
+    // information now so that the sharing mode can be known when loading
+    // controls.
     $fu = data_entry_helper::get_population_data(array(
         'table' => 'filters_user',
         'extraParams' => $readAuth + array('id' => $options['filters_user_id']),
-        'caching' => FALSE
+        'caching' => FALSE,
     ));
     if (count($fu) !== 1) {
       throw new exception('Could not find filter user record');
@@ -1390,7 +1392,8 @@ if ($('#select-filter').val()) {
 
 JS;
   }
-  // Any standard parameters we supply get activated, so ensure they don't appear on a params form.
+  // Any standard parameters we supply get activated, so ensure they don't
+  // appear on a params form.
   report_helper::$filterParamsToGloballySkip = report_helper::$initialFilterParamsToApply;
   return $r;
 }
@@ -1420,7 +1423,7 @@ function report_filters_load_existing($readAuth, $sharing, $caching = FALSE) {
     'readAuth' => $readAuth,
     'caching' => $caching,
     'extraParams' => array(
-      'filter_sharing_mode' => $sharing,
+      'filter_sharing_mode' => $sharing === 'M' ? 'R' : $sharing,
       'defines_permissions' => '',
       'filter_user_id' => $userId,
     ),
@@ -1429,7 +1432,7 @@ function report_filters_load_existing($readAuth, $sharing, $caching = FALSE) {
 }
 
 /**
- * Convert a sharing mode single letter code into the full term for that sharing mode.
+ * Convert a sharing mode code into the full term for that sharing mode.
  *
  * @param string $code
  *   Sharing code, e.g. 'M'.

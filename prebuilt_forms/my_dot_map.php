@@ -542,12 +542,7 @@ class iform_my_dot_map {
       $style = $args["wms_dist_{$layerId}_style"] ? ", styles: '" . $args["wms_dist_$layerId" . "_style"] . "'" : '';
       // Also the opacity.
       $opacity = $args["wms_dist_{$layerId}_opacity"] ? $args["wms_dist_{$layerId}_opacity"] : 1;
-      if ($opacity != 1) {
-        $opacity = " opacity: $opacity,";
-      }
-      else
-        // don't set opacity if not required as it messes up printing in IE<=8
-        $opacity = '';
+      $opacity = $opacity === 1 ? '' : $opacity = " opacity: $opacity,";
       $filter = ', CQL_FILTER: "' . $filter . '"';
       data_entry_helper::$onload_javascript .= "var distLayer$layerId = new OpenLayers.Layer.WMS(
         '" . str_replace("'", "\'", $args["wms_dist_{$layerId}_title"]) . "',

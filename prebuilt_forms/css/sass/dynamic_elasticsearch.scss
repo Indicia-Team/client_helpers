@@ -1,0 +1,16 @@
+#filter-bar {
+  * {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  label {
+    width: auto;
+    margin: 0 4px 0 15px;
+  }
+  .form-group {
+    margin-bottom: 0;
+  }
+  .form-control {
+    width: auto;
+  }
+}
