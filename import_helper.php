@@ -88,7 +88,7 @@ class import_helper extends helper_base {
       self::$javascript .= "
       $('#lookupSelectsample').attr('disabled', 'disabled');
       $('#lookupSelectoccurrence').attr('disabled', 'disabled');
-      $('#lookup-mode-warning').show();"; 
+      $('#lookup-mode-warning').show();";
     }
     self::add_resource('jquery_ui');
     self::add_resource('import');
@@ -109,11 +109,11 @@ class import_helper extends helper_base {
       } else {
         $options['allowCommitToDB']=true;
       }
-      return self::upload_mappings_form($options); 
+      return self::upload_mappings_form($options);
     // Import step 2 is only shown if the preventCommitsOnError option has been set.
-    // This means we don't commit any rows at all if any errors are found, therefore we need 
+    // This means we don't commit any rows at all if any errors are found, therefore we need
     // an extra error checking step
-    } elseif ((isset($_POST['import_step']) && $_POST['import_step']==2)) {  
+    } elseif ((isset($_POST['import_step']) && $_POST['import_step']==2)) {
       $options['allowCommitToDB']=false;
       return self::run_upload($options);
     } elseif ((isset($_POST['import_step']) && $_POST['import_step']==3)) {
@@ -148,10 +148,10 @@ class import_helper extends helper_base {
       $options['importPreventCommitBehaviour']='partial_import';
     }
     // If the behaviour of the import is not specified, then fall back on the default which to not use
-    // sample example key for verification 
+    // sample example key for verification
     if (empty($options['importSampleLogic'])) {
-      $options['importSampleLogic']='consecutive_rows'; 
-    }  
+      $options['importSampleLogic']='consecutive_rows';
+    }
     $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
     // by this time, we should always have an existing file
     if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
@@ -241,8 +241,8 @@ class import_helper extends helper_base {
       if ($options['importSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Samples verified by sample key field'),
-        'fieldname' => 'verifySamplesUsingExternalKey', 
-        'helpText'=>'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '. 
+        'fieldname' => 'verifySamplesUsingExternalKey',
+        'helpText'=>'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '.
         'e.g. occurrences with the same external key on the row cannot have different sample dates. Note that rows for the same sample must still be placed consecutively in the import file.'
       ));
       }
@@ -282,8 +282,8 @@ class import_helper extends helper_base {
       'not_imported' => 'Not imported',
     ]);
     $filename = basename($_SESSION['uploaded_file']);
-    $mappingsAndSettings=self::get_mappings_and_settings($options); 
-	  $settings=$mappingsAndSettings['settings'];    
+    $mappingsAndSettings=self::get_mappings_and_settings($options);
+	  $settings=$mappingsAndSettings['settings'];
     $request = parent::$base_url . "index.php/services/import/get_import_fields/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
     // Include survey and website information in the request if available, as
@@ -493,13 +493,13 @@ JS;
 	  //The earlier call wouldn't have retrieved any mappings as get_column_options wouldn't have been run yet
 	  $mappingsAndSettings=self::get_mappings_and_settings($options);
 	  self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
-    //If skip mapping is on, then we don't actually need to show this page and can skip straight to the 
+    //If skip mapping is on, then we don't actually need to show this page and can skip straight to the
     //upload or error checking stage (which will be determined by run_upload using the allowCommitToDB option)
     if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible']==true && count(self::$automaticMappings) === $colCount) {
-      // Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function 
+      // Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function
       // as we have already done that here
       return self::run_upload($options,true);
-    } 
+    }
     //Preserve the post from the website/survey selection screen
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
       //If we are error checking before upload we do an extra step, which is import step 2
@@ -535,7 +535,7 @@ JS;
   private static function preserve_fields($options,$filename,$importStep) {
     $mappingsAndSettings=self::get_mappings_and_settings($options);
     $settingFields=$mappingsAndSettings['settings'];
-    $mappingFields=$mappingsAndSettings['mappings'];      
+    $mappingFields=$mappingsAndSettings['mappings'];
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
@@ -546,7 +546,7 @@ JS;
         if (!empty($value) && $field!=='import_step' && $field !=='submit') {
           $r .= '<input type="hidden" name="setting['.$field.']" id="setting['.$field.']" value="'.$value.'"/>'."\n";
         }
-      } 
+      }
     }
     foreach ($mappingFields as $field=>$value) {
       if (!empty($mappingFields[$field])) {
@@ -704,10 +704,10 @@ JS;
     }
     $rows=file($_SESSION['uploaded_file']);
     $r = '';
-    // If we are using the sample external key to verify samples, 
+    // If we are using the sample external key to verify samples,
     // then we need to check the sample data is consistant between the
     // rows which share the same external key. If not, warn the user.
-    if ($options['model']==='occurrence'||$options['model']==='sample') {  
+    if ($options['model']==='occurrence'||$options['model']==='sample') {
       if (!empty($mappingsAndSettings['settings']['verifySamplesUsingExternalKey'])&&$mappingsAndSettings['settings']['verifySamplesUsingExternalKey']==true) {
         $checkArrays = self::sample_external_key_issue_checks($options,$rows);
         $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
@@ -737,16 +737,16 @@ JS;
       $output=self::collect_errors($options,$filename);
       if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
         return self::display_result_as_error_check_stage_failed($options,$output);
-      } 
+      }
       //Need to re-send metadata as we need to call warehouse again for upload (rather than error check)
-      $mappingsAndSettings=self::get_mappings_and_settings($options); 
+      $mappingsAndSettings=self::get_mappings_and_settings($options);
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
-    }  
+    }
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
     if ($transferFileDataToWarehouseSuccess===true) {
       //Progress message depends if we are uploading or simply checking for errors
       if ($options['allowCommitToDB']==true) {
-        $progressMessage = ' records uploaded.'; 
+        $progressMessage = ' records uploaded.';
       } else {
         $progressMessage = ' records checked.';
       }
@@ -817,7 +817,7 @@ JS;
     }
     return $output;
   }
-    
+
   /*
    * Jump to the results screen if errors have been detected during the error checking stage.
    * This only applies if we are preventing all commits if any errors are detected (otherwise upload_result function is called instead)
@@ -1287,9 +1287,9 @@ TD;
     if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
       $settings=self::remove_unused_associations($options,$settings);
     }
-    
+
     $settings=self::remove_unused_settings($settings);
-    
+
     $metadata=self::create_metadata_array($mappings,$settings);
 
     if (function_exists('hostsite_set_user_field')) {
@@ -1307,9 +1307,10 @@ TD;
   //Collect the mappings and settings from various places depending on importer mode, wizard stage.
   //These can be held in variables, option variable, or the post. Collect as appropriate
   private static function get_mappings_and_settings($options) {
-    $mappingsAndSettings=array();
-    $mappingsAndSettings['mappings']=array();
-    $mappingsAndSettings['settings']=array();
+    $mappingsAndSettings = [
+      'mappings' => [],
+      'settings' => [],
+    ];
     // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
     // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
     if (isset($options['presetSettings']))
@@ -1350,7 +1351,7 @@ TD;
       unset($mappingsAndSettings['mappings']['setting']);
     return $mappingsAndSettings;
   }
-  
+
   // when not using associations make sure that the association fields are not passed through.
   // These fields would confuse the association detection logic.
   private static function remove_unused_associations($options,$settings) {
@@ -1361,7 +1362,7 @@ TD;
     }
     return $settings;
   }
-  
+
   // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
   private static function remove_unused_settings($settings) {
     foreach ($settings as $key => $value) {
@@ -1371,20 +1372,20 @@ TD;
     }
     return $settings;
   }
-  
-  private static function create_metadata_array($mappings,$settings) {
-    $metadata=array();
+
+  private static function create_metadata_array($mappings, $settings) {
+    $metadata = [
+      'user_id' => hostsite_get_user_field('indicia_user_id'),
+    ];
     if (!empty($mappings)) {
-      $mappingsArray = array('mappings' => json_encode($mappings));
-      $metadata=array_merge($metadata,$mappingsArray);
+      $metadata['mappings'] = json_encode($mappings);
     }
     if (!empty($settings)) {
-      $settingsArray = array('settings' => json_encode($settings));
-      $metadata=array_merge($metadata,$settingsArray);
+      $metadata['settings'] = json_encode($settings);
     }
     return $metadata;
   }
-  
+
   private static function save_user_import_mappings($mappings) {
     $userSettings = array();
     foreach ($mappings as $column => $setting) {
@@ -1462,12 +1463,12 @@ TD;
         }
 	      // Flag rows with the same sample external key but different sample data such as dates
 	      if ($rowInconsistencyFailure===true) {
-	        $inconsistencyFailureRows[$rowNumber]=$fileRow;  
+	        $inconsistencyFailureRows[$rowNumber]=$fileRow;
         }
         // Flag rows with same sample external key which are not on consecutive rows
 	      if ($rowClusteringFailure===true) {
-	        $clusteringFailureRows[$rowNumber]=$fileRow;     
-	      } 
+	        $clusteringFailureRows[$rowNumber]=$fileRow;
+	      }
 	      $rowNumber++;
       }
     }
@@ -1476,7 +1477,7 @@ TD;
     $returnArray['clusteringFailureRows']=$clusteringFailureRows;
     return $returnArray;
   }
-  
+
   /*
    * Show results of any consistency issues between rows with the same sample external key
    * (if using that import mode)
