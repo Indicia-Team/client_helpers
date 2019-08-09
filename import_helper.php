@@ -1349,7 +1349,7 @@ TD;
     if (empty($mappings)) {
       return $mappings;
     }
-    $correcedMappings = [];
+    $correctedMappings = [];
     // Ensure mappings are clean and in the same order as the column headings.
     $handle = fopen($_SESSION['uploaded_file'], "r");
     $columns = fgetcsv($handle, 1000, ",");
@@ -1357,10 +1357,17 @@ TD;
     foreach($columns as $column) {
       $internalColumn = str_replace(" ", "_", $column);
       if (isset($mappings[$internalColumn])) {
-        $correcedMappings[$internalColumn] = $mappings[$internalColumn];
+        $correctedMappings[$internalColumn] = $mappings[$internalColumn];
       }
     }
-    return $correcedMappings;
+    // Lookup existing record selections can go on the end.
+    // @todo Existing record lookup selections should really go in their own metadata section.
+    foreach($mappings as $key => $value) {
+      if (strpos($key, 'lookupSelect') === 0) {
+        $correctedMappings[$key] = $value;
+      }
+    }
+    return $correctedMappings;
   }
 
   //Collect the mappings and settings from various places depending on importer mode, wizard stage.
