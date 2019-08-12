@@ -500,7 +500,7 @@ JS;
   protected static function get_control_source($auth, $args, $tabalias, $options) {
     self::applyReplacements($options, ['aggregation'], ['aggregation']);
     self::checkOptions(
-      'esSource',
+      'source',
       $options,
       ['id'],
       ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
