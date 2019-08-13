@@ -1,4 +1,5 @@
- <?php
+<?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,70 +14,73 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package  Client
- * @author   Indicia Team
- * @license  http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
-/**
- * Link in other required php files.
- */
+
 require_once 'lang.php';
 require_once 'helper_base.php';
 /**
  * Static helper class that provides methods for dealing with imports.
- * @package Client
  */
 class import_helper extends helper_base {
   /**
-   * @var boolean Flag set to true if the host system is capable of storing our user's remembered import mappings
+   * @var bool Flag set to true if the host system is capable of storing our user's remembered import mappings
    * for future imports.
    */
-  private static $rememberingMappings=TRUE;
+  private static $rememberingMappings = TRUE;
+
   /**
    * @var array List of field to column mappings that we managed to set automatically
    */
-  private static $automaticMappings=array();
+  private static $automaticMappings = [];
+
   /**
-   * Outputs an import wizard. The csv file to be imported should be available in the $_POST data, unless
-   * the existing_file option is specified.
-   * Additionally, if there are any preset values which apply to each row in the import data then you can
-   * pass these to the importer in the $_POST data. For example, you could set taxa_taxon_list:taxon_list_id=3 in
-   * the $_POST data when importing species data to force it to go into list 3.
+   * Outputs an import wizard.
    *
-   * @param array $options Options array with the following possibilities:
+   * The csv file to be imported should be available in the $_POST data, unless
+   * the existing_file option is specified. Additionally, if there are any
+   * preset values which apply to each row in the import data then you can pass
+   * these to the importer in the $_POST data. For example, you could set
+   * taxa_taxon_list:taxon_list_id=3 in the $_POST data when importing species
+   * data to force it to go into list 3.
    *
-   * * **model** - Required. The name of the model data is being imported into.
-   * * **existing_file** - Optional. The full path on the server to an already uploaded file to import.
-   * * **auth** - Read and write authorisation tokens.
-   * * **presetSettings** - Optional associative array of any preset values for the import
-   *   settings. Any settings which have a presetSetting specified will be ommitted from
-   *   the settings form.
-   * * **occurrenceAssociations** - set to true to enable import of associated occurrences or false to
-   *   disable it. Default false.
-   * * **fieldMap** - array of configurations of the fields available to import, one per survey.
-   *   The importer will generate a list of all possible fields in the database to import into
-   *   for a given survey. This typically includes all the standard "core" database fields such
-   *   as species name and sample date, as well as a list of all custom attributes for a survey.
-   *   This list is quite long and some of the default core database fields provided might not be
-   *   appropriate to your survey dataset, leading to possible confusion. So you can use this parameter
-   *   to define database fields and column titles in the spreadsheet that will automatically map to them.
-   *   Provide an array, with each array entry being an associative array containing the definition of the
-   *   fields for 1 survey dataset. In the associative array provide a value called survey_id to link
-   *   this definition to a survey dataset. Also provide a value called fields containing a list of
-   *   database fields you are defining for this dataset, one per line. If you want to link this field
-   *   to a column title then follow the database field name with an equals, then the column title,
-   *   e.g. sample:date=Record date.
-   * * **onlyAllowMappedFields** - set to true and supply field mappings in the fieldMap parameter
-   *   to ensure that only the fields you have specified for the selected survey will be available for
-   *   selection. This allows you to hide all the import fields that you don't want to be used for
-   *   importing into a given survey dataset, thus tidying up the list of options to improve ease of
-   *   use. Default true.
-   * * **skipMappingIfPossible** - set to true to completely bypass the field to column mappings setup
-   *   stage of the import tool if all the columns in the supplied spreadsheet are mapped. Combine this
-   *   with the fieldMap parameter to make predefined import configurations that require little effort
-   *   to use as long as a matching spreadsheet structure is supplied.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **model** - Required. The name of the model data is being imported into.
+   *   * **existing_file** - Optional. The full path on the server to an already uploaded file to import.
+   *   * **auth** - Read and write authorisation tokens.
+   *   * **presetSettings** - Optional associative array of any preset values for the import
+   *     settings. Any settings which have a presetSetting specified will be ommitted from
+   *     the settings form.
+   *   * **occurrenceAssociations** - set to true to enable import of associated occurrences or false to
+   *     disable it. Default false.
+   *   * **fieldMap** - array of configurations of the fields available to import, one per survey.
+   *     The importer will generate a list of all possible fields in the database to import into
+   *     for a given survey. This typically includes all the standard "core" database fields such
+   *     as species name and sample date, as well as a list of all custom attributes for a survey.
+   *     This list is quite long and some of the default core database fields provided might not be
+   *     appropriate to your survey dataset, leading to possible confusion. So you can use this parameter
+   *     to define database fields and column titles in the spreadsheet that will automatically map to them.
+   *     Provide an array, with each array entry being an associative array containing the definition of the
+   *     fields for 1 survey dataset. In the associative array provide a value called survey_id to link
+   *     this definition to a survey dataset. Also provide a value called fields containing a list of
+   *     database fields you are defining for this dataset, one per line. If you want to link this field
+   *     to a column title then follow the database field name with an equals, then the column title,
+   *     e.g. sample:date=Record date.
+   *   * **onlyAllowMappedFields** - set to true and supply field mappings in the fieldMap parameter
+   *     to ensure that only the fields you have specified for the selected survey will be available for
+   *     selection. This allows you to hide all the import fields that you don't want to be used for
+   *     importing into a given survey dataset, thus tidying up the list of options to improve ease of
+   *     use. Default true.
+   *   * **skipMappingIfPossible** - set to true to completely bypass the field to column mappings setup
+   *     stage of the import tool if all the columns in the supplied spreadsheet are mapped. Combine this
+   *     with the fieldMap parameter to make predefined import configurations that require little effort
+   *     to use as long as a matching spreadsheet structure is supplied.
+   *
    * @return string
+   *
    * @throws \exception
    */
 
@@ -84,50 +88,59 @@ class import_helper extends helper_base {
     // Currently the preventCommitsOnError on error option won't work with existing data updates.
     // Hopefully this will change in the future, the problem is the preserve_fields function does
     // not currently preserve the existing data lookup selections because preserve fields was coded first.
-    if (!empty($_POST['preventCommitsOnError']) && $_POST['preventCommitsOnError']==true) {
+    if (!empty($_POST['preventCommitsOnError']) && $_POST['preventCommitsOnError'] == TRUE) {
       self::$javascript .= "
       $('#lookupSelectsample').attr('disabled', 'disabled');
       $('#lookupSelectoccurrence').attr('disabled', 'disabled');
-      $('#lookup-mode-warning').show();"; 
+      $('#lookup-mode-warning').show();";
     }
     self::add_resource('jquery_ui');
     self::add_resource('import');
-    //If there is no upload total yet and no import step we know to show the very first screen
+    // If there is no upload total yet and no import step we know to show the
+    // very first screen.
     if (!isset($_POST['import_step'])&&!isset($_POST['total'])) {
-      if (count($_FILES)==1) {
-        return self::import_settings_form($options);
+      if (count($_FILES) === 1) {
+        return self::importSettingsForm($options);
       }
       else {
-        return self::upload_form($options);
+        return self::uploadForm($options);
       }
-    } elseif (isset($_POST['import_step']) && $_POST['import_step']==1) {
+    }
+    elseif (isset($_POST['import_step']) && $_POST['import_step'] == 1) {
       // If we have the Prevent Commits On Any Error option on, then the first pass of the upload
       // process will always be to check errors and not commit to DB, so set variable to control this
-      if ((isset($_POST['preventCommitsOnError'])&&$_POST['preventCommitsOnError']==true)||
-          (isset($_POST['setting']['preventCommitsOnError'])&&$_POST['setting']['preventCommitsOnError']==true)) {
-        $options['allowCommitToDB']=false;
-      } else {
-        $options['allowCommitToDB']=true;
+      if ((isset($_POST['preventCommitsOnError'])&&$_POST['preventCommitsOnError'] == TRUE)||
+          (isset($_POST['setting']['preventCommitsOnError'])&&$_POST['setting']['preventCommitsOnError'] == TRUE)) {
+        $options['allowCommitToDB'] = FALSE;
       }
-      return self::upload_mappings_form($options); 
+      else {
+        $options['allowCommitToDB'] = TRUE;
+      }
+      return self::upload_mappings_form($options);
     // Import step 2 is only shown if the preventCommitsOnError option has been set.
-    // This means we don't commit any rows at all if any errors are found, therefore we need 
+    // This means we don't commit any rows at all if any errors are found, therefore we need
     // an extra error checking step
-    } elseif ((isset($_POST['import_step']) && $_POST['import_step']==2)) {  
-      $options['allowCommitToDB']=false;
+    }
+    elseif ((isset($_POST['import_step']) && $_POST['import_step'] == 2)) {
+      $options['allowCommitToDB'] = FALSE;
       return self::run_upload($options);
-    } elseif ((isset($_POST['import_step']) && $_POST['import_step']==3)) {
-      $options['allowCommitToDB']=true;
+    }
+    elseif ((isset($_POST['import_step']) && $_POST['import_step'] == 3)) {
+      $options['allowCommitToDB'] = TRUE;
       return self::run_upload($options);
-    } elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
+    }
+    elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
       return self::upload_result($options);
-    } else throw new exception('Invalid importer state');
+    }
+    else {
+      throw new exception('Invalid importer state');
+    }
   }
 
   /**
    * Returns the HTML for a simple file upload form.
    */
-  private static function upload_form($options) {
+  private static function uploadForm($options) {
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = '<form action="' . $reloadpath . '" method="post" enctype="multipart/form-data">';
@@ -138,28 +151,36 @@ class import_helper extends helper_base {
   }
 
   /**
-   * Generates the import settings form. If none available, then outputs the upload mappings form.
-   * @param array $options Options array passed to the import control.
+   * Generates the import settings form.
+   *
+   * If none available, then outputs the upload mappings form.
+   *
+   * @param array $options
+   *   Options array passed to the import control.
    */
-  private static function import_settings_form($options) {
-    // If the behaviour of the import is not specified, then fall back on the default which is to allow
-    // working rows to commit and only report errors on failing rows
+  private static function importSettingsForm(array $options) {
+    // If the behaviour of the import is not specified, then fall back on the
+    // default which is to allow working rows to commit and only report errors
+    // on failing rows.
     if (empty($options['importPreventCommitBehaviour'])) {
-      $options['importPreventCommitBehaviour']='partial_import';
+      $options['importPreventCommitBehaviour'] = 'partial_import';
     }
-    // If the behaviour of the import is not specified, then fall back on the default which to not use
-    // sample example key for verification 
+    // If the behaviour of the import is not specified, then fall back on the
+    // default which to not use sample example key for verification.
     if (empty($options['importSampleLogic'])) {
-      $options['importSampleLogic']='consecutive_rows'; 
-    }  
+      $options['importSampleLogic'] = 'consecutive_rows';
+    }
     $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
-    // by this time, we should always have an existing file
-    if (empty($_SESSION['uploaded_file'])) throw new Exception('File to upload could not be found');
+    // By this time, we should always have an existing file.
+    if (empty($_SESSION['uploaded_file'])) {
+      throw new Exception('File to upload could not be found');
+    }
     $request = parent::$base_url . "index.php/services/import/get_import_settings/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
     $switches = isset($options['switches']) && is_array($options['switches']) ? $options['switches'] : array();
-    if (!empty($options['occurrenceAssociations']))
-      $switches['occurrence_associations']='t';
+    if (!empty($options['occurrenceAssociations'])) {
+      $switches['occurrence_associations'] = 't';
+    }
     $request .= '&' . self::array_to_query_string($switches);
 
     $response = self::http_post($request, array());
@@ -241,8 +262,8 @@ class import_helper extends helper_base {
       if ($options['importSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
       $r .= data_entry_helper::checkbox(array(
         'label' => lang::get('Samples verified by sample key field'),
-        'fieldname' => 'verifySamplesUsingExternalKey', 
-        'helpText'=>'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '. 
+        'fieldname' => 'verifySamplesUsingExternalKey',
+        'helpText'=>'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '.
         'e.g. occurrences with the same external key on the row cannot have different sample dates. Note that rows for the same sample must still be placed consecutively in the import file.'
       ));
       }
@@ -282,8 +303,8 @@ class import_helper extends helper_base {
       'not_imported' => 'Not imported',
     ]);
     $filename = basename($_SESSION['uploaded_file']);
-    $mappingsAndSettings=self::get_mappings_and_settings($options); 
-	  $settings=$mappingsAndSettings['settings'];    
+    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $settings = $mappingsAndSettings['settings'];
     $request = parent::$base_url . "index.php/services/import/get_import_fields/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
     // Include survey and website information in the request if available, as
@@ -314,19 +335,21 @@ class import_helper extends helper_base {
     }
     $response = self::http_post($request, array());
     $fields = json_decode($response['output'], TRUE);
-    if (!is_array($fields))
+    if (!is_array($fields)) {
       return "curl request to $request failed. Response " . print_r($response, TRUE);
-    // Restrict the fields if there is a setting for this survey Id
-    if (!empty($settings['survey_id']))
+    }
+    // Restrict the fields if there is a setting for this survey Id.
+    if (!empty($settings['survey_id'])) {
       self::limitFields($fields, $options, $settings['survey_id']);
+    }
     if (isset($options['importMergeFields']) && $options['importMergeFields'] != '' && $options['importMergeFields'] != '{}' &&
-        // strip all white space so we can also catch [ ] for example
+        // Strip all white space so we can also catch [ ] for example.
         preg_replace('/\s+/', '', $options['importMergeFields']) != '[]') {
       foreach ($options['importMergeFields'] as $modelSpec) {
         if (!isset($modelSpec->model) || ($modelSpec->model = $options['model'])) {
           foreach ($modelSpec->fields as $fieldSpec) {
             foreach ($fieldSpec->virtualFields as $subFieldSpec) {
-              // merge the field in at the end on the similar fields
+              // Merge the field in at the end on the similar fields.
               $newFields = array();
               $parts = explode(':', $fieldSpec->fieldName);
               $lastMatch = FALSE;
@@ -337,7 +360,7 @@ class import_helper extends helper_base {
                   $newFields[$fieldSpec->fieldName . ':' . $subFieldSpec->fieldNameSuffix] = lang::get($subFieldSpec->description) .
                       ' (' . lang::get('merged to form {1}', lang::get($fieldSpec->description)) . ')';
                 }
-                else if (!$lastMatch && $keyParts[0] === $parts[0]) {
+                elseif (!$lastMatch && $keyParts[0] === $parts[0]) {
                   $lastMatch = TRUE;
                 }
                 $newFields[$key] = $value;
@@ -458,19 +481,20 @@ HTML;
   </div>
 
 HTML;
-$usedOptions=array();
+    $usedOptions = [];
     if (count($existingDataLookupOptions) > 0) {
-      $r .= '<div id="lookup-mode-warning" style="color:red; display:none">'.lang::get('Note that updating of existing records is only available when the Prevent Commits On Any Error importer option is not being used').'</div>';
+      $r .= '<div id="lookup-mode-warning" style="color:red; display:none">' . lang::get('Note that updating of existing records is only available when the Prevent Commits On Any Error importer option is not being used').'</div>';
       $r .= '<fieldset><legend>' . lang::get('Lookup of existing records') . '</legend>';
       foreach ($existingDataLookupOptions as $model => $combinations) {
         $r .= '<label for="lookupSelect' . $model . '\">' . lang::get(ucfirst($model) . ' records') . '</label>';
         $r .= "<select name=\"lookupSelect" . $model . "\" id=\"lookupSelect" . $model . "\" class=\"lookupSelects\">";
         $r .= "<option value=\"\" >" . lang::get('Do not look up existing records') . "</option>";
         foreach ($combinations as $combination) {
-          if (!in_array($model.$combination['description'],$usedOptions)) {
-            array_push($usedOptions,$model.$combination['description']);
-            // Each possible field for existing record lookup has the list of fields that need to be filled in
-            // for it to work specified as json in its value
+          if (!in_array($model . $combination['description'], $usedOptions)) {
+            array_push($usedOptions, $model . $combination['description']);
+            // Each possible field for existing record lookup has the list of
+            // fields that need to be filled in for it to work specified as
+            // json in its value.
             $r .= "<option value=\"" . htmlspecialchars(json_encode($combination['fields'])) . "\">" . lang::get($combination['description']) . "</option>";
           }
         }
@@ -489,23 +513,25 @@ JS;
     else {
       self::$javascript .= "indiciaData.enableExistingDataLookup = false;\n";
     }
-    //We need to rerun this even though we run this earlier in this function
-	  //The earlier call wouldn't have retrieved any mappings as get_column_options wouldn't have been run yet
-	  $mappingsAndSettings=self::get_mappings_and_settings($options);
-	  self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
-    //If skip mapping is on, then we don't actually need to show this page and can skip straight to the 
-    //upload or error checking stage (which will be determined by run_upload using the allowCommitToDB option)
-    if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible']==true && count(self::$automaticMappings) === $colCount) {
-      // Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function 
+    // We need to rerun this even though we run this earlier in this function.
+    // The earlier call wouldn't have retrieved any mappings as
+    // get_column_options wouldn't have been run yet.
+    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    self::send_mappings_and_settings_to_warehouse($filename, $options, $mappingsAndSettings);
+    // If skip mapping is on, then we don't actually need to show this page and
+    // can skip straight to the upload or error checking stage (which will be
+    // determined by run_upload using the allowCommitToDB option).
+    if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE && count(self::$automaticMappings) === $colCount) {
+      // Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function
       // as we have already done that here
-      return self::run_upload($options,true);
-    } 
-    //Preserve the post from the website/survey selection screen
-    if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
+      return self::run_upload($options, TRUE);
+    }
+    // Preserve the post from the website/survey selection screen.
+    if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB'] === FALSE) {
       //If we are error checking before upload we do an extra step, which is import step 2
-      $r .= self::preserve_fields($options,$filename,2);
+      $r .= self::preserve_fields($options, $filename, 2);
     } else {
-      $r .= self::preserve_fields($options,$filename,3);
+      $r .= self::preserve_fields($options, $filename, 3);
     }
     $r .= '<input type="submit" name="submit" id="submit" value="' . lang::get('Upload') . '" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
@@ -532,34 +558,34 @@ JS;
 
   /* Function used to preserve the post from previous stages as we move through the importer otherwise values are lost from
       2 steps ago. Also preserves the automatic mappings used to skip the mapping stage by saving it to the post */
-  private static function preserve_fields($options,$filename,$importStep) {
-    $mappingsAndSettings=self::get_mappings_and_settings($options);
-    $settingFields=$mappingsAndSettings['settings'];
-    $mappingFields=$mappingsAndSettings['mappings'];      
+  private static function preserve_fields($options, $filename, $importStep) {
+    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $settingFields = $mappingsAndSettings['settings'];
+    $mappingFields = $mappingsAndSettings['mappings'];
     $reload = self::get_reload_link_parts();
-    $reload['params']['uploaded_csv']=$filename;
+    $reload['params']['uploaded_csv'] = $filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $r =  "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n";
+    $r = "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n";
 
-    foreach ($settingFields as $field=>$value) {
+    foreach ($settingFields as $field => $value) {
       if (!empty($settingFields[$field])) {
-        if (!empty($value) && $field!=='import_step' && $field !=='submit') {
-          $r .= '<input type="hidden" name="setting['.$field.']" id="setting['.$field.']" value="'.$value.'"/>'."\n";
-        }
-      } 
-    }
-    foreach ($mappingFields as $field=>$value) {
-      if (!empty($mappingFields[$field])) {
-        if (is_string($field)&&is_string($value)&&!empty($value) && $field!=='import_step' && $field !=='submit') {
-          $r .= '<input type="hidden" name="mapping['.$field.']" id="mapping['.$field.']" value="'.$value.'"/>'."\n";
+        if (!empty($value) && $field !== 'import_step' && $field !== 'submit') {
+          $r .= "<input type=\"hidden\" name=\"setting[$field]\" id=\"setting[$field]\" value=\"$value\"/>\n";
         }
       }
     }
-    if (!empty($importStep)&&$importStep!==null) {
-      $r .= '<input type="hidden" name="import_step" value="'.$importStep.'" />';
+    foreach ($mappingFields as $field => $value) {
+      if (!empty($mappingFields[$field])) {
+        if (is_string($field)&&is_string($value)&&!empty($value) && $field !== 'import_step' && $field !==' submit') {
+          $r .= "<input type=\"hidden\" name=\"mapping[$field]\" id=\"mapping[$field]\" value=\"$value\"/>\n";
+        }
+      }
     }
-    $r .= '<input id="hidden_submit" type="submit" style="display: none" value="'.lang::get('Upload').'"></form>';
-    $r .=  "</form><div>\n";
+    if (!empty($importStep)&&$importStep != NULL) {
+      $r .= '<input type="hidden" name="import_step" value="' . $importStep . '" />';
+    }
+    $r .= '<input id="hidden_submit" type="submit" style="display: none" value="' . lang::get('Upload') . '"></form>';
+    $r .= "</form><div>\n";
     return $r;
   }
 
@@ -572,21 +598,22 @@ JS;
    * @return array|mixed
    */
   private static function getAutoFieldMappings($options, $settings) {
-    $autoFieldMappings=array();
-    //get the user's checked preference for the import page
+    $autoFieldMapping = [];
+    // Get the user's checked preference for the import page.
     if (function_exists('hostsite_get_user_field')) {
       $json = hostsite_get_user_field('import_field_mappings');
       if ($json === FALSE) {
-        if (!hostsite_set_user_field('import_field_mappings', '[]'))
+        if (!hostsite_set_user_field('import_field_mappings', '[]')) {
           self::$rememberingMappings = FALSE;
+        }
       }
       else {
-        $json=trim($json);
-        $autoFieldMappings=json_decode(trim($json), TRUE);
+        $json = trim($json);
+        $autoFieldMappings = json_decode(trim($json), TRUE);
       }
     }
     else {
-      // host does not support user profiles, so we can't remember mappings
+      // Host does not support user profiles, so we can't remember mappings.
       self::$rememberingMappings = FALSE;
     }
     if (!empty($settings['survey_id']) && !empty($options['fieldMap'])) {
@@ -598,8 +625,9 @@ JS;
           $fields = self::explode_lines($surveyFieldMap['fields']);
           foreach ($fields as $field) {
             $tokens = explode('=', $field);
-            if (count($tokens)===2)
+            if (count($tokens) === 2) {
               $autoFieldMappings[$tokens[1]] = $tokens[0];
+            }
           }
         }
       }
@@ -613,8 +641,9 @@ JS;
           $fields = self::explode_lines($surveyFieldMap['fields']);
           foreach ($fields as $field) {
             $tokens = explode('=', $field);
-            if (count($tokens)===2)
+            if (count($tokens) === 2) {
               $autoFieldMappings[$tokens[1]] = $tokens[0];
+            }
           }
         }
       }
@@ -704,10 +733,10 @@ JS;
     }
     $rows=file($_SESSION['uploaded_file']);
     $r = '';
-    // If we are using the sample external key to verify samples, 
+    // If we are using the sample external key to verify samples,
     // then we need to check the sample data is consistant between the
     // rows which share the same external key. If not, warn the user.
-    if ($options['model']==='occurrence'||$options['model']==='sample') {  
+    if ($options['model']==='occurrence'||$options['model']==='sample') {
       if (!empty($mappingsAndSettings['settings']['verifySamplesUsingExternalKey'])&&$mappingsAndSettings['settings']['verifySamplesUsingExternalKey']==true) {
         $checkArrays = self::sample_external_key_issue_checks($options,$rows);
         $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
@@ -737,16 +766,16 @@ JS;
       $output=self::collect_errors($options,$filename);
       if (!is_array($output) || (isset($output['problems'])&&$output['problems']>0)) {
         return self::display_result_as_error_check_stage_failed($options,$output);
-      } 
+      }
       //Need to re-send metadata as we need to call warehouse again for upload (rather than error check)
-      $mappingsAndSettings=self::get_mappings_and_settings($options); 
+      $mappingsAndSettings=self::get_mappings_and_settings($options);
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
-    }  
+    }
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
     if ($transferFileDataToWarehouseSuccess===true) {
       //Progress message depends if we are uploading or simply checking for errors
       if ($options['allowCommitToDB']==true) {
-        $progressMessage = ' records uploaded.'; 
+        $progressMessage = ' records uploaded.';
       } else {
         $progressMessage = ' records checked.';
       }
@@ -817,7 +846,7 @@ JS;
     }
     return $output;
   }
-    
+
   /*
    * Jump to the results screen if errors have been detected during the error checking stage.
    * This only applies if we are preventing all commits if any errors are detected (otherwise upload_result function is called instead)
@@ -1287,9 +1316,9 @@ TD;
     if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
       $settings=self::remove_unused_associations($options,$settings);
     }
-    
+
     $settings=self::remove_unused_settings($settings);
-    
+
     $metadata=self::create_metadata_array($mappings,$settings);
 
     if (function_exists('hostsite_set_user_field')) {
@@ -1304,12 +1333,50 @@ TD;
       return $mappingsAndSettings;
   }
 
+  /**
+   * Clean and sort the mappings.
+   *
+   * Column mappings must be in the same order as the import file, so sort
+   * according to the columns in the file and discard any not in the file.
+   *
+   * @param array $mappings
+   *   Existing column mappings.
+   *
+   * @return array
+   *   Sorted and cleaned mappings.
+   */
+  private static function cleanMappings(array $mappings) {
+    if (empty($mappings)) {
+      return $mappings;
+    }
+    $correctedMappings = [];
+    // Ensure mappings are clean and in the same order as the column headings.
+    $handle = fopen($_SESSION['uploaded_file'], "r");
+    $columns = fgetcsv($handle, 1000, ",");
+    fclose($handle);
+    foreach($columns as $column) {
+      $internalColumn = str_replace(" ", "_", $column);
+      if (isset($mappings[$internalColumn])) {
+        $correctedMappings[$internalColumn] = $mappings[$internalColumn];
+      }
+    }
+    // Lookup existing record selections can go on the end.
+    // @todo Existing record lookup selections should really go in their own metadata section.
+    foreach($mappings as $key => $value) {
+      if (strpos($key, 'lookupSelect') === 0) {
+        $correctedMappings[$key] = $value;
+      }
+    }
+    return $correctedMappings;
+  }
+
   //Collect the mappings and settings from various places depending on importer mode, wizard stage.
   //These can be held in variables, option variable, or the post. Collect as appropriate
   private static function get_mappings_and_settings($options) {
-    $mappingsAndSettings=array();
-    $mappingsAndSettings['mappings']=array();
-    $mappingsAndSettings['settings']=array();
+    $mappingsAndSettings = [
+      'mappings' => [],
+      'settings' => [],
+    ];
     // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
     // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
     if (isset($options['presetSettings']))
@@ -1336,12 +1403,15 @@ TD;
       $mappingsAndSettings['mappings']=$adjustedAutomaticMappings;
     }
     //Collect mappings from a designated array in the post if available
-    if (!empty($_POST['mapping']))
+    if (!empty($_POST['mapping'])) {
       $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST['mapping']);
+    }
     //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
-    if (isset($_POST['setting']))
+    if (isset($_POST['setting'])) {
       $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST);
+    }
+    $mappingsAndSettings['mappings'] = self::cleanMappings($mappingsAndSettings['mappings']);
     //The mappings should simply be the mappings, so remove any mappings or settings sub-arrays if these have become jumbled
     //up inside our mappings array
     if (!empty($mappingsAndSettings['mappings']['mapping']))
@@ -1350,7 +1420,7 @@ TD;
       unset($mappingsAndSettings['mappings']['setting']);
     return $mappingsAndSettings;
   }
-  
+
   // when not using associations make sure that the association fields are not passed through.
   // These fields would confuse the association detection logic.
   private static function remove_unused_associations($options,$settings) {
@@ -1361,7 +1431,7 @@ TD;
     }
     return $settings;
   }
-  
+
   // only want defaults that actually have a value - others can be set on a per-row basis by mapping to a column
   private static function remove_unused_settings($settings) {
     foreach ($settings as $key => $value) {
@@ -1371,20 +1441,20 @@ TD;
     }
     return $settings;
   }
-  
-  private static function create_metadata_array($mappings,$settings) {
-    $metadata=array();
+
+  private static function create_metadata_array($mappings, $settings) {
+    $metadata = [
+      'user_id' => hostsite_get_user_field('indicia_user_id'),
+    ];
     if (!empty($mappings)) {
-      $mappingsArray = array('mappings' => json_encode($mappings));
-      $metadata=array_merge($metadata,$mappingsArray);
+      $metadata['mappings'] = json_encode($mappings);
     }
     if (!empty($settings)) {
-      $settingsArray = array('settings' => json_encode($settings));
-      $metadata=array_merge($metadata,$settingsArray);
+      $metadata['settings'] = json_encode($settings);
     }
     return $metadata;
   }
-  
+
   private static function save_user_import_mappings($mappings) {
     $userSettings = array();
     foreach ($mappings as $column => $setting) {
@@ -1462,12 +1532,12 @@ TD;
         }
 	      // Flag rows with the same sample external key but different sample data such as dates
 	      if ($rowInconsistencyFailure===true) {
-	        $inconsistencyFailureRows[$rowNumber]=$fileRow;  
+	        $inconsistencyFailureRows[$rowNumber]=$fileRow;
         }
         // Flag rows with same sample external key which are not on consecutive rows
 	      if ($rowClusteringFailure===true) {
-	        $clusteringFailureRows[$rowNumber]=$fileRow;     
-	      } 
+	        $clusteringFailureRows[$rowNumber]=$fileRow;
+	      }
 	      $rowNumber++;
       }
     }
@@ -1476,7 +1546,7 @@ TD;
     $returnArray['clusteringFailureRows']=$clusteringFailureRows;
     return $returnArray;
   }
-  
+
   /*
    * Show results of any consistency issues between rows with the same sample external key
    * (if using that import mode)

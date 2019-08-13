@@ -4,5 +4,9 @@
 #filter-bar label {
   width: auto;
   margin: 0 4px 0 15px; }
+#filter-bar .form-group {
+  margin-bottom: 0; }
+#filter-bar .form-control {
+  width: auto; }
 
 /*# sourceMappingURL=dynamic_elasticsearch.css.map */

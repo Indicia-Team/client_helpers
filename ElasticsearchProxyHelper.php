@@ -309,12 +309,15 @@ JS;
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
       }
       if (!empty($qryConfig['nested'])) {
-        $bool['must'][] = [
+        // Must not nested queries should be handled at outer level.
+        $outerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must_not' : 'must';
+        $innerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must' : $qryConfig['bool_clause'];
+        $bool[$outerBoolClause][] = [
           'nested' => [
             'path' => $qryConfig['nested'],
             'query' => [
               'bool' => [
-                $qryConfig['bool_clause'] => [$queryDef],
+                $innerBoolClause => [$queryDef],
               ],
             ],
           ],
@@ -328,7 +331,7 @@ JS;
     unset($query['bool_queries']);
     // Apply a training mode filter.
     $bool['must'][] = [
-      'term' => ['metadata.trial' => hostsite_get_user_field('training', FALSE)],
+      'term' => ['metadata.trial' => hostsite_get_user_field('training') ? TRUE : FALSE],
     ];
     iform_load_helpers([]);
     $readAuth = helper_base::get_read_auth(self::$config['indicia']['website_id'], self::$config['indicia']['password']);
@@ -745,7 +748,16 @@ JS;
     $filter = self::getDefinitionFilter($definition, $params);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-      $bool[$boolClause][] = ['exists' => ['field' => 'occurrence.media']];
+      $bool[$boolClause][] = [
+        'nested' => [
+          'path' => 'occurrence.media',
+          'query' => [
+            'bool' => [
+              'must' => ['exists' => ['field' => 'occurrence.media']],
+            ],
+          ],
+        ],
+      ];
     }
   }
 

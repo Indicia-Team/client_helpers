@@ -776,7 +776,7 @@ class filter_source extends FilterBase {
       'readAuth' => $readAuth,
       'caching' => TRUE,
       'cachePerUser' => FALSE,
-      'extraParams' => array('sharing' => $options['sharing']),
+      'extraParams' => array('sharing' => $options['sharing'] === 'me' ? 'reporting' : $options['sharing']),
     );
     // If in the warehouse then we are only interested in the website for the milestone we are editing.
     if (isset($options['website_id'])) {
@@ -1423,7 +1423,7 @@ function report_filters_load_existing($readAuth, $sharing, $caching = FALSE) {
     'readAuth' => $readAuth,
     'caching' => $caching,
     'extraParams' => array(
-      'filter_sharing_mode' => $sharing,
+      'filter_sharing_mode' => $sharing === 'M' ? 'R' : $sharing,
       'defines_permissions' => '',
       'filter_user_id' => $userId,
     ),

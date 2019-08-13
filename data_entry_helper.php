@@ -1861,88 +1861,88 @@ JS;
 
   /**
    * An HTML list box control.
-   * Options can be either populated from a web-service call to the Warehouse, e.g. the contents of
-   * a termlist, or can be populated from a fixed supplied array. The list box can
-   * be linked to populate itself when an item is selected in another control by specifying the
-   * parentControlId and filterField options.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>listbox</b></br>
-   * HTML template used to generate the select element.
-   * </li>
-   * <li><b>listbox_item</b></br>
-   * HTML template used to generate each option element with the select element.
-   * </li>
-   * </ul>
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>table</b><br/>
-   * Table name to get data from for the select options if the select is being populated by a service call.</li>
-   * <li><b>captionField</b><br/>
-   * Field to draw values to show in the control from if the select is being populated by a service call.</li>
-   * <li><b>valueField</b><br/>
-   * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
-   * to the value of captionField.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array if the select is being populated by a service call.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the select is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.
-   * </li>
-   * <li><b>size</b><br/>
-   * Optional. Number of lines to display in the listbox. Defaults to 3.</li>
-   * <li><b>multiselect</b><br/>
-   * Optional. Allow multi-select in the list box. Defaults to false.</li>
-   * <li><b>parentControlId</b><br/>
-   * Optional. Specifies a parent control for linked lists. If specified then this control is not
-   * populated until the parent control's value is set. The parent control's value is used to
-   * filter this control's options against the field specified by filterField.</li>
-   * <li><b>parentControlLabel</b><br/>
-   * Optional. Specifies the label of the parent control in a set of linked lists. This allows the child list
-   * to display information about selecting the parent first.</li>
-   * <li><b>filterField</b><br/>
-   * Optional. Specifies the field to filter this control's content against when using a parent
-   * control value to set up linked lists. Defaults to parent_id though this is not active
-   * unless a parentControlId is specified.</li>
-   * <li><b>filterIncludesNulls</b><br/>
-   * Optional. Defaults to false. If true, then null values for the filter field are included in the filter results
-   * when using a linked list.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>listCaptionSpecialChars</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies whether to run the caption through
-   * htmlspecialchars. In some cases there may be format info in the caption, and in others we may wish to keep those
-   * characters as literal.
-   * <li><b>selectedItemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li>
-   * <li><b>termImageSize</b><br/>
-   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
-   * output.</li>
-   * </ul>
+   * Options can be either populated from a web-service call to the Warehouse,
+   * e.g. the contents of a termlist, or can be populated from a fixed
+   * supplied array. The list box can be linked to populate itself when an item
+   * is selected in another control by specifying the parentControlId and
+   * filterField options.
+   *
+   * The output of this control can be configured using the following
+   * templates:
+   * * listbox - HTML template used to generate the select element.
+   * * listbox_item - HTML template used to generate each option element with
+   *   the select element.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Table name to get data from for the select options if the
+   *     select is being populated by a service call.
+   *   * captionField - Field to draw values to show in the control from if the
+   *     select is being populated by a service call.
+   *   * valueField - Field to draw values to return from the control from if
+   *     the select is being populated by a service call. Defaults to the value
+   *     of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array if the select is being populated by a service
+   *     call.
+   *   * lookupValues - If the select is to be populated with a fixed list of
+   *     values, rather than via a service call, then the values can be passed
+   *     passed into this parameter as an associated array of key=>caption.
+   *   * size - Optional. Number of lines to display in the listbox. Defaults
+   *     to 3.
+   *   * multiselect - Optional. Allow multi-select in the list box. Defaults
+   *     to false.
+   *   * parentControlId - Optional. Specifies a parent control for linked
+   *     lists. If specified then this control is not populated until the
+   *     parent control's value is set. The parent control's value is used to
+   *     filter this control's options against the field specified by
+   *     filterField.
+   *   * parentControlLabel - Optional. Specifies the label of the parent
+   *     control in a set of linked lists. This allows the child list to
+   *     display information about selecting the parent first.
+   *   * filterField - Optional. Specifies the field to filter this control's
+   *     content against when using a parent control value to set up linked
+   *     lists. Defaults to parent_id though this is not active unless a
+   *     parentControlId is specified.
+   *   * filterIncludesNulls - Optional. Defaults to false. If true, then null
+   *     values for the filter field are included in the filter results when
+   *     using a linked list.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value, if this is not specified
+   *     then 1 hour.
+   *   * template - Optional. If specified, specifies the name of the template
+   *     (in global $indicia_templates) to use for the outer control.
+   *   * itemTemplate - Optional. If specified, specifies the name of the
+   *     template (in global $indicia_templates) to use for each item in the
+   *     control.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
+   *   * listCaptionSpecialChars - Optional and only relevant when loading
+   *     content from a data service call. Specifies whether to run the caption
+   *     through htmlspecialchars. In some cases there may be format info in
+   *     the caption, and in others we may wish to keep those characters as
+   *     literal.
+   *   * selectedItemTemplate - Optional. If specified, specifies the name of
+   *     the template (in global $indicia_templates) to use for the selected
+   *     item in the control.
+   *   * termImageSize - Optional. Set to an Indicia image size preset
+   *     (normally  thumb, med or original) to include term images in the
+   *     output.
    *
    * @return string HTML to insert into the page for the listbox control.
    */
@@ -2323,90 +2323,91 @@ JS;
   }
 
   /**
-   * Helper function to generate a select control from a Indicia core service query. The select control can
-   * be linked to populate itself when an item is selected in another control by specifying the
-   * parentControlId and filterField options.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>select</b></br>
-   * HTML template used to generate the select element.
-   * </li>
-   * <li><b>select_item</b></br>
-   * HTML template used to generate each option element with the select elements.
-   * </li>
-   * </ul>
+   * Helper function to generate a select control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>  *
-   * <li><b>table</b><br/>
-   * Table name to get data from for the select options if the select is being populated by a service call.</li>
-   * <li><b>report</b><br/>
-   * Report name to get data from for the select options if the select is being populated by a service call using a report.
-   * Mutually exclusive with the table option.</li>
-   * <li><b>captionField</b><br/>
-   * Field to draw values to show in the control from if the select is being populated by a service call.</li>
-   * <li><b>valueField</b><br/>
-   * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
-   * to the value of captionField.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array if the select is being populated by a service call.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the select is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.
-   * </li>
-   * <li><b>parentControlId</b><br/>
-   * Optional. Specifies a parent control for linked lists. If specified then this control is not
-   * populated until the parent control's value is set. The parent control's value is used to
-   * filter this control's options against the field specified by filterField.</li>
-   * <li><b>parentControlLabel</b><br/>
-   * Optional. Specifies the label of the parent control in a set of linked lists. This allows the child list
-   * to display information about selecting the parent first.</li>
-   * <li><b>filterField</b><br/>
-   * Optional. Specifies the field to filter this control's content against when using a parent
-   * control value to set up linked lists. Defaults to parent_id though this is not active
-   * unless a parentControlId is specified.</li>
-   * <li><b>filterIncludesNulls</b><br/>
-   * Optional. Defaults to false. If true, then null values for the filter field are included in the filter results
-   * when using a linked list.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>blankText</b><br/>
-   * Optional. If specified then the first option in the drop down is the blank text, used when there is no value.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>listCaptionSpecialChars</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies whether to run the caption through
-   * htmlspecialchars. In some cases there may be format info in the caption, and in others we may wish to keep those
-   * characters as literal.
-   * <li><b>selectedItemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the selected item in the control.</li>
-   * <li><b>termImageSize</b><br/>
-   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
-   * output.</li>
-   * </ul>
+   * The select control can be linked to populate itself when an item is
+   * selected in another control by specifying the parentControlId and
+   * filterField options.
    *
-   * @return string HTML code for a select control.
+   * The output of this control can be configured using the following
+   * templates:
+   * * select - HTML template used to generate the select element.
+   * * select_item - HTML template used to generate each option element with
+   * the select elements.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Table name to get data from for the select options if the
+   *     select is being populated by a service call.
+   *   * report - Report name to get data from for the select options if the
+   *     select is being populated by a service call using a report. Mutually
+   *     exclusive with the table option.
+   *   * captionField - Field to draw values to show in the control from if the
+   *     select is being populated by a service call.
+   *   * valueField - Field to draw values to return from the control from if
+   *     the select is being populated by a service call. Defaults to the value
+   *     of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array if the select is being populated by a service
+   *     call.
+   *   * lookupValues - If the select is to be populated with a fixed list of
+   *     values, rather than via a service call, then the values can be passed
+   *     into this parameter as an associated array of key => caption.
+   *   * parentControlId - Optional. Specifies a parent control for linked
+   *     lists. If specified then this control is not populated until the
+   *     parent control's value is set. The parent control's value is used to
+   *     filter this control's options against the field specified by
+   *     filterField.
+   *   * parentControlLabel - Optional. Specifies the label of the parent
+   *     control in a set of linked lists. This allows the child list to
+   *     display information about selecting the parent first.
+   *   * filterField - Optional. Specifies the field to filter this control's
+   *     content against when using a parent control value to set up linked
+   *     lists. Defaults to parent_id though this is not active unless a
+   *     parentControlId is specified.
+   *   * filterIncludesNulls - Optional. Defaults to false. If true, then null
+   *     values for the filter field are included in the filter results when
+   *     using a linked list.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value, if this is not specified
+   *     then 1 hour.
+   *   * blankText - Optional. If specified then the first option in the drop
+   *     down is the blank text, used when there is no value.
+   *   * template - Optional. If specified, specifies the name of the template
+   *     (in global $indicia_templates) to use for the outer control.
+   *   * itemTemplate - Optional. If specified, specifies the name of the
+   *     template (in global $indicia_templates) to use for each item in the
+   *     control.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
+   *   * listCaptionSpecialChars - Optional and only relevant when loading
+   *     content from a data service call. Specifies whether to run the caption
+   *     through htmlspecialchars. In some cases there may be format info in
+   *     the caption, and in others we may wish to keep those characters as
+   *     literal.
+   *   * selectedItemTemplate - Optional. If specified, specifies the name of
+   *     the template (in global $indicia_templates) to use for the selected
+   *     item in the control.
+   *   * termImageSize - Optional. Set to an Indicia image size preset
+   *     (normally thumb, med or original) to include term images in the
+   *     output.
+   *
+   * @return string
+   *   HTML code for a select control.
    */
   public static function select($options)
   {
@@ -5697,17 +5698,19 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     global $indicia_templates;
     self::add_resource('json');
     $options = array_merge(array(
-      'filterField'=>'parent_id',
-      'size'=>3
+      'filterField' => 'parent_id',
+      'size' => 3,
+      'hideChildrenUntilLoaded' => FALSE,
     ), $options);
     if (array_key_exists('parentControlId', $options) && empty(data_entry_helper::$entity_to_load[$options['parentControlId']])) {
       // no options for now
       $options['items'] = '';
-      self::init_linked_lists($options);
+      self::initLinkedLists($options);
     } else {
-      if (array_key_exists('parentControlId', $options))
+      if (array_key_exists('parentControlId', $options)) {
         // still want linked lists, even though we will have some items initially populated
-        self::init_linked_lists($options);
+        self::initLinkedLists($options);
+      }
       $lookupItems = self::get_list_items_from_options($options, 'selected');
       $options['items'] = "";
       if (array_key_exists('blankText', $options)) {
@@ -5852,41 +5855,49 @@ HTML;
    *
    * @param array Options array of the child linked list.
    */
-  private static function init_linked_lists($options) {
+  private static function initLinkedLists($options) {
     global $indicia_templates;
     // setup JavaScript to do the population when the parent control changes
-    $parentControlId = str_replace(':','\\\\:',$options['parentControlId']);
-    $escapedId = str_replace(':','\\\\:',$options['id']);
+    $parentControlId = str_replace(':', '\\\\:', $options['parentControlId']);
+    $escapedId = str_replace(':','\\\\:', $options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
-      $request = "$url?report=".$options['report'].".xml&mode=json&reportSource=local&callback=?";
+      $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
       $query = $options['filterField'] . '="+$(this).val()+"';
     }
     else {
       $url = parent::getProxiedBaseUrl() . "index.php/services/data";
-      $request = "$url/".$options['table']."?mode=json&callback=?";
+      $request = "$url/$options[table]?mode=json&callback=?";
       $inArray = array('val');
       if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
         $inArray[] = null;
-      $query = urlencode(json_encode(array('in'=>array($options['filterField'], $inArray))));
-      $query = 'query=' . str_replace('%22val%22', '"+$(this).val()+"', $query);
+      $query = urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
     }
     if (isset($options['parentControlLabel']))
-      $instruct = str_replace('{0}', $options['parentControlLabel'], lang::get('Please select a {0} first'));
+      $instruct = lang::get('Please select a {1} first', $options['parentControlLabel']);
     else
       $instruct = lang::get('Awaiting selection...');
     if (array_key_exists('extraParams', $options)) {
-      $request .= '&'.self::array_to_query_string($options['extraParams']);
+      $request .= '&' . http_build_query($options['extraParams']);
     }
     // store default in JavaScript so we can load the correct value after AJAX population.
     if (!empty($options['default']) && preg_match('/^[0-9]+$/', $options['default']))
       self::$javascript .= "indiciaData['default$escapedId']=$options[default];\n";
-    self::$javascript .= str_replace(
-      array('{fn}','{escapedId}','{request}','{query}','{valueField}','{captionField}','{filterField}','{parentControlId}', '{instruct}'),
-      array($fn, $escapedId, $request,$query,$options['valueField'],$options['captionField'],$options['filterField'],$parentControlId, $instruct),
-      $indicia_templates['linked_list_javascript']
-    );
+    if (!isset(self::$indiciaData['linkedSelects'])) {
+      self::$indiciaData['linkedSelects'] = [];
+    }
+    self::$indiciaData['linkedSelects'][] = [
+      'escapedId' => $escapedId,
+      'request' => $request,
+      'query' => $query,
+      'valueField' => $options['valueField'],
+      'captionField' => $options['captionField'],
+      'filterField' => $options['filterField'],
+      'parentControlId' => $parentControlId,
+      'instruct' => $instruct,
+      'hideChildrenUntilLoaded' => $options['hideChildrenUntilLoaded'],
+    ];
   }
 
   /**

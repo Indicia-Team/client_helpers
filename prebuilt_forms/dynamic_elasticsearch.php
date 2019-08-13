@@ -183,6 +183,10 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
       'caption' => 'Display spatial reference',
       'description' => 'Spatial reference in the recommended local grid system.',
     ],
+    'location.coordinate_uncertainty_in_meters' => [
+      'caption' => 'Coordinate uncertainty in metres',
+      'description' => 'Uncertainty of a provided GPS point.',
+    ],
     '#lat_lon#' => [
       'caption' => 'Lat/lon',
       'description' => 'Latitude and longitude of the record.',
@@ -191,6 +195,22 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
       'handler' => 'media',
+    ],
+    'occurrence.sex' => [
+      'caption' => 'Sex',
+      'description' => 'Sex of the recorded organism',
+    ],
+    'occurrence.life_stage' => [
+      'caption' => 'Life stage',
+      'description' => 'Life stage of the recorded organism.',
+    ],
+    'occurrence.individual_count' => [
+      'caption' => 'Count',
+      'description' => 'Numeric abundance count of the recorded organism.',
+    ],
+    'occurrence.organism_quantity' => [
+      'caption' => 'Quantity',
+      'description' => 'Abundance of the recorded organism (numeric or text).',
     ],
   ];
 
@@ -380,6 +400,38 @@ JS;
   }
 
   /**
+   * Applies token replacements to one or more values in the $options array.
+   *
+   * Tokens are of the format "{{ name }}" where the token name is one of the
+   * following:
+   * * indicia_user_id - the user's warehouse user ID.
+   * * a parameter from the URL query string.
+   *
+   * @param array $options
+   *   Control options.
+   * @param array $fields
+   *   List of the fields in the options array that replacements should be
+   *   applied to.
+   * @param array $jsonFields
+   *   Subset of $fields where the value should be a JSON object after
+   *   replacements are applied.
+   */
+  private static function applyReplacements(array &$options, array $fields, array $jsonFields) {
+    $replacements = ['{{ indicia_user_id }}' => hostsite_get_user_field('indicia_user_id')];
+    foreach ($_GET as $field => $value) {
+      $replacements["{{ $field }}"] = $value;
+    }
+    foreach ($fields as $field) {
+      if (!empty($options[$field]) && is_string($options[$field])) {
+        $options[$field] = str_replace(array_keys($replacements), array_values($replacements), $options[$field]);
+        if (in_array($field, $jsonFields)) {
+          $options[$field] = json_decode($options[$field]);
+        }
+      }
+    }
+  }
+
+  /**
    * Provide common option handling for controls.
    *
    * * If attachToId specified, ensures that the control ID is set to the same
@@ -446,8 +498,9 @@ JS;
    *   Empty string as no HTML required.
    */
   protected static function get_control_source($auth, $args, $tabalias, $options) {
+    self::applyReplacements($options, ['aggregation'], ['aggregation']);
     self::checkOptions(
-      'esSource',
+      'source',
       $options,
       ['id'],
       ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
@@ -966,49 +1019,126 @@ HTML;
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * Currently only supports taxon scratchpad list filtering.
-   *
-   * Options can include:
-   * * @taxon_scratchpad_list_id - set to false to disable filtering species by
-   *   a provided scratchpad list ID.
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[urlParams]
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.
    */
   protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
+    self::checkOptions('urlParams', $options, [], ['fieldFilters']);
     $options = array_merge([
-      'taxon_scratchpad_list_id' => TRUE,
+      'fieldFilters' => [
+        'taxa_in_scratchpad_list_id' => [
+          [
+            'name' => 'taxon.higher_taxon_ids',
+            'type' => 'integer',
+            'process' => 'taxonIdsInScratchpad',
+          ],
+        ],
+        // For legacy configurations
+        'taxon_scratchpad_list_id' => [
+          [
+            'name' => 'taxon.higher_taxon_ids',
+            'type' => 'integer',
+            'process' => 'taxonIdsInScratchpad',
+          ],
+        ],
+        'sample_id' => [
+          [
+            'name' => 'event.event_id',
+            'type' => 'integer',
+          ],
+        ],
+        'taxa_in_sample_id' => [
+          [
+            // Use accepted taxon ID so this is not a hierarchical query.
+            'name' => 'taxon.accepted_taxon_id',
+            'type' => 'integer',
+            'process' => 'taxonIdsInSample',
+          ],
+        ],
+      ],
       // Other options, e.g. group_id or field params may be added in future.
     ], $options);
     $r = '';
-    if (!empty($options['taxon_scratchpad_list_id']) && !empty($_GET['taxon_scratchpad_list_id'])) {
-      // Check the parameter is valid.
-      $taxonScratchpadListId = $_GET['taxon_scratchpad_list_id'];
-      if (!preg_match('/^\d+$/', $taxonScratchpadListId)) {
-        hostsite_show_message(
-          lang::get('The taxon_scratchpad_list_id parameter should be a whole number which is the ID of a scratchpad list.'),
-          'warning'
-        );
-      }
-      // Load the scratchpad's list of taxa.
-      iform_load_helpers(['report_helper']);
-      $listEntries = report_helper::get_report_data([
-        'dataSource' => 'library/taxa/external_keys_for_scratchpad',
-        'readAuth' => $auth['read'],
-        'extraParams' => ['scratchpad_list_id' => $taxonScratchpadListId],
-      ]);
-      // Build a hidden input which causes filtering to this list.
-      $keys = [];
-      foreach ($listEntries as $row) {
-        $keys[] = $row['external_key'];
-      }
-      $keyJson = str_replace('"', '&quot;', json_encode($keys));
-      $r .= <<<HTML
-<input type="hidden" class="es-filter-param" value="$keyJson"
-  data-es-bool-clause="must" data-es-field="taxon.higher_taxon_ids" data-es-query-type="terms" />
+    foreach ($options['fieldFilters'] as $field => $esFieldList) {
+      if (!empty($_GET[$field])) {
+        foreach ($esFieldList as $esField) {
+          $value = trim($_GET[$field]);
+          if ($esField['type'] === 'integer') {
+            if (!preg_match('/^\d+$/', $value)) {
+              // Disable this filter.
+              $value = '-1';
+              hostsite_show_message(
+                "Data cannot be loaded because the value in the $field parameter is invalid",
+                'warning'
+              );
+            }
+          }
+          $queryType = 'term';
+          // Special processing for a taxon scratchpad ID.
+          if (isset($esField['process'])) {
+            if ($esField['process'] === 'taxonIdsInScratchpad') {
+              $value = self::convertValueToFilterList(
+                'library/taxa/external_keys_for_scratchpad',
+                ['scratchpad_list_id' => $value],
+                'external_key',
+                $auth
+              );
+            }
+            elseif ($esField['process'] === 'taxonIdsInSample') {
+              $value = self::convertValueToFilterList(
+                'library/taxa/external_keys_for_sample',
+                ['sample_id' => $value],
+                'external_key',
+                $auth
+              );
+            }
+            $queryType = 'terms';
+          }
+          $r .= <<<HTML
+<input type="hidden" class="es-filter-param" value="$value"
+  data-es-bool-clause="must" data-es-field="$esField[name]" data-es-query-type="$queryType" />
+
 HTML;
+        }
+      }
     }
     return $r;
+  }
+
+  /**
+   * Uses an Indicia report to convert a URL param to a list of filter values.
+   *
+   * For example, converts a scratchpad list ID to the list of taxa in the
+   * scratchpad list.
+   *
+   * @param string $report
+   *   Report path.
+   * @param array $params
+   *   List of parameters to pass to the report.
+   * @param string $outputField
+   *   Name of the field output by the report to build the list from.
+   * @param array $auth
+   *   Authorisation tokens.
+   *
+   * @return string
+   *   List for placing in the url param's hidden input attribute.
+   */
+  private static function convertValueToFilterList($report, array $params, $outputField, array $auth) {
+    // Load the scratchpad's list of taxa.
+    iform_load_helpers(['report_helper']);
+    $listEntries = report_helper::get_report_data([
+      'dataSource' => $report,
+      'readAuth' => $auth['read'],
+      'extraParams' => $params,
+    ]);
+    // Build a hidden input which causes filtering to this list.
+    $keys = [];
+    foreach ($listEntries as $row) {
+      $keys[] = $row[$outputField];
+    }
+    return str_replace('"', '&quot;', json_encode($keys));
   }
 
   /**
@@ -1020,26 +1150,47 @@ HTML;
    *
    * Options are:
    *
-   * * @locationTypeId - ID of the location type of the locations to list. Must
-   *   be a type indexed by the spatial index builder module.
+   * * @locationTypeId - Either a single ID of the location type of the
+   *   locations to list, or an array of IDs of location types where the
+   *   locations are hierarchical (parent first). Each type ID must be indexed
+   *   by the spatial index builder module.
    *
    * @return string
    *   Control HTML
    */
   protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
-    if (empty($options['locationTypeId']) || !preg_match('/^\d+$/', $options['locationTypeId'])) {
-      throw new Exception('An integer @locationTypeId parameter is required for the [higherGeographySelect] control');
+    if (empty($options['locationTypeId']) ||
+        (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId']))) {
+      throw new Exception('An integer or integer array @locationTypeId parameter is required for the [higherGeographySelect] control');
     }
-    $options['extraParams'] = array_merge([
-      'location_type_id' => $options['locationTypeId'],
-      'orderby' => 'name',
-    ], $options['extraParams'], $auth['read']);
+    $typeIds = is_array($options['locationTypeId']) ? $options['locationTypeId'] : [$options['locationTypeId']];
+    $r = '';
     $options = array_merge([
-      'id' => 'higher-geography-select',
       'class' => 'es-higher-geography-select',
       'blankText' => lang::get('<All locations shown>'),
+      'id' => 'higher-geography-select',
     ], $options);
-    return data_entry_helper::location_select($options);
+    $options['extraParams'] = array_merge([
+      'orderby' => 'name',
+    ], $options['extraParams'], $auth['read']);
+    $baseId = $options['id'];
+    foreach ($typeIds as $idx => $typeId) {
+      $options['extraParams']['location_type_id'] = $typeId;
+      if (count($typeIds) > 0) {
+        $options['id'] = "$baseId-$idx";
+        $options['class'] .= ' linked-select';
+      }
+      if ($idx > 0) {
+        $options['parentControlId'] = "$baseId-" . ($idx - 1);
+        if ($idx === 1) {
+          $options['parentControlLabel'] = $options['label'];
+          $options['filterField'] = 'parent_id';
+          unset($options['label']);
+        }
+      }
+      $r .= data_entry_helper::location_select($options);
+    }
+    return $r;
   }
 
   /**
