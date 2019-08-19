@@ -3,6 +3,7 @@ jQuery(document).ready(function enablePdf($) {
   indiciaData.reportsToLoad = 0;
   indiciaData.htmlPreparedForPdf = false;
 
+
   function shrinkReportsIfNeeded() {
     var maxWidthLandscape = 1100;
     // Calculate max width value, based on A4 aspect ratio for portrait.
@@ -58,7 +59,7 @@ jQuery(document).ready(function enablePdf($) {
     // Create the PDF
     html2pdf($(indiciaData.printSettings.includeSelector)[0], {
       filename: indiciaData.printSettings.fileName,
-      margin: [0.5, 0.5],
+      margin: indiciaData.printSettings.margin,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         dpi: 192,
