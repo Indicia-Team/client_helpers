@@ -430,7 +430,23 @@ HTML;
 
     $request = str_replace('get_required_fields', 'get_existing_record_options', $request);
     $response = self::http_post($request);
-    $existingDataLookupOptions = json_decode($response['output'], TRUE);
+    
+    // The $existingDataLookupOptions variable holds the required fields that must be filled in for a particular existing lookup option to work
+    // e.g. external_key can't be used unless external_key is filled in
+    // However these options come from the importDuplicateCheckCombinations option in the model, some fields from here are not suitable for use
+    // and if left in cause problems. Remove this options (held in $importDuplicateCheckCombinationsToRemove) 
+    $existingDataLookupOptions = array();
+    $importDuplicateCheckCombinations = json_decode($response['output'], TRUE);
+    $importDuplicateCheckCombinationsToRemove = array('taxa_taxon_list:taxon_id', 'sample:sample_method_id');
+    foreach ($importDuplicateCheckCombinations[$options['model']] as $idx => $importDuplicateCheckCombination) {
+      foreach ($importDuplicateCheckCombination['fields'] as $idx2 => $field) {
+        if (!empty($field['fieldName']) && in_array($field['fieldName'], $importDuplicateCheckCombinationsToRemove)) {
+          unset($importDuplicateCheckCombinations[$options['model']][$idx]['fields'][$idx2]);
+        }
+      }
+    }
+    $existingDataLookupOptions = $importDuplicateCheckCombinations;
+
     if (!is_array($existingDataLookupOptions)) {
       // There is a possibility that the warehouse is not as advanced as the form: in this case we carry on as if no options are avaailable.
       $existingDataLookupOptions = array();
@@ -598,7 +614,7 @@ JS;
    * @return array|mixed
    */
   private static function getAutoFieldMappings($options, $settings) {
-    $autoFieldMapping = [];
+    $autoFieldMappings = [];
     // Get the user's checked preference for the import page.
     if (function_exists('hostsite_get_user_field')) {
       $json = hostsite_get_user_field('import_field_mappings');
