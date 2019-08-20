@@ -46,16 +46,26 @@ class extension_print {
    * @param array $options
    *   Options passed to the control. Options are:
    *     * format - portrait, landscape, or choose (default).
-   *     * includeSelector - selector for the element which includes the content to be printed. Defaults to
-   *       #content.
-   *     * excludeSelector - selector for any elements inside the element being printed which should be hidden.
-   *     * maxRecords - maximum number of records to load per report table. Default 20,000.
+   *     * includeSelector - selector for the element which includes the
+   *       content to be printed. Defaults to content.
+   *     * excludeSelector - selector for any elements inside the element being
+   *       printed which should be hidden.
+   *     * maxRecords - maximum number of records to load per report table.
+   *       Default 20,000.
    *     * fileName - default name given to download PDF files.
-   *     * addToSelector - if specified, then the button generated will be added to the element matching this selector
-   *       rather than emitted inline. This allows you to embed the PDF generation button anywhere on the page you
-   *       want to.
-   *     * titleSelector - set to the selector used for the page title element to include in the report.
+   *     * addToSelector - if specified, then the button generated will be
+   *       added to the element matching this selector rather than emitted
+   *       inline. This allows you to embed the PDF generation button anywhere
+   *       on the page you want to.
+   *     * titleSelector - set to the selector used for the page title element
+   *       to include in the report.
    *       Defaults to #page-title.
+   *     * format - landscape or portrait. If not specified then a popup dialog
+   *       is shown to ask the user.
+   *     * margin - margin size in cm. Can be a single number,
+   *       [vMargin, hMargin], or [top, left, bottom, right].
+   *     * pagebreak - setting for page break mode to pass to html2pdf.
+   *       @link https://github.com/eKoopmans/html2pdf.js#page-breaks.
    * @param string $path
    *   Current page path.
    *
@@ -66,22 +76,28 @@ class extension_print {
     global $indicia_templates;
     helper_base::add_resource('html2pdf');
     helper_base::add_resource('fancybox');
-    $options = array_merge(array(
+    $options = array_merge([
       'format' => 'choose',
       'includeSelector' => '#content',
       'excludeSelector' => '',
       'maxRecords' => 200,
       'fileName' => 'report.pdf',
       'addToSelector' => '',
-      'titleSelector' => '#page-title'
-    ), $options);
+      'titleSelector' => '#page-title',
+      'margin' => [0.5, 0.5],
+      'pagebreak' => ['mode' => ['css', 'legacy']],
+    ], $options);
+    $margin = json_encode($options['margin']);
+    $pagebreak = json_encode($options['pagebreak']);
     helper_base::$javascript .= <<<JS
 indiciaData.printSettings = {
   includeSelector: "$options[includeSelector]",
   excludeSelector: "$options[excludeSelector]",
   titleSelector: "$options[titleSelector]",
   maxRecords: $options[maxRecords],
-  fileName: "$options[fileName]"
+  fileName: "$options[fileName]",
+  margin: $margin,
+  pagebreak: $pagebreak,
 };
 
 JS;

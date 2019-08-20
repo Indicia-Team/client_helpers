@@ -3,6 +3,7 @@ jQuery(document).ready(function enablePdf($) {
   indiciaData.reportsToLoad = 0;
   indiciaData.htmlPreparedForPdf = false;
 
+
   function shrinkReportsIfNeeded() {
     var maxWidthLandscape = 1100;
     // Calculate max width value, based on A4 aspect ratio for portrait.
@@ -46,6 +47,7 @@ jQuery(document).ready(function enablePdf($) {
    * Once the page has all data loaded, trigger conversion to PDF.
    */
   function doConversion() {
+    var options;
     // Apply required HTML changes.
     if (!indiciaData.htmlPreparedForPdf) {
       prepareHtmlForPdf();
@@ -56,9 +58,9 @@ jQuery(document).ready(function enablePdf($) {
     shrinkReportsIfNeeded();
 
     // Create the PDF
-    html2pdf($(indiciaData.printSettings.includeSelector)[0], {
+    options = {
       filename: indiciaData.printSettings.fileName,
-      margin: [0.5, 0.5],
+      margin: indiciaData.printSettings.margin,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         dpi: 192,
@@ -68,11 +70,21 @@ jQuery(document).ready(function enablePdf($) {
         orientation: $('#pdf-format').val(),
         unit: 'cm',
         format: 'a4'
-      }
-    });
-    //
-    $(indiciaData.printSettings.includeSelector).removeClass('printing');
-    $('div.loading').remove();
+      },
+      pagebreak: { avoid: '.specimen-label' }
+    };
+    html2pdf()
+      .set(options)
+      .from($(indiciaData.printSettings.includeSelector)[0])
+      .save()
+      .then(function onSuccess() {
+        $(indiciaData.printSettings.includeSelector).removeClass('printing');
+        $('div.loading').remove();
+      }, function onFail(why) {
+        $(indiciaData.printSettings.includeSelector).removeClass('printing');
+        $('div.loading').remove();
+        alert('PDF generation failed. ' + why.message);
+      });
   }
 
   window.reportLoaded = function checkIfAllReportsLoaded(div) {
