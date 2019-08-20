@@ -71,7 +71,7 @@ jQuery(document).ready(function enablePdf($) {
         unit: 'cm',
         format: 'a4'
       },
-      pagebreak: { avoid: '.specimen-label' }
+      pagebreak: indiciaData.printSettings.pagebreak
     };
     html2pdf()
       .set(options)
