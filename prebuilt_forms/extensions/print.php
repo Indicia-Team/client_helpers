@@ -62,7 +62,10 @@ class extension_print {
    *       Defaults to #page-title.
    *     * format - landscape or portrait. If not specified then a popup dialog
    *       is shown to ask the user.
-   *     * margin - margin sizes (default [0.5, 0.5] inches).
+   *     * margin - margin size in cm. Can be a single number,
+   *       [vMargin, hMargin], or [top, left, bottom, right].
+   *     * pagebreak - setting for page break mode to pass to html2pdf.
+   *       @link https://github.com/eKoopmans/html2pdf.js#page-breaks.
    * @param string $path
    *   Current page path.
    *
@@ -82,8 +85,10 @@ class extension_print {
       'addToSelector' => '',
       'titleSelector' => '#page-title',
       'margin' => [0.5, 0.5],
+      'pagebreak' => ['mode' => ['css', 'legacy']],
     ], $options);
     $margin = json_encode($options['margin']);
+    $pagebreak = json_encode($options['pagebreak']);
     helper_base::$javascript .= <<<JS
 indiciaData.printSettings = {
   includeSelector: "$options[includeSelector]",
@@ -91,7 +96,8 @@ indiciaData.printSettings = {
   titleSelector: "$options[titleSelector]",
   maxRecords: $options[maxRecords],
   fileName: "$options[fileName]",
-  margins: $margin
+  margin: $margin,
+  pagebreak: $pagebreak,
 };
 
 JS;
