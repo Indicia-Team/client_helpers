@@ -44,6 +44,42 @@ jQuery(document).ready(function enablePdf($) {
   }
 
   /**
+   * Recurse into SVG elements to inline the styles.
+   */
+  function recurseSvgInlineStyles(node) {
+    var properties = [
+      'fill',
+      'color',
+      'font-size',
+      'stroke',
+      'font'
+    ];
+    var styles;
+    if (!node.style) {
+      return;
+    }
+    styles = getComputedStyle(node);
+    properties.forEach(function eachProperty(prop) {
+      node.style[prop] = styles[prop];
+    });
+    $.each(node.childNodes, function eachChild() {
+      recurseSvgInlineStyles(this);
+    });
+  }
+
+  /**
+   * Html2Canvas needs us to inline any SVG styles.
+   */
+  function svgInlineStyles() {
+    var svgElems = $('svg');
+    $.each(svgElems, function eacSvg() {
+      $(this).attr('width', this.clientWidth + 'px');
+      $(this).attr('height', this.clientHeight + 'px');
+      recurseSvgInlineStyles(this);
+    });
+  }
+
+  /**
    * Once the page has all data loaded, trigger conversion to PDF.
    */
   function doConversion() {
@@ -56,6 +92,7 @@ jQuery(document).ready(function enablePdf($) {
     // Use a CSS class to clean up page style.
     $(indiciaData.printSettings.includeSelector).addClass('printing');
     shrinkReportsIfNeeded();
+    svgInlineStyles();
 
     // Create the PDF
     options = {
