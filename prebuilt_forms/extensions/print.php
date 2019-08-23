@@ -116,7 +116,7 @@ JS;
       ));
       return <<<HTML
 <div id="print-pdf">
-  <input type="hidden" name="pdf-format" value="$options[format]" />
+  <input type="hidden" id="pdf-format" value="$options[format]" />
   $generateBtn
 </div>
 HTML;
