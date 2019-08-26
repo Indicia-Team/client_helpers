@@ -91,6 +91,7 @@ jQuery(document).ready(function enablePdf($) {
     }
     // Use a CSS class to clean up page style.
     $(indiciaData.printSettings.includeSelector).addClass('printing');
+    $(indiciaData.printSettings.excludeSelector).addClass('hide-from-printing');
     shrinkReportsIfNeeded();
     svgInlineStyles();
 
@@ -116,10 +117,12 @@ jQuery(document).ready(function enablePdf($) {
       .save()
       .then(function onSuccess() {
         $(indiciaData.printSettings.includeSelector).removeClass('printing');
-        $('div.loading').remove();
+        $(indiciaData.printSettings.excludeSelector).removeClass('hide-from-printing');
+        $('div.loading-spinner').remove();
       }, function onFail(why) {
         $(indiciaData.printSettings.includeSelector).removeClass('printing');
-        $('div.loading').remove();
+        $(indiciaData.printSettings.excludeSelector).removeClass('hide-from-printing');
+        $('div.loading-spinner').remove();
         alert('PDF generation failed. ' + why.message);
       });
   }
@@ -140,7 +143,7 @@ jQuery(document).ready(function enablePdf($) {
    * Initiates the process of converting the page HTML to a PDF document.
    */
   function convertToPdf() {
-    $('body').append('<div class="loading">Loading&#8230;</div>');
+    $(indiciaData.printSettings.includeSelector).append('<div class="loading-spinner"><div>Loading...</div></div>');
     $.fancybox.close();
     if (typeof indiciaData.reports !== 'undefined') {
       // Count the report grids so we know when they are all done
