@@ -44,6 +44,42 @@ jQuery(document).ready(function enablePdf($) {
   }
 
   /**
+   * Recurse into SVG elements to inline the styles.
+   */
+  function recurseSvgInlineStyles(node) {
+    var properties = [
+      'fill',
+      'color',
+      'font-size',
+      'stroke',
+      'font'
+    ];
+    var styles;
+    if (!node.style) {
+      return;
+    }
+    styles = getComputedStyle(node);
+    properties.forEach(function eachProperty(prop) {
+      node.style[prop] = styles[prop];
+    });
+    $.each(node.childNodes, function eachChild() {
+      recurseSvgInlineStyles(this);
+    });
+  }
+
+  /**
+   * Html2Canvas needs us to inline any SVG styles.
+   */
+  function svgInlineStyles() {
+    var svgElems = $('svg');
+    $.each(svgElems, function eacSvg() {
+      $(this).attr('width', this.clientWidth + 'px');
+      $(this).attr('height', this.clientHeight + 'px');
+      recurseSvgInlineStyles(this);
+    });
+  }
+
+  /**
    * Once the page has all data loaded, trigger conversion to PDF.
    */
   function doConversion() {
@@ -55,7 +91,9 @@ jQuery(document).ready(function enablePdf($) {
     }
     // Use a CSS class to clean up page style.
     $(indiciaData.printSettings.includeSelector).addClass('printing');
+    $(indiciaData.printSettings.excludeSelector).addClass('hide-from-printing');
     shrinkReportsIfNeeded();
+    svgInlineStyles();
 
     // Create the PDF
     options = {
@@ -71,7 +109,7 @@ jQuery(document).ready(function enablePdf($) {
         unit: 'cm',
         format: 'a4'
       },
-      pagebreak: { avoid: '.specimen-label' }
+      pagebreak: indiciaData.printSettings.pagebreak
     };
     html2pdf()
       .set(options)
@@ -79,10 +117,12 @@ jQuery(document).ready(function enablePdf($) {
       .save()
       .then(function onSuccess() {
         $(indiciaData.printSettings.includeSelector).removeClass('printing');
-        $('div.loading').remove();
+        $(indiciaData.printSettings.excludeSelector).removeClass('hide-from-printing');
+        $('div.loading-spinner').remove();
       }, function onFail(why) {
         $(indiciaData.printSettings.includeSelector).removeClass('printing');
-        $('div.loading').remove();
+        $(indiciaData.printSettings.excludeSelector).removeClass('hide-from-printing');
+        $('div.loading-spinner').remove();
         alert('PDF generation failed. ' + why.message);
       });
   }
@@ -103,7 +143,7 @@ jQuery(document).ready(function enablePdf($) {
    * Initiates the process of converting the page HTML to a PDF document.
    */
   function convertToPdf() {
-    $('body').append('<div class="loading">Loading&#8230;</div>');
+    $(indiciaData.printSettings.includeSelector).append('<div class="loading-spinner"><div>Loading...</div></div>');
     $.fancybox.close();
     if (typeof indiciaData.reports !== 'undefined') {
       // Count the report grids so we know when they are all done

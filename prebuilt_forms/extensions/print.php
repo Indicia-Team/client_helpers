@@ -59,7 +59,7 @@ class extension_print {
    *       on the page you want to.
    *     * titleSelector - set to the selector used for the page title element
    *       to include in the report.
-   *       Defaults to #page-title.
+   *       Defaults to h1.
    *     * format - landscape or portrait. If not specified then a popup dialog
    *       is shown to ask the user.
    *     * margin - margin size in cm. Can be a single number,
@@ -83,7 +83,7 @@ class extension_print {
       'maxRecords' => 200,
       'fileName' => 'report.pdf',
       'addToSelector' => '',
-      'titleSelector' => '#page-title',
+      'titleSelector' => 'h1',
       'margin' => [0.5, 0.5],
       'pagebreak' => ['mode' => ['css', 'legacy']],
     ], $options);
@@ -116,7 +116,7 @@ JS;
       ));
       return <<<HTML
 <div id="print-pdf">
-  <input type="hidden" name="pdf-format" value="$options[format]" />
+  <input type="hidden" id="pdf-format" value="$options[format]" />
   $generateBtn
 </div>
 HTML;
