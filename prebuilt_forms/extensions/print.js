@@ -143,7 +143,7 @@ jQuery(document).ready(function enablePdf($) {
    * Initiates the process of converting the page HTML to a PDF document.
    */
   function convertToPdf() {
-    $(indiciaData.printSettings.includeSelector).append('<div class="loading-spinner"><div>Loading...</div></div>');
+    $('body').append('<div class="loading-spinner spinner-fixed"><div>Loading...</div></div>');
     $.fancybox.close();
     if (typeof indiciaData.reports !== 'undefined') {
       // Count the report grids so we know when they are all done
