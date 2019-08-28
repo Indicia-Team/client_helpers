@@ -625,7 +625,10 @@ HTML;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[download]
    */
   protected static function get_control_download($auth, $args, $tabalias, $options) {
-    self::checkOptions('esDownload', $options, ['source'], []);
+    self::checkOptions('esDownload', $options,
+      ['source'],
+      ['addColumns', 'removeColumns']
+    );
     global $indicia_templates;
     $r = str_replace(
       [
@@ -672,7 +675,12 @@ HTML;
       $indicia_templates['two-col-50']);
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
-    $dataOptions = self::getOptionsForJs($options, ['source'], empty($options['attachToId']));
+    $dataOptions = self::getOptionsForJs($options, [
+      'source',
+      'columnsTemplate',
+      'addColumns',
+      'removeColumns',
+    ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcEsDownload({});
 

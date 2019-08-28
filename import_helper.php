@@ -1375,10 +1375,24 @@ TD;
     fclose($handle);
     foreach($columns as $column) {
       $internalColumn = str_replace(" ", "_", $column);
+      $idx=0;
+      // For UTF with BOM, the first heading seems to get underscores attached to the front of it,
+      // need to strip these and reinstate the array item in a minute as it doesn't get picked up by the $correctedMappings below
+      // (because of the underscores not matching the mappings array).
+      foreach ($mappings as $key => $value) {
+        if ($idx==0) {
+          $trimmedKey=ltrim($key,'_');
+          $theValueFromTrimmedKey=$value;
+        }
+        $idx++;
+      }
       if (isset($mappings[$internalColumn])) {
         $correctedMappings[$internalColumn] = $mappings[$internalColumn];
       }
     }
+    // Re-instate the first item in the array after stripping BOM underscores (see note above)
+    $firstItem = array($trimmedKey => $theValueFromTrimmedKey);
+    $correctedMappings = $firstItem + $correctedMappings;
     // Lookup existing record selections can go on the end.
     // @todo Existing record lookup selections should really go in their own metadata section.
     foreach($mappings as $key => $value) {

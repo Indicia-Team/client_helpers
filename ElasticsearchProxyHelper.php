@@ -247,9 +247,6 @@ JS;
       'must_not' => [],
       'filter' => [],
     ];
-    $nested = [
-      'occurrence.media',
-    ];
     $basicQueryTypes = ['match_all', 'match_none'];
     $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
     $arrayFieldQueryTypes = ['terms'];
