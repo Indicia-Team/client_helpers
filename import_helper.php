@@ -342,9 +342,13 @@ class import_helper extends helper_base {
     if (!empty($settings['survey_id'])) {
       self::limitFields($fields, $options, $settings['survey_id']);
     }
-    if (isset($options['importMergeFields']) && $options['importMergeFields'] != '' && $options['importMergeFields'] != '{}' &&
-        // Strip all white space so we can also catch [ ] for example.
-        preg_replace('/\s+/', '', $options['importMergeFields']) != '[]') {
+    if(isset($options['importMergeFields']) && is_string($options['importMergeFields'])) {
+      $options['importMergeFields'] = json_decode($options['importMergeFields']);
+    }
+    if(isset($options['synonymProcessing']) && is_string($options['synonymProcessing'])) {
+        $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
+    }
+    if (isset($options['importMergeFields']) && $options['importMergeFields'] != '' && $options['importMergeFields'] != '{}') {
       foreach ($options['importMergeFields'] as $modelSpec) {
         if (!isset($modelSpec->model) || ($modelSpec->model = $options['model'])) {
           foreach ($modelSpec->fields as $fieldSpec) {
@@ -1334,8 +1338,7 @@ TD;
     }
 
     $settings=self::remove_unused_settings($settings);
-
-    $metadata=self::create_metadata_array($mappings,$settings);
+    $metadata=self::create_metadata_array($mappings,$settings,$options);
 
     if (function_exists('hostsite_set_user_field')) {
       self::save_user_import_mappings($mappings);
@@ -1472,7 +1475,7 @@ TD;
     return $settings;
   }
 
-  private static function create_metadata_array($mappings, $settings) {
+  private static function create_metadata_array($mappings, $settings, $options) {
     $metadata = [
       'user_id' => hostsite_get_user_field('indicia_user_id'),
     ];
@@ -1481,6 +1484,12 @@ TD;
     }
     if (!empty($settings)) {
       $metadata['settings'] = json_encode($settings);
+    }
+    if (!empty($options['importMergeFields'])) {
+      $metadata['importMergeFields'] = json_encode($options['importMergeFields']);
+    }
+    if (!empty($options['synonymProcessing'])) {
+      $metadata['synonymProcessing'] = json_encode($options['synonymProcessing']);
     }
     return $metadata;
   }
