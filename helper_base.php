@@ -2803,6 +2803,25 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     return $r;
   }
 
+  /**
+   * Converts entries in an options array to text representing bool value.
+   *
+   * Makes it easier to use the options when injecting into JS. Conversion
+   * results in an additional key being created in the array with a Text
+   * suffix and the value containing 'true' or 'false' depending on the bool
+   * value.
+   *
+   * @param array $options
+   *   Control options array.
+   * @param array $keys
+   *   List of item keys to convert.
+   */
+  protected static function convertBoolOptionsToText( array &$options, array $keys) {
+    foreach ($keys as $key) {
+      $options[$key . 'Text'] = isset($options[$key]) && $options[$key] ? 'true' : 'false';
+    }
+  }
+
 }
 
 /**

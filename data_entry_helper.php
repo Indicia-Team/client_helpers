@@ -3250,6 +3250,11 @@ RIJS;
   *  - media
   *  - attr<em>N</em> where <em>N</em> is an occurrence attribute id.
   * </li>
+  * <li><b>enableDynamicAttrs</b>
+  * Optional. Set to TRUE to enable replacement of attribute columns with any
+  * dynamic ones declared for the selected taxon in the row for the same system
+  * function.
+  * </li>
   * </ul>
   * @return string HTML for the species checklist input grid.
   */
@@ -3293,15 +3298,29 @@ RIJS;
         $options['extraParams'] += self::parseSpeciesNameFilterMode($options);
       }
     }
-    self::$javascript .= "indiciaData['rowInclusionCheck-".$options['id']."'] = '".$options['rowInclusionCheck']."';\n";
-    self::$javascript .= "indiciaData['copyDataFromPreviousRow-".$options['id']."'] = '".$options['copyDataFromPreviousRow']."';\n";
-    self::$javascript .= "indiciaData['includeSpeciesGridLinkPage-".$options['id']."'] = '".$options['includeSpeciesGridLinkPage']."';\n";
-    self::$javascript .= "indiciaData.speciesGridPageLinkUrl = '".$options['speciesGridPageLinkUrl']."';\n";
-    self::$javascript .= "indiciaData.speciesGridPageLinkParameter = '".$options['speciesGridPageLinkParameter']."';\n";
-    self::$javascript .= "indiciaData.speciesGridPageLinkTooltip = '".$options['speciesGridPageLinkTooltip']."';\n";
-    self::$javascript .= "indiciaData['editTaxaNames-".$options['id']."'] = '".$options['editTaxaNames']."';\n";
-    self::$javascript .= "indiciaData['subSpeciesColumn-".$options['id']."'] = '".$options['subSpeciesColumn']."';\n";
-    self::$javascript .= "indiciaData['subSamplePerRow-".$options['id']."'] = ".($options['subSamplePerRow'] ? 'true' : 'false') . ";\n";
+    self::convertBoolOptionsToText($options, [
+      'copyDataFromPreviousRow',
+      'includeSpeciesGridLinkPage',
+      'editTaxaNames',
+      'subSpeciesColumn',
+      'subSamplePerRow',
+      'enableDynamicAttrs'
+    ]);
+
+    self::$javascript .= <<<JS
+indiciaData['rowInclusionCheck-$options[id]'] = '$options[rowInclusionCheck]';
+indiciaData['copyDataFromPreviousRow-$options[id]'] = $options[copyDataFromPreviousRowText];
+indiciaData['includeSpeciesGridLinkPage-$options[id]'] = $options[includeSpeciesGridLinkPageText];
+indiciaData.speciesGridPageLinkUrl = '$options[speciesGridPageLinkUrl]';
+indiciaData.speciesGridPageLinkParameter = '$options[speciesGridPageLinkParameter]';
+indiciaData.speciesGridPageLinkTooltip = '$options[speciesGridPageLinkTooltip]';
+indiciaData['editTaxaNames-$options[id]'] = $options[editTaxaNamesText];
+indiciaData['subSpeciesColumn-$options[id]'] = $options[subSpeciesColumnText];
+indiciaData['subSamplePerRow-$options[id]'] = $options[subSamplePerRowText];
+indiciaData['enableDynamicAttrs-$options[id]'] = $options[enableDynamicAttrsText];
+
+JS;
+
     if ($options['copyDataFromPreviousRow']) {
       self::$javascript .= "indiciaData['previousRowColumnsToInclude-".$options['id']."'] = '".$options['previousRowColumnsToInclude']."';\n";
       self::$javascript .= "indiciaData.langAddAnother='" . lang::get('Add another') . "';\n";
@@ -3443,7 +3462,7 @@ JS;
         $taxon = $taxalist[$taxonIdx];
         // If we are using the sub-species column then when the taxon has a parent (=species) this goes in the
         // first column and we put the subsp in the second column in a moment.
-        if (isset($options['subSpeciesColumn']) && $options['subSpeciesColumn'] && !empty($taxon['parent']))
+        if ($options['subSpeciesColumn'] && !empty($taxon['parent']))
           $firstColumnTaxon=$taxon['parent'];
         else
           $firstColumnTaxon=$taxon;
@@ -4531,6 +4550,7 @@ JS;
       'speciesControlToUseSubSamples' => false,
       'subSamplePerRow' => false,
       'copyDataFromPreviousRow' => false,
+      'enableDynamicAttrs' => false,
       'previousRowColumnsToInclude' => '',
       'editTaxaNames' => false,
       'sticky' => true,
