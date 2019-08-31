@@ -3258,8 +3258,7 @@ RIJS;
   * </ul>
   * @return string HTML for the species checklist input grid.
   */
-  public static function species_checklist($options)
-  {
+  public static function species_checklist($options) {
     global $indicia_templates;
     $options = self::check_options($options);
     $options = self::get_species_checklist_options($options);
@@ -3298,32 +3297,22 @@ RIJS;
         $options['extraParams'] += self::parseSpeciesNameFilterMode($options);
       }
     }
-    self::convertBoolOptionsToText($options, [
-      'copyDataFromPreviousRow',
-      'includeSpeciesGridLinkPage',
-      'editTaxaNames',
-      'subSpeciesColumn',
-      'subSamplePerRow',
-      'enableDynamicAttrs'
-    ]);
 
-    self::$javascript .= <<<JS
-indiciaData['rowInclusionCheck-$options[id]'] = '$options[rowInclusionCheck]';
-indiciaData['copyDataFromPreviousRow-$options[id]'] = $options[copyDataFromPreviousRowText];
-indiciaData['includeSpeciesGridLinkPage-$options[id]'] = $options[includeSpeciesGridLinkPageText];
-indiciaData.speciesGridPageLinkUrl = '$options[speciesGridPageLinkUrl]';
-indiciaData.speciesGridPageLinkParameter = '$options[speciesGridPageLinkParameter]';
-indiciaData.speciesGridPageLinkTooltip = '$options[speciesGridPageLinkTooltip]';
-indiciaData['editTaxaNames-$options[id]'] = $options[editTaxaNamesText];
-indiciaData['subSpeciesColumn-$options[id]'] = $options[subSpeciesColumnText];
-indiciaData['subSamplePerRow-$options[id]'] = $options[subSamplePerRowText];
-indiciaData['enableDynamicAttrs-$options[id]'] = $options[enableDynamicAttrsText];
-
-JS;
-
+    self::$indiciaData["rowInclusionCheck-$options[id]"] = $options['rowInclusionCheck'];
+    self::$indiciaData["copyDataFromPreviousRow-$options[id]"] = $options['copyDataFromPreviousRow'];
+    self::$indiciaData["rowInclusionCheck-$options[id]"] = $options['rowInclusionCheck'];
+    self::$indiciaData["copyDataFromPreviousRow-$options[id]"] = $options['copyDataFromPreviousRow'];
+    self::$indiciaData["includeSpeciesGridLinkPage-$options[id]"] = $options['includeSpeciesGridLinkPage'];
+    self::$indiciaData['speciesGridPageLinkUrl'] = $options['speciesGridPageLinkUrl'];
+    self::$indiciaData['speciesGridPageLinkParameter'] = $options['speciesGridPageLinkParameter'];
+    self::$indiciaData['speciesGridPageLinkTooltip'] = $options['speciesGridPageLinkTooltip'];
+    self::$indiciaData["editTaxaNames-$options[id]"] = $options['editTaxaNames'];
+    self::$indiciaData["subSpeciesColumn-$options[id]"] = $options['subSpeciesColumn'];
+    self::$indiciaData["subSamplePerRow-$options[id]"] = $options['subSamplePerRow'];
+    self::$indiciaData["enableDynamicAttrs-$options[id]"] = $options['enableDynamicAttrs'];
     if ($options['copyDataFromPreviousRow']) {
-      self::$javascript .= "indiciaData['previousRowColumnsToInclude-".$options['id']."'] = '".$options['previousRowColumnsToInclude']."';\n";
-      self::$javascript .= "indiciaData.langAddAnother='" . lang::get('Add another') . "';\n";
+      self::$indiciaData["previousRowColumnsToInclude-$options[id]"] = $options['previousRowColumnsToInclude'];
+      self::$indiciaData['langAddAnother'] = lang::get('Add another');
     }
     if (count($options['mediaTypes'])) {
       self::add_resource('plupload');
@@ -3332,13 +3321,12 @@ JS;
       $interimImageFolder = self::getInterimImageFolder('domain');
       $relativeImageFolder = self::getImageRelativePath();
       $js_path = self::$js_path;
-      self::$javascript .= <<<JS
-indiciaData.uploadSettings = {
-  uploadScript: '{$relpath}upload.php',
-  destinationFolder: '$interimImageFolder',
-  relativeImageFolder: '$relativeImageFolder',
-  jsPath: '$js_path'
-JS;
+      $uploadSettings = [
+        'uploadScript' => "{$relpath}upload.php",
+        'destinationFolder' => $interimImageFolder,
+        'relativeImageFolder' => $relativeImageFolder,
+        'jsPath' => $js_path,
+      ];
       $langStrings = array(
         'caption' => 'Files',
         'addBtnCaption' => 'Add {1}',
@@ -3349,18 +3337,18 @@ JS;
         'msgDelete' => 'Delete this item'
       );
       foreach ($langStrings as $key => $string) {
-        self::$javascript .= ",\n  $key: '" . lang::get($string) . "'";
+        $uploadSettings[$key] = lang::get($string);
       }
       if (isset($options['resizeWidth'])) {
-        self::$javascript .= ",\n  resizeWidth: ".$options['resizeWidth'];
+        $uploadSettings['resizeWidth'] = $options['resizeWidth'];
       }
       if (isset($options['resizeHeight'])) {
-        self::$javascript .= ",\n  resizeHeight: ".$options['resizeHeight'];
+        $uploadSettings['resizeHeight'] = $options['resizeHeight'];
       }
       if (isset($options['resizeQuality'])) {
-        self::$javascript .= ",\n  resizeQuality: ".$options['resizeQuality'];
+        $uploadSettings['resizeQuality'] = $options['resizeQuality'];
       }
-      self::$javascript .= "\n}\n";
+      self::$indiciaData['uploadSettings'] = $uploadSettings;
       if ($indicia_templates['file_box']!='')
         self::$javascript .= "file_boxTemplate = '".str_replace('"','\"', $indicia_templates['file_box']) . "';\n";
       if ($indicia_templates['file_box_initial_file_info']!='')
@@ -3410,6 +3398,7 @@ JS;
       }
       // Get the attribute and control information required to build the custom occurrence attribute columns
       self::species_checklist_prepare_attributes($options, $attributes, $occAttrControls, $occAttrControlsExisting, $occAttrs);
+      self::speciesChecklistPrepareDynamicAttributes($options, $attributes);
       $beforegrid = '<span style="display: none;">Step 1</span>'."\n";
       if (!empty($options['lookupListId'])) {
         $beforegrid .= self::get_species_checklist_clonable_row($options, $occAttrControls, $attributes);
@@ -4670,6 +4659,29 @@ JS;
     return (array_key_exists('occAttrClasses', $options) && $idx < count($options['occAttrClasses'])) ?
       $options['occAttrClasses'][$idx] :
       'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($caption)); // provide a default class based on the control caption
+  }
+
+  /**
+   * Dumps info about any dynamic attributes in the grid into JS.
+   *
+   * Provide JS with info required for dynamic system attribute replacements
+   * depending on selected species.
+   */
+  private static function speciesChecklistPrepareDynamicAttributes($options, $attributes) {
+    if ($options['enableDynamicAttrs']) {
+      $attrInfo = [];
+      foreach ($attributes as $attr) {
+        if (!empty($attr['system_function'])) {
+          if (!isset($attrInfo[$attr['system_function']])) {
+            $attrInfo[$attr['system_function']] = [];
+          }
+          $attrInfo[$attr['system_function']][] =
+          'sc' . preg_replace('/[^a-zA-Z0-9]/', '', ucWords($attr['caption']));
+        }
+      }
+      self::$indiciaData["dynamicAttrInfo-$options[id]"] = $attrInfo;
+      self::$indiciaData['dynamicAttrProxyUrl'] = hostsite_get_url('iform/dynamicattrsproxy');
+    }
   }
 
   /**
