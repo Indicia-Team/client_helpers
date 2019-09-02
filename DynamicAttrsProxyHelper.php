@@ -56,7 +56,7 @@ class DynamicAttrsProxyHelper {
     $attrList = self::getDynamicAttrsList(
       $readAuth,
       $_GET['survey_id'],
-      $_GET['taxa_taxon_list_id'],
+      $_GET['taxa_taxon_list_ids'],
       NULL,
       'occurrence',
       $_GET['language'],
@@ -67,9 +67,8 @@ class DynamicAttrsProxyHelper {
     foreach ($attrList as $attr) {
       if ($attr['system_function']) {
         $attrData[] = [
-          'system_function' => $attr['system_function'],
+          'attr' => $attr,
           'control' => data_entry_helper::outputAttribute($attr, ['label' => '', 'extraParams' => $readAuth]),
-          'attribute_id' => $attr['attribute_id'],
         ];
       }
     }
@@ -121,20 +120,28 @@ class DynamicAttrsProxyHelper {
     // the highest taxon_rank_sort_order (i.e. the lowest rank) which has
     // attributes for each attribute type. Whilst doing this we can also
     // discard duplicates, e.g. if same attribute linked at several taxonomic
-    // levels.
-    $attrTypeSortOrders = [];
-    $attrIds = [];
+    // levels. Note that this all has to happen on a per-occurrence ID basis if
+    // loading a list of occurrences to edit.
+    $occurrences = [];
     foreach ($list as $idx => $attr) {
-      if (in_array($attr['attribute_id'], $attrIds)) {
+      // Find a unique identifier for the occurrence, if loading for a list.
+      $occIdent = $attr['occurrence_id'] ? $attr['occurrence_id'] : '-';
+      if (!isset($occurrences[$occIdent])) {
+        $occurrences[$occIdent] = [
+          'attrTypeSortOrders' => [],
+          'attrIds' => [],
+        ];
+      }
+      if (in_array($attr['attribute_id'], $occurrences[$occIdent]['attrIds'])) {
         unset($list[$idx]);
       }
       else {
-        $attrIds[] = $attr['attribute_id'];
+        $occurrences[$occIdent]['attrIds'][] = $attr['attribute_id'];
         $attrTypeKey = self::getAttrTypeKey($attr);
         if (!empty($attrTypeKey)) {
-          if (!array_key_exists($attrTypeKey, $attrTypeSortOrders) ||
-              (integer) $attr['attr_taxon_rank_sort_order'] > $attrTypeSortOrders[$attrTypeKey]) {
-            $attrTypeSortOrders[$attrTypeKey] = (integer) $attr['attr_taxon_rank_sort_order'];
+          if (!array_key_exists($attrTypeKey, $occurrences[$occIdent]['attrTypeSortOrders']) ||
+              (integer) $attr['attr_taxon_rank_sort_order'] > $occurrences[$occIdent]['attrTypeSortOrders'][$attrTypeKey]) {
+                $occurrences[$occIdent]['attrTypeSortOrders'][$attrTypeKey] = (integer) $attr['attr_taxon_rank_sort_order'];
           }
         }
       }
@@ -143,8 +150,9 @@ class DynamicAttrsProxyHelper {
     // same type attached to a lower rank taxon. E.g. a genus stage attribute
     // will cause a family stage attribute to be discarded.
     foreach ($list as $idx => $attr) {
+      $occIdent = $attr['occurrence_id'] ? $attr['occurrence_id'] : '-';
       $attrTypeKey = self::getAttrTypeKey($attr);
-      if (!empty($attrTypeKey) && $attrTypeSortOrders[$attrTypeKey] > (integer) $attr['attr_taxon_rank_sort_order']) {
+      if (!empty($attrTypeKey) && $occurrences[$occIdent]['attrTypeSortOrders'][$attrTypeKey] > (integer) $attr['attr_taxon_rank_sort_order']) {
         unset($list[$idx]);
       }
     }
@@ -169,11 +177,12 @@ class DynamicAttrsProxyHelper {
     // For the purposes of duplicate handling, we treat sex, stage and count
     // related data as the same thing.
     if (in_array($attr['system_function'], $sexStageAttrs)) {
-      return 'sex/stage/count';
+      $key = 'sex/stage/count';
     }
     else {
-      return empty($attr['system_function']) ? $attr['term_name'] : $attr['system_function'];
+      $key = empty($attr['system_function']) ? $attr['term_name'] : $attr['system_function'];
     }
+    return $key;
   }
 
 }
