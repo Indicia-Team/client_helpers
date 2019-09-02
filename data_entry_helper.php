@@ -3369,6 +3369,19 @@ RIJS;
           (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),
           $options['spatialRefPerRow'], $options['spatialRefPrecisionAttrId']);
     }
+    if (isset(self::$entity_to_load['sample:id']) && $options['enableDynamicAttrs']) {
+      $attrData = [];
+      // JS is going to need to know which occurrence attribute data to load dynamically.
+      foreach (self::$entity_to_load as $key => $value) {
+        if (preg_match('/^sc:\d+:\d+:occAttr:\d+:\d+$/', $key)) {
+          $attrData[$key] = $value;
+        }
+      }
+      if (count($attrData) > 0) {
+        self::$indiciaData['loadExistingDynamicAttrs'] = true;
+        self::$indiciaData['existingOccAttrData'] = $attrData;
+      }
+    }
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
@@ -6355,7 +6368,7 @@ if (errors$uniq.length>0) {
         // skip the extra row at the end for input of new rows
         if (!array_key_exists("$a[0]:$a[1]:$a[2]:present", $arr))
           continue;
-        if (is_array($value) && count($value)>0) {
+        if (is_array($value) && count($value) > 0) {
           // The value is an array, so might contain existing database ID info in the value to link to existing records
           foreach ($value as $idx=>$arrayItem) {
             // does the entry contain the value record ID (required for existing values in controls which post arrays, like multiselect selects)?
@@ -6403,8 +6416,8 @@ if (errors$uniq.length>0) {
       // determine if this record is for presence, absence or nothing
       $present = self::wrap_species_checklist_record_present($record, $include_if_any_data,
         $zeroAttrs, $zeroValues, $hasDataIgnoreAttrs);
-      if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
-        if ($present===null)
+      if (array_key_exists('id', $record) || $present !== null) { // must always handle row if already present in the db
+        if ($present === null)
           // checkboxes do not appear if not checked. If uncheck, delete record.
           $record['deleted'] = 't';
         else
