@@ -1792,10 +1792,17 @@ JS;
         } elseif (is_string($data)) {
           $data = str_replace("'", "\\'", $data);
           $value = "'$data'";
+        } elseif (is_bool($data)) {
+          $value = $data ? 'true' : 'false';
         } else {
           $value = $data;
         }
-        $r[] = "indiciaData.$key = $value;";
+        if (strpos($key, '-') !== FALSE) {
+          $r[] = "indiciaData['$key'] = $value;";
+        } 
+        else {
+          $r[] = "indiciaData.$key = $value;";
+        }
       }
       return implode("\n", $r);
     }
