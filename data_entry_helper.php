@@ -3369,19 +3369,6 @@ RIJS;
           (isset($options['subSampleSampleMethodID']) ? $options['subSampleSampleMethodID'] : ''),
           $options['spatialRefPerRow'], $options['spatialRefPrecisionAttrId']);
     }
-    if (isset(self::$entity_to_load['sample:id']) && $options['enableDynamicAttrs']) {
-      $attrData = [];
-      // JS is going to need to know which occurrence attribute data to load dynamically.
-      foreach (self::$entity_to_load as $key => $value) {
-        if (preg_match('/^sc:\d+:\d+:occAttr:\d+:\d+$/', $key)) {
-          $attrData[$key] = $value;
-        }
-      }
-      if (count($attrData) > 0) {
-        self::$indiciaData['loadExistingDynamicAttrs'] = true;
-        self::$indiciaData['existingOccAttrData'] = $attrData;
-      }
-    }
     // load the full list of species for the grid, including the main checklist plus any additional species in the reloaded occurrences.
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
@@ -4682,6 +4669,22 @@ JS;
    */
   private static function speciesChecklistPrepareDynamicAttributes($options, $attributes) {
     if ($options['enableDynamicAttrs']) {
+      if (isset(self::$entity_to_load['sample:id'])) {
+        $attrData = [];
+        // Loading existing data to edit. JS is going to need to know the attr
+        // data values to use for the dynamic attrs once they are loaded by the
+        // script.
+        foreach (self::$entity_to_load as $key => $value) {
+          if (preg_match('/^sc:\d+:\d+:occAttr:\d+:\d+$/', $key)) {
+            $attrData[$key] = $value;
+          }
+        }
+        if (count($attrData) > 0) {
+          self::$indiciaData['loadExistingDynamicAttrs'] = true;
+          self::$indiciaData['existingOccAttrData'] = $attrData;
+        }
+      }
+      // Works out which attributes are for which system function.
       $attrInfo = [];
       foreach ($attributes as $attr) {
         if (!empty($attr['system_function'])) {
