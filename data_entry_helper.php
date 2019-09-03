@@ -2934,36 +2934,40 @@ RIJS;
  /**
   * Helper function to generate a species checklist from a given taxon list.
   *
-  * <p>This function will generate a flexible grid control with one row for each species
-  * in the specified list. For each row, the control will display the list preferred term
-  * for that species, a checkbox to indicate its presence, and a series of cells for a set
-  * of occurrence attributes passed to the control.</p>
+  * This function will generate a flexible grid control with one row for each
+  * species in the specified list. For each row, the control will display the
+  * list preferred term for that species, a checkbox to indicate its presence,
+  * and a series of cells for a set of occurrence attributes passed to the
+  * control.
   *
-  * <p>Further, the control will incorporate the functionality to add extra terms to the
-  * control from the parent list of the one given. This will take the form of an autocomplete
-  * box against the parent list which will add an extra row to the control upon selection.</p>
+  * Further, the control will incorporate the functionality to add extra terms
+  * to the control from the parent list of the one given. This will take the
+  * form of an autocomplete box against the parent list which will add an extra
+  * row to the control upon selection.
   *
-  * <p>To change the format of the label displayed for each taxon in the grid
-  * rows that are pre-loaded into the grid, use the global $indicia_templates
-  * variable to set the value for the entry 'taxon_label'. The tags available in
-  * the template are {taxon}, {preferred_taxon}, {authority} and {default_common_name}. This
-  * can be a PHP snippet if PHPtaxonLabel is set to true.</p>
+  * To change the format of the label displayed for each taxon in the grid rows
+  * that are pre-loaded into the grid, use the global $indicia_templates
+  * variable to set the value for the entry 'taxon_label'. The tags available
+  * in the template are {taxon}, {preferred_taxon}, {authority} and
+  * {default_common_name}. This can be a PHP snippet if PHPtaxonLabel is set to
+  * true.
   *
-  * <p>To change the format of the label displayed for each taxon in the
+  * To change the format of the label displayed for each taxon in the
   * autocomplete used for searching for species to add to the grid, use the
   * global $indicia_templates variable to set the value for the entry
   * 'format_species_autocomplete_fn'. This must be a JavaScript function which
   * takes a single parameter. The parameter is the item returned from the
   * database with attributes taxon, preferred ('t' or 'f'), preferred_taxon,
-  * default_common_name, authority, taxon_group, language. The function must return the
-  * string to display in the autocomplete list.</p>
+  * default_common_name, authority, taxon_group, language. The function must
+  * return the string to display in the autocomplete list.
   *
-  * <p>To perform an action on the event of a new row being added to the grid,
+  * To perform an action on the event of a new row being added to the grid,
   * write a JavaScript function taking arguments (data, row) and add to the
-  * array hook_species_checklist_new_row, where data is an object containing the
-  * details of the taxon row as loaded from the data services.</p>
+  * array hook_species_checklist_new_row, where data is an object containing
+  * the details of the taxon row as loaded from the data services.
   *
-  * @param array $options Options array with the following possibilities:<ul>
+  * @param array $options
+  *   Options array with the following possibilities:<ul>
   * <li><b>listId</b><br/>
   * Optional. The ID of the taxon_lists record which is to be used to obtain the
   * species or taxon list. This is equired unless lookupListId is provided.</li>
@@ -3060,7 +3064,7 @@ RIJS;
   * Optional. If set to true, then a spatial reference column is included on each row. When submitted, each unique
   * spatial reference will cause a subsample to be included in the submission allowing more precise locations to be
   * defined for some records.</li>
-* <li><b>spatialRefPrecisionAttrId</b><br/>
+  * <li><b>spatialRefPrecisionAttrId</b><br/>
   * Optional. If set to the ID of a sample attribute and spatialRefPerRow is enabled, then a spatial reference
   * precision column is included on each row. When submitted, each unique spatial reference and precision value will
   * cause a subsample to be included in the submission with the attribute set to this value. The sample attribute must
@@ -3246,10 +3250,18 @@ RIJS;
   * dynamic ones declared for the selected taxon in the row for the same system
   * function.
   * </li>
+  * <li><b>limitDynamicAttrsTaxonGroupIds</b>
+  * Optional. Set to an array of taxon group IDs to limit the dynamic attribute
+  * fetch to only taxa in these groups. Useful for limiting the performance
+  * impact since every time a species is selected in the grid a web services
+  * request is sent to check for dynamic attributes.
+  * </li>
   * </ul>
-  * @return string HTML for the species checklist input grid.
+  *
+  * @return string
+  *   HTML for the species checklist input grid.
   */
-  public static function species_checklist($options) {
+  public static function species_checklist(array $options) {
     global $indicia_templates;
     $options = self::check_options($options);
     $options = self::get_species_checklist_options($options);
@@ -3301,6 +3313,7 @@ RIJS;
     self::$indiciaData["subSpeciesColumn-$options[id]"] = $options['subSpeciesColumn'];
     self::$indiciaData["subSamplePerRow-$options[id]"] = $options['subSamplePerRow'];
     self::$indiciaData["enableDynamicAttrs-$options[id]"] = $options['enableDynamicAttrs'];
+    self::$indiciaData["limitDynamicAttrsTaxonGroupIds-$options[id]"] = $options['limitDynamicAttrsTaxonGroupIds'];
     if ($options['copyDataFromPreviousRow']) {
       self::$indiciaData["previousRowColumnsToInclude-$options[id]"] = $options['previousRowColumnsToInclude'];
       self::$indiciaData['langAddAnother'] = lang::get('Add another');
@@ -3523,6 +3536,9 @@ RIJS;
           // this includes a control to force out a 0 value when the checkbox is unchecked.
           $row .= "<input type=\"hidden\" class=\"scPresence\" name=\"$fieldname\" value=\"0\"/>".
             "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname\" id=\"$fieldname\" value=\"$taxon[taxa_taxon_list_id]\" $checked />";
+        // Store additional useful info about the taxon.
+        $row .= "<input type=\"hidden\" class=\"scTaxaTaxonListId\" value=\"$taxon[taxa_taxon_list_id]\" />";
+        $row .= "<input type=\"hidden\" class=\"scTaxonGroupId\" value=\"$taxon[taxon_group_id]\" />";
         // If we have a grid ID attribute, output a hidden
         if (!empty($options['gridIdAttributeId'])) {
           $gridAttributeId = $options['gridIdAttributeId'];
@@ -4531,6 +4547,7 @@ JS;
       'subSamplePerRow' => FALSE,
       'copyDataFromPreviousRow' => FALSE,
       'enableDynamicAttrs' => FALSE,
+      'limitDynamicAttrsTaxonGroupIds' => FALSE,
       'previousRowColumnsToInclude' => '',
       'editTaxaNames' => FALSE,
       'sticky' => TRUE,
@@ -4718,6 +4735,8 @@ JS;
     $hidden = ($options['rowInclusionCheck']=='checkbox' ? '' : ' style="display:none"');
     $r .= '<td class="scPresenceCell" headers="'.$options['id'].'-present-0"'.$hidden.'>';
     $r .= "<input type=\"checkbox\" class=\"scPresence\" name=\"$fieldname:present\" id=\"$fieldname:present\" value=\"\" />";
+    $r .= '<input type="hidden" class="scTaxaTaxonListId" value="" />';
+    $r .= '<input type="hidden" class="scTaxonGroupId" value="" />';
     // If we have a grid ID attribute, output a hidden
     if (!empty($options['gridIdAttributeId']))
       $r .= "<input type=\"hidden\" name=\"$fieldname:occAttr:$options[gridIdAttributeId]\" id=\"$fieldname:occAttr:$options[gridIdAttributeId]\" value=\"$options[id]\"/>";
