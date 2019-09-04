@@ -7168,6 +7168,35 @@ HTML;
   }
 
   /**
+   * Work out a suitable success message to displaty after saving.
+   *
+   * @param array $response
+   *   Response data from the save operation.
+   *
+   * @return string
+   *   Success message.
+   */
+  private static function getSuccessMessage($response) {
+    $what = 'data';
+    if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
+      $count = 0;
+      foreach ($response['struct']['children'] as $child) {
+        if ($child['model'] === 'occurrence') {
+          $count ++;
+        }
+      }
+      if ($count > 0) {
+        $what = $count === 1 ? 'record' : 'records';
+      }
+    }
+    $siteName = 'this website';
+    if (function_exists('hostsite_get_config_value')) {
+      $siteName = hostsite_get_config_value('site', 'name');
+    }
+    return lang::get('Thank you for submitting your {1} to {2}.', lang::get($what), lang::get($siteName));
+  }
+
+  /**
    * Takes a response from a call to forward_post_to() and outputs any errors from it onto the screen.
    *
    * @param string $response Return value from a call to forward_post_to().
@@ -7228,7 +7257,7 @@ HTML;
         }
       }
       elseif (array_key_exists('success',$response)) {
-        $successMessage = lang::get('Thank you for submitting your data.');
+        $successMessage = self::getSuccessMessage($response);
         if (function_exists('hostsite_show_message'))
           hostsite_show_message($successMessage);
         else
