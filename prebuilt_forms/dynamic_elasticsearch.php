@@ -223,7 +223,7 @@ class iform_dynamic_elasticsearch extends iform_dynamic {
   public static function get_dynamic_elasticsearch_definition() {
     $description = <<<HTML
 Provides a dynamically output page which links to an index of occurrence data in an <a href="https://www.elastic.co">
-Elasticsearch</a> cluster.
+Elasticsearch</a> cluster.<br/>
 This page can generate controls for the following:
 <ul>
   <li>filtering</li>
@@ -233,12 +233,15 @@ This page can generate controls for the following:
   <li>mapping</li>
   <li>verification</li>
 </ul>
+Note that although this page supports linking to groups, you should build in any appropriate filtering manually rather
+than assume the Elasticsearch requests will automatically filter to the viewed group.
 HTML;
     return array(
       'title' => 'Elasticsearch outputs (customisable)',
       'category' => 'Experimental',
       'description' => $description,
       'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html',
+      'supportsGroups' => TRUE,
     );
   }
 
