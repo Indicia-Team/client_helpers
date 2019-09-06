@@ -5700,9 +5700,11 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    */
   public static function get_population_data($options) {
+    $useQueryParam = FALSE;
     if (isset($options['report']))
       $serviceCall = 'report/requestReport?report='.$options['report'].'.xml&reportSource=local&mode=json';
     elseif (isset($options['table'])) {
+      $useQueryParam = $options['table'] !== 'taxa_search';
       $serviceCall = 'data/'.$options['table'].'?mode=json';
       if (isset($options['columns']))
         $serviceCall .= '&columns='.$options['columns'];
@@ -5714,14 +5716,18 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       // process them to turn any array parameters into a query parameter for the service call
       $filterToEncode = array('where'=>array(array()));
       $otherParams = array();
-      foreach($params as $param=>$value) {
-        if (is_array($value))
-          $filterToEncode['in'] = array($param, $value);
-        elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
-          // these params are not filters, so can't go in the query
-          $otherParams[$param] = $value;
-        else
-          $filterToEncode['where'][0][$param] = $value;
+      // For data services calls to entities (i.e. not taxa_search), array
+      // parameters need to be modified into a query parameter.
+      if ($useQueryParam) {
+        foreach($params as $param=>$value) {
+          if (is_array($value))
+            $filterToEncode['in'] = array($param, $value);
+          elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
+            // these params are not filters, so can't go in the query
+            $otherParams[$param] = $value;
+          else
+            $filterToEncode['where'][0][$param] = $value;
+        }
       }
       // use advanced querying technique if we need to
       if (isset($filterToEncode['in']))
