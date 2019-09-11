@@ -367,24 +367,19 @@ function iform_map_zoom_to_location($locationId, $readAuth) {
 
 /**
  * Draws and zooms the map into a geometry or list of geometries.
- * @param string|array $geom WKT string for the geom to zoom to, or an array of
- * WKT strings.
- * @param $name Layer name to add
- * @param bool $restrict Set true to limit the map to the area covering the geoms.
+ *
+ * @param string|array $geom
+ *   WKT string for the geom to zoom to, or an array of WKT strings.
+ * @param string $name
+ *   Layer name to add.
  */
-function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
+function iform_map_zoom_to_geom($geom, $name) {
   $name = str_replace("'", "\\'", $name);
   $geoms = is_array($geom) ? $geom : [$geom];
   $geomJson = json_encode($geoms);
-  // Create code to restrict extent and zoom in if being asked to do so, will add to JS in a moment
-  $restrictExtentCode = !$restrict ? '' : <<<SCRIPT
-  mapdiv.map.setOptions({restrictedExtent: bounds});
-  if (mapdiv.map.getZoomForExtent(bounds)>mapdiv.map.getZoom()) {
-    mapdiv.map.zoomTo(mapdiv.map.getZoomForExtent(bounds));
-  }
-SCRIPT;
-  // Note, since the following moves the map, we want it to be the first mapInitialisationHook
-  data_entry_helper::$javascript .= <<<SCRIPT
+  // Note, since the following moves the map, we want it to be the first
+  // mapInitialisationHook.
+  data_entry_helper::$javascript .= <<<JS
 indiciaData.mapZoomPlanned = true;
 indiciaFns.zoomToBounds = function(mapdiv, bounds) {
   // Skip zoom to loaded bounds if already zoomed to a report output, remembering a position set in a cookie, or
@@ -435,9 +430,9 @@ mapInitialisationHooks.push(function(mapdiv) {
   indiciaData.initialBounds = bounds;
   mapdiv.map.addLayer(loclayer);
   indiciaFns.zoomToBounds(mapdiv, bounds);
-$restrictExtentCode
 });
-SCRIPT;
+
+JS;
 }
 
 /**
