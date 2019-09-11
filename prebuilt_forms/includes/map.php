@@ -378,7 +378,9 @@ function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
   $geomJson = json_encode($geoms);
   // Create code to restrict extent and zoom in if being asked to do so, will add to JS in a moment
   $restrictExtentCode = !$restrict ? '' : <<<SCRIPT
-  mapdiv.map.setOptions({restrictedExtent: bounds});
+  // Disabled used of OL2 restrictedExtent property because of interference with our 
+  // dynamic zooming: https://github.com/BiologicalRecordsCentre/iRecord/issues/655.
+  //mapdiv.map.setOptions({restrictedExtent: bounds});
   if (mapdiv.map.getZoomForExtent(bounds)>mapdiv.map.getZoom()) {
     mapdiv.map.zoomTo(mapdiv.map.getZoomForExtent(bounds));
   }
