@@ -436,18 +436,22 @@ JS;
 }
 
 /**
- * Return a list of OpenLayers options to pass to the data_entry_helper::map_panel method, built from the prebuilt
- * form arguments.
- * @param $args
- * @return array Options array for OpenLayers, or null if not specified.
+ * Return a list of OpenLayers options to pass to the map.
+ *
+ * Options are for the data_entry_helper::map_panel method olOptions parameter,
+ * built from the prebuilt form arguments.
+ *
+ * @param array $args
+ *   Form arguments.
+ *
+ * @return array
+ *   Options array for OpenLayers, or empty array if not specified.
  */
-function iform_map_get_ol_options($args) {
+function iform_map_get_ol_options(array $args) {
   if (!empty($args['openlayers_options'])) {
-    $opts = json_decode($args['openlayers_options'], true);
-  } else {
-    $opts = array();
+    $options = json_decode($args['openlayers_options'], TRUE);
   }
-  return $opts;
+  return (!isset($options) || $options === NULL) ? [] : $options;
 }
 
 /**
