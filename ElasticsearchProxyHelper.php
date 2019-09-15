@@ -41,14 +41,11 @@ class ElasticsearchProxyHelper {
     $dateFormat = helper_base::$date_format;
     $rootFolder = helper_base::getRootFolder(TRUE);
     $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-    helper_base::$javascript .= <<<JS
-indiciaData.esProxyAjaxUrl = '$esProxyAjaxUrl';
-indiciaData.esSources = [];
-indiciaData.esMappings = $mappings;
-indiciaData.dateFormat = '$dateFormat';
-indiciaData.rootFolder = '$rootFolder';
-
-JS;
+    helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
+    helper_base::$indiciaData['esSources'] = [];
+    helper_base::$indiciaData['esMappings'] = $mappings;
+    helper_base::$indiciaData['dateFormat'] = $dateFormat;
+    helper_base::$indiciaData['rootFolder'] = $rootFolder;
   }
 
   public static function callMethod($method, $nid) {
