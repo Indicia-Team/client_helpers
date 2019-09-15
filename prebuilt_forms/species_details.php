@@ -413,10 +413,11 @@ class iform_species_details extends iform_dynamic {
     }
     //Draw the names on the page
     $details_report = self::draw_names($auth['read'], $hidePreferred, $hideCommon, $hideSynonym, $hideTaxonomy);
-
+	// DGfM don't load any attributes other than dynamic attributes (handled by different function), with one
+	// exception, the flag as to whether the description is finished needs to display a message if it isn't finished
     if ($options['includeAttributes']) {
       //draw any custom attributes for the species added by the user
-      $attrs_report = report_helper::freeform_report(array(
+      /*$attrs_report = report_helper::freeform_report(array(
         'readAuth' => $auth['read'],
         'class' => 'species-details-fields',
         'dataSource' => 'library/taxa/taxon_attributes_with_hiddens',
@@ -429,8 +430,30 @@ class iform_species_details extends iform_dynamic {
           'operator' => $args['operator'],
           'sharing' => 'reporting'
         )
+      ));*/
+      $attrData = report_helper::get_report_data(array(
+        'readAuth' => $auth['read'],
+        'dataSource'=>'library/taxa/taxon_attributes_with_hiddens',
+        'useCache' => false,
+        'extraParams' => array(
+          'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
+          'attrs' => strtolower(self::convert_array_to_set($fields)),
+          'testagainst' => $args['testagainst'],
+          'operator' => $args['operator'],
+          'sharing' => 'reporting'
+        )
       ));
+      $descriptionComplete = false;
+      foreach ($attrData as $resultRow) {
+        if ($resultRow['caption']=='Beschreibung fertig' && $resultRow['raw_value']==1) {
+          $descriptionComplete = true;
+        }
+      }
+      if ($descriptionComplete===false) {
+        data_entry_helper::$javascript .= "$('.incomplete-description-warning').show();\n";
+      }
     }
+
     $r = '';
     // Draw the species names and custom attributes.
     if (isset($details_report)) {
