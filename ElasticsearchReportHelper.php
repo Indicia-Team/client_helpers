@@ -38,6 +38,14 @@ class ElasticsearchReportHelper {
    */
   private static $controlIds = [];
 
+  /**
+   * A button for downloading the ES data from a source.
+   *
+   * @return string
+   *   HTML for download button and progress display.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[download]
+   */
   public static function download($options) {
     self::checkOptions('esDownload', $options,
       ['source'],
