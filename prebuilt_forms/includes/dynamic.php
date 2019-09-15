@@ -589,7 +589,9 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         // Component surrounded by [] so represents a control or control block
         // Anything following the component that starts with @ is an option to
         // pass to the control.
-        $options = [];
+        $options = [
+          'nid' => self::$nid,
+        ];
         while ($i < count($tabContent) - 1 && substr($tabContent[$i + 1], 0, 1) === '@' || trim($tabContent[$i]) === '') {
           $i++;
           // Ignore empty lines.
@@ -1014,30 +1016,6 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       }
     }
     return $r;
-  }
-
-  /**
-   * Prepares options for a control are to be passed through to JavaScript.
-   *
-   * Picks the entries from the options array which are in $keysToPassThrough
-   * then returns a JSON encoded string that can be added to indiciaData.
-   *
-   * @param array $options
-   *   Control options array.
-   * @param array $keysToPassThrough
-   *   Array of the names of the options which are going to be passed into
-   *   JavaScript settings.
-   * @param bool $encodeSpecialChars
-   *   If set to true, then the result is encoded using htmlspecialchars()
-   *   e.g. for when the response is to be included in an HTML attribute.
-   *
-   * @return string
-   *   JSON encoded string.
-   */
-  protected static function getOptionsForJs(array $options, array $keysToPassThrough, $encodeSpecialChars = FALSE) {
-    $dataOptions = array_intersect_key($options, array_combine($keysToPassThrough, $keysToPassThrough));
-    $r = json_encode($dataOptions);
-    return $encodeSpecialChars ? htmlspecialchars($r) : $r;
   }
 
   /**
