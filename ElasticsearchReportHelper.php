@@ -357,6 +357,226 @@ JS;
   }
 
   /**
+   * A select box for choosing from a list of higher geography boundaries.
+   *
+   * Lists indexed locations for a given type. When a location is chosen, the
+   * boundary is shown and the ES data is filtered to records which intersect
+   * the boundary.
+   *
+   * Options are:
+   *
+   * * @locationTypeId - Either a single ID of the location type of the
+   *   locations to list, or an array of IDs of location types where the
+   *   locations are hierarchical (parent first). Each type ID must be indexed
+   *   by the spatial index builder module.
+   *
+   * @return string
+   *   Control HTML
+   */
+  public static function higherGeographySelect($options) {
+    if (empty($options['locationTypeId']) ||
+        (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId']))) {
+      throw new Exception('An integer or integer array @locationTypeId parameter is required for the [higherGeographySelect] control');
+    }
+    $typeIds = is_array($options['locationTypeId']) ? $options['locationTypeId'] : [$options['locationTypeId']];
+    $r = '';
+    $options = array_merge([
+      'class' => 'es-higher-geography-select',
+      'blankText' => lang::get('<All locations shown>'),
+      'id' => 'higher-geography-select',
+    ], $options);
+    $options['extraParams'] = array_merge([
+      'orderby' => 'name',
+    ], $options['extraParams'], $auth['read']);
+    $baseId = $options['id'];
+    foreach ($typeIds as $idx => $typeId) {
+      $options['extraParams']['location_type_id'] = $typeId;
+      if (count($typeIds) > 0) {
+        $options['id'] = "$baseId-$idx";
+        $options['class'] .= ' linked-select';
+      }
+      if ($idx > 0) {
+        $options['parentControlId'] = "$baseId-" . ($idx - 1);
+        if ($idx === 1) {
+          $options['parentControlLabel'] = $options['label'];
+          $options['filterField'] = 'parent_id';
+          unset($options['label']);
+        }
+      }
+      $r .= data_entry_helper::location_select($options);
+    }
+    return $r;
+  }
+
+  /**
+   * An Elasticsearch or Indicia data powered Leaflet map control.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[leafletMap]
+   */
+  public static function leafletMap($options) {
+    self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
+    helper_base::add_resource('leaflet');
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'layerConfig',
+      'showSelectedRow',
+      'initialLat',
+      'initialLng',
+      'initialZoom',
+      'cookies',
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcLeafletMap({});
+
+JS;
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcLeafletMap('bindGrids');
+
+JS;
+    return self::getControlContainer('leafletMap', $options, $dataOptions);
+  }
+
+  public static function permissionFilters($options) {
+    $allowedTypes = [];
+    // Add My records download permission if allowed.
+    if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
+      $allowedTypes['my'] = lang::get('My records');
+    }
+    // Add All records download permission if allowed.
+    if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
+      $allowedTypes['all'] = lang::get('All records');
+    }
+    // Add collated location (e.g. LRC boundary) records download permission if
+    // allowed.
+    if (!empty($options['location_collation_records_permission'])
+        && hostsite_user_has_permission($options['location_collation_records_permission'])) {
+      $locationId = hostsite_get_user_field('location_collation');
+      if ($locationId) {
+        $locationData = data_entry_helper::get_population_data([
+          'table' => 'location',
+          'extraParams' => $options['readAuth'] + ['id' => $locationId],
+        ]);
+        if (count($locationData) > 0) {
+          $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+        }
+      }
+    }
+    if (count($allowedTypes) === 1) {
+      $value = array_values($allowedTypes)[0];
+      return <<<HTML
+<input type="hidden" name="es-permissions-filter" value="$value" class="permissions-filter" />
+
+HTML;
+    }
+    else {
+      return data_entry_helper::select([
+        'fieldname' => 'es-permissions-filter',
+        'lookupValues' => $allowedTypes,
+        'class' => 'permissions-filter',
+      ]);
+    }
+  }
+
+  /**
+   * A tabbed control to show full record details and verification info.
+   *
+   * @return string
+   *   Control HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[recordDetails]
+   */
+  public static function recordDetails($options) {
+    $options = array_merge([
+      'allowRedetermination' => FALSE,
+    ], $options);
+    self::checkOptions('recordDetails', $options, ['showSelectedRow'], ['locationTypes']);
+    if (!empty($options['explorePath'])) {
+      // Build  URL which overrides the default filters applied to many Explore
+      // pages in order to be able to apply out own filter.
+      $options['exploreUrl'] = hostsite_get_url(
+        $options['explorePath'],
+        [
+          'filter-quality' => '-q-',
+          'filter-date_from' => '-df-',
+          'filter-date_to' => '-dt-',
+          'filter-user_id' => '-userId-',
+          'filter-date_age' => '',
+          'filter-indexed_location_list' => '',
+          'filter-indexed_location_id' => '',
+          'filter-my_records' => 1,
+        ]
+      );
+    }
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'showSelectedRow',
+      'exploreUrl',
+      'locationTypes',
+      'allowRedetermination',
+    ], TRUE);
+    helper_base::add_resource('tabs');
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcRecordDetailsPane({});
+
+JS;
+    $r = <<<HTML
+<div class="details-container" id="$options[id]" data-idc-config="$dataOptions">
+  <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
+  <div class="tabs" style="display: none">
+    <ul>
+      <li><a href="#tabs-details">Details</a></li>
+      <li><a href="#tabs-comments">Comments</a></li>
+      <li><a href="#tabs-recorder-experience">Recorder experience</a></li>
+    </ul>
+    <div id="tabs-details">
+      <div class="record-details">
+      </div>
+    </div>
+    <div id="tabs-comments">
+      <div class="comments">
+      </div>
+    </div>
+    <div id="tabs-recorder-experience">
+      <div class="recorder-experience"></div>
+      <div class="loading-spinner" style="display: none"><div>Loading...</div></div>
+    </div>
+  </div>
+</div>
+
+HTML;
+    if ($options['allowRedetermination']) {
+      helper_base::add_resource('validation');
+      $redetUrl = iform_ajaxproxy_url(self::$nid, 'occurrence');
+      $userId = hostsite_get_user_field('indicia_user_id');
+      helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
+      $speciesInput = data_entry_helper::species_autocomplete([
+        'label' => lang::get('Redetermine to'),
+        'helpText' => lang::get('Select the new taxon name.'),
+        'fieldname' => 'redet-species',
+        'extraParams' => $auth['read'] + ['taxon_list_id' => 1],
+        'speciesIncludeAuthorities' => TRUE,
+        'speciesIncludeBothNames' => TRUE,
+        'speciesNameFilterMode' => 'preferred',
+        'validation' => ['required'],
+      ]);
+      $commentInput = data_entry_helper::textarea([
+        'label' => lang::get('Explanation comment'),
+        'helpText' => lang::get('Please give reasons why you are changing this record.'),
+        'fieldname' => 'redet-comment',
+      ]);
+      $r .= <<<HTML
+<div id="redet-panel-wrap" style="display: none">
+  <form id="redet-form">
+    $speciesInput
+    $commentInput
+    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
+    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
+  </form>
+</div>
+HTML;
+    }
+    return $r;
+  }
+
+  /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[source]
@@ -394,6 +614,64 @@ JS;
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
     // A source is entirely JS driven - no HTML.
     return '';
+  }
+
+  /**
+   * A control for flexibly outputting data formatted using HTML templates.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[templatedOutput]
+   */
+  public static function templatedOutput($options) {
+    self::checkOptions('templatedOutput', $options, ['source', 'content'], []);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'source',
+      'content',
+      'header',
+      'footer',
+      'repeatField',
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcTemplatedOutput({});
+
+JS;
+    return self::getControlContainer('templatedOutput', $options, $dataOptions);
+  }
+
+  /**
+   * Output a selector for a user's registered filters.
+   */
+  public static function userFilters($options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    self::$controlIndex++;
+    $options = array_merge([
+      'id' => "es-user-filter-" . self::$controlIndex,
+      'definesPermissions' => FALSE,
+      'sharingCode' => 'R',
+    ], $options);
+    $filterData = report_filters_load_existing($options['readAuth'], $options['sharingCode'], TRUE);
+    $optionArr = [];
+    foreach ($filterData as $filter) {
+      if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
+        $optionArr[$filter['id']] = $filter['title'];
+      }
+    }
+    if (count($optionArr) === 0) {
+      // No filters available. Until we support saving, doesn't make sense to
+      // show the control.
+      return '';
+    }
+    else {
+      $controlOptions = [
+        'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
+        'fieldname' => $options['id'],
+        'lookupValues' => $optionArr,
+        'class' => 'user-filter',
+      ];
+      if (!$options['definesPermissions']) {
+        $controlOptions['blankText'] = '- ' . lang::get('Please select') . ' - ';
+      }
+      return data_entry_helper::select($controlOptions);
+    }
   }
 
   /**
