@@ -38,6 +38,252 @@ class ElasticsearchReportHelper {
    */
   private static $controlIds = [];
 
+  const MAPPING_FIELDS = [
+    '@timestamp' => [
+      'caption' => 'Indexing timestamp',
+      'description' => 'Timestamp when the record was indexed into to the reporting system.',
+    ],
+    'id' => [
+      'caption' => 'ID',
+      'description' => 'Unique record ID.',
+    ],
+    'event.event_id' => [
+      'caption' => 'Sample ID',
+      'description' => 'Unique sample ID.',
+    ],
+    '#datasource_code#' => [
+      'caption' => 'Datasource codes',
+      'description' => 'Website and survey dataset the record is sourced from, in abbreviated encoded form.',
+    ],
+    '#status_icons#' => [
+      'caption' => 'Record status icons',
+      'description' => "Icons showing the record's verification status and sensitivity information.",
+    ],
+    '#data_cleaner_icons#' => [
+      'caption' => 'Automated checks',
+      'description' => "Icons showing the results of automated checks on the record.",
+    ],
+    '#event_date#' => [
+      'caption' => 'Date',
+      'description' => 'Date of the record',
+    ],
+    'event.day_of_year' => [
+      'caption' => 'Day of year',
+      'description' => 'Numeric day within the year of the record (1-366)',
+    ],
+    'event.month' => [
+      'caption' => 'Month',
+      'description' => 'Numeric month of the record',
+    ],
+    'event.year' => [
+      'caption' => 'Year',
+      'description' => 'Year of the record',
+    ],
+    'event.event_remarks' => [
+      'caption' => 'Sample comment',
+      'description' => 'Comment given for the sample by the recorder.',
+    ],
+    'event.habitat' => [
+      'caption' => 'Habitat',
+      'description' => 'Habitat recorded for the sample.',
+    ],
+    'event.recorded_by' => [
+      'caption' => 'Recorder name(s)',
+      'description' => 'Name of the people involved in the field record.',
+    ],
+    'event.sampling_protocol' => [
+      'caption' => 'Sample method',
+      'description' => 'Method for the sample if provided.',
+    ],
+    'identification.identified_by' => [
+      'caption' => 'Identified by',
+      'description' => 'Identifier (determiner) of the record.',
+    ],
+    'identification.recorder_certainty' => [
+      'caption' => 'Recorder certainty',
+      'description' => 'Certainty that the identification is correct as attributed by the recorder.',
+    ],
+    'identification.verification_decision_source' => [
+      'caption' => 'Verification decision source',
+      'description' => 'Either M for machine based verification or H for human verification decisions.',
+    ],
+    'taxon.name' => [
+      'caption' => 'Taxon name',
+      'description' => 'Name as recorded for the taxon.',
+    ],
+    'taxon.accepted_name' => [
+      'caption' => 'Accepted name',
+      'description' => 'Currently accepted name for the recorded taxon.',
+    ],
+    'taxon.vernacular_name' => [
+      'caption' => 'Common name',
+      'description' => 'Common name for the recorded taxon.',
+    ],
+    'taxon.group' => [
+      'caption' => 'Taxon group',
+      'description' => 'Taxon reporting group associated with the current identification of this record.',
+    ],
+    'taxon.kingdom' => [
+      'caption' => 'Kingdom',
+      'description' => 'Taxonomic kingdom associated with the current identification of this record.',
+    ],
+    'taxon.phylum' => [
+      'caption' => 'Phylum',
+      'description' => 'Taxonomic phylum associated with the current identification of this record.',
+    ],
+    'taxon.class' => [
+      'caption' => 'Class',
+      'description' => 'Taxonomic class associated with the current identification of this record.',
+    ],
+    'taxon.order' => [
+      'caption' => 'Order',
+      'description' => 'Taxonomic order associated with the current identification of this record.',
+    ],
+    'taxon.family' => [
+      'caption' => 'Family',
+      'description' => 'Taxonomic family associated with the current identification of this record.',
+    ],
+    'taxon.subfamily' => [
+      'caption' => 'Subfamily',
+      'description' => 'Taxonomic subfamily associated with the current identification of this record.',
+    ],
+    'taxon.taxon_rank' => [
+      'caption' => 'Taxon rank',
+      'description' => 'Taxonomic rank associated with the current identification of this record.',
+    ],
+    'taxon.genus' => [
+      'caption' => 'Genus',
+      'description' => 'Taxonomic genus associated with the current identification of this record.',
+    ],
+    'location.verbatim_locality' => [
+      'caption' => 'Location name',
+      'description' => 'Location name associated with the record.',
+    ],
+    'location.name' => [
+      'caption' => 'Location',
+      'description' => 'Location associated with the record where the record was linked to a defined location.',
+    ],
+    'location.location_id' => [
+      'caption' => 'Location ID',
+      'description' => 'Unique ID of the location associated with the record where the record was linked to a defined location.',
+    ],
+    'location.parent_name' => [
+      'caption' => 'Parent location',
+      'description' => 'Parent location associated with the record where the record was linked to a defined location which has a hierarchical parent.',
+    ],
+    'location.parent_location_id' => [
+      'caption' => 'Parent location ID',
+      'description' => 'Unique ID of the parent location associated with the record where the record was linked to a defined location which has a hierarchical parent.',
+    ],
+    'location.output_sref' => [
+      'caption' => 'Display spatial reference',
+      'description' => 'Spatial reference in the recommended local grid system.',
+    ],
+    'location.coordinate_uncertainty_in_meters' => [
+      'caption' => 'Coordinate uncertainty in metres',
+      'description' => 'Uncertainty of a provided GPS point.',
+    ],
+    '#lat_lon#' => [
+      'caption' => 'Lat/lon',
+      'description' => 'Latitude and longitude of the record.',
+    ],
+    'occurrence.media' => [
+      'caption' => 'Media',
+      'description' => 'Thumbnails for any occurrence photos and other media.',
+      'handler' => 'media',
+    ],
+    'occurrence.sex' => [
+      'caption' => 'Sex',
+      'description' => 'Sex of the recorded organism',
+    ],
+    'occurrence.life_stage' => [
+      'caption' => 'Life stage',
+      'description' => 'Life stage of the recorded organism.',
+    ],
+    'occurrence.individual_count' => [
+      'caption' => 'Count',
+      'description' => 'Numeric abundance count of the recorded organism.',
+    ],
+    'occurrence.organism_quantity' => [
+      'caption' => 'Quantity',
+      'description' => 'Abundance of the recorded organism (numeric or text).',
+    ],
+  ];
+
+  /**
+   * An Elasticsearch or Indicia powered grid control.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
+   */
+  public static function dataGrid($options) {
+    self::checkOptions(
+      'dataGrid',
+      $options,
+      ['source'],
+      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources']
+    );
+    if (empty($options['columns'])) {
+      throw new Exception('Control [dataGrid] requires a parameter called @columns.');
+    }
+    if (!empty($options['scrollY']) && !preg_match('/^\d+px$/', $options['scrollY'])) {
+      throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
+    }
+    $options = array_merge([
+      'availableColumns' => !empty($options['aggregation']) ? [] : array_keys(self::MAPPING_FIELDS),
+    ], $options);
+    $columnsByField = [];
+    foreach ($options['columns'] as $columnDef) {
+      if (empty($columnDef['field'])) {
+        throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
+      }
+      $field = $columnDef['field'];
+      unset($columnDef['field']);
+      $columnsByField[$field] = $columnDef;
+    }
+    $options['columns'] = array_keys($columnsByField);
+    foreach ($options['availableColumns'] as $field) {
+      if (array_key_exists($field, self::MAPPING_FIELDS)) {
+        if (!isset($columnsByField[$field])) {
+          $columnsByField[$field] = self::MAPPING_FIELDS[$field];
+        }
+        else {
+          $columnsByField[$field] = array_merge(self::MAPPING_FIELDS[$field], $columnsByField[$field]);
+        }
+      }
+    }
+    $options['availableColumnInfo'] = $columnsByField;
+    helper_base::add_resource('jquery_ui');
+    helper_base::add_resource('indiciaFootableReport');
+    // Add footableSort for aggregation tables.
+    if ((!empty($options['aggregation']) && $options['aggregation'] === 'simple') || !empty($options['sourceTable'])) {
+      helper_base::add_resource('footableSort');
+    }
+    // Fancybox for image popups.
+    helper_base::add_resource('fancybox');
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'source',
+      'columns',
+      'availableColumnInfo',
+      'actions',
+      'cookies',
+      'includeColumnHeadings',
+      'includeFilterRow',
+      'includePager',
+      'responsive',
+      'responsiveOptions',
+      'sortable',
+      'aggregation',
+      'sourceTable',
+      'scrollY',
+      'applyFilterRowToSources',
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcDataGrid({});
+
+JS;
+    return self::getControlContainer('dataGrid', $options, $dataOptions);
+  }
+
   /**
    * A button for downloading the ES data from a source.
    *

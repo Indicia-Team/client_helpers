@@ -573,72 +573,7 @@ HTML;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
    */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
-    self::checkOptions(
-      'dataGrid',
-      $options,
-      ['source'],
-      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources']
-    );
-    if (empty($options['columns'])) {
-      throw new Exception('Control [dataGrid] requires a parameter called @columns.');
-    }
-    if (!empty($options['scrollY']) && !preg_match('/^\d+px$/', $options['scrollY'])) {
-      throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
-    }
-    $options = array_merge([
-      'availableColumns' => !empty($options['aggregation']) ? [] : array_keys(self::MAPPING_FIELDS),
-    ], $options);
-    $columnsByField = [];
-    foreach ($options['columns'] as $columnDef) {
-      if (empty($columnDef['field'])) {
-        throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
-      }
-      $field = $columnDef['field'];
-      unset($columnDef['field']);
-      $columnsByField[$field] = $columnDef;
-    }
-    $options['columns'] = array_keys($columnsByField);
-    foreach ($options['availableColumns'] as $field) {
-      if (array_key_exists($field, self::MAPPING_FIELDS)) {
-        if (!isset($columnsByField[$field])) {
-          $columnsByField[$field] = self::MAPPING_FIELDS[$field];
-        }
-        else {
-          $columnsByField[$field] = array_merge(self::MAPPING_FIELDS[$field], $columnsByField[$field]);
-        }
-      }
-    }
-    $options['availableColumnInfo'] = $columnsByField;
-    helper_base::add_resource('jquery_ui');
-    helper_base::add_resource('indiciaFootableReport');
-    // Add footableSort for aggregation tables.
-    if ((!empty($options['aggregation']) && $options['aggregation'] === 'simple') || !empty($options['sourceTable'])) {
-      helper_base::add_resource('footableSort');
-    }
-    // Fancybox for image popups.
-    helper_base::add_resource('fancybox');
-    $dataOptions = helper_base::getOptionsForJs($options, [
-      'source',
-      'columns',
-      'availableColumnInfo',
-      'actions',
-      'cookies',
-      'includeColumnHeadings',
-      'includeFilterRow',
-      'includePager',
-      'responsive',
-      'responsiveOptions',
-      'sortable',
-      'aggregation',
-      'sourceTable',
-      'scrollY',
-      'applyFilterRowToSources',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcDataGrid({});
-
-JS;
-    return self::getControlContainer('dataGrid', $options, $dataOptions);
+    return ElasticsearchReportHelper::dataGrid($options);
   }
 
   /**
