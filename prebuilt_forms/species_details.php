@@ -479,32 +479,22 @@ class iform_species_details extends iform_dynamic {
     global $indicia_templates;
     $r = '';
     if (!$hidePreferred) {
-      $r .= str_replace(
-        array('{caption}', '{value}', '{class}'),
-        array(lang::get('Species name'), self::$preferred, ''),
-        $indicia_templates['dataValue']);
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get('Species name'), self::$preferred), $indicia_templates['dataValue']);
+	
     }
     if ($hideCommon == FALSE && !empty(self::$commonNames)) {
       $label = (count(self::$commonNames) === 1) ? 'Common name' : 'Common names';
-      $r .= str_replace(
-        array('{caption}', '{value}', '{class}'),
-        array(lang::get($label), implode(', ', self::$commonNames), ''),
-        $indicia_templates['dataValue']);
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get($label), implode(', ', self::$commonNames)), $indicia_templates['dataValue']);
+	
     }
     if ($hideSynonym == FALSE && !empty(self::$synonyms)) {
       $label = (count(self::$synonyms) === 1) ? 'Synonym' : 'Synonyms';
-      $r .= str_replace(
-        array('{caption}', '{value}', '{class}'),
-        array(lang::get($label), implode(', ', self::$synonyms), ''),
-        $indicia_templates['dataValue']
-      );
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get($label), implode(', ', self::$synonyms)), $indicia_templates['dataValue']);
+	
     }
     if ($hideTaxonomy == FALSE && !empty(self::$taxonomy)) {
-      $r .= str_replace(
-        array('{caption}', '{value}', '{class}'),
-        array(lang::get('Taxonomy'), implode(' :: ', self::$taxonomy), ''),
-        $indicia_templates['dataValue']
-      );
+      $r .= str_replace(array('{caption}', '{value}'), array(lang::get('Taxonomy'), implode(' :: ', self::$taxonomy)), $indicia_templates['dataValue']);
+	
     }
     return $r;
   }
