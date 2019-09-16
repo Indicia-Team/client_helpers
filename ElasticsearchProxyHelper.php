@@ -29,28 +29,6 @@ class ElasticsearchProxyHelper {
 
   private static $config;
 
-  private static $esMappings;
-
-  public static function enableElasticsearchProxy($nid = NULL) {
-    self::$config = hostsite_get_es_config($nid);
-    helper_base::add_resource('datacomponents');
-    // Retrieve the Elasticsearch mappings.
-    self::getMappings();
-    // Prepare the stuff we need to pass to the JavaScript.
-    $mappings = json_encode(self::$esMappings);
-    $dateFormat = helper_base::$date_format;
-    $rootFolder = helper_base::getRootFolder(TRUE);
-    $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-    helper_base::$javascript .= <<<JS
-indiciaData.esProxyAjaxUrl = '$esProxyAjaxUrl';
-indiciaData.esSources = [];
-indiciaData.esMappings = $mappings;
-indiciaData.dateFormat = '$dateFormat';
-indiciaData.rootFolder = '$rootFolder';
-
-JS;
-  }
-
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
     if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
@@ -60,6 +38,14 @@ JS;
     }
 
     switch ($method) {
+      case 'attrs':
+        self::proxyAttrDetails($nid);
+        break;
+
+      case 'comments':
+        self::proxyComments($nid);
+        break;
+
       case 'searchbyparams':
         self::proxySearchByParams();
         break;
@@ -84,6 +70,61 @@ JS;
 
   private static function getEsUrl() {
     return self::$config['indicia']['base_url'] . 'index.php/services/rest/' . self::$config['es']['endpoint'];
+  }
+
+  /**
+   * Ajax method which echoes custom attribute data to the client.
+   *
+   * At the moment, this info is built from the Indicia warehouse, not
+   * Elasticsearch.
+   *
+   * @param int $nid
+   *   Node ID to obtain connection info from.
+   */
+  private static function proxyAttrDetails($nid) {
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $options = array(
+      'dataSource' => 'reports_for_prebuilt_forms/dynamic_elasticsearch/record_details',
+      'readAuth' => $readAuth,
+      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
+      'sharing' => 'verification',
+      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+    );
+    $reportData = report_helper::get_report_data($options);
+    // Convert the output to a structured JSON object.
+    $data = [];
+    foreach ($reportData as $attribute) {
+      if (!empty($attribute['value'])) {
+        if (!isset($data[$attribute['attribute_type'] . ' attributes'])) {
+          $data[$attribute['attribute_type'] . ' attributes'] = array();
+        }
+        $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
+      }
+    }
+    header('Content-type: application/json');
+    echo json_encode($data);
+  }
+
+  /**
+   * Ajax handler for the [recordDetails] comments tab.
+   *
+   * @param int $nid
+   *   Node ID to obtain connection info from.
+   */
+  private static function proxyComments($nid) {
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $options = array(
+      'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
+      'readAuth' => $readAuth,
+      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
+      'sharing' => 'verification',
+      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+    );
+    $reportData = report_helper::get_report_data($options);
+    header('Content-type: application/json');
+    echo json_encode($reportData);
   }
 
   private static function proxySearchByParams() {
@@ -246,9 +287,6 @@ JS;
       'should' => [],
       'must_not' => [],
       'filter' => [],
-    ];
-    $nested = [
-      'occurrence.media',
     ];
     $basicQueryTypes = ['match_all', 'match_none'];
     $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
@@ -771,86 +809,6 @@ JS;
       }
     }
     return [];
-  }
-
-  /**
-   * Converts nested mappings data from ES to a flat field list.
-   *
-   * ES returns the mappings for an index as a hierarchical structure
-   * representing the JSON document fields. This recursive function converts
-   * this structure to a flat associative array of fields and field
-   * configuration where the keys are the field names with their parent
-   * elements separated by periods.
-   *
-   * @param array $data
-   *   Mappings data structure retrieved from ES.
-   * @param array $mappings
-   *   Array which will be populated by the field list.
-   * @param array $path
-   *   Array of parent fields which define the path to the current element.
-   */
-  private static function recurseMappings(array $data, array &$mappings, array $path = []) {
-    foreach ($data as $field => $config) {
-      $thisPath = array_merge($path, [$field]);
-      if (isset($config['properties'])) {
-        self::recurseMappings($config['properties'], $mappings, $thisPath);
-      }
-      else {
-        $field = implode('.', $thisPath);
-        $mappings[$field] = [
-          'type' => $config['type'],
-        ];
-        // We can't sort on text unless a keyword is specified.
-        if (isset($config['fields']) && isset($config['fields']['keyword'])) {
-          $mappings[$field]['sort_field'] = "$field.keyword";
-        }
-        elseif ($config['type'] !== 'text') {
-          $mappings[$field]['sort_field'] = $field;
-        }
-        else {
-          // Disable sorting.
-          $mappings[$field]['sort_field'] = FALSE;
-        }
-      }
-    }
-  }
-
-  /**
-   * Retrieves the ES index mappings data.
-   *
-   * A list of mapped fields is stored in self::$esMappings.
-   *
-   * @param int $nid
-   *   Node ID, used to retrieve the node parameters which contain ES settings.
-   */
-  private static function getMappings() {
-    $url = self::getEsUrl() . '/_mapping/doc';
-    $session = curl_init($url);
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . self::$config['es']['user'] . ':SECRET:' . self::$config['es']['secret'],
-    ]);
-    curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-    curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($session, CURLOPT_HEADER, FALSE);
-    curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
-    // Do the POST and then close the session.
-    $response = curl_exec($session);
-    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
-    if ($httpCode !== 200) {
-      $error = json_decode($response, TRUE);
-      $msg = !empty($error['message'])
-        ? $error['message']
-        : curl_errno($session) . ': ' . curl_error($session);
-      throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
-
-    }
-    curl_close($session);
-    $mappingData = json_decode($response, TRUE);
-    $mappingData = array_pop($mappingData);
-    $mappings = [];
-    self::recurseMappings($mappingData['mappings']['doc']['properties'], $mappings);
-    self::$esMappings = $mappings;
   }
 
 }

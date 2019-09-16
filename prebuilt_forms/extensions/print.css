@@ -71,3 +71,7 @@
 .hide-from-printing {
   display: none;
 }
+
+div.spinner-fixed {
+  position: fixed;
+}

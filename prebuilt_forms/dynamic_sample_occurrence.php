@@ -686,7 +686,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           $response = data_entry_helper::get_population_data(array(
             'table' => 'location',
             'extraParams' => $auth['read'] + array(
-                'query' => json_encode(array('in' => array('id'=>explode(',', $locationIDToLoad)))),
+                'query' => json_encode(array('in' => array('id' => explode(',', $locationIDToLoad)))),
                 'view' => 'detail'
               )
           ));
@@ -694,19 +694,19 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
           foreach ($response as $loc) {
             $geoms[] = $loc['boundary_geom'] ? $loc['boundary_geom'] : $loc['centroid_geom'];
           }
-          $geom = count($geoms)>1 ? 'GEOMETRYCOLLECTION(' . implode(',', $geoms) . ')' : $geoms[0];
-          $layerName = count($geoms)>1 ? lang::get('Boundaries') : lang::get('Boundary of {1}', $response[0]['name']);
-          iform_map_zoom_to_geom($geom, lang::get('{1} for the {2} group', $layerName, self::$group['title']), TRUE);
+          $geom = count($geoms) > 1 ? 'GEOMETRYCOLLECTION(' . implode(',', $geoms) . ')' : $geoms[0];
+          $layerName = count($geoms) > 1 ? lang::get('Boundaries') : lang::get('Boundary of {1}', $response[0]['name']);
+          iform_map_zoom_to_geom($geom, lang::get('{1} for the {2} group', $layerName, self::$group['title']));
           self::hide_other_boundaries($args);
         }
         elseif (!empty($filterDef->searchArea)) {
-          iform_map_zoom_to_geom($filterDef->searchArea, lang::get('Recording area for the {1} group', self::$group['title']), TRUE);
+          iform_map_zoom_to_geom($filterDef->searchArea, lang::get('Recording area for the {1} group', self::$group['title']));
           self::hide_other_boundaries($args);
         }
       }
-      if (!empty($filterDef->taxon_group_names) && !empty((array)$filterDef->taxon_group_names)) {
-        $args['taxon_filter'] = implode("\n", array_values((array)$filterDef->taxon_group_names));
-        $args['taxon_filter_field']='taxon_group';
+      if (!empty($filterDef->taxon_group_names) && !empty((array) $filterDef->taxon_group_names)) {
+        $args['taxon_filter'] = implode("\n", array_values((array) $filterDef->taxon_group_names));
+        $args['taxon_filter_field'] = 'taxon_group';
       }
       // @todo Consider other types of species filter, e.g. family or species list?
     }

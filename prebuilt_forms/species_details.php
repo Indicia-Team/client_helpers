@@ -736,6 +736,7 @@ HTML
 	if (!empty($data[0]['associated_taxa'])) {
       $r = '<div class="detail-panel" id="detail-panel-taxonassociations"><h3>'.lang::get('Hosts').'</h3>';
       $r .= '<div><i>'.$data[0]['associated_taxa'].'</i></div>';
+      $r .= '</div>';
     } else {
       $r = '';
     }

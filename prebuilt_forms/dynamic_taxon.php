@@ -789,7 +789,7 @@ JS;
       'position_termlist_id',
       'impact_termlist_id',
     ]);
-    $dataOptions = self::getOptionsForJs($options, [
+    $dataOptions = helper_base::getOptionsForJs($options, [
       'taxon_list_id',
       'association_type_id',
     ], TRUE);
@@ -825,8 +825,7 @@ HTML;
    */
   protected static function get_control_taxondesignations($auth, $args, $tabAlias, $options) {
     helper_base::add_resource('jquery_ui');
-    $dataOptions = self::getOptionsForJs($options, [
-    ], TRUE);
+    $dataOptions = helper_base::getOptionsForJs($options, [], TRUE);
     helper_base::addLanguageStringsToJs('taxondesig', [
       'btnAddNew' => 'Add new designation',
       'hdrDesignation' => 'Designation',
