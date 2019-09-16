@@ -200,9 +200,8 @@ TXT;
    *   Node ID.
    */
   public static function get_form($args, $nid) {
-    require_once helper_base::client_helper_path() . 'ElasticsearchProxyHelper.php';
-    ElasticsearchProxyHelper::enableElasticsearchProxy($nid);
     iform_load_helpers(['ElasticsearchReportHelper']);
+    ElasticsearchReportHelper::enableElasticsearchProxy($nid);
     data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/dynamic_elasticsearch');;
     $r = parent::get_form($args, $nid);
     return $r;

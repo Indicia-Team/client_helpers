@@ -38,6 +38,8 @@ class ElasticsearchReportHelper {
    */
   private static $controlIds = [];
 
+  private static $esMappings;
+
   const MAPPING_FIELDS = [
     '@timestamp' => [
       'caption' => 'Indexing timestamp',
@@ -209,6 +211,22 @@ class ElasticsearchReportHelper {
       'description' => 'Abundance of the recorded organism (numeric or text).',
     ],
   ];
+
+  public static function enableElasticsearchProxy($nid = NULL) {
+    helper_base::add_resource('datacomponents');
+    // Retrieve the Elasticsearch mappings.
+    self::getMappings($nid);
+    // Prepare the stuff we need to pass to the JavaScript.
+    $mappings = json_encode(self::$esMappings);
+    $dateFormat = helper_base::$date_format;
+    $rootFolder = helper_base::getRootFolder(TRUE);
+    $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
+    helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
+    helper_base::$indiciaData['esSources'] = [];
+    helper_base::$indiciaData['esMappings'] = $mappings;
+    helper_base::$indiciaData['dateFormat'] = $dateFormat;
+    helper_base::$indiciaData['rootFolder'] = $rootFolder;
+  }
 
   /**
    * An Elasticsearch or Indicia powered grid control.
@@ -987,6 +1005,86 @@ JS;
 </div>
 
 HTML;
+  }
+
+  /**
+   * Converts nested mappings data from ES to a flat field list.
+   *
+   * ES returns the mappings for an index as a hierarchical structure
+   * representing the JSON document fields. This recursive function converts
+   * this structure to a flat associative array of fields and field
+   * configuration where the keys are the field names with their parent
+   * elements separated by periods.
+   *
+   * @param array $data
+   *   Mappings data structure retrieved from ES.
+   * @param array $mappings
+   *   Array which will be populated by the field list.
+   * @param array $path
+   *   Array of parent fields which define the path to the current element.
+   */
+  private static function recurseMappings(array $data, array &$mappings, array $path = []) {
+    foreach ($data as $field => $config) {
+      $thisPath = array_merge($path, [$field]);
+      if (isset($config['properties'])) {
+        self::recurseMappings($config['properties'], $mappings, $thisPath);
+      }
+      else {
+        $field = implode('.', $thisPath);
+        $mappings[$field] = [
+          'type' => $config['type'],
+        ];
+        // We can't sort on text unless a keyword is specified.
+        if (isset($config['fields']) && isset($config['fields']['keyword'])) {
+          $mappings[$field]['sort_field'] = "$field.keyword";
+        }
+        elseif ($config['type'] !== 'text') {
+          $mappings[$field]['sort_field'] = $field;
+        }
+        else {
+          // Disable sorting.
+          $mappings[$field]['sort_field'] = FALSE;
+        }
+      }
+    }
+  }
+
+  /* Retrieves the ES index mappings data.
+   *
+   * A list of mapped fields is stored in self::$esMappings.
+   *
+   * @param int $nid
+   *   Node ID, used to retrieve the node parameters which contain ES settings.
+   */
+  private static function getMappings($nid) {
+    $config = hostsite_get_es_config($nid);
+    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping/doc';
+    $session = curl_init($url);
+    curl_setopt($session, CURLOPT_HTTPHEADER, [
+      'Content-Type: application/json',
+      'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'],
+    ]);
+    curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
+    curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
+    curl_setopt($session, CURLOPT_HEADER, FALSE);
+    curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
+    // Do the POST and then close the session.
+    $response = curl_exec($session);
+    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
+    if ($httpCode !== 200) {
+      $error = json_decode($response, TRUE);
+      $msg = !empty($error['message'])
+        ? $error['message']
+        : curl_errno($session) . ': ' . curl_error($session);
+      throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
+
+    }
+    curl_close($session);
+    $mappingData = json_decode($response, TRUE);
+    $mappingData = array_pop($mappingData);
+    $mappings = [];
+    self::recurseMappings($mappingData['mappings']['doc']['properties'], $mappings);
+    self::$esMappings = $mappings;
   }
 
 }
