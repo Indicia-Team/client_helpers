@@ -405,7 +405,7 @@ JS;
     ], $options);
     $options['extraParams'] = array_merge([
       'orderby' => 'name',
-    ], $options['extraParams'], $auth['read']);
+    ], $options['extraParams'], $options['readAuth']);
     $baseId = $options['id'];
     foreach ($typeIds as $idx => $typeId) {
       $options['extraParams']['location_type_id'] = $typeId;
@@ -433,6 +433,11 @@ JS;
    */
   public static function leafletMap(array $options) {
     self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
+    $options = array_merge([
+      'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
+      'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
+      'initialZoom' => hostsite_get_config_value('iform', 'map_zoom', 5),
+    ], $options);
     helper_base::add_resource('leaflet');
     $dataOptions = helper_base::getOptionsForJs($options, [
       'layerConfig',
