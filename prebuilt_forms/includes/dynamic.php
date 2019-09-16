@@ -234,21 +234,21 @@ class iform_dynamic {
       $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
       self::$auth = $auth;
     }
-    // Determine how the form was requested and therefore what to output
+    // Determine how the form was requested and therefore what to output.
     $mode = (method_exists(self::$called_class, 'getMode'))
       ? call_user_func(array(self::$called_class, 'getMode'), $args, $nid)
       : '';
     self::$mode = $mode;
-    if($mode ===  self::MODE_GRID) {
-      // Output a grid of existing records
+    if ($mode ===  self::MODE_GRID) {
+      // Output a grid of existing records.
       $r = call_user_func(array(self::$called_class, 'getGrid'), $args, $nid, $auth);
     } else {
       if (($mode === self::MODE_EXISTING || $mode === self::MODE_EXISTING_RO || $mode === self::MODE_CLONE) && is_null(data_entry_helper::$entity_to_load)) {
         // only load if not in error situation.
         call_user_func_array(array(self::$called_class, 'getEntity'), array(&$args, $auth));
-        // when editing, no need to step through all the pages to save a change.
+        // When editing, no need to step through all the pages to save a change.
         if ($mode === self::MODE_EXISTING)
-          $args['save_button_below_all_pages']=true;
+          $args['save_button_below_all_pages'] = TRUE;
       }
       // attributes must be fetched after the entity to load is filled in - this is because the id gets filled in then!
       $attributes = (method_exists(self::$called_class, 'getAttributes'))
@@ -259,7 +259,7 @@ class iform_dynamic {
     if (!empty($args['high_volume']) && $args['high_volume']) {
       $c = $r . '|!|' . data_entry_helper::$javascript . '|!|' . data_entry_helper::$late_javascript . '|!|' .
           data_entry_helper::$onload_javascript . '|!|' . json_encode(data_entry_helper::$required_resources);
-      data_entry_helper::cache_set(array('node'=>$nid), $c, HIGH_VOLUME_CACHE_TIMEOUT);
+      data_entry_helper::cache_set(array('node' => $nid), $c, HIGH_VOLUME_CACHE_TIMEOUT);
     }
     return $r;
   }

@@ -29,22 +29,6 @@ require_once 'includes/dynamic.php';
 class iform_dynamic_elasticsearch extends iform_dynamic {
 
   /**
-   * Count controls to make unique IDs.
-   * @todo Delete
-   *
-   * @var integer
-   */
-  private static $controlIndex = 0;
-
-  /**
-   * Track control IDs so warning can be given if duplicate IDs are used.
-   * @todo Delete
-   *
-   * @var array
-   */
-  private static $controlIds = [];
-
-  /**
    * Return the page metadata.
    *
    * @return array
@@ -222,71 +206,11 @@ TXT;
     data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/dynamic_elasticsearch');;
     $r = parent::get_form($args, $nid);
     // The following function must fire after the page content is built.
-    data_entry_helper::$onload_javascript .= <<<JS
+    data_entry_helper::$late_javascript .= <<<JS
 indiciaFns.populateDataSources();
 
 JS;
     return $r;
-  }
-
-  /**
-   * Provide common option handling for controls.
-   *
-   * * If attachToId specified, ensures that the control ID is set to the same
-   *   value.
-   * * Sets a unique ID for the control if not already set.
-   * * Checks that required options are all populated.
-   * * Checks that options which should contain JSON do so.
-   * * Source option converted to array if not already.
-   *
-   * @param string $controlName
-   *   Name of the type of control.
-   * @param array $options
-   *   Options passed to the control (key and value associative array). Will be
-   *   modified.
-   * @param array $requiredOptions
-   *   Array of option names which must have a value.
-   * @param array $jsonOptions
-   *   Array of option names which must contain JSON.
-   *
-   * @todo Delete
-   */
-  private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
-    self::$controlIndex++;
-    if (!empty($options['attachToId'])) {
-      if (!empty($options['id']) && $options['id'] !== $options['attachToId']) {
-        throw new Exception("Control ID $options[id] @attachToId does not match the @id option value.");
-      }
-      // If attaching to an existing element, force the ID.
-      $options['id'] = $options['attachToId'];
-    }
-    else {
-      // Otherwise, generate a unique ID if not defined.
-      $options = array_merge([
-        'id' => "idc-$controlName-" . self::$controlIndex,
-      ], $options);
-    }
-    // Fail if duplicate ID on page.
-    if (in_array($options['id'], self::$controlIds)) {
-      throw new Exception("Control ID $options[id] is duplicated in the page configuration");
-    }
-    self::$controlIds[] = $options['id'];
-    foreach ($requiredOptions as $option) {
-      if (!isset($options[$option]) || $options[$option] === '') {
-        throw new Exception("Control [$controlName] requires a parameter called @$option");
-      }
-    }
-    foreach ($jsonOptions as $option) {
-      if (!empty($options[$option]) && !is_object($options[$option]) && !is_array($options[$option])) {
-        throw new Exception("@$option option for [$controlName] is not a valid JSON object.");
-      }
-    }
-    // Source option can be either a single named source, or an array of key
-    // value pairs where the key is the source name and the value is the title,
-    // e.g. for a multi-layer map. So, standardise it to the array style.
-    if (!empty($options['source'])) {
-      $options['source'] = is_string($options['source']) ? [$options['source'] => 'Source data'] : $options['source'];
-    }
   }
 
   /**
@@ -408,120 +332,7 @@ JS;
    *   Hidden input HTML which defines the appropriate filters.
    */
   protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
-    self::checkOptions('urlParams', $options, [], ['fieldFilters']);
-    $options = array_merge([
-      'fieldFilters' => [
-        'taxa_in_scratchpad_list_id' => [
-          [
-            'name' => 'taxon.higher_taxon_ids',
-            'type' => 'integer',
-            'process' => 'taxonIdsInScratchpad',
-          ],
-        ],
-        // For legacy configurations
-        'taxon_scratchpad_list_id' => [
-          [
-            'name' => 'taxon.higher_taxon_ids',
-            'type' => 'integer',
-            'process' => 'taxonIdsInScratchpad',
-          ],
-        ],
-        'sample_id' => [
-          [
-            'name' => 'event.event_id',
-            'type' => 'integer',
-          ],
-        ],
-        'taxa_in_sample_id' => [
-          [
-            // Use accepted taxon ID so this is not a hierarchical query.
-            'name' => 'taxon.accepted_taxon_id',
-            'type' => 'integer',
-            'process' => 'taxonIdsInSample',
-          ],
-        ],
-      ],
-      // Other options, e.g. group_id or field params may be added in future.
-    ], $options);
-    $r = '';
-    foreach ($options['fieldFilters'] as $field => $esFieldList) {
-      if (!empty($_GET[$field])) {
-        foreach ($esFieldList as $esField) {
-          $value = trim($_GET[$field]);
-          if ($esField['type'] === 'integer') {
-            if (!preg_match('/^\d+$/', $value)) {
-              // Disable this filter.
-              $value = '-1';
-              hostsite_show_message(
-                "Data cannot be loaded because the value in the $field parameter is invalid",
-                'warning'
-              );
-            }
-          }
-          $queryType = 'term';
-          // Special processing for a taxon scratchpad ID.
-          if (isset($esField['process'])) {
-            if ($esField['process'] === 'taxonIdsInScratchpad') {
-              $value = self::convertValueToFilterList(
-                'library/taxa/external_keys_for_scratchpad',
-                ['scratchpad_list_id' => $value],
-                'external_key',
-                $auth
-              );
-            }
-            elseif ($esField['process'] === 'taxonIdsInSample') {
-              $value = self::convertValueToFilterList(
-                'library/taxa/external_keys_for_sample',
-                ['sample_id' => $value],
-                'external_key',
-                $auth
-              );
-            }
-            $queryType = 'terms';
-          }
-          $r .= <<<HTML
-<input type="hidden" class="es-filter-param" value="$value"
-  data-es-bool-clause="must" data-es-field="$esField[name]" data-es-query-type="$queryType" />
-
-HTML;
-        }
-      }
-    }
-    return $r;
-  }
-
-  /**
-   * Uses an Indicia report to convert a URL param to a list of filter values.
-   *
-   * For example, converts a scratchpad list ID to the list of taxa in the
-   * scratchpad list.
-   *
-   * @param string $report
-   *   Report path.
-   * @param array $params
-   *   List of parameters to pass to the report.
-   * @param string $outputField
-   *   Name of the field output by the report to build the list from.
-   * @param array $auth
-   *   Authorisation tokens.
-   *
-   * @return string
-   *   List for placing in the url param's hidden input attribute.
-   */
-  private static function convertValueToFilterList($report, array $params, $outputField, array $auth) {
-    // Load the scratchpad's list of taxa.
-    iform_load_helpers(['report_helper']);
-    $listEntries = report_helper::get_report_data([
-      'dataSource' => $report,
-      'readAuth' => $auth['read'],
-      'extraParams' => $params,
-    ]);
-    // Build a hidden input which causes filtering to this list.
-    $keys = [];
-    foreach ($listEntries as $row) {
-      $keys[] = $row[$outputField];
-    }
-    return str_replace('"', '&quot;', json_encode($keys));
+    return ElasticsearchReportHelper::urlParams($options);
   }
 
   /**
@@ -543,63 +354,6 @@ HTML;
    */
   protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::higherGeographySelect($options);
-  }
-
-  /**
-   * Ajax method which echoes custom attribute data to the client.
-   *
-   * At the moment, this info is built from the Indicia warehouse, not
-   * Elasticsearch.
-   *
-   * @param int $website_id
-   *   Warehouse website ID.
-   * @param string $password
-   *   Warehouse password.
-   */
-  public static function ajax_attrs($website_id, $password) {
-    $readAuth = report_helper::get_read_auth($website_id, $password);
-    $options = array(
-      'dataSource' => 'reports_for_prebuilt_forms/dynamic_elasticsearch/record_details',
-      'readAuth' => $readAuth,
-      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
-      'sharing' => 'verification',
-      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
-    );
-    $reportData = report_helper::get_report_data($options);
-    // Convert the output to a structured JSON object.
-    $data = [];
-    foreach ($reportData as $attribute) {
-      if (!empty($attribute['value'])) {
-        if (!isset($data[$attribute['attribute_type'] . ' attributes'])) {
-          $data[$attribute['attribute_type'] . ' attributes'] = array();
-        }
-        $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
-      }
-    }
-    header('Content-type: application/json');
-    echo json_encode($data);
-  }
-
-  /**
-   * Ajax handler for the [recordDetails] comments tab.
-   *
-   * @param int $website_id
-   *   Warehouse website ID.
-   * @param string $password
-   *   Warehouse password.
-   */
-  public static function ajax_comments($website_id, $password) {
-    $readAuth = report_helper::get_read_auth($website_id, $password);
-    $options = array(
-      'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
-      'readAuth' => $readAuth,
-      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
-      'sharing' => 'verification',
-      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
-    );
-    $reportData = report_helper::get_report_data($options);
-    header('Content-type: application/json');
-    echo json_encode($reportData);
   }
 
   protected static function getHeader($args) {

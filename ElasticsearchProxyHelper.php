@@ -57,6 +57,14 @@ class ElasticsearchProxyHelper {
     }
 
     switch ($method) {
+      case 'attrs':
+        self::proxyAttrDetails($nid);
+        break;
+
+      case 'comments':
+        self::proxyComments($nid);
+        break;
+
       case 'searchbyparams':
         self::proxySearchByParams();
         break;
@@ -81,6 +89,61 @@ class ElasticsearchProxyHelper {
 
   private static function getEsUrl() {
     return self::$config['indicia']['base_url'] . 'index.php/services/rest/' . self::$config['es']['endpoint'];
+  }
+
+  /**
+   * Ajax method which echoes custom attribute data to the client.
+   *
+   * At the moment, this info is built from the Indicia warehouse, not
+   * Elasticsearch.
+   *
+   * @param int $nid
+   *   Node ID to obtain connection info from.
+   */
+  private static function proxyAttrDetails($nid) {
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $options = array(
+      'dataSource' => 'reports_for_prebuilt_forms/dynamic_elasticsearch/record_details',
+      'readAuth' => $readAuth,
+      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
+      'sharing' => 'verification',
+      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+    );
+    $reportData = report_helper::get_report_data($options);
+    // Convert the output to a structured JSON object.
+    $data = [];
+    foreach ($reportData as $attribute) {
+      if (!empty($attribute['value'])) {
+        if (!isset($data[$attribute['attribute_type'] . ' attributes'])) {
+          $data[$attribute['attribute_type'] . ' attributes'] = array();
+        }
+        $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
+      }
+    }
+    header('Content-type: application/json');
+    echo json_encode($data);
+  }
+
+  /**
+   * Ajax handler for the [recordDetails] comments tab.
+   *
+   * @param int $nid
+   *   Node ID to obtain connection info from.
+   */
+  private static function proxyComments($nid) {
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $options = array(
+      'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
+      'readAuth' => $readAuth,
+      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
+      'sharing' => 'verification',
+      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+    );
+    $reportData = report_helper::get_report_data($options);
+    header('Content-type: application/json');
+    echo json_encode($reportData);
   }
 
   private static function proxySearchByParams() {

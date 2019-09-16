@@ -215,7 +215,7 @@ class ElasticsearchReportHelper {
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
    */
-  public static function dataGrid($options) {
+  public static function dataGrid(array $options) {
     self::checkOptions(
       'dataGrid',
       $options,
@@ -292,7 +292,7 @@ JS;
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[download]
    */
-  public static function download($options) {
+  public static function download(array $options) {
     self::checkOptions('esDownload', $options,
       ['source'],
       ['addColumns', 'removeColumns']
@@ -373,7 +373,7 @@ JS;
    * @return string
    *   Control HTML
    */
-  public static function higherGeographySelect($options) {
+  public static function higherGeographySelect(array $options) {
     if (empty($options['locationTypeId']) ||
         (!is_array($options['locationTypeId']) && !preg_match('/^\d+$/', $options['locationTypeId']))) {
       throw new Exception('An integer or integer array @locationTypeId parameter is required for the [higherGeographySelect] control');
@@ -413,7 +413,7 @@ JS;
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[leafletMap]
    */
-  public static function leafletMap($options) {
+  public static function leafletMap(array $options) {
     self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
     helper_base::add_resource('leaflet');
     $dataOptions = helper_base::getOptionsForJs($options, [
@@ -435,7 +435,7 @@ JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
   }
 
-  public static function permissionFilters($options) {
+  public static function permissionFilters(array $options) {
     $allowedTypes = [];
     // Add My records download permission if allowed.
     if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
@@ -484,7 +484,7 @@ HTML;
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[recordDetails]
    */
-  public static function recordDetails($options) {
+  public static function recordDetails(array $options) {
     $options = array_merge([
       'allowRedetermination' => FALSE,
     ], $options);
@@ -584,7 +584,7 @@ HTML;
    * @return string
    *   Empty string as no HTML required.
    */
-  public static function source($options) {
+  public static function source(array $options) {
     self::applyReplacements($options, ['aggregation'], ['aggregation']);
     self::checkOptions(
       'source',
@@ -621,7 +621,7 @@ HTML;
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[templatedOutput]
    */
-  public static function templatedOutput($options) {
+  public static function templatedOutput(array $options) {
     self::checkOptions('templatedOutput', $options, ['source', 'content'], []);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'source',
@@ -638,9 +638,100 @@ JS;
   }
 
   /**
+   * Retrieve parameters from the URL and add to the ES requests.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[urlParams]
+   *
+   * @return string
+   *   Hidden input HTML which defines the appropriate filters.
+   */
+  public static function urlParams(array $options) {
+    self::checkOptions('urlParams', $options, [], ['fieldFilters']);
+    $options = array_merge([
+      'fieldFilters' => [
+        'taxa_in_scratchpad_list_id' => [
+          [
+            'name' => 'taxon.higher_taxon_ids',
+            'type' => 'integer',
+            'process' => 'taxonIdsInScratchpad',
+          ],
+        ],
+        // For legacy configurations
+        'taxon_scratchpad_list_id' => [
+          [
+            'name' => 'taxon.higher_taxon_ids',
+            'type' => 'integer',
+            'process' => 'taxonIdsInScratchpad',
+          ],
+        ],
+        'sample_id' => [
+          [
+            'name' => 'event.event_id',
+            'type' => 'integer',
+          ],
+        ],
+        'taxa_in_sample_id' => [
+          [
+            // Use accepted taxon ID so this is not a hierarchical query.
+            'name' => 'taxon.accepted_taxon_id',
+            'type' => 'integer',
+            'process' => 'taxonIdsInSample',
+          ],
+        ],
+      ],
+      // Other options, e.g. group_id or field params may be added in future.
+    ], $options);
+    $r = '';
+    foreach ($options['fieldFilters'] as $field => $esFieldList) {
+      if (!empty($_GET[$field])) {
+        foreach ($esFieldList as $esField) {
+          $value = trim($_GET[$field]);
+          if ($esField['type'] === 'integer') {
+            if (!preg_match('/^\d+$/', $value)) {
+              // Disable this filter.
+              $value = '-1';
+              hostsite_show_message(
+                "Data cannot be loaded because the value in the $field parameter is invalid",
+                'warning'
+              );
+            }
+          }
+          $queryType = 'term';
+          // Special processing for a taxon scratchpad ID.
+          if (isset($esField['process'])) {
+            if ($esField['process'] === 'taxonIdsInScratchpad') {
+              $value = self::convertValueToFilterList(
+                'library/taxa/external_keys_for_scratchpad',
+                ['scratchpad_list_id' => $value],
+                'external_key',
+                $auth
+              );
+            }
+            elseif ($esField['process'] === 'taxonIdsInSample') {
+              $value = self::convertValueToFilterList(
+                'library/taxa/external_keys_for_sample',
+                ['sample_id' => $value],
+                'external_key',
+                $auth
+              );
+            }
+            $queryType = 'terms';
+          }
+          $r .= <<<HTML
+<input type="hidden" class="es-filter-param" value="$value"
+  data-es-bool-clause="must" data-es-field="$esField[name]" data-es-query-type="$queryType" />
+
+HTML;
+        }
+      }
+    }
+    return $r;
+  }
+
+  /**
    * Output a selector for a user's registered filters.
    */
-  public static function userFilters($options) {
+  public static function userFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
     self::$controlIndex++;
     $options = array_merge([
@@ -682,7 +773,7 @@ JS;
    * @return string
    *   Panel HTML;
    */
-  public static function verificationButtons($options) {
+  public static function verificationButtons(array $options) {
     self::checkOptions('verificationButtons', $options, ['showSelectedRow'], []);
     if (!empty($options['editPath'])) {
       $options['editPath'] = helper_base::getRootFolder(TRUE) . $options['editPath'];
@@ -825,6 +916,41 @@ HTML;
     if (!empty($options['source'])) {
       $options['source'] = is_string($options['source']) ? [$options['source'] => 'Source data'] : $options['source'];
     }
+  }
+
+
+  /**
+   * Uses an Indicia report to convert a URL param to a list of filter values.
+   *
+   * For example, converts a scratchpad list ID to the list of taxa in the
+   * scratchpad list.
+   *
+   * @param string $report
+   *   Report path.
+   * @param array $params
+   *   List of parameters to pass to the report.
+   * @param string $outputField
+   *   Name of the field output by the report to build the list from.
+   * @param array $auth
+   *   Authorisation tokens.
+   *
+   * @return string
+   *   List for placing in the url param's hidden input attribute.
+   */
+  private static function convertValueToFilterList($report, array $params, $outputField, array $auth) {
+    // Load the scratchpad's list of taxa.
+    iform_load_helpers(['report_helper']);
+    $listEntries = report_helper::get_report_data([
+      'dataSource' => $report,
+      'readAuth' => $auth['read'],
+      'extraParams' => $params,
+    ]);
+    // Build a hidden input which causes filtering to this list.
+    $keys = [];
+    foreach ($listEntries as $row) {
+      $keys[] = $row[$outputField];
+    }
+    return str_replace('"', '&quot;', json_encode($keys));
   }
 
   /**
