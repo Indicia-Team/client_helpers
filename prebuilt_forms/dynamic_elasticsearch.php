@@ -353,7 +353,9 @@ JS;
    *   Control HTML
    */
   protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::higherGeographySelect($options);
+    return ElasticsearchReportHelper::higherGeographySelect(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   protected static function getHeader($args) {
