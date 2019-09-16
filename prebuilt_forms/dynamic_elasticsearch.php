@@ -205,11 +205,6 @@ TXT;
     iform_load_helpers(['ElasticsearchReportHelper']);
     data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/dynamic_elasticsearch');;
     $r = parent::get_form($args, $nid);
-    // The following function must fire after the page content is built.
-    data_entry_helper::$late_javascript .= <<<JS
-indiciaFns.populateDataSources();
-
-JS;
     return $r;
   }
 

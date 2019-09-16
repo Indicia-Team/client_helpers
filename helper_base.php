@@ -1892,6 +1892,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
 indiciaData.documentReady = 'started';
 $javascript
 $late_javascript
+// Elasticsearch source population.
+if (typeof indiciaFns.populateDataSources !== 'undefined') {
+  indiciaFns.populateDataSources();
+}
 // if window.onload already happened before document.ready, ensure any hooks are still run.
 if (indiciaData.windowLoaded === 'done') {
   $.each(indiciaData.onloadFns, function(idx, fn) {
