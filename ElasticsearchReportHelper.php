@@ -287,6 +287,7 @@ class ElasticsearchReportHelper {
       'includeColumnHeadings',
       'includeFilterRow',
       'includePager',
+      'includeMultiSelectTool',
       'responsive',
       'responsiveOptions',
       'sortable',
