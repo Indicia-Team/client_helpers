@@ -285,6 +285,17 @@ TXT;
   }
 
   /**
+   * A standard parameters filter toolbar for use on Elasticsearch pages.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[standardParams]
+   */
+  protected static function get_control_standardParams($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::standardParams(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
    * A control for flexibly outputting data formatted using HTML templates.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[templatedOutput]

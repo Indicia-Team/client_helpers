@@ -641,6 +641,34 @@ HTML;
   }
 
   /**
+   * A standard parameters filter toolbar for use on Elasticsearch pages.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[standardParams]
+   */
+  public static function standardParams(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    $options = array_merge(array(
+      'allowSave' => TRUE,
+      'sharing' => 'reporting',
+      'elasticsearch' => TRUE,
+    ), $options);
+    foreach ($options as &$value) {
+      $value = apply_user_replacements($value);
+    }
+    if ($options['allowSave'] && !function_exists('iform_ajaxproxy_url')) {
+      return 'The AJAX Proxy module must be enabled to support saving filters. Set @allowSave=false to disable this in the [standard params] control.';
+    }
+    if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id')) {
+      // If not logged in and linked to warehouse, we can't use standard params
+      // functionality like saving, so...
+      return '';
+    }
+    $hiddenStuff = '';
+    $r = report_filter_panel($options['readAuth'], $options, helper_base::$website_id, $hiddenStuff);
+    return $r . $hiddenStuff;
+  }
+
+  /**
    * A control for flexibly outputting data formatted using HTML templates.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[templatedOutput]
