@@ -462,111 +462,27 @@ class ElasticsearchProxyHelper {
   }
 
   private static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
-    self::applyUserFiltersOccId($definition, $bool);
-    self::applyUserFiltersOccExternalKey($definition, $bool);
+    self::applyUserFiltersTaxonGroupList($definition, $bool);
+    self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
+    self::applyUserFiltersTaxonMarineFlag($definition, $bool);
     self::applyUserFiltersSearchArea($definition, $bool);
     self::applyUserFiltersLocationName($definition, $bool);
     self::applyUserFiltersLocationList($definition, $bool);
     self::applyUserFiltersIndexedLocationList($definition, $bool);
     self::applyUserFiltersIndexedLocationTypeList($definition, $bool, $readAuth);
+    self::applyUserFiltersDate($definition, $bool);
+    self::applyUserFiltersWho($definition, $bool);
+    self::applyUserFiltersOccId($definition, $bool);
+    self::applyUserFiltersOccExternalKey($definition, $bool);
+    self::applyUserFiltersQuality($definition, $bool);
+    self::applyUserFiltersAutoChecks($definition, $bool);
+    self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
     self::applyUserFiltersWebsiteList($definition, $bool);
     self::applyUserFiltersSurveyList($definition, $bool);
+    self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
-    self::applyUserFiltersTaxonGroupList($definition, $bool);
-    self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
-    self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
-    self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
-  }
 
-  /**
-   * Converts an Indicia filter definition idlist or occ_id to an ES query.
-   *
-   * Both occ_id and idlist are filters on occurrence.id so we treat them the
-   * same here.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersOccId(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['idlist', 'oc_id']);
-    $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-    if (!empty($filter)) {
-      $bool[$boolClause][] = [
-        'terms' => ['id' => explode(',', $filter['value'])],
-      ];
-    }
-  }
-
-  /**
-   * Converts an filter definition occurrence_external_key to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersOccExternalKey(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['occurrence_external_key']);
-    if (!empty($filter)) {
-      $bool['must'][] = [
-        'terms' => ['occurrence.source_system_key' => explode(',', $filter['value'])],
-      ];
-    }
-  }
-
-  /**
-   * Converts an Indicia filter definition website_list to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['website_list', 'website_id']);
-    if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-      $bool[$boolClause][] = [
-        'terms' => ['metadata.website.id' => explode(',', $filter['value'])],
-      ];
-    }
-  }
-
-  /**
-   * Converts an Indicia filter definition survey_list to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['survey_list', 'survey_id']);
-    if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-      $bool[$boolClause][] = [
-        'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
-      ];
-    }
-  }
-
-  /**
-   * Converts an Indicia filter definition group_id to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersGroupId(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['group_id']);
-    if (!empty($filter)) {
-      $bool['must'][] = [
-        'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
-      ];
-    }
   }
 
   /**
@@ -635,10 +551,7 @@ class ElasticsearchProxyHelper {
       if ($filter['op'] === '=') {
         $bool['must'][] = [
           'match' => [
-            'taxon.taxon_rank_sort_order' => [
-              'query' => $filter['value'],
-              'type' => 'phrase',
-            ],
+            'taxon.taxon_rank_sort_order' => $filter['value'],
           ],
         ];
       }
@@ -654,6 +567,26 @@ class ElasticsearchProxyHelper {
           ],
         ];
       }
+    }
+  }
+
+  /**
+   * Converts a filter definition marine flag filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersTaxonMarineFlag(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['marine_flag']);
+    // Filter op can be =, >= or <=.
+    if (!empty($filter) && $filter['value'] !== 'all') {
+      $bool['must'][] = [
+        'match' => [
+          'taxon.marine' => $filter['value'] === 'Y',
+        ],
+      ];
     }
   }
 
@@ -776,6 +709,298 @@ class ElasticsearchProxyHelper {
           ],
         ];
       }
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition date filter to an ES query.
+   *
+   * Support for recorded, input, edited, verified dates. Age is supported as
+   * long as format specifies age in minutes, hours, days, weeks, months or
+   * years.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersDate(array $definition, array &$bool) {
+    $esFields = [
+      'recorded' => 'event.date_start',
+      'input' => 'metadata.created_on',
+      'edited' => 'metadata.updated_on',
+      'verified' => 'identification.verified_on',
+    ];
+    $dateTypes = [
+      'from' => 'gte',
+      'to' => 'lte',
+      'age' => 'gte',
+    ];
+    if (!empty($definition['date_type'])) {
+      foreach ($dateTypes as $type => $op) {
+        $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
+        if (!empty($definition[$fieldName])) {
+          $value = $definition[$fieldName];
+          // Convert date format.
+          if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
+            $value = "$matches[Y]-$matches[m]-$matches[d]";
+          }
+          elseif ($type === 'age') {
+            $value = 'now-' . str_replace(
+              ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
+              ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
+              strtolower($value)
+            );
+          }
+          $bool['must'][] = [
+            'range' => [
+              $esFields[$definition['date_type']] => [
+                $op => $value,
+              ],
+            ],
+          ];
+        }
+      }
+    }
+  }
+
+  private static function applyUserFiltersWho(array $definition, array &$bool) {
+    if (!empty($definition['my_records']) && $definition['my_records'] === '1') {
+      $bool['must'][] = [
+        'match' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition idlist or occ_id to an ES query.
+   *
+   * Both occ_id and idlist are filters on occurrence.id so we treat them the
+   * same here.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersOccId(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['idlist', 'oc_id']);
+    $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+    if (!empty($filter)) {
+      $bool[$boolClause][] = [
+        'terms' => ['id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an filter definition occurrence_external_key to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersOccExternalKey(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['occurrence_external_key']);
+    if (!empty($filter)) {
+      $bool['must'][] = [
+        'terms' => ['occurrence.source_system_key' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  private static function applyUserFiltersQuality(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['quality']);
+    if (!empty($filter)) {
+      switch ($filter['value']) {
+        case 'V1':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 1]];
+          break;
+
+        case 'V':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
+          break;
+
+        case '-3':
+          $bool['must'][] = [
+            'bool' => [
+              'should' => [
+                [
+                  'bool' => [
+                    'must' => [
+                      ['term' => ['identification.verification_status' => 'V']],
+                    ],
+                  ],
+                ],
+                [
+                  'bool' => [
+                    'must' => [
+                      ['term' => ['identification.verification_status' => 'C']],
+                      ['term' => ['identification.verification_substatus' => 3]],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ];
+          break;
+
+        case 'C3':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 3]];
+          break;
+
+        case 'C':
+          $bool['must'][] = ['match' => ['identification.recorder_certainty' => 'Certain']];
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case 'L':
+          $bool['must'][] = ['terms' => ['identification.recorder_certainty.keyword' => ['Certain', 'Likely']]];
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case 'P':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 0]];
+          $bool['must_not'][] = ['exists' => ['field' => 'identification.query']];
+          break;
+
+        case '!R':
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case '!D':
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          $bool['must_not'][] = ['terms' => ['identification.query.keyword' => ['Q', 'A']]];
+          break;
+
+        case 'D':
+          $bool['must'][] = ['match' => ['identification.query' => 'Q']];
+          break;
+
+        case 'A':
+          $bool['must'][] = ['match' => ['identification.query' => 'A']];
+          break;
+
+        case 'R':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case 'R4':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 4]];
+          break;
+
+        case 'DR':
+          // Queried or not accepted.
+          $bool['must'][] = [
+            'bool' => [
+              'should' => [
+                [
+                  'bool' => [
+                    'must' => [
+                      ['term' => ['identification.verification_status' => 'R']],
+                    ],
+                  ],
+                ],
+                [
+                  'bool' => [
+                    'must' => [
+                      ['match' => ['identification.query' => 'Q']],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ];
+          break;
+
+        default:
+          // Nothing to do for 'all'.
+      }
+    }
+  }
+
+  private static function applyUserFiltersAutoChecks(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['autochecks']);
+    if (!empty($filter) && in_array($filter['value'], ['P', 'F'])) {
+      $bool['must'][] = ['match' => ['identification.auto_checks.result' => $filter['value'] === 'P']];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition website_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['website_list', 'website_id']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => ['metadata.website.id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition survey_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['survey_list', 'survey_id']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition input_form_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersInputFormList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['input_form_list']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => [
+          'metadata.input_form.keyword' => explode(',', str_replace("'", '', $filter['value'])),
+        ],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition group_id to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersGroupId(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['group_id']);
+    if (!empty($filter)) {
+      $bool['must'][] = [
+        'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
+      ];
     }
   }
 
