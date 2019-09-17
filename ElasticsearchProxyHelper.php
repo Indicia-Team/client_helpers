@@ -377,8 +377,13 @@ class ElasticsearchProxyHelper {
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
     }
+    if (!empty($query['filter_def'])) {
+      self::applyFilterDef($readAuth, $query['filter_def'], $bool);
+    }
     unset($query['user_filters']);
     unset($query['permissions_filter']);
+    unset($query['filter_def']);
+
     $bool = array_filter($bool, function ($k) {
       return count($k) > 0;
     });
@@ -451,21 +456,26 @@ class ElasticsearchProxyHelper {
         throw new exception("Filter with ID $userFilter could not be loaded.");
       }
       $definition = json_decode($filterData[0]['definition'], TRUE);
-      self::applyUserFiltersOccId($definition, $bool);
-      self::applyUserFiltersOccExternalKey($definition, $bool);
-      self::applyUserFiltersSearchArea($filterData[0]['search_area'], $bool);
-      self::applyUserFiltersLocationName($definition, $bool);
-      self::applyUserFiltersLocationList($definition, $bool);
-      self::applyUserFiltersIndexedLocationList($definition, $bool);
-      self::applyUserFiltersIndexedLocationTypeList($definition, $bool, $readAuth);
-      self::applyUserFiltersWebsiteList($definition, $bool);
-      self::applyUserFiltersSurveyList($definition, $bool);
-      self::applyUserFiltersGroupId($definition, $bool);
-      self::applyUserFiltersTaxonGroupList($definition, $bool);
-      self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
-      self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
-      self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
+      $definition['searchArea'] = $filterData[0]['search_area'];
+      self::applyFilterDef($readAuth, $definition, $bool);
     }
+  }
+
+  private static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
+    self::applyUserFiltersOccId($definition, $bool);
+    self::applyUserFiltersOccExternalKey($definition, $bool);
+    self::applyUserFiltersSearchArea($definition, $bool);
+    self::applyUserFiltersLocationName($definition, $bool);
+    self::applyUserFiltersLocationList($definition, $bool);
+    self::applyUserFiltersIndexedLocationList($definition, $bool);
+    self::applyUserFiltersIndexedLocationTypeList($definition, $bool, $readAuth);
+    self::applyUserFiltersWebsiteList($definition, $bool);
+    self::applyUserFiltersSurveyList($definition, $bool);
+    self::applyUserFiltersGroupId($definition, $bool);
+    self::applyUserFiltersTaxonGroupList($definition, $bool);
+    self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
+    self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
   }
 
   /**
@@ -650,17 +660,17 @@ class ElasticsearchProxyHelper {
   /**
    * Converts an Indicia filter definition location_name to an ES query.
    *
-   * @param string $searchArea
+   * @param string $definition
    *   WKT for the searchArea in EPSG:4326.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersSearchArea($searchArea, array &$bool) {
-    if (!empty($searchArea)) {
+  private static function applyUserFiltersSearchArea($definition, array &$bool) {
+    if (!empty($definition['searchArea'])) {
       $bool['must'][] = [
         'geo_shape' => [
           'location.geom' => [
-            'shape' => $searchArea,
+            'shape' => $definition['searchArea'],
             'relation' => 'intersects',
           ],
         ],
