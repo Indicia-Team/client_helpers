@@ -764,6 +764,14 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Converts an Indicia filter definition my_records filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
   private static function applyUserFiltersWho(array $definition, array &$bool) {
     if (!empty($definition['my_records']) && $definition['my_records'] === '1') {
       $bool['must'][] = [
@@ -810,6 +818,14 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Converts an Indicia filter definition quality filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
   private static function applyUserFiltersQuality(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['quality']);
     if (!empty($filter)) {
@@ -924,6 +940,14 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Converts an Indicia filter definition auto checks filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
   private static function applyUserFiltersAutoChecks(array $definition, array &$bool) {
     $filter = self::getDefinitionFilter($definition, ['autochecks']);
     if (!empty($filter) && in_array($filter['value'], ['P', 'F'])) {
