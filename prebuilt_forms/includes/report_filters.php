@@ -306,6 +306,7 @@ class filter_where extends FilterBase {
 
   /**
    * Define the HTML required for this filter's UI panel.
+   *
    * Options available:
    * * **personSiteAttrId** - a multi-value location attribute used to link users to their recording sites.
    * * **includeSitesCreatedByUser** - boolean which defines if sites that the user is the creator of are available. Default TRUE.
@@ -313,8 +314,7 @@ class filter_where extends FilterBase {
    * * **otherLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the
    *
    * @param array $readAuth
-   *   Read authorisation tokens
-   *
+   *   Read authorisation tokens.   *
    * @param array $options
    *   Control options array. Options include:
    *   * includeSitesCreatedByUser - Defines if user created sites are available for selection. True or false
@@ -339,7 +339,7 @@ class filter_where extends FilterBase {
     $options = array_merge(array(
       'includeSitesCreatedByUser' => TRUE,
       'indexedLocationTypeIds' => array(),
-      'otherLocationTypeIds' => array()
+      'otherLocationTypeIds' => [],
     ), $options);
     data_entry_helper::$javascript .= "indiciaData.includeSitesCreatedByUser=" . ($options['includeSitesCreatedByUser'] ? 'true' : 'false') . ";\n";
     data_entry_helper::$javascript .= "indiciaData.personSiteAttrId=" . (empty($options['personSiteAttrId']) ? 'false' : $options['personSiteAttrId']) . ";\n";
@@ -360,7 +360,7 @@ class filter_where extends FilterBase {
     $locTypes = array_merge($options['indexedLocationTypeIds'], $options['otherLocationTypeIds']);
     $locTypes = data_entry_helper::get_population_data(array(
       'table' => 'termlists_term',
-      'extraParams' => $readAuth + array('view' => 'cache', 'query' => json_encode(array('in' => array('id' => $locTypes))))
+      'extraParams' => $readAuth + array('view' => 'cache', 'query' => json_encode(array('in' => array('id' => $locTypes)))),
     ));
     foreach ($locTypes as $locType) {
       $sitesLevel1[$locType['id']] = $locType['term'] . '...';
@@ -371,7 +371,7 @@ class filter_where extends FilterBase {
       'label' => lang::get('Choose an existing site or location'),
       'lookupValues' => $sitesLevel1,
       'blankText' => '<' . lang::get('Please select') . '>',
-      'controlWrapTemplate' => 'justControl'
+      'controlWrapTemplate' => 'justControl',
     ));
     $r .= data_entry_helper::sub_list(array(
       'fieldname' => 'location_list',
@@ -380,15 +380,15 @@ class filter_where extends FilterBase {
       'captionField' => 'name',
       'valueField' => 'id',
       'addToTable' => FALSE,
-      'extraParams' => $readAuth
+      'extraParams' => $readAuth,
     ));
 
     $r .= '</div></fieldset>';
     $r .= '<br/><fieldset class="exclusive">';
-    $r .= data_entry_helper::text_input(array(
+    $r .= data_entry_helper::text_input([
       'label' => lang::get('Or, search for site names containing'),
-      'fieldname' => 'location_name'
-    ));
+      'fieldname' => 'location_name',
+    ]);
     $r .= '</fieldset>';
     $r .= '<fieldset class="exclusive">';
     // Build the array of spatial reference systems into a format Indicia can use.
@@ -405,11 +405,11 @@ class filter_where extends FilterBase {
     foreach ($list as $system) {
       $systems[$system] = lang::get("sref:$system");
     }
-    $r .= data_entry_helper::sref_and_system(array(
+    $r .= data_entry_helper::sref_and_system([
       'label' => lang::get('Or, find records in map reference'),
       'fieldname' => 'sref',
-      'systems' => $systems
-    ));
+      'systems' => $systems,
+    ]);
     $r .= '</fieldset></fieldset>';
     $r .= '<fieldset><legend>' . lang::get('Or, select a drawing tool in the map toolbar then draw a boundary to find intersecting records') . '</legend>';
     if (empty($options['linkToMapDiv'])) {
@@ -417,7 +417,8 @@ class filter_where extends FilterBase {
         $initialLat = hostsite_get_config_value('iform', 'map_centroid_lat', 55);
         $initialLong = hostsite_get_config_value('iform', 'map_centroid_long', -1);
         $initialZoom = (int) hostsite_get_config_value('iform', 'map_zoom', 5);
-      } else {
+      }
+      else {
         $initialLat = 55;
         $initialLong = -1;
         $initialZoom = 5;
@@ -439,7 +440,7 @@ class filter_where extends FilterBase {
         'standardControls' => array('layerSwitcher', 'panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
           'modifyFeature', 'clearEditLayer'),
         'readAuth' => $readAuth,
-        'gridRefHint' => TRUE
+        'gridRefHint' => TRUE,
       ));
       $indicia_templates['jsWrap'] = $oldwrap;
     }
@@ -461,7 +462,7 @@ class filter_where extends FilterBase {
       if ($locality) {
         $loc = data_entry_helper::get_population_data(array(
           'table' => 'location',
-          'extraParams' => $readAuth + array('id' => $locality)
+          'extraParams' => $readAuth + array('id' => $locality),
         ));
         $loc = $loc[0];
         $outputArr["loc:$loc[id]"] = $loc['name'];
