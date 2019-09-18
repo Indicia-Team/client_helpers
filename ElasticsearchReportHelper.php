@@ -568,14 +568,14 @@ JS;
 HTML;
     if ($options['allowRedetermination']) {
       helper_base::add_resource('validation');
-      $redetUrl = iform_ajaxproxy_url(self::$nid, 'occurrence');
+      $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
       $userId = hostsite_get_user_field('indicia_user_id');
       helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
       $speciesInput = data_entry_helper::species_autocomplete([
         'label' => lang::get('Redetermine to'),
         'helpText' => lang::get('Select the new taxon name.'),
         'fieldname' => 'redet-species',
-        'extraParams' => $auth['read'] + ['taxon_list_id' => 1],
+        'extraParams' => $options['readAuth'] + ['taxon_list_id' => 1],
         'speciesIncludeAuthorities' => TRUE,
         'speciesIncludeBothNames' => TRUE,
         'speciesNameFilterMode' => 'preferred',

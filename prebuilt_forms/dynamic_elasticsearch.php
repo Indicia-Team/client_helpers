@@ -325,7 +325,9 @@ TXT;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[recordDetails]
    */
   protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::recordDetails($options);
+    return ElasticsearchReportHelper::recordDetails(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   /**
