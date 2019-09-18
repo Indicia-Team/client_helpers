@@ -567,6 +567,11 @@ JS;
 
 HTML;
     if ($options['allowRedetermination']) {
+      $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
+      if (!$redetTaxonListId) {
+        throw new Exception('[recordDetails] control has @allowRedetermination option but the Indicia setting ' .
+          'Master Checklist ID is not set. This is required to provide a list to select the redetermination from.');
+      }
       helper_base::add_resource('validation');
       $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
       $userId = hostsite_get_user_field('indicia_user_id');
@@ -575,7 +580,7 @@ HTML;
         'label' => lang::get('Redetermine to'),
         'helpText' => lang::get('Select the new taxon name.'),
         'fieldname' => 'redet-species',
-        'extraParams' => $options['readAuth'] + ['taxon_list_id' => 1],
+        'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
         'speciesIncludeAuthorities' => TRUE,
         'speciesIncludeBothNames' => TRUE,
         'speciesNameFilterMode' => 'preferred',
