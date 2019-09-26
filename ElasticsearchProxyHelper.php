@@ -34,7 +34,7 @@ class ElasticsearchProxyHelper {
     if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      return;
+      throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
 
     switch ($method) {
@@ -60,6 +60,10 @@ class ElasticsearchProxyHelper {
 
       case 'updateids':
         self::proxyUpdateIds();
+        break;
+
+      case 'updateall':
+        self::proxyUpdateAll($nid);
         break;
 
       default:
@@ -128,10 +132,10 @@ class ElasticsearchProxyHelper {
   }
 
   private static function proxySearchByParams() {
-    self::checkPermissionsFilter(self::$config['es']);
+    self::checkPermissionsFilter($_POST);
     $url = self::getEsUrl() . '/_search';
-    $query = self::buildEsQueryFromRequest();
-    self::curlPost($url, $query);
+    $query = self::buildEsQueryFromRequest($_POST);
+    echo self::curlPost($url, $query);
   }
 
   /**
@@ -147,7 +151,7 @@ class ElasticsearchProxyHelper {
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
-    self::curlPost($url, $query);
+    echo self::curlPost($url, $query);
   }
 
   /**
@@ -156,17 +160,17 @@ class ElasticsearchProxyHelper {
   public static function proxyDownload() {
     $isScrollToNextPage = array_key_exists('scroll_id', $_POST);
     if (!$isScrollToNextPage) {
-      self::checkPermissionsFilter();
+      self::checkPermissionsFilter($_POST);
     }
     $url = self::getEsUrl() . '/_search?format=csv';
-    $query = self::buildEsQueryFromRequest();
+    $query = self::buildEsQueryFromRequest($_POST);
     if ($isScrollToNextPage) {
       $url .= '&scroll_id=' . $_POST['scroll_id'];
     }
     else {
       $url .= '&scroll';
     }
-    self::curlPost($url, $query);
+    echo self::curlPost($url, $query);
   }
 
   /**
@@ -179,28 +183,97 @@ class ElasticsearchProxyHelper {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      return;
+      throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
+    echo self::internalUpdateIds($_POST['ids'], $_POST['doc']['identification'],
+      isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
+  }
+
+  /**
+   * Proxy method to apply verification change to entire results set.
+   *
+   * Uses a filter definition passed in the post to retrieve the records from
+   * ES then applies the decision to all aof them.
+   */
+  public static function proxyUpdateAll($nid) {
+    if (empty(self::$config['es']['warehouse_prefix'])) {
+      header("HTTP/1.1 405 Method not allowed");
+      echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
+      throw new ElasticsearchProxyAbort('Configuration incomplete');
+    }
+    if (empty($_POST['website_id'])) {
+      header("HTTP/1.1 400 Missing parameter");
+      echo json_encode(['error' => 'Missing website_id parameter']);
+      throw new ElasticsearchProxyAbort('Parameter missing');
+    }
+    self::checkPermissionsFilter($_POST['occurrence:idsFromElasticFilter']);
+    $url = self::getEsUrl() . '/_search';
+    $query = self::buildEsQueryFromRequest($_POST['occurrence:idsFromElasticFilter']);
+    // Limit response for efficiency.
+    $_GET['filter_path'] = 'hits.hits._source.id';
+    // Maximum 10000.
+    $query['size'] = 10000;
+    $esResponse = json_decode(self::curlPost($url, $query));
+    $ids = [];
+    foreach ($esResponse->hits->hits as $item) {
+      $ids[] = $item->_source->id;
+    }
+    $statuses = [
+      'verification_status' => $_POST['occurrence:record_status'],
+      'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
+    ];
+    self::internalUpdateIds($ids, $statuses, NULL);
+    try {
+      self::updateWarehouseVerificationAction($ids, $nid);
+    }
+    catch (Exception $e) {
+      header("HTTP/1.1 500 Internal server error");
+      echo json_encode(['error' => 'Error whilst updating warehouse records: ' . $e->getMessage()]);
+      throw new ElasticsearchProxyAbort('Internal server error');
+    }
+    echo json_encode([
+      'updated' => count($ids),
+    ]);
+  }
+
+  /**
+   * Apply verification result to a list of IDs.
+   *
+   * Used by both update for multi-select checkboxes and the entire data table.
+   *
+   * @param array $ids
+   *   List of occurrence IDs.
+   * @param array $statuses
+   *   Status data to apply (verification_status, verification_substatus,
+   *   query).
+   * @param int $websiteIdToModify
+   *   If changing the website ID (i.e. setting to 0 to temporarily hide the
+   *   record), set it here.
+   *
+   * @return string
+   *   Result of the POST to ES.
+   */
+  private static function internalUpdateIds(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
-    if (!empty($_POST['doc']['identification']['verification_status'])) {
-      $scripts[] = "ctx._source.identification.verification_status = '" . $_POST['doc']['identification']['verification_status'] . "'";
+    if (!empty($statuses['verification_status'])) {
+      $scripts[] = "ctx._source.identification.verification_status = '" . $statuses['verification_status'] . "'";
     }
-    if (!empty($_POST['doc']['identification']['verification_substatus'])) {
-      $scripts[] = "ctx._source.identification.verification_substatus = '" . $_POST['doc']['identification']['verification_substatus'] . "'";
+    if (!empty($statuses['verification_substatus'])) {
+      $scripts[] = "ctx._source.identification.verification_substatus = '" . $statuses['verification_substatus'] . "'";
     }
-    if (!empty($_POST['doc']['identification']['query'])) {
-      $scripts[] = "ctx._source.identification.query = '" . $_POST['doc']['identification']['query'] . "'";
+    if (!empty($statuses['query'])) {
+      $scripts[] = "ctx._source.identification.query = '" . $statuses['query'] . "'";
     }
-    if (isset($_POST['doc']['metadata']['website']['id'])) {
-      $scripts[] = "ctx._source.metadata.website.id = '" . $_POST['doc']['metadata']['website']['id'] . "'";
+    if ($websiteIdToModify !== NULL) {
+      $scripts[] = "ctx._source.metadata.website.id = '" . $websiteIdToModify . "'";
     }
     if (empty($scripts)) {
-      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], true));
+      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
     }
     $_ids = [];
     // Convert Indicia IDs to the document _ids for ES.
-    foreach ($_POST['ids'] as $id) {
+    foreach ($ids as $id) {
       $_ids[] = self::$config['es']['warehouse_prefix'] . $id;
     }
     $doc = [
@@ -214,7 +287,43 @@ class ElasticsearchProxyHelper {
         ],
       ],
     ];
-    self::curlPost($url, $doc);
+    return self::curlPost($url, $doc);
+  }
+
+  /**
+   * When updating an entire ES filter result, also update the warehouse.
+   *
+   * Since we want to be sure that the warehouse update changes exactly the
+   * same set of records as in the current ES filter, the proxy takes
+   * responsibility for the warehouse update as well.
+   *
+   * @param array $ids
+   *   List of occurrence IDs.
+   * @param int $nid
+   *   Node ID for authentication.
+   */
+  private static function updateWarehouseVerificationAction(array $ids, $nid) {
+    $data = [
+      'website_id' => $_POST['website_id'],
+      'user_id' => $_POST['user_id'],
+      'occurrence:record_decision_source' => 'H',
+      'occurrence:record_status' => $_POST['occurrence:record_status'],
+      'occurrence:ids' => implode(',', $ids),
+    ];
+    if (!empty($_POST['occurrence_comment:comment'])) {
+      $data['occurrence_comment:comment'] = $_POST['occurrence_comment:comment'];
+    }
+    if (!empty($_POST['occurrence:record_substatus'])) {
+      $data['occurrence:record_substatus'] = $_POST['occurrence:record_substatus'];
+    }
+    $conn = iform_get_connection_details($nid);
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    $request = helper_base::$base_url . "index.php/services/data_utils/list_verify";
+    $postargs = helper_base::array_to_query_string(array_merge($data, $auth['write_tokens']), TRUE);
+    $response = helper_base::http_post($request, $postargs);
+    if ($response['output'] !== 'OK') {
+      throw new exception($response['output']);
+    }
   }
 
   /**
@@ -250,7 +359,7 @@ class ElasticsearchProxyHelper {
       $headers['content_type'] .= '; ' . $headers['charset'];
     }
     header('Content-type: ' . $headers['content_type']);
-    echo $response;
+    return $response;
   }
 
   /**
@@ -260,11 +369,11 @@ class ElasticsearchProxyHelper {
    * so this method checks against the Drupal permissions defined on the edit
    * tab, ensuring calls to the proxy can't be easily hacked.
    *
-   * @param array $params
-   *   Form parameters from the Edit tab which include permission settings.
+   * @param array $post
+   *   Section of the $_POST data which holds the filter info.
    */
-  private static function checkPermissionsFilter() {
-    $permissionsFilter = empty($_POST['permissions_filter']) ? 'all' : $_POST['permissions_filter'];
+  private static function checkPermissionsFilter(array $post) {
+    $permissionsFilter = empty($post['permissions_filter']) ? 'all' : $post['permissions_filter'];
     $validPermissionsFilter = [
       'all',
       'my',
@@ -278,10 +387,10 @@ class ElasticsearchProxyHelper {
     }
   }
 
-  private static function buildEsQueryFromRequest() {
+  private static function buildEsQueryFromRequest($post) {
     $query = array_merge([
       'bool_queries' => [],
-    ], $_POST);
+    ], $post);
     $bool = [
       'must' => [],
       'should' => [],
@@ -373,7 +482,7 @@ class ElasticsearchProxyHelper {
     ];
     iform_load_helpers([]);
     $readAuth = helper_base::get_read_auth(self::$config['indicia']['website_id'], self::$config['indicia']['password']);
-    self::applyPermissionsFilter($bool);
+    self::applyPermissionsFilter($post, $bool);
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
     }
@@ -393,9 +502,9 @@ class ElasticsearchProxyHelper {
     return $query;
   }
 
-  private static function applyPermissionsFilter(array &$bool) {
-    if (!empty($_POST['permissions_filter'])) {
-      switch ($_POST['permissions_filter']) {
+  private static function applyPermissionsFilter($post, array &$bool) {
+    if (!empty($post['permissions_filter'])) {
+      switch ($post['permissions_filter']) {
         case 'my':
           $bool['must'][] = [
             'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
@@ -461,6 +570,16 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Converts from an old style PG filter def to ES bool query.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $definition
+   *   PG filter definition.
+   * @param array $bool
+   *   ES bool query definintion.
+   */
   private static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
