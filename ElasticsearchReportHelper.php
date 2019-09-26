@@ -894,6 +894,12 @@ JS;
       <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
       <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
       <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+      <div class="multi-only apply-to">
+        <span>Apply decision to:</span>
+        <button class="multi-mode-selected active">selected</button>
+        |
+        <button class="multi-mode-table">all</button>
+      </div>
       <span class="sep"></span>
       <button class="query" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
     </div>
