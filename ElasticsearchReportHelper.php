@@ -110,6 +110,14 @@ class ElasticsearchReportHelper {
       'caption' => 'Recorder certainty',
       'description' => 'Certainty that the identification is correct as attributed by the recorder.',
     ],
+    'identification.verifier.name' => [
+      'caption' => 'Verifier name',
+      'description' => "Name of the verifier responsible for record's current verification status.",
+    ],
+    'identification.verified_on' => [
+      'caption' => 'Verified on',
+      'description' => "Date/time of the current verification decision.",
+    ],
     'identification.verification_decision_source' => [
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
