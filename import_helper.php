@@ -653,7 +653,7 @@ JS;
   private static function getAutoFieldMappings($options, $settings) {
     $autoFieldMappings = [];
     // Get the user's checked preference for the import page.
-    if (function_exists('hostsite_get_user_field')) {
+    if (function_exists('hostsite_get_user_field') && function_exists('hostsite_set_user_field')) {
       $json = hostsite_get_user_field('import_field_mappings');
       if ($json === FALSE) {
         if (!hostsite_set_user_field('import_field_mappings', '[]')) {
