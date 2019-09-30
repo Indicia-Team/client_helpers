@@ -1509,9 +1509,10 @@ TD;
   }
 
   private static function create_metadata_array($mappings, $settings, $options) {
-    $metadata = [
-      'user_id' => hostsite_get_user_field('indicia_user_id'),
-    ];
+    $metadata = [];
+    if (function_exists('hostsite_get_user_field')) {
+      $metadata['user_id'] = hostsite_get_user_field('indicia_user_id');
+    }
     if (!empty($mappings)) {
       $metadata['mappings'] = json_encode($mappings);
     }
