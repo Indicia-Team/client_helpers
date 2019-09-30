@@ -1799,7 +1799,7 @@ JS;
         }
         if (strpos($key, '-') !== FALSE) {
           $r[] = "indiciaData['$key'] = $value;";
-        } 
+        }
         else {
           $r[] = "indiciaData.$key = $value;";
         }
@@ -1892,6 +1892,10 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
 indiciaData.documentReady = 'started';
 $javascript
 $late_javascript
+// Elasticsearch source population.
+if (typeof indiciaFns.populateDataSources !== 'undefined') {
+  indiciaFns.populateDataSources();
+}
 // if window.onload already happened before document.ready, ensure any hooks are still run.
 if (indiciaData.windowLoaded === 'done') {
   $.each(indiciaData.onloadFns, function(idx, fn) {
@@ -2254,6 +2258,30 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     } else {
       return array();
     }
+  }
+
+  /**
+   * Prepares options for a control are to be passed through to JavaScript.
+   *
+   * Picks the entries from the options array which are in $keysToPassThrough
+   * then returns a JSON encoded string that can be added to indiciaData.
+   *
+   * @param array $options
+   *   Control options array.
+   * @param array $keysToPassThrough
+   *   Array of the names of the options which are going to be passed into
+   *   JavaScript settings.
+   * @param bool $encodeSpecialChars
+   *   If set to true, then the result is encoded using htmlspecialchars()
+   *   e.g. for when the response is to be included in an HTML attribute.
+   *
+   * @return string
+   *   JSON encoded string.
+   */
+  public static function getOptionsForJs(array $options, array $keysToPassThrough, $encodeSpecialChars = FALSE) {
+    $dataOptions = array_intersect_key($options, array_combine($keysToPassThrough, $keysToPassThrough));
+    $r = json_encode($dataOptions);
+    return $encodeSpecialChars ? htmlspecialchars($r) : $r;
   }
 
   /**

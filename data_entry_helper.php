@@ -1626,79 +1626,83 @@ JS;
   }
 
   /**
-   * Outputs an autocomplete control that is dedicated to listing locations and which is bound to any map panel
-   * added to the page. Although it is possible to set all the options of a normal autocomplete, generally
-   * the table, valueField, captionField, id should be left uninitialised and the fieldname will default to the
-   * sample's location_id field so can normally also be left.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>autocomplete</b></br>
-   * Defines a hidden input and a visible input, to hold the underlying database ID and to
-   * allow input and display of the text search string respectively.
-   * </li>
-   * <li><b>autocomplete_javascript</b></br>
-   * Defines the JavaScript which will be inserted onto the page in order to activate the
-   * autocomplete control.
-   * </li>
-   * </ul>
+   * Outputs an autocomplete control that is dedicated to searching locations.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Optional. The name of the database field this control is bound to.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>extraParams</b><br/>
-   * Required. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>useLocationName</b>
-   * Optional. If true, then inputting a place name which does not match to an existing place
-   * gets stored in the location_name field. Defaults to false.
-   * </li>
-   * <li><b>searchUpdatesSref</b>
-   * Optional. If true, then when a location is found in the autocomplete, the location's centroid spatial
-   * reference is loaded into the spatial_ref control on the form if any exists. Defaults to false.
-   * </li>
-   * <li><b>searchUpdatesUsingBoundary/b>
-   * Optional. If true and using searchUpdatesSref=true, then when a location is found in the autocomplete, the
-   * location's boundary geometry is loaded into the record's geometry control on the form if any exists. Defaults to false.
-   * </li>
-   * <li><b>allowcreate</b>
-   * Optional. If true, if the user has typed in a non-existing location name and also supplied
-   * a spatial reference, a button is displayed which lets them save a location for future
-   * personal use. Defaults to false. For this to work, you must either allow the standard Indicia
-   * code to handle the submission for you, or your code must handle the presence of a value called
-   * save-site-flag in the form submission data and if true, it must first save the site information
-   * to the locations table database then attach the location_id returned to the submitted sample data.
-   * </li>
-   * <li><b>fetchLocationAttributesIntoSample</b>
-   * Defaults to true. Defines that when a location is picked, any sample attributes marked as for_location=true
-   * will be populated with their previous values from the same site for this user. For example you might capture
-   * a habitat sample attribute and expect it to default to the previously entered value when a repeat visit to a
-   * site occurs.
-   * </li>
-   * <li><b>autofillFromLocationTypeId</b>
-   * If a location type term's ID is provided here (from the termlists_terms table) then when a map reference is input
-   * either by clicking on a map or direct entry into the sref_input control, attempts to find a matching boundary
-   * from the locaitons of this type on the warehouse by intersecting with the boundaries then fills in this control
-   * from the matching location details. If more than one are found the user is asked to resolve it, e.g. if a grid
-   * ref overlays a boundary.
-   * </li>
-   * </ul>
+   * The control is automatically bound to any map panel added to the page.
+   * Although it is possible to set all the options of a normal autocomplete,
+   * generally the table, valueField, captionField, id should be left
+   * uninitialised and the fieldname will default to the sample's location_id
+   * field so can normally also be left.
    *
-   * @return string HTML to insert into the page for the location select control.
+   * The output of this control can be configured using the following
+   * templates:
+   * * autocomplete - Defines a hidden input and a visible input, to hold the
+   * underlying database ID and to allow input and display of the text search
+   * string respectively.
+   * * autocomplete_javascript - Defines the JavaScript which will be inserted
+   * onto the page in order to activate the autocomplete control.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Optional. The name of the database field this control is
+   *     bound to.
+   *   * default - Optional. The default value to assign to the control. This
+   *   is overridden when reloading a record with existing data for this
+   *   control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * extraParams - Required. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value; if this is not specified
+   *     then 1 hour.
+   *   * useLocationName - Optional. If true, then inputting a place name which
+   *     does not match to an existing place gets stored in the location_name
+   *     field. Defaults to false.
+   *   * searchUpdatesSref - Optional. If true, then when a location is found
+   *     in the autocomplete, the location's centroid spatial reference is
+   *     loaded into the spatial_ref control on the form if any exists.
+   *     Defaults to false.
+   *   * searchUpdatesUsingBoundary - Optional. If true and using
+   *     searchUpdatesSref=true, then when a location is found in the
+   *     autocomplete, the location's boundary geometry is loaded into the
+   *     record's geometry control on the form if any exists. Defaults to
+   *     false.
+   *   * allowcreate - Optional. If true, if the user has typed in a
+   *     non-existing location name and also supplied a spatial reference, a
+   *     button is displayed which lets them save a location for future
+   *     personal use. Defaults to false. For this to work, you must either
+   *     allow the standard Indicia code to handle the submission for you, or
+   *     your code must handle the presence of a value called save-site-flag in
+   *     the form submission data and if true, it must first save the site
+   *     information to the locations table database then attach the
+   *     location_id returned to the submitted sample data.
+   *   * fetchLocationAttributesIntoSample - Defaults to true. Defines that
+   *     when a location is picked, any sample attributes marked as
+   *     for_location=true will be populated with their previous values from
+   *     the same site for this user. For example you might capture a habitat
+   *     sample attribute and expect it to default to the previously entered
+   *     value when a repeat visit to a site occurs.
+   *   * autofillFromLocationTypeId - If a location type term's ID is provided
+   *     here (from the termlists_terms table) then when a map reference is
+   *     input either by clicking on a map or direct entry into the sref_input
+   *     control, attempts to find a matching boundary from the locations of
+   *     this type on the warehouse by intersecting with the boundaries then
+   *     fills in this control from the matching location details. If more than
+   *     one are found the user is asked to resolve it, e.g. if a grid ref
+   *     overlays a boundary.
+   *
+   * @return string
+   *   HTML to insert into the page for the location select control.
    */
-  public static function location_autocomplete($options) {
-    if (empty($options['id']))
+  public static function location_autocomplete(array $options) {
+    if (empty($options['id'])) {
       $options['id'] = 'imp-location';
+    }
     $options = self::check_options($options);
     $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : null;
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
@@ -1725,21 +1729,23 @@ JS;
       'fetchLocationAttributesIntoSample' =>
           !isset($options['fieldname']) || $options['fieldname'] === 'sample:location_id'
     ), $options);
-    // Disable warnings for no matches if the user is allowed to input a vague unmatched location name.
-    $options['warnIfNoMatch']=!$options['useLocationName'];
-    // this makes it easier to enter unmatched text, if allowed to do so
-    $options['continueOnBlur']=!$options['useLocationName'];
+    // Disable warnings for no matches if the user is allowed to input a vague
+    // unmatched location name.
+    $options['warnIfNoMatch'] = !$options['useLocationName'];
+    // This makes it easier to enter unmatched text, if allowed to do so.
+    $options['continueOnBlur'] = !$options['useLocationName'];
     $r = self::autocomplete($options);
-    // put a hidden input in the form to indicate that the location value should be
-    // copied to the location_name field if not linked to a location id.
+    // Put a hidden input in the form to indicate that the location value
+    // should be copied to the location_name field if not linked to a
+    // location id.
     if ($options['useLocationName'])
-      $r = '<input type="hidden" name="useLocationName" value="true"/>'.$r;
+      $r = '<input type="hidden" name="useLocationName" value="true"/>' . $r;
     if ($options['allowCreate']) {
       self::add_resource('createPersonalSites');
       if ($options['allowCreate']) {
-        self::$javascript .= "indiciaData.msgRememberSite='".lang::get('Remember site') . "';\n";
-        self::$javascript .= "indiciaData.msgRememberSiteHint='".lang::get('Remember details of this site so you can enter records at the same location in future.') . "';\n";
-        self::$javascript .= "indiciaData.msgSiteWillBeRemembered='".lang::get('The site will be available to search for next time you input some records.') . "';\n";
+        self::$javascript .= "indiciaData.msgRememberSite='" . lang::get('Remember site') . "';\n";
+        self::$javascript .= "indiciaData.msgRememberSiteHint='" . lang::get('Remember details of this site so you can enter records at the same location in future.') . "';\n";
+        self::$javascript .= "indiciaData.msgSiteWillBeRemembered='" . lang::get('The site will be available to search for next time you input some records.') . "';\n";
         self::$javascript .= "allowCreateSites();\n";
       }
     }
@@ -1751,7 +1757,7 @@ JS;
     $escapedId = str_replace(':', '\\\\:', $options['id']);
     // If using Easy Login, then this enables auto-population of the site related fields.
     if ($options['fetchLocationAttributesIntoSample'] &&
-        function_exists('hostsite_get_user_field') && ($createdById=hostsite_get_user_field('indicia_user_id'))) {
+        function_exists('hostsite_get_user_field') && ($createdById = hostsite_get_user_field('indicia_user_id'))) {
       self::$javascript .= <<<JS
 $('#$escapedId').change(function() {
   indiciaFns.locationControl.fetchLocationAttributesIntoSample('$options[id]', $createdById);
@@ -1778,52 +1784,53 @@ JS;
   }
 
   /**
-   * Outputs a select control that is dedicated to listing locations and which is bound to any map panel
-   * added to the page. Although it is possible to set all the options of a normal select control, generally
-   * the table, valueField, captionField, id should be left uninitialised and the fieldname will default to the
-   * sample's location_id field so can normally also be left. If you need to use a report to populate the list of
-   * locations, for example when filtering by a custom attribute, then set the report option to the report name
-   * (e.g. library/reports/locations_list) and provide report parameters in extraParams. You can also override
-   * the captionField and valueField if required.
+   * Outputs a select control that is dedicated to listing locations.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Optional. The name of the database field this control is bound to.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>extraParams</b><br/>
-   * Required. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>searchUpdatesSref</b>
-   * Optional. If true, then when a location is selected, the location's centroid spatial
-   * reference is loaded into the spatial_ref control on the form if any exists. Defaults to false.
-   * </li>
-   * <li><b>searchUpdatesUsingBoundary/b>
-   * Optional. If true and using searchUpdatesSref=true, then when a location is selected, the location's boundary
-   * geometry is loaded into the record's geometry control on the form if any exists. Defaults to false.
-   * </li>
-   * </ul>
+   * The control is automatically bound to any map panel added to the page.
+   * Although it is possible to set all the options of a normal select control,
+   * generally the table, valueField, captionField, id should be left
+   * uninitialised and the fieldname will default to the sample's location_id
+   * field so can normally also be left. If you need to use a report to
+   * populate the list of locations, for example when filtering by a custom
+   * attribute, then set the report option to the report name (e.g.
+   * library/reports/locations_list) and provide report parameters in
+   * extraParams. You can also override the captionField and valueField if
+   * required.
    *
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>select</b></br>
-   * HTML template used to generate the select element.
-   * </li>
-   * <li><b>select_item</b></br>
-   * HTML template used to generate each option element with the select element.
-   * </li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   * * select - HTML template used to generate the select element.
+   * * select_item - HTML template used to generate each option element with
+   *   the select element.
    *
-   * @return string HTML to insert into the page for the location select control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Optional. The name of the database field this control is
+   *     bound to.
+   *   * default - Optional. The default value to assign to the control. This
+   *    is overridden when reloading a record with existing data for this
+   *    control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * extraParams - Required. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value; if this is not specified
+   *     then 1 hour.
+   *   * searchUpdatesSref - Optional. If true, then when a location is
+   *     selected, the location's centroid spatial reference is loaded into the
+   *     spatial_ref control on the form if any exists. Defaults to false.
+   *   * searchUpdatesUsingBoundary - Optional. If true and using
+   *     searchUpdatesSref=true, then when a location is selected, the
+   *     location's boundary geometry is loaded into the record's geometry
+   *     control on the form if any exists. Defaults to false.
+   *
+   * @return string
+   *   HTML to insert into the page for the location select control.
    */
   public static function location_select($options) {
     $options = self::check_options($options);
@@ -5693,9 +5700,11 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
    */
   public static function get_population_data($options) {
+    $useQueryParam = FALSE;
     if (isset($options['report']))
       $serviceCall = 'report/requestReport?report='.$options['report'].'.xml&reportSource=local&mode=json';
     elseif (isset($options['table'])) {
+      $useQueryParam = $options['table'] !== 'taxa_search';
       $serviceCall = 'data/'.$options['table'].'?mode=json';
       if (isset($options['columns']))
         $serviceCall .= '&columns='.$options['columns'];
@@ -5707,14 +5716,18 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       // process them to turn any array parameters into a query parameter for the service call
       $filterToEncode = array('where'=>array(array()));
       $otherParams = array();
-      foreach($params as $param=>$value) {
-        if (is_array($value))
-          $filterToEncode['in'] = array($param, $value);
-        elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
-          // these params are not filters, so can't go in the query
-          $otherParams[$param] = $value;
-        else
-          $filterToEncode['where'][0][$param] = $value;
+      // For data services calls to entities (i.e. not taxa_search), array
+      // parameters need to be modified into a query parameter.
+      if ($useQueryParam) {
+        foreach($params as $param=>$value) {
+          if (is_array($value))
+            $filterToEncode['in'] = array($param, $value);
+          elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
+            // these params are not filters, so can't go in the query
+            $otherParams[$param] = $value;
+          else
+            $filterToEncode['where'][0][$param] = $value;
+        }
       }
       // use advanced querying technique if we need to
       if (isset($filterToEncode['in']))
@@ -7161,6 +7174,35 @@ HTML;
   }
 
   /**
+   * Work out a suitable success message to displaty after saving.
+   *
+   * @param array $response
+   *   Response data from the save operation.
+   *
+   * @return string
+   *   Success message.
+   */
+  private static function getSuccessMessage($response) {
+    $what = 'data';
+    if ($response['success'] === 'multiple records' && $response['outer_table'] === 'sample' && isset($response['struct']['children'])) {
+      $count = 0;
+      foreach ($response['struct']['children'] as $child) {
+        if ($child['model'] === 'occurrence') {
+          $count ++;
+        }
+      }
+      if ($count > 0) {
+        $what = $count === 1 ? 'record' : 'records';
+      }
+    }
+    $siteName = 'this website';
+    if (function_exists('hostsite_get_config_value')) {
+      $siteName = hostsite_get_config_value('site', 'name');
+    }
+    return lang::get('Thank you for submitting your {1} to {2}.', lang::get($what), lang::get($siteName));
+  }
+
+  /**
    * Takes a response from a call to forward_post_to() and outputs any errors from it onto the screen.
    *
    * @param string $response Return value from a call to forward_post_to().
@@ -7221,7 +7263,7 @@ HTML;
         }
       }
       elseif (array_key_exists('success',$response)) {
-        $successMessage = lang::get('Thank you for submitting your data.');
+        $successMessage = self::getSuccessMessage($response);
         if (function_exists('hostsite_show_message'))
           hostsite_show_message($successMessage);
         else

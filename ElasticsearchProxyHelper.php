@@ -29,37 +29,23 @@ class ElasticsearchProxyHelper {
 
   private static $config;
 
-  private static $esMappings;
-
-  public static function enableElasticsearchProxy($nid = NULL) {
-    self::$config = hostsite_get_es_config($nid);
-    helper_base::add_resource('datacomponents');
-    // Retrieve the Elasticsearch mappings.
-    self::getMappings();
-    // Prepare the stuff we need to pass to the JavaScript.
-    $mappings = json_encode(self::$esMappings);
-    $dateFormat = helper_base::$date_format;
-    $rootFolder = helper_base::getRootFolder(TRUE);
-    $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-    helper_base::$javascript .= <<<JS
-indiciaData.esProxyAjaxUrl = '$esProxyAjaxUrl';
-indiciaData.esSources = [];
-indiciaData.esMappings = $mappings;
-indiciaData.dateFormat = '$dateFormat';
-indiciaData.rootFolder = '$rootFolder';
-
-JS;
-  }
-
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
     if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      return;
+      throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
 
     switch ($method) {
+      case 'attrs':
+        self::proxyAttrDetails($nid);
+        break;
+
+      case 'comments':
+        self::proxyComments($nid);
+        break;
+
       case 'searchbyparams':
         self::proxySearchByParams();
         break;
@@ -76,6 +62,10 @@ JS;
         self::proxyUpdateIds();
         break;
 
+      case 'updateall':
+        self::proxyUpdateAll($nid);
+        break;
+
       default:
         header("HTTP/1.1 404 Not found");
         echo json_encode(['error' => 'Method not found']);
@@ -86,11 +76,66 @@ JS;
     return self::$config['indicia']['base_url'] . 'index.php/services/rest/' . self::$config['es']['endpoint'];
   }
 
+  /**
+   * Ajax method which echoes custom attribute data to the client.
+   *
+   * At the moment, this info is built from the Indicia warehouse, not
+   * Elasticsearch.
+   *
+   * @param int $nid
+   *   Node ID to obtain connection info from.
+   */
+  private static function proxyAttrDetails($nid) {
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $options = array(
+      'dataSource' => 'reports_for_prebuilt_forms/dynamic_elasticsearch/record_details',
+      'readAuth' => $readAuth,
+      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
+      'sharing' => 'verification',
+      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+    );
+    $reportData = report_helper::get_report_data($options);
+    // Convert the output to a structured JSON object.
+    $data = [];
+    foreach ($reportData as $attribute) {
+      if (!empty($attribute['value'])) {
+        if (!isset($data[$attribute['attribute_type'] . ' attributes'])) {
+          $data[$attribute['attribute_type'] . ' attributes'] = array();
+        }
+        $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
+      }
+    }
+    header('Content-type: application/json');
+    echo json_encode($data);
+  }
+
+  /**
+   * Ajax handler for the [recordDetails] comments tab.
+   *
+   * @param int $nid
+   *   Node ID to obtain connection info from.
+   */
+  private static function proxyComments($nid) {
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $options = array(
+      'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
+      'readAuth' => $readAuth,
+      // @todo Sharing should be dynamically set in a form parameter (use $nid param).
+      'sharing' => 'verification',
+      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+    );
+    $reportData = report_helper::get_report_data($options);
+    header('Content-type: application/json');
+    echo json_encode($reportData);
+  }
+
   private static function proxySearchByParams() {
-    self::checkPermissionsFilter(self::$config['es']);
+    self::checkPermissionsFilter($_POST);
     $url = self::getEsUrl() . '/_search';
-    $query = self::buildEsQueryFromRequest();
-    self::curlPost($url, $query);
+    $query = self::buildEsQueryFromRequest($_POST);
+    echo self::curlPost($url, $query);
   }
 
   /**
@@ -106,7 +151,7 @@ JS;
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
-    self::curlPost($url, $query);
+    echo self::curlPost($url, $query);
   }
 
   /**
@@ -115,17 +160,17 @@ JS;
   public static function proxyDownload() {
     $isScrollToNextPage = array_key_exists('scroll_id', $_POST);
     if (!$isScrollToNextPage) {
-      self::checkPermissionsFilter();
+      self::checkPermissionsFilter($_POST);
     }
     $url = self::getEsUrl() . '/_search?format=csv';
-    $query = self::buildEsQueryFromRequest();
+    $query = self::buildEsQueryFromRequest($_POST);
     if ($isScrollToNextPage) {
       $url .= '&scroll_id=' . $_POST['scroll_id'];
     }
     else {
       $url .= '&scroll';
     }
-    self::curlPost($url, $query);
+    echo self::curlPost($url, $query);
   }
 
   /**
@@ -138,28 +183,97 @@ JS;
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
-      return;
+      throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
+    echo self::internalUpdateIds($_POST['ids'], $_POST['doc']['identification'],
+      isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
+  }
+
+  /**
+   * Proxy method to apply verification change to entire results set.
+   *
+   * Uses a filter definition passed in the post to retrieve the records from
+   * ES then applies the decision to all aof them.
+   */
+  public static function proxyUpdateAll($nid) {
+    if (empty(self::$config['es']['warehouse_prefix'])) {
+      header("HTTP/1.1 405 Method not allowed");
+      echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
+      throw new ElasticsearchProxyAbort('Configuration incomplete');
+    }
+    if (empty($_POST['website_id'])) {
+      header("HTTP/1.1 400 Missing parameter");
+      echo json_encode(['error' => 'Missing website_id parameter']);
+      throw new ElasticsearchProxyAbort('Parameter missing');
+    }
+    self::checkPermissionsFilter($_POST['occurrence:idsFromElasticFilter']);
+    $url = self::getEsUrl() . '/_search';
+    $query = self::buildEsQueryFromRequest($_POST['occurrence:idsFromElasticFilter']);
+    // Limit response for efficiency.
+    $_GET['filter_path'] = 'hits.hits._source.id';
+    // Maximum 10000.
+    $query['size'] = 10000;
+    $esResponse = json_decode(self::curlPost($url, $query));
+    $ids = [];
+    foreach ($esResponse->hits->hits as $item) {
+      $ids[] = $item->_source->id;
+    }
+    $statuses = [
+      'verification_status' => $_POST['occurrence:record_status'],
+      'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
+    ];
+    self::internalUpdateIds($ids, $statuses, NULL);
+    try {
+      self::updateWarehouseVerificationAction($ids, $nid);
+    }
+    catch (Exception $e) {
+      header("HTTP/1.1 500 Internal server error");
+      echo json_encode(['error' => 'Error whilst updating warehouse records: ' . $e->getMessage()]);
+      throw new ElasticsearchProxyAbort('Internal server error');
+    }
+    echo json_encode([
+      'updated' => count($ids),
+    ]);
+  }
+
+  /**
+   * Apply verification result to a list of IDs.
+   *
+   * Used by both update for multi-select checkboxes and the entire data table.
+   *
+   * @param array $ids
+   *   List of occurrence IDs.
+   * @param array $statuses
+   *   Status data to apply (verification_status, verification_substatus,
+   *   query).
+   * @param int $websiteIdToModify
+   *   If changing the website ID (i.e. setting to 0 to temporarily hide the
+   *   record), set it here.
+   *
+   * @return string
+   *   Result of the POST to ES.
+   */
+  private static function internalUpdateIds(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
-    if (!empty($_POST['doc']['identification']['verification_status'])) {
-      $scripts[] = "ctx._source.identification.verification_status = '" . $_POST['doc']['identification']['verification_status'] . "'";
+    if (!empty($statuses['verification_status'])) {
+      $scripts[] = "ctx._source.identification.verification_status = '" . $statuses['verification_status'] . "'";
     }
-    if (!empty($_POST['doc']['identification']['verification_substatus'])) {
-      $scripts[] = "ctx._source.identification.verification_substatus = '" . $_POST['doc']['identification']['verification_substatus'] . "'";
+    if (!empty($statuses['verification_substatus'])) {
+      $scripts[] = "ctx._source.identification.verification_substatus = '" . $statuses['verification_substatus'] . "'";
     }
-    if (!empty($_POST['doc']['identification']['query'])) {
-      $scripts[] = "ctx._source.identification.query = '" . $_POST['doc']['identification']['query'] . "'";
+    if (!empty($statuses['query'])) {
+      $scripts[] = "ctx._source.identification.query = '" . $statuses['query'] . "'";
     }
-    if (isset($_POST['doc']['metadata']['website']['id'])) {
-      $scripts[] = "ctx._source.metadata.website.id = '" . $_POST['doc']['metadata']['website']['id'] . "'";
+    if ($websiteIdToModify !== NULL) {
+      $scripts[] = "ctx._source.metadata.website.id = '" . $websiteIdToModify . "'";
     }
     if (empty($scripts)) {
-      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], true));
+      throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
     }
     $_ids = [];
     // Convert Indicia IDs to the document _ids for ES.
-    foreach ($_POST['ids'] as $id) {
+    foreach ($ids as $id) {
       $_ids[] = self::$config['es']['warehouse_prefix'] . $id;
     }
     $doc = [
@@ -173,7 +287,43 @@ JS;
         ],
       ],
     ];
-    self::curlPost($url, $doc);
+    return self::curlPost($url, $doc);
+  }
+
+  /**
+   * When updating an entire ES filter result, also update the warehouse.
+   *
+   * Since we want to be sure that the warehouse update changes exactly the
+   * same set of records as in the current ES filter, the proxy takes
+   * responsibility for the warehouse update as well.
+   *
+   * @param array $ids
+   *   List of occurrence IDs.
+   * @param int $nid
+   *   Node ID for authentication.
+   */
+  private static function updateWarehouseVerificationAction(array $ids, $nid) {
+    $data = [
+      'website_id' => $_POST['website_id'],
+      'user_id' => $_POST['user_id'],
+      'occurrence:record_decision_source' => 'H',
+      'occurrence:record_status' => $_POST['occurrence:record_status'],
+      'occurrence:ids' => implode(',', $ids),
+    ];
+    if (!empty($_POST['occurrence_comment:comment'])) {
+      $data['occurrence_comment:comment'] = $_POST['occurrence_comment:comment'];
+    }
+    if (!empty($_POST['occurrence:record_substatus'])) {
+      $data['occurrence:record_substatus'] = $_POST['occurrence:record_substatus'];
+    }
+    $conn = iform_get_connection_details($nid);
+    $auth = helper_base::get_read_write_auth($conn['website_id'], $conn['password']);
+    $request = helper_base::$base_url . "index.php/services/data_utils/list_verify";
+    $postargs = helper_base::array_to_query_string(array_merge($data, $auth['write_tokens']), TRUE);
+    $response = helper_base::http_post($request, $postargs);
+    if ($response['output'] !== 'OK') {
+      throw new exception($response['output']);
+    }
   }
 
   /**
@@ -209,7 +359,7 @@ JS;
       $headers['content_type'] .= '; ' . $headers['charset'];
     }
     header('Content-type: ' . $headers['content_type']);
-    echo $response;
+    return $response;
   }
 
   /**
@@ -219,11 +369,11 @@ JS;
    * so this method checks against the Drupal permissions defined on the edit
    * tab, ensuring calls to the proxy can't be easily hacked.
    *
-   * @param array $params
-   *   Form parameters from the Edit tab which include permission settings.
+   * @param array $post
+   *   Section of the $_POST data which holds the filter info.
    */
-  private static function checkPermissionsFilter() {
-    $permissionsFilter = empty($_POST['permissions_filter']) ? 'all' : $_POST['permissions_filter'];
+  private static function checkPermissionsFilter(array $post) {
+    $permissionsFilter = empty($post['permissions_filter']) ? 'all' : $post['permissions_filter'];
     $validPermissionsFilter = [
       'all',
       'my',
@@ -237,10 +387,10 @@ JS;
     }
   }
 
-  private static function buildEsQueryFromRequest() {
+  private static function buildEsQueryFromRequest($post) {
     $query = array_merge([
       'bool_queries' => [],
-    ], $_POST);
+    ], $post);
     $bool = [
       'must' => [],
       'should' => [],
@@ -332,12 +482,17 @@ JS;
     ];
     iform_load_helpers([]);
     $readAuth = helper_base::get_read_auth(self::$config['indicia']['website_id'], self::$config['indicia']['password']);
-    self::applyPermissionsFilter($bool);
+    self::applyPermissionsFilter($post, $bool);
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
     }
+    if (!empty($query['filter_def'])) {
+      self::applyFilterDef($readAuth, $query['filter_def'], $bool);
+    }
     unset($query['user_filters']);
     unset($query['permissions_filter']);
+    unset($query['filter_def']);
+
     $bool = array_filter($bool, function ($k) {
       return count($k) > 0;
     });
@@ -347,9 +502,9 @@ JS;
     return $query;
   }
 
-  private static function applyPermissionsFilter(array &$bool) {
-    if (!empty($_POST['permissions_filter'])) {
-      switch ($_POST['permissions_filter']) {
+  private static function applyPermissionsFilter($post, array &$bool) {
+    if (!empty($post['permissions_filter'])) {
+      switch ($post['permissions_filter']) {
         case 'my':
           $bool['must'][] = [
             'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
@@ -410,112 +565,43 @@ JS;
         throw new exception("Filter with ID $userFilter could not be loaded.");
       }
       $definition = json_decode($filterData[0]['definition'], TRUE);
-      self::applyUserFiltersOccId($definition, $bool);
-      self::applyUserFiltersOccExternalKey($definition, $bool);
-      self::applyUserFiltersSearchArea($filterData[0]['search_area'], $bool);
-      self::applyUserFiltersLocationName($definition, $bool);
-      self::applyUserFiltersLocationList($definition, $bool);
-      self::applyUserFiltersIndexedLocationList($definition, $bool);
-      self::applyUserFiltersIndexedLocationTypeList($definition, $bool, $readAuth);
-      self::applyUserFiltersWebsiteList($definition, $bool);
-      self::applyUserFiltersSurveyList($definition, $bool);
-      self::applyUserFiltersGroupId($definition, $bool);
-      self::applyUserFiltersTaxonGroupList($definition, $bool);
-      self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
-      self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
-      self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
+      $definition['searchArea'] = $filterData[0]['search_area'];
+      self::applyFilterDef($readAuth, $definition, $bool);
     }
   }
 
   /**
-   * Converts an Indicia filter definition idlist or occ_id to an ES query.
+   * Converts from an old style PG filter def to ES bool query.
    *
-   * Both occ_id and idlist are filters on occurrence.id so we treat them the
-   * same here.
-   *
+   * @param array $readAuth
+   *   Read authentication tokens.
    * @param array $definition
-   *   Definition loaded for the Indicia filter.
+   *   PG filter definition.
    * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   *   ES bool query definintion.
    */
-  private static function applyUserFiltersOccId(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['idlist', 'oc_id']);
-    $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-    if (!empty($filter)) {
-      $bool[$boolClause][] = [
-        'terms' => ['id' => explode(',', $filter['value'])],
-      ];
-    }
-  }
+  private static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
+    self::applyUserFiltersTaxonGroupList($definition, $bool);
+    self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
+    self::applyUserFiltersTaxonMarineFlag($definition, $bool);
+    self::applyUserFiltersSearchArea($definition, $bool);
+    self::applyUserFiltersLocationName($definition, $bool);
+    self::applyUserFiltersLocationList($definition, $bool);
+    self::applyUserFiltersIndexedLocationList($definition, $bool);
+    self::applyUserFiltersIndexedLocationTypeList($definition, $bool, $readAuth);
+    self::applyUserFiltersDate($definition, $bool);
+    self::applyUserFiltersWho($definition, $bool);
+    self::applyUserFiltersOccId($definition, $bool);
+    self::applyUserFiltersOccExternalKey($definition, $bool);
+    self::applyUserFiltersQuality($definition, $bool);
+    self::applyUserFiltersAutoChecks($definition, $bool);
+    self::applyUserFiltersHasPhotos($readAuth, $definition, ['has_photos'], $bool);
+    self::applyUserFiltersWebsiteList($definition, $bool);
+    self::applyUserFiltersSurveyList($definition, $bool);
+    self::applyUserFiltersInputFormList($definition, $bool);
+    self::applyUserFiltersGroupId($definition, $bool);
 
-  /**
-   * Converts an filter definition occurrence_external_key to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersOccExternalKey(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['occurrence_external_key']);
-    if (!empty($filter)) {
-      $bool['must'][] = [
-        'terms' => ['occurrence.source_system_key' => explode(',', $filter['value'])],
-      ];
-    }
-  }
-
-  /**
-   * Converts an Indicia filter definition website_list to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['website_list', 'website_id']);
-    if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-      $bool[$boolClause][] = [
-        'terms' => ['metadata.website.id' => explode(',', $filter['value'])],
-      ];
-    }
-  }
-
-  /**
-   * Converts an Indicia filter definition survey_list to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['survey_list', 'survey_id']);
-    if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-      $bool[$boolClause][] = [
-        'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
-      ];
-    }
-  }
-
-  /**
-   * Converts an Indicia filter definition group_id to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersGroupId(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['group_id']);
-    if (!empty($filter)) {
-      $bool['must'][] = [
-        'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
-      ];
-    }
   }
 
   /**
@@ -584,10 +670,7 @@ JS;
       if ($filter['op'] === '=') {
         $bool['must'][] = [
           'match' => [
-            'taxon.taxon_rank_sort_order' => [
-              'query' => $filter['value'],
-              'type' => 'phrase',
-            ],
+            'taxon.taxon_rank_sort_order' => $filter['value'],
           ],
         ];
       }
@@ -607,19 +690,39 @@ JS;
   }
 
   /**
+   * Converts a filter definition marine flag filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersTaxonMarineFlag(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['marine_flag']);
+    // Filter op can be =, >= or <=.
+    if (!empty($filter) && $filter['value'] !== 'all') {
+      $bool['must'][] = [
+        'match' => [
+          'taxon.marine' => $filter['value'] === 'Y',
+        ],
+      ];
+    }
+  }
+
+  /**
    * Converts an Indicia filter definition location_name to an ES query.
    *
-   * @param string $searchArea
+   * @param string $definition
    *   WKT for the searchArea in EPSG:4326.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersSearchArea($searchArea, array &$bool) {
-    if (!empty($searchArea)) {
+  private static function applyUserFiltersSearchArea($definition, array &$bool) {
+    if (!empty($definition['searchArea'])) {
       $bool['must'][] = [
         'geo_shape' => [
           'location.geom' => [
-            'shape' => $searchArea,
+            'shape' => $definition['searchArea'],
             'relation' => 'intersects',
           ],
         ],
@@ -729,6 +832,322 @@ JS;
   }
 
   /**
+   * Converts an Indicia filter definition date filter to an ES query.
+   *
+   * Support for recorded, input, edited, verified dates. Age is supported as
+   * long as format specifies age in minutes, hours, days, weeks, months or
+   * years.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersDate(array $definition, array &$bool) {
+    $esFields = [
+      'recorded' => 'event.date_start',
+      'input' => 'metadata.created_on',
+      'edited' => 'metadata.updated_on',
+      'verified' => 'identification.verified_on',
+    ];
+    $dateTypes = [
+      'from' => 'gte',
+      'to' => 'lte',
+      'age' => 'gte',
+    ];
+    if (!empty($definition['date_type'])) {
+      foreach ($dateTypes as $type => $op) {
+        $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
+        if (!empty($definition[$fieldName])) {
+          $value = $definition[$fieldName];
+          // Convert date format.
+          if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
+            $value = "$matches[Y]-$matches[m]-$matches[d]";
+          }
+          elseif ($type === 'age') {
+            $value = 'now-' . str_replace(
+              ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
+              ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
+              strtolower($value)
+            );
+          }
+          $bool['must'][] = [
+            'range' => [
+              $esFields[$definition['date_type']] => [
+                $op => $value,
+              ],
+            ],
+          ];
+        }
+      }
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition my_records filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersWho(array $definition, array &$bool) {
+    if (!empty($definition['my_records']) && $definition['my_records'] === '1') {
+      $bool['must'][] = [
+        'match' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition idlist or occ_id to an ES query.
+   *
+   * Both occ_id and idlist are filters on occurrence.id so we treat them the
+   * same here.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersOccId(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['idlist', 'oc_id']);
+    $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+    if (!empty($filter)) {
+      $bool[$boolClause][] = [
+        'terms' => ['id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an filter definition occurrence_external_key to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersOccExternalKey(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['occurrence_external_key']);
+    if (!empty($filter)) {
+      $bool['must'][] = [
+        'terms' => ['occurrence.source_system_key' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition quality filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersQuality(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['quality']);
+    if (!empty($filter)) {
+      switch ($filter['value']) {
+        case 'V1':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 1]];
+          break;
+
+        case 'V':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'V']];
+          break;
+
+        case '-3':
+          $bool['must'][] = [
+            'bool' => [
+              'should' => [
+                [
+                  'bool' => [
+                    'must' => [
+                      ['term' => ['identification.verification_status' => 'V']],
+                    ],
+                  ],
+                ],
+                [
+                  'bool' => [
+                    'must' => [
+                      ['term' => ['identification.verification_status' => 'C']],
+                      ['term' => ['identification.verification_substatus' => 3]],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ];
+          break;
+
+        case 'C3':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 3]];
+          break;
+
+        case 'C':
+          $bool['must'][] = ['match' => ['identification.recorder_certainty' => 'Certain']];
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case 'L':
+          $bool['must'][] = ['terms' => ['identification.recorder_certainty.keyword' => ['Certain', 'Likely']]];
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case 'P':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'C']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 0]];
+          $bool['must_not'][] = ['exists' => ['field' => 'identification.query']];
+          break;
+
+        case '!R':
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case '!D':
+          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
+          $bool['must_not'][] = ['terms' => ['identification.query.keyword' => ['Q', 'A']]];
+          break;
+
+        case 'D':
+          $bool['must'][] = ['match' => ['identification.query' => 'Q']];
+          break;
+
+        case 'A':
+          $bool['must'][] = ['match' => ['identification.query' => 'A']];
+          break;
+
+        case 'R':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
+          break;
+
+        case 'R4':
+          $bool['must'][] = ['match' => ['identification.verification_status' => 'R']];
+          $bool['must'][] = ['match' => ['identification.verification_substatus' => 4]];
+          break;
+
+        case 'DR':
+          // Queried or not accepted.
+          $bool['must'][] = [
+            'bool' => [
+              'should' => [
+                [
+                  'bool' => [
+                    'must' => [
+                      ['term' => ['identification.verification_status' => 'R']],
+                    ],
+                  ],
+                ],
+                [
+                  'bool' => [
+                    'must' => [
+                      ['match' => ['identification.query' => 'Q']],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ];
+          break;
+
+        default:
+          // Nothing to do for 'all'.
+      }
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition auto checks filter to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersAutoChecks(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['autochecks']);
+    if (!empty($filter) && in_array($filter['value'], ['P', 'F'])) {
+      $bool['must'][] = ['match' => ['identification.auto_checks.result' => $filter['value'] === 'P']];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition website_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['website_list', 'website_id']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => ['metadata.website.id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition survey_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['survey_list', 'survey_id']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => ['metadata.survey.id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition input_form_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersInputFormList(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['input_form_list']);
+    if (!empty($filter)) {
+      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+      $bool[$boolClause][] = [
+        'terms' => [
+          'metadata.input_form.keyword' => explode(',', str_replace("'", '', $filter['value'])),
+        ],
+      ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition group_id to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersGroupId(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['group_id']);
+    if (!empty($filter)) {
+      $bool['must'][] = [
+        'terms' => ['metadata.group.id' => explode(',', $filter['value'])],
+      ];
+    }
+  }
+
+  /**
    * Converts an Indicia filter definition has_photos filter to an ES query.
    *
    * @param array $readAuth
@@ -768,86 +1187,6 @@ JS;
       }
     }
     return [];
-  }
-
-  /**
-   * Converts nested mappings data from ES to a flat field list.
-   *
-   * ES returns the mappings for an index as a hierarchical structure
-   * representing the JSON document fields. This recursive function converts
-   * this structure to a flat associative array of fields and field
-   * configuration where the keys are the field names with their parent
-   * elements separated by periods.
-   *
-   * @param array $data
-   *   Mappings data structure retrieved from ES.
-   * @param array $mappings
-   *   Array which will be populated by the field list.
-   * @param array $path
-   *   Array of parent fields which define the path to the current element.
-   */
-  private static function recurseMappings(array $data, array &$mappings, array $path = []) {
-    foreach ($data as $field => $config) {
-      $thisPath = array_merge($path, [$field]);
-      if (isset($config['properties'])) {
-        self::recurseMappings($config['properties'], $mappings, $thisPath);
-      }
-      else {
-        $field = implode('.', $thisPath);
-        $mappings[$field] = [
-          'type' => $config['type'],
-        ];
-        // We can't sort on text unless a keyword is specified.
-        if (isset($config['fields']) && isset($config['fields']['keyword'])) {
-          $mappings[$field]['sort_field'] = "$field.keyword";
-        }
-        elseif ($config['type'] !== 'text') {
-          $mappings[$field]['sort_field'] = $field;
-        }
-        else {
-          // Disable sorting.
-          $mappings[$field]['sort_field'] = FALSE;
-        }
-      }
-    }
-  }
-
-  /**
-   * Retrieves the ES index mappings data.
-   *
-   * A list of mapped fields is stored in self::$esMappings.
-   *
-   * @param int $nid
-   *   Node ID, used to retrieve the node parameters which contain ES settings.
-   */
-  private static function getMappings() {
-    $url = self::getEsUrl() . '/_mapping/doc';
-    $session = curl_init($url);
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . self::$config['es']['user'] . ':SECRET:' . self::$config['es']['secret'],
-    ]);
-    curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-    curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($session, CURLOPT_HEADER, FALSE);
-    curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
-    // Do the POST and then close the session.
-    $response = curl_exec($session);
-    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
-    if ($httpCode !== 200) {
-      $error = json_decode($response, TRUE);
-      $msg = !empty($error['message'])
-        ? $error['message']
-        : curl_errno($session) . ': ' . curl_error($session);
-      throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
-
-    }
-    curl_close($session);
-    $mappingData = json_decode($response, TRUE);
-    $mappingData = array_pop($mappingData);
-    $mappings = [];
-    self::recurseMappings($mappingData['mappings']['doc']['properties'], $mappings);
-    self::$esMappings = $mappings;
   }
 
 }

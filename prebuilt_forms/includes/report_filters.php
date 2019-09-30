@@ -52,16 +52,19 @@ class filter_what extends FilterBase {
   public function get_controls($readAuth, $options) {
     $r = '';
     // There is only one tab when running on the Warehouse.
-    if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE)
+    if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
       $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
           'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).') . "</p>\n";
+    }
     $r .= '<div id="what-tabs">' . "\n";
     // Data_entry_helper::tab_header breaks inside fancybox. So output manually.
     $r .= '<ul>' .
         '<li id="species-group-tab-tab"><a href="#species-group-tab" rel="address:species-group-tab"><span>' . lang::get('Species groups') . '</span></a></li>';
     $r .= '<li id="species-tab-tab"><a href="#species-tab" rel="address:species-tab"><span>' . lang::get('Species or higher taxa') . '</span></a></li>';
-    $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>' .
-        '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>' .
+    if (!$options['elasticsearch']) {
+      $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>';
+    }
+    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>' .
         '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
         '</ul>';
     $r .= '<div id="species-group-tab">' . "\n";
@@ -119,21 +122,23 @@ class filter_what extends FilterBase {
     );
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
-    $r .= "<div id=\"designations-tab\">\n";
-    $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
-      ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-    $subListOptions = array(
-      'fieldname' => 'taxon_designation_list',
-      'table' => 'taxon_designation',
-      'captionField' => 'title',
-      'valueField' => 'id',
-      'extraParams' => $readAuth,
-      'addToTable' => FALSE,
-      'autocompleteControl' => 'select',
-      'extraParams' => $readAuth + array('orderby' => 'title')
-    );
-    $r .= data_entry_helper::sub_list($subListOptions);
-    $r .= "</div>\n";
+    if (!$options['elasticsearch']) {
+      $r .= "<div id=\"designations-tab\">\n";
+      $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
+        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
+      $subListOptions = array(
+        'fieldname' => 'taxon_designation_list',
+        'table' => 'taxon_designation',
+        'captionField' => 'title',
+        'valueField' => 'id',
+        'extraParams' => $readAuth,
+        'addToTable' => FALSE,
+        'autocompleteControl' => 'select',
+        'extraParams' => $readAuth + array('orderby' => 'title')
+      );
+      $r .= data_entry_helper::sub_list($subListOptions);
+      $r .= "</div>\n";
+    }
     $r .= "<div id=\"rank-tab\">\n";
     $r .= '<p id="level-label">' . lang::get('Include records where the level') . '</p>';
     $r .= data_entry_helper::select(array(
@@ -301,6 +306,7 @@ class filter_where extends FilterBase {
 
   /**
    * Define the HTML required for this filter's UI panel.
+   *
    * Options available:
    * * **personSiteAttrId** - a multi-value location attribute used to link users to their recording sites.
    * * **includeSitesCreatedByUser** - boolean which defines if sites that the user is the creator of are available. Default TRUE.
@@ -308,8 +314,7 @@ class filter_where extends FilterBase {
    * * **otherLocationTypeIds** - array of location type IDs for types that are available and which are indexed in the
    *
    * @param array $readAuth
-   *   Read authorisation tokens
-   *
+   *   Read authorisation tokens.   *
    * @param array $options
    *   Control options array. Options include:
    *   * includeSitesCreatedByUser - Defines if user created sites are available for selection. True or false
@@ -334,7 +339,7 @@ class filter_where extends FilterBase {
     $options = array_merge(array(
       'includeSitesCreatedByUser' => TRUE,
       'indexedLocationTypeIds' => array(),
-      'otherLocationTypeIds' => array()
+      'otherLocationTypeIds' => [],
     ), $options);
     data_entry_helper::$javascript .= "indiciaData.includeSitesCreatedByUser=" . ($options['includeSitesCreatedByUser'] ? 'true' : 'false') . ";\n";
     data_entry_helper::$javascript .= "indiciaData.personSiteAttrId=" . (empty($options['personSiteAttrId']) ? 'false' : $options['personSiteAttrId']) . ";\n";
@@ -355,7 +360,7 @@ class filter_where extends FilterBase {
     $locTypes = array_merge($options['indexedLocationTypeIds'], $options['otherLocationTypeIds']);
     $locTypes = data_entry_helper::get_population_data(array(
       'table' => 'termlists_term',
-      'extraParams' => $readAuth + array('view' => 'cache', 'query' => json_encode(array('in' => array('id' => $locTypes))))
+      'extraParams' => $readAuth + array('view' => 'cache', 'query' => json_encode(array('in' => array('id' => $locTypes)))),
     ));
     foreach ($locTypes as $locType) {
       $sitesLevel1[$locType['id']] = $locType['term'] . '...';
@@ -366,7 +371,7 @@ class filter_where extends FilterBase {
       'label' => lang::get('Choose an existing site or location'),
       'lookupValues' => $sitesLevel1,
       'blankText' => '<' . lang::get('Please select') . '>',
-      'controlWrapTemplate' => 'justControl'
+      'controlWrapTemplate' => 'justControl',
     ));
     $r .= data_entry_helper::sub_list(array(
       'fieldname' => 'location_list',
@@ -375,15 +380,15 @@ class filter_where extends FilterBase {
       'captionField' => 'name',
       'valueField' => 'id',
       'addToTable' => FALSE,
-      'extraParams' => $readAuth
+      'extraParams' => $readAuth,
     ));
 
     $r .= '</div></fieldset>';
     $r .= '<br/><fieldset class="exclusive">';
-    $r .= data_entry_helper::text_input(array(
+    $r .= data_entry_helper::text_input([
       'label' => lang::get('Or, search for site names containing'),
-      'fieldname' => 'location_name'
-    ));
+      'fieldname' => 'location_name',
+    ]);
     $r .= '</fieldset>';
     $r .= '<fieldset class="exclusive">';
     // Build the array of spatial reference systems into a format Indicia can use.
@@ -400,11 +405,11 @@ class filter_where extends FilterBase {
     foreach ($list as $system) {
       $systems[$system] = lang::get("sref:$system");
     }
-    $r .= data_entry_helper::sref_and_system(array(
+    $r .= data_entry_helper::sref_and_system([
       'label' => lang::get('Or, find records in map reference'),
       'fieldname' => 'sref',
-      'systems' => $systems
-    ));
+      'systems' => $systems,
+    ]);
     $r .= '</fieldset></fieldset>';
     $r .= '<fieldset><legend>' . lang::get('Or, select a drawing tool in the map toolbar then draw a boundary to find intersecting records') . '</legend>';
     if (empty($options['linkToMapDiv'])) {
@@ -412,7 +417,8 @@ class filter_where extends FilterBase {
         $initialLat = hostsite_get_config_value('iform', 'map_centroid_lat', 55);
         $initialLong = hostsite_get_config_value('iform', 'map_centroid_long', -1);
         $initialZoom = (int) hostsite_get_config_value('iform', 'map_zoom', 5);
-      } else {
+      }
+      else {
         $initialLat = 55;
         $initialLong = -1;
         $initialZoom = 5;
@@ -434,7 +440,7 @@ class filter_where extends FilterBase {
         'standardControls' => array('layerSwitcher', 'panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
           'modifyFeature', 'clearEditLayer'),
         'readAuth' => $readAuth,
-        'gridRefHint' => TRUE
+        'gridRefHint' => TRUE,
       ));
       $indicia_templates['jsWrap'] = $oldwrap;
     }
@@ -456,7 +462,7 @@ class filter_where extends FilterBase {
       if ($locality) {
         $loc = data_entry_helper::get_population_data(array(
           'table' => 'location',
-          'extraParams' => $readAuth + array('id' => $locality)
+          'extraParams' => $readAuth + array('id' => $locality),
         ));
         $loc = $loc[0];
         $outputArr["loc:$loc[id]"] = $loc['name'];
@@ -580,31 +586,36 @@ class filter_quality extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls() {
+  public function get_controls($readAuth, $options) {
     $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
-    $r .= data_entry_helper::select(array(
+    $qualityOptions = [
+      'V1' => lang::get('Accepted as correct records only'),
+      'V' => lang::get('Accepted records only'),
+      '-3' => lang::get('Reviewer agreed at least plausible'),
+      'C3' => lang::get('Plausible records only'),
+      'C' => lang::get('Recorder was certain'),
+      'L' => lang::get('Recorder thought the record was at least likely'),
+      'P' => lang::get('Not reviewed'),
+      'T' => lang::get('Not reviewed but trusted recorder'),
+      '!R' => lang::get('Exclude not accepted records'),
+      '!D' => lang::get('Exclude queried or not accepted records'),
+      'all' => lang::get('All records'),
+      'D' => lang::get('Queried records only'),
+      'A' => lang::get('Answered records only'),
+      'R' => lang::get('Not accepted records only'),
+      'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
+      'DR' => lang::get('Queried or not accepted records'),
+    ];
+    if ($options['elasticsearch']) {
+      // Elasticsearch doesn't currently support recorder trust.
+      unset($qualityOptions['T']);
+    }
+    $r .= data_entry_helper::select([
       'label' => lang::get('Records to include'),
       'fieldname' => 'quality',
       'id' => 'quality-filter',
-      'lookupValues' => array(
-        'V1' => lang::get('Accepted as correct records only'),
-        'V' => lang::get('Accepted records only'),
-        '-3' => lang::get('Reviewer agreed at least plausible'),
-        'C3' => lang::get('Plausible records only'),
-        'C' => lang::get('Recorder was certain'),
-        'L' => lang::get('Recorder thought the record was at least likely'),
-        'P' => lang::get('Not reviewed'),
-        'T' => lang::get('Not reviewed but trusted recorder'),
-        '!R' => lang::get('Exclude not accepted records'),
-        '!D' => lang::get('Exclude queried or not accepted records'),
-        'all' => lang::get('All records'),
-        'D' => lang::get('Queried records only'),
-        'A' => lang::get('Answered records only'),
-        'R' => lang::get('Not accepted records only'),
-        'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
-        'DR' => lang::get('Queried or not accepted records'),
-      )
-    ));
+      'lookupValues' => $qualityOptions,
+    ]);
     $r .= data_entry_helper::select(array(
       'label' => lang::get('Automated checks'),
       'fieldname' => 'autochecks',
@@ -612,29 +623,31 @@ class filter_quality extends FilterBase {
         '' => lang::get('Not filtered'),
         'P' => lang::get('Only include records that pass all automated checks'),
         'F' => lang::get('Only include records that fail at least one automated check'),
-      )
-    ));
-    $r .= data_entry_helper::select(array(
-      'label' => lang::get('Identification difficulty'),
-      'fieldname' => 'identification_difficulty_op',
-      'lookupValues' => array(
-        '=' => lang::get('is'),
-        '>=' => lang::get('is at least'),
-        '<=' => lang::get('is at most'),
       ),
-      'afterControl' => data_entry_helper::select(array(
-        'fieldname' => 'identification_difficulty',
-        'lookupValues' => array(
-          '' => lang::get('Not filtered'),
-          1 => 1,
-          2 => 2,
-          3 => 3,
-          4 => 4,
-          5 => 5,
-        ),
-        'controlWrapTemplate' => 'justControl',
-      ))
     ));
+    if (!$options['elasticsearch']) {
+      $r .= data_entry_helper::select(array(
+        'label' => lang::get('Identification difficulty'),
+        'fieldname' => 'identification_difficulty_op',
+        'lookupValues' => array(
+          '=' => lang::get('is'),
+          '>=' => lang::get('is at least'),
+          '<=' => lang::get('is at most'),
+        ),
+        'afterControl' => data_entry_helper::select(array(
+          'fieldname' => 'identification_difficulty',
+          'lookupValues' => array(
+            '' => lang::get('Not filtered'),
+            1 => 1,
+            2 => 2,
+            3 => 3,
+            4 => 4,
+            5 => 5,
+          ),
+          'controlWrapTemplate' => 'justControl',
+        ))
+      ));
+    }
     $r .= data_entry_helper::select([
       'label' => 'Photos',
       'fieldname' => 'has_photos',
@@ -823,9 +836,8 @@ class filter_source extends FilterBase {
  *     data_flow, editing.
  *   * context_id - can also be passed as URL parameter. Force the initial
  *     selection of a particular context (a record which has
- *     defines_permissions=TRUE in the
- *   * filters table. Set to "default" to select their profile verification
- *     settings when sharing=verification.
+ *     defines_permissions=TRUE in the filters table. Set to "default" to
+ *     select their profile verification settings when sharing=verification.
  *   * filter_id - can also be passed as URL parameter. Force the initial
  *     selection of a particular filter record in the filters table.
  *   * filterTypes - allows control of the list of filter panels available,
@@ -861,6 +873,8 @@ class filter_source extends FilterBase {
  *     then the value can be set to {"Habitat":[1,2],"Food":[3,4]} resulting
  *     in 2 controls being added to the Other flags tab for filtering on this
  *     information.
+ *   * elasticsearch - set to TRUE to disable search options which are not
+ *     compatible with data in elasticsearch.
  * @param int $website_id
  *   The current website's warehouse ID.
  * @param string $hiddenStuff
@@ -879,7 +893,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     iform_load_helpers(array('report_helper'));
   }
   else {
-    //When running on warehouse we don't have iform_load_helpers
+    // When running on warehouse we don't have iform_load_helpers.
     require_once DOCROOT . 'client_helpers/report_helper.php';
   }
   if (!empty($_POST['filter:sharing'])) {
@@ -903,6 +917,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
       'my-groups-locality',
     ),
     'entity' => 'occurrence',
+    'elasticsearch' => FALSE,
   ), $options);
   // Introduce some extra quick filters useful for verifiers.
   if ($options['sharing'] === 'verification') {
