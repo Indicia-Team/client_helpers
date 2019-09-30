@@ -609,7 +609,7 @@ HTML;
         'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
         'speciesIncludeAuthorities' => TRUE,
         'speciesIncludeBothNames' => TRUE,
-        'speciesNameFilterMode' => 'preferred',
+        'speciesNameFilterMode' => 'all',
         'validation' => ['required'],
       ]);
       $commentInput = data_entry_helper::textarea([
