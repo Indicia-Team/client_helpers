@@ -238,7 +238,7 @@ class ElasticsearchReportHelper {
     // Retrieve the Elasticsearch mappings.
     self::getMappings($nid);
     // Prepare the stuff we need to pass to the JavaScript.
-    $mappings = json_encode(self::$esMappings);
+    $mappings = self::$esMappings;
     $dateFormat = helper_base::$date_format;
     $rootFolder = helper_base::getRootFolder(TRUE);
     $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
