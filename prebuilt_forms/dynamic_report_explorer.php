@@ -584,26 +584,32 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     self::$applyUserPrefs = FALSE;
     $options = array_merge(array(
       'allowSave' => TRUE,
-      'sharing' => empty($args['sharing']) ? 'reporting' : $args['sharing']
+      'sharing' => empty($args['sharing']) ? 'reporting' : $args['sharing'],
     ), $options);
-    if ($args['redirect_on_success'])
+    if ($args['redirect_on_success']) {
       $options['redirect_on_success'] = hostsite_get_url($args['redirect_on_success']);
-    // any preset params on the report page should be loaded as initial settings for the filter.
+    }
+    // Any preset params on the report page should be loaded as initial
+    // settings for the filter.
     if (!empty($args['param_presets'])) {
       $params = data_entry_helper::explode_lines_key_value_pairs($args['param_presets']);
       foreach ($params as $key => $val) {
-        if (!isset($options["filter-$key"]))
+        if (!isset($options["filter-$key"])) {
           $options["filter-$key"] = $val;
+        }
       }
     }
     foreach ($options as $key => &$value) {
       $value = apply_user_replacements($value);
     }
-    if ($options['allowSave'] && !function_exists('iform_ajaxproxy_url'))
+    if ($options['allowSave'] && !function_exists('iform_ajaxproxy_url')) {
       return 'The AJAX Proxy module must be enabled to support saving filters. Set @allowSave=false to disable this in the [standard params] control.';
-    if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id'))
-      // if not logged in and linked to warehouse, we can't use standard params functionality like saving, so...
+    }
+    if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id')) {
+      // If not logged in and linked to warehouse, we can't use standard params
+      // functionality like saving, so...
       return '';
+    }
     $hiddenStuff = '';
     $r = report_filter_panel($auth['read'], $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;

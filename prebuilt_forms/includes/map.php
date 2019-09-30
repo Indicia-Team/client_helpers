@@ -367,24 +367,19 @@ function iform_map_zoom_to_location($locationId, $readAuth) {
 
 /**
  * Draws and zooms the map into a geometry or list of geometries.
- * @param string|array $geom WKT string for the geom to zoom to, or an array of
- * WKT strings.
- * @param $name Layer name to add
- * @param bool $restrict Set true to limit the map to the area covering the geoms.
+ *
+ * @param string|array $geom
+ *   WKT string for the geom to zoom to, or an array of WKT strings.
+ * @param string $name
+ *   Layer name to add.
  */
-function iform_map_zoom_to_geom($geom, $name, $restrict=false) {
+function iform_map_zoom_to_geom($geom, $name) {
   $name = str_replace("'", "\\'", $name);
   $geoms = is_array($geom) ? $geom : [$geom];
   $geomJson = json_encode($geoms);
-  // Create code to restrict extent and zoom in if being asked to do so, will add to JS in a moment
-  $restrictExtentCode = !$restrict ? '' : <<<SCRIPT
-  mapdiv.map.setOptions({restrictedExtent: bounds});
-  if (mapdiv.map.getZoomForExtent(bounds)>mapdiv.map.getZoom()) {
-    mapdiv.map.zoomTo(mapdiv.map.getZoomForExtent(bounds));
-  }
-SCRIPT;
-  // Note, since the following moves the map, we want it to be the first mapInitialisationHook
-  data_entry_helper::$javascript .= <<<SCRIPT
+  // Note, since the following moves the map, we want it to be the first
+  // mapInitialisationHook.
+  data_entry_helper::$javascript .= <<<JS
 indiciaData.mapZoomPlanned = true;
 indiciaFns.zoomToBounds = function(mapdiv, bounds) {
   // Skip zoom to loaded bounds if already zoomed to a report output, remembering a position set in a cookie, or
@@ -435,24 +430,28 @@ mapInitialisationHooks.push(function(mapdiv) {
   indiciaData.initialBounds = bounds;
   mapdiv.map.addLayer(loclayer);
   indiciaFns.zoomToBounds(mapdiv, bounds);
-$restrictExtentCode
 });
-SCRIPT;
+
+JS;
 }
 
 /**
- * Return a list of OpenLayers options to pass to the data_entry_helper::map_panel method, built from the prebuilt
- * form arguments.
- * @param $args
- * @return array Options array for OpenLayers, or null if not specified.
+ * Return a list of OpenLayers options to pass to the map.
+ *
+ * Options are for the data_entry_helper::map_panel method olOptions parameter,
+ * built from the prebuilt form arguments.
+ *
+ * @param array $args
+ *   Form arguments.
+ *
+ * @return array
+ *   Options array for OpenLayers, or empty array if not specified.
  */
-function iform_map_get_ol_options($args) {
+function iform_map_get_ol_options(array $args) {
   if (!empty($args['openlayers_options'])) {
-    $opts = json_decode($args['openlayers_options'], true);
-  } else {
-    $opts = array();
+    $options = json_decode($args['openlayers_options'], TRUE);
   }
-  return $opts;
+  return (!isset($options) || $options === NULL) ? [] : $options;
 }
 
 /**

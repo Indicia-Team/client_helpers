@@ -171,13 +171,19 @@ class form_helper extends helper_base {
         'default' => isset($options['password']) ? $options['password'] : ''
       ));
     }
+    // Default - we are only going to show recommended page types in the category and page type drop downs.
+    $showRecommendedPageTypes = TRUE;
+    if (isset($options['form'])) {
+      // If selecting an existing non-core form, then we need to override the default and show all categories and pages.
+      $showRecommendedPageTypes = !empty($forms[$defaultCategory][$options['form']]['recommended']);
+    }
     $r .= data_entry_helper::checkbox(array(
       'label' => lang::get('Only show recommended page types'),
       'fieldname' => 'recommended',
       'helpText' => lang::get('Tick this box to limit the available page types to the recommended ones provided ' .
           'within the Indicia core. Unticking the box will allow you to select additional page types, such as ' .
           'those for specific survey methodologies or previous versions of the code.'),
-      'default' => TRUE,
+      'default' => $showRecommendedPageTypes,
       'labelClass' => 'auto'
     ));
     $r .= data_entry_helper::select(array(
@@ -200,8 +206,6 @@ class form_helper extends helper_base {
 
     // Div for the form instructions.
     $details = '';
-    // Default - we are only going to show recommended page types in the category and page type drop downs.
-    $showRecommendedPageTypes = TRUE;
     if (isset($options['form'])) {
       if (isset($forms[$defaultCategory][$options['form']]['description'])) {
         $details .= '<p>' . $forms[$defaultCategory][$options['form']]['description'] . '</p>';
@@ -212,8 +216,6 @@ class form_helper extends helper_base {
       if ($details !== '') {
         $details = "<div class=\"ui-state-highlight ui-corner-all page-notice\">$details</div>";
       }
-      // If selecting an existing non-core form, then we need to override the default and show all categories and pages.
-      $showRecommendedPageTypes = !empty($forms[$defaultCategory][$options['form']]['recommended']);
     }
     $r .= "<div id=\"form-def\">$details</div>\n";
     $r .= '<input type="button" value="' . lang::get('Load Settings Form') . '" id="load-params" disabled="disabled" />';
