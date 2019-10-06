@@ -1293,7 +1293,6 @@ JS;
     elseif ($options['driver'] === 'indicia_locations') {
       $settings['warehouseUrl'] = self::$base_url;
       $settings['public'] = $options['public'] ? 't' : 'f';
-      self::add_resource('json');
     }
     self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings = $.extend($.fn.indiciaMapPanel.georeferenceLookupSettings, ' . json_encode($settings) . ");\n";
     if ($options['autoCollapseResults']) {
@@ -3286,7 +3285,6 @@ RIJS;
     if ($options['columns'] > 1 && count($options['mediaTypes'])>1)
       throw new Exception('The species_checklist control does not support having more than one occurrence per row (columns option > 0) '.
         'at the same time has having the mediaTypes option in use.');
-    self::add_resource('json');
     self::add_resource('autocomplete');
     $filterArray = self::getSpeciesNamesFilter($options);
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
@@ -5767,7 +5765,6 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    */
   private static function select_or_listbox($options) {
     global $indicia_templates;
-    self::add_resource('json');
     $options = array_merge(array(
       'filterField' => 'parent_id',
       'size' => 3,
@@ -7531,7 +7528,6 @@ TXT;
     }
     else
       $query = array('in'=>array());
-    self::add_resource('json');
     if (isset($options['website_ids'])) {
       $query['in']['website_id']=$options['website_ids'];
     } elseif ($options['attrtable'] !== 'person_attribute' && $options['attrtable'] !== 'taxa_taxon_list_attribute') {

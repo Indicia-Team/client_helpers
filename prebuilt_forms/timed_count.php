@@ -677,7 +677,6 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     global $user;
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
-    data_entry_helper::add_resource('json');
     data_entry_helper::add_resource('autocomplete');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     // did the parent sample previously exist? Default is no.
