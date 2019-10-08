@@ -979,6 +979,8 @@ HTML
    * associated with occurrences of this species.
    */
   protected static function get_control_speciesphotos($auth, $args, $tabalias, $options) {
+    global $language ;
+    $lang_name = \Drupal::languageManager()->getCurrentLanguage()->getId();
     iform_load_helpers(array('report_helper'));
     data_entry_helper::add_resource('fancybox');
     $options = array_merge([
@@ -1008,6 +1010,7 @@ HTML
       'extraParams' => array(
         'taxa_taxon_list_id' => self::$taxa_taxon_list_id,
         'taxon_meaning_id' => self::$taxon_meaning_id,
+        'language' => $lang_name
       )
     ));
     return '<div class="detail-panel" id="detail-panel-speciesphotos"><h3>' . lang::get('Photos and media') . '</h3>' .
