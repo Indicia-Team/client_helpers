@@ -296,8 +296,8 @@ JS;
       if (empty($columnDef['field'])) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
       }
-      if (empty($columnDef['caption'])) {
-        throw new Exception('Control [dataGrid] @columns option does not contain a caption for every item.');
+      if (!isset($columnDef['caption'])) {
+        $columnDef['caption'] = '';
       }
       $field = $columnDef['field'];
       unset($columnDef['field']);
