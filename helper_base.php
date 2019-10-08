@@ -891,6 +891,7 @@ JS;
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
             self::$js_path . 'indicia.datacomponents/idc.esDataSource.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.leafletMap.js',
