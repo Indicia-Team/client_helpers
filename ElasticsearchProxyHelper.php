@@ -86,6 +86,7 @@ class ElasticsearchProxyHelper {
    *   Node ID to obtain connection info from.
    */
   private static function proxyAttrDetails($nid) {
+    iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $options = array(
@@ -117,6 +118,7 @@ class ElasticsearchProxyHelper {
    *   Node ID to obtain connection info from.
    */
   private static function proxyComments($nid) {
+    iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $options = array(
@@ -531,19 +533,6 @@ class ElasticsearchProxyHelper {
   /**
    * Converts Indicia style filters in proxy request to ES query syntax.
    *
-   * Support for filter definitions is incomplete. Currently only the following
-   * parameters are converted:
-   * * idlist
-   * * occ_id
-   * * occurrence_external_key
-   * * website_list & website_list_op
-   * * survey_list & survey_list_op
-   * * group_id
-   * * taxon_group_list
-   * * higher_taxa_taxon_list_list
-   * * taxa_taxon_list_list
-   * * indexed_location_list & indexed_location_list_op.
-   *
    * @param array $readAuth
    *   Read authentication tokens.
    * @param array $query
@@ -565,7 +554,9 @@ class ElasticsearchProxyHelper {
         throw new exception("Filter with ID $userFilter could not be loaded.");
       }
       $definition = json_decode($filterData[0]['definition'], TRUE);
-      $definition['searchArea'] = $filterData[0]['search_area'];
+      // Can't be both searchArea (freehand) and location area.
+      $definition['searchArea'] = $filterData[0]['search_area']
+        ? $filterData[0]['search_area'] : $filterData[0]['location_area'];
       self::applyFilterDef($readAuth, $definition, $bool);
     }
   }
@@ -581,13 +572,13 @@ class ElasticsearchProxyHelper {
    *   ES bool query definintion.
    */
   private static function applyFilterDef(array $readAuth, array $definition, array &$bool) {
+    self::convertLocationListToSearchArea($definition, $readAuth);
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
     self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
     self::applyUserFiltersTaxonMarineFlag($definition, $bool);
     self::applyUserFiltersSearchArea($definition, $bool);
     self::applyUserFiltersLocationName($definition, $bool);
-    self::applyUserFiltersLocationList($definition, $bool);
     self::applyUserFiltersIndexedLocationList($definition, $bool);
     self::applyUserFiltersIndexedLocationTypeList($definition, $bool, $readAuth);
     self::applyUserFiltersDate($definition, $bool);
@@ -601,7 +592,27 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
+  }
 
+  /**
+   * If there is a location_list in the filter, convert to searchArea.
+   *
+   * This requires fetching the combined boundaries from the warehouse,
+   * transformed to EPSG:4326.
+   */
+  private static function convertLocationListToSearchArea(array &$definition, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, ['location_list', 'location_ids']);
+    if (!empty($filter)) {
+      $boundaryData = data_entry_helper::get_report_data([
+        'dataSource' => '/library/locations/locations_combined_boundary_transformed',
+        'extraParams' => [
+          'location_ids' => $filter['value'],
+        ],
+        'readAuth' => $readAuth,
+        'caching' => TRUE,
+      ]);
+      $definition['searchArea'] = $boundaryData[0]['geom'];
+    }
   }
 
   /**
@@ -710,7 +721,10 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Converts an Indicia filter definition location_name to an ES query.
+   * Converts an Indicia filter definition search_area to an ES query.
+   *
+   * For ES purposes, any location_list filter is modified to a searchArea
+   * filter beforehand.
    *
    * @param string $definition
    *   WKT for the searchArea in EPSG:4326.
@@ -742,25 +756,6 @@ class ElasticsearchProxyHelper {
     $filter = self::getDefinitionFilter($definition, ['location_name']);
     if (!empty($filter)) {
       $bool['must'][] = ['match_phrase' => ['location.verbatim_locality' => $filter['value']]];
-    }
-  }
-
-  /**
-   * Converts an Indicia filter definition location_list to an ES query.
-   *
-   * @param array $definition
-   *   Definition loaded for the Indicia filter.
-   * @param array $bool
-   *   Bool clauses that filters can be added to (e.g. $bool['must']).
-   */
-  private static function applyUserFiltersLocationList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, [
-      'location_list',
-      'location_id',
-    ]);
-    if (!empty($filter)) {
-      $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
-      $bool[$boolClause][] = ['terms' => ['location.location_ids' => $filter['value']]];
     }
   }
 

@@ -238,7 +238,7 @@ class ElasticsearchReportHelper {
     // Retrieve the Elasticsearch mappings.
     self::getMappings($nid);
     // Prepare the stuff we need to pass to the JavaScript.
-    $mappings = json_encode(self::$esMappings);
+    $mappings = self::$esMappings;
     $dateFormat = helper_base::$date_format;
     $rootFolder = helper_base::getRootFolder(TRUE);
     $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
@@ -247,6 +247,24 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+  }
+
+  /**
+   * A control for flexibly outputting data formatted using a custom script.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   */
+  public static function customScript(array $options) {
+    self::checkOptions('customScript', $options, ['source', 'functionName'], []);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'source',
+      'functionName',
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcCustomScript({});
+
+JS;
+    return self::getControlContainer('customScript', $options, $dataOptions);
   }
 
   /**
@@ -277,6 +295,9 @@ class ElasticsearchReportHelper {
     foreach ($options['columns'] as $columnDef) {
       if (empty($columnDef['field'])) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
+      }
+      if (!isset($columnDef['caption'])) {
+        $columnDef['caption'] = '';
       }
       $field = $columnDef['field'];
       unset($columnDef['field']);
@@ -609,7 +630,7 @@ HTML;
         'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
         'speciesIncludeAuthorities' => TRUE,
         'speciesIncludeBothNames' => TRUE,
-        'speciesNameFilterMode' => 'preferred',
+        'speciesNameFilterMode' => 'all',
         'validation' => ['required'],
       ]);
       $commentInput = data_entry_helper::textarea([

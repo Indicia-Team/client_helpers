@@ -1827,19 +1827,56 @@ TD;
     //- Show a Please Wait message to the user
     //- Create any new plots, plot groups that are required.
     //- Submit the import to the warehouse
-    if (!empty($websiteId))
+    if (!empty($websiteId)) {
+      if (function_exists('watchdog')) {
+        if (!empty($websiteId)) {
+          watchdog('indicia', 'Attempting to send these new plot names to this Website Id '.$websiteId);
+        } else {
+          watchdog('indicia', 'Plant Portal Error - The $websiteId is empty');
+        }
+      }
       data_entry_helper::$javascript .= "var websiteId = ".$websiteId.";";
+    }
     $warehouseUrl = self::get_warehouse_url();
     
     data_entry_helper::$javascript .= "
     $('#create-import-data').click(function () {
     $('#create-import-data').attr('disabled','true');
     $('#import-loading-msg').show();";
-    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($args['plot_group_permission_person_attr_id']))
+    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($args['plot_group_permission_person_attr_id'])) {
+      if (function_exists('watchdog')) {
+        watchdog('indicia', 'Attempting to send these new plot groups to the Warehouse '.print_r($distinctPlotGroupNamesToCreate,true));
+      } 
       data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
-    
-    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']))
+    }
+    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id'])) {
+      if (function_exists('watchdog')) {
+        watchdog('indicia', 'Attempting to send these new plot names to the Warehouse '.print_r($plotsToCreateNames,true));
+        watchdog('indicia', 'Attempting to send these new plot spatial references to the Warehouse '.print_r($plotsToCreateSrefs,true));
+        watchdog('indicia', 'Attempting to send these new plot spatial reference systems to the Warehouse '.print_r($plotsToCreateSrefSystems,true));
+        if (!empty($warehouseUrl)) {
+          watchdog('indicia', 'Attempting to send these new plot names to this Warehouse '.print_r($warehouseUrl,true));
+        } else {
+          watchdog('indicia', 'Plant Portal Error - The $warehouseUrl is empty');
+        }
+        if (!empty($currentUserId)) {
+          watchdog('indicia', 'Attempting to send these new plot names using this user id '.$currentUserId);
+        } else {
+          watchdog('indicia', 'Plant Portal Error - The $currentUserId is empty');
+        }
+        if (!empty($args['plot_group_identifier_name_lookup_loc_attr_id'])) {
+          watchdog('indicia', 'Attempting to send these new plot names using this plot_group_identifier_name_lookup_loc_attr_id '.$args['plot_group_identifier_name_lookup_loc_attr_id']);
+        } else {
+          watchdog('indicia', 'Plant Portal Error - The plot_group_identifier_name_lookup_loc_attr_id is empty');
+        }
+        if (!empty($args['plot_location_type_id'])) {
+          watchdog('indicia', 'Attempting to send these new plot names using this plot_location_type_id '.$args['plot_location_type_id']);
+        } else {
+          watchdog('indicia', 'Plant Portal Error - The plot_location_type_id is empty');
+        }
+      }
       data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_location_type_id'].");";
+    }
     if (!empty($websiteId)&&!empty($plotPairsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
       data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotPairsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
     data_entry_helper::$javascript .= "$('#submit-import').click(); });";
