@@ -439,7 +439,7 @@ class import_helper extends helper_base {
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     // If the user checked the Remember All checkbox need to remember this
     // setting.
-    $checkedRememberAll = isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';
+    $checkedRememberAll = isset($autoFieldMappings['rememberall']) ? ' checked="checked"' : '';
     $r = <<<HTML
 <form method="post" id="entry_form" action="$reloadpath" class="iform">
   <p>{$t['column_mapping_instructions']}</p>
@@ -643,6 +643,23 @@ JS;
   }
 
   /**
+   * Converts field mappings configuration text to an array.
+   *
+   * The fieldMap config is a list of database fields with optional '=column
+   * titles' added to them. Need a list of column titles mapped to fields so
+   * swap this around.
+   */
+  private static function extractFieldData($fieldText, &$autoFieldMappings) {
+    $fields = self::explode_lines($fieldText);
+    foreach ($fields as $field) {
+      $tokens = explode('=', $field);
+      if (count($tokens) === 2) {
+        $autoFieldMappings[self::strForCompare($tokens[1])] = $tokens[0];
+      }
+    }
+  }
+
+  /**
    * Returns an array of field to column title mappings that were previously stored in the user profile,
    * or mappings that were provided via the page's configuration form.
    * If the user profile does not support saving mappings then sets self::$rememberingMappings to false.
@@ -662,7 +679,7 @@ JS;
       }
       else {
         $json = trim($json);
-        $autoFieldMappings = json_decode(trim($json), TRUE);
+        $autoFieldMappings = json_decode(strtolower(trim($json)), TRUE);
       }
     }
     else {
@@ -673,31 +690,16 @@ JS;
       foreach ($options['fieldMap'] as $surveyFieldMap) {
         if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
             $surveyFieldMap['survey_id'] == $settings['survey_id']) {
-          // The fieldMap config is a list of database fields with optional '=column titles' added to them.
-          // Need a list of column titles mapped to fields so swap this around.
-          $fields = self::explode_lines($surveyFieldMap['fields']);
-          foreach ($fields as $field) {
-            $tokens = explode('=', $field);
-            if (count($tokens) === 2) {
-              $autoFieldMappings[$tokens[1]] = $tokens[0];
-            }
-          }
+          self::extractFieldData($surveyFieldMap['fields'], $autoFieldMappings);
         }
       }
     }
-    else if (empty($settings['survey_id']) && !empty($options['fieldMap'])) {
-      // for locations, there is no survey ID, so do the same but with special survey check
+    elseif (empty($settings['survey_id']) && !empty($options['fieldMap'])) {
+      // For locations, there is no survey ID, so do the same but with special
+      // survey check.
       foreach ($options['fieldMap'] as $surveyFieldMap) {
         if (!isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) /* Used for locations */) {
-          // The fieldMap config is a list of database fields with optional '=column titles' added to them.
-          // Need a list of column titles mapped to fields so swap this around.
-          $fields = self::explode_lines($surveyFieldMap['fields']);
-          foreach ($fields as $field) {
-            $tokens = explode('=', $field);
-            if (count($tokens) === 2) {
-              $autoFieldMappings[$tokens[1]] = $tokens[0];
-            }
-          }
+          self::extractFieldData($surveyFieldMap['fields'], $autoFieldMappings);
         }
       }
     }
@@ -950,6 +952,21 @@ JS;
   }
 
   /**
+   * Return simplified string for comparisons.
+   *
+   * Allows less fussye column title matching.
+   *
+   * @param string $str
+   *   String to simplify.
+   *
+   * @return string
+   *   String, lowercased, only alphanumerics.
+   */
+  private static function strForCompare($str) {
+    return preg_replace('/[^\da-z]/', '', strtolower($str));
+  }
+
+  /**
    * Retrieve column options for import.
    *
    * Returns a list of columns as an list of <options> for inclusion in an HTML
@@ -1043,12 +1060,14 @@ JS;
       // Skip the metadata fields.
       if (!in_array($fieldname, $skipped)) {
         $selected = FALSE;
-        //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
-        //This means only the first occurrence for the needle is exploded which is desirable in the situation as the field caption
-        //contains colons in some situations.
-        $colKey = preg_replace('/[^A-Za-z0-9]/', ' ', $column);
-        if (!empty($autoFieldMappings[$colKey]) && $autoFieldMappings[$colKey]!=='<Not imported>') {
-          $savedData = explode(':',$autoFieldMappings[$colKey],2);
+        // Get user's saved settings, last parameter is 2 as this forces the
+        // system to explode into a maximum of two segments. This means only
+        // the first occurrence for the needle is exploded which is desirable
+        // in the situation as the field caption contains colons in some
+        // situations.
+        $colKey = self::strForCompare($column);
+        if (!empty($autoFieldMappings[$colKey]) && $autoFieldMappings[$colKey] !== '<not imported>') {
+          $savedData = explode(':', $autoFieldMappings[$colKey], 2);
           $savedSectionHeading = $savedData[0];
           $savedMainCaption = $savedData[1];
         }
@@ -1056,24 +1075,28 @@ JS;
           $savedSectionHeading = '';
           $savedMainCaption = '';
         }
-        //Detect if the user has saved a column setting that is not 'not imported' then call the method that handles the auto-match rules.
+        // Detect if the user has saved a column setting that is not 'not
+        // imported' then call the method that handles the auto-match rules.
         if (strcasecmp($prefix, $savedSectionHeading) === 0 &&
             strcasecmp($field, $savedSectionHeading . ':' . $savedMainCaption) === 0) {
           $selected = TRUE;
           $itWasSaved[$column] = 1;
-          //even though we have already detected the user has a saved setting, we need to call the auto-detect rules as if it gives the same result then the system acts as if it wasn't saved.
+          // Even though we have already detected the user has a saved setting,
+          // we need to call the auto-detect rules as if it gives the same
+          // result then the system acts as if it wasn't saved.
           $saveDetectRulesResult = self::auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved[$column], TRUE);
           $itWasSaved[$column] = $saveDetectRulesResult['itWasSaved'];
         }
         else {
-          //only use the auto field selection rules to select the drop-down if there isn't a saved option
+          // Only use the auto field selection rules to select the drop-down if
+          // there isn't a saved option
           if (!isset($autoFieldMappings[$colKey])) {
             $nonSaveDetectRulesResult = self::auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved[$column], FALSE);
             $selected = $nonSaveDetectRulesResult['selected'];
           }
         }
         //As a last resort. If we have a match and find that there is more than one caption with this match, then flag a multiMatch to deal with it later
-        if (strcasecmp($strippedScreenCaption, $column)==0 && $labelList[strtolower($strippedScreenCaption)] > 1) {
+        if (strcasecmp($strippedScreenCaption, $column) == 0 && $labelList[strtolower($strippedScreenCaption)] > 1) {
           $multiMatch[] = $column;
           $optionID = $idColumn . 'Duplicate';
         }
@@ -1081,14 +1104,15 @@ JS;
           $optionID = $idColumn . 'Normal';
         }
         $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
-        if ($selected)
+        if ($selected) {
           self::$automaticMappings[$column] = $field;
+        }
       }
 
-      // if we have got an option for this field, add to the list
+      // If we have got an option for this field, add to the list.
       if (isset($option)) {
-        // first check if we need a new heading
-        if ($prefix!=$heading) {
+        // First check if we need a new heading.
+        if ($prefix != $heading) {
           $heading = $prefix;
           $class = '';
           if (isset($labelListHeading[$column . $heading])) {
@@ -1150,7 +1174,8 @@ JS;
     );
     $selected = FALSE;
     //handle situation where there is a unique exact match
-    if (strcasecmp($strippedScreenCaption, $column)==0 && $labelList[strtolower($strippedScreenCaption)] == 1) {
+    if (self::strForCompare($strippedScreenCaption) === self::strForCompare($column)
+        && $labelList[strtolower($strippedScreenCaption)] == 1) {
       if ($saveDetectedMode) {
         $itWasSaved = 0;
       }
@@ -1159,7 +1184,7 @@ JS;
       }
     }
     else {
-      //handle the situation where a there isn' a unqiue match, but there is if you take the heading into account also
+      //handle the situation where a there isn' a unique match, but there is if you take the heading into account also
       if (strcasecmp($prefix . ' ' . $strippedScreenCaption, $column)==0) {
         if ($saveDetectedMode) {
           $itWasSaved = 0;
