@@ -139,7 +139,7 @@ class import_helper extends helper_base {
       else {
         $options['allowCommitToDB'] = TRUE;
       }
-      return self::upload_mappings_form($options);
+      return self::uploadMappingsForm($options);
     // Import step 2 is only shown if the preventCommitsOnError option has been set.
     // This means we don't commit any rows at all if any errors are found, therefore we need
     // an extra error checking step
@@ -245,54 +245,61 @@ class import_helper extends helper_base {
       $form = self::build_params_form($formOptions, $hasVisibleContent);
       // If there are no settings required, skip to the next step.
       if (!$hasVisibleContent) {
-        return self::upload_mappings_form($options);
+        return self::uploadMappingsForm($options);
       }
       $r .= $form;
       if (isset($options['presetSettings'])) {
-        // The presets might contain some extra values to apply to every row - must be output as hiddens
+        // The presets might contain some extra values to apply to every row -
+        // must be output as hiddens.
         $extraHiddens = array_diff_key($options['presetSettings'], $formArray);
         unset($extraHiddens['password']);
         foreach ($extraHiddens as $hidden => $value) {
           $r .= "<input type=\"hidden\" name=\"$hidden\" value=\"$value\" />\n";
         }
       }
-      // If import behaviour is to be specified by the user, then provide options on the screen for them.
-      // If not specified by the user they must be hidden in the background
-      if (($options['importPreventCommitBehaviour']==='user_defined') ||
-          ($options['importSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample'))) {
+      // If import behaviour is to be specified by the user, then provide
+      // options on the screen for them. If not specified by the user they
+      // must be hidden in the background.
+      if (($options['importPreventCommitBehaviour'] === 'user_defined') ||
+          ($options['importSampleLogic'] === 'user_defined' && ($options['model'] === 'occurrence'||$options['model'] === 'sample'))) {
         $r .= '<hr>';
       }
-      // In this case the administrator has specific on the Edit Tab that any errors will prevent the import.
-      // Keep this information in a hidden checkbox
-      if ($options['importPreventCommitBehaviour']==='prevent')
+      // In this case the administrator has specific on the Edit Tab that any
+      // errors will prevent the import. Keep this information in a hidden
+      // checkbox.
+      if ($options['importPreventCommitBehaviour'] === 'prevent') {
         $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" checked>';
-      // In this case the administrator has specific on the Edit Tab that any errors will only affect
-      // affected rows and working rows can be committed.
-      // Keep this information in a hidden checkbox
-      if ($options['importPreventCommitBehaviour']==='partial_import')
+      }
+      // In this case the administrator has specific on the Edit Tab that any
+      // errors will only affect affected rows and working rows can be
+      // committed. Keep this information in a hidden checkbox.
+      if ($options['importPreventCommitBehaviour'] === 'partial_import') {
         $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" >';
-      // Admin has specified that user can provide option so display to screen
-      if ($options['importPreventCommitBehaviour']==='user_defined') {
+      }
+      // Admin has specified that user can provide option so display to screen.
+      if ($options['importPreventCommitBehaviour'] === 'user_defined') {
         $r .= data_entry_helper::checkbox(array(
           'label' => lang::get('Reject entire import if there are any errors'),
           'fieldname' => 'preventCommitsOnError',
-          'helpText'=>'Select this checkbox to prevent the importing of any rows '
-              .'if there are any errors at all. Leave this checkbox switched off to import valid rows. Please note: Functionality to update '
-              . 'existing data is currently disabled when this option is selected, only new data can be imported.'
+          'helpText' => 'Select this checkbox to prevent the importing of any rows ' .
+              'if there are any errors at all. Leave this checkbox switched off to import valid rows. Please note: Functionality to update ' .
+               'existing data is currently disabled when this option is selected, only new data can be imported.'
         ));
       }
-      // Same logic for other behaviour option
-      if ($options['importSampleLogic']==='sample_ext_key')
-      $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" checked>';
-      if ($options['importSampleLogic']==='consecutive_rows')
-      $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" >';
-      if ($options['importSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
-      $r .= data_entry_helper::checkbox(array(
-        'label' => lang::get('Samples verified by sample key field'),
-        'fieldname' => 'verifySamplesUsingExternalKey',
-        'helpText'=>'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '.
-        'e.g. occurrences with the same external key on the row cannot have different sample dates. Note that rows for the same sample must still be placed consecutively in the import file.'
-      ));
+      // Same logic for other behaviour option.
+      if ($options['importSampleLogic'] === 'sample_ext_key') {
+        $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" checked>';
+      }
+      if ($options['importSampleLogic'] === 'consecutive_rows') {
+        $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" >';
+      }
+      if ($options['importSampleLogic'] === 'user_defined' && ($options['model'] === 'occurrence' || $options['model'] === 'sample')) {
+        $r .= data_entry_helper::checkbox([
+          'label' => lang::get('Samples verified by sample key field'),
+          'fieldname' => 'verifySamplesUsingExternalKey',
+          'helpText' => 'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '.
+          'e.g. occurrences with the same external key on the row cannot have different sample dates. Note that rows for the same sample must still be placed consecutively in the import file.'
+        ]);
       }
       $r .= '<input type="hidden" name="import_step" value="1" />';
       $r .= '<input type="submit" name="submit" value="' . lang::get('Next') . '" class="ui-corner-all ui-state-default button" />';
@@ -309,7 +316,7 @@ class import_helper extends helper_base {
     else {
       // No settings form, so output the mappings form instead which is the
       // next step.
-      return self::upload_mappings_form($options);
+      return self::uploadMappingsForm($options);
     }
   }
 
@@ -319,7 +326,7 @@ class import_helper extends helper_base {
    * @param array $options
    *   Options array passed to the import control.
    */
-  private static function upload_mappings_form(array $options) {
+  private static function uploadMappingsForm(array $options) {
     ini_set('auto_detect_line_endings', 1);
     $t = self::getTranslations([
       'Because you are looking up existing records to import into, required field validation will only be applied when the new data are merged into the existing data during import.',
@@ -378,7 +385,7 @@ class import_helper extends helper_base {
       $options['importMergeFields'] = json_decode($options['importMergeFields']);
     }
     if (isset($options['synonymProcessing']) && is_string($options['synonymProcessing'])) {
-        $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
+      $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
     }
     if (isset($options['importMergeFields']) && $options['importMergeFields'] != '' && $options['importMergeFields'] != '{}') {
       foreach ($options['importMergeFields'] as $modelSpec) {
@@ -412,17 +419,17 @@ class import_helper extends helper_base {
       }
     }
     if (isset($options['synonymProcessing'])) {
-        $synonymProcessing = $options['synonymProcessing'];
-        if (isset($synonymProcessing->separateSynonyms) && $synonymProcessing->separateSynonyms === TRUE) {
-            $fields['synonym:tracker'] = lang::get("Main record vs Synonym");
-            $fields['synonym:identifier'] = lang::get("Field to group records together");
-        }
+      $synonymProcessing = $options['synonymProcessing'];
+      if (isset($synonymProcessing->separateSynonyms) && $synonymProcessing->separateSynonyms === TRUE) {
+        $fields['synonym:tracker'] = lang::get("Main record vs Synonym");
+        $fields['synonym:identifier'] = lang::get("Field to group records together");
+      }
     }
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], TRUE);
     if (!is_array($responseIds)) {
-        return "curl request to $request failed. Response " . print_r($response, TRUE);
+      return "curl request to $request failed. Response " . print_r($response, TRUE);
     }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
     $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys($settings)) : array();
