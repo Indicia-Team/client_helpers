@@ -481,22 +481,24 @@ HTML;
     // and if left in cause problems. Remove this options (held in $importDuplicateCheckCombinationsToRemove)
     $existingDataLookupOptions = array();
     $importDuplicateCheckCombinations = json_decode($response['output'], TRUE);
-    $importDuplicateCheckCombinationsToRemove = array('taxa_taxon_list:taxon_id', 'sample:sample_method_id');
-    foreach ($importDuplicateCheckCombinations[$options['model']] as $idx => $importDuplicateCheckCombination) {
-      foreach ($importDuplicateCheckCombination['fields'] as $idx2 => $field) {
-        if (!empty($field['fieldName']) && in_array($field['fieldName'], $importDuplicateCheckCombinationsToRemove)) {
-          unset($importDuplicateCheckCombinations[$options['model']][$idx]['fields'][$idx2]);
+    if (isset($importDuplicateCheckCombinations[$options['model']])) {
+      $importDuplicateCheckCombinationsToRemove = array('taxa_taxon_list:taxon_id', 'sample:sample_method_id');
+      foreach ($importDuplicateCheckCombinations[$options['model']] as $idx => $importDuplicateCheckCombination) {
+        foreach ($importDuplicateCheckCombination['fields'] as $idx2 => $field) {
+          if (!empty($field['fieldName']) && in_array($field['fieldName'], $importDuplicateCheckCombinationsToRemove)) {
+            unset($importDuplicateCheckCombinations[$options['model']][$idx]['fields'][$idx2]);
+          }
         }
       }
-    }
-    $existingDataLookupOptions = $importDuplicateCheckCombinations;
+      $existingDataLookupOptions = $importDuplicateCheckCombinations;
 
-    if (!is_array($existingDataLookupOptions)) {
-      // There is a possibility that the warehouse is not as advanced as the form: in this case we carry on as if no options are avaailable.
-      $existingDataLookupOptions = array();
-    }
-    if (count($existingDataLookupOptions) > 0) {
-      $r .= "<th>{$t['Used in lookup of existing data?']}</th>";
+      if (!is_array($existingDataLookupOptions)) {
+        // There is a possibility that the warehouse is not as advanced as the form: in this case we carry on as if no options are avaailable.
+        $existingDataLookupOptions = array();
+      }
+      if (count($existingDataLookupOptions) > 0) {
+        $r .= "<th>{$t['Used in lookup of existing data?']}</th>";
+      }
     }
 
     $r .= '</tr></thead><tbody>';
@@ -505,7 +507,7 @@ HTML;
       $column = trim($column);
       if (!empty($column)) {
         $colCount++;
-        $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
+        $colFieldName = self::columnMachineName($column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
         $r .= self::getColumnOptions(
           $options['model'],
@@ -961,7 +963,7 @@ JS;
   /**
    * Return simplified string for comparisons.
    *
-   * Allows less fussye column title matching.
+   * Allows less fussy column title matching.
    *
    * @param string $str
    *   String to simplify.
@@ -971,6 +973,21 @@ JS;
    */
   private static function strForCompare($str) {
     return preg_replace('/[^\da-z]/', '', strtolower($str));
+  }
+
+  /**
+   * Return column caption translated to machine name.
+   *
+   * E.g. consistent way to determine name attr for associated control.
+   *
+   * @param string $caption
+   *   Caption to convert.
+   *
+   * @return string
+   *   Non-alphanumerics replaced with _.
+   */
+  private static function columnMachineName($caption) {
+    return preg_replace('/[^A-Za-z0-9]/', '_', $caption);
   }
 
   /**
@@ -1235,7 +1252,7 @@ JS;
     $optionID = str_replace(" ", "", $column) . 'Normal';
     $r = "<option value=\"&lt;Not imported&gt;\">&lt;" . lang::get('Not imported') . '&gt;</option>' . $r . '</optgroup>';
     if (self::$rememberingMappings) {
-      $inputName = preg_replace('/[^A-Za-z0-9]/', '_', $column) . '.Remember';
+      $inputName = self::columnMachineName($column) . '.Remember';
       $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
       $r .= <<<TD
 <td class="centre">
@@ -1248,7 +1265,7 @@ JS;
 TD;
     }
     if ($includeLookups) {
-      $checkboxName = preg_replace('/[^A-Za-z0-9]/', '_', $column) . '.Lookup';
+      $checkboxName = self::columnMachineName($column) . '.Lookup';
       $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
       $r .= <<<TD
 <td class="centre">
@@ -1439,7 +1456,7 @@ TD;
     $columns = fgetcsv($handle, 1000, ",");
     fclose($handle);
     foreach($columns as $column) {
-      $internalColumn = str_replace(" ", "_", $column);
+      $internalColumn = self::columnMachineName($column);
       $idx=0;
       // For UTF with BOM, the first heading seems to get underscores attached to the front of it,
       // need to strip these and reinstate the array item in a minute as it doesn't get picked up by the $correctedMappings below
