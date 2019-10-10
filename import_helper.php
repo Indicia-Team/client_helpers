@@ -987,7 +987,7 @@ JS;
    *   Non-alphanumerics replaced with _.
    */
   private static function columnMachineName($caption) {
-    return preg_replace('/[^A-Za-z0-9]/', '_', $caption);
+    return preg_replace('/[^A-Za-z0-9]/', '_', trim($caption));
   }
 
   /**
