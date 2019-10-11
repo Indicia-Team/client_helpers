@@ -787,7 +787,7 @@ JS;
                 'library/taxa/external_keys_for_scratchpad',
                 ['scratchpad_list_id' => $value],
                 'external_key',
-                $auth
+                $options['readAuth']
               );
             }
             elseif ($esField['process'] === 'taxonIdsInSample') {
@@ -795,7 +795,7 @@ JS;
                 'library/taxa/external_keys_for_sample',
                 ['sample_id' => $value],
                 'external_key',
-                $auth
+                $options['readAuth']
               );
             }
             $queryType = 'terms';
@@ -1022,18 +1022,18 @@ HTML;
    *   List of parameters to pass to the report.
    * @param string $outputField
    *   Name of the field output by the report to build the list from.
-   * @param array $auth
-   *   Authorisation tokens.
+   * @param array $readAuth
+   *   Read authorisation tokens.
    *
    * @return string
    *   List for placing in the url param's hidden input attribute.
    */
-  private static function convertValueToFilterList($report, array $params, $outputField, array $auth) {
+  private static function convertValueToFilterList($report, array $params, $outputField, array $readAuth) {
     // Load the scratchpad's list of taxa.
     iform_load_helpers(['report_helper']);
     $listEntries = report_helper::get_report_data([
       'dataSource' => $report,
-      'readAuth' => $auth['read'],
+      'readAuth' => $readAuth,
       'extraParams' => $params,
     ]);
     // Build a hidden input which causes filtering to this list.
