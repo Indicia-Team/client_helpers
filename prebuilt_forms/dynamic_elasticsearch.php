@@ -387,7 +387,9 @@ TXT;
    *   Hidden input HTML which defines the appropriate filters.
    */
   protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::urlParams($options);
+    return ElasticsearchReportHelper::urlParams(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   protected static function getHeader($args) {
