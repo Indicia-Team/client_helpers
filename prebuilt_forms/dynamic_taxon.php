@@ -566,6 +566,7 @@ HTML;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-taxon.html#photos
    */
   protected static function get_control_photos($auth, $args, $tabAlias, $options) {
+    $translations = data_entry_helper::setupTranslationsArray();
     $opts = [
       'table' => 'taxon_medium',
       'readAuth' => $auth['read'],

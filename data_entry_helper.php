@@ -5646,6 +5646,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         self::$entity_to_load["$mediaEntity:id:$image[id]"]  = $image['id'];
         self::$entity_to_load["$mediaEntity:path:$image[id]"] = $image['path'];
         self::$entity_to_load["$mediaEntity:caption:$image[id]"] = $image['caption'];
+        self::$entity_to_load["$mediaEntity:external_details:$image[id]"] = $image['external_details'];
         self::$entity_to_load["$mediaEntity:media_type:$image[id]"] = $image['media_type'];
         self::$entity_to_load["$mediaEntity:media_type_id:$image[id]"] = $image['media_type_id'];
       }
@@ -8079,13 +8080,25 @@ HTML;
             $values[$prefix.':media_type_id'.$uniqueId] : '';
           //Only extract the media if we are extracting media of any type or the data matches the type we are wanting to extract
           if ($thisMediaTypeId==$mediaTypeIdToExtract||$mediaTypeIdToExtract===null) {
+          	// Translate the image category
+            $translations = self::setupTranslationsArray();
+            global $language ;
+            // Note this line only works in Drupal 8
+            $lang_name = \Drupal::languageManager()->getCurrentLanguage()->getId();
+            // Drupal 7 equivalent
+    		//$lang_name = $language->language;
+            if (!empty($values[$prefix.':external_details'.$uniqueId])) {
+              $values[$prefix.':external_details'.$uniqueId] = $translations[$lang_name][$values[$prefix.':external_details'.$uniqueId]];
+            }
             $mediaValues = array(
               // Id is set only when saving over an existing record.
               'id' => array_key_exists($prefix.':id'.$uniqueId, $values) ?
                   $values[$prefix.':id'.$uniqueId] : '',
               'path' => $value,
               'caption' => isset($values[$prefix.':caption'.$uniqueId]) ?
-                  $values[$prefix.':caption'.$uniqueId] : ''
+                  $values[$prefix.':caption'.$uniqueId] : '',
+                  'external_details' => isset($values[$prefix.':external_details'.$uniqueId]) ?
+              	  $values[$prefix.':external_details'.$uniqueId] : ''
             );
             if (!empty($thisMediaTypeId)) {
               $mediaValues['media_type_id'] = $thisMediaTypeId;
@@ -8154,6 +8167,64 @@ HTML;
       }
     }
     return $r;
+  }
+  
+  /*  
+   * Translate the image category
+   */
+  public static function setupTranslationsArray() {
+    $translations = array();
+    $languageCodes = array('en','de','cs');
+
+    $detailTranslation['en'] = 'Detail';
+    $detailTranslation['de'] = 'Detail';
+    $detailTranslation['cs'] = 'Detail';
+
+    $locationTranslation['en'] = 'Habitat';
+    $locationTranslation['de'] = 'Standort';
+    $locationTranslation['cs'] = 'Stanoviště';
+    
+    $microTranslation['en'] = 'Micro detail';
+    $microTranslation['de'] = 'Mikrobild';
+    $microTranslation['cs'] = 'Mikrofoto';
+
+    $appearanceTranslation['en'] = 'Appearance';
+    $appearanceTranslation['de'] = 'Habitus';
+    $appearanceTranslation['cs'] = 'Celkový vzhled';
+
+    foreach ($languageCodes as $langCode) {
+      foreach ($detailTranslation as $detailTranslationForSpecificLang) {
+        $translations[$langCode][$detailTranslationForSpecificLang] = $detailTranslation[$langCode];
+        $translations[$langCode][$detailTranslationForSpecificLang] = $detailTranslation[$langCode];
+        $translations[$langCode][$detailTranslationForSpecificLang] = $detailTranslation[$langCode];
+      }
+
+      foreach ($locationTranslation as $locationTranslationForSpecificLang) {
+        $translations[$langCode][$locationTranslationForSpecificLang] = $locationTranslation[$langCode];
+        $translations[$langCode][$locationTranslationForSpecificLang] = $locationTranslation[$langCode];
+        $translations[$langCode][$locationTranslationForSpecificLang] = $locationTranslation[$langCode];
+      }
+
+      foreach ($microTranslation as $microTranslationForSpecificLang) {
+        $translations[$langCode][$microTranslationForSpecificLang] = $microTranslation[$langCode];
+        $translations[$langCode][$microTranslationForSpecificLang] = $microTranslation[$langCode];
+        $translations[$langCode][$microTranslationForSpecificLang] = $microTranslation[$langCode];
+      }
+
+      foreach ($appearanceTranslation as $appearanceTranslationForSpecificLang) {
+        $translations[$langCode][$appearanceTranslationForSpecificLang] = $appearanceTranslation[$langCode];
+        $translations[$langCode][$appearanceTranslationForSpecificLang] = $appearanceTranslation[$langCode];
+        $translations[$langCode][$appearanceTranslationForSpecificLang] = $appearanceTranslation[$langCode];
+      }
+    }
+    global $language ;
+    // This line only works in Drupal 8
+    $lang_name = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    // Drupal 7 equivalent
+    //$lang_name = $language->language;
+    self::$javascript .= "indiciaData.langName='" .$lang_name. "';\n";
+    self::$javascript .= "indiciaData.imageCategoryTranslations=" . json_encode($translations) . ";\n";
+    return $translations;
   }
 
   /**
