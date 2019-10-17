@@ -179,9 +179,16 @@ class iform_quick_species_maps {
     $args['indicia_species_layer_slds'] = report_helper::explode_lines($args['indicia_species_layer_slds']);
     $r .= '<div id="rightcol">';
     $r .= '<div id="layerbox">';
+
+    $r .= '<div style="margin:0.5em 0 0.5em 0"><input type="checkbox" checked id="showInstructions" style="margin-right:1em">'. lang::get('Show instructions');
+    $r .= '<input type="checkbox" id="showLegend" style="margin:0 1em 0 3em" checked>'. lang::get('Show legend') . '</div>';
     $r .= '<p id="instruct">' . lang::get('Click on the + buttons in the grid to add species layers to the map. You can add up to {1} layers at a time.',
-        count($args['indicia_species_layer_slds']));
-    $r .= '<p id="instruct2" style="display: none">' . lang::get('Use the - buttons to permanently remove layers, or untick the box in the legend to temporarily hide them.');
+         count($args['indicia_species_layer_slds']));
+    $r .= lang::get('Use the - buttons to permanently remove layers, or untick the box in the legend to temporarily hide them.');
+
+    // $r .= '<p id="instruct">' . lang::get('Click on the + buttons in the grid to add species layers to the map. You can add up to {1} layers at a time.',
+    //     count($args['indicia_species_layer_slds']));
+    // $r .= '<p id="instruct2" style="display: none">' . lang::get('Use the - buttons to permanently remove layers, or untick the box in the legend to temporarily hide them.');
     $mapOptions = iform_map_get_map_options($args, $readAuth);
     $mapOptions['clickForSpatialRef'] = FALSE;
     $olOptions = iform_map_get_ol_options($args, $readAuth);

@@ -49,13 +49,8 @@ $(document).ready(function () {
     if ((evt.target.localName || evt.target.nodeName.toLowerCase())!=="img") {
       return;
     }
-    // Toggle through instructions to get the user started
-    if (sequence===0) {
-      $('#instruct').slideUp();
-      $('#instruct2').show();
-    } else if (sequence===1) {
-      $('#instruct2').slideUp();
-    }
+
+    
     // Find the taxon's key (e.g. tvk)
     key=$(evt.target).parents('tr')[0].id.substr(3);
     if ($(evt.target).hasClass('on-map')) {
@@ -86,16 +81,38 @@ $(document).ready(function () {
           {isBaseLayer: false, sphericalMercator: true, singleTile: true, opacity: 0.5});
       indiciaData.mapdiv.map.addLayer(layer);
       layers.push({layer:layer,key:key});
-      if (layers.length>indiciaData.indiciaSpeciesLayer.slds.length) {
+      //if (layers.length>indiciaData.indiciaSpeciesLayer.slds.length) {
+      if (layers.length>10) {
         remove=layers.splice(0,1);
         img = $('tr#row'+remove[0].key).find('img');
-        img.attr('src', img.attr('src').replace('delete.png','add.png'));
-        img.removeClass('on-map');
+        // Image may not be found, e.g. if filtes have been applied.
+        if (img.length) {
+          img.attr('src', img.attr('src').replace('delete.png','add.png'));
+          img.removeClass('on-map');
+        }
         indiciaData.mapdiv.map.removeLayer(remove[0].layer);
       }
       $(evt.target).attr('src', $(evt.target).attr('src').replace('add.png','delete.png'));
       $(evt.target).addClass('on-map');
       sequence++;
+    }
+  });
+  
+  /**
+   * Respond to checkbox clicks for hiding/showing legend and instructions.
+   */
+  $('#showInstructions').click(function (evt) {
+    if (this.checked) {
+      $('#instruct').show();
+    } else {
+      $('#instruct').hide();
+    }
+  });
+  $('#showLegend').click(function (evt) {
+    if (this.checked) {
+      $('#layerbox .layer_list').show();
+    } else {
+      $('#layerbox .layer_list').hide();
     }
   });
 });

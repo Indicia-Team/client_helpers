@@ -17,7 +17,7 @@ div #leftcol {
   border: solid silver 1px; }
 div #layerbox {
   padding: 0 1em;
-  height: 90px; }
+  height: auto; }
   div #layerbox ul li {
     background: none;
     vertical-align: middle; }
