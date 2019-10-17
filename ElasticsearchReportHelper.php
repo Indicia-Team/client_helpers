@@ -335,6 +335,7 @@ JS;
       'includeMultiSelectTool',
       'responsive',
       'responsiveOptions',
+      'autoResponsiveCols',
       'sortable',
       'aggregation',
       'sourceTable',
