@@ -82,7 +82,7 @@ $(document).ready(function () {
       indiciaData.mapdiv.map.addLayer(layer);
       layers.push({layer:layer,key:key});
       //if (layers.length>indiciaData.indiciaSpeciesLayer.slds.length) {
-      if (layers.length>10) {
+      if (layers.length>20) {
         remove=layers.splice(0,1);
         img = $('tr#row'+remove[0].key).find('img');
         // Image may not be found, e.g. if filtes have been applied.
