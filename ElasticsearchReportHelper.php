@@ -336,6 +336,7 @@ JS;
       'responsive',
       'responsiveOptions',
       'autoResponsiveCols',
+      'autoResponsiveExpand',
       'sortable',
       'aggregation',
       'sourceTable',
