@@ -185,7 +185,8 @@ class ElasticsearchProxyHelper {
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
       throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
-    echo self::internalUpdateIds($_POST['ids'], $_POST['doc']['identification'],
+    $statuses = isset($_POST['doc']['identification']) ? $_POST['doc']['identification'] : [];
+    echo self::internalUpdateIds($_POST['ids'], $statuses,
       isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
   }
 
