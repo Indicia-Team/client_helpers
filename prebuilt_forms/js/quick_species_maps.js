@@ -43,6 +43,29 @@ $(document).ready(function () {
   var sequence=0, remove, removeIdx, img, title, key, filter, sld;
   
   /**
+   * Catch change of state on the show instructins checkbox.
+   */
+  $('#layerbox #checkShowInstructions').change(function () {
+    if(this.checked) {
+      $('#layerbox #instruct').show()
+    } else {
+      $('#layerbox #instruct').hide()
+    }
+    
+  })
+
+  /**
+   * Catch change of state on the show legend checkbox.
+   */
+  $('#layerbox #checkShowLegend').change(function () {
+    if(this.checked) {
+      $('#layerbox #layers').show()
+    } else {
+      $('#layerbox #layers').hide()
+    }
+  })
+
+  /**
    * Catch clicks on the grid icons, to add layers for the species to the map.
    */
   $('table.report-grid tbody').click(function (evt) {
@@ -50,7 +73,6 @@ $(document).ready(function () {
       return;
     }
 
-    
     // Find the taxon's key (e.g. tvk)
     key=$(evt.target).parents('tr')[0].id.substr(3);
     if ($(evt.target).hasClass('on-map')) {
@@ -68,7 +90,7 @@ $(document).ready(function () {
         $(evt.target).removeClass('on-map');
       }
     } else {
-      // not on the
+      // not on the map
       title=indiciaData.indiciaSpeciesLayer.title.replace('{1}', $($(evt.target).parents('tr')[0]).find('td:first').text());
       filter=indiciaData.indiciaSpeciesLayer.cqlFilter.replace('{filterValue}', key);
       if ($('#report-ownData').attr('checked')) {
@@ -81,40 +103,19 @@ $(document).ready(function () {
           {isBaseLayer: false, sphericalMercator: true, singleTile: true, opacity: 0.5});
       indiciaData.mapdiv.map.addLayer(layer);
       layers.push({layer:layer,key:key});
-      //if (layers.length>indiciaData.indiciaSpeciesLayer.slds.length) {
-      if (layers.length>20) {
+      if (layers.length>indiciaData.indiciaSpeciesLayer.max_layers) {
         remove=layers.splice(0,1);
-        img = $('tr#row'+remove[0].key).find('img');
-        // Image may not be found, e.g. if filtes have been applied.
-        if (img.length) {
-          img.attr('src', img.attr('src').replace('delete.png','add.png'));
-          img.removeClass('on-map');
-        }
         indiciaData.mapdiv.map.removeLayer(remove[0].layer);
+        img = $('tr#row'+remove[0].key).find('img');
+        //If row not currently visible in grid, img.length will be zero
+        img.length && img.attr('src', img.attr('src').replace('delete.png','add.png'));
+        img.length && img.removeClass('on-map'); 
       }
       $(evt.target).attr('src', $(evt.target).attr('src').replace('add.png','delete.png'));
       $(evt.target).addClass('on-map');
       sequence++;
     }
-  });
-  
-  /**
-   * Respond to checkbox clicks for hiding/showing legend and instructions.
-   */
-  $('#showInstructions').click(function (evt) {
-    if (this.checked) {
-      $('#instruct').show();
-    } else {
-      $('#instruct').hide();
-    }
-  });
-  $('#showLegend').click(function (evt) {
-    if (this.checked) {
-      $('#layerbox .layer_list').show();
-    } else {
-      $('#layerbox .layer_list').hide();
-    }
-  });
+  }); 
 });
 
 }(jQuery));
