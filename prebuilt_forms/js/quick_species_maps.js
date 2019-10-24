@@ -107,9 +107,11 @@ $(document).ready(function () {
         remove=layers.splice(0,1);
         indiciaData.mapdiv.map.removeLayer(remove[0].layer);
         img = $('tr#row'+remove[0].key).find('img');
-        //If row not currently visible in grid, img.length will be zero
-        img.length && img.attr('src', img.attr('src').replace('delete.png','add.png'));
-        img.length && img.removeClass('on-map'); 
+        if (img.length){
+          //If row not currently visible in grid, img.length will be zero
+          img.attr('src', img.attr('src').replace('delete.png','add.png'));
+          img.removeClass('on-map'); 
+        }
       }
       $(evt.target).attr('src', $(evt.target).attr('src').replace('add.png','delete.png'));
       $(evt.target).addClass('on-map');
