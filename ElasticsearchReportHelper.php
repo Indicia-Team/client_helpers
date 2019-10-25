@@ -250,6 +250,24 @@ class ElasticsearchReportHelper {
   }
 
   /**
+   * A control for flexibly outputting data formatted using a custom script.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   */
+  public static function customScript(array $options) {
+    self::checkOptions('customScript', $options, ['source', 'functionName'], []);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'source',
+      'functionName',
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcCustomScript({});
+
+JS;
+    return self::getControlContainer('customScript', $options, $dataOptions);
+  }
+
+  /**
    * An Elasticsearch or Indicia powered grid control.
    *
    * @return string
@@ -277,6 +295,9 @@ class ElasticsearchReportHelper {
     foreach ($options['columns'] as $columnDef) {
       if (empty($columnDef['field'])) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
+      }
+      if (!isset($columnDef['caption'])) {
+        $columnDef['caption'] = '';
       }
       $field = $columnDef['field'];
       unset($columnDef['field']);
@@ -314,6 +335,8 @@ class ElasticsearchReportHelper {
       'includeMultiSelectTool',
       'responsive',
       'responsiveOptions',
+      'autoResponsiveCols',
+      'autoResponsiveExpand',
       'sortable',
       'aggregation',
       'sourceTable',

@@ -139,7 +139,7 @@ class import_helper extends helper_base {
       else {
         $options['allowCommitToDB'] = TRUE;
       }
-      return self::upload_mappings_form($options);
+      return self::uploadMappingsForm($options);
     // Import step 2 is only shown if the preventCommitsOnError option has been set.
     // This means we don't commit any rows at all if any errors are found, therefore we need
     // an extra error checking step
@@ -245,54 +245,61 @@ class import_helper extends helper_base {
       $form = self::build_params_form($formOptions, $hasVisibleContent);
       // If there are no settings required, skip to the next step.
       if (!$hasVisibleContent) {
-        return self::upload_mappings_form($options);
+        return self::uploadMappingsForm($options);
       }
       $r .= $form;
       if (isset($options['presetSettings'])) {
-        // The presets might contain some extra values to apply to every row - must be output as hiddens
+        // The presets might contain some extra values to apply to every row -
+        // must be output as hiddens.
         $extraHiddens = array_diff_key($options['presetSettings'], $formArray);
         unset($extraHiddens['password']);
         foreach ($extraHiddens as $hidden => $value) {
           $r .= "<input type=\"hidden\" name=\"$hidden\" value=\"$value\" />\n";
         }
       }
-      // If import behaviour is to be specified by the user, then provide options on the screen for them.
-      // If not specified by the user they must be hidden in the background
-      if (($options['importPreventCommitBehaviour']==='user_defined') ||
-          ($options['importSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample'))) {
+      // If import behaviour is to be specified by the user, then provide
+      // options on the screen for them. If not specified by the user they
+      // must be hidden in the background.
+      if (($options['importPreventCommitBehaviour'] === 'user_defined') ||
+          ($options['importSampleLogic'] === 'user_defined' && ($options['model'] === 'occurrence'||$options['model'] === 'sample'))) {
         $r .= '<hr>';
       }
-      // In this case the administrator has specific on the Edit Tab that any errors will prevent the import.
-      // Keep this information in a hidden checkbox
-      if ($options['importPreventCommitBehaviour']==='prevent')
+      // In this case the administrator has specific on the Edit Tab that any
+      // errors will prevent the import. Keep this information in a hidden
+      // checkbox.
+      if ($options['importPreventCommitBehaviour'] === 'prevent') {
         $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" checked>';
-      // In this case the administrator has specific on the Edit Tab that any errors will only affect
-      // affected rows and working rows can be committed.
-      // Keep this information in a hidden checkbox
-      if ($options['importPreventCommitBehaviour']==='partial_import')
+      }
+      // In this case the administrator has specific on the Edit Tab that any
+      // errors will only affect affected rows and working rows can be
+      // committed. Keep this information in a hidden checkbox.
+      if ($options['importPreventCommitBehaviour'] === 'partial_import') {
         $r .= '<input type="checkbox" style="display:none;" name="preventCommitsOnError" >';
-      // Admin has specified that user can provide option so display to screen
-      if ($options['importPreventCommitBehaviour']==='user_defined') {
+      }
+      // Admin has specified that user can provide option so display to screen.
+      if ($options['importPreventCommitBehaviour'] === 'user_defined') {
         $r .= data_entry_helper::checkbox(array(
           'label' => lang::get('Reject entire import if there are any errors'),
           'fieldname' => 'preventCommitsOnError',
-          'helpText'=>'Select this checkbox to prevent the importing of any rows '
-              .'if there are any errors at all. Leave this checkbox switched off to import valid rows. Please note: Functionality to update '
-              . 'existing data is currently disabled when this option is selected, only new data can be imported.'
+          'helpText' => 'Select this checkbox to prevent the importing of any rows ' .
+              'if there are any errors at all. Leave this checkbox switched off to import valid rows. Please note: Functionality to update ' .
+               'existing data is currently disabled when this option is selected, only new data can be imported.'
         ));
       }
-      // Same logic for other behaviour option
-      if ($options['importSampleLogic']==='sample_ext_key')
-      $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" checked>';
-      if ($options['importSampleLogic']==='consecutive_rows')
-      $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" >';
-      if ($options['importSampleLogic']==='user_defined' && ($options['model']==='occurrence'||$options['model']==='sample')) {
-      $r .= data_entry_helper::checkbox(array(
-        'label' => lang::get('Samples verified by sample key field'),
-        'fieldname' => 'verifySamplesUsingExternalKey',
-        'helpText'=>'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '.
-        'e.g. occurrences with the same external key on the row cannot have different sample dates. Note that rows for the same sample must still be placed consecutively in the import file.'
-      ));
+      // Same logic for other behaviour option.
+      if ($options['importSampleLogic'] === 'sample_ext_key') {
+        $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" checked>';
+      }
+      if ($options['importSampleLogic'] === 'consecutive_rows') {
+        $r .= '<input type="checkbox" style="display:none;" name="verifySamplesUsingExternalKey" >';
+      }
+      if ($options['importSampleLogic'] === 'user_defined' && ($options['model'] === 'occurrence' || $options['model'] === 'sample')) {
+        $r .= data_entry_helper::checkbox([
+          'label' => lang::get('Samples verified by sample key field'),
+          'fieldname' => 'verifySamplesUsingExternalKey',
+          'helpText' => 'Select this checkbox to verify imported samples using the sample external key field to determine consistency between the imported rows. '.
+          'e.g. occurrences with the same external key on the row cannot have different sample dates. Note that rows for the same sample must still be placed consecutively in the import file.'
+        ]);
       }
       $r .= '<input type="hidden" name="import_step" value="1" />';
       $r .= '<input type="submit" name="submit" value="' . lang::get('Next') . '" class="ui-corner-all ui-state-default button" />';
@@ -309,7 +316,7 @@ class import_helper extends helper_base {
     else {
       // No settings form, so output the mappings form instead which is the
       // next step.
-      return self::upload_mappings_form($options);
+      return self::uploadMappingsForm($options);
     }
   }
 
@@ -319,7 +326,7 @@ class import_helper extends helper_base {
    * @param array $options
    *   Options array passed to the import control.
    */
-  private static function upload_mappings_form(array $options) {
+  private static function uploadMappingsForm(array $options) {
     ini_set('auto_detect_line_endings', 1);
     $t = self::getTranslations([
       'Because you are looking up existing records to import into, required field validation will only be applied when the new data are merged into the existing data during import.',
@@ -378,7 +385,7 @@ class import_helper extends helper_base {
       $options['importMergeFields'] = json_decode($options['importMergeFields']);
     }
     if (isset($options['synonymProcessing']) && is_string($options['synonymProcessing'])) {
-        $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
+      $options['synonymProcessing'] = json_decode($options['synonymProcessing']);
     }
     if (isset($options['importMergeFields']) && $options['importMergeFields'] != '' && $options['importMergeFields'] != '{}') {
       foreach ($options['importMergeFields'] as $modelSpec) {
@@ -412,17 +419,17 @@ class import_helper extends helper_base {
       }
     }
     if (isset($options['synonymProcessing'])) {
-        $synonymProcessing = $options['synonymProcessing'];
-        if (isset($synonymProcessing->separateSynonyms) && $synonymProcessing->separateSynonyms === TRUE) {
-            $fields['synonym:tracker'] = lang::get("Main record vs Synonym");
-            $fields['synonym:identifier'] = lang::get("Field to group records together");
-        }
+      $synonymProcessing = $options['synonymProcessing'];
+      if (isset($synonymProcessing->separateSynonyms) && $synonymProcessing->separateSynonyms === TRUE) {
+        $fields['synonym:tracker'] = lang::get("Main record vs Synonym");
+        $fields['synonym:identifier'] = lang::get("Field to group records together");
+      }
     }
     $request = str_replace('get_import_fields', 'get_required_fields', $request);
     $response = self::http_post($request);
     $responseIds = json_decode($response['output'], TRUE);
     if (!is_array($responseIds)) {
-        return "curl request to $request failed. Response " . print_r($response, TRUE);
+      return "curl request to $request failed. Response " . print_r($response, TRUE);
     }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
     $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys($settings)) : array();
@@ -439,7 +446,7 @@ class import_helper extends helper_base {
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
     // If the user checked the Remember All checkbox need to remember this
     // setting.
-    $checkedRememberAll = isset($autoFieldMappings['RememberAll']) ? ' checked="checked"' : '';
+    $checkedRememberAll = isset($autoFieldMappings['rememberall']) ? ' checked="checked"' : '';
     $r = <<<HTML
 <form method="post" id="entry_form" action="$reloadpath" class="iform">
   <p>{$t['column_mapping_instructions']}</p>
@@ -474,22 +481,24 @@ HTML;
     // and if left in cause problems. Remove this options (held in $importDuplicateCheckCombinationsToRemove)
     $existingDataLookupOptions = array();
     $importDuplicateCheckCombinations = json_decode($response['output'], TRUE);
-    $importDuplicateCheckCombinationsToRemove = array('taxa_taxon_list:taxon_id', 'sample:sample_method_id');
-    foreach ($importDuplicateCheckCombinations[$options['model']] as $idx => $importDuplicateCheckCombination) {
-      foreach ($importDuplicateCheckCombination['fields'] as $idx2 => $field) {
-        if (!empty($field['fieldName']) && in_array($field['fieldName'], $importDuplicateCheckCombinationsToRemove)) {
-          unset($importDuplicateCheckCombinations[$options['model']][$idx]['fields'][$idx2]);
+    if (isset($importDuplicateCheckCombinations[$options['model']])) {
+      $importDuplicateCheckCombinationsToRemove = array('taxa_taxon_list:taxon_id', 'sample:sample_method_id');
+      foreach ($importDuplicateCheckCombinations[$options['model']] as $idx => $importDuplicateCheckCombination) {
+        foreach ($importDuplicateCheckCombination['fields'] as $idx2 => $field) {
+          if (!empty($field['fieldName']) && in_array($field['fieldName'], $importDuplicateCheckCombinationsToRemove)) {
+            unset($importDuplicateCheckCombinations[$options['model']][$idx]['fields'][$idx2]);
+          }
         }
       }
-    }
-    $existingDataLookupOptions = $importDuplicateCheckCombinations;
+      $existingDataLookupOptions = $importDuplicateCheckCombinations;
 
-    if (!is_array($existingDataLookupOptions)) {
-      // There is a possibility that the warehouse is not as advanced as the form: in this case we carry on as if no options are avaailable.
-      $existingDataLookupOptions = array();
-    }
-    if (count($existingDataLookupOptions) > 0) {
-      $r .= "<th>{$t['Used in lookup of existing data?']}</th>";
+      if (!is_array($existingDataLookupOptions)) {
+        // There is a possibility that the warehouse is not as advanced as the form: in this case we carry on as if no options are avaailable.
+        $existingDataLookupOptions = array();
+      }
+      if (count($existingDataLookupOptions) > 0) {
+        $r .= "<th>{$t['Used in lookup of existing data?']}</th>";
+      }
     }
 
     $r .= '</tr></thead><tbody>';
@@ -498,7 +507,7 @@ HTML;
       $column = trim($column);
       if (!empty($column)) {
         $colCount++;
-        $colFieldName = preg_replace('/[^A-Za-z0-9]/', '_', $column);
+        $colFieldName = self::columnMachineName($column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
         $r .= self::getColumnOptions(
           $options['model'],
@@ -643,6 +652,23 @@ JS;
   }
 
   /**
+   * Converts field mappings configuration text to an array.
+   *
+   * The fieldMap config is a list of database fields with optional '=column
+   * titles' added to them. Need a list of column titles mapped to fields so
+   * swap this around.
+   */
+  private static function extractFieldData($fieldText, &$autoFieldMappings) {
+    $fields = self::explode_lines($fieldText);
+    foreach ($fields as $field) {
+      $tokens = explode('=', $field);
+      if (count($tokens) === 2) {
+        $autoFieldMappings[self::strForCompare($tokens[1])] = $tokens[0];
+      }
+    }
+  }
+
+  /**
    * Returns an array of field to column title mappings that were previously stored in the user profile,
    * or mappings that were provided via the page's configuration form.
    * If the user profile does not support saving mappings then sets self::$rememberingMappings to false.
@@ -662,7 +688,7 @@ JS;
       }
       else {
         $json = trim($json);
-        $autoFieldMappings = json_decode(trim($json), TRUE);
+        $autoFieldMappings = json_decode(strtolower(trim($json)), TRUE);
       }
     }
     else {
@@ -673,31 +699,16 @@ JS;
       foreach ($options['fieldMap'] as $surveyFieldMap) {
         if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
             $surveyFieldMap['survey_id'] == $settings['survey_id']) {
-          // The fieldMap config is a list of database fields with optional '=column titles' added to them.
-          // Need a list of column titles mapped to fields so swap this around.
-          $fields = self::explode_lines($surveyFieldMap['fields']);
-          foreach ($fields as $field) {
-            $tokens = explode('=', $field);
-            if (count($tokens) === 2) {
-              $autoFieldMappings[$tokens[1]] = $tokens[0];
-            }
-          }
+          self::extractFieldData($surveyFieldMap['fields'], $autoFieldMappings);
         }
       }
     }
-    else if (empty($settings['survey_id']) && !empty($options['fieldMap'])) {
-      // for locations, there is no survey ID, so do the same but with special survey check
+    elseif (empty($settings['survey_id']) && !empty($options['fieldMap'])) {
+      // For locations, there is no survey ID, so do the same but with special
+      // survey check.
       foreach ($options['fieldMap'] as $surveyFieldMap) {
         if (!isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) /* Used for locations */) {
-          // The fieldMap config is a list of database fields with optional '=column titles' added to them.
-          // Need a list of column titles mapped to fields so swap this around.
-          $fields = self::explode_lines($surveyFieldMap['fields']);
-          foreach ($fields as $field) {
-            $tokens = explode('=', $field);
-            if (count($tokens) === 2) {
-              $autoFieldMappings[$tokens[1]] = $tokens[0];
-            }
-          }
+          self::extractFieldData($surveyFieldMap['fields'], $autoFieldMappings);
         }
       }
     }
@@ -950,6 +961,36 @@ JS;
   }
 
   /**
+   * Return simplified string for comparisons.
+   *
+   * Allows less fussy column title matching.
+   *
+   * @param string $str
+   *   String to simplify.
+   *
+   * @return string
+   *   String, lowercased, only alphanumerics.
+   */
+  private static function strForCompare($str) {
+    return preg_replace('/[^\da-z]/', '', strtolower($str));
+  }
+
+  /**
+   * Return column caption translated to machine name.
+   *
+   * E.g. consistent way to determine name attr for associated control.
+   *
+   * @param string $caption
+   *   Caption to convert.
+   *
+   * @return string
+   *   Non-alphanumerics replaced with _.
+   */
+  private static function columnMachineName($caption) {
+    return preg_replace('/[^A-Za-z0-9]/', '_', trim($caption));
+  }
+
+  /**
    * Retrieve column options for import.
    *
    * Returns a list of columns as an list of <options> for inclusion in an HTML
@@ -1043,12 +1084,14 @@ JS;
       // Skip the metadata fields.
       if (!in_array($fieldname, $skipped)) {
         $selected = FALSE;
-        //get user's saved settings, last parameter is 2 as this forces the system to explode into a maximum of two segments.
-        //This means only the first occurrence for the needle is exploded which is desirable in the situation as the field caption
-        //contains colons in some situations.
-        $colKey = preg_replace('/[^A-Za-z0-9]/', ' ', $column);
-        if (!empty($autoFieldMappings[$colKey]) && $autoFieldMappings[$colKey]!=='<Not imported>') {
-          $savedData = explode(':',$autoFieldMappings[$colKey],2);
+        // Get user's saved settings, last parameter is 2 as this forces the
+        // system to explode into a maximum of two segments. This means only
+        // the first occurrence for the needle is exploded which is desirable
+        // in the situation as the field caption contains colons in some
+        // situations.
+        $colKey = self::strForCompare($column);
+        if (!empty($autoFieldMappings[$colKey]) && $autoFieldMappings[$colKey] !== '<not imported>') {
+          $savedData = explode(':', $autoFieldMappings[$colKey], 2);
           $savedSectionHeading = $savedData[0];
           $savedMainCaption = $savedData[1];
         }
@@ -1056,24 +1099,28 @@ JS;
           $savedSectionHeading = '';
           $savedMainCaption = '';
         }
-        //Detect if the user has saved a column setting that is not 'not imported' then call the method that handles the auto-match rules.
+        // Detect if the user has saved a column setting that is not 'not
+        // imported' then call the method that handles the auto-match rules.
         if (strcasecmp($prefix, $savedSectionHeading) === 0 &&
             strcasecmp($field, $savedSectionHeading . ':' . $savedMainCaption) === 0) {
           $selected = TRUE;
           $itWasSaved[$column] = 1;
-          //even though we have already detected the user has a saved setting, we need to call the auto-detect rules as if it gives the same result then the system acts as if it wasn't saved.
+          // Even though we have already detected the user has a saved setting,
+          // we need to call the auto-detect rules as if it gives the same
+          // result then the system acts as if it wasn't saved.
           $saveDetectRulesResult = self::auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved[$column], TRUE);
           $itWasSaved[$column] = $saveDetectRulesResult['itWasSaved'];
         }
         else {
-          //only use the auto field selection rules to select the drop-down if there isn't a saved option
+          // Only use the auto field selection rules to select the drop-down if
+          // there isn't a saved option
           if (!isset($autoFieldMappings[$colKey])) {
             $nonSaveDetectRulesResult = self::auto_detection_rules($column, $defaultCaption, $strippedScreenCaption, $prefix, $labelList, $itWasSaved[$column], FALSE);
             $selected = $nonSaveDetectRulesResult['selected'];
           }
         }
         //As a last resort. If we have a match and find that there is more than one caption with this match, then flag a multiMatch to deal with it later
-        if (strcasecmp($strippedScreenCaption, $column)==0 && $labelList[strtolower($strippedScreenCaption)] > 1) {
+        if (strcasecmp($strippedScreenCaption, $column) == 0 && $labelList[strtolower($strippedScreenCaption)] > 1) {
           $multiMatch[] = $column;
           $optionID = $idColumn . 'Duplicate';
         }
@@ -1081,14 +1128,15 @@ JS;
           $optionID = $idColumn . 'Normal';
         }
         $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
-        if ($selected)
+        if ($selected) {
           self::$automaticMappings[$column] = $field;
+        }
       }
 
-      // if we have got an option for this field, add to the list
+      // If we have got an option for this field, add to the list.
       if (isset($option)) {
-        // first check if we need a new heading
-        if ($prefix!=$heading) {
+        // First check if we need a new heading.
+        if ($prefix != $heading) {
           $heading = $prefix;
           $class = '';
           if (isset($labelListHeading[$column . $heading])) {
@@ -1150,7 +1198,8 @@ JS;
     );
     $selected = FALSE;
     //handle situation where there is a unique exact match
-    if (strcasecmp($strippedScreenCaption, $column)==0 && $labelList[strtolower($strippedScreenCaption)] == 1) {
+    if (self::strForCompare($strippedScreenCaption) === self::strForCompare($column)
+        && $labelList[strtolower($strippedScreenCaption)] == 1) {
       if ($saveDetectedMode) {
         $itWasSaved = 0;
       }
@@ -1159,7 +1208,7 @@ JS;
       }
     }
     else {
-      //handle the situation where a there isn' a unqiue match, but there is if you take the heading into account also
+      //handle the situation where a there isn' a unique match, but there is if you take the heading into account also
       if (strcasecmp($prefix . ' ' . $strippedScreenCaption, $column)==0) {
         if ($saveDetectedMode) {
           $itWasSaved = 0;
@@ -1203,7 +1252,7 @@ JS;
     $optionID = str_replace(" ", "", $column) . 'Normal';
     $r = "<option value=\"&lt;Not imported&gt;\">&lt;" . lang::get('Not imported') . '&gt;</option>' . $r . '</optgroup>';
     if (self::$rememberingMappings) {
-      $inputName = preg_replace('/[^A-Za-z0-9]/', '_', $column) . '.Remember';
+      $inputName = self::columnMachineName($column) . '.Remember';
       $checked = ($itWasSaved[$column] == 1 || $rememberAll) ? ' checked="checked"' : '';
       $r .= <<<TD
 <td class="centre">
@@ -1216,7 +1265,7 @@ JS;
 TD;
     }
     if ($includeLookups) {
-      $checkboxName = preg_replace('/[^A-Za-z0-9]/', '_', $column) . '.Lookup';
+      $checkboxName = self::columnMachineName($column) . '.Lookup';
       $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
       $r .= <<<TD
 <td class="centre">
@@ -1407,7 +1456,7 @@ TD;
     $columns = fgetcsv($handle, 1000, ",");
     fclose($handle);
     foreach($columns as $column) {
-      $internalColumn = str_replace(" ", "_", $column);
+      $internalColumn = self::columnMachineName($column);
       $idx=0;
       // For UTF with BOM, the first heading seems to get underscores attached to the front of it,
       // need to strip these and reinstate the array item in a minute as it doesn't get picked up by the $correctedMappings below
@@ -1509,9 +1558,10 @@ TD;
   }
 
   private static function create_metadata_array($mappings, $settings, $options) {
-    $metadata = [
-      'user_id' => hostsite_get_user_field('indicia_user_id'),
-    ];
+    $metadata = [];
+    if (function_exists('hostsite_get_user_field')) {
+      $metadata['user_id'] = hostsite_get_user_field('indicia_user_id');
+    }
     if (!empty($mappings)) {
       $metadata['mappings'] = json_encode($mappings);
     }

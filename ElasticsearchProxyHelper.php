@@ -86,6 +86,7 @@ class ElasticsearchProxyHelper {
    *   Node ID to obtain connection info from.
    */
   private static function proxyAttrDetails($nid) {
+    iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $options = array(
@@ -117,6 +118,7 @@ class ElasticsearchProxyHelper {
    *   Node ID to obtain connection info from.
    */
   private static function proxyComments($nid) {
+    iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     $options = array(
