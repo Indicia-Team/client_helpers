@@ -1,54 +1,90 @@
 @media only screen and (min-width: 768px) {
   div #rightcol {
     width: 49%;
-    float: right; }
+    float: right;
+  }
   div #leftcol {
     width: 49%;
-    float: left; } }
+    float: left;
+  }
+}
 div #rightcol {
-  -moz-box-shadow: silver 3px 3px 6px;
   -webkit-box-shadow: silver 3px 3px 6px;
+  -moz-box-shadow: silver 3px 3px 6px;
   box-shadow: silver 3px 3px 6px;
-  border: solid silver 1px; }
+  border: solid silver 1px;
+}
 div #leftcol {
-  -moz-box-shadow: silver 3px 3px 6px;
   -webkit-box-shadow: silver 3px 3px 6px;
+  -moz-box-shadow: silver 3px 3px 6px;
   box-shadow: silver 3px 3px 6px;
-  border: solid silver 1px; }
+  border: solid silver 1px;
+}
 div #layerbox {
   padding: 0 1em;
-  height: 90px; }
-  div #layerbox ul li {
-    background: none;
-    vertical-align: middle; }
-    div #layerbox ul li input {
-      margin: 0 0.5em;
-      vertical-align: middle; }
-    div #layerbox ul li img {
-      margin: 0 0.5em;
-      vertical-align: middle; }
+  height: auto;
+}
+div #layerbox ul li {
+  background: none;
+  vertical-align: middle;
+}
+div #layerbox ul li input {
+  margin: 0 0.5em;
+  vertical-align: middle;
+}
+div #layerbox ul li img {
+  margin: 0 0.5em;
+  vertical-align: middle;
+}
 
 #report-params fieldset {
   border: none;
   margin: 0;
-  padding: 0 1em; }
-  #report-params fieldset legend {
-    display: none; }
+  padding: 0 1em;
+}
+#report-params fieldset legend {
+  display: none;
+}
 #report-params div.fieldset-wrapper > * {
+  display: -moz-inline-stack;
   display: inline-block;
   vertical-align: middle;
   *vertical-align: auto;
-  *zoom: 1;
-  *display: inline; }
+  zoom: 1;
+  *display: inline;
+}
 #report-params .param-container > * {
-  vertical-align: middle; }
+  vertical-align: middle;
+}
 #report-params label, #report-params input {
   width: auto;
-  margin: 0.1em 0.25em 0.1em 0.5em; }
+  margin: 0.1em 0.25em 0.1em 0.5em;
+}
 
 .action-button {
   min-width: 16px;
   min-height: 16px;
-  border-bottom: none; }
+  border-bottom: none;
+}
+
+#layerbox #checkShowInstructions {
+  margin: 0.5em 1em 1em 0;
+}
+
+#layerbox #checkShowLegend {
+  margin: 0.5em 1em 1em 2em;
+}
+
+p#instruct {
+  margin-bottom: 0.5em;
+}
+
+#map-container {
+  margin-top: 0.5em;
+}
+
+#layers ul {
+  margin: 0;
+}
 
 /*# sourceMappingURL=quick_species_maps.css.map */
