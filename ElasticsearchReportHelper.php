@@ -247,6 +247,8 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+    $config = hostsite_get_es_config($nid);
+    helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
   }
 
   /**
@@ -1154,7 +1156,9 @@ HTML;
    */
   private static function getMappings($nid) {
     $config = hostsite_get_es_config($nid);
-    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping/doc';
+    // /doc added to URL only for Elasticsearch 6.x.
+    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
+      ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
@@ -1179,7 +1183,11 @@ HTML;
     $mappingData = json_decode($response, TRUE);
     $mappingData = array_pop($mappingData);
     $mappings = [];
-    self::recurseMappings($mappingData['mappings']['doc']['properties'], $mappings);
+    // ES 6.x has a type (doc) within the index, ES 7.x doesn't support this.
+    $props = $config['es']['version'] == 6
+      ? $mappingData['mappings']['doc']['properties']
+      : $mappingData['mappings']['properties'];
+    self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
 
