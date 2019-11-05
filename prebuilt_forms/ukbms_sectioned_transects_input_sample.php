@@ -941,7 +941,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       $url = explode('#', $url[0], 2);
       if (count($url)>1) $fragment=$url[1];
     }
-    $args['return_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
+    $args['return_page'] = hostsite_get_url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
 
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/ukbms_sectioned_transects_input_sample') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
@@ -955,7 +955,6 @@ class iform_ukbms_sectioned_transects_input_sample {
   }
 
   public static function get_sample_form($args, $nid, $response) {
-    global $user;
 
     data_entry_helper::add_resource('autocomplete');
 
@@ -1053,7 +1052,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       $siteParams = self::$auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
       if ((!isset($args['user_locations_filter']) || $args['user_locations_filter']) &&
           (!isset($args['managerPermission']) || !hostsite_user_has_permission($args['managerPermission']))) {
-        $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>$user->uid);
+        $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>hostsite_get_user_field('id'));
       } else
         $siteParams += array('locattrs'=>'');
       $availableSites = data_entry_helper::get_population_data(array(
@@ -1072,7 +1071,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       // Only need to do if not a manager - they have already fetched the full list anyway.
       if(isset($args['branch_assignment_permission']) && hostsite_user_has_permission($args['branch_assignment_permission']) && $siteParams['locattrs']!='') {
         $siteParams['locattrs']='Branch CMS User ID';
-        $siteParams['attr_location_branch_cms_user_id']=$user->uid;
+        $siteParams['attr_location_branch_cms_user_id']=hostsite_get_user_field('id');
         unset($siteParams['attr_location_cms_user_id']);
         $availableSites = data_entry_helper::get_population_data(array(
             'report'=>'library/locations/locations_list',
@@ -1193,7 +1192,6 @@ class iform_ukbms_sectioned_transects_input_sample {
   }
 
   public static function get_occurrences_form($args, $nid, $response) {
-    global $user;
     global $indicia_templates;
 
     $formOptions = array(
@@ -1230,7 +1228,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     $oldCtrlWrapTemplate = $indicia_templates['controlWrap'];
     $indicia_templates['controlWrap'] = '{control}';
 
-    drupal_add_js('misc/tableheader.js'); // for sticky heading
+    // drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
     data_entry_helper::add_resource('json');
@@ -1546,7 +1544,7 @@ class iform_ukbms_sectioned_transects_input_sample {
         (isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "" ?
             '<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($site_attributes)>0 && $site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
       '<input name="occAttr:' . $args['occurrence_attribute_id'] . '" id="occattr"/>' .
-      '<input name="transaction_id" id="transaction_id"/>' .
+      '<input name="transaction_id" id="occurrence_transaction_id"/>' .
       '<input name="user_id" value="'.self::$userId.'"/>' .
        '</form>';
 
@@ -1565,7 +1563,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     foreach ($attributes as $attr) {
       $r .= '<input id="'.$attr['fieldname'].'" />';
     }
-    $r .=   '<input name="transaction_id" id="transaction_id"/>' .
+    $r .= '<input name="transaction_id" id="sample_transaction_id"/>' .
       '<input name="user_id" value="'.self::$userId.'"/>' .
         '</form>';
 
@@ -1832,12 +1830,13 @@ class iform_ukbms_sectioned_transects_input_sample {
         'nonce' => $values['read_nonce'],
         'auth_token' => $values['read_auth_token']
       );
-      if (!isset($values['sample:entered_sref'])) {
+      if (empty($values['sample:entered_sref'])) {
         // the sample does not have sref data, as the user has just picked a transect site at this point. Copy the
         // site's centroid across to the sample. Should this be cached?
         $site = data_entry_helper::get_population_data(array(
           'table' => 'location',
-          'extraParams' => $read + array('view'=>'detail','id'=>$values['sample:location_id'],'deleted'=>'f')
+          'extraParams' => $read + array('view'=>'detail','id'=>$values['sample:location_id'],'deleted'=>'f'),
+          'caching' => false
         ));
         $site = $site[0];
         $values['sample:entered_sref'] = $site['centroid_sref'];
@@ -1891,7 +1890,12 @@ class iform_ukbms_sectioned_transects_input_sample {
                                        'sample_method_id' => array('value' => $sampleMethods[0]['id'])
                      )),
                    'copyFields' => array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'));
+          // for a new subsample, fill in the attributes: set any default, or if none, copy from same main sample attr
           foreach ($attributes as $attr) {
+            if (!empty($attr['default'])) {
+              $smp['model']['fields']['smpAttr:'.$attr['attributeId']] = array('value' => $attr['default']);
+              continue;
+            }
             foreach ($values as $key => $value){
               $parts = explode(':',$key);
               if(count($parts)>1 && $parts[0]=='smpAttr' && $parts[1]==$attr['attributeId']){

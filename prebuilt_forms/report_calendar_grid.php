@@ -381,7 +381,6 @@ jQuery('#".$ctrlid."').change(function(){
 
   private static function location_control($args, $readAuth, $nid)
   {
-    global $user;
     $siteUrlParams = self::get_site_url_params($args);
     $ctrl = '';
     // survey_id either comes from the location_type control, or from presets; in that order.
@@ -409,7 +408,7 @@ jQuery('#".$ctrlid."').change(function(){
     }
     $attrListArgs=array('nocache'=>true,
         'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
-                           'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=>$user->uid),
+            'location_attribute_id'=>$cmsAttr['attributeId'], 'raw_value'=> hostsite_get_user_field('id')),
                      $readAuth),
         'table'=>'location_attribute_value');
     $attrList = data_entry_helper::get_population_data($attrListArgs);
@@ -466,9 +465,8 @@ jQuery('#".$ctrlid."').change(function(){
   public static function get_form($args, $nid, $response) {
   // Future enhancement? manager user access right who can see all walks by all people, with a person filter drop down.
   // Future enhancement? Download list of surveys used as basis for calendar
-    global $user;
 
-    $logged_in = $user->uid>0;
+    $logged_in = hostsite_get_user_field('id') > 0;
     if(!$logged_in) {
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
     }
@@ -525,24 +523,20 @@ jQuery('#".$ctrlid."').change(function(){
     $gets = ($split!==false && strlen($url) > $split+1) ? explode('&', substr($url, $split+1)) : array();
     $getsAssoc = array();
     foreach ($gets as $get) {
-//    	var_dump($get);
-
       $tokens = explode('=', $get);
       if (count($tokens)===1) $tokens[] = '';
       $getsAssoc[$tokens[0]] = $tokens[1];
     }
-     $path = $split!==false ? substr($url, 0, $split) : $url;
+    $path = $split!==false ? substr($url, 0, $split) : $url;
     foreach($extensions as $extension){
-//  	var_dump($extension);
-    	if(strpos($extension, '&') !== false) {
+//    var_dump($extension);
+      if(strpos($extension, '&') !== false) {
         $tokens = explode('=', substr($extension, 1));
         $getsAssoc[$tokens[0]] = $tokens[1]; // this means that the extension can/will override the original url it the same.
       } else
-      	$path .= $extension;
+        $path .= $extension;
     }
-  	foreach($getsAssoc as $key=>$value)
-      $path .= (strpos($path, '?') === false ? '?' : '&').$key.'='.$value;
-    return $path;
+    return hostsite_get_url($path, $getsAssoc);
   }
 
 }
