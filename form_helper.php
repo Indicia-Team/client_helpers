@@ -346,7 +346,7 @@ function hideMapsIfOverridden() {
 hideMapsIfOverridden();
 
 /**
- * Disallow georeferencer  selection if controlled by iform_user_ui_options.
+ * Disallow georeferencer selection if controlled by iform_user_ui_options.
  */
 function disableGeoreferencerSelectionIfOverriden() {
   // Disable georefrencer selection if override is supplied.
