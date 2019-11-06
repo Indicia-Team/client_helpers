@@ -890,6 +890,7 @@ JS;
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
             self::$js_path . 'indicia.datacomponents/idc.esDataSource.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.leafletMap.js',
@@ -1764,7 +1765,7 @@ JS;
     // Jquery validation js has to be added at this late stage, because only then do we know all the messages required.
     self::setup_jquery_validation_js();
     $dump = self::internal_dump_resources(self::$required_resources);
-    $dump .= self::getIndiciaData();
+    $dump .= "<script type='text/javascript'>/* <![CDATA[ */\n" . self::getIndiciaData() . "\n/* ]]> */</script>\n";
     $dump .= self::get_scripts(self::$javascript, self::$late_javascript, self::$onload_javascript, true, $closure);
     // ensure scripted JS does not output again if recalled.
     self::$javascript = "";

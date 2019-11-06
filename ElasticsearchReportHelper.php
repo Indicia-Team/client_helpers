@@ -247,6 +247,26 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+    $config = hostsite_get_es_config($nid);
+    helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+  }
+
+  /**
+   * A control for flexibly outputting data formatted using a custom script.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   */
+  public static function customScript(array $options) {
+    self::checkOptions('customScript', $options, ['source', 'functionName'], []);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'source',
+      'functionName',
+    ], empty($options['attachToId']));
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').idcCustomScript({});
+
+JS;
+    return self::getControlContainer('customScript', $options, $dataOptions);
   }
 
   /**
@@ -277,6 +297,9 @@ class ElasticsearchReportHelper {
     foreach ($options['columns'] as $columnDef) {
       if (empty($columnDef['field'])) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
+      }
+      if (!isset($columnDef['caption'])) {
+        $columnDef['caption'] = '';
       }
       $field = $columnDef['field'];
       unset($columnDef['field']);
@@ -314,6 +337,8 @@ class ElasticsearchReportHelper {
       'includeMultiSelectTool',
       'responsive',
       'responsiveOptions',
+      'autoResponsiveCols',
+      'autoResponsiveExpand',
       'sortable',
       'aggregation',
       'sourceTable',
@@ -787,7 +812,7 @@ JS;
                 'library/taxa/external_keys_for_scratchpad',
                 ['scratchpad_list_id' => $value],
                 'external_key',
-                $auth
+                $options['readAuth']
               );
             }
             elseif ($esField['process'] === 'taxonIdsInSample') {
@@ -795,7 +820,7 @@ JS;
                 'library/taxa/external_keys_for_sample',
                 ['sample_id' => $value],
                 'external_key',
-                $auth
+                $options['readAuth']
               );
             }
             $queryType = 'terms';
@@ -896,7 +921,7 @@ JS;
       Actions:
       <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
       <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="far fa-check-double status-V1"></span></button>
+      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
       <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
       <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
       <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
@@ -1022,18 +1047,18 @@ HTML;
    *   List of parameters to pass to the report.
    * @param string $outputField
    *   Name of the field output by the report to build the list from.
-   * @param array $auth
-   *   Authorisation tokens.
+   * @param array $readAuth
+   *   Read authorisation tokens.
    *
    * @return string
    *   List for placing in the url param's hidden input attribute.
    */
-  private static function convertValueToFilterList($report, array $params, $outputField, array $auth) {
+  private static function convertValueToFilterList($report, array $params, $outputField, array $readAuth) {
     // Load the scratchpad's list of taxa.
     iform_load_helpers(['report_helper']);
     $listEntries = report_helper::get_report_data([
       'dataSource' => $report,
-      'readAuth' => $auth['read'],
+      'readAuth' => $readAuth,
       'extraParams' => $params,
     ]);
     // Build a hidden input which causes filtering to this list.
@@ -1131,7 +1156,9 @@ HTML;
    */
   private static function getMappings($nid) {
     $config = hostsite_get_es_config($nid);
-    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping/doc';
+    // /doc added to URL only for Elasticsearch 6.x.
+    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
+      ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
@@ -1156,7 +1183,11 @@ HTML;
     $mappingData = json_decode($response, TRUE);
     $mappingData = array_pop($mappingData);
     $mappings = [];
-    self::recurseMappings($mappingData['mappings']['doc']['properties'], $mappings);
+    // ES 6.x has a type (doc) within the index, ES 7.x doesn't support this.
+    $props = $config['es']['version'] == 6
+      ? $mappingData['mappings']['doc']['properties']
+      : $mappingData['mappings']['properties'];
+    self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
 
