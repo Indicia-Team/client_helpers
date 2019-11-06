@@ -1233,7 +1233,6 @@ class iform_ukbms_sectioned_transects_input_sample {
     drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
-    data_entry_helper::add_resource('json');
     data_entry_helper::add_resource('autocomplete');
 
     // did the parent sample previously exist? Default is no.
