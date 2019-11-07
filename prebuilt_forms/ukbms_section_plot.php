@@ -70,7 +70,7 @@ class iform_ukbms_section_plot {
       	array(
           'name'=>'manager_permission',
           'caption'=>'Drupal Permission for Manager mode',
-          'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set). This primarily determines the functionality of the User and Location filters, if selected.',
+          'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set). This primarily determines the functionality of the Location filter.',
           'type'=>'string',
           'required' => false,
           'group' => 'Access Control'
@@ -78,7 +78,7 @@ class iform_ukbms_section_plot {
         array(
           'name'=>'branch_manager_permission',
           'caption'=>'Drupal Permission for Branch Coordinator mode',
-          'description'=>'Enter the Drupal permission name to be used to determine if this user is a Branch Coordinator. This primarily determines the functionality of the User and Location filters, if selected.',
+          'description'=>'Enter the Drupal permission name to be used to determine if this user is a Branch Coordinator. This primarily determines the functionality of the Location filter.',
           'type'=>'string',
           'required' => false,
           'group' => 'Access Control'
@@ -94,19 +94,28 @@ class iform_ukbms_section_plot {
       		'siteSpecific'=>true,
       		'group' => 'Access Control'
       	),
-      	array(
-      		'name' => 'branchCmsLocAttrId',
-      		'caption' => 'Branch CMS User ID Attribute',
-      		'description' => 'A location multivalue attribute, used to allocate sites to a user at a branch level.',
-      		'type'=>'select',
-      		'table'=>'location_attribute',
-      		'captionField'=>'caption',
-      		'valueField'=>'id',
-      		'siteSpecific'=>true,
-      		'required' => false,
-      		'group' => 'Access Control'
-      	),
-      	array(
+        array(
+          'name' => 'branchCmsLocAttrId',
+          'caption' => 'Branch Attribute',
+          'description' => 'A location attribute (potentially multivalue), used to allocate sites to a user at a branch level.',
+          'type'=>'select',
+          'table'=>'location_attribute',
+          'captionField'=>'caption',
+          'valueField'=>'id',
+          'siteSpecific'=>true,
+          'required' => false,
+          'group' => 'Access Control'
+        ),
+        array(
+          'name' => 'branchAttributeValue',
+          'caption' => 'Branch Attribute Value',
+          'description' => 'The value to use for the branch attribute filtering, defaults to the CMS user Id',
+          'type'=>'string',
+          'siteSpecific'=>true,
+          'required' => false,
+          'group' => 'Access Control'
+        ),
+        array(
       		'name' => 'sensitivityLocAttrId',
       		'caption' => 'Location attribute used to filter out sensitive sites',
       		'description' => 'A boolean location attribute, set to true if a site is sensitive.',
@@ -486,22 +495,23 @@ class iform_ukbms_section_plot {
     // assume if a sensitive site is allocated to a user, they have permission to see it.
   	// note that when in user specific mode it returns the list currently assigned to the user: it does not give
   	// locations which the user previously recorded data against, but is no longer allocated to.
-    global $user;
-    $userUID = $user->uid;
-    $manager = (isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission']));
-
+    $userUID = hostsite_get_user_field('id');
+    $superManager = (isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission']));
+    $branchManager = (isset($args['branch_manager_permission']) && $args['branch_manager_permission']!="" && hostsite_user_has_permission($args['branch_manager_permission']));
+    
     $ctrl = '<label class="location-select-label">'.lang::get('Site').':</label>';
 
     $cmsAttr = $args['cmsLocAttrId'];
-    $branchCmsAttr = $args['branchCmsLocAttrId'];
 
     $locationListArgs=array(// 'nocache'=>true,
     		'extraParams'=>array_merge(array('website_id'=>$args['website_id'], 'location_type_id' => '',
+    		    'sensattr' => '',
+    		    'exclude_sensitive' => '',
     				'locattrs'=>(!empty($args['sensitivityLocAttrId']) ? $args['sensitivityLocAttrId'] : '')),
     				$readAuth),
             'readAuth' => $readAuth,
             'caching' => true,
-            'dataSource' => 'library/locations/locations_list');
+            'dataSource' => 'library/locations/locations_list_exclude_sensitive');
 	// could use locattrs to fetch sensitive
     $attrArgs = array(
     		'valuetable'=>'location_attribute_value',
@@ -533,13 +543,12 @@ class iform_ukbms_section_plot {
       $locationTypeLookUpValues[$location_type_id] = $options['surveyMapping'][$location_type_id]['location_type_term'];
       // first use attributes to find list of locations allocated to me
       // for an admin, we can see all sites, including sensitive.
-      if($manager) {
-      	$locationListArgs['extraParams']['idlist'] = '';
-  	    $locationList = report_helper::get_report_data($locationListArgs);
+      if($superManager) {
+        $locationListArgs['extraParams']['idlist'] = '';
+        $locationList = report_helper::get_report_data($locationListArgs);
       } else {
       	$locationIDList=array();
       	// first get locations allocated to me
-      	// unless decided on the future, if allocated to you, you can see the results: i.e. no sensitivity filtering.
       	$attrListArgs=array(// 'nocache'=>true,
       			'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
       					'location_attribute_id'=>$cmsAttr, 'raw_value'=>$userUID),
@@ -552,24 +561,38 @@ class iform_ukbms_section_plot {
       			$locationIDList[] = $attr['location_id'];
       	}
       	// then get locations allocated to me as branch
-        $attrListArgs=array(// 'nocache'=>true,
-      			'extraParams'=>array_merge(array('view'=>'list', 'website_id'=>$args['website_id'],
-      					'location_attribute_id'=>$branchCmsAttr, 'raw_value'=>$userUID),
-      					$readAuth),
-      			'table'=>'location_attribute_value');
-      	$attrList = data_entry_helper::get_population_data($attrListArgs);
-      	if (isset($attrList['error'])) return $attrList['error'];
-      	if(count($attrList)>0) {
-      		foreach($attrList as $attr)
-      			$locationIDList[] = $attr['location_id'];
-      	}
-      	$locationListArgs['extraParams']['idlist'] = implode(',', $locationIDList);
+        if ($branchManager && !empty($args['branchCmsLocAttrId'])) {
+          if (empty($args['branchAttributeValue'])) {
+            $args['branchAttributeValue'] = '{id}';
+          }
+          $attrListArgs = array(// 'nocache'=>true,
+            'extraParams' => array_merge(
+                array(
+                  'view' => 'list',
+                  'website_id' => $args['website_id'],
+                  'location_attribute_id' => $args['branchCmsLocAttrId'],
+                  'raw_value' => apply_user_replacements($args['branchAttributeValue'])
+                ),
+                $readAuth
+              ),
+            'table'=>'location_attribute_value'
+          );
+          $attrList = data_entry_helper::get_population_data($attrListArgs);
+          if (isset($attrList['error'])) return $attrList['error'];
+          if(count($attrList)>0) {
+            foreach($attrList as $attr) {
+              $locationIDList[] = $attr['location_id'];
+            }
+          }
+        }
+        $locationListArgs['extraParams']['idlist'] = implode(',', $locationIDList);
 
-      	if(isset($args['sensitivityAccessPermission']) && $args['sensitivityAccessPermission']!="" &&
-      			!hostsite_user_has_permission($args['sensitivityAccessPermission']) &&
-      			!empty($args['sensitivityLocAttrId'])) {
-      		$locationListArgs['extraParams']['attr_location_'.$args['sensitivityLocAttrId']] = '0';
-      	}
+        // unless decided on the future, if allocated to you, you can see the results: i.e. no sensitivity filtering.
+        // if(isset($args['sensitivityAccessPermission']) && $args['sensitivityAccessPermission']!="" &&
+        //     !hostsite_user_has_permission($args['sensitivityAccessPermission']) &&
+        //     !empty($args['sensitivityLocAttrId'])) {
+        //   $locationListArgs['extraParams']['attr_location_'.$args['sensitivityLocAttrId']] = '0';
+        // }
 
         if($locationListArgs['extraParams']['idlist'] != '') {
   	    	$locationList = report_helper::get_report_data($locationListArgs);
@@ -580,8 +603,8 @@ class iform_ukbms_section_plot {
       $sort = array();
       $locs = array();
       foreach($locationList as $location) {
-      	$sort[$location['location_id']]=$location['name']; // locations_list report returns location_id, not id
-      	$locs[$location['location_id']]=$location;
+      	$sort[$location['id']]=$location['name']; // locations_list report returns location_id, not id
+      	$locs[$location['id']]=$location;
       }
       natcasesort($sort);
       $ctrl .='<select id="'.$options['locationSelectIDPrefix'].'-'.$location_type_id.'" class="location-select">';
@@ -715,14 +738,13 @@ class iform_ukbms_section_plot {
    * @return HTML string
    */
   public static function get_form($args, $arg2, $response) {
-    global $user;
     $retVal = '';
 
     if(isset($args['nidvsnode']) && $args['nidvsnode'])
     	$nid = $arg2;
     else $nid = $arg2->nid;
 
-    if($user->uid<=0) { // we are assuming Drupal.
+    if(hostsite_get_user_field('id')<=0) { // we are assuming Drupal.
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
     }
 

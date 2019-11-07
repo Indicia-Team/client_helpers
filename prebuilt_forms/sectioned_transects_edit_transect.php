@@ -274,7 +274,6 @@ class iform_sectioned_transects_edit_transect {
    * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
-    global $user;
     $checks=self::check_prerequisites();
     $args = self::getArgDefaults($args);
     if ($checks!==true)
@@ -362,7 +361,7 @@ class iform_sectioned_transects_edit_transect {
             isset($settings['cmsUserAttr']['default']) &&
             !empty($settings['cmsUserAttr']['default'])) {
           foreach($settings['cmsUserAttr']['default'] as $value) { // multi value
-            if($value['default'] == $user->uid) { // comparing string against int so no triple equals
+            if($value['default'] == hostsite_get_user_field('id')) { // comparing string against int so no triple equals
               $settings['canEditBody'] = true;
               $settings['canEditSections'] = true;
               break;
@@ -375,7 +374,7 @@ class iform_sectioned_transects_edit_transect {
             isset($settings['branchCmsUserAttr']['default']) &&
             !empty($settings['branchCmsUserAttr']['default'])) {
           foreach($settings['branchCmsUserAttr']['default'] as $value) { // now multi value
-            if($value['default'] == $user->uid) { // comparing string against int so no triple equals
+            if($value['default'] == hostsite_get_user_field('id')) { // comparing string against int so no triple equals
               $settings['canEditBody'] = true;
               $settings['canAllocUser'] = true;
               break;
@@ -590,8 +589,7 @@ class iform_sectioned_transects_edit_transect {
         $r .= self::get_user_assignment_control($auth['read'], $settings['cmsUserAttr'], $args);
       } else if (!$settings['locationId']) {
         // for a new record, we need to link the current user to the location if they are not admin.
-        global $user;
-        $r .= '<input type="hidden" name="locAttr:'.self::$cmsUserAttrId.'" value="'.$user->uid.'">';
+        $r .= '<input type="hidden" name="locAttr:'.self::$cmsUserAttrId.'" value="'.hostsite_get_user_field('id').'">';
       }
     }
     if ($settings['canEditBody'])
@@ -762,15 +760,22 @@ $('#delete-transect').click(deleteSurvey);
    */
   protected static function get_user_assignment_control($readAuth, $cmsUserAttr, $args) {
     if(self::$cmsUserList == null) {
-      $query = db_query("select uid, name from {users} where name <> '' order by name");
       $users = array();
-      // there have been DB API changes for Drupal7: db_query now returns the result array.
-      if(version_compare(VERSION, '7', '<')) {
-        while ($user = db_fetch_object($query))
-          $users[$user->uid] = $user->name;
+      if(version_compare(hostsite_get_cms_version(), '7', '<')) {
+          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
+          while($result = db_fetch_object($results)){
+              $users[$result->uid] = $result->name;
+          }
+      } else if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
+          foreach ($results as $result) {  // DB handling is different in 7 and 8
+              $users[$result->uid] = $result->name;
+          }
       } else {
-        foreach ($query as $user)
-          $users[$user->uid] = $user->name;
+          $results = db_query("SELECT uid, name FROM {users_field_data} where name <> '' order by name");
+          foreach ($results as $result) {
+              $users[$result->uid] = $result->name;
+          }
       }
       self::$cmsUserList = $users;
   	} else $users= self::$cmsUserList;
@@ -805,15 +810,22 @@ $('#delete-transect').click(deleteSurvey);
   protected static function get_branch_assignment_control($readAuth, $branchCmsUserAttr, $args, $settings) {
     if(!$branchCmsUserAttr) return '<span style="display:none;">No branch location attribute</span>'; // no attribute so don't display
     if(self::$cmsUserList == null) {
-      $query = db_query("select uid, name from {users} where name <> '' order by name");
       $users = array();
-      // there have been DB API changes for Drupal7: db_query now returns the result array.
-      if(version_compare(VERSION, '7', '<')) {
-        while ($user = db_fetch_object($query))
-          $users[$user->uid] = $user->name;
+      if(version_compare(hostsite_get_cms_version(), '7', '<')) {
+          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
+          while($result = db_fetch_object($results)){
+              $users[$result->uid] = $result->name;
+          }
+      } else if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
+          foreach ($results as $result) {  // DB handling is different in 7 and 8
+              $users[$result->uid] = $result->name;
+          }
       } else {
-        foreach ($query as $user)
-          $users[$user->uid] = $user->name;
+          $results = db_query("SELECT uid, name FROM {users_field_data} where name <> '' order by name");
+          foreach ($results as $result) {
+              $users[$result->uid] = $result->name;
+          }
       }
       self::$cmsUserList = $users;
     } else $users= self::$cmsUserList;
