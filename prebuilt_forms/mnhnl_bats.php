@@ -795,8 +795,7 @@ hook_species_checklist_pre_delete_row=function(e) {
   	global $indicia_templates;
 //    $options = data_entry_helper::check_arguments(func_get_args(), array('listId', 'occAttrs', 'readAuth', 'extraParams', 'lookupListId'));
     $options = data_entry_helper::get_species_checklist_options($options);
-    if(self::$mode !== self::MODE_EXISTING_RO){
-      data_entry_helper::add_resource('json');
+    if(self::$mode !== self::MODE_EXISTING_RO) {
       data_entry_helper::add_resource('autocomplete');
     }
     $occAttrControls = array();

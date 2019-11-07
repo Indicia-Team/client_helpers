@@ -1449,7 +1449,6 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     if ($options['columns'] > 1 && count($options['mediaTypes'])>1)
       throw new Exception('The species_checklist control does not support having more than one occurrence per row (columns option > 0) '.
           'at the same time has having the mediaTypes option in use.');
-    data_entry_helper::add_resource('json');
     data_entry_helper::add_resource('autocomplete');
     $filterArray = data_entry_helper::getSpeciesNamesFilter($options);
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');

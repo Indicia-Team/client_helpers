@@ -129,6 +129,10 @@ function apply_user_replacements($original) {
   );
   // Do basic replacements and trim the data.
   $text = str_replace($replace, $replaceWith, $original);
+  // Allow other modules to hook in.
+  if (function_exists('hostsite_invoke_alter_hooks')) {
+    hostsite_invoke_alter_hooks('iform_user_replacements', $text);
+  }
   // Look for any profile field replacments.
   if (preg_match_all('/{([a-zA-Z0-9\-_]+)}/', $text, $matches) && function_exists('hostsite_get_user_field')) {
     foreach ($matches[1] as $profileField) {

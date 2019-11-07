@@ -68,9 +68,9 @@ var reportOptions;
 
       // scan back to start of week one, then back 7 days to start of week zero
       // these work across month & year boundaries
-      if(weekOne_date_weekday > reportOptions.weekStartDay) 
+      if(weekOne_date_weekday >= reportOptions.weekStartDay) 
         reportOptions.zeroWeekStartDate.setDate(weekOne_date.getDate() - (weekOne_date_weekday-reportOptions.weekStartDay) - 7);
-      else if(weekOne_date_weekday < reportOptions.weekStartDay)
+      else
         reportOptions.zeroWeekStartDate.setDate(weekOne_date.getDate() - (7+weekOne_date_weekday-reportOptions.weekStartDay) - 7);
 
       // get the child locations - the sections. We then populate the X labels.

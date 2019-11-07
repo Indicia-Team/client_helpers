@@ -247,6 +247,8 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+    $config = hostsite_get_es_config($nid);
+    helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
   }
 
   /**
@@ -919,7 +921,7 @@ JS;
       Actions:
       <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
       <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="far fa-check-double status-V1"></span></button>
+      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
       <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
       <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
       <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
@@ -1154,7 +1156,9 @@ HTML;
    */
   private static function getMappings($nid) {
     $config = hostsite_get_es_config($nid);
-    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping/doc';
+    // /doc added to URL only for Elasticsearch 6.x.
+    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
+      ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
@@ -1179,7 +1183,11 @@ HTML;
     $mappingData = json_decode($response, TRUE);
     $mappingData = array_pop($mappingData);
     $mappings = [];
-    self::recurseMappings($mappingData['mappings']['doc']['properties'], $mappings);
+    // ES 6.x has a type (doc) within the index, ES 7.x doesn't support this.
+    $props = $config['es']['version'] == 6
+      ? $mappingData['mappings']['doc']['properties']
+      : $mappingData['mappings']['properties'];
+    self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
 

@@ -3394,7 +3394,6 @@ filterReset".$idx." = function(){
 				$retVal .= str_replace('<br/>','',$ctrl).'<br />';
                 $attrList[]=array('id'=>$attr['attributeId'],'shape'=>false);
 				if(count($filterAttr)>1) {
-				  data_entry_helper::add_resource('json');
 				  data_entry_helper::add_resource('autocomplete');
 				  data_entry_helper::$javascript .="
 jQuery('#locAttr\\\\:".$attr['attributeId']."').autocomplete('".data_entry_helper::$base_url."/index.php/services/data/termlists_term', {

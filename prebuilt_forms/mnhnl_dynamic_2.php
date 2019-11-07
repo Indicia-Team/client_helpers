@@ -23,13 +23,13 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
  */
 
 /* Development Stream: TBD
- * 
+ *
  * Stage 2 get subsamples going.
  * In tabs mode, Prevent display of species tab until location provided for main sample.
  * default coords to parent
@@ -37,10 +37,10 @@
  * Optionally add listlayer label: taxon and count.
  * add possiblity that parent has a location.
  * Add ability to show previously store samples/occurrences
- * 
+ *
  * Known Bugs
  * The count on the species grid is flagged required but isn't
- * 
+ *
  * Nice to haves
  * Buttons in Params Form to configure the form for Reptiles, Amphibiansx2, Dormice.
  * Extend Species grid - optional date: sort datepicker & ID
@@ -57,12 +57,12 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
   protected static $node;
   protected static $check_or_radio_group_template;
   protected static $check_or_radio_group_item_template;
-  
+
   /*
    * First all the API stuff for bolting into the IForm Module.
    */
-  
-   /** 
+
+   /**
    * Return the form metadata.
    * @return string The definition of the form.
    */
@@ -77,12 +77,12 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           'session).'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     $parentVal = array_merge(
       parent::get_parameters(),
       iform_mnhnl_getParameters(),
@@ -142,7 +142,7 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
           'required' => false,
           'helpText' => 'The sample method that will be used for created subsamples in the species grid.'
         ),
-      		
+
         array(
           'name' => 'reportFilenamePrefix',
           'caption' => 'Report Filename Prefix',
@@ -195,12 +195,12 @@ class iform_mnhnl_dynamic_2 extends iform_mnhnl_dynamic_1 {
     }
     return $retVal;
   }
-  
-  
+
+
   /**
    * Retrieves a list of the css files that this form requires in addition to the standard
    * Drupal, theme or Indicia ones.
-   * 
+   *
    * @return array List of css files to include for this form.
    */
   public static function get_css() {
@@ -247,7 +247,7 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
     // get the CMS User ID attribute so we can filter the grid to this user
     $userIdAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS User ID', isset($args['sample_method_id']) && $args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if (!$userIdAttr) return lang::get('getSampleListGrid function: This form must be used with a survey that has the CMS User ID sample attribute associated with it, so records can be tagged against their creator.');
-    $extraParams = array('survey_id'=>$args['survey_id'], 
+    $extraParams = array('survey_id'=>$args['survey_id'],
         'userID_attr_id'=>$userIdAttr,
         'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid)); // use -1 if admin - non logged in will not get this far.
     $userNameAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS Username', isset($args['sample_method_id']) && $args['sample_method_id']!="" ? $args['sample_method_id'] : false);
@@ -288,8 +288,8 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
       'columns' => call_user_func(array(get_called_class(), 'getReportActions')),
       'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 25),
       'autoParamsForm' => true,
-      'extraParams' => $extraParams));	
-    $r .= '<form>';    
+      'extraParams' => $extraParams));
+    $r .= '<form>';
     $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => 'new')).'\'">';
     $r .= '</form>
 <div style="display:none" />
@@ -314,7 +314,7 @@ deleteSurvey = function(sampleID){
 };";
     return $r;
   }
-  
+
   protected static function getSampleListGridPreamble() {
     global $user;
     $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').
@@ -322,15 +322,15 @@ deleteSurvey = function(sampleID){
     return $r;
   }
   protected static function getReportActions() {
-    return array(array('display' => '', 'actions' => 
+    return array(array('display' => '', 'actions' =>
             array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
-        array('display' => '', 'actions' => 
+        array('display' => '', 'actions' =>
             array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
   }
-  
-  /* 
+
+  /*
    * And now all the controls.
-   * 
+   *
    * Controls inherited from Dynamic 1
    * Map
    * Sample Comment
@@ -343,7 +343,7 @@ deleteSurvey = function(sampleID){
    * Place Search
    * REcorder Names
    * Record Status
-   * 
+   *
    * Note the Dynamic 2 Species control is overridden by the local one.
    */
   protected static function get_control_locationmodule($auth, $args, $tabalias, $options) {
@@ -358,7 +358,7 @@ deleteSurvey = function(sampleID){
     return iform_mnhnl_locationattributes($auth, $args, $tabalias, $options);
   }
   protected static function get_control_pointgrid($auth, $args, $tabalias, $options) {
-    return iform_mnhnl_PointGrid($auth, $args, $options); 
+    return iform_mnhnl_PointGrid($auth, $args, $options);
   }
   protected static function get_control_pickrecordernames($auth, $args, $tabalias, $options) {
     return iform_mnhnl_recordernamesControl(parent::$node, $auth, $args, $tabalias, $options);
@@ -367,7 +367,7 @@ deleteSurvey = function(sampleID){
     return data_entry_helper::textarea(array_merge(array(
       'fieldname'=>'location:comment',
       'label'=>lang::get('Location Comment')
-    ), $options)); 
+    ), $options));
   }
   protected static function get_control_lateJS($auth, $args, $tabalias, $options) {
    return iform_mnhnl_locationmodule_lateJS($auth, $args, $tabalias, $options);
@@ -519,9 +519,9 @@ $.validator.addMethod('no_observation', function(arg1, arg2){
             data_entry_helper::$late_javascript .= "
 jQuery('[name=".str_replace(':','\\:',$rule[0])."],[name^=".str_replace(':','\\:',$rule[0])."\\:]').rules('add', {end_time: true});
 $.validator.addMethod('end_time', function(value, element){
-  var startTime = jQuery('[name=smpAttr\\:".$found."],[name^=smpAttr\\:".$found."\\:]') 
-  if(value=='' || startTime.val() == '') return true; 
-  return (value >= startTime.val()); 
+  var startTime = jQuery('[name=smpAttr\\:".$found."],[name^=smpAttr\\:".$found."\\:]')
+  if(value=='' || startTime.val() == '') return true;
+  return (value >= startTime.val());
 },
   \"".lang::get('validation_end_time')."\");
 ";
@@ -532,8 +532,8 @@ $.validator.addMethod('end_time', function(value, element){
             $func = "check_N2_".str_replace(':','_',$rule[0]);
             $selector = str_replace(':','\\:',$rule[0]);
             data_entry_helper::$late_javascript .= $func." = function(){
-  var controls = jQuery('[name=".$selector."\\[\\]],[name=".$selector."],[name^=".$selector."\\:]').filter('[type=checkbox]'); 
-  var checkedControls = controls.filter(':checked'); 
+  var controls = jQuery('[name=".$selector."\\[\\]],[name=".$selector."],[name^=".$selector."\\:]').filter('[type=checkbox]');
+  var checkedControls = controls.filter(':checked');
   if(checkedControls.length >= 2)
     controls.not(':checked').attr('disabled',true);
   else
@@ -546,7 +546,7 @@ jQuery('[name=".$selector."\\[\\]],[name=".$selector."],[name^=".$selector."\\:]
             $func = "check_N3_".str_replace(':','_',$rule[0]);
             $selector = str_replace(':','\\:',$rule[0]);
             data_entry_helper::$late_javascript .= $func."_sub = function(elem){
-  var controls = jQuery('[name='+elem.name+']'); 
+  var controls = jQuery('[name='+elem.name+']');
   var checkedControls = controls.filter(':checked');
   if(checkedControls.length >= 3)
     controls.not(':checked').attr('disabled',true);
@@ -675,7 +675,7 @@ indiciaData.speciesListInTextMax = '".$ctrlArgs[2]."';\n";
           $attrOpts['class']='targ-smpAttr-'.str_replace(' ', '', ucWords($smpAttributes[$attrID]['untranslatedCaption']));
           if($smpID && $smpAttributes[$attrID]["data_type"]!="B") $attrOpts['validation'] = array('required');
           else unset($attrOpts['validation']);
-          $retval .= str_replace('{MyPrefix}',$fieldprefix, 
+          $retval .= str_replace('{MyPrefix}',$fieldprefix,
               '<td class="targ-grid-cell"><nobr>'.data_entry_helper::outputAttribute(($smpID ? $subSamplesAttrs[$smpID][$attrID] : $smpAttributes[$attrID]),
                 $attrOpts).'</nobr></td>');
         }
@@ -709,7 +709,7 @@ jQuery('.targ-presence').change(function(){
           data_entry_helper::$javascript .= ($i>1?',':'')."[value=".$disableList[$i]."]";
         data_entry_helper::$javascript .= "').remove();\n";
       }
-    }    
+    }
     if(!isset($options['optional']))
       data_entry_helper::$late_javascript .= "// JS for target species grid control.
 $.validator.addMethod('targ-presence', function(value, element){
@@ -816,7 +816,7 @@ hook_species_checklist_pre_delete_row=function(e) {
     $species_ctrl_opts=array_merge(array(
           'speciesListID'=>$options['speciesListID'],
           'label'=>lang::get('occurrence:taxa_taxon_list_id'),
-          'columns'=>1,          
+          'columns'=>1,
           'extraParams'=>$extraParams,
           'readAuth'=>$extraParams,
           'survey_id'=>$args['survey_id'],
@@ -892,7 +892,6 @@ hook_species_checklist_pre_delete_row=function(e) {
   	global $indicia_templates;
 //    $options = data_entry_helper::check_arguments(func_get_args(), array('speciesListID', 'occAttrs', 'readAuth', 'extraParams'));
     $options = self::get_species_checklist_options($options);
-    data_entry_helper::add_resource('json');
     data_entry_helper::add_resource('autocomplete');
     $occAttrControls = array();
     $occAttrCaptions = array();
@@ -1284,14 +1283,14 @@ $('#entry_form').before(cloneableDiv);\n";
     return $options;
   }
 
-  
+
   public static function species_checklist_prepare_attributes($options, $attributes, &$occAttrControls, &$occAttrCaptions, &$occAttrs) {
     $idx=0;
     // this sets up client side only required validation
     if (array_key_exists('required', $options))
       $requiredAttrs = explode(',',$options['required']);
     else $requiredAttrs = array();
-    
+
     if (array_key_exists('occAttrs', $options))
       $attrs = $options['occAttrs'];
     else
@@ -1322,7 +1321,7 @@ $('#entry_form').before(cloneableDiv);\n";
       $idx++;
     }
   }
-  
+
   public static function preload_species_checklist_occurrences($sampleId, $readAuth, $options) {
     $occurrenceIds = array();
     $sampleIds = array();
@@ -1366,7 +1365,7 @@ $('#entry_form').before(cloneableDiv);\n";
         data_entry_helper::$entity_to_load['occurrence:record_status']=$occurrence['record_status'];
         data_entry_helper::$entity_to_load['occurrence:taxa_taxon_list_id']=$occurrence['taxa_taxon_list_id'];
         data_entry_helper::$entity_to_load['occurrence:taxa_taxon_list_id:taxon']=$occurrence['taxon'];
-        
+
         data_entry_helper::$entity_to_load['sc::'.$smp.':'.$occurrence['taxa_taxon_list_id'].':'.$occurrence['id'].':present'] = true;
         data_entry_helper::$entity_to_load['sc::'.$smp.':'.$occurrence['taxa_taxon_list_id'].':'.$occurrence['id'].':occurrence:comment'] = $occurrence['comment'];
         // Keep a list of all Ids
@@ -1404,7 +1403,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     }
     return $occurrenceIds;
   }
-  
+
   /**
    * When the species checklist grid has a lookup list associated with it, this is a
    * secondary checklist which you can pick species from to add to the grid. As this happens,
@@ -1480,7 +1479,7 @@ mapInitialisationHooks.push(function(mapdiv) {
       $r .="</tr>";
     }
     $idx = 0;
-    
+
     for($i=1; $i<=$numRows; $i++){
       $numCtrls=0;
       $row='';
@@ -1542,8 +1541,8 @@ mapInitialisationHooks.push(function(mapdiv) {
           $options['occAttrClasses'][$idx] :
           'sc'.str_replace(' ', '', ucWords($caption)); // provide a default class based on the control caption
   }
-  
-  
+
+
   public static function get_species_checklist_record_list($options) {
     // at this point the data_entry_helper::$entity_to_load has been preloaded with the occurrence data.
     $taxalist = array();
@@ -1606,13 +1605,13 @@ mapInitialisationHooks.push(function(mapdiv) {
     if (!strpos($attrs, 'display:none')) $colIdx++;
     return "<th$attrs$width>".$caption."</th>";
   }
-  
+
   /*
    * Finally the submission handler
    */
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
+   * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
    * @param integer $nid The node's ID
    * @return array Submission structure.
@@ -1724,7 +1723,7 @@ mapInitialisationHooks.push(function(mapdiv) {
         if(isset($arr['includeSubSample'])){
           if (!$present) $samples[$id]['deleted'] = 't';
           $samples[$id]['website_id'] = $arr['website_id'];
-          $samples[$id]['entered_sref_system'] = '2169'; // TBD 
+          $samples[$id]['entered_sref_system'] = '2169'; // TBD
           $samples[$id]['survey_id'] = $arr['survey_id'];
           $smp = data_entry_helper::wrap($samples[$id], 'sample');
           $smp['subModels'] = array(array('fkId' => 'sample_id', 'model' => $occ));
@@ -1746,5 +1745,5 @@ mapInitialisationHooks.push(function(mapdiv) {
   private static function wrap_species_checklist_record_present($record) {
     return (array_key_exists('present', $record) && $record['present']!='false'); // inclusion of record detected from the presence
   }
-  
-} 
+
+}

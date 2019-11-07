@@ -1,5 +1,9 @@
-var clearSection, loadSectionDetails, confirmSelectSection, selectSection, syncPost, deleteWalks,
-    deleteLocation, deleteSections, deleteSection, updateTransectDetails, countryChange;
+/**
+ * Public functions
+ */
+var clearSection, loadSectionDetails, confirmSelectSection, selectSection, deleteWalks,
+    deleteLocation, deleteSections, updateTransectDetails, countryChange;
+
 var defaultLayers = null,
     defaultRouteLayers = null;
 
@@ -51,7 +55,7 @@ MyMousePositionControl=OpenLayers.Class(
                   (lonLat.lat > 0 ? 'N' : 'S') +
                   lat +
                   ' ' +
-                  (lonLat.lon > 0 ? 'W' : 'E') +
+                  (lonLat.lon > 0 ? 'E' : 'W') +
                   long;
               break;
           default:
@@ -69,70 +73,661 @@ MyMousePositionControl=OpenLayers.Class(
   }
 );
 
-(function ($) {
-/*
- * The following functions are utility functions within this file..
+/**
+ * i18n
+ * Make so can't delete last section
+ * Delete a transect
+ * Special map functionality (Luxembourg)
+ * Error checking in Ajax php functions
+ * Location Type functionality (not really used for EBMS)
  */
-  syncPost = function(url, data) {
-    $.ajax({
-      type: 'POST',
-      url: url,
-      data: data,
-      success: function(data) {
-        if (typeof(data.error)!=="undefined") {
-          alert(data.error);
-        }},
-      dataType: 'json',
-      async: false // cannot be asynchronous otherwise we navigate away from the page too early
+
+(function ($) {
+
+  /**
+   * This global initialisation function must run after all the settings have been set up. With the ready functions
+   * being run in the order they are defined, the call to this function has to be set up in the php form at the very
+   * end, when everything else has been run.
+   */
+  bind_events = function() {
+
+    var version=$.ui.version.split('.'),
+          beforeActivateEvent=(version[0]==='1' && version[1]<9) ? 'select' : 'beforeActivate'
+          activateEvent=(version[0]==='1' && version[1]<9) ? 'tabsshow' : 'tabsactivate'
+          opts={};
+    opts[beforeActivateEvent] = check_leaving_tab_handler;
+    $('.ui-tabs').tabs(opts);
+    $('.ui-tabs').bind(activateEvent, sort_map_on_tab_activate_handler);
+
+    indiciaData.ignoreChanges = false;
+    indiciaData.transectDetailsChanged = false;
+    $('#input-form').find('input,textarea,select').change(function(evt) { indiciaData.transectDetailsChanged = true; });
+    $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).change(function(evt){ countryChange(true); });
+    $('#imp-sref').blur(edit_sref_handler);
+
+    $('#add-user').click(add_user_click_handler);
+    $( document ).on( 'click', '.remove-user', remove_user_click_handler);
+    $('#add-branch-coord').click(add_branch_coordinator_click_handler);
+    $('#delete-site').click(delete_site_handler);
+
+    // the following is for both the route and detail tabs: not always present
+    $('#section-select-route li,#section-select li').click(section_select_change_handler);
+
+    // the following are for the route tabs: not always present
+    $('.insert-section').click(insert_section_click_handler);
+    $('.erase-route').click(erase_route_click_handler);
+    $('.save-route').click(save_route_click_handler);
+    $('.complete-route-details').click(complete_route_details_click_handler);
+    $('.remove-section').click(remove_section_click_handler);
+
+    // the following are for the section detail tabs: not always present
+    $('#section-form').find('input,textarea,select').change(function(evt) {
+        indiciaData.sectionDetailsChanged = true;
+    });
+    $('#section-form').ajaxForm({ // pressed save on the form details page.
+        dataType:  'json',
+        success: section_form_ajax_success,
+    });
+
+    
+    // locTypeChange(null);
+
+    if($('#location-id').length >0)
+      selectSection('S1', true);
+  }
+
+  /* 
+   * The following are the general functions, appropriate to more than one tab.
+   */
+  check_leaving_tab_handler=function(event, ui) {
+    var section = $('#section-select-route li.selected').html();
+   
+    switch(ui.oldTab[0].id) {
+      case 'site-details-tab' :
+          tabinputs = $('#input-form').find('input,select,textarea').not(':disabled,[name=""],.inactive');
+          if (tabinputs.length>0 && !tabinputs.valid()) {
+            alert(indiciaData.langErrorsOnTab);
+            return false;
+          }
+          if(!indiciaData.transectDetailsChanged || indiciaData.ignoreChanges) {
+            indiciaData.ignoreChanges = false;
+            return true;
+          }
+          dialog = $('<p>You have changed the data for the transect, but not saved it.</p>').dialog(
+                { title: "Data changed",
+                  buttons: { "Save data":  function() {
+                          $('#input-form').submit(); // validation already run: non ajax form than will reload the form.
+                        },
+                      "Continue without saving":  function() {
+                          indiciaData.ignoreChanges=true;
+                          $('#' + ui.newTab[0].id + ' a').click();
+                          $(this).dialog('close');
+                        },
+                      "Cancel":  function() {
+                          $(this).dialog('close');
+                        },
+                    },
+                  classes: {"ui-dialog": "above-map"}});
+          return false;
+      case 'your-route-tab' :
+          var drawingChanged = (typeof indiciaData.drawFeature !== "undefined" &&
+                  indiciaData.drawFeature.active &&
+                  indiciaData.drawFeature.handler.line != null &&
+                  indiciaData.drawFeature.handler.line.geometry.components.length > 0);
+          if(typeof indiciaData.modifyFeature !== "undefined" &&
+                  indiciaData.modifyFeature.active && indiciaData.modifyFeature.modified) {
+            indiciaData.routeChanged = true;
+          }
+          if(!(indiciaData.routeChanged || drawingChanged) || indiciaData.ignoreChanges){
+            indiciaData.ignoreChanges = false;
+            return true;
+          }
+          dialog = $('<p>You have changed the route, but not saved it. Do you wish to save the route before moving to the next tab?</p>').dialog(
+                { title: "Route changed",
+                  buttons: { "Save route first":  function() {
+                          $(this).dialog('close');
+                          saveRoute(function() {
+                            $('#' + ui.newTab[0].id + ' a').click();
+                          });
+                        },
+                      "Continue without saving":  function() {
+                          if(drawingChanged) // we delete any partially drawn lines.
+                            indiciaData.drawFeature.cancel();
+                          indiciaData.ignoreChanges=true;
+                          $('#' + ui.newTab[0].id + ' a').click();
+                          $(this).dialog('close');
+                        },
+                      "Cancel":  function() {
+                          $(this).dialog('close');
+                        },
+                    },
+                  classes: {"ui-dialog": "above-map"}});
+          return false;
+      default:
+          break;
+    }
+    return true;
+  }
+
+  var sort_map_on_tab_activate_handler = function(event, ui) {
+    var div,
+        target = (typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0]),
+        section = $('#section-select-route li.selected').html();
+    indiciaData.ignoreChanges = false;
+    if ((div = $('#'+target.id+' #route-map')).length > 0) { // Your Route map is being displayed on this tab
+        div = div[0]; // equivalent of indiciaData.mapdiv
+        copy_over_transects();
+        resetMap(div, true, false, true) // when redisplaying route map, include the transect itself.
+        // Reset all the controls 
+        indiciaData.navControl.deactivate(); // Nav control always exists
+        if(typeof indiciaData.modifyFeature !== "undefined")
+          indiciaData.modifyFeature.deactivate();
+        if(typeof indiciaData.selectFeature !== "undefined") {
+            indiciaData.selectFeature.deactivate();
+            indiciaData.selectFeature.unselectAll();
+          }
+        if(typeof indiciaData.drawFeature !== "undefined") {
+          indiciaData.drawFeature.activate();
+        }
+        indiciaData.currentFeature = null;
+        indiciaData.previousGeometry = null;
+        $.each(div.map.editLayer.features, function(idx, feature) {
+          if (feature.attributes.section===section) {
+            indiciaData.drawFeature.deactivate();
+            indiciaData.currentFeature = feature;
+            indiciaData.previousGeometry = feature.geometry.clone();
+            if(typeof indiciaData.modifyFeature !== "undefined")
+              indiciaData.modifyFeature.activate();
+          }
+        });
+    } else if ((div = $('#'+target.id+' #map')).length > 0) { // Main map is being displayed on this tab
+      div = div[0]; // equivalent of indiciaData.mapdiv
+      resetMap(div, false, true, true); // when redisplaying main map, dont include the country.
+    }
+  };
+
+
+  /*
+   * The following are the functions for the Main site tab
+   */
+  var edit_sref_handler = function(evt) {
+    var myVal = $('#imp-sref').val(),
+        mainMapDiv = $('#map')[0];
+
+    if (myVal==='') {
+      mainMapDiv.map.editLayer.destroyFeatures();
+    }
+  }
+
+  var add_user_click_handler = function(evt) {
+    var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
+    if ($('#user-'+user.value).length===0) {
+      $('#user-list').append('<tr><td id="user-'+user.value+'"><input type="hidden" name="locAttr:'+indiciaData.locCmsUsrAttr+'::'+user.value+'" value="'+user.value+'"/>'+
+          user.text+'</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
+    } else { // undo any delete
+      $('#user-'+user.value).closest('tr').removeClass('ui-state-disabled').css('text-decoration','');
+      $('#user-'+user.value).find('input').val(user.value);
+    }
+    indiciaData.transectDetailsChanged = true;
+  };
+
+  var add_branch_coordinator_click_handler = function(evt) {
+    var coordinator=($('#branchCmsUserId')[0]).options[$('#branchCmsUserId')[0].selectedIndex];
+    if ($('#branch-coord-'+coordinator.value).length===0) {
+      $('#branch-coord-list').append('<tr><td id="branch-coord-'+coordinator.value+'">' +
+          // TODO ??? replace locBranchCmsUsrAttr??
+          '<input type="hidden" name="locAttr:'+indiciaData.locBranchCmsUsrAttr+'::'+coordinator.value+'" value="'+coordinator.value+'"/>'+coordinator.text+'</td>'+
+          '<td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
+    } else { // undo any delete
+        $('#branch-coord-'+coordinator.value).closest('tr').removeClass('ui-state-disabled').css('text-decoration','');
+        $('#branch-coord-'+coordinator.value).find('input').val(coordinator.value);
+    }
+    indiciaData.transectDetailsChanged = true;
+  };
+
+  delete_site_handler = function(evt){
+    var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
+    if(confirm((indiciaData.settings.walks.len > 0 ? '' + indiciaData.settings.walks.len +
+                  ' walks will also be deleted when you delete this location. ' : '') +
+                'Are you sure you wish to delete this location? Please note, this may take some time: please ' +
+                'wait until the page reloads automatically.')) {
+      $.ajax({
+          url: indiciaData.ajaxUrl + '/deleteSite/' + indiciaData.nid + urlSep + 'id=' + $('#location-id').val(),
+          dataType: 'json',
+          success: function (response) {
+              window.onbeforeunload = null;
+              setTimeout(function() { window.location = indiciaData.sitesListPath; });
+          }
+      });
+    };
+  };
+
+  var remove_user_click_handler = function(evt) { // used for both normal and branch/country users
+    $(evt.target).closest('tr').css('text-decoration','line-through');
+    $(evt.target).closest('tr').addClass('ui-state-disabled');
+    // clear the underlying value
+    $(evt.target).closest('tr').find('input').val('');
+  };
+
+  countryChange = function(checkOutside) {
+    var myVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(),
+        mainMapDiv = $('#map')[0];
+    
+    _countryChangeEnd = function(div, oldMapExtent, reproject, oldProjection) {
+        var infoExtent = div.map.infoLayer.getDataExtent(),
+            bounds;
+
+        if(div.map.editLayer.features.length > 0) {
+          // keep map extent the same if a site already entered.
+          if(reproject) {
+            bounds = oldMapExtent.transform(oldProjection, div.map.projection);
+            div.map.zoomToExtent(bounds, true);
+            if(!mainMapDiv.map.getExtent().intersectsBounds(mainMapDiv.map.baseLayer.maxExtent))
+              div.map.zoomToExtent(mainMapDiv.map.baseLayer.maxExtent, true);
+          }
+        } else if(infoExtent !== null)
+          div.map.zoomToExtent(infoExtent);
+        else
+          mainMapDiv.map.setCenter(div.map.defaultLayers.centre, div.map.defaultLayers.zoom, false, true);
+      }
+
+    // empty info layer on main map: infor layer holds the country on the main map, and the transect on the route map.
+    mainMapDiv.map.infoLayer.destroyFeatures();
+    
+    // record the extent of the edit layer on the main map. The route map is not being displayed and that is re-zoomed on change of tab. Possibly empty.
+    mapExtent = mainMapDiv.map.getExtent();
+    oldEditLayerProj = mainMapDiv.map.editLayer.projection;
+
+    // scan config to get new maps.
+    if(_setDefaultLayers(mainMapDiv)) { // returns false if no valid baselayer.
+      details = _setBaseLayers(mainMapDiv); // returns object : index into country array for map data, or false if default.
+      // reproject any edit layer geometries: main map.
+      if(details.reproject)
+        _convertGeometries(oldEditLayerProj.projCode, mainMapDiv.map.editLayer); // country infoLayer is empty
+      _resetMap(mainMapDiv, true, false, details.reproject || mainMapDiv.map.editLayer.features.length == 0);
+    } else return;
+
+    // set up sref system options
+    system = $('#imp-sref-system').val();
+    $('#imp-sref-system option').addClass('working').attr('disabled',false);
+    list = (details.index !== false ? indiciaData.settings.country_configurations[details.index].map.sref_systems.split(',') : indiciaData.settings.defaultSystems);
+    $.each(list, function(idx, system){ $('#imp-sref-system option[value='+system+']').removeClass('working'); });
+    $('#imp-sref-system option.working').removeClass('working').attr('disabled','disabled');
+    if($('#imp-sref-system option[value='+system+']:enabled').length == 0) {
+      $('#imp-sref-system').val($('#imp-sref-system option:enabled').first().val());
+    } else {
+      $('#imp-sref-system').val(system);
+    }
+    if($('#imp-sref-system').val() != system && mainMapDiv.map.editLayer.features.length > 0)
+      $.getJSON(indiciaData.indiciaSvc +
+          'index.php/services/spatial/wkt_to_sref&wkt=' + 
+          $('#imp-geom').val() +
+          '&system='+$('#imp-sref-system').val()+
+          '&precision=8&callback=?',
+        function(data){
+          if(typeof data.error != 'undefined')
+            alert(data.error);
+          else {
+            $('#imp-sref').val(data.sref);
+          }
+        });
+
+    if (myVal != ''){
+      // first put the country on the map
+      $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).addClass("working1");
+      $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location/" + myVal +
+                    '?mode=json&view=detail' +
+                    '&auth_token='+indiciaData.readAuth.auth_token+
+                    '&reset_timeout=true&nonce='+indiciaData.readAuth.nonce,
+        function(ldata) {
+          $.each(ldata, function(idx, country){ // only expecting 1 record
+            var parser = new OpenLayers.Format.WKT(),
+                features,
+                intersects = true;
+            features = parser.read(country.boundary_geom);
+            if (mainMapDiv.map.infoLayer.projection.projCode!='EPSG:900913' && mainMapDiv.map.infoLayer.projection.projCode!='EPSG:3857') { 
+              var cloned = features.geometry.clone();
+              features.geometry = cloned.transform(new OpenLayers.Projection('EPSG:3857'), mainMapDiv.map.infoLayer.projection.projCode);
+            }
+            if (!Array.isArray(features)) features = [features];
+            mainMapDiv.map.infoLayer.addFeatures(features);
+            
+            if(!checkOutside) return;
+            
+            $.each(mainMapDiv.map.editLayer.features, function(idx1, editFeature) {
+                if(typeof editFeature.attributes.temp !== 'undefined' &&  editFeature.attributes.temp == true)
+                    return;
+                intersects = false;
+                $.each(mainMapDiv.map.infoLayer.features, function(idx2, countryFeature) {
+                    intersects |= countryFeature.geometry.intersects(editFeature.geometry.getCentroid());
+                });
+            });
+            if(!intersects) {
+              $('<p>The transect is outside the newly selected country.</p>').dialog(
+                    { title: "Transect outside country",
+                      buttons: { "OK":  function() { $(this).dialog('close'); } },
+                      classes: {"ui-dialog": "above-map"}});
+            }
+          });
+          $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).removeClass("working1");
+          _countryChangeEnd(mainMapDiv, mapExtent, details.reproject, oldEditLayerProj);
+        }
+      );
+      // Update Code
+      // Next recalculate the code: only do this if the site is new
+      if($('#location-id').length==0) {
+          // The calculation of the index is now transferred to the submission function on the page, as this is done
+          // at the last moment: prevents duplicates.
+          var code = indiciaData.autogeneratePrefix +
+              $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')+' option:selected').text() +
+              indiciaData.autogeneratePrefix.substring(indiciaData.autogeneratePrefix.length-1) +
+              '[INDEX]';
+          $('#location-code').val(code);
+        }
+    } else
+        _countryChangeEnd(mainMapDiv, mapExtent, details.reproject, oldEditLayerProj);
+  }
+
+  /*
+   * The following functions are common between the route and section details tabs.
+   */
+  var section_select_change_handler = function(evt) {
+    var parts = evt.target.id.split('-');
+    confirmSelectSection(parts[parts.length-1], true);
+  };
+
+  confirmSelectSection = function(section, doFeature) {
+    var current = $('#section-select-route li.selected').html(),
+        mapDiv = $('#route-map')[0];
+    if(current == section) return;
+    // continue to save if the route is either unchanged or user says no.
+    if(indiciaData.routeChanged === true || indiciaData.sectionDetailsChanged === true) {
+      var buttons = {};
+      buttons[indiciaData.langStrings.Cancel] = function() {
+            $(this).dialog('close');
+          };
+      buttons[indiciaData.langStrings.Continue] =function() {
+            $(this).dialog('close');
+            indiciaData.sectionDetailsChanged === false;
+            indiciaData.routeChanged = false;
+            mapDiv.map.editLayer.removeFeatures([indiciaData.currentFeature]);
+            if(indiciaData.previousGeometry == null) {
+              if(typeof indiciaData.drawFeature !== "undefined")
+                  indiciaData.drawFeature.activate();
+            } else {
+              indiciaData.currentFeature.geometry = indiciaData.previousGeometry;
+              mapDiv.map.editLayer.addFeatures([indiciaData.currentFeature]);
+              if(typeof indiciaData.modifyFeature !== "undefined")
+                indiciaData.modifyFeature.activate();
+            }
+            mapDiv.map.editLayer.redraw();
+            selectSection(section, doFeature);  // overwrite the details.
+          };
+      // display dialog and drive from its button events.
+      // TODO i18n title
+      var dialog = $('<p>There are unsaved changes to the route and/or the section details for this currently selected section. Select &apos;Continue&apos; to discard these changes, and load the new section; choose &apos;Cancel&apos; to prevent the data load, and allow you to save the data first.</p>')
+              .dialog({ title: "Data changed", buttons: buttons, classes: {"ui-dialog": "above-map"}});
+    } else { // no unsaved changes on the route or the details page
+      selectSection(section, doFeature);
+    }
+  };
+
+  /**
+   * This function does not check if the existing data needs to be saved: it just overwrites.
+   */
+  selectSection = function(section, doFeature) {
+    // If doFeature is true, then all we need to do is select the feature on the route map.
+    // This will trigger a featureSelected event which then calls this function again with the doFeature false.
+    // We use this second call to change the data, being careful about recursion.
+    indiciaData.routeChanged = false;
+    indiciaData.sectionDetailsChanged = false;
+    $('.section-select li').removeClass('selected');
+    $('#section-select-route-'+section).addClass('selected');
+    $('#section-select-'+section).addClass('selected');
+    if(doFeature){
+      // Deactivate the controls if active and unselect previous route feature.
+      if(typeof indiciaData.modifyFeature !== "undefined")
+        indiciaData.modifyFeature.deactivate();
+      if(typeof indiciaData.drawFeature !== "undefined")
+        indiciaData.drawFeature.deactivate();
+      if(typeof indiciaData.selectFeature !== "undefined") {
+        indiciaData.selectFeature.deactivate();
+        indiciaData.selectFeature.unselectAll();
+      }
+      indiciaData.currentFeature = null;
+      indiciaData.previousGeometry = null;
+      // if we click a new route: no feature yet, also no data!
+      $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
+          if (feature.attributes.section===section) {
+            indiciaData.currentFeature = feature;
+            indiciaData.previousGeometry = feature.geometry.clone();
+          }
+      });
+      if (indiciaData.currentFeature === null) { // no featureSelected event, so we load details now.
+        if(typeof indiciaData.drawFeature !== "undefined")
+          indiciaData.drawFeature.activate();
+        loadSectionDetails(section);
+        indiciaData.routeChanged = false;
+        indiciaData.sectionDetailsChanged = false;
+        indiciaData.currentSection=section;
+      } else {
+        if(typeof indiciaData.modifyFeature !== "undefined")
+          indiciaData.modifyFeature.activate();
+      }
+    } else {
+      // doFeature = false implies that this has come from a map event. i.e. select of feature using select control
+        if(typeof indiciaData.selectFeature !== "undefined") {
+            indiciaData.selectFeature.deactivate();
+            indiciaData.selectFeature.unselectAll();
+          }
+        indiciaData.currentFeature = null;
+        indiciaData.previousGeometry = null;
+        $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
+            if (feature.attributes.section===section) {
+              indiciaData.currentFeature = feature;
+              indiciaData.previousGeometry = feature.geometry.clone();
+            }
+        });
+        if(typeof indiciaData.modifyFeature !== "undefined")
+            indiciaData.modifyFeature.activate();
+    }
+    loadSectionDetails(section);
+    indiciaData.currentSection=section;
+  };
+
+  /*
+   * The following functions are specific to the route tab.
+   */
+  var insert_section_click_handler = function(evt) {
+    var current = $('#section-select-route li.selected').html();
+    var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
+    var dialog2 = '<p>Please wait whilst the subsequent sections are renumbered, ' +
+        'and the number of sections counter on the Transect changed. ' +
+        'The page will reload automatically when complete.</p>';
+    // TODO reformat for i18n.
+    var buttons = {};
+    buttons[indiciaData.langStrings.Before] = function() {
+        $('.insert-section').addClass('waiting-button');
+        $(dialog2).dialog({ title: "Please Wait",
+                      buttons: {"OK": function() { $(this).dialog('close');}},
+                      classes: {"ui-dialog": "above-map"},
+            });
+        $.ajax({
+            url: indiciaData.ajaxUrl + '/insertSection/' + indiciaData.nid + urlSep + 'section=' + current +
+                    '&before=true&parent_id=' + $('#location-id').val() +
+                    '&parent_location_type_id=' +  $('#location_type_id').val(),
+            dataType: 'json',
+            success: function (response) {
+                window.onbeforeunload = null;
+                setTimeout(function() { window.location.href = window.location.href; });
+            }
+          });
+      };
+    buttons[indiciaData.langStrings.After] =  function() {
+          $('.insert-section').addClass('waiting-button');
+          $(dialog2).dialog({ title: "Please Wait",
+                        buttons: {"OK": function() { $(this).dialog('close');}},
+                        classes: {"ui-dialog": "above-map"},
+              });
+          $.ajax({
+              url: indiciaData.ajaxUrl + '/insertSection/' + indiciaData.nid + urlSep + 'section=' + current +
+                      '&after=true&parent_id=' + $('#location-id').val() +
+                      '&parent_location_type_id=' +  $('#location_type_id').val(),
+              dataType: 'json',
+              success: function (response) {
+                  window.onbeforeunload = null;
+                  setTimeout(function() { window.location.href = window.location.href; });
+              }
+            });
+      };
+    buttons[indiciaData.langStrings.Cancel] = function() {
+        $(this).dialog('close');
+      };
+    var dialog = $('<p>Do you wish it insert the new route before or after the currently selected section?</p>')
+        .dialog({ title: "Insert route",
+            classes: {"ui-dialog": "above-map"},
+            buttons: buttons,
+          });
+          
+  };
+
+  var erase_route_click_handler = function(evt) {
+    var current = $('#section-select-route li.selected').html(),
+        featuresToRemove = [],
+        div = $('#route-map'),
+        geom,
+        urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
+
+    div = div[0];
+    // If the draw feature control is active unwind it one point at a time, starting at the end.
+    for(var i = div.map.controls.length-1; i>=0; i--)
+      if(div.map.controls[i].CLASS_NAME == 'OpenLayers.Control.DrawFeature' && div.map.controls[i].active) {
+        if(div.map.controls[i].handler.line){
+          if(div.map.controls[i].handler.line.geometry.components.length <= 2) // start point plus current unselected position)
+            div.map.controls[i].cancel();
+          else 
+            div.map.controls[i].undo();
+          return;
+        }
+      }
+    $.each(div.map.editLayer.features, function(idx, feature) {
+      if (feature.attributes.section===current) {
+        featuresToRemove.push(feature);
+      }
+    });
+    if (featuresToRemove.length>0 && featuresToRemove[0].geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
+      // TODO i18n
+      if (!confirm('Do you wish to erase the route for this section?')) {
+        return;
+      }
+    } else return; // no existing route to clear
+    indiciaData.navControl.deactivate();
+    indiciaData.modifyFeature.deactivate();
+    indiciaData.drawFeature.deactivate();
+    indiciaData.selectFeature.deactivate();
+    indiciaData.currentFeature = null;
+    div.map.editLayer.removeFeatures(featuresToRemove, {});
+    indiciaData.drawFeature.activate();
+    if (typeof indiciaData.sections[current]=="undefined") {
+      return; // not currently stored in database
+    }
+    indiciaData.sections[current].sectionLen = 0;
+    indiciaData.routeChanged = true;
+  }; // End function for erase route click
+
+  var save_route_click_handler = function(evt) {
+    // This saves the currently selected route aginst the currently selected section.
+    // We assume that user has pressed button deliberately, so no confirmation.
+    if(indiciaData.currentFeature === null) return; // no feature selected so don't save
+    saveRoute(function() {});
+  };
+
+  var remove_section_click_handler = function(evt) {
+    var current = $('#section-select-route li.selected').html();
+    var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
+    // reformat for i18n, including buttons.
+    if(confirm(indiciaData.sectionDeleteConfirm + ' ' + current + '?')) {
+        $('<p>Please wait whilst the section and its walk data are removed, ' +
+                'the subsequent sections are renumbered, ' +
+                'the number of sections counter on the Transect changed, ' +
+                'and the transect length is recalculated. ' +
+                'The page will reload automatically when complete.</p>')
+            .dialog({ title: "Please Wait",
+                      buttons: {"OK": function() { $(this).dialog('close');}},
+                      classes: {"ui-dialog": "above-map"},
+            });
+        $('.remove-section').addClass('waiting-button');
+
+        $.ajax({
+            url: indiciaData.ajaxUrl + '/deleteSection/' + indiciaData.nid + urlSep + 'section=' + current +
+                    '&parent_id=' + $('#location-id').val() +
+                    '&parent_location_type_id=' +  $('#location_type_id').val(),
+            dataType: 'json',
+            success: function (response) {
+                window.onbeforeunload = null;
+                setTimeout(function() { window.location.href = window.location.href; });
+            }
+        });
+    }
+  };
+
+  var complete_route_details_click_handler = function(evt) {
+    indiciaFns.activeTab($('#controls'), 'section-details');
+  };
+
+  /* 
+   * The following functions are specific to the section details tab
+   */
+  /**
+   * Clear the section details form: errors, values, checkboxes/radios and remove any attribute value IDs
+   * local function. No external data dependancies.
+   */
+  var clearSection = function() {
+    indiciaData.sectionDetailsChanged = false;
+    $('#section-location-id,#section-location-sref,#section-location-system,#section-location-system-select').val('');
+    // remove exiting errors:
+    $('#section-form').find('.inline-error').remove();
+    $('#section-form').find('.ui-state-error').removeClass('ui-state-error');
+    // loop through form controls to make sure they do not have the value id (as these will be new values)
+    $.each($('#section-form').find(':input[name]'), function(idx, ctrl) {
+      var nameparts = $(ctrl).attr('name').split(':');
+      if (nameparts[0]==='locAttr') {
+        if (nameparts.length===3) {
+          $(ctrl).attr('name', nameparts[0] + ':' + nameparts[1]);
+        }
+        // clear the control's value
+        if ($(ctrl).is(':checkbox')) {
+          $(ctrl).attr('checked', false);
+        } else {
+          $(ctrl).val('');
+        }
+      } else if ($(ctrl).hasClass('hierarchy-select')) {
+        $(ctrl).val('');
+      }
     });
   };
 
-clearSection = function() {
-  $('#section-location-id').val('');
-  $('#section-location-sref').val('');
-  $('#section-location-system,#section-location-system-select').val('');
-  // remove exiting errors:
-  $('#section-form').find('.inline-error').remove();
-  $('#section-form').find('.ui-state-error').removeClass('ui-state-error');
-  var nameparts;
-  // loop through form controls to make sure they do not have the value id (as these will be new values)
-  $.each($('#section-form').find(':input[name]'), function(idx, ctrl) {
-    nameparts = $(ctrl).attr('name').split(':');
-    if (nameparts[0]==='locAttr') {
-      if (nameparts.length===3) {
-        $(ctrl).attr('name', nameparts[0] + ':' + nameparts[1]);
-      }
-      // clear the control's value
-      if ($(ctrl).is(':checkbox')) {
-          $(ctrl).attr('checked', false);
-      } else {
-          $(ctrl).val('');
-      }
-    } else if ($(ctrl).hasClass('hierarchy-select')) {
-      $(ctrl).val('');
-    }
-  });
-};
-/*
- * This only loads the section data details: this is the third tab, it does not deal 
- * with the route tab.
- */
-loadSectionDetails = function(section) {
-  clearSection();
-  if (typeof indiciaData.sections[section]!=="undefined") { // previously existing section.
-    $('#section-details-tab').show();
-    $('.complete-route-details').removeAttr('disabled');
-    $('#section-location-id').val(indiciaData.sections[section].id);
-    // if the systems on the section and main location do not match, copy the the system and sref from the main site.
-    if(indiciaData.sections[section].system !== $('#imp-sref-system').val()) {
+  /**
+   * This only loads the section data details: this is the third tab, it does not deal 
+   * with the route tab.
+   */
+  loadSectionDetails = function(section) {
+    clearSection();
+    $('#section-details-transaction-id').val(section);
+    if (typeof indiciaData.sections[section]!=="undefined") { // previously existing section.
+      $('#section-details-tab').show();
+      $('.complete-route-details').removeAttr('disabled');
+      $('#section-location-id').val(indiciaData.sections[section].id);
+      // if the systems on the section and main location do not match, copy the the system and sref from the main site.
+      if(indiciaData.sections[section].system !== $('#imp-sref-system').val()) {
         $('#section-location-sref').val($('#imp-sref').val());
         $('#section-location-system,#section-location-system-select').val($('#imp-sref-system').val());
-    } else {
+      } else {
         $('#section-location-sref').val(indiciaData.sections[section].sref);
         $('#section-location-system,#section-location-system-select').val(indiciaData.sections[section].system);
-    }
-    $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
-        "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+      }
+      $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?location_id=" + indiciaData.sections[section].id +
+          "&mode=json&view=list&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
         function(data) {
           var attrname;
           $.each(data, function(idx, attr) {
@@ -160,7 +755,7 @@ loadSectionDetails = function(section) {
               }
             } else if ($('#section-form #fld-locAttr\\:'+attr.location_attribute_id).length>0) {
               // a hierarchy select outputs a fld control, which needs a special case
-              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
+              $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
               $('#section-form #fld-locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
               // check the option is already in the drop down.
               if ($('#section-form #locAttr\\:'+attr.location_attribute_id + " option[value='"+attr.raw_value+"']").length===0) {
@@ -170,355 +765,129 @@ loadSectionDetails = function(section) {
                     attr.raw_value + '">' + attr.value + '</option>');
               }
               $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
-            } else {              
-              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);              
+            } else {
+              $('#section-form #locAttr\\:'+attr.location_attribute_id).val(attr.raw_value);
               $('#section-form #locAttr\\:'+attr.location_attribute_id).attr('name',attrname);
             }
           });
         }
-    );
-  } else {
-	  $('#section-details-tab').hide();
-	  $('.complete-route-details').attr('disabled','disabled');
-  }
-};
-
-updateTransectDetails = function(newNumSections) {
-  var transectLen = 0;
-  var numSections = parseInt($('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').val(),10);
-  var ldata = {'location:id':$('#location-id').val(), 'website_id':indiciaData.website_id};
-  var save = (newNumSections !== false);
-  var renameAutoCalc = false;
-  
-  if (typeof indiciaData.autocalcTransectLengthAttrId != 'undefined' &&
-        indiciaData.autocalcTransectLengthAttrId &&
-        indiciaData.autocalcSectionLengthAttrId) {
-    // add all sections lengths together
-    for(var i = 1; i <= numSections; i++){
-      if(typeof indiciaData.sections['S'+i] !== "undefined" && typeof indiciaData.sections['S'+i].sectionLen !== "undefined"){
-        transectLen += indiciaData.sections['S'+i].sectionLen;
-      }
+      );
+    } else { // if there is no existing route (i.e. section record), can't enter details.
+      $('#section-details-tab').hide();
+      $('.complete-route-details').attr('disabled','disabled');
     }
-    // load into form.
-    $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
-    ldata[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
-    save = renameAutoCalc = true;
-  }
-
-  if(newNumSections !== false)
-    ldata[indiciaData.settings.numSectionsAttr] = ''+newNumSections;
-  
-  if(save)
-    syncPost(indiciaData.ajaxFormPostUrl, ldata);
-
-  if(newNumSections !== false) {
-    window.onbeforeunload = null;
-    setTimeout(function(){
-        window.location.reload(true);
-    });
-  } else if (renameAutoCalc && indiciaData.autocalcTransectLengthAttrName.split(':').length === 2) {
-    $.ajax({
-        type: 'GET',
-        url: indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?" +
-              "location_id=" + $('#location-id').val() +
-              "&location_attribute_id=" + indiciaData.autocalcTransectLengthAttrId +
-              "&mode=json&view=list&callback=?" +
-              "&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
-        success: function(data) {
-          if (data.length > 0) {
-            var attrname = 'locAttr:' +
-                           indiciaData.autocalcTransectLengthAttrId + ':' +
-                           data[0].id;
-            $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).attr('name', attrname);
-            indiciaData.autocalcTransectLengthAttrName = attrname;
-          }
-        },
-        dataType: 'json',
-        async: false
-      });
-  }
-}
-
-/*
- * Check if any route changes or details changes have been saved before allowing 
- * a new section to be selected.
- */
-confirmSelectSection = function(section, doFeature, withCancel) {
-  // continue to save if the route is either unchanged or user says no.
-  if(typeof indiciaData.modifyFeature !== "undefined" &&
-		  indiciaData.modifyFeature.active && indiciaData.modifyFeature.modified)
-	  indiciaData.routeChanged = true;
-  if(indiciaData.routeChanged === true) {
-    var buttons =  { 
-        "No":  function() { 
-        	// replace the route with the previous one for this section.
-        	// At his point, indiciaData.currentSection should point to existing, previously selected section.
-        	var removeSections = [], oldSection = [], div = $('#route-map'), geom;
-        	$(this).dialog('close');
-        	div = div[0];
-    		if(typeof indiciaData.modifyFeature !== "undefined")
-    		    indiciaData.modifyFeature.deactivate();
-    		if(typeof indiciaData.drawFeature !== "undefined")
-    		    indiciaData.drawFeature.deactivate();
-		    indiciaData.navControl.activate(); // Nav control always exists
-        	$.each(div.map.editLayer.features, function(idx, feature) {
-        		if (feature.attributes.section===indiciaData.currentSection) {
-        			removeSections.push(feature);
-        		}
-        	});
-        	if (removeSections.length>0) {
-        		div.map.editLayer.removeFeatures(removeSections, {});
-        	}
-        	if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined') {
-              // .geom is stored in 3857: convert to map projection.
-              geom = OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom);
-              if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
-                geom = geom.transform(new OpenLayers.Projection('EPSG:3857'), indiciaData.mapdiv.map.projection);
-              }
-              oldSection.push(new OpenLayers.Feature.Vector(geom, {section:indiciaData.currentSection, type:"boundary"}));
-              div.map.editLayer.addFeatures(oldSection);
-        	} // dont worry about selection.
-        	indiciaData.routeChanged = false;
-        	checkIfSectionChanged(section, doFeature, withCancel);
-        },
-        "Yes": function() { $(this).dialog('close');
-        	saveRoute();
-        	indiciaData.routeChanged = false;
-        	checkIfSectionChanged(section, doFeature, withCancel);
-        } // synchronous for bit that matters. 
-    };
-    if(withCancel) {
-      buttons.Cancel = function() { $(this).dialog('close'); };
-    }
-    // display dialog and drive from its button events.
-    var dialog = $('<p>'+(withCancel ? indiciaData.routeChangeConfirmCancel : indiciaData.routeChangeConfirm) +'</p>').dialog({ title: "Save Route Data?", buttons: buttons });
-  } else {
-	  checkIfSectionChanged(section, doFeature, withCancel);
-  }
-};
-
-checkIfSectionChanged = function(section, doFeature, withCancel) {
-  if(indiciaData.sectionDetailsChanged === true) {
-    var buttons =  { 
-        "Yes": function() { $(this).dialog('close');
-        	$('#section-form').submit();
-        	selectSection(section, doFeature);
-        },
-        "No":  function() { $(this).dialog('close');
-        	selectSection(section, doFeature); }};
-    if(withCancel) {
-      buttons.Cancel = function() { $(this).dialog('close'); };
-    }
-    // display dialog and drive from its button events.
-    var dialog = $('<p>'+(withCancel ? indiciaData.sectionChangeConfirmCancel : indiciaData.sectionChangeConfirm) +'</p>').dialog({ title: "Save Section Details?", buttons: buttons });
-  } else {
-    selectSection(section, doFeature);
-  }
-};
-
-selectSection = function(section, doFeature) {
-  /*
-   * If doFeature is true, then we need to select the feature on the route map.
-   * This will trigger a featureSelected event which then calls this function again with the doFeature false.
-   * We let this second call change the data, being careful about recursion.
-   * At this point the data has all been saved. routeChanged and sectionDetailsChanged are set in save functions
-   */
-  $('.section-select li').removeClass('selected');
-  $('#section-select-route-'+section).addClass('selected');
-  $('#section-select-'+section).addClass('selected');
-  var oldEnableSelectReload = indiciaData.enableSelectReload;
-  indiciaData.enableSelectReload = false; // don't want to recurse when the feature is selected.
-  if(doFeature){
-	// Deactivate the controls if active and unselect previous route feature.
-	if (typeof indiciaData.mapdiv !== "undefined") {
-      indiciaData.navControl.deactivate(); // Nav control always exists
-      if(typeof indiciaData.modifyFeature !== "undefined")
-    	  indiciaData.modifyFeature.deactivate();
-      if(typeof indiciaData.drawFeature !== "undefined")
-    	  indiciaData.drawFeature.deactivate();
-      if(typeof indiciaData.selectFeature !== "undefined") {
-    	  indiciaData.selectFeature.deactivate();
-    	  indiciaData.selectFeature.unselectAll();
-      }
-      indiciaData.currentFeature = null;
-	  // if we click a new route: no feature yet, also no data!
-	  $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
-	      if (feature.attributes.section===section) {
-	    	  indiciaData.currentFeature = feature;
-	      }
-	  });
-	  if (indiciaData.currentFeature === null) {
-		  if(typeof indiciaData.drawFeature !== "undefined")
-	    	  indiciaData.drawFeature.activate();
-	  } else {
-		  if(typeof indiciaData.modifyFeature !== "undefined")
-	    	  indiciaData.modifyFeature.activate();
-		  if(typeof indiciaData.selectFeature !== "undefined")
-	    	  indiciaData.selectFeature.select(indiciaData.currentFeature);
-	  }
-    }
-  } else { // doFeature = false implies that this has come from a map event. i.e. select of feature using select control
-    // Deactivate the controls if active and unselect previous route feature.
-    if (typeof indiciaData.mapdiv !== "undefined") {
-    	  if(typeof indiciaData.selectFeature !== "undefined")
-	    	  indiciaData.selectFeature.deactivate();
-		  indiciaData.currentFeature = null;
-		  $.each(indiciaData.mapdiv.map.editLayer.features, function(idx, feature) {
-		      if (feature.attributes.section===section) {
-		    	  indiciaData.currentFeature = feature;
-		      }
-		  });
-		  if(typeof indiciaData.modifyFeature !== "undefined")
-	    	  indiciaData.modifyFeature.activate();
-	}
-  }
-  indiciaData.routeChanged = false;
-  indiciaData.enableSelectReload = oldEnableSelectReload;
-  if (indiciaData.currentSection!==section) {
-    indiciaData.sectionDetailsChanged = false;
-    loadSectionDetails(section);
-    indiciaData.currentSection=section;
-  }
-};
-
-deleteWalks = function(walkIDs) {
-  $.each(walkIDs, function(i, walkID) {
-    $('#delete-transect').html('Deleting Walks ' + (Math.round(i/walkIDs.length*100)+'%'));
-    var data = {
-      'sample:id':walkID,
-      'sample:deleted':'t',
-      'website_id':indiciaData.website_id
-    };
-    syncPost(indiciaData.ajaxFormPostSampleUrl, data);
-  });
-  $('#delete-transect').html('Deleting Walks 100%');
-};
-
-deleteLocation = function(ID) {
-  var data = {
-    'location:id':ID,
-    'location:deleted':'t',
-    'website_id':indiciaData.website_id
   };
-  syncPost(indiciaData.ajaxFormPostUrl, data);
-};
 
-// delete a set of sections. Does not re-index the other section codes.
-deleteSections = function(sectionIDs) {
-  $.each(sectionIDs, function(i, sectionID) {
-    $('#delete-transect').html('Deleting Sections ' + (Math.round(i/sectionIDs.length*100)+'%'));
-    deleteLocation(sectionID);
-  });
-  $('#delete-transect').html('Deleting Sections 100%');
-};
-
-//delete a section
-deleteSection = function(section) {
-  var data;
-  // section comes in like "S1"
-  // TODO NTH Add progress bar
-  $('<p>Please wait whilst the section and its walk data are removed, the subsequent sections renumbered, and the number of sections counter on the Transect changed. The page will reload automatically when complete.</p>').dialog({ title: "Please Wait",
-	  	buttons: {"OK": function() {
-	  		$( this ).dialog('close');}}});
-
-  $('.remove-section').addClass('waiting-button');
-  // if it has been saved, delete any subsamples lodged against it.
-  if(typeof indiciaData.sections[section] !== "undefined"){
-    $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/sample?location_id=" + indiciaData.sections[section].id +
-            "&mode=json&view=detail&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
-      function(sdata) {
-        if (typeof sdata.error==="undefined") {
-          $.each(sdata, function(idx, sample) {
-            var postData = {'sample:id':sample.id,'sample:deleted':'t','website_id':indiciaData.website_id};
-            syncPost(indiciaData.ajaxFormPostSampleUrl, postData);
-          });
-          // The getJSON is async: need all getjson to have returned list before we delete the location, otherwise DB
-          // location delete trigger may cause havoc with the samples query. When a location is deleted its samples
-          // are orphaned but undeleted.
-          deleteLocation(indiciaData.sections[section].id);
-        }
+  // Two ways the section form is submitted: the user presses the submit button, or the user moves away from this
+  // section: in the first the data will still be for the same section, in the other, the section selector is pointing 
+  // to the requested section. BUT there may be validation errors, so don't load the new section until the form has
+  // returned successfully.
+  var section_form_ajax_success = function(data) {
+    var transaction_section = data.transaction_id;
+    // remove any existing errors:
+    $('#section-form').find('.inline-error').remove();
+    $('#section-form').find('.ui-state-error').removeClass('ui-state-error');
+    if(typeof data.errors !== "undefined"){
+      // reset the section selectors on route and details tabs, to point to the section which has the error.
+      $('.section-select li').removeClass('selected');
+      $('#section-select-route-'+transaction_section).addClass('selected');
+      $('#section-select-'+transaction_section).addClass('selected');
+      for(field in data.errors){
+        var elem = $('#section-form').find('[name='+field.replace(/:/g,'\\:')+']');
+        var label = $("<label/>").attr({"for": elem[0].id, generated: true}).addClass('inline-error').html(data.errors[field]);
+        var elementBefore = $(elem).next().hasClass('deh-required') ? $(elem).next() : elem;
+        label.insertAfter(elementBefore);
+        elem.addClass('ui-state-error');
       }
-    );
-    indiciaData.sections[section].sectionLen = 0;
-  }
-  // loop through all the subsections with a greater section number
-  // subsamples are attached to the location and parent, but the location_name is not filled in, so don't need to change that
-  // Update the code and the name for the locations.
-  // Note that the subsections may not have been saved, so may not exist.
-  var numSections = parseInt($('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').val(),10);
-  for(var i = parseInt(section.substr(1))+1; i <= numSections; i++){
-	// don't need to update the indiciaData as form will be reloaded.
-    if(typeof indiciaData.sections['S'+i] !== "undefined"){
-      data = {'location:id':indiciaData.sections['S'+i].id,
-                  'location:code':'S'+(i-1),
-                  'location:name':$('#location-name').val() + ' - ' + 'S'+(i-1),
-                  'website_id':indiciaData.website_id};
-      syncPost(indiciaData.ajaxFormPostUrl, data);
+      // TODO i18n
+      jQuery('<p>The information for section '+transaction_section+' has NOT been saved. There are errors which require attention, and which have been highlighted - please correct them and re-save.</p>').dialog({ title: "Section Save Failed", buttons: { "OK": function() { $(this).dialog('close'); }}, classes: {"ui-dialog": "above-map"}});
+    } else {
+      // fetch and store the Sref...
+      // The section form is only available if there is already a section record - generated on the route tab.
+      $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location?id=" + indiciaData.sections[transaction_section].id +
+                "&mode=json&view=list&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce, 
+            function(data) {
+              if(data.length>0) {
+                indiciaData.sections[transaction_section].sref = data[0].centroid_sref;
+                indiciaData.sections[transaction_section].system = data[0].centroid_sref_system;
+              }
+              // need to reset any section attribute value ids, so reload for both moved and non-moved scenarios
+              var current_section = $('#section-select li.selected').html();
+              loadSectionDetails(current_section);
+      });
+      // TODO i18n
+      jQuery('<p>The information for section '+transaction_section+' has been succesfully saved.</p>').dialog({ title: "Section saved", buttons: { "OK": function() { $(this).dialog('close'); }}, classes: {"ui-dialog": "above-map"}});
     }
-  }
-  // update the attribute value for number of sections.
-  // and finally update the total transect length on the transect.
-  // reload the form when all ajax done. This will reload the new section list and total transect length into the form
-  updateTransectDetails(numSections-1);
-};
+  };
 
-//insert a section
-insertSection = function(section) {
-  var data;
-  // section comes in like "S1"
-  // TODO NTH Add progress bar
-  $('<p>Please wait whilst the subsequent sections are renumbered, and the number of sections counter on the Transect changed. The page will reload automatically when complete.</p>').dialog({ title: "Please Wait",
-	  	buttons: {"OK": function() { $(this).dialog('close');}}});
-  $('.insert-section').addClass('waiting-button');
-  // loop through all the subsections with a greater section number
-  // subsamples are attached to the location and parent, but the location_name is not filled in, so don't need to change that
-  // Update the code and the name for the locations.
-  // Note that the subsections may not have been saved, so may not exist.
-  var numSections = parseInt($('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').val(),10);
-  for(var i = parseInt(section.substr(1))+1; i <= numSections; i++){
-    if(typeof indiciaData.sections['S'+i] !== "undefined"){
-      data = {'location:id':indiciaData.sections['S'+i].id,
-                  'location:code':'S'+(i+1),
-                  'location:name':$('#location-name').val() + ' - ' + 'S'+(i+1),
-                  'website_id':indiciaData.website_id};
-      syncPost(indiciaData.ajaxFormPostUrl, data);
+/**
+ * This saves the currently selected route against the currently selected section.
+ */
+saveRoute = function(callback) {
+    var current = $('#section-select-route li.selected').html(),
+        oldSection = [],
+        saveRouteDialogText,
+        geom;
+
+    var drawingChanged = (typeof indiciaData.drawFeature !== "undefined" &&
+            indiciaData.drawFeature.active &&
+            indiciaData.drawFeature.handler.line != null &&
+            indiciaData.drawFeature.handler.line.geometry.components.length > 2);
+              // ignore single points - these occur when control active but nothing added so far, as mouse moves control over the map.
+              // 2 points are a start point and the mouse: only one vertex so not a line yet
+
+    // If the draw control is active, save any unfinished line.
+    if(drawingChanged){
+      indiciaData.drawFeature.finishSketch();
+      // this triggers the feature added event
+      indiciaData.drawFeature.deactivate();
+      if(typeof indiciaData.modifyFeature !== "undefined")
+        indiciaData.modifyFeature.activate();
     }
-  }
-  updateTransectDetails(numSections+1);
-};
+    // If any other control (including modify control) is active, the feature geometry is upto date: geom is correct.
+    // However need to unflag any modification within the modify control.
+    else if (typeof indiciaData.modifyFeature !== "undefined" &&
+            indiciaData.modifyFeature.active) {
+        indiciaData.modifyFeature.deactivate();
+        indiciaData.modifyFeature.activate();
+    }
+    geom = indiciaData.currentFeature.geometry.clone();
 
-var saveRouteDialog;
-
-saveRoute = function() {
-    var current, oldSection = [], saveRouteDialogText, geom = indiciaData.currentFeature.geometry.clone();
-	// This saves the currently selected route aginst the currently selected section.
-	$('.save-route').addClass('waiting-button');
+    $('.save-route').addClass('waiting-button');
 
     $('#section-details-tab').show();
     $('.complete-route-details').removeAttr('disabled');
-    current = $('#section-select-route li.selected').html();
+
     saveRouteDialogText = 'Saving the route data for section '+current+'.<br/>';
+
     // Leave indiciaData.currentFeature selected
+    indiciaData.previousGeometry = geom.clone();
     // Prepare data to post the new or edited section to the db
     if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
       geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
     }
 
-    var data = {
+    var postData = {
       'location:code':current,
       'location:name':$('#location-name').val() + ' - ' + current,
       'location:parent_id':$('#location-id').val(),
       'location:boundary_geom':geom.toString(), // in 3857
       'location:location_type_id':indiciaData.sectionTypeId,
-      'website_id':indiciaData.website_id
+      'website_id':indiciaData.website_id,
+      'transaction_id':current
     };
+
+	var newSectionDetails = {system : $('#imp-sref-system').val()};
+
     if (typeof indiciaData.sections[current]!=="undefined") {
-      data['location:id']=indiciaData.sections[current].id;
+      newSectionDetails.id = indiciaData.sections[current].id;
+      postData['location:id'] = indiciaData.sections[current].id;
     } else {
       saveRouteDialogText = saveRouteDialogText + 'Don&apos;t forget to enter the data on the &quot;Section Details&quot; tab for this new route.<br/>';
-      data['locations_website:website_id']=indiciaData.website_id;
+      postData['locations_website:website_id']=indiciaData.website_id;
     }
-	saveRouteDialog = jQuery('<p>'+saveRouteDialogText+'<span class="route-status">Saving Route...</span></p>').dialog({ title: "Saving Route", buttons: { "Hide": function() { $(this).dialog('close'); }}});
+
+    var saveRouteDialog = jQuery('<p>'+saveRouteDialogText+'<span class="route-status">Saving Route...</span></p>').dialog({ title: "Saving Route", buttons: { "Hide": function() { $(this).dialog('close'); }}, classes: {"ui-dialog": "above-map"}});
 
     // Setup centroid grid ref and centroid geometry of section.
     // Store this in the indiciaData
@@ -531,58 +900,108 @@ saveRoute = function() {
       } else {
         pt = jQuery.extend({}, indiciaData.currentFeature.geometry.components[0]);
       }
-      sref=handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
-      indiciaData.sections[current] = {sref : sref,	system : $('#imp-sref-system').val()};
+      newSectionDetails.sref = handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
     } else { // default : initially set the section Sref etc to match the parent. centroid_geom will be auto generated on the server
-      indiciaData.sections[current] = {sref : $('#imp-sref').val(), system : $('#imp-sref-system').val()};
+      newSectionDetails.sref = $('#imp-sref').val();
     }
-    // Store in POST data
-    data['location:centroid_sref']=indiciaData.sections[current].sref; // centroid_geom not provided, so automatically created by warehouse from sref
-    data['location:centroid_sref_system']=indiciaData.sections[current].system;
-    $('#section-location-sref').val(data['location:centroid_sref']);
-    $('#section-location-system,#section-location-system-select').val(indiciaData.sections[current].system);
+
     // Store boundary geometry in the indiciaData
-    indiciaData.sections[current].geom = geom.toString(); // in 3857.
+    newSectionDetails.geom = geom.toString(); // in 3857.
 
     // autocalc the section length and store in the section POST data and indiciaData and the Section Form
     if (indiciaData.autocalcSectionLengthAttrId) {
-  	var sectionLen = Math.round(indiciaData.currentFeature.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:27700').getLength());
-      data[$('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).attr('name')] = sectionLen;
+      var sectionLen = Math.round(indiciaData.currentFeature.geometry.clone().transform(indiciaData.mapdiv.map.projection, 'EPSG:27700').getLength());
+      postData[$('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).attr('name')] = sectionLen;
       $('#locAttr\\:'+indiciaData.autocalcSectionLengthAttrId).val(sectionLen);
-      indiciaData.sections[current].sectionLen = sectionLen;
+      newSectionDetails.sectionLen = sectionLen;
     }
-    indiciaData.routeChanged = false;
 
-    // POST the new section details. Synchronous due to current in success function
+    indiciaData.sections[current] = newSectionDetails;
+
+    // Store in POST data
+    postData['location:centroid_sref'] = newSectionDetails.sref; // centroid_geom not provided, so automatically created by warehouse from sref
+    postData['location:centroid_sref_system'] = newSectionDetails.system;
+
+    // Store into details form
+    $('#section-location-sref').val(newSectionDetails.sref);
+    $('#section-location-system,#section-location-system-select').val(newSectionDetails.system);
+
     $.ajax({
         type: 'POST',
         url: indiciaData.ajaxFormPostUrl,
-        data: data,
+        data: postData,
         success: function(data) {
           if (typeof(data.error)!=="undefined") {
             alert(data.error);
           } else {
-              // Better way of doing this?
-              var current = $('#section-select-route li.selected').html();
-              indiciaData.sections[current].id = data.outer_id; // both new and old require this, see defaultSectionGridRef functionality
-              $('#section-location-id').val(data.outer_id);
-              $('#section-select-route-'+current).removeClass('missing');
-              $('#section-select-'+current).removeClass('missing');
+              var current_section = $('#section-select-route li.selected').html();
+              var transaction_section = data.transaction_id;
+              indiciaData.sections[transaction_section].id = data.outer_id; // both new and old require this, see defaultSectionGridRef functionality
+              $('#section-select-route-'+transaction_section+',#section-select-'+transaction_section).removeClass('missing');
+              if(current_section == transaction_section) {
+                $('#section-location-id').val(data.outer_id);
+              }
+              indiciaData.routeChanged = false;
           }
           $('.save-route').removeClass('waiting-button');
-          },
+          saveRouteDialog.dialog('close');
+          if(callback !== null) callback();
+        },
         dataType: 'json',
-        async: false // Synchronous due to method of working out current in success function
     });
-    // Now update the parent with the total transect length
-    $('.route-status').empty().html('Updating total transect length...');
-    updateTransectDetails(false);
-    saveRouteDialog.dialog('close');
+    // Now update the parent with the total transect length: can do this at same time as data saved, as not dependant
+    updateTransectDetails();
 }
 
-$(document).ready(function() {
+updateTransectDetails = function() {
+  var transectLen = 0;
+  var numSections;
+  var ldata = {'location:id':$('#location-id').val(), 'website_id':indiciaData.website_id};
+  
+  for (prop in indiciaData.sections) {
+      if (hasOwnProperty.call(indiciaData.sections, prop) && typeof indiciaData.sections[prop].sectionLen !== "undefined") {
+    	  transectLen += indiciaData.sections[prop].sectionLen;
+      }
+    }
+  // load into form.
+  $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).val(transectLen);
+  ldata[indiciaData.autocalcTransectLengthAttrName] = ''+transectLen;
+  
+  $.ajax({
+        type: 'POST',
+        url: indiciaData.ajaxFormPostUrl,
+        data: ldata,
+        success: function(data) {
+          if (typeof(data.error)!=="undefined") {
+            alert(data.error);
+          } else {
+            if (indiciaData.autocalcTransectLengthAttrName.split(':').length === 2) {
+              $.ajax({
+                type: 'GET',
+                url: indiciaData.indiciaSvc + "index.php/services/data/location_attribute_value?" +
+                      "location_id=" + $('#location-id').val() +
+                      "&location_attribute_id=" + indiciaData.autocalcTransectLengthAttrId +
+                      "&mode=json&view=list&callback=?" +
+                      "&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
+                success: function(data) {
+                  if (data.length > 0) {
+                    var attrname = 'locAttr:' +
+                                   indiciaData.autocalcTransectLengthAttrId + ':' +
+                                   data[0].id;
+                    $('#locAttr\\:'+indiciaData.autocalcTransectLengthAttrId).attr('name', attrname);
+                    indiciaData.autocalcTransectLengthAttrName = attrname;
+                  }
+                },
+                dataType: 'json',
+              });
+            }
+          }
+        },
+        dataType: 'json',
+  });
+}
 
-  function _removeLayers(div) {
+function _removeLayers(div) {
     var toRemove = [];
     $.each(div.map.layers, function(idx, layer){
       if(layer !== div.map.editLayer &&
@@ -598,6 +1017,9 @@ $(document).ready(function() {
     });
   }
 
+  /*
+   * Map Utility functions.
+   */
     function _setDefaultLayers(div) {
       if (typeof div.map.defaultLayers === 'undefined') { // if first call, copy default layers into store.
         if (div.map.baseLayer == null) return false;
@@ -617,9 +1039,11 @@ $(document).ready(function() {
       return true;
     }
 
-    function _extendBounds(bounds, buffer) {
+    function _extendBounds(bounds, buffer, minimum) {
       var dy = (bounds.top-bounds.bottom) * buffer;
       var dx = (bounds.right-bounds.left) * buffer;
+      if(dx<minimum) dx=minimum;
+      if(dy<minimum) dy=minimum;
       bounds.top = bounds.top + dy;
       bounds.bottom = bounds.bottom - dy;
       bounds.right = bounds.right + dx;
@@ -633,6 +1057,8 @@ $(document).ready(function() {
           found = false,
           countryVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val();
 
+//      return retVal;
+      
       if(countryVal!==''){
         for(i=0; i < indiciaData.settings.country_configurations.length && !found; i++) {
           if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined' ||
@@ -655,7 +1081,7 @@ $(document).ready(function() {
 //            layer.settings.units = "meters"; TODO ???
 //            layer.settings.displayInLayerSwitcher = true; TODO ???
             tcLayer = new OpenLayers.Layer.TileCache(layer.caption, layer.servers, layer.layerName, layer.settings);
-
+            tcLayer.layerId = layer.layerName + '.0';
             if(layer.settings.isBaseLayer) {
               if(div.map.projection.projCode != layer.settings.srs) {
                 retVal.reproject = true;
@@ -674,6 +1100,9 @@ $(document).ready(function() {
             if(typeof layer.setInitialVisibility != 'undefined')
               tcLayer.setVisibility(layer.setInitialVisibility);
           });
+          div.map.setLayerIndex(div.map.infoLayer, div.map.layers.length);
+          div.map.setLayerIndex(div.map.editLayer, div.map.layers.length);
+          div.map.resetLayersZIndex()
           return retVal;
         }
       }
@@ -710,7 +1139,7 @@ $(document).ready(function() {
         $.each(toRemove, function(idx, feature){
           var cloned = feature.geometry.clone();
           feature.geometry = cloned.transform(projCode, layer.projection.projCode);
-          feature.attributes.converted = true;
+          feature.attributes.converted = true; // flag that this feature is being added due to a projection conversion.
           layer.addFeatures([feature]);
         });
       }
@@ -734,57 +1163,13 @@ $(document).ready(function() {
         delete indiciaData.initialBounds;
       } else {
         if(bounds !== null) {
-          _extendBounds(bounds, div.settings.maxZoomBuffer);
+          _extendBounds(bounds, div.settings.maxZoomBuffer, 10);
           div.map.zoomToExtent(bounds);
         }
         if(typeof div.map.baseLayer.onMapResize !== "undefined")
           div.map.baseLayer.onMapResize();
       }
     }
-
-  var doingSelection=false; 
-  
-  $('#section-form').ajaxForm({ // pressed save on the form details page.
-    async: false,
-    dataType:  'json',
-    complete: function() {
-      // 
-    },
-    success: function(data) {
-      // remove existing errors:
-      $('#section-form').find('.inline-error').remove();
-      $('#section-form').find('.ui-state-error').removeClass('ui-state-error');
-      if(typeof data.errors !== "undefined"){
-        for(field in data.errors){
-          var elem = $('#section-form').find('[name='+field+']');
-          var label = $("<label/>")
-                    .attr({"for":  elem[0].id, generated: true})
-                    .addClass('inline-error')
-                    .html(data.errors[field]);
-          var elementBefore = $(elem).next().hasClass('deh-required') ? $(elem).next() : elem;
-          label.insertAfter(elementBefore);
-          elem.addClass('ui-state-error');
-        }
-        jQuery('<p>The information for section '+current+' has NOT been saved. There are errors which require attention, and which have been highlighted - please correct them and re-save.</p>').dialog({ title: "Section Save Failed", buttons: { "OK": function() { $(this).dialog('close'); }}});
-      } else {
-        var current = $('#section-select li.selected').html();
-        // store the Sref...
-        indiciaData.sections[current].sref = $('#section-location-sref').val();
-        indiciaData.sections[current].system = $('#section-location-system-select').val();
-        jQuery('<p>The information for section '+current+' has been succesfully saved.</p>').dialog({ title: "Section Saved", buttons: { "OK": function() { $(this).dialog('close'); }}});
-        indiciaData.sectionDetailsChanged = false;
-      }
-    }
-  });  
-
-  $('#section-select li').click(function(evt) {
-    var parts = evt.target.id.split('-');
-    confirmSelectSection(parts[parts.length-1], true, true);
-  });
-
-  $('#section-form').find('input,textarea,select').change(function(evt) {
-    indiciaData.sectionDetailsChanged = true;
-  });
 
   // Extra map initialisation functionality is needed if there is more than one map - i.e. if the
   // route map is displayed.
@@ -839,7 +1224,7 @@ $(document).ready(function() {
     function resetMap(div, incInfo, initBounds, zoom) {
       var editLayerProj,
           infoLayerProj,
-          details;
+          details = {'reproject':true};
 
       if(typeof div.map == 'undefined') return;
       if ($(div).filter(':visible').length == 0) return;
@@ -850,35 +1235,16 @@ $(document).ready(function() {
       if(_setDefaultLayers(div)) {
         details = _setBaseLayers(div);
         if(details.reproject) {
-          _convertGeometries(editLayerProj.projCode, div.map.editLayer);
           _convertGeometries(infoLayerProj.projCode, div.map.infoLayer);
+          _convertGeometries(editLayerProj.projCode, div.map.editLayer);
         }
       }
+
       // when the route map is initially created it is hidden, so is not rendered, and the calculations of the map size are wrong
       // (Width is 100 rather than 100%), so any initial zoom in to the transect by the map panel is wrong.
       // Not only that but the layers may have changed.
-      _resetMap(div, incInfo, initBounds, zoom);
+      _resetMap(div, incInfo, initBounds, zoom || details.reproject);
     }
-
-  // Need to work around issue where standard mapTabHandler can only handle one map
-  indiciaFns.bindTabsActivate($('.ui-tabs'), function(event, ui) {
-      var div,
-          target = (typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0]),
-          mod = false;
-      if((div = $('#'+target.id+' #route-map')).length > 0){ // Your Route map is being displayed on this tab
-        mod = typeof indiciaData.modifyFeature !== "undefined" && indiciaData.modifyFeature.active;
-        if(mod) indiciaData.modifyFeature.deactivate();
-        copy_over_transects();
-        div = div[0]; // equivalent of indiciaData.mapdiv
-        resetMap(div, true, false, true) // when redisplaying route map, include the transect itself.
-        if(mod) indiciaData.modifyFeature.activate();
-      } else if ((div = $('#'+target.id+' #map')).length > 0){ // Main map is being displayed on this tab
-        div = div[0]; // equivalent of indiciaData.mapdiv
-        resetMap(div, false, true, true); // when redisplaying route map, dont include the country.
-      }
-    });
-
-
 
   mapInitialisationHooks.push(function(div) {
     var defaultStyle = new OpenLayers.Style(),
@@ -890,39 +1256,87 @@ $(document).ready(function() {
 
     if (div.id==='route-map') {
       indiciaData.currentFeature = null;
+      indiciaData.previousGeometry = null;
       indiciaData.routeChanged = false;
-      indiciaData.enableSelectReload = true;
-
       div.map.infoLayer = new OpenLayers.Layer.Vector('Transect Square', {style: div.map.editLayer.style, 'sphericalMercator': true, displayInLayerSwitcher: true});
       div.map.addLayer(div.map.infoLayer);
       // If there are any features in the editLayer without a section number, then this is the transect square feature, so move it to the parent (Transect Square) layer,
       // otherwise it will be selectable and will prevent the route features being clicked on to select them. Have to do this each time the tab is displayed
       // else any changes in the transect will not be reflected here.
-      copy_over_transects();
+      // copy_over_transects();
 
       // find the selectFeature control so we can interact with it later
       // Note these are the route-map controls.
       $.each(div.map.controls, function(idx, control) {
         if (control.CLASS_NAME==='OpenLayers.Control.SelectFeature') {
           indiciaData.selectFeature = control;
+          control.events.on({'activate':function() {
+              if(typeof indiciaData.navControl !== "undefined") {
+                  indiciaData.navControl.deactivate();
+              }
+              if(typeof indiciaData.drawFeature !== "undefined") {
+                  indiciaData.drawFeature.deactivate();
+                }
+              if(typeof indiciaData.modifyFeature !== "undefined")
+                indiciaData.modifyFeature.deactivate();
+              if(indiciaData.currentFeature !== null)
+                      indiciaData.selectFeature.select(indiciaData.currentFeature);
+              else
+                	  indiciaData.selectFeature.unselectAll();
+            }});
           div.map.editLayer.events.on({'featureselected': function(evt) {
-            if(indiciaData.enableSelectReload) // switched off when selecting a feature when not changing the section.
-              confirmSelectSection(evt.feature.attributes.section, false, false);
+            confirmSelectSection(evt.feature.attributes.section, false);
           }});
         } else if (control.CLASS_NAME==='OpenLayers.Control.DrawFeature') {
+            control.events.on({'activate':function() {
+                if(typeof indiciaData.navControl !== "undefined") {
+                    indiciaData.navControl.deactivate();
+                }
+                if(typeof indiciaData.modifyFeature !== "undefined")
+                  indiciaData.modifyFeature.deactivate();
+                if(typeof indiciaData.selectFeature !== "undefined") {
+                    indiciaData.selectFeature.deactivate();
+                    if(indiciaData.currentFeature !== null)
+                        indiciaData.selectFeature.select(indiciaData.currentFeature);
+                    else
+                  	  indiciaData.selectFeature.unselectAll();
+                }
+              }});
           indiciaData.drawFeature = control;
         } else if (control.CLASS_NAME==='OpenLayers.Control.ModifyFeature') {
           indiciaData.modifyFeature = control;
           control.standalone = true;
           control.events.on({'activate':function() {
-        	var oldEnableSelectReload = indiciaData.enableSelectReload;
-        	indiciaData.enableSelectReload = false;
-            indiciaData.modifyFeature.selectFeature(indiciaData.currentFeature);
-            indiciaData.enableSelectReload = oldEnableSelectReload;
+            if(typeof indiciaData.navControl !== "undefined") {
+                  indiciaData.navControl.deactivate();
+            }
+            if(typeof indiciaData.selectFeature !== "undefined") {
+                    indiciaData.selectFeature.deactivate();
+                    indiciaData.selectFeature.unselectAll();
+            }
+            if(typeof indiciaData.drawFeature !== "undefined") {
+              indiciaData.drawFeature.deactivate();
+            }
+            if(indiciaData.currentFeature !== null)
+              indiciaData.modifyFeature.selectFeature(indiciaData.currentFeature);
             div.map.editLayer.redraw();
           }});
         } else if (control.CLASS_NAME==='OpenLayers.Control.Navigation') {
             indiciaData.navControl = control;
+            control.events.on({'activate':function() {
+              if(typeof indiciaData.modifyFeature !== "undefined")
+                indiciaData.modifyFeature.deactivate();
+              if(typeof indiciaData.selectFeature !== "undefined") {
+                  indiciaData.selectFeature.deactivate();
+                  if(indiciaData.currentFeature !== null)
+                      indiciaData.selectFeature.select(indiciaData.currentFeature);
+                  else
+                	  indiciaData.selectFeature.unselectAll();
+              }
+              if(typeof indiciaData.drawFeature !== "undefined") {
+                indiciaData.drawFeature.deactivate();
+              }
+            }});
         }
       });
 
@@ -966,7 +1380,10 @@ $(document).ready(function() {
       $('.olControlEditingToolbar').addClass('right');
 
       function featureRouteAddedEvent(evt) {
-          if(typeof evt.feature.attributes.converted != 'undefined') return;
+          if(typeof evt.feature.attributes.converted != 'undefined') {
+            delete evt.feature.attributes.converted;
+            return;
+          }
           // Only handle lines - as things like the sref control also trigger feature change events
           if (evt.feature.geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
             var current, oldSection = [];
@@ -980,8 +1397,8 @@ $(document).ready(function() {
               }
             });
             if (oldSection.length>0) {
-              if (!confirm('Would you like to replace the existing section with the new one?')) {
-                evt.feature.layer.removeFeatures([evt.feature], {}); // No so abort - remove new feature
+              if (!confirm('Select \'OK\' if you would like to replace the existing section with the newly drawn one, and \'Cancel\' to keep the previous route.')) {
+                evt.feature.layer.removeFeatures([evt.feature], {}); // No so abort - remove new feature, leave draw control active.
                 return;
               } else {
                 evt.feature.layer.removeFeatures(oldSection, {});
@@ -990,222 +1407,42 @@ $(document).ready(function() {
             indiciaData.routeChanged = true;
             // make sure the feature is selected: this ensures that it can be modified straight away
             // but we dont't want it to trigger a load of attibutes etc.
-            // Leave the draw feature control active.
             indiciaData.currentFeature = evt.feature;
-            var oldEnableSelectReload = indiciaData.enableSelectReload;
-            indiciaData.enableSelectReload = false;
+            indiciaData.previousGeometry = evt.feature.geometry.clone();
             indiciaData.selectFeature.select(indiciaData.currentFeature);
-            indiciaData.enableSelectReload = oldEnableSelectReload;
+            indiciaData.drawFeature.deactivate();
+            indiciaData.modifyFeature.activate();
             div.map.editLayer.redraw();
           }
       }
 
-      div.map.editLayer.events.on({'featureadded': featureRouteAddedEvent}); 
-      div.map.editLayer.events.on({'afterfeaturemodified': function() {indiciaData.routeChanged = true;}}); 
+      div.map.editLayer.events.on({'featureadded': featureRouteAddedEvent}); // called when a new route line added
+      div.map.editLayer.events.on({'featuremodified': function(evt) { indiciaData.routeChanged = true; }}); // called when a vertex is dragged, and mouse released. 
 
       resetMap(div, true, false, true);
-      // select the first section
-      locTypeChange();
-      selectSection('S1', true);
-
-      // following are for the route and detail tabs: not always present
-      $('#section-select-route li').click(function(evt) {
-        var parts = evt.target.id.split('-');
-        confirmSelectSection(parts[parts.length-1], true, true);
-      });
-      $('.insert-section').click(function(evt) {
-        var current = $('#section-select-route li.selected').html();
-        if(confirm(indiciaData.sectionInsertConfirm + ' ' + current + '?')) insertSection(current);
-      });
-      $('.erase-route').click(function(evt) {
-        var current = $('#section-select-route li.selected').html(),
-            oldSection = [],
-            div = $('#route-map'),
-            geom;
-        div = div[0];
-        // If the draw feature control is active unwind it one point at a time, starting at the end.
-        for(var i = div.map.controls.length-1; i>=0; i--)
-          if(div.map.controls[i].CLASS_NAME == 'OpenLayers.Control.DrawFeature' && div.map.controls[i].active) {
-            if(div.map.controls[i].handler.line){
-              if(div.map.controls[i].handler.line.geometry.components.length <= 2) // start point plus current unselected position)
-                div.map.controls[i].cancel();
-              else 
-                div.map.controls[i].undo();
-              return;
-            }
-          }
-        $.each(div.map.editLayer.features, function(idx, feature) {
-          if (feature.attributes.section===current) {
-            oldSection.push(feature);
-          }
-        });
-        if (oldSection.length>0 && oldSection[0].geometry.CLASS_NAME==="OpenLayers.Geometry.LineString") {
-          if (!confirm('Do you wish to erase the route for this section?')) {
-            return;
-          }
-        } else return; // no existing route to clear
-        indiciaData.navControl.deactivate();
-        indiciaData.modifyFeature.deactivate();
-        indiciaData.drawFeature.deactivate();
-        indiciaData.selectFeature.deactivate();
-        indiciaData.currentFeature = null;
-        div.map.editLayer.removeFeatures(oldSection, {});
-        if (typeof indiciaData.sections[current]=="undefined") {
-          return; // not currently stored in database
-        }
-        indiciaData.drawFeature.activate();
-        indiciaData.sections[current].sectionLen = 0;
-        // have to leave the location in the website (data may have been recorded against it), but can't just empty the geometry as will fail validation
-        geom = oldSection[0].geometry.clone();
-        if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
-          geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
-        }
-        var data = {
-            'location:boundary_geom':'',
-            'location:centroid_geom':geom.getCentroid().toString(),
-            'location:id':indiciaData.sections[current].id,
-            'website_id':indiciaData.website_id
-        };
-        indiciaData.routeChanged = false;
-        $.post(
-          indiciaData.ajaxFormPostUrl,
-          data,
-          function(data) {
-            if (typeof(data.error)!=="undefined") {
-              alert(data.error);
-            } else {
-              // Better way of doing this?
-              var current = $('#section-select-route li.selected').html();
-              $('#section-select-route-'+current).addClass('missing');
-              $('#section-select-'+current).addClass('missing');
-            }
-            // recalculate total transect length
-            updateTransectDetails(false);
-          },
-          'json'
-        );
-      }); // End function for erase route click
-      $('.save-route').click(function(evt) {
-        var current, oldSection = [];
-        // This saves the currently selected route aginst the currently selected section.
-        // We assume that user has pressed button deliberately, so no confirmation.
-        if(indiciaData.currentFeature === null) return; // no feature selected so don't save
-        if($('.save-route').hasClass('waiting-button')) return; // prevents double clicking.
-        $('.save-route').addClass('waiting-button');
-
-        var buttons =  { 
-          "Abort changes" : function() {
-            $(this).dialog('close');
-            // replace the route with the previous one for this section.
-            // At this point, indiciaData.currentSection should point to existing, previously selected section.
-            var removeSections = [], oldSection = [], div = $('#route-map'), geom;
-            div = div[0];
-            if(typeof indiciaData.modifyFeature !== "undefined")
-              indiciaData.modifyFeature.deactivate();
-        		if(typeof indiciaData.drawFeature !== "undefined")
-        		    indiciaData.drawFeature.deactivate();
-    		        indiciaData.navControl.activate(); // Nav control always exists
-        	    $.each(div.map.editLayer.features, function(idx, feature) {
-        	        if (feature.attributes.section===indiciaData.currentSection) {
-        	            removeSections.push(feature);
-        	        }
-        	    });
-        	    if (removeSections.length>0) {
-        	        div.map.editLayer.removeFeatures(removeSections, {});
-        	    }
-        	    if(typeof indiciaData.sections[indiciaData.currentSection] !== 'undefined' &&
-        	    		typeof indiciaData.sections[indiciaData.currentSection].geom !== 'undefined') {
-                    geom = OpenLayers.Geometry.fromWKT(indiciaData.sections[indiciaData.currentSection].geom);
-                    if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
-                      geom = geom.transform(new OpenLayers.Projection('EPSG:3857'), indiciaData.mapdiv.map.projection);
-                    }
-        	        oldSection.push(new OpenLayers.Feature.Vector(geom, {section:indiciaData.currentSection, type:"boundary"}));
-        	        div.map.editLayer.addFeatures(oldSection);
-        	    } // dont worry about selection.
-        	    indiciaData.routeChanged = false;
-        	    $('.save-route').removeClass('waiting-button');
-        	  },
-        	"Don't save":  function() {
-        	    $('.save-route').removeClass('waiting-button');
-        	    $(this).dialog('close');
-        	  },
-          	"Yes": function() {
-        		$(this).dialog('close');
-        	    saveRoute();
-        	  }
-          };
-          // display dialog and drive from its button events.
-          var dialog = $('<p>Are you sure you wish to save this route now? Choose &quot;Yes&quot; to save the changes; &quot;Don&apos;t save&quot; to leave the route as is, but not save it just yet; and &quot;Abort changes&quot; to wind back the changes, and (if applicable) replace the new route with the previously saved version.</p>')
-        	    	.dialog({ title: "Save Route Data?",
-        	    		buttons: buttons,
-        	    		width: 400,
-        	    	    closeOnEscape: false,
-        	    	    open: function(event, ui) {
-        	    	        $(".ui-dialog-titlebar-close", $(this).parent()).remove();
-        	    	    }});
-      });
-      $('.complete-route-details').click(function(evt) {
-          indiciaFns.activeTab($('#controls'), 'section-details');
-      });
-      $('.remove-section').click(function(evt) {
-        var current = $('#section-select-route li.selected').html();
-        if(confirm(indiciaData.sectionDeleteConfirm + ' ' + current + '?')) deleteSection(current);
-      });
       if($('#section-location-id').val() == '')
-        $('.complete-route-details').attr('disabled','disabled');
-
+        $('.complete-route-details').attr('disabled','disabled'); // should be done by the section select
     } else {
       // main map
       function featureSiteAddedEvent(evt) { // check that the country is OK.
-        if(typeof evt.feature.attributes.converted != 'undefined') return;
-        // get country that centroid is in: requires geoserver.
-        // proxiedurl,featurePrefix,featureType,[geometryName],featureNS,srsName[,propertyNames]
-        if(indiciaData.settings.country_layer_lookup.length != 5)
-          return;
-        if(typeof(evt.feature) == 'undefined' ||
-            typeof(evt.feature.attributes) == 'undefined' ||
-            (typeof(evt.feature.attributes.temp) !== 'undefined' &&
-              typeof(evt.feature.attributes.temp=== true)))
-          return;
-        var protocolSpec = indiciaData.settings.country_layer_lookup, geom;
-
-        var protocol = new OpenLayers.Protocol.WFS({
-            url: protocolSpec[0],featurePrefix: protocolSpec[1],featureType: protocolSpec[2], geometryName:'boundary_geom',featureNS: protocolSpec[3],srsName: protocolSpec[4],version: '1.1.0',propertyNames: ['boundary_geom','name']
-           ,callback: function(a1){
-             // here we don't zoom
-
-            if(a1.error && (typeof a1.error.success == 'undefined' || a1.error.success == false)){
-              alert('Country lookup failed.'); // TODO NTH i18n
-              return;
-            }
-            if(a1.features.length > 0) {
-              var id = a1.features[0].fid.split('.');
-              id=id[1];
-              if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == id) // country is the same
-                return;
-              if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == '') { // not set yet.
-                $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(id).change();
-                return;
-              }
-              var dialog = $('<p>A change in country has been detected. Do you wish to set the country to the new value? This may lead to changes in the acceptable number of sections, and/or a different set of maps.</p>').dialog(
-                      {title: "Change Country?",
-                       buttons: { 
-                           "No":  function() { $(this).dialog('close'); },
-                           "Yes": function() { $(this).dialog('close');
-                               $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(id);
-                               countryChange(false); }}});
-            } // else no country - just leave alone
+          var intersects = false,
+              mainMapDiv = $('#map')[0];
+          if(typeof evt.feature.attributes.temp !== 'undefined' &&  evt.feature.attributes.temp == true)
+                  return;
+          if(mainMapDiv.map.infoLayer.features.length === 0)
+            return;
+          $.each(mainMapDiv.map.infoLayer.features, function(idx2, countryFeature) {
+              $.each(countryFeature.geometry.components, function(idx3, component) {
+                  intersects |= component.containsPoint(evt.feature.geometry.getCentroid());
+                  //intersects |= countryFeature.geometry.intersects(evt.feature.geometry.getCentroid());
+              });
+          });
+          if(!intersects) {
+            $('<p>The new transect position is outside the boundary of the previously selected country.</p>').dialog(
+                  { title: "Transect outside country",
+                    buttons: { "OK":  function() { $(this).dialog('close'); } },
+                    classes: {"ui-dialog": "above-map"}});
           }
-        });
-        // convert geometry to 3857 as this is what the geoserver uses.
-        geom = evt.feature.geometry.clone();
-        if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
-          geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
-        }
-        filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[
-                     new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: geom.getCentroid()}),
-                     new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: indiciaData.settings.country_location_type_id})]});
-        protocol.read({filter: filter});
       };
 
       div.map.infoLayer = new OpenLayers.Layer.Vector('Country',
@@ -1219,291 +1456,11 @@ $(document).ready(function() {
            sphericalMercator: true,
            displayInLayerSwitcher: true});
       div.map.addLayer(div.map.infoLayer);
-      countryChange(false);
-
-      div.map.editLayer.events.on({'featureadded': featureSiteAddedEvent}); 
 
       resetMap(div, false, true, false);
-
-    }
-  });
-  
-  $('#add-user').click(function(evt) {
-    var user=($('#cmsUserId')[0]).options[$('#cmsUserId')[0].selectedIndex];
-    if ($('#user-'+user.value).length===0) {
-      $('#user-list').append('<tr><td id="user-'+user.value+'"><input type="hidden" name="locAttr:'+indiciaData.locCmsUsrAttr+'::'+user.value+'" value="'+user.value+'"/>'+
-          user.text+'</td><td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
-    }
-  });
-  
-  $('.remove-user').live('click', function(evt) {
-    $(evt.target).closest('tr').css('text-decoration','line-through');
-    $(evt.target).closest('tr').addClass('ui-state-disabled');
-    // clear the underlying value
-    $(evt.target).closest('tr').find('input').val('');
-  });
-
-  $('#add-branch-coord').click(function(evt) {
-    var coordinator=($('#branchCmsUserId')[0]).options[$('#branchCmsUserId')[0].selectedIndex];
-    if ($('#branch-coord-'+coordinator.value).length===0) {
-      $('#branch-coord-list').append('<tr><td id="branch-coord-'+coordinator.value+'">' +
-          // TODO ??? replace locBranchCmsUsrAttr??
-          '<input type="hidden" name="locAttr:'+indiciaData.locBranchCmsUsrAttr+'::'+coordinator.value+'" value="'+coordinator.value+'"/>'+coordinator.text+'</td>'+
-          '<td><div class="ui-state-default ui-corner-all"><span class="remove-user ui-icon ui-icon-circle-close"></span></div></td></tr>');
+      countryChange(false);
+      div.map.editLayer.events.on({'featureadded': featureSiteAddedEvent}); 
     }
   });
 
-    $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).change(function(evt){countryChange(true);});
-
-    countryChange = function(checkOutside) { // changeCountry
-      var lt = $('#location_type_id').val(),
-          myVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(),
-          found = false,
-          details,
-          mainMapDiv = $('#map'),
-          toRemove = [],
-          mapExtent,
-          reproject = false,
-          list,
-          oldEditLayerProj,
-          _countryChangeEnd;
-
-      mainMapDiv = mainMapDiv[0];
-
-      _countryChangeEnd = function(div, oldMapExtent, reproject, oldProjection) {
-        var infoExtent = div.map.infoLayer.getDataExtent(),
-            bounds, dialog, protocol, geom, protocolSpec;
-
-        if(div.map.editLayer.features.length > 0) {
-          // keep map extent the same if a site already entered.
-          if(reproject) {
-            bounds = oldMapExtent.transform(oldProjection, div.map.projection);
-            div.map.zoomToExtent(bounds, true);
-            if(!mainMapDiv.map.getExtent().intersectsBounds(mainMapDiv.map.baseLayer.maxExtent))
-              div.map.zoomToExtent(mainMapDiv.map.baseLayer.maxExtent, true);
-          }
-          if (myVal=='')
-            dialog = $('<p>Warning: you are clearing the country, after the site has been created and a country allocated.</p>').dialog(
-                      {title: "Country Cleared",
-                       buttons: { "OK":  function() { $(this).dialog('close'); }}});
-          else if (checkOutside && indiciaData.settings.country_layer_lookup.length == 5) {
-            protocolSpec = indiciaData.settings.country_layer_lookup;
-
-            protocol = new OpenLayers.Protocol.WFS({
-                url: protocolSpec[0],featurePrefix: protocolSpec[1],featureType: protocolSpec[2], geometryName:'boundary_geom',featureNS: protocolSpec[3],srsName: protocolSpec[4],version: '1.1.0',propertyNames: ['boundary_geom','name']
-               ,callback: function(a1){
-                  if(a1.error && (typeof a1.error.success == 'undefined' || a1.error.success == false)){
-                    return;
-                  }
-                  if(a1.features.length > 0) {
-                    var id = a1.features[0].fid.split('.');
-                    id=id[1];
-                    if($('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val() == id) // country is the same
-                      return;
-                    var dialog = $('<p>Warning: the site you have previously entered is outside the country you have just selected.</p>').dialog(
-                            {title: "Outside Country",
-                             buttons: { "OK":  function() { $(this).dialog('close'); }}});
-                  }
-                }
-              });
-            // convert to 3857 as this is what the geoserver uses.
-            geom = div.map.editLayer.features[0].geometry.clone();
-            if (indiciaData.mapdiv.map.projection.projCode!='EPSG:900913' && indiciaData.mapdiv.map.projection.projCode!='EPSG:3857') { 
-              geom = geom.transform(indiciaData.mapdiv.map.projection, new OpenLayers.Projection('EPSG:3857'));
-            }
-
-            filter = new OpenLayers.Filter.Logical({type:OpenLayers.Filter.Logical.AND, filters:[
-                           new OpenLayers.Filter.Spatial({type: OpenLayers.Filter.Spatial.CONTAINS,property: 'boundary_geom',value: geom.getCentroid()}),
-                           new OpenLayers.Filter.Comparison({type: OpenLayers.Filter.Comparison.EQUAL_TO, property: 'location_type_id', value: indiciaData.settings.country_location_type_id})]});
-            protocol.read({filter: filter});
-          }
-        } else if(infoExtent !== null)
-          div.map.zoomToExtent(infoExtent);
-        else
-          mainMapDiv.map.setCenter(div.map.defaultLayers.centre, div.map.defaultLayers.zoom, false, true);
-      }
-
-      // record the extent of the edit layer on the main map. The route map is not being displayed and that is re-zoomed on change of tab. Possibly empty.
-      mapExtent = mainMapDiv.map.getExtent();
-      oldEditLayerProj = mainMapDiv.map.editLayer.projection;
-
-      // scan config to get new maps.
-      if(_setDefaultLayers(mainMapDiv)) { // returns false if no valid baselayer.
-        details = _setBaseLayers(mainMapDiv); // returns object : index into country array for map data, or false if default.
-        // reproject any edit layer geometries: main map.
-        if(details.reproject)
-          _convertGeometries(oldEditLayerProj.projCode, mainMapDiv.map.editLayer); // country infoLayer is empty
-        _resetMap(mainMapDiv, true, false, mainMapDiv.map.editLayer.features.length == 0);
-      } else return;
-
-      // set up sref system options
-      system = $('#imp-sref-system').val();
-      $('#imp-sref-system option').addClass('working').attr('disabled',false);
-      list = (details.index !== false ? indiciaData.settings.country_configurations[details.index].map.sref_systems.split(',') : indiciaData.settings.defaultSystems);
-      $.each(list, function(idx, system){ $('#imp-sref-system option[value='+system+']').removeClass('working'); });
-      $('#imp-sref-system option.working').removeClass('working').attr('disabled','disabled');
-      if($('#imp-sref-system option[value='+system+']:enabled').length == 0) {
-        $('#imp-sref-system').val('');
-      }
-      if($('#imp-sref-system').val() != system && mainMapDiv.map.editLayer.features.length > 0)
-        $.getJSON(indiciaData.indiciaSvc +
-        		  'index.php/services/spatial/wkt_to_sref&wkt=' + 
-        		  $('#imp-geom').val() +
-        		  '&system='+$('#imp-sref-system').val()+
-        		  '&precision=8&callback=?',
-      	      function(data){
-      	        if(typeof data.error != 'undefined')
-      	          alert(data.error);
-      	        else {
-      	          $('#imp-sref').val(data.sref);
-      	        }
-      	      });
-
-
-      // empty info layer on main map
-      mainMapDiv.map.infoLayer.destroyFeatures();
-
-      // If country specified, add to info layer on main map 
-      if (myVal != ''){
-        // first put the country on the map
-        $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).addClass("working1");
-        $.getJSON(indiciaData.indiciaSvc + "index.php/services/data/location/" + myVal +
-                    '?mode=json&view=detail' +
-                    '&auth_token='+indiciaData.readAuth.auth_token+
-                    '&reset_timeout=true&nonce='+indiciaData.readAuth.nonce,
-          function(ldata) {
-            var mainMapDiv = $('#map');
-            mainMapDiv = mainMapDiv[0];
-            $.each(ldata, function(idx, country){
-              var parser = new OpenLayers.Format.WKT(),
-                  features;
-              features = parser.read(country.boundary_geom);
-              if (mainMapDiv.map.infoLayer.projection.projCode!='EPSG:900913' && mainMapDiv.map.infoLayer.projection.projCode!='EPSG:3857') { 
-                var cloned = features.geometry.clone();
-                features.geometry = cloned.transform(new OpenLayers.Projection('EPSG:3857'), mainMapDiv.map.infoLayer.projection.projCode);
-              }
-              if (!Array.isArray(features)) features = [features];
-              mainMapDiv.map.infoLayer.addFeatures(features);
-            });
-            $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).removeClass("working1");
-            _countryChangeEnd(mainMapDiv, mapExtent, details.reproject, oldEditLayerProj);
-          }
-        );
-        // Update Code
-        // Next recalculate the code: only do this if the site is new
-        if($('#location-id').length==0) {
-            // The calculation of the index is now transferred to the submission function on the page, as this is done
-            // at the last moment: prevents duplicates.
-            var code = indiciaData.autogeneratePrefix +
-                $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')+' option:selected').text() +
-                indiciaData.autogeneratePrefix.substring(indiciaData.autogeneratePrefix.length-1) +
-                '[INDEX]';
-            $('#location-code').val(code);
-          }
-      } else
-        _countryChangeEnd(mainMapDiv, mapExtent, details.reproject, oldEditLayerProj);
-
-      // update location types to match new country definition
-      if($('select#location_type_id').length) { // if not a select then it is fixed and hidden - only 1 possible value, so no need to set options.
-        $('#location_type_id option[value=]').attr('disabled',false);
-        $('#location_type_id option:not([value=])').attr('disabled','disabled');
-        for(i=0, found=false; i < indiciaData.settings.country_configurations.length; i++) {
-          if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined') continue; // find country definition
-          for(j=0; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
-            if(indiciaData.settings.country_configurations[i].country_names[j].country !== "Default" &&
-               indiciaData.settings.country_configurations[i].country_names[j].id == myVal) found = true;
-          if(!found) continue;
-          for(j=0; j < indiciaData.settings.country_configurations[i].location_types.length; j++)
-            if(indiciaData.settings.country_configurations[i].location_types[j].can_create)
-              $('#location_type_id option[value='+indiciaData.settings.country_configurations[i].location_types[j].id+']').attr('disabled',false);
-          break;
-        }
-        if(!found) // no country specific, set default 
-          for(i=0; i < indiciaData.settings.country_configurations.length; i++) {
-            if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined') continue; // find country definition
-            for(j=0, found=false; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
-              if(indiciaData.settings.country_configurations[i].country_names[j].country == "Default") found = true;
-              if(!found) continue;
-              for(j=0; j < indiciaData.settings.country_configurations[i].location_types.length; j++)
-                if(indiciaData.settings.country_configurations[i].location_types[j].can_create)
-                  $('#location_type_id option[value='+indiciaData.settings.country_configurations[i].location_types[j].id+']').attr('disabled',false);
-          }
-        if($('#location_type_id option:not([value=]):enabled').length == 1)
-          $('#location_type_id').val($('#location_type_id option:not([value=]):enabled').val());
-        else if(lt!='' && $('#location_type_id option[value='+lt+']:enabled').length == 1)
-          $('#location_type_id').val(lt);
-        else
-          $('#location_type_id').val('');
-        if($('#location_type_id option:not([value=]):enabled').length == 0)
-          alert('You do not have permission to create locations for this country');
-      }
-      // trigger a location_type update: this deals with the number of sections functionality
-      $('#location_type_id').change();
-    }
-
-    locTypeChange = function(evt){
-      var countryVal = $('#'+indiciaData.settings.countryAttr.id.replace(/:/g,'\\:')).val(),
-          myVal = $('#location_type_id').val(),
-          i,j,found = false,
-          min,max,value;
-      if (countryVal !== '' && myVal !== ''){
-        for (i = 0; i < indiciaData.settings.country_configurations.length; i++) {
-          if (typeof indiciaData.settings.country_configurations[i].country_names === 'undefined') continue; // find country definition
-          for (j = 0, found = false; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
-            if (indiciaData.settings.country_configurations[i].country_names[j].country !== "Default" &&
-                indiciaData.settings.country_configurations[i].country_names[j].id == countryVal) found = true;
-          if (!found) continue;
-          for (j = 0, found = false; j < indiciaData.settings.country_configurations[i].location_types.length && !found; j++)
-            if(indiciaData.settings.country_configurations[i].location_types[j].id == myVal) found = true;
-          if(!found) continue;
-          j--; // ends with j pointing to location_type after found one
-          break; // drops through if couldn't find the country
-        }
-      }
-      if (!found) {
-        for(i=0; i < indiciaData.settings.country_configurations.length; i++) {
-          if(typeof indiciaData.settings.country_configurations[i].country_names === 'undefined') continue; // find default country definition
-          for(j=0, found=false; j < indiciaData.settings.country_configurations[i].country_names.length && !found; j++)
-            if(indiciaData.settings.country_configurations[i].country_names[j].country == "Default") found = true;
-          if(!found) continue;
-          for (j = 0, found = false; j < indiciaData.settings.country_configurations[i].location_types.length && !found; j++)
-            if(indiciaData.settings.country_configurations[i].location_types[j].id == myVal) found = true;
-          if(!found) j=0;
-          else j--; // ends with j pointing to location_type after found one
-          break;
-        }
-      }
-      max = Math.max(indiciaData.settings.locationId !== null ? indiciaData.settings.numSectionsAttrOriginalValue : 0,
-              indiciaData.settings.country_configurations[i].location_types[j].num_sections);
-      if(max != indiciaData.settings.country_configurations[i].location_types[j].num_sections)
-        alert('New Site definition involves a max number of sections which is less than the current value. You must remove the extra sections manually.') //TODO NTH i18n
-      min = (indiciaData.settings.locationId !== null ?
-              (indiciaData.settings.country_configurations[i].location_types[j].can_change_num_sections ? indiciaData.settings.numSectionsAttrOriginalValue : Math.max(indiciaData.settings.numSectionsAttrOriginalValue, indiciaData.settings.country_configurations[i].location_types[j].num_sections)) :
-              (indiciaData.settings.country_configurations[i].location_types[j].can_change_num_sections ? 1 : indiciaData.settings.country_configurations[i].location_types[j].num_sections));
-      value = Math.min(max, Math.max($('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').val(), min));
-      $('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']')
-          .val(value).attr('max',max).attr('min',min).removeClass('ui-state-error')
-          .closest('div').find('.inline-error').remove();
-      if(min==max)
-        $('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');
-      else
-        $('[name='+indiciaData.settings.numSectionsAttr.replace(/:/g,'\\:')+']').removeAttr('readonly').css('color','').css('background-color','');
-      // TODO NTH set numSections helptext.
-      if (indiciaData.settings.canEditSections && 
-          ((indiciaData.settings.country_configurations[i].location_types[0].can_change_num_sections && value > 1) ||
-            (indiciaData.settings.country_configurations[i].location_types[0].num_sections < value)))
-        $('.remove-section').show();
-      else
-        $('.remove-section').hide();
-      if (indiciaData.settings.canEditSections && 
-          indiciaData.settings.country_configurations[i].location_types[0].can_change_num_sections &&
-          value < indiciaData.settings.country_configurations[i].location_types[0].num_sections)
-        $('.insert-section').show();
-      else
-        $('.insert-section').hide();
-    };
-
-    locTypeChange(null);
-    $('#location_type_id').change(locTypeChange);
-  });
 }(jQuery));

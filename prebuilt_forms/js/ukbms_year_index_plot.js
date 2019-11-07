@@ -46,7 +46,7 @@ var reportOptions;
           dataType = $('#'+ reportOptions.dataTypeSelectID).val(),
           dataSource = dataType == 'count' ? reportOptions.countDataSource : reportOptions.indexDataSource,
           cookieParams = $.cookie('providedParams'),
-           cookieData = {};
+          cookieData = {};
 
       if(locationType == '' || location == '' || $(this).hasClass('waiting-button'))
         return;
@@ -61,12 +61,12 @@ var reportOptions;
       if(typeof reportOptions.reportGroup != 'undefined' && typeof reportOptions.rememberParamsReportGroup != 'undefined' ) {
         // attempt to store the location type in a cookie.
         if (cookieParams == null) {
-        cookieData[reportOptions.rememberParamsReportGroup] = {};
-        } else {
-            cookieData = JSON.parse(cookieParams);
-            if (typeof cookieData[reportOptions.rememberParamsReportGroup] == 'undefined') {
           cookieData[reportOptions.rememberParamsReportGroup] = {};
-            }
+        } else {
+          cookieData = JSON.parse(cookieParams);
+          if (typeof cookieData[reportOptions.rememberParamsReportGroup] == 'undefined') {
+            cookieData[reportOptions.rememberParamsReportGroup] = {};
+          }
         }
         cookieData[reportOptions.rememberParamsReportGroup][reportOptions.reportGroup+'-location_type_id'] = locationType;
         $.cookie('providedParams', JSON.stringify(cookieData));
@@ -121,10 +121,19 @@ var reportOptions;
                 reportOptions.values[occurrence.taxon_meaning_id][j] = 0;
               }
             }
-            var val = parseInt(occurrence[reportOptions[reportOptions.loadedDataType+'CountField']]);
-            if(val != occurrence[reportOptions[reportOptions.loadedDataType+'CountField']])
-              val = 0;
-            reportOptions.values[occurrence.taxon_meaning_id][occurrence.year-first_year] += val;
+            if (reportOptions[reportOptions.loadedDataType+'JSONEncoded']) {
+              var summarisedData = JSON.parse(occurrence[reportOptions[reportOptions.loadedDataType+'CountField']]);
+              
+              for (var i=0; i < summarisedData.length; i++) {
+                var val = parseInt(summarisedData[i].summary);
+                if(val == summarisedData[i].summary)
+                  reportOptions.values[occurrence.taxon_meaning_id][occurrence.year-first_year] += val;
+              }
+            } else {
+              var val = parseInt(occurrence[reportOptions[reportOptions.loadedDataType+'CountField']]);
+              if(val == occurrence[reportOptions[reportOptions.loadedDataType+'CountField']])
+                reportOptions.values[occurrence.taxon_meaning_id][occurrence.year-first_year] += val;
+            }
           });
               
           // Next sort out the species list drop downs.
