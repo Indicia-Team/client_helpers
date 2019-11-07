@@ -20,6 +20,8 @@
  * @link  http://code.google.com/p/indicia/
  */
 
+require_once('includes/user.php');
+
 /**
  * @package Client
  * @subpackage PrebuiltForms
@@ -75,7 +77,7 @@ class iform_ebms_transects_allocation {
         "location_types" :  {"type":"seq",  "title": "Location Types", "desc":"List of the location types included in the grid when viewing this option. If omitted, no filter applied.",
           "sequence": [ {"type":"str", "title": "Location Type", "desc":"Location Type Term: this will be translated to the appropriate ID."} ] },
         "edit_link_path":   {"type":"str",  "title": "Edit Path", "desc":"Path to page used for editing Locations. If omitted, link not provided." },
-        "regional_control_location_type" : {"type":"str", "title": "Regional Control Location Type", "desc":"Location Type Term used to provide a regional filter control. If omitted then no regional control will be displayed. This will be translated to the appropriate ID."}
+        "region_control_location_type" : {"type":"str", "title": "Regional Control Location Type", "desc":"Location Type Term used to provide a regional filter control. If omitted then no regional control will be displayed. This will be translated to the appropriate ID."}
       }
     }
 ]
@@ -84,17 +86,79 @@ class iform_ebms_transects_allocation {
               'group'=>'Report Settings'
           ),
           array(
-              'name'=>'county_location_attr_id',
-              'caption'=>'County Location Attrbute Id',
-              'description'=>'Indicia ID for the location attribute that holds the names of counties for the square.',
-              'type'=>'select',
-              'table'=>'location_attribute',
-              'valueField'=>'id',
-              'captionField'=>'caption',
-              'required' => true,
+              'name'=>'managerPermission',
+              'caption'=>'Drupal Permission for Manager mode',
+              'description'=>'Enter the Drupal permission name to be used to determine if this user is a manager (i.e. full access to full data set).',
+              'type'=>'string',
+              'required' => false,
           ),
-          
-    ));
+          array(
+              'name' => 'lookup_report_name',
+              'caption' => 'Report Name',
+              'description' => 'Select the report to lookup the locations associated with a region.',
+              'type' => 'report_helper::report_picker',
+              'group' => 'Lookup Report',
+          ),
+          array(
+              'name' => 'lookup_param_presets',
+              'caption' => 'Preset parameter values',
+              'description' => 'Enter each parameter into this box one per line. Each parameter is followed by an equals then the value, ' .
+                    'e.g. survey_id=6. You can use {user_id} as a value which will be replaced by the user ID from the CMS ' .
+                    'logged in user or {username} as a value replaces with the logged in username. If you have installed the ' .
+                    'Profile module then you can also use {profile_*} to refer to the value of a field in the user\'s profile ' .
+                    '(replace the asterisk to make the field name match the field created in the profile). Finally, use [*] to ' .
+                    'set a report parameter to 1 or 0 depending on whether the user has the permission, replacing * with the ' .
+                    'permission name.',
+              'type' => 'textarea',
+              'required' => FALSE,
+              'group' => 'Lookup Report',
+          ),
+          array(
+              'name' => 'report_name',
+              'caption' => 'Report Name',
+              'description' => 'Select the report to provide the output for this page.',
+              'type' => 'report_helper::report_picker',
+              'group' => 'Download Report',
+          ),
+          array(
+              'name' => 'param_presets',
+              'caption' => 'Preset parameter values',
+              'description' => 'Enter each parameter into this box one per line. Each parameter is followed by an equals then the value, ' .
+                  'e.g. survey_id=6. You can use {user_id} as a value which will be replaced by the user ID from the CMS ' .
+                  'logged in user or {username} as a value replaces with the logged in username. If you have installed the ' .
+                  'Profile module then you can also use {profile_*} to refer to the value of a field in the user\'s profile ' .
+                  '(replace the asterisk to make the field name match the field created in the profile). Finally, use [*] to ' .
+                  'set a report parameter to 1 or 0 depending on whether the user has the permission, replacing * with the ' .
+                  'permission name.',
+              'type' => 'textarea',
+              'required' => FALSE,
+              'group' => 'Download Report',
+          ),
+          array(
+              'name' => 'columns_config',
+              'caption' => 'Columns Configuration',
+              'description' => 'Define a list of columns with various configuration options when you want to override the '.
+              'default output of the report.',
+              'type' => 'jsonwidget',
+              'schema' => '{
+  "type":"seq",
+  "title":"Columns List",
+  "sequence":
+  [
+    {
+      "type":"map",
+      "title":"Output Column",
+      "mapping": {
+        "template": {"type":"str","desc":"Template of the output for this column. Use [*] to indicate a replacement, where * is a column name in the report, or field_* to access fields associated with the user in the CMS."},
+        "caption": {"type":"str","desc":"Caption of the column."},
+      }
+    }
+  ]
+}',
+              'required' => true,
+              'group'=>'Download Report'
+          )
+      ));
     return $retVal;
   }
 
@@ -112,6 +176,14 @@ class iform_ebms_transects_allocation {
 
     // FutureDev: data drive the report name ebms_country_locations. May need to be replaced as a report - is there a library report I can use?
     // FutureDev? Add map and allow filtering by displayed area.
+
+    if(!empty($args['managerPermission'])) {
+      $myCountryReplacement = '{ebms_scheme_country_ids}';
+      $myCountry = apply_user_replacements($myCountryReplacement);
+      if (!hostsite_user_has_permission($args['managerPermission']) && (empty($myCountry) || $myCountry === "-1" || $myCountry === $myCountryReplacement)) {
+        return lang::get("You do not have full data set access permission: in your account settings you must set the scheme you are interested in. Country lookup = %s", $myCountry);
+      }
+    }
 
     $auth = array();
     $current = self::_identify_current_type($args, $auth); // config object
@@ -139,7 +211,8 @@ class iform_ebms_transects_allocation {
       'select_all_button' => lang::get('Select All'),
       'deselect_all_button' => lang::get('Deselect All'),
       'download_button' => lang::get('Download Allocation Report'),
-      'county_location_attr_id' => $args['county_location_attr_id'],
+      'lookup_report_name' => $args['lookup_report_name'],
+      'lookup_param_presets' => (object) get_options_array_with_user_data($args['lookup_param_presets']),
     );
 
     $r = self::_get_control_bar($auth, $args, $nid, $settings) .
@@ -171,11 +244,11 @@ class iform_ebms_transects_allocation {
 
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $config[$selected]->index = $selected;
-    if(!empty($config[$selected]->regional_control_location_type)) {
-      $terms = helper_base::get_termlist_terms($auth, 'indicia:location_types', array($config[$selected]->regional_control_location_type));
+    if(!empty($config[$selected]->region_control_location_type)) {
+      $terms = helper_base::get_termlist_terms($auth, 'indicia:location_types', array($config[$selected]->region_control_location_type));
       if(count($terms) == 0)
-        throw new exception("Form configuration error: could not find region location type ".$config[$selected]->regional_control_location_type." for allocation index ".$selected);
-      $config[$selected]->regional_control_location_type_id = $terms[0]['id'];
+        throw new exception("Form configuration error: could not find region location type ".$config[$selected]->region_control_location_type." for allocation index ".$selected);
+      $config[$selected]->region_control_location_type_id = $terms[0]['id'];
     }
     if(empty($config[$selected]->location_types) || count($config[$selected]->location_types) == 0)
       throw new exception("Form configuration error: missing location_types for allocation index ".$selected);
@@ -211,7 +284,7 @@ class iform_ebms_transects_allocation {
         $lookup_values[$idx] = empty($config_entry->label) ? $idx : $config_entry->label;
     }
     if(count($lookup_values) > 1)
-      return '<tr><th colspan='.(empty($settings['config']->regional_control_location_type) ? '3' : '4').'>' .
+      return '<tr><th colspan='.(empty($settings['config']->region_control_location_type) ? '3' : '4').'>' .
           data_entry_helper::select(array(
               'label'=>lang::get('Allocation Type'),
               'fieldname'=>$settings['allocation_select_id'],
@@ -228,25 +301,42 @@ class iform_ebms_transects_allocation {
   }
 
   private static function _region_control($auth, $args, $nid, $settings) {
-    if(empty($settings['config']->regional_control_location_type)) return '';
-    return '<th>' .
+    if(empty($settings['config']->region_control_location_type)) return '';
+    $myCountryReplacement = '{ebms_scheme_country_ids}';
+    $myCountry = apply_user_replacements($myCountryReplacement);
+    $default = (empty($myCountry) || $myCountry === "-1" || $myCountry === $myCountryReplacement) ? '' : $myCountry;
+    if(!empty($args['managerPermission']) && !hostsite_user_has_permission($args['managerPermission'])) {
+        return '<th>' .
+            data_entry_helper::select(array(
+                'fieldname'=>$settings['region_select_id'],
+                'label'=>lang::get($settings['config']->region_control_location_type),
+                'table'=>'location',
+                'valueField'=>'id',
+                'captionField'=>'name',
+                'extraParams'=>$auth['read'] + array('view'=>'detail', 'id'=>$default)
+            )) .
+            '</th>';
+    } else {
+      return '<th>' .
         data_entry_helper::select(array(
           'fieldname'=>$settings['region_select_id'],
-          'label'=>lang::get($settings['config']->regional_control_location_type),
+          'label'=>lang::get($settings['config']->region_control_location_type),
           'table'=>'location',
           'valueField'=>'id',
           'captionField'=>'name',
-          'blankText'=>lang::get('<Please select '.($settings['config']->regional_control_location_type).'>'),
+          'blankText'=>lang::get('<Please select '.($settings['config']->region_control_location_type).'>'),
+          'default' => $default,
           'extraParams'=>$auth['read'] +
                 array('view'=>'detail',
-                    'location_type_id'=>$settings['config']->regional_control_location_type_id,
+                    'location_type_id'=>$settings['config']->region_control_location_type_id,
                     'orderby'=>'name')
              )) .
         '</th>';
+    }
   }
 
   private static function _location_control($auth, $args, $nid, $settings) {
-    if(empty($settings['config']->regional_control_location_type))
+    if(empty($settings['config']->region_control_location_type))
       return '<th>' .
         data_entry_helper::select(array(
           'fieldname'=>$settings['site_select_id'],
@@ -262,25 +352,28 @@ class iform_ebms_transects_allocation {
           'caching'=>false
              )) .
         '</th>';
-    else
+    else {
+      $extraParams = array_merge($auth['read'],
+        get_options_array_with_user_data($args['lookup_param_presets']),
+        array('location_type_ids' => implode(',', $settings['config']->location_type_ids),
+          'region_type_id' => $settings['config']->region_control_location_type_id
+        ));
       return '<th>' .
         data_entry_helper::select(array(
-            'fieldname' => $settings['site_select_id'],
-            'label' => lang::get('Site'),
-            'report' => 'reports_for_prebuilt_forms/UKBMS/ebms_region_locations',
-            'valueField' => 'location_id',
-            'captionField' => 'name',
-            'parentControlId' => 'region-control-'.$nid,
-            'parentControlLabel' => lang::get($settings['config']->regional_control_location_type),
-            'filterField' => 'region_location_id',
-            'blankText'=>lang::get('<Please select Site>'),
-            'extraParams' => array_merge($auth['read'],
-                array('location_type_ids' => implode(',', $settings['config']->location_type_ids),
-                      'region_type_id'=>$settings['config']->regional_control_location_type_id
-                )),
-            'caching' => false
+          'fieldname' => $settings['site_select_id'],
+          'label' => lang::get('Site'),
+          'report' => $args['lookup_report_name'],
+          'valueField' => 'location_id',
+          'captionField' => 'name',
+          'parentControlId' => 'region-control-' . $nid,
+          'parentControlLabel' => lang::get($settings['config']->region_control_location_type),
+          'filterField' => 'region_location_id',
+          'blankText' => lang::get('<Please select Site>'),
+          'extraParams' => $extraParams,
+          'caching' => false
         )) .
         '</th>';
+    }
   }
 
   private static function _user_control($auth, $args, $nid, &$settings) {
@@ -300,10 +393,10 @@ class iform_ebms_transects_allocation {
       $settings['config']->user_prefix = lang::get("CMS User ");
 
     // look up all users, not just those that have entered data.
-    if(version_compare(VERSION, '8', '<')) {
-      $results = db_query('SELECT uid, name FROM {users}'); // assume drupal7
+    if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+      $results = db_query('SELECT uid, name FROM {users} WHERE uid <> 0'); // assume drupal7
     } else {
-      $results = db_query('SELECT uid, name FROM {users_field_data}'); // drupal8
+      $results = db_query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8
     }
     foreach ($results as $result) {
       if($result->uid){ // ignore unauthorised user, uid zero
@@ -345,28 +438,29 @@ class iform_ebms_transects_allocation {
     return '<table class="ui-widget ui-widget-content reallocate-grid" id="'.$settings['grid_id'].'">' .
         '<thead class="ui-widget-header">' .
           '<tr>' .
-            '<td colspan=6>'.
+            '<td colspan="'.(empty($settings['config']->region_control_location_type) ? '6' : '7').'">'.
               '<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['select_all_class'].'" value="'.$settings['select_all_button'].'" />' .
               '<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselect_all_class'].'" value="'.$settings['deselect_all_button'].'" />' .
             '</td>' .
           '</tr>' .
           '<tr>' .
             '<th>'.lang::get('Allocated?').'</th>' .
-            (empty($settings['config']->regional_control_location_type) ? '' : '<th>'.lang::get($settings['config']->regional_control_location_type).'</th>') .
+            (empty($settings['config']->region_control_location_type) ? '' : '<th>'.lang::get($settings['config']->region_control_location_type).'</th>') .
+            '<th>'.lang::get('ID').'</th>' .
             '<th>'.lang::get('Site').'</th>' .
             '<th>'.lang::get('SRef').'</th>' .
             '<th>'.lang::get('User').'</th>' .
-            '<th></th>' .
+            '<th>'.lang::get('Actions').'</th>' .
           '</tr>' .
         '</thead>' .
         '<tbody>' .
           '<tr>' .
-            '<td colspan=6>'.lang::get('Use Search button to populate grid').'</td>' .
+            '<td colspan='.(empty($settings['config']->region_control_location_type) ? '6' : '7').'>'.lang::get('Use Search button to populate grid').'</td>' .
           '</tr>' .
         '</tbody>' .
         '<tfoot>' .
           '<tr>' .
-            '<td colspan=4>'.
+            '<td colspan='.(empty($settings['config']->region_control_location_type) ? '2' : '3').'>'.
               '<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['select_all_class'].'" value="'.$settings['select_all_button'].'" />' .
               '<input type="button" disabled="disabled" class="ui-corner-all ui-widget-content '.$settings['deselect_all_class'].'" value="'.$settings['deselect_all_button'].'" />' .
             '</td>' .
@@ -375,8 +469,11 @@ class iform_ebms_transects_allocation {
                 '<input type="submit" class="ui-corner-all ui-widget-content '.$settings['download_class'].'" value="'.$settings['download_button'].'" />' .
                 '<input type="hidden" name="location_type_ids" value="'.implode(',',$settings['config']->location_type_ids).'" />' .
                 '<input type="hidden" name="attribute_id" value="'.$settings['config']->attr_id.'" />' .
-                '<input type="hidden" name="region_location_type_id" value="'.$settings['config']->regional_control_location_type_id.'" />' .
+                '<input type="hidden" name="region_location_type_id" value="'.$settings['config']->region_control_location_type_id.'" />' .
                 '</form>' .
+            '</td>' .
+            '<td colspan=2>'.
+              lang::get('Number of sites : '). '<span id="site-count">0</span>' .
             '</td>' .
           '</tr>' .
         '</tfoot>' .
@@ -399,59 +496,133 @@ class iform_ebms_transects_allocation {
   }
 
   public static function ajax_downloadSiteAllocations($website_id, $password, $nid) {
+      require_once 'includes/user.php' ;
       // UKBMS Issue 80
       // Requirement: a report to output the square, allocated recorder (user name, proper name), email address, branch and county
       // Have to do this in 2 stages, as the allocation within UKBMS is via the CMS user ID, not the Indicia ID, so
       // the link to the user name etc is not held on the warehouse.
-      $formParams = hostsite_get_node_field_value($nid, 'params');
-      $conn = iform_get_connection_details($nid);
-      iform_load_helpers(array('data_entry_helper', 'report_helper'));
-      data_entry_helper::$base_url = $conn['base_url'];
-      $readAuth = data_entry_helper::get_read_auth($website_id, $password);
-      $params = array(
-          'location_type_ids' => $_GET['location_type_ids'],
-          'locattrs' => $_GET['attribute_id'].','.$formParams['county_location_attr_id'],
-          'region_location_type_id' => $_GET['region_location_type_id'],
-      );
+      // ABLE #15 Requirement: Report of user allocation to transects: userID, userName, userEmail, LocationType, LocationsID, LocationName
+      // Report only available to country manager role, for transects within their country boundary
+      // Country attribute, and country Boundary.
+
+      // Users must have "Access Indicia Iform web pages" permission
+
       header('Content-type: text/csv; utf-8');
       header('Content-Disposition: attachment; filename="allocations.csv"');
       header("Pragma: no-cache");
       header("Expires: 0");
       // Output a byte order mark for proper CSV UTF-8.
       echo chr(239) . chr(187) . chr(191);
+      $formParams = hostsite_get_node_field_value($nid, 'params');
+
+      if(!($cmsID = hostsite_get_user_field('id'))) {
+          echo "Not Logged in";
+          return;
+      }
+
+      $conn = iform_get_connection_details($nid);
+      iform_load_helpers(array('data_entry_helper', 'report_helper'));
+      data_entry_helper::$base_url = $conn['base_url'];
+      $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+
+      $params = get_options_array_with_user_data($formParams['param_presets']);
+      $params['location_type_ids'] = $_GET['location_type_ids'];
+      $params['region_location_type_id'] = $_GET['region_location_type_id'];
+      // Expect presets to include locattrs: include county attribute id for UKBMS
+      if(!array_key_exists('locattrs', $params) || $params['locattrs'] === '')
+          $params['locattrs'] = $_GET['attribute_id']; // this is the attribute the location to user allocation is in.
+      else
+          $params['locattrs'] .= ','.$_GET['attribute_id'];
+
+      if(!empty($formParams['managerPermission']) && !hostsite_user_has_permission($formParams['managerPermission'])) {
+        $myCountryReplacement = '{ebms_scheme_country_ids}';
+        $params['region_id'] = apply_user_replacements($myCountryReplacement);
+      }
+
       $out = fopen('php://output', 'w');
-      fputcsv ( $out, array('Square', 'Recorder username', 'Recorder name', 'Recorder email', 'Branch', 'County') );
+      // This can be overridden.
+      $headers = [];
+      $columns = json_decode($formParams['columns_config'], TRUE);
+      foreach ($columns as $idx => $column) {
+          if (!array_key_exists('visible', $column) || $column['visible'] === true) {
+            if (array_key_exists('caption', $column)) {
+              $headers[] = lang::get($column['caption']);
+            } else if (array_key_exists('fieldname', $column)) {
+                $headers[] = lang::get($column['fieldname']);
+            } else {
+                $headers[] = $idx;
+            }
+          }
+      }
+      fputcsv ( $out, $headers );
       $r = report_helper::get_report_data(array(
-          'dataSource' => "projects/ukbms/locations_allocations_list",
+          'dataSource' => $formParams['report_name'],
           'readAuth' => $readAuth,
           'extraParams' => $params,
           'caching' => FALSE,
       ));
+      if(array_key_exists('debug', $_GET)){
+          echo print_r($params, true);
+          echo print_r($r, true);
+          return;
+      }
       foreach($r as $row) {
-          if(empty($row['attr_location_'.$_GET['attribute_id']])) {
-              fputcsv ( $out, array($row['name'], "", "", "", $row['region_name'], $row['attr_location_term_'.$formParams['county_location_attr_id']]) );
-          } else {
-              $users = explode(',',$row['attr_location_'.$_GET['attribute_id']]);
-              foreach($users as $thisUser) {
-                  $thisUser = trim($thisUser);
-                  try {
-                      fputcsv ( $out,
-                          array($row['name'],
-                              hostsite_get_user_field('name', 0, false, $thisUser),
-                              hostsite_get_user_field('field_first_name', '', false, $thisUser) . ' ' .
-                                hostsite_get_user_field('field_last_name', '', false, $thisUser),
-                              hostsite_get_user_field('mail', '', false, (int)$thisUser),
-                              //hostsite_get_user_field('mail', '', false, $thisUser),
-                              $row['region_name'],
-                              $row['attr_location_term_'.$formParams['county_location_attr_id']]));
-                  } catch(Exception $e) {
-                      fputcsv ( $out, array($row['name'], "[CMS User $thisUser]", "", "", $row['region_name'], $row['attr_location_term_'.$formParams['county_location_attr_id']]) );
+          $users = explode(',',$row['attr_location_'.$_GET['attribute_id']]);
+          foreach($users as $thisUser) {
+              $thisUser = trim($thisUser);
+              $account = \Drupal\user\Entity\User::load($thisUser);
+              $outputrow = [];
+              foreach ($columns as $idx => $column) {
+                  if (array_key_exists('template', $column)) {
+                      $matches = array();
+                      preg_match_all('/\[([\w:]+)\]/', $column['template'], $matches);
+//                      $outputrow[] = print_r($matches, true);
+                      $output = $column['template'];
+                      for($i=0; $i<count($matches[1]); $i++){
+                          $parts = explode(':',$matches[1][$i],2);
+                          if(count($parts) !== 2) continue;
+                          switch($parts[0]) {
+                              case 'user' :
+                                  if($thisUser === null || $thisUser === '') {
+                                      $output = str_replace('['.$matches[1][$i].']', '', $output);
+                                  } else if($parts[1]==='uid') {
+                                      $output = str_replace('['.$matches[1][$i].']', $thisUser, $output);
+                                  } else if($account !== null) {
+                                    $output = str_replace('['.$matches[1][$i].']',
+                                        hostsite_get_user_field($parts[1], 'Field '.$matches[1][$i].' not found', false, $thisUser),
+                                                            $output);
+                                  }
+                                  break;
+                              case 'report' :
+                                  $output = str_replace('['.$matches[1][$i].']',
+                                  array_key_exists($parts[1], $row) ? $row[$parts[1]] : 'Column '.$matches[1][$i].' not found',
+                                                            $output);
+                              break;
+                          }
+                      }
+                      $outputrow[] = $output;
+                  } else {
+                      $outputrow[] = 'No template';
                   }
               }
+              fputcsv ( $out, $outputrow );
           }
       }
       fclose($out);
       return;
   }
-  
+
+  /**
+   * Declare the list of permissions we've got set up to pass to the CMS' permissions code.
+   * @param int $nid Node ID, not used
+   * @param array $args Form parameters array, used to extract the defined permissions.
+   * @return array List of distinct permissions.
+   */
+  public static function get_perms($nid, $args) {
+      $perms = array();
+      if (!empty($args['managerPermission']))
+          $perms[] = $args['managerPermission'];
+      return $perms;
+  }
+
 }

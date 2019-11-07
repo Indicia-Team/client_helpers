@@ -148,16 +148,14 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     });
 
     $('#smp-form').ajaxForm({
-      async: false, // must be synchronous, otherwise currentCell could change.
       dataType:  'json',
-      complete: function() {
-        var selector = '#'+indiciaData.currentCell.replace(/:/g, '\\:');
-        $(selector).removeClass('saving');
-      },
       success: function(data){
+        var transaction_id = data.transaction_id,
+            selector = '#'+transaction_id.replace(/:/g, '\\:');
+        $(selector).removeClass('saving');
         if (checkErrors(data)) {
           // get the sample code from the id of the cell we are editing.
-          var parts = indiciaData.currentCell.split(':');
+          var parts = transaction_id.split(':');
           // we cant just check if we are going to create new attributes and fetch in this case to get the attribute ids -
           // there is a possibility we have actually deleted an existing attribute, in which the id must be removed. This can only be
           // found out by going to the database. We can't keep using the deleted attribute as it stays deleted (ie does not undelete)
@@ -218,7 +216,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
       if(formOptions['finishedAttrID']) {
         $('.smp-finish').click(finishSample);
         $('#finished-form').ajaxForm({
-          async: false,
+//          async: false,
           dataType:  'json',
           success: function(data){
             window.location.href = formOptions['return_page'];
@@ -240,6 +238,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
   saveSample = function (code) {
     var parts, id;
     $('#smpid').val(formOptions.subSamples[code]);
+    $('#sample_transaction_id').val(indiciaData.currentCell);
     $.each(formOptions.sections, function(idx, section) {
       if (section.code == code) {
         // copy the fieldname and value into the sample submission form for each sample custom attribute
@@ -307,7 +306,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
 
     // Store the current cell's ID as a transaction ID, so we know which cell we were updating. Adds a tag if this is a deletion
     // so we can handle deletion logic properly when the post returns
-    $('#transaction_id').val(transactionId);
+    $('#occurrence_transaction_id').val(transactionId);
 
     if ($(selector +'\\:id').length>0 || $('#occdeleted').val()==='f') {
       $('#occ-form').submit();
@@ -792,7 +791,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
 
     // first tag all blank rows.
     $(table + ' .occs-body tr').removeClass('possibleRemove').each(function(idx, row){
-      if($(row).find('input').not(':hidden').not('[value=]').length == 0)
+      if($(row).find('input').not(':hidden').not('[value=""]').length == 0)
         $(row).addClass('possibleRemove');
     });
 
@@ -955,7 +954,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
       if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
           typeof formOptions.outOfRangeVerification[i].section_limit !== "undefined") {
-        return parseInt(formOptions.outOfRangeVerification[i].section_limit, 10) < parseInt(value, 10);
+        return formOptions.outOfRangeVerification[i].section_limit < value;
       }
     };
     return false;
@@ -965,7 +964,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
       if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
           typeof formOptions.outOfRangeVerification[i].walk_limit !== "undefined") {
-        return parseInt(formOptions.outOfRangeVerification[i].walk_limit, 10) < parseInt(total, 10);
+        return formOptions.outOfRangeVerification[i].walk_limit < total;
       }
     };
     return false;

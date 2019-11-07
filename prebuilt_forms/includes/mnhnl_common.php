@@ -25,7 +25,7 @@
  * 			usePolygons
  * 			includeLocationComment
  * 			includeLocationCode
- * 
+ *
  * TBD extend sref_system so can choose from drop down if > 1, else set to configured value.
  * TBD Convert locModTool to AJAX: return to locations page after saving
  * TBD put in check to enforce ParentLocationType and LocationType in options, loctools set?
@@ -35,7 +35,7 @@
  * TBD Add zoom to commune: display boundary on map, restrict displayed sites to those in commune.
  * TBD Add control to undo changes to existing locations.
  * TBD Hide buttons that can't be used.
- * 
+ *
  * The location centroid sref will contain the central point of the geom.
  * cant restrict location_attribute_values fetch in populateExtensions to location IDs in this square as this uses GET params: too small!
  */
@@ -401,14 +401,14 @@ function iform_mnhnl_locModTool($auth, $args, $node) {
       <input type='submit' class='ui-state-default ui-corner-all' value='".lang::get('Download')."'>
     </form>
     </fieldset>";
-  	
+
   }
   $retVal .= "<form method=\"post\" id=\"entry_form\">".
           $auth['write'].
           "<input type=\"hidden\" id=\"source\" name=\"source\" value=\"iform_mnhnl_locModTool\" />".
           "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />".
           "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"".$args['survey_id']."\" />";
-  $retVal .= iform_mnhnl_lux5kgridControl($auth, $args, $node, 
+  $retVal .= iform_mnhnl_lux5kgridControl($auth, $args, $node,
       array('Instructions2' => lang::get('LANG_LocModTool_Instructions2'),
        'MainFieldLabel' => lang::get('LANG_LocModTool_IDLabel'),
        'NameLabel' => lang::get('LANG_LocModTool_NameLabel'),
@@ -504,7 +504,7 @@ function iform_mnhnl_recordernamesControl($node, $auth, $args, $tabalias, $optio
           'label'=>lang::get('Recorder names'),
           'default'=>implode(', ', $values)
         ), $options));
-    
+
     $r = data_entry_helper::listbox(array_merge(array(
       'id'=>'sample:recorder_names',
       'fieldname'=>'sample:recorder_names[]',
@@ -624,10 +624,10 @@ defaultStyle = new OpenLayers.Style({pointRadius: 6, fillColor: \"Red\",fillOpac
 selectStyle = new OpenLayers.Style({fillColor: \"Blue\",fillOpacity: 0.3,strokeColor: \"Blue\",strokeWidth: 2});
 //defaultLabelStyle = new OpenLayers.Style({fontColor: \"Yellow\", labelAlign: \"".$args['labelAlign']."\", labelXOffset: ".$args['labelXOffset'].", labelSelect: true});
 dragPointStyleHash={pointRadius: 6,fillColor: \"Fuchsia\",fillOpacity: 0.3,strokeColor: \"Fuchsia\",strokeWidth: 1};
-// Interesting behaviour of the Points: when any mod control is active it creates a set of vertices which can be 
+// Interesting behaviour of the Points: when any mod control is active it creates a set of vertices which can be
 // dragged, allowing the existing geometry to be modified. All fine for Lines and polygons, but for points
 // the vertices are generated in the default style, and appear over the top of our existing geometry, so
-// effectively making it appear unselected! 
+// effectively making it appear unselected!
 // We want consistent colouring, so
 // 1) normal=red, yellow surrounds points
 // 2) highlighted=blue, yellow surrounds points
@@ -646,7 +646,7 @@ SitePointLayer = new OpenLayers.Layer.Vector('Site Points',{styleMap: SitePointS
 //SitePointLayer = new OpenLayers.Layer.Vector('Site Points',{styleMap: SitePointStyleMap});
 SitePathLayer = new OpenLayers.Layer.Vector('Site Paths',{styleMap: SiteStyleMap, displayInLayerSwitcher: false});
 SiteAreaLayer = new OpenLayers.Layer.Vector('Site Areas',{styleMap: SiteStyleMap, displayInLayerSwitcher: false});
-SiteLabelLayer = new OpenLayers.Layer.Vector('Site Labels',{//styleMap: SiteLabelStyleMap, 
+SiteLabelLayer = new OpenLayers.Layer.Vector('Site Labels',{//styleMap: SiteLabelStyleMap,
 displayInLayerSwitcher: false});
 var SiteNum = 0;\n";
 
@@ -975,7 +975,7 @@ convertFeature = function(feature, projection){
   return feature;
 }
 convertGeom = function(geom, projection){
-  if (projection.projcode!='EPSG:900913' && projection.projcode!='EPSG:3857') { 
+  if (projection.projcode!='EPSG:900913' && projection.projcode!='EPSG:3857') {
     var cloned = geom.clone();
     return cloned.transform(new OpenLayers.Projection('EPSG:900913'), projection);
   }
@@ -1119,7 +1119,7 @@ loadFeatures = function(parent_id, child_id, childArgs, loadParent, setSelectOpt
 ".($args['SecondaryLocationTypeTerm'] != '' && $options['AdminMode'] ?
 "            if(data[i].location_type_id == $secondary){
               centreFeature.style = jQuery.extend({}, SiteListSecondaryLabelStyleHash);
-            } else 
+            } else
   " : "").
 "            centreFeature.style = jQuery.extend({}, SiteListPrimaryLabelStyleHash);
             centreFeature.style.label = data[i].name;
@@ -1273,7 +1273,7 @@ loadChildFeatures = function(parent_id, setSelectOptions){
 ".($args['SecondaryLocationTypeTerm'] != '' && $options['AdminMode'] ?
 "            if(data[i].location_type_id == $secondary){
               centreFeature.style = jQuery.extend({}, SiteListSecondaryLabelStyleHash);
-            } else 
+            } else
   " : "").
 "            centreFeature.style = jQuery.extend({}, SiteListPrimaryLabelStyleHash);
             centreFeature.style.label = data[i].name;
@@ -1356,7 +1356,7 @@ populateExtensions = function(locids){
         SiteLabelLayer.removeFeatures([locList[j].feature]);
         locList[j].feature.style.label = locList[j].template;
         SiteLabelLayer.addFeatures([locList[j].feature]);\n".
-($args['locationMode']!='filtered' ? 
+($args['locationMode']!='filtered' ?
 "        var myOption = jQuery(\"#".$options['MainFieldID']."\").find('option').filter('[value='+locList[j].id+']').empty();
 ".($args['SecondaryLocationTypeTerm']!='' && $options['AdminMode']  ?
 "        if(locList[j].feature.attributes.data.location_type_id == $primary)
@@ -1445,7 +1445,7 @@ setGeomFields = function(){
   }
   centreSrefGeom=getCentroid(completeGeom);
   // the geometry is in the map projection: if this doesn't match indicia's internal one, then must convert.
-  if (SiteAreaLayer.map.projection.projcode!='EPSG:900913' && SiteAreaLayer.map.projection.projcode!='EPSG:3857') { 
+  if (SiteAreaLayer.map.projection.projcode!='EPSG:900913' && SiteAreaLayer.map.projection.projcode!='EPSG:3857') {
     completeGeom.transform(SiteAreaLayer.map.projection,  new OpenLayers.Projection('EPSG:900913'));
   }
   var boundaryWKT = getwkt(completeGeom, true, true);
@@ -1570,7 +1570,7 @@ highlightMe = function(id, SiteNum){
   for(var i=0; i<allFeatures.length; i++){
     if((typeof allFeatures[i].attributes.data != 'undefined' &&
           typeof allFeatures[i].attributes.data.id != 'undefined' &&
-          allFeatures[i].attributes.data.id == id) || 
+          allFeatures[i].attributes.data.id == id) ||
         (typeof allFeatures[i].attributes.SiteNum != 'undefined' &&
           allFeatures[i].attributes.SiteNum == SiteNum)){
       allFeatures[i].attributes.highlighted = true;
@@ -1621,7 +1621,7 @@ addDrawnPointToSelection = function(geometry) {
   SiteAreaLayer.destroyFeatures();
 " : "").
 "  var highlightedFeatures = gethighlight();
-".(!$options['AdminMode'] || (isset($args['adminsCanCreate']) && $args['adminsCanCreate']) ? 
+".(!$options['AdminMode'] || (isset($args['adminsCanCreate']) && $args['adminsCanCreate']) ?
 "  if(highlightedFeatures.length == 0){
     setDrawnGeom();
     // No currently selected feature. Create a new one.
@@ -1630,7 +1630,7 @@ addDrawnPointToSelection = function(geometry) {
     if(typeof addPGPoint != 'undefined') addPGPoint(geometry);
     return true;
   }
-" : 
+" :
 "  if(highlightedFeatures.length == 0) return true;
 ").
 "  var selectedFeature = false;
@@ -1696,7 +1696,7 @@ addDrawnLineToSelection = function(geometry) {
   SiteAreaLayer.destroyFeatures();
 " : "").
 "  var highlightedFeatures = gethighlight();
-".(!$options['AdminMode'] || (isset($args['adminsCanCreate']) && $args['adminsCanCreate']) ? 
+".(!$options['AdminMode'] || (isset($args['adminsCanCreate']) && $args['adminsCanCreate']) ?
 "  if(highlightedFeatures.length == 0){
     setDrawnGeom();
     // No currently selected feature. Create a new one.
@@ -1704,7 +1704,7 @@ addDrawnLineToSelection = function(geometry) {
     hook_new_site_added(feature, feature.attributes.SiteNum);
     return true;
   }
-" : 
+" :
 "  if(highlightedFeatures.length == 0) return true;
 ")."
   var selectedFeature = false;
@@ -1767,7 +1767,7 @@ addDrawnPolygonToSelection = function(geometry) {
   SitePathLayer.destroyFeatures();
 " : "").
 "  var highlightedFeatures = gethighlight();
-".(!$options['AdminMode'] || (isset($args['adminsCanCreate']) && $args['adminsCanCreate']) ? 
+".(!$options['AdminMode'] || (isset($args['adminsCanCreate']) && $args['adminsCanCreate']) ?
 "  if(highlightedFeatures.length == 0){
     setDrawnGeom();
     // No currently selected feature. Create a new one.
@@ -1775,7 +1775,7 @@ addDrawnPolygonToSelection = function(geometry) {
     hook_new_site_added(feature, feature.attributes.SiteNum);
     return true;
   }
-" : 
+" :
 "  if(highlightedFeatures.length == 0) return true;
 ")."
   var selectedFeature = false;
@@ -1991,7 +1991,7 @@ StartNewSite = function(){
 "  setNameDropDowns(false, '');
 " :
 "  jQuery('#dummy-name').val('');
-") : 
+") :
 "  keepName = jQuery('#".$options['MainFieldID']."').val() == '';
   // first remove any existing new location.
   var highlighted = gethighlight();
@@ -2132,7 +2132,7 @@ polygonDrawActivate = function(){
         modAreaFeature.selectFeature(SiteAreaLayer.features[i]);}}
     resetVertices();
     return true;
-" : 
+" :
 "    polygonDraw.deactivate();
     selectFeature.activate();
     return false;
@@ -2176,7 +2176,7 @@ lineDrawActivate = function(){
         modPathFeature.selectFeature(SitePathLayer.features[i]);}}
     resetVertices();
     return true;
-" : 
+" :
 "    lineDraw.deactivate();
     selectFeature.activate();
     return false;
@@ -2226,7 +2226,7 @@ pointDrawActivate = function(){
         resetVertices();}}
     if(typeof populatePGrid != 'undefined') populatePGrid();
     return true;
-" : 
+" :
 "    pointDraw.deactivate();
     selectFeature.activate();
     return false;
@@ -2340,7 +2340,7 @@ mapInitialisationHooks.push(function(mapdiv) {
 		  prefix: 'LUREF:',
 		  displayProjection: new OpenLayers.Projection('EPSG:2169'),
 		  emptyString: '',
-		  numDigits: 0 
+		  numDigits: 0
 		});
 		mapdiv.map.addControl(mousePosCtrl);
 " : "").
@@ -2384,7 +2384,7 @@ mapInitialisationHooks.push(function(mapdiv) {
               data_entry_helper::$javascript .= "		loadFeatures('',".data_entry_helper::$entity_to_load['location:id'].",{initial: true}, false, false, false, false, true);\n";
       		break;
     	default: // mode = parent
-      		data_entry_helper::$javascript .= "		loadFeatures(".data_entry_helper::$entity_to_load['location:parent_id'].",".data_entry_helper::$entity_to_load['location:id'].",{initial: true}, true, true, false, false, true);\n"; 
+      		data_entry_helper::$javascript .= "		loadFeatures(".data_entry_helper::$entity_to_load['location:parent_id'].",".data_entry_helper::$entity_to_load['location:id'].",{initial: true}, true, true, false, false, true);\n";
       }
     } else if($args['locationMode']=='single'){
       data_entry_helper::$javascript .= "		loadFeatures('','',{initial: true}, false, false, false, true, true);\n";
@@ -2423,7 +2423,7 @@ SitePointLayer.events.on({
 hook_ChildFeatureLoad = function(feature, data, child_id, childArgs){
   if(child_id == '' || data.id != child_id){\n";
       if($args['locationMode']!='filtered' && isset($args['duplicateNameCheck']) && $args['duplicateNameCheck']=='enforce'){
-        data_entry_helper::$javascript .= "    var clearVal = jQuery('#location-name').val() == data.name;\n"; 
+        data_entry_helper::$javascript .= "    var clearVal = jQuery('#location-name').val() == data.name;\n";
         if($args['siteNameTermListID']!="")
           data_entry_helper::$javascript .= "    jQuery('#location-name').find('option').filter('[value='+data.name+']').attr('disabled','disabled');\n";
         data_entry_helper::$javascript .= "    if(clearVal) jQuery('#location-name').val('');\n";
@@ -2595,7 +2595,7 @@ jQuery('#".$options['MainFieldID']."').change(function(){mainFieldChange(true)})
     								'orderby'=>'name',
     								'location_type_id'=>$args['location_assignment_location_type_id'],
     								'deleted'=>'f')));
-      $locResponse = data_entry_helper::get_population_data($locOptions); 
+      $locResponse = data_entry_helper::get_population_data($locOptions);
       if (isset($locResponse['error'])) return "PARENT LOOKUP ERROR:  ".$locResponse['error'];
       $opts = "";
       if (!isset(data_entry_helper::$entity_to_load[$options['ParentFieldName']]))
@@ -2646,7 +2646,7 @@ jQuery(\"#".$options['ParentFieldID']."\").change(function(){
            zoomToLayerExtent(ParentLocationLayer);
          }
        }});
-".($options['AdminMode'] ? 
+".($options['AdminMode'] ?
 "    // in admin mode we have to reset the location name drop downs.
     jQuery('#location-name').find('option').removeAttr('disabled');
 ".(isset($args['duplicateNameCheck']) && ($args['duplicateNameCheck']==true || $args['duplicateNameCheck']=='check' || $args['duplicateNameCheck']=='enforce') ?
@@ -2666,7 +2666,7 @@ jQuery(\"#".$options['ParentFieldID']."\").change(function(){
 "          // if enforce, disable all options for existing and reset the name value if needed.
           for(var di=0; di<data.length; di++){
             if(data[di].name == parseInt(data[di].name) && currentID != data[di].id)
-              // only disable fields for existing locations for numeric names and which are not me. 
+              // only disable fields for existing locations for numeric names and which are not me.
               jQuery('#location-name').find('option').filter('[value='+data[di].name+']').attr('disabled','disabled');
           }
           // finally if enforce and there is a clash, reset the value. This will then automatically take first available.
@@ -2717,7 +2717,7 @@ jQuery(\"#".$options['ParentFieldID']."\").change(function(){
       $locOptions['items'] = $opts;
       // single site requires all location data in main form. Mult site must have array: depends on implementation so left to actual form.
       $retVal .= data_entry_helper::apply_template($locOptions['template'], $locOptions)."<br />";
-      
+
       if($options['AdminMode']){
         $locOptions = array('validation' => array('required'),
     					'label'=>$options['ParentLabel'],
@@ -2751,7 +2751,7 @@ jQuery(\"#".$options['ParentFieldID']."\").change(function(){
         $retVal .= "<label for=\"location-name\">".$options['NameLabel'].":</label> <input type='text' id=\"location-name\" name=\"location:name\" class='required wide' value=\"".htmlspecialchars(data_entry_helper::$entity_to_load['location:name'])."\" /><span class='deh-required'>*</span><br/>";
       } else {
         $retVal .= data_entry_helper::select(array(
-            'label'=>$options['NameLabel'], 
+            'label'=>$options['NameLabel'],
             'id'=>'location-name',
             'fieldname'=>'location:name',
             'table'=>'termlists_term',
@@ -2768,7 +2768,7 @@ jQuery(\"#".$options['ParentFieldID']."\").change(function(){
         $retVal .= "<label for=\"dummy-name\">".$options['NameLabel'].":</label> <input type='text' id=\"dummy-name\" name=\"dummy:name\" class='wide' value=\"".htmlspecialchars(data_entry_helper::$entity_to_load['location:name'])."\" /><span class='deh-required'>*</span><br/>";
       } else {
         $retVal .= data_entry_helper::select(array(
-          'label'=>$options['NameLabel'], 
+          'label'=>$options['NameLabel'],
           'id'=>'dummy-name',
           'fieldname'=>'dummy:name',
           'table'=>'termlists_term',
@@ -2874,7 +2874,7 @@ jQuery(\"#".$options['ChooseParentFieldID']."\").change(function(){
           'extraParams'=>array_merge(array('orderby'=>'id', 'view'=>'detail', 'website_id'=>$args['website_id'], 'location_type_id'=>$primary), $auth['read']),
           'columns'=>'id,name,parent_id', // Only need certain columns, not geoms which would mean lots of network traffic
           'table'=>'location');
-      $locList = data_entry_helper::get_population_data($location_list_args); 
+      $locList = data_entry_helper::get_population_data($location_list_args);
       if (isset($locList['error'])) return $locList['error'];
       $location_attr_list_args=array(
           'nocache'=>true,
@@ -3001,7 +3001,7 @@ hook_setSref_".$idx." = function(geom){ // map projection
                   }
                   $locOptions['items'] = $opts;
                   $retVal .= data_entry_helper::apply_template($locOptions['template'], $locOptions);
-                  
+
                   if($options['AdminMode']){
                     // In admin mode assume can reassign to any location: admins should have access to all squares.
                     $location_list_args=array(
@@ -3241,7 +3241,7 @@ hook_setSref_".$idx." = function(geom){ // map projection
                   ParentLocationLayer.addFeatures([a1.features[closest]]); // feature should be in map projection
                   jQuery('#filterSelect".$idx."').val(a1.features[closest].attributes['".$protocol[6]."']);
                   jQuery('#locAttr\\\\:".$attr['attributeId']."').val(a1.features[closest].attributes['".$protocol[6]."']);\n";
-                	
+
 						foreach($filterAttrs as $idx1=>$filterAttr1) // just need index, so don't explode
 							if($idx1 > $idx && $idx1<count($filterAttrs)-1) // don't do name
 							    data_entry_helper::$javascript .="                  filterLoad".($idx1)."();\n";
@@ -3373,7 +3373,7 @@ filterLoad".$idx." = function(){
   }
 };
 filterReset".$idx." = function(){
-  // filterResets also clear the main field. 
+  // filterResets also clear the main field.
   jQuery('#".$options['MainFieldID']."').empty().attr('disabled','disabled').append('<option value=\"\">".lang::get("First fill in filter options above")."</option>');
   jQuery('#location-name').data('newValue','');
 };";
@@ -3394,7 +3394,6 @@ filterReset".$idx." = function(){
 				$retVal .= str_replace('<br/>','',$ctrl).'<br />';
                 $attrList[]=array('id'=>$attr['attributeId'],'shape'=>false);
 				if(count($filterAttr)>1) {
-				  data_entry_helper::add_resource('json');
 				  data_entry_helper::add_resource('autocomplete');
 				  data_entry_helper::$javascript .="
 jQuery('#locAttr\\\\:".$attr['attributeId']."').autocomplete('".data_entry_helper::$base_url."/index.php/services/data/termlists_term', {
@@ -3612,7 +3611,7 @@ hook_setSref = function(geom){ // geom is in map projection.
           $retVal .= "<label for=\"location-name\">".$options['NameLabel'].":</label> <input type='text' id=\"location-name\" name=\"location:name\" class='wide required' value=\"".htmlspecialchars(data_entry_helper::$entity_to_load['location:name'])."\" /><span class='deh-required'>*</span><br/>";
         } else {
           $retVal .= data_entry_helper::select(array(
-            'label'=>$options['NameLabel'], 
+            'label'=>$options['NameLabel'],
             'id'=>'location-name',
             'fieldname'=>'location:name',
             'table'=>'termlists_term',
@@ -3807,7 +3806,7 @@ modPGPoint = function(geometry){
   else if(geometry.CLASS_NAME == \"OpenLayers.Geometry.Point\") geomList=[geometry];
   else geomList=geometry.components;
   jQuery('.pgDataRow').each(function(idx,elem){
-    if(jQuery(this).data('geometry').x != jQuery(this).data('oldGeometry').x || 
+    if(jQuery(this).data('geometry').x != jQuery(this).data('oldGeometry').x ||
         jQuery(this).data('geometry').y != jQuery(this).data('oldGeometry').y){
       // the geometry, which is the same object as the feature, has moved
       var geometryX = convertGeom(jQuery(this).data('geometry'), SitePointLayer.map.projection);
@@ -3861,7 +3860,7 @@ clearPGrid= function(){jQuery('.pgDataRow').remove();}
 
 function iform_mnhnl_SrefFields($auth, $args, $incLocTypeDropDown=false) {
   if($args['LocationTypeTerm']=='' && isset($args['location_assignment_location_type_id'])) $args['LocationTypeTerm']=$args['location_assignment_location_type_id'];
-  $primary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['LocationTypeTerm']);	
+  $primary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['LocationTypeTerm']);
   data_entry_helper::$javascript .= "
 // functions for iform_mnhnl_SrefFields
 _setSref = function(sref){
@@ -3932,7 +3931,7 @@ function handleEnteredSref(value) {
 <input type=\"hidden\" id=\"locWebsite\" name=\"locations_website:website_id\" value=\"".$args['website_id']."\" />
 ";
 	if($args['SecondaryLocationTypeTerm']!='' && $incLocTypeDropDown) {
-		$secondary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['SecondaryLocationTypeTerm']);	
+		$secondary = iform_mnhnl_getTermID($auth, 'indicia:location_types',$args['SecondaryLocationTypeTerm']);
 		$retVal .= "<label for=\"location_location_type_id\">".lang::get('LANG_Location_Type_Label').":</label> <select id=\"location_location_type_id\" name=\"location:location_type_id\">
     <option value=\"\"></option>
     <option value=\"$primary\">".lang::get('LANG_Location_Type_Primary')."</option>
@@ -4062,7 +4061,7 @@ setupButtons($('#controls'), 0);";
   };
   return '';
 }
-  
+
 function iform_mnhnl_getAttr($auth, $args, $table, $caption, $qualifier=false){
   $attrOpts = array(
         'valuetable'=>$table.'_attribute_value'
@@ -4185,7 +4184,7 @@ function iform_mnhnl_listLocations($auth, $args) {
                                             'indicia_user_id' : 'uid')),
       'nocache'=>true
   ));
-  
+
   $ret_val = array();
   foreach($location_list as $location)
     $ret_val[] = $location['location_id'];
@@ -4209,6 +4208,6 @@ function iform_mnhnl_listUsers($auth, $args) {
       $retVal[] = $account->name;
     }
   }
-  
+
   return array_unique($ret_val);
 }
