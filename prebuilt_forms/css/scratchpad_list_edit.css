@@ -14,6 +14,10 @@ a.non-unique-name.preferred:after {
   content: '[accepted name]';
   font-size: 9px;
 }
+a.non-unique-name.disallow-data-entry:after {
+  content: '[name no longer recognised]';
+  font-size: 9px;
+}
 #scratchpad-container {
   display: inline-block;
   width: 75%;

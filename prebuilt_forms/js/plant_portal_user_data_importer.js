@@ -7,6 +7,7 @@ function send_new_plots_to_warehouse(warehouseUrl,websiteId,plotsToCreateNames,p
   //Some of the information to send are just individual values and aren't grouped (such as website ID).
   //AV To Do, do we even need to send the attribute to hold the group?
   var arrayOfAttributesToSend=create_array_of_new_plot_attributes_for_warehouse(websiteId,userId,attributeIdToHoldGroup,plotLocationType);
+  alert('About to send plots to warehouse ' + websiteId + ' ' + warehouseUrl);
   create_params_string_and_send_chunks_to_warehouse(warehouseUrl,websiteId,arrayOfChunkTypesToSend,arrayOfAttributesToSend,'create_new_plots');
 }
 

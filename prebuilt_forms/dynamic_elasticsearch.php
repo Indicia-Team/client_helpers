@@ -228,7 +228,7 @@ TXT;
    * @return string
    *   Select HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-templatedOutput
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-userFilters
    */
   protected static function get_control_userFilters($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::userFilters(array_merge($options, [
@@ -248,6 +248,18 @@ TXT;
       'all_records_permission' => $args['all_records_permission'],
       'location_collation_records_permission' => $args['location_collation_records_permission'],
     ]));
+  }
+
+  /**
+   * A control for flexibly outputting data formatted using a JS function.
+   *
+   * @return string
+   *   HTML for the container element.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   */
+  protected static function get_control_customScript($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::customScript($options);
   }
 
   /**
@@ -375,7 +387,9 @@ TXT;
    *   Hidden input HTML which defines the appropriate filters.
    */
   protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::urlParams($options);
+    return ElasticsearchReportHelper::urlParams(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   protected static function getHeader($args) {

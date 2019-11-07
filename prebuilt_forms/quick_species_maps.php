@@ -137,6 +137,8 @@ class iform_quick_species_maps {
    *   Form HTML.
    */
   public static function get_form($args, $nid, $response = NULL) {
+    // Max number of layers that can be displayed
+    $max_layers=30;
     iform_load_helpers(array('report_helper', 'map_helper'));
     $conn = iform_get_connection_details($nid);
     $readAuth = report_helper::get_read_auth($conn['website_id'], $conn['password']);
@@ -179,9 +181,10 @@ class iform_quick_species_maps {
     $args['indicia_species_layer_slds'] = report_helper::explode_lines($args['indicia_species_layer_slds']);
     $r .= '<div id="rightcol">';
     $r .= '<div id="layerbox">';
-    $r .= '<p id="instruct">' . lang::get('Click on the + buttons in the grid to add species layers to the map. You can add up to {1} layers at a time.',
-        count($args['indicia_species_layer_slds']));
-    $r .= '<p id="instruct2" style="display: none">' . lang::get('Use the - buttons to permanently remove layers, or untick the box in the legend to temporarily hide them.');
+    $r .= '<input id="checkShowInstructions" type="checkbox" checked>' . lang::get('Show instructions');
+    $r .= '<input id="checkShowLegend" type="checkbox" checked>' . lang::get('Show legend');
+    $r .= '<p id="instruct">' . lang::get('Click on the + buttons in the grid to add species layers to the map. You can add up to {1} layers at a time. ', $max_layers); 
+    $r .= 'Use the - buttons to permanently remove layers, or untick the box in the legend to temporarily hide them.</p>';
     $mapOptions = iform_map_get_map_options($args, $readAuth);
     $mapOptions['clickForSpatialRef'] = FALSE;
     $olOptions = iform_map_get_ol_options($args, $readAuth);
@@ -246,7 +249,8 @@ class iform_quick_species_maps {
           '  "wmsUrl":"' . data_entry_helper::$geoserver_url . "wms\",\n" .
           "  \"cqlFilter\":\"$cql\",\n" .
           "  \"filterField\":\"taxon_meaning_id\",\n" .
-          '  "slds":' . json_encode($args['indicia_species_layer_slds']) . "\n" .
+          '  "slds":' . json_encode($args['indicia_species_layer_slds']) . ",\n" .
+          '  "max_layers":' . strval($max_layers) . "\n" .
           "};\n";
     }
     return $r;

@@ -25,7 +25,7 @@ div {
   }
   #layerbox {
     padding: 0 1em;
-    height:90px;
+    height:auto;
     ul li {
       background: none;
       vertical-align: middle;
@@ -60,13 +60,33 @@ div {
     width: auto;
     margin: 0.1em 0.25em 0.1em 0.5em;
   }
-  input[type="checkbox"] {
+  // input[type="checkbox"] {
     
-  }
+  // }
 }
 
 .action-button {
   min-width: 16px;
   min-height: 16px;
   border-bottom: none;
+}
+
+#layerbox #checkShowInstructions {
+  margin: 0.5em 1em 1em 0;
+}
+
+#layerbox #checkShowLegend {
+  margin: 0.5em 1em 1em 2em;
+}
+
+p#instruct {
+  margin-bottom: 0.5em;
+}
+
+#map-container {
+  margin-top: 0.5em;
+}
+
+#layers ul {
+  margin: 0;
 }

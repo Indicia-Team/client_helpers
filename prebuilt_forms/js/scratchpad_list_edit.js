@@ -100,6 +100,7 @@ jQuery(document).ready(function ($) {
     var foundPreferredMatches = [];
     var nonUniqueBatchIdx = 0;
     var preferred;
+    var disallowDataEntry;
     var $el;
 
     $('#scratchpad-remove-duplicates').hide();
@@ -163,8 +164,11 @@ jQuery(document).ready(function ($) {
               rowInput + ' (unique match could not be found - click on the correct option below)</span>');
           $.each(matches, function () {
             preferred = typeof this.record.preferred !== 'undefined' && this.record.preferred === 't';
+            disallowDataEntry = typeof this.record.allow_data_entry !== 'undefined' && this.record.allow_data_entry === 'f';
+            preferred = typeof this.record.preferred !== 'undefined' && this.record.preferred === 't' && !disallowDataEntry;
             output.push('<a contenteditable="false" class="non-unique-name' +
                 (preferred ? ' preferred' : '') +
+                (disallowDataEntry ? ' disallow-data-entry' : '') +
                 '" data-batch="' + nonUniqueBatchIdx +
                 '" data-id="' + this.record.id + '" data-name="' + this.record.name + '">' +
                 this.record.unambiguous +
