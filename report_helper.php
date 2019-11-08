@@ -1539,6 +1539,7 @@ JS;
    * @param array $options Options passed to the report control, which should contain the column definitions.
    */
   private static function get_direct_mode_params_form($options) {
+    global $indicia_templates;
     $reloadUrl = self::get_reload_link_parts();
     $r = '<form action="'.$reloadUrl['path'].'" method="get" class="linear-form" id="filterForm-'.$options['id'].'">';
     $r .= '<label for="filters" class="auto">'.lang::get('Filter for').'</label> ';
@@ -1553,8 +1554,8 @@ JS;
       }
     }
     $r .= "</select>\n";
-    $r .= '<input type="submit" value="Filter" class="run-filter ui-corner-all ui-state-default"/>'.
-        '<button class="clear-filter" style="display: none">Clear</button>';
+    $r .= '<input type="submit" value="Filter" class="run-filter ' . $indicia_templates['buttonHighlightedClass'] . '"/>'.
+        '<button class="clear-filter ' . $indicia_templates['buttonDefaultClass'] . '" style="display: none">Clear</button>';
     $r .= "</form>\n";
     return $r;
   }
@@ -2498,7 +2499,9 @@ mapSettingsHooks.push(function(opts) { $setLocationJs
         $options['paramsToHide']=$options['ignoreParams'];
       $r .= self::build_params_form(array_merge($options, array('form'=>$response['parameterRequest'], 'defaults'=>$params)), $hasVisibleContent);
       if (isset($options['completeParamsForm']) && $options['completeParamsForm']) {
-        $suffix = '<input type="submit" value="'.lang::get($options['paramsFormButtonCaption']).'" id="run-report"/>'.
+        global $indicia_templates;
+        $suffix = '<input type="submit" value="'.lang::get($options['paramsFormButtonCaption']).'" id="run-report" ' .
+            "class=\"$indicia_templates[buttonHighlightedClass]\" />" .
             '</fieldset></form>';
       } else
         $suffix = '';
@@ -4510,7 +4513,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
   	// TODO put following JS into a control JS file.
 
   	self::add_resource('jquery_ui');
-    
+
     $extraParams = $options['readAuth'] + array('survey_id'=>$options['survey_id']);
     $definition = data_entry_helper::get_population_data(array(
         'table'=>'summariser_definition',
@@ -4520,7 +4523,7 @@ jQuery('#".$options['chartID']."-series-disable').click(function(){
     if(count($definition) != 1) {
       return 'ERROR: could not find a single summariser_definition records for survey_id ' . $options['survey_id'] . "\n".print_r($definition,true);
     }
-    
+
   	$options = self::get_report_calendar_summary_options($options); // don't use all of these now, eg. extraParams: this is used later for raw data
   	$extraParams = $options['readAuth'] + array('year'=>$options['year'], 'survey_id'=>$options['survey_id']);
   	// at the moment the summary_builder module indexes the user_id on the created_by_id field on the parent sample.
@@ -4615,7 +4618,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
       $yearEndYearDay = $yearEnd->format('z'); // day within year
       $maxPeriodNo = 1+ceil(($yearEndYearDay-$periodOneDateYearDay)/7);
   	}
-    
+
     // Initialise data
     $tableNumberHeaderRow = $tableDateHeaderRow = $downloadNumberHeaderRow = $downloadDateHeaderRow = "";
     $summaryDataDownloadGrid = $estimateDataDownloadGrid = $rawDataDownloadGrid = '';
@@ -4640,7 +4643,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
     $summarySeriesData=array();
     $estimatesSeriesData=array();
     $seriesOptions=array();
-    
+
     for($i= $minPeriodNo; $i <= $maxPeriodNo; $i++){
         $tableNumberHeaderRow.= '<th class="week">'.$i.'</th>';
         $tableDateHeaderRow.= '<th class="week">'.$firstPeriodDate->format('M').'<br/>'.$firstPeriodDate->format('d').'</th>';
@@ -4651,7 +4654,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
         $fullDates[$i] = $firstPeriodDate->format('d/m/Y');
         $firstPeriodDate->modify('+7 days');
     }
-    
+
   	$sampleFieldList = !empty($options['sampleFields']) ? explode(',',$options['sampleFields']) : false;
     if(empty($sampleFieldList))
       $sampleFields = false;
@@ -4701,7 +4704,7 @@ function rebuild_page_url(oldURL, overrideparam, overridevalue) {
             $summaryArray[$taxonMeaningID][$periodNo] = array('total'=>null,'estimate'=>0);
         }
           if($summary->summary !== null && $summary->summary !== "NULL") {
-            $summaryArray[$taxonMeaningID][$periodNo]['total'] = ($summaryArray[$taxonMeaningID][$periodNo]['total'] == null 
+            $summaryArray[$taxonMeaningID][$periodNo]['total'] = ($summaryArray[$taxonMeaningID][$periodNo]['total'] == null
                 ? 0 : $summaryArray[$taxonMeaningID][$periodNo]['total']) + $summary->summary;
         }
           $summaryArray[$taxonMeaningID][$periodNo]['estimate'] += $summary->estimate;
