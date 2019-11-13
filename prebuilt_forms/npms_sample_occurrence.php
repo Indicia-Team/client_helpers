@@ -52,11 +52,27 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'required'=>true
         ),
         array(
+          'name'=>'core_square_location_type_id',
+          'caption'=>'Core square location type ID',
+          'description'=>'NPMS square location type ID',
+          'type'=>'string',
+          'group'=>'Other IForm Parameters',
+          'required'=>true
+        ),
+        array(
+          'name'=>'npms_years_termlist_id',
+          'caption'=>'NPMS years termlist ID',
+          'description'=>'ID of termlist containing NPMS years',
+          'type'=>'string',
+          'group'=>'Other IForm Parameters',
+          'required'=>true
+        ),
+        array(
           'name'=>'locking_date',
           'caption'=>'Locking Date',
           'description'=>'The date to lock the form from. Samples "created on" earlier than this date are read-only (use format yyyy-mm-dd)',
           'type'=>'string',
-          'group'=>'Locking Date',
+          'group'=>'Dates',
           'required'=>false
         ),
         array(
@@ -65,7 +81,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'description'=>'Override the warning text shown to the user when the form is locked from editing 
           because the locking date has past.',
           'type'=>'string',
-          'group'=>'Other IForm Parameters',
+          'group'=>'Dates',
           'required'=>false
         ), 
         array(
@@ -93,7 +109,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'caption'=>'Ignore grid sample date before',
           'description'=>'Exclude any samples before this date on the initial grid of data.',
           'type'=>'string',
-          'group'=>'Other IForm Parameters',
+          'group'=>'Dates',
           'required'=>false
         ),
         array(
@@ -125,7 +141,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'default'=>true,
           'group'=>'Permissions',
           'required'=>true
-        )       
+        )  
       )
     ); 
   }
@@ -144,6 +160,26 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
         'With customisations for the Plant Surveillance Scheme.'
     );
   }
+
+  /*
+   * This can't be run inside get_form_html, as that code is only run after the grid page
+   */
+  public static function get_form($args, $nid) {
+    // Change the grid params to submit as soon as a change is made without the need for a run button
+    data_entry_helper::$javascript .= "
+    $('#run-report').hide();
+     
+    $(document).ready(function($) {
+      $('#samples_grid-square_id').change(function(e) {
+        $('#samples_grid-params').submit();
+      });  
+
+      $('#samples_grid-year').change(function(e) {
+        $('#samples_grid-params').submit();
+      });
+    });";
+    return parent::get_form($args, $nid);
+  } 
 
   protected static function get_form_html($args, $auth, $attributes) {
     $r='';
@@ -164,7 +200,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
     if (!empty($args['abun_photo_msg']) && !empty($args['abun_attr_id'])) {
       //If the user enters a photo without an abundance warn them.
       data_entry_helper::$javascript .= "
-        $('#tab-submit').click(function(e) {
+        $('#entry_form').submit(function(e) {
           var photoWithoutAbunFound=false;
           var rowCounter=-1;
           $(\"table[id^='species-grid'] tr\").each(function() {
@@ -187,8 +223,10 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
             }
           });
           if (photoWithoutAbunFound===true) {
-            alert('".$args['abun_photo_msg']."') 
-            e.preventDefault();
+            alert('".$args['abun_photo_msg']."');
+            return false;
+          } else {
+            this.submit();
           }
         });";  
     }
@@ -359,7 +397,7 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
       if (!empty($args['override_locking_wrong_user_text']))
         $r .= '<em style="color: red;">'.$args['override_locking_wrong_user_text'].'</em>';
       else
-        $r .= '<em style="color: red;">This form cannot be edited as the plot visit was made by another person.</em>';
+        $r .= '<em style="color: red;">The data on this form has been locked for editing because you are no longer assigned the square or you did not originally create the visit.</em>';
       data_entry_helper::$javascript .= "
       var lockForm=true;
       ";
@@ -408,30 +446,6 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
     // Set it into the indicia templates
     $indicia_templates['taxon_label'] = $php;
   }
-  
-  /**
-   * Override function to add hidden attribute to store linked sample id
-   * When adding a survey 1 record this is given the value 0
-   * When adding a survey 2 record this is given the sample_id of the corresponding survey 1 record.
-   * @param type $args
-   * @param type $auth
-   * @param type $attributes
-   * @return string The hidden inputs that are added to the start of the form
-   */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    $r = parent::getFirstTabAdditionalContent($args, $auth, $attributes);    
-    $linkAttr = 'smpAttr:' . $args['survey_1_attr'];
-    if (array_key_exists('new', $_GET)) {
-      if (array_key_exists('sample_id', $_GET)) {
-        // Adding a survey 2 record
-        $r .= '<input id="' . $linkAttr. '" type="hidden" name="' . $linkAttr. '" value="' . $_GET['sample_id'] . '"/>' . PHP_EOL;
-      } else {
-        // Adding a survey 1 record
-        $r .= '<input id="' . $linkAttr. '" type="hidden" name="' . $linkAttr. '" value="0"/>' . PHP_EOL;
-      }
-    }
-    return $r;
-  }
 
   /**
    * Override function to include actions to add or edit the linked sample
@@ -443,13 +457,8 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
     return array(array('display' => 'Actions', 
                        'actions' => array(array('caption' => lang::get('Edit this Survey'), 
                                                 'url'=>'{currentUrl}', 
-                                                'urlParams' => array('edit' => '', 'sample_id' => '{sample_id}')
-                                               ),
-                                          array('caption' => lang::get('Add a Survey 2'), 
-                                                'url'=>'{currentUrl}', 
-                                                'urlParams' => array('new' => '', 'sample_id' => '{sample_id}'),
-                                                'visibility_field' => 'show_add_sample_2'
-                                          )
+                                                'urlParams' => array('sample_id' => '{sample_id}')
+                                               )
     )));
   }
   
@@ -482,6 +491,9 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
     if (!empty($filter) && !empty($args['plot_number_attr_id'])) {
       $filter = array_merge($filter,array('plot_number_attr_id' => $args['plot_number_attr_id']));
     }
+    
+    $filter = array_merge($filter,array('year_termlist_id' => $args['npms_years_termlist_id']));
+    $filter = array_merge($filter,array('core_square_location_type_id' => $args['core_square_location_type_id']));
     // Return with error message if we cannot identify the user records
     if (!isset($filter)) {
       return lang::get('LANG_No_User_Id');
@@ -501,6 +513,7 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
       'columns' => call_user_func(array(self::$called_class, 'getReportActions')),
       'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
       'autoParamsForm' => true,
+      'paramDefaults' => array('square_id' => '0', 'year' => ''),
       'extraParams' => $filter
     ));
     $r .= '<form>';
@@ -634,6 +647,47 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
       }
     }
     return $occurrenceIds;
+  }
+
+  /*
+   * At the submission point we need to insert values to automatically tell the system if this
+   * is going to be a survey 1 or survey 2
+   */
+  public static function get_submission($values, $args, $nid) {
+    $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
+    $surveyOneFieldName = 'smpAttr:' . $args['survey_1_attr'];
+    $selectedPlotId=$values['sample:location_id'];
+    // Need to find out how many samples have been created for this plot so far this year
+    $reportOptions =
+    array(
+      'readAuth' => $readAuth,
+      'dataSource'=> $args['grid_report'],
+      'extraParams'=> array(
+        // Effectively ignore square in this situation
+        'square_id' => 0,
+        'plot_id' => $selectedPlotId,
+        // Need to check based on the year of the sample, not the year today
+        'year' => substr($values['sample:date'], -4),
+        'year_termlist_id' => $args['npms_years_termlist_id'],
+        'survey_id' => $args['survey_id'],
+        'iUserID' =>  hostsite_get_user_field('indicia_user_id'),
+        'person_square_attr_id' => $args['person_square_attr_id'],
+        'core_square_location_type_id' => $args['core_square_location_type_id'],
+        's1AttrID' => $args['survey_1_attr'])
+    );
+    $samplesForThisPlotThisYear=data_entry_helper::get_report_data($reportOptions);
+    // If no samples have been created so far this year and it is a new sample (i.e. not editing)
+    // then we know we need to create this as a Survey 1.
+    // (noting we store an ID of 0 as the linking sample ID if it is survey 1)
+    if (count($samplesForThisPlotThisYear)==0 && empty($values['sample:id'])) {
+      $values[$surveyOneFieldName]='0';
+    // If only 1 sample for the plot already exists this year, then need to copy the ID of that sample into 
+    // the submission so it can be linked to this new sample. The new sample becomes sample 2 that is linked
+    // to 1 through an attribute 
+    } elseif (count($samplesForThisPlotThisYear)==1 && empty($values['sample:id'])) {
+      $values[$surveyOneFieldName] = $samplesForThisPlotThisYear[0]['sample_id'];
+    }
+    return parent::get_submission($values, $args, $nid);
   }
 }
 
