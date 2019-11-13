@@ -2573,7 +2573,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
       $cacheTimeOut = self::getCacheTimeOut($options);
       $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
-      if ($options['caching'] !== 'store') {
+      if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
         $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response !== FALSE)
           $cacheLoaded = TRUE;
