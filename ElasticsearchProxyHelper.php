@@ -160,18 +160,29 @@ class ElasticsearchProxyHelper {
    * A search proxy that handles build of a CSV download file.
    */
   public static function proxyDownload() {
-    $isScrollToNextPage = array_key_exists('scroll_id', $_POST);
+    $isScrollToNextPage = array_key_exists('scroll_id', $_GET);
     if (!$isScrollToNextPage) {
       self::checkPermissionsFilter($_POST);
     }
-    $url = self::getEsUrl() . '/_search?format=csv';
-    $query = self::buildEsQueryFromRequest($_POST);
-    if ($isScrollToNextPage) {
-      $url .= '&scroll_id=' . $_POST['scroll_id'];
+    $url = self::getEsUrl() . '/_search?' . self::getPassThroughUrlParams(['format' => 'csv'], [
+      'aggregation_type',
+      'uniq_id',
+      'state',
+    ]);
+    if (isset($_GET['aggregation_type']) && isset($_GET['uniq_id']) && isset($_GET['state'])) {
+      // Pass through parameters for aggregation download file chunking.
+      $url .= "&aggregation_type=$_GET[aggregation_type]";
+      $url .= "&uniq_id=$_GET[uniq_id]";
+      $url .= "&state=$_GET[state]";
     }
     else {
+      // Download will use Elasticsearch scroll if doing documents.
       $url .= '&scroll';
+      if ($isScrollToNextPage) {
+        $url .= '&scroll_id=' . $_GET['scroll_id'];
+      }
     }
+    $query = self::buildEsQueryFromRequest($_POST);
     echo self::curlPost($url, $query);
   }
 
@@ -237,6 +248,29 @@ class ElasticsearchProxyHelper {
     echo json_encode([
       'updated' => count($ids),
     ]);
+  }
+
+  /**
+   * Creates a query string for the URL to pass through.
+   *
+   * Only passes through parameters in $_GET where the key matches one of the
+   * provided.
+   *
+   * @param array $default
+   *   List of paramaters that should appear in the query string no matter
+   *   what.
+   * @param array $params
+   *   Names of $_GET keys that will be copied into the resulting query string
+   *   if provided.
+   */
+  private static function getPassThroughUrlParams(array $default, array $params) {
+    $query = $default;
+    foreach ($params as $param) {
+      if (!empty($_GET[$param])) {
+        $query[$param] = $_GET[$param];
+      }
+    }
+    return http_build_query($query);
   }
 
   /**
