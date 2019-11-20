@@ -1522,7 +1522,7 @@ TD;
     if (!empty(self::$automaticMappings) && !empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE) {
       $adjustedAutomaticMappings = [];
       foreach (self::$automaticMappings as $key => $automaticMap) {
-        $adjustedAutomaticMappings[str_replace(" ", "_", $key)] = $automaticMap;
+        $adjustedAutomaticMappings[self::columnMachineName($key)] = $automaticMap;
       }
       $mappingsAndSettings['mappings'] = $adjustedAutomaticMappings;
     }
