@@ -113,11 +113,22 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'required'=>false
         ),
         array(
+          'name'=>'genus_entry_found_msg',
+          'caption'=>'Genus entry made message',
+          'description'=>'Message to display to the user '
+            . 'if they have entered a species at genus taxon rank.'
+            . 'Only applies to Inventory, Indicator (without a static species grid).',
+          'type'=>'textarea',
+          'group'=>'Other IForm Parameters',
+          'required'=>false
+        ),
+        array(
           'name'=>'abun_photo_msg',
           'caption'=>'Abundance missing message',
           'description'=>'Message to display to the user '
             . 'if they have added a photo with no abundance. '
-            . 'Disabled if this and the Abundance Missing Message are not filled in.',
+            . 'Disabled if this and the Abundance Missing Message are not filled in.'
+            . 'Only applies to Wildflower (with a static species grid).',
           'type'=>'textarea',
           'group'=>'Other IForm Parameters',
           'required'=>false
@@ -126,7 +137,8 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           'name'=>'abun_attr_id',
           'caption'=>'Abundance occurrence attribute ID',
           'description'=>'Occurrence attribute ID for abundance.'
-            . 'Disabled if this and the Abundance Occurrence Attribute ID are not filled in.',
+            . 'Disabled if this and the Abundance Occurrence Attribute ID are not filled in.'
+            . 'Only applies to Wildflower (with a static species grid).',
           'type'=>'textarea',
           'group'=>'Other IForm Parameters',
           'required'=>false
@@ -197,42 +209,83 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
             return false;
           }
         });";
-    if (!empty($args['abun_photo_msg']) && !empty($args['abun_attr_id'])) {
-      //If the user enters a photo without an abundance warn them.
-      data_entry_helper::$javascript .= "
-        $('#entry_form').submit(function(e) {
+    
+
+      // If the user enters a Wildflower photo without an abundance then stop them.
+      // If the user enters a genus on Inventory, Indicator photo then warn them with the option to continue
+      // (to detect a genus, we simply count if it is a one word entry)
+      if ((!empty($args['abun_photo_msg']) && !empty($args['abun_attr_id'])) || !empty($args['genus_entry_found_msg'])) {   
+        data_entry_helper::$javascript .= "
+        function WordCount(str) {
+          return str.split(' ')
+                .filter(function(n) { return n != '' })
+                .length;
+        }  
+
+        $(document).on('click', '#tab-submit', function(e){ 
           var photoWithoutAbunFound=false;
-          var rowCounter=-1;
-          $(\"table[id^='species-grid'] tr\").each(function() {
-            //Image row is called supplementary-row in edit mode
-            if ($(this).hasClass('image-row')||$(this).hasClass('supplementary-row')) {
-              //Image row might not actually have any image if Add Photo button wasn't clicked
-              if ($(this).find('img').length) {
-                //Current row is image row, so to get abundance we need to look in previous row and do a no value check
-                //As we are doing a contains selector we need to loop even though there should only be one result
-                //Difficult to use an exact selector, as edit mode has attribute values IDs in the selector, this makes life complicated.
-                $(this).prev().find(\"input[id*='occAttr\\\\:".$args['abun_attr_id']."']\").each(function( index ) {
-                  if (!$(this).val()) {
-                    photoWithoutAbunFound=true;
-                  }
-                });
-              } 
-            } else {
-              //If row isn't an image row, then it is a real grid row that we need to keep track of
-              rowCounter++;
+          var unwantedGenusEntryFound=false;
+          // Cycle through each row on grid
+          $(\"table[id^='species-grid'] tr\").each(function() {";
+            if (!empty($args['genus_entry_found_msg'])) {
+              data_entry_helper::$javascript .= "
+              $(this).prev().find(\".scTaxonCell\").each(function( index ) {
+                // Only count items in an emphasis tag as we don't want to count the taxon group and other labels
+                if (WordCount($(this).find('em').text())===1) {
+                  unwantedGenusEntryFound=true;
+                }
+              });";
             }
-          });
-          if (photoWithoutAbunFound===true) {
-            alert('".$args['abun_photo_msg']."');
-            return false;
-          } else {
-            this.submit();
+
+            if (!empty($args['abun_photo_msg']) && !empty($args['abun_attr_id'])) {
+              data_entry_helper::$javascript .= "
+              //Image row is called supplementary-row in edit mode
+              if ($(this).hasClass('image-row') || $(this).hasClass('supplementary-row')) {
+                //Image row might not actually have any image if Add Photo button wasn't clicked
+                if ($(this).find('img').length) {
+                  //Current row is image row, so to get abundance we need to look in previous row and do a check for no value.
+                  //As we are doing a contains selector, we need to loop even though there should only be one result
+                  //Difficult to use an exact selector, as edit mode has attribute values IDs in the selector, this makes life complicated.
+                  $(this).prev().find(\"input[id*='occAttr\\\\:".$args['abun_attr_id']."']\").each(function( index ) {
+                    if (!$(this).val()) {
+                      photoWithoutAbunFound=true;
+                    }
+                  });
+                } 
+              }";
+            }
+          data_entry_helper::$javascript .= "  
+          });"; 
+
+          if (!empty($args['genus_entry_found_msg'])) {
+            data_entry_helper::$javascript .= "
+            if (unwantedGenusEntryFound===true) {
+              var txt;
+              var r = confirm('".$args['genus_entry_found_msg']."');
+              if (r == true) {
+                // If user wants to continue anyway, them the genus is no longer considered unwanted
+                unwantedGenusEntryFound=false;
+              } else {
+                unwantedGenusEntryFound=true;
+              } 
+            }";
           }
-        });";  
-    }
-      data_entry_helper::$javascript .= "
-      });
-    ";
+          if (!empty($args['abun_photo_msg']) && !empty($args['abun_attr_id'])) {
+            data_entry_helper::$javascript .= "
+            if (photoWithoutAbunFound===true) {
+              alert('".$args['abun_photo_msg']."');
+            }";
+          }
+        data_entry_helper::$javascript .= "
+          if (unwantedGenusEntryFound === true || photoWithoutAbunFound === true) {
+            return false;
+          }
+        });";
+      }
+      data_entry_helper::$javascript .= "  
+      });";
+
+
     if (function_exists('hostsite_get_user_field')) {
       $iUserId = hostsite_get_user_field('indicia_user_id');
     }
