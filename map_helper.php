@@ -301,7 +301,6 @@ class map_helper extends helper_base {
           $options['otherBaseLayerConfig'] = [];
         }
         foreach ($options['tilecacheLayers'] as $layer) {
-          drupal_set_message('<pre>' . var_export($layer, true) . '</pre>');
           $options['otherBaseLayerConfig'][] = [
             'class' => 'TileCache',
             'params' => [$layer['caption'], $layer['servers'], $layer['layerName'], $layer['settings']],
