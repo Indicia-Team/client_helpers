@@ -74,15 +74,12 @@ class map_helper extends helper_base {
    *     'google_satellite', 'openlayers_wms', 'bing_aerial', 'bing_hybrid',
    *     'bing_shaded', 'bing_os', 'osm' (for OpenStreetMap), 'os_outdoor',
    *     'os_road', 'os_light', 'os_night', 'os_leisure'.
-   *   * tilecacheLayers - Array of layer definitions for tilecaches, which are
-   *     pre-cached background tiles. They are less flexible but much faster
-   *     than typical WMS services. The array is associative, with the
-   *     following keys:
-   *     * caption - The display name of the layer
-   *     * servers - array list of server URLs for the cache
-   *     * layerName - the name of the layer within the cache
-   *     * settings - any other settings that need to be passed to the
-   *       tilecache, e.g. the server resolutions or file format.
+   *   * otherBaseLayerConfig - Array of layer definitions for any other layers
+   *     to add to the map. Each entry is an object with 2 properties -
+   *     * class - name of the Openlayers layer class (must be a subclass of
+   *       OpenLayers.layer), e.g. WMTS.
+   *     * params - list of parameters to pass to the constructor of the layer
+   *       as defined in the OpenLayers documentation.
    *   * indiciaWMSLayers
    *   * indiciaWFSLayers
    *   * layers - An array of JavaScript variables which point to additional
@@ -298,9 +295,23 @@ class map_helper extends helper_base {
         'gridRefHintInFooter' => TRUE,
         'gridRefHint' => FALSE,
       ], $options);
-      // When using tilecache layers, the open layers defaults cannot be used.
-      // The caller must take control of openlayers settings.
+      // Map deprecated tilecacheLayers setting to newer otherBaseLayerConfig.
       if (isset($options['tilecacheLayers'])) {
+        if (!isset($options['otherBaseLayerConfig'])) {
+          $options['otherBaseLayerConfig'] = [];
+        }
+        foreach ($options['tilecacheLayers'] as $layer) {
+          drupal_set_message('<pre>' . var_export($layer, true) . '</pre>');
+          $options['otherBaseLayerConfig'][] = [
+            'class' => 'TileCache',
+            'params' => [$layer['caption'], $layer['servers'], $layer['layerName'], $layer['settings']],
+          ];
+        }
+        unset($options['tilecacheLayers']);
+      }
+      // When using custom base layer classes, the Openlayers defaults cannot 
+      // be used. The caller must take control of Openlayers settings.
+      if (isset($options['otherBaseLayerConfig'])) {
         $options['useOlDefaults'] = FALSE;
       }
 
