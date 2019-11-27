@@ -367,8 +367,7 @@ class extension_splash_extensions {
       $location_list_args = array_merge(array(
           'label'=>lang::get('LANG_Location_Label'),
           'view'=>'detail'
-      ), $options);
-      
+      ), $options);    
       $r .= data_entry_helper::location_select($location_list_args);
       //Create the mini report, not currently required on PSS site
       if (empty($options['pssMode']))

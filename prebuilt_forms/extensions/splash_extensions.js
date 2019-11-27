@@ -10,7 +10,6 @@ var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, l
       } else {
         $('#entry_form').append('<input name="sample:privacy_precision" value="" type="hidden" />');  
       }
-      $("#entry_form").submit();      
     });
   }
   
