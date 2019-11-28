@@ -148,8 +148,17 @@ function iform_map_get_map_parameters() {
     ),
     array(
       'name' => 'tile_cache_layers',
-      'caption' => 'Tile cache JSON',
-      'description' => 'JSON describing the tile cache layers to make available. For advanced users only.',
+      'caption' => 'Tile cache JSON (deprecated)',
+      'description' => 'JSON describing the tile cache layers to make available. For advanced users only. ' .
+          'Deprecated - use Other base layer config instead.',
+      'type' => 'textarea',
+      'group' => 'Advanced Base Map Layers',
+      'required' => FALSE
+    ),
+    array(
+      'name' => 'other_base_layer_config',
+      'caption' => 'Other base layer config',
+      'description' => 'JSON describing the custom base layers to make available. For advanced users only.',
       'type' => 'textarea',
       'group' => 'Advanced Base Map Layers',
       'required' => FALSE
@@ -289,9 +298,12 @@ function iform_map_get_map_options($args, $readAuth) {
     );\n";
     $options['layers'][] = 'baseLayer';
   }
-  // Also add any tilecaches they have defined
+  // Also add any custom base layers they have defined
   if (!empty($args['tile_cache_layers'])) {
     $options['tilecacheLayers'] = json_decode($args['tile_cache_layers'], true);
+  }
+  if (!empty($args['other_base_layer_config'])) {
+    $options['otherBaseLayerConfig'] = json_decode($args['other_base_layer_config'], true);
   }
   // And any indicia Wms layers from the GeoServer
   if (!empty($args['indicia_wms_layers'])) {
