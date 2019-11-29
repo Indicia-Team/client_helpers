@@ -346,10 +346,6 @@ class user_helper extends helper_base {
    * <li>email_address</li>
    * <li>website_url</li>
    * <li>address</li>
-   * <li>home_entered_sref</li>
-   * <li>home_entered_sref_system</li>
-   * <li>interests</li>
-   * <li>location_name</li>
    * <li>username</li>
    * <li>default_digest_mode</li>
    * <li>activated</li>
@@ -432,10 +428,6 @@ class user_helper extends helper_base {
    * <li>email_address</li>
    * <li>website_url</li>
    * <li>address</li>
-   * <li>home_entered_sref</li>
-   * <li>home_entered_sref_system</li>
-   * <li>interests</li>
-   * <li>location_name</li>
    * <li>username</li>
    * <li>default_digest_mode</li>
    * <li>activated</li>
