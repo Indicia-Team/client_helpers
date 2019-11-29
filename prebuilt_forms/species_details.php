@@ -462,6 +462,9 @@ class iform_species_details extends iform_dynamic {
     if (isset($attrs_report)) {
       $r .= $attrs_report;
     }
+    // Display description author, this is then moved to the Descriptions tab using jQuery
+    if (!empty($attrData[0]['caption']) && !empty($attrData[0]['value']))
+      $r .= '<div id="author-move-from"><br><b>'.ucfirst(lang::get($attrData[0]['caption'])).'</b>: <em>'.$attrData[0]['value'].'</em></div>';
     return str_replace(
       ['{id}', '{title}', '{content}'],
       ['detail-panel-speciesdetails', lang::get('Species Details'), $r],
