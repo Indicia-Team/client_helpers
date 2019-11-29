@@ -350,8 +350,6 @@ class user_helper extends helper_base {
    * <li>home_entered_sref_system</li>
    * <li>interests</li>
    * <li>location_name</li>
-   * <li>email_visible</li>
-   * <li>view_common_names</li>
    * <li>username</li>
    * <li>default_digest_mode</li>
    * <li>activated</li>
@@ -438,8 +436,6 @@ class user_helper extends helper_base {
    * <li>home_entered_sref_system</li>
    * <li>interests</li>
    * <li>location_name</li>
-   * <li>email_visible</li>
-   * <li>view_common_names</li>
    * <li>username</li>
    * <li>default_digest_mode</li>
    * <li>activated</li>
