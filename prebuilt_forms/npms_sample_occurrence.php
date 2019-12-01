@@ -226,7 +226,7 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
           var photoWithoutAbunFound=false;
           var unwantedGenusEntryFound=false;
           // Cycle through each row on grid
-          $(\"table[id^='species-grid'] tr\").each(function() {";
+          $(\"table[id^='species-grid'] tr\").filter('.scClonableRow, .added-row').each(function() {";
             if (!empty($args['genus_entry_found_msg'])) {
               data_entry_helper::$javascript .= "
               $(this).prev().find(\".scTaxonCell\").each(function( index ) {
