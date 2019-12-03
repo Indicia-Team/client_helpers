@@ -335,34 +335,27 @@ class user_helper extends helper_base {
    * Defaults to false.</li>
    * </ul>
    *
-   * @return array containing:<ul>
-   * <li>The 'user_id' key hold the user_id for the authenticated user,
-   * or '0' if the login credentials are not valid for this website.</li>
-   * <li>The 'profile' as an array containing:-<ul>
-   * <li>title</li>
-   * <li>first_name</li>
-   * <li>surname</li>
-   * <li>initials</li>
-   * <li>email_address</li>
-   * <li>website_url</li>
-   * <li>address</li>
-   * <li>home_entered_sref</li>
-   * <li>home_entered_sref_system</li>
-   * <li>interests</li>
-   * <li>location_name</li>
-   * <li>email_visible</li>
-   * <li>view_common_names</li>
-   * <li>username</li>
-   * <li>default_digest_mode</li>
-   * <li>activated</li>
-   * <li>banned</li>
-   * <li>site_role</li>
-   * <li>registration_datetime</li>
-   * <li>last_login_datetime</li>
-   * <li>preferred_sref_system</li>
-   * </ul>
-   * This is only returned if the 'getprofile' option is true in the request options.</li>
-   * </ul>
+   * @return array containing:
+   * * The 'user_id' key hold the user_id for the authenticated user, or '0' if
+   *   the login credentials are not valid for this website.
+   * * The 'profile' as an array containing:
+   *   * title
+   *   * first_name
+   *   * surname
+   *   * initials
+   *   * email_address
+   *   * website_url
+   *   * address
+   *   * username
+   *   * default_digest_mode
+   *   * activated
+   *   * banned
+   *   * site_role
+   *   * registration_datetime
+   *   * last_login_datetime
+   *   * preferred_sref_system
+   *   This is only returned if the 'getprofile' option is true in the request
+   *   options.
    */
 
   public static function authenticate_user($username, $password, $readAuth, $website_password, $options=array()) {
@@ -426,29 +419,23 @@ class user_helper extends helper_base {
    * @param array $readAuth Required.
    * Array containing service authentication data obtained from get_read_auth().
    *
-   * @return array containing:<ul>
-   * <li>title</li>
-   * <li>first_name</li>
-   * <li>surname</li>
-   * <li>initials</li>
-   * <li>email_address</li>
-   * <li>website_url</li>
-   * <li>address</li>
-   * <li>home_entered_sref</li>
-   * <li>home_entered_sref_system</li>
-   * <li>interests</li>
-   * <li>location_name</li>
-   * <li>email_visible</li>
-   * <li>view_common_names</li>
-   * <li>username</li>
-   * <li>default_digest_mode</li>
-   * <li>activated</li>
-   * <li>banned</li>
-   * <li>site_role</li>
-   * <li>registration_datetime</li>
-   * <li>last_login_datetime</li>
-   * <li>preferred_sref_system</li>
-   * </ul>
+   * @return array
+   *   Containing:
+   *   * title
+   *   * first_name
+   *   * surname
+   *   * initials
+   *   * email_address
+   *   * website_url
+   *   * address
+   *   * username
+   *   * default_digest_mode
+   *   * activated
+   *   * banned
+   *   * site_role
+   *   * registration_datetime
+   *   * last_login_datetime
+   *   * preferred_sref_system
    */
 
   public static function get_user_profile($user_id, $readAuth) {

@@ -5853,7 +5853,7 @@ HTML;
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
       $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
-      $query = $options['filterField'] . '="+$(this).val()+"';
+      $query = $options['filterField'] . '=' . urlencode('"val"');
     }
     else {
       $url = parent::getProxiedBaseUrl() . "index.php/services/data";
@@ -5861,7 +5861,7 @@ HTML;
       $inArray = array('val');
       if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
         $inArray[] = null;
-      $query = urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
+      $query = 'query=' .urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
     }
     if (isset($options['parentControlLabel']))
       $instruct = lang::get('Please select a {1} first', $options['parentControlLabel']);
@@ -6765,6 +6765,7 @@ HTML;
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:comment";
       $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"]) ?
         self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"] : '';
+      $value = htmlspecialchars($value);
       $r .= "<input class=\"scComment\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
       $r .= "</td>";
     }

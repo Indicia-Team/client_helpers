@@ -1494,45 +1494,57 @@ TD;
     ];
     // If the last step was skipped because the user did not have any settings to supply, presetSettings contains the presets.
     // Otherwise we'll use the settings form content which already in $_POST so will overwrite presetSettings.
-    if (isset($options['presetSettings']))
+    if (isset($options['presetSettings'])) {
       $mappingsAndSettings['settings'] = $options['presetSettings'];
-    //Collect settings from a designated array in the post if available
-    if (!empty($_POST['setting']))
-      $mappingsAndSettings['settings']=array_merge($mappingsAndSettings['settings'],$_POST['setting']);    //If the post does not contain a specific array for settings, then just ge the settings as the general post fields
-    if (!isset($_POST['setting']))
-      $mappingsAndSettings['settings']=array_merge($mappingsAndSettings['settings'],$_POST);
-    //The settings should simply be the settings, so remove any mappings or settings sub-arrays if these have become jumbled
-    //up inside our settings array
-    if (!empty($mappingsAndSettings['settings']['mapping']))
+    }
+    // Collect settings from a designated array in the post if available.
+    if (!empty($_POST['setting'])) {
+      // If the post does not contain a specific array for settings, then just
+      // get the settings as the general post fields.
+      $mappingsAndSettings['settings'] = array_merge($mappingsAndSettings['settings'], $_POST['setting']);
+    }
+    if (!isset($_POST['setting'])) {
+      $mappingsAndSettings['settings'] = array_merge($mappingsAndSettings['settings'], $_POST);
+    }
+    // The settings should simply be the settings, so remove any mappings or
+    // settings sub-arrays if these have become jumbled up inside our settings
+    // array.
+    if (!empty($mappingsAndSettings['settings']['mapping'])) {
       unset($mappingsAndSettings['settings']['mapping']);
-    if (!empty($mappingsAndSettings['settings']['setting']))
+    }
+    if (!empty($mappingsAndSettings['settings']['setting'])) {
       unset($mappingsAndSettings['settings']['setting']);
-    //If we are skipping the mappings page, then the mapping will be in the automatic mappings variable
-    //Change the keys in this array so that spaces are replaced with underscores so the mappings are the same
-    //as if they had been stored in the post
-    if (!empty(self::$automaticMappings) && !empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible']==true ) {
-      $adjustedAutomaticMappings=array();
-      foreach (self::$automaticMappings as $key=>$automaticMap) {
-        $adjustedAutomaticMappings[str_replace(" ", "_", $key)]=$automaticMap;
+    }
+    // If we are skipping the mappings page, then the mapping will be in the
+    // automatic mappings variable. Change the keys in this array so that
+    // spaces are replaced with underscores so the mappings are the same as if
+    // they had been stored in the post.
+    if (!empty(self::$automaticMappings) && !empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE) {
+      $adjustedAutomaticMappings = [];
+      foreach (self::$automaticMappings as $key => $automaticMap) {
+        $adjustedAutomaticMappings[self::columnMachineName($key)] = $automaticMap;
       }
-      $mappingsAndSettings['mappings']=$adjustedAutomaticMappings;
+      $mappingsAndSettings['mappings'] = $adjustedAutomaticMappings;
     }
     //Collect mappings from a designated array in the post if available
     if (!empty($_POST['mapping'])) {
-      $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST['mapping']);
+      $mappingsAndSettings['mappings'] = array_merge($mappingsAndSettings['mappings'], $_POST['mapping']);
     }
     //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
     if (isset($_POST['setting'])) {
-      $mappingsAndSettings['mappings']=array_merge($mappingsAndSettings['mappings'],$_POST);
+      $mappingsAndSettings['mappings'] = array_merge($mappingsAndSettings['mappings'], $_POST);
     }
     $mappingsAndSettings['mappings'] = self::cleanMappings($mappingsAndSettings['mappings']);
-    //The mappings should simply be the mappings, so remove any mappings or settings sub-arrays if these have become jumbled
-    //up inside our mappings array
-    if (!empty($mappingsAndSettings['mappings']['mapping']))
+    // The mappings should simply be the mappings, so remove any mappings or
+    // settings sub-arrays if these have become jumbled up inside our mappings
+    // array.
+    if (!empty($mappingsAndSettings['mappings']['mapping'])) {
       unset($mappingsAndSettings['mappings']['mapping']);
-    if (!empty($mappingsAndSettings['mappings']['setting']))
+    }
+    if (!empty($mappingsAndSettings['mappings']['setting'])) {
       unset($mappingsAndSettings['mappings']['setting']);
+    }
     return $mappingsAndSettings;
   }
 

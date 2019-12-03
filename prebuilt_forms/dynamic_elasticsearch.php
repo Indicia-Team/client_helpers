@@ -205,7 +205,7 @@ TXT;
   public static function get_form($args, $nid) {
     iform_load_helpers(['ElasticsearchReportHelper']);
     ElasticsearchReportHelper::enableElasticsearchProxy($nid);
-    data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/dynamic_elasticsearch');;
+    data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/dynamic_elasticsearch');
     $r = parent::get_form($args, $nid);
     return $r;
   }
