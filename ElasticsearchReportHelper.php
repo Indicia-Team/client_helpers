@@ -275,7 +275,7 @@ JS;
    * @return string
    *   Grid container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-dataGrid
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-datagrid
    */
   public static function dataGrid(array $options) {
     self::checkOptions(
@@ -413,6 +413,7 @@ HTML;
     // add some download options.
     $dataOptions = helper_base::getOptionsForJs($options, [
       'source',
+      'aggregation',
       'columnsTemplate',
       'addColumns',
       'removeColumns',

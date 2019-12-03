@@ -6843,6 +6843,7 @@ HTML;
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:comment";
       $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"]) ?
         self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"] : '';
+      $value = htmlspecialchars($value);
       $r .= "<input class=\"scComment\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
       $r .= "</td>";
     }
