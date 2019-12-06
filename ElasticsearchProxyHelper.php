@@ -149,7 +149,7 @@ class ElasticsearchProxyHelper {
    * aggregated data across the entire dataset which is not limited by the page
    * permissions.
    */
-  public static function proxyRawsearch() {
+  private static function proxyRawsearch() {
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
@@ -159,7 +159,7 @@ class ElasticsearchProxyHelper {
   /**
    * A search proxy that handles build of a CSV download file.
    */
-  public static function proxyDownload() {
+  private static function proxyDownload() {
     $isScrollToNextPage = array_key_exists('scroll_id', $_GET);
     if (!$isScrollToNextPage) {
       self::checkPermissionsFilter($_POST);
@@ -192,7 +192,7 @@ class ElasticsearchProxyHelper {
    * Used by the verification system when in checklist mode to allow setting a
    * comment and status on multiple records in one go.
    */
-  public static function proxyUpdateIds() {
+  private static function proxyUpdateIds() {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
@@ -209,7 +209,7 @@ class ElasticsearchProxyHelper {
    * Uses a filter definition passed in the post to retrieve the records from
    * ES then applies the decision to all aof them.
    */
-  public static function proxyUpdateAll($nid) {
+  private static function proxyUpdateAll($nid) {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
