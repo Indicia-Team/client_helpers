@@ -46,24 +46,36 @@ class ElasticsearchProxyHelper {
         self::proxyComments($nid);
         break;
 
-      case 'searchbyparams':
-        self::proxySearchByParams();
-        break;
-
-      case 'rawsearch':
-        self::proxyRawsearch();
+      case 'doesUserSeeNotifications':
+        self::proxyDoesUserSeeNotifications($nid);
         break;
 
       case 'download':
         self::proxyDownload();
         break;
 
-      case 'updateids':
-        self::proxyUpdateIds();
+      case 'mediaAndComments':
+        self::proxyMediaAndComments($nid);
+        break;
+
+      case 'rawsearch':
+        self::proxyRawsearch();
+        break;
+
+      case 'searchbyparams':
+        self::proxySearchByParams();
         break;
 
       case 'updateall':
         self::proxyUpdateAll($nid);
+        break;
+
+      case 'updateids':
+        self::proxyUpdateIds();
+        break;
+
+      case 'verificationQueryEmail':
+        self::proxyVerificationQueryEmail();
         break;
 
       default:
@@ -112,10 +124,25 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Provides information on a user's ability to see notifications.
+   *
+   * Used when querying records for verification.
+   */
+  function proxyDoesUserSeeNotifications($nid) {
+    iform_load_helpers(['VerificationHelper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    header('Content-type: application/json');
+    echo json_encode(['msg' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id'])]);
+  }
+
+  /**
    * Ajax handler for the [recordDetails] comments tab.
    *
    * @param int $nid
    *   Node ID to obtain connection info from.
+   *
+   * @todo Consider switch to using VerificationHelper::getComments().
    */
   private static function proxyComments($nid) {
     iform_load_helpers(['report_helper']);
@@ -187,6 +214,28 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Proxy method to retrieve media and comments for emails.
+   *
+   * When an email is sent to query a record, the comments and media are
+   * injected into the HTML. Returns an array with a media entry and a comments
+   * entry, both containing the required HTML.
+   *
+   * @return array
+   *   Media and comments information.
+   */
+  private static function proxyMediaAndComments($nid) {
+    iform_load_helpers(['VerificationHelper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
+    header('Content-type: application/json');
+    echo json_encode(array(
+      'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
+      'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
+    ));
+  }
+
+  /**
    * Proxy method that receives a list of IDs to perform updates on in Elastic.
    *
    * Used by the verification system when in checklist mode to allow setting a
@@ -248,6 +297,28 @@ class ElasticsearchProxyHelper {
     echo json_encode([
       'updated' => count($ids),
     ]);
+  }
+
+  /**
+   * Proxy method to send an email querying a record.
+   */
+  private static function proxyVerificationQueryEmail() {
+    $fromEmail = $params['email_from_address'];
+    $headers = [
+      'MIME-Version: 1.0',
+      'Content-type: text/html; charset=UTF-8;',
+      'From: ' . $fromEmail,
+      'Reply-To: ' . hostsite_get_user_field('mail'),
+    ];
+    $headers = implode("\r\n", $headers) . PHP_EOL;
+    $emailBody = $_POST['body'];
+    $emailBody = str_replace("\n", "<br/>", $emailBody);
+    // Send email. Depends upon settings in php.ini being correct.
+    $success = mail($_POST['to'],
+         $_POST['subject'],
+         wordwrap($emailBody, 70),
+         $headers);
+    echo $success ? 'OK' : 'Fail';
   }
 
   /**

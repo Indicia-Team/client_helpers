@@ -230,7 +230,7 @@ indiciaData.rowIdToReselect = false;
         if (substatus) {
           $('#row' + id + ' td:first div, #details-tab td.status').addClass('substatus-' + substatus);
         }
-        text = indiciaData.statusTranslations[status];
+        text = indiciaData.statusTranslations[status + (substatus || '')];
         $('#details-tab td.status').html(text);
         if (indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'details' ||
           indiciaData.detailsTabs[indiciaFns.activeTab($('#record-details-tabs'))] === 'comments') {

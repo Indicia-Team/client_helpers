@@ -22,10 +22,23 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+ /**
+  * A helper class for Verification related code.
+  */
 class VerificationHelper {
 
+  /**
+   * Track if status labels have been translated so we only do it once.
+   *
+   * @var bool
+   */
   private static $statusTermsTranslated = FALSE;
 
+  /**
+   * Record status term mappings.
+   *
+   * @var array
+   */
   private static $statusTerms = array(
     'V' => 'Accepted',
     'R' => 'Not accepted',
@@ -36,6 +49,11 @@ class VerificationHelper {
     'C' => 'Not reviewed',
   );
 
+  /**
+   * Record substatus term mappings.
+   *
+   * @var array
+   */
   private static $substatusTerms = array(
     '1' => 'correct',
     '2' => 'considered correct',
@@ -44,8 +62,26 @@ class VerificationHelper {
     '5' => 'incorrect',
   );
 
-  public static function doesUserSeeNotifications($readAuth, $userId) {
+  /**
+   * Determine if a user likely to see any notifications raised.
+   *
+   * Users who casually submit a record may never log in again to check their
+   * notifications. This examines their notifications to determine if they can
+   * be expected to check any future ones, to determine whether a notified
+   * comment or a direct email is the best way of letting them know about an
+   * action.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param int $userId
+   *   Warehouse user ID of the user to check.
+   *
+   * @return string
+   *   Yes, no, maybe or unknown.
+   */
+  public static function doesUserSeeNotifications(array $readAuth, $userId) {
     iform_load_helpers(['report_helper']);
+    // Get some summary stats about the user's existing notifications.
     $data = report_helper::get_report_data(array(
       'dataSource' => 'library/users/user_notification_response_likely',
       'readAuth' => $readAuth,
@@ -88,13 +124,28 @@ class VerificationHelper {
     }
   }
 
-  public static function getComments($readAuth, $params, $emailMode = FALSE) {
+  /**
+   * Retrieves HTML to display a record's comments.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param array $params
+   *   Page parameters.
+   * @param int $occurrenceId
+   *   ID of the occurrence to load comments for.
+   * @param bool $emailMode
+   *   If true, then HTML simplified for insertion into an email.
+   *
+   * @return string
+   *   HTML.
+   */
+  public static function getComments(array $readAuth, array $params, $occurrenceId, $emailMode = FALSE) {
     iform_load_helpers(array('data_entry_helper', 'report_helper'));
     $options = array(
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
       'sharing' => $params['sharing'],
-      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
+      'extraParams' => array('occurrence_id' => $occurrenceId),
     );
     $comments = report_helper::get_report_data($options);
     $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path() . "../media/images/" : report_helper::$images_path;
@@ -141,12 +192,15 @@ class VerificationHelper {
             $r .= '<h3>' . ucfirst($type) . '</h3>';
             foreach ($items as $item) {
               $r .= '<div class="correspondence shrunk">';
-              $r .= '<a class="unshrink-correspondence" title="'.lang::get('Expand this correspondence block to show its full details.').'">'.lang::get('more...').'</a>';
+              $r .= '<a class="unshrink-correspondence" title="' .
+                lang::get('Expand this correspondence block to show its full details.') . '">' .
+                lang::get('more...') . '</a>';
               foreach ($item as $field => $value) {
                 $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
                 $r .= "<div>$field $value</div>";
               }
-              $r .= '<a class="shrink-correspondence" title="'.lang::get('Shrink this correspondence block.').'">'.lang::get('less...').'</a>';
+              $r .= '<a class="shrink-correspondence" title="' .
+                lang::get('Shrink this correspondence block.') . '">' . lang::get('less...') . '</a>';
               $r .= '</div>';
             }
           }
@@ -155,53 +209,37 @@ class VerificationHelper {
       $r .= '</div>';
     }
     $r .= '</div>';
-    if (!$emailMode) {
-      $r .= self::getCommentsForm();
-    }
     return $r;
   }
 
   /**
-   * Returns the HTML for a comments form.
+   * Retrieves the media for a record as HTML.
+   *
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param array $params
+   *   Form configuration.
+   * @param int $occurrenceId
+   *   Occurrence ID to check for media.
+   * @param int $sampleId
+   *   Sample ID to check for media.
    *
    * @return string
-   *   Form HTML.
+   *   HTML.
    */
-  private static function getCommentsForm() {
-    $allowConfidential = isset($_GET['allowconfidential']) && $_GET['allowconfidential'] === 'true';
-    $r = '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
-    if ($allowConfidential) {
-      $r .= '<label><input type="checkbox" id="comment-confidential" /> ' . lang::get('Confidential?') . '</label><br>';
-    }
-    else {
-      $r .= '<input type="hidden" id="comment-confidential" value="f" />';
-    }
-    $r .= data_entry_helper::textarea([
-      'fieldname' => 'comment-text'
-    ]);
-    $r .= data_entry_helper::text_input([
-      'label' => lang::get('External reference or other source'),
-      'fieldname' => 'comment-reference'
-    ]);
-    $r .= '<button type="button" class="default-button" ' .
-      'onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-reference\').val(), jQuery(\'#comment-confidential\:checked\').length, false);">' . lang::get('Save') . '</button>';
-    $r .= '</fieldset></form>';
-    return $r;
-  }
-
-  public static function getMedia($readAuth, $params) {
+  public static function getMedia(array $readAuth, array $params, $occurrenceId, $sampleId) {
     iform_load_helpers(['data_entry_helper']);
     // Retrieve occurrence media for record.
     $occ_media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_medium',
-      'extraParams' => $readAuth + array('occurrence_id' => $_GET['occurrence_id']),
+      'extraParams' => $readAuth + array('occurrence_id' => $occurrenceId),
       'nocache' => TRUE,
       'sharing' => $params['sharing'],
     ));
     // Retrieve related sample media.
     $smp_media = data_entry_helper::get_population_data(array(
       'table' => 'sample_medium',
-      'extraParams' => $readAuth + array('sample_id' => $_GET['sample_id']),
+      'extraParams' => $readAuth + array('sample_id' => $sampleId),
       'nocache' => TRUE,
       'sharing' => $params['sharing'],
     ));
@@ -223,9 +261,17 @@ class VerificationHelper {
     return $r;
   }
 
+  /**
+   * Build a list of media thumbnails as HTML.
+   *
+   * @param array $media
+   *   Media data loaded from the database.
+   *
+   * @return string
+   *   HTML.
+   */
   private static function getMediaHtml($media) {
     require_once 'prebuilt_forms/includes/report.php';
-    $path = helper_base::get_uploaded_image_folder();
     $r = '<div class="media-gallery"><ul >';
     foreach ($media as $file) {
       $r .= iform_report_get_gallery_item($file);
@@ -241,7 +287,7 @@ class VerificationHelper {
    *
    * @param string $status
    *   Status code from database (e.g. 'C').
-   * @param integer $substatus
+   * @param int $substatus
    *   Substatus value from database.
    * @param string $query
    *   Query valid for the record (null, Q or A).
@@ -257,8 +303,9 @@ class VerificationHelper {
     if (!empty(self::$statusTerms[$status]) && ($status !== 'C' || (int) $substatus !== 3)) {
       $labels[] = lang::get(self::$statusTerms[$status]);
     }
-    elseif ((int) $substatus !== 3)
+    elseif ((int) $substatus !== 3) {
       $labels[] = lang::get('Unknown');
+    }
     if ($substatus && !empty(self::$substatusTerms[$substatus])) {
       $labels[] = lang::get(self::$substatusTerms[$substatus]);
     }
@@ -274,6 +321,11 @@ class VerificationHelper {
     return implode('::', $labels);
   }
 
+  /**
+   * Returns an array of all translated status terms, keyed by code.
+   *
+   * @return array
+   */
   public static function getTranslatedStatusTerms() {
     self::translateStatusTerms();
     return array_merge(
@@ -288,6 +340,17 @@ class VerificationHelper {
     );
   }
 
+  /**
+   * Returns the icon HTML for a given status/substatus.
+   *
+   * @param string $status
+   *   Record status code.
+   * @param string $substatus
+   *   Record substatus number.
+   * @param string $imgPath
+   *   Path to the media/images folder.
+   * @return void
+   */
   private static function getStatusIcons($status, $substatus, $imgPath) {
     $r = '';
     if (!empty($status)) {

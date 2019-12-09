@@ -900,9 +900,13 @@ HTML;
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
+    $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
+    $siteEmail = hostsite_get_config_value('site', 'mail', '');
     helper_base::$javascript .= <<<JS
 indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
 indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
+indiciaData.ajaxFormPostQuickReplyPageAuth = '$quickReplyPageAuthUrl';
+indiciaData.siteEmail = '$siteEmail';
 $('#$options[id]').idcVerificationButtons({});
 
 JS;
@@ -915,6 +919,28 @@ JS;
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
+    helper_base::addLanguageStringsToJs('verificationButtons', [
+      'commentAvoidAsUserNotNotified' => 'Although you can add your query as a comment, there is no guarantee that the recorder will check their notifications. ',
+      'commentOkAsUserNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
+      'commentTabTitle' => 'Comment on the record',
+      'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
+      'emailAvoidAsUserNotified' => 'Although you can send your query as an email, this recorded does check notifications so you might prefer to add the query to the comments tab.',
+      'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
+      'emailOkAsUserNotNotified' => 'Sending the query as an email is preferred as the recorder does not check their notifications.',
+      'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
+        'stating how confident you are that the record is correct and any other information you have which may help ' .
+        'to confirm this. You can reply to this message and it will be forwarded direct to the verifier.',
+      'emailQuerySubject' => 'Record of {{ taxon.taxon_name }} requires confirmation (ID:{{ id }})',
+      'emailSent' => 'The email was sent successfully.',
+      'emailTabTitle' => 'Email record details',
+      'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
+      'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
+      'queryUnavailableEmail' => 'As this record does not have an email address for the recorder, the query must be added as a comment to the record. There is no guarantee that the recorder will check their notifications.',
+      'replyToThisQuery' => 'Reply to this query',
+      'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
+      'saveQueryToComments' => 'Save query to comments log',
+      'sendQueryAsEmail' => 'Send query as email',
+    ]);
     return <<<HTML
 <div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
   <div class="selection-buttons-placeholder">
