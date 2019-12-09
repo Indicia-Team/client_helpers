@@ -1715,54 +1715,14 @@ HTML;
 
   /**
    * Ajax handler to determine if a user is likely to see a notification added to their comments.
-   * @param $website_id
-   * @param $password
-   * @return string Either yes, no, maybe or unknown.
-   * @throws \Exception
+   *
+   * @return string
+   *   yes, no or maybe.
    */
   public static function ajax_do_they_see_notifications($website_id, $password) {
-    iform_load_helpers(array('report_helper'));
-    $readAuth = report_helper::get_read_auth($website_id, $password);
-    $data = report_helper::get_report_data(array(
-      'dataSource' => 'library/users/user_notification_response_likely',
-      'readAuth' => $readAuth,
-      'extraParams' => array('user_id' => $_GET['user_id'])
-    ));
-    $acknowledged = 0;
-    $unacknowledged = 0;
-    $emailFrequency = FALSE;
-    foreach ($data as $row) {
-      if ($row['key'] === 'acknowledged') {
-        $acknowledged = (int) $row['value'];
-      }
-      elseif ($row['key'] === 'unacknowledged') {
-        $unacknowledged = (int) $row['value'];
-      }
-      elseif ($row['key'] === 'email_frequency') {
-        $emailFrequency = $row['value'];
-      }
-    }
-    if ($emailFrequency) {
-      // If they receive emails for comment notifications, we can assume they will see a comment.
-      echo 'yes';
-    }
-    elseif ($acknowledged + $unacknowledged > 0) {
-      // otherwise, we need some info on the ratio of acknowledged to unacknowledged notifications over the last year
-      $ratio = $acknowledged / ($acknowledged + $unacknowledged);
-      if ($ratio > 0.3) {
-        echo 'yes';
-      }
-      elseif ($ratio === 0) {
-        echo 'no';
-      }
-      else {
-        echo 'maybe';
-      }
-    }
-    else {
-      // They don't have notifications in database, so we can't say.
-      echo 'unknown';
-    }
+    iform_load_helpers(array('VerificationHelper'));
+    $readAuth = helper_base::get_read_auth($website_id, $password);
+    echo VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']);
   }
 
   /**
