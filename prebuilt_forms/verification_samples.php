@@ -785,8 +785,9 @@ idlist=';
       $r .= '<strong>'.(empty($comment['person_name']) ? $comment['username'] : $comment['person_name']).'</strong> ';
       $commentTime = strtotime($comment['updated_on']);
       // Output the comment time. Skip if in future (i.e. server/client date settings don't match)
-      if ($commentTime < time())
-        $r .= self::ago($commentTime);
+      if ($commentTime < time()) {
+        $r .= helper_base::ago($commentTime);
+      }
       $r .= '</div>';
       $c = str_replace("\n", '<br/>', $comment['comment']);
       $r .= "<div>$c</div>";
@@ -896,44 +897,6 @@ idlist=';
     $params = array_merge($_POST, $auth['write_tokens']);
     $response = data_entry_helper::http_post($url, $params);
     echo $response['output'];
-  }
-
-  /**
-   * Convert a timestamp into readable format (... ago) for use on a comment list.
-   * @param timestamp $timestamp The date time to convert.
-   * @return string The output string.
-   */
-  private static function ago($timestamp) {
-    $difference = time() - $timestamp;
-    // Having the full phrase means that it is fully localisable if the phrasing is different.
-    $periods = array(
-      lang::get("{1} second ago"),
-      lang::get("{1} minute ago"),
-      lang::get("{1} hour ago"),
-      lang::get("Yesterday"),
-      lang::get("{1} week ago"),
-      lang::get("{1} month ago"),
-      lang::get("{1} year ago"),
-      lang::get("{1} decade ago"));
-    $periodsPlural = array(
-      lang::get("{1} seconds ago"),
-      lang::get("{1} minutes ago"),
-      lang::get("{1} hours ago"),
-      lang::get("{1} days ago"),
-      lang::get("{1} weeks ago"),
-      lang::get("{1} months ago"),
-      lang::get("{1} years ago"),
-      lang::get("{1} decades ago"));
-    $lengths = array("60","60","24","7","4.35","12","10");
-    for($j = 0; (($difference >= $lengths[$j]) && ($j < 7)) ; $j++) {
-      $difference /= $lengths[$j];
-    }
-    $difference = round($difference);
-    if($difference == 1)
-      $text = str_replace('{1}', $difference, $periods[$j]);
-    else
-      $text = str_replace('{1}', $difference, $periodsPlural[$j]);
-    return $text;
   }
 
   private static function report_filter_panel($args, $readAuth) {
