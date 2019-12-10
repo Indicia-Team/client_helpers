@@ -1121,18 +1121,18 @@ HTML
     );
     $reportData = report_helper::get_report_data($options);
     // Set some values which must exist in the record.
-    $record = array_merge(array(
-        'wkt' => '',
-        'taxon' => '',
-        'sample_id' => '',
-        'date' => '',
-        'entered_sref' => '',
-        'taxon_external_key' => '',
-        'taxon_meaning_id' => '',
-        'record_status' => '',
-        'zero_abundance' => '',
-        'sref_precision' => '0',
-    ), $reportData['records'][0]);
+    $record = array_merge([
+      'wkt' => '',
+      'taxon' => '',
+      'sample_id' => '',
+      'date' => '',
+      'entered_sref' => '',
+      'taxon_external_key' => '',
+      'taxon_meaning_id' => '',
+      'record_status' => '',
+      'zero_abundance' => '',
+      'sref_precision' => '0',
+    ], $reportData['records'][0]);
     // Build an array of all the data. This allows the JS to insert the data into emails etc. Note we
     // use an array rather than an assoc array to build the JSON, so that order is guaranteed.
     $data = array();
@@ -1141,8 +1141,9 @@ HTML
       if (!empty($def['display']) && $def['visible'] !== 'false' && !empty($record[$col])) {
         $caption = explode(':', $def['display']);
         // Is this a new heading?
-        if (!isset($data[$caption[0]]))
+        if (!isset($data[$caption[0]])) {
           $data[$caption[0]] = array();
+        }
         $val = ($col === 'record_status') ?
           VerificationHelper::getStatusLabel($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
         $data[$caption[0]][] = array('caption' => $caption[1], 'value' => $val);
@@ -1302,7 +1303,7 @@ HTML
   }
 
   private static function getMedia($readAuth, $params) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(array('data_entry_helper', 'VerificationHelper'));
     // Retrieve occurrence media for record.
     $occ_media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_medium',
@@ -1325,43 +1326,41 @@ HTML
       $r .= '<p>' . lang::get('Click on thumbnails to view full size') . '</p>';
       if (count($occ_media) > 0) {
         $r .= '<p class="header">' . lang::get('Record media') . '</p>';
-        $r .= self::getMediaHtml($occ_media);
+        $r .= VerificationHelper::getMediaHtml($occ_media);
       }
       if (count($smp_media) > 0) {
         $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
-        $r .= self::getMediaHtml($smp_media);
+        $r .= VerificationHelper::getMediaHtml($smp_media);
       }
     }
     return $r;
   }
 
-  private static function getMediaHtml($media) {
-    require_once 'includes/report.php';
-    $path = data_entry_helper::get_uploaded_image_folder();
-    $r = '<div class="media-gallery"><ul >';
-    foreach ($media as $file) {
-      $r .= iform_report_get_gallery_item($file);
-    }
-    $r .= '</ul></div>';
-    return $r;
-  }
-
+  /**
+   * Ajax handler to get comments for the details pane tab.
+   */
   public static function ajax_comments($website_id, $password, $nid) {
     iform_load_helpers(array('VerificationHelper'));
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $readAuth = helper_base::get_read_auth($website_id, $password);
-    echo VerificationHelper::getComments($readAuth, $params);
+    echo VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id']);
     echo self::getCommentsForm();
   }
 
+  /**
+   * Ajax handler to get media and comments for a record.
+   *
+   * E.g. when creating a query email, the comments and photos are injected
+   * into the email body.
+   */
   public static function ajax_mediaAndComments($website_id, $password, $nid) {
     iform_load_helpers(array('VerificationHelper'));
     $readAuth = helper_base::get_read_auth($website_id, $password);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     header('Content-type: application/json');
     echo json_encode(array(
-      'media' => VerificationHelper::getMedia($readAuth, $params),
-      'comments' => VerificationHelper::getComments($readAuth, $params, TRUE),
+      'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
+      'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
     ));
   }
 
@@ -1383,7 +1382,6 @@ HTML
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
     $headers[] = 'From: ' . $fromEmail;
     $headers[] = 'Reply-To: ' . hostsite_get_user_field('mail');
-    $headers[] = 'Return-Path: ' . $site_email;
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = $_POST['body'];
     $emailBody = str_replace("\n", "<br/>", $emailBody);
