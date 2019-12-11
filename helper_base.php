@@ -1121,53 +1121,39 @@ JS;
    * Parameters forms are a quick way of specifying a simple form used to specify the input
    * parameters for a process. Returns the HTML required for a parameters form, e.g. the form
    * defined for input of report parameters or the default values for a csv import.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>form</b><br/>
-   * Associative array defining the form structure. The structure is the same as described for <em>fixed_values_form</em> in a Warehouse model.
-   * @link http://code.google.com/p/indicia/wiki/SampleModelPage.
-   * </li>
-   * <li><b>id</b><br/>
-   * When used for report output, id of the report instance on the page if relevant, so that controls can be given unique ids.
-   * </li>
-   * <li><b>form</b><br/>
-   * Associative array defining the form content.
-   * </li>
-   * <li><b>readAuth</b><br/>
-   * Read authorisation array.
-   * </li>
-   * <li><b>fieldNamePrefix</b><br/>
-   * Optional prefix for form field names.
-   * </li>
-   * <li><b>defaults</b><br/>
-   * Associative array of default values for each form element.
-   * </li>
-   * <li><b>paramsToHide</b><br/>
-   * An optional array of parameter names for parameters that should be added to the form output as hidden inputs rather than visible controls.
-   * <li><b>paramsToExclude</b><br/>
-   * An optional array of parameter names for parameters that should be skipped in the form output despite being in the form definition.
-   * <li><b>forceLookupParamAutocomplete</b><br/>
-   * If true, forces lookup parameters to be an autocomplete instead of drop-down.
-   * <li><b>forceLookupParamAutocompleteSelectMode</b><br/>
-   * Used in conjunction with forceLookupParamAutocomplete, if true then autocomplete parameter control is put into selectMode.
-   * </li>
-   * <li><b>extraParams</b><br/>
-   * Optional array of param names and values that have a fixed value and are therefore output only as a hidden control.
-   * </li>
-   * <li><b>inlineMapTools</b><br/>
-   * Defaults to false. If true, then map drawing parameter tools are embedded into the report parameters form. If false, then the map
-   * drawing tools are added to a toolbar at the top of the map.
-   * </li>
-   * <li><b>helpText</b><br/>
-   * Defaults to true. Set to false to disable helpText being displayed alongside controls, useful for building compact versions of
-   * simple parameter forms.
-   * </li>
-   * <li><b>nocache</b><br/>
-   * Set to true to disable caching of lookups.
-   * </li>
-   * </ul>
-   * @param boolean $hasVisibleContent On completion, this is set to true if there are visible
-   * controls in the params form. If not, then it may be appropriate to skip the displaying of this
-   * params form since it is not necessary.
+   * @param array $options Options array with the following possibilities:
+   * * form - Associative array defining the form structure. The structure is
+   *   the same as described for <em>fixedValuesForm</em> in a Warehouse model.
+   * * id - When used for report output, id of the report instance on the page
+   *   if relevant, so that controls can be given unique ids.
+   * * form - Associative array defining the form content.
+   * * readAuth- Read authorisation array.
+   * * fieldNamePrefix - Optional prefix for form field names.
+   * * defaults - Associative array of default values for each form element.
+   * * paramsToHide - An optional array of parameter names for parameters that
+   *   should be added to the form output as hidden inputs rather than visible
+   *   controls.
+   * * paramsToExclude - An optional array of parameter names for parameters
+   *   that should be skipped in the form output despite being in the form
+   *   definition.
+   * * forceLookupParamAutocomplete - If true, forces lookup parameters to be
+   *   an autocomplete instead of drop-down.
+   * * forceLookupParamAutocompleteSelectMode - Used in conjunction with f
+   *   orceLookupParamAutocomplete, if true then autocomplete parameter control
+   *   is put into selectMode.
+   * * extraParams - Optional array of param names and values that have a fixed
+   *   value and are therefore output only as a hidden control.
+   * * inlineMapTools - Defaults to false. If true, then map drawing parameter
+   *   tools are embedded into the report parameters form. If false, then the
+   *   map drawing tools are added to a toolbar at the top of the map.
+   * * helpText - Defaults to true. Set to false to disable helpText being
+   *   displayed alongside controls, useful for building compact versions of
+   *   simple parameter forms.
+   * * nocache - Set to true to disable caching of lookups.
+   * @param bool $hasVisibleContent
+   *   On completion, this is set to true if there are visible controls in the
+   *   params form. If not, then it may be appropriate to skip the displaying of
+   *   this params form since it is not necessary.
    */
   public static function build_params_form($options, &$hasVisibleContent) {
     require_once('data_entry_helper.php');
