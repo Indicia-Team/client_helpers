@@ -450,6 +450,10 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   /**
    * A control for adding a simple download link to a page.
    *
+   * Options available are:
+   *   * dataSource - the path to the report file to download from.
+   *   * limit - maximum number of records, defaults to 20,000.
+   *
    * @return string
    *   Link HTML.
    */
