@@ -218,7 +218,7 @@ class form_helper extends helper_base {
       }
     }
     $r .= "<div id=\"form-def\">$details</div>\n";
-    $r .= '<input type="button" value="' . lang::get('Load Settings Form') . '" id="load-params" disabled="disabled" />';
+    $r .= '<input type="button" value="' . lang::get('Load settings form') . '" id="load-params" disabled="disabled" />';
     if (isset($options['includeOutputDivs']) && $options['includeOutputDivs']) {
       $r .= '<div id="form-params"></div>';
     }

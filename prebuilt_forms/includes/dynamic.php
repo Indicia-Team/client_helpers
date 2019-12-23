@@ -156,8 +156,8 @@ class iform_dynamic {
         ),
         array(
           'name'=>'survey_id',
-          'caption'=>'Survey',
-          'description'=>'The survey that data will be posted into and that defines custom attributes.',
+          'caption'=>'Survey dataset',
+          'description'=>'The survey dataset that data will be posted into and that defines custom attributes.',
           'type'=>'select',
           'table'=>'survey',
           'captionField'=>'title',
