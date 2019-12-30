@@ -153,7 +153,7 @@ class import_helper extends helper_base {
       return self::run_upload($options);
     }
     elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
-      return self::upload_result($options);
+      return self::uploadResult($options);
     }
     else {
       throw new exception('Invalid importer state');
@@ -913,13 +913,14 @@ JS;
 
   /*
    * Jump to the results screen if errors have been detected during the error checking stage.
-   * This only applies if we are preventing all commits if any errors are detected (otherwise upload_result function is called instead)
+   * This only applies if we are preventing all commits if any errors are detected (otherwise uploadResult function is called instead)
    */
   private static function display_result_as_error_check_stage_failed($options,$output) {
     // get the path back to the same page
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
+    hostsite_show_message(lang::get('Errors were encountered.'), 'error');
     $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
         $downloadInstructions .
         " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
@@ -931,22 +932,28 @@ JS;
    * Displays the upload result page.
    * @param array $options Array of options passed to the import control.
    */
-  private static function upload_result($options) {
+  private static function uploadResult($options) {
     $request = parent::$base_url . "index.php/services/import/get_upload_result?uploaded_csv=" . $_GET['uploaded_csv'];
     $request .= '&' . self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
+    $r = '';
     if (isset($response['output'])) {
       $output = json_decode($response['output'], TRUE);
       if (!is_array($output) || !isset($output['problems']))
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, TRUE);
-      if ($output['problems']>0) {
-          $downloadInstructions=lang::get('partial_commits_download_error_file_instructions');
+      if ($output['problems'] > 0) {
+        hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+        $downloadInstructions = lang::get('partial_commits_download_error_file_instructions');
         $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
           $downloadInstructions .
           " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
       }
       else {
-        $r = 'The upload was successful.';
+        if (function_exists('hostsite_show_message')) {
+          hostsite_show_message(lang::get('The upload was successful.'));
+        } else {
+          $r = lang::get('The upload was successful.');
+        }
       }
     }
     else {
