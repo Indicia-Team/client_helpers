@@ -1008,6 +1008,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         }
         $attr['default'] = $default;
       }
+      $ctrlOptions['class'] = 'dynamic-attr';
       $r .= data_entry_helper::outputAttribute($attr, $ctrlOptions);
     }
     foreach ($fieldsetTracking as $fieldsetName) {
