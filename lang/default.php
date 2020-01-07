@@ -72,6 +72,8 @@ $default_terms = array(
   'sref:utm30ed50' => 'Channel Islands Grid (UTM ED50)',
   'sref:4326' => 'WGS84 (decimal lat,long)',
   'sref:2169' => 'LUREF (x,y)',
+  'sref:3006' => 'SWEREF99 TM',
+  'sref:3021' => 'Swedish Grid (RT90 2.5 gon v)',
 
   // Define the captions for fields in the data dictionary.
   'dd:occurrence:fk_taxa_taxon_list' => 'Species or taxon name',
