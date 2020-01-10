@@ -482,6 +482,9 @@ class iform_species_details extends iform_dynamic {
     global $indicia_templates;
     $r = '';
     if (!$hidePreferred) {
+      // Place the species name into a hidden field which can then be copied to the Drupal page title using jQuery
+      // Need to chop up the string so we only have the latin name (excluding the Authority)
+      $r .= '<div id="species-name-hidden" style="display:none">'.explode('</em>',ltrim(self::$preferred,'<em>'))[0].'</div>';
       $r .= str_replace(array('{caption}', '{value}'), array(lang::get('Species name'), self::$preferred), $indicia_templates['dataValue']);
 	
     }
