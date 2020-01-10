@@ -495,6 +495,27 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Converts input string to simple search format.
+   *
+   * Basically tokenises the words and adds * wildcard.
+   *
+   * @param string $value
+   *   Search string.
+   *
+   * @return string
+   *   Converted search string.
+   */
+  private static function convertSearchToSimpleQueryString($value) {
+    $words = preg_split('/[,. ]/', $value);
+    $fn = function ($word) {
+      $word = rtrim($word, '*');
+      return "$word*";
+    };
+    $tokens = array_map($fn, $words);
+    return implode(' ', $tokens);
+  }
+
   private static function buildEsQueryFromRequest($post) {
     $query = array_merge([
       'bool_queries' => [],
@@ -515,7 +536,13 @@ class ElasticsearchProxyHelper {
         // Exclamation mark reverses logic.
         $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'must';
         $value = preg_replace('/^!/', '', $value);
-        $bool[$logic][] = ['match_phrase_prefix' => [$field => $value]];
+        $bool[$logic][] = [
+          'simple_query_string' => [
+            'query' => self::convertSearchToSimpleQueryString($value),
+            'fields' => [$field],
+            'default_operator' => 'AND',
+          ],
+        ];
       }
       unset($query['textFilters']);
     }
