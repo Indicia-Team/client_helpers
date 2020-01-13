@@ -287,7 +287,7 @@ JS;
     if (empty($options['columns'])) {
       throw new Exception('Control [dataGrid] requires a parameter called @columns.');
     }
-    if (!empty($options['scrollY']) && !preg_match('/^\d+px$/', $options['scrollY'])) {
+    if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
     $options = array_merge([
