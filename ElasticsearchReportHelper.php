@@ -70,21 +70,25 @@ class ElasticsearchReportHelper {
       'caption' => 'Automated checks',
       'description' => "Icons showing the results of automated checks on the record.",
     ],
+    'metadata.created_on' => [
+      'caption' => 'Submitted on',
+      'description' => 'Date the record was submitted.',
+    ],
     '#event_date#' => [
       'caption' => 'Date',
-      'description' => 'Date of the record',
+      'description' => 'Date of the record.',
     ],
     'event.day_of_year' => [
       'caption' => 'Day of year',
-      'description' => 'Numeric day within the year of the record (1-366)',
+      'description' => 'Numeric day within the year of the record (1-366).',
     ],
     'event.month' => [
       'caption' => 'Month',
-      'description' => 'Numeric month of the record',
+      'description' => 'Numeric month of the record.',
     ],
     'event.year' => [
       'caption' => 'Year',
-      'description' => 'Year of the record',
+      'description' => 'Year of the record.',
     ],
     'event.event_remarks' => [
       'caption' => 'Sample comment',
@@ -222,6 +226,10 @@ class ElasticsearchReportHelper {
     'occurrence.organism_quantity' => [
       'caption' => 'Quantity',
       'description' => 'Abundance of the recorded organism (numeric or text).',
+    ],
+    'occurrence.occurrence_remarks' => [
+      'caption' => 'Occurrence comment',
+      'description' => 'Comment given for the occurrence by the recorder.',
     ],
   ];
 
