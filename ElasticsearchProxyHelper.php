@@ -1039,12 +1039,24 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersOccId(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['idlist', 'oc_id']);
-    $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+    $filter = self::getDefinitionFilter($definition, ['idlist', 'occ_id']);
     if (!empty($filter)) {
-      $bool[$boolClause][] = [
-        'terms' => ['id' => explode(',', $filter['value'])],
-      ];
+      $op = empty($filter['op']) ? '=' : $filter['op'];
+      if ($op === '=') {
+        $bool['must'][] = [
+          'terms' => ['id' => explode(',', $filter['value'])],
+        ];
+      }
+      else {
+        $translate = ['>=' => 'gte', '<=' => 'lte'];
+        $bool['must'][] = [
+          'range' => [
+            'id' => [
+              $translate[$op] => $filter['value'],
+            ],
+          ],
+        ];
+      }
     }
   }
 
