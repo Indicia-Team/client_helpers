@@ -1,9 +1,10 @@
-#filter-bar label, #filter-bar select, #filter-bar input {
+#filter-bar label, #filter-bar select, #filter-bar input, #filter-bar .ctrl-wrap {
   display: inline-block;
-  vertical-align: middle; }
+  vertical-align: middle;
+  margin: 4px; }
 #filter-bar label {
   width: auto;
-  margin: 0 4px 0 15px; }
+  margin-left: 15px; }
 #filter-bar .form-group {
   margin-bottom: 0; }
 #filter-bar .form-control {

@@ -1,11 +1,12 @@
 #filter-bar {
-  label, select, input {
+  label, select, input, .ctrl-wrap {
     display: inline-block;
     vertical-align: middle;
+    margin: 4px;
   }
   label {
     width: auto;
-    margin: 0 4px 0 15px;
+    margin-left: 15px;
   }
   .form-group {
     margin-bottom: 0;
