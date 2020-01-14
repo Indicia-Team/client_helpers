@@ -626,42 +626,6 @@ JS;
 </div>
 
 HTML;
-    if ($options['allowRedetermination']) {
-      $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
-      if (!$redetTaxonListId) {
-        throw new Exception('[recordDetails] control has @allowRedetermination option but the Indicia setting ' .
-          'Master Checklist ID is not set. This is required to provide a list to select the redetermination from.');
-      }
-      helper_base::add_resource('validation');
-      $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
-      $userId = hostsite_get_user_field('indicia_user_id');
-      helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
-      $speciesInput = data_entry_helper::species_autocomplete([
-        'label' => lang::get('Redetermine to'),
-        'helpText' => lang::get('Select the new taxon name.'),
-        'fieldname' => 'redet-species',
-        'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
-        'speciesIncludeAuthorities' => TRUE,
-        'speciesIncludeBothNames' => TRUE,
-        'speciesNameFilterMode' => 'all',
-        'validation' => ['required'],
-      ]);
-      $commentInput = data_entry_helper::textarea([
-        'label' => lang::get('Explanation comment'),
-        'helpText' => lang::get('Please give reasons why you are changing this record.'),
-        'fieldname' => 'redet-comment',
-      ]);
-      $r .= <<<HTML
-<div id="redet-panel-wrap" style="display: none">
-  <form id="redet-form">
-    $speciesInput
-    $commentInput
-    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
-    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
-  </form>
-</div>
-HTML;
-    }
     return $r;
   }
 
@@ -922,11 +886,13 @@ JS;
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';
     }
+    $optionalLinkArray[] = '<button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>';
     if (!empty($options['viewPath'])) {
       $optionalLinkArray[] = '<a class="view" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
+    helper_base::add_resource('validation');
     helper_base::addLanguageStringsToJs('verificationButtons', [
       'commentAvoidAsUserNotNotified' => 'Although you can add your query as a comment, there is no guarantee that the recorder will check their notifications. ',
       'commentOkAsUserNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
@@ -948,6 +914,30 @@ JS;
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
+    ]);
+    $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
+    if (!$redetTaxonListId) {
+      throw new Exception('[verificationButtons] requires the Indicia setting Master Checklist ID to be set. This ' .
+        'is required to provide a list to select the redetermination from.');
+    }
+    $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
+    $userId = hostsite_get_user_field('indicia_user_id');
+    helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
+    $speciesInput = data_entry_helper::species_autocomplete([
+      'label' => lang::get('Redetermine to'),
+      'helpText' => lang::get('Select the new taxon name.'),
+      'fieldname' => 'redet-species',
+      'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
+      'speciesIncludeAuthorities' => TRUE,
+      'speciesIncludeBothNames' => TRUE,
+      'speciesNameFilterMode' => 'all',
+      'validation' => ['required'],
+      'class' => 'control-width-5',
+    ]);
+    $commentInput = data_entry_helper::textarea([
+      'label' => lang::get('Explanation comment'),
+      'helpText' => lang::get('Please give reasons why you are changing this record.'),
+      'fieldname' => 'redet-comment',
     ]);
     return <<<HTML
 <div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
@@ -976,7 +966,16 @@ JS;
     $optionalLinks
   </div>
 </div>
+<div id="redet-panel-wrap" style="display: none">
+  <form id="redet-form" class="verification-popup">
+    $speciesInput
+    $commentInput
+    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
+    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
+  </form>
+</div>
 HTML;
+
   }
 
   /**
