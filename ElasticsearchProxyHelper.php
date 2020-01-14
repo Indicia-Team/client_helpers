@@ -111,12 +111,46 @@ class ElasticsearchProxyHelper {
     $reportData = report_helper::get_report_data($options);
     // Convert the output to a structured JSON object.
     $data = [];
+    // Organise some attributes by system function, so we can make output consistent.
+    $sysFuncAttrs = [];
+    $sysFuncList = [
+      'Additional occurrence' => ['certainty', 'sex_stage_count', 'sex', 'stage', 'sex_stage'],
+      'Additional sample' => ['biotope'],
+    ];
+    foreach ($reportData as $key => $attribute) {
+      if (isset($sysFuncList[$attribute['attribute_type']])
+          && in_array($attribute['system_function'], $sysFuncList[$attribute['attribute_type']])) {
+        $sysFuncAttrs[$attribute['system_function']] = $attribute;
+        unset($reportData[$key]);
+      }
+    }
+    // Now build the special system function output first.
+    foreach ($sysFuncList as $heading => $sysFuncs) {
+      $headingData = [];
+      foreach ($sysFuncs as $sysFunc) {
+        if (isset($sysFuncAttrs[$sysFunc])) {
+          $headingData[] = [
+            'caption' => $sysFuncAttrs[$sysFunc]['caption'],
+            'value' => $sysFuncAttrs[$sysFunc]['value'],
+            'system_function' => $sysFuncAttrs[$sysFunc]['system_function'],
+          ];
+        }
+      }
+      if (!empty($headingData)) {
+        $data["$heading attributes"] = $headingData;
+      }
+    }
+    // Now the rest.
     foreach ($reportData as $attribute) {
       if (!empty($attribute['value'])) {
         if (!isset($data[$attribute['attribute_type'] . ' attributes'])) {
-          $data[$attribute['attribute_type'] . ' attributes'] = array();
+          $data[$attribute['attribute_type'] . ' attributes'] = [];
         }
-        $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
+        $data[$attribute['attribute_type'] . ' attributes'][] = [
+          'caption' => $attribute['caption'],
+          'value' => $attribute['value'],
+          'system_function' => $attribute['system_function'],
+        ];
       }
     }
     header('Content-type: application/json');

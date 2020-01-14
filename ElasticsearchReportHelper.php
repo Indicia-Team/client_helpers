@@ -594,6 +594,7 @@ HTML;
       'showSelectedRow',
       'exploreUrl',
       'locationTypes',
+      'extraLocationTypes',
       'allowRedetermination',
     ], TRUE);
     helper_base::add_resource('tabs');
