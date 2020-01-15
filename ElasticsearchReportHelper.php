@@ -70,21 +70,25 @@ class ElasticsearchReportHelper {
       'caption' => 'Automated checks',
       'description' => "Icons showing the results of automated checks on the record.",
     ],
+    'metadata.created_on' => [
+      'caption' => 'Submitted on',
+      'description' => 'Date the record was submitted.',
+    ],
     '#event_date#' => [
       'caption' => 'Date',
-      'description' => 'Date of the record',
+      'description' => 'Date of the record.',
     ],
     'event.day_of_year' => [
       'caption' => 'Day of year',
-      'description' => 'Numeric day within the year of the record (1-366)',
+      'description' => 'Numeric day within the year of the record (1-366).',
     ],
     'event.month' => [
       'caption' => 'Month',
-      'description' => 'Numeric month of the record',
+      'description' => 'Numeric month of the record.',
     ],
     'event.year' => [
       'caption' => 'Year',
-      'description' => 'Year of the record',
+      'description' => 'Year of the record.',
     ],
     'event.event_remarks' => [
       'caption' => 'Sample comment',
@@ -223,6 +227,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Quantity',
       'description' => 'Abundance of the recorded organism (numeric or text).',
     ],
+    'occurrence.occurrence_remarks' => [
+      'caption' => 'Occurrence comment',
+      'description' => 'Comment given for the occurrence by the recorder.',
+    ],
   ];
 
   /**
@@ -287,7 +295,7 @@ JS;
     if (empty($options['columns'])) {
       throw new Exception('Control [dataGrid] requires a parameter called @columns.');
     }
-    if (!empty($options['scrollY']) && !preg_match('/^\d+px$/', $options['scrollY'])) {
+    if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
     $options = array_merge([
@@ -586,6 +594,7 @@ HTML;
       'showSelectedRow',
       'exploreUrl',
       'locationTypes',
+      'extraLocationTypes',
       'allowRedetermination',
     ], TRUE);
     helper_base::add_resource('tabs');
@@ -618,42 +627,6 @@ JS;
 </div>
 
 HTML;
-    if ($options['allowRedetermination']) {
-      $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
-      if (!$redetTaxonListId) {
-        throw new Exception('[recordDetails] control has @allowRedetermination option but the Indicia setting ' .
-          'Master Checklist ID is not set. This is required to provide a list to select the redetermination from.');
-      }
-      helper_base::add_resource('validation');
-      $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
-      $userId = hostsite_get_user_field('indicia_user_id');
-      helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
-      $speciesInput = data_entry_helper::species_autocomplete([
-        'label' => lang::get('Redetermine to'),
-        'helpText' => lang::get('Select the new taxon name.'),
-        'fieldname' => 'redet-species',
-        'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
-        'speciesIncludeAuthorities' => TRUE,
-        'speciesIncludeBothNames' => TRUE,
-        'speciesNameFilterMode' => 'all',
-        'validation' => ['required'],
-      ]);
-      $commentInput = data_entry_helper::textarea([
-        'label' => lang::get('Explanation comment'),
-        'helpText' => lang::get('Please give reasons why you are changing this record.'),
-        'fieldname' => 'redet-comment',
-      ]);
-      $r .= <<<HTML
-<div id="redet-panel-wrap" style="display: none">
-  <form id="redet-form">
-    $speciesInput
-    $commentInput
-    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
-    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
-  </form>
-</div>
-HTML;
-    }
     return $r;
   }
 
@@ -900,9 +873,13 @@ HTML;
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
+    $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
+    $siteEmail = hostsite_get_config_value('site', 'mail', '');
     helper_base::$javascript .= <<<JS
 indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
 indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
+indiciaData.ajaxFormPostQuickReplyPageAuth = '$quickReplyPageAuthUrl';
+indiciaData.siteEmail = '$siteEmail';
 $('#$options[id]').idcVerificationButtons({});
 
 JS;
@@ -910,11 +887,59 @@ JS;
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';
     }
+    $optionalLinkArray[] = '<button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>';
     if (!empty($options['viewPath'])) {
       $optionalLinkArray[] = '<a class="view" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
+    helper_base::add_resource('validation');
+    helper_base::addLanguageStringsToJs('verificationButtons', [
+      'commentAvoidAsUserNotNotified' => 'Although you can add your query as a comment, there is no guarantee that the recorder will check their notifications. ',
+      'commentOkAsUserNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
+      'commentTabTitle' => 'Comment on the record',
+      'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
+      'emailAvoidAsUserNotified' => 'Although you can send your query as an email, this recorded does check notifications so you might prefer to add the query to the comments tab.',
+      'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
+      'emailOkAsUserNotNotified' => 'Sending the query as an email is preferred as the recorder does not check their notifications.',
+      'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
+        'stating how confident you are that the record is correct and any other information you have which may help ' .
+        'to confirm this. You can reply to this message and it will be forwarded direct to the verifier.',
+      'emailQuerySubject' => 'Record of {{ taxon.taxon_name }} requires confirmation (ID:{{ id }})',
+      'emailSent' => 'The email was sent successfully.',
+      'emailTabTitle' => 'Email record details',
+      'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
+      'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
+      'queryUnavailableEmail' => 'As this record does not have an email address for the recorder, the query must be added as a comment to the record. There is no guarantee that the recorder will check their notifications.',
+      'replyToThisQuery' => 'Reply to this query',
+      'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
+      'saveQueryToComments' => 'Save query to comments log',
+      'sendQueryAsEmail' => 'Send query as email',
+    ]);
+    $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
+    if (!$redetTaxonListId) {
+      throw new Exception('[verificationButtons] requires the Indicia setting Master Checklist ID to be set. This ' .
+        'is required to provide a list to select the redetermination from.');
+    }
+    $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
+    $userId = hostsite_get_user_field('indicia_user_id');
+    helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
+    $speciesInput = data_entry_helper::species_autocomplete([
+      'label' => lang::get('Redetermine to'),
+      'helpText' => lang::get('Select the new taxon name.'),
+      'fieldname' => 'redet-species',
+      'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
+      'speciesIncludeAuthorities' => TRUE,
+      'speciesIncludeBothNames' => TRUE,
+      'speciesNameFilterMode' => 'all',
+      'validation' => ['required'],
+      'class' => 'control-width-5',
+    ]);
+    $commentInput = data_entry_helper::textarea([
+      'label' => lang::get('Explanation comment'),
+      'helpText' => lang::get('Please give reasons why you are changing this record.'),
+      'fieldname' => 'redet-comment',
+    ]);
     return <<<HTML
 <div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
   <div class="selection-buttons-placeholder">
@@ -942,7 +967,16 @@ JS;
     $optionalLinks
   </div>
 </div>
+<div id="redet-panel-wrap" style="display: none">
+  <form id="redet-form" class="verification-popup">
+    $speciesInput
+    $commentInput
+    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
+    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
+  </form>
+</div>
 HTML;
+
   }
 
   /**
