@@ -73,11 +73,15 @@ class extension_notifications_centre {
    * with any source_type letter comma separated list.
    * Removing the @sourceType option will display a filter drop-down that the user can select from.
    * Set @manage_members_page_path to specify the path to a page for managing activity/group members.
+   * Use the @dataSource option to override the default report used to display the grid
    */
   public static function messages_grid($auth, $args, $tabalias, $options, $path) {
     if (empty($options['id']))
       $options['id'] = 'notifications-grid';
     $indicia_user_id=hostsite_get_user_field('indicia_user_id');
+    if (empty($options['dataSource'])) {
+      $options['dataSource'] = 'library/notifications/notifications_list_for_notifications_centre';
+    }
     self::initialise($auth, $args, $tabalias, $options, $path, $indicia_user_id);
     if ($indicia_user_id)
       return self::notifications_grid($auth, $options, $args['website_id'], $indicia_user_id); // system
@@ -195,7 +199,7 @@ class extension_notifications_centre {
       $extraParams['group_ids'] = $options['groupIds'];
     }
     $notifications = data_entry_helper::get_report_data(array(
-      'dataSource'=>'library/notifications/notifications_list_for_notifications_centre',
+      'dataSource'=>$options['dataSource'],
       'readAuth'=>$auth['read'],
       'extraParams'=>$extraParams
     ));
@@ -316,7 +320,7 @@ class extension_notifications_centre {
       'id'=>'notifications-'.$options['id'],
       'readAuth' => $auth['read'],
       'itemsPerPage'=>10,
-      'dataSource'=>'library/notifications/notifications_list_for_notifications_centre',
+      'dataSource'=>$options['dataSource'],
       'rowId'=>'notification_id',
       'ajax'=>true,
       'mode'=>'report',

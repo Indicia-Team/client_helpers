@@ -53,8 +53,13 @@ class filter_what extends FilterBase {
     $r = '';
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
-      $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
-          'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).') . "</p>\n";
+      if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
+        $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
+            'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab), a species scratchpad (fifth tab) or other flags such as marine taxa (sixth tab).') . "</p>\n";
+      } else {
+        $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
+            'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).') . "</p>\n";
+      }
     }
     $r .= '<div id="what-tabs">' . "\n";
     // Data_entry_helper::tab_header breaks inside fancybox. So output manually.
@@ -64,8 +69,11 @@ class filter_what extends FilterBase {
     if (!$options['elasticsearch']) {
       $r .= '<li id="designations-tab-tab"><a href="#designations-tab" rel="address:designations-tab"><span>' . lang::get('Designations') . '</span></a></li>';
     }
-    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>' .
-        '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
+    $r .= '<li id="rank-tab-tab"><a href="#rank-tab" rel="address:rank-tab"><span>' . lang::get('Level') . '</span></a></li>';
+    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
+      $r .= '<li id="scratchpad-tab-tab"><a href="#scratchpad-tab" rel="address:scratchpad-tab"><span>' . lang::get('Scratchpads') . '</span></a></li>';
+    }
+    $r .= '<li id="flags-tab-tab"><a href="#flags-tab" rel="address:flags-tab"><span>' . lang::get('Other flags') . '</span></a></li>' .
         '</ul>';
     $r .= '<div id="species-group-tab">' . "\n";
     if (function_exists('hostsite_get_user_field')) {
@@ -162,6 +170,21 @@ class filter_what extends FilterBase {
     }
     $r .= '</select>';
     $r .= "</div>\n";
+    if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
+      $r .= "<div id=\"scratchpad-tab\">\n";
+      $r .= '<p>' . lang::get('Select a species scratchpad to filter against') . '</p>' .
+      $form .= data_entry_helper::select(array(
+        'blankText' => lang::get('<Please select>'),
+        'fieldname' => 'taxa_scratchpad_list_id',
+        'id' => 'taxa_scratchpad_list_id',
+        'table' => 'scratchpad_list',
+        'captionField' => 'title',
+        'valueField' => 'id',
+        'extraParams' => $readAuth + array('orderby' => 'title'),
+        'sharing' => 'reporting'
+      ));
+      $r .= "</div>\n";
+    }
     $r .= "<div id=\"flags-tab\">\n";
     $r .= '<p>' . lang::get('Select additional flags to filter for.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions limit the settings you can change on this tab.') . '</div>';

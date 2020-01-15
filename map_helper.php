@@ -279,9 +279,11 @@ class map_helper extends helper_base {
     }
     else {
       global $indicia_templates;
-      if (!array_key_exists('presetLayers', $options) or count($options['presetLayers']) === 0) {
+      if ((!array_key_exists('presetLayers', $options) or count($options['presetLayers']) === 0)
+          && empty($options['otherBaseLayerConfig'])) {
         // If no layers set default to OSM.
         $options['presetLayers'][] = "osm";
+
       }
       $options = array_merge([
         'indiciaSvc' => parent::getProxiedBaseUrl(),
@@ -308,7 +310,7 @@ class map_helper extends helper_base {
         }
         unset($options['tilecacheLayers']);
       }
-      // When using custom base layer classes, the Openlayers defaults cannot 
+      // When using custom base layer classes, the Openlayers defaults cannot
       // be used. The caller must take control of Openlayers settings.
       if (isset($options['otherBaseLayerConfig'])) {
         $options['useOlDefaults'] = FALSE;

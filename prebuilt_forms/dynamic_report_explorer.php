@@ -95,6 +95,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
                   "&nbsp;&nbsp;<strong>[standard params]</strong> - a standard params filter bar. Use with reports that support standard params.<br/>".
                   "&nbsp;&nbsp;<strong>[map]</strong> - outputs report content as a map.<br/>".
                   "&nbsp;&nbsp;<strong>[reportgrid]</strong> - outputs report content in tabular form.<br/>".
+                  "&nbsp;&nbsp;<strong>[reportdownloadlink]</strong> - a simple link to download the report's records.<br/>".
                   "&nbsp;&nbsp;<strong>[reportchart]</strong> - outputs report content in chart form.<br/>".
                   "&nbsp;&nbsp;<strong>[reportfreeform]</strong> - outputs report content in flexible HTML.<br/>".
                   "&nbsp;&nbsp;<strong>[reportaddtojs]</strong> - outputs report data to JavaScript for use by custom " .
@@ -433,7 +434,7 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         ),
       )
     );
-    // ensure supplied extraParams are merged, not overwritten
+    // Ensure supplied extraParams are merged, not overwritten.
     if (!empty($options['extraParams'])) {
       $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
     }
@@ -444,6 +445,41 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     self::$requestReportCount++;
     self::$reportCount++;
     return report_helper::report_grid($reportOptions);
+  }
+
+  /**
+   * A control for adding a simple download link to a page.
+   *
+   * Options available are:
+   *   * dataSource - the path to the report file to download from.
+   *   * limit - maximum number of records, defaults to 20,000.
+   *
+   * @return string
+   *   Link HTML.
+   */
+  protected static function get_control_reportdownloadlink($auth, $args, $tabalias, $options) {
+    iform_load_helpers(array('report_helper'));
+    $args['report_name'] = '';
+    $sharing = empty($args['sharing']) ? 'reporting' : $args['sharing'];
+    // Set default limit.
+    $args['items_per_page'] = isset($options['limit']) ? $options['limit'] : 20000;
+    $reportOptions = array_merge(
+      iform_report_get_report_options($args, $auth['read']),
+      array(
+        'reportGroup' => 'dynamic',
+        'autoParamsForm' => FALSE,
+        'sharing' => $sharing,
+      )
+    );
+    // Ensure supplied extraParams are merged, not overwritten.
+    if (!empty($options['extraParams'])) {
+      $options['extraParams'] = array_merge($reportOptions['extraParams'], $options['extraParams']);
+    }
+    $reportOptions = array_merge($reportOptions, $options);
+    if (self::$applyUserPrefs) {
+      iform_report_apply_explore_user_own_preferences($reportOptions);
+    }
+    return report_helper::report_download_link($reportOptions);
   }
 
   /*

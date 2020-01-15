@@ -153,7 +153,7 @@ class import_helper extends helper_base {
       return self::run_upload($options);
     }
     elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
-      return self::upload_result($options);
+      return self::uploadResult($options);
     }
     else {
       throw new exception('Invalid importer state');
@@ -836,18 +836,20 @@ JS;
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
-    if ($transferFileDataToWarehouseSuccess===true) {
+    if ($transferFileDataToWarehouseSuccess === TRUE) {
       //Progress message depends if we are uploading or simply checking for errors
-      if ($options['allowCommitToDB']==true) {
-        $progressMessage = ' records uploaded.';
+      if ($options['allowCommitToDB']) {
+        $progressMessage = lang::get('{1} records uploaded');
       } else {
-        $progressMessage = ' records checked.';
+        $progressMessage = lang::get('{1} records checked');
       }
+      $errorMessage = 'and {1} error(s) encountered.';
       // initiate local javascript to do the upload with a progress feedback
-      $r .= '
-      <div id="progress" class="ui-widget ui-widget-content ui-corner-all">
-      <div id="progress-bar" style="width: 400px"></div>';
-      if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']==true) {
+      $r .= <<<HTML
+<div id="progress">
+<div id="progress-bar"></div>
+HTML;
+      if (isset($options['allowCommitToDB']) && $options['allowCommitToDB']) {
         $actionMessage='Preparing to upload.';
       } else {
         $actionMessage='Checking file for errors..';
@@ -855,43 +857,54 @@ JS;
       $r .= "<div id='progress-text'>$actionMessage.</div>
       </div>
       ";
-      self::$onload_javascript .= "
-    /**
-    * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
-    * next chunk.
-    */
-    uploadChunk = function() {
-      var limit=50;
-      $.ajax({
-        url: '".parent::getProxiedBaseUrl()."index.php/services/import/upload?offset='+total+'&limit='+limit+'"
-              . "&filepos='+filepos+'&uploaded_csv=$filename"
-              . "&model=".$options['model']."&allow_commit_to_db=".$options['allowCommitToDB']."',
-        dataType: 'jsonp',
-        success: function(response) {
-          var allowCommitToDB = '".$options['allowCommitToDB']."';
-          total = total + response.uploaded;
-          filepos = response.filepos;
-          jQuery('#progress-text').html(total + '$progressMessage');
-          $('#progress-bar').progressbar ('option', 'value', response.progress);
-          if (response.uploaded>=limit) {
-            uploadChunk();
+      $baseUrl = parent::getProxiedBaseUrl();
+      self::$onload_javascript .= <<<JS
+/**
+ * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
+ * next chunk.
+ */
+uploadChunk = function() {
+  var limit = 50;
+  $.ajax({
+    url: '{$baseUrl}index.php/services/import/upload?offset=' + total + '&limit=' + limit +
+         '&filepos=' + filepos + '&uploaded_csv=$filename' +
+         '&model=$options[model]&allow_commit_to_db=$options[allowCommitToDB]',
+    dataType: 'jsonp',
+    success: function(response) {
+      var allowCommitToDB = '$options[allowCommitToDB]';
+      var message;
+      total = total + response.uploaded;
+      filepos = response.filepos;
+      message = '$progressMessage'.replace('{1}', total - response.errorCount);
+      if (response.errorCount > 0) {
+        message += ' $errorMessage'.replace('{1}', response.errorCount);
+      }
+      jQuery('#progress-text').html(message);
+      $('#progress-bar').progressbar ('option', 'value', response.progress);
+      if (response.uploaded >= limit) {
+        uploadChunk();
+      } else {
+        if (allowCommitToDB) {
+          if (response.errorCount > 0) {
+            jQuery('#progress-text').html('Upload finished with errors.');
           } else {
-            if (allowCommitToDB==1) {
-              jQuery('#progress-text').html('Upload complete.');
-              //We only need total at end of wizard, so we can just refresh page with total as param to use in the post of next step
-            } else {
-              jQuery('#progress-text').html('Checks complete.');
-            }
-            $('#fields_to_retain_form').append('<input type=\"hidden\" name=\"total\" id=\"total\" value=\"'+total+'\"/>');
-            $('#fields_to_retain_form').submit();
+            jQuery('#progress-text').html('Upload complete.');
           }
+          //We only need total at end of wizard, so we can just refresh page with total as param to use in the post of next step
+        } else {
+          jQuery('#progress-text').html('Checks complete.');
         }
-      });
-    };
-    var total=0, filepos=0;
-    jQuery('#progress-bar').progressbar ({value: 0});
-    uploadChunk();
-    ";
+        $('#fields_to_retain_form').append('<input type=\"hidden\" name=\"total\" id=\"total\" value=\"'+total+'\"/>');
+        $('#fields_to_retain_form').submit();
+      }
+    }
+  });
+};
+var total = 0, filepos = 0;
+jQuery('#progress-bar').progressbar ({value: 0});
+uploadChunk();
+
+JS;
     }
     return $r;
   }
@@ -913,13 +926,14 @@ JS;
 
   /*
    * Jump to the results screen if errors have been detected during the error checking stage.
-   * This only applies if we are preventing all commits if any errors are detected (otherwise upload_result function is called instead)
+   * This only applies if we are preventing all commits if any errors are detected (otherwise uploadResult function is called instead)
    */
   private static function display_result_as_error_check_stage_failed($options,$output) {
     // get the path back to the same page
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
+    hostsite_show_message(lang::get('Errors were encountered.'), 'error');
     $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
         $downloadInstructions .
         " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
@@ -931,22 +945,28 @@ JS;
    * Displays the upload result page.
    * @param array $options Array of options passed to the import control.
    */
-  private static function upload_result($options) {
+  private static function uploadResult($options) {
     $request = parent::$base_url . "index.php/services/import/get_upload_result?uploaded_csv=" . $_GET['uploaded_csv'];
     $request .= '&' . self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
+    $r = '';
     if (isset($response['output'])) {
       $output = json_decode($response['output'], TRUE);
       if (!is_array($output) || !isset($output['problems']))
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, TRUE);
-      if ($output['problems']>0) {
-          $downloadInstructions=lang::get('partial_commits_download_error_file_instructions');
+      if ($output['problems'] > 0) {
+        hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+        $downloadInstructions = lang::get('partial_commits_download_error_file_instructions');
         $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
           $downloadInstructions .
           " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
       }
       else {
-        $r = 'The upload was successful.';
+        if (function_exists('hostsite_show_message')) {
+          hostsite_show_message(lang::get('The upload was successful.'));
+        } else {
+          $r = lang::get('The upload was successful.');
+        }
       }
     }
     else {

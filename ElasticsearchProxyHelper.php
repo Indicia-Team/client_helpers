@@ -46,24 +46,36 @@ class ElasticsearchProxyHelper {
         self::proxyComments($nid);
         break;
 
-      case 'searchbyparams':
-        self::proxySearchByParams();
-        break;
-
-      case 'rawsearch':
-        self::proxyRawsearch();
+      case 'doesUserSeeNotifications':
+        self::proxyDoesUserSeeNotifications($nid);
         break;
 
       case 'download':
         self::proxyDownload();
         break;
 
-      case 'updateids':
-        self::proxyUpdateIds();
+      case 'mediaAndComments':
+        self::proxyMediaAndComments($nid);
+        break;
+
+      case 'rawsearch':
+        self::proxyRawsearch();
+        break;
+
+      case 'searchbyparams':
+        self::proxySearchByParams();
         break;
 
       case 'updateall':
         self::proxyUpdateAll($nid);
+        break;
+
+      case 'updateids':
+        self::proxyUpdateIds();
+        break;
+
+      case 'verificationQueryEmail':
+        self::proxyVerificationQueryEmail();
         break;
 
       default:
@@ -99,12 +111,46 @@ class ElasticsearchProxyHelper {
     $reportData = report_helper::get_report_data($options);
     // Convert the output to a structured JSON object.
     $data = [];
+    // Organise some attributes by system function, so we can make output consistent.
+    $sysFuncAttrs = [];
+    $sysFuncList = [
+      'Additional occurrence' => ['certainty', 'sex_stage_count', 'sex', 'stage', 'sex_stage'],
+      'Additional sample' => ['biotope'],
+    ];
+    foreach ($reportData as $key => $attribute) {
+      if (isset($sysFuncList[$attribute['attribute_type']])
+          && in_array($attribute['system_function'], $sysFuncList[$attribute['attribute_type']])) {
+        $sysFuncAttrs[$attribute['system_function']] = $attribute;
+        unset($reportData[$key]);
+      }
+    }
+    // Now build the special system function output first.
+    foreach ($sysFuncList as $heading => $sysFuncs) {
+      $headingData = [];
+      foreach ($sysFuncs as $sysFunc) {
+        if (isset($sysFuncAttrs[$sysFunc])) {
+          $headingData[] = [
+            'caption' => $sysFuncAttrs[$sysFunc]['caption'],
+            'value' => $sysFuncAttrs[$sysFunc]['value'],
+            'system_function' => $sysFuncAttrs[$sysFunc]['system_function'],
+          ];
+        }
+      }
+      if (!empty($headingData)) {
+        $data["$heading attributes"] = $headingData;
+      }
+    }
+    // Now the rest.
     foreach ($reportData as $attribute) {
       if (!empty($attribute['value'])) {
         if (!isset($data[$attribute['attribute_type'] . ' attributes'])) {
-          $data[$attribute['attribute_type'] . ' attributes'] = array();
+          $data[$attribute['attribute_type'] . ' attributes'] = [];
         }
-        $data[$attribute['attribute_type'] . ' attributes'][] = array('caption' => $attribute['caption'], 'value' => $attribute['value']);
+        $data[$attribute['attribute_type'] . ' attributes'][] = [
+          'caption' => $attribute['caption'],
+          'value' => $attribute['value'],
+          'system_function' => $attribute['system_function'],
+        ];
       }
     }
     header('Content-type: application/json');
@@ -112,10 +158,25 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Provides information on a user's ability to see notifications.
+   *
+   * Used when querying records for verification.
+   */
+  function proxyDoesUserSeeNotifications($nid) {
+    iform_load_helpers(['VerificationHelper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    header('Content-type: application/json');
+    echo json_encode(['msg' => VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id'])]);
+  }
+
+  /**
    * Ajax handler for the [recordDetails] comments tab.
    *
    * @param int $nid
    *   Node ID to obtain connection info from.
+   *
+   * @todo Consider switch to using VerificationHelper::getComments().
    */
   private static function proxyComments($nid) {
     iform_load_helpers(['report_helper']);
@@ -149,7 +210,7 @@ class ElasticsearchProxyHelper {
    * aggregated data across the entire dataset which is not limited by the page
    * permissions.
    */
-  public static function proxyRawsearch() {
+  private static function proxyRawsearch() {
     $url = self::getEsUrl() . '/_search';
     $query = array_merge($_POST);
     $query['size'] = 0;
@@ -159,7 +220,7 @@ class ElasticsearchProxyHelper {
   /**
    * A search proxy that handles build of a CSV download file.
    */
-  public static function proxyDownload() {
+  private static function proxyDownload() {
     $isScrollToNextPage = array_key_exists('scroll_id', $_GET);
     if (!$isScrollToNextPage) {
       self::checkPermissionsFilter($_POST);
@@ -187,12 +248,34 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Proxy method to retrieve media and comments for emails.
+   *
+   * When an email is sent to query a record, the comments and media are
+   * injected into the HTML. Returns an array with a media entry and a comments
+   * entry, both containing the required HTML.
+   *
+   * @return array
+   *   Media and comments information.
+   */
+  private static function proxyMediaAndComments($nid) {
+    iform_load_helpers(['VerificationHelper']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
+    header('Content-type: application/json');
+    echo json_encode(array(
+      'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
+      'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
+    ));
+  }
+
+  /**
    * Proxy method that receives a list of IDs to perform updates on in Elastic.
    *
    * Used by the verification system when in checklist mode to allow setting a
    * comment and status on multiple records in one go.
    */
-  public static function proxyUpdateIds() {
+  private static function proxyUpdateIds() {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
@@ -209,7 +292,7 @@ class ElasticsearchProxyHelper {
    * Uses a filter definition passed in the post to retrieve the records from
    * ES then applies the decision to all aof them.
    */
-  public static function proxyUpdateAll($nid) {
+  private static function proxyUpdateAll($nid) {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
@@ -248,6 +331,28 @@ class ElasticsearchProxyHelper {
     echo json_encode([
       'updated' => count($ids),
     ]);
+  }
+
+  /**
+   * Proxy method to send an email querying a record.
+   */
+  private static function proxyVerificationQueryEmail() {
+    $fromEmail = $params['email_from_address'];
+    $headers = [
+      'MIME-Version: 1.0',
+      'Content-type: text/html; charset=UTF-8;',
+      'From: ' . $fromEmail,
+      'Reply-To: ' . hostsite_get_user_field('mail'),
+    ];
+    $headers = implode("\r\n", $headers) . PHP_EOL;
+    $emailBody = $_POST['body'];
+    $emailBody = str_replace("\n", "<br/>", $emailBody);
+    // Send email. Depends upon settings in php.ini being correct.
+    $success = mail($_POST['to'],
+         $_POST['subject'],
+         wordwrap($emailBody, 70),
+         $headers);
+    echo $success ? 'OK' : 'Fail';
   }
 
   /**
@@ -444,7 +549,13 @@ class ElasticsearchProxyHelper {
         // Exclamation mark reverses logic.
         $logic = substr($value, 0, 1) === '!' ? 'must_not' : 'must';
         $value = preg_replace('/^!/', '', $value);
-        $bool[$logic][] = ['match_phrase_prefix' => [$field => $value]];
+        $bool[$logic][] = [
+          'simple_query_string' => [
+            'query' => $value,
+            'fields' => [$field],
+            'default_operator' => 'AND',
+          ],
+        ];
       }
       unset($query['textFilters']);
     }
@@ -527,6 +638,7 @@ class ElasticsearchProxyHelper {
       self::applyFilterDef($readAuth, $query['filter_def'], $bool);
     }
     unset($query['user_filters']);
+    unset($query['refresh_user_filters']);
     unset($query['permissions_filter']);
     unset($query['filter_def']);
 
@@ -584,6 +696,7 @@ class ElasticsearchProxyHelper {
           'filter_id' => $userFilter,
         ],
         'readAuth' => $readAuth,
+        'caching' => $query['refresh_user_filters'] === 'true' ? 'store' : TRUE,
       ]);
       if (count($filterData) === 0) {
         throw new exception("Filter with ID $userFilter could not be loaded.");
@@ -941,12 +1054,24 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersOccId(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['idlist', 'oc_id']);
-    $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
+    $filter = self::getDefinitionFilter($definition, ['idlist', 'occ_id']);
     if (!empty($filter)) {
-      $bool[$boolClause][] = [
-        'terms' => ['id' => explode(',', $filter['value'])],
-      ];
+      $op = empty($filter['op']) ? '=' : $filter['op'];
+      if ($op === '=') {
+        $bool['must'][] = [
+          'terms' => ['id' => explode(',', $filter['value'])],
+        ];
+      }
+      else {
+        $translate = ['>=' => 'gte', '<=' => 'lte'];
+        $bool['must'][] = [
+          'range' => [
+            'id' => [
+              $translate[$op] => $filter['value'],
+            ],
+          ],
+        ];
+      }
     }
   }
 

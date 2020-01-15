@@ -375,7 +375,9 @@ TXT;
    *   Panel container HTML;
    */
   protected static function get_control_verificationButtons($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::verificationButtons($options);
+    return ElasticsearchReportHelper::verificationButtons(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   /**

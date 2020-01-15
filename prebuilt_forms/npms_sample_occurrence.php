@@ -225,20 +225,22 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
         $(document).on('click', '#tab-submit', function(e){ 
           var photoWithoutAbunFound=false;
           var unwantedGenusEntryFound=false;
-          // Cycle through each row on grid
-          $(\"table[id^='species-grid'] tr\").filter('.scClonableRow, .added-row').each(function() {";
+          // Cycle through each row on grid";
             if (!empty($args['genus_entry_found_msg'])) {
-              data_entry_helper::$javascript .= "
-              $(this).prev().find(\".scTaxonCell\").each(function( index ) {
+            data_entry_helper::$javascript .= "
+            $(\"table[id^='species-grid'] tr\").filter('.added-row').each(function() {
+              $(this).find(\".scTaxonCell\").each(function( index ) {
                 // Only count items in an emphasis tag as we don't want to count the taxon group and other labels
                 if (WordCount($(this).find('em').text())===1) {
                   unwantedGenusEntryFound=true;
                 }
-              });";
+              });
+            });";
             }
 
             if (!empty($args['abun_photo_msg']) && !empty($args['abun_attr_id'])) {
-              data_entry_helper::$javascript .= "
+            data_entry_helper::$javascript .= "
+            $(\"table[id^='species-grid'] tr\").each(function() {
               //Image row is called supplementary-row in edit mode
               if ($(this).hasClass('image-row') || $(this).hasClass('supplementary-row')) {
                 //Image row might not actually have any image if Add Photo button wasn't clicked
@@ -252,11 +254,9 @@ class iform_npms_sample_occurrence extends iform_dynamic_sample_occurrence {
                     }
                   });
                 } 
-              }";
-            }
-          data_entry_helper::$javascript .= "  
-          });"; 
-
+              }
+            });"; 
+          }
           if (!empty($args['genus_entry_found_msg'])) {
             data_entry_helper::$javascript .= "
             if (unwantedGenusEntryFound===true) {
