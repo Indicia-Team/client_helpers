@@ -659,6 +659,7 @@ class ElasticsearchProxyHelper {
       self::applyFilterDef($readAuth, $query['filter_def'], $bool);
     }
     unset($query['user_filters']);
+    unset($query['refresh_user_filters']);
     unset($query['permissions_filter']);
     unset($query['filter_def']);
 
@@ -716,6 +717,7 @@ class ElasticsearchProxyHelper {
           'filter_id' => $userFilter,
         ],
         'readAuth' => $readAuth,
+        'caching' => $query['refresh_user_filters'] === 'true' ? 'store' : TRUE,
       ]);
       if (count($filterData) === 0) {
         throw new exception("Filter with ID $userFilter could not be loaded.");
