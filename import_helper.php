@@ -737,7 +737,16 @@ JS;
       foreach ($options['fieldMap'] as $surveyFieldMap) {
         if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
             $surveyFieldMap['survey_id'] == $settings['survey_id']) {
-          return helper_base::explode_lines_key_value_pairs($surveyFieldMap['fields']);
+          preg_match_all("/([^=\r\n]+)=([^\r\n]+)/", $surveyFieldMap['fields'], $pairs);
+          $pairs[1] = array_map('trim', $pairs[1]);
+          $pairs[2] = array_map('trim', $pairs[2]);
+          $r = [];
+          foreach ($pairs[1] as $idx => $key) {
+            if (!isset($r[$key])) {
+              $r[$key] = $pairs[2][$idx];
+            }
+          }
+          return $r;
         }
       }
     }
