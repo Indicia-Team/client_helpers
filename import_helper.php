@@ -444,6 +444,7 @@ class import_helper extends helper_base {
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
+    $fieldMap = self::getFieldMap($options, $settings);
     // If the user checked the Remember All checkbox need to remember this
     // setting.
     $checkedRememberAll = isset($autoFieldMappings['rememberall']) ? ' checked="checked"' : '';
@@ -514,6 +515,7 @@ HTML;
           $unlinked_fields,
           $column,
           $autoFieldMappings,
+          $fieldMap,
           count($existingDataLookupOptions) > 0,
           array_key_exists('allowDataDeletions', $options) ? $options['allowDataDeletions'] : FALSE
         );
@@ -605,7 +607,7 @@ JS;
         $fieldname = $tokens[count($tokens) - 1];
         $caption = lang::get(self::processLabel(preg_replace(array('/^fk_/', '/_id$/'), array('', ''), $fieldname)));
       }
-      $caption = self::translate_field($field, $caption);
+      $caption = self::translate_field($field, $caption, $fieldMap);
       self::$javascript .= "required_fields['$field']='$caption';\n";
     }
     self::$onload_javascript .= <<<JS
@@ -672,8 +674,12 @@ JS;
    * Returns an array of field to column title mappings that were previously stored in the user profile,
    * or mappings that were provided via the page's configuration form.
    * If the user profile does not support saving mappings then sets self::$rememberingMappings to false.
-   * @param array $options Options array passed to the import helper which might contain a fieldMap.
-   * @param array $settings Settings array for this import which might contain the survey_id.
+   *
+   * @param array $options
+   *   Options array passed to the import helper which might contain a fieldMap.
+   * @param array $settings
+   *   Settings array for this import which might contain the survey_id.
+   *
    * @return array|mixed
    */
   private static function getAutoFieldMappings($options, $settings) {
@@ -713,6 +719,29 @@ JS;
       }
     }
     return $autoFieldMappings;
+  }
+
+  /**
+   * Retrieve any configured field mappings for the chosen survey dataset.
+   *
+   * @param array $options
+   *   Options array passed to the import helper which might contain a fieldMap.
+   * @param array $settings
+   *   Settings array for this import which might contain the survey_id.
+   *
+   * @return array
+   *   Associative array mapping fields to captions.
+   */
+  private static function getFieldMap($options, $settings) {
+    if (!empty($settings['survey_id']) && !empty($options['fieldMap'])) {
+      foreach ($options['fieldMap'] as $surveyFieldMap) {
+        if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
+            $surveyFieldMap['survey_id'] == $settings['survey_id']) {
+          return helper_base::explode_lines_key_value_pairs($surveyFieldMap['fields']);
+        }
+      }
+    }
+    return [];
   }
 
   /**
@@ -1035,7 +1064,7 @@ JS;
    * @param bool $allowDataDeletions
    *   Should the importer allow data to be removed.
    */
-  private static function getColumnOptions($model, $fields, $column, $autoFieldMappings, $includeLookups, $allowDataDeletions = FALSE) {
+  private static function getColumnOptions($model, $fields, $column, $autoFieldMappings, $fieldMap, $includeLookups, $allowDataDeletions = FALSE) {
     $skipped = [
       'image_path', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
       'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning',
@@ -1072,7 +1101,7 @@ JS;
          * $labelListHeading is an array where the keys are each column we work with concatenated to the heading of the caption we
          * are currently working on.
          */
-        $strippedScreenCaption = str_replace(" (from controlled termlist)","",self::translate_field($field, $caption));
+        $strippedScreenCaption = str_replace(" (from controlled termlist)","",self::translate_field($field, $caption, $fieldMap));
         $labelList[$labelListIndex] = strtolower($strippedScreenCaption);
         $labelListIndex++;
         if (isset($labelListHeading[$column . $prefix])) {
@@ -1096,7 +1125,7 @@ JS;
       // Make a clean looking default caption. This could be provided by the $fields array, or we have to construct it.
       $defaultCaption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
       // Allow the default caption to be translated or overridden by language files.
-      $translatedCaption = self::translate_field($field, $defaultCaption);
+      $translatedCaption = self::translate_field($field, $defaultCaption, $fieldMap);
       // Need a version of the caption without "from controlled termlist" as we ignore that for matching.
       $strippedScreenCaption = str_replace(" (from controlled termlist)", "", $translatedCaption);
       $fieldname = preg_replace(['/^fk_/', '/_id$/'], ['', ''], $fieldname);
@@ -1147,7 +1176,7 @@ JS;
         else {
           $optionID = $idColumn . 'Normal';
         }
-        $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
+        $option = self::model_field_option($field, $defaultCaption, $selected, $optionID, $fieldMap);
         if ($selected) {
           self::$automaticMappings[$column] = $field;
         }
@@ -1404,9 +1433,9 @@ TD;
    * @param boolean $selected Set to true if outputing the currently selected option.
    * @param string $optionID Id of the current option.
    */
-  private static function model_field_option($field, $caption, $selected, $optionID) {
+  private static function model_field_option($field, $caption, $selected, $optionID, $fieldMap) {
     $selHtml = ($selected) ? ' selected="selected"' : '';
-    $caption = self::translate_field($field, $caption);
+    $caption = self::translate_field($field, $caption, $fieldMap);
     $r = '<option class=';
     $r .= $optionID;
     $r .= ' value="' . htmlspecialchars($field) . "\"$selHtml>" . htmlspecialchars($caption) . '</option>';
@@ -1416,19 +1445,31 @@ TD;
   /**
    * Provides optional translation of field captions by looking for a translation code dd:model:fieldname. If not
    * found returns the original caption.
-   * @param string $field Name of the field being output.
-   * @param string $caption Untranslated caption of the field being output.
-   * @return string Translated caption.
+   *
+   * @param string $field
+   *   Name of the field being output.
+   * @param string $caption
+   *   Untranslated caption of the field being output.
+   * @param array $fieldMap
+   *   Mappings to captions for this survey dataset.
+   *
+   * @return string
+   *   Translated caption.
    */
-  private static function translate_field($field, $caption) {
-    // look in the translation settings to see if this column name needs overriding
-    $trans = lang::get("dd:$field");
-    // Only update the caption if this actually did anything
-    if ($trans != "dd:$field" ) {
-      return $trans;
+  private static function translate_field($field, $caption, $fieldMap) {
+    if (isset($fieldMap[$field])) {
+      return lang::get(ucfirst($fieldMap[$field]));
     }
     else {
-      return $caption;
+      // look in the translation settings to see if this column name needs overriding
+      $trans = lang::get("dd:$field");
+      // Only update the caption if this actually did anything
+      if ($trans != "dd:$field" ) {
+        return $trans;
+      }
+      else {
+        return $caption;
+      }
     }
   }
 
