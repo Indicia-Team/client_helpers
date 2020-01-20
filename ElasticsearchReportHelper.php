@@ -126,7 +126,7 @@ class ElasticsearchReportHelper {
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
     ],
-    'taxon.name' => [
+    'taxon.taxon_name' => [
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
     ],
