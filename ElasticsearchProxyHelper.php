@@ -472,7 +472,7 @@ class ElasticsearchProxyHelper {
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
   private static function curlPost($url, $data) {
-    $allowedGetParams = ['filter_path'];
+    $allowedGetParams = ['filter_path', 'refresh'];
     $getParams = [];
     foreach ($allowedGetParams as $param) {
       if (!empty($_GET[$param])) {
