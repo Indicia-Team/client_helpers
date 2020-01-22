@@ -462,7 +462,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         $headerOptions['tabs']['#section-details'] = lang::get('Section Details');
       }
       if($settings['canAccessContact'] && $contact !== '') {
-        $headerOptions['tabs']['#contact-details'] = lang::get('Contact Details');
+        $headerOptions['tabs']['#contact-details'] = lang::get('Site contact information');
       }
     }
     if (count($headerOptions['tabs'])) {

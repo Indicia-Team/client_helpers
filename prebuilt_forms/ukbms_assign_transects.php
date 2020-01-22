@@ -381,7 +381,8 @@ class iform_ukbms_assign_transects {
                                       'indiciaData.holiday_attr_id = ' . $args['holiday_attr_id'] . ';' . PHP_EOL .
                                       'indiciaData.indiciaSvc = "' . data_entry_helper::$base_url . '";' . PHP_EOL .
                                       'indiciaData.siteDetails = "' . hostsite_get_url('/site-details') . '";' . PHP_EOL .
-                                      'indiciaData.initFeatureIds = [' . implode(', ', $preLoad) . '];' . PHP_EOL;
+                                      'indiciaData.initFeatureIds = [' . implode(', ', $preLoad) . '];' . PHP_EOL .
+                                      'indiciaData.user_id = ' . (($user_id = hostsite_get_user_field('indicia_user_id')) ? $user_id : 0) . ';' . PHP_EOL ;
 
     return $r;
   }

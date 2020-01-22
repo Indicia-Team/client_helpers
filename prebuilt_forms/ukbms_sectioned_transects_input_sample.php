@@ -850,8 +850,20 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Transects Editor Settings'
         ),
         array(
+          'name'=>'confidentialAttrID',
+          'caption' => 'Location attribute used to indicate confidential sites',
+          'description' => 'A boolean location attribute, set to true if a site is confidential.',
+          'type'=>'select',
+          'table'=>'location_attribute',
+          'captionField'=>'caption',
+          'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
+          'required' => false,
+          'group' => 'Confidential and Sensitivity Handling'
+        ),
+        array(
           'name'=>'sensitiveAttrID',
-          'caption' => 'Location attribute used to filter out sensitive sites',
+          'caption' => 'Location attribute used to indicate sensitive sites',
           'description' => 'A boolean location attribute, set to true if a site is sensitive.',
           'type'=>'select',
           'table'=>'location_attribute',
@@ -859,7 +871,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'valueField'=>'id',
           'extraParams' => array('orderby'=>'caption'),
           'required' => false,
-          'group' => 'Sensitivity Handling'
+          'group' => 'Confidential and Sensitivity Handling'
         ),
         array(
           'name' => 'sensitivityPrecision',
@@ -867,7 +879,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'description' => 'Precision to be applied to new occurrences recorded at sensitive sites. Existing occurrences are not changed. A number representing the square size in metres - e.g. enter 1000 for 1km square.',
           'type' => 'int',
           'required' => false,
-          'group' => 'Sensitivity Handling'
+          'group' => 'Confidential and Sensitivity Handling'
         ),
         array(
           'name'=>'finishedAttrID',
@@ -1516,9 +1528,9 @@ class iform_ukbms_sectioned_transects_input_sample {
     $r .= '<form style="display: none" id="validation-form"></form>';
     data_entry_helper::enable_validation('validation-form');
     // A stub form for AJAX posting when we need to create an occurrence
-    if(isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "") {
-      $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
-      $site_attributes = data_entry_helper::getAttributes(array(
+    $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
+    if(!empty($args["sensitiveAttrID"]) && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "") {
+      $sensitive_site_attributes = data_entry_helper::getAttributes(array(
             'valuetable'=>'location_attribute_value'
             ,'attrtable'=>'location_attribute'
             ,'key'=>'location_id'
@@ -1528,6 +1540,18 @@ class iform_ukbms_sectioned_transects_input_sample {
             ,'survey_id'=>$args['survey_id']
             ,'id' => $parentLocId // location ID
       ));
+    }
+    if(!empty($args["confidentialAttrID"])) {
+        $confidential_site_attributes = data_entry_helper::getAttributes(array(
+            'valuetable'=>'location_attribute_value'
+            ,'attrtable'=>'location_attribute'
+            ,'key'=>'location_id'
+            ,'fieldprefix'=>'locAttr'
+            ,'extraParams'=>self::$auth['read'] + array('id'=>$args["confidentialAttrID"])
+            ,'location_type_id'=>$locationType[0]['id']
+            ,'survey_id'=>$args['survey_id']
+            ,'id' => $parentLocId // location ID
+        ));
     }
     $defaults = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $record_status = isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C';
@@ -1541,7 +1565,9 @@ class iform_ukbms_sectioned_transects_input_sample {
         '<input name="occurrence:record_status" value="'.$record_status.'" />' .
         '<input name="occurrence:sample_id" id="occ_sampleid"/>' .
         (isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "" ?
-            '<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($site_attributes)>0 && $site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
+            '<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($sensitive_site_attributes)>0 && $sensitive_site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
+        (!empty($args["confidentialAttrID"]) ?
+            '<input name="occurrence:confidential" id="occConfidential" value="'.(count($confidential_site_attributes)>0 && $confidential_site_attributes[$args["confidentialAttrID"]]['default']=="1" ? '1' : '0').'"/>' : '') .
       '<input name="occAttr:' . $args['occurrence_attribute_id'] . '" id="occattr"/>' .
       '<input name="transaction_id" id="occurrence_transaction_id"/>' .
       '<input name="user_id" value="'.self::$userId.'"/>' .

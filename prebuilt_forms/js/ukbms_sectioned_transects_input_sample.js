@@ -302,7 +302,8 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
 
     $('#occzero').val(occAttrValue==='0' ? 't' : 'f'); // Zero -> zero abundance
 
-    $('#occSensitive').attr('disabled', $(selector +'\\:id').length>0); // existing ID - leave sensitivity as is, new data - use location sensitivity
+    $('#occSensitive').attr('disabled', $(selector +'\\:id').length>0); // existing ID - leave sensitivity and confidentiality as is, new data - use location data
+    $('#occConfidential').attr('disabled', $(selector +'\\:id').length>0);
 
     // Store the current cell's ID as a transaction ID, so we know which cell we were updating. Adds a tag if this is a deletion
     // so we can handle deletion logic properly when the post returns
@@ -954,7 +955,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
       if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
           typeof formOptions.outOfRangeVerification[i].section_limit !== "undefined") {
-        return formOptions.outOfRangeVerification[i].section_limit < value;
+        return parseInt(formOptions.outOfRangeVerification[i].section_limit, 10) < parseInt(value, 10);
       }
     };
     return false;
@@ -964,7 +965,7 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
     for (var i = 0; i < formOptions.outOfRangeVerification.length; i++) {
       if (formOptions.outOfRangeVerification[i].taxon_meaning_id == taxon_meaning_id &&
           typeof formOptions.outOfRangeVerification[i].walk_limit !== "undefined") {
-        return formOptions.outOfRangeVerification[i].walk_limit < total;
+        return parseInt(formOptions.outOfRangeVerification[i].walk_limit, 10) < parseInt(total, 10);
       }
     };
     return false;
