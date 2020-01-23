@@ -863,6 +863,8 @@ JS;
             'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
         'georeference_default_indicia_locations' => array(
             'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
+        'sref_handlers_2169' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/2169.js')),
         'sref_handlers_4326' => array(
             'javascript' => array(self::$js_path.'drivers/sref/4326.js')),
         'sref_handlers_osgb' => array(

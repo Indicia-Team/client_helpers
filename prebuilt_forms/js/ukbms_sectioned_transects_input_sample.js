@@ -223,6 +223,24 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
           }
         });
       }
+      
+      $('.smp-input').each(function(idx, elem) {
+    	var parts = $(elem).attr('id').split(':'),
+    		opposite;
+    	if (formOptions.interactingSampleAttributes.length === 2 && parts[1] == formOptions.interactingSampleAttributes[0] && $(elem).val() !== '') {
+    		opposite = '#'+parts[0]+'\\:'+formOptions.interactingSampleAttributes[1]+'\\:'+parts[2];
+    		if ($(opposite).val() === '') {
+    		  $(opposite).val(100-$(elem).val());
+    	      saveSample(parts[2]);
+    		}
+    	} else if (formOptions.interactingSampleAttributes.length === 2 && parts[1] == formOptions.interactingSampleAttributes[1] && $(elem).val() !== '') {
+    		opposite = '#'+parts[0]+'\\:'+formOptions.interactingSampleAttributes[0]+'\\:'+parts[2];
+    		if ($(opposite).val() === '') {
+    		  $(opposite).val(100-$(elem).val());
+    	      saveSample(parts[2]);
+            }
+    	}
+      });
   }
 
   /**
@@ -749,6 +767,11 @@ var setUpSamplesForm, setUpOccurrencesForm, saveSample, setTotals, getRowTotal,
         }
       } else if ($(selector).hasClass('smp-input')) {
         // change to just a sample attribute.
+    	if (formOptions.interactingSampleAttributes.length === 2 && parts[1] == formOptions.interactingSampleAttributes[0] && $(selector).val() !== '') {
+    		$('#'+parts[0]+'\\:'+formOptions.interactingSampleAttributes[1]+'\\:'+parts[2]).val(100-$(selector).val());
+    	} else if (formOptions.interactingSampleAttributes.length === 2 && parts[1] == formOptions.interactingSampleAttributes[1] && $(selector).val() !== '') {
+    		$('#'+parts[0]+'\\:'+formOptions.interactingSampleAttributes[0]+'\\:'+parts[2]).val(100-$(selector).val());
+    	}
         saveSample(parts[2]);
       }
     }

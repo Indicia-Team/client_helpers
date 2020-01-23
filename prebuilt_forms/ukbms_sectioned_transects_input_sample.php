@@ -165,6 +165,14 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Transects Editor Settings'
         ),
         array(
+          'name' => 'interacting_sample_attributes',
+          'caption' => 'Interacting sample attributes',
+          'description' => 'Comma separated list of subsample attribute ids, which are percentage values which interact - entering one as 75 will cause the other to be set to 25.',
+          'type' => 'text_input',
+          'required' => false,
+          'siteSpecific' => true
+        ),
+        array(
           'name' => 'attribute_configuration',
           'caption' => 'Custom configuration for attributes',
           'description' => 'Custom configuration for attributes',
@@ -1233,7 +1241,8 @@ class iform_ukbms_sectioned_transects_input_sample {
         'verificationTitle' => lang::get('Warnings'),
         'verificationSectionLimitMessage' => lang::get('The value entered for this taxon on this transect section ({{ value }}) exceeds the expected maximum ({{ limit }})'),
         'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk ({{ total }}) exceeds the expected maximum ({{ limit }})'),
-        'outOfRangeVerification' => array()
+        'outOfRangeVerification' => array(),
+        'interactingSampleAttributes' => array()
     );
 
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
@@ -1299,7 +1308,9 @@ class iform_ukbms_sectioned_transects_input_sample {
       $subSamplesByCode[$subSample['code']] = $subSample;
     }
     $formOptions['subSamples'] = (object)$subSampleList;
-
+    if(!empty($args['interacting_sample_attributes']) && count(explode(',', $args['interacting_sample_attributes'])) === 2) {
+        $formOptions['interactingSampleAttributes'] = explode(',', $args['interacting_sample_attributes']);
+    }
     $occurrences = array();
     if ($existing) {
       // Only need to load the occurrences for a pre-existing sample

@@ -8277,7 +8277,7 @@ HTML;
     // extract the codes and make lowercase
     $systems=unserialize(strtolower(serialize(array_keys($systems))));
     // find the systems that have client-side JavaScript handlers
-    $handlers = array_intersect($systems, array('osgb','osie','4326'));
+    $handlers = array_intersect($systems, array('osgb','osie','4326','2169'));
     self::get_resources();
     foreach ($handlers as $code) {
       // dynamically find a resource to link us to the handler js file.
