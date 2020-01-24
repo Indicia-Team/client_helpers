@@ -7825,6 +7825,7 @@ TXT;
           unset($item['default']);
         }
         $r .= self::internalOutputAttribute($item, $options);
+        unset($options['default']);
       }
       return "$r</label>";
     }
