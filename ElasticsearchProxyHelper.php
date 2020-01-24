@@ -540,7 +540,7 @@ class ElasticsearchProxyHelper {
       'filter' => [],
     ];
     $basicQueryTypes = ['match_all', 'match_none'];
-    $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
+    $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix', 'exists'];
     $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
     if (isset($query['textFilters'])) {
