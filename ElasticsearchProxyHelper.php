@@ -429,7 +429,7 @@ class ElasticsearchProxyHelper {
         ],
       ],
     ];
-    return self::curlPost($url, $doc);
+    return self::curlPost($url, $doc, ['refresh' => 'true']);
   }
 
   /**
@@ -471,9 +471,8 @@ class ElasticsearchProxyHelper {
   /**
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
-  private static function curlPost($url, $data) {
-    $allowedGetParams = ['filter_path', 'refresh'];
-    $getParams = [];
+  private static function curlPost($url, $data, $getParams = []) {
+    $allowedGetParams = ['filter_path'];
     foreach ($allowedGetParams as $param) {
       if (!empty($_GET[$param])) {
         $getParams[$param] = $_GET[$param];
