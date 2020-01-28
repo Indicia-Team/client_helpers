@@ -993,6 +993,7 @@ JS;
       if (!is_array($output) || !isset($output['problems']))
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, TRUE);
       if ($output['problems'] > 0) {
+        $class = 'upload-results-errors';
         hostsite_show_message(lang::get('Errors were encountered.'), 'error');
         $downloadInstructions = lang::get('partial_commits_download_error_file_instructions');
         $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
@@ -1000,6 +1001,7 @@ JS;
           " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
       }
       else {
+        $class = 'upload-results-success';
         if (function_exists('hostsite_show_message')) {
           hostsite_show_message(lang::get('The upload was successful.'));
         } else {
@@ -1015,7 +1017,7 @@ JS;
     unset($reload['params']['uploaded_csv']);
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = "<p>$r</p><p>" . lang::get('Would you like to ') . "<a href=\"$reloadpath\">" . lang::get('import another file?') . "</a></p>";
-    return $r;
+    return "<div class=\"$class\">$r</div>";
   }
 
   /**
