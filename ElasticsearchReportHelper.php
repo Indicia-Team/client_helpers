@@ -374,7 +374,7 @@ JS;
       ['addColumns', 'removeColumns']
     );
     global $indicia_templates;
-    $r = str_replace(
+    $html = str_replace(
       [
         '{id}',
         '{title}',
@@ -405,13 +405,12 @@ JS;
 </div>
 
 HTML;
-    $r .= str_replace(
+    $html .= str_replace(
       [
         '{attrs}',
         '{col-1}',
         '{col-2}',
-      ],
-      [
+      ], [
         '',
         $progress,
         '<div class="idc-download-files"><h2>' . lang::get('Files') . ':</h2></div>',
@@ -426,7 +425,7 @@ HTML;
       'addColumns',
       'removeColumns',
     ], empty($options['attachToId']));
-    $r = self::getControlContainer('esDownload', $options, $dataOptions, $r);
+    $r = self::getControlContainer('esDownload', $options, $dataOptions, $html);
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcEsDownload({});
 
