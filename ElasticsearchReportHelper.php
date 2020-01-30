@@ -426,11 +426,12 @@ HTML;
       'addColumns',
       'removeColumns',
     ], empty($options['attachToId']));
+    $r = self::getControlContainer('esDownload', $options, $dataOptions, $r);
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcEsDownload({});
 
 JS;
-    return self::getControlContainer('esDownload', $options, $dataOptions, $r);
+    return $r;
   }
 
   /**
