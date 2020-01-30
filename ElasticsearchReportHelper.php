@@ -381,7 +381,7 @@ JS;
         '{class}',
         '{caption}',
       ], [
-        $options['id'],
+        "$options[id]-button",
         lang::get('Run the download'),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
         lang::get('Download'),
