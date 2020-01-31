@@ -25,4 +25,4 @@ $indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div
 
 $indicia_templates['dataValueList'] = '<div class="detail-panel" id="{id}"><h3>{title}</h3><dl class="dl-horizontal">{content}</dl></div>';		
 $indicia_templates['dataValue'] = '<dt>{caption}</dt><dd>{value}</dd>';
-$indicia_templates['speciesDetailsThumbnail'] = '<div class="thumbnail" style="width:150px; height:180px; white-space: nowrap; overflow: hidden; text-overflow:ellipsis; text-align:center;">{external_details}<a class="fancybox" rel="gallery" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>';
+$indicia_templates['speciesDetailsThumbnail'] = '<div class="thumbnail" style="width:150px; height:180px; white-space: nowrap; overflow: hidden; text-overflow:ellipsis; text-align:center;">{external_details}<a class="fancybox" rel="gallery" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{author}</a></div>';
