@@ -231,6 +231,17 @@ class iform_importer {
           }]
         }'
       ),
+      [
+        'name' => 'embedReupload',
+        'caption' => 'Embed reupload form in last page',
+        'description' => 'Use this option to control whether the last page, shown after an import, includes an embedded form for uploading another file or not.',
+        'type' => 'select',
+        'options' => [
+          0 => 'No embedded form, provide link back to upload page',
+          1 => 'Provide embedded upload form after an import that resulted in errors',
+          2 => 'Provide embedded upload form after any import',
+        ],
+      ],
       array(
         'name' => 'synonymProcessing',
         'caption' => 'Synonym Processing',
@@ -318,7 +329,7 @@ class iform_importer {
     if (empty($args['importPreventCommitBehaviour']))
       $args['importPreventCommitBehaviour']='partial_import';
     if (empty($args['importSampleLogic']))
-      $args['importSampleLogic']='consecutive_rows'; 
+      $args['importSampleLogic']='consecutive_rows';
     iform_load_helpers(array('import_helper'));
     // apply defaults
     $args = array_merge(array(
@@ -371,7 +382,7 @@ class iform_importer {
     if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training'))
       $presets['occurrence:training'] = 't';
     try {
-      $options = array(
+      $options = [
         'model' => $model,
         'auth' => $auth,
         'presetSettings' => $presets,
@@ -385,7 +396,8 @@ class iform_importer {
         'importMergeFields' => $args['importMergeFields'],
         'synonymProcessing' => $args['synonymProcessing'],
         'switches' => array('activate_global_sample_method' => 't'),
-      );
+        'embed_reupload' => isset($args['embedReupload']) ? $args['embedReupload'] : EMBED_REUPLOAD_OFF,
+      ];
       $r = import_helper::importer($options);
     }
     catch (Exception $e) {

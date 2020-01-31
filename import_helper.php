@@ -28,6 +28,10 @@
 require_once 'lang.php';
 require_once 'helper_base.php';
 
+define('EMBED_REUPLOAD_OFF', 0);
+define('EMBED_REUPLOAD_ERRORS_ONLY', 1);
+define('EMBED_REUPLOAD_ON', 2);
+
 /**
  * Static helper class that provides methods for dealing with imports.
  */
@@ -100,6 +104,12 @@ class import_helper extends helper_base {
    *     in the supplied spreadsheet are mapped. Combine this with the fieldMap
    *     parameter to make predefined import configurations that require little
    *     effort to use as long as a matching spreadsheet structure is supplied.
+   *   * **embed_reupload** - set to EMBED_REUPLOAD_ON to embed an upload form
+   *     into the page shown on completion of an upload, allowing another file
+   *     to be uploaded. Or, set to EMBED_REUPLOAD_ERRORS_ONLY to embed the
+   *     upload form into this page only when the last upload had errors, in
+   *     which case a message is shown explaining that the user can use the
+   *     form to upload the errors file. Defaults to EMBED_REUPLOAD_OFF.
    *
    * @return string
    *   HTML for the next page of the importer.
@@ -984,6 +994,9 @@ JS;
    * @param array $options Array of options passed to the import control.
    */
   private static function uploadResult($options) {
+    $options = array_merge([
+      'embed_reupload' => EMBED_REUPLOAD_OFF,
+    ], $options);
     $request = parent::$base_url . "index.php/services/import/get_upload_result?uploaded_csv=" . $_GET['uploaded_csv'];
     $request .= '&' . self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
@@ -1004,7 +1017,8 @@ JS;
         $class = 'upload-results-success';
         if (function_exists('hostsite_show_message')) {
           hostsite_show_message(lang::get('The upload was successful.'));
-        } else {
+        }
+        else {
           $r = lang::get('The upload was successful.');
         }
       }
@@ -1016,7 +1030,21 @@ JS;
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $r = "<p>$r</p><p>" . lang::get('Would you like to ') . "<a href=\"$reloadpath\">" . lang::get('import another file?') . "</a></p>";
+    $r = "<p>$r</p>";
+    if (isset($response['output'])) {
+      if ($options['embed_reupload'] === EMBED_REUPLOAD_ON && $output['problems'] === 0) {
+        $r .= '<p>' . lang::get('If you would like to upload another file you can use the form below.') . '</p>';
+        $r .= self::uploadForm($options);
+      }
+      elseif ($options['embed_reupload'] !== EMBED_REUPLOAD_OFF && $output['problems'] > 0) {
+        $r .= '<p>' . lang::get('Once you have downloaded the file containing errors and corrected them you can ' .
+          'upload the file again using the form below.') . '</p>';
+        $r .= self::uploadForm($options);
+      }
+      else {
+        $r .= '<p>' . lang::get('Would you like to ') . "<a href=\"$reloadpath\">" . lang::get('import another file?') . "</a></p>";
+      }
+    }
     return "<div class=\"$class\">$r</div>";
   }
 
