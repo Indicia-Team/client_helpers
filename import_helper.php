@@ -442,7 +442,7 @@ class import_helper extends helper_base {
       return "curl request to $request failed. Response " . print_r($response, TRUE);
     }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
-    $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys($settings)) : array();
+    $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys(array_filter($settings))) : array();
     $unlinked_fields = !empty($preset_fields) ? array_diff_key($fields, array_combine($preset_fields, $preset_fields)) : $fields;
     // Only use the required fields that are available for selection - the rest
     // are handled somehow else.
