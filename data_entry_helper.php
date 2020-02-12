@@ -1611,15 +1611,21 @@ JS;
       'id' => 'jsonwidget_container',
       'fieldname' => 'jsonwidget',
       'schema' => '{}',
-      'class'=> ''
+      'class' => '',
+      'default' => '',
     ), $options);
     $options['class'] = trim($options['class'].' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    extract($options, EXTR_PREFIX_ALL, 'opt');
-    if (!isset($opt_default)) $opt_default = '';
-    $opt_default = str_replace(array("\r","\n", "'"), array('\r','\n',"\'"), $opt_default);
-    self::$javascript .= "$('#".$options['id']."').jsonedit({schema: $opt_schema, default: '$opt_default', fieldname: \"$opt_fieldname\"});\n";
+    $options['default'] = str_replace(array("\\n", "\r", "\n", "'"), array('\\\n', '\r','\n',"\'"), $options['default']);
+    self::$javascript .= <<<JS
+$('#$options[id]').jsonedit({
+  schema: $options[schema],
+  default: '$options[default]',
+  fieldname: '$options[fieldname]'
+});
+
+JS;
 
     return self::apply_template('jsonwidget', $options);
   }
