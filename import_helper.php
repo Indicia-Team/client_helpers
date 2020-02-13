@@ -854,7 +854,6 @@ JS;
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $mappingsAndSettings=self::getMappingsAndSettings($options);
-    watchdog('$mappingsAndSettings', var_export($mappingsAndSettings, true));
     if ($calledFromSkippedMappingsPage===false) {
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
