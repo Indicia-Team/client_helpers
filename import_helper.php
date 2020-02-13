@@ -664,6 +664,7 @@ JS;
     foreach ($mappingFields as $field => $value) {
       if (!empty($mappingFields[$field])) {
         if (is_string($field)&&is_string($value)&&!empty($value) && $field !== 'import_step' && $field !==' submit') {
+          $value = htmlspecialchars($value);
           $r .= "<input type=\"hidden\" name=\"mapping[$field]\" id=\"mapping[$field]\" value=\"$value\"/>\n";
         }
       }
