@@ -156,11 +156,11 @@ class import_helper extends helper_base {
     }
     elseif ((isset($_POST['import_step']) && $_POST['import_step'] == 2)) {
       $options['allowCommitToDB'] = FALSE;
-      return self::run_upload($options);
+      return self::runUpload($options);
     }
     elseif ((isset($_POST['import_step']) && $_POST['import_step'] == 3)) {
       $options['allowCommitToDB'] = TRUE;
-      return self::run_upload($options);
+      return self::runUpload($options);
     }
     elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
       return self::uploadResult($options);
@@ -352,7 +352,7 @@ class import_helper extends helper_base {
       'not_imported' => 'Not imported',
     ]);
     $filename = basename($_SESSION['uploaded_file']);
-    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $mappingsAndSettings = self::getMappingsAndSettings($options);
     $settings = $mappingsAndSettings['settings'];
     $request = parent::$base_url . "index.php/services/import/get_import_fields/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
@@ -558,23 +558,34 @@ HTML;
 
 HTML;
     $usedOptions = [];
-    if (count($existingDataLookupOptions) > 0) {
-      $r .= '<div id="lookup-mode-warning" style="color:red; display:none">' . lang::get('Note that updating of existing records is only available when the Prevent Commits On Any Error importer option is not being used').'</div>';
+    if (count($existingDataLookupOptions) > 0 || !empty($options['existingRecordLookupMethod'])) {
+      $r .= '<div id="lookup-mode-warning" class="alert alert-danger" style="display:none">' . lang::get('Note that updating of existing records is only available when the Prevent Commits On Any Error importer option is not being used').'</div>';
       $r .= '<fieldset><legend>' . lang::get('Lookup of existing records') . '</legend>';
-      foreach ($existingDataLookupOptions as $model => $combinations) {
-        $r .= '<label for="lookupSelect' . $model . '\">' . lang::get(ucfirst($model) . ' records') . '</label>';
-        $r .= "<select name=\"lookupSelect" . $model . "\" id=\"lookupSelect" . $model . "\" class=\"lookupSelects\">";
-        $r .= "<option value=\"\" >" . lang::get('Do not look up existing records') . "</option>";
-        foreach ($combinations as $combination) {
-          if (!in_array($model . $combination['description'], $usedOptions)) {
-            array_push($usedOptions, $model . $combination['description']);
-            // Each possible field for existing record lookup has the list of
-            // fields that need to be filled in for it to work specified as
-            // json in its value.
-            $r .= "<option value=\"" . htmlspecialchars(json_encode($combination['fields'])) . "\">" . lang::get($combination['description']) . "</option>";
+      if (!empty($options['existingRecordLookupMethod'])) {
+        // Configuration forces a particular lookup method.
+        $msg = lang::get('Data will be used to lookup and update existing records where possible.');
+        $r .= <<<HTML
+<div class="alert alert-info">$msg</div>
+
+HTML;
+      } 
+      else {
+        // User can choose lookup method.
+        foreach ($existingDataLookupOptions as $model => $combinations) {
+          $r .= '<label for="lookupSelect' . $model . '\">' . lang::get(ucfirst($model) . ' records') . '</label>';
+          $r .= "<select name=\"lookupSelect" . $model . "\" id=\"lookupSelect" . $model . "\" class=\"lookupSelects\">";
+          $r .= "<option value=\"\" >" . lang::get('Do not look up existing records') . "</option>";
+          foreach ($combinations as $combination) {
+            if (!in_array($model . $combination['description'], $usedOptions)) {
+              array_push($usedOptions, $model . $combination['description']);
+              // Each possible field for existing record lookup has the list of
+              // fields that need to be filled in for it to work specified as
+              // json in its value.
+              $r .= "<option value=\"" . htmlspecialchars(json_encode($combination['fields'])) . "\">" . lang::get($combination['description']) . "</option>";
+            }
           }
+          $r .= "</select><br/>";
         }
-        $r .= "</select><br/>";
       }
       $r .= "</fieldset>";
       self::$javascript .= <<<JS
@@ -592,15 +603,15 @@ JS;
     // We need to rerun this even though we run this earlier in this function.
     // The earlier call wouldn't have retrieved any mappings as
     // get_column_options wouldn't have been run yet.
-    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $mappingsAndSettings = self::getMappingsAndSettings($options);
     self::send_mappings_and_settings_to_warehouse($filename, $options, $mappingsAndSettings);
     // If skip mapping is on, then we don't actually need to show this page and
     // can skip straight to the upload or error checking stage (which will be
-    // determined by run_upload using the allowCommitToDB option).
+    // determined by runUpload using the allowCommitToDB option).
     if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE && count(self::$automaticMappings) === $importableColCount) {
-      // Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function
+      // Need to pass true to stop the mappings and settings being sent to the warehouse during the runUpload function
       // as we have already done that here
-      return self::run_upload($options, TRUE);
+      return self::runUpload($options, TRUE);
     }
     // Preserve the post from the website/survey selection screen.
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB'] === FALSE) {
@@ -635,7 +646,7 @@ JS;
   /* Function used to preserve the post from previous stages as we move through the importer otherwise values are lost from
       2 steps ago. Also preserves the automatic mappings used to skip the mapping stage by saving it to the post */
   private static function preserve_fields($options, $filename, $importStep) {
-    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $mappingsAndSettings = self::getMappingsAndSettings($options);
     $settingFields = $mappingsAndSettings['settings'];
     $mappingFields = $mappingsAndSettings['mappings'];
     $reload = self::get_reload_link_parts();
@@ -833,7 +844,7 @@ JS;
 	 * being skipped on screen. That function will have already sent the settings and mappings to the warehouse so we don't need
 	 * to again.
    */
-  private static function run_upload($options,$calledFromSkippedMappingsPage=false) {
+  private static function runUpload($options, $calledFromSkippedMappingsPage = FALSE) {
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
@@ -841,7 +852,8 @@ JS;
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $mappingsAndSettings=self::getMappingsAndSettings($options);
+    watchdog('$mappingsAndSettings', var_export($mappingsAndSettings, true));
     if ($calledFromSkippedMappingsPage===false) {
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
@@ -882,7 +894,7 @@ JS;
         return self::display_result_as_error_check_stage_failed($options,$output);
       }
       //Need to re-send metadata as we need to call warehouse again for upload (rather than error check)
-      $mappingsAndSettings=self::get_mappings_and_settings($options);
+      $mappingsAndSettings=self::getMappingsAndSettings($options);
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
@@ -1589,7 +1601,7 @@ TD;
 
   //Collect the mappings and settings from various places depending on importer mode, wizard stage.
   //These can be held in variables, option variable, or the post. Collect as appropriate
-  private static function get_mappings_and_settings($options) {
+  private static function getMappingsAndSettings($options) {
     $mappingsAndSettings = [
       'mappings' => [],
       'settings' => [],
@@ -1627,6 +1639,10 @@ TD;
         $adjustedAutomaticMappings[self::columnMachineName($key)] = $automaticMap;
       }
       $mappingsAndSettings['mappings'] = $adjustedAutomaticMappings;
+    }
+    // If a configured existing record lookup method, copy it over.
+    if (!empty($options['existingRecordLookupMethod'])) {
+      $mappingsAndSettings['mappings']["lookupSelect$options[model]"] = $options['existingRecordLookupMethod'];
     }
     //Collect mappings from a designated array in the post if available
     if (!empty($_POST['mapping'])) {
@@ -1713,7 +1729,7 @@ TD;
    * rows (otherwise the importer would create separate samples)
    */
   private static function sample_external_key_issue_checks($options,$rows) {
-    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $mappingsAndSettings=self::getMappingsAndSettings($options);
     $columnIdx=0;
     $columnIdxsToCheck=array();
     // Cycle through each of the column mappings and get the position of the sample external key column
