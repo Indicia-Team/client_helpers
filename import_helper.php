@@ -513,11 +513,13 @@ HTML;
     }
 
     $r .= '</tr></thead><tbody>';
-    $colCount = 0;
+    $importableColCount = 0;
     foreach ($columns as $column) {
       $column = trim($column);
       if (!empty($column)) {
-        $colCount++;
+        if (!in_array($column, ['Number of problems', 'Problem description', 'Row no.'])) {
+          $importableColCount++;
+        }
         $colFieldName = self::columnMachineName($column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
         $r .= self::getColumnOptions(
@@ -595,7 +597,8 @@ JS;
     // If skip mapping is on, then we don't actually need to show this page and
     // can skip straight to the upload or error checking stage (which will be
     // determined by run_upload using the allowCommitToDB option).
-    if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE && count(self::$automaticMappings) === $colCount) {
+    drupal_set_message($importableColCount);
+    if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE && count(self::$automaticMappings) === $importableColCount) {
       // Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function
       // as we have already done that here
       return self::run_upload($options, TRUE);
