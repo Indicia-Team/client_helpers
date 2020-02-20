@@ -255,6 +255,7 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+    helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
   }
