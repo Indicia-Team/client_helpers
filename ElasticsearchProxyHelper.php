@@ -29,6 +29,10 @@ class ElasticsearchProxyHelper {
 
   private static $config;
 
+  private static $confidentialFilterApplied = FALSE;
+
+  private static $releaseStatusFilterApplied = FALSE;
+
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
     if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
@@ -636,6 +640,15 @@ class ElasticsearchProxyHelper {
     if (!empty($query['filter_def'])) {
       self::applyFilterDef($readAuth, $query['filter_def'], $bool);
     }
+    // Apply default restrictions.
+    if (!self::$confidentialFilterApplied) {
+      // Unless explicitly specified in a filter, hide confidential.
+      $bool['must'][] = ['term' => ['metadata.confidential' => FALSE]];
+    }
+    if (!self::$releaseStatusFilterApplied) {
+      // Unless explicitly specified in a filter, limit to released.
+      $bool['must'][] = ['term' => ['metadata.release_status' => 'R']];
+    }
     unset($query['user_filters']);
     unset($query['refresh_user_filters']);
     unset($query['permissions_filter']);
@@ -739,6 +752,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
+    self::applyUserFiltersAccessRestrictions($definition, $bool);
   }
 
   /**
@@ -1328,6 +1342,83 @@ class ElasticsearchProxyHelper {
           ],
         ],
       ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter access restrictions to an ES query.
+   *
+   * Covers the following fields:
+   * * confidential
+   * * exclude_sensitive
+   * * release_status.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersAccessRestrictions(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['confidential']);
+    if (!empty($filter)) {
+      if ($filter['value'] !== 'all') {
+        $bool['must'][] = [
+          'term' => ['metadata.confidential' => $filter['value'] === 't' ? TRUE : FALSE],
+        ];
+      }
+      self::$confidentialFilterApplied = TRUE;
+    }
+    $filter = self::getDefinitionFilter($definition, ['exclude_sensitive']);
+    if (!empty($filter)) {
+      $bool['must'][] = ['term' => ['metadata.sensitive' => FALSE]];
+    }
+    $filter = self::getDefinitionFilter($definition, ['release_status']);
+    $userId = hostsite_get_user_field('indicia_user_id');
+    if (!empty($filter)) {
+      switch ($filter['value']) {
+        case 'R':
+          // Released.
+          $bool['must'][] = ['term' => ['metadata.release_status' => 'R']];
+          break;
+
+        case 'RM':
+          // Released by other recorders plus my own unreleased records.
+          $bool['must'][] = [
+            'query_string' => ['query' => "metadata.release_status:R OR metadata.created_by_id:$userId"],
+          ];
+          break;
+
+        case 'U':
+          // Unreleased because records belong of a project that has not yet
+          // released the records.
+          $bool['must'][] = ['term' => ['metadata.release_status' => 'U']];
+          break;
+
+        case 'RU':
+          // Released plus unreleased because records belong to a project that
+          // has not yet released the records.
+          $bool['must_not'][] = ['term' => ['metadata.release_status' => 'P']];
+          break;
+
+        case 'P':
+          // Recorder has requested a precheck before release.
+          $bool['must'][] = ['term' => ['metadata.release_status' => 'P']];
+          break;
+
+        case 'RP':
+          // Released plus records where recorder has requested a precheck
+          // before release.
+          $bool['must_not'][] = ['term' => ['metadata.release_status' => 'U']];
+          break;
+
+        case 'A':
+          // All.
+          break;
+
+        default:
+          throw new ElasticsearchProxyAbort("Invalid release_status filter value $filter[value]");
+      }
+      self::$releaseStatusFilterApplied = TRUE;
     }
   }
 
