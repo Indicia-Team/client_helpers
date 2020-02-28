@@ -568,7 +568,7 @@ HTML;
 <div class="alert alert-info">$msg</div>
 
 HTML;
-      } 
+      }
       else {
         // User can choose lookup method.
         foreach ($existingDataLookupOptions as $model => $combinations) {
@@ -1640,10 +1640,6 @@ TD;
       }
       $mappingsAndSettings['mappings'] = $adjustedAutomaticMappings;
     }
-    // If a configured existing record lookup method, copy it over.
-    if (!empty($options['existingRecordLookupMethod'])) {
-      $mappingsAndSettings['mappings']["lookupSelect$options[model]"] = $options['existingRecordLookupMethod'];
-    }
     //Collect mappings from a designated array in the post if available
     if (!empty($_POST['mapping'])) {
       $mappingsAndSettings['mappings'] = array_merge($mappingsAndSettings['mappings'], $_POST['mapping']);
@@ -1652,6 +1648,10 @@ TD;
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
     if (isset($_POST['setting'])) {
       $mappingsAndSettings['mappings'] = array_merge($mappingsAndSettings['mappings'], $_POST);
+    }
+    // If a configured existing record lookup method, copy it over.
+    if (!empty($options['existingRecordLookupMethod'])) {
+      $mappingsAndSettings['mappings']["lookupSelect$options[model]"] = $options['existingRecordLookupMethod'];
     }
     $mappingsAndSettings['mappings'] = self::cleanMappings($mappingsAndSettings['mappings']);
     // The mappings should simply be the mappings, so remove any mappings or
