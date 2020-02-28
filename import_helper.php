@@ -517,7 +517,7 @@ HTML;
     foreach ($columns as $column) {
       $column = trim($column);
       if (!empty($column)) {
-        if (!in_array($column, ['Number of problems', 'Problem description', 'Row no.'])) {
+        if (!in_array($column, ['Number of problems', 'Problem description', 'Row no.', 'Import ID'])) {
           $importableColCount++;
         }
         $colFieldName = self::columnMachineName($column);
