@@ -291,7 +291,7 @@ JS;
       'dataGrid',
       $options,
       ['source'],
-      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources']
+      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources', 'rowClasses']
     );
     if (empty($options['columns'])) {
       throw new Exception('Control [dataGrid] requires a parameter called @columns.');
@@ -353,6 +353,7 @@ JS;
       'sourceTable',
       'scrollY',
       'applyFilterRowToSources',
+      'rowClasses',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcDataGrid({});
