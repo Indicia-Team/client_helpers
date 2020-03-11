@@ -606,7 +606,7 @@ class ElasticsearchProxyHelper {
         // One of the ES query string based query types.
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
       }
-      if (!empty($qryConfig['nested'])) {
+      if (!empty($qryConfig['nested']) && $qryConfig['nested'] !== 'null') {
         // Must not nested queries should be handled at outer level.
         $outerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must_not' : 'must';
         $innerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must' : $qryConfig['bool_clause'];
