@@ -586,7 +586,7 @@ class ElasticsearchProxyHelper {
       unset($query['numericFilters']);
     }
     foreach ($query['bool_queries'] as $qryConfig) {
-      if (!empty($qryConfig['query']) && $qryConfig['empty'] !== 'null') {
+      if (!empty($qryConfig['query']) && $qryConfig['query'] !== 'null') {
         $queryDef = json_decode(
           str_replace('#value#', $qryConfig['value'], $qryConfig['query']), TRUE
         );
