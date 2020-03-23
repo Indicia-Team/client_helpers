@@ -5749,21 +5749,6 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   }
 
   /**
-   * Helper function to clear the Indicia cache files.
-   */
-  public static function clear_cache() {
-    $cacheFolder = parent::$cache_folder ? parent::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    if(!$dh = @opendir($cacheFolder)) {
-      return;
-    }
-    while (false !== ($obj = readdir($dh))) {
-      if($obj != '.' && $obj != '..')
-        @unlink($cacheFolder . '/' . $obj);
-    }
-    closedir($dh);
-  }
-
-  /**
    * Internal function to output either a select or listbox control depending on the templates
    * passed.
    * @param array $options Control options array
