@@ -1640,10 +1640,6 @@ TD;
       }
       $mappingsAndSettings['mappings'] = $adjustedAutomaticMappings;
     }
-    //Collect mappings from a designated array in the post if available
-    if (!empty($_POST['mapping'])) {
-      $mappingsAndSettings['mappings'] = array_merge($mappingsAndSettings['mappings'], $_POST['mapping']);
-    }
     //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
     if (isset($_POST['setting'])) {
