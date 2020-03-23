@@ -812,7 +812,7 @@ class ElasticsearchProxyHelper {
     ]);
     if (!empty($filter)) {
       // Convert the IDs to external keys, stored in ES as taxon_ids.
-      $taxonData = data_entry_helper::get_population_data([
+      $taxonData = helper_base::get_population_data([
         'table' => 'taxa_taxon_list',
         'extraParams' => [
           'view' => 'cache',
@@ -963,7 +963,7 @@ class ElasticsearchProxyHelper {
     if (!empty($filter)) {
       // Convert the location type IDs to terms that are used in the ES
       // document.
-      $typeRows = data_entry_helper::get_population_data([
+      $typeRows = helper_base::get_population_data([
         'table' => 'termlists_term',
         'extraParams' => [
           'id' => $filter,
