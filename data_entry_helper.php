@@ -7781,7 +7781,8 @@ TXT;
         if (isset($item['control_type']) &&
           ($item['control_type']=='text_input' || $item['control_type']=='textarea'
             || $item['control_type']=='postcode_textbox' || $item['control_type']=='time_input'
-            || $item['control_type']=='hidden_text' || $item['control_type']=='complex_attr_grid' )) {
+            || $item['control_type']=='hidden_text' || $item['control_type']=='complex_attr_grid'
+            || $item['control_type']=='autocomplete' || $item['control_type']=='species_autocomplete')) {
           $ctrl = $item['control_type'];
         } else {
           $ctrl = 'text_input';
