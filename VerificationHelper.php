@@ -341,6 +341,62 @@ class VerificationHelper {
   }
 
   /**
+   * Finds the taxon meaning IDs which require fully logged communications.
+   *
+   * If the workflow_module is enabled then a verification page can call this
+   * method to load the taxon meanin IDs for all taxa where
+   * log_all_communications is set. These should store the contents of emails
+   * sent in the occurrence_comments.
+   *
+   * Meaning IDs are added to $indiciaData.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param string $sharing
+   *   Record sharing mode, normally verification.
+   */
+  public static function fetchTaxaWithLoggedCommunications($auth, $sharing) {
+    data_entry_helper::$indiciaData['workflowEnabled'] = TRUE;
+    // Allow caching.
+    $wfMetadata = data_entry_helper::get_population_data(array(
+      'table' => 'workflow_metadata',
+      'extraParams' => $auth['read'] + array(
+        'log_all_communications' => 't',
+        'entity' => 'occurrence',
+        'view' => 'detail',
+        'columns' => 'key,key_value',
+      ),
+    ));
+    $workflowTaxonMeaningIDsLogAllComms = array();
+    $externalKeys = [];
+    foreach ($wfMetadata as $wfMeta) {
+      switch ($wfMeta['key']) {
+        case 'taxa_taxon_list_external_key':
+          $externalKeys[] = $wfMeta['key_value'];
+          break;
+
+        default:
+          hostsite_show_message("Unrecognised workflow_metadata key $wfMeta[key]");
+          break;
+      }
+    }
+    // Allow caching.
+    $wkMIDs = data_entry_helper::get_population_data(array(
+      'table' => 'cache_taxa_taxon_list',
+      'extraParams' => $auth['read'] + array(
+        'query' => json_encode(['in' => ['external_key' => $externalKeys]]),
+        'columns' => 'taxon_meaning_id',
+      ),
+      'sharing' => $sharing,
+    ));
+    foreach ($wkMIDs as $wkMID) {
+      $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
+    }
+    data_entry_helper::$indiciaData['workflowTaxonMeaningIDsLogAllComms'] =
+      array_values(array_unique($workflowTaxonMeaningIDsLogAllComms));
+  }
+
+  /**
    * Returns the icon HTML for a given status/substatus.
    *
    * @param string $status
