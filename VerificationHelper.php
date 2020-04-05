@@ -382,7 +382,7 @@ class VerificationHelper {
     // Allow caching.
     $wkMIDs = data_entry_helper::get_population_data(array(
       'table' => 'cache_taxa_taxon_list',
-      'extraParams' => $auth['read'] + array(
+      'extraParams' => $readAuth + array(
         'query' => json_encode(['in' => ['external_key' => $externalKeys]]),
         'columns' => 'taxon_meaning_id',
       ),
