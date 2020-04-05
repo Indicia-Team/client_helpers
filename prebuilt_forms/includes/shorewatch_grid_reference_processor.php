@@ -14,10 +14,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package  Client
- * @author   Indicia Team
- * @license  http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/indicia-team/client_helpers
  */
 
   /**
@@ -26,7 +25,7 @@
    * @param array $args iform parameters.
    * @return array Submission structure.
    */
-  
+
   function create_submission($values, $args) {
     // Any remembered fields need to be made available to the hook function outside this class.
     global $remembered;
@@ -44,7 +43,7 @@
       'table' => 'location_attribute_value',
       'extraParams' => $readAuth + array('location_id' => $submission['fields']['location_id']['value'], 'location_attribute_id' => $args['platform_height'])
     ));
-    
+
     if (!empty($locationAttributeValueRow[0]['value']))
       $platformHeight = $locationAttributeValueRow[0]['value'];
     $enteredSref = $submission['fields']['entered_sref']['value'];
@@ -68,14 +67,14 @@
           if (preg_match('/^occAttr:'.$args['distance_estimate'].'.*/',$occurrenceAttrToMatchKey)) {
             $distance = $occurrenceAttrToMatch['value'];
           }
-        }   
+        }
         //Collect the actual reticules value by looking it up in the termlists_term view as currently we only have an id from the drop-down
         $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
         if (!empty($reticuleToUse)) {
           $termlistsTermsRow = data_entry_helper::get_population_data(array(
               'table' => 'termlists_term',
               'extraParams' => $readAuth + array('id' => $reticuleToUse)
-          ));      
+          ));
         }
         if (!empty($termlistsTermsRow[0]['term']))
           $reticules = $termlistsTermsRow[0]['term'];
@@ -89,7 +88,7 @@
         if (!empty($termlistsTermsRow[0]['term']))
           $reticuleFrom = $termlistsTermsRow[0]['term'];
       }
-      //We calculate the grid ref of the cetacean by using the reticules/bearing/platform height and the original entered sptial reference. This is stored in the sub-sample associated with the occurrence.  
+      //We calculate the grid ref of the cetacean by using the reticules/bearing/platform height and the original entered sptial reference. This is stored in the sub-sample associated with the occurrence.
       if (!empty($bearing) && ((!empty($platformHeight) && !empty($reticules)) || !empty($distance))) {
         $occurrenceAndSubSampleRecord['model']['fields']['entered_sref']['value'] = calculate_sighting_sref($bearing, $reticuleFrom, $reticules, $platformHeight, $distance, $enteredSref, $args);
       } else {
@@ -128,11 +127,11 @@
     return($submission);
   }
 /*
-   * Method that calculates the spatial reference of cetacean sightings by using the spatial reference of 
+   * Method that calculates the spatial reference of cetacean sightings by using the spatial reference of
    * the observer, the bearing to the sighting, the number of reticules and the platform height.
    */
   function calculate_sighting_sref($bearing, $reticuleFrom, $reticules, $platformHeight, $distance, $enteredSref, $args) {
-    //Convert the 50N 50E style latitude/longitude spatial reference format into pure numbers so we 
+    //Convert the 50N 50E style latitude/longitude spatial reference format into pure numbers so we
     //can manipulate it mathematically.
     $convertedSref = lat_long_conversion_to_numbers($enteredSref);
     $radians = $bearing*pi()/180;
@@ -149,19 +148,19 @@
       $simplifiedAngle = $angleBetween2Radii+$reticules*$angleRetDeclination;
       $radialDistance = (cos($simplifiedAngle )*(6370*sin($simplifiedAngle)-sqrt(pow(6370,2)*(pow(sin($simplifiedAngle),2))-2*6370*$platformHeight*pow(cos($simplifiedAngle),2))))*1000;
     }
-    $dLat = $radialDistance*(cos($radians)); 
+    $dLat = $radialDistance*(cos($radians));
     $angleLat = 2*((($dLat/1000)/(6370*2)));
     $dLong = $radialDistance*(sin($radians));
     $angleLong = 2*((($dLong/1000)/(6370*2)));
     $sightingSref['lat'] = $angleLat * (180/pi()) + $convertedSref['lat'];
     $sightingSref['long'] = $angleLong * (180/pi()) + $convertedSref['long'];
-    //Convert back into 50N 50E style latitude/longitude spatial reference format 
+    //Convert back into 50N 50E style latitude/longitude spatial reference format
     return lat_long_conversion_to_NE($sightingSref);
   }
-  
+
   /*
    * Convert spatial references from a format like 50N 50W to 50 -50
-   */  
+   */
   function lat_long_conversion_to_numbers($originalSref) {
     $splitOriginalSref = explode(' ', $originalSref);
     //if the last character of the latitude is S (south) then the latitude is negative.
@@ -172,7 +171,7 @@
     //convert from string to a number for actual use.
     $convertedSref['lat'] = floatval($splitOriginalSref[0]);
     //if the last character of the latitude is W (west) then the longitude is negative.
-    if (substr($splitOriginalSref[1], -1)==='W')  
+    if (substr($splitOriginalSref[1], -1)==='W')
      $splitOriginalSref[1] = '-'.$splitOriginalSref[1];
     //always chop off the E or W from the end of the longitude.
     $splitOriginalSref[1] = substr_replace($splitOriginalSref[1],"",-1);
@@ -180,9 +179,9 @@
     $convertedSref['long'] = floatval($splitOriginalSref[1]);
     return $convertedSref;
   }
-  
+
   /*
-   * Convert spatial references from a format like 50 -50 to 50N 50W 
+   * Convert spatial references from a format like 50 -50 to 50N 50W
    */
   function lat_long_conversion_to_NE($sref) {
     //convert to string so we can manipulate the grid references
