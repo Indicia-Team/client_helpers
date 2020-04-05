@@ -875,10 +875,10 @@ HTML;
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
     $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
     $siteEmail = hostsite_get_config_value('site', 'mail', '');
-    helper_base::$indiciaData['ajaxFormPostSingleVerify'] = '$verifyUrl&user_id=$userId&sharing=verification';
-    helper_base::$indiciaData['ajaxFormPostComment'] = '$commentUrl&user_id=$userId&sharing=verification';
-    helper_base::$indiciaData['ajaxFormPostQuickReplyPageAuth'] = '$quickReplyPageAuthUrl';
-    helper_base::$indiciaData['siteEmail'] = '$siteEmail';
+    helper_base::$indiciaData['ajaxFormPostSingleVerify'] = "$verifyUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostComment'] = "$commentUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostQuickReplyPageAuth'] = $quickReplyPageAuthUrl;
+    helper_base::$indiciaData['siteEmail'] = $siteEmail;
     helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
     if (isset($options['enableWorkflow']) && $options['enableWorkflow']) {
       VerificationHelper::fetchTaxaWithLoggedCommunications($options['readAuth']);
