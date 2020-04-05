@@ -1006,7 +1006,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.siteEmail = "' . $site_email = hostsite_get_config_value('site', 'mail', '') . "\";\n";
 
     if (isset($args['enableWorkflow']) && $args['enableWorkflow']) {
-      VerificationHelper::fetchTaxaWithLoggedCommunications($auth, $args['sharing']);
+      VerificationHelper::fetchTaxaWithLoggedCommunications($auth['read'], $args['sharing']);
     }
     else {
       data_entry_helper::$javascript .= "indiciaData.workflowEnabled = false;\n";

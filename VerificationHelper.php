@@ -350,17 +350,16 @@ class VerificationHelper {
    *
    * Meaning IDs are added to $indiciaData.
    *
-   * @param array $auth
-   *   Authorisation tokens.
+   * @param array $readAuth
+   *   Read authorisation tokens.
    * @param string $sharing
-   *   Record sharing mode, normally verification.
+   *   Record sharing mode, defaults to verification.
    */
-  public static function fetchTaxaWithLoggedCommunications($auth, $sharing) {
-    data_entry_helper::$indiciaData['workflowEnabled'] = TRUE;
+  public static function fetchTaxaWithLoggedCommunications($readAuth, $sharing = 'verification') {
     // Allow caching.
     $wfMetadata = data_entry_helper::get_population_data(array(
       'table' => 'workflow_metadata',
-      'extraParams' => $auth['read'] + array(
+      'extraParams' => $readAuth + array(
         'log_all_communications' => 't',
         'entity' => 'occurrence',
         'view' => 'detail',
@@ -392,6 +391,7 @@ class VerificationHelper {
     foreach ($wkMIDs as $wkMID) {
       $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
     }
+    data_entry_helper::$indiciaData['workflowEnabled'] = TRUE;
     data_entry_helper::$indiciaData['workflowTaxonMeaningIDsLogAllComms'] =
       array_values(array_unique($workflowTaxonMeaningIDsLogAllComms));
   }
