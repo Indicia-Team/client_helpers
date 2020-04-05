@@ -877,14 +877,14 @@ HTML;
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
     $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
     $siteEmail = hostsite_get_config_value('site', 'mail', '');
-    helper_base::$javascript .= <<<JS
-indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
-indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
-indiciaData.ajaxFormPostQuickReplyPageAuth = '$quickReplyPageAuthUrl';
-indiciaData.siteEmail = '$siteEmail';
-$('#$options[id]').idcVerificationButtons({});
-
-JS;
+    helper_base::$indiciaData['ajaxFormPostSingleVerify'] = '$verifyUrl&user_id=$userId&sharing=verification';
+    helper_base::$indiciaData['ajaxFormPostComment'] = '$commentUrl&user_id=$userId&sharing=verification';
+    helper_base::$indiciaData['ajaxFormPostQuickReplyPageAuth'] = '$quickReplyPageAuthUrl';
+    helper_base::$indiciaData['siteEmail'] = '$siteEmail';
+    helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
+    if (isset($options['enableWorkflow']) && $options['enableWorkflow']) {
+      VerificationHelper::fetchTaxaWithLoggedCommunications($options['readAuth']);
+    }
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';

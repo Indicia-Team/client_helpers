@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,17 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers
  */
 
 /**
  * List of methods that can be used for a prebuilt form control generation.
- * @package Client
- * @subpackage PrebuiltForms.
  */
 
 /**
@@ -232,7 +229,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
       }
 
       if (isset($args['nameShow']) && $args['nameShow'] == true) {
-        // Show the attribute with default value providing we aren't editing, in which case the value should be collected 
+        // Show the attribute with default value providing we aren't editing, in which case the value should be collected
         // from the saved data (even if that data is blank) so we don't want to overwrite it
         if (!isset($attribute['default']) && !isset($_GET['sample_id']) && !isset($_GET['occurrence_id']))
           $attribute['default'] = $value;
@@ -253,7 +250,7 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
     }
     elseif (strcasecmp($attribute['untranslatedCaption'], 'email') == 0) {
       if (isset($args['emailShow']) && $args['emailShow'] == true) {
-        // Show the email attribute with default value providing we aren't editing, in which case the value should be collected 
+        // Show the email attribute with default value providing we aren't editing, in which case the value should be collected
         // from the saved data (even if that data is blank) so we don't want to overwrite it
         if (!isset($attribute['default']) && !isset($_GET['sample_id']) && !isset($_GET['occurrence_id']))
           $attribute['default'] = hostsite_get_user_field('mail');
