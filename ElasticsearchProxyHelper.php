@@ -341,11 +341,10 @@ class ElasticsearchProxyHelper {
    * Proxy method to send an email querying a record.
    */
   private static function proxyVerificationQueryEmail() {
-    $fromEmail = $params['email_from_address'];
     $headers = [
       'MIME-Version: 1.0',
       'Content-type: text/html; charset=UTF-8;',
-      'From: ' . $fromEmail,
+      'From: ' . hostsite_get_config_value('site', 'mail', ''),
       'Reply-To: ' . hostsite_get_user_field('mail'),
     ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
