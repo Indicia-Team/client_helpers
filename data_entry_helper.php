@@ -5825,8 +5825,8 @@ HTML;
   private static function initLinkedLists($options) {
     global $indicia_templates;
     // setup JavaScript to do the population when the parent control changes
-    $parentControlId = str_replace(':', '\\\\:', $options['parentControlId']);
-    $escapedId = str_replace(':','\\\\:', $options['id']);
+    $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
+    $escapedId = str_replace(':','\\:', $options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
