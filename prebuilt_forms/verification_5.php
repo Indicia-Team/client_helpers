@@ -1006,42 +1006,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.siteEmail = "' . $site_email = hostsite_get_config_value('site', 'mail', '') . "\";\n";
 
     if (isset($args['enableWorkflow']) && $args['enableWorkflow']) {
-      data_entry_helper::$javascript .= "indiciaData.workflowEnabled = true;\n";
-      // Allow caching.
-      $wfMetadata = data_entry_helper::get_population_data(array(
-        'table' => 'workflow_metadata',
-        'extraParams' => $auth['read'] + array(
-          'log_all_communications' => 't',
-          'entity' => 'occurrence',
-          'view' => 'detail',
-          'columns' => 'key,key_value',
-        ),
-      ));
-      $workflowTaxonMeaningIDsLogAllComms = array();
-      foreach ($wfMetadata as $wfMeta) {
-        switch ($wfMeta['key']) {
-          case 'taxa_taxon_list_external_key':
-            // Allow caching.
-            $wkMIDs = data_entry_helper::get_population_data(array(
-              'table' => 'cache_taxa_taxon_list',
-              'extraParams' => $auth['read'] + array(
-                'external_key' => $wfMeta['key_value'],
-                'columns' => 'taxon_meaning_id',
-              ),
-              'sharing' => $args['sharing'],
-            ));
-            foreach ($wkMIDs as $wkMID) {
-              $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
-            }
-            break;
-
-          default:
-            drupal_set_message("Unrecognised workflow_metadata key $wfMeta[key]");
-            break;
-        }
-      }
-      data_entry_helper::$javascript .= "indiciaData.workflowTaxonMeaningIDsLogAllComms = " .
-          json_encode(array_values(array_unique($workflowTaxonMeaningIDsLogAllComms))) . ";\n";
+      VerificationHelper::fetchTaxaWithLoggedCommunications($auth['read'], $args['sharing']);
     }
     else {
       data_entry_helper::$javascript .= "indiciaData.workflowEnabled = false;\n";

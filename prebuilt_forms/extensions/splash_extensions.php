@@ -351,6 +351,7 @@ class extension_splash_extensions {
       $options['reportProvidesOrderBy']=true;
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
+      $options['validation'] = 'required';
       $options['extraParams']['user_square_attr_id']=$userSquareAttrId;
       $options['report']='projects/npms/get_plots_for_square_id';
       $options['extraParams']['current_user_id']=$currentUserId;
@@ -377,6 +378,13 @@ class extension_splash_extensions {
         data_entry_helper::$javascript .= '
           private_plots_set_precision('.json_encode($privatePlots).');
         ';
+      }
+      if (!empty($selectedSquareAndPlotInfo[0]['plot_id'])) {
+        data_entry_helper::$javascript="
+        $(window).load(function() {
+          $('#imp-location').val(".$selectedSquareAndPlotInfo[0]['plot_id'].");
+          update_square_plot_info_labels();
+        });\n";
       }
       return $r;
     }
@@ -1893,6 +1901,8 @@ class extension_splash_extensions {
       $emailFrom=variable_get('site_mail', '');
     else 
       $emailFrom='support@npms.org.uk';
+    // Left this line commented out as method of emailing can differ depending on host
+    //$sent = mail($emailTo, $subject, wordwrap($message, 70)); 
     $sent = drupal_mail('iform', 'location_signup_removal_mail', $emailTo, user_preferred_language($user), array('body' => $message, 'subject' => $subject/*, 'headers' => array('Cc' => $header_cc, 'Bcc' => $header_bcc)*/), $emailFrom, TRUE);
     // Change the logging message depending on email purpose
     if ($type==='Allocate') {

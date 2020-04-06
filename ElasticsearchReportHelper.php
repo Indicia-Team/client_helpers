@@ -126,7 +126,7 @@ class ElasticsearchReportHelper {
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
     ],
-    'taxon.name' => [
+    'taxon.taxon_name' => [
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
     ],
@@ -255,6 +255,7 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+    helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
   }
@@ -290,7 +291,7 @@ JS;
       'dataGrid',
       $options,
       ['source'],
-      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources']
+      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources', 'rowClasses']
     );
     if (empty($options['columns'])) {
       throw new Exception('Control [dataGrid] requires a parameter called @columns.');
@@ -352,6 +353,7 @@ JS;
       'sourceTable',
       'scrollY',
       'applyFilterRowToSources',
+      'rowClasses',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcDataGrid({});
@@ -374,14 +376,14 @@ JS;
       ['addColumns', 'removeColumns']
     );
     global $indicia_templates;
-    $r = str_replace(
+    $html = str_replace(
       [
         '{id}',
         '{title}',
         '{class}',
         '{caption}',
       ], [
-        $options['id'],
+        "$options[id]-button",
         lang::get('Run the download'),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
         lang::get('Download'),
@@ -405,13 +407,12 @@ JS;
 </div>
 
 HTML;
-    $r .= str_replace(
+    $html .= str_replace(
       [
         '{attrs}',
         '{col-1}',
         '{col-2}',
-      ],
-      [
+      ], [
         '',
         $progress,
         '<div class="idc-download-files"><h2>' . lang::get('Files') . ':</h2></div>',
@@ -426,11 +427,12 @@ HTML;
       'addColumns',
       'removeColumns',
     ], empty($options['attachToId']));
+    $r = self::getControlContainer('esDownload', $options, $dataOptions, $html);
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcEsDownload({});
 
 JS;
-    return self::getControlContainer('esDownload', $options, $dataOptions, $r);
+    return $r;
   }
 
   /**
@@ -875,14 +877,14 @@ HTML;
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
     $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
     $siteEmail = hostsite_get_config_value('site', 'mail', '');
-    helper_base::$javascript .= <<<JS
-indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
-indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
-indiciaData.ajaxFormPostQuickReplyPageAuth = '$quickReplyPageAuthUrl';
-indiciaData.siteEmail = '$siteEmail';
-$('#$options[id]').idcVerificationButtons({});
-
-JS;
+    helper_base::$indiciaData['ajaxFormPostSingleVerify'] = "$verifyUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostComment'] = "$commentUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostQuickReplyPageAuth'] = $quickReplyPageAuthUrl;
+    helper_base::$indiciaData['siteEmail'] = $siteEmail;
+    helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
+    if (isset($options['enableWorkflow']) && $options['enableWorkflow']) {
+      VerificationHelper::fetchTaxaWithLoggedCommunications($options['readAuth']);
+    }
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';

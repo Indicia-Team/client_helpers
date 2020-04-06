@@ -827,7 +827,9 @@ saveRoute = function(callback) {
     var current = $('#section-select-route li.selected').html(),
         oldSection = [],
         saveRouteDialogText,
-        geom;
+        geom,
+        handler,
+        pt;
 
     var drawingChanged = (typeof indiciaData.drawFeature !== "undefined" &&
             indiciaData.drawFeature.active &&
@@ -894,13 +896,19 @@ saveRoute = function(callback) {
     if (indiciaData.defaultSectionGridRef.match(/^section(Centroid|Start)100$/) &&
         typeof indiciaData.srefHandlers!=="undefined" &&
         typeof indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()]!=="undefined") {
-      var handler = indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()], pt, sref;
+      handler = indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()];
       if (indiciaData.defaultSectionGridRef==='sectionCentroid100') {
         pt = indiciaData.currentFeature.geometry.getCentroid(true); // must use weighted to accurately calculate
       } else {
         pt = jQuery.extend({}, indiciaData.currentFeature.geometry.components[0]);
       }
       newSectionDetails.sref = handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 6);
+    } else if (indiciaData.defaultSectionGridRef === 'sectionCentroid1' &&
+            typeof indiciaData.srefHandlers!=="undefined" &&
+            typeof indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()]!=="undefined") {
+      handler = indiciaData.srefHandlers[$('#imp-sref-system').val().toLowerCase()];
+      pt = indiciaData.currentFeature.geometry.getCentroid(true); // must use weighted to accurately calculate
+      newSectionDetails.sref = handler.pointToGridNotation(pt.transform(indiciaData.mapdiv.map.projection, 'EPSG:'+handler.srid), 10);
     } else { // default : initially set the section Sref etc to match the parent. centroid_geom will be auto generated on the server
       newSectionDetails.sref = $('#imp-sref').val();
     }

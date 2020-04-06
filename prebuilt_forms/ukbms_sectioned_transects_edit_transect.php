@@ -243,10 +243,8 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
    * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
-    global $user;
-    // use the js from the main form, until there is a deviation.
-    // drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/sectioned_transects_edit_transect.js");
-    drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/sectioned_transects_edit_transect.css");
+    // use the css from the main form, until there is a deviation. JS has deviated
+    // drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/sectioned_transects_edit_transect.css");
 
     $checks=self::check_prerequisites();
     $args = self::getArgDefaults($args);
@@ -337,7 +335,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
             isset($settings['cmsUserAttr']['default']) &&
             !empty($settings['cmsUserAttr']['default'])) {
           foreach($settings['cmsUserAttr']['default'] as $value) { // multi value
-            if($value['default'] == $user->uid) { // comparing string against int so no triple equals
+            if($value['default'] == hostsite_get_user_field('id')) { // comparing string against int so no triple equals
               $settings['canEditBody'] = true;
               $settings['canEditSections'] = true;
               break;
@@ -360,7 +358,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
             isset($settings['branchCmsUserAttr']['default']) &&
             !empty($settings['branchCmsUserAttr']['default'])) {
           foreach($settings['branchCmsUserAttr']['default'] as $value) { // now multi value
-            if($value['default'] == $user->uid) { // comparing string against int so no triple equals
+            if($value['default'] == hostsite_get_user_field('id')) { // comparing string against int so no triple equals
               $settings['canEditBody'] = true;
               $settings['canAllocUser'] = true;
               $settings['canAccessContact'] = true;
@@ -462,7 +460,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         $headerOptions['tabs']['#section-details'] = lang::get('Section Details');
       }
       if($settings['canAccessContact'] && $contact !== '') {
-        $headerOptions['tabs']['#contact-details'] = lang::get('Contact Details');
+        $headerOptions['tabs']['#contact-details'] = lang::get('Site contact information');
       }
     }
     if (count($headerOptions['tabs'])) {
@@ -745,8 +743,7 @@ class iform_ukbms_sectioned_transects_edit_transect extends iform_sectioned_tran
         $r .= self::get_user_assignment_control($auth['read'], $settings['cmsUserAttr'], $args);
       } else if (!$settings['locationId']) {
         // for a new record, we need to link the current user to the location if they are not admin.
-        global $user;
-        $r .= '<input type="hidden" name="locAttr:'.self::$cmsUserAttrId.'" value="'.$user->uid.'">';
+        $r .= '<input type="hidden" name="locAttr:'.self::$cmsUserAttrId.'" value="'.hostsite_get_user_field('id').'">';
       }
     }
     if ($settings['canEditBody']) {
@@ -777,7 +774,7 @@ deleteSurvey = function(){
     $('#delete-transect').html('Deleting Site');
     deleteLocation(".$settings['locationId'].");
     $('#delete-transect').html('Done');
-    window.location='".url($args['sites_list_path'])."';
+    window.location='". hostsite_get_url($args['sites_list_path']) ."';
   };
 };
 $('#delete-transect').click(deleteSurvey);
@@ -844,7 +841,7 @@ $('#delete-transect').click(deleteSurvey);
   	$r .= map_helper::map_panel($options, $olOptions);
   	$r .= '<button class="indicia-button right" type="button" title="'.
   		lang::get('Returns to My Sites page. Remember to save any changes to the Site details, Route and/or Section details first.').
-  		'" onclick="window.location.href=\'' . url($args['sites_list_path']) . '\'">'.lang::get('Finish').'</button>';
+  		'" onclick="window.location.href=\'' . hostsite_get_url($args['sites_list_path']) . '\'">'.lang::get('Finish').'</button>';
   	$r .= '</div>';
   	return $r;
   }

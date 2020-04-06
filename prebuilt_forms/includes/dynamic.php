@@ -13,19 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package    Client
- * @subpackage PrebuiltForms
- * @author    Indicia Team
- * @license    http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link     https://github.com/indicia-team/warehouse/
+ * @author Indicia Team
+ * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link https://github.com/indicia-team/client_helpers
  */
 
 /**
  * Parent class for dynamic prebuilt Indicia data entry forms.
  * NB has Drupal specific code.
- *
- * @package    Client
- * @subpackage PrebuiltForms
  */
 
 require_once('map.php');
@@ -726,7 +721,8 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           // settings text using something like @smpAttr:4|label=My label. The next bit of code parses these out into an
           // array used when building the html.
           // Alternatively, a setting like @option=value is applied to all the attributes.
-          $attrSpecificOptions = array();
+          $attrSpecificOptions = [];
+          $attrGenericOptions = [];
           foreach ($options as $option => $value) {
             // split the id of the option into the control name and option name.
             $optionId = explode('|', $option);
@@ -744,10 +740,11 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             }
             else {
               // Found an option like @option=value
-              $defAttrOptions = array_merge($defAttrOptions, array($option => $value));
+              $attrGenericOptions = array_merge($attrGenericOptions, array($option => $value));
             }
           }
-          $attrHtml = get_attribute_html($attributes, $args, $defAttrOptions, $tab, $attrSpecificOptions);
+          $attrHtml = get_attribute_html($attributes, $args, $defAttrOptions, $tab,
+            array_merge($attrGenericOptions, $attrSpecificOptions));
           if (!empty($attrHtml))
             $hasControls = true;
           $html .= $attrHtml;

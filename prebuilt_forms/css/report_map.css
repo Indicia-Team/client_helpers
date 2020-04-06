@@ -1,33 +1,19 @@
-/* line 5, sass/report_map.scss */
 #map-container {
   float: left;
   clear: left;
-}
+  background-color: #eeeeee; }
 
-/* line 10, sass/report_map.scss */
 #map-toolbar {
-  float: none;
-}
+  float: none; }
 
-/* line 14, sass/report_map.scss */
 #map-legend, #map-layer-picker {
   float: right;
-  clear: right;
-}
-/* line 19, sass/report_map.scss */
-#map-legend li div, #map-legend li img, #map-layer-picker li div, #map-layer-picker li img {
-  display: inline-block;
-  vertical-align: middle;
-  *vertical-align: auto;
-  *zoom: 1;
-  *display: inline;
-  width: 16px;
-  height: 16px;
-  vertical-align: middle;
-  margin-right: 8px;
-}
+  clear: right; }
+  #map-legend li div, #map-legend li img, #map-layer-picker li div, #map-layer-picker li img {
+    display: inline-block;
+    vertical-align: middle;
+    width: 16px;
+    height: 16px;
+    margin-right: 8px; }
 
-/* line 29, sass/report_map.scss */
-#map-container {
-  background-color: #eeeeee;
-}
+/*# sourceMappingURL=report_map.css.map */

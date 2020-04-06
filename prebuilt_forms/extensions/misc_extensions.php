@@ -740,4 +740,45 @@ JS;
     return report_helper::report_grid($reportOptions);
   }
 
+  /**
+   * Undocumented function
+   *
+   * @param array $options
+   *   Options array with the following options:
+   *   * id - HTML id attribute for the div which will contain the location
+   *     details. A unique default will be assigned if not specified.
+   *   * template - HTML to output for each intersecting location. Field
+   *     value replacement tokens are specified as {{ fieldname }}. The
+   *     following fields are available:
+   *     * location_id
+   *     * name
+   *     * comment
+   *     * location_type_id
+   *     * location_type
+   *     * centroid_sref
+   *     * centroid_sref_system
+   *   * locationTypeIds - an array of location type IDs to consider when
+   *     looking for locations which intersect the click point.
+   *
+   * @return string
+   *   HTML for the control's container.
+   */
+  public static function query_locations_on_map_click($auth, $args, $tabalias, $options, $path) {
+    static $queryLocationsOnMapClickCount = 0;
+    $queryLocationsOnMapClickCount++;
+    if (!isset($options['locationTypeIds']) || !is_array($options['locationTypeIds'])) {
+      return 'The query_locations_on_map_click extension requires a locationTypeIds array in the options.';
+    }
+    $options = array_merge([
+      'template' => '<div><h2>{{ name }}</h2>{{ comment }}</div>',
+      'id' => "locationsOnMapClick-$queryLocationsOnMapClickCount",
+    ], $options);
+    if (!isset(helper_base::$indiciaData['queryLocationsOnMapClickSettings'])) {
+      helper_base::$indiciaData['queryLocationsOnMapClickSettings'] = [];
+    }
+    helper_base::$indiciaData['queryLocationsOnMapClickSettings'][$options['id']]
+      = $options;
+    return "<div id=\"$options[id]\"></div>";
+  }
+
 }

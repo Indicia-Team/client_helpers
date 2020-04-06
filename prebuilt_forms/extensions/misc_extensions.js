@@ -100,5 +100,46 @@ jQuery(document).ready(function ($) {
         }
       }
     );
+  };
+
+  /**
+   * Code for misc_extensions.query_locations_on_map_click control.
+   */
+  if (indiciaData.queryLocationsOnMapClickSettings) {
+    // Attach handler when map clicked on.
+    mapClickForSpatialRefHooks.push(function onMapClick(clickInfo) {
+      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport' +
+        '?report=library/locations/locations_list_3.xml&callback=?';
+      var reportOptions = {
+        mode: 'json',
+        nonce: indiciaData.read.nonce,
+        auth_token: indiciaData.read.auth_token,
+        reportSource: 'local',
+        intersects: clickInfo.mapwkt
+      };
+      $.each(indiciaData.queryLocationsOnMapClickSettings, function eachLocationType(id, data) {
+        reportOptions.location_type_ids = data.locationTypeIds.join(',');
+        // Find locations that intersect a click point.
+        $.getJSON(reportingURL, reportOptions,
+          function success(locations) {
+            var output = [];
+            // For each location in response, build HTML.
+            $.each(locations, function eachLocation() {
+              var template = data.template;
+              $.each(this, function eachField(field, value) {
+                // Empty values.
+                if (value === null) {
+                  value = '';
+                }
+                template = template.replace(new RegExp('{{ ' + field + ' }}', 'g'), value);
+              });
+              output.push(template);
+            });
+            // Output the list of templated items.
+            $('#' + id).html(output.join(''));
+          }
+        );
+      });
+    });
   }
 });

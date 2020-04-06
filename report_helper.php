@@ -564,6 +564,10 @@ class report_helper extends helper_base {
           self::$website_id
         ), $options['footer']
       );
+      // Allow other modules to hook in.
+      if (function_exists('hostsite_invoke_alter_hooks')) {
+          hostsite_invoke_alter_hooks('iform_user_replacements', $footer);
+      }
       // Merge in any references to the parameters sent to the report: could extend this in the future to pass in the extraParams
       foreach($currentParamValues as $key=>$param){
         $footer = str_replace(array('{'.$key.'}'), array($param), $footer);

@@ -22,13 +22,31 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+ /**
+  * Exception class for request abort.
+  */
 class ElasticsearchProxyAbort extends Exception {
 }
 
+/**
+ * Helper class with library functions to support Elasticsearch proxying.
+ */
 class ElasticsearchProxyHelper {
 
   private static $config;
 
+  private static $confidentialFilterApplied = FALSE;
+
+  private static $releaseStatusFilterApplied = FALSE;
+
+  /**
+   * Route into the functions provided by the proxy.
+   *
+   * @param string $method
+   *   Method name.
+   * @param int $nid
+   *   Node ID.
+   */
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
     if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
@@ -84,6 +102,12 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Returns the URL required to call the Elasticsearch service.
+   *
+   * @return string
+   *   URL.
+   */
   private static function getEsUrl() {
     return self::$config['indicia']['base_url'] . 'index.php/services/rest/' . self::$config['es']['endpoint'];
   }
@@ -162,7 +186,7 @@ class ElasticsearchProxyHelper {
    *
    * Used when querying records for verification.
    */
-  function proxyDoesUserSeeNotifications($nid) {
+  private static function proxyDoesUserSeeNotifications($nid) {
     iform_load_helpers(['VerificationHelper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
@@ -337,11 +361,10 @@ class ElasticsearchProxyHelper {
    * Proxy method to send an email querying a record.
    */
   private static function proxyVerificationQueryEmail() {
-    $fromEmail = $params['email_from_address'];
     $headers = [
       'MIME-Version: 1.0',
       'Content-type: text/html; charset=UTF-8;',
-      'From: ' . $fromEmail,
+      'From: ' . hostsite_get_config_value('site', 'mail', ''),
       'Reply-To: ' . hostsite_get_user_field('mail'),
     ];
     $headers = implode("\r\n", $headers) . PHP_EOL;
@@ -414,9 +437,12 @@ class ElasticsearchProxyHelper {
       throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
     }
     $_ids = [];
-    // Convert Indicia IDs to the document _ids for ES.
+    $sensitive_Ids = [];
+    // Convert Indicia IDs to the document _ids for ES. Also make a 2nd version
+    // for full precision copies of sensitive records.
     foreach ($ids as $id) {
       $_ids[] = self::$config['es']['warehouse_prefix'] . $id;
+      $sensitive_Ids[] = self::$config['es']['warehouse_prefix'] . "$id!";
     }
     $doc = [
       'script' => [
@@ -425,11 +451,17 @@ class ElasticsearchProxyHelper {
       ],
       'query' => [
         'terms' => [
-          '_id' => $_ids,
+          '_id' => $sensitive_Ids,
         ],
       ],
     ];
-    return self::curlPost($url, $doc);
+    // Update index immediately and overwrite update conflicts.
+    // Sensitive records first. This will be an incomplete set, so don't report
+    // the result back.
+    self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
+    // Now normal records/blurred records. This should be a full set.
+    $doc['query']['terms']['_id'] = $_ids;
+    return self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
   }
 
   /**
@@ -471,9 +503,9 @@ class ElasticsearchProxyHelper {
   /**
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
-  private static function curlPost($url, $data) {
+  private static function curlPost($url, $data, $getParams = []) {
     $allowedGetParams = ['filter_path'];
-    $getParams = [];
+    // Additional GET params should only be used if valid for ES.
     foreach ($allowedGetParams as $param) {
       if (!empty($_GET[$param])) {
         $getParams[$param] = $_GET[$param];
@@ -540,7 +572,13 @@ class ElasticsearchProxyHelper {
       'filter' => [],
     ];
     $basicQueryTypes = ['match_all', 'match_none'];
-    $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix'];
+    $fieldQueryTypes = [
+      'term',
+      'match',
+      'match_phrase',
+      'match_phrase_prefix',
+      'exists',
+    ];
     $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
     if (isset($query['textFilters'])) {
@@ -583,7 +621,7 @@ class ElasticsearchProxyHelper {
       unset($query['numericFilters']);
     }
     foreach ($query['bool_queries'] as $qryConfig) {
-      if (!empty($qryConfig['query'])) {
+      if (!empty($qryConfig['query']) && $qryConfig['query'] !== 'null') {
         $queryDef = json_decode(
           str_replace('#value#', $qryConfig['value'], $qryConfig['query']), TRUE
         );
@@ -603,7 +641,7 @@ class ElasticsearchProxyHelper {
         // One of the ES query string based query types.
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
       }
-      if (!empty($qryConfig['nested'])) {
+      if (!empty($qryConfig['nested']) && $qryConfig['nested'] !== 'null') {
         // Must not nested queries should be handled at outer level.
         $outerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must_not' : 'must';
         $innerBoolClause = $qryConfig['bool_clause'] === 'must_not' ? 'must' : $qryConfig['bool_clause'];
@@ -636,6 +674,15 @@ class ElasticsearchProxyHelper {
     }
     if (!empty($query['filter_def'])) {
       self::applyFilterDef($readAuth, $query['filter_def'], $bool);
+    }
+    // Apply default restrictions.
+    if (!self::$confidentialFilterApplied) {
+      // Unless explicitly specified in a filter, hide confidential.
+      $bool['must'][] = ['term' => ['metadata.confidential' => FALSE]];
+    }
+    if (!self::$releaseStatusFilterApplied) {
+      // Unless explicitly specified in a filter, limit to released.
+      $bool['must'][] = ['term' => ['metadata.release_status' => 'R']];
     }
     unset($query['user_filters']);
     unset($query['refresh_user_filters']);
@@ -740,6 +787,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersSurveyList($definition, $bool);
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
+    self::applyUserFiltersAccessRestrictions($definition, $bool);
   }
 
   /**
@@ -799,7 +847,7 @@ class ElasticsearchProxyHelper {
     ]);
     if (!empty($filter)) {
       // Convert the IDs to external keys, stored in ES as taxon_ids.
-      $taxonData = data_entry_helper::get_population_data([
+      $taxonData = helper_base::get_population_data([
         'table' => 'taxa_taxon_list',
         'extraParams' => [
           'view' => 'cache',
@@ -950,7 +998,7 @@ class ElasticsearchProxyHelper {
     if (!empty($filter)) {
       // Convert the location type IDs to terms that are used in the ES
       // document.
-      $typeRows = data_entry_helper::get_population_data([
+      $typeRows = helper_base::get_population_data([
         'table' => 'termlists_term',
         'extraParams' => [
           'id' => $filter,
@@ -1329,6 +1377,83 @@ class ElasticsearchProxyHelper {
           ],
         ],
       ];
+    }
+  }
+
+  /**
+   * Converts an Indicia filter access restrictions to an ES query.
+   *
+   * Covers the following fields:
+   * * confidential
+   * * exclude_sensitive
+   * * release_status.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   */
+  private static function applyUserFiltersAccessRestrictions(array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ['confidential']);
+    if (!empty($filter)) {
+      if ($filter['value'] !== 'all') {
+        $bool['must'][] = [
+          'term' => ['metadata.confidential' => $filter['value'] === 't' ? TRUE : FALSE],
+        ];
+      }
+      self::$confidentialFilterApplied = TRUE;
+    }
+    $filter = self::getDefinitionFilter($definition, ['exclude_sensitive']);
+    if (!empty($filter)) {
+      $bool['must'][] = ['term' => ['metadata.sensitive' => FALSE]];
+    }
+    $filter = self::getDefinitionFilter($definition, ['release_status']);
+    $userId = hostsite_get_user_field('indicia_user_id');
+    if (!empty($filter)) {
+      switch ($filter['value']) {
+        case 'R':
+          // Released.
+          $bool['must'][] = ['term' => ['metadata.release_status' => 'R']];
+          break;
+
+        case 'RM':
+          // Released by other recorders plus my own unreleased records.
+          $bool['must'][] = [
+            'query_string' => ['query' => "metadata.release_status:R OR metadata.created_by_id:$userId"],
+          ];
+          break;
+
+        case 'U':
+          // Unreleased because records belong of a project that has not yet
+          // released the records.
+          $bool['must'][] = ['term' => ['metadata.release_status' => 'U']];
+          break;
+
+        case 'RU':
+          // Released plus unreleased because records belong to a project that
+          // has not yet released the records.
+          $bool['must_not'][] = ['term' => ['metadata.release_status' => 'P']];
+          break;
+
+        case 'P':
+          // Recorder has requested a precheck before release.
+          $bool['must'][] = ['term' => ['metadata.release_status' => 'P']];
+          break;
+
+        case 'RP':
+          // Released plus records where recorder has requested a precheck
+          // before release.
+          $bool['must_not'][] = ['term' => ['metadata.release_status' => 'U']];
+          break;
+
+        case 'A':
+          // All.
+          break;
+
+        default:
+          throw new ElasticsearchProxyAbort("Invalid release_status filter value $filter[value]");
+      }
+      self::$releaseStatusFilterApplied = TRUE;
     }
   }
 
