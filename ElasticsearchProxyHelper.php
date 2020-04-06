@@ -22,9 +22,15 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
+ /**
+  * Exception class for request abort.
+  */
 class ElasticsearchProxyAbort extends Exception {
 }
 
+/**
+ * Helper class with library functions to support Elasticsearch proxying.
+ */
 class ElasticsearchProxyHelper {
 
   private static $config;
@@ -33,6 +39,14 @@ class ElasticsearchProxyHelper {
 
   private static $releaseStatusFilterApplied = FALSE;
 
+  /**
+   * Route into the functions provided by the proxy.
+   *
+   * @param string $method
+   *   Method name.
+   * @param int $nid
+   *   Node ID.
+   */
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
     if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
@@ -88,6 +102,12 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Returns the URL required to call the Elasticsearch service.
+   *
+   * @return string
+   *   URL.
+   */
   private static function getEsUrl() {
     return self::$config['indicia']['base_url'] . 'index.php/services/rest/' . self::$config['es']['endpoint'];
   }
@@ -166,7 +186,7 @@ class ElasticsearchProxyHelper {
    *
    * Used when querying records for verification.
    */
-  function proxyDoesUserSeeNotifications($nid) {
+  private static function proxyDoesUserSeeNotifications($nid) {
     iform_load_helpers(['VerificationHelper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
@@ -417,9 +437,12 @@ class ElasticsearchProxyHelper {
       throw new exception('Unsupported field for update. ' . var_export($_POST['doc'], TRUE));
     }
     $_ids = [];
-    // Convert Indicia IDs to the document _ids for ES.
+    $sensitive_Ids = [];
+    // Convert Indicia IDs to the document _ids for ES. Also make a 2nd version
+    // for full precision copies of sensitive records.
     foreach ($ids as $id) {
       $_ids[] = self::$config['es']['warehouse_prefix'] . $id;
+      $sensitive_Ids[] = self::$config['es']['warehouse_prefix'] . "$id!";
     }
     $doc = [
       'script' => [
@@ -428,11 +451,17 @@ class ElasticsearchProxyHelper {
       ],
       'query' => [
         'terms' => [
-          '_id' => $_ids,
+          '_id' => $sensitive_Ids,
         ],
       ],
     ];
-    return self::curlPost($url, $doc, ['refresh' => 'true']);
+    // Update index immediately and overwrite update conflicts.
+    // Sensitive records first. This will be an incomplete set, so don't report
+    // the result back.
+    self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
+    // Now normal records/blurred records. This should be a full set.
+    $doc['query']['terms']['_id'] = $_ids;
+    return self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
   }
 
   /**
@@ -476,6 +505,7 @@ class ElasticsearchProxyHelper {
    */
   private static function curlPost($url, $data, $getParams = []) {
     $allowedGetParams = ['filter_path'];
+    // Additional GET params should only be used if valid for ES.
     foreach ($allowedGetParams as $param) {
       if (!empty($_GET[$param])) {
         $getParams[$param] = $_GET[$param];
@@ -542,7 +572,13 @@ class ElasticsearchProxyHelper {
       'filter' => [],
     ];
     $basicQueryTypes = ['match_all', 'match_none'];
-    $fieldQueryTypes = ['term', 'match', 'match_phrase', 'match_phrase_prefix', 'exists'];
+    $fieldQueryTypes = [
+      'term',
+      'match',
+      'match_phrase',
+      'match_phrase_prefix',
+      'exists',
+    ];
     $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
     if (isset($query['textFilters'])) {
