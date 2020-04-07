@@ -995,7 +995,9 @@ JS;
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
-    hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+    if (function_exists('hostsite_show_message')) {
+      hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+    }
     $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
         $downloadInstructions .
         " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
@@ -1021,7 +1023,9 @@ JS;
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, TRUE);
       if ($output['problems'] > 0) {
         $class = 'upload-results-errors';
-        hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+        if (function_exists('hostsite_show_message')) {
+          hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+        }
         $downloadInstructions = lang::get('partial_commits_download_error_file_instructions');
         $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
           $downloadInstructions .
