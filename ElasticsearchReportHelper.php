@@ -641,12 +641,12 @@ HTML;
    *   Empty string as no HTML required.
    */
   public static function source(array $options) {
-    self::applyReplacements($options, ['aggregation'], ['aggregation']);
+    self::applyReplacements($options, ['aggregation', 'countAggregation'], ['aggregation', 'countAggregation']);
     self::checkOptions(
       'source',
       $options,
       ['id'],
-      ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
+      ['aggregation', 'countAggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
     );
     $options = array_merge([
       'aggregationMapMode' => 'geoHash',
@@ -658,6 +658,7 @@ HTML;
       'sort',
       'filterPath',
       'aggregation',
+      'countAggregation',
       'aggregationMapMode',
       'buildTableXY',
       'initialMapBounds',
