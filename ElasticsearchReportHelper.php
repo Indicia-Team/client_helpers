@@ -304,13 +304,20 @@ JS;
     ], $options);
     $columnsByField = [];
     foreach ($options['columns'] as $columnDef) {
-      if (empty($columnDef['field'])) {
+      $valid = !empty($columnDef['field']);
+      if ($options['aggregation'] && $options['aggregation'] === 'autoAggregationTable') {
+        $valid = $valid || !empty($columnDef['agg']);
+        if (empty($columnDef['agg'])) {
+          $columnDef['path'] = 'fieldlist.hits.hits.0._source';
+        }
+      }
+      if (!$valid) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
       }
       if (!isset($columnDef['caption'])) {
         $columnDef['caption'] = '';
       }
-      $field = $columnDef['field'];
+      $field = empty($columnDef['agg']) ? $columnDef['field'] : $columnDef['agg'];
       unset($columnDef['field']);
       $columnsByField[$field] = $columnDef;
     }
@@ -641,7 +648,11 @@ HTML;
    *   Empty string as no HTML required.
    */
   public static function source(array $options) {
-    self::applyReplacements($options, ['aggregation', 'countAggregation'], ['aggregation', 'countAggregation']);
+    self::applyReplacements(
+      $options,
+      ['aggregation', 'countAggregation', 'autoAggregationTable'],
+      ['aggregation', 'countAggregation', 'autoAggregationTable']
+    );
     self::checkOptions(
       'source',
       $options,
@@ -659,6 +670,7 @@ HTML;
       'filterPath',
       'aggregation',
       'countAggregation',
+      'autoAggregationTable',
       'aggregationMapMode',
       'buildTableXY',
       'initialMapBounds',
