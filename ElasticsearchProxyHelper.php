@@ -456,12 +456,16 @@ class ElasticsearchProxyHelper {
       ],
     ];
     // Update index immediately and overwrite update conflicts.
-    // Sensitive records first. This will be an incomplete set, so don't report
-    // the result back.
-    self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
-    // Now normal records/blurred records. This should be a full set.
+    // Sensitive records first.
+    $r1 = self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
+    $r1js = json_decode($r1);
+    // Now normal records/blurred records.
     $doc['query']['terms']['_id'] = $_ids;
-    return self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
+    $r2 = self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
+    $r2js = json_decode($r2);
+    // Since the verification alias can only see 1 copy of each record (e.g.
+    // full precision), combine the totals to report the total records changed.
+    return json_encode(['updated' => $r1js->updated + $r2js->updated]);
   }
 
   /**
