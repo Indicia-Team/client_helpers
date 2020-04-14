@@ -305,7 +305,7 @@ JS;
     $columnsByField = [];
     foreach ($options['columns'] as $columnDef) {
       $valid = !empty($columnDef['field']);
-      if ($options['aggregation'] && $options['aggregation'] === 'autoAggregationTable') {
+      if (isset($options['aggregation']) && $options['aggregation'] === 'autoAggregationTable') {
         $valid = $valid || !empty($columnDef['agg']);
         if (empty($columnDef['agg'])) {
           $columnDef['path'] = 'fieldlist.hits.hits.0._source';
