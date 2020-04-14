@@ -896,6 +896,7 @@ HTML;
     helper_base::$indiciaData['siteEmail'] = $siteEmail;
     helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
     if (isset($options['enableWorkflow']) && $options['enableWorkflow']) {
+      iform_load_helpers(['VerificationHelper']);
       VerificationHelper::fetchTaxaWithLoggedCommunications($options['readAuth']);
     }
     $optionalLinkArray = [];
