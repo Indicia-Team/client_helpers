@@ -792,6 +792,7 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersInputFormList($definition, $bool);
     self::applyUserFiltersGroupId($definition, $bool);
     self::applyUserFiltersAccessRestrictions($definition, $bool);
+    self::applyUserFiltersTaxaScratchpadList($definition, $bool, $readAuth);
   }
 
   /**
@@ -1458,6 +1459,41 @@ class ElasticsearchProxyHelper {
           throw new ElasticsearchProxyAbort("Invalid release_status filter value $filter[value]");
       }
       self::$releaseStatusFilterApplied = TRUE;
+    }
+  }
+
+  /**
+   * Converts a filter definition taxa_scratchpad_list_id to an ES query.
+   *
+   * Finds all records for a list of taxa (using external_key as unique ID),
+   * including taxonomic children.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyUserFiltersTaxaScratchpadList(array $definition, array &$bool, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, [
+      'taxa_scratchpad_list_id',
+    ]);
+    if (!empty($filter)) {
+      // Convert the IDs to external keys, stored in ES as taxon_ids.
+      $taxonData = data_entry_helper::get_report_data([
+        'dataSource' => '/library/taxa/external_keys_for_scratchpad',
+        'extraParams' => [
+          'scratchpad_list_id' => $filter['value'],
+        ],
+        'readAuth' => $readAuth,
+        'caching' => TRUE,
+      ]);
+      $keys = [];
+      foreach ($taxonData as $taxon) {
+        $keys[] = $taxon['external_key'];
+      }
+      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
     }
   }
 
