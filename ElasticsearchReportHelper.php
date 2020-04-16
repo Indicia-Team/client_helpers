@@ -304,13 +304,20 @@ JS;
     ], $options);
     $columnsByField = [];
     foreach ($options['columns'] as $columnDef) {
-      if (empty($columnDef['field'])) {
+      $valid = !empty($columnDef['field']);
+      if (isset($options['aggregation']) && $options['aggregation'] === 'autoAggregationTable') {
+        $valid = $valid || !empty($columnDef['agg']);
+        if (empty($columnDef['agg'])) {
+          $columnDef['path'] = 'fieldlist.hits.hits.0._source';
+        }
+      }
+      if (!$valid) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
       }
       if (!isset($columnDef['caption'])) {
         $columnDef['caption'] = '';
       }
-      $field = $columnDef['field'];
+      $field = empty($columnDef['agg']) ? $columnDef['field'] : $columnDef['agg'];
       unset($columnDef['field']);
       $columnsByField[$field] = $columnDef;
     }
@@ -641,12 +648,16 @@ HTML;
    *   Empty string as no HTML required.
    */
   public static function source(array $options) {
-    self::applyReplacements($options, ['aggregation'], ['aggregation']);
+    self::applyReplacements(
+      $options,
+      ['aggregation', 'countAggregation', 'autoAggregationTable'],
+      ['aggregation', 'countAggregation', 'autoAggregationTable']
+    );
     self::checkOptions(
       'source',
       $options,
       ['id'],
-      ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
+      ['aggregation', 'countAggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
     );
     $options = array_merge([
       'aggregationMapMode' => 'geoHash',
@@ -658,6 +669,8 @@ HTML;
       'sort',
       'filterPath',
       'aggregation',
+      'countAggregation',
+      'autoAggregationTable',
       'aggregationMapMode',
       'buildTableXY',
       'initialMapBounds',
@@ -883,6 +896,7 @@ HTML;
     helper_base::$indiciaData['siteEmail'] = $siteEmail;
     helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
     if (isset($options['enableWorkflow']) && $options['enableWorkflow']) {
+      iform_load_helpers(['VerificationHelper']);
       VerificationHelper::fetchTaxaWithLoggedCommunications($options['readAuth']);
     }
     $optionalLinkArray = [];

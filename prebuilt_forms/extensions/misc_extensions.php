@@ -741,24 +741,9 @@ JS;
   }
 
   /**
-   * Undocumented function
+   * Displays information about locations found under a map click point.
    *
-   * @param array $options
-   *   Options array with the following options:
-   *   * id - HTML id attribute for the div which will contain the location
-   *     details. A unique default will be assigned if not specified.
-   *   * template - HTML to output for each intersecting location. Field
-   *     value replacement tokens are specified as {{ fieldname }}. The
-   *     following fields are available:
-   *     * location_id
-   *     * name
-   *     * comment
-   *     * location_type_id
-   *     * location_type
-   *     * centroid_sref
-   *     * centroid_sref_system
-   *   * locationTypeIds - an array of location type IDs to consider when
-   *     looking for locations which intersect the click point.
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-forms.html#misc-extensions-query-locations-on-map-click
    *
    * @return string
    *   HTML for the control's container.
