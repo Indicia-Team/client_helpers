@@ -249,7 +249,7 @@ class iform_sectioned_transects_edit_transect {
   protected static function extract_attr(&$attributes, $caption, $unset=true) {
   	$found=false;
   	foreach($attributes as $idx => $attr) {
-  		if (strcasecmp($attr['caption'], $caption)===0) { // should this be untranslated?
+  	  if (strcasecmp($attr['untranslatedCaption'], $caption)===0) {
   			// found will pick up just the first one
   			if (!$found)
   				$found=$attr;

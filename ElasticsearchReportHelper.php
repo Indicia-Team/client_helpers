@@ -255,6 +255,7 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+    helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
   }
@@ -290,7 +291,7 @@ JS;
       'dataGrid',
       $options,
       ['source'],
-      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources']
+      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources', 'rowClasses']
     );
     if (empty($options['columns'])) {
       throw new Exception('Control [dataGrid] requires a parameter called @columns.');
@@ -303,13 +304,20 @@ JS;
     ], $options);
     $columnsByField = [];
     foreach ($options['columns'] as $columnDef) {
-      if (empty($columnDef['field'])) {
+      $valid = !empty($columnDef['field']);
+      if (isset($options['aggregation']) && $options['aggregation'] === 'autoAggregationTable') {
+        $valid = $valid || !empty($columnDef['agg']);
+        if (empty($columnDef['agg'])) {
+          $columnDef['path'] = 'fieldlist.hits.hits.0._source';
+        }
+      }
+      if (!$valid) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
       }
       if (!isset($columnDef['caption'])) {
         $columnDef['caption'] = '';
       }
-      $field = $columnDef['field'];
+      $field = empty($columnDef['agg']) ? $columnDef['field'] : $columnDef['agg'];
       unset($columnDef['field']);
       $columnsByField[$field] = $columnDef;
     }
@@ -352,6 +360,7 @@ JS;
       'sourceTable',
       'scrollY',
       'applyFilterRowToSources',
+      'rowClasses',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcDataGrid({});
@@ -374,14 +383,14 @@ JS;
       ['addColumns', 'removeColumns']
     );
     global $indicia_templates;
-    $r = str_replace(
+    $html = str_replace(
       [
         '{id}',
         '{title}',
         '{class}',
         '{caption}',
       ], [
-        $options['id'],
+        "$options[id]-button",
         lang::get('Run the download'),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
         lang::get('Download'),
@@ -405,13 +414,12 @@ JS;
 </div>
 
 HTML;
-    $r .= str_replace(
+    $html .= str_replace(
       [
         '{attrs}',
         '{col-1}',
         '{col-2}',
-      ],
-      [
+      ], [
         '',
         $progress,
         '<div class="idc-download-files"><h2>' . lang::get('Files') . ':</h2></div>',
@@ -426,11 +434,12 @@ HTML;
       'addColumns',
       'removeColumns',
     ], empty($options['attachToId']));
+    $r = self::getControlContainer('esDownload', $options, $dataOptions, $html);
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcEsDownload({});
 
 JS;
-    return self::getControlContainer('esDownload', $options, $dataOptions, $r);
+    return $r;
   }
 
   /**
@@ -639,12 +648,16 @@ HTML;
    *   Empty string as no HTML required.
    */
   public static function source(array $options) {
-    self::applyReplacements($options, ['aggregation'], ['aggregation']);
+    self::applyReplacements(
+      $options,
+      ['aggregation', 'countAggregation', 'autoAggregationTable'],
+      ['aggregation', 'countAggregation', 'autoAggregationTable']
+    );
     self::checkOptions(
       'source',
       $options,
       ['id'],
-      ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
+      ['aggregation', 'countAggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
     );
     $options = array_merge([
       'aggregationMapMode' => 'geoHash',
@@ -656,6 +669,8 @@ HTML;
       'sort',
       'filterPath',
       'aggregation',
+      'countAggregation',
+      'autoAggregationTable',
       'aggregationMapMode',
       'buildTableXY',
       'initialMapBounds',

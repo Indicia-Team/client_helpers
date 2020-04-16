@@ -1611,15 +1611,21 @@ JS;
       'id' => 'jsonwidget_container',
       'fieldname' => 'jsonwidget',
       'schema' => '{}',
-      'class'=> ''
+      'class' => '',
+      'default' => '',
     ), $options);
     $options['class'] = trim($options['class'].' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    extract($options, EXTR_PREFIX_ALL, 'opt');
-    if (!isset($opt_default)) $opt_default = '';
-    $opt_default = str_replace(array("\r","\n", "'"), array('\r','\n',"\'"), $opt_default);
-    self::$javascript .= "$('#".$options['id']."').jsonedit({schema: $opt_schema, default: '$opt_default', fieldname: \"$opt_fieldname\"});\n";
+    $options['default'] = str_replace(array("\\n", "\r", "\n", "'"), array('\\\n', '\r','\n',"\'"), $options['default']);
+    self::$javascript .= <<<JS
+$('#$options[id]').jsonedit({
+  schema: $options[schema],
+  default: '$options[default]',
+  fieldname: '$options[fieldname]'
+});
+
+JS;
 
     return self::apply_template('jsonwidget', $options);
   }
@@ -5651,113 +5657,6 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   }
 
   /**
-   * Issue a post request to get the population data required for a control either from
-   * direct access to a data entity (table) or via a report query. The response will be cached
-   * locally unless the caching option is set to false.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>table</b><br/>
-   * Singular table name used when loading from a database entity.
-   * </li>
-   * <li><b>report</b><br/>
-   * Path to the report file to use when loading data from a report, e.g. "library/occurrences/explore_list",
-   * excluding the .xml extension.
-   * </li>
-   * <li><b>orderby</b><br/>
-   * Optional. For a non-default sort order, provide the field name to sort by. Can be comma separated
-   * to sort by several fields in descending order of precedence.
-   * </li>
-   * <li><b>sortdir</b><br/>
-   * Optional. Specify ASC or DESC to define ascending or descending sort order respectively. Can
-   * be comma separated if several sort fields are specified in the orderby parameter.
-   * </li>
-   * <li><b>extraParams</b><br/>
-   * Array of extra URL parameters to send with the web service request. Should include key value
-   * pairs for the field filters (for table data) or report parameters (for the report data) as well
-   * as the read authorisation tokens. Can also contain a parameter for:
-   * orderby - for a non-default sort order, provide the field name to sort by. Can be comma separated
-   * to sort by several fields in descending order of precedence.
-   * sortdir - specify ASC or DESC to define ascending or descending sort order respectively. Can
-   * be comma separated if several sort fields are specified in the orderby parameter.
-   * limit - number of records to return.
-   * offset - number of records to offset by into the dataset, useful when paginating through the
-   * records.
-   * view - use to specify which database view to load for an entity (e.g. list, detail, gv or cache).
-   * Defaults to list.
-   * </li>
-   * <li><b>caching</b>
-   * If true, then the response will be cached and the cached copy used for future calls. Default true.
-   * If 'store' then although the response is not fetched from a cache, the response will be stored in the cache for possible
-   * later use. Replaces the legacy nocache parameter.
-   * </li>
-   * <li><b>sharing</b><br/>
-   * Optional. Set to verification, reporting, peer_review, moderation, data_flow or editing to request
-   * data sharing with other websites for the task. Further information is given in the link below.
-   * </li>
-   * </ul>
-   * @link https://indicia-docs.readthedocs.org/en/latest/developing/web-services/data-services-entity-list.html
-   * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
-   */
-  public static function get_population_data($options) {
-    $useQueryParam = FALSE;
-    if (isset($options['report']))
-      $serviceCall = 'report/requestReport?report='.$options['report'].'.xml&reportSource=local&mode=json';
-    elseif (isset($options['table'])) {
-      $useQueryParam = $options['table'] !== 'taxa_search';
-      $serviceCall = 'data/'.$options['table'].'?mode=json';
-      if (isset($options['columns']))
-        $serviceCall .= '&columns='.$options['columns'];
-    }
-    $request = "index.php/services/$serviceCall";
-    if (array_key_exists('extraParams', $options)) {
-      // make a copy of the extra params
-      $params = array_merge($options['extraParams']);
-      // process them to turn any array parameters into a query parameter for the service call
-      $filterToEncode = array('where'=>array(array()));
-      $otherParams = array();
-      // For data services calls to entities (i.e. not taxa_search), array
-      // parameters need to be modified into a query parameter.
-      if ($useQueryParam) {
-        foreach($params as $param=>$value) {
-          if (is_array($value))
-            $filterToEncode['in'] = array($param, $value);
-          elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
-            // these params are not filters, so can't go in the query
-            $otherParams[$param] = $value;
-          else
-            $filterToEncode['where'][0][$param] = $value;
-        }
-      }
-      // use advanced querying technique if we need to
-      if (isset($filterToEncode['in']))
-        $request .= '&query='.urlencode(json_encode($filterToEncode)).'&'.self::array_to_query_string($otherParams, true);
-      else
-        $request .= '&'.self::array_to_query_string($options['extraParams'], true);
-    }
-    if (isset($options['sharing']))
-      $request .= '&sharing='.$options['sharing'];
-    if (isset($options['attrs']))
-      $request .= '&attrs='.$options['attrs'];
-    if (!isset($options['caching']))
-      $options['caching'] = true; // default
-    return self::getCachedServicesCall($request, $options);
-  }
-
-  /**
-   * Helper function to clear the Indicia cache files.
-   */
-  public static function clear_cache() {
-    $cacheFolder = parent::$cache_folder ? parent::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    if(!$dh = @opendir($cacheFolder)) {
-      return;
-    }
-    while (false !== ($obj = readdir($dh))) {
-      if($obj != '.' && $obj != '..')
-        @unlink($cacheFolder . '/' . $obj);
-    }
-    closedir($dh);
-  }
-
-  /**
    * Internal function to output either a select or listbox control depending on the templates
    * passed.
    * @param array $options Control options array
@@ -5926,8 +5825,8 @@ HTML;
   private static function initLinkedLists($options) {
     global $indicia_templates;
     // setup JavaScript to do the population when the parent control changes
-    $parentControlId = str_replace(':', '\\\\:', $options['parentControlId']);
-    $escapedId = str_replace(':','\\\\:', $options['id']);
+    $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
+    $escapedId = str_replace(':','\\:', $options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
@@ -7825,6 +7724,7 @@ TXT;
           unset($item['default']);
         }
         $r .= self::internalOutputAttribute($item, $options);
+        unset($options['default']);
       }
       return "$r</label>";
     }
@@ -7881,7 +7781,8 @@ TXT;
         if (isset($item['control_type']) &&
           ($item['control_type']=='text_input' || $item['control_type']=='textarea'
             || $item['control_type']=='postcode_textbox' || $item['control_type']=='time_input'
-            || $item['control_type']=='hidden_text' || $item['control_type']=='complex_attr_grid' )) {
+            || $item['control_type']=='hidden_text' || $item['control_type']=='complex_attr_grid'
+            || $item['control_type']=='autocomplete' || $item['control_type']=='species_autocomplete')) {
           $ctrl = $item['control_type'];
         } else {
           $ctrl = 'text_input';
@@ -8277,7 +8178,7 @@ HTML;
     // extract the codes and make lowercase
     $systems=unserialize(strtolower(serialize(array_keys($systems))));
     // find the systems that have client-side JavaScript handlers
-    $handlers = array_intersect($systems, array('osgb','osie','4326'));
+    $handlers = array_intersect($systems, array('osgb','osie','4326','2169'));
     self::get_resources();
     foreach ($handlers as $code) {
       // dynamically find a resource to link us to the handler js file.

@@ -149,6 +149,31 @@ class iform_importer {
         'type' => 'boolean',
         'default' => FALSE
       ),
+      [
+        'name' => 'existingRecordLookupMethod',
+        'caption' => 'Existing record lookup method',
+        'description' => 'If a fixed method of looking up an existing record is required rather than allowing user ' .
+          'selection then choose it here',
+        'required' => FALSE,
+        'type' => 'select',
+        'options' => [
+          'Occurrence: Occurrence ID' => 'Occurrence: Occurrence ID',
+          'Occurrence: Occurrence External Key' => 'Occurrence: Occurrence External Key',
+          'Occurrence: Sample and Taxon' => 'Occurrence: Sample and Taxon',
+          'Sample: Sample ID' => 'Sample: Sample ID',
+          'Sample: Sample External Key' => 'Sample: Sample External Key',
+          'Sample: Grid Ref and Date' => 'Sample: Grid Ref and Date',
+          'Sample: Location Record and Date' => 'Sample: Location Record and Date',
+        ],
+      ],
+      [
+        'name' => 'existingRecordLookupMethodCustom',
+        'caption' => 'Custom existing record lookup method',
+        'description' => 'To specify a lookup method for existing records that is not covered in the list above, ' .
+          'paste its JSON here.',
+        'required' => FALSE,
+        'type' => 'textarea',
+      ],
       array(
         'name' => 'importMergeFields',
         'caption' => 'Merge Field mappings',
@@ -231,6 +256,17 @@ class iform_importer {
           }]
         }'
       ),
+      [
+        'name' => 'embedReupload',
+        'caption' => 'Embed reupload form in last page',
+        'description' => 'Use this option to control whether the last page, shown after an import, includes an embedded form for uploading another file or not.',
+        'type' => 'select',
+        'options' => [
+          0 => 'No embedded form, provide link back to upload page',
+          1 => 'Provide embedded upload form after an import that resulted in errors',
+          2 => 'Provide embedded upload form after any import',
+        ],
+      ],
       array(
         'name' => 'synonymProcessing',
         'caption' => 'Synonym Processing',
@@ -318,7 +354,7 @@ class iform_importer {
     if (empty($args['importPreventCommitBehaviour']))
       $args['importPreventCommitBehaviour']='partial_import';
     if (empty($args['importSampleLogic']))
-      $args['importSampleLogic']='consecutive_rows'; 
+      $args['importSampleLogic']='consecutive_rows';
     iform_load_helpers(array('import_helper'));
     // apply defaults
     $args = array_merge(array(
@@ -371,7 +407,9 @@ class iform_importer {
     if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training'))
       $presets['occurrence:training'] = 't';
     try {
-      $options = array(
+      $existingRecordLookupMethod = empty($args['existingRecordLookupMethod']) ?
+        $args['existingRecordLookupMethodCustom'] : self::lookupConfig($args['existingRecordLookupMethod']);
+      $options = [
         'model' => $model,
         'auth' => $auth,
         'presetSettings' => $presets,
@@ -380,12 +418,14 @@ class iform_importer {
         'fieldMap' => empty($args['fieldMap']) ? array() : json_decode($args['fieldMap'], TRUE),
         'onlyAllowMappedFields' => $args['onlyAllowMappedFields'],
         'skipMappingIfPossible' => $args['skipMappingIfPossible'],
+        'existingRecordLookupMethod' => $existingRecordLookupMethod,
         'importPreventCommitBehaviour' => $args['importPreventCommitBehaviour'],
         'importSampleLogic' => $args['importSampleLogic'],
         'importMergeFields' => $args['importMergeFields'],
         'synonymProcessing' => $args['synonymProcessing'],
         'switches' => array('activate_global_sample_method' => 't'),
-      );
+        'embed_reupload' => isset($args['embedReupload']) ? $args['embedReupload'] : EMBED_REUPLOAD_OFF,
+      ];
       $r = import_helper::importer($options);
     }
     catch (Exception $e) {
@@ -397,5 +437,48 @@ class iform_importer {
       $r = "<p>" . lang::get('Would you like to ') . "<a href=\"$reloadpath\">" . lang::get('import another file?') . "</a></p>";
     }
     return $r;
+  }
+
+  /**
+   * Retrieve the configuration required for existing record lookups.
+   */
+  private static function lookupConfig($method) {
+    $arr = [
+      'Occurrence: Occurrence ID' => json_encode([
+        ['fieldName' => 'website_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'occurrence:id'],
+      ]),
+      'Occurrence: Occurrence External Key' => json_encode([
+        ['fieldName' => 'website_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'occurrence:external_key'],
+      ]),
+      'Occurrence: Sample and Taxon' => json_encode([
+        ['fieldName' => 'website_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'occurrence:sample_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'occurrence:taxa_taxon_list_id'],
+      ]),
+      'Sample: Sample ID' => json_encode([
+        ['fieldName' => 'survey_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'sample:id'],
+      ]),
+      'Sample: Sample External Key' => json_encode([
+        ['fieldName' => 'survey_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'sample:sample_method_id'],
+        ['fieldName' => 'sample:external_key'],
+      ]),
+      'Sample: Grid Ref and Date' => json_encode([
+        ['fieldName' => 'survey_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'sample:sample_method_id'],
+        ['fieldName' => 'sample:entered_sref'],
+        ['fieldName' => 'sample:date'],
+      ]),
+      'Sample: Location Record and Date' => json_encode([
+        ['fieldName' => 'survey_id', 'notInMappings' => TRUE],
+        ['fieldName' => 'sample:sample_method_id'],
+        ['fieldName' => 'sample:location_id'],
+        ['fieldName' => 'sample:date'],
+      ]),
+    ];
+    return $arr[$method];
   }
 }

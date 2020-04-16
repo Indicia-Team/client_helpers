@@ -133,7 +133,7 @@ class iform_group_locations {
         'urlParams' => array(
           'group_id' => $_GET['group_id'],
           'filter-location_id' => '{location_id}',
-          'filter-date-age' => ''
+          'filter-date_age' => ''
         )
       );
 

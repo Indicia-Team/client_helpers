@@ -863,6 +863,8 @@ JS;
             'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
         'georeference_default_indicia_locations' => array(
             'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
+        'sref_handlers_2169' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/2169.js')),
         'sref_handlers_4326' => array(
             'javascript' => array(self::$js_path.'drivers/sref/4326.js')),
         'sref_handlers_osgb' => array(
@@ -2484,6 +2486,98 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     $template = str_replace('{class}', $indicia_templates['error_class'], $indicia_templates['validation_message']);
     $template = str_replace('{for}', $fieldname, $template);
     return str_replace('{error}', lang::get($error), $template);
+  }
+
+  /**
+   * Issue a post request to get the population data required for a control either from
+   * direct access to a data entity (table) or via a report query. The response will be cached
+   * locally unless the caching option is set to false.
+   * @param array $options Options array with the following possibilities:<ul>
+   * <li><b>table</b><br/>
+   * Singular table name used when loading from a database entity.
+   * </li>
+   * <li><b>report</b><br/>
+   * Path to the report file to use when loading data from a report, e.g. "library/occurrences/explore_list",
+   * excluding the .xml extension.
+   * </li>
+   * <li><b>orderby</b><br/>
+   * Optional. For a non-default sort order, provide the field name to sort by. Can be comma separated
+   * to sort by several fields in descending order of precedence.
+   * </li>
+   * <li><b>sortdir</b><br/>
+   * Optional. Specify ASC or DESC to define ascending or descending sort order respectively. Can
+   * be comma separated if several sort fields are specified in the orderby parameter.
+   * </li>
+   * <li><b>extraParams</b><br/>
+   * Array of extra URL parameters to send with the web service request. Should include key value
+   * pairs for the field filters (for table data) or report parameters (for the report data) as well
+   * as the read authorisation tokens. Can also contain a parameter for:
+   * orderby - for a non-default sort order, provide the field name to sort by. Can be comma separated
+   * to sort by several fields in descending order of precedence.
+   * sortdir - specify ASC or DESC to define ascending or descending sort order respectively. Can
+   * be comma separated if several sort fields are specified in the orderby parameter.
+   * limit - number of records to return.
+   * offset - number of records to offset by into the dataset, useful when paginating through the
+   * records.
+   * view - use to specify which database view to load for an entity (e.g. list, detail, gv or cache).
+   * Defaults to list.
+   * </li>
+   * <li><b>caching</b>
+   * If true, then the response will be cached and the cached copy used for future calls. Default true.
+   * If 'store' then although the response is not fetched from a cache, the response will be stored in the cache for possible
+   * later use. Replaces the legacy nocache parameter.
+   * </li>
+   * <li><b>sharing</b><br/>
+   * Optional. Set to verification, reporting, peer_review, moderation, data_flow or editing to request
+   * data sharing with other websites for the task. Further information is given in the link below.
+   * </li>
+   * </ul>
+   * @link https://indicia-docs.readthedocs.org/en/latest/developing/web-services/data-services-entity-list.html
+   * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
+   */
+  public static function get_population_data($options) {
+    $useQueryParam = FALSE;
+    if (isset($options['report']))
+      $serviceCall = 'report/requestReport?report='.$options['report'].'.xml&reportSource=local&mode=json';
+    elseif (isset($options['table'])) {
+      $useQueryParam = $options['table'] !== 'taxa_search';
+      $serviceCall = 'data/'.$options['table'].'?mode=json';
+      if (isset($options['columns']))
+        $serviceCall .= '&columns='.$options['columns'];
+    }
+    $request = "index.php/services/$serviceCall";
+    if (array_key_exists('extraParams', $options)) {
+      // make a copy of the extra params
+      $params = array_merge($options['extraParams']);
+      // process them to turn any array parameters into a query parameter for the service call
+      $filterToEncode = array('where'=>array(array()));
+      $otherParams = array();
+      // For data services calls to entities (i.e. not taxa_search), array
+      // parameters need to be modified into a query parameter.
+      if ($useQueryParam) {
+        foreach($params as $param=>$value) {
+          if (is_array($value))
+            $filterToEncode['in'] = array($param, $value);
+          elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
+            // these params are not filters, so can't go in the query
+            $otherParams[$param] = $value;
+          else
+            $filterToEncode['where'][0][$param] = $value;
+        }
+      }
+      // use advanced querying technique if we need to
+      if (isset($filterToEncode['in']))
+        $request .= '&query='.urlencode(json_encode($filterToEncode)).'&'.self::array_to_query_string($otherParams, true);
+      else
+        $request .= '&'.self::array_to_query_string($options['extraParams'], true);
+    }
+    if (isset($options['sharing']))
+      $request .= '&sharing='.$options['sharing'];
+    if (isset($options['attrs']))
+      $request .= '&attrs='.$options['attrs'];
+    if (!isset($options['caching']))
+      $options['caching'] = true; // default
+    return self::getCachedServicesCall($request, $options);
   }
 
   /**

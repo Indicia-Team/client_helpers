@@ -17,9 +17,6 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
-indiciaData.unassignedLocationLayer = false;
-indiciaData.myLocationLayer = false;
-indiciaData.othersLocationLayer = false;
 indiciaData.holidayLocationLayer = false;
 
 (function ($) {
@@ -54,7 +51,7 @@ indiciaData.holidayLocationLayer = false;
           return true;
         });
         $.each(data, function(_idx, site) {
-
+          // only display sites that are flagged as holiday
           if (site['attr_location_' + indiciaData.holiday_attr_id] === null || !site['attr_location_' + indiciaData.holiday_attr_id]) {
             return true;
           }
@@ -76,8 +73,12 @@ indiciaData.holidayLocationLayer = false;
             site['feature'].attributes.name = site.name;
             site['feature'].attributes.id = site.location_id;
             site['feature'].attributes.isAssignee = isAssignee;
-            if(isAssignee) {
+            site['feature'].attributes.assigned = (assignees.length > 0);
+            if (isAssignee) {
               site['feature'].renderIntent = 'mine';
+            }
+            else if (assignees.length > 0) {
+              site['feature'].renderIntent = 'others';
             }
             indiciaData.holidayLocationLayer.addFeatures([site['feature']]); // features added even if too many for list
           }
@@ -109,21 +110,23 @@ indiciaData.holidayLocationLayer = false;
     if (features.length === 0)
       return;
 
+    // sort into nearest first.
     $.each(features, function(_idx, feature) {
       feature.attributes.featureDistance = Math.round(feature.geometry.clone().transform(indiciaData.holidayLocationLayer.map.projection, 'EPSG:27700').distanceTo(mapCentre));
     });
     features.sort(function(a, b) {
       return a.attributes.featureDistance - b.attributes.featureDistance;
     });
+
     $.each(features, function(_idx, feature) {
 
       var runningTotal = $('#featureTableBody tr').length,
           row = '<td>' +
-                (typeof indiciaData.user_id === 'undefined' ? feature.attributes.name :
+                (typeof indiciaData.user_id === 'undefined' || indiciaData.user_id===0 ? feature.attributes.name :
                   '<a target="_blank" href="' + indiciaData.siteDetails + '?id=' + feature.attributes.id + '">' + feature.attributes.name + '</a>') +
                 '</td>';
 
-      // make sure that we can see the nearest holiday square. Data has been sorted into nearest first.
+      // make sure that we can at least see the nearest holiday square. Data has been sorted into nearest first.
       if(_idx === 0) { // Only zoom if the closest (first due to sorting) holiday square is outside the bounds.
         if(!bounds.containsBounds(feature.geometry.getBounds())) {
           bounds.extend(feature.geometry.getCentroid());
@@ -145,13 +148,26 @@ indiciaData.holidayLocationLayer = false;
 
       row = row + '<td>' + feature.attributes.featureDistance + 'm</td>';
 
-      if(typeof indiciaData.user_id === 'undefined' || indiciaData.user_id===0) {
-         row = row + /* '<td>Yes</td>' + */ '<td></td><td>Please login/register before requesting a holiday square.</td>';
-      } else if(feature.attributes.isAssignee) {
-         row = row + /* '<td>Yes</td>' + */ '<td>Assigned to you</td>' + buildAction('unassign_holiday', 'Unassign', feature, indiciaData.userID, true);
+      if(feature.attributes.isAssignee) {
+        row = row + '<td>Assigned to you</td>';
+      } else if(feature.attributes.assigned) {
+        if(typeof indiciaData.user_id === 'undefined' || indiciaData.user_id===0) {
+          row = row + '<td>Assigned to someone</td>';
+        } else {
+          row = row + '<td>Assigned to someone else</td>';
+        }
       } else {
-         row = row + /* '<td>Yes</td>' + */ '<td>Not assigned to you</td>' + buildAction('assign_holiday', 'Assign', feature, indiciaData.userID, true);
+        row = row + '<td>Not assigned</td>';
       }
+      
+      if(typeof indiciaData.user_id === 'undefined' || indiciaData.user_id===0) {
+        row = row + '<td>Please login/register before requesting a holiday square.</td>';
+      } else if(feature.attributes.isAssignee) {
+        row = row + buildAction('unassign_holiday', 'Unassign', feature, indiciaData.userID, true);
+      } else {
+        row = row + buildAction('assign_holiday', 'Assign to you', feature, indiciaData.userID, true);
+      }
+      
       if(runningTotal < indiciaData.limit) {
         $('#featureTableBody').append('<tr' + ($('#featureTableBody tr').length % 2 ? '' : ' class="odd"') + '>' + row + '</tr>');
       }
@@ -166,15 +182,10 @@ indiciaData.holidayLocationLayer = false;
   mapInitialisationHooks.push(function (div) {
 
     var baseStyle               = { strokeWidth: 4, fillOpacity: 0 },
-        unassignedLocationStyle = new OpenLayers.Style(),
-        unassignedLocationRule  = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Yellow'}, baseStyle) }),
-        unassignedLocationStyleMap,
         myLocationStyle         = new OpenLayers.Style(),
         myLocationRule          = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Red'}, baseStyle) }),
-        myLocationStyleMap,
         othersLocationStyle     = new OpenLayers.Style(),
         othersLocationRule      = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Green'}, baseStyle) }),
-        othersLocationStyleMap,
         holidayLocationStyle    = new OpenLayers.Style(),
         holidayLocationRule     = new OpenLayers.Rule({ symbolizer: $.extend({strokeColor: 'Blue'}, baseStyle) }),
         holidayLocationStyleMap,
@@ -191,25 +202,10 @@ indiciaData.holidayLocationLayer = false;
             }
         });
 
-/*
-    unassignedLocationStyle.addRules([unassignedLocationRule, labelRule]);
-    unassignedLocationStyleMap          = new OpenLayers.StyleMap({'default': unassignedLocationStyle});
-    indiciaData.unassignedLocationLayer = new OpenLayers.Layer.Vector('Unassigned Sites', {styleMap: unassignedLocationStyleMap, displayInLayerSwitcher: true});
-    div.map.addLayer(indiciaData.unassignedLocationLayer);
-*/
     myLocationStyle.addRules([myLocationRule, labelRule]);
-/*
-    myLocationStyleMap                  = new OpenLayers.StyleMap({'default': myLocationStyle});
-    indiciaData.myLocationLayer         = new OpenLayers.Layer.Vector('My Sites', {styleMap: myLocationStyleMap, displayInLayerSwitcher: true});
-    div.map.addLayer(indiciaData.myLocationLayer);
-
     othersLocationStyle.addRules([othersLocationRule, labelRule]);
-    othersLocationStyleMap              = new OpenLayers.StyleMap({'default': othersLocationStyle});
-    indiciaData.othersLocationLayer     = new OpenLayers.Layer.Vector('Sites assigned to others', {styleMap: othersLocationStyleMap, displayInLayerSwitcher: true});
-    div.map.addLayer(indiciaData.othersLocationLayer);
-*/
     holidayLocationStyle.addRules([holidayLocationRule, labelRule]);
-    holidayLocationStyleMap             = new OpenLayers.StyleMap({'default': holidayLocationStyle, 'mine': myLocationStyle});
+    holidayLocationStyleMap             = new OpenLayers.StyleMap({'default': holidayLocationStyle, 'mine': myLocationStyle, 'others': othersLocationStyle});
     indiciaData.holidayLocationLayer    = new OpenLayers.Layer.Vector('Holiday Sites', {styleMap: holidayLocationStyleMap, displayInLayerSwitcher: true});
     div.map.addLayer(indiciaData.holidayLocationLayer);
 

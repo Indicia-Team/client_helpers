@@ -721,7 +721,8 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           // settings text using something like @smpAttr:4|label=My label. The next bit of code parses these out into an
           // array used when building the html.
           // Alternatively, a setting like @option=value is applied to all the attributes.
-          $attrSpecificOptions = array();
+          $attrSpecificOptions = [];
+          $attrGenericOptions = [];
           foreach ($options as $option => $value) {
             // split the id of the option into the control name and option name.
             $optionId = explode('|', $option);
@@ -739,10 +740,11 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             }
             else {
               // Found an option like @option=value
-              $defAttrOptions = array_merge($defAttrOptions, array($option => $value));
+              $attrGenericOptions = array_merge($attrGenericOptions, array($option => $value));
             }
           }
-          $attrHtml = get_attribute_html($attributes, $args, $defAttrOptions, $tab, $attrSpecificOptions);
+          $attrHtml = get_attribute_html($attributes, $args, $defAttrOptions, $tab,
+            array_merge($attrGenericOptions, $attrSpecificOptions));
           if (!empty($attrHtml))
             $hasControls = true;
           $html .= $attrHtml;

@@ -740,4 +740,30 @@ JS;
     return report_helper::report_grid($reportOptions);
   }
 
+  /**
+   * Displays information about locations found under a map click point.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-forms.html#misc-extensions-query-locations-on-map-click
+   *
+   * @return string
+   *   HTML for the control's container.
+   */
+  public static function query_locations_on_map_click($auth, $args, $tabalias, $options, $path) {
+    static $queryLocationsOnMapClickCount = 0;
+    $queryLocationsOnMapClickCount++;
+    if (!isset($options['locationTypeIds']) || !is_array($options['locationTypeIds'])) {
+      return 'The query_locations_on_map_click extension requires a locationTypeIds array in the options.';
+    }
+    $options = array_merge([
+      'template' => '<div><h2>{{ name }}</h2>{{ comment }}</div>',
+      'id' => "locationsOnMapClick-$queryLocationsOnMapClickCount",
+    ], $options);
+    if (!isset(helper_base::$indiciaData['queryLocationsOnMapClickSettings'])) {
+      helper_base::$indiciaData['queryLocationsOnMapClickSettings'] = [];
+    }
+    helper_base::$indiciaData['queryLocationsOnMapClickSettings'][$options['id']]
+      = $options;
+    return "<div id=\"$options[id]\"></div>";
+  }
+
 }

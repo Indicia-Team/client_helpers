@@ -28,6 +28,10 @@
 require_once 'lang.php';
 require_once 'helper_base.php';
 
+define('EMBED_REUPLOAD_OFF', 0);
+define('EMBED_REUPLOAD_ERRORS_ONLY', 1);
+define('EMBED_REUPLOAD_ON', 2);
+
 /**
  * Static helper class that provides methods for dealing with imports.
  */
@@ -100,6 +104,12 @@ class import_helper extends helper_base {
    *     in the supplied spreadsheet are mapped. Combine this with the fieldMap
    *     parameter to make predefined import configurations that require little
    *     effort to use as long as a matching spreadsheet structure is supplied.
+   *   * **embed_reupload** - set to EMBED_REUPLOAD_ON to embed an upload form
+   *     into the page shown on completion of an upload, allowing another file
+   *     to be uploaded. Or, set to EMBED_REUPLOAD_ERRORS_ONLY to embed the
+   *     upload form into this page only when the last upload had errors, in
+   *     which case a message is shown explaining that the user can use the
+   *     form to upload the errors file. Defaults to EMBED_REUPLOAD_OFF.
    *
    * @return string
    *   HTML for the next page of the importer.
@@ -146,11 +156,11 @@ class import_helper extends helper_base {
     }
     elseif ((isset($_POST['import_step']) && $_POST['import_step'] == 2)) {
       $options['allowCommitToDB'] = FALSE;
-      return self::run_upload($options);
+      return self::runUpload($options);
     }
     elseif ((isset($_POST['import_step']) && $_POST['import_step'] == 3)) {
       $options['allowCommitToDB'] = TRUE;
-      return self::run_upload($options);
+      return self::runUpload($options);
     }
     elseif (isset($_POST['total']) && empty($_POST['import_step'])) {
       return self::uploadResult($options);
@@ -342,7 +352,7 @@ class import_helper extends helper_base {
       'not_imported' => 'Not imported',
     ]);
     $filename = basename($_SESSION['uploaded_file']);
-    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $mappingsAndSettings = self::getMappingsAndSettings($options);
     $settings = $mappingsAndSettings['settings'];
     $request = parent::$base_url . "index.php/services/import/get_import_fields/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
@@ -432,7 +442,7 @@ class import_helper extends helper_base {
       return "curl request to $request failed. Response " . print_r($response, TRUE);
     }
     $model_required_fields = self::expand_ids_to_fks($responseIds);
-    $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys($settings)) : array();
+    $preset_fields = !empty($settings) ? self::expand_ids_to_fks(array_keys(array_filter($settings))) : array();
     $unlinked_fields = !empty($preset_fields) ? array_diff_key($fields, array_combine($preset_fields, $preset_fields)) : $fields;
     // Only use the required fields that are available for selection - the rest
     // are handled somehow else.
@@ -444,6 +454,7 @@ class import_helper extends helper_base {
     self::clear_website_survey_fields($unlinked_fields, $settings);
     self::clear_website_survey_fields($unlinked_required_fields, $settings);
     $autoFieldMappings = self::getAutoFieldMappings($options, $settings);
+    $fieldMap = self::getFieldMap($options, $settings);
     // If the user checked the Remember All checkbox need to remember this
     // setting.
     $checkedRememberAll = isset($autoFieldMappings['rememberall']) ? ' checked="checked"' : '';
@@ -502,11 +513,13 @@ HTML;
     }
 
     $r .= '</tr></thead><tbody>';
-    $colCount = 0;
+    $importableColCount = 0;
     foreach ($columns as $column) {
       $column = trim($column);
       if (!empty($column)) {
-        $colCount++;
+        if (!in_array($column, ['Number of problems', 'Problem description', 'Row no.', 'Import ID'])) {
+          $importableColCount++;
+        }
         $colFieldName = self::columnMachineName($column);
         $r .= "<tr><td>$column</td><td><select name=\"$colFieldName\" id=\"$colFieldName\">";
         $r .= self::getColumnOptions(
@@ -514,6 +527,7 @@ HTML;
           $unlinked_fields,
           $column,
           $autoFieldMappings,
+          $fieldMap,
           count($existingDataLookupOptions) > 0,
           array_key_exists('allowDataDeletions', $options) ? $options['allowDataDeletions'] : FALSE
         );
@@ -544,23 +558,34 @@ HTML;
 
 HTML;
     $usedOptions = [];
-    if (count($existingDataLookupOptions) > 0) {
-      $r .= '<div id="lookup-mode-warning" style="color:red; display:none">' . lang::get('Note that updating of existing records is only available when the Prevent Commits On Any Error importer option is not being used').'</div>';
+    if (count($existingDataLookupOptions) > 0 || !empty($options['existingRecordLookupMethod'])) {
+      $r .= '<div id="lookup-mode-warning" class="alert alert-danger" style="display:none">' . lang::get('Note that updating of existing records is only available when the Prevent Commits On Any Error importer option is not being used').'</div>';
       $r .= '<fieldset><legend>' . lang::get('Lookup of existing records') . '</legend>';
-      foreach ($existingDataLookupOptions as $model => $combinations) {
-        $r .= '<label for="lookupSelect' . $model . '\">' . lang::get(ucfirst($model) . ' records') . '</label>';
-        $r .= "<select name=\"lookupSelect" . $model . "\" id=\"lookupSelect" . $model . "\" class=\"lookupSelects\">";
-        $r .= "<option value=\"\" >" . lang::get('Do not look up existing records') . "</option>";
-        foreach ($combinations as $combination) {
-          if (!in_array($model . $combination['description'], $usedOptions)) {
-            array_push($usedOptions, $model . $combination['description']);
-            // Each possible field for existing record lookup has the list of
-            // fields that need to be filled in for it to work specified as
-            // json in its value.
-            $r .= "<option value=\"" . htmlspecialchars(json_encode($combination['fields'])) . "\">" . lang::get($combination['description']) . "</option>";
+      if (!empty($options['existingRecordLookupMethod'])) {
+        // Configuration forces a particular lookup method.
+        $msg = lang::get('Data will be used to lookup and update existing records where possible.');
+        $r .= <<<HTML
+<div class="alert alert-info">$msg</div>
+
+HTML;
+      }
+      else {
+        // User can choose lookup method.
+        foreach ($existingDataLookupOptions as $model => $combinations) {
+          $r .= '<label for="lookupSelect' . $model . '\">' . lang::get(ucfirst($model) . ' records') . '</label>';
+          $r .= "<select name=\"lookupSelect" . $model . "\" id=\"lookupSelect" . $model . "\" class=\"lookupSelects\">";
+          $r .= "<option value=\"\" >" . lang::get('Do not look up existing records') . "</option>";
+          foreach ($combinations as $combination) {
+            if (!in_array($model . $combination['description'], $usedOptions)) {
+              array_push($usedOptions, $model . $combination['description']);
+              // Each possible field for existing record lookup has the list of
+              // fields that need to be filled in for it to work specified as
+              // json in its value.
+              $r .= "<option value=\"" . htmlspecialchars(json_encode($combination['fields'])) . "\">" . lang::get($combination['description']) . "</option>";
+            }
           }
+          $r .= "</select><br/>";
         }
-        $r .= "</select><br/>";
       }
       $r .= "</fieldset>";
       self::$javascript .= <<<JS
@@ -578,15 +603,15 @@ JS;
     // We need to rerun this even though we run this earlier in this function.
     // The earlier call wouldn't have retrieved any mappings as
     // get_column_options wouldn't have been run yet.
-    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $mappingsAndSettings = self::getMappingsAndSettings($options);
     self::send_mappings_and_settings_to_warehouse($filename, $options, $mappingsAndSettings);
     // If skip mapping is on, then we don't actually need to show this page and
     // can skip straight to the upload or error checking stage (which will be
-    // determined by run_upload using the allowCommitToDB option).
-    if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE && count(self::$automaticMappings) === $colCount) {
-      // Need to pass true to stop the mappings and settings being sent to the warehouse during the run_upload function
+    // determined by runUpload using the allowCommitToDB option).
+    if (!empty($options['skipMappingIfPossible']) && $options['skipMappingIfPossible'] == TRUE && count(self::$automaticMappings) === $importableColCount) {
+      // Need to pass true to stop the mappings and settings being sent to the warehouse during the runUpload function
       // as we have already done that here
-      return self::run_upload($options, TRUE);
+      return self::runUpload($options, TRUE);
     }
     // Preserve the post from the website/survey selection screen.
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB'] === FALSE) {
@@ -605,7 +630,7 @@ JS;
         $fieldname = $tokens[count($tokens) - 1];
         $caption = lang::get(self::processLabel(preg_replace(array('/^fk_/', '/_id$/'), array('', ''), $fieldname)));
       }
-      $caption = self::translate_field($field, $caption);
+      $caption = self::translate_field($field, $caption, $fieldMap);
       self::$javascript .= "required_fields['$field']='$caption';\n";
     }
     self::$onload_javascript .= <<<JS
@@ -621,7 +646,7 @@ JS;
   /* Function used to preserve the post from previous stages as we move through the importer otherwise values are lost from
       2 steps ago. Also preserves the automatic mappings used to skip the mapping stage by saving it to the post */
   private static function preserve_fields($options, $filename, $importStep) {
-    $mappingsAndSettings = self::get_mappings_and_settings($options);
+    $mappingsAndSettings = self::getMappingsAndSettings($options);
     $settingFields = $mappingsAndSettings['settings'];
     $mappingFields = $mappingsAndSettings['mappings'];
     $reload = self::get_reload_link_parts();
@@ -639,6 +664,7 @@ JS;
     foreach ($mappingFields as $field => $value) {
       if (!empty($mappingFields[$field])) {
         if (is_string($field)&&is_string($value)&&!empty($value) && $field !== 'import_step' && $field !==' submit') {
+          $value = htmlspecialchars($value);
           $r .= "<input type=\"hidden\" name=\"mapping[$field]\" id=\"mapping[$field]\" value=\"$value\"/>\n";
         }
       }
@@ -672,8 +698,12 @@ JS;
    * Returns an array of field to column title mappings that were previously stored in the user profile,
    * or mappings that were provided via the page's configuration form.
    * If the user profile does not support saving mappings then sets self::$rememberingMappings to false.
-   * @param array $options Options array passed to the import helper which might contain a fieldMap.
-   * @param array $settings Settings array for this import which might contain the survey_id.
+   *
+   * @param array $options
+   *   Options array passed to the import helper which might contain a fieldMap.
+   * @param array $settings
+   *   Settings array for this import which might contain the survey_id.
+   *
    * @return array|mixed
    */
   private static function getAutoFieldMappings($options, $settings) {
@@ -713,6 +743,38 @@ JS;
       }
     }
     return $autoFieldMappings;
+  }
+
+  /**
+   * Retrieve any configured field mappings for the chosen survey dataset.
+   *
+   * @param array $options
+   *   Options array passed to the import helper which might contain a fieldMap.
+   * @param array $settings
+   *   Settings array for this import which might contain the survey_id.
+   *
+   * @return array
+   *   Associative array mapping fields to captions.
+   */
+  private static function getFieldMap($options, $settings) {
+    if (!empty($settings['survey_id']) && !empty($options['fieldMap'])) {
+      foreach ($options['fieldMap'] as $surveyFieldMap) {
+        if (isset($surveyFieldMap['survey_id']) && isset($surveyFieldMap['fields']) &&
+            $surveyFieldMap['survey_id'] == $settings['survey_id']) {
+          preg_match_all("/([^=\r\n]+)=([^\r\n]+)/", $surveyFieldMap['fields'], $pairs);
+          $pairs[1] = array_map('trim', $pairs[1]);
+          $pairs[2] = array_map('trim', $pairs[2]);
+          $r = [];
+          foreach ($pairs[1] as $idx => $key) {
+            if (!isset($r[$key])) {
+              $r[$key] = $pairs[2][$idx];
+            }
+          }
+          return $r;
+        }
+      }
+    }
+    return [];
   }
 
   /**
@@ -783,7 +845,7 @@ JS;
 	 * being skipped on screen. That function will have already sent the settings and mappings to the warehouse so we don't need
 	 * to again.
    */
-  private static function run_upload($options,$calledFromSkippedMappingsPage=false) {
+  private static function runUpload($options, $calledFromSkippedMappingsPage = FALSE) {
     self::add_resource('jquery_ui');
     if (!file_exists($_SESSION['uploaded_file']))
       return lang::get('upload_not_available');
@@ -791,7 +853,7 @@ JS;
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv']=$filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $mappingsAndSettings=self::getMappingsAndSettings($options);
     if ($calledFromSkippedMappingsPage===false) {
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
@@ -832,7 +894,7 @@ JS;
         return self::display_result_as_error_check_stage_failed($options,$output);
       }
       //Need to re-send metadata as we need to call warehouse again for upload (rather than error check)
-      $mappingsAndSettings=self::get_mappings_and_settings($options);
+      $mappingsAndSettings=self::getMappingsAndSettings($options);
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
     $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
@@ -933,7 +995,9 @@ JS;
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $downloadInstructions=lang::get('no_commits_download_error_file_instructions');
-    hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+    if (function_exists('hostsite_show_message')) {
+      hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+    }
     $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
         $downloadInstructions .
         " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
@@ -946,6 +1010,9 @@ JS;
    * @param array $options Array of options passed to the import control.
    */
   private static function uploadResult($options) {
+    $options = array_merge([
+      'embed_reupload' => EMBED_REUPLOAD_OFF,
+    ], $options);
     $request = parent::$base_url . "index.php/services/import/get_upload_result?uploaded_csv=" . $_GET['uploaded_csv'];
     $request .= '&' . self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
@@ -955,16 +1022,21 @@ JS;
       if (!is_array($output) || !isset($output['problems']))
         return lang::get('An error occurred during the upload.') . '<br/>' . print_r($response, TRUE);
       if ($output['problems'] > 0) {
-        hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+        $class = 'upload-results-errors';
+        if (function_exists('hostsite_show_message')) {
+          hostsite_show_message(lang::get('Errors were encountered.'), 'error');
+        }
         $downloadInstructions = lang::get('partial_commits_download_error_file_instructions');
         $r = lang::get('{1} problems were detected during the import.', $output['problems']) . ' ' .
           $downloadInstructions .
           " <a href=\"$output[file]\">" . lang::get('Download the records that did not import.') . '</a>';
       }
       else {
+        $class = 'upload-results-success';
         if (function_exists('hostsite_show_message')) {
           hostsite_show_message(lang::get('The upload was successful.'));
-        } else {
+        }
+        else {
           $r = lang::get('The upload was successful.');
         }
       }
@@ -976,8 +1048,22 @@ JS;
     unset($reload['params']['total']);
     unset($reload['params']['uploaded_csv']);
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $r = "<p>$r</p><p>" . lang::get('Would you like to ') . "<a href=\"$reloadpath\">" . lang::get('import another file?') . "</a></p>";
-    return $r;
+    $r = "<p>$r</p>";
+    if (isset($response['output'])) {
+      if ($options['embed_reupload'] === EMBED_REUPLOAD_ON && $output['problems'] === 0) {
+        $r .= '<p>' . lang::get('If you would like to upload another file you can use the form below.') . '</p>';
+        $r .= self::uploadForm($options);
+      }
+      elseif ($options['embed_reupload'] !== EMBED_REUPLOAD_OFF && $output['problems'] > 0) {
+        $r .= '<p>' . lang::get('Once you have downloaded the file containing errors and corrected them you can ' .
+          'upload the file again using the form below.') . '</p>';
+        $r .= self::uploadForm($options);
+      }
+      else {
+        $r .= '<p>' . lang::get('Would you like to ') . "<a href=\"$reloadpath\">" . lang::get('import another file?') . "</a></p>";
+      }
+    }
+    return "<div class=\"$class\">$r</div>";
   }
 
   /**
@@ -1035,7 +1121,7 @@ JS;
    * @param bool $allowDataDeletions
    *   Should the importer allow data to be removed.
    */
-  private static function getColumnOptions($model, $fields, $column, $autoFieldMappings, $includeLookups, $allowDataDeletions = FALSE) {
+  private static function getColumnOptions($model, $fields, $column, $autoFieldMappings, $fieldMap, $includeLookups, $allowDataDeletions = FALSE) {
     $skipped = [
       'image_path', 'created_by_id', 'created_on', 'updated_by_id', 'updated_on',
       'fk_created_by', 'fk_updated_by', 'fk_meaning', 'fk_taxon_meaning',
@@ -1072,7 +1158,7 @@ JS;
          * $labelListHeading is an array where the keys are each column we work with concatenated to the heading of the caption we
          * are currently working on.
          */
-        $strippedScreenCaption = str_replace(" (from controlled termlist)","",self::translate_field($field, $caption));
+        $strippedScreenCaption = str_replace(" (from controlled termlist)","",self::translate_field($field, $caption, $fieldMap));
         $labelList[$labelListIndex] = strtolower($strippedScreenCaption);
         $labelListIndex++;
         if (isset($labelListHeading[$column . $prefix])) {
@@ -1096,7 +1182,7 @@ JS;
       // Make a clean looking default caption. This could be provided by the $fields array, or we have to construct it.
       $defaultCaption = self::make_clean_caption($caption, $prefix, $fieldname, $model);
       // Allow the default caption to be translated or overridden by language files.
-      $translatedCaption = self::translate_field($field, $defaultCaption);
+      $translatedCaption = self::translate_field($field, $defaultCaption, $fieldMap);
       // Need a version of the caption without "from controlled termlist" as we ignore that for matching.
       $strippedScreenCaption = str_replace(" (from controlled termlist)", "", $translatedCaption);
       $fieldname = preg_replace(['/^fk_/', '/_id$/'], ['', ''], $fieldname);
@@ -1147,7 +1233,7 @@ JS;
         else {
           $optionID = $idColumn . 'Normal';
         }
-        $option = self::model_field_option($field, $defaultCaption, $selected, $optionID);
+        $option = self::model_field_option($field, $defaultCaption, $selected, $optionID, $fieldMap);
         if ($selected) {
           self::$automaticMappings[$column] = $field;
         }
@@ -1404,9 +1490,9 @@ TD;
    * @param boolean $selected Set to true if outputing the currently selected option.
    * @param string $optionID Id of the current option.
    */
-  private static function model_field_option($field, $caption, $selected, $optionID) {
+  private static function model_field_option($field, $caption, $selected, $optionID, $fieldMap) {
     $selHtml = ($selected) ? ' selected="selected"' : '';
-    $caption = self::translate_field($field, $caption);
+    $caption = self::translate_field($field, $caption, $fieldMap);
     $r = '<option class=';
     $r .= $optionID;
     $r .= ' value="' . htmlspecialchars($field) . "\"$selHtml>" . htmlspecialchars($caption) . '</option>';
@@ -1416,19 +1502,31 @@ TD;
   /**
    * Provides optional translation of field captions by looking for a translation code dd:model:fieldname. If not
    * found returns the original caption.
-   * @param string $field Name of the field being output.
-   * @param string $caption Untranslated caption of the field being output.
-   * @return string Translated caption.
+   *
+   * @param string $field
+   *   Name of the field being output.
+   * @param string $caption
+   *   Untranslated caption of the field being output.
+   * @param array $fieldMap
+   *   Mappings to captions for this survey dataset.
+   *
+   * @return string
+   *   Translated caption.
    */
-  private static function translate_field($field, $caption) {
-    // look in the translation settings to see if this column name needs overriding
-    $trans = lang::get("dd:$field");
-    // Only update the caption if this actually did anything
-    if ($trans != "dd:$field" ) {
-      return $trans;
+  private static function translate_field($field, $caption, $fieldMap) {
+    if (isset($fieldMap[$field])) {
+      return lang::get(ucfirst($fieldMap[$field]));
     }
     else {
-      return $caption;
+      // look in the translation settings to see if this column name needs overriding
+      $trans = lang::get("dd:$field");
+      // Only update the caption if this actually did anything
+      if ($trans != "dd:$field" ) {
+        return $trans;
+      }
+      else {
+        return $caption;
+      }
     }
   }
 
@@ -1507,7 +1605,7 @@ TD;
 
   //Collect the mappings and settings from various places depending on importer mode, wizard stage.
   //These can be held in variables, option variable, or the post. Collect as appropriate
-  private static function get_mappings_and_settings($options) {
+  private static function getMappingsAndSettings($options) {
     $mappingsAndSettings = [
       'mappings' => [],
       'settings' => [],
@@ -1550,6 +1648,10 @@ TD;
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
     if (isset($_POST['setting'])) {
       $mappingsAndSettings['mappings'] = array_merge($mappingsAndSettings['mappings'], $_POST);
+    }
+    // If a configured existing record lookup method, copy it over.
+    if (!empty($options['existingRecordLookupMethod'])) {
+      $mappingsAndSettings['mappings']["lookupSelect$options[model]"] = $options['existingRecordLookupMethod'];
     }
     $mappingsAndSettings['mappings'] = self::cleanMappings($mappingsAndSettings['mappings']);
     // The mappings should simply be the mappings, so remove any mappings or
@@ -1627,7 +1729,7 @@ TD;
    * rows (otherwise the importer would create separate samples)
    */
   private static function sample_external_key_issue_checks($options,$rows) {
-    $mappingsAndSettings=self::get_mappings_and_settings($options);
+    $mappingsAndSettings=self::getMappingsAndSettings($options);
     $columnIdx=0;
     $columnIdxsToCheck=array();
     // Cycle through each of the column mappings and get the position of the sample external key column

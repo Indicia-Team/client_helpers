@@ -373,6 +373,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     	case 'georefDriver':
     	  $retVal[$i]['required']=false; // method of georef detection is to see if driver specified: allows ommision of area preferences.
           break;
+    	case 'default_section_grid_ref':
+    	  $retVal[$i]['lookupValues']['sectionCentroid1'] = 'Section centroid to 1m accuracy';
+          break;
     	default:
           break;
       }
@@ -390,11 +393,8 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
    * @return Form HTML.
    */
   public static function get_form($args, $nid, $response=null) {
-    // use the js/css from the parent forms, until there is a deviation.
-    // drupal_add_js(iform_client_helpers_path() . "prebuilt_forms/js/ukbms_sectioned_transects_edit_transect.js");
-    // drupal_add_css(iform_client_helpers_path() . "prebuilt_forms/css/sectioned_transects_edit_transect.css");
 
-    $checks=self::check_prerequisites();
+      $checks=self::check_prerequisites();
     $args = self::getArgDefaults($args);
     if ($checks!==true)
       return $checks;
@@ -687,6 +687,9 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     $r .= '<form method="post" id="input-form">';
     $r .= $auth['write'];
     $r .= "<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
+    $r .= '<input type="hidden" name="read_nonce" value="' . $auth['read']['nonce'] . '"/>';
+    $r .= '<input type="hidden" name="read_auth_token" value="' . $auth['read']['auth_token'] . '"/>';
+    
     $r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: 54%">';
 
     // Special for EBMS is the country block: this should just have the country attribute in it: a text location attribute; powered
@@ -1066,7 +1069,74 @@ $('#delete-transect').click(deleteSurvey);
       }
       $values['location:code'] = implode(':',$newCode);
     }
-    return parent::get_submission($values, $args);
+    
+    $submission = parent::get_submission($values, $args);
+    
+    // Build the sections
+    // Create a list of section Codes needed for this value of number of sections.
+    $read = array(
+        'nonce' => $values['read_nonce'],
+        'auth_token' => $values['read_auth_token']
+    );
+    $num_sections = 0;
+    $transectLocationType = helper_base::get_termlist_terms(array('read'=>$read), 'indicia:location_types', array('Transect'));
+    $transectAttributes = data_entry_helper::getAttributes(array(
+        'valuetable'=>'location_attribute_value',
+        'attrtable'=>'location_attribute',
+        'key'=>'location_id',
+        'fieldprefix'=>'locAttr',
+        'extraParams'=>$read,
+        'survey_id'=>$args['survey_id'],
+        'location_type_id'=>$transectLocationType[0]['id'],
+        'multiValue'=>false // ensures that array_keys are the list of attribute IDs.
+    ));
+    foreach($transectAttributes as $transectAttribute) {
+        if ($transectAttribute['caption']==='No. of sections') {
+            foreach($values as $key => $value) {
+                if ($key === $transectAttribute['fieldname'] ||
+                        substr_compare($key, $transectAttribute['fieldname'].':' , 0, strlen($transectAttribute['fieldname'])+1) === 0) {
+                    $num_sections = $value;
+                }
+            }
+        }
+    }
+    if($num_sections>0) {
+        $sectionList = array_map(function($i) { return 'S'.$i; }, range(1, $num_sections));
+
+        // If this is an existing site, Fetch all the existing sections, and remove those codes from the array
+        if (!empty($values['location:id'])) {
+            $sections = data_entry_helper::get_population_data(array(
+                'table' => 'location',
+                'extraParams' => $read + array('view'=>'detail','parent_id'=>$values['location:id'],'deleted'=>'f'),
+                'nocache' => true // may have recently added or removed a section
+            ));
+            $sectionList = array_filter($sectionList, function($i) use ($sections) {
+                foreach($sections as $section) {
+                    if($i === $section['code'])
+                        return false;
+                }
+                return true;
+            });
+        }
+        // Loop through all currently in the array, and create a section submodel array.
+        $newSubSections = array();
+        $sectionLocationType = helper_base::get_termlist_terms(array('read'=>$read), 'indicia:location_types', array('Transect Section'));
+        foreach($sectionList as $section){
+            $newSubSections[] = array('fkId' => 'parent_id',
+                'model' => array('id' => 'location',
+                    'fields' => array('name' => array('value' => $values['location:name'] . ' - ' . $section),
+                        'code' => array('value' => $section),
+                        'location_type_id' => array('value' => $sectionLocationType[0]['id'])),
+                    'joinsTo' => array('website' => array($values['website_id']))),
+                'copyFields' => array('centroid_sref'=>'centroid_sref','centroid_sref_system'=>'centroid_sref_system'));
+        }
+        // Bolt into the main model array.
+        if(count($newSubSections)>0) {
+            $submission['subModels'] = array_merge(!empty($submission['subModels']) ? $submission['subModels'] : array(),
+                $newSubSections);
+        }
+    } else throw(1);
+    return $submission;
   }
 
   /**
@@ -1080,6 +1150,10 @@ $('#delete-transect').click(deleteSurvey);
       data_entry_helper::$base_url = $conn['base_url'];
       $auth = data_entry_helper::get_read_write_auth($website_id, $password);
 
+      $sectionLocationType = helper_base::get_termlist_terms($auth,
+          'indicia:location_types',
+          array(empty($params['section_type_term']) ? 'Section' : $params['section_type_term']));
+      
       $parent = $_GET['parent_id'];
       $parentLocationTypeId = $_GET['parent_location_type_id'];
       $insertPoint = intval(substr($_GET['section'], 1)); // section comes in like "S1"
@@ -1099,7 +1173,7 @@ $('#delete-transect').click(deleteSurvey);
       $transect = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,name', 'id'=>$parent),
+          'extraParams' => $auth['read'] + array('view'=>'detail', 'id'=>$parent),
       ));
       if(!count($transect)) {
           header('Content-type: application/json');
@@ -1120,7 +1194,7 @@ $('#delete-transect').click(deleteSurvey);
       $sections = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
-          'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,code,name', 'parent_id'=>$parent),
+          'extraParams' => $auth['read'] + array('view'=>'detail', 'parent_id'=>$parent),
       ));
 
 
@@ -1133,7 +1207,7 @@ $('#delete-transect').click(deleteSurvey);
             // Update the code and the name for the sections.
             $sectionPostData = ['location:id' => $section['id'],
                                 'location:code' => 'S'.($sectionCode+1),
-                                'location:name' => $transect[0]['name'] + ' - ' + 'S'+($sectionCode+1),
+                                'location:name' => $transect[0]['name'] . ' - S' . ($sectionCode+1),
                                 'website_id' => $website_id,
             ];
             $model = data_entry_helper::wrap($sectionPostData, 'location');
@@ -1141,6 +1215,24 @@ $('#delete-transect').click(deleteSurvey);
             // TODO check response
         }
       }
+      
+      // insert the new section into gap,
+      $sectionCode = array_key_exists('before', $_GET) ? $insertPoint : $insertPoint + 1;
+      $sectionPostData = ['location:code' => 'S'.($sectionCode),
+          'location:name' => $transect[0]['name'] . ' - S' . ($sectionCode),
+          'location:parent_id' => $parent,
+          'location:location_type_id' => $sectionLocationType[0]['id'],
+          'location:centroid_sref' => $transect[0]['centroid_sref'],
+          'location:centroid_sref_system' => $transect[0]['centroid_sref_system'],
+          'locations_website:website_id' => $website_id,
+          'website_id' => $website_id,
+      ];
+      $model = data_entry_helper::wrap($sectionPostData, 'location');
+      $model['joinsTo'] = array('website' => array($website_id));
+      
+      $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
+      // TODO check response
+      
       $transectPostData = ['location:id' => $parent,
           'website_id' => $website_id];
       // Add one to the section count on the transect
@@ -1247,7 +1339,7 @@ $('#delete-transect').click(deleteSurvey);
                   // Update the code and the name for the sections.
                   $sectionPostData = ['location:id' => $section['id'],
                       'location:code' => 'S'.($sectionCode-1),
-                      'location:name' => $transect[0]['name'] + ' - ' + 'S'+($sectionCode-1),
+                      'location:name' => $transect[0]['name'] . ' - S' . ($sectionCode-1),
                       'website_id' => $website_id,];
                   $model = data_entry_helper::wrap($sectionPostData, 'location');
                   $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
@@ -1272,9 +1364,8 @@ $('#delete-transect').click(deleteSurvey);
                   'table' => 'location_attribute_value',
                   'cachetimeout' => 0, // can't cache
                   'extraParams' =>$auth['read'] + array('view' => 'list',
-                      'columns' => 'id,value',
                       'location_id' => $sectionIdList,
-                      'location_atribute_id' => $autocalcSectionLengthAttrId),
+                      'location_attribute_id' => $autocalcSectionLengthAttrId),
               ));
               foreach($sectionLengthAttrs as $sectionLengthAttr) {
                   $transectLen += $sectionLengthAttr['value'];
@@ -1380,9 +1471,8 @@ $('#delete-transect').click(deleteSurvey);
                   'table' => 'location_attribute_value',
                   'cachetimeout' => 0, // can't cache
                   'extraParams' => $readAuth + array('view' => 'list',
-                      'columns' => 'id,value',
                       'location_id' => $sectionIdList,
-                      'location_atribute_id' => $autocalcSectionLengthAttrId),
+                      'location_attribute_id' => $autocalcSectionLengthAttrId),
               ));
               foreach($sectionLengthAttrs as $sectionLengthAttr) {
                   $transectLen += $sectionLengthAttr['value'];
