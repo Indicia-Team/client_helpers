@@ -494,14 +494,22 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
    */
   public static function leafletMap(array $options) {
-    self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
+    self::checkOptions('leafletMap', $options, ['baseLayerConfig', 'layerConfig'], ['baseLayerConfig', 'layerConfig']);
     $options = array_merge([
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
       'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
       'initialZoom' => hostsite_get_config_value('iform', 'map_zoom', 5),
     ], $options);
     helper_base::add_resource('leaflet');
+    if (isset($options['baseLayerConfig'])) {
+      foreach ($options['baseLayerConfig'] as $baseLayer) {
+        if ($baseLayer['type'] === 'Google') {
+          helper_base::add_resource('leaflet_google');
+        }
+      }
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
+      'baseLayerConfig',
       'layerConfig',
       'showSelectedRow',
       'initialLat',
