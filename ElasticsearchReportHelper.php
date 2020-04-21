@@ -494,7 +494,10 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
    */
   public static function leafletMap(array $options) {
-    self::checkOptions('leafletMap', $options, ['baseLayerConfig', 'layerConfig'], ['baseLayerConfig', 'layerConfig']);
+    self::checkOptions('leafletMap', $options,
+      ['layerConfig'],
+      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle']
+    );
     $options = array_merge([
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
       'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
@@ -516,6 +519,7 @@ JS;
       'initialLng',
       'initialZoom',
       'cookies',
+      'selectedFeatureStyle',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcLeafletMap({});
