@@ -382,6 +382,10 @@ JS;
       ['source'],
       ['addColumns', 'removeColumns']
     );
+    $options = array_merge([
+      'caption' => 'Download',
+      'title' => 'Run the download'
+    ], $options);
     global $indicia_templates;
     $html = str_replace(
       [
@@ -391,9 +395,9 @@ JS;
         '{caption}',
       ], [
         "$options[id]-button",
-        lang::get('Run the download'),
+        lang::get($options['title']),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
-        lang::get('Download'),
+        lang::get($options['caption']),
       ],
       $indicia_templates['button']
     );
