@@ -20,3 +20,7 @@
 .id-diff-5 {
   background-position: -64px 0px;
 }
+
+#map-container {
+    z-index: 0;
+}
