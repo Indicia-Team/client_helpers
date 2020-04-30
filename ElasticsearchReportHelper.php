@@ -382,6 +382,10 @@ JS;
       ['source'],
       ['addColumns', 'removeColumns']
     );
+    $options = array_merge([
+      'caption' => 'Download',
+      'title' => 'Run the download'
+    ], $options);
     global $indicia_templates;
     $html = str_replace(
       [
@@ -391,9 +395,9 @@ JS;
         '{caption}',
       ], [
         "$options[id]-button",
-        lang::get('Run the download'),
+        lang::get($options['title']),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
-        lang::get('Download'),
+        lang::get($options['caption']),
       ],
       $indicia_templates['button']
     );
@@ -494,20 +498,32 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
    */
   public static function leafletMap(array $options) {
-    self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
+    self::checkOptions('leafletMap', $options,
+      ['layerConfig'],
+      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle']
+    );
     $options = array_merge([
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
       'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
       'initialZoom' => hostsite_get_config_value('iform', 'map_zoom', 5),
     ], $options);
     helper_base::add_resource('leaflet');
+    if (isset($options['baseLayerConfig'])) {
+      foreach ($options['baseLayerConfig'] as $baseLayer) {
+        if ($baseLayer['type'] === 'Google') {
+          helper_base::add_resource('leaflet_google');
+        }
+      }
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
+      'baseLayerConfig',
       'layerConfig',
       'showSelectedRow',
       'initialLat',
       'initialLng',
       'initialZoom',
       'cookies',
+      'selectedFeatureStyle',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcLeafletMap({});

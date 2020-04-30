@@ -110,7 +110,8 @@ class filter_what extends FilterBase {
       'captionField' => 'q',
       'valueField' => 'id',
       'extraParams' => $baseParams,
-      'addToTable' => FALSE
+      'addToTable' => FALSE,
+      'continueOnBlur' => FALSE,
     ));
     $r .= "</div>\n";
     $r .= '<div id="species-tab">' . "\n";
@@ -126,6 +127,7 @@ class filter_what extends FilterBase {
       'valueField' => 'preferred_taxa_taxon_list_id',
       'extraParams' => $baseParams,
       'addToTable' => FALSE,
+      'continueOnBlur' => FALSE,
     );
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
@@ -141,7 +143,8 @@ class filter_what extends FilterBase {
         'extraParams' => $readAuth,
         'addToTable' => FALSE,
         'autocompleteControl' => 'select',
-        'extraParams' => $readAuth + array('orderby' => 'title')
+        'extraParams' => $readAuth + array('orderby' => 'title'),
+        'continueOnBlur' => FALSE,
       );
       $r .= data_entry_helper::sub_list($subListOptions);
       $r .= "</div>\n";
@@ -246,6 +249,7 @@ class filter_what extends FilterBase {
             'view' => 'cache',
             'query' => json_encode(['in' => ['termlist_id' => $termlistIds]]),
           ],
+          'continueOnBlur' => FALSE,
         ]);
         $idx++;
       }

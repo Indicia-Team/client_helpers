@@ -720,6 +720,7 @@ JS;
    *   * sref_handlers_osie
    *   * font_awesome
    *   * leaflet
+   *   * leaflet_google
    */
   public static function add_resource($resource) {
 
@@ -914,6 +915,14 @@ JS;
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket.min.js',
             'https://cdnjs.cloudflare.com/ajax/libs/wicket/1.3.3/wicket-leaflet.min.js',
             self::$js_path . 'leaflet.heat/dist/leaflet-heat.js',
+          ],
+        ],
+        'leaflet_google' => [
+          'deps' => [
+            'googlemaps'
+          ],
+          'javascript' => [
+            'https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js',
           ],
         ],
         'datacomponents' => [

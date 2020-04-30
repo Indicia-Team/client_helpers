@@ -1081,6 +1081,12 @@ JS;
     return preg_replace('/[^\da-z]/', '', strtolower($str));
   }
 
+  private static function remove_utf8_bom($text) {
+    $bom = pack('H*','EFBBBF');
+    $text = preg_replace("/^$bom/", '', $text);
+    return $text;
+  }
+
   /**
    * Return column caption translated to machine name.
    *
@@ -1093,6 +1099,9 @@ JS;
    *   Non-alphanumerics replaced with _.
    */
   private static function columnMachineName($caption) {
+    // Just in case first column in a CSV file with BOM, remove it.
+    $bom = pack('H*','EFBBBF');
+    $caption = preg_replace("/^$bom/", '', $caption);
     return preg_replace('/[^A-Za-z0-9]/', '_', trim($caption));
   }
 
