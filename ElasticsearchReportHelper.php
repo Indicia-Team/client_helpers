@@ -206,10 +206,9 @@ class ElasticsearchReportHelper {
       'caption' => 'Lat/lon',
       'description' => 'Latitude and longitude of the record.',
     ],
-    'occurrence.media' => [
+    '#occurrence_media#' => [
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
-      'handler' => 'media',
     ],
     'occurrence.sex' => [
       'caption' => 'Sex',
@@ -379,12 +378,18 @@ JS;
    */
   public static function download(array $options) {
     self::checkOptions('esDownload', $options,
-      ['source'],
+      [],
       ['addColumns', 'removeColumns']
     );
+    if (empty($options['source']) && empty($options['linkToDataGrid'])) {
+      throw new Exception('Download control requires a value for either the @source or @linkToDataGrid option.');
+    }
+    if (!empty($options['source']) && !empty($options['linkToDataGrid'])) {
+      throw new Exception('Download control requires only one of the @source or @linkToDataGrid options to be specified.');
+    }
     $options = array_merge([
       'caption' => 'Download',
-      'title' => 'Run the download'
+      'title' => 'Run the download',
     ], $options);
     global $indicia_templates;
     $html = str_replace(
@@ -433,6 +438,7 @@ HTML;
     // add some download options.
     $dataOptions = helper_base::getOptionsForJs($options, [
       'source',
+      'linkToDataGrid',
       'aggregation',
       'columnsTemplate',
       'addColumns',
