@@ -7261,8 +7261,8 @@ TXT;
     $r = '<div class="ui-widget ui-widget-content ui-state-highlight ui-corner-all">' .
       '<p class="ui-widget-header"><strong>System check</strong></p><ul>';
     // Test PHP version.
-    if (PHP_VERSION_ID<50200) {
-      $r .= '<li class="ui-state-error">Warning: PHP version is '.phpversion().' which does not support JSON communication with the Indicia Warehouse.</li>';
+    if (PHP_VERSION_ID<50600) {
+      $r .= '<li class="ui-state-error">Warning: PHP version is '.phpversion().' which is unsupported.</li>';
     } elseif ($fullInfo) {
       $r .= '<li>Success: PHP version is '.phpversion().'.</li>';
     }
