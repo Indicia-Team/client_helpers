@@ -339,10 +339,13 @@ JS;
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'source',
-      'columns',
-      'availableColumnInfo',
       'actions',
+      'aggregation',
+      'applyFilterRowToSources',
+      'availableColumnInfo',
+      'autoResponsiveCols',
+      'autoResponsiveExpand',
+      'columns',
       'cookies',
       'includeColumnHeadings',
       'includeFilterRow',
@@ -350,14 +353,11 @@ JS;
       'includeMultiSelectTool',
       'responsive',
       'responsiveOptions',
-      'autoResponsiveCols',
-      'autoResponsiveExpand',
-      'sortable',
-      'aggregation',
-      'sourceTable',
-      'scrollY',
-      'applyFilterRowToSources',
       'rowClasses',
+      'scrollY',
+      'source',
+      'sourceTable',
+      'sortable',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
 $('#$options[id]').idcDataGrid({});
