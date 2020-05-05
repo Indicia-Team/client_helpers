@@ -270,10 +270,6 @@ class ElasticsearchReportHelper {
       'source',
       'functionName',
     ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcCustomScript({});
-
-JS;
     return self::getControlContainer('customScript', $options, $dataOptions);
   }
 
@@ -316,6 +312,11 @@ JS;
       }
       $field = empty($columnDef['agg']) ? $columnDef['field'] : $columnDef['agg'];
       unset($columnDef['field']);
+      // To aid transition from older code versions, auto-enable the media
+      // special field handling. This may be removed in future.
+      if ($field === 'occurrence.media') {
+        $field = '#occurrence_media#';
+      }
       $columnsByField[$field] = $columnDef;
     }
     $options['columns'] = array_keys($columnsByField);
@@ -358,10 +359,6 @@ JS;
       'source',
       'sortable',
     ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcDataGrid({});
-
-JS;
     return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
@@ -441,12 +438,7 @@ HTML;
       'addColumns',
       'removeColumns',
     ], empty($options['attachToId']));
-    $r = self::getControlContainer('esDownload', $options, $dataOptions, $html);
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcEsDownload({});
-
-JS;
-    return $r;
+    return self::getControlContainer('esDownload', $options, $dataOptions, $html);
   }
 
   /**
@@ -528,10 +520,7 @@ JS;
       'cookies',
       'selectedFeatureStyle',
     ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcLeafletMap({});
-
-JS;
+    // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
 $('#$options[id]').idcLeafletMap('bindGrids');
 
@@ -685,6 +674,18 @@ HTML;
         'sortAggregation',
       ]
     );
+    // Temporary support for deprecated @aggregationMapMode option. Will be
+    // removed in a future version.
+    if (empty($options['mode'])) {
+      if (!empty($options['aggregationMapMode'])) {
+        $options['mode'] = 'map' . ucfirst($options['aggregationMapMode']);
+      }
+      elseif (!empty($options['aggregation']) && !empty($options['filterBoundsUsingMap'])) {
+        // Default aggregation mode to mapGeoHash (for legacy support till
+        // deprecated code removed).
+        $options['mode'] = 'mapGeoHash';
+      }
+    }
     $options = array_merge([
       'mode' => 'docs',
     ], $options);
@@ -757,10 +758,6 @@ HTML;
       'footer',
       'repeatField',
     ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcTemplatedOutput({});
-
-JS;
     return self::getControlContainer('templatedOutput', $options, $dataOptions);
   }
 
@@ -1288,18 +1285,23 @@ AGG;
    * @return string
    *   Control HTML.
    */
-  private static function getControlContainer($controlName, array $options, $dataOptions, $content='') {
+  private static function getControlContainer($controlName, array $options, $dataOptions, $content = '') {
+    $initFn = 'idc' . ucfirst($controlName);
     if (!empty($options['attachToId'])) {
       // Use JS to attach to an existing element.
       helper_base::$javascript .= <<<JS
 $('#$options[attachToId]')
   .addClass('idc-output')
   .addClass("idc-output-$controlName")
-  .attr('data-idc-output-config', '$dataOptions');
-
+  .attr('data-idc-config', '$dataOptions')
+  .$initFn({});
 JS;
       return '';
     }
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').$initFn({});
+
+JS;
     return <<<HTML
 <div id="$options[id]" class="idc-output idc-output-$controlName" data-idc-config="$dataOptions">
   $content
