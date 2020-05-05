@@ -332,8 +332,8 @@ JS;
     $options['availableColumnInfo'] = $columnsByField;
     helper_base::add_resource('jquery_ui');
     helper_base::add_resource('indiciaFootableReport');
-    // Add footableSort for aggregation tables.
-    if ((!empty($options['aggregation']) && $options['aggregation'] === 'simple') || !empty($options['sourceTable'])) {
+    // Add footableSort for simple aggregation tables.
+    if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {
       helper_base::add_resource('footableSort');
     }
     // Fancybox for image popups.
@@ -356,7 +356,6 @@ JS;
       'rowClasses',
       'scrollY',
       'source',
-      'sourceTable',
       'sortable',
     ], empty($options['attachToId']));
     helper_base::$javascript .= <<<JS
@@ -692,7 +691,6 @@ HTML;
     self::applySourceModeDefaults($options);
     $jsOptions = [
       'aggregation',
-      'buildTableXY',
       'countAggregation',
       'fields',
       'filterBoolClauses',
