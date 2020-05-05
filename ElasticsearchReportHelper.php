@@ -289,12 +289,16 @@ JS;
     self::checkOptions(
       'dataGrid',
       $options,
-      ['source'],
-      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources', 'rowClasses']
+      ['columns', 'source'],
+      [
+        'actions',
+        'applyFilterRowToSources',
+        'availableColumns',
+        'columns',
+        'responsiveOptions',
+        'rowClasses',
+      ]
     );
-    if (empty($options['columns'])) {
-      throw new Exception('Control [dataGrid] requires a parameter called @columns.');
-    }
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
@@ -304,12 +308,6 @@ JS;
     $columnsByField = [];
     foreach ($options['columns'] as $columnDef) {
       $valid = !empty($columnDef['field']);
-      if (isset($options['aggregation']) && $options['aggregation'] === 'autoAggregationTable') {
-        $valid = $valid || !empty($columnDef['agg']);
-        if (empty($columnDef['agg'])) {
-          $columnDef['path'] = 'fieldlist.hits.hits.0._source';
-        }
-      }
       if (!$valid) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
       }
@@ -672,35 +670,47 @@ HTML;
   public static function source(array $options) {
     self::applyReplacements(
       $options,
-      ['aggregation', 'countAggregation', 'autoAggregationTable'],
-      ['aggregation', 'countAggregation', 'autoAggregationTable']
+      ['aggregation', 'countAggregation', 'sortAggregation'],
+      ['aggregation', 'countAggregation', 'sortAggregation']
     );
     self::checkOptions(
       'source',
       $options,
       ['id'],
-      ['aggregation', 'countAggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
+      [
+        'aggregation',
+        'fields',
+        'filterBoolClauses',
+        'countAggregation',
+        'sort',
+        'sortAggregation',
+      ]
     );
     $options = array_merge([
-      'aggregationMapMode' => 'geoHash',
+      'mode' => 'docs',
     ], $options);
+    self::applySourceModeDefaults($options);
     $jsOptions = [
-      'id',
+      'aggregation',
+      'buildTableXY',
+      'countAggregation',
+      'fields',
+      'filterBoolClauses',
+      'filterBoundsUsingMap',
+      'filterField',
+      'filterPath',
+      'filterSourceField',
+      'filterSourceGrid',
       'from',
+      'id',
+      'initialMapBounds',
+      'mapGridSquareSize',
+      'mapGeoHashPrecision',
+      'mode',
+      'sortAggregation',
       'size',
       'sort',
-      'filterPath',
-      'aggregation',
-      'countAggregation',
-      'autoAggregationTable',
-      'aggregationMapMode',
-      'buildTableXY',
-      'initialMapBounds',
-      'filterBoolClauses',
-      'filterSourceGrid',
-      'filterSourceField',
-      'filterField',
-      'filterBoundsUsingMap',
+      'uniqueField',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
     // A source is entirely JS driven - no HTML.
@@ -1046,6 +1056,128 @@ HTML;
           $options[$field] = json_decode($options[$field]);
         }
       }
+    }
+  }
+
+  /**
+   * Apply default settings for the mapGeoHash mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsMapGeoHash(array &$options) {
+    $options = array_merge($options, [
+      'mapGeoHashPrecision' => 4,
+      'size' => 0,
+    ]);
+    $aggText = <<<AGG
+{
+  "filter_agg": {
+    "filter": {
+      "geo_bounding_box": {}
+    },
+    "aggs": {
+      "by_hash": {
+        "geohash_grid": {
+          "field": "location.point",
+          "precision": $options[mapGeoHashPrecision]
+        },
+        "aggs": {
+          "by_centre": {
+            "geo_centroid": {
+              "field": "location.point"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+AGG;
+    $options = array_merge($options, ['aggregation' => json_decode($aggText)]);
+  }
+
+  /**
+   * Apply default settings for the mapGridSquare mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsMapGridSquare(array &$options) {
+    $options = array_merge($options, [
+      'mapGridSquareSize' => 'autoGridSquareSize',
+      'size' => 0,
+    ]);
+    $geoField = $options['mapGridSquareSize'] === 'autoGridSquareSize' ?
+      'autoGridSquareField' : "location.grid_square.$options[mapGridSquareSize]km.centre";
+    $aggText = <<<AGG
+{
+  "filter_agg": {
+    "filter": {
+      "geo_bounding_box": {}
+    },
+    "aggs": {
+      "by_srid": {
+        "terms": {
+          "field": "location.grid_square.srid",
+          "size": 1000,
+          "order": {
+            "_count": "desc"
+          }
+        },
+        "aggs": {
+          "by_square": {
+            "terms": {
+              "field": "$geoField",
+              "size": 100000,
+              "order": {
+                "_count": "desc"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+AGG;
+    $options = array_merge($options, ['aggregation' => json_decode($aggText)]);
+  }
+
+  /**
+   * Apply default settings for the termAggregation mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsTermAggregation(array &$options) {
+    if (empty($options['uniqueField'])) {
+      throw new Exception("Sources require a parameter called @uniqueField when @mode=termAggregation");
+    }
+    if (empty($options['aggregation'])) {
+      throw new Exception("Sources require a parameter called @aggregation when @mode=termAggregation");
+    }
+    if (!empty($options['orderbyAggregation']) && !is_object($options['orderbyAggregation'])
+        && !is_array($options['orderbyAggregation'])) {
+      throw new Exception("@orderbyAggregation option for source is not a valid JSON object.");
+    }
+    $options = array_merge([
+      'fields' => [],
+      // Default to sort by the uniqueField.
+      'sort' => [$options['uniqueField'] => 'asc'],
+    ], $options);
+  }
+
+  /**
+   * Apply default settings depending on the @mode option.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaults(array &$options) {
+    $method = 'applySourceModeDefaults' . ucfirst($options['mode']);
+    if (method_exists('ElasticsearchReportHelper', $method)) {
+      self::$method($options);
     }
   }
 
