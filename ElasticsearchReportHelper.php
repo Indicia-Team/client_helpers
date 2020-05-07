@@ -341,7 +341,6 @@ class ElasticsearchReportHelper {
     helper_base::add_resource('fancybox');
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
-      'aggregation',
       'applyFilterRowToSources',
       'availableColumnInfo',
       'autoResponsiveCols',
@@ -658,8 +657,8 @@ HTML;
   public static function source(array $options) {
     self::applyReplacements(
       $options,
-      ['aggregation', 'countAggregation', 'sortAggregation'],
-      ['aggregation', 'countAggregation', 'sortAggregation']
+      ['aggregation', 'sortAggregation'],
+      ['aggregation', 'sortAggregation']
     );
     self::checkOptions(
       'source',
@@ -669,7 +668,6 @@ HTML;
         'aggregation',
         'fields',
         'filterBoolClauses',
-        'countAggregation',
         'sort',
         'sortAggregation',
       ]
@@ -692,7 +690,6 @@ HTML;
     self::applySourceModeDefaults($options);
     $jsOptions = [
       'aggregation',
-      'countAggregation',
       'fields',
       'filterBoolClauses',
       'filterBoundsUsingMap',
@@ -1338,10 +1335,7 @@ HTML;
           'type' => $config['type'],
         ];
         // We can't sort on text unless a keyword is specified.
-        if (isset($config['fields']) && isset($config['fields']['keyword'])) {
-          $mappings[$field]['sort_field'] = "$field.keyword";
-        }
-        elseif ($config['type'] !== 'text') {
+        if ($config['type'] !== 'text' || (isset($config['fields']) && isset($config['fields']['keyword']))) {
           $mappings[$field]['sort_field'] = $field;
         }
         else {
