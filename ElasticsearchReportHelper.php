@@ -255,6 +255,7 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
     helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
+    helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
   }
@@ -298,39 +299,19 @@ class ElasticsearchReportHelper {
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
-    $options = array_merge([
-      'availableColumns' => !empty($options['aggregation']) ? [] : array_keys(self::MAPPING_FIELDS),
-    ], $options);
-    $columnsByField = [];
-    foreach ($options['columns'] as $columnDef) {
-      $valid = !empty($columnDef['field']);
-      if (!$valid) {
+    foreach ($options['columns'] as &$columnDef) {
+      if (empty($columnDef['field'])) {
         throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
       }
       if (!isset($columnDef['caption'])) {
         $columnDef['caption'] = '';
       }
-      $field = empty($columnDef['agg']) ? $columnDef['field'] : $columnDef['agg'];
-      unset($columnDef['field']);
       // To aid transition from older code versions, auto-enable the media
       // special field handling. This may be removed in future.
-      if ($field === 'occurrence.media') {
-        $field = '#occurrence_media#';
-      }
-      $columnsByField[$field] = $columnDef;
-    }
-    $options['columns'] = array_keys($columnsByField);
-    foreach ($options['availableColumns'] as $field) {
-      if (array_key_exists($field, self::MAPPING_FIELDS)) {
-        if (!isset($columnsByField[$field])) {
-          $columnsByField[$field] = self::MAPPING_FIELDS[$field];
-        }
-        else {
-          $columnsByField[$field] = array_merge(self::MAPPING_FIELDS[$field], $columnsByField[$field]);
-        }
+      if ($columnDef['field'] === 'occurrence.media') {
+        $columnDef['field'] = '#occurrence_media#';
       }
     }
-    $options['availableColumnInfo'] = $columnsByField;
     helper_base::add_resource('jquery_ui');
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for simple aggregation tables.
@@ -342,7 +323,7 @@ class ElasticsearchReportHelper {
     $dataOptions = helper_base::getOptionsForJs($options, [
       'actions',
       'applyFilterRowToSources',
-      'availableColumnInfo',
+      'availableColumns',
       'autoResponsiveCols',
       'autoResponsiveExpand',
       'columns',
