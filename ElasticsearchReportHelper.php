@@ -294,6 +294,7 @@ class ElasticsearchReportHelper {
         'columns',
         'responsiveOptions',
         'rowClasses',
+        'rowsPerPageOptions',
       ]
     );
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
@@ -335,6 +336,7 @@ class ElasticsearchReportHelper {
       'responsive',
       'responsiveOptions',
       'rowClasses',
+      'rowsPerPageOptions',
       'scrollY',
       'source',
       'sortable',
