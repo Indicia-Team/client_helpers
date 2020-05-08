@@ -1136,18 +1136,6 @@ AGG;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaultsTermAggregation(array &$options) {
-    $options = array_merge($options, [
-      'fields' => [],
-    ]);
-  }
-
-  /**
-   * Apply default settings for the termAggregation mode.
-   *
-   * @param array $options
-   *   Options passed to the [source]. Will be modified as appropriate.
-   */
-  private static function applySourceModeDefaultsTermAggregation(array &$options) {
     if (empty($options['uniqueField'])) {
       throw new Exception("Sources require a parameter called @uniqueField when @mode=termAggregation");
     }
