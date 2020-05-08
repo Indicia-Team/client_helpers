@@ -1118,6 +1118,30 @@ AGG;
   }
 
   /**
+   * Apply default settings for the compositeAggregation mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsCompositeAggregation(array &$options) {
+    $options = array_merge($options, [
+      'fields' => [],
+    ]);
+  }
+
+  /**
+   * Apply default settings for the termAggregation mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsTermAggregation(array &$options) {
+    $options = array_merge($options, [
+      'fields' => [],
+    ]);
+  }
+
+  /**
    * Apply default settings for the termAggregation mode.
    *
    * @param array $options
