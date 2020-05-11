@@ -286,7 +286,7 @@ class ElasticsearchReportHelper {
     self::checkOptions(
       'dataGrid',
       $options,
-      ['columns', 'source'],
+      ['source'],
       [
         'actions',
         'applyFilterRowToSources',
@@ -300,17 +300,19 @@ class ElasticsearchReportHelper {
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
-    foreach ($options['columns'] as &$columnDef) {
-      if (empty($columnDef['field'])) {
-        throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
-      }
-      if (!isset($columnDef['caption'])) {
-        $columnDef['caption'] = '';
-      }
-      // To aid transition from older code versions, auto-enable the media
-      // special field handling. This may be removed in future.
-      if ($columnDef['field'] === 'occurrence.media') {
-        $columnDef['field'] = '#occurrence_media#';
+    if (isset($options['columns'])) {
+      foreach ($options['columns'] as &$columnDef) {
+        if (empty($columnDef['field'])) {
+          throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
+        }
+        if (!isset($columnDef['caption'])) {
+          $columnDef['caption'] = '';
+        }
+        // To aid transition from older code versions, auto-enable the media
+        // special field handling. This may be removed in future.
+        if ($columnDef['field'] === 'occurrence.media') {
+          $columnDef['field'] = '#occurrence_media#';
+        }
       }
     }
     helper_base::add_resource('jquery_ui');
@@ -1128,6 +1130,7 @@ AGG;
   private static function applySourceModeDefaultsCompositeAggregation(array &$options) {
     $options = array_merge($options, [
       'fields' => [],
+      'aggregation' => [],
     ]);
   }
 
@@ -1141,9 +1144,6 @@ AGG;
     if (empty($options['uniqueField'])) {
       throw new Exception("Sources require a parameter called @uniqueField when @mode=termAggregation");
     }
-    if (empty($options['aggregation'])) {
-      throw new Exception("Sources require a parameter called @aggregation when @mode=termAggregation");
-    }
     if (!empty($options['orderbyAggregation']) && !is_object($options['orderbyAggregation'])
         && !is_array($options['orderbyAggregation'])) {
       throw new Exception("@orderbyAggregation option for source is not a valid JSON object.");
@@ -1152,6 +1152,7 @@ AGG;
       'fields' => [],
       // Default to sort by the uniqueField.
       'sort' => [$options['uniqueField'] => 'asc'],
+      'aggregation' => [],
     ], $options);
   }
 
