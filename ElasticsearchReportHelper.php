@@ -686,7 +686,6 @@ HTML;
       'id',
       'initialMapBounds',
       'mapGridSquareSize',
-      'mapGeoHashPrecision',
       'mode',
       'sortAggregation',
       'size',
@@ -1043,10 +1042,11 @@ HTML;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaultsMapGeoHash(array &$options) {
+    // Disable loading of docs.
     $options = array_merge($options, [
-      'mapGeoHashPrecision' => 4,
       'size' => 0,
     ]);
+    // Note the geohash_grid precision will be overridden depending on map zoom.
     $aggText = <<<AGG
 {
   "filter_agg": {
@@ -1057,7 +1057,7 @@ HTML;
       "by_hash": {
         "geohash_grid": {
           "field": "location.point",
-          "precision": $options[mapGeoHashPrecision]
+          "precision": 1
         },
         "aggs": {
           "by_centre": {
@@ -1081,12 +1081,17 @@ AGG;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaultsMapGridSquare(array &$options) {
-    $options = array_merge($options, [
+    $options = array_merge([
       'mapGridSquareSize' => 'autoGridSquareSize',
       'size' => 0,
-    ]);
-    $geoField = $options['mapGridSquareSize'] === 'autoGridSquareSize' ?
-      'autoGridSquareField' : "location.grid_square.$options[mapGridSquareSize]km.centre";
+    ], $options);
+    if ($options['mapGridSquareSize'] === 'autoGridSquareSize') {
+      $geoField = 'autoGridSquareField';
+    }
+    else {
+      $sizeInKm = $options['mapGridSquareSize'] / 1000;
+      $geoField = "location.grid_square.{$sizeInKm}km.centre";
+    }
     $aggText = <<<AGG
 {
   "filter_agg": {
