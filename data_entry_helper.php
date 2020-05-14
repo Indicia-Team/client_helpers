@@ -908,17 +908,17 @@ JS;
         $imgPath .= 'nuvola/date-16px.png';
         if (!empty($options['buttonText'])) {
           $buttonText = $options['buttonText'];
-        } else {
+        }
+        else {
           $buttonText = $options['allowVagueDates'] ? lang::get('To enter an exact date, click here. To enter a vague date, type it into the text box') : lang::get('Click here to pick a date');
         }
-        $options['afterControl'] = "<img src=\"$imgPath\" title=\"buttonText\" onclick=\"jQuery('#sample\\\\:date').datepicker('show');\"/>";
-      } else
-        $button='';
+        $options['afterControl'] = "<img src=\"$imgPath\" title=\"$buttonText\" onclick=\"jQuery('#sample\\\\:date').datepicker('show');\"/>";
+      }
       self::$javascript .= "jQuery('#$escaped_id').datepicker({
     dateFormat : '".$options['dateFormat']."',
     changeMonth: true,
     changeYear: true,
-    constrainInput: false $button";
+    constrainInput: false";
       // Filter out future dates
       if (!array_key_exists('allowFuture', $options) || $options['allowFuture']==false) {
         self::$javascript .= ",
