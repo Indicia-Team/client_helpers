@@ -911,7 +911,7 @@ JS;
         } else {
           $buttonText = $options['allowVagueDates'] ? lang::get('To enter an exact date, click here. To enter a vague date, type it into the text box') : lang::get('Click here to pick a date');
         }
-        $button = ",\n    showOn: 'button',\n    buttonImage: '$imgPath',\n    buttonText: '$buttonText'";
+        $options['afterControl'] = "<img src=\"$imgPath\" title=\"buttonText\" onclick=\"jQuery('#sample\\\\:date').datepicker('show');\"/>";
       } else
         $button='';
       self::$javascript .= "jQuery('#$escaped_id').datepicker({
