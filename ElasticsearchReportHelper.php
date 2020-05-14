@@ -27,7 +27,7 @@ class ElasticsearchReportHelper {
   /**
    * Count controls to make unique IDs.
    *
-   * @var integer
+   * @var int
    */
   private static $controlIndex = 0;
 
@@ -1043,9 +1043,9 @@ HTML;
    */
   private static function applySourceModeDefaultsMapGeoHash(array &$options) {
     // Disable loading of docs.
-    $options = array_merge($options, [
+    $options = array_merge([
       'size' => 0,
-    ]);
+    ], $options);
     // Note the geohash_grid precision will be overridden depending on map zoom.
     $aggText = <<<AGG
 {
@@ -1071,7 +1071,7 @@ HTML;
   }
 }
 AGG;
-    $options = array_merge($options, ['aggregation' => json_decode($aggText)]);
+    $options = array_merge(['aggregation' => json_decode($aggText)], $options);
   }
 
   /**
@@ -1123,7 +1123,7 @@ AGG;
   }
 }
 AGG;
-    $options = array_merge($options, ['aggregation' => json_decode($aggText)]);
+    $options = array_merge(['aggregation' => json_decode($aggText)], $options);
   }
 
   /**
@@ -1133,10 +1133,10 @@ AGG;
    *   Options passed to the [source]. Will be modified as appropriate.
    */
   private static function applySourceModeDefaultsCompositeAggregation(array &$options) {
-    $options = array_merge($options, [
+    $options = array_merge([
       'fields' => [],
       'aggregation' => [],
-    ]);
+    ], $options);
   }
 
   /**
@@ -1232,7 +1232,6 @@ AGG;
     }
   }
 
-
   /**
    * Uses an Indicia report to convert a URL param to a list of filter values.
    *
@@ -1271,14 +1270,19 @@ AGG;
    * Returns the HTML required to act as a control container.
    *
    * Creates the common HTML strucuture required to wrap any data output
-   * control. If the control's @attachToId option is set then sets the
-   * required JavaScript to make the control inject itself into the existing
-   * element instead.
+   * control.
    *
    * @param string $controlName
+   *   Control type name (e.g. source, dataGrid).
    * @param array $options
+   *   Options passed to the control. If the control's @attachToId option is
+   *   set then sets the required JavaScript to make the control inject itself
+   *   into the existing element instead.
    * @param string $dataOptions
+   *   Options to store in the HTML data-idc-config attribute on the container.
+   *   These are made available to configure the JS behaviour of the control.
    * @param string $content
+   *   HTML to add to the container.
    *
    * @return string
    *   Control HTML.
