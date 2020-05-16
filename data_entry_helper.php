@@ -4821,32 +4821,29 @@ HTML;
   }
 
   /**
-   * Helper function to output an HTML textarea. This includes re-loading of existing values
-   * and displaying of validation error messages.
+   * Helper function to output an HTML textarea.
+   *
+   * This includes re-loading of existing values and displaying of validation
+   * error messages.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>textareat</b></br>
-   * HTML template used to generate the textarea element.
-   * </li>
-   * </ul>
+   * * textarea - HTML template used to generate the textarea element.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to, e.g. occurrence:image.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>rows</b><br/>
-   * Optional. HTML rows attribute. Defaults to 4.</li>
-   * <li><b>cols</b><br/>
-   * Optional. HTML cols attribute. Defaults to 80.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname- Required. The name of the database field this control is
+   *     bound to, e.g. occurrence:image.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * rows - Optional. HTML rows attribute. Defaults to 4.
+   *   * cols - Optional. HTML cols attribute. Defaults to 80.
    *
-   * @return string HTML to insert into the page for the textarea control.
+   * @return string
+   *   HTML to insert into the page for the textarea control.
    */
   public static function textarea($options) {
     $options = array_merge(array(
