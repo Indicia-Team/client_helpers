@@ -415,12 +415,12 @@ HTML;
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'source',
-      'linkToDataGrid',
+      'addColumns',
       'aggregation',
       'columnsTemplate',
-      'addColumns',
+      'linkToDataGrid',
       'removeColumns',
+      'source',
     ], empty($options['attachToId']));
     return self::getControlContainer('esDownload', $options, $dataOptions, $html);
   }
@@ -496,13 +496,13 @@ HTML;
     }
     $dataOptions = helper_base::getOptionsForJs($options, [
       'baseLayerConfig',
-      'layerConfig',
-      'showSelectedRow',
+      'cookies',
       'initialLat',
       'initialLng',
       'initialZoom',
-      'cookies',
+      'layerConfig',
       'selectedFeatureStyle',
+      'showSelectedRow',
     ], empty($options['attachToId']));
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
@@ -592,11 +592,11 @@ HTML;
       );
     }
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'showSelectedRow',
-      'exploreUrl',
-      'locationTypes',
-      'extraLocationTypes',
       'allowRedetermination',
+      'exploreUrl',
+      'extraLocationTypes',
+      'locationTypes',
+      'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
     helper_base::$javascript .= <<<JS
@@ -1213,6 +1213,7 @@ AGG;
     if (in_array($options['id'], self::$controlIds)) {
       throw new Exception("Control ID $options[id] is duplicated in the page configuration");
     }
+
     self::$controlIds[] = $options['id'];
     foreach ($requiredOptions as $option) {
       if (!isset($options[$option]) || $options[$option] === '') {
