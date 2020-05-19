@@ -67,6 +67,12 @@ class DynamicAttrsProxyHelper {
       // Only load if needed.
       require_once 'data_entry_helper.php';
       foreach ($attrList as $attr) {
+        // Correct default field names.
+        // @todo Share code for this with dynamic.php. Or better, tidy so not
+        // necessary.
+        $attr['default'] = $attr['default_value'];
+        $attr['displayValue'] = $attr['default_value_caption'];
+        $attr['defaultUpper'] = $attr['default_upper_value'];
         if ($attr['system_function']) {
           $attrData[] = [
             'attr' => $attr,
