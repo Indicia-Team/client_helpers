@@ -270,7 +270,7 @@ class ElasticsearchReportHelper {
     $dataOptions = helper_base::getOptionsForJs($options, [
       'source',
       'functionName',
-    ], empty($options['attachToId']));
+    ], TRUE);
     return self::getControlContainer('customScript', $options, $dataOptions);
   }
 
@@ -342,7 +342,7 @@ class ElasticsearchReportHelper {
       'scrollY',
       'source',
       'sortable',
-    ], empty($options['attachToId']));
+    ], TRUE);
     return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
@@ -417,11 +417,12 @@ HTML;
     $dataOptions = helper_base::getOptionsForJs($options, [
       'addColumns',
       'aggregation',
+      'buttonContainerElement',
       'columnsTemplate',
       'linkToDataGrid',
       'removeColumns',
       'source',
-    ], empty($options['attachToId']));
+    ], TRUE);
     return self::getControlContainer('esDownload', $options, $dataOptions, $html);
   }
 
@@ -503,7 +504,7 @@ HTML;
       'layerConfig',
       'selectedFeatureStyle',
       'showSelectedRow',
-    ], empty($options['attachToId']));
+    ], TRUE);
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
 $('#$options[id]').idcLeafletMap('bindGrids');
@@ -738,7 +739,7 @@ HTML;
       'header',
       'footer',
       'repeatField',
-    ], empty($options['attachToId']));
+    ], TRUE);
     return self::getControlContainer('templatedOutput', $options, $dataOptions);
   }
 
@@ -1177,8 +1178,6 @@ AGG;
   /**
    * Provide common option handling for controls.
    *
-   * * If attachToId specified, ensures that the control ID is set to the same
-   *   value.
    * * Sets a unique ID for the control if not already set.
    * * Checks that required options are all populated.
    * * Checks that options which should contain JSON do so.
@@ -1196,19 +1195,10 @@ AGG;
    */
   private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
     self::$controlIndex++;
-    if (!empty($options['attachToId'])) {
-      if (!empty($options['id']) && $options['id'] !== $options['attachToId']) {
-        throw new Exception("Control ID $options[id] @attachToId does not match the @id option value.");
-      }
-      // If attaching to an existing element, force the ID.
-      $options['id'] = $options['attachToId'];
-    }
-    else {
-      // Otherwise, generate a unique ID if not defined.
-      $options = array_merge([
-        'id' => "idc-$controlName-" . self::$controlIndex,
-      ], $options);
-    }
+    // Generate a unique ID if not defined.
+    $options = array_merge([
+      'id' => "idc-$controlName-" . self::$controlIndex,
+    ], $options);
     // Fail if duplicate ID on page.
     if (in_array($options['id'], self::$controlIds)) {
       throw new Exception("Control ID $options[id] is duplicated in the page configuration");
@@ -1276,9 +1266,9 @@ AGG;
    * @param string $controlName
    *   Control type name (e.g. source, dataGrid).
    * @param array $options
-   *   Options passed to the control. If the control's @attachToId option is
-   *   set then sets the required JavaScript to make the control inject itself
-   *   into the existing element instead.
+   *   Options passed to the control. If the control's @containerElement option
+   *   is set then sets the required JavaScript to make the control inject
+   *   itself into the existing element instead.
    * @param string $dataOptions
    *   Options to store in the HTML data-idc-config attribute on the container.
    *   These are made available to configure the JS behaviour of the control.
@@ -1290,16 +1280,15 @@ AGG;
    */
   private static function getControlContainer($controlName, array $options, $dataOptions, $content = '') {
     $initFn = 'idc' . ucfirst($controlName);
-    if (!empty($options['attachToId'])) {
+    if (!empty($options['containerElement'])) {
       // Use JS to attach to an existing element.
       helper_base::$javascript .= <<<JS
-$('#$options[attachToId]')
-  .addClass('idc-output')
-  .addClass("idc-output-$controlName")
-  .attr('data-idc-config', '$dataOptions')
-  .$initFn({});
+if ($('$options[containerElement]').length === 0) {
+  indiciaFns.controlFail($('#$options[id]'), 'Invalid @containerElement selector for $options[id]');
+}
+$($('$options[containerElement]')[0]).append($('#$options[id]'));
+
 JS;
-      return '';
     }
     helper_base::$javascript .= <<<JS
 $('#$options[id]').$initFn({});
