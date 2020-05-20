@@ -27,7 +27,7 @@ class ElasticsearchReportHelper {
   /**
    * Count controls to make unique IDs.
    *
-   * @var integer
+   * @var int
    */
   private static $controlIndex = 0;
 
@@ -206,10 +206,9 @@ class ElasticsearchReportHelper {
       'caption' => 'Lat/lon',
       'description' => 'Latitude and longitude of the record.',
     ],
-    'occurrence.media' => [
+    '#occurrence_media#' => [
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
-      'handler' => 'media',
     ],
     'occurrence.sex' => [
       'caption' => 'Sex',
@@ -256,6 +255,7 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
     helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
+    helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
   }
@@ -270,11 +270,7 @@ class ElasticsearchReportHelper {
     $dataOptions = helper_base::getOptionsForJs($options, [
       'source',
       'functionName',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcCustomScript({});
-
-JS;
+    ], TRUE);
     return self::getControlContainer('customScript', $options, $dataOptions);
   }
 
@@ -291,61 +287,49 @@ JS;
       'dataGrid',
       $options,
       ['source'],
-      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources', 'rowClasses']
+      [
+        'actions',
+        'applyFilterRowToSources',
+        'availableColumns',
+        'columns',
+        'responsiveOptions',
+        'rowClasses',
+        'rowsPerPageOptions',
+      ]
     );
-    if (empty($options['columns'])) {
-      throw new Exception('Control [dataGrid] requires a parameter called @columns.');
-    }
     if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
-    $options = array_merge([
-      'availableColumns' => !empty($options['aggregation']) ? [] : array_keys(self::MAPPING_FIELDS),
-    ], $options);
-    $columnsByField = [];
-    foreach ($options['columns'] as $columnDef) {
-      $valid = !empty($columnDef['field']);
-      if (isset($options['aggregation']) && $options['aggregation'] === 'autoAggregationTable') {
-        $valid = $valid || !empty($columnDef['agg']);
-        if (empty($columnDef['agg'])) {
-          $columnDef['path'] = 'fieldlist.hits.hits.0._source';
+    if (isset($options['columns'])) {
+      foreach ($options['columns'] as &$columnDef) {
+        if (empty($columnDef['field'])) {
+          throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
         }
-      }
-      if (!$valid) {
-        throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
-      }
-      if (!isset($columnDef['caption'])) {
-        $columnDef['caption'] = '';
-      }
-      $field = empty($columnDef['agg']) ? $columnDef['field'] : $columnDef['agg'];
-      unset($columnDef['field']);
-      $columnsByField[$field] = $columnDef;
-    }
-    $options['columns'] = array_keys($columnsByField);
-    foreach ($options['availableColumns'] as $field) {
-      if (array_key_exists($field, self::MAPPING_FIELDS)) {
-        if (!isset($columnsByField[$field])) {
-          $columnsByField[$field] = self::MAPPING_FIELDS[$field];
+        if (!isset($columnDef['caption'])) {
+          $columnDef['caption'] = '';
         }
-        else {
-          $columnsByField[$field] = array_merge(self::MAPPING_FIELDS[$field], $columnsByField[$field]);
+        // To aid transition from older code versions, auto-enable the media
+        // special field handling. This may be removed in future.
+        if ($columnDef['field'] === 'occurrence.media') {
+          $columnDef['field'] = '#occurrence_media#';
         }
       }
     }
-    $options['availableColumnInfo'] = $columnsByField;
     helper_base::add_resource('jquery_ui');
     helper_base::add_resource('indiciaFootableReport');
-    // Add footableSort for aggregation tables.
-    if ((!empty($options['aggregation']) && $options['aggregation'] === 'simple') || !empty($options['sourceTable'])) {
+    // Add footableSort for simple aggregation tables.
+    if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {
       helper_base::add_resource('footableSort');
     }
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'source',
-      'columns',
-      'availableColumnInfo',
       'actions',
+      'applyFilterRowToSources',
+      'availableColumns',
+      'autoResponsiveCols',
+      'autoResponsiveExpand',
+      'columns',
       'cookies',
       'includeColumnHeadings',
       'includeFilterRow',
@@ -353,19 +337,12 @@ JS;
       'includeMultiSelectTool',
       'responsive',
       'responsiveOptions',
-      'autoResponsiveCols',
-      'autoResponsiveExpand',
-      'sortable',
-      'aggregation',
-      'sourceTable',
-      'scrollY',
-      'applyFilterRowToSources',
       'rowClasses',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcDataGrid({});
-
-JS;
+      'rowsPerPageOptions',
+      'scrollY',
+      'source',
+      'sortable',
+    ], TRUE);
     return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
@@ -379,9 +356,19 @@ JS;
    */
   public static function download(array $options) {
     self::checkOptions('esDownload', $options,
-      ['source'],
+      [],
       ['addColumns', 'removeColumns']
     );
+    if (empty($options['source']) && empty($options['linkToDataGrid'])) {
+      throw new Exception('Download control requires a value for either the @source or @linkToDataGrid option.');
+    }
+    if (!empty($options['source']) && !empty($options['linkToDataGrid'])) {
+      throw new Exception('Download control requires only one of the @source or @linkToDataGrid options to be specified.');
+    }
+    $options = array_merge([
+      'caption' => 'Download',
+      'title' => 'Run the download',
+    ], $options);
     global $indicia_templates;
     $html = str_replace(
       [
@@ -391,9 +378,9 @@ JS;
         '{caption}',
       ], [
         "$options[id]-button",
-        lang::get('Run the download'),
+        lang::get($options['title']),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
-        lang::get('Download'),
+        lang::get($options['caption']),
       ],
       $indicia_templates['button']
     );
@@ -428,18 +415,15 @@ HTML;
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'source',
-      'aggregation',
-      'columnsTemplate',
       'addColumns',
+      'aggregation',
+      'buttonContainerElement',
+      'columnsTemplate',
+      'linkToDataGrid',
       'removeColumns',
-    ], empty($options['attachToId']));
-    $r = self::getControlContainer('esDownload', $options, $dataOptions, $html);
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcEsDownload({});
-
-JS;
-    return $r;
+      'source',
+    ], TRUE);
+    return self::getControlContainer('esDownload', $options, $dataOptions, $html);
   }
 
   /**
@@ -494,25 +478,34 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
    */
   public static function leafletMap(array $options) {
-    self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
+    self::checkOptions('leafletMap', $options,
+      ['layerConfig'],
+      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle']
+    );
     $options = array_merge([
       'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
       'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
       'initialZoom' => hostsite_get_config_value('iform', 'map_zoom', 5),
     ], $options);
     helper_base::add_resource('leaflet');
+    if (isset($options['baseLayerConfig'])) {
+      foreach ($options['baseLayerConfig'] as $baseLayer) {
+        if ($baseLayer['type'] === 'Google') {
+          helper_base::add_resource('leaflet_google');
+        }
+      }
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'layerConfig',
-      'showSelectedRow',
+      'baseLayerConfig',
+      'cookies',
       'initialLat',
       'initialLng',
       'initialZoom',
-      'cookies',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcLeafletMap({});
-
-JS;
+      'layerConfig',
+      'selectedFeatureStyle',
+      'showSelectedRow',
+    ], TRUE);
+    // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
 $('#$options[id]').idcLeafletMap('bindGrids');
 
@@ -600,11 +593,11 @@ HTML;
       );
     }
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'showSelectedRow',
-      'exploreUrl',
-      'locationTypes',
-      'extraLocationTypes',
       'allowRedetermination',
+      'exploreUrl',
+      'extraLocationTypes',
+      'locationTypes',
+      'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
     helper_base::$javascript .= <<<JS
@@ -650,35 +643,55 @@ HTML;
   public static function source(array $options) {
     self::applyReplacements(
       $options,
-      ['aggregation', 'countAggregation', 'autoAggregationTable'],
-      ['aggregation', 'countAggregation', 'autoAggregationTable']
+      ['aggregation', 'sortAggregation'],
+      ['aggregation', 'sortAggregation']
     );
     self::checkOptions(
       'source',
       $options,
       ['id'],
-      ['aggregation', 'countAggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
+      [
+        'aggregation',
+        'fields',
+        'filterBoolClauses',
+        'sort',
+        'sortAggregation',
+      ]
     );
+    // Temporary support for deprecated @aggregationMapMode option. Will be
+    // removed in a future version.
+    if (empty($options['mode'])) {
+      if (!empty($options['aggregationMapMode'])) {
+        $options['mode'] = 'map' . ucfirst($options['aggregationMapMode']);
+      }
+      elseif (!empty($options['aggregation']) && !empty($options['filterBoundsUsingMap'])) {
+        // Default aggregation mode to mapGeoHash (for legacy support till
+        // deprecated code removed).
+        $options['mode'] = 'mapGeoHash';
+      }
+    }
     $options = array_merge([
-      'aggregationMapMode' => 'geoHash',
+      'mode' => 'docs',
     ], $options);
+    self::applySourceModeDefaults($options);
     $jsOptions = [
-      'id',
+      'aggregation',
+      'fields',
+      'filterBoolClauses',
+      'filterBoundsUsingMap',
+      'filterField',
+      'filterPath',
+      'filterSourceField',
+      'filterSourceGrid',
       'from',
+      'id',
+      'initialMapBounds',
+      'mapGridSquareSize',
+      'mode',
+      'sortAggregation',
       'size',
       'sort',
-      'filterPath',
-      'aggregation',
-      'countAggregation',
-      'autoAggregationTable',
-      'aggregationMapMode',
-      'buildTableXY',
-      'initialMapBounds',
-      'filterBoolClauses',
-      'filterSourceGrid',
-      'filterSourceField',
-      'filterField',
-      'filterBoundsUsingMap',
+      'uniqueField',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
     // A source is entirely JS driven - no HTML.
@@ -726,11 +739,7 @@ HTML;
       'header',
       'footer',
       'repeatField',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcTemplatedOutput({});
-
-JS;
+    ], TRUE);
     return self::getControlContainer('templatedOutput', $options, $dataOptions);
   }
 
@@ -1028,10 +1037,147 @@ HTML;
   }
 
   /**
+   * Apply default settings for the mapGeoHash mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsMapGeoHash(array &$options) {
+    // Disable loading of docs.
+    $options = array_merge([
+      'size' => 0,
+    ], $options);
+    // Note the geohash_grid precision will be overridden depending on map zoom.
+    $aggText = <<<AGG
+{
+  "filter_agg": {
+    "filter": {
+      "geo_bounding_box": {}
+    },
+    "aggs": {
+      "by_hash": {
+        "geohash_grid": {
+          "field": "location.point",
+          "precision": 1
+        },
+        "aggs": {
+          "by_centre": {
+            "geo_centroid": {
+              "field": "location.point"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+AGG;
+    $options = array_merge(['aggregation' => json_decode($aggText)], $options);
+  }
+
+  /**
+   * Apply default settings for the mapGridSquare mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsMapGridSquare(array &$options) {
+    $options = array_merge([
+      'mapGridSquareSize' => 'autoGridSquareSize',
+      'size' => 0,
+    ], $options);
+    if ($options['mapGridSquareSize'] === 'autoGridSquareSize') {
+      $geoField = 'autoGridSquareField';
+    }
+    else {
+      $sizeInKm = $options['mapGridSquareSize'] / 1000;
+      $geoField = "location.grid_square.{$sizeInKm}km.centre";
+    }
+    $aggText = <<<AGG
+{
+  "filter_agg": {
+    "filter": {
+      "geo_bounding_box": {}
+    },
+    "aggs": {
+      "by_srid": {
+        "terms": {
+          "field": "location.grid_square.srid",
+          "size": 1000,
+          "order": {
+            "_count": "desc"
+          }
+        },
+        "aggs": {
+          "by_square": {
+            "terms": {
+              "field": "$geoField",
+              "size": 100000,
+              "order": {
+                "_count": "desc"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+AGG;
+    $options = array_merge(['aggregation' => json_decode($aggText)], $options);
+  }
+
+  /**
+   * Apply default settings for the compositeAggregation mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsCompositeAggregation(array &$options) {
+    $options = array_merge([
+      'fields' => [],
+      'aggregation' => [],
+    ], $options);
+  }
+
+  /**
+   * Apply default settings for the termAggregation mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsTermAggregation(array &$options) {
+    if (empty($options['uniqueField'])) {
+      throw new Exception("Sources require a parameter called @uniqueField when @mode=termAggregation");
+    }
+    if (!empty($options['orderbyAggregation']) && !is_object($options['orderbyAggregation'])
+        && !is_array($options['orderbyAggregation'])) {
+      throw new Exception("@orderbyAggregation option for source is not a valid JSON object.");
+    }
+    $options = array_merge([
+      'fields' => [],
+      // Default to sort by the uniqueField.
+      'sort' => [$options['uniqueField'] => 'asc'],
+      'aggregation' => [],
+    ], $options);
+  }
+
+  /**
+   * Apply default settings depending on the @mode option.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaults(array &$options) {
+    $method = 'applySourceModeDefaults' . ucfirst($options['mode']);
+    if (method_exists('ElasticsearchReportHelper', $method)) {
+      self::$method($options);
+    }
+  }
+
+  /**
    * Provide common option handling for controls.
    *
-   * * If attachToId specified, ensures that the control ID is set to the same
-   *   value.
    * * Sets a unique ID for the control if not already set.
    * * Checks that required options are all populated.
    * * Checks that options which should contain JSON do so.
@@ -1049,23 +1195,15 @@ HTML;
    */
   private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
     self::$controlIndex++;
-    if (!empty($options['attachToId'])) {
-      if (!empty($options['id']) && $options['id'] !== $options['attachToId']) {
-        throw new Exception("Control ID $options[id] @attachToId does not match the @id option value.");
-      }
-      // If attaching to an existing element, force the ID.
-      $options['id'] = $options['attachToId'];
-    }
-    else {
-      // Otherwise, generate a unique ID if not defined.
-      $options = array_merge([
-        'id' => "idc-$controlName-" . self::$controlIndex,
-      ], $options);
-    }
+    // Generate a unique ID if not defined.
+    $options = array_merge([
+      'id' => "idc-$controlName-" . self::$controlIndex,
+    ], $options);
     // Fail if duplicate ID on page.
     if (in_array($options['id'], self::$controlIds)) {
       throw new Exception("Control ID $options[id] is duplicated in the page configuration");
     }
+
     self::$controlIds[] = $options['id'];
     foreach ($requiredOptions as $option) {
       if (!isset($options[$option]) || $options[$option] === '') {
@@ -1084,7 +1222,6 @@ HTML;
       $options['source'] = is_string($options['source']) ? [$options['source'] => 'Source data'] : $options['source'];
     }
   }
-
 
   /**
    * Uses an Indicia report to convert a URL param to a list of filter values.
@@ -1124,30 +1261,39 @@ HTML;
    * Returns the HTML required to act as a control container.
    *
    * Creates the common HTML strucuture required to wrap any data output
-   * control. If the control's @attachToId option is set then sets the
-   * required JavaScript to make the control inject itself into the existing
-   * element instead.
+   * control.
    *
    * @param string $controlName
+   *   Control type name (e.g. source, dataGrid).
    * @param array $options
+   *   Options passed to the control. If the control's @containerElement option
+   *   is set then sets the required JavaScript to make the control inject
+   *   itself into the existing element instead.
    * @param string $dataOptions
+   *   Options to store in the HTML data-idc-config attribute on the container.
+   *   These are made available to configure the JS behaviour of the control.
    * @param string $content
+   *   HTML to add to the container.
    *
    * @return string
    *   Control HTML.
    */
-  private static function getControlContainer($controlName, array $options, $dataOptions, $content='') {
-    if (!empty($options['attachToId'])) {
+  private static function getControlContainer($controlName, array $options, $dataOptions, $content = '') {
+    $initFn = 'idc' . ucfirst($controlName);
+    if (!empty($options['containerElement'])) {
       // Use JS to attach to an existing element.
       helper_base::$javascript .= <<<JS
-$('#$options[attachToId]')
-  .addClass('idc-output')
-  .addClass("idc-output-$controlName")
-  .attr('data-idc-output-config', '$dataOptions');
+if ($('$options[containerElement]').length === 0) {
+  indiciaFns.controlFail($('#$options[id]'), 'Invalid @containerElement selector for $options[id]');
+}
+$($('$options[containerElement]')[0]).append($('#$options[id]'));
 
 JS;
-      return '';
     }
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').$initFn({});
+
+JS;
     return <<<HTML
 <div id="$options[id]" class="idc-output idc-output-$controlName" data-idc-config="$dataOptions">
   $content
@@ -1184,10 +1330,7 @@ HTML;
           'type' => $config['type'],
         ];
         // We can't sort on text unless a keyword is specified.
-        if (isset($config['fields']) && isset($config['fields']['keyword'])) {
-          $mappings[$field]['sort_field'] = "$field.keyword";
-        }
-        elseif ($config['type'] !== 'text') {
+        if ($config['type'] !== 'text' || (isset($config['fields']) && isset($config['fields']['keyword']))) {
           $mappings[$field]['sort_field'] = $field;
         }
         else {

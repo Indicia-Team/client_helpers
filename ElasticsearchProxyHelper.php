@@ -740,23 +740,26 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFilters(array $readAuth, array $query, array &$bool) {
-    foreach ($query['user_filters'] as $userFilter) {
-      $filterData = data_entry_helper::get_report_data([
-        'dataSource' => '/library/filters/filter_with_transformed_searcharea',
-        'extraParams' => [
-          'filter_id' => $userFilter,
-        ],
-        'readAuth' => $readAuth,
-        'caching' => $query['refresh_user_filters'] === 'true' ? 'store' : TRUE,
-      ]);
-      if (count($filterData) === 0) {
-        throw new exception("Filter with ID $userFilter could not be loaded.");
+    if (count($query['user_filters']) > 0) {
+      require_once 'report_helper.php';
+      foreach ($query['user_filters'] as $userFilter) {
+        $filterData = data_entry_helper::get_report_data([
+          'dataSource' => '/library/filters/filter_with_transformed_searcharea',
+          'extraParams' => [
+            'filter_id' => $userFilter,
+          ],
+          'readAuth' => $readAuth,
+          'caching' => $query['refresh_user_filters'] === 'true' ? 'store' : TRUE,
+        ]);
+        if (count($filterData) === 0) {
+          throw new exception("Filter with ID $userFilter could not be loaded.");
+        }
+        $definition = json_decode($filterData[0]['definition'], TRUE);
+        // Can't be both searchArea (freehand) and location area.
+        $definition['searchArea'] = $filterData[0]['search_area']
+          ? $filterData[0]['search_area'] : $filterData[0]['location_area'];
+        self::applyFilterDef($readAuth, $definition, $bool);
       }
-      $definition = json_decode($filterData[0]['definition'], TRUE);
-      // Can't be both searchArea (freehand) and location area.
-      $definition['searchArea'] = $filterData[0]['search_area']
-        ? $filterData[0]['search_area'] : $filterData[0]['location_area'];
-      self::applyFilterDef($readAuth, $definition, $bool);
     }
   }
 
@@ -804,7 +807,8 @@ class ElasticsearchProxyHelper {
   private static function convertLocationListToSearchArea(array &$definition, array $readAuth) {
     $filter = self::getDefinitionFilter($definition, ['location_list', 'location_ids']);
     if (!empty($filter)) {
-      $boundaryData = data_entry_helper::get_report_data([
+      require_once 'report_helper.php';
+      $boundaryData = report_helper::get_report_data([
         'dataSource' => '/library/locations/locations_combined_boundary_transformed',
         'extraParams' => [
           'location_ids' => $filter['value'],
@@ -1480,8 +1484,9 @@ class ElasticsearchProxyHelper {
       'taxa_scratchpad_list_id',
     ]);
     if (!empty($filter)) {
+      require_once 'report_helper.php';
       // Convert the IDs to external keys, stored in ES as taxon_ids.
-      $taxonData = data_entry_helper::get_report_data([
+      $taxonData = report_helper::get_report_data([
         'dataSource' => '/library/taxa/external_keys_for_scratchpad',
         'extraParams' => [
           'scratchpad_list_id' => $filter['value'],
