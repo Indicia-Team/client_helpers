@@ -886,18 +886,18 @@ JS;
         $imgPath .= 'nuvola/date-16px.png';
         if (!empty($options['buttonText'])) {
           $buttonText = $options['buttonText'];
-        } else {
+        }
+        else {
           $buttonText = $options['allowVagueDates'] ? lang::get('To enter an exact date, click here. To enter a vague date, type it into the text box') : lang::get('Click here to pick a date');
         }
-        $button = ",\n    showOn: 'button',\n    buttonImage: '$imgPath',\n    buttonText: '$buttonText'";
-      } else
-        $button='';
+        $options['afterControl'] = "<img src=\"$imgPath\" title=\"$buttonText\" onclick=\"jQuery('#sample\\\\:date').datepicker('show');\"/>";
+      }
       self::$javascript .= "indiciaData.dateFormat = '$options[dateFormat]';
-  $('#$escaped_id').datepicker({
+  jQuery('#$escaped_id').datepicker({
     dateFormat : '".$options['dateFormat']."',
     changeMonth: true,
     changeYear: true,
-    constrainInput: false $button";
+    constrainInput: false";
       // Filter out future dates
       if (!array_key_exists('allowFuture', $options) || $options['allowFuture']==false) {
         self::$javascript .= ",
@@ -2866,9 +2866,6 @@ RIJS;
   * {default_common_name}. This can be a PHP snippet if PHPtaxonLabel is set to
   * true.
   *
-<<<<<<< HEAD
-  * <p>To perform an action on the event of a new row being added to the grid,
-=======
   * To change the format of the label displayed for each taxon in the
   * autocomplete used for searching for species to add to the grid, use the
   * global $indicia_templates variable to set the value for the entry
@@ -2879,7 +2876,6 @@ RIJS;
   * return the string to display in the autocomplete list.
   *
   * To perform an action on the event of a new row being added to the grid,
->>>>>>> develop
   * write a JavaScript function taking arguments (data, row) and add to the
   * array hook_species_checklist_new_row, where data is an object containing
   * the details of the taxon row as loaded from the data services.
@@ -4742,32 +4738,29 @@ HTML;
   }
 
   /**
-   * Helper function to output an HTML textarea. This includes re-loading of existing values
-   * and displaying of validation error messages.
+   * Helper function to output an HTML textarea.
+   *
+   * This includes re-loading of existing values and displaying of validation
+   * error messages.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>textareat</b></br>
-   * HTML template used to generate the textarea element.
-   * </li>
-   * </ul>
+   * * textarea - HTML template used to generate the textarea element.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to, e.g. occurrence:image.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>rows</b><br/>
-   * Optional. HTML rows attribute. Defaults to 4.</li>
-   * <li><b>cols</b><br/>
-   * Optional. HTML cols attribute. Defaults to 80.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname- Required. The name of the database field this control is
+   *     bound to, e.g. occurrence:image.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * rows - Optional. HTML rows attribute. Defaults to 4.
+   *   * cols - Optional. HTML cols attribute. Defaults to 80.
    *
-   * @return string HTML to insert into the page for the textarea control.
+   * @return string
+   *   HTML to insert into the page for the textarea control.
    */
   public static function textarea($options) {
     $options = array_merge(array(
@@ -7183,8 +7176,8 @@ TXT;
     $r = '<div class="ui-widget ui-widget-content ui-state-highlight ui-corner-all">' .
       '<p class="ui-widget-header"><strong>System check</strong></p><ul>';
     // Test PHP version.
-    if (PHP_VERSION_ID<50200) {
-      $r .= '<li class="ui-state-error">Warning: PHP version is '.phpversion().' which does not support JSON communication with the Indicia Warehouse.</li>';
+    if (PHP_VERSION_ID<50600) {
+      $r .= '<li class="ui-state-error">Warning: PHP version is '.phpversion().' which is unsupported.</li>';
     } elseif ($fullInfo) {
       $r .= '<li>Success: PHP version is '.phpversion().'.</li>';
     }

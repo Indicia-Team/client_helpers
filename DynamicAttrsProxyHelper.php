@@ -48,10 +48,9 @@ class DynamicAttrsProxyHelper {
    * Attribute HTML is echoed to the client.
    */
   private static function getSpeciesChecklistAttrs() {
-    iform_load_helpers(['data_entry_helper']);
-    $website_id = variable_get('indicia_website_id', '');
-    $password = variable_get('indicia_password', '');
-    $readAuth = data_entry_helper::get_read_auth($website_id, $password);
+    iform_load_helpers([]);
+    $conn = iform_get_connection_details();
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     // Get the attributes for this taxon.
     $attrList = self::getDynamicAttrsList(
       $readAuth,
@@ -64,12 +63,22 @@ class DynamicAttrsProxyHelper {
     );
     // Convert to a response with control HTML.
     $attrData = [];
-    foreach ($attrList as $attr) {
-      if ($attr['system_function']) {
-        $attrData[] = [
-          'attr' => $attr,
-          'control' => data_entry_helper::outputAttribute($attr, ['label' => '', 'extraParams' => $readAuth]),
-        ];
+    if (count($attrList) > 0) {
+      // Only load if needed.
+      require_once 'data_entry_helper.php';
+      foreach ($attrList as $attr) {
+        // Correct default field names.
+        // @todo Share code for this with dynamic.php. Or better, tidy so not
+        // necessary.
+        $attr['default'] = $attr['default_value'];
+        $attr['displayValue'] = $attr['default_value_caption'];
+        $attr['defaultUpper'] = $attr['default_upper_value'];
+        if ($attr['system_function']) {
+          $attrData[] = [
+            'attr' => $attr,
+            'control' => data_entry_helper::outputAttribute($attr, ['label' => '', 'extraParams' => $readAuth]),
+          ];
+        }
       }
     }
     // Return the AJAX response as JSON.
@@ -94,13 +103,11 @@ class DynamicAttrsProxyHelper {
     if (!empty($occurrenceId)) {
       $params['occurrence_id'] = $occurrenceId;
     }
-    $r = report_helper::get_report_data([
-      'dataSource' => "library/{$type}_attributes/{$type}_attributes_for_form",
-      'readAuth' => $readAuth,
-      'extraParams' => $params,
-      'caching' => FALSE,
+    $r = helper_base::get_population_data([
+      'report' => "library/{$type}_attributes/{$type}_attributes_for_form",
+      'extraParams' => $params + $readAuth,
+      'caching' => TRUE,
     ]);
-    self::removeDuplicateAttrs($r);
     return $r;
   }
 
@@ -161,7 +168,7 @@ class DynamicAttrsProxyHelper {
   /**
    * Get a key name which defines the type of an attribute.
    *
-   * Since sex, stage and abundance attributes interact, treat them as the same
+   * Since sex/stage and abundance attributes interact, treat them as the same
    * thing for the purposes of duplicate removal when dynamic attributes are
    * loaded from different levels in the taxonomic hierarchy. Otherwise we
    * use the attribute's system function or term name (i.e. Darwin Core term).
@@ -173,7 +180,7 @@ class DynamicAttrsProxyHelper {
    *   Key name.
    */
   private static function getAttrTypeKey(array $attr) {
-    $sexStageAttrs = ['sex', 'stage', 'sex_stage', 'sex_stage_count'];
+    $sexStageAttrs = ['sex_stage', 'sex_stage_count'];
     // For the purposes of duplicate handling, we treat sex, stage and count
     // related data as the same thing.
     if (in_array($attr['system_function'], $sexStageAttrs)) {
