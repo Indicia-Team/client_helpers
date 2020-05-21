@@ -1156,8 +1156,6 @@ AGG;
     }
     $options = array_merge([
       'fields' => [],
-      // Default to sort by the uniqueField.
-      'sort' => [$options['uniqueField'] => 'asc'],
       'aggregation' => [],
     ], $options);
   }
