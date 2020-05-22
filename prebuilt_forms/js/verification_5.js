@@ -838,7 +838,6 @@ indiciaData.rowIdToReselect = false;
   function loadVerificationTemplates(status) {
     var getTemplatesReport;
     var getTemplatesReportParameters;
-    var i;
     getTemplatesReport = indiciaData.read.url + '/index.php/services/report/requestReport?report=library/verification_templates/verification_templates_for_a_taxon.xml&mode=json&mode=json&callback=?';
     getTemplatesReportParameters = {
       auth_token: indiciaData.read.auth_token,
@@ -853,9 +852,9 @@ indiciaData.rowIdToReselect = false;
       getTemplatesReportParameters,
       function (data) {
         if (data.length > 0) {
-          for (i = 0; i < data.length; i++) {
-            $('.verify-template').append('<option value="' + (data[i].id) + '">' + data[i].title + '</option>');
-          }
+          $.each(data, function() {
+            $('.verify-template').append('<option value="' + this.id + '">' + this.title + '</option>');
+          });
           $('.verify-template').data('data', data);
         } else {
           $('.verify-template-container').hide();
@@ -887,6 +886,7 @@ indiciaData.rowIdToReselect = false;
         };
         var convs = Object.keys(conversions);
         var replacement;
+        var i;
         var j;
         for (i = 0; i < convs.length; i++) {
           if (typeof conversions[convs[i]] === 'object') {
@@ -905,11 +905,11 @@ indiciaData.rowIdToReselect = false;
         }
         return item;
       };
-      for (i = 0; i < data.length; i++) {
-        if (data[i].id === templateID) {
-          $('.templatable-comment').val(substitute(data[i].template));
+      $.each(data, function eachData() {
+        if (this.id === templateID) {
+          $('.templatable-comment').val(substitute(this.template));
         }
-      }
+      });
     });
   }
 
