@@ -129,7 +129,7 @@ class report_helper extends helper_base {
    */
   public static function report_download_link($options) {
     $options = array_merge(array(
-      'caption' => lang::get('Download this report'),
+      'caption' => 'Download this report',
       'format' => 'csv',
       'itemsPerPage' => 20000
     ), $options);
