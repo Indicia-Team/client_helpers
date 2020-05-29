@@ -2320,7 +2320,81 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     return $terms;
   }
 
- /**
+  /**
+   * Apply a set of replacements to a string.
+   *
+   * Useful when configuration allows the specification of strings that will
+   * be output in the HTML (e.g dynamic content or report grid footers). The
+   * following tokens are replaced:
+   * * {rootFolder} - relative URL to prefix links generated within the site.
+   * * {currentUrl} - relative URL of the current page.
+   * * {sep} - either ? or & as required to append to links before adding
+   *     parameters. Will be ? unless using dirty URLs.
+   * * {warehouseRoot} - root URL of the warehouse.
+   * * {geoserverRoot} - root URL of the GeoServer instance if configured.
+   * * {nonce} - read nonce token, used to generate reporting links.
+   * * {auth} - read auth token, used to generate reporting links.
+   * * {indicia_user_id} - Indicia warehouse user ID.
+   * * {uid} - Drupal uid.
+   * * {website_id} - Indicia warehouse website ID.
+   * * {t:<phrase>} - returns translated version of <phrase>.
+   *
+   * @param string $string
+   *   String to have tokens replaced.
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @return string
+   *   String with tokens replaced.
+   */
+  public static function getStringReplaceTokens($string, $readAuth) {
+    $rootFolder = self::getRootFolder(TRUE);
+    $currentUrl = self::get_reload_link_parts();
+    // Amend currentUrl path if we have Drupal 7 dirty URLs so javascript will
+    // work properly.
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?') === FALSE) {
+      $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
+    }
+    // Do translations.
+    if (preg_match_all('/{t:([^}]+)}/', $string, $matches)) {
+      for ($i = 0; $i < count($matches[0]); $i++) {
+        $string = str_replace($matches[0][$i], lang::get($matches[1][$i]), $string);
+      }
+    }
+    // Note a couple of repeats in the list for legacy reasons.
+    return str_replace(
+      [
+        '{rootFolder}',
+        '{currentUrl}',
+        '{sep}',
+        '{warehouseRoot}',
+        '{geoserverRoot}',
+        '{nonce}',
+        '{auth}',
+        '{iUserID}',
+        '{indicia_user_id}',
+        '{user_id}',
+        '{uid}',
+        '{website_id}',
+      ],
+      [
+        $rootFolder,
+        $currentUrl['path'],
+        strpos($rootFolder, '?') === FALSE ? '?' : '&',
+        self::$base_url,
+        self::$geoserver_url,
+        "nonce=$readAuth[nonce]",
+        "auth_token=$readAuth[auth_token]",
+        hostsite_get_user_field('indicia_user_id'),
+        hostsite_get_user_field('indicia_user_id'),
+        hostsite_get_user_field('id'),
+        hostsite_get_user_field('id'),
+        self::$website_id,
+      ],
+      $string
+    );
+  }
+
+  /**
    * Converts the validation rules in an options array into a string that can be used as the control class,
    * to trigger the jQuery validation plugin.
    * @param $options. Control options array. For validation to be applied should contain a validation entry,

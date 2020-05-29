@@ -754,12 +754,14 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           $hasControls = true;
         }
       } elseif ($component === '|') {
-        // column splitter. So, store the col html and start on the next column.
+        // Column splitter. So, store the col html and start on the next
+        // column.
         $cols[] = $html;
         $html = '';
       } else {
-        // output anything else as is. This allow us to add html to the form structure.
-        $html .= $component;
+        // Output anything else as is. This allow us to add html to the form
+        // structure.
+        $html .= helper_base::getStringReplaceTokens($component, $auth['read']);
       }
     }
     if (count($cols)>0) {
