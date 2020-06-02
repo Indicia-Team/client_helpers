@@ -1155,6 +1155,9 @@ JS;
   * <li><b>rendererOptions</b><br/>
   * Associative array of options to pass to the jqplot renderer.
   * </li>
+  * <li><b>gridOptions</b><br/>
+  * Associative array of options to pass to the jqplot grid object.
+  * </li>
   * <li><b>legendOptions</b><br/>
   * Associative array of options to pass to the jqplot legend. For more information see links below.
   * </li>
@@ -1242,7 +1245,12 @@ JS;
       (isset($renderer) ? "renderer:$renderer,\n      " : '') .
       "rendererOptions:" . json_encode($options['rendererOptions']) .
       "\n    }";
-    $optsToCopyThrough = array('legend'=>'legendOptions', 'series'=>'seriesOptions', 'seriesColors'=>'seriesColors');
+    $optsToCopyThrough = [
+      'legend'=>'legendOptions',
+      'series'=>'seriesOptions',
+      'seriesColors'=>'seriesColors',
+      'grid'=>'gridOptions'
+    ];
     foreach ($optsToCopyThrough as $key=>$settings) {
       if (!empty($options[$settings]))
         $opts[] = "$key:".json_encode($options[$settings]);
