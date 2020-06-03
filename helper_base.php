@@ -1895,7 +1895,10 @@ $late_javascript
 // Elasticsearch source population.
 if (typeof indiciaFns.hookupDataSources !== 'undefined') {
   indiciaFns.hookupDataSources();
-  indiciaFns.populateDataSources();
+  // Populate unless a report filter builder present as that will do it for us.
+  if (!window.loadFilter) {
+    indiciaFns.populateDataSources();
+  }
 }
 // if window.onload already happened before document.ready, ensure any hooks are still run.
 if (indiciaData.windowLoaded === 'done') {
