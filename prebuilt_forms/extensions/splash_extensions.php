@@ -184,6 +184,15 @@ class extension_splash_extensions {
    * <li><b>adminUsersIndiciaUserIds</b><br/>
    * Optional. Comma separated list of Indicia User IDs (not Drupal) of admin users who are allowed edit a sample regardless of whether they have been allocated the square and plot.</li>
    * </ul>
+   * <li><b>SurveyId</b><br/>
+   * The survey ID for the data entry form this control is placed onto.</li>
+   * </ul>
+   * <li><b>squaresPlotsReportPathOverride</b><br/>
+   * Optional. Optionally override the path to the report used to return the squares and plots to select from.</li>
+   * </ul>
+   * <li><b>squaresPlotsControlHelpOverride</b><br/>
+   * Optional. Optionally override helpText under the square/plots selection control.</li>
+   * </ul>
    */
   public static function splash_location_select($auth, $args, $tabAlias, $options) {
     if (empty($options['coreSquareLocationTypeId'])) {
@@ -206,6 +215,17 @@ class extension_splash_extensions {
       drupal_set_message('Please fill in the @userSquareAttrId option for the splash_location_select control');
       return '';
     }
+    if (empty($options['surveyId'])) {
+      drupal_set_message('Please fill in the @surveyId option for the splash_location_select control');
+      return '';
+    }
+    if (empty($options['squaresPlotsReportPathOverride'])) {
+      $options['squaresPlotsReportPathOverride'] = 'projects/npms/get_my_squares_that_have_plots_2';
+    }
+    if (empty($options['squaresPlotsControlHelpOverride'])) {
+      $options['squaresPlotsControlHelpOverride'] = '<em>Please note: If you cannot see any plots, you might have created survey 1 & 2 for all your plots
+      already.</em>';
+    }
     if (empty($options['adminUsersIndiciaUserIds'])) {
       $adminUsersIndiciaUserIds=[];
     } else {
@@ -225,7 +245,7 @@ class extension_splash_extensions {
                         'no_vice_county_found_message'=>$noViceCountyFoundMessage,
                         'user_square_attr_id'=>$userSquareAttrId);
     $reportOptions = array(
-      'dataSource'=>'projects/npms/get_my_squares_that_have_plots_2',
+      'dataSource'=>$options['squaresPlotsReportPathOverride'],
       'readAuth'=>$auth['read'],
       'mode'=>'report',
       'extraParams' => $extraParamForSquarePlotReports
@@ -331,16 +351,24 @@ class extension_splash_extensions {
       $options['reportProvidesOrderBy']=true;
       $options['searchUpdatesSref']=true;
       $options['label']='Plot';
+      $options['validation'] = 'required';
       $options['extraParams']['user_square_attr_id']=$userSquareAttrId;
       $options['report']='projects/npms/get_plots_for_square_id';
       $options['extraParams']['current_user_id']=$currentUserId;
+      $options['extraParams']['year_start_date'] = date("Y").'-'.'01-01';
+      $options['extraParams']['survey_id'] = $options['surveyId'];
+      $options['extraParams']['plot_location_type_id'] = $options['coreSquareLocationTypeId'];
+      if (!empty($_GET['sample_id'])) {
+        $options['extraParams']['current_sample_id'] = $_GET['sample_id'];
+      }
       if (!empty($options['plotNumberAttrId']))
         $options['extraParams']['plot_number_attr_id']=$options['plotNumberAttrId'];
       //Create the drop-down for the plot
+      $options['helpText'] = $options['squaresPlotsControlHelpOverride'];
       $location_list_args = array_merge(array(
           'label'=>lang::get('LANG_Location_Label'),
           'view'=>'detail'
-      ), $options);
+      ), $options);    
       $r .= data_entry_helper::location_select($location_list_args);
       //Create the mini report, not currently required on PSS site
       if (empty($options['pssMode']))
@@ -350,6 +378,13 @@ class extension_splash_extensions {
         data_entry_helper::$javascript .= '
           private_plots_set_precision('.json_encode($privatePlots).');
         ';
+      }
+      if (!empty($selectedSquareAndPlotInfo[0]['plot_id'])) {
+        data_entry_helper::$javascript="
+        $(window).load(function() {
+          $('#imp-location').val(".$selectedSquareAndPlotInfo[0]['plot_id'].");
+          update_square_plot_info_labels();
+        });\n";
       }
       return $r;
     }
@@ -1866,6 +1901,8 @@ class extension_splash_extensions {
       $emailFrom=variable_get('site_mail', '');
     else 
       $emailFrom='support@npms.org.uk';
+    // Left this line commented out as method of emailing can differ depending on host
+    //$sent = mail($emailTo, $subject, wordwrap($message, 70)); 
     $sent = drupal_mail('iform', 'location_signup_removal_mail', $emailTo, user_preferred_language($user), array('body' => $message, 'subject' => $subject/*, 'headers' => array('Cc' => $header_cc, 'Bcc' => $header_bcc)*/), $emailFrom, TRUE);
     // Change the logging message depending on email purpose
     if ($type==='Allocate') {

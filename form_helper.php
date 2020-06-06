@@ -218,7 +218,7 @@ class form_helper extends helper_base {
       }
     }
     $r .= "<div id=\"form-def\">$details</div>\n";
-    $r .= '<input type="button" value="' . lang::get('Load Settings Form') . '" id="load-params" disabled="disabled" />';
+    $r .= '<input type="button" value="' . lang::get('Load settings form') . '" id="load-params" disabled="disabled" />';
     if (isset($options['includeOutputDivs']) && $options['includeOutputDivs']) {
       $r .= '<div id="form-params"></div>';
     }
@@ -341,9 +341,24 @@ function hideMapsIfOverridden() {
       '<div class="alert alert-info">The base map layers are locked by the iform_user_ui_options module.</div>'
     );
   }
-}
+};
 
 hideMapsIfOverridden();
+
+/**
+ * Disallow georeferencer selection if controlled by iform_user_ui_options.
+ */
+function disableGeoreferencerSelectionIfOverriden() {
+  // Disable georefrencer selection if override is supplied.
+  if (indiciaData.georeferencerOverride) {
+    $('#georefDriver').prop("disabled", true);
+    $('#ctrl-wrap-georefDriver').after(
+      '<div class="alert alert-info">The georeferencer is locked by the iform_user_ui_options module.</div>'
+    );
+  }
+};
+
+disableGeoreferencerSelectionIfOverriden();
 
 $('#form-category-picker').change(function(e) {
   var opts = '<option value="">$jsParams[langPleaseSelect]</option>';

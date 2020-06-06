@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Indicia, the OPAL Online Recording Toolkit.
  *
@@ -13,17 +14,13 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
+ * @author Indicia Team
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @link https://github.com/indicia-team/client_helpers
  */
 
 /**
  * List of methods that can be used for building forms that include details of the logged in CMS user in Drupal.
- * @package Client
- * @subpackage PrebuiltForms.
  */
 
 /**
@@ -129,6 +126,10 @@ function apply_user_replacements($original) {
   );
   // Do basic replacements and trim the data.
   $text = str_replace($replace, $replaceWith, $original);
+  // Allow other modules to hook in.
+  if (function_exists('hostsite_invoke_alter_hooks')) {
+    hostsite_invoke_alter_hooks('iform_user_replacements', $text);
+  }
   // Look for any profile field replacments.
   if (preg_match_all('/{([a-zA-Z0-9\-_]+)}/', $text, $matches) && function_exists('hostsite_get_user_field')) {
     foreach ($matches[1] as $profileField) {

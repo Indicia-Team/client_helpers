@@ -165,6 +165,14 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group'=>'Transects Editor Settings'
         ),
         array(
+          'name' => 'interacting_sample_attributes',
+          'caption' => 'Interacting sample attributes',
+          'description' => 'Comma separated list of subsample attribute ids, which are percentage values which interact - entering one as 75 will cause the other to be set to 25.',
+          'type' => 'text_input',
+          'required' => false,
+          'siteSpecific' => true
+        ),
+        array(
           'name' => 'attribute_configuration',
           'caption' => 'Custom configuration for attributes',
           'description' => 'Custom configuration for attributes',
@@ -850,8 +858,20 @@ class iform_ukbms_sectioned_transects_input_sample {
           'group' => 'Transects Editor Settings'
         ),
         array(
+          'name'=>'confidentialAttrID',
+          'caption' => 'Location attribute used to indicate confidential sites',
+          'description' => 'A boolean location attribute, set to true if a site is confidential.',
+          'type'=>'select',
+          'table'=>'location_attribute',
+          'captionField'=>'caption',
+          'valueField'=>'id',
+          'extraParams' => array('orderby'=>'caption'),
+          'required' => false,
+          'group' => 'Confidential and Sensitivity Handling'
+        ),
+        array(
           'name'=>'sensitiveAttrID',
-          'caption' => 'Location attribute used to filter out sensitive sites',
+          'caption' => 'Location attribute used to indicate sensitive sites',
           'description' => 'A boolean location attribute, set to true if a site is sensitive.',
           'type'=>'select',
           'table'=>'location_attribute',
@@ -859,7 +879,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'valueField'=>'id',
           'extraParams' => array('orderby'=>'caption'),
           'required' => false,
-          'group' => 'Sensitivity Handling'
+          'group' => 'Confidential and Sensitivity Handling'
         ),
         array(
           'name' => 'sensitivityPrecision',
@@ -867,7 +887,7 @@ class iform_ukbms_sectioned_transects_input_sample {
           'description' => 'Precision to be applied to new occurrences recorded at sensitive sites. Existing occurrences are not changed. A number representing the square size in metres - e.g. enter 1000 for 1km square.',
           'type' => 'int',
           'required' => false,
-          'group' => 'Sensitivity Handling'
+          'group' => 'Confidential and Sensitivity Handling'
         ),
         array(
           'name'=>'finishedAttrID',
@@ -941,7 +961,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       $url = explode('#', $url[0], 2);
       if (count($url)>1) $fragment=$url[1];
     }
-    $args['return_page'] = url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
+    $args['return_page'] = hostsite_get_url($url[0], array('query' => $params, 'fragment' => $fragment, 'absolute' => TRUE));
 
     data_entry_helper::$javascript .= 'indiciaData.ajaxUrl="' . hostsite_get_url('iform/ajax/ukbms_sectioned_transects_input_sample') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.nid = "' . $nid . "\";\n";
@@ -955,7 +975,6 @@ class iform_ukbms_sectioned_transects_input_sample {
   }
 
   public static function get_sample_form($args, $nid, $response) {
-    global $user;
 
     data_entry_helper::add_resource('autocomplete');
 
@@ -1053,7 +1072,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       $siteParams = self::$auth['read'] + array('website_id' => $args['website_id'], 'location_type_id'=>$locationType[0]['id']);
       if ((!isset($args['user_locations_filter']) || $args['user_locations_filter']) &&
           (!isset($args['managerPermission']) || !hostsite_user_has_permission($args['managerPermission']))) {
-        $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>$user->uid);
+        $siteParams += array('locattrs'=>'CMS User ID', 'attr_location_cms_user_id'=>hostsite_get_user_field('id'));
       } else
         $siteParams += array('locattrs'=>'');
       $availableSites = data_entry_helper::get_population_data(array(
@@ -1072,7 +1091,7 @@ class iform_ukbms_sectioned_transects_input_sample {
       // Only need to do if not a manager - they have already fetched the full list anyway.
       if(isset($args['branch_assignment_permission']) && hostsite_user_has_permission($args['branch_assignment_permission']) && $siteParams['locattrs']!='') {
         $siteParams['locattrs']='Branch CMS User ID';
-        $siteParams['attr_location_branch_cms_user_id']=$user->uid;
+        $siteParams['attr_location_branch_cms_user_id']=hostsite_get_user_field('id');
         unset($siteParams['attr_location_cms_user_id']);
         $availableSites = data_entry_helper::get_population_data(array(
             'report'=>'library/locations/locations_list',
@@ -1193,7 +1212,6 @@ class iform_ukbms_sectioned_transects_input_sample {
   }
 
   public static function get_occurrences_form($args, $nid, $response) {
-    global $user;
     global $indicia_templates;
 
     $formOptions = array(
@@ -1223,17 +1241,17 @@ class iform_ukbms_sectioned_transects_input_sample {
         'verificationTitle' => lang::get('Warnings'),
         'verificationSectionLimitMessage' => lang::get('The value entered for this taxon on this transect section ({{ value }}) exceeds the expected maximum ({{ limit }})'),
         'verificationWalkLimitMessage' => lang::get('The total seen for this taxon on this walk ({{ total }}) exceeds the expected maximum ({{ limit }})'),
-        'outOfRangeVerification' => array()
+        'outOfRangeVerification' => array(),
+        'interactingSampleAttributes' => array()
     );
 
     // remove the ctrlWrap as it complicates the grid & JavaScript unnecessarily
     $oldCtrlWrapTemplate = $indicia_templates['controlWrap'];
     $indicia_templates['controlWrap'] = '{control}';
 
-    drupal_add_js('misc/tableheader.js'); // for sticky heading
+    // drupal_add_js('misc/tableheader.js'); // for sticky heading
     data_entry_helper::add_resource('jquery_form');
     data_entry_helper::add_resource('jquery_ui');
-    data_entry_helper::add_resource('json');
     data_entry_helper::add_resource('autocomplete');
 
     // did the parent sample previously exist? Default is no.
@@ -1290,7 +1308,9 @@ class iform_ukbms_sectioned_transects_input_sample {
       $subSamplesByCode[$subSample['code']] = $subSample;
     }
     $formOptions['subSamples'] = (object)$subSampleList;
-
+    if(!empty($args['interacting_sample_attributes']) && count(explode(',', $args['interacting_sample_attributes'])) === 2) {
+        $formOptions['interactingSampleAttributes'] = explode(',', $args['interacting_sample_attributes']);
+    }
     $occurrences = array();
     if ($existing) {
       // Only need to load the occurrences for a pre-existing sample
@@ -1519,9 +1539,9 @@ class iform_ukbms_sectioned_transects_input_sample {
     $r .= '<form style="display: none" id="validation-form"></form>';
     data_entry_helper::enable_validation('validation-form');
     // A stub form for AJAX posting when we need to create an occurrence
-    if(isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "") {
-      $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
-      $site_attributes = data_entry_helper::getAttributes(array(
+    $locationType = helper_base::get_termlist_terms(self::$auth, 'indicia:location_types', array(empty($args['transect_type_term']) ? 'Transect' : $args['transect_type_term']));
+    if(!empty($args["sensitiveAttrID"]) && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "") {
+      $sensitive_site_attributes = data_entry_helper::getAttributes(array(
             'valuetable'=>'location_attribute_value'
             ,'attrtable'=>'location_attribute'
             ,'key'=>'location_id'
@@ -1531,6 +1551,18 @@ class iform_ukbms_sectioned_transects_input_sample {
             ,'survey_id'=>$args['survey_id']
             ,'id' => $parentLocId // location ID
       ));
+    }
+    if(!empty($args["confidentialAttrID"])) {
+        $confidential_site_attributes = data_entry_helper::getAttributes(array(
+            'valuetable'=>'location_attribute_value'
+            ,'attrtable'=>'location_attribute'
+            ,'key'=>'location_id'
+            ,'fieldprefix'=>'locAttr'
+            ,'extraParams'=>self::$auth['read'] + array('id'=>$args["confidentialAttrID"])
+            ,'location_type_id'=>$locationType[0]['id']
+            ,'survey_id'=>$args['survey_id']
+            ,'id' => $parentLocId // location ID
+        ));
     }
     $defaults = helper_base::explode_lines_key_value_pairs($args['defaults']);
     $record_status = isset($defaults['occurrence:record_status']) ? $defaults['occurrence:record_status'] : 'C';
@@ -1544,9 +1576,11 @@ class iform_ukbms_sectioned_transects_input_sample {
         '<input name="occurrence:record_status" value="'.$record_status.'" />' .
         '<input name="occurrence:sample_id" id="occ_sampleid"/>' .
         (isset($args["sensitiveAttrID"]) && $args["sensitiveAttrID"] != "" && isset($args["sensitivityPrecision"]) && $args["sensitivityPrecision"] != "" ?
-            '<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($site_attributes)>0 && $site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
+            '<input name="occurrence:sensitivity_precision" id="occSensitive" value="'.(count($sensitive_site_attributes)>0 && $sensitive_site_attributes[$args["sensitiveAttrID"]]['default']=="1" ? $args["sensitivityPrecision"] : '').'"/>' : '') .
+        (!empty($args["confidentialAttrID"]) ?
+            '<input name="occurrence:confidential" id="occConfidential" value="'.(count($confidential_site_attributes)>0 && $confidential_site_attributes[$args["confidentialAttrID"]]['default']=="1" ? '1' : '0').'"/>' : '') .
       '<input name="occAttr:' . $args['occurrence_attribute_id'] . '" id="occattr"/>' .
-      '<input name="transaction_id" id="transaction_id"/>' .
+      '<input name="transaction_id" id="occurrence_transaction_id"/>' .
       '<input name="user_id" value="'.self::$userId.'"/>' .
        '</form>';
 
@@ -1565,7 +1599,7 @@ class iform_ukbms_sectioned_transects_input_sample {
     foreach ($attributes as $attr) {
       $r .= '<input id="'.$attr['fieldname'].'" />';
     }
-    $r .=   '<input name="transaction_id" id="transaction_id"/>' .
+    $r .= '<input name="transaction_id" id="sample_transaction_id"/>' .
       '<input name="user_id" value="'.self::$userId.'"/>' .
         '</form>';
 
@@ -1832,12 +1866,13 @@ class iform_ukbms_sectioned_transects_input_sample {
         'nonce' => $values['read_nonce'],
         'auth_token' => $values['read_auth_token']
       );
-      if (!isset($values['sample:entered_sref'])) {
+      if (empty($values['sample:entered_sref'])) {
         // the sample does not have sref data, as the user has just picked a transect site at this point. Copy the
         // site's centroid across to the sample. Should this be cached?
         $site = data_entry_helper::get_population_data(array(
           'table' => 'location',
-          'extraParams' => $read + array('view'=>'detail','id'=>$values['sample:location_id'],'deleted'=>'f')
+          'extraParams' => $read + array('view'=>'detail','id'=>$values['sample:location_id'],'deleted'=>'f'),
+          'caching' => false
         ));
         $site = $site[0];
         $values['sample:entered_sref'] = $site['centroid_sref'];
@@ -1891,7 +1926,12 @@ class iform_ukbms_sectioned_transects_input_sample {
                                        'sample_method_id' => array('value' => $sampleMethods[0]['id'])
                      )),
                    'copyFields' => array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'));
+          // for a new subsample, fill in the attributes: set any default, or if none, copy from same main sample attr
           foreach ($attributes as $attr) {
+            if (!empty($attr['default'])) {
+              $smp['model']['fields']['smpAttr:'.$attr['attributeId']] = array('value' => $attr['default']);
+              continue;
+            }
             foreach ($values as $key => $value){
               $parts = explode(':',$key);
               if(count($parts)>1 && $parts[0]=='smpAttr' && $parts[1]==$attr['attributeId']){

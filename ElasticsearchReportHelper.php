@@ -27,7 +27,7 @@ class ElasticsearchReportHelper {
   /**
    * Count controls to make unique IDs.
    *
-   * @var integer
+   * @var int
    */
   private static $controlIndex = 0;
 
@@ -40,6 +40,11 @@ class ElasticsearchReportHelper {
 
   private static $esMappings;
 
+  /**
+   * List of ES fields with caption and description for each.
+   *
+   * @internal
+   */
   const MAPPING_FIELDS = [
     '@timestamp' => [
       'caption' => 'Indexing timestamp',
@@ -65,21 +70,25 @@ class ElasticsearchReportHelper {
       'caption' => 'Automated checks',
       'description' => "Icons showing the results of automated checks on the record.",
     ],
+    'metadata.created_on' => [
+      'caption' => 'Submitted on',
+      'description' => 'Date the record was submitted.',
+    ],
     '#event_date#' => [
       'caption' => 'Date',
-      'description' => 'Date of the record',
+      'description' => 'Date of the record.',
     ],
     'event.day_of_year' => [
       'caption' => 'Day of year',
-      'description' => 'Numeric day within the year of the record (1-366)',
+      'description' => 'Numeric day within the year of the record (1-366).',
     ],
     'event.month' => [
       'caption' => 'Month',
-      'description' => 'Numeric month of the record',
+      'description' => 'Numeric month of the record.',
     ],
     'event.year' => [
       'caption' => 'Year',
-      'description' => 'Year of the record',
+      'description' => 'Year of the record.',
     ],
     'event.event_remarks' => [
       'caption' => 'Sample comment',
@@ -105,11 +114,19 @@ class ElasticsearchReportHelper {
       'caption' => 'Recorder certainty',
       'description' => 'Certainty that the identification is correct as attributed by the recorder.',
     ],
+    'identification.verifier.name' => [
+      'caption' => 'Verifier name',
+      'description' => "Name of the verifier responsible for record's current verification status.",
+    ],
+    'identification.verified_on' => [
+      'caption' => 'Verified on',
+      'description' => "Date/time of the current verification decision.",
+    ],
     'identification.verification_decision_source' => [
       'caption' => 'Verification decision source',
       'description' => 'Either M for machine based verification or H for human verification decisions.',
     ],
-    'taxon.name' => [
+    'taxon.taxon_name' => [
       'caption' => 'Taxon name',
       'description' => 'Name as recorded for the taxon.',
     ],
@@ -189,10 +206,9 @@ class ElasticsearchReportHelper {
       'caption' => 'Lat/lon',
       'description' => 'Latitude and longitude of the record.',
     ],
-    'occurrence.media' => [
+    '#occurrence_media#' => [
       'caption' => 'Media',
       'description' => 'Thumbnails for any occurrence photos and other media.',
-      'handler' => 'media',
     ],
     'occurrence.sex' => [
       'caption' => 'Sex',
@@ -210,14 +226,26 @@ class ElasticsearchReportHelper {
       'caption' => 'Quantity',
       'description' => 'Abundance of the recorded organism (numeric or text).',
     ],
+    'occurrence.occurrence_remarks' => [
+      'caption' => 'Occurrence comment',
+      'description' => 'Comment given for the occurrence by the recorder.',
+    ],
   ];
 
+  /**
+   * Prepares the page for interacting with the Elasticsearch proxy.
+   *
+   * @param int $nid
+   *   Node ID or NULL if not on a node.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
+   */
   public static function enableElasticsearchProxy($nid = NULL) {
     helper_base::add_resource('datacomponents');
     // Retrieve the Elasticsearch mappings.
     self::getMappings($nid);
     // Prepare the stuff we need to pass to the JavaScript.
-    $mappings = json_encode(self::$esMappings);
+    $mappings = self::$esMappings;
     $dateFormat = helper_base::$date_format;
     $rootFolder = helper_base::getRootFolder(TRUE);
     $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
@@ -226,79 +254,95 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['esMappings'] = $mappings;
     helper_base::$indiciaData['dateFormat'] = $dateFormat;
     helper_base::$indiciaData['rootFolder'] = $rootFolder;
+    helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
+    helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+    $config = hostsite_get_es_config($nid);
+    helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+  }
+
+  /**
+   * A control for flexibly outputting data formatted using a custom script.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   */
+  public static function customScript(array $options) {
+    self::checkOptions('customScript', $options, ['source', 'functionName'], []);
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'source',
+      'functionName',
+    ], TRUE);
+    return self::getControlContainer('customScript', $options, $dataOptions);
   }
 
   /**
    * An Elasticsearch or Indicia powered grid control.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
+   * @return string
+   *   Grid container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-datagrid
    */
   public static function dataGrid(array $options) {
     self::checkOptions(
       'dataGrid',
       $options,
       ['source'],
-      ['actions', 'columns', 'responsiveOptions', 'availableColumns', 'applyFilterRowToSources']
+      [
+        'actions',
+        'applyFilterRowToSources',
+        'availableColumns',
+        'columns',
+        'responsiveOptions',
+        'rowClasses',
+        'rowsPerPageOptions',
+      ]
     );
-    if (empty($options['columns'])) {
-      throw new Exception('Control [dataGrid] requires a parameter called @columns.');
-    }
-    if (!empty($options['scrollY']) && !preg_match('/^\d+px$/', $options['scrollY'])) {
+    if (!empty($options['scrollY']) && !preg_match('/^-?\d+px$/', $options['scrollY'])) {
       throw new Exception('Control [dataGrid] @scrollY parameter must be of CSS pixel format, e.g. 100px');
     }
-    $options = array_merge([
-      'availableColumns' => !empty($options['aggregation']) ? [] : array_keys(self::MAPPING_FIELDS),
-    ], $options);
-    $columnsByField = [];
-    foreach ($options['columns'] as $columnDef) {
-      if (empty($columnDef['field'])) {
-        throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
-      }
-      $field = $columnDef['field'];
-      unset($columnDef['field']);
-      $columnsByField[$field] = $columnDef;
-    }
-    $options['columns'] = array_keys($columnsByField);
-    foreach ($options['availableColumns'] as $field) {
-      if (array_key_exists($field, self::MAPPING_FIELDS)) {
-        if (!isset($columnsByField[$field])) {
-          $columnsByField[$field] = self::MAPPING_FIELDS[$field];
+    if (isset($options['columns'])) {
+      foreach ($options['columns'] as &$columnDef) {
+        if (empty($columnDef['field'])) {
+          throw new Exception('Control [dataGrid] @columns option does not contain a field for every item.');
         }
-        else {
-          $columnsByField[$field] = array_merge(self::MAPPING_FIELDS[$field], $columnsByField[$field]);
+        if (!isset($columnDef['caption'])) {
+          $columnDef['caption'] = '';
+        }
+        // To aid transition from older code versions, auto-enable the media
+        // special field handling. This may be removed in future.
+        if ($columnDef['field'] === 'occurrence.media') {
+          $columnDef['field'] = '#occurrence_media#';
         }
       }
     }
-    $options['availableColumnInfo'] = $columnsByField;
     helper_base::add_resource('jquery_ui');
     helper_base::add_resource('indiciaFootableReport');
-    // Add footableSort for aggregation tables.
-    if ((!empty($options['aggregation']) && $options['aggregation'] === 'simple') || !empty($options['sourceTable'])) {
+    // Add footableSort for simple aggregation tables.
+    if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {
       helper_base::add_resource('footableSort');
     }
     // Fancybox for image popups.
     helper_base::add_resource('fancybox');
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'source',
-      'columns',
-      'availableColumnInfo',
       'actions',
+      'applyFilterRowToSources',
+      'availableColumns',
+      'autoResponsiveCols',
+      'autoResponsiveExpand',
+      'columns',
       'cookies',
       'includeColumnHeadings',
       'includeFilterRow',
       'includePager',
+      'includeMultiSelectTool',
       'responsive',
       'responsiveOptions',
-      'sortable',
-      'aggregation',
-      'sourceTable',
+      'rowClasses',
+      'rowsPerPageOptions',
       'scrollY',
-      'applyFilterRowToSources',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcDataGrid({});
-
-JS;
+      'source',
+      'sortable',
+    ], TRUE);
     return self::getControlContainer('dataGrid', $options, $dataOptions);
   }
 
@@ -308,25 +352,35 @@ JS;
    * @return string
    *   HTML for download button and progress display.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[download]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-download
    */
   public static function download(array $options) {
     self::checkOptions('esDownload', $options,
-      ['source'],
+      [],
       ['addColumns', 'removeColumns']
     );
+    if (empty($options['source']) && empty($options['linkToDataGrid'])) {
+      throw new Exception('Download control requires a value for either the @source or @linkToDataGrid option.');
+    }
+    if (!empty($options['source']) && !empty($options['linkToDataGrid'])) {
+      throw new Exception('Download control requires only one of the @source or @linkToDataGrid options to be specified.');
+    }
+    $options = array_merge([
+      'caption' => 'Download',
+      'title' => 'Run the download',
+    ], $options);
     global $indicia_templates;
-    $r = str_replace(
+    $html = str_replace(
       [
         '{id}',
         '{title}',
         '{class}',
         '{caption}',
       ], [
-        $options['id'],
-        lang::get('Run the download'),
+        "$options[id]-button",
+        lang::get($options['title']),
         "class=\"$indicia_templates[buttonHighlightedClass] do-download\"",
-        lang::get('Download'),
+        lang::get($options['caption']),
       ],
       $indicia_templates['button']
     );
@@ -347,13 +401,12 @@ JS;
 </div>
 
 HTML;
-    $r .= str_replace(
+    $html .= str_replace(
       [
         '{attrs}',
         '{col-1}',
         '{col-2}',
-      ],
-      [
+      ], [
         '',
         $progress,
         '<div class="idc-download-files"><h2>' . lang::get('Files') . ':</h2></div>',
@@ -362,34 +415,24 @@ HTML;
     // This does nothing at the moment - just a placeholder for if and when we
     // add some download options.
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'source',
-      'columnsTemplate',
       'addColumns',
+      'aggregation',
+      'buttonContainerElement',
+      'columnsTemplate',
+      'linkToDataGrid',
       'removeColumns',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcEsDownload({});
-
-JS;
-    return self::getControlContainer('esDownload', $options, $dataOptions, $r);
+      'source',
+    ], TRUE);
+    return self::getControlContainer('esDownload', $options, $dataOptions, $html);
   }
 
   /**
    * A select box for choosing from a list of higher geography boundaries.
    *
-   * Lists indexed locations for a given type. When a location is chosen, the
-   * boundary is shown and the ES data is filtered to records which intersect
-   * the boundary.
-   *
-   * Options are:
-   *
-   * * @locationTypeId - Either a single ID of the location type of the
-   *   locations to list, or an array of IDs of location types where the
-   *   locations are hierarchical (parent first). Each type ID must be indexed
-   *   by the spatial index builder module.
-   *
    * @return string
    *   Control HTML
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-higherGeopgraphySelect
    */
   public static function higherGeographySelect(array $options) {
     if (empty($options['locationTypeId']) ||
@@ -405,7 +448,7 @@ JS;
     ], $options);
     $options['extraParams'] = array_merge([
       'orderby' => 'name',
-    ], $options['extraParams'], $auth['read']);
+    ], $options['extraParams'], $options['readAuth']);
     $baseId = $options['id'];
     foreach ($typeIds as $idx => $typeId) {
       $options['extraParams']['location_type_id'] = $typeId;
@@ -429,23 +472,40 @@ JS;
   /**
    * An Elasticsearch or Indicia data powered Leaflet map control.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[leafletMap]
+   * @return string
+   *   Map container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
    */
   public static function leafletMap(array $options) {
-    self::checkOptions('leafletMap', $options, ['layerConfig'], ['layerConfig']);
+    self::checkOptions('leafletMap', $options,
+      ['layerConfig'],
+      ['baseLayerConfig', 'layerConfig', 'selectedFeatureStyle']
+    );
+    $options = array_merge([
+      'initialLat' => hostsite_get_config_value('iform', 'map_centroid_lat', 54.093409),
+      'initialLng' => hostsite_get_config_value('iform', 'map_centroid_long', -2.89479),
+      'initialZoom' => hostsite_get_config_value('iform', 'map_zoom', 5),
+    ], $options);
     helper_base::add_resource('leaflet');
+    if (isset($options['baseLayerConfig'])) {
+      foreach ($options['baseLayerConfig'] as $baseLayer) {
+        if ($baseLayer['type'] === 'Google') {
+          helper_base::add_resource('leaflet_google');
+        }
+      }
+    }
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'layerConfig',
-      'showSelectedRow',
+      'baseLayerConfig',
+      'cookies',
       'initialLat',
       'initialLng',
       'initialZoom',
-      'cookies',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcLeafletMap({});
-
-JS;
+      'layerConfig',
+      'selectedFeatureStyle',
+      'showSelectedRow',
+    ], TRUE);
+    // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
 $('#$options[id]').idcLeafletMap('bindGrids');
 
@@ -453,6 +513,14 @@ JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
   }
 
+  /**
+   * Output a selector for various high level permissions filtering options.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+   */
   public static function permissionFilters(array $options) {
     $allowedTypes = [];
     // Add My records download permission if allowed.
@@ -498,9 +566,9 @@ HTML;
    * A tabbed control to show full record details and verification info.
    *
    * @return string
-   *   Control HTML.
+   *   Panel container HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[recordDetails]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordDetails
    */
   public static function recordDetails(array $options) {
     $options = array_merge([
@@ -525,10 +593,11 @@ HTML;
       );
     }
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'showSelectedRow',
-      'exploreUrl',
-      'locationTypes',
       'allowRedetermination',
+      'exploreUrl',
+      'extraLocationTypes',
+      'locationTypes',
+      'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
     helper_base::$javascript .= <<<JS
@@ -560,74 +629,69 @@ JS;
 </div>
 
 HTML;
-    if ($options['allowRedetermination']) {
-      helper_base::add_resource('validation');
-      $redetUrl = iform_ajaxproxy_url(self::$nid, 'occurrence');
-      $userId = hostsite_get_user_field('indicia_user_id');
-      helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
-      $speciesInput = data_entry_helper::species_autocomplete([
-        'label' => lang::get('Redetermine to'),
-        'helpText' => lang::get('Select the new taxon name.'),
-        'fieldname' => 'redet-species',
-        'extraParams' => $auth['read'] + ['taxon_list_id' => 1],
-        'speciesIncludeAuthorities' => TRUE,
-        'speciesIncludeBothNames' => TRUE,
-        'speciesNameFilterMode' => 'preferred',
-        'validation' => ['required'],
-      ]);
-      $commentInput = data_entry_helper::textarea([
-        'label' => lang::get('Explanation comment'),
-        'helpText' => lang::get('Please give reasons why you are changing this record.'),
-        'fieldname' => 'redet-comment',
-      ]);
-      $r .= <<<HTML
-<div id="redet-panel-wrap" style="display: none">
-  <form id="redet-form">
-    $speciesInput
-    $commentInput
-    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
-    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
-  </form>
-</div>
-HTML;
-    }
     return $r;
   }
 
   /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[source]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-source
    *
    * @return string
    *   Empty string as no HTML required.
    */
   public static function source(array $options) {
-    self::applyReplacements($options, ['aggregation'], ['aggregation']);
+    self::applyReplacements(
+      $options,
+      ['aggregation', 'sortAggregation'],
+      ['aggregation', 'sortAggregation']
+    );
     self::checkOptions(
       'source',
       $options,
       ['id'],
-      ['aggregation', 'filterBoolClauses', 'buildTableXY', 'sort']
+      [
+        'aggregation',
+        'fields',
+        'filterBoolClauses',
+        'sort',
+        'sortAggregation',
+      ]
     );
+    // Temporary support for deprecated @aggregationMapMode option. Will be
+    // removed in a future version.
+    if (empty($options['mode'])) {
+      if (!empty($options['aggregationMapMode'])) {
+        $options['mode'] = 'map' . ucfirst($options['aggregationMapMode']);
+      }
+      elseif (!empty($options['aggregation']) && !empty($options['filterBoundsUsingMap'])) {
+        // Default aggregation mode to mapGeoHash (for legacy support till
+        // deprecated code removed).
+        $options['mode'] = 'mapGeoHash';
+      }
+    }
     $options = array_merge([
-      'aggregationMapMode' => 'geoHash',
+      'mode' => 'docs',
     ], $options);
+    self::applySourceModeDefaults($options);
     $jsOptions = [
-      'id',
+      'aggregation',
+      'fields',
+      'filterBoolClauses',
+      'filterBoundsUsingMap',
+      'filterField',
+      'filterPath',
+      'filterSourceField',
+      'filterSourceGrid',
       'from',
+      'id',
+      'initialMapBounds',
+      'mapGridSquareSize',
+      'mode',
+      'sortAggregation',
       'size',
       'sort',
-      'filterPath',
-      'aggregation',
-      'aggregationMapMode',
-      'buildTableXY',
-      'initialMapBounds',
-      'filterBoolClauses',
-      'filterSourceGrid',
-      'filterSourceField',
-      'filterField',
-      'filterBoundsUsingMap',
+      'uniqueField',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
     // A source is entirely JS driven - no HTML.
@@ -635,9 +699,37 @@ HTML;
   }
 
   /**
+   * A standard parameters filter toolbar for use on Elasticsearch pages.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardParams
+   */
+  public static function standardParams(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    $options = array_merge(array(
+      'allowSave' => TRUE,
+      'sharing' => 'reporting',
+      'elasticsearch' => TRUE,
+    ), $options);
+    foreach ($options as &$value) {
+      $value = apply_user_replacements($value);
+    }
+    if ($options['allowSave'] && !function_exists('iform_ajaxproxy_url')) {
+      return 'The AJAX Proxy module must be enabled to support saving filters. Set @allowSave=false to disable this in the [standard params] control.';
+    }
+    if (!function_exists('hostsite_get_user_field') || !hostsite_get_user_field('indicia_user_id')) {
+      // If not logged in and linked to warehouse, we can't use standard params
+      // functionality like saving, so...
+      return '';
+    }
+    $hiddenStuff = '';
+    $r = report_filter_panel($options['readAuth'], $options, helper_base::$website_id, $hiddenStuff);
+    return $r . $hiddenStuff;
+  }
+
+  /**
    * A control for flexibly outputting data formatted using HTML templates.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[templatedOutput]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-templatedOutput
    */
   public static function templatedOutput(array $options) {
     self::checkOptions('templatedOutput', $options, ['source', 'content'], []);
@@ -647,18 +739,14 @@ HTML;
       'header',
       'footer',
       'repeatField',
-    ], empty($options['attachToId']));
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcTemplatedOutput({});
-
-JS;
+    ], TRUE);
     return self::getControlContainer('templatedOutput', $options, $dataOptions);
   }
 
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[urlParams]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-urlParams
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.
@@ -674,7 +762,7 @@ JS;
             'process' => 'taxonIdsInScratchpad',
           ],
         ],
-        // For legacy configurations
+        // For legacy configurations.
         'taxon_scratchpad_list_id' => [
           [
             'name' => 'taxon.higher_taxon_ids',
@@ -722,7 +810,7 @@ JS;
                 'library/taxa/external_keys_for_scratchpad',
                 ['scratchpad_list_id' => $value],
                 'external_key',
-                $auth
+                $options['readAuth']
               );
             }
             elseif ($esField['process'] === 'taxonIdsInSample') {
@@ -730,7 +818,7 @@ JS;
                 'library/taxa/external_keys_for_sample',
                 ['sample_id' => $value],
                 'external_key',
-                $auth
+                $options['readAuth']
               );
             }
             $queryType = 'terms';
@@ -748,6 +836,8 @@ HTML;
 
   /**
    * Output a selector for a user's registered filters.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-userFilters
    */
   public static function userFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
@@ -786,7 +876,7 @@ HTML;
   /**
    * A panel containing buttons for record verification actions.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[verificationButtons]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-verificationButtons
    *
    * @return string
    *   Panel HTML;
@@ -807,21 +897,75 @@ HTML;
     $userId = hostsite_get_user_field('indicia_user_id');
     $verifyUrl = iform_ajaxproxy_url($options['nid'], 'list_verify');
     $commentUrl = iform_ajaxproxy_url($options['nid'], 'occ-comment');
-    helper_base::$javascript .= <<<JS
-indiciaData.ajaxFormPostSingleVerify = '$verifyUrl&user_id=$userId&sharing=verification';
-indiciaData.ajaxFormPostComment = '$commentUrl&user_id=$userId&sharing=verification';
-$('#$options[id]').idcVerificationButtons({});
-
-JS;
+    $quickReplyPageAuthUrl = iform_ajaxproxy_url($options['nid'], 'comment_quick_reply_page_auth');
+    $siteEmail = hostsite_get_config_value('site', 'mail', '');
+    helper_base::$indiciaData['ajaxFormPostSingleVerify'] = "$verifyUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostComment'] = "$commentUrl&user_id=$userId&sharing=verification";
+    helper_base::$indiciaData['ajaxFormPostQuickReplyPageAuth'] = $quickReplyPageAuthUrl;
+    helper_base::$indiciaData['siteEmail'] = $siteEmail;
+    helper_base::$javascript .= "$('#$options[id]').idcVerificationButtons({});\n";
+    if (isset($options['enableWorkflow']) && $options['enableWorkflow']) {
+      iform_load_helpers(['VerificationHelper']);
+      VerificationHelper::fetchTaxaWithLoggedCommunications($options['readAuth']);
+    }
     $optionalLinkArray = [];
     if (!empty($options['editPath'])) {
       $optionalLinkArray[] = '<a class="edit" title="Edit this record"><span class="fas fa-edit"></span></a>';
     }
+    $optionalLinkArray[] = '<button class="redet" title="Redetermine this record"><span class="fas fa-tag"></span></button>';
     if (!empty($options['viewPath'])) {
       $optionalLinkArray[] = '<a class="view" title="View this record\'s details page"><span class="fas fa-file-invoice"></span></a>';
     }
     $optionalLinks = implode("\n  ", $optionalLinkArray);
     helper_base::add_resource('fancybox');
+    helper_base::add_resource('validation');
+    helper_base::addLanguageStringsToJs('verificationButtons', [
+      'commentAvoidAsUserNotNotified' => 'Although you can add your query as a comment, there is no guarantee that the recorder will check their notifications. ',
+      'commentOkAsUserNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
+      'commentTabTitle' => 'Comment on the record',
+      'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
+      'emailAvoidAsUserNotified' => 'Although you can send your query as an email, this recorded does check notifications so you might prefer to add the query to the comments tab.',
+      'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
+      'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
+      'emailOkAsUserNotNotified' => 'Sending the query as an email is preferred as the recorder does not check their notifications.',
+      'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
+        'stating how confident you are that the record is correct and any other information you have which may help ' .
+        'to confirm this. You can reply to this message and it will be forwarded direct to the verifier.',
+      'emailQuerySubject' => 'Record of {{ taxon.taxon_name }} requires confirmation (ID:{{ id }})',
+      'emailReplyInstruct' => "Click on your email's reply button to send an email direct to the verifier.",
+      'emailSent' => 'The email was sent successfully.',
+      'emailTabTitle' => 'Email record details',
+      'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
+      'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
+      'queryUnavailableEmail' => 'As this record does not have an email address for the recorder, the query must be added as a comment to the record. There is no guarantee that the recorder will check their notifications.',
+      'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
+      'saveQueryToComments' => 'Save query to comments log',
+      'sendQueryAsEmail' => 'Send query as email',
+    ]);
+    $redetTaxonListId = hostsite_get_config_value('iform', 'master_checklist_id');
+    if (!$redetTaxonListId) {
+      throw new Exception('[verificationButtons] requires the Indicia setting Master Checklist ID to be set. This ' .
+        'is required to provide a list to select the redetermination from.');
+    }
+    $redetUrl = iform_ajaxproxy_url(NULL, 'occurrence');
+    $userId = hostsite_get_user_field('indicia_user_id');
+    helper_base::$indiciaData['ajaxFormPostRedet'] = "$redetUrl&user_id=$userId&sharing=editing";
+    $speciesInput = data_entry_helper::species_autocomplete([
+      'label' => lang::get('Redetermine to'),
+      'helpText' => lang::get('Select the new taxon name.'),
+      'fieldname' => 'redet-species',
+      'extraParams' => $options['readAuth'] + ['taxon_list_id' => $redetTaxonListId],
+      'speciesIncludeAuthorities' => TRUE,
+      'speciesIncludeBothNames' => TRUE,
+      'speciesNameFilterMode' => 'all',
+      'validation' => ['required'],
+      'class' => 'control-width-5',
+    ]);
+    $commentInput = data_entry_helper::textarea([
+      'label' => lang::get('Explanation comment'),
+      'helpText' => lang::get('Please give reasons why you are changing this record.'),
+      'fieldname' => 'redet-comment',
+    ]);
     return <<<HTML
 <div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
   <div class="selection-buttons-placeholder">
@@ -829,12 +973,18 @@ JS;
       Actions:
       <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
       <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="far fa-check-double status-V1"></span></button>
+      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
       <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
       <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
       <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
       <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
       <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+      <div class="multi-only apply-to">
+        <span>Apply decision to:</span>
+        <button class="multi-mode-selected active">selected</button>
+        |
+        <button class="multi-mode-table">all</button>
+      </div>
       <span class="sep"></span>
       <button class="query" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
     </div>
@@ -843,7 +993,16 @@ JS;
     $optionalLinks
   </div>
 </div>
+<div id="redet-panel-wrap" style="display: none">
+  <form id="redet-form" class="verification-popup">
+    $speciesInput
+    $commentInput
+    <button type="submit" class="btn btn-primary" id="apply-redet">Apply redetermination</button>
+    <button type="button" class="btn btn-danger" id="cancel-redet">Cancel</button>
+  </form>
+</div>
 HTML;
+
   }
 
   /**
@@ -879,10 +1038,145 @@ HTML;
   }
 
   /**
+   * Apply default settings for the mapGeoHash mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsMapGeoHash(array &$options) {
+    // Disable loading of docs.
+    $options = array_merge([
+      'size' => 0,
+    ], $options);
+    // Note the geohash_grid precision will be overridden depending on map zoom.
+    $aggText = <<<AGG
+{
+  "filter_agg": {
+    "filter": {
+      "geo_bounding_box": {}
+    },
+    "aggs": {
+      "by_hash": {
+        "geohash_grid": {
+          "field": "location.point",
+          "precision": 1
+        },
+        "aggs": {
+          "by_centre": {
+            "geo_centroid": {
+              "field": "location.point"
+            }
+          }
+        }
+      }
+    }
+  }
+}
+AGG;
+    $options = array_merge(['aggregation' => json_decode($aggText)], $options);
+  }
+
+  /**
+   * Apply default settings for the mapGridSquare mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsMapGridSquare(array &$options) {
+    $options = array_merge([
+      'mapGridSquareSize' => 'autoGridSquareSize',
+      'size' => 0,
+    ], $options);
+    if ($options['mapGridSquareSize'] === 'autoGridSquareSize') {
+      $geoField = 'autoGridSquareField';
+    }
+    else {
+      $sizeInKm = $options['mapGridSquareSize'] / 1000;
+      $geoField = "location.grid_square.{$sizeInKm}km.centre";
+    }
+    $aggText = <<<AGG
+{
+  "filter_agg": {
+    "filter": {
+      "geo_bounding_box": {}
+    },
+    "aggs": {
+      "by_srid": {
+        "terms": {
+          "field": "location.grid_square.srid",
+          "size": 1000,
+          "order": {
+            "_count": "desc"
+          }
+        },
+        "aggs": {
+          "by_square": {
+            "terms": {
+              "field": "$geoField",
+              "size": 100000,
+              "order": {
+                "_count": "desc"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+AGG;
+    $options = array_merge(['aggregation' => json_decode($aggText)], $options);
+  }
+
+  /**
+   * Apply default settings for the compositeAggregation mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsCompositeAggregation(array &$options) {
+    $options = array_merge([
+      'fields' => [],
+      'aggregation' => [],
+    ], $options);
+  }
+
+  /**
+   * Apply default settings for the termAggregation mode.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaultsTermAggregation(array &$options) {
+    if (empty($options['uniqueField'])) {
+      throw new Exception("Sources require a parameter called @uniqueField when @mode=termAggregation");
+    }
+    if (!empty($options['orderbyAggregation']) && !is_object($options['orderbyAggregation'])
+        && !is_array($options['orderbyAggregation'])) {
+      throw new Exception("@orderbyAggregation option for source is not a valid JSON object.");
+    }
+    $options = array_merge([
+      'fields' => [],
+      'aggregation' => [],
+    ], $options);
+  }
+
+  /**
+   * Apply default settings depending on the @mode option.
+   *
+   * @param array $options
+   *   Options passed to the [source]. Will be modified as appropriate.
+   */
+  private static function applySourceModeDefaults(array &$options) {
+    $method = 'applySourceModeDefaults' . ucfirst($options['mode']);
+    if (method_exists('ElasticsearchReportHelper', $method)) {
+      self::$method($options);
+    }
+  }
+
+  /**
    * Provide common option handling for controls.
    *
-   * * If attachToId specified, ensures that the control ID is set to the same
-   *   value.
    * * Sets a unique ID for the control if not already set.
    * * Checks that required options are all populated.
    * * Checks that options which should contain JSON do so.
@@ -900,23 +1194,15 @@ HTML;
    */
   private static function checkOptions($controlName, array &$options, array $requiredOptions, array $jsonOptions) {
     self::$controlIndex++;
-    if (!empty($options['attachToId'])) {
-      if (!empty($options['id']) && $options['id'] !== $options['attachToId']) {
-        throw new Exception("Control ID $options[id] @attachToId does not match the @id option value.");
-      }
-      // If attaching to an existing element, force the ID.
-      $options['id'] = $options['attachToId'];
-    }
-    else {
-      // Otherwise, generate a unique ID if not defined.
-      $options = array_merge([
-        'id' => "idc-$controlName-" . self::$controlIndex,
-      ], $options);
-    }
+    // Generate a unique ID if not defined.
+    $options = array_merge([
+      'id' => "idc-$controlName-" . self::$controlIndex,
+    ], $options);
     // Fail if duplicate ID on page.
     if (in_array($options['id'], self::$controlIds)) {
       throw new Exception("Control ID $options[id] is duplicated in the page configuration");
     }
+
     self::$controlIds[] = $options['id'];
     foreach ($requiredOptions as $option) {
       if (!isset($options[$option]) || $options[$option] === '') {
@@ -936,7 +1222,6 @@ HTML;
     }
   }
 
-
   /**
    * Uses an Indicia report to convert a URL param to a list of filter values.
    *
@@ -949,18 +1234,18 @@ HTML;
    *   List of parameters to pass to the report.
    * @param string $outputField
    *   Name of the field output by the report to build the list from.
-   * @param array $auth
-   *   Authorisation tokens.
+   * @param array $readAuth
+   *   Read authorisation tokens.
    *
    * @return string
    *   List for placing in the url param's hidden input attribute.
    */
-  private static function convertValueToFilterList($report, array $params, $outputField, array $auth) {
+  private static function convertValueToFilterList($report, array $params, $outputField, array $readAuth) {
     // Load the scratchpad's list of taxa.
     iform_load_helpers(['report_helper']);
     $listEntries = report_helper::get_report_data([
       'dataSource' => $report,
-      'readAuth' => $auth['read'],
+      'readAuth' => $readAuth,
       'extraParams' => $params,
     ]);
     // Build a hidden input which causes filtering to this list.
@@ -975,30 +1260,39 @@ HTML;
    * Returns the HTML required to act as a control container.
    *
    * Creates the common HTML strucuture required to wrap any data output
-   * control. If the control's @attachToId option is set then sets the
-   * required JavaScript to make the control inject itself into the existing
-   * element instead.
+   * control.
    *
    * @param string $controlName
+   *   Control type name (e.g. source, dataGrid).
    * @param array $options
+   *   Options passed to the control. If the control's @containerElement option
+   *   is set then sets the required JavaScript to make the control inject
+   *   itself into the existing element instead.
    * @param string $dataOptions
+   *   Options to store in the HTML data-idc-config attribute on the container.
+   *   These are made available to configure the JS behaviour of the control.
    * @param string $content
+   *   HTML to add to the container.
    *
    * @return string
    *   Control HTML.
    */
-  private static function getControlContainer($controlName, array $options, $dataOptions, $content='') {
-    if (!empty($options['attachToId'])) {
+  private static function getControlContainer($controlName, array $options, $dataOptions, $content = '') {
+    $initFn = 'idc' . ucfirst($controlName);
+    if (!empty($options['containerElement'])) {
       // Use JS to attach to an existing element.
       helper_base::$javascript .= <<<JS
-$('#$options[attachToId]')
-  .addClass('idc-output')
-  .addClass("idc-output-$controlName")
-  .attr('data-idc-output-config', '$dataOptions');
+if ($('$options[containerElement]').length === 0) {
+  indiciaFns.controlFail($('#$options[id]'), 'Invalid @containerElement selector for $options[id]');
+}
+$($('$options[containerElement]')[0]).append($('#$options[id]'));
 
 JS;
-      return '';
     }
+    helper_base::$javascript .= <<<JS
+$('#$options[id]').$initFn({});
+
+JS;
     return <<<HTML
 <div id="$options[id]" class="idc-output idc-output-$controlName" data-idc-config="$dataOptions">
   $content
@@ -1035,10 +1329,7 @@ HTML;
           'type' => $config['type'],
         ];
         // We can't sort on text unless a keyword is specified.
-        if (isset($config['fields']) && isset($config['fields']['keyword'])) {
-          $mappings[$field]['sort_field'] = "$field.keyword";
-        }
-        elseif ($config['type'] !== 'text') {
+        if ($config['type'] !== 'text' || (isset($config['fields']) && isset($config['fields']['keyword']))) {
           $mappings[$field]['sort_field'] = $field;
         }
         else {
@@ -1058,7 +1349,9 @@ HTML;
    */
   private static function getMappings($nid) {
     $config = hostsite_get_es_config($nid);
-    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping/doc';
+    // /doc added to URL only for Elasticsearch 6.x.
+    $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
+      ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_HTTPHEADER, [
       'Content-Type: application/json',
@@ -1083,7 +1376,11 @@ HTML;
     $mappingData = json_decode($response, TRUE);
     $mappingData = array_pop($mappingData);
     $mappings = [];
-    self::recurseMappings($mappingData['mappings']['doc']['properties'], $mappings);
+    // ES 6.x has a type (doc) within the index, ES 7.x doesn't support this.
+    $props = $config['es']['version'] == 6
+      ? $mappingData['mappings']['doc']['properties']
+      : $mappingData['mappings']['properties'];
+    self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
 

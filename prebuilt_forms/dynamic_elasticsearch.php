@@ -198,11 +198,13 @@ TXT;
    *   Page parameters.
    * @param int $nid
    *   Node ID.
+   *
+   * @return string
+   *   Page HTML.
    */
   public static function get_form($args, $nid) {
     iform_load_helpers(['ElasticsearchReportHelper']);
     ElasticsearchReportHelper::enableElasticsearchProxy($nid);
-    data_entry_helper::$indiciaData['ajaxUrl'] = hostsite_get_url('iform/ajax/dynamic_elasticsearch');;
     $r = parent::get_form($args, $nid);
     return $r;
   }
@@ -210,7 +212,7 @@ TXT;
   /**
    * Initialises the JavaScript required for an Elasticsearch data source.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[source]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-source
    *
    * @return string
    *   Empty string as no HTML required.
@@ -221,6 +223,11 @@ TXT;
 
   /**
    * Output a selector for a user's registered filters.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-userFilters
    */
   protected static function get_control_userFilters($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::userFilters(array_merge($options, [
@@ -231,8 +238,7 @@ TXT;
   /**
    * Output a selector for various high level permissions filtering options.
    *
-   * Options available will depend on the permissions set on the Permissions
-   * section of the Edit tab.
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
    */
   protected static function get_control_permissionFilters($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::permissionFilters(array_merge($options, [
@@ -244,12 +250,24 @@ TXT;
   }
 
   /**
+   * A control for flexibly outputting data formatted using a JS function.
+   *
+   * @return string
+   *   HTML for the container element.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
+   */
+  protected static function get_control_customScript($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::customScript($options);
+  }
+
+  /**
    * A button for downloading the ES data from a source.
    *
    * @return string
    *   HTML for download button and progress display.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[download]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-download
    */
   protected static function get_control_download($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::download($options);
@@ -258,10 +276,27 @@ TXT;
   /**
    * An Elasticsearch or Indicia powered grid control.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[dataGrid]
+   * @return string
+   *   Report container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-dataGrid
    */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::dataGrid($options);
+  }
+
+  /**
+   * A select box for choosing from a list of higher geography boundaries.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-higherGeographySelect
+   *
+   * @return string
+   *   Control HTML
+   */
+  protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::higherGeographySelect(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   /**
@@ -269,7 +304,10 @@ TXT;
    *
    * @deprecated Use leafletMap instead.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[map]
+   * @return string
+   *   Map container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
    */
   protected static function get_control_map($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::leafletMap($options);
@@ -278,16 +316,50 @@ TXT;
   /**
    * An Elasticsearch or Indicia data powered Leaflet map control.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[leafletMap]
+   * @return string
+   *   Map container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-leafletMap
    */
   protected static function get_control_leafletMap($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::leafletMap($options);
   }
 
   /**
+   * A tabbed control to show full record details and verification info.
+   *
+   * @return string
+   *   Panel container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordDetails
+   */
+  protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::recordDetails(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
+   * A standard parameters filter toolbar for use on Elasticsearch pages.
+   *
+   * @return string
+   *   Params toolbar HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-standardParams
+   */
+  protected static function get_control_standardParams($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::standardParams(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
    * A control for flexibly outputting data formatted using HTML templates.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[templatedOutput]
+   * @return string
+   *   Report container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-templatedOutput
    */
   protected static function get_control_templatedOutput($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::templatedOutput($options);
@@ -296,58 +368,27 @@ TXT;
   /**
    * A panel containing buttons for record verification actions.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[verificationButtons]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-verificationButtons
    *
    * @return string
-   *   Panel HTML;
+   *   Panel container HTML;
    */
   protected static function get_control_verificationButtons($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::verificationButtons($options);
-  }
-
-  /**
-   * A tabbed control to show full record details and verification info.
-   *
-   * @return string
-   *   Control HTML.
-   *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[recordDetails]
-   */
-  protected static function get_control_recordDetails($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::recordDetails($options);
+    return ElasticsearchReportHelper::verificationButtons(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   /**
    * Retrieve parameters from the URL and add to the ES requests.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#[urlParams]
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-urlParams
    *
    * @return string
    *   Hidden input HTML which defines the appropriate filters.
    */
   protected static function get_control_urlParams($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::urlParams($options);
-  }
-
-  /**
-   * A select box for choosing from a list of higher geography boundaries.
-   *
-   * Lists indexed locations for a given type. When a location is chosen, the
-   * boundary is shown and the ES data is filtered to records which intersect
-   * the boundary.
-   *
-   * Options are:
-   *
-   * * @locationTypeId - Either a single ID of the location type of the
-   *   locations to list, or an array of IDs of location types where the
-   *   locations are hierarchical (parent first). Each type ID must be indexed
-   *   by the spatial index builder module.
-   *
-   * @return string
-   *   Control HTML
-   */
-  protected static function get_control_higherGeographySelect($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::higherGeographySelect(array_merge($options, [
+    return ElasticsearchReportHelper::urlParams(array_merge($options, [
       'readAuth' => $auth['read'],
     ]));
   }

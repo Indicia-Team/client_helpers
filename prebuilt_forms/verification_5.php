@@ -32,26 +32,6 @@ require_once 'includes/groups.php';
  */
 class iform_verification_5 {
 
-  private static $statusTermsTranslated = FALSE;
-
-  private static $statusTerms = array(
-    'V' => 'Accepted',
-    'R' => 'Not accepted',
-    // Deprecated.
-    'D' => 'Query',
-    'I' => 'In progress',
-    'T' => 'Test record',
-    'C' => 'Not reviewed',
-  );
-
-  private static $substatusTerms = array(
-    '1' => 'correct',
-    '2' => 'considered correct',
-    '3' => 'plausible',
-    '4' => 'unable to verify',
-    '5' => 'incorrect',
-  );
-
   /**
    * Flag that can be set when the user's permissions filters are to be ignored.
    *
@@ -774,7 +754,7 @@ idlist=';
     if (!self::check_prerequisites()) {
       return '';
     }
-    iform_load_helpers(['data_entry_helper', 'map_helper', 'report_helper']);
+    iform_load_helpers(['data_entry_helper', 'map_helper', 'report_helper', 'VerificationHelper']);
     $args = array_merge([
       'sharing' => 'verification',
       'report_row_class' => 'zero-{zero_abundance}',
@@ -1005,8 +985,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponseTitle="' . lang::get('Log a response to a Query') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.popupTranslations.logResponse="' . lang::get('Save Response') . "\";\n";
 
-    self::translateStatusTerms();
-    data_entry_helper::$javascript .= "indiciaData.statusTranslations = " . json_encode(self::$statusTerms) . ";\n";
+    data_entry_helper::$javascript .= "indiciaData.statusTranslations = " . json_encode(VerificationHelper::getTranslatedStatusTerms()) . ";\n";
     data_entry_helper::$javascript .= "indiciaData.commentTranslations = {};\n";
     data_entry_helper::$javascript .= 'indiciaData.commentTranslations.emailed = "' . lang::get('I emailed this record to {1} for checking.') . "\";\n";
     data_entry_helper::$javascript .= 'indiciaData.commentTranslations.recorder = "' . lang::get('the recorder') . "\";\n";
@@ -1027,42 +1006,7 @@ HTML
     data_entry_helper::$javascript .= 'indiciaData.siteEmail = "' . $site_email = hostsite_get_config_value('site', 'mail', '') . "\";\n";
 
     if (isset($args['enableWorkflow']) && $args['enableWorkflow']) {
-      data_entry_helper::$javascript .= "indiciaData.workflowEnabled = true;\n";
-      // Allow caching.
-      $wfMetadata = data_entry_helper::get_population_data(array(
-        'table' => 'workflow_metadata',
-        'extraParams' => $auth['read'] + array(
-          'log_all_communications' => 't',
-          'entity' => 'occurrence',
-          'view' => 'detail',
-          'columns' => 'key,key_value',
-        ),
-      ));
-      $workflowTaxonMeaningIDsLogAllComms = array();
-      foreach ($wfMetadata as $wfMeta) {
-        switch ($wfMeta['key']) {
-          case 'taxa_taxon_list_external_key':
-            // Allow caching.
-            $wkMIDs = data_entry_helper::get_population_data(array(
-              'table' => 'cache_taxa_taxon_list',
-              'extraParams' => $auth['read'] + array(
-                'external_key' => $wfMeta['key_value'],
-                'columns' => 'taxon_meaning_id',
-              ),
-              'sharing' => $args['sharing'],
-            ));
-            foreach ($wkMIDs as $wkMID) {
-              $workflowTaxonMeaningIDsLogAllComms[] = $wkMID['taxon_meaning_id'];
-            }
-            break;
-
-          default:
-            drupal_set_message("Unrecognised workflow_metadata key $wfMeta[key]");
-            break;
-        }
-      }
-      data_entry_helper::$javascript .= "indiciaData.workflowTaxonMeaningIDsLogAllComms = " .
-          json_encode(array_values(array_unique($workflowTaxonMeaningIDsLogAllComms))) . ";\n";
+      VerificationHelper::fetchTaxaWithLoggedCommunications($auth['read'], $args['sharing']);
     }
     else {
       data_entry_helper::$javascript .= "indiciaData.workflowEnabled = false;\n";
@@ -1071,21 +1015,6 @@ HTML
     data_entry_helper::add_resource('jqplot');
     data_entry_helper::add_resource('jqplot_bar');
     return $r;
-  }
-
-  /**
-   * Convert the list of status terms and substatus terms into a translated version.
-   */
-  private static function translateStatusTerms() {
-    if (!self::$statusTermsTranslated) {
-      foreach (self::$statusTerms as &$term) {
-        $term = lang::get($term);
-      }
-      foreach (self::$substatusTerms as &$term) {
-        $term = lang::get($term);
-      }
-      self::$statusTermsTranslated = TRUE;
-    }
   }
 
   /*
@@ -1146,7 +1075,7 @@ HTML
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     $details_report = empty($params['record_details_report']) ? 'reports_for_prebuilt_forms/verification_5/record_data' : $params['record_details_report'];
     $attrs_report = empty($params['record_attrs_report']) ? 'reports_for_prebuilt_forms/verification_3/record_data_attributes' : $params['record_attrs_report'];
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(array('report_helper', 'VerificationHelper'));
     $readAuth = report_helper::get_read_auth($website_id, $password);
     $options = array(
       'dataSource' => $details_report,
@@ -1157,18 +1086,18 @@ HTML
     );
     $reportData = report_helper::get_report_data($options);
     // Set some values which must exist in the record.
-    $record = array_merge(array(
-        'wkt' => '',
-        'taxon' => '',
-        'sample_id' => '',
-        'date' => '',
-        'entered_sref' => '',
-        'taxon_external_key' => '',
-        'taxon_meaning_id' => '',
-        'record_status' => '',
-        'zero_abundance' => '',
-        'sref_precision' => '0',
-    ), $reportData['records'][0]);
+    $record = array_merge([
+      'wkt' => '',
+      'taxon' => '',
+      'sample_id' => '',
+      'date' => '',
+      'entered_sref' => '',
+      'taxon_external_key' => '',
+      'taxon_meaning_id' => '',
+      'record_status' => '',
+      'zero_abundance' => '',
+      'sref_precision' => '0',
+    ], $reportData['records'][0]);
     // Build an array of all the data. This allows the JS to insert the data into emails etc. Note we
     // use an array rather than an assoc array to build the JSON, so that order is guaranteed.
     $data = array();
@@ -1177,10 +1106,11 @@ HTML
       if (!empty($def['display']) && $def['visible'] !== 'false' && !empty($record[$col])) {
         $caption = explode(':', $def['display']);
         // Is this a new heading?
-        if (!isset($data[$caption[0]]))
+        if (!isset($data[$caption[0]])) {
           $data[$caption[0]] = array();
+        }
         $val = ($col === 'record_status') ?
-            self::status_label($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
+          VerificationHelper::getStatusLabel($record[$col], $record['record_substatus'], $record['query']) : $record[$col];
         $data[$caption[0]][] = array('caption' => $caption[1], 'value' => $val);
       }
       if ($col === 'email' && !empty($record[$col])) {
@@ -1226,7 +1156,8 @@ HTML
       foreach ($items as $item) {
         if (!is_null($item['value']) && $item['value'] != '') {
           $value = preg_match('/^http(s)?:\/\//', $item['value']) ? "<a href=\"$item[value]\" target=\"_blank\">$item[value]</a>" : $item['value'];
-          $r .= "<tr><td class=\"caption\">" . $item['caption'] . "</td><td>$value</td></tr>\n";
+          $valueClass = strtolower($item['caption']) === 'record status' ? ' class="status"' : '';
+          $r .= "<tr><td class=\"caption\">" . $item['caption'] . "</td><td$valueClass>$value</td></tr>\n";
           if ($email === '' && (strtolower($item['caption']) === 'email' || strtolower($item['caption']) === 'email address')) {
             $email = $item['value'];
           }
@@ -1322,44 +1253,6 @@ HTML
   }
 
   /**
-   * Converts a status and substatus into a readable label (e.g. accepted, or accepted:considered correct)
-   *
-   * @param string $status
-   *   Status code from database (e.g. 'C').
-   * @param integer $substatus
-   *   Substatus value from database.
-   * @param string $query
-   *   Query valid for the record (null, Q or A).
-   *
-   * @return string
-   *   Status label text.
-   */
-  private static function status_label($status, $substatus, $query) {
-    $labels = array();
-    self::translateStatusTerms();
-    // Grab the term for the status. We don't need to bother with not reviewed status if
-    // substatus is plausible.
-    if (!empty(self::$statusTerms[$status]) && ($status !== 'C' || (int) $substatus !== 3)) {
-      $labels[] = lang::get(self::$statusTerms[$status]);
-    }
-    elseif ((int) $substatus !== 3)
-      $labels[] = lang::get('Unknown');
-    if ($substatus && !empty(self::$substatusTerms[$substatus])) {
-      $labels[] = lang::get(self::$substatusTerms[$substatus]);
-    }
-    switch ($query) {
-      case 'Q':
-        $labels[] = lang::get('Queried');
-        break;
-
-      case 'A':
-        $labels[] = lang::get('Query answered');
-        break;
-    }
-    return implode($labels, '::');
-  }
-
-  /**
    * Ajax method allowing the details pane to show the media tab content.
    *
    * @param integer $website_id
@@ -1375,7 +1268,7 @@ HTML
   }
 
   private static function getMedia($readAuth, $params) {
-    iform_load_helpers(array('data_entry_helper'));
+    iform_load_helpers(array('data_entry_helper', 'VerificationHelper'));
     // Retrieve occurrence media for record.
     $occ_media = data_entry_helper::get_population_data(array(
       'table' => 'occurrence_medium',
@@ -1398,181 +1291,41 @@ HTML
       $r .= '<p>' . lang::get('Click on thumbnails to view full size') . '</p>';
       if (count($occ_media) > 0) {
         $r .= '<p class="header">' . lang::get('Record media') . '</p>';
-        $r .= self::getMediaHtml($occ_media);
+        $r .= VerificationHelper::getMediaHtml($occ_media);
       }
       if (count($smp_media) > 0) {
         $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
-        $r .= self::getMediaHtml($smp_media);
+        $r .= VerificationHelper::getMediaHtml($smp_media);
       }
-    }
-    return $r;
-  }
-
-  private static function getMediaHtml($media) {
-    require_once 'includes/report.php';
-    $path = data_entry_helper::get_uploaded_image_folder();
-    $r = '<div class="media-gallery"><ul >';
-    foreach ($media as $file) {
-      $r .= iform_report_get_gallery_item($file);
-    }
-    $r .= '</ul></div>';
-    return $r;
-  }
-
-  public static function ajax_comments($website_id, $password, $nid) {
-    iform_load_helpers(array('report_helper'));
-    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
-    $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::getComments($readAuth, $params);
-  }
-
-  private static function status_icons($status, $substatus, $imgPath) {
-    $r = '';
-    if (!empty($status)) {
-      $hint = self::status_label($status, $substatus, NULL);
-      $images = array();
-      if ($status === 'V') {
-        $images[] = 'ok-16px';
-      }
-      elseif ($status === 'R') {
-        $images[] = 'cancel-16px';
-      }
-      switch ($substatus) {
-        case '1':
-          $images[] = 'ok-16px';
-          break;
-
-        case '2':
-          break;
-
-        case '3':
-          $images[] = 'quiz-22px';
-          break;
-
-        case '4':
-          break;
-
-        case '5':
-          $images[] = 'cancel-16px';
-          break;
-      }
-      if ($images) {
-        foreach ($images as $image) {
-          $r .= "<img width=\"12\" height=\"12\" src=\"{$imgPath}nuvola/$image.png\" title=\"$hint\" alt=\"$hint\"/>";
-        }
-      }
-    }
-    return $r;
-  }
-
-  private static function getComments($readAuth, $params, $emailMode = FALSE) {
-    iform_load_helpers(array('data_entry_helper', 'report_helper'));
-    $options = array(
-      'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
-      'readAuth' => $readAuth,
-      'sharing' => $params['sharing'],
-      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
-    );
-    $comments = report_helper::get_report_data($options);
-    $imgPath = empty(report_helper::$images_path) ? report_helper::relative_client_helper_path() . "../media/images/" : report_helper::$images_path;
-    $r = '';
-    if (count($comments) === 0) {
-      $r .= '<p id="no-comments">' . lang::get('No comments have been made.') . '</p>';
-    }
-    $r .= '<div id="comment-list">';
-    foreach ($comments as $comment) {
-      $r .= '<div class="comment">';
-      $r .= '<div class="header">';
-      if (!$emailMode) {
-        $r .= self::status_icons($comment['record_status'], $comment['record_substatus'], $imgPath);
-        if ($comment['query'] === 't') {
-          $hint = lang::get('This is a query');
-          $r .= "<img width=\"12\" height=\"12\" src=\"{$imgPath}nuvola/dubious-16px.png\" title=\"$hint\" alt=\"$hint\"/>";
-        }
-      }
-      $r .= "<strong>$comment[person_name]</strong> ";
-      $commentTime = strtotime($comment['updated_on']);
-      // Output the comment time. Skip if in future (i.e. server/client date settings don't match).
-      if ($commentTime < time())
-        $r .= self::ago($commentTime);
-      $r .= '</div>';
-      $c = str_replace("\n", '<br/>', $comment['comment']);
-      if ($emailMode) {
-        $r .= "<div class=\"comment-body\">$c</div>";
-      }
-      else {
-        $r .= '<div class="comment-body shrunk">' .
-                '<a class="unshrink-comment" title="' . lang::get('Expand this comment block to show its full details.') . '">' .
-                  lang::get('more...') .
-                '</a>' .
-                $c .
-                '<a class="shrink-comment" title="' . lang::get('Shrink this comment block.') . '">' .
-                  lang::get('less...') .
-                '</a>' .
-              '</div>';
-        if (!empty($comment['correspondence_data'])) {
-          $data = str_replace("\n", '<br/>', $comment['correspondence_data']);
-          $correspondenceData = json_decode($data, TRUE);
-          foreach ($correspondenceData as $type => $items) {
-            $r .= '<h3>' . ucfirst($type) . '</h3>';
-            foreach ($items as $item) {
-              $r .= '<div class="correspondence shrunk">';
-              $r .= '<a class="unshrink-correspondence" title="'.lang::get('Expand this correspondence block to show its full details.').'">'.lang::get('more...').'</a>';
-              foreach ($item as $field => $value) {
-                $field = $field === 'body' ? '' : '<span>' . ucfirst($field) . ':</span>';
-                $r .= "<div>$field $value</div>";
-              }
-              $r .= '<a class="shrink-correspondence" title="'.lang::get('Shrink this correspondence block.').'">'.lang::get('less...').'</a>';
-              $r .= '</div>';
-            }
-          }
-        }
-      }
-      $r .= '</div>';
-    }
-    $r .= '</div>';
-    if (!$emailMode) {
-      $r .= self::getCommentsForm();
     }
     return $r;
   }
 
   /**
-   * Returns the HTML for a comments form.
-   *
-   * @return string
-   *   Form HTML.
+   * Ajax handler to get comments for the details pane tab.
    */
-  private static function getCommentsForm() {
-    $allowConfidential = isset($_GET['allowconfidential']) && $_GET['allowconfidential'] === 'true';
-    $r = '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
-    if ($allowConfidential) {
-      $r .= '<label><input type="checkbox" id="comment-confidential" /> ' . lang::get('Confidential?') . '</label><br>';
-    }
-    else {
-      $r .= '<input type="hidden" id="comment-confidential" value="f" />';
-    }
-    $r .= data_entry_helper::textarea([
-      'fieldname' => 'comment-text'
-    ]);
-    $r .= data_entry_helper::text_input([
-      'label' => lang::get('External reference or other source'),
-      'fieldname' => 'comment-reference'
-    ]);
-    $r .= '<button type="button" class="default-button" ' .
-      'onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-reference\').val(), jQuery(\'#comment-confidential\:checked\').length, false);">' . lang::get('Save') . '</button>';
-    $r .= '</fieldset></form>';
-    return $r;
+  public static function ajax_comments($website_id, $password, $nid) {
+    iform_load_helpers(array('VerificationHelper'));
+    $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
+    $readAuth = helper_base::get_read_auth($website_id, $password);
+    echo VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id']);
+    echo self::getCommentsForm();
   }
 
+  /**
+   * Ajax handler to get media and comments for a record.
+   *
+   * E.g. when creating a query email, the comments and photos are injected
+   * into the email body.
+   */
   public static function ajax_mediaAndComments($website_id, $password, $nid) {
-    iform_load_helpers(array('report_helper'));
-    $readAuth = report_helper::get_read_auth($website_id, $password);
+    iform_load_helpers(array('VerificationHelper'));
+    $readAuth = helper_base::get_read_auth($website_id, $password);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
     header('Content-type: application/json');
     echo json_encode(array(
-      'media' => self::getMedia($readAuth, $params),
-      'comments' => self::getComments($readAuth, $params, TRUE)
+      'media' => VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']),
+      'comments' => VerificationHelper::getComments($readAuth, $params, $_GET['occurrence_id'], TRUE),
     ));
   }
 
@@ -1594,7 +1347,6 @@ HTML
     $headers[] = 'Content-type: text/html; charset=UTF-8;';
     $headers[] = 'From: ' . $fromEmail;
     $headers[] = 'Reply-To: ' . hostsite_get_user_field('mail');
-    $headers[] = 'Return-Path: ' . $site_email;
     $headers = implode("\r\n", $headers) . PHP_EOL;
     $emailBody = $_POST['body'];
     $emailBody = str_replace("\n", "<br/>", $emailBody);
@@ -1714,54 +1466,42 @@ HTML;
 
   /**
    * Ajax handler to determine if a user is likely to see a notification added to their comments.
-   * @param $website_id
-   * @param $password
-   * @return string Either yes, no, maybe or unknown.
-   * @throws \Exception
+   *
+   * @return string
+   *   yes, no or maybe.
    */
   public static function ajax_do_they_see_notifications($website_id, $password) {
-    iform_load_helpers(array('report_helper'));
-    $readAuth = report_helper::get_read_auth($website_id, $password);
-    $data = report_helper::get_report_data(array(
-      'dataSource' => 'library/users/user_notification_response_likely',
-      'readAuth' => $readAuth,
-      'extraParams' => array('user_id' => $_GET['user_id'])
-    ));
-    $acknowledged = 0;
-    $unacknowledged = 0;
-    $emailFrequency = FALSE;
-    foreach ($data as $row) {
-      if ($row['key'] === 'acknowledged') {
-        $acknowledged = (int) $row['value'];
-      }
-      elseif ($row['key'] === 'unacknowledged') {
-        $unacknowledged = (int) $row['value'];
-      }
-      elseif ($row['key'] === 'email_frequency') {
-        $emailFrequency = $row['value'];
-      }
-    }
-    if ($emailFrequency) {
-      // If they receive emails for comment notifications, we can assume they will see a comment.
-      echo 'yes';
-    }
-    elseif ($acknowledged + $unacknowledged > 0) {
-      // otherwise, we need some info on the ratio of acknowledged to unacknowledged notifications over the last year
-      $ratio = $acknowledged / ($acknowledged + $unacknowledged);
-      if ($ratio > 0.3) {
-        echo 'yes';
-      }
-      elseif ($ratio === 0) {
-        echo 'no';
-      }
-      else {
-        echo 'maybe';
-      }
+    iform_load_helpers(array('VerificationHelper'));
+    $readAuth = helper_base::get_read_auth($website_id, $password);
+    echo VerificationHelper::doesUserSeeNotifications($readAuth, $_GET['user_id']);
+  }
+
+  /**
+   * Returns the HTML for a comments form.
+   *
+   * @return string
+   *   Form HTML.
+   */
+  private static function getCommentsForm() {
+    $allowConfidential = isset($_GET['allowconfidential']) && $_GET['allowconfidential'] === 'true';
+    $r = '<form><fieldset><legend>' . lang::get('Add new comment') . '</legend>';
+    if ($allowConfidential) {
+      $r .= '<label><input type="checkbox" id="comment-confidential" /> ' . lang::get('Confidential?') . '</label><br>';
     }
     else {
-      // They don't have notifications in database, so we can't say.
-      echo 'unknown';
+      $r .= '<input type="hidden" id="comment-confidential" value="f" />';
     }
+    $r .= data_entry_helper::textarea([
+      'fieldname' => 'comment-text'
+    ]);
+    $r .= data_entry_helper::text_input([
+      'label' => lang::get('External reference or other source'),
+      'fieldname' => 'comment-reference'
+    ]);
+    $r .= '<button type="button" class="default-button" ' .
+      'onclick="indiciaFns.saveComment(jQuery(\'#comment-text\').val(), jQuery(\'#comment-reference\').val(), jQuery(\'#comment-confidential\:checked\').length, false);">' . lang::get('Save') . '</button>';
+    $r .= '</fieldset></form>';
+    return $r;
   }
 
   /**
@@ -1866,52 +1606,6 @@ HTML;
     $params = array_merge($_POST, $auth['write_tokens']);
     $response = data_entry_helper::http_post($url, $params);
     echo $response['output'];
-  }
-
-  /**
-   * Convert a timestamp into readable format (... ago) for use on a comment list.
-   *
-   * @param timestamp $timestamp
-   *   The date time to convert.
-   *
-   * @return string
-   *   The output string.
-   */
-  private static function ago($timestamp) {
-    $difference = time() - $timestamp;
-    // Having the full phrase means that it is fully localisable if the phrasing is different.
-    $periods = array(
-      lang::get("{1} second ago"),
-      lang::get("{1} minute ago"),
-      lang::get("{1} hour ago"),
-      lang::get("Yesterday"),
-      lang::get("{1} week ago"),
-      lang::get("{1} month ago"),
-      lang::get("{1} year ago"),
-      lang::get("{1} decade ago")
-    );
-    $periodsPlural = array(
-      lang::get("{1} seconds ago"),
-      lang::get("{1} minutes ago"),
-      lang::get("{1} hours ago"),
-      lang::get("{1} days ago"),
-      lang::get("{1} weeks ago"),
-      lang::get("{1} months ago"),
-      lang::get("{1} years ago"),
-      lang::get("{1} decades ago")
-    );
-    $lengths = array("60", "60", "24", "7", "4.35", "12", "10");
-    for ($j = 0; (($difference >= $lengths[$j]) && ($j < 7)); $j++) {
-      $difference /= $lengths[$j];
-    }
-    $difference = round($difference);
-    if ($difference == 1) {
-      $text = str_replace('{1}', $difference, $periods[$j]);
-    }
-    else {
-      $text = str_replace('{1}', $difference, $periodsPlural[$j]);
-    }
-    return $text;
   }
 
   private static function reportFilterPanel($args, $readAuth) {

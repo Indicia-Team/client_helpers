@@ -711,6 +711,7 @@ JS;
    *   * sref_handlers_osie
    *   * font_awesome
    *   * leaflet
+   *   * leaflet_google
    */
   public static function add_resource($resource) {
     // Ensure indiciaFns is always the first resource added
@@ -784,7 +785,6 @@ JS;
         'jquery_ui' => array('deps' => array('jquery'), 'stylesheets' => array("$indicia_theme_path$indicia_theme/jquery-ui.custom.css"), 'javascript' => array(self::$js_path."jquery-ui.custom.min.js", self::$js_path."jquery-ui.effects.js")),
         'jquery_ui_fr' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path."jquery.ui.datepicker-fr.js")),
         'jquery_form' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."jquery.form.js")),
-        'json' => array('javascript' => array(self::$js_path."json2.js")),
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
@@ -814,12 +814,12 @@ JS;
         'jqplot_canvas_axis_label_renderer' => array('javascript' => array(self::$js_path.'jqplot/plugins/jqplot.canvasTextRenderer.js', self::$js_path.'jqplot/plugins/jqplot.canvasAxisLabelRenderer.js')),
         'jqplot_trendline' => array('javascript'=>array(self::$js_path.'jqplot/plugins/jqplot.trendline.js')),
         'reportgrid' => array('deps' => array('jquery_ui', 'jquery_cookie'),
-            'javascript' => array(self::$js_path.'jquery.reportgrid.js', self::$js_path.'json2.js')),
+            'javascript' => array(self::$js_path.'jquery.reportgrid.js')),
         'reportfilters' => array('deps' => array('reportgrid'), 'stylesheets' => array(self::$css_path."report-filters.css"), 'javascript' => array(self::$js_path.'reportFilters.js')),
         'tabs' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path.'tabs.js')),
         'wizardprogress' => array('deps' => array('tabs'), 'stylesheets' => array(self::$css_path."wizard_progress.css")),
         'spatialReports' => array('javascript'=>array(self::$js_path.'spatialReports.js')),
-        'jsonwidget' => array('deps' => array('jquery'), 'javascript'=>array(self::$js_path."jsonwidget/json.js", self::$js_path."jsonwidget/jsonedit.js",
+        'jsonwidget' => array('deps' => array('jquery'), 'javascript'=>array(self::$js_path."jsonwidget/jsonedit.js",
             self::$js_path."jquery.jsonwidget.js"), 'stylesheets'=>array(self::$css_path."jsonwidget.css")),
         'timeentry' => array('javascript'=>array(self::$js_path."jquery.timeentry.min.js")),
         'verification' => array('javascript'=>array(self::$js_path."verification.js")),
@@ -864,6 +864,8 @@ JS;
             'javascript' => array(self::$js_path.'drivers/georeference/google_places.js')),
         'georeference_default_indicia_locations' => array(
             'javascript' => array(self::$js_path.'drivers/georeference/indicia_locations.js')),
+        'sref_handlers_2169' => array(
+            'javascript' => array(self::$js_path.'drivers/sref/2169.js')),
         'sref_handlers_4326' => array(
             'javascript' => array(self::$js_path.'drivers/sref/4326.js')),
         'sref_handlers_osgb' => array(
@@ -882,6 +884,14 @@ JS;
             self::$js_path . 'leaflet.heat/dist/leaflet-heat.js',
           ],
         ],
+        'leaflet_google' => [
+          'deps' => [
+            'googlemaps'
+          ],
+          'javascript' => [
+            'https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js',
+          ],
+        ],
         'datacomponents' => [
           'deps' => [
             'font_awesome',
@@ -891,6 +901,7 @@ JS;
           'javascript' => [
             self::$js_path . 'indicia.datacomponents/idc.core.js',
             self::$js_path . 'indicia.datacomponents/idc.esDataSource.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.customScript.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.dataGrid.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.esDownload.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.leafletMap.js',
@@ -1121,53 +1132,39 @@ JS;
    * Parameters forms are a quick way of specifying a simple form used to specify the input
    * parameters for a process. Returns the HTML required for a parameters form, e.g. the form
    * defined for input of report parameters or the default values for a csv import.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>form</b><br/>
-   * Associative array defining the form structure. The structure is the same as described for <em>fixed_values_form</em> in a Warehouse model.
-   * @link http://code.google.com/p/indicia/wiki/SampleModelPage.
-   * </li>
-   * <li><b>id</b><br/>
-   * When used for report output, id of the report instance on the page if relevant, so that controls can be given unique ids.
-   * </li>
-   * <li><b>form</b><br/>
-   * Associative array defining the form content.
-   * </li>
-   * <li><b>readAuth</b><br/>
-   * Read authorisation array.
-   * </li>
-   * <li><b>fieldNamePrefix</b><br/>
-   * Optional prefix for form field names.
-   * </li>
-   * <li><b>defaults</b><br/>
-   * Associative array of default values for each form element.
-   * </li>
-   * <li><b>paramsToHide</b><br/>
-   * An optional array of parameter names for parameters that should be added to the form output as hidden inputs rather than visible controls.
-   * <li><b>paramsToExclude</b><br/>
-   * An optional array of parameter names for parameters that should be skipped in the form output despite being in the form definition.
-   * <li><b>forceLookupParamAutocomplete</b><br/>
-   * If true, forces lookup parameters to be an autocomplete instead of drop-down.
-   * <li><b>forceLookupParamAutocompleteSelectMode</b><br/>
-   * Used in conjunction with forceLookupParamAutocomplete, if true then autocomplete parameter control is put into selectMode.
-   * </li>
-   * <li><b>extraParams</b><br/>
-   * Optional array of param names and values that have a fixed value and are therefore output only as a hidden control.
-   * </li>
-   * <li><b>inlineMapTools</b><br/>
-   * Defaults to false. If true, then map drawing parameter tools are embedded into the report parameters form. If false, then the map
-   * drawing tools are added to a toolbar at the top of the map.
-   * </li>
-   * <li><b>helpText</b><br/>
-   * Defaults to true. Set to false to disable helpText being displayed alongside controls, useful for building compact versions of
-   * simple parameter forms.
-   * </li>
-   * <li><b>nocache</b><br/>
-   * Set to true to disable caching of lookups.
-   * </li>
-   * </ul>
-   * @param boolean $hasVisibleContent On completion, this is set to true if there are visible
-   * controls in the params form. If not, then it may be appropriate to skip the displaying of this
-   * params form since it is not necessary.
+   * @param array $options Options array with the following possibilities:
+   * * form - Associative array defining the form structure. The structure is
+   *   the same as described for <em>fixedValuesForm</em> in a Warehouse model.
+   * * id - When used for report output, id of the report instance on the page
+   *   if relevant, so that controls can be given unique ids.
+   * * form - Associative array defining the form content.
+   * * readAuth- Read authorisation array.
+   * * fieldNamePrefix - Optional prefix for form field names.
+   * * defaults - Associative array of default values for each form element.
+   * * paramsToHide - An optional array of parameter names for parameters that
+   *   should be added to the form output as hidden inputs rather than visible
+   *   controls.
+   * * paramsToExclude - An optional array of parameter names for parameters
+   *   that should be skipped in the form output despite being in the form
+   *   definition.
+   * * forceLookupParamAutocomplete - If true, forces lookup parameters to be
+   *   an autocomplete instead of drop-down.
+   * * forceLookupParamAutocompleteSelectMode - Used in conjunction with f
+   *   orceLookupParamAutocomplete, if true then autocomplete parameter control
+   *   is put into selectMode.
+   * * extraParams - Optional array of param names and values that have a fixed
+   *   value and are therefore output only as a hidden control.
+   * * inlineMapTools - Defaults to false. If true, then map drawing parameter
+   *   tools are embedded into the report parameters form. If false, then the
+   *   map drawing tools are added to a toolbar at the top of the map.
+   * * helpText - Defaults to true. Set to false to disable helpText being
+   *   displayed alongside controls, useful for building compact versions of
+   *   simple parameter forms.
+   * * nocache - Set to true to disable caching of lookups.
+   * @param bool $hasVisibleContent
+   *   On completion, this is set to true if there are visible controls in the
+   *   params form. If not, then it may be appropriate to skip the displaying of
+   *   this params form since it is not necessary.
    */
   public static function build_params_form($options, &$hasVisibleContent) {
     require_once('data_entry_helper.php');
@@ -1765,7 +1762,7 @@ JS;
     // Jquery validation js has to be added at this late stage, because only then do we know all the messages required.
     self::setup_jquery_validation_js();
     $dump = self::internal_dump_resources(self::$required_resources);
-    $dump .= self::getIndiciaData();
+    $dump .= "<script type='text/javascript'>/* <![CDATA[ */\n" . self::getIndiciaData() . "\n/* ]]> */</script>\n";
     $dump .= self::get_scripts(self::$javascript, self::$late_javascript, self::$onload_javascript, true, $closure);
     // ensure scripted JS does not output again if recalled.
     self::$javascript = "";
@@ -1890,11 +1887,18 @@ indiciaData.jQuery = jQuery; //saving the current version of jQuery
         }
         $script .= <<<JS
 indiciaData.documentReady = 'started';
+if (typeof indiciaFns.initDataSources !== 'undefined') {
+  indiciaFns.initDataSources();
+}
 $javascript
 $late_javascript
 // Elasticsearch source population.
-if (typeof indiciaFns.populateDataSources !== 'undefined') {
-  indiciaFns.populateDataSources();
+if (typeof indiciaFns.hookupDataSources !== 'undefined') {
+  indiciaFns.hookupDataSources();
+  // Populate unless a report filter builder present as that will do it for us.
+  if (!window.loadFilter) {
+    indiciaFns.populateDataSources();
+  }
 }
 // if window.onload already happened before document.ready, ensure any hooks are still run.
 if (indiciaData.windowLoaded === 'done') {
@@ -2319,7 +2323,81 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     return $terms;
   }
 
- /**
+  /**
+   * Apply a set of replacements to a string.
+   *
+   * Useful when configuration allows the specification of strings that will
+   * be output in the HTML (e.g dynamic content or report grid footers). The
+   * following tokens are replaced:
+   * * {rootFolder} - relative URL to prefix links generated within the site.
+   * * {currentUrl} - relative URL of the current page.
+   * * {sep} - either ? or & as required to append to links before adding
+   *     parameters. Will be ? unless using dirty URLs.
+   * * {warehouseRoot} - root URL of the warehouse.
+   * * {geoserverRoot} - root URL of the GeoServer instance if configured.
+   * * {nonce} - read nonce token, used to generate reporting links.
+   * * {auth} - read auth token, used to generate reporting links.
+   * * {indicia_user_id} - Indicia warehouse user ID.
+   * * {uid} - Drupal uid.
+   * * {website_id} - Indicia warehouse website ID.
+   * * {t:<phrase>} - returns translated version of <phrase>.
+   *
+   * @param string $string
+   *   String to have tokens replaced.
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @return string
+   *   String with tokens replaced.
+   */
+  public static function getStringReplaceTokens($string, $readAuth) {
+    $rootFolder = self::getRootFolder(TRUE);
+    $currentUrl = self::get_reload_link_parts();
+    // Amend currentUrl path if we have Drupal 7 dirty URLs so javascript will
+    // work properly.
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?') === FALSE) {
+      $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
+    }
+    // Do translations.
+    if (preg_match_all('/{t:([^}]+)}/', $string, $matches)) {
+      for ($i = 0; $i < count($matches[0]); $i++) {
+        $string = str_replace($matches[0][$i], lang::get($matches[1][$i]), $string);
+      }
+    }
+    // Note a couple of repeats in the list for legacy reasons.
+    return str_replace(
+      [
+        '{rootFolder}',
+        '{currentUrl}',
+        '{sep}',
+        '{warehouseRoot}',
+        '{geoserverRoot}',
+        '{nonce}',
+        '{auth}',
+        '{iUserID}',
+        '{indicia_user_id}',
+        '{user_id}',
+        '{uid}',
+        '{website_id}',
+      ],
+      [
+        $rootFolder,
+        $currentUrl['path'],
+        strpos($rootFolder, '?') === FALSE ? '?' : '&',
+        self::$base_url,
+        self::$geoserver_url,
+        "nonce=$readAuth[nonce]",
+        "auth_token=$readAuth[auth_token]",
+        hostsite_get_user_field('indicia_user_id'),
+        hostsite_get_user_field('indicia_user_id'),
+        hostsite_get_user_field('id'),
+        hostsite_get_user_field('id'),
+        self::$website_id,
+      ],
+      $string
+    );
+  }
+
+  /**
    * Converts the validation rules in an options array into a string that can be used as the control class,
    * to trigger the jQuery validation plugin.
    * @param $options. Control options array. For validation to be applied should contain a validation entry,
@@ -2501,6 +2579,98 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
   /**
+   * Issue a post request to get the population data required for a control either from
+   * direct access to a data entity (table) or via a report query. The response will be cached
+   * locally unless the caching option is set to false.
+   * @param array $options Options array with the following possibilities:<ul>
+   * <li><b>table</b><br/>
+   * Singular table name used when loading from a database entity.
+   * </li>
+   * <li><b>report</b><br/>
+   * Path to the report file to use when loading data from a report, e.g. "library/occurrences/explore_list",
+   * excluding the .xml extension.
+   * </li>
+   * <li><b>orderby</b><br/>
+   * Optional. For a non-default sort order, provide the field name to sort by. Can be comma separated
+   * to sort by several fields in descending order of precedence.
+   * </li>
+   * <li><b>sortdir</b><br/>
+   * Optional. Specify ASC or DESC to define ascending or descending sort order respectively. Can
+   * be comma separated if several sort fields are specified in the orderby parameter.
+   * </li>
+   * <li><b>extraParams</b><br/>
+   * Array of extra URL parameters to send with the web service request. Should include key value
+   * pairs for the field filters (for table data) or report parameters (for the report data) as well
+   * as the read authorisation tokens. Can also contain a parameter for:
+   * orderby - for a non-default sort order, provide the field name to sort by. Can be comma separated
+   * to sort by several fields in descending order of precedence.
+   * sortdir - specify ASC or DESC to define ascending or descending sort order respectively. Can
+   * be comma separated if several sort fields are specified in the orderby parameter.
+   * limit - number of records to return.
+   * offset - number of records to offset by into the dataset, useful when paginating through the
+   * records.
+   * view - use to specify which database view to load for an entity (e.g. list, detail, gv or cache).
+   * Defaults to list.
+   * </li>
+   * <li><b>caching</b>
+   * If true, then the response will be cached and the cached copy used for future calls. Default true.
+   * If 'store' then although the response is not fetched from a cache, the response will be stored in the cache for possible
+   * later use. Replaces the legacy nocache parameter.
+   * </li>
+   * <li><b>sharing</b><br/>
+   * Optional. Set to verification, reporting, peer_review, moderation, data_flow or editing to request
+   * data sharing with other websites for the task. Further information is given in the link below.
+   * </li>
+   * </ul>
+   * @link https://indicia-docs.readthedocs.org/en/latest/developing/web-services/data-services-entity-list.html
+   * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
+   */
+  public static function get_population_data($options) {
+    $useQueryParam = FALSE;
+    if (isset($options['report']))
+      $serviceCall = 'report/requestReport?report='.$options['report'].'.xml&reportSource=local&mode=json';
+    elseif (isset($options['table'])) {
+      $useQueryParam = $options['table'] !== 'taxa_search';
+      $serviceCall = 'data/'.$options['table'].'?mode=json';
+      if (isset($options['columns']))
+        $serviceCall .= '&columns='.$options['columns'];
+    }
+    $request = "index.php/services/$serviceCall";
+    if (array_key_exists('extraParams', $options)) {
+      // make a copy of the extra params
+      $params = array_merge($options['extraParams']);
+      // process them to turn any array parameters into a query parameter for the service call
+      $filterToEncode = array('where'=>array(array()));
+      $otherParams = array();
+      // For data services calls to entities (i.e. not taxa_search), array
+      // parameters need to be modified into a query parameter.
+      if ($useQueryParam) {
+        foreach($params as $param=>$value) {
+          if (is_array($value))
+            $filterToEncode['in'] = array($param, $value);
+          elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
+            // these params are not filters, so can't go in the query
+            $otherParams[$param] = $value;
+          else
+            $filterToEncode['where'][0][$param] = $value;
+        }
+      }
+      // use advanced querying technique if we need to
+      if (isset($filterToEncode['in']))
+        $request .= '&query='.urlencode(json_encode($filterToEncode)).'&'.self::array_to_query_string($otherParams, true);
+      else
+        $request .= '&'.self::array_to_query_string($options['extraParams'], true);
+    }
+    if (isset($options['sharing']))
+      $request .= '&sharing='.$options['sharing'];
+    if (isset($options['attrs']))
+      $request .= '&attrs='.$options['attrs'];
+    if (!isset($options['caching']))
+      $options['caching'] = true; // default
+    return self::getCachedServicesCall($request, $options);
+  }
+
+  /**
    * Utility function for access to the iform cache.
    *
    * @param array $cacheOpts
@@ -2573,7 +2743,7 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
       $cacheFolder = self::$cache_folder ? self::$cache_folder : self::relative_client_helper_path() . 'cache/';
       $cacheTimeOut = self::getCacheTimeOut($options);
       $cacheFile = self::getCacheFileName($cacheFolder, $cacheOpts, $cacheTimeOut);
-      if ($options['caching'] !== 'store') {
+      if ($options['caching'] !== 'store' && !isset($_GET['refreshcache'])) {
         $response = self::getCachedResponse($cacheFile, $cacheTimeOut, $cacheOpts);
         if ($response !== FALSE)
           $cacheLoaded = TRUE;
@@ -2819,6 +2989,52 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
           unlink($files[$i][0]);
       }
     }
+  }
+
+  /**
+   * Convert a timestamp into readable format (... ago) for use on a comment list.
+   *
+   * @param timestamp $timestamp
+   *   The date time to convert.
+   *
+   * @return string
+   *   The output string.
+   */
+  public static function ago($timestamp) {
+    $difference = time() - $timestamp;
+    // Having the full phrase means that it is fully localisable if the phrasing is different.
+    $periods = array(
+      lang::get("{1} second ago"),
+      lang::get("{1} minute ago"),
+      lang::get("{1} hour ago"),
+      lang::get("Yesterday"),
+      lang::get("{1} week ago"),
+      lang::get("{1} month ago"),
+      lang::get("{1} year ago"),
+      lang::get("{1} decade ago")
+    );
+    $periodsPlural = array(
+      lang::get("{1} seconds ago"),
+      lang::get("{1} minutes ago"),
+      lang::get("{1} hours ago"),
+      lang::get("{1} days ago"),
+      lang::get("{1} weeks ago"),
+      lang::get("{1} months ago"),
+      lang::get("{1} years ago"),
+      lang::get("{1} decades ago")
+    );
+    $lengths = array("60", "60", "24", "7", "4.35", "12", "10");
+    for ($j = 0; (($difference >= $lengths[$j]) && ($j < 7)); $j++) {
+      $difference /= $lengths[$j];
+    }
+    $difference = round($difference);
+    if ($difference == 1) {
+      $text = str_replace('{1}', $difference, $periods[$j]);
+    }
+    else {
+      $text = str_replace('{1}', $difference, $periodsPlural[$j]);
+    }
+    return $text;
   }
 
   /**

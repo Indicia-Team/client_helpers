@@ -908,17 +908,17 @@ JS;
         $imgPath .= 'nuvola/date-16px.png';
         if (!empty($options['buttonText'])) {
           $buttonText = $options['buttonText'];
-        } else {
+        }
+        else {
           $buttonText = $options['allowVagueDates'] ? lang::get('To enter an exact date, click here. To enter a vague date, type it into the text box') : lang::get('Click here to pick a date');
         }
-        $button = ",\n    showOn: 'button',\n    buttonImage: '$imgPath',\n    buttonText: '$buttonText'";
-      } else
-        $button='';
+        $options['afterControl'] = "<img src=\"$imgPath\" title=\"$buttonText\" onclick=\"jQuery('#sample\\\\:date').datepicker('show');\"/>";
+      }
       self::$javascript .= "jQuery('#$escaped_id').datepicker({
     dateFormat : '".$options['dateFormat']."',
     changeMonth: true,
     changeYear: true,
-    constrainInput: false $button";
+    constrainInput: false";
       // Filter out future dates
       if (!array_key_exists('allowFuture', $options) || $options['allowFuture']==false) {
         self::$javascript .= ",
@@ -1293,7 +1293,6 @@ JS;
     elseif ($options['driver'] === 'indicia_locations') {
       $settings['warehouseUrl'] = self::$base_url;
       $settings['public'] = $options['public'] ? 't' : 'f';
-      self::add_resource('json');
     }
     self::$javascript .= '$.fn.indiciaMapPanel.georeferenceLookupSettings = $.extend($.fn.indiciaMapPanel.georeferenceLookupSettings, ' . json_encode($settings) . ");\n";
     if ($options['autoCollapseResults']) {
@@ -1612,15 +1611,21 @@ JS;
       'id' => 'jsonwidget_container',
       'fieldname' => 'jsonwidget',
       'schema' => '{}',
-      'class'=> ''
+      'class' => '',
+      'default' => '',
     ), $options);
     $options['class'] = trim($options['class'].' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    extract($options, EXTR_PREFIX_ALL, 'opt');
-    if (!isset($opt_default)) $opt_default = '';
-    $opt_default = str_replace(array("\r","\n", "'"), array('\r','\n',"\'"), $opt_default);
-    self::$javascript .= "$('#".$options['id']."').jsonedit({schema: $opt_schema, default: '$opt_default', fieldname: \"$opt_fieldname\"});\n";
+    $options['default'] = str_replace(array("\\n", "\r", "\n", "'"), array('\\\n', '\r','\n',"\'"), $options['default']);
+    self::$javascript .= <<<JS
+$('#$options[id]').jsonedit({
+  schema: $options[schema],
+  default: '$options[default]',
+  fieldname: '$options[fieldname]'
+});
+
+JS;
 
     return self::apply_template('jsonwidget', $options);
   }
@@ -3286,7 +3291,6 @@ RIJS;
     if ($options['columns'] > 1 && count($options['mediaTypes'])>1)
       throw new Exception('The species_checklist control does not support having more than one occurrence per row (columns option > 0) '.
         'at the same time has having the mediaTypes option in use.');
-    self::add_resource('json');
     self::add_resource('autocomplete');
     $filterArray = self::getSpeciesNamesFilter($options);
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
@@ -4817,32 +4821,29 @@ HTML;
   }
 
   /**
-   * Helper function to output an HTML textarea. This includes re-loading of existing values
-   * and displaying of validation error messages.
+   * Helper function to output an HTML textarea.
+   *
+   * This includes re-loading of existing values and displaying of validation
+   * error messages.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>textareat</b></br>
-   * HTML template used to generate the textarea element.
-   * </li>
-   * </ul>
+   * * textarea - HTML template used to generate the textarea element.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to, e.g. occurrence:image.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>rows</b><br/>
-   * Optional. HTML rows attribute. Defaults to 4.</li>
-   * <li><b>cols</b><br/>
-   * Optional. HTML cols attribute. Defaults to 80.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname- Required. The name of the database field this control is
+   *     bound to, e.g. occurrence:image.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * rows - Optional. HTML rows attribute. Defaults to 4.
+   *   * cols - Optional. HTML cols attribute. Defaults to 80.
    *
-   * @return string HTML to insert into the page for the textarea control.
+   * @return string
+   *   HTML to insert into the page for the textarea control.
    */
   public static function textarea($options) {
     $options = array_merge(array(
@@ -5654,113 +5655,6 @@ $('div#$escaped_divId').indiciaTreeBrowser({
   }
 
   /**
-   * Issue a post request to get the population data required for a control either from
-   * direct access to a data entity (table) or via a report query. The response will be cached
-   * locally unless the caching option is set to false.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>table</b><br/>
-   * Singular table name used when loading from a database entity.
-   * </li>
-   * <li><b>report</b><br/>
-   * Path to the report file to use when loading data from a report, e.g. "library/occurrences/explore_list",
-   * excluding the .xml extension.
-   * </li>
-   * <li><b>orderby</b><br/>
-   * Optional. For a non-default sort order, provide the field name to sort by. Can be comma separated
-   * to sort by several fields in descending order of precedence.
-   * </li>
-   * <li><b>sortdir</b><br/>
-   * Optional. Specify ASC or DESC to define ascending or descending sort order respectively. Can
-   * be comma separated if several sort fields are specified in the orderby parameter.
-   * </li>
-   * <li><b>extraParams</b><br/>
-   * Array of extra URL parameters to send with the web service request. Should include key value
-   * pairs for the field filters (for table data) or report parameters (for the report data) as well
-   * as the read authorisation tokens. Can also contain a parameter for:
-   * orderby - for a non-default sort order, provide the field name to sort by. Can be comma separated
-   * to sort by several fields in descending order of precedence.
-   * sortdir - specify ASC or DESC to define ascending or descending sort order respectively. Can
-   * be comma separated if several sort fields are specified in the orderby parameter.
-   * limit - number of records to return.
-   * offset - number of records to offset by into the dataset, useful when paginating through the
-   * records.
-   * view - use to specify which database view to load for an entity (e.g. list, detail, gv or cache).
-   * Defaults to list.
-   * </li>
-   * <li><b>caching</b>
-   * If true, then the response will be cached and the cached copy used for future calls. Default true.
-   * If 'store' then although the response is not fetched from a cache, the response will be stored in the cache for possible
-   * later use. Replaces the legacy nocache parameter.
-   * </li>
-   * <li><b>sharing</b><br/>
-   * Optional. Set to verification, reporting, peer_review, moderation, data_flow or editing to request
-   * data sharing with other websites for the task. Further information is given in the link below.
-   * </li>
-   * </ul>
-   * @link https://indicia-docs.readthedocs.org/en/latest/developing/web-services/data-services-entity-list.html
-   * @link https://indicia-docs.readthedocs.org/en/latest/administrating/warehouse/website-agreements.html
-   */
-  public static function get_population_data($options) {
-    $useQueryParam = FALSE;
-    if (isset($options['report']))
-      $serviceCall = 'report/requestReport?report='.$options['report'].'.xml&reportSource=local&mode=json';
-    elseif (isset($options['table'])) {
-      $useQueryParam = $options['table'] !== 'taxa_search';
-      $serviceCall = 'data/'.$options['table'].'?mode=json';
-      if (isset($options['columns']))
-        $serviceCall .= '&columns='.$options['columns'];
-    }
-    $request = "index.php/services/$serviceCall";
-    if (array_key_exists('extraParams', $options)) {
-      // make a copy of the extra params
-      $params = array_merge($options['extraParams']);
-      // process them to turn any array parameters into a query parameter for the service call
-      $filterToEncode = array('where'=>array(array()));
-      $otherParams = array();
-      // For data services calls to entities (i.e. not taxa_search), array
-      // parameters need to be modified into a query parameter.
-      if ($useQueryParam) {
-        foreach($params as $param=>$value) {
-          if (is_array($value))
-            $filterToEncode['in'] = array($param, $value);
-          elseif ($param=='orderby' || $param=='sortdir' || $param=='auth_token' || $param=='nonce' || $param=='view')
-            // these params are not filters, so can't go in the query
-            $otherParams[$param] = $value;
-          else
-            $filterToEncode['where'][0][$param] = $value;
-        }
-      }
-      // use advanced querying technique if we need to
-      if (isset($filterToEncode['in']))
-        $request .= '&query='.urlencode(json_encode($filterToEncode)).'&'.self::array_to_query_string($otherParams, true);
-      else
-        $request .= '&'.self::array_to_query_string($options['extraParams'], true);
-    }
-    if (isset($options['sharing']))
-      $request .= '&sharing='.$options['sharing'];
-    if (isset($options['attrs']))
-      $request .= '&attrs='.$options['attrs'];
-    if (!isset($options['caching']))
-      $options['caching'] = true; // default
-    return self::getCachedServicesCall($request, $options);
-  }
-
-  /**
-   * Helper function to clear the Indicia cache files.
-   */
-  public static function clear_cache() {
-    $cacheFolder = parent::$cache_folder ? parent::$cache_folder : self::relative_client_helper_path() . 'cache/';
-    if(!$dh = @opendir($cacheFolder)) {
-      return;
-    }
-    while (false !== ($obj = readdir($dh))) {
-      if($obj != '.' && $obj != '..')
-        @unlink($cacheFolder . '/' . $obj);
-    }
-    closedir($dh);
-  }
-
-  /**
    * Internal function to output either a select or listbox control depending on the templates
    * passed.
    * @param array $options Control options array
@@ -5768,7 +5662,6 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    */
   private static function select_or_listbox($options) {
     global $indicia_templates;
-    self::add_resource('json');
     $options = array_merge(array(
       'filterField' => 'parent_id',
       'size' => 3,
@@ -5930,13 +5823,13 @@ HTML;
   private static function initLinkedLists($options) {
     global $indicia_templates;
     // setup JavaScript to do the population when the parent control changes
-    $parentControlId = str_replace(':', '\\\\:', $options['parentControlId']);
-    $escapedId = str_replace(':','\\\\:', $options['id']);
+    $parentControlId = str_replace(':', '\\:', $options['parentControlId']);
+    $escapedId = str_replace(':','\\:', $options['id']);
     $fn = preg_replace("/[^A-Za-z0-9]/", "", $options['id']) . "_populate";
     if (!empty($options['report'])) {
       $url = parent::getProxiedBaseUrl() . "index.php/services/report/requestReport";
       $request = "$url?report=" . $options['report'] . ".xml&mode=json&reportSource=local&callback=?";
-      $query = $options['filterField'] . '="+$(this).val()+"';
+      $query = $options['filterField'] . '=' . urlencode('"val"');
     }
     else {
       $url = parent::getProxiedBaseUrl() . "index.php/services/data";
@@ -5944,7 +5837,7 @@ HTML;
       $inArray = array('val');
       if (!isset($options['filterIncludesNulls']) || $options['filterIncludesNulls'])
         $inArray[] = null;
-      $query = urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
+      $query = 'query=' .urlencode(json_encode(array('in' => array($options['filterField'], $inArray))));
     }
     if (isset($options['parentControlLabel']))
       $instruct = lang::get('Please select a {1} first', $options['parentControlLabel']);
@@ -6847,6 +6740,7 @@ HTML;
       $fieldname = "sc:$options[id]-$rowIdx:$existingRecordId:occurrence:comment";
       $value = isset(self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"]) ?
         self::$entity_to_load["sc:$loadedTxIdx:$existingRecordId:occurrence:comment"] : '';
+      $value = htmlspecialchars($value);
       $r .= "<input class=\"scComment\" type=\"text\" name=\"$fieldname\" id=\"$fieldname\" value=\"$value\" />";
       $r .= "</td>";
     }
@@ -7365,8 +7259,8 @@ TXT;
     $r = '<div class="ui-widget ui-widget-content ui-state-highlight ui-corner-all">' .
       '<p class="ui-widget-header"><strong>System check</strong></p><ul>';
     // Test PHP version.
-    if (PHP_VERSION_ID<50200) {
-      $r .= '<li class="ui-state-error">Warning: PHP version is '.phpversion().' which does not support JSON communication with the Indicia Warehouse.</li>';
+    if (PHP_VERSION_ID<50600) {
+      $r .= '<li class="ui-state-error">Warning: PHP version is '.phpversion().' which is unsupported.</li>';
     } elseif ($fullInfo) {
       $r .= '<li>Success: PHP version is '.phpversion().'.</li>';
     }
@@ -7532,7 +7426,6 @@ TXT;
     }
     else
       $query = array('in'=>array());
-    self::add_resource('json');
     if (isset($options['website_ids'])) {
       $query['in']['website_id']=$options['website_ids'];
     } elseif ($options['attrtable'] !== 'person_attribute' && $options['attrtable'] !== 'taxa_taxon_list_attribute') {
@@ -7829,6 +7722,7 @@ TXT;
           unset($item['default']);
         }
         $r .= self::internalOutputAttribute($item, $options);
+        unset($options['default']);
       }
       return "$r</label>";
     }
@@ -7885,7 +7779,8 @@ TXT;
         if (isset($item['control_type']) &&
           ($item['control_type']=='text_input' || $item['control_type']=='textarea'
             || $item['control_type']=='postcode_textbox' || $item['control_type']=='time_input'
-            || $item['control_type']=='hidden_text' || $item['control_type']=='complex_attr_grid' )) {
+            || $item['control_type']=='hidden_text' || $item['control_type']=='complex_attr_grid'
+            || $item['control_type']=='autocomplete' || $item['control_type']=='species_autocomplete')) {
           $ctrl = $item['control_type'];
         } else {
           $ctrl = 'text_input';
@@ -8351,7 +8246,7 @@ HTML;
     // extract the codes and make lowercase
     $systems=unserialize(strtolower(serialize(array_keys($systems))));
     // find the systems that have client-side JavaScript handlers
-    $handlers = array_intersect($systems, array('osgb','osie','4326'));
+    $handlers = array_intersect($systems, array('osgb','osie','4326','2169'));
     self::get_resources();
     foreach ($handlers as $code) {
       // dynamically find a resource to link us to the handler js file.

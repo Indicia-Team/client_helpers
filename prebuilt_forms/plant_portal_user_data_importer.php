@@ -1827,19 +1827,21 @@ TD;
     //- Show a Please Wait message to the user
     //- Create any new plots, plot groups that are required.
     //- Submit the import to the warehouse
-    if (!empty($websiteId))
+    if (!empty($websiteId)) {
       data_entry_helper::$javascript .= "var websiteId = ".$websiteId.";";
+    }
     $warehouseUrl = self::get_warehouse_url();
     
     data_entry_helper::$javascript .= "
     $('#create-import-data').click(function () {
     $('#create-import-data').attr('disabled','true');
     $('#import-loading-msg').show();";
-    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($args['plot_group_permission_person_attr_id']))
+    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($args['plot_group_permission_person_attr_id'])) {
       data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
-    
-    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']))
+    }
+    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id'])) {
       data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_location_type_id'].");";
+    }
     if (!empty($websiteId)&&!empty($plotPairsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
       data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotPairsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
     data_entry_helper::$javascript .= "$('#submit-import').click(); });";
