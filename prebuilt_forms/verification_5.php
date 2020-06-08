@@ -1255,50 +1255,20 @@ HTML
   /**
    * Ajax method allowing the details pane to show the media tab content.
    *
-   * @param integer $website_id
+   * @param int $website_id
+   *   Website ID for auth.
    * @param string $password
+   *   Website password for auth.
+   * @param int $nid
+   *   Node ID.
    *
    * @throws \exception
    */
   public static function ajax_media($website_id, $password, $nid) {
-    iform_load_helpers(array('report_helper'));
+    iform_load_helpers(['helper_base', 'VerificationHelper']);
     $params = array_merge(['sharing' => 'verification'], hostsite_get_node_field_value($nid, 'params'));
-    $readAuth = report_helper::get_read_auth($website_id, $password);
-    echo self::getMedia($readAuth, $params);
-  }
-
-  private static function getMedia($readAuth, $params) {
-    iform_load_helpers(array('data_entry_helper', 'VerificationHelper'));
-    // Retrieve occurrence media for record.
-    $occ_media = data_entry_helper::get_population_data(array(
-      'table' => 'occurrence_medium',
-      'extraParams' => $readAuth + array('occurrence_id' => $_GET['occurrence_id']),
-      'nocache' => TRUE,
-      'sharing' => $params['sharing'],
-    ));
-    // Retrieve related sample media.
-    $smp_media = data_entry_helper::get_population_data(array(
-      'table' => 'sample_medium',
-      'extraParams' => $readAuth + array('sample_id' => $_GET['sample_id']),
-      'nocache' => TRUE,
-      'sharing' => $params['sharing'],
-    ));
-    $r = '';
-    if (count($occ_media) + count($smp_media) === 0) {
-      $r .= lang::get('No media found for this record');
-    }
-    else {
-      $r .= '<p>' . lang::get('Click on thumbnails to view full size') . '</p>';
-      if (count($occ_media) > 0) {
-        $r .= '<p class="header">' . lang::get('Record media') . '</p>';
-        $r .= VerificationHelper::getMediaHtml($occ_media);
-      }
-      if (count($smp_media) > 0) {
-        $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
-        $r .= VerificationHelper::getMediaHtml($smp_media);
-      }
-    }
-    return $r;
+    $readAuth = helper_base::get_read_auth($website_id, $password);
+    echo VerificationHelper::getMedia($readAuth, $params, $_GET['occurrence_id'], $_GET['sample_id']);
   }
 
   /**
