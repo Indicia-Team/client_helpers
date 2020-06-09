@@ -580,7 +580,7 @@ EOD
     $func = get_user_func(self::$called_class, 'renderFooter');
     $r .= $func ? call_user_func($func, $args) : '';
 
-    $func = get_user_func(self::$called_class, 'link_species_popups');
+    $func = get_user_func(self::$called_class, 'linkSpeciesPopups');
     $r .= $func ? call_user_func($func, $args) : '';
 
     return $r;

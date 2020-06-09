@@ -573,7 +573,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
               '"Lasius niger|Additional info|Colony info" pops up the controls from the block Additional Info > Colony info when a species is entered with this '.
               'name. For the species name, specify the preferred name from list.',
           'type' => 'textarea',
-          'required'=>false,
+          'required' => FALSE,
           'group' => 'Species'
         ),
         array(
@@ -1188,21 +1188,28 @@ HTML;
   }
 
   /**
-   * Implement the link_species_popups parameter. This hides any identified blocks and pops them up when a certain species is entered.
+   * Implement the link_species_popups parameter.
+   *
+   * This hides any identified blocks and pops them up when a certain species
+   * is entered.
    */
-  protected static function link_species_popups($args) {
-    $r='';
+  protected static function linkSpeciesPopups($args) {
+    $r = '';
     if (isset($args['link_species_popups']) && !empty($args['link_species_popups'])) {
       data_entry_helper::add_resource('fancybox');
       $popups = helper_base::explode_lines($args['link_species_popups']);
       foreach ($popups as $popup) {
         $tokens = explode("|", $popup);
-        if (count($tokens)==2)
+        if (count($tokens) === 2) {
           $fieldset = get_fieldset_id($tokens[1]);
-        else if (count($tokens)==3)
-          $fieldset = get_fieldset_id($tokens[1],$tokens[2]);
-        else
+        }
+        elseif (count($tokens) === 3) {
+          $fieldset = get_fieldset_id($tokens[1], $tokens[2]);
+        }
+        else {
           throw new Exception('The link species popups form argument contains an invalid value');
+        }
+
         // insert a save button into the fancyboxed fieldset, since the normal close X looks like it cancels changes
         data_entry_helper::$javascript .= "$('#$fieldset').append('<input type=\"button\" value=\"".lang::get('Close')."\" onclick=\"jQuery.fancybox.close();\" ?>');\n";
         // create an empty link that we can fire to fancybox the popup fieldset

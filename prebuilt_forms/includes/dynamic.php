@@ -438,8 +438,8 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     if (method_exists(self::$called_class, 'getFooter'))
       $r .= call_user_func(array(self::$called_class, 'getFooter'), $args);
 
-    if (method_exists(self::$called_class, 'link_species_popups'))
-      $r .= call_user_func(array(self::$called_class, 'link_species_popups'), $args);
+    if (method_exists(self::$called_class, 'linkSpeciesPopups'))
+      $r .= call_user_func(array(self::$called_class, 'linkSpeciesPopups'), $args);
     return $r;
   }
 
