@@ -87,6 +87,7 @@ TXT;
       [
         'name' => 'structure',
         'caption' => 'Form structure',
+        'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#user-interface',
         'type' => 'textarea',
         'group' => 'User interface',
         'default' => '',

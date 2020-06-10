@@ -555,12 +555,12 @@ JS;
    * @param array $controlList List of controls as defined by the prebuilt form.
    * @return array List of modified controls.
    */
-  private static function map_control_options($controlList) {
+  private static function mapControlOptions($controlList) {
     $mappings = array(
-        'name' => 'fieldname',
-        'caption' => 'label',
-        'options' => 'lookupValues',
-        'description' => 'helpText'
+      'name' => 'fieldname',
+      'caption' => 'label',
+      'options' => 'lookupValues',
+      'description' => 'helpText',
     );
     foreach ($controlList as &$options) {
       foreach ($options as $option => $value) {
@@ -569,10 +569,17 @@ JS;
           unset($options[$option]);
         }
       }
-      if (!isset($options['required']) || $options['required']===true) {
-        if (!isset($options['class'])) $options['class']='';
+      if (!isset($options['required']) || $options['required'] === TRUE) {
+        if (!isset($options['class'])) {
+          $options['class'] = '';
+        }
         $options['class'] .= ' required';
         $options['suffixTemplate'] = 'requiredsuffix';
+      }
+      if (!empty($options['helpLink'])) {
+        $options['helpText'] = empty($options['helpText']) ? '' : "$options[helpText]<br/>";
+        $langViewDocs = lang::get('View documentation in new tab');
+        $options['helpText'] .= "<a target=\"_blank\" href=\"$options[helpLink]\">$langViewDocs</a>";
       }
     }
     return $controlList;
@@ -643,7 +650,7 @@ JS;
     if (!is_callable(array('iform_' . $form, 'get_parameters'))) {
       throw new Exception("Form $form does not implement the get_parameters method.");
     }
-    $formParams = self::map_control_options(call_user_func(array('iform_' . $form, 'get_parameters')));
+    $formParams = self::mapControlOptions(call_user_func(array('iform_' . $form, 'get_parameters')));
     $params = array_merge($params, $formParams);
     // Add in a standard parameter for specifying a redirection.
     $params[] = array(
