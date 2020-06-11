@@ -1168,6 +1168,7 @@ JS;
    */
   public static function build_params_form($options, &$hasVisibleContent) {
     require_once('data_entry_helper.php');
+    global $indicia_templates;
     $javascript = '';
     // track if there is anything other than hiddens on the form
     $hasVisibleContent=false;
@@ -1210,9 +1211,15 @@ JS;
         self::add_resource('spatialReports');
         self::add_resource('clearLayer');
         if ($options['inlineMapTools']) {
-          $r .= '<label>'.$info['display'].':</label>';
-          $r .= '<div class="control-box">Use the following tools to define the query area.<br/>'.
-          '<div id="map-toolbar" class="olControlEditingToolbar left"></div></div><br/>';
+          $ctrl = <<<HTML
+<label>$info[display]:</label>
+<div class="control-box">
+  <div id="map-toolbar" class="olControlEditingToolbar clearfix"></div>
+  <p class="helpText">Use the above tools to define the query area.</p>
+</div>
+
+HTML;
+          $r .= str_replace(array('{control}', '{id}'), [$ctrl, 'map-toolbar'], $indicia_templates['controlWrap']);
         }
         $r .= '<input type="hidden" name="'.$fieldname.'" id="hidden-wkt" value="'.
             (isset($_POST[$fieldname]) ? $_POST[$fieldname] : '').'"/>';
