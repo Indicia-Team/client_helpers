@@ -1200,13 +1200,15 @@ JS;
       }
       // If the form has defined any tools to add to the map, we need to create JavaScript to add them to the map.
       if (count($tools)) {
-        // wrap JavaScript in a test that the map is on the page
-        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
+        // Wrap JavaScript in a test that the map is on the page.
+        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true') {
           $javascript .= "if (typeof $.fn.indiciaMapPanel!=='undefined') {\n";
+          $javascript .= "  indiciaFns.enableBuffering();\n";
+        }
+        $javascript .= "  indiciaFns.storeGeomsInFormOnSubmit();\n";
         $fieldname=(isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '') .$key;
         self::add_resource('spatialReports');
         self::add_resource('clearLayer');
-        $javascript .= "  indiciaFns.enableBuffering();\n";
         if ($options['inlineMapTools']) {
           $r .= '<label>'.$info['display'].':</label>';
           $r .= '<div class="control-box">Use the following tools to define the query area.<br/>'.
