@@ -602,8 +602,8 @@ HTML;
       'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcRecordDetailsPane({});
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcRecordDetailsPane();
 
 JS;
     $r = <<<HTML
