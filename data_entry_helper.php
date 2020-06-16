@@ -7248,13 +7248,6 @@ TXT;
    * @param boolean $fullInfo If true, then successful checks are also output.
    */
   public static function system_check($fullInfo=true) {
-    // PHP_VERSION_ID is available as of PHP 5.2.7, if our
-    // version is lower than that, then emulate it
-    if(!defined('PHP_VERSION_ID'))
-    {
-      $version = PHP_VERSION;
-      define('PHP_VERSION_ID', ($version{0} * 10000 + $version{2} * 100 + $version{4}));
-    }
     $r = '<div class="ui-widget ui-widget-content ui-state-highlight ui-corner-all">' .
       '<p class="ui-widget-header"><strong>System check</strong></p><ul>';
     // Test PHP version.
