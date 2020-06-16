@@ -87,6 +87,7 @@ TXT;
       [
         'name' => 'structure',
         'caption' => 'Form structure',
+        'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#user-interface',
         'type' => 'textarea',
         'group' => 'User interface',
         'default' => '',
@@ -124,6 +125,7 @@ TXT;
         'description' => 'Prefix given to numeric IDs to make them unique on the index.',
         'type' => 'text_input',
         'group' => 'Elasticsearch settings',
+        'required' => FALSE,
       ],
       [
         'name' => 'filter_json',

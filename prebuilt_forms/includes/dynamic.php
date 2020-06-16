@@ -438,8 +438,8 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     if (method_exists(self::$called_class, 'getFooter'))
       $r .= call_user_func(array(self::$called_class, 'getFooter'), $args);
 
-    if (method_exists(self::$called_class, 'link_species_popups'))
-      $r .= call_user_func(array(self::$called_class, 'link_species_popups'), $args);
+    if (method_exists(self::$called_class, 'linkSpeciesPopups'))
+      $r .= call_user_func(array(self::$called_class, 'linkSpeciesPopups'), $args);
     return $r;
   }
 
@@ -754,12 +754,14 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           $hasControls = true;
         }
       } elseif ($component === '|') {
-        // column splitter. So, store the col html and start on the next column.
+        // Column splitter. So, store the col html and start on the next
+        // column.
         $cols[] = $html;
         $html = '';
       } else {
-        // output anything else as is. This allow us to add html to the form structure.
-        $html .= $component;
+        // Output anything else as is. This allow us to add html to the form
+        // structure.
+        $html .= helper_base::getStringReplaceTokens($component, $auth['read']);
       }
     }
     if (count($cols)>0) {

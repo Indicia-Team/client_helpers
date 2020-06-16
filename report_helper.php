@@ -129,7 +129,7 @@ class report_helper extends helper_base {
    */
   public static function report_download_link($options) {
     $options = array_merge(array(
-      'caption' => lang::get('Download this report'),
+      'caption' => 'Download this report',
       'format' => 'csv',
       'itemsPerPage' => 20000
     ), $options);
@@ -539,31 +539,7 @@ class report_helper extends helper_base {
     $tfoot .= '<tr><td colspan="'.count($options['columns'])*$options['galleryColCount'].'">'.self::output_pager($options, $pageUrl, $sortAndPageUrlParams, $response).'</td></tr>'.
     $extraFooter = '';
     if (isset($options['footer']) && !empty($options['footer'])) {
-      $footer = str_replace(
-        array(
-          '{rootFolder}',
-          '{currentUrl}',
-          '{sep}',
-          '{warehouseRoot}',
-          '{geoserverRoot}',
-          '{nonce}',
-          '{auth}',
-          '{iUserID}',
-          '{user_id}',
-          '{website_id}'),
-        array(
-          $rootFolder,
-          $currentUrl['path'],
-          strpos($rootFolder, '?')===FALSE ? '?' : '&',
-          self::$base_url,
-          self::$geoserver_url,
-          'nonce='.$options['readAuth']['nonce'],
-          'auth_token='.$options['readAuth']['auth_token'],
-          (function_exists('hostsite_get_user_field') ? hostsite_get_user_field('indicia_user_id') : ''),
-          hostsite_get_user_field('id'),
-          self::$website_id
-        ), $options['footer']
-      );
+      $footer = helper_base::getStringReplaceTokens($options['footer'], $options['readAuth']);
       // Allow other modules to hook in.
       if (function_exists('hostsite_invoke_alter_hooks')) {
           hostsite_invoke_alter_hooks('iform_user_replacements', $footer);
@@ -1179,6 +1155,9 @@ JS;
   * <li><b>rendererOptions</b><br/>
   * Associative array of options to pass to the jqplot renderer.
   * </li>
+  * <li><b>gridOptions</b><br/>
+  * Associative array of options to pass to the jqplot grid object.
+  * </li>
   * <li><b>legendOptions</b><br/>
   * Associative array of options to pass to the jqplot legend. For more information see links below.
   * </li>
@@ -1266,7 +1245,12 @@ JS;
       (isset($renderer) ? "renderer:$renderer,\n      " : '') .
       "rendererOptions:" . json_encode($options['rendererOptions']) .
       "\n    }";
-    $optsToCopyThrough = array('legend'=>'legendOptions', 'series'=>'seriesOptions', 'seriesColors'=>'seriesColors');
+    $optsToCopyThrough = [
+      'legend'=>'legendOptions',
+      'series'=>'seriesOptions',
+      'seriesColors'=>'seriesColors',
+      'grid'=>'gridOptions'
+    ];
     foreach ($optsToCopyThrough as $key=>$settings) {
       if (!empty($options[$settings]))
         $opts[] = "$key:".json_encode($options[$settings]);
