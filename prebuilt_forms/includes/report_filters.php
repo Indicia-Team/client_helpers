@@ -883,11 +883,11 @@ class filter_source extends FilterBase {
  *   * allowSave - set to FALSE to disable the save bar at the foot of the
  *     panel.
  *   * presets - provide an array of preset filters to provide in the filters
- *     drop down. Choose from my-records, my-groups (uses your list of taxon
- *     groups in the user account), my-locality (uses your recording locality
- *     from the user  account), my-groups-locality (uses taxon groups and
- *     recording locality from the user account), my-queried-records,
- *     queried-records, answered-records, accepted-records,
+ *     drop down. Choose from all-records, my-records, my-groups (uses your
+ *     list of taxon groups in the user account), my-locality (uses your
+ *     recording locality from the user  account), my-groups-locality (uses
+ *     taxon groups and recording locality from the user account),
+ *     my-queried-records, queried-records, answered-records, accepted-records,
  *     not-accepted-records.
  *   * generateFilterListCallback - a callback to allow custom versions of the
  *     filters to be used, utilising the standard filter user interface.
@@ -933,6 +933,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     'allowSave' => TRUE,
     'redirect_on_success' => '',
     'presets' => array(
+      'all-records',
       'my-records',
       'my-queried-records',
       'my-queried-or-not-accepted-records',
@@ -1007,6 +1008,10 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     foreach ($options['presets'] as $preset) {
       $title = FALSE;
       switch ($preset) {
+        case 'all-records':
+          $title = lang::get('All records');
+          break;
+
         case 'my-records':
           if (hostsite_get_user_field('id')) {
             $title = lang::get('My records');
