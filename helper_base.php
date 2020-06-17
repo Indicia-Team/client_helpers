@@ -611,14 +611,14 @@ class helper_base {
    *   Associative array of keys and texts to translate.
    */
   public static function addLanguageStringsToJs($group, array $strings) {
-      self::$javascript .= <<<JS
-indiciaData.lang.$group = {};
-
-JS;
+    $translations = [];
     foreach ($strings as $key => $text) {
-      self::$javascript .= "indiciaData.lang.$group.$key = '" .
-      str_replace("'", "\'", lang::get($text)) . "';\n";
+      $translations[$key] = lang::get($text);
     }
+    if (!isset(self::$indiciaData['lang'])) {
+      self::$indiciaData['lang'] = [];
+    }
+    self::$indiciaData['lang'][$group] = $translations;
   }
 
   /**
