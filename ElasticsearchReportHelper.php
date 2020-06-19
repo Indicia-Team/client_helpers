@@ -561,6 +561,110 @@ HTML;
     }
   }
 
+   /**
+   * Output a selector for a record contexts which allows user to select from:
+   * All records (if permission is set)
+   * My records
+   * Permission filters
+   * Groups
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordContext
+   */
+  public static function recordContext(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    $sharingTypes = array(
+      'R' => lang::get('Reporting'), 
+      'V' => lang::get('Verification'), 
+      'D' => lang::get('Data-flow'), 
+      'M' => lang::get('Moderation'), 
+      'P' => lang::get('Peer review')
+    );
+    $sharingCodes=array('R', 'V', 'D', 'M', 'P');
+
+    $options = array_merge([
+      'id' => "es-record-context",
+      'useSharingPrefix' => TRUE,
+      'linkedUserFilter' => '',
+    ], $options);
+
+
+    $optionArr = [];
+
+    // Add My records options.
+    $optionArr['p-my'] = lang::get('My records');
+
+    // Add All records if website permission allows.
+    if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
+      $optionArr['p-all'] = lang::get('All records');
+    }
+
+    // Add collated location (e.g. LRC boundary) records if website permissions allow.
+    if (!empty($options['location_collation_records_permission'])
+        && hostsite_user_has_permission($options['location_collation_records_permission'])) {
+      $locationId = hostsite_get_user_field('location_collation');
+      if ($locationId) {
+        $locationData = data_entry_helper::get_population_data([
+          'table' => 'location',
+          'extraParams' => $options['readAuth'] + ['id' => $locationId],
+        ]);
+        if (count($locationData) > 0) {
+          $optionArr['p-location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+        }
+      }
+    }
+
+    // Add in permission filters.
+    foreach ($sharingCodes as $sharingCode) {
+      $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
+      foreach ($filterData as $filter) {
+        if ($filter['defines_permissions'] === 't') {
+          // If useSharingPrefix options specified, prefix type of sharing to filter name
+          $filterTitle = $options['useSharingPrefix'] ? $sharingTypes[$sharingCode].' - '.$filter['title'] : $filter['title'];
+          $optionArr['f-'.$filter['id']] = $filterTitle;
+        }
+      }
+    }
+
+    // Group page integration if user linked to warehouse.
+    $params = array(
+      'user_id'=>hostsite_get_user_field('indicia_user_id'),
+      'view' => 'detail'
+    );
+
+    if ($params['user_id']) {
+      $params['sharing']= 'reporting'; //RJB added this for testing from non-iRecord site
+
+      $groups = data_entry_helper::get_population_data(array(
+        'table'=>'groups_user',
+        'extraParams'=>data_entry_helper::$js_read_tokens + $params
+      ));
+      foreach ($groups as $group) {
+        $title = $group['group_title'] .
+            (isset($group['group_expired']) && $group['group_expired'] === 't' ? ' (' . lang::get('finished') . ')' : '');
+        if ($group['administrator']==='t') {
+          $optionArr["g-all-$group[group_id]"] = lang::get('All records added using a recording form for {1}', $title);
+        }
+        $optionArr["g-my-$group[group_id]"] = lang::get('My records added using a recording form for {1}', $title);
+      }
+    }
+
+    // Return the select control. There will always be at least one option (my records)
+    $controlOptions = [
+      'label' => lang::get('Record context'),
+      'fieldname' => $options['id'],
+      'lookupValues' => $optionArr,
+      'data' => $options['linkedUserFilter'],
+      'class' => 'record-context',
+    ];
+
+    helper_base::$javascript .= <<<JS
+$('#$options[id]')
+  .attr('data-linked-user-filter', '$options[linkedUserFilter]');
+JS;
+
+    return data_entry_helper::select($controlOptions);
+  }
+
   /**
    * A tabbed control to show full record details and verification info.
    *
@@ -846,13 +950,19 @@ HTML;
       'definesPermissions' => FALSE,
       'sharingCode' => 'R',
     ], $options);
-    $filterData = report_filters_load_existing($options['readAuth'], $options['sharingCode'], TRUE);
+
+    // Sharing code can be specified as a comma separated list of codes
+    $sharingCodes = explode(',', $options['sharingCode']);
     $optionArr = [];
-    foreach ($filterData as $filter) {
-      if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
-        $optionArr[$filter['id']] = $filter['title'];
+    foreach ($sharingCodes as $sharingCode) {
+      $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
+      foreach ($filterData as $filter) {
+        if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
+          $optionArr[$filter['id']] = $filter['title'];
+        }
       }
     }
+
     if (count($optionArr) === 0) {
       // No filters available. Until we support saving, doesn't make sense to
       // show the control.
@@ -1390,5 +1500,4 @@ HTML;
     self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
-
 }
