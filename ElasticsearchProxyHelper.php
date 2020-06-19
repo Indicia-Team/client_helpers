@@ -743,7 +743,7 @@ class ElasticsearchProxyHelper {
     if (count($query['user_filters']) > 0) {
       require_once 'report_helper.php';
       foreach ($query['user_filters'] as $userFilter) {
-        $filterData = data_entry_helper::get_report_data([
+        $filterData = report_helper::get_report_data([
           'dataSource' => '/library/filters/filter_with_transformed_searcharea',
           'extraParams' => [
             'filter_id' => $userFilter,
