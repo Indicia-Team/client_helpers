@@ -121,17 +121,20 @@ class report_helper extends helper_base {
    * If this download link is to be displayed alongside a report_grid to provide a download of the same data, set the id
    * option to the same value for both the report_download_link and report_grid controls to link them together. Use the itemsPerPage parameter
    * to control how many records are downloaded.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>format</b><br/>
-   * Default to csv. Specify the download format, one of csv, json, xml, nbn.
-   * </li>
-   * </ul>
+   * @param array $options Options array with the following possibilities:
+   * * caption - link caption.
+   * * class - class attribute for the link generated.
+   * * dataSource - path to the report file.
+   * * format - Default to csv. Specify the download format, one of csv, json,
+   *   xml, nbn.
+   * * itemsPerPage - max size of download file. Default 20000.
    */
   public static function report_download_link($options) {
     $options = array_merge(array(
       'caption' => 'Download this report',
       'format' => 'csv',
-      'itemsPerPage' => 20000
+      'itemsPerPage' => 20000,
+      'class' => '',
     ), $options);
     // Option for a special report for downloading.
     if (!empty($options['dataSourceDownloadLink'])) {
@@ -149,8 +152,13 @@ class report_helper extends helper_base {
     if (isset($origDataSource)) {
       $options['dataSource'] = $origDataSource;
     }
+    $class = $options['class'] ? " class=\"$options[class]\"" : '';
     global $indicia_templates;
-    return str_replace(array('{link}', '{caption}'), array($link, lang::get($options['caption'])), $indicia_templates['report_download_link']);
+    return str_replace(
+      ['{link}', '{caption}', '{class}'],
+      [$link, lang::get($options['caption']), $class],
+      $indicia_templates['report_download_link']
+    );
   }
 
  /**

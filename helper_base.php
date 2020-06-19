@@ -191,7 +191,7 @@ $indicia_templates = array(
   'paging' => '<div class="left">{first} {prev} {pagelist} {next} {last}</div><div class="right">{showing}</div>',
   'jsonwidget' => '<div id="{id}" {class}></div>',
   'report_picker' => '<div id="{id}" {class}>{reports}<div class="report-metadata"></div><button type="button" id="picker-more">{moreinfo}</button><div class="ui-helper-clearfix"></div></div>',
-  'report_download_link' => '<div class="report-download-link"><a href="{link}">{caption}</a></div>',
+  'report_download_link' => '<div class="report-download-link"><a href="{link}"{class}>{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
   'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
   'loading_overlay' => '<div class="loading-spinner" style="display: none"><div>Loading...</div></div>',
