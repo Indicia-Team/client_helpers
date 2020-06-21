@@ -444,9 +444,11 @@ class iform_species_details extends iform_dynamic {
         )
       ));
       $descriptionComplete = false;
-      foreach ($attrData as $resultRow) {
+      foreach ($attrData as $rowIdx => $resultRow) {
         if ($resultRow['caption']=='Beschreibung fertig' && $resultRow['raw_value']==1) {
           $descriptionComplete = true;
+          // We don't actually want the finished description attribute to show on screen
+          unset($attrData[$rowIdx]);
         }
       }
       if ($descriptionComplete===false) {
