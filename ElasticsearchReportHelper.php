@@ -512,54 +512,55 @@ JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
   }
 
-  /**
-   * Output a selector for various high level permissions filtering options.
-   *
-   * @return string
-   *   Select HTML.
-   *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
-   */
-  public static function permissionFilters(array $options) {
-    $allowedTypes = [];
-    // Add My records download permission if allowed.
-    if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
-      $allowedTypes['my'] = lang::get('My records');
-    }
-    // Add All records download permission if allowed.
-    if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
-      $allowedTypes['all'] = lang::get('All records');
-    }
-    // Add collated location (e.g. LRC boundary) records download permission if
-    // allowed.
-    if (!empty($options['location_collation_records_permission'])
-        && hostsite_user_has_permission($options['location_collation_records_permission'])) {
-      $locationId = hostsite_get_user_field('location_collation');
-      if ($locationId) {
-        $locationData = data_entry_helper::get_population_data([
-          'table' => 'location',
-          'extraParams' => $options['readAuth'] + ['id' => $locationId],
-        ]);
-        if (count($locationData) > 0) {
-          $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
-        }
-      }
-    }
-    if (count($allowedTypes) === 1) {
-      $value = array_values($allowedTypes)[0];
-      return <<<HTML
-<input type="hidden" name="es-permissions-filter" value="$value" class="permissions-filter" />
+//   /**
+//    * Output a selector for various high level permissions filtering options.
+//    *
+//    * @return string
+//    *   Select HTML.
+//    *
+//    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+//    */
+//   public static function permissionFilters(array $options) {
+//     $allowedTypes = [];
+//     // Add My records download permission if allowed.
+//     if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
+//       $allowedTypes['my'] = lang::get('My records');
+//     }
+//     // Add All records download permission if allowed.
+//     if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
+//       $allowedTypes['all'] = lang::get('All records');
+//     }
+//     // Add collated location (e.g. LRC boundary) records download permission if
+//     // allowed.
+//     if (!empty($options['location_collation_records_permission'])
+//         && hostsite_user_has_permission($options['location_collation_records_permission'])) {
+//       $locationId = hostsite_get_user_field('location_collation');
+//       if ($locationId) {
+//         $locationData = data_entry_helper::get_population_data([
+//           'table' => 'location',
+//           'extraParams' => $options['readAuth'] + ['id' => $locationId],
+//         ]);
+//         if (count($locationData) > 0) {
+//           $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+//         }
+//       }
+//     }
+//     if (count($allowedTypes) === 1) {
+//       $value = array_values($allowedTypes)[0];
+//       $key = array_search($value, $allowedTypes);
+//       return <<<HTML
+// <input type="hidden" name="es-permissions-filter" value="$key" class="permissions-filter" />
 
-HTML;
-    }
-    else {
-      return data_entry_helper::select([
-        'fieldname' => 'es-permissions-filter',
-        'lookupValues' => $allowedTypes,
-        'class' => 'permissions-filter',
-      ]);
-    }
-  }
+// HTML;
+//     }
+//     else {
+//       return data_entry_helper::select([
+//         'fieldname' => 'es-permissions-filter',
+//         'lookupValues' => $allowedTypes,
+//         'class' => 'permissions-filter',
+//       ]);
+//     }
+//   }
 
    /**
    * Output a selector for a record contexts which allows user to select from:
@@ -567,10 +568,13 @@ HTML;
    * My records
    * Permission filters
    * Groups
+   * 
+   * @return string
+   *   Select HTML.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordContext
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
    */
-  public static function recordContext(array $options) {
+  public static function permissionFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
     $sharingTypes = array(
       'R' => lang::get('Reporting'), 
@@ -582,16 +586,18 @@ HTML;
     $sharingCodes=array('R', 'V', 'D', 'M', 'P');
 
     $options = array_merge([
-      'id' => "es-record-context",
+      'id' => "es-permissions-filter",
+      'includeSharingFilters' => TRUE,
       'useSharingPrefix' => TRUE,
-      'linkedUserFilter' => '',
+      'includeGroupContexts' => TRUE,
     ], $options);
-
 
     $optionArr = [];
 
-    // Add My records options.
-    $optionArr['p-my'] = lang::get('My records');
+    // Add My records download permission if allowed.
+    if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
+      $optionArr['p-my'] = lang::get('My records');
+    }
 
     // Add All records if website permission allows.
     if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
@@ -614,37 +620,39 @@ HTML;
     }
 
     // Add in permission filters.
-    foreach ($sharingCodes as $sharingCode) {
-      $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
-      foreach ($filterData as $filter) {
-        if ($filter['defines_permissions'] === 't') {
-          // If useSharingPrefix options specified, prefix type of sharing to filter name
-          $filterTitle = $options['useSharingPrefix'] ? $sharingTypes[$sharingCode].' - '.$filter['title'] : $filter['title'];
-          $optionArr['f-'.$filter['id']] = $filterTitle;
+    if ($options['includeSharingFilters']) {
+      foreach ($sharingCodes as $sharingCode) {
+        $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
+        foreach ($filterData as $filter) {
+          if ($filter['defines_permissions'] === 't') {
+            // If useSharingPrefix options specified, prefix type of sharing to filter name
+            $filterTitle = $options['useSharingPrefix'] ? $sharingTypes[$sharingCode].' - '.$filter['title'] : $filter['title'];
+            $optionArr['f-'.$filter['id']] = $filterTitle;
+          }
         }
       }
     }
+    
+    if ($options['includeGroupContexts']) {
+      // Groups integration if user linked to warehouse.
+      $params = array(
+        'user_id'=>hostsite_get_user_field('indicia_user_id'),
+        'view' => 'detail'
+      );
 
-    // Group page integration if user linked to warehouse.
-    $params = array(
-      'user_id'=>hostsite_get_user_field('indicia_user_id'),
-      'view' => 'detail'
-    );
-
-    if ($params['user_id']) {
-      $params['sharing']= 'reporting'; //RJB added this for testing from non-iRecord site
-
-      $groups = data_entry_helper::get_population_data(array(
-        'table'=>'groups_user',
-        'extraParams'=>data_entry_helper::$js_read_tokens + $params
-      ));
-      foreach ($groups as $group) {
-        $title = $group['group_title'] .
-            (isset($group['group_expired']) && $group['group_expired'] === 't' ? ' (' . lang::get('finished') . ')' : '');
-        if ($group['administrator']==='t') {
-          $optionArr["g-all-$group[group_id]"] = lang::get('All records added using a recording form for {1}', $title);
+      if ($params['user_id']) {
+        $groups = data_entry_helper::get_population_data(array(
+          'table'=>'groups_user',
+          'extraParams'=>data_entry_helper::$js_read_tokens + $params
+        ));
+        foreach ($groups as $group) {
+          $title = $group['group_title'] .
+              (isset($group['group_expired']) && $group['group_expired'] === 't' ? ' (' . lang::get('finished') . ')' : '');
+          if ($group['administrator']==='t') {
+            $optionArr["g-all-$group[group_id]"] = lang::get('All records added using a recording form for {1}', $title);
+          }
+          $optionArr["g-my-$group[group_id]"] = lang::get('My records added using a recording form for {1}', $title);
         }
-        $optionArr["g-my-$group[group_id]"] = lang::get('My records added using a recording form for {1}', $title);
       }
     }
 
@@ -653,14 +661,8 @@ HTML;
       'label' => lang::get('Record context'),
       'fieldname' => $options['id'],
       'lookupValues' => $optionArr,
-      'data' => $options['linkedUserFilter'],
-      'class' => 'record-context',
+      'class' => 'permissions-filter',
     ];
-
-    helper_base::$javascript .= <<<JS
-$('#$options[id]')
-  .attr('data-linked-user-filter', '$options[linkedUserFilter]');
-JS;
 
     return data_entry_helper::select($controlOptions);
   }
