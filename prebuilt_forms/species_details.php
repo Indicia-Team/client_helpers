@@ -451,7 +451,9 @@ class iform_species_details extends iform_dynamic {
           unset($attrData[$rowIdx]);
         }
       }
-      if ($descriptionComplete===false) {
+      // Show a warning that a description isn't complete for administrators only
+      $user = \Drupal::currentUser()->getRoles();
+      if ($descriptionComplete===false && in_array("administrator", $user)) {
         data_entry_helper::$javascript .= "$('.incomplete-description-warning').show();\n";
       }
     }
