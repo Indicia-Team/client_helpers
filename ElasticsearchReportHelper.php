@@ -512,56 +512,6 @@ JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
   }
 
-//   /**
-//    * Output a selector for various high level permissions filtering options.
-//    *
-//    * @return string
-//    *   Select HTML.
-//    *
-//    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
-//    */
-//   public static function permissionFilters(array $options) {
-//     $allowedTypes = [];
-//     // Add My records download permission if allowed.
-//     if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
-//       $allowedTypes['my'] = lang::get('My records');
-//     }
-//     // Add All records download permission if allowed.
-//     if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
-//       $allowedTypes['all'] = lang::get('All records');
-//     }
-//     // Add collated location (e.g. LRC boundary) records download permission if
-//     // allowed.
-//     if (!empty($options['location_collation_records_permission'])
-//         && hostsite_user_has_permission($options['location_collation_records_permission'])) {
-//       $locationId = hostsite_get_user_field('location_collation');
-//       if ($locationId) {
-//         $locationData = data_entry_helper::get_population_data([
-//           'table' => 'location',
-//           'extraParams' => $options['readAuth'] + ['id' => $locationId],
-//         ]);
-//         if (count($locationData) > 0) {
-//           $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
-//         }
-//       }
-//     }
-//     if (count($allowedTypes) === 1) {
-//       $value = array_values($allowedTypes)[0];
-//       $key = array_search($value, $allowedTypes);
-//       return <<<HTML
-// <input type="hidden" name="es-permissions-filter" value="$key" class="permissions-filter" />
-
-// HTML;
-//     }
-//     else {
-//       return data_entry_helper::select([
-//         'fieldname' => 'es-permissions-filter',
-//         'lookupValues' => $allowedTypes,
-//         'class' => 'permissions-filter',
-//       ]);
-//     }
-//   }
-
    /**
    * Output a selector for a record contexts which allows user to select from:
    * All records (if permission is set)
