@@ -515,13 +515,15 @@ JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
   }
 
-   /**
-   * Output a selector for a record contexts which allows user to select from:
-   * All records (if permission is set)
-   * My records
-   * Permission filters
-   * Groups
-   * 
+  /**
+   * Output a selector for sets of records defined by a permission.
+   *
+   * Allows user to select from:
+   * * All records (if permission is set)
+   * * My records
+   * * Permission filters
+   * * Groups.
+   *
    * @return string
    *   Select HTML.
    *
@@ -529,20 +531,13 @@ JS;
    */
   public static function permissionFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
-    $sharingTypes = array(
-      'R' => lang::get('Reporting'), 
-      'V' => lang::get('Verification'), 
-      'D' => lang::get('Data-flow'), 
-      'M' => lang::get('Moderation'), 
-      'P' => lang::get('Peer review')
-    );
-    $sharingCodes=array('R', 'V', 'D', 'M', 'P');
 
     $options = array_merge([
       'id' => "es-permissions-filter",
-      'includeSharingFilters' => TRUE,
+      'includeFiltersForGroups' => FALSE,
+      'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
-      'includeGroupContexts' => TRUE,
+      'label' => 'Records to access',
     ], $options);
 
     $optionArr = [];
@@ -557,7 +552,8 @@ JS;
       $optionArr['p-all'] = lang::get('All records');
     }
 
-    // Add collated location (e.g. LRC boundary) records if website permissions allow.
+    // Add collated location (e.g. LRC boundary) records if website
+    // permissions allow.
     if (!empty($options['location_collation_records_permission'])
         && hostsite_user_has_permission($options['location_collation_records_permission'])) {
       $locationId = hostsite_get_user_field('location_collation');
@@ -573,35 +569,48 @@ JS;
     }
 
     // Add in permission filters.
-    if ($options['includeSharingFilters']) {
-      foreach ($sharingCodes as $sharingCode) {
-        $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
-        foreach ($filterData as $filter) {
-          if ($filter['defines_permissions'] === 't') {
-            // If useSharingPrefix options specified, prefix type of sharing to filter name
-            $filterTitle = $options['useSharingPrefix'] ? $sharingTypes[$sharingCode].' - '.$filter['title'] : $filter['title'];
-            $optionArr['f-'.$filter['id']] = $filterTitle;
-          }
+    // Find allowed values onle.
+    $sharingCodes = array_intersect(
+      $options['includeFiltersForSharingCodes'],
+      ['R', 'V', 'D', 'M', 'P']
+    );
+    $sharingTypes = array(
+      'R' => lang::get('Reporting'),
+      'V' => lang::get('Verification'),
+      'D' => lang::get('Data-flow'),
+      'M' => lang::get('Moderation'),
+      'P' => lang::get('Peer review'),
+    );
+    foreach ($sharingCodes as $sharingCode) {
+      $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
+      foreach ($filterData as $filter) {
+        if ($filter['defines_permissions'] === 't') {
+          // If useSharingPrefix options specified, prefix type of sharing to
+          // filter name.
+          $filterTitle = $options['useSharingPrefix']
+            ? $sharingTypes[$sharingCode] . ' - ' . $filter['title']
+            : $filter['title'];
+          $optionArr["f-$filter[id]"] = $filterTitle;
         }
       }
     }
-    
-    if ($options['includeGroupContexts']) {
+
+    if ($options['includeFiltersForGroups']) {
       // Groups integration if user linked to warehouse.
-      $params = array(
-        'user_id'=>hostsite_get_user_field('indicia_user_id'),
-        'view' => 'detail'
-      );
+      $params = [
+        'user_id' => hostsite_get_user_field('indicia_user_id'),
+        'view' => 'detail',
+      ];
 
       if ($params['user_id']) {
         $groups = data_entry_helper::get_population_data(array(
-          'table'=>'groups_user',
-          'extraParams'=>data_entry_helper::$js_read_tokens + $params
+          'table' => 'groups_user',
+          'extraParams' => data_entry_helper::$js_read_tokens + $params,
         ));
         foreach ($groups as $group) {
-          $title = $group['group_title'] .
-              (isset($group['group_expired']) && $group['group_expired'] === 't' ? ' (' . lang::get('finished') . ')' : '');
-          if ($group['administrator']==='t') {
+          $title = $group['group_title'] . (isset($group['group_expired']) && $group['group_expired'] === 't' ?
+              ' (' . lang::get('finished') . ')' : '');
+          if ($group['administrator'] === 't') {
             $optionArr["g-all-$group[group_id]"] = lang::get('All records added using a recording form for {1}', $title);
           }
           $optionArr["g-my-$group[group_id]"] = lang::get('My records added using a recording form for {1}', $title);
@@ -609,9 +618,10 @@ JS;
       }
     }
 
-    // Return the select control. There will always be at least one option (my records)
+    // Return the select control. There will always be at least one option (my
+    // records).
     $controlOptions = [
-      'label' => lang::get('Record context'),
+      'label' => lang::get($options['label']),
       'fieldname' => $options['id'],
       'lookupValues' => $optionArr,
       'class' => 'permissions-filter',
@@ -905,8 +915,11 @@ HTML;
       'definesPermissions' => FALSE,
       'sharingCode' => 'R',
     ], $options);
+    $options = array_merge([
+      'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
+    ], $options);
 
-    // Sharing code can be specified as a comma separated list of codes
+    // Sharing code can be specified as a comma separated list of codes.
     $sharingCodes = explode(',', $options['sharingCode']);
     $optionArr = [];
     foreach ($sharingCodes as $sharingCode) {
@@ -925,7 +938,7 @@ HTML;
     }
     else {
       $controlOptions = [
-        'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
+        'label' => $options['label'],
         'fieldname' => $options['id'],
         'lookupValues' => $optionArr,
         'class' => 'user-filter',
