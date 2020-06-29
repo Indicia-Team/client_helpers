@@ -631,6 +631,57 @@ JS;
   }
 
   /**
+   * Output a selector for record status.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
+   */
+  public static function statusFilters(array $options) {
+
+    require_once 'prebuilt_forms/includes/report_filters.php';
+
+    $options = array_merge([
+      'id' => 'es-status-filters',
+      'label' => 'Record status',
+      'selected' => 'Any status',
+    ], $options);
+
+    $selectItems = [
+      'Any status' => '',
+      'Any status except not accepted' => 'NOT identification.verification_status:R',
+      'Pending' => 'identification.verification_status:C AND identification.verification_substatus:0 AND NOT identification.query:Q',
+      'Accepted' => 'identification.verification_status:V',
+      'Not accepted' => 'identification.verification_status:R',
+      'Plausible' => 'identification.verification_status:C AND identification.verification_substatus:3',
+      'Queried' => 'identification.verification_status:C AND identification.query:Q',
+      'Answered' => 'identification.verification_status:C AND identification.query:A'
+    ];
+    $optionArr = [];
+    $defaultValue = '';
+    foreach ($selectItems as $key => $value) {
+      $optionArr[$value] = $key;
+      // Set the defaule value - user specified attribute is set to
+      // drop-down item text, but we use the actual value to specify
+      // the default.
+      if ($options['selected'] === $key) {
+        $defaultValue = $value;
+      }
+    }
+    // Return the select control.
+    $controlOptions = [
+      'label' => lang::get($options['label']),
+      'fieldname' => $options['id'],
+      'lookupValues' => $optionArr,
+      'default' => $defaultValue,
+      'class' => 'status-filters',
+    ];
+
+    return data_entry_helper::select($controlOptions);
+  }
+
+  /**
    * A tabbed control to show full record details and verification info.
    *
    * @return string

@@ -252,16 +252,13 @@ TXT;
   }
 
   /**
-   * Output a selector for a general record access contexts based on permission filters and group permissions etc
+   * Output a selector for record status.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-recordContext
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
    */
-  protected static function get_control_recordContext($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::recordContext(array_merge($options, [
+  protected static function get_control_statusFilters($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::statusFilters(array_merge($options, [
       'readAuth' => $auth['read'],
-      'my_records_permission' => $args['my_records_permission'],
-      'all_records_permission' => $args['all_records_permission'],
-      'location_collation_records_permission' => $args['location_collation_records_permission'],
     ]));
   }
 
