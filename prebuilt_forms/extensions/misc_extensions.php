@@ -263,9 +263,7 @@ class extension_misc_extensions {
   public static function report_helper_control($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(['report_helper']);
     $ctrl = $options['control'];
-    if (isset($options['extraParams'])) {
-      $options['extraParams'] = $auth['read'] + $options['extraParams'];
-    }
+    $options['readAuth'] = $auth['read'];
     return report_helper::$ctrl($options);
   }
 
