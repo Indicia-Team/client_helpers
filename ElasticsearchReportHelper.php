@@ -602,6 +602,7 @@ JS;
         'view' => 'detail',
       ];
 
+      $params['sharing']= 'data_flow'; //##TESTING
       if ($params['user_id']) {
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'groups_user',
@@ -628,6 +629,41 @@ JS;
     ];
 
     return data_entry_helper::select($controlOptions);
+  }
+
+  /**
+   * Output a summary of currently applied filters.
+   *
+   * @return string
+   *   HTML summary text.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filterSummary
+   */
+  public static function filterSummary(array $options) {
+
+    require_once 'prebuilt_forms/includes/report_filters.php';
+
+    $options = array_merge([
+      'id' => 'es-filter-summary',
+      'label' => 'Filter summary',
+    ], $options);
+
+    $html = <<<HTML
+<div>
+  <h3>$options[label]</h3>
+  <div class="filter-summary-contents"></div>
+</div>
+
+HTML;
+
+helper_base::$late_javascript .= <<<JS
+$('#es-filter-summary').idcFilterSummary('populate');
+$('.es-filter-param, .user-filter, .permissions-filter, .status-filters').change(function () {
+    // Update any summary output 
+    $('#es-filter-summary').idcFilterSummary('populate')
+});
+JS;
+    return self::getControlContainer('filterSummary', $options, json_encode([]), $html);
   }
 
   /**
