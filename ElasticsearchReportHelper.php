@@ -602,7 +602,6 @@ JS;
         'view' => 'detail',
       ];
 
-      $params['sharing']= 'data_flow'; //##TESTING
       if ($params['user_id']) {
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'groups_user',
