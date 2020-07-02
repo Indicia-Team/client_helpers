@@ -1339,6 +1339,7 @@ HTML;
     $r .= '<img src="' . data_entry_helper::$images_path . 'trash-22px.png" width="22" height="22" alt="Bin this filter" title="Bin this filter" class="button disabled" id="filter-delete"/>';
   }
   $r .= '</div></div>'; // toolbar + clearfix
+  $r .= '</div>';
   if (!empty($options['filters_user_id'])) {
     // If we are preloading based on a filter user ID, we need to get the
     // information now so that the sharing mode can be known when loading
@@ -1353,21 +1354,21 @@ HTML;
     }
     $options['sharing'] = report_filters_sharing_code_to_full_term($fu[0]['filter_sharing']);
   }
-  report_helper::$javascript .= "indiciaData.lang={pleaseSelect:\"" . lang::get('Please select') . "\"};\n";
   // Create the hidden panels required to populate the popups for setting each type of filter up.
   $hiddenStuff = '';
+  $noDescriptionLangStrings = [];
   foreach ($filterModules as $category => $list) {
     foreach ($list as $moduleName => $module) {
       $hiddenStuff .= "<div style=\"display: none\"><div class=\"filter-popup\" id=\"controls-$moduleName\"><form action=\"#\" class=\"filter-controls\"><fieldset>" . $module->get_controls($readAuth, $options) .
         '<button class="fb-close" type="button">' . lang::get('Cancel') . '</button>' .
         '<button class="fb-apply" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
       $shortName = str_replace('filter_', '', $moduleName);
-      report_helper::$javascript .= "indiciaData.lang.NoDescription$shortName='" . lang::get('Click to Filter ' . ucfirst($shortName)) . "';\n";
+      $noDescriptionLangStrings[$shortName] = 'Click to Filter ' . ucfirst($shortName);
     }
-
   }
-  $r .= '</div>';
+  report_helper::addLanguageStringsToJs('reportFiltersNoDescription', $noDescriptionLangStrings);
   report_helper::addLanguageStringsToJs('reportFilters', [
+    'PleaseSelect' => 'Please select',
     'CreateAFilter' => 'Create a filter',
     'ModifyFilter' => 'Modify filter',
     'FilterSaved' => 'The filter has been saved',
