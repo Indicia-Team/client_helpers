@@ -659,7 +659,7 @@ helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
 $('.es-filter-param, .user-filter, .permissions-filter, .status-filters').change(function () {
     // Update any summary output 
-    $('#es-filter-summary').idcFilterSummary('populate')
+    $('#es-filter-summary').idcFilterSummary('populate');
 });
 JS;
     return self::getControlContainer('filterSummary', $options, json_encode([]), $html);
