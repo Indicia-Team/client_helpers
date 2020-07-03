@@ -252,7 +252,22 @@ TXT;
   }
 
   /**
+<<<<<<< HEAD
+   * Output simple summary of currently defined filters.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filterSummary
+   */
+  protected static function get_control_filterSummary($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::filterSummary(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
+   * Output a selector for a general record access contexts based on permission filters and group permissions etc
+=======
    * Output a selector for record status.
+>>>>>>> develop
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
    */

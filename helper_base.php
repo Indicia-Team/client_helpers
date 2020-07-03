@@ -908,6 +908,7 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.recordDetailsPane.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.templatedOutput.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
           ],
         ],
       );
