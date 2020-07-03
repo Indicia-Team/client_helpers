@@ -631,6 +631,24 @@ JS;
   }
 
   /**
+   * Output a selector for record status - mirrors the 'quality - records to include' drop-down in standardParams control.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
+   */
+  public static function statusFilters(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    $options = array_merge(array(
+      'sharing' => 'reporting',
+      'elasticsearch' => TRUE,
+    ), $options);
+
+    return status_control($options['readAuth'], $options);
+  }
+
+  /**
    * A tabbed control to show full record details and verification info.
    *
    * @return string
