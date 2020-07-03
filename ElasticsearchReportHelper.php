@@ -655,14 +655,33 @@ JS;
 
 HTML;
 
-helper_base::$late_javascript .= <<<JS
+  helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
 $('.es-filter-param, .user-filter, .permissions-filter, .status-filters').change(function () {
     // Update any summary output 
     $('#es-filter-summary').idcFilterSummary('populate');
 });
+
 JS;
+    
     return self::getControlContainer('filterSummary', $options, json_encode([]), $html);
+  }
+
+  /* Output a selector for record status - mirrors the 'quality - records to include' drop-down in standardParams control.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
+   */
+  public static function statusFilters(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    $options = array_merge(array(
+      'sharing' => 'reporting',
+      'elasticsearch' => TRUE,
+    ), $options);
+
+    return status_control($options['readAuth'], $options);
   }
 
   /**
