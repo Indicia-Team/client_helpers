@@ -858,7 +858,7 @@ function status_control ($readAuth, $options) {
   $ctl = new filter_quality();
   $r = '<div class="standalone-quality-filter">';
   $r .= $ctl->get_controls($readAuth, $options, array('status'));
-  $r .= '</dev>';
+  $r .= '</div>';
 
   report_helper::$onload_javascript .= <<<JS
     indiciaData.filter.def.quality = '!R';
