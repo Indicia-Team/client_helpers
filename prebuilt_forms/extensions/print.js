@@ -102,7 +102,8 @@ jQuery(document).ready(function enablePdf($) {
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: {
         dpi: 192,
-        letterRendering: true
+        letterRendering: true,
+        scale: 4
       },
       jsPDF: {
         orientation: $('#pdf-format').val(),
