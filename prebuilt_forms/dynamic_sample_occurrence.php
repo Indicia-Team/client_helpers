@@ -1038,7 +1038,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     unset(data_entry_helper::$entity_to_load['occurrence:id']);
   }
 
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
+  protected static function getFormHiddenInputs($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
     $r = <<<HTML
 $auth[write]

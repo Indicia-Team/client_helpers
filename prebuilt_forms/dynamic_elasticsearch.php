@@ -29,6 +29,13 @@ require_once 'includes/dynamic.php';
 class iform_dynamic_elasticsearch extends iform_dynamic {
 
   /**
+   * Disable wrapping output in <form>.
+   *
+   * @var bool
+   */
+  protected static $isDataEntryForm = FALSE;
+
+  /**
    * Return the page metadata.
    *
    * @return array
@@ -416,18 +423,6 @@ TXT;
     return ElasticsearchReportHelper::urlParams(array_merge($options, [
       'readAuth' => $auth['read'],
     ]));
-  }
-
-  protected static function getHeader($args) {
-    return '';
-  }
-
-  protected static function getFooter($args) {
-    return '';
-  }
-
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
   }
 
   /**

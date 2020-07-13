@@ -154,7 +154,7 @@ class iform_dynamic_person extends iform_dynamic {
    * tab or form section. This is a set of hidden inputs containing the website ID as well as an existing person's ID.
    * @param type $args
    */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
+  protected static function getFormHiddenInputs($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
     $r = $auth['write'].
           "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";//.

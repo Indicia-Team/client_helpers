@@ -32,6 +32,13 @@ require_once('includes/report_filters.php');
 class iform_dynamic_report_explorer extends iform_dynamic {
 
   /**
+   * Disable wrapping output in <form>.
+   *
+   * @var bool
+   */
+  protected static $isDataEntryForm = FALSE;
+
+  /**
    * Count the total number of reports for this page request so we can generate unique ids.
    * @var integer
    */
@@ -277,18 +284,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         )
       )
     );
-  }
-
-  protected static function getHeader($args) {
-    return '';
-  }
-
-  protected static function getFooter($args) {
-    return '';
-  }
-
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
   }
 
   /**

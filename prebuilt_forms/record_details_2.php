@@ -36,6 +36,13 @@ require_once 'includes/groups.php';
 
 class iform_record_details_2 extends iform_dynamic {
 
+  /**
+   * Disable wrapping output in <form>.
+   *
+   * @var bool
+   */
+  protected static $isDataEntryForm = FALSE;
+
   protected static $record;
 
   /**
@@ -1027,20 +1034,6 @@ STRUCT;
   }
 
   /**
-   * Override the standard header as this is not an HTML form.
-   */
-  protected static function getHeader($args) {
-    return '';
-  }
-
-  /**
-   * Override the standard footer as this is not an HTML form.
-   */
-  protected static function getFooter($args) {
-    return '';
-  }
-
-  /**
    * Loads the record associated with the page if not already loaded.
    */
   protected static function load_record($auth, $args) {
@@ -1092,13 +1085,6 @@ STRUCT;
         $iform_page_metadata['longitude'] = number_format((float) self::$record['long'], 5, '.', '');
       }
     }
-  }
-
-  /**
-   * Override some default behaviour in dynamic.
-   */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
   }
 
 }
