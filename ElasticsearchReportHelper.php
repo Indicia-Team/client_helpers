@@ -367,12 +367,36 @@ class ElasticsearchReportHelper {
     if (!empty($options['source']) && !empty($options['linkToDataGrid'])) {
       throw new Exception('Download control requires only one of the @source or @linkToDataGrid options to be specified.');
     }
+    if (empty($options['source']) && !empty($options['columnsTemplate'])) {
+      throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataGrid).');
+    }
+
     $options = array_merge([
       'caption' => 'Download',
       'title' => 'Run the download',
     ], $options);
+
+    // If columnsTemplate options specifies an array, then create control options for
+    // a select control that will be used to indicate the selected columns template. 
+    if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
+      $availableColTypes = array(
+        "default" => lang::get("Standard download format"), 
+        "easy-download" => lang::get("Backward-compatible format")
+      );
+      $optionArr = array();
+      foreach ($options['columnsTemplate'] as $colType) {
+        $optionArr[$colType] = $availableColTypes[$colType];
+      }
+      $controlOptions = [
+        'id' => "$options[id]-select",
+        'fieldname' => 'columnsTemplate',
+        'lookupValues' => $optionArr,
+      ];
+      unset($options['columnsTemplate']); 
+    }
+
     global $indicia_templates;
-    $html = str_replace(
+    $button = str_replace(
       [
         '{id}',
         '{title}',
@@ -386,6 +410,12 @@ class ElasticsearchReportHelper {
       ],
       $indicia_templates['button']
     );
+    if (isset($controlOptions)) {
+      $html = "<div style='display: inline-block'>".$button."</div>";
+      $html .= "<div style='display: inline-block'>".data_entry_helper::select($controlOptions)."</div>";
+    } else {
+      $html = $button;
+    }
     $progress = <<<HTML
 <div class="progress-circle-container">
   <svg>
