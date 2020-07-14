@@ -411,8 +411,8 @@ class ElasticsearchReportHelper {
       $indicia_templates['button']
     );
     if (isset($controlOptions)) {
-      $html = "<div style='display: inline-block'>".$button."</div>";
-      $html .= "<div style='display: inline-block'>".data_entry_helper::select($controlOptions)."</div>";
+      $html = "<div class='idc-download-ctl-part'>".$button."</div>";
+      $html .= "<div class='idc-download-ctl-part'>".data_entry_helper::select($controlOptions)."</div>";
     } else {
       $html = $button;
     }
