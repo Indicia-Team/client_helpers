@@ -388,7 +388,7 @@ class ElasticsearchReportHelper {
         $optionArr[$colType] = $availableColTypes[$colType];
       }
       $controlOptions = [
-        'id' => "$options[id]-select",
+        'id' => "$options[id]-template",
         'fieldname' => 'columnsTemplate',
         'lookupValues' => $optionArr,
       ];
