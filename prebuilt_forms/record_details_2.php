@@ -1025,15 +1025,6 @@ STRUCT;
   }
 
   /**
-   * Disable save buttons for this form class. Not a data entry form...
-   *
-   * @return boolean
-   */
-  protected static function include_save_buttons() {
-    return FALSE;
-  }
-
-  /**
    * Loads the record associated with the page if not already loaded.
    */
   protected static function load_record($auth, $args) {

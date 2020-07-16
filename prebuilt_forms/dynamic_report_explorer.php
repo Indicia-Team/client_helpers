@@ -647,16 +647,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   }
 
   /**
-   * Disable save buttons for this form class. Not a data entry form.
-   *
-   * @return bool
-   *   Always return FALSE.
-   */
-  protected static function include_save_buttons() {
-    return FALSE;
-  }
-
-  /**
    * Ajax handler to provide the content for the details of a single record.
    */
   public static function ajax_get_feature_popup_details($website_id, $password, $nid) {

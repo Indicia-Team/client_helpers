@@ -429,12 +429,12 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         // We need the verify button as well if this option is enabled
         if (isset($args['verification_panel']) && $args['verification_panel'])
           $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">'.lang::get('Precheck my records')."</button>\n";
-        if (call_user_func(array(self::$called_class, 'include_save_buttons'))
-            && !($args['interface']=='tabs' && isset($args['save_button_below_all_pages']) && $args['save_button_below_all_pages'])
-            && method_exists(self::$called_class, 'getSubmitButtons'))
-          // last part of a non wizard interface must insert a save button, unless it is tabbed
-          // interface with save button beneath all pages
+        if (self::$isDataEntryForm && method_exists(self::$called_class, 'getSubmitButtons')
+            && !($args['interface'] === 'tabs' && !empty($args['save_button_below_all_pages']))) {
+          // Last part of a non wizard interface must insert a save button,
+          // unless it is tabbed interface with save button beneath all pages.
           $r .= call_user_func(array(self::$called_class, 'getSubmitButtons'), $args);
+        }
       }
       $pageIdx++;
       $r .= "</div>\n";
@@ -445,14 +445,6 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       $r .= call_user_func(array(self::$called_class, 'linkSpeciesPopups'), $args);
     }
     return $r;
-  }
-
-  /**
-   * Simple protected method which allows child classes to disable save buttons on the form.
-   * @return type
-   */
-  protected static function include_save_buttons() {
-    return TRUE;
   }
 
   /**
@@ -481,9 +473,11 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
   protected static function getFooter($args) {
     $r = '';
     if (self::$isDataEntryForm) {
-      // add a single submit button outside the tabs if they want a button visible all the time
-      if ($args['interface']=='tabs' && $args['save_button_below_all_pages'] && method_exists(self::$called_class, 'getSubmitButtons'))
+      // Add a single submit button outside the tabs if a button needs to be
+      // visible all the time.
+      if ($args['interface'] === 'tabs' && $args['save_button_below_all_pages'] && method_exists(self::$called_class, 'getSubmitButtons')) {
         $r .= call_user_func(array(self::$called_class, 'getSubmitButtons'), $args);
+      }
       if(!empty(data_entry_helper::$validation_errors)){
         $r .= data_entry_helper::dump_remaining_errors();
       }

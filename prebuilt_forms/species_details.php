@@ -1033,14 +1033,6 @@ HTML
   }
 
   /**
-   * Disable save buttons for this form class. Not a data entry form...
-   * @return boolean
-   */
-  protected static function include_save_buttons() {
-    return FALSE;
-  }
-
-  /**
    * Used to convert an array of attributes to a string formatted like a set,
    * this is then used by the species_data_attributes_with_hiddens report to return
    * custom attributes which aren't in the hidden attributes list.

@@ -28,6 +28,15 @@
 class iform_form_name {
 
   /**
+   * Disable wrapping output in <form>.
+   *
+   * @var bool
+   *
+   * @todo Remove if this is a data entry form.
+   */
+  protected static $isDataEntryForm = FALSE;
+
+  /**
    * Return the form metadata.
    *
    * Note the title of this method includes the name of the form file. This
