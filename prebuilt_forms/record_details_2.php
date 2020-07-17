@@ -36,14 +36,16 @@ require_once 'includes/groups.php';
 
 class iform_record_details_2 extends iform_dynamic {
 
-  /**
-   * Disable wrapping output in <form>.
-   *
-   * @var bool
-   */
-  protected static $isDataEntryForm = FALSE;
-
   protected static $record;
+
+  /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
 
   /**
    * Return the form metadata.

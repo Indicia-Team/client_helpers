@@ -32,19 +32,21 @@ require_once 'includes/report.php';
  */
 class iform_species_details extends iform_dynamic {
 
-  /**
-   * Disable wrapping output in <form>.
-   *
-   * @var bool
-   */
-  protected static $isDataEntryForm = FALSE;
-
   private static $preferred;
   private static $synonyms = array();
   private static $commonNames = array();
   private static $taxonomy = array();
   private static $taxa_taxon_list_id;
   private static $taxon_meaning_id;
+
+  /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
 
   /**
    * Return the form metadata.

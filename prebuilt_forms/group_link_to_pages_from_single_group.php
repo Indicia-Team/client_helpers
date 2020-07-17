@@ -29,11 +29,13 @@ require_once('includes/groups.php');
 class iform_group_link_to_pages_from_single_group extends iform_dynamic {
 
   /**
-   * Disable wrapping output in <form>.
+   * Disable form element wrapped around output.
    *
-   * @var bool
+   * @return bool
    */
-  protected static $isDataEntryForm = FALSE;
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
 
   public static function get_parameters() {
     $retVal = array_merge(

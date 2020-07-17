@@ -47,13 +47,6 @@ class iform_dynamic {
   // The form mode. Stored in case other inheriting forms need it.
   protected static $mode;
 
-  /**
-   * Controls whether a form element wrapped around output.
-   *
-   * @var bool
-   */
-  protected static $isDataEntryForm = TRUE;
-
   // Values that $mode can take
   const MODE_GRID = 0; // default mode when no grid set to false - display grid of existing data
   const MODE_NEW = 1; // default mode when no_grid set to true - display an empty form for adding a new sample
@@ -61,6 +54,14 @@ class iform_dynamic {
   const MODE_EXISTING_RO = 3; // display existing sample for reading only
   const MODE_CLONE = 4; // display form for adding a new sample containing values of an existing sample.
 
+  /**
+   * Controls whether a form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return TRUE;
+  }
 
   public static function get_parameters() {
     $retVal = array_merge(
@@ -427,9 +428,10 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         ));
       } elseif ($pageIdx==count($tabHtml)-1) {
         // We need the verify button as well if this option is enabled
-        if (isset($args['verification_panel']) && $args['verification_panel'])
+        if (isset($args['verification_panel']) && $args['verification_panel']) {
           $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">'.lang::get('Precheck my records')."</button>\n";
-        if (self::$isDataEntryForm && method_exists(self::$called_class, 'getSubmitButtons')
+        }
+        if (call_user_func([self::$called_class, 'isDataEntryForm']) && method_exists(self::$called_class, 'getSubmitButtons')
             && !($args['interface'] === 'tabs' && !empty($args['save_button_below_all_pages']))) {
           // Last part of a non wizard interface must insert a save button,
           // unless it is tabbed interface with save button beneath all pages.
@@ -453,7 +455,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    * @param type $args
    */
   protected static function getHeader($args) {
-    if (self::$isDataEntryForm) {
+    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
       // Make sure the form action points back to this page
       $reloadPath = call_user_func(array(self::$called_class, 'getReloadPath'));
       // request automatic JS validation
@@ -472,7 +474,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    */
   protected static function getFooter($args) {
     $r = '';
-    if (self::$isDataEntryForm) {
+    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
       // Add a single submit button outside the tabs if a button needs to be
       // visible all the time.
       if ($args['interface'] === 'tabs' && $args['save_button_below_all_pages'] && method_exists(self::$called_class, 'getSubmitButtons')) {
@@ -494,7 +496,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    */
   protected static function getFormHiddenInputs($args, $auth, &$attributes) {
     $r = '';
-    if (self::$isDataEntryForm) {
+    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
       // Get authorisation tokens to update the Warehouse, plus any other hidden data.
       $r = $auth['write'].
             "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n".
@@ -1044,7 +1046,5 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       }
     }
   }
-
-
 
 }

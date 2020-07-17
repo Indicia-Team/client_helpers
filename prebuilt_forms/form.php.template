@@ -28,13 +28,15 @@
 class iform_form_name {
 
   /**
-   * Disable wrapping output in <form>.
+   * Disable form element wrapped around output.
    *
-   * @var bool
+   * @return bool
    *
-   * @todo Remove if this is a data entry form.
+   * @todo Remove this if the page type is for data entry.
    */
-  protected static $isDataEntryForm = FALSE;
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
 
   /**
    * Return the form metadata.

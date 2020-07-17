@@ -29,11 +29,13 @@ require_once 'includes/dynamic.php';
 class iform_dynamic_elasticsearch extends iform_dynamic {
 
   /**
-   * Disable wrapping output in <form>.
+   * Disable form element wrapped around output.
    *
-   * @var bool
+   * @return bool
    */
-  protected static $isDataEntryForm = FALSE;
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
 
   /**
    * Return the page metadata.

@@ -32,13 +32,6 @@ require_once('includes/report_filters.php');
 class iform_dynamic_report_explorer extends iform_dynamic {
 
   /**
-   * Disable wrapping output in <form>.
-   *
-   * @var bool
-   */
-  protected static $isDataEntryForm = FALSE;
-
-  /**
    * Count the total number of reports for this page request so we can generate unique ids.
    * @var integer
    */
@@ -56,6 +49,15 @@ class iform_dynamic_report_explorer extends iform_dynamic {
    * @var bool
    */
   private static $applyUserPrefs = TRUE;
+
+  /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
 
   /**
    * Return the form metadata.
