@@ -555,7 +555,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         $tabalias = 'tab-'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
       $html = self::get_tab_content($auth, $args, $tab, $tabContent, $tabalias, $attributes, $hasControls);
       if (!empty($html) && $hasControls) {
-        $tabHtml[$tab] = "<h3>Tab: $tab</h3>$html";
+        $tabHtml[$tab] = $html;
       }
     }
     return $tabHtml;
