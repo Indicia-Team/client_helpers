@@ -461,7 +461,10 @@ $('form#entry_form').tooltip({
       ));
     }
     if ($options['draw_boundary_on_map']) {
-      iform_map_zoom_to_geom($location['boundary_geom'], 'Survey square');
+      iform_map_zoom_to_geom(
+        empty($location['boundary_geom']) ? $location['centroid_geom'] : $location['boundary_geom'],
+        'Survey square'
+      );
     }
     return $r;
   }
