@@ -1366,6 +1366,7 @@ HTML;
       $sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), NULL, $attrOptions);
       $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\">$sampleCtrls</div>";
     }
+    $r .= "<div id=\"$options[id]-cluster\" style=\"display: none\"></div>";
     $r .= "<div id=\"$options[id]-container\" style=\"display: none\">" .
            // A dummy to capture feedback from the map.
            '<input type="hidden" id="imp-sref" />' .
@@ -1410,6 +1411,8 @@ HTML;
         'DeleteMessage' => lang::get("Please select the records on the map you wish to delete."),
         'ConfirmDeleteTitle' => lang::get("Confirm deletion of records"),
         'ConfirmDeleteText' => lang::get("Are you sure you wish to delete all the records at {OLD}?"),
+
+        'ClusterMessage' => lang::get("You selected a cluster of places on the map, pick one of them to work with."),
 
         'CancelLabel' => lang::get("Cancel"),
         'FinishLabel' => lang::get("Finish"),
@@ -1620,6 +1623,7 @@ HTML;
         'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : false),
         'occurrenceImages' => $args['occurrence_images'],
         'PHPtaxonLabel' => true,
+        'speciesInLabel' => false,
         'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), // used for termlists in attributes
         'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),
         'userControlsTaxonFilter' => isset($args['user_controls_taxon_filter']) ? $args['user_controls_taxon_filter'] : false,
