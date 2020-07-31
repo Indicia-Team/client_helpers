@@ -700,28 +700,6 @@ TXT;
    * it available to a hook function which exists outside the form.
    */
   protected static function get_form_html($args, $auth, $attributes) {
-    if ($_GET['occurrence_id']!='' && $args['taxon_filter']!= '') {
-      // If an occurrence ID is passed in URL and the taxon
-      // filter argument is set on form, check that the taxon
-      // passes the filter and, if not, turn the filter off.
-      $record = data_entry_helper::get_population_data(array(
-        'table' => 'occurrence',
-        'extraParams' => $auth['read'] + array(
-            'id' => $_GET['occurrence_id'],
-            'view' => 'detail'
-          )
-      ));
-      $filtered_taxa = data_entry_helper::get_population_data(array(
-        'table' => 'taxa_search',
-        'extraParams' => $auth['read'] + array(
-            'taxa_taxon_list_id'=>$record[0]['taxa_taxon_list_id'],
-            $args['taxon_filter_field'] => json_encode($args['taxon_filter'])
-          )
-      ));
-      if (count($filtered_taxa) == 0) {
-        $args['taxon_filter']='';
-      }
-    }
     group_authorise_form($args, $auth['read']);
     // We always want an autocomplete formatter function for species lookups. The form implementation can
     // specify its own if required
@@ -918,6 +896,21 @@ TXT;
         if (count($response) !== 0) {
           // We found an occurrence so use it to detect the sample.
           self::$loadedSampleId = $response[0]['sample_id'];
+          if ($args['taxon_filter']) {
+            // If a taxon filter is set, check to see if the specified occurrence would
+            // pass the filtering. If not, then turn filtering off for this occurrence
+            // otherwise it cannot be edited.
+            $filtered_taxa = data_entry_helper::get_population_data(array(
+              'table' => 'taxa_search',
+              'extraParams' => $auth['read'] + array(
+                  'taxa_taxon_list_id'=>$response[0]['taxa_taxon_list_id'],
+                  $args['taxon_filter_field'] => json_encode($args['taxon_filter'])
+                )
+            ));
+            if (count($filtered_taxa) == 0) {
+              $args['taxon_filter']='';
+            }
+          }
         }
       }
     }
