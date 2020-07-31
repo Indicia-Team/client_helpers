@@ -896,6 +896,21 @@ TXT;
         if (count($response) !== 0) {
           // We found an occurrence so use it to detect the sample.
           self::$loadedSampleId = $response[0]['sample_id'];
+          if ($args['taxon_filter']) {
+            // If a taxon filter is set, check to see if the specified occurrence would
+            // pass the filtering. If not, then turn filtering off for this occurrence
+            // otherwise it cannot be edited.
+            $filtered_taxa = data_entry_helper::get_population_data(array(
+              'table' => 'taxa_search',
+              'extraParams' => $auth['read'] + array(
+                  'taxa_taxon_list_id'=>$response[0]['taxa_taxon_list_id'],
+                  $args['taxon_filter_field'] => json_encode($args['taxon_filter'])
+                )
+            ));
+            if (count($filtered_taxa) == 0) {
+              $args['taxon_filter']='';
+            }
+          }
         }
       }
     }
