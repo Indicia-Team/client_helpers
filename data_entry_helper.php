@@ -3296,9 +3296,7 @@ RIJS;
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
     //make a copy of the options so that we can maipulate it
     $overrideOptions = $options;
-    //Set speciesInLabel option on indiciaData  
-    self::$indiciaData["speciesInLabel"] = $options['speciesInLabel'];
-
+ 
     //We are going to cycle through each of the name filter types
     //and save the parameters required for each type in an array so
     //that the Javascript can quickly access the required parameters

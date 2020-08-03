@@ -1651,6 +1651,11 @@ HTML;
     call_user_func(array(self::$called_class, 'build_grid_taxon_label_function'), $args, $options);
     if (self::$mode == self::MODE_CLONE)
       $species_ctrl_opts['useLoadedExistingRecords'] = true;
+
+    //Set speciesInLabel flag on indiciaData
+    $speciesInLabel = $options['speciesInLabel'] ? 'true' : 'false';
+    data_entry_helper::$javascript .= "\nindiciaData.speciesInLabel=".$speciesInLabel.";\n";
+
     return data_entry_helper::species_checklist($species_ctrl_opts);
   }
 
