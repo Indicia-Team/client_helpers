@@ -454,7 +454,7 @@ class filter_where extends FilterBase {
       global $indicia_templates;
       $oldwrap = $indicia_templates['jsWrap'];
       $indicia_templates['jsWrap'] = '{content}';
-      $r .= map_helper::map_panel(array(
+      $mapOpts = [
         'divId' => 'filter-pane-map',
         'presetLayers' => array('osm'),
         'editLayer' => TRUE,
@@ -465,9 +465,16 @@ class filter_where extends FilterBase {
         'height' => 400,
         'standardControls' => array('layerSwitcher', 'panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
           'modifyFeature', 'clearEditLayer'),
+        'allowPolygonRecording' => TRUE,
         'readAuth' => $readAuth,
         'gridRefHint' => TRUE,
-      ));
+      ];
+      // Pass through buffering option.
+      if (!empty($options['selectFeatureBufferProjection'])) {
+        $mapOpts['selectFeatureBufferProjection'] = $options['selectFeatureBufferProjection'];
+      }
+      $r .= map_helper::map_panel($mapOpts);
+
       $indicia_templates['jsWrap'] = $oldwrap;
     }
     else {
