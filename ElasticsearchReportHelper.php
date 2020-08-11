@@ -688,7 +688,6 @@ HTML;
   helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
 $('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
-    console.log("changed")
     // Update any summary output 
     $('#es-filter-summary').idcFilterSummary('populate');
 });
