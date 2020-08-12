@@ -1400,6 +1400,7 @@ HTML;
     }
   }
   report_helper::addLanguageStringsToJs('reportFiltersNoDescription', $noDescriptionLangStrings);
+  report_filters_set_parser_language_strings();
   report_helper::addLanguageStringsToJs('reportFilters', [
     'PleaseSelect' => 'Please select',
     'CreateAFilter' => 'Create a filter',
@@ -1408,18 +1409,7 @@ HTML;
     'FilterDeleted' => 'The filter has been deleted',
     'ConfirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
     'FilterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
-    'AutochecksFailed' => 'Automated checks failed',
-    'AutochecksPassed' => 'Automated checks passed',
-    'IdentificationDifficulty' => 'Identification difficulty',
-    'HasPhotos' => 'Only include records which have photos',
-    'HasNoPhotos' => 'Exclude records which have photos',
     'ConfirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
-    'MyRecords' => 'My records only',
-    'OnlyConfidentialRecords' => 'Only confidential records',
-    'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
-    'NoConfidentialRecords' => 'Exclude confidential records',
-    'includeUnreleasedRecords' => 'Include unreleased records',
-    'excludeUnreleasedRecords' => 'Exclude unreleased records',
   ]);
   if (function_exists('iform_ajaxproxy_url')) {
     report_helper::$javascript .= "indiciaData.filterPostUrl='" . iform_ajaxproxy_url(NULL, 'filter') . "';\n";
@@ -1558,4 +1548,23 @@ function report_filters_sharing_code_to_full_term($code) {
  */
 function report_filters_full_term_to_sharing_code($term) {
   return strtoupper(substr($term, 0, 1));
+}
+
+/**
+ * Utility function to add laguage strings to Javascript for the JS filter parser.
+ */
+function report_filters_set_parser_language_strings() {
+  report_helper::addLanguageStringsToJs('reportFilters', [
+    'AutochecksFailed' => 'Automated checks failed',
+    'AutochecksPassed' => 'Automated checks passed',
+    'IdentificationDifficulty' => 'Identification difficulty',
+    'HasPhotos' => 'Only include records which have photos',
+    'HasNoPhotos' => 'Exclude records which have photos',
+    'MyRecords' => 'My records only',
+    'OnlyConfidentialRecords' => 'Only confidential records',
+    'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
+    'NoConfidentialRecords' => 'Exclude confidential records',
+    'includeUnreleasedRecords' => 'Include unreleased records',
+    'excludeUnreleasedRecords' => 'Exclude unreleased records',
+  ]);
 }
