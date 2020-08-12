@@ -671,7 +671,7 @@ JS;
   public static function filterSummary(array $options) {
 
     require_once 'prebuilt_forms/includes/report_filters.php';
-
+    report_filters_set_parser_language_strings();
     $options = array_merge([
       'id' => 'es-filter-summary',
       'label' => 'Filter summary',
