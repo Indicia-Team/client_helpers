@@ -694,7 +694,7 @@ JS;
 
   /**
    * Helper function to output a checkbox for controlling training mode.
-   * Occurrences submitted in training mode can be kept apart from normal records.
+   * Samples and occurrences submitted in training mode can be kept apart from normal records.
    * The output of this control can be configured using the following templates:
    * <ul>
    * <li><b>training</b></br>
