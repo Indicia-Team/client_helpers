@@ -40,6 +40,15 @@ class iform_species_details extends iform_dynamic {
   private static $taxon_meaning_id;
 
   /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
+
+  /**
    * Return the form metadata.
    *
    * @return array
@@ -492,7 +501,7 @@ class iform_species_details extends iform_dynamic {
    * Available options include:
    * * @includeCaptions - set to false to exclude attribute captions from the
    *   grouped data.
-   *   @headingsToInclude - CSV list of heading names that are to be included. To include a particular sub-category only, supply the  
+   *   @headingsToInclude - CSV list of heading names that are to be included. To include a particular sub-category only, supply the
    *   heading name and then a slash and then the sub-category name e.g.  the following includes just the hoglets sub-category
    *   and the entire rabbits section @headingsToInclude=Hedgehogs/Hoglets,Rabbits
    *   @headingsToExclude - Same as @headingsToInclude but items are exluded instead (any items that appear in both headingsToInclude and headingsToExclude will be excluded).
@@ -516,7 +525,7 @@ class iform_species_details extends iform_dynamic {
     } else {
       $headingsToExclude = array();
     }
-    
+
     $mainHeadingsToInclude = $subHeadingsToInclude = $mainHeadingsToExclude = $subHeadingsToExclude = array();
     // Cycle through all the headings we want to include
     foreach ($headingsToInclude as $headingSubCatToInclude) {
@@ -525,12 +534,12 @@ class iform_species_details extends iform_dynamic {
         // If a sub-category has been specified, then get the main heading and sub-category and save them
         // (we still need the main heading as we need to display it, even if we are only going to be showing one of the sub-categories)
         $headingSubCatSplit=explode('/',$headingSubCatToInclude);
-        $mainHeadingsToInclude[]=$headingSubCatSplit[0];  
-        $subHeadingsToInclude[]=$headingSubCatToInclude;  
+        $mainHeadingsToInclude[]=$headingSubCatSplit[0];
+        $subHeadingsToInclude[]=$headingSubCatToInclude;
       } else {
         // If we are including the whole section, then indicate this explicitely to the system using the word unlimited
         $mainHeadingsToInclude[]=$headingSubCatToInclude;
-        $subHeadingsToInclude[]=$headingSubCatToInclude.'/unlimited';  
+        $subHeadingsToInclude[]=$headingSubCatToInclude.'/unlimited';
       }
     }
 
@@ -539,10 +548,10 @@ class iform_species_details extends iform_dynamic {
     foreach ($headingsToExclude as $headingSubCatToExclude) {
       if (strpos($headingSubCatToExclude, '/') !== false) {
         $headingSubCatSplit=explode('/',$headingSubCatToExclude);
-        $subHeadingsToExclude[]=$headingSubCatToExclude;  
+        $subHeadingsToExclude[]=$headingSubCatToExclude;
       } else {
         $mainHeadingsToExclude[]=$headingSubCatToExclude;
-        $subHeadingsToExclude[]=$headingSubCatToExclude.'/unlimited';  
+        $subHeadingsToExclude[]=$headingSubCatToExclude.'/unlimited';
       }
     }
 
@@ -579,9 +588,9 @@ class iform_species_details extends iform_dynamic {
             // - The user hasn't specified any options regarding which sections should be displayed
             // - The user has specified to include the section, and not specified to exclude it
             // - The user hasn't specified any options regarding what to include, and it isn't in the list of items to exclude.
-            if ($currentHeading === '' 
+            if ($currentHeading === ''
                 || (in_array($currentHeading, $mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))
-                || (empty($mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))  
+                || (empty($mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))
                 || (empty($mainHeadingsToInclude) && empty($mainHeadingsToExclude))) {
               $r .= str_replace(
                 ['{id}', '{title}', '{content}'],
@@ -605,9 +614,9 @@ class iform_species_details extends iform_dynamic {
         // - The user has specified to include all sub-categories under a particular heading and the sub-category is not listed for exclusion
         if  ($row['subcategory'] === '' ||
             (in_array($currentHeadingAndSubCat, $subHeadingsToInclude) && !in_array($currentHeadingAndSubCat, $subHeadingsToExclude)) ||
-            (empty($subHeadingsToInclude) && !in_array($currentHeadingAndSubCat, $subHeadingsToExclude)) ||  
+            (empty($subHeadingsToInclude) && !in_array($currentHeadingAndSubCat, $subHeadingsToExclude)) ||
             (empty($subHeadingsToInclude) && empty($subHeadingsToExclude)) ||
-            (in_array($currentHeading.'/unlimited', $subHeadingsToInclude) && !in_array($currentHeading.'/unlimited', $subHeadingsToExclude))   
+            (in_array($currentHeading.'/unlimited', $subHeadingsToInclude) && !in_array($currentHeading.'/unlimited', $subHeadingsToExclude))
         ) {
           $currentHeadingContent .= str_replace(
             array('{caption}', '{value}'),
@@ -618,9 +627,9 @@ class iform_species_details extends iform_dynamic {
    	  }
       if (!empty($currentHeadingContent)) {
         // See comments above for explanation of IF statement
-        if ($currentHeading === '' 
+        if ($currentHeading === ''
             || (in_array($currentHeading, $mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))
-            || (empty($mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))  
+            || (empty($mainHeadingsToInclude) && !in_array($currentHeading, $mainHeadingsToExclude))
             || (empty($mainHeadingsToInclude) && empty($mainHeadingsToExclude))) {
           $r .= str_replace(
             ['{id}', '{title}', '{content}'],
@@ -691,10 +700,10 @@ HTML
       )
     )) . '</div>';
   }
-  
+
   /*
    * Gets a comma seperated list of taxa associated with the species by using the taxon_associations table
-   */  
+   */
   protected static function get_control_taxonassociations($auth, $args, $tabalias, $options) {
     $params = [
       'taxa_taxon_list_id' => empty($_GET['taxa_taxon_list_id']) ? '' : $_GET['taxa_taxon_list_id'],
@@ -1026,14 +1035,6 @@ HTML
   }
 
   /**
-   * Disable save buttons for this form class. Not a data entry form...
-   * @return boolean
-   */
-  protected static function include_save_buttons() {
-    return FALSE;
-  }
-
-  /**
    * Used to convert an array of attributes to a string formatted like a set,
    * this is then used by the species_data_attributes_with_hiddens report to return
    * custom attributes which aren't in the hidden attributes list.
@@ -1044,26 +1045,5 @@ HTML
    */
   protected static function convert_array_to_set($theArray) {
     return "'".implode("','", str_replace("'", "''", $theArray))."'";
-  }
-
-  /**
-   * Override the standard header as this is not an HTML form.
-   */
-  protected static function getHeader($args) {
-    return '';
-  }
-
-  /**
-   * Override the standard footer as this is not an HTML form.
-   */
-  protected static function getFooter($args) {
-    return '';
-  }
-
-  /**
-   * Override some default behaviour in dynamic.
-   */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
   }
 }

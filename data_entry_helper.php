@@ -694,7 +694,7 @@ JS;
 
   /**
    * Helper function to output a checkbox for controlling training mode.
-   * Occurrences submitted in training mode can be kept apart from normal records.
+   * Samples and occurrences submitted in training mode can be kept apart from normal records.
    * The output of this control can be configured using the following templates:
    * <ul>
    * <li><b>training</b></br>
@@ -3296,6 +3296,7 @@ RIJS;
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
     //make a copy of the options so that we can maipulate it
     $overrideOptions = $options;
+ 
     //We are going to cycle through each of the name filter types
     //and save the parameters required for each type in an array so
     //that the Javascript can quickly access the required parameters
@@ -7248,13 +7249,6 @@ TXT;
    * @param boolean $fullInfo If true, then successful checks are also output.
    */
   public static function system_check($fullInfo=true) {
-    // PHP_VERSION_ID is available as of PHP 5.2.7, if our
-    // version is lower than that, then emulate it
-    if(!defined('PHP_VERSION_ID'))
-    {
-      $version = PHP_VERSION;
-      define('PHP_VERSION_ID', ($version{0} * 10000 + $version{2} * 100 + $version{4}));
-    }
     $r = '<div class="ui-widget ui-widget-content ui-state-highlight ui-corner-all">' .
       '<p class="ui-widget-header"><strong>System check</strong></p><ul>';
     // Test PHP version.

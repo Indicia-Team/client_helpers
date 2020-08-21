@@ -229,6 +229,9 @@ ul.gallery li {
   margin: 0 0 4px 0;
   line-height: 1em;
 }
+.popup-form label.auto {
+  display: inline-block;
+}
 /* line 146, sass/verification_5.scss */
 .popup-form #ctrl-wrap-redet-from-full-list label {
   display: inline-block;

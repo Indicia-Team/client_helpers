@@ -332,7 +332,9 @@ class ElasticsearchReportHelper {
       'columns',
       'cookies',
       'includeColumnHeadings',
+      'includeColumnSettingsTool',
       'includeFilterRow',
+      'includeFullScreenTool',
       'includePager',
       'includeMultiSelectTool',
       'responsive',
@@ -365,12 +367,36 @@ class ElasticsearchReportHelper {
     if (!empty($options['source']) && !empty($options['linkToDataGrid'])) {
       throw new Exception('Download control requires only one of the @source or @linkToDataGrid options to be specified.');
     }
+    if (empty($options['source']) && !empty($options['columnsTemplate'])) {
+      throw new Exception('Download control @source option must be specified if @columnsTemplate option is used (cannot be used with @linkToDataGrid).');
+    }
+
     $options = array_merge([
       'caption' => 'Download',
       'title' => 'Run the download',
     ], $options);
+
+    // If columnsTemplate options specifies an array, then create control options for
+    // a select control that will be used to indicate the selected columns template.
+    if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
+      $availableColTypes = array(
+        "default" => lang::get("Standard download format"),
+        "easy-download" => lang::get("Backward-compatible format")
+      );
+      $optionArr = array();
+      foreach ($options['columnsTemplate'] as $colType) {
+        $optionArr[$colType] = $availableColTypes[$colType];
+      }
+      $controlOptions = [
+        'id' => "$options[id]-template",
+        'fieldname' => 'columnsTemplate',
+        'lookupValues' => $optionArr,
+      ];
+      unset($options['columnsTemplate']);
+    }
+
     global $indicia_templates;
-    $html = str_replace(
+    $button = str_replace(
       [
         '{id}',
         '{title}',
@@ -384,6 +410,12 @@ class ElasticsearchReportHelper {
       ],
       $indicia_templates['button']
     );
+    if (isset($controlOptions)) {
+      $html = "<div class='idc-download-ctl-part'>".$button."</div>";
+      $html .= "<div class='idc-download-ctl-part'>".data_entry_helper::select($controlOptions)."</div>";
+    } else {
+      $html = $button;
+    }
     $progress = <<<HTML
 <div class="progress-circle-container">
   <svg>
@@ -514,7 +546,13 @@ JS;
   }
 
   /**
-   * Output a selector for various high level permissions filtering options.
+   * Output a selector for sets of records defined by a permission.
+   *
+   * Allows user to select from:
+   * * All records (if permission is set)
+   * * My records
+   * * Permission filters
+   * * Groups.
    *
    * @return string
    *   Select HTML.
@@ -522,17 +560,30 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
    */
   public static function permissionFilters(array $options) {
-    $allowedTypes = [];
+    require_once 'prebuilt_forms/includes/report_filters.php';
+
+    $options = array_merge([
+      'id' => "es-permissions-filter",
+      'includeFiltersForGroups' => FALSE,
+      'includeFiltersForSharingCodes' => [],
+      'useSharingPrefix' => TRUE,
+      'label' => 'Records to access',
+    ], $options);
+
+    $optionArr = [];
+
     // Add My records download permission if allowed.
     if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
-      $allowedTypes['my'] = lang::get('My records');
+      $optionArr['p-my'] = lang::get('My records');
     }
-    // Add All records download permission if allowed.
+
+    // Add All records if website permission allows.
     if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
-      $allowedTypes['all'] = lang::get('All records');
+      $optionArr['p-all'] = lang::get('All records');
     }
-    // Add collated location (e.g. LRC boundary) records download permission if
-    // allowed.
+
+    // Add collated location (e.g. LRC boundary) records if website
+    // permissions allow.
     if (!empty($options['location_collation_records_permission'])
         && hostsite_user_has_permission($options['location_collation_records_permission'])) {
       $locationId = hostsite_get_user_field('location_collation');
@@ -542,24 +593,128 @@ JS;
           'extraParams' => $options['readAuth'] + ['id' => $locationId],
         ]);
         if (count($locationData) > 0) {
-          $allowedTypes['location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
+          $optionArr['p-location_collation'] = lang::get('Records within location ' . $locationData[0]['name']);
         }
       }
     }
-    if (count($allowedTypes) === 1) {
-      $value = array_values($allowedTypes)[0];
-      return <<<HTML
-<input type="hidden" name="es-permissions-filter" value="$value" class="permissions-filter" />
+
+    // Add in permission filters.
+    // Find allowed values onle.
+    $sharingCodes = array_intersect(
+      $options['includeFiltersForSharingCodes'],
+      ['R', 'V', 'D', 'M', 'P']
+    );
+    $sharingTypes = array(
+      'R' => lang::get('Reporting'),
+      'V' => lang::get('Verification'),
+      'D' => lang::get('Data-flow'),
+      'M' => lang::get('Moderation'),
+      'P' => lang::get('Peer review'),
+    );
+    foreach ($sharingCodes as $sharingCode) {
+      $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
+      foreach ($filterData as $filter) {
+        if ($filter['defines_permissions'] === 't') {
+          // If useSharingPrefix options specified, prefix type of sharing to
+          // filter name.
+          $filterTitle = $options['useSharingPrefix']
+            ? $sharingTypes[$sharingCode] . ' - ' . $filter['title']
+            : $filter['title'];
+          $optionArr["f-$filter[id]"] = $filterTitle;
+        }
+      }
+    }
+
+    if ($options['includeFiltersForGroups']) {
+      // Groups integration if user linked to warehouse.
+      $params = [
+        'user_id' => hostsite_get_user_field('indicia_user_id'),
+        'view' => 'detail',
+      ];
+
+      if ($params['user_id']) {
+        $groups = data_entry_helper::get_population_data(array(
+          'table' => 'groups_user',
+          'extraParams' => data_entry_helper::$js_read_tokens + $params,
+        ));
+        foreach ($groups as $group) {
+          $title = $group['group_title'] . (isset($group['group_expired']) && $group['group_expired'] === 't' ?
+              ' (' . lang::get('finished') . ')' : '');
+          if ($group['administrator'] === 't') {
+            $optionArr["g-all-$group[group_id]"] = lang::get('All records added using a recording form for {1}', $title);
+          }
+          $optionArr["g-my-$group[group_id]"] = lang::get('My records added using a recording form for {1}', $title);
+        }
+      }
+    }
+
+    // Return the select control. There will always be at least one option (my
+    // records).
+    $controlOptions = [
+      'label' => lang::get($options['label']),
+      'fieldname' => $options['id'],
+      'lookupValues' => $optionArr,
+      'class' => 'permissions-filter',
+    ];
+
+    return data_entry_helper::select($controlOptions);
+  }
+
+  /**
+   * Output a summary of currently applied filters.
+   *
+   * @return string
+   *   HTML summary text.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filterSummary
+   */
+  public static function filterSummary(array $options) {
+
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    report_filters_set_parser_language_strings();
+    $options = array_merge([
+      'id' => 'es-filter-summary',
+      'label' => 'Filter summary',
+    ], $options);
+
+    $html = <<<HTML
+<div>
+  <h3>$options[label]</h3>
+  <div class="filter-summary-contents"></div>
+</div>
 
 HTML;
-    }
-    else {
-      return data_entry_helper::select([
-        'fieldname' => 'es-permissions-filter',
-        'lookupValues' => $allowedTypes,
-        'class' => 'permissions-filter',
-      ]);
-    }
+
+  helper_base::$late_javascript .= <<<JS
+$('#es-filter-summary').idcFilterSummary('populate');
+$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
+    // Update any summary output
+    $('#es-filter-summary').idcFilterSummary('populate');
+});
+
+JS;
+
+    return self::getControlContainer('filterSummary', $options, json_encode([]), $html);
+  }
+
+  /**
+   * Output a selector for record status.
+   *
+   * Mirrors the 'quality - records to include' drop-down in standardParams control.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
+   */
+  public static function statusFilters(array $options) {
+    require_once 'prebuilt_forms/includes/report_filters.php';
+    $options = array_merge(array(
+      'sharing' => 'reporting',
+      'elasticsearch' => TRUE,
+    ), $options);
+
+    return status_control($options['readAuth'], $options);
   }
 
   /**
@@ -600,8 +755,8 @@ HTML;
       'showSelectedRow',
     ], TRUE);
     helper_base::add_resource('tabs');
-    helper_base::$javascript .= <<<JS
-$('#$options[id]').idcRecordDetailsPane({});
+    helper_base::$late_javascript .= <<<JS
+$('#$options[id]').idcRecordDetailsPane();
 
 JS;
     $r = <<<HTML
@@ -847,13 +1002,22 @@ HTML;
       'definesPermissions' => FALSE,
       'sharingCode' => 'R',
     ], $options);
-    $filterData = report_filters_load_existing($options['readAuth'], $options['sharingCode'], TRUE);
+    $options = array_merge([
+      'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
+    ], $options);
+
+    // Sharing code can be specified as a comma separated list of codes.
+    $sharingCodes = explode(',', $options['sharingCode']);
     $optionArr = [];
-    foreach ($filterData as $filter) {
-      if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
-        $optionArr[$filter['id']] = $filter['title'];
+    foreach ($sharingCodes as $sharingCode) {
+      $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
+      foreach ($filterData as $filter) {
+        if (($filter['defines_permissions'] === 't') === $options['definesPermissions']) {
+          $optionArr[$filter['id']] = $filter['title'];
+        }
       }
     }
+
     if (count($optionArr) === 0) {
       // No filters available. Until we support saving, doesn't make sense to
       // show the control.
@@ -861,7 +1025,7 @@ HTML;
     }
     else {
       $controlOptions = [
-        'label' => $options['definesPermissions'] ? lang::get('Context') : lang::get('Filter'),
+        'label' => $options['label'],
         'fieldname' => $options['id'],
         'lookupValues' => $optionArr,
         'class' => 'user-filter',
@@ -1157,8 +1321,6 @@ AGG;
     }
     $options = array_merge([
       'fields' => [],
-      // Default to sort by the uniqueField.
-      'sort' => [$options['uniqueField'] => 'asc'],
       'aggregation' => [],
     ], $options);
   }
@@ -1385,5 +1547,4 @@ HTML;
     self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
-
 }

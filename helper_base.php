@@ -191,7 +191,7 @@ $indicia_templates = array(
   'paging' => '<div class="left">{first} {prev} {pagelist} {next} {last}</div><div class="right">{showing}</div>',
   'jsonwidget' => '<div id="{id}" {class}></div>',
   'report_picker' => '<div id="{id}" {class}>{reports}<div class="report-metadata"></div><button type="button" id="picker-more">{moreinfo}</button><div class="ui-helper-clearfix"></div></div>',
-  'report_download_link' => '<div class="report-download-link"><a href="{link}">{caption}</a></div>',
+  'report_download_link' => '<div class="report-download-link"><a href="{link}"{class}>{caption}</a></div>',
   'verification_panel' => '<div id="verification-panel">{button}<div class="messages" style="display: none"></div></div>',
   'two-col-50' => '<div class="two columns"{attrs}><div class="column">{col-1}</div><div class="column">{col-2}</div></div>',
   'loading_overlay' => '<div class="loading-spinner" style="display: none"><div>Loading...</div></div>',
@@ -611,14 +611,14 @@ class helper_base {
    *   Associative array of keys and texts to translate.
    */
   public static function addLanguageStringsToJs($group, array $strings) {
-      self::$javascript .= <<<JS
-indiciaData.lang.$group = {};
-
-JS;
+    $translations = [];
     foreach ($strings as $key => $text) {
-      self::$javascript .= "indiciaData.lang.$group.$key = '" .
-      str_replace("'", "\'", lang::get($text)) . "';\n";
+      $translations[$key] = lang::get($text);
     }
+    if (!isset(self::$indiciaData['lang'])) {
+      self::$indiciaData['lang'] = [];
+    }
+    self::$indiciaData['lang'][$group] = $translations;
   }
 
   /**
@@ -908,6 +908,7 @@ JS;
             self::$js_path . 'indicia.datacomponents/jquery.idc.recordDetailsPane.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.templatedOutput.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
           ],
         ],
       );
@@ -1168,6 +1169,7 @@ JS;
    */
   public static function build_params_form($options, &$hasVisibleContent) {
     require_once('data_entry_helper.php');
+    global $indicia_templates;
     $javascript = '';
     // track if there is anything other than hiddens on the form
     $hasVisibleContent=false;
@@ -1200,17 +1202,25 @@ JS;
       }
       // If the form has defined any tools to add to the map, we need to create JavaScript to add them to the map.
       if (count($tools)) {
-        // wrap JavaScript in a test that the map is on the page
-        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true')
+        // Wrap JavaScript in a test that the map is on the page.
+        if (isset($info['allow_buffer']) && $info['allow_buffer']=='true') {
           $javascript .= "if (typeof $.fn.indiciaMapPanel!=='undefined') {\n";
+          $javascript .= "  indiciaFns.enableBuffering();\n";
+        }
+        $javascript .= "  indiciaFns.storeGeomsInFormOnSubmit();\n";
         $fieldname=(isset($options['fieldNamePrefix']) ? $options['fieldNamePrefix'].'-' : '') .$key;
         self::add_resource('spatialReports');
         self::add_resource('clearLayer');
-        $javascript .= "  indiciaFns.enableBuffering();\n";
         if ($options['inlineMapTools']) {
-          $r .= '<label>'.$info['display'].':</label>';
-          $r .= '<div class="control-box">Use the following tools to define the query area.<br/>'.
-          '<div id="map-toolbar" class="olControlEditingToolbar left"></div></div><br/>';
+          $ctrl = <<<HTML
+<label>$info[display]:</label>
+<div class="control-box">
+  <div id="map-toolbar" class="olControlEditingToolbar clearfix"></div>
+  <p class="helpText">Use the above tools to define the query area.</p>
+</div>
+
+HTML;
+          $r .= str_replace(array('{control}', '{id}'), [$ctrl, 'map-toolbar'], $indicia_templates['controlWrap']);
         }
         $r .= '<input type="hidden" name="'.$fieldname.'" id="hidden-wkt" value="'.
             (isset($_POST[$fieldname]) ? $_POST[$fieldname] : '').'"/>';
@@ -2323,7 +2333,81 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
     return $terms;
   }
 
- /**
+  /**
+   * Apply a set of replacements to a string.
+   *
+   * Useful when configuration allows the specification of strings that will
+   * be output in the HTML (e.g dynamic content or report grid footers). The
+   * following tokens are replaced:
+   * * {rootFolder} - relative URL to prefix links generated within the site.
+   * * {currentUrl} - relative URL of the current page.
+   * * {sep} - either ? or & as required to append to links before adding
+   *     parameters. Will be ? unless using dirty URLs.
+   * * {warehouseRoot} - root URL of the warehouse.
+   * * {geoserverRoot} - root URL of the GeoServer instance if configured.
+   * * {nonce} - read nonce token, used to generate reporting links.
+   * * {auth} - read auth token, used to generate reporting links.
+   * * {indicia_user_id} - Indicia warehouse user ID.
+   * * {uid} - Drupal uid.
+   * * {website_id} - Indicia warehouse website ID.
+   * * {t:<phrase>} - returns translated version of <phrase>.
+   *
+   * @param string $string
+   *   String to have tokens replaced.
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @return string
+   *   String with tokens replaced.
+   */
+  public static function getStringReplaceTokens($string, $readAuth) {
+    $rootFolder = self::getRootFolder(TRUE);
+    $currentUrl = self::get_reload_link_parts();
+    // Amend currentUrl path if we have Drupal 7 dirty URLs so javascript will
+    // work properly.
+    if (isset($currentUrl['params']['q']) && strpos($currentUrl['path'], '?') === FALSE) {
+      $currentUrl['path'] = $currentUrl['path'].'?q='.$currentUrl['params']['q'];
+    }
+    // Do translations.
+    if (preg_match_all('/{t:([^}]+)}/', $string, $matches)) {
+      for ($i = 0; $i < count($matches[0]); $i++) {
+        $string = str_replace($matches[0][$i], lang::get($matches[1][$i]), $string);
+      }
+    }
+    // Note a couple of repeats in the list for legacy reasons.
+    return str_replace(
+      [
+        '{rootFolder}',
+        '{currentUrl}',
+        '{sep}',
+        '{warehouseRoot}',
+        '{geoserverRoot}',
+        '{nonce}',
+        '{auth}',
+        '{iUserID}',
+        '{indicia_user_id}',
+        '{user_id}',
+        '{uid}',
+        '{website_id}',
+      ],
+      [
+        $rootFolder,
+        $currentUrl['path'],
+        strpos($rootFolder, '?') === FALSE ? '?' : '&',
+        self::$base_url,
+        self::$geoserver_url,
+        "nonce=$readAuth[nonce]",
+        "auth_token=$readAuth[auth_token]",
+        hostsite_get_user_field('indicia_user_id'),
+        hostsite_get_user_field('indicia_user_id'),
+        hostsite_get_user_field('id'),
+        hostsite_get_user_field('id'),
+        self::$website_id,
+      ],
+      $string
+    );
+  }
+
+  /**
    * Converts the validation rules in an options array into a string that can be used as the control class,
    * to trigger the jQuery validation plugin.
    * @param $options. Control options array. For validation to be applied should contain a validation entry,

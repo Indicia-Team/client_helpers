@@ -54,6 +54,14 @@ class iform_dynamic {
   const MODE_EXISTING_RO = 3; // display existing sample for reading only
   const MODE_CLONE = 4; // display form for adding a new sample containing values of an existing sample.
 
+  /**
+   * Controls whether a form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return TRUE;
+  }
 
   public static function get_parameters() {
     $retVal = array_merge(
@@ -331,14 +339,12 @@ class iform_dynamic {
 
   protected static function get_form_html($args, $auth, $attributes) {
     global $indicia_templates;
-    $r = call_user_func(array(self::$called_class, 'getHeader'), $args);
     $params = array($args, $auth, &$attributes);
+    $r = call_user_func(array(self::$called_class, 'getHeader'), $args);
+    $r .= call_user_func_array(array(self::$called_class, 'getFormHiddenInputs'), $params);
     if (self::$mode === self::MODE_CLONE) {
       call_user_func_array(array(self::$called_class, 'cloneEntity'), $params);
     }
-    $firstTabExtras = (method_exists(self::$called_class, 'getFirstTabAdditionalContent'))
-      ? call_user_func_array(array(self::$called_class, 'getFirstTabAdditionalContent'), $params)
-      : '';
     $customAttributeTabs = get_attribute_tabs($attributes);
     $tabs = self::get_all_tabs($args['structure'], $customAttributeTabs);
     if (isset($tabs['-'])) {
@@ -349,7 +355,7 @@ class iform_dynamic {
 
     $r .= "<div id=\"controls\">\n";
     // Build a list of the tabs that actually have content.
-    $tabHtml = self::get_tab_html($tabs, $auth, $args, $attributes, $firstTabExtras);
+    $tabHtml = self::get_tab_html($tabs, $auth, $args, $attributes);
     // Output the dynamic tab headers.
     if ($args['interface'] !== 'one_page') {
       $headerOptions = array('tabs' => array());
@@ -422,33 +428,25 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         ));
       } elseif ($pageIdx==count($tabHtml)-1) {
         // We need the verify button as well if this option is enabled
-        if (isset($args['verification_panel']) && $args['verification_panel'])
+        if (isset($args['verification_panel']) && $args['verification_panel']) {
           $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">'.lang::get('Precheck my records')."</button>\n";
-        if (call_user_func(array(self::$called_class, 'include_save_buttons'))
-            && !($args['interface']=='tabs' && isset($args['save_button_below_all_pages']) && $args['save_button_below_all_pages'])
-            && method_exists(self::$called_class, 'getSubmitButtons'))
-          // last part of a non wizard interface must insert a save button, unless it is tabbed
-          // interface with save button beneath all pages
+        }
+        if (call_user_func([self::$called_class, 'isDataEntryForm']) && method_exists(self::$called_class, 'getSubmitButtons')
+            && !($args['interface'] === 'tabs' && !empty($args['save_button_below_all_pages']))) {
+          // Last part of a non wizard interface must insert a save button,
+          // unless it is tabbed interface with save button beneath all pages.
           $r .= call_user_func(array(self::$called_class, 'getSubmitButtons'), $args);
+        }
       }
       $pageIdx++;
       $r .= "</div>\n";
     }
     $r .= "</div>\n";
-    if (method_exists(self::$called_class, 'getFooter'))
-      $r .= call_user_func(array(self::$called_class, 'getFooter'), $args);
-
-    if (method_exists(self::$called_class, 'link_species_popups'))
-      $r .= call_user_func(array(self::$called_class, 'link_species_popups'), $args);
+    $r .= call_user_func(array(self::$called_class, 'getFooter'), $args);
+    if (method_exists(self::$called_class, 'linkSpeciesPopups')) {
+      $r .= call_user_func(array(self::$called_class, 'linkSpeciesPopups'), $args);
+    }
     return $r;
-  }
-
-  /**
-   * Simple protected method which allows child classes to disable save buttons on the form.
-   * @return type
-   */
-  protected static function include_save_buttons() {
-    return TRUE;
   }
 
   /**
@@ -457,36 +455,17 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    * @param type $args
    */
   protected static function getHeader($args) {
-    // Make sure the form action points back to this page
-    $reloadPath = call_user_func(array(self::$called_class, 'getReloadPath'));
-    $r = "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
-    // request automatic JS validation
-    if (!isset($args['clientSideValidation']) || $args['clientSideValidation'])
-      data_entry_helper::enable_validation('entry_form');
-    return $r;
+    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
+      // Make sure the form action points back to this page
+      $reloadPath = call_user_func(array(self::$called_class, 'getReloadPath'));
+      // request automatic JS validation
+      if (!isset($args['clientSideValidation']) || $args['clientSideValidation'])
+        data_entry_helper::enable_validation('entry_form');
+      return "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
+    }
+    return '';
   }
 
-  /**
-   * Overridable function to supply default values to a new record from the entity_to_load.
-   * @param type $args
-   */
-  protected static function cloneEntity($args, $auth, &$attributes) {
-  }
-
- /**
-   * Overridable function to retrieve the additional HTML to appear at the top of the first
-   * tab or form section. This is normally a set of hidden inputs, containing things like the
-   * website ID to post with a form submission.
-   * @param type $args
-   */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    // Get authorisation tokens to update the Warehouse, plus any other hidden data.
-    $r = $auth['write'].
-          "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n".
-          "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
-    $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
-    return $r;
-  }
 
   /**
    * Overridable function to retrieve the HTML to appear below the dynamically constructed form,
@@ -495,14 +474,43 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
    */
   protected static function getFooter($args) {
     $r = '';
-    // add a single submit button outside the tabs if they want a button visible all the time
-    if ($args['interface']=='tabs' && $args['save_button_below_all_pages'] && method_exists(self::$called_class, 'getSubmitButtons'))
-      $r .= call_user_func(array(self::$called_class, 'getSubmitButtons'), $args);
-    if(!empty(data_entry_helper::$validation_errors)){
-      $r .= data_entry_helper::dump_remaining_errors();
+    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
+      // Add a single submit button outside the tabs if a button needs to be
+      // visible all the time.
+      if ($args['interface'] === 'tabs' && $args['save_button_below_all_pages'] && method_exists(self::$called_class, 'getSubmitButtons')) {
+        $r .= call_user_func(array(self::$called_class, 'getSubmitButtons'), $args);
+      }
+      if(!empty(data_entry_helper::$validation_errors)){
+        $r .= data_entry_helper::dump_remaining_errors();
+      }
+      $r .= "</form>";
     }
-    $r .= "</form>";
     return $r;
+  }
+
+ /**
+   * Overridable function to retrieve the additional HTML to appear at the top of the first
+   * tab or form section. This is normally a set of hidden inputs, containing things like the
+   * website ID to post with a form submission.
+   * @param type $args
+   */
+  protected static function getFormHiddenInputs($args, $auth, &$attributes) {
+    $r = '';
+    if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
+      // Get authorisation tokens to update the Warehouse, plus any other hidden data.
+      $r = $auth['write'].
+            "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n".
+            "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
+      $r .= get_user_profile_hidden_inputs($attributes, $args, isset(data_entry_helper::$entity_to_load['sample:id']), $auth['read']);
+    }
+    return $r;
+  }
+
+  /**
+   * Overridable function to supply default values to a new record from the entity_to_load.
+   * @param type $args
+   */
+  protected static function cloneEntity($args, $auth, &$attributes) {
   }
 
   /**
@@ -535,7 +543,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     return $reloadPath;
   }
 
-  protected static function get_tab_html($tabs, $auth, $args, $attributes, $firstTabExtras) {
+  protected static function get_tab_html($tabs, $auth, $args, $attributes) {
     $tabHtml = array();
     foreach ($tabs as $tab=>$tabContent) {
       // keep track on if the tab actually has real content, so we can avoid floating instructions if all the controls
@@ -547,11 +555,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         $tabalias = null;
       else
         $tabalias = 'tab-'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($tab));
-      $html = '';
-      if (count($tabHtml)===0 && $firstTabExtras)
-        // output the hidden inputs on the first tab
-        $html .= $firstTabExtras;
-      $html .= self::get_tab_content($auth, $args, $tab, $tabContent, $tabalias, $attributes, $hasControls);
+      $html = self::get_tab_content($auth, $args, $tab, $tabContent, $tabalias, $attributes, $hasControls);
       if (!empty($html) && $hasControls) {
         $tabHtml[$tab] = $html;
       }
@@ -754,12 +758,14 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
           $hasControls = true;
         }
       } elseif ($component === '|') {
-        // column splitter. So, store the col html and start on the next column.
+        // Column splitter. So, store the col html and start on the next
+        // column.
         $cols[] = $html;
         $html = '';
       } else {
-        // output anything else as is. This allow us to add html to the form structure.
-        $html .= $component;
+        // Output anything else as is. This allow us to add html to the form
+        // structure.
+        $html .= helper_base::getStringReplaceTokens($component, $auth['read']);
       }
     }
     if (count($cols)>0) {
@@ -1040,7 +1046,5 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       }
     }
   }
-
-
 
 }

@@ -24,13 +24,19 @@ require_once('includes/dynamic.php');
 require_once('includes/groups.php');
 
 /**
- * 
- * 
- * @package Client
- * @subpackage PrebuiltForms
  * A page for listing a series of links to the pages related to a particular group.
  */
 class iform_group_link_to_pages_from_single_group extends iform_dynamic {
+
+  /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
+
   public static function get_parameters() {
     $retVal = array_merge(
       array(
@@ -68,8 +74,8 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
     );
     return $retVal;
   }
-            
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -82,12 +88,7 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
       'recommended' => true
     );
   }
-  
-  //Override as we don't want to execute this
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
-  }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -96,13 +97,15 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
    * @param array $response When this form is reloading after saving a submission, contains the response from the service call.
    * Note this does not apply when redirecting (in this case the details of the saved object are in the $_GET data).
    * @return Form HTML.
-   * @todo: Implement this method 
+   * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
-    if (empty($args['group_id']))
+    if (empty($args['group_id'])) {
       drupal_set_message('Please specify a group_id in the page configuration.');
-    if (empty($args['instructions_configuration']))
+    }
+    if (empty($args['instructions_configuration'])) {
       drupal_set_message('Please provide a page configuration in the User Interface options.');
+    }
     //Only perform if the user has specified an instruction to appear under each page like.
     if (!empty($args['instructions_configuration'])) {
       $configuration = data_entry_helper::explode_lines($args['instructions_configuration']);
@@ -124,9 +127,9 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
           $key = substr($configurationLine, 1, -1);
           $titleNumber++;
         } else {
-          //If the line does not use square brackets then we know it is part of the description/instruction. We do an 
+          //If the line does not use square brackets then we know it is part of the description/instruction. We do an
           //append as the instruction might span several lines.
-          $description.=$configurationLine; 
+          $description.=$configurationLine;
         }
       }
       //For the last description we still need to save it to the array.
@@ -146,8 +149,8 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
     );
     // automatic handling for Drupal clean urls.
     $rootFolder = helper_base::getRootFolder(true);
-    
-    $groupsData = data_entry_helper::get_report_data($reportOptions); 
+
+    $groupsData = data_entry_helper::get_report_data($reportOptions);
     if (empty($groupsData)) {
       if (!empty($args['no_group_found_message'])) {
         $r = '<div>'.$args['no_group_found_message'].'</div>';
@@ -163,7 +166,7 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
     //All the page links come out of the database in one cluster. Explode these so we have each link separately
     $explodedPageLinks = explode('</a>',$pageLinks);
     // reinsert the closing </a> used in the explode above
-    foreach ($explodedPageLinks as &$pageLink) 
+    foreach ($explodedPageLinks as &$pageLink)
       $pageLink .= '</a>';
     $pageLinkHtml='';
     //Go through all the page links to display
@@ -172,8 +175,8 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
         //Each page link is a html link, we just want the plain name
         $plainPageLink=trim(strip_tags($pageLink));
         //If the user has specified an instruction/description for the page link, then display the instruction in the lines following the link
-        //using italics. 
-        if (array_key_exists($plainPageLink,$titleDescArr)) {  
+        //using italics.
+        if (array_key_exists($plainPageLink,$titleDescArr)) {
           if (!empty($titleDescArr[$plainPageLink])) {
             $pageLinkHtml .= "<h3>$pageLink</a></h3><p>{$titleDescArr[$plainPageLink]}</p>\n";
           } else {
@@ -185,7 +188,7 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
 
     $r = "<div><h2>$groupTitle Links</h2>";
     $r .= str_replace(array('{rootFolder}','{sep}'),
-        array($rootFolder, strpos($rootFolder, '?')===FALSE ? '?' : '&'), $pageLinkHtml); 
+        array($rootFolder, strpos($rootFolder, '?')===FALSE ? '?' : '&'), $pageLinkHtml);
     $r .= '</div><br>';
     $r .= parent::get_form($args, $nid, $response=null);
     return $r;

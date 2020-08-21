@@ -31,7 +31,7 @@
 require_once('includes/dynamic.php');
 
 class iform_verification_template_edit extends iform_dynamic {
-    
+
     /**
      * Return the form metadata.
      * @return array The definition of the form.
@@ -45,7 +45,7 @@ class iform_verification_template_edit extends iform_dynamic {
             'recommended' => true,
         );
     }
-    
+
     /**
      * Get the list of parameters for this form.
      * @return array List of parameters that this form requires.
@@ -114,7 +114,7 @@ class iform_verification_template_edit extends iform_dynamic {
         }
         return $retVal;
     }
-    
+
     /**
      * Return the generated form output.
      * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -148,7 +148,7 @@ class iform_verification_template_edit extends iform_dynamic {
         $args['interface'] = 'one_page';
         return parent::get_form($args, $nid);
     }
-    
+
     /**
      * Get the recorder names control
      * @param array $auth Read authorisation tokens
@@ -165,7 +165,7 @@ class iform_verification_template_edit extends iform_dynamic {
             'class' => 'wide',
         ));
     }
-    
+
     /**
      * Get the template statuses control.
      * @param array $auth Read authorisation tokens
@@ -196,7 +196,7 @@ class iform_verification_template_edit extends iform_dynamic {
             )) .
             '</fieldset>';
     }
-    
+
     /**
      * Get the restrict to website control.
      * @param array $auth Read authorisation tokens
@@ -213,7 +213,7 @@ class iform_verification_template_edit extends iform_dynamic {
             'helpText' => lang::get('Select this option if you want this template to only apply to records from this website.'),
         ));
     }
-    
+
     /**
      * Get the template control.
      * @param array $auth Read authorisation tokens
@@ -230,7 +230,7 @@ class iform_verification_template_edit extends iform_dynamic {
         )
             );
     }
-    
+
     /**
      * Get the restrict to external keys control.
      * @param array $auth Read authorisation tokens
@@ -265,7 +265,7 @@ class iform_verification_template_edit extends iform_dynamic {
             data_entry_helper::sub_list($subListOptions) . PHP_EOL .
             '</div></fieldset>' . PHP_EOL;
     }
-    
+
     /**
      * Retrieve the path to the current page, so the form can submit to itself.
      * @return string
@@ -285,7 +285,7 @@ class iform_verification_template_edit extends iform_dynamic {
         }
         return $reloadPath;
     }
-    
+
     /**
      * Determine whether to show a grid of existing records or a form for either adding a new record or editing an existing one.
      * @param array $args iform parameters.
@@ -295,7 +295,7 @@ class iform_verification_template_edit extends iform_dynamic {
     protected static function getMode($args, $nid) {
         // Default to mode MODE_GRID or MODE_NEW depending on no_grid parameter
         $mode = (isset($args['no_grid']) && $args['no_grid']) ? self::MODE_NEW : self::MODE_GRID;
-        
+
         if ($_POST && !is_null(data_entry_helper::$entity_to_load)) {
             // errors with new sample or entity populated with post, so display this data.
             $mode = self::MODE_EXISTING;
@@ -311,7 +311,7 @@ class iform_verification_template_edit extends iform_dynamic {
         }
         return $mode;
     }
-    
+
     /**
      * Construct a grid of existing records.
      * @param array $args iform parameters.
@@ -338,7 +338,7 @@ class iform_verification_template_edit extends iform_dynamic {
                 '</form>' .
                 '</div>';
     }
-    
+
     /**
      * Prepare to display an existing verification template: populate data_entry_helper::$entity_to_load
      * @param array $args iform parameters.
@@ -379,7 +379,7 @@ class iform_verification_template_edit extends iform_dynamic {
                     'fieldname' => 'verification_template:restrict_to_external_keys[]',
                 );
             }
-            
+
             $keys = self::array_parse(data_entry_helper::$entity_to_load['verification_template:restrict_to_family_external_keys']);
             data_entry_helper::$entity_to_load['verification_template:restrict_to_family_external_keys'] = array();
             foreach ($keys as $key) {
@@ -411,13 +411,13 @@ class iform_verification_template_edit extends iform_dynamic {
                     'fieldname' => 'verification_template:restrict_to_family_external_keys[]'
                 );
             }
-            
+
             $statuses = self::array_parse(data_entry_helper::$entity_to_load['verification_template:template_statuses']);
             data_entry_helper::$entity_to_load['verification_template:template_statuses'] = $statuses;
-            
+
         }
     }
-    
+
     /**
      * Parse a single dimension postgres array represented as a string into a PHP array.
      *
@@ -459,7 +459,7 @@ class iform_verification_template_edit extends iform_dynamic {
         }
         return $return;
     }
-    
+
     /**
      * Retrieve the additional HTML to appear at the top of the first
      * tab or form section. This is a set of hidden inputs containing the website ID and any existing template's ID.
@@ -468,7 +468,7 @@ class iform_verification_template_edit extends iform_dynamic {
      * @param array $attributes for this entity type: not applicable for verification_templates
      * @return string HTML to be added.
      */
-    protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
+    protected static function getFormHiddenInputs($args, $auth, &$attributes) {
         // Get authorisation tokens to update the Warehouse, plus any other hidden data.
         // no survey
         $r = $auth['write'] .
@@ -479,7 +479,7 @@ class iform_verification_template_edit extends iform_dynamic {
         }
         return $r;
     }
-    
+
     /**
      * Handles the construction of a submission array from a set of form values.
      * @param array $values Associative array of form data values.
@@ -490,7 +490,7 @@ class iform_verification_template_edit extends iform_dynamic {
         $struct=array(
             'model' => 'verification_template'
         );
-        
+
         if(isset($values['verification_template:restrict_to_external_keys'])) {
             $l = count($values['verification_template:restrict_to_external_keys']);
             for ($i = $l-1; $i >= 0; $i--) {
@@ -503,7 +503,7 @@ class iform_verification_template_edit extends iform_dynamic {
         } else {
             $values['verification_template:restrict_to_external_keys'] = array();
         }
-        
+
         if(isset($values['verification_template:restrict_to_family_external_keys'])) {
             $l = count($values['verification_template:restrict_to_family_external_keys']);
             for ($i = $l-1; $i >= 0; $i--) {
@@ -516,10 +516,10 @@ class iform_verification_template_edit extends iform_dynamic {
         } else {
             $values['verification_template:restrict_to_family_external_keys'] = array();
         }
-        
+
         return submission_builder::build_submission($values, $struct);
     }
-    
+
     /**
      * Provide actions to edit the linked verification_template
      * @return array report actions structure.
@@ -538,7 +538,7 @@ class iform_verification_template_edit extends iform_dynamic {
             )
         );
     }
-    
+
     /**
      * Override the default submit buttons to add a delete button where appropriate.
      * @param array $args iform parameters.
@@ -562,6 +562,6 @@ class iform_verification_template_edit extends iform_dynamic {
             }
             return $r;
     }
-    
+
 }
 

@@ -87,6 +87,135 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
    * @return array List of parameters that this form requires.
    */
   public static function get_parameters() {
+    $formStructureDescription = <<<TXT
+<h3>Form structure overview</h3>
+Define the structure of the form. Each component goes on a new line and is nested inside the
+previous component where appropriate. The following types of component can be specified. <br/>
+<strong>=tab/block name=</strong> is used to specify the name of a tab or wizard page. For All One
+Page mode, you must still specify a single block name in order to provide a block wrapper for the
+form. (Alpha-numeric characters only)<br/>
+<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in
+this form structure. <br/>
+<strong>[control name]</strong> indicates a predefined control is to be added to the
+form.<br/>
+<h3>Controls available</h3>
+<ul>
+  <li><strong>[species]</strong> - a species grid or input control. You can change any of the
+  control options for an individual custom attribute control in a grid by putting
+  @control|option=value on the subsequent line(s). For example, if a control is for occAttr:4 then
+  you can set it's default value by specifying @occAttr:4|default=7 on the line after the
+  [species]<br/>
+  If you want to specify a custom template for a grid's species label cell, then override the
+  taxon_label template. If you have multiple grids on the form, you can override each one
+  individually by setting the @taxonLabelTemplate for each grid to the name of a template that
+  you've added to the\$indicia_templates global array. If in single species entry mode and using a
+  select box for data input, you can put a taxon group select above the species input select by
+  setting the option @taxonGroupSelect=true. Control the label and helptext for this control using
+  the options @taxonGroupSelectLabel and @taxonGroupSelectHelpText.</li>
+  <li><strong>[species map]</strong> - a species grid or input control: this is the same as the
+  species control, but the sample is broken down into subsamples, each of which has its own
+  location picked from the map. Only the part of the species grid which is being added to or
+  modified at the time is displayed. This control should be placed after the map control, with
+  which it integrates. Species recording must be set to a List (grid mode) rather than single
+  entry. This control does not currently support mixed spatial reference systems, only the first
+  specified will be used. You do not need a [spatial reference] control on the page when using a
+  [species map] control.</li>
+  <li><strong>[species map summary]</strong> - a read only grid showing a summary of the data
+  entered using the species map control.</li>
+  <li><strong>[species attributes]</strong> - any custom attributes for the occurrence, if not
+  using the grid. Also includes a file upload box and sensitivity input control if relevant. The
+  attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they
+  default to 1600. Set @useDescriptionAsHelpText=true to load the descriptions of attribute
+  definitions on the server into the help text displayed with the control. Note that this control
+  provides a quick way to output all occurrence custom attributes plus photo and sensitivity input
+  controls and outputs all attributes irrespective of the form block or tab. For finer control of
+  the output, see the [occAttr:n], [photos] and [sensitivity] controls.</li>
+  <li><strong>[species dynamic attributes]</strong> - any custom attributes that have been
+  configured to only show for certain branches of the taxonomic hierarchy. Set @types to an array
+  containing either sample or occurrence to limit the block of attributes to those associated at
+  the sample or occurrence level only.</li>
+  <li><strong>[date]</strong> - date picker control. A sample must always have a date.</li>
+  <li><strong>[map]</strong> - a map that links to the spatial reference and location
+  select/autocomplete controls</li>
+  <li><strong>[spatial reference]</strong> - spatial reference input text box. A sample must always
+  have a spatial reference.</li>
+  <li><strong>[location name]</strong> - a text box to enter a place name.</li>
+  <li><strong>[location autocomplete]</strong> - an autocomplete control for picking a stored
+  location. A spatial reference is still required.</li>
+  <li><strong>[location url param]</strong> - a set of hidden inputs that insert the location ID
+  read from a URL parameter called location_id into the form. Uses the location's centroid as the
+  sample map reference.</li>
+  <li><strong>[location select]</strong> - a select control for picking a stored location. A
+  spatial reference is still required.</li>
+  <li><strong>[location map]</strong> - combines location select, map and spatial reference
+  controls for recording only at stored locations.</li>
+  <li><strong>[occurrence comment]</strong> - a text box for occurrence level comment.
+  Alternatively use the [species attributes] control to output all input controls for the species
+  automatically.</li>
+  <li><strong>[photos]</strong> - use when in single record entry mode to provide a control for
+  uploading occurrence photos. Alternatively use the [species attributes] control to output all
+  input controls for the species automatically. The [photos] control overrides the setting
+  <strong>Occurrence Images</strong>.</li>
+  <li><strong>[place search]</strong> - zooms the map to the entered location.</li>
+  <li><strong>[recorder names]</strong> - a text box for names. The logged-in user's id is always
+  stored with the record.</li>
+  <li><strong>[record status]</strong> - allow recorder to mark record as in progress or
+  complete.</li>
+  <li><strong>[review input]</strong>. - a panel showing all the currently input form values which
+  can be placed on the last tab of the form to allow the submission to be reviewed</li>
+  <li><strong>[sample comment]</strong> - a text box for sample level comment. (Each occurrence may
+  also have a comment.)</li>
+  <li><strong>[sample photo]</strong>. - a photo upload for sample level images. (Each occurrence
+  may also have photos.)</li>
+  <li><strong>[sensitivity]</strong> - outputs a control for setting record sensitivity and the
+  public viewing precision. This control will also output
+  any other occurrence custom attributes which are on an outer block called Sensitivity. Any such
+  attributes will then be disabled when the record is not sensitive, so they can be used to capture
+  information that only relates to sensitive records.</li>
+  <li><strong>[zero abundance]</strong>. - use when in single record entry mode to provide a
+  checkbox for specifying negative records.</li>
+  <li><strong>[smpAttr:<i>n</i>]</strong></li> is used to insert a particular custom sample
+  attribute identified by its ID number</li>
+  <li><strong>[occAttr:<i>n</i>]</strong> is used to insert a particular custom occurrence
+  attribute identified by its ID number when inputting single records at a time. Or use [species
+  attributes] to output the whole lot.</li>
+</ul>
+<h3>Options for controls</h3>
+<strong>@option=value</strong> on the line(s) following any control allows you to override one of
+the options passed to the control. The options available depend on the control. For example
+@label=Abundance would set the untranslated label of a control to Abundance. Where the option value
+is an array, use valid JSON to encode the value. For example an array of strings could be passed as
+@occAttrClasses=["class1","class2"] or a keyed array as
+@extraParams={"preferred":"true","orderby":"term"}. Other common options include helpText (set to a
+piece of additional text to display alongside the control) and class (to add css classes to the
+control such as control-width-3). Specify @permision=... to create a Drupal permission which you
+can use to control the visibility of this specific control.<br/>
+<strong>[*]</strong> is used to make a placeholder for putting any custom attributes that should be
+inserted into the current tab. When this option is used, you can change any of the control options
+for an individual custom attribute control by putting @control|option=value on the subsequent
+line(s). For example, if a control is for smpAttr:4 then you can update it's label by specifying
+@smpAttr:4|label=New Label on the line after the [*]. You can also set an option for all the
+controls output by the [*] block by specifying @option=value as for non-custom controls, e.g. set
+@label=My label to define the same label for all controls in this custom attribute block. You can
+define the value for a control using the standard replacement tokens for user data, namely
+{user_id}, {username}, {email} and {profile_*}; replace * in the latter to construct an existing
+profile field name. For example you could set the default value of an email input using
+@smpAttr:n|default={email} where n is the attribute ID.<br/>
+For any attribute controls you can:
+<ul>
+  <li>Set the default value to load from a parameter provided in the URL query string by setting
+  @urlParam to the name of the parameter in the URL which will contain the default value.</li>
+  <li>Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the
+  server into the help text displayed with the control.</li>
+  <li>* Set @attrImageSize = 'thumb', 'med' or 'original' to display the image defined for the
+  attribute on the server alongside the caption.</li>
+</ul>
+<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of
+the site.?<br/>
+<strong>|</strong> is used insert a split so that controls before the split go into a left column
+and controls after the split go into a right column.<br/>
+<strong>all else</strong> is copied to the output html so you can add structure for styling.
+TXT;
     $retVal = array_merge(
         parent::get_parameters(),
       array(
@@ -135,84 +264,8 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         ),
         array(
           'name' => 'structure',
-          'caption' => 'Form Structure',
-          'description' => 'Define the structure of the form. Each component goes on a new line and is nested inside the previous component where appropriate. The following types of ' .
-            "component can be specified. <br/>" .
-            "<strong>=tab/page name=</strong> is used to specify the name of a tab or wizard page. (Alpha-numeric characters only)<br/>" .
-            "<strong>=*=</strong> indicates a placeholder for putting any custom attribute tabs not defined in this form structure. <br/>" .
-            "<strong>[control name]</strong> indicates a predefined control is to be added to the form with the following predefined controls available: <br/>" .
-                "&nbsp;&nbsp;<strong>[species]</strong> - a species grid or input control. " .
-                    "You can change any of the control options for an individual custom attribute control in a grid by putting @control|option=value on the subsequent line(s). " .
-                    "For example, if a control is for occAttr:4 then you can set it's default value by specifying @occAttr:4|default=7 on the line after the [species]<br/>" .
-                    "If you want to specify a custom template for a grid's species label cell, then override the taxon_label template. If you have multiple grids on the " .
-                    "form, you can override each one individually by setting the @taxonLabelTemplate for each grid to the name of a template that you've added to the " .
-                    "\$indicia_templates global array. " .
-                    "If in single species entry mode and using a select box for data input, you can put a taxon group select above the species input select by " .
-                    "setting the option @taxonGroupSelect=true. Control the label and helptext for this control using the options @taxonGroupSelectLabel and @taxonGroupSelectHelpText.<br/>" .
-                "&nbsp;&nbsp;<strong>[species map]</strong> - a species grid or input control: this is the same as the species control, but the sample is broken down " .
-                "into subsamples, each of which has its own location picked from the map. Only the part of the species grid which is being added to or modified at the " .
-                "time is displayed. This control should be placed after the map control, with which it integrates. Species recording must be set to a List (grid mode) rather than single entry. " .
-                "This control does not currently support mixed spatial reference systems, only the first specified will be used. You do not need a [spatial reference] control on the " .
-                "page when using a [species map] control.<br/>" .
-                "&nbsp;&nbsp;<strong>[species map summary]</strong> - a read only grid showing a summary of the data entered using the species map control.<br/>" .
-                "&nbsp;&nbsp;<strong>[species attributes]</strong> - any custom attributes for the occurrence, if not using the grid. Also includes a file upload " .
-                    "box and sensitivity input control if relevant. The attrubutes @resizeWidth and @resizeHeight can specified on subsequent lines, otherwise they " .
-                    "default to 1600. Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the server into the help text displayed " .
-                    "with the control. Note that this control provides a quick way to output all occurrence custom attributes plus photo and sensitivity input controls " .
-                    "and outputs all attributes irrespective of the form block or tab. For finer control of the output, see the [occAttr:n], [photos] and [sensitivity] controls.<br/>" .
-                "&nbsp;&nbsp;<strong>[species dynamic attributes]</strong> - any custom attributes that have been configured to only show for certain branches " .
-                    "of the taxonomic hierarchy. Set @types to an array containing either sample or occurrence to limit the block of attributes to those associated " .
-                    "at the sample or occurrence level only.<br/>" .
-                "&nbsp;&nbsp;<strong>[date]</strong> - a sample must always have a date.<br/>" .
-                "&nbsp;&nbsp;<strong>[map]</strong> - a map that links to the spatial reference and location select/autocomplete controls<br/>" .
-                "&nbsp;&nbsp;<strong>[spatial reference]</strong> - a sample must always have a spatial reference.<br/>" .
-                "&nbsp;&nbsp;<strong>[location name]</strong> - a text box to enter a place name.<br/>" .
-                "&nbsp;&nbsp;<strong>[location autocomplete]</strong> - an autocomplete control for picking a stored location. A spatial reference is still required.<br/>" .
-                "&nbsp;&nbsp;<strong>[location url param]</strong> - a set of hidden inputs that insert the location ID read from a URL parameter called location_id into the form. Uses the " .
-                "location's centroid as the sample map reference.<br/>" .
-                "&nbsp;&nbsp;<strong>[location select]</strong> - a select control for picking a stored location. A spatial reference is still required.<br/>" .
-                "&nbsp;&nbsp;<strong>[location map]</strong> - combines location select, map and spatial reference controls for recording only at stored locations.<br/>" .
-                "&nbsp;&nbsp;<strong>[occurrence comment]</strong> - a text box for occurrence level comment. Alternatively use the " .
-                    "[species attributes] control to output all input controls for the species automatically. <br/>" .
-                "&nbsp;&nbsp;<strong>[photos]</strong> - use when in single record entry mode to provide a control for uploading occurrence photos. Alternatively use the " .
-                    "[species attributes] control to output all input controls for the species automatically. The [photos] control overrides the setting <strong>Occurrence Images</strong>.<br/>" .
-                "&nbsp;&nbsp;<strong>[place search]</strong> - zooms the map to the entered location.<br/>" .
-                "&nbsp;&nbsp;<strong>[recorder names]</strong> - a text box for names. The logged-in user's id is always stored with the record.<br/>" .
-                "&nbsp;&nbsp;<strong>[record status]</strong> - allow recorder to mark record as in progress or complete<br/>" .
-                "&nbsp;&nbsp;<strong>[review input]</strong>. - a panel showing all the currently input form values ' .
-                    'which can be placed on the last tab of the form to allow the submission to be reviewed<br/>" .
-                "&nbsp;&nbsp;<strong>[sample comment]</strong> - a text box for sample level comment. (Each occurrence may also have a comment.) <br/>" .
-                "&nbsp;&nbsp;<strong>[sample photo]</strong>. - a photo upload for sample level images. (Each occurrence may also have photos.) <br/>" .
-                "&nbsp;&nbsp;<strong>[sensitivity]</strong> - outputs a control for setting record sensitivity and the public viewing precision. This control will also output " .
-                    "any other occurrence custom attributes which are on an outer block called Sensitivity. Any such attributes will then be disabled when the record is " .
-                    "not sensitive, so they can be used to capture information that only relates to sensitive records.<br/>" .
-                "&nbsp;&nbsp;<strong>[zero abundance]</strong>. - use when in single record entry mode to provide a checkbox for specifying negative records.<br/>" .
-            "<strong>@option=value</strong> on the line(s) following any control allows you to override one of the options passed to the control. The options " .
-            "available depend on the control. For example @label=Abundance would set the untranslated label of a control to Abundance. Where the " .
-            "option value is an array, use valid JSON to encode the value. For example an array of strings could be passed as @occAttrClasses=[\"class1\",\"class2\"] " .
-            "or a keyed array as @extraParams={\"preferred\":\"true\",\"orderby\":\"term\"}. " .
-            "Other common options include helpText (set to a piece of additional text to display alongside the control) and class (to add css " .
-            "classes to the control such as control-width-3). Specify @permision=... to create a Drupal permission which you can use to " .
-            "control the visibility of this specific control.<br/>" .
-            "<strong>[*]</strong> is used to make a placeholder for putting any custom attributes that should be inserted into the current tab. When this option is " .
-            "used, you can change any of the control options for an individual custom attribute control by putting @control|option=value on the subsequent line(s). " .
-            "For example, if a control is for smpAttr:4 then you can update it's label by specifying @smpAttr:4|label=New Label on the line after the [*]. " .
-            "You can also set an option for all the controls output by the [*] block by specifying @option=value as for non-custom controls, e.g. " .
-            "set @label=My label to define the same label for all controls in this custom attribute block. " .
-            "You can define the value for a control using the standard replacement tokens for user data, namely {user_id}, {username}, {email} and {profile_*}; " .
-            "replace * in the latter to construct an existing profile field name. For example you could set the default value of an email input using @smpAttr:n|default={email} " .
-            "where n is the attribute ID.<br/>" .
-            "<strong>[smpAttr:<i>n</i>]</strong> is used to insert a particular custom sample attribute identified by its ID number<br/>" .
-            "<strong>[occAttr:<i>n</i>]</strong> is used to insert a particular custom occurrence attribute identified by its ID number when inputting single records at a time. " .
-            "Or use [species attributes] to output the whole lot.<br/>" .
-            "For any attribute controls you can:<br/>" .
-            " * Set the default value to load from a parameter provided in the URL query string by setting @urlParam to " .
-            "   the name of the parameter in the URL which will contain the default value.<br/>" .
-            " * Set @useDescriptionAsHelpText=true to load the descriptions of attribute definnitions on the server into the help text displayed with the control.<br/>" .
-            " * Set @attrImageSize = 'thumb', 'med' or 'original' to display the image defined for the attribute on the server alongside the caption.<br/>" .
-            "<strong>?help text?</strong> is used to define help text to add to the tab, e.g. ?Enter the name of the site.? <br/>" .
-            "<strong>|</strong> is used insert a split so that controls before the split go into a left column and controls after the split go into a right column.<br/>" .
-            "<strong>all else</strong> is copied to the output html so you can add structure for styling.",
+          'caption' => 'Form structure',
+          'description' => $formStructureDescription,
           'type' => 'textarea',
           'default' => "=Species=\r\n" .
               "?Please enter the species you saw and any other information about them.?\r\n" .
@@ -573,7 +626,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
               '"Lasius niger|Additional info|Colony info" pops up the controls from the block Additional Info > Colony info when a species is entered with this '.
               'name. For the species name, specify the preferred name from list.',
           'type' => 'textarea',
-          'required'=>false,
+          'required' => FALSE,
           'group' => 'Species'
         ),
         array(
@@ -843,6 +896,21 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
         if (count($response) !== 0) {
           // We found an occurrence so use it to detect the sample.
           self::$loadedSampleId = $response[0]['sample_id'];
+          if ($args['taxon_filter']) {
+            // If a taxon filter is set, check to see if the specified occurrence would
+            // pass the filtering. If not, then turn filtering off for this occurrence
+            // otherwise it cannot be edited.
+            $filtered_taxa = data_entry_helper::get_population_data(array(
+              'table' => 'taxa_search',
+              'extraParams' => $auth['read'] + array(
+                  'taxa_taxon_list_id'=>$response[0]['taxa_taxon_list_id'],
+                  $args['taxon_filter_field'] => json_encode($args['taxon_filter'])
+                )
+            ));
+            if (count($filtered_taxa) == 0) {
+              $args['taxon_filter']='';
+            }
+          }
         }
       }
     }
@@ -1038,7 +1106,7 @@ class iform_dynamic_sample_occurrence extends iform_dynamic {
     unset(data_entry_helper::$entity_to_load['occurrence:id']);
   }
 
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
+  protected static function getFormHiddenInputs($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden data.
     $r = <<<HTML
 $auth[write]
@@ -1188,21 +1256,28 @@ HTML;
   }
 
   /**
-   * Implement the link_species_popups parameter. This hides any identified blocks and pops them up when a certain species is entered.
+   * Implement the link_species_popups parameter.
+   *
+   * This hides any identified blocks and pops them up when a certain species
+   * is entered.
    */
-  protected static function link_species_popups($args) {
-    $r='';
+  protected static function linkSpeciesPopups($args) {
+    $r = '';
     if (isset($args['link_species_popups']) && !empty($args['link_species_popups'])) {
       data_entry_helper::add_resource('fancybox');
       $popups = helper_base::explode_lines($args['link_species_popups']);
       foreach ($popups as $popup) {
         $tokens = explode("|", $popup);
-        if (count($tokens)==2)
+        if (count($tokens) === 2) {
           $fieldset = get_fieldset_id($tokens[1]);
-        else if (count($tokens)==3)
-          $fieldset = get_fieldset_id($tokens[1],$tokens[2]);
-        else
+        }
+        elseif (count($tokens) === 3) {
+          $fieldset = get_fieldset_id($tokens[1], $tokens[2]);
+        }
+        else {
           throw new Exception('The link species popups form argument contains an invalid value');
+        }
+
         // insert a save button into the fancyboxed fieldset, since the normal close X looks like it cancels changes
         data_entry_helper::$javascript .= "$('#$fieldset').append('<input type=\"button\" value=\"".lang::get('Close')."\" onclick=\"jQuery.fancybox.close();\" ?>');\n";
         // create an empty link that we can fire to fancybox the popup fieldset
@@ -1306,6 +1381,7 @@ HTML;
       $sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), NULL, $attrOptions);
       $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\">$sampleCtrls</div>";
     }
+    $r .= "<div id=\"$options[id]-cluster\" style=\"display: none\"></div>";
     $r .= "<div id=\"$options[id]-container\" style=\"display: none\">" .
            // A dummy to capture feedback from the map.
            '<input type="hidden" id="imp-sref" />' .
@@ -1350,6 +1426,8 @@ HTML;
         'DeleteMessage' => lang::get("Please select the records on the map you wish to delete."),
         'ConfirmDeleteTitle' => lang::get("Confirm deletion of records"),
         'ConfirmDeleteText' => lang::get("Are you sure you wish to delete all the records at {OLD}?"),
+
+        'ClusterMessage' => lang::get("You selected a cluster of places on the map, pick one of them to work with."),
 
         'CancelLabel' => lang::get("Cancel"),
         'FinishLabel' => lang::get("Finish"),
@@ -1560,6 +1638,7 @@ HTML;
         'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : false),
         'occurrenceImages' => $args['occurrence_images'],
         'PHPtaxonLabel' => true,
+        'speciesInLabel' => false,
         'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')), // used for termlists in attributes
         'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),
         'userControlsTaxonFilter' => isset($args['user_controls_taxon_filter']) ? $args['user_controls_taxon_filter'] : false,
@@ -1587,6 +1666,11 @@ HTML;
     call_user_func(array(self::$called_class, 'build_grid_taxon_label_function'), $args, $options);
     if (self::$mode == self::MODE_CLONE)
       $species_ctrl_opts['useLoadedExistingRecords'] = true;
+
+    //Set speciesInLabel flag on indiciaData
+    $speciesInLabel = $options['speciesInLabel'] ? 'true' : 'false';
+    data_entry_helper::$javascript .= "\nindiciaData.speciesInLabel=".$speciesInLabel.";\n";
+
     return data_entry_helper::species_checklist($species_ctrl_opts);
   }
 

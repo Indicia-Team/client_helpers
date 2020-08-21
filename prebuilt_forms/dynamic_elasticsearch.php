@@ -29,6 +29,15 @@ require_once 'includes/dynamic.php';
 class iform_dynamic_elasticsearch extends iform_dynamic {
 
   /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
+
+  /**
    * Return the page metadata.
    *
    * @return array
@@ -87,6 +96,7 @@ TXT;
       [
         'name' => 'structure',
         'caption' => 'Form structure',
+        'helpLink' => 'https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-elasticsearch.html#user-interface',
         'type' => 'textarea',
         'group' => 'User interface',
         'default' => '',
@@ -124,6 +134,7 @@ TXT;
         'description' => 'Prefix given to numeric IDs to make them unique on the index.',
         'type' => 'text_input',
         'group' => 'Elasticsearch settings',
+        'required' => FALSE,
       ],
       [
         'name' => 'filter_json',
@@ -246,6 +257,29 @@ TXT;
       'my_records_permission' => $args['my_records_permission'],
       'all_records_permission' => $args['all_records_permission'],
       'location_collation_records_permission' => $args['location_collation_records_permission'],
+    ]));
+  }
+
+  /**
+   * Output simple summary of currently defined filters.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-filterSummary
+   */
+  protected static function get_control_filterSummary($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::filterSummary(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
+   * Output a selector for a general record access contexts based on permission filters and group permissions etc
+   * Output a selector for record status.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-statusFilters
+   */
+  protected static function get_control_statusFilters($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::statusFilters(array_merge($options, [
+      'readAuth' => $auth['read'],
     ]));
   }
 
@@ -391,28 +425,6 @@ TXT;
     return ElasticsearchReportHelper::urlParams(array_merge($options, [
       'readAuth' => $auth['read'],
     ]));
-  }
-
-  protected static function getHeader($args) {
-    return '';
-  }
-
-  protected static function getFooter($args) {
-    return '';
-  }
-
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
-  }
-
-  /**
-   * Disable save buttons for this form class. Not a data entry form.
-   *
-   * @return bool
-   *   Always return FALSE.
-   */
-  protected static function include_save_buttons() {
-    return FALSE;
   }
 
 }
