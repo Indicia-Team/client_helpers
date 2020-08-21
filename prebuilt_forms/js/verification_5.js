@@ -807,6 +807,9 @@ indiciaData.rowIdToReselect = false;
         'occurrence:taxa_taxon_list_id': $('#redet').val(),
         user_id: indiciaData.user_id
       };
+      if ($('#on-behalf-of').is(':checked')) {
+        data['occurrence:determiner_id'] = currRec.extra.created_by_id;
+      }
       if ($('#verify-comment').val()) {
         data['occurrence_comment:comment'] = $('#verify-comment').val();
       }
@@ -918,11 +921,14 @@ indiciaData.rowIdToReselect = false;
     var html = '<form id="redet-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.redetermine + '</legend>';
     html += '<div id="redet-dropdown-popup-ctnr"></div>';
+    html += '<label class="auto" for="on-behalf-of">Redetermine on behalf of original recorder:</label><input type="checkbox" id="on-behalf-of"/>';
+    html += '<p class="helpText">If you are changing the record determination on behalf of the original recorder and their name should be ' +
+      'stored against the determination, please tick this box.</p>';
     html += '<div class="verify-template-container"> ' +
-    '<label class="auto">' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
+    '<label>' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
     '<select class="verify-template" >' +
     '<option value="">' + indiciaData.popupTranslations.pleaseSelect + '</option></select></div>';
-    html += '<label class="auto">Comment:</label><textarea id="verify-comment" class="templatable-comment" rows="5" cols="80"></textarea><br />' +
+    html += '<label for="verify-comment">Comment:</label><textarea id="verify-comment" class="templatable-comment" rows="5" cols="80"></textarea><br />' +
       '<input type="submit" class="default-button" value="' +
       indiciaData.popupTranslations.redetermine + '" />' +
       '</fieldset></form>';

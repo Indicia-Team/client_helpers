@@ -22,7 +22,7 @@
 
 /**
  * Prebuilt form for the NPMS Paths survey
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
@@ -38,9 +38,9 @@ class iform_npms_paths extends iform_wildflower_count {
   protected static $mode;
   protected static $loadedSampleId;
   protected static $loadedOccurrenceId;
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_npms_paths_definition() {
@@ -50,14 +50,14 @@ class iform_npms_paths extends iform_wildflower_count {
       'description'=>'NPMS paths form based on the Wildflower Count form.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
-      array( 
+      array(
         'name' => 'grid_report',
         'caption' => 'Grid Report',
         'description' => 'Name of the report to use to populate the grid for selecting existing data from.',
@@ -65,22 +65,22 @@ class iform_npms_paths extends iform_wildflower_count {
         'group' => 'User Interface',
         'default' => 'reports_for_prebuilt_forms/dynamic_sample_occurrence_samples'
       ),
-      array( 
+      array(
         'name' => 'num_species_tabs',
         'caption' => 'Number of Species Tabs',
-        'description' => 'The number of species tabs. This number combined with the Number of Species Per Tab option needs to be 
+        'description' => 'The number of species tabs. This number combined with the Number of Species Per Tab option needs to be
             large enough to accommodate all the species in the species list. If no number is provided then the system assumes 3 tabs.',
         'type'=>'string',
         'group' => 'User Interface',
-      ),  
-      array( 
+      ),
+      array(
         'name' => 'num_species_per_tab',
         'caption' => 'Number of Species Per Tab',
-        'description' => 'The number of species to appear on each species tab. This number combined with the Number of Species Tabs option needs to be 
+        'description' => 'The number of species to appear on each species tab. This number combined with the Number of Species Tabs option needs to be
             large enough to accommodate all the species in the species list. If no number is provided then the system assumes 34 species per tab.',
         'type'=>'string',
         'group' => 'User Interface',
-      ),  
+      ),
       array(
           'name'=>'survey_id',
           'caption'=>'Survey',
@@ -219,7 +219,7 @@ class iform_npms_paths extends iform_wildflower_count {
       ),
     );
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -258,24 +258,24 @@ class iform_npms_paths extends iform_wildflower_count {
       //If in mode clone, we want to load existing data but as a new sample. So strip out all the existing attribute value ids from the form
       //html so the data is loaded but it creates a new sample.
       if (self::$mode ===  self::MODE_CLONE)
-        self::cloneEntity($args, $auth, $topSampleAttrs); 
+        self::cloneEntity($args, $auth, $topSampleAttrs);
       global $indicia_templates;
       $indicia_templates['starredSuffix']="*<br/>\n";
       $indicia_templates['validation_message'] = "<span class=\"ui-state-error-text\">{error}</span>\n";
       data_entry_helper::enable_validation('entry-form');
       $r .= '<form method="post" action="" id="entry-form">';
       $r .= '<div id="tabs">';
-      data_entry_helper::enable_tabs(array('divId'=>'tabs','navButtons'=>true)); 
+      data_entry_helper::enable_tabs(array('divId'=>'tabs','navButtons'=>true));
       //User needs to set configuration options for the number of species tabs they want and the
       //number of species to appear on each tab. The user needs to make sure this will result in enough
       //space to display all the required species from the species list.
       if (!empty($args['num_species_tabs']))
         $numSpeciesTabs=$args['num_species_tabs'];
-      else 
+      else
         $numSpeciesTabs=3;
       if (!empty($args['num_species_per_tab']))
         $numSpeciesPerTab=$args['num_species_per_tab'];
-      else 
+      else
         $numSpeciesPerTab=34;
       $tabsArray=array(
         '#your-square'=>'Find Place',
@@ -289,7 +289,7 @@ class iform_npms_paths extends iform_wildflower_count {
       $r .= data_entry_helper::tab_header(array('tabs'=>$tabsArray));
       $r .= '<div id="your-square">';
       $r .= self::get_hiddens($args, $auth);
-      $r .= self::getFirstTabAdditionalContent($args, $auth);
+      $r .= self::getFormHiddenInputs($args, $auth);
       $r .= self::tab_your_square($args, $auth['read'], $topSampleAttrs);
       $r .= '</div>'; // your-square
       $r .= '<div id="your-plots">';
@@ -308,27 +308,27 @@ class iform_npms_paths extends iform_wildflower_count {
     }
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    $subSampleIds=array('path', 'square', 'linear'); 
+    $subSampleIds=array('path', 'square', 'linear');
     //Need to supply false as the third parameter, this explicitely tells the system that there are no
     //attributes to check as zero abundance even though we have already given the system the rowInclusionCheck=hasData option
     //which tells the system that only species with data should be considered as an occurrence.
     //If we don't do this, the system will always create an occurrence for every species, even if the Paths checkbox is off.
     $submission = data_entry_helper::build_sample_occurrences_list_submission($values, true, false);
     // Now because it is not standard, we need to attach the sub-samples for each plot.
-    // First, extract the attributes for each subsample into their own arrays.    
+    // First, extract the attributes for each subsample into their own arrays.
     $subSamples=array();
     foreach ($values as $key=>$value) {
       if (strpos($key,':')) {
-        $parts = explode(':', $key);        
-        if (in_array($parts[0], $subSampleIds)) {          
+        $parts = explode(':', $key);
+        if (in_array($parts[0], $subSampleIds)) {
           $subSamples[$parts[0]][substr($key, strlen($parts[0])+1)] = $value;
         }
       }
@@ -349,10 +349,10 @@ class iform_npms_paths extends iform_wildflower_count {
     }
     return($submission);
   }
-  
+
   /*
    * New function to replace the one on the original wildflower form. The original form had the Submit button on the Other Species tab
-   * and the new form has it on the final (numbered) species tab. 
+   * and the new form has it on the final (numbered) species tab.
    */
   protected static function tab_species_npms_paths($args, $auth, $offset, $limit, $tabNum,$numSpeciesTabs) {
     $r='';
@@ -372,14 +372,14 @@ class iform_npms_paths extends iform_wildflower_count {
         'rowInclusionCheck'=>'hasData',
         'class'=>'checklist',
         'survey_id' => $args['survey_id'],
-        'extraParams'=>$auth['read'] + array('taxon_list_id' => $args['list_id'], 'limit'=>$limit, 
+        'extraParams'=>$auth['read'] + array('taxon_list_id' => $args['list_id'], 'limit'=>$limit,
             'offset'=>$offset, 'orderby'=>'common', 'sortdir'=>'ASC', 'view'=>'detail'),
         'occAttrClasses'=>array('coverage'),
         'speciesNameFilterMode'=>'preferred',
         'language'=>'eng',
         // prevent multiple hits to the db - the first grid can load all the species data
         'useLoadedExistingRecords' => $offset>0
-    )); 
+    ));
     //If the last tab, then use a submit button, otherwise we have Previous/Next Step
     if ($tabNum==$numSpeciesTabs) {
       $r .= '<p class="highlight">'.lang::get('Please review all tabs of the form before submitting the survey.').'</p>';
@@ -395,8 +395,8 @@ class iform_npms_paths extends iform_wildflower_count {
     }
     return $r;
   }
-  
-  
+
+
   /**
    * Override function to add the report parameter for the ID of the custom attribute which holds the linked sample.
    * Depends upon a report existing that uses the parameter e.g. npms_sample_occurrence_samples
@@ -418,7 +418,7 @@ class iform_npms_paths extends iform_wildflower_count {
           's1AttrID' => $args['survey_1_attr'],
           'iUserID' => $iUserId);
     }
-    
+
     // Return with error message if we cannot identify the user records
     if (!isset($filter)) {
       return lang::get('LANG_No_User_Id');
@@ -443,7 +443,7 @@ class iform_npms_paths extends iform_wildflower_count {
     $r .= '</form>';
     return $r;
   }
-  
+
   /**
    * Override function to add hidden attribute to store linked sample id
    * When adding a survey 1 record this is given the value 0
@@ -452,7 +452,7 @@ class iform_npms_paths extends iform_wildflower_count {
    * @param type $auth
    * @return string The hidden inputs that are added to the start of the form
    */
-  protected static function getFirstTabAdditionalContent($args, $auth/*, &$attributes*/) {
+  protected static function getFormHiddenInputs($args, $auth/*, &$attributes*/) {
     $r='';
     $linkAttr = 'smpAttr:' . $args['survey_1_attr'];
     if (array_key_exists('new', $_GET)) {
@@ -466,33 +466,33 @@ class iform_npms_paths extends iform_wildflower_count {
     }
     return $r;
   }
-  
+
   /**
    * Override function to include actions to add or edit the linked sample
-   * Depends upon a report existing, e.g. npms_sample_occurrence_samples, that 
+   * Depends upon a report existing, e.g. npms_sample_occurrence_samples, that
    * returns the fields done1 and done2 where
    * done1 is true if there is no second sample linked to the first and
    * done2 is true when there is a second sample.
    */
   protected static function getReportActions() {
-    return array(array('display' => 'Actions', 
-                       'actions' => array(array('caption' => lang::get('Edit Survey 1'), 
-                                                'url'=>'{currentUrl}', 
+    return array(array('display' => 'Actions',
+                       'actions' => array(array('caption' => lang::get('Edit Survey 1'),
+                                                'url'=>'{currentUrl}',
                                                 'urlParams' => array('edit' => '', 'sample_id' => '{sample_id1}')
                                                ),
-                                          array('caption' => lang::get('Add Survey 2'), 
-                                                'url'=>'{currentUrl}', 
+                                          array('caption' => lang::get('Add Survey 2'),
+                                                'url'=>'{currentUrl}',
                                                 'urlParams' => array('new' => '', 'sample_id' => '{sample_id1}'),
                                                 'visibility_field' => 'done1'
                                                ),
-                                          array('caption' => lang::get('Edit Survey 2'), 
-                                                'url'=>'{currentUrl}', 
+                                          array('caption' => lang::get('Edit Survey 2'),
+                                                'url'=>'{currentUrl}',
                                                 'urlParams' => array('edit' => '', 'sample_id' => '{sample_id2}'),
                                                 'visibility_field' => 'done2'
                                                ),
     )));
   }
-  
+
   /**
    * Construct a grid of existing records.
    * @param array $args iform parameters.
@@ -517,7 +517,7 @@ class iform_npms_paths extends iform_wildflower_count {
     $r .= "<div id=\"sampleList\">".self::getSampleListGrid($args, $nid, $auth, $attributes)."</div>";
     return $r;
   }
-  
+
   /*
    * When the page loads we need to know what mode it is in e.g. add mode, edit mode or do we just display a list of existing records.
    * @param array $args iform parameters.
@@ -545,10 +545,10 @@ class iform_npms_paths extends iform_wildflower_count {
     //New record but data cloned from old record, so when saving, a new record is created using existing data.
     if (self::$mode == self::MODE_EXISTING && array_key_exists('new', $_GET)){
       self::$mode = self::MODE_CLONE;
-    }  
+    }
     return self::$mode;
   }
-  
+
   /*
    * Create the "Your Paths" tab. This used to be called "Your Plots", but as we are overriding a method, we use the old method name.
    * The is different to the original Wildflower Count version of the method as the Paths page removes some of the original sections of the page
@@ -560,7 +560,7 @@ class iform_npms_paths extends iform_wildflower_count {
     $r = data_entry_helper::date_picker(array(
       'label' => 'Date of visit',
       'fieldname' => 'sample:date',
-      'class' => 'ui-state-highlight'  
+      'class' => 'ui-state-highlight'
     ));
     $r .= self::output_habitats_block('Path', 'path', $auth, $args);
     $r .= data_entry_helper::wizard_buttons(array(
@@ -569,7 +569,7 @@ class iform_npms_paths extends iform_wildflower_count {
     ));
     return $r;
   }
-  
+
   /*
    * Output the habitats block on the Your Paths tab. Override the output_habitats_block from the Wildflowers form,
    * added support for cloning.
@@ -577,7 +577,7 @@ class iform_npms_paths extends iform_wildflower_count {
   protected static function output_habitats_block($title, $prefix, $auth, $args) {
     global $indicia_templates;
     static $existingSubSamples;
-    
+
     $r = '<fieldset class="ui-corner-all">
   <legend>'.$title.' habitats</legend>
   <table class="habitats">
@@ -588,7 +588,7 @@ class iform_npms_paths extends iform_wildflower_count {
   <td>26-50%</td>
   <td>51-75%</td>
   <td>76-100%</td>
-  <td>Further info. about habitat e.g management, recent changes</td>';  
+  <td>Further info. about habitat e.g management, recent changes</td>';
     $r .= '</tr></thead>
   <tbody>';
     $coverageAttrs = data_entry_helper::getAttributes(array(
@@ -606,7 +606,7 @@ class iform_npms_paths extends iform_wildflower_count {
         'survey_id'=>$args['survey_id'],
     ));
     if (isset($_GET['sample_id'])) {
-      // use a static here to load all the subsample data in one hit      
+      // use a static here to load all the subsample data in one hit
       if (!isset($existingSubSamples)) {
         $attrIds = array();
         foreach ($coverageAttrs as $attr)
@@ -627,7 +627,7 @@ class iform_npms_paths extends iform_wildflower_count {
           break;
         }
       }
-      
+
       // apply the defaults we just loaded to the list of attributes
       if (isset($thisSubSample)) {
         foreach ($coverageAttrs as $idx=>$attr) {
@@ -653,12 +653,12 @@ class iform_npms_paths extends iform_wildflower_count {
     $indicia_templates['label'] = '';
     $indicia_templates['check_or_radio_group_item'] = '<td><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked} {disabled}/></td>';
     $indicia_templates['check_or_radio_group']='{items}';
-    //We need to remove the attribute_value ids from the fieldnames if cloning data onto a new record, otherwise it will save over the 
+    //We need to remove the attribute_value ids from the fieldnames if cloning data onto a new record, otherwise it will save over the
     //top of the existing record.
     if (self::$mode ===  self::MODE_CLONE) {
-      self::cloneEntity($args, $auth, $coverageAttrs); 
-      self::cloneEntity($args, $auth, $otherInfoAttrs); 
-    }    
+      self::cloneEntity($args, $auth, $coverageAttrs);
+      self::cloneEntity($args, $auth, $otherInfoAttrs);
+    }
     foreach($coverageAttrs as $idx => $attr) {
       $r .= '<tr><td><label>'.$attr['caption'].'</label></td>';
         //unset the attribute caption as we have already drawn it
@@ -675,7 +675,7 @@ class iform_npms_paths extends iform_wildflower_count {
     $indicia_templates['check_or_radio_group'] = $template;
     $indicia_templates['label'] = $labelTemplate;
     $r .= '</tbody></table>';
-    //In mode close, we want the form to act as if it is a new record even though it is showing existing data, so 
+    //In mode close, we want the form to act as if it is a new record even though it is showing existing data, so
     //we don't want the system to know about existing sample/sub-sample IDs at the point of save.
     if (isset($thisSubSample) && self::$mode !==  self::MODE_CLONE) {
       $r .= '<input type="hidden" name="'.$prefix.'_sample_id" value="'.$thisSubSample['sample_id'].'" />';
@@ -683,10 +683,10 @@ class iform_npms_paths extends iform_wildflower_count {
     $r .= '</fieldset>';
     return $r;
   }
-  
+
   /*
-   * This method clones existing sample data onto a new record. 
-   * This is used for the "Survey 2" functionality. 
+   * This method clones existing sample data onto a new record.
+   * This is used for the "Survey 2" functionality.
    * Note that this is different to the dynamic_sample_occurrence clone entity as we are not cloning any occurrence data
    * in this case, have also removed the code that handled multi-value fields as we don't need it for this form.
    * @param array $args iform parameters.
@@ -703,6 +703,6 @@ class iform_npms_paths extends iform_wildflower_count {
     if (isset(data_entry_helper::$entity_to_load['sample:id']))
       unset(data_entry_helper::$entity_to_load['sample:id']);
     if (isset(data_entry_helper::$entity_to_load['occurrence:id']))
-      unset(data_entry_helper::$entity_to_load['occurrence:id']); 
+      unset(data_entry_helper::$entity_to_load['occurrence:id']);
   }
 }

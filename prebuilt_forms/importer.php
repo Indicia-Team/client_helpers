@@ -404,8 +404,10 @@ class iform_importer {
       }
     }
     // If in training mode, set the flag on the imported records
-    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training'))
+    if (function_exists('hostsite_get_user_field') && hostsite_get_user_field('training')) {
+      $presets['sample:training'] = 't';
       $presets['occurrence:training'] = 't';
+    }
     try {
       $existingRecordLookupMethod = empty($args['existingRecordLookupMethod']) ?
         $args['existingRecordLookupMethodCustom'] : self::lookupConfig($args['existingRecordLookupMethod']);

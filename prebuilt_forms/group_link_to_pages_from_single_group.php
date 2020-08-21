@@ -24,13 +24,19 @@ require_once('includes/dynamic.php');
 require_once('includes/groups.php');
 
 /**
- *
- *
- * @package Client
- * @subpackage PrebuiltForms
  * A page for listing a series of links to the pages related to a particular group.
  */
 class iform_group_link_to_pages_from_single_group extends iform_dynamic {
+
+  /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
+
   public static function get_parameters() {
     $retVal = array_merge(
       array(
@@ -83,11 +89,6 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
     );
   }
 
-  //Override as we don't want to execute this
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
-  }
-
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -99,10 +100,12 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
    * @todo: Implement this method
    */
   public static function get_form($args, $nid, $response=null) {
-    if (empty($args['group_id']))
+    if (empty($args['group_id'])) {
       drupal_set_message('Please specify a group_id in the page configuration.');
-    if (empty($args['instructions_configuration']))
+    }
+    if (empty($args['instructions_configuration'])) {
       drupal_set_message('Please provide a page configuration in the User Interface options.');
+    }
     //Only perform if the user has specified an instruction to appear under each page like.
     if (!empty($args['instructions_configuration'])) {
       $configuration = data_entry_helper::explode_lines($args['instructions_configuration']);

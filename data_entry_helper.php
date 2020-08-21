@@ -684,7 +684,7 @@ JS;
 
   /**
    * Helper function to output a checkbox for controlling training mode.
-   * Occurrences submitted in training mode can be kept apart from normal records.
+   * Samples and occurrences submitted in training mode can be kept apart from normal records.
    * The output of this control can be configured using the following templates:
    * <ul>
    * <li><b>training</b></br>
@@ -3195,6 +3195,7 @@ RIJS;
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
     //make a copy of the options so that we can maipulate it
     $overrideOptions = $options;
+ 
     //We are going to cycle through each of the name filter types
     //and save the parameters required for each type in an array so
     //that the Javascript can quickly access the required parameters

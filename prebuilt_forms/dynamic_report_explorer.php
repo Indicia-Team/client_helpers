@@ -51,6 +51,15 @@ class iform_dynamic_report_explorer extends iform_dynamic {
   private static $applyUserPrefs = TRUE;
 
   /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
+
+  /**
    * Return the form metadata.
    */
   public static function get_dynamic_report_explorer_definition() {
@@ -277,18 +286,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
         )
       )
     );
-  }
-
-  protected static function getHeader($args) {
-    return '';
-  }
-
-  protected static function getFooter($args) {
-    return '';
-  }
-
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
   }
 
   /**
@@ -649,16 +646,6 @@ class iform_dynamic_report_explorer extends iform_dynamic {
     $hiddenStuff = '';
     $r = report_filter_panel($auth['read'], $options, $args['website_id'], $hiddenStuff);
     return $r . $hiddenStuff;
-  }
-
-  /**
-   * Disable save buttons for this form class. Not a data entry form.
-   *
-   * @return bool
-   *   Always return FALSE.
-   */
-  protected static function include_save_buttons() {
-    return FALSE;
   }
 
   /**

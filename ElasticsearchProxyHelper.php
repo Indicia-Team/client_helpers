@@ -532,7 +532,12 @@ class ElasticsearchProxyHelper {
     // Do the POST and then close the session.
     $response = curl_exec($session);
     $headers = curl_getinfo($session);
+    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
     curl_close($session);
+    // Check for an error, or check if the http response was not OK.
+    if ($httpCode != 200) {
+      http_response_code($httpCode);
+    }
     if (array_key_exists('charset', $headers)) {
       $headers['content_type'] .= '; ' . $headers['charset'];
     }
@@ -743,7 +748,7 @@ class ElasticsearchProxyHelper {
     if (count($query['user_filters']) > 0) {
       require_once 'report_helper.php';
       foreach ($query['user_filters'] as $userFilter) {
-        $filterData = data_entry_helper::get_report_data([
+        $filterData = report_helper::get_report_data([
           'dataSource' => '/library/filters/filter_with_transformed_searcharea',
           'extraParams' => [
             'filter_id' => $userFilter,

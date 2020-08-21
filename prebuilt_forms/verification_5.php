@@ -719,7 +719,7 @@ idlist=';
       'speciesIncludeTaxonGroup' => TRUE,
       'validation' => ['required'],
     ]);
-    if ($taxon_list_id) {
+    if ($taxon_list_id && preg_match('/^\d+$/', $taxon_list_id)) {
       data_entry_helper::$javascript .= "indiciaData.mainTaxonListId=$taxon_list_id\n;";
       $r .= '<div class="redet-partial-list">' .
         data_entry_helper::checkbox([

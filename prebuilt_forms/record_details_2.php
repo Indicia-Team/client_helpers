@@ -39,6 +39,15 @@ class iform_record_details_2 extends iform_dynamic {
   protected static $record;
 
   /**
+   * Disable form element wrapped around output.
+   *
+   * @return bool
+   */
+  protected static function isDataEntryForm() {
+    return FALSE;
+  }
+
+  /**
    * Return the form metadata.
    *
    * @return array
@@ -1018,29 +1027,6 @@ STRUCT;
   }
 
   /**
-   * Disable save buttons for this form class. Not a data entry form...
-   *
-   * @return boolean
-   */
-  protected static function include_save_buttons() {
-    return FALSE;
-  }
-
-  /**
-   * Override the standard header as this is not an HTML form.
-   */
-  protected static function getHeader($args) {
-    return '';
-  }
-
-  /**
-   * Override the standard footer as this is not an HTML form.
-   */
-  protected static function getFooter($args) {
-    return '';
-  }
-
-  /**
    * Loads the record associated with the page if not already loaded.
    */
   protected static function load_record($auth, $args) {
@@ -1092,13 +1078,6 @@ STRUCT;
         $iform_page_metadata['longitude'] = number_format((float) self::$record['long'], 5, '.', '');
       }
     }
-  }
-
-  /**
-   * Override some default behaviour in dynamic.
-   */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    return '';
   }
 
 }

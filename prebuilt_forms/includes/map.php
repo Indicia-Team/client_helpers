@@ -324,7 +324,7 @@ function iform_map_get_map_options($args, $readAuth) {
     $args['standard_controls'] = str_replace("\r\n", "\n", $args['standard_controls']);
     $options['standardControls']=explode("\n", $args['standard_controls']);
     // If drawing controls are enabled, then allow polygon recording.
-    if (in_array('drawPolygon', $options['standardControls']) || in_array('drawLine', $options['standardControls']))
+    if (count(array_intersect(['drawPolygon', 'drawLine', 'drawPoint'], $options['standardControls'])) > 0)
       $options['allowPolygonRecording']=true;
   }
   // And pass through any translation strings, only if they exist

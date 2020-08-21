@@ -295,7 +295,7 @@ TXT;
    * @return string
    *   Additional HTML for the first tab.
    */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
+  protected static function getFormHiddenInputs($args, $auth, &$attributes) {
     // Get authorisation tokens to update the Warehouse, plus any other hidden
     // data.
     $r = $auth['write'] . <<<HTML

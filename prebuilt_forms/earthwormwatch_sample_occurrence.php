@@ -141,8 +141,8 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
    * @param type $attributes
    * @return string The hidden inputs that are added to the start of the form
    */
-  protected static function getFirstTabAdditionalContent($args, $auth, &$attributes) {
-    $r = parent::getFirstTabAdditionalContent($args, $auth, $attributes);
+  protected static function getFormHiddenInputs($args, $auth, &$attributes) {
+    $r = parent::getFormHiddenInputs($args, $auth, $attributes);
     $linkAttr = 'smpAttr:' . $args['pit_1_survey_attr'];
     if (array_key_exists('new', $_GET)) {
       if (array_key_exists('sample_id', $_GET)) {

@@ -142,6 +142,9 @@ ul.gallery li {
       margin: 0 0 4px 0;
       line-height: 1em;
     }
+    &.auto {
+      display: inline-block;
+    }
   }
   #ctrl-wrap-redet-from-full-list label {
     display: inline-block;

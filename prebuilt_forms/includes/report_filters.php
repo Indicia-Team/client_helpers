@@ -454,7 +454,7 @@ class filter_where extends FilterBase {
       global $indicia_templates;
       $oldwrap = $indicia_templates['jsWrap'];
       $indicia_templates['jsWrap'] = '{content}';
-      $r .= map_helper::map_panel(array(
+      $mapOpts = [
         'divId' => 'filter-pane-map',
         'presetLayers' => array('osm'),
         'editLayer' => TRUE,
@@ -465,9 +465,16 @@ class filter_where extends FilterBase {
         'height' => 400,
         'standardControls' => array('layerSwitcher', 'panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
           'modifyFeature', 'clearEditLayer'),
+        'allowPolygonRecording' => TRUE,
         'readAuth' => $readAuth,
         'gridRefHint' => TRUE,
-      ));
+      ];
+      // Pass through buffering option.
+      if (!empty($options['selectFeatureBufferProjection'])) {
+        $mapOpts['selectFeatureBufferProjection'] = $options['selectFeatureBufferProjection'];
+      }
+      $r .= map_helper::map_panel($mapOpts);
+
       $indicia_templates['jsWrap'] = $oldwrap;
     }
     else {
@@ -612,77 +619,87 @@ class filter_quality extends FilterBase {
   /**
    * Define the HTML required for this filter's UI panel.
    */
-  public function get_controls($readAuth, $options) {
-    $r = '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
-    $qualityOptions = [
-      'V1' => lang::get('Accepted as correct records only'),
-      'V' => lang::get('Accepted records only'),
-      '-3' => lang::get('Reviewer agreed at least plausible'),
-      'C3' => lang::get('Plausible records only'),
-      'C' => lang::get('Recorder was certain'),
-      'L' => lang::get('Recorder thought the record was at least likely'),
-      'P' => lang::get('Not reviewed'),
-      'T' => lang::get('Not reviewed but trusted recorder'),
-      '!R' => lang::get('Exclude not accepted records'),
-      '!D' => lang::get('Exclude queried or not accepted records'),
-      'all' => lang::get('All records'),
-      'D' => lang::get('Queried records only'),
-      'A' => lang::get('Answered records only'),
-      'R' => lang::get('Not accepted records only'),
-      'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
-      'DR' => lang::get('Queried or not accepted records'),
-    ];
-    if ($options['elasticsearch']) {
-      // Elasticsearch doesn't currently support recorder trust.
-      unset($qualityOptions['T']);
+  public function get_controls($readAuth, $options, $ctls=array('status', 'auto', 'difficulty', 'photo')) {
+
+    $r='';
+    if (in_array('status', $ctls)) {
+      $r .= '<div class="context-instruct messages warning">' . lang::get('Please note, your options for quality filtering are restricted by your access permissions in this context.') . '</div>';
+      $qualityOptions = [
+        'V1' => lang::get('Accepted as correct records only'),
+        'V' => lang::get('Accepted records only'),
+        '-3' => lang::get('Reviewer agreed at least plausible'),
+        'C3' => lang::get('Plausible records only'),
+        'C' => lang::get('Recorder was certain'),
+        'L' => lang::get('Recorder thought the record was at least likely'),
+        'P' => lang::get('Not reviewed'),
+        'T' => lang::get('Not reviewed but trusted recorder'),
+        '!R' => lang::get('Exclude not accepted records'),
+        '!D' => lang::get('Exclude queried or not accepted records'),
+        'all' => lang::get('All records'),
+        'D' => lang::get('Queried records only'),
+        'A' => lang::get('Answered records only'),
+        'R' => lang::get('Not accepted records only'),
+        'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
+        'DR' => lang::get('Queried or not accepted records'),
+      ];
+      if ($options['elasticsearch']) {
+        // Elasticsearch doesn't currently support recorder trust.
+        unset($qualityOptions['T']);
+      }
+      $r .= data_entry_helper::select([
+        'label' => lang::get('Records to include'),
+        'fieldname' => 'quality',
+        'id' => 'quality-filter',
+        'lookupValues' => $qualityOptions,
+      ]);
     }
-    $r .= data_entry_helper::select([
-      'label' => lang::get('Records to include'),
-      'fieldname' => 'quality',
-      'id' => 'quality-filter',
-      'lookupValues' => $qualityOptions,
-    ]);
-    $r .= data_entry_helper::select(array(
-      'label' => lang::get('Automated checks'),
-      'fieldname' => 'autochecks',
-      'lookupValues' => array(
-        '' => lang::get('Not filtered'),
-        'P' => lang::get('Only include records that pass all automated checks'),
-        'F' => lang::get('Only include records that fail at least one automated check'),
-      ),
-    ));
-    if (!$options['elasticsearch']) {
+    if (in_array('auto', $ctls)) {
       $r .= data_entry_helper::select(array(
-        'label' => lang::get('Identification difficulty'),
-        'fieldname' => 'identification_difficulty_op',
+        'label' => lang::get('Automated checks'),
+        'fieldname' => 'autochecks',
         'lookupValues' => array(
-          '=' => lang::get('is'),
-          '>=' => lang::get('is at least'),
-          '<=' => lang::get('is at most'),
+          '' => lang::get('Not filtered'),
+          'P' => lang::get('Only include records that pass all automated checks'),
+          'F' => lang::get('Only include records that fail at least one automated check'),
         ),
-        'afterControl' => data_entry_helper::select(array(
-          'fieldname' => 'identification_difficulty',
-          'lookupValues' => array(
-            '' => lang::get('Not filtered'),
-            1 => 1,
-            2 => 2,
-            3 => 3,
-            4 => 4,
-            5 => 5,
-          ),
-          'controlWrapTemplate' => 'justControl',
-        ))
       ));
     }
-    $r .= data_entry_helper::select([
-      'label' => 'Photos',
-      'fieldname' => 'has_photos',
-      'lookupValues' => [
-        '' => 'Include all records',
-        '1' => 'Only include records which have photos',
-        '0' => 'Exclude records which have photos',
-      ],
-    ]);
+    if (in_array('difficulty', $ctls)) {
+      if (!$options['elasticsearch']) {
+        $r .= data_entry_helper::select(array(
+          'label' => lang::get('Identification difficulty'),
+          'fieldname' => 'identification_difficulty_op',
+          'lookupValues' => array(
+            '=' => lang::get('is'),
+            '>=' => lang::get('is at least'),
+            '<=' => lang::get('is at most'),
+          ),
+          'afterControl' => data_entry_helper::select(array(
+            'fieldname' => 'identification_difficulty',
+            'lookupValues' => array(
+              '' => lang::get('Not filtered'),
+              1 => 1,
+              2 => 2,
+              3 => 3,
+              4 => 4,
+              5 => 5,
+            ),
+            'controlWrapTemplate' => 'justControl',
+          ))
+        ));
+      }
+    }
+    if (in_array('photo', $ctls)) {
+      $r .= data_entry_helper::select([
+        'label' => 'Photos',
+        'fieldname' => 'has_photos',
+        'lookupValues' => [
+          '' => 'Include all records',
+          '1' => 'Only include records which have photos',
+          '0' => 'Exclude records which have photos',
+        ],
+      ]);
+    }
     return $r;
   }
 
@@ -843,6 +860,22 @@ class filter_source extends FilterBase {
 
 }
 
+function status_control ($readAuth, $options) {
+  report_helper::add_resource('reportfilters');
+  $ctl = new filter_quality();
+  $r = '<div class="standalone-quality-filter">';
+  $r .= $ctl->get_controls($readAuth, $options, array('status'));
+  $r .= '</div>';
+
+  report_helper::$onload_javascript .= <<<JS
+    indiciaData.filter.def.quality = '!R';
+    indiciaFns.applyFilterToReports(false);
+
+JS;
+
+  return $r;
+}
+
 /**
  * Code to output a standardised report filtering panel.
  *
@@ -883,11 +916,11 @@ class filter_source extends FilterBase {
  *   * allowSave - set to FALSE to disable the save bar at the foot of the
  *     panel.
  *   * presets - provide an array of preset filters to provide in the filters
- *     drop down. Choose from my-records, my-groups (uses your list of taxon
- *     groups in the user account), my-locality (uses your recording locality
- *     from the user  account), my-groups-locality (uses taxon groups and
- *     recording locality from the user account), my-queried-records,
- *     queried-records, answered-records, accepted-records,
+ *     drop down. Choose from all-records, my-records, my-groups (uses your
+ *     list of taxon groups in the user account), my-locality (uses your
+ *     recording locality from the user  account), my-groups-locality (uses
+ *     taxon groups and recording locality from the user account),
+ *     my-queried-records, queried-records, answered-records, accepted-records,
  *     not-accepted-records.
  *   * generateFilterListCallback - a callback to allow custom versions of the
  *     filters to be used, utilising the standard filter user interface.
@@ -933,6 +966,7 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     'allowSave' => TRUE,
     'redirect_on_success' => '',
     'presets' => array(
+      'all-records',
       'my-records',
       'my-queried-records',
       'my-queried-or-not-accepted-records',
@@ -1007,6 +1041,10 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
     foreach ($options['presets'] as $preset) {
       $title = FALSE;
       switch ($preset) {
+        case 'all-records':
+          $title = lang::get('All records');
+          break;
+
         case 'my-records':
           if (hostsite_get_user_field('id')) {
             $title = lang::get('My records');
@@ -1334,6 +1372,7 @@ HTML;
     $r .= '<img src="' . data_entry_helper::$images_path . 'trash-22px.png" width="22" height="22" alt="Bin this filter" title="Bin this filter" class="button disabled" id="filter-delete"/>';
   }
   $r .= '</div></div>'; // toolbar + clearfix
+  $r .= '</div>';
   if (!empty($options['filters_user_id'])) {
     // If we are preloading based on a filter user ID, we need to get the
     // information now so that the sharing mode can be known when loading
@@ -1348,39 +1387,29 @@ HTML;
     }
     $options['sharing'] = report_filters_sharing_code_to_full_term($fu[0]['filter_sharing']);
   }
-  report_helper::$javascript .= "indiciaData.lang={pleaseSelect:\"" . lang::get('Please select') . "\"};\n";
   // Create the hidden panels required to populate the popups for setting each type of filter up.
   $hiddenStuff = '';
+  $noDescriptionLangStrings = [];
   foreach ($filterModules as $category => $list) {
     foreach ($list as $moduleName => $module) {
       $hiddenStuff .= "<div style=\"display: none\"><div class=\"filter-popup\" id=\"controls-$moduleName\"><form action=\"#\" class=\"filter-controls\"><fieldset>" . $module->get_controls($readAuth, $options) .
         '<button class="fb-close" type="button">' . lang::get('Cancel') . '</button>' .
         '<button class="fb-apply" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
       $shortName = str_replace('filter_', '', $moduleName);
-      report_helper::$javascript .= "indiciaData.lang.NoDescription$shortName='" . lang::get('Click to Filter ' . ucfirst($shortName)) . "';\n";
+      $noDescriptionLangStrings[$shortName] = 'Click to Filter ' . ucfirst($shortName);
     }
-
   }
-  $r .= '</div>';
+  report_helper::addLanguageStringsToJs('reportFiltersNoDescription', $noDescriptionLangStrings);
+  report_filters_set_parser_language_strings();
   report_helper::addLanguageStringsToJs('reportFilters', [
+    'PleaseSelect' => 'Please select',
     'CreateAFilter' => 'Create a filter',
     'ModifyFilter' => 'Modify filter',
     'FilterSaved' => 'The filter has been saved',
     'FilterDeleted' => 'The filter has been deleted',
     'ConfirmFilterChangedLoad' => 'Do you want to load the selected filter and lose your current changes?',
     'FilterExistsOverwrite' => 'A filter with that name already exists. Would you like to overwrite it?',
-    'AutochecksFailed' => 'Automated checks failed',
-    'AutochecksPassed' => 'Automated checks passed',
-    'IdentificationDifficulty' => 'Identification difficulty',
-    'HasPhotos' => 'Only include records which have photos',
-    'HasNoPhotos' => 'Exclude records which have photos',
     'ConfirmFilterDelete' => 'Are you sure you want to permanently delete the {title} filter?',
-    'MyRecords' => 'My records only',
-    'OnlyConfidentialRecords' => 'Only confidential records',
-    'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
-    'NoConfidentialRecords' => 'Exclude confidential records',
-    'includeUnreleasedRecords' => 'Include unreleased records',
-    'excludeUnreleasedRecords' => 'Exclude unreleased records',
   ]);
   if (function_exists('iform_ajaxproxy_url')) {
     report_helper::$javascript .= "indiciaData.filterPostUrl='" . iform_ajaxproxy_url(NULL, 'filter') . "';\n";
@@ -1519,4 +1548,23 @@ function report_filters_sharing_code_to_full_term($code) {
  */
 function report_filters_full_term_to_sharing_code($term) {
   return strtoupper(substr($term, 0, 1));
+}
+
+/**
+ * Utility function to add laguage strings to Javascript for the JS filter parser.
+ */
+function report_filters_set_parser_language_strings() {
+  report_helper::addLanguageStringsToJs('reportFilters', [
+    'AutochecksFailed' => 'Automated checks failed',
+    'AutochecksPassed' => 'Automated checks passed',
+    'IdentificationDifficulty' => 'Identification difficulty',
+    'HasPhotos' => 'Only include records which have photos',
+    'HasNoPhotos' => 'Exclude records which have photos',
+    'MyRecords' => 'My records only',
+    'OnlyConfidentialRecords' => 'Only confidential records',
+    'AllConfidentialRecords' => 'Include both confidential and non-confidential records',
+    'NoConfidentialRecords' => 'Exclude confidential records',
+    'includeUnreleasedRecords' => 'Include unreleased records',
+    'excludeUnreleasedRecords' => 'Exclude unreleased records',
+  ]);
 }

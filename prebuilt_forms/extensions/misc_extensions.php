@@ -240,6 +240,12 @@ class extension_misc_extensions {
     return '';
   }
 
+  /**
+   * Output any data_entry_helper class control.
+   *
+   * Provide the function name in the @control option. Other options are passed
+   * through.
+   */
   public static function data_entry_helper_control($auth, $args, $tabalias, $options, $path) {
     $ctrl = $options['control'];
     if (isset($options['extraParams'])) {
@@ -248,11 +254,31 @@ class extension_misc_extensions {
     return data_entry_helper::$ctrl($options);
   }
 
-  public static function map_helper_control($auth, $args, $tabalias, $options, $path) {
-    iform_load_helpers(array('map_helper'));
+  /**
+   * Output any report_helper class control.
+   *
+   * Provide the function name in the @control option. Other options are passed
+   * through.
+   */
+  public static function report_helper_control($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(['report_helper']);
     $ctrl = $options['control'];
-    if (isset($options['extraParams']))
+    $options['readAuth'] = $auth['read'];
+    return report_helper::$ctrl($options);
+  }
+
+  /**
+   * Output any map_helper class control.
+   *
+   * Provide the function name in the @control option. Other options are passed
+   * through.
+   */
+  public static function map_helper_control($auth, $args, $tabalias, $options, $path) {
+    iform_load_helpers(['map_helper']);
+    $ctrl = $options['control'];
+    if (isset($options['extraParams'])) {
       $options['extraParams'] = $auth['read'] + $options['extraParams'];
+    }
     return map_helper::$ctrl($options);
   }
 
@@ -435,7 +461,10 @@ $('form#entry_form').tooltip({
       ));
     }
     if ($options['draw_boundary_on_map']) {
-      iform_map_zoom_to_geom($location['boundary_geom'], 'Survey square');
+      iform_map_zoom_to_geom(
+        empty($location['boundary_geom']) ? $location['centroid_geom'] : $location['boundary_geom'],
+        'Survey square'
+      );
     }
     return $r;
   }
