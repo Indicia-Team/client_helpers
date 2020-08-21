@@ -377,10 +377,10 @@ class ElasticsearchReportHelper {
     ], $options);
 
     // If columnsTemplate options specifies an array, then create control options for
-    // a select control that will be used to indicate the selected columns template. 
+    // a select control that will be used to indicate the selected columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = array(
-        "default" => lang::get("Standard download format"), 
+        "default" => lang::get("Standard download format"),
         "easy-download" => lang::get("Backward-compatible format")
       );
       $optionArr = array();
@@ -392,7 +392,7 @@ class ElasticsearchReportHelper {
         'fieldname' => 'columnsTemplate',
         'lookupValues' => $optionArr,
       ];
-      unset($options['columnsTemplate']); 
+      unset($options['columnsTemplate']);
     }
 
     global $indicia_templates;
@@ -688,16 +688,19 @@ HTML;
   helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
 $('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
-    // Update any summary output 
+    // Update any summary output
     $('#es-filter-summary').idcFilterSummary('populate');
 });
 
 JS;
-    
+
     return self::getControlContainer('filterSummary', $options, json_encode([]), $html);
   }
 
-  /* Output a selector for record status - mirrors the 'quality - records to include' drop-down in standardParams control.
+  /**
+   * Output a selector for record status.
+   *
+   * Mirrors the 'quality - records to include' drop-down in standardParams control.
    *
    * @return string
    *   Select HTML.
