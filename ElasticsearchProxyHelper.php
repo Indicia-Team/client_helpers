@@ -782,6 +782,8 @@ class ElasticsearchProxyHelper {
     self::convertLocationListToSearchArea($definition, $readAuth);
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxonMeaning($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxaTaxonListExternalKey($definition, $bool, $readAuth);
     self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
     self::applyUserFiltersTaxonMarineFlag($definition, $bool);
     self::applyUserFiltersSearchArea($definition, $bool);
@@ -843,6 +845,33 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Generic function to apply a taxonomy filter to ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyTaxonomyFilter(array $definition, array &$bool, array $readAuth, array $filter) {
+    // Convert the IDs to external keys, stored in ES as taxon_ids.
+    $taxonData = helper_base::get_population_data([
+      'table' => 'taxa_taxon_list',
+      'extraParams' => [
+        'view' => 'cache',
+        'query' => json_encode($filter),
+      ] + $readAuth,
+    ]);
+    $keys = [];
+    foreach ($taxonData as $taxon) {
+      $keys[] = $taxon['external_key'];
+    }
+    $keys = array_unique($keys);
+    $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
+  }
+
+  /**
    * Converts an Indicia filter definition taxa_taxon_list_list to an ES query.
    *
    * @param array $definition
@@ -860,19 +889,46 @@ class ElasticsearchProxyHelper {
       'higher_taxa_taxon_list_id',
     ]);
     if (!empty($filter)) {
-      // Convert the IDs to external keys, stored in ES as taxon_ids.
-      $taxonData = helper_base::get_population_data([
-        'table' => 'taxa_taxon_list',
-        'extraParams' => [
-          'view' => 'cache',
-          'query' => json_encode(['in' => ['id' => explode(',', $filter['value'])]]),
-        ] + $readAuth,
-      ]);
-      $keys = [];
-      foreach ($taxonData as $taxon) {
-        $keys[] = $taxon['external_key'];
-      }
-      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
+      self::applyTaxonomyFilter($definition, $bool, $readAuth, ['in' => ['id' => explode(',', $filter['value'])]]);
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition taxon_meaning_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyUserFiltersTaxonMeaning(array $definition, array &$bool, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, [
+      'taxon_meaning_list',
+      'taxon_meaning_id',
+    ]);
+    if (!empty($filter)) {
+      self::applyTaxonomyFilter($definition, $bool, $readAuth, ['in' => ['taxon_meaning_id' => explode(',', $filter['value'])]]);
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition taxa_taxon_list_external_key_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyUserFiltersTaxaTaxonListExternalKey(array $definition, array &$bool, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, [
+      'taxa_taxon_list_external_key_list',
+    ]);
+    if (!empty($filter)) {
+      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => explode(',', $filter['value'])]];
     }
   }
 
