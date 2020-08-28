@@ -1039,9 +1039,9 @@ class ElasticsearchProxyHelper {
   /**
    * Converts an Indicia filter definition date filter to an ES query.
    *
-   * Support for recorded, input, edited, verified dates. Age is supported as
-   * long as format specifies age in minutes, hours, days, weeks, months or
-   * years.
+   * Support for recorded (default), input, edited, verified dates. Age is
+   * supported as long as format specifies age in minutes, hours, days, weeks,
+   * months or years.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
@@ -1060,30 +1060,30 @@ class ElasticsearchProxyHelper {
       'to' => 'lte',
       'age' => 'gte',
     ];
-    if (!empty($definition['date_type'])) {
-      foreach ($dateTypes as $type => $op) {
-        $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
-        if (!empty($definition[$fieldName])) {
-          $value = $definition[$fieldName];
-          // Convert date format.
-          if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
-            $value = "$matches[Y]-$matches[m]-$matches[d]";
-          }
-          elseif ($type === 'age') {
-            $value = 'now-' . str_replace(
-              ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
-              ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
-              strtolower($value)
-            );
-          }
-          $bool['must'][] = [
-            'range' => [
-              $esFields[$definition['date_type']] => [
-                $op => $value,
-              ],
-            ],
-          ];
+    // Default to recorded date.
+    $definition['date_type'] = empty($definition['date_type']) ? 'recorded' : $definition['date_type'];
+    foreach ($dateTypes as $type => $op) {
+      $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
+      if (!empty($definition[$fieldName])) {
+        $value = $definition[$fieldName];
+        // Convert date format.
+        if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
+          $value = "$matches[Y]-$matches[m]-$matches[d]";
         }
+        elseif ($type === 'age') {
+          $value = 'now-' . str_replace(
+            ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
+            ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
+            strtolower($value)
+          );
+        }
+        $bool['must'][] = [
+          'range' => [
+            $esFields[$definition['date_type']] => [
+              $op => $value,
+            ],
+          ],
+        ];
       }
     }
   }
