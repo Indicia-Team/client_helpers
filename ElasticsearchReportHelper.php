@@ -760,7 +760,7 @@ $('#$options[id]').idcRecordDetailsPane();
 
 JS;
     $r = <<<HTML
-<div class="details-container" id="$options[id]" data-idc-config="$dataOptions">
+<div class="record-details-container" id="$options[id]" data-idc-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
