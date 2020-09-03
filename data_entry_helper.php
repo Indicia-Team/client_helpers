@@ -1067,7 +1067,7 @@ JS;
       'jsPath' => self::$js_path,
       'buttonTemplate' => $indicia_templates['button'],
       'table' => 'occurrence_medium',
-      'maxUploadSize' => self::convert_to_bytes(isset(parent::$maxUploadSize) ? parent::$maxUploadSize : '4M'),
+      'maxUploadSize' => self::convert_to_bytes(parent::$upload_max_filesize),
       'codeGenerated' => 'all',
       'mediaTypes' => !empty($options['subType']) ? array($options['subType']) : array('Image:Local'),
       'fileTypes' => (object) self::$upload_file_types,
@@ -3296,7 +3296,7 @@ RIJS;
     $filterNameTypes = array('all','currentLanguage', 'preferred', 'excludeSynonyms');
     //make a copy of the options so that we can maipulate it
     $overrideOptions = $options;
- 
+
     //We are going to cycle through each of the name filter types
     //and save the parameters required for each type in an array so
     //that the Javascript can quickly access the required parameters
@@ -8001,7 +8001,7 @@ HTML;
             if (self::$validation_errors==null) self::$validation_errors = array();
             self::$validation_errors[$key] = lang::get('file too big for webserver');
           }
-          elseif (!self::check_upload_size($file)) {
+          elseif (!self::checkUploadSize($file)) {
             // even if file uploads Ok to interim location, the Warehouse may still block it.
             if (self::$validation_errors==null) self::$validation_errors = array();
             self::$validation_errors[$key] = lang::get('file too big for warehouse');
@@ -8055,14 +8055,11 @@ HTML;
    * @param array $file Item from the $_FILES array.
    * @return bool True if the file size is acceptable, otherwise false.
    */
-  public static function check_upload_size(array $file) {
+  public static function checkUploadSize(array $file) {
     if ((int) $file['error'] !== UPLOAD_ERR_OK)
       return TRUE;
 
-    if (isset(parent::$maxUploadSize))
-      $size = parent::$maxUploadSize;
-    else
-      $size = '4M'; // default
+    $size = parent::$upload_max_filesize;
 
     if ( ! preg_match('/[0-9]++[BKMG]/', $size))
       return FALSE;

@@ -298,8 +298,15 @@ class helper_base {
    */
   public static $delegate_translation_to_hostsite = FALSE;
 
+  /**
+   * Check on maximum file size for image uploads.
+   *
+   * @var string
+   */
+  public static $upload_max_filesize = '4M';
+
   /*
-   * End of ariables that can be specified in helper_config.php.
+   * End of variables that can be specified in helper_config.php.
    */
 
   /**
@@ -3126,5 +3133,8 @@ if (class_exists('helper_config')) {
   }
   if (isset(helper_config::$delegate_translation_to_hostsite)) {
     helper_base::$delegate_translation_to_hostsite = helper_config::$delegate_translation_to_hostsite;
+  }
+  if (isset(helper_config::$upload_max_filesize)) {
+    helper_base::$upload_max_filesize = helper_config::$upload_max_filesize;
   }
 }

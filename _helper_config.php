@@ -106,4 +106,11 @@ class helper_config {
    */
   public static $delegate_translation_to_hostsite = FALSE;
 
+  /**
+   * Allow the check on maximum file size for image uploads to be set.
+   *
+   * @var string
+   */
+  public static $upload_max_filesize = '4M';
+
 }
