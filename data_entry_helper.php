@@ -5375,13 +5375,13 @@ $('div#$escaped_divId').indiciaTreeBrowser({
         $options['class']=$buttonClass." tab-prev";
         $options['id']='tab-prev';
         $options['caption']='&lt; '.lang::get($options['captionPrev']);
-        $r .= str_replace('{content}', str_replace("\n", "", self::apply_template('button', $options)), $indicia_templates['jsWrap']);
+        $r .= self::apply_template('button', $options);
       }
       if ($options['page']!='last') {
         $options['class']=$buttonClass." tab-next";
         $options['id']='tab-next';
         $options['caption']=lang::get($options['captionNext']).' &gt;';
-        $r .= str_replace('{content}', str_replace("\n", "", self::apply_template('button', $options)), $indicia_templates['jsWrap']);
+        $r .= self::apply_template('button', $options);
       } else {
         if ($options['includeSubmitButton']) {
           $options['class']=$buttonClass." tab-submit";

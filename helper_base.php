@@ -38,9 +38,6 @@ $indicia_templates = array(
   // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
   'justControl' => "{control}\n",
-  'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n" .
-      "document.write('{content}');" .
-      "/* ]]> */</script>\n",
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
   // Use if label ends with another punctuation mark.
   'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>',
@@ -103,14 +100,12 @@ $indicia_templates = array(
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
   'check_or_radio_group' => '<ul {class} id="{id}">{items}</ul>',
   'check_or_radio_group_item' => '<li><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
-  'map_panel' => "<div id=\"{divId}\" style=\"width: {width}; height: {height};\"{class}></div>",
-  'georeference_lookup' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<input type=\"text\" id=\"imp-georef-search\"{class} />{searchButton}');\n".
-    "document.write('<div id=\"imp-georef-div\" class=\"ui-corner-all ui-widget-content ui-helper-hidden\">');\n".
-    "document.write('  <div id=\"imp-georef-output-div\">');\n".
-    "document.write('  </div>  {closeButton}');\n".
-    "document.write('</div>');".
-    "\n/* ]]> */</script>",
+  'map_panel' => '<div id="map-container" style="width: {width};"><div id="map-loading" class="loading-spinner" style="display: none"><div>Loading...</div></div><div id="{divId}" style="width: {width}; height: {height};"{class}></div></div>',
+  'georeference_lookup' => '<input type="text" id="imp-georef-search"{class} />{searchButton}' .
+    '<div id="imp-georef-div" class="ui-corner-all ui-widget-content ui-helper-hidden">' .
+    '<div id="imp-georef-output-div"></div> ' .
+    '{closeButton}' .
+    '</div>',
   'tab_header' => "<ul>{tabs}</ul>\n",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
@@ -1785,7 +1780,7 @@ HTML;
     self::$javascript = "";
     self::$late_javascript = "";
     self::$onload_javascript = "";
-    return $dump;
+    return "alert('Dump'); $dump";
   }
 
   /**
