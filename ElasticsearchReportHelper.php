@@ -1084,14 +1084,10 @@ HTML;
     helper_base::add_resource('fancybox');
     helper_base::add_resource('validation');
     helper_base::addLanguageStringsToJs('verificationButtons', [
-      'commentAvoidAsUserNotNotified' => 'Although you can add your query as a comment, there is no guarantee that the recorder will check their notifications. ',
-      'commentOkAsUserNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
-      'emailAvoidAsUserNotified' => 'Although you can send your query as an email, this recorded does check notifications so you might prefer to add the query to the comments tab.',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
-      'emailOkAsUserNotNotified' => 'Sending the query as an email is preferred as the recorder does not check their notifications.',
       'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
         'stating how confident you are that the record is correct and any other information you have which may help ' .
         'to confirm this. You can reply to this message and it will be forwarded direct to the verifier.',
@@ -1100,8 +1096,15 @@ HTML;
       'emailSent' => 'The email was sent successfully.',
       'emailTabTitle' => 'Email record details',
       'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
+      'queryEmailTabAnonWithEmail' => 'This record was posted by a recorder who was not logged in but provided their email address so email is the best method of contact.',
+      'queryEmailTabAnonWithoutEmail' => 'As this record does not have an email address for the recorder, the query is best added as a comment to the record unless you know the recorder and have their email address and permission to use it. There is no guarantee that the recorder will check their notifications.',
+      'queryEmailTabUserIsNotified' => 'Although you can email this recorder directly, they check their notifications so adding a comment should be sufficient.',
+      'queryEmailTabUserIsNotNotified' => 'Sending the query as an email is likely to be the best method of contact as the recorder does not check their notifications.',
+      'queryCommentTabAnonWithEmail' => 'This record was posted by a recorder who was not logged in but provided their email address. You can add a comment using this tab but they are unlikely to see it so email is likely to be the best method of contact.',
+      'queryCommentTabAnonWithoutEmail' => 'As this record does not have an email address for the recorder, the query can be added to the record as a comment. The query can only be sent to the recorder if you know their email address and have permission to use it.',
+      'queryCommentTabUserIsNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
+      'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
-      'queryUnavailableEmail' => 'As this record does not have an email address for the recorder, the query must be added as a comment to the record. There is no guarantee that the recorder will check their notifications.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
