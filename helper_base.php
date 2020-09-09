@@ -911,6 +911,7 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.templatedOutput.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
+            'https://unpkg.com/@ungap/url-search-params',
           ],
         ],
       );
