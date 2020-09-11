@@ -91,7 +91,7 @@ $indicia_templates = array(
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" {title}/>'."\n",
+  'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" autocomplete="off" {title}/>'."\n",
   'select' => '<select id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
   'select_item' => '<option value="{value}" {selected} >{caption}</option>',
   'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
