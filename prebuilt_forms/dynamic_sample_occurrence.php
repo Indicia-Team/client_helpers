@@ -1670,7 +1670,7 @@ HTML;
       $species_ctrl_opts['useLoadedExistingRecords'] = true;
 
     //Set speciesInLabel flag on indiciaData
-    $speciesInLabel = $options['speciesInLabel'] ? 'true' : 'false';
+    $speciesInLabel = !empty($options['speciesInLabel']) ? 'true' : 'false';
     data_entry_helper::$javascript .= "\nindiciaData.speciesInLabel=".$speciesInLabel.";\n";
 
     return data_entry_helper::species_checklist($species_ctrl_opts);
