@@ -35,6 +35,7 @@ class iform_species_details extends iform_dynamic {
   private static $preferred;
   private static $synonyms = array();
   private static $commonNames = array();
+  private static $commonNameForCurrentLanguage = array();
   private static $taxonomy = array();
   private static $taxa_taxon_list_id;
   private static $taxon_meaning_id;
@@ -301,6 +302,9 @@ class iform_species_details extends iform_dynamic {
    * Obtains details of all names for this species from the database.
    */
   protected static function get_names($auth) {
+  	// Get the Drupal language the user currently has selected
+    global $language ;
+    $lang_name = \Drupal::languageManager()->getCurrentLanguage()->getId();
     iform_load_helpers(array('report_helper'));
     self::$preferred = lang::get('Unknown');
     //Get all the different names for the species
@@ -334,6 +338,15 @@ class iform_species_details extends iform_dynamic {
       }
       else {
         self::$commonNames[] = $speciesData['taxon'];
+      }
+      // If there is a match between a common name language and the users' current language
+      // selection in Drupal, then that is the common name we want to display in the page title
+      if (($speciesData['language_iso'] === 'eng' && $lang_name==='en') ||
+          ($speciesData['language_iso'] === 'deu' && $lang_name==='de') ||
+          ($speciesData['language_iso'] === 'cze' && $lang_name==='cs')) {
+        if (!self::$commonNameForCurrentLanguage) {
+      	  self::$commonNameForCurrentLanguage = $speciesData['taxon'];
+      	}
       }
     }
     /* Fix a problem on the fungi-without-borders site where providing a
@@ -505,6 +518,11 @@ class iform_species_details extends iform_dynamic {
     if ($hideTaxonomy == FALSE && !empty(self::$taxonomy)) {
       $r .= str_replace(array('{caption}', '{value}'), array(lang::get('Taxonomy'), implode(' :: ', self::$taxonomy)), $indicia_templates['dataValue']);
 	
+    }
+    // Put the common name relevant to the user's current Drupal language selection in a hidden field
+    // so it can be used in the page title
+    if (!empty(self::$commonNameForCurrentLanguage)) {
+      $r .= '<div id="current_common_name" style="display:none">'.self::$commonNameForCurrentLanguage.'</div>';
     }
     return $r;
   }
