@@ -238,10 +238,10 @@ function iform_map_get_georef_parameters() {
       'description' => 'Choose the web service used for resolving place names to points on the map. Each web-service has a '.
            'different set of characteristics.',
       'type' => 'select',
-      'default' => 'google_places',
+      'default' => 'nominatim',
       'options' => array(
-        'google_places' => 'Google Places API text search.',
         'nominatim' => 'Nominatim API place search.',
+        'google_places' => 'Google Places API text search.',
         'geoportal_lu' => 'ACT Geoportal Luxembourg (for places in Luxumbourg)',
         'indicia_locations' => 'Search the Indicia locations list.'
       ),

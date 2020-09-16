@@ -38,9 +38,6 @@ $indicia_templates = array(
   // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
   'justControl' => "{control}\n",
-  'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n" .
-      "document.write('{content}');" .
-      "/* ]]> */</script>\n",
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
   // Use if label ends with another punctuation mark.
   'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>',
@@ -94,7 +91,7 @@ $indicia_templates = array(
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" {title}/>'."\n",
+  'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" autocomplete="off" {title}/>'."\n",
   'select' => '<select id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
   'select_item' => '<option value="{value}" {selected} >{caption}</option>',
   'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
@@ -103,14 +100,12 @@ $indicia_templates = array(
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
   'check_or_radio_group' => '<ul {class} id="{id}">{items}</ul>',
   'check_or_radio_group_item' => '<li><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
-  'map_panel' => "<div id=\"{divId}\" style=\"width: {width}; height: {height};\"{class}></div>",
-  'georeference_lookup' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<input type=\"text\" id=\"imp-georef-search\"{class} />{searchButton}');\n".
-    "document.write('<div id=\"imp-georef-div\" class=\"ui-corner-all ui-widget-content ui-helper-hidden\">');\n".
-    "document.write('  <div id=\"imp-georef-output-div\">');\n".
-    "document.write('  </div>  {closeButton}');\n".
-    "document.write('</div>');".
-    "\n/* ]]> */</script>",
+  'map_panel' => '<div id="map-container" style="width: {width};"><div id="map-loading" class="loading-spinner" style="display: none"><div>Loading...</div></div><div id="{divId}" style="width: {width}; height: {height};"{class}></div></div>',
+  'georeference_lookup' => '<input type="text" id="imp-georef-search"{class} />{searchButton}' .
+    '<div id="imp-georef-div" class="ui-corner-all ui-widget-content ui-helper-hidden">' .
+    '<div id="imp-georef-output-div"></div> ' .
+    '{closeButton}' .
+    '</div>',
   'tab_header' => "<ul>{tabs}</ul>\n",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
@@ -298,8 +293,15 @@ class helper_base {
    */
   public static $delegate_translation_to_hostsite = FALSE;
 
+  /**
+   * Check on maximum file size for image uploads.
+   *
+   * @var string
+   */
+  public static $upload_max_filesize = '4M';
+
   /*
-   * End of ariables that can be specified in helper_config.php.
+   * End of variables that can be specified in helper_config.php.
    */
 
   /**
@@ -3127,5 +3129,8 @@ if (class_exists('helper_config')) {
   }
   if (isset(helper_config::$delegate_translation_to_hostsite)) {
     helper_base::$delegate_translation_to_hostsite = helper_config::$delegate_translation_to_hostsite;
+  }
+  if (isset(helper_config::$upload_max_filesize)) {
+    helper_base::$upload_max_filesize = helper_config::$upload_max_filesize;
   }
 }

@@ -1410,6 +1410,8 @@ HTML;
 
   /* Set up the control JS and also return the existing data subsample blocks */
   protected static function get_control_speciesmap_controls($auth, $args, $options){
+    $defaults = array('singleRecordSubsamples' => false);
+    $options = array_merge($defaults, $options);
     $langStrings = array('AddLabel' => lang::get("Add records to map"),
         'AddMessage' => lang::get("Please click on the map where you would like to add your records. Zoom the map in for greater precision."),
         'AddDataMessage' => lang::get("Please enter all the species records for this position into the grid below. When you have finished, click the Finish button to return to the map where you may choose another grid reference to enter data for."),
@@ -1668,7 +1670,7 @@ HTML;
       $species_ctrl_opts['useLoadedExistingRecords'] = true;
 
     //Set speciesInLabel flag on indiciaData
-    $speciesInLabel = $options['speciesInLabel'] ? 'true' : 'false';
+    $speciesInLabel = !empty($options['speciesInLabel']) ? 'true' : 'false';
     data_entry_helper::$javascript .= "\nindiciaData.speciesInLabel=".$speciesInLabel.";\n";
 
     return data_entry_helper::species_checklist($species_ctrl_opts);

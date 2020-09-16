@@ -450,10 +450,6 @@ class filter_where extends FilterBase {
         $initialZoom = 5;
       }
       // Need our own map on the popup.
-      // The js wrapper around the map div does not help here, since it breaks fancybox and fancybox is js only anyway.
-      global $indicia_templates;
-      $oldwrap = $indicia_templates['jsWrap'];
-      $indicia_templates['jsWrap'] = '{content}';
       $mapOpts = [
         'divId' => 'filter-pane-map',
         'presetLayers' => array('osm'),
@@ -474,8 +470,6 @@ class filter_where extends FilterBase {
         $mapOpts['selectFeatureBufferProjection'] = $options['selectFeatureBufferProjection'];
       }
       $r .= map_helper::map_panel($mapOpts);
-
-      $indicia_templates['jsWrap'] = $oldwrap;
     }
     else {
       // We are going to use an existing map for drawing boundaries etc. So prepare a container.
