@@ -1781,7 +1781,7 @@ HTML;
     self::$javascript = "";
     self::$late_javascript = "";
     self::$onload_javascript = "";
-    return "alert('Dump'); $dump";
+    return $dump;
   }
 
   /**
