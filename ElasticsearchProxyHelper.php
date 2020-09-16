@@ -853,14 +853,18 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    * @param array $readAuth
    *   Read authentication tokens.
+   * @param string $filterField
+   *   Name of the field to filter on ('id' or 'taxon_meaning_id').
+   * @param string $filterValues
+   *   Comma separated list of IDs to filter against.
    */
-  private static function applyTaxonomyFilter(array $definition, array &$bool, array $readAuth, array $filter) {
+  private static function applyTaxonomyFilter(array $definition, array &$bool, array $readAuth, $filterField, $filterValues) {
     // Convert the IDs to external keys, stored in ES as taxon_ids.
     $taxonData = helper_base::get_population_data([
-      'table' => 'taxa_taxon_list',
+      'report' => 'library/taxa/convert_ids_to_external_keys',
       'extraParams' => [
-        'view' => 'cache',
-        'query' => json_encode($filter),
+        $filterField => $filterValues,
+        'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
       ] + $readAuth,
     ]);
     $keys = [];
@@ -889,7 +893,7 @@ class ElasticsearchProxyHelper {
       'higher_taxa_taxon_list_id',
     ]);
     if (!empty($filter)) {
-      self::applyTaxonomyFilter($definition, $bool, $readAuth, ['in' => ['id' => explode(',', $filter['value'])]]);
+      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'id', $filter['value']);
     }
   }
 
@@ -909,7 +913,7 @@ class ElasticsearchProxyHelper {
       'taxon_meaning_id',
     ]);
     if (!empty($filter)) {
-      self::applyTaxonomyFilter($definition, $bool, $readAuth, ['in' => ['taxon_meaning_id' => explode(',', $filter['value'])]]);
+      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'taxon_meaning_id', $filter['value']);
     }
   }
 
