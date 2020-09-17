@@ -346,6 +346,10 @@ class iform_species_details extends iform_dynamic {
           ($speciesData['language_iso'] === 'cze' && $lang_name==='cs')) {
         if (!self::$commonNameForCurrentLanguage) {
       	  self::$commonNameForCurrentLanguage = $speciesData['taxon'];
+      	  // Override this particular case for description taxa_taxon_list_id = 11181 on request from client
+      	  if (self::$commonNameForCurrentLanguage==='Bleicher Schüppling') {
+      	  	self::$commonNameForCurrentLanguage = 'Blasser Urwaldschüppling';
+      	  }
       	}
       }
     }
