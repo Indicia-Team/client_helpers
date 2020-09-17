@@ -568,14 +568,17 @@ mapInitialisationHooks.push(function(mapdiv) {
   private function userOwnsLocation() {
     if (function_exists('hostsite_get_user_field')) {
       $iUserId = hostsite_get_user_field('indicia_user_id');
+      dpm($iUserId);
       if ($iUserId === 1 || $iUserId === data_entry_helper::$entity_to_load['location:created_by_id']) {
         return true;
       }
       else {
+        dpm("no match");
         return false;
       }
     } 
     else {
+      dpm("no function");
       return false;
     }
   }
