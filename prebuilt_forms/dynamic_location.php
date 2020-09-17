@@ -569,7 +569,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     if (function_exists('hostsite_get_user_field')) {
       $iUserId = hostsite_get_user_field('indicia_user_id');
       dpm($iUserId);
-      if ($iUserId === 1 || $iUserId === data_entry_helper::$entity_to_load['location:created_by_id']) {
+      if ($iUserId === "1" || $iUserId === data_entry_helper::$entity_to_load['location:created_by_id']) {
         return true;
       }
       else {
