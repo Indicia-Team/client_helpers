@@ -497,8 +497,9 @@ $('form#entry_form').tooltip({
    * @param array $args
    * @param string $tabalias
    * @param array $options
-   *   Array of options. Set parameter to the name of the URL parameter for the scratchpad_list_id, if you want to
-   *   override the default.
+   *   Array of options. Set parameter to the name of the URL parameter for the
+   *   scratchpad_list_id, if you want to override the default. Or provide an
+   *   option @scratchpad_list_id to directly set the loaded list.
    *
    * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
    */
@@ -508,13 +509,15 @@ $('form#entry_form').tooltip({
         'parameter' => 'scratchpad_list_id'
       ), $options
     );
-    if (empty($_GET[$options['parameter']])) {
+    if (empty($options['scratchpad_list_id']) && empty($_GET[$options['parameter']])) {
       // No list to load.
       return '';
     }
+    $scratchpad_list_id = empty($options['scratchpad_list_id'])
+      ? $_GET[$options['parameter']] : $options['scratchpad_list_id'];
     $entries = data_entry_helper::get_population_data(array(
       'table' => 'scratchpad_list_entry',
-      'extraParams' => $auth['read'] + array('scratchpad_list_id' => $_GET[$options['parameter']]),
+      'extraParams' => $auth['read'] + array('scratchpad_list_id' => $scratchpad_list_id),
       'caching' => FALSE
     ));
     $r = '';
@@ -526,10 +529,10 @@ $('form#entry_form').tooltip({
       }
       hostsite_show_message(lang::get('The list of species has been loaded into the form for you. ' .
         'Please fill in the other form values before saving the form.'));
-      $r = data_entry_helper::hidden_text(array(
+      $r = data_entry_helper::hidden_text([
         'fieldname' => 'scratchpad_list_id',
-        'default' => $_GET[$options['parameter']]
-      ));
+        'default' => $scratchpad_list_id,
+      ]);
       $r .= data_entry_helper::hidden_text(array(
         'fieldname' => 'submission_extensions[]',
         'default' => 'misc_extensions.remove_scratchpad'
