@@ -808,7 +808,9 @@ indiciaData.rowIdToReselect = false;
         user_id: indiciaData.user_id
       };
       if ($('#on-behalf-of').is(':checked')) {
-        data['occurrence:determiner_id'] = currRec.extra.created_by_id;
+        data['occurrence:determiner_id'] = currRec.extra.created_by_person_id;
+      } else if ($('#no-update-determiner').is(':checked')) {
+        data['occurrence:determiner_id'] = -1;
       }
       if ($('#verify-comment').val()) {
         data['occurrence_comment:comment'] = $('#verify-comment').val();
@@ -921,9 +923,12 @@ indiciaData.rowIdToReselect = false;
     var html = '<form id="redet-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.redetermine + '</legend>';
     html += '<div id="redet-dropdown-popup-ctnr"></div>';
-    html += '<label class="auto" for="on-behalf-of">Redetermine on behalf of original recorder:</label><input type="checkbox" id="on-behalf-of"/>';
+    html += '<label class="auto" for="update-redeterminer">Set your name as the determiner of this record:</label><input type="radio" name="redet-mode" id="set-name-as-determiner" checked="checked" />';
+    html += '<label class="auto" for="on-behalf-of">Redetermine on behalf of original recorder:</label><input type="radio" name="redet-mode" id="on-behalf-of"/>';
     html += '<p class="helpText">If you are changing the record determination on behalf of the original recorder and their name should be ' +
       'stored against the determination, please tick this box.</p>';
+    html += '<label class="auto" for="no-update-determiner">Don\'t update the determiner:</label><input type="radio" name="redet-mode" id="no-update-determiner"/>';
+    html += '<p class="helpText">Tick this box to leave the current determiner name stored against the determination as it is.</p>';
     html += '<div class="verify-template-container"> ' +
     '<label>' + indiciaData.popupTranslations.templateLabel + ' : </label>' +
     '<select class="verify-template" >' +
