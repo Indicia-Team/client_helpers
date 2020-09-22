@@ -384,6 +384,10 @@ class iform_species_details extends iform_dynamic {
    *   The output html string.
    */
   protected static function get_control_speciesdetails($auth, $args, $tabalias, $options) {
+    // Get the Drupal language the user currently has selected
+    global $language ;
+    $lang_name = \Drupal::languageManager()->getCurrentLanguage()->getId();
+    
     global $indicia_templates;
     $options = array_merge([
       'includeAttributes' => TRUE,
@@ -485,8 +489,13 @@ class iform_species_details extends iform_dynamic {
     }
     // Display description author, this is then moved to the Descriptions tab using jQuery
     foreach ($attrData as $rowIdx => $resultRow) {
-      if (!empty($resultRow['caption']) && !empty($resultRow['value']) && $resultRow['caption']=='autore(n)')
+      if (!empty($resultRow['caption']) && !empty($resultRow['value']) && $resultRow['caption']=='autore(n)') {
         $r .= '<div id="author-move-from"><br><b>'.ucfirst(lang::get($resultRow['caption'])).'</b>: <em>'.$resultRow['value'].'</em></div>';
+      }
+      // Do the same with the main comment field, this one is slightly different as we only want to show it in German
+      if (!empty($resultRow['caption']) && !empty($resultRow['value']) && $resultRow['caption']=='Hauptkommentar' && $lang_name==='de') {
+        $r .= '<div id="main-comment-move-from"><br><b>'.ucfirst(lang::get($resultRow['caption'])).'</b>: <em>'.$resultRow['value'].'</em></div>';
+      }
     }
     return str_replace(
       ['{id}', '{title}', '{content}'],
