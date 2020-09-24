@@ -303,9 +303,9 @@ mapInitialisationHooks.push(function(mapdiv) {
     if ($tabalias)
       $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
-    if (!self::userOwnsLocation()) {
-      $options['standardControls']=null;
-      $r = '<p><strong>You cannot edit this loation because you do not own it.</strong></p>';
+    if (!self::editLocationPermitted()) {
+      $options['standardControls'] = NULL;
+      $r = '<p><strong>You cannot edit this location because you do not own it.</strong></p>';
     }
     else {
       $r = '';
@@ -546,7 +546,7 @@ mapInitialisationHooks.push(function(mapdiv) {
    * Override the default submit buttons to add a delete button where appropriate.
    */
   protected static function getSubmitButtons($args) {
-    if (!self::userOwnsLocation()) {
+    if (!self::editLocationPermitted()) {
       return '';
     }
     $r = '';
@@ -565,21 +565,24 @@ mapInitialisationHooks.push(function(mapdiv) {
     return $r;
   }
 
-  private function userOwnsLocation() {
+  /**
+   * Indicates whether or not the current user is permitted to edit the location entity.
+   */
+  private function editLocationPermitted() {
     if (empty(data_entry_helper::$entity_to_load['location:id'])) {
-      return true;
+      return TRUE;
     }
     elseif (function_exists('hostsite_get_user_field')) {
       $iUserId = hostsite_get_user_field('indicia_user_id');
       if ($iUserId === "1" || $iUserId === data_entry_helper::$entity_to_load['location:created_by_id']) {
-        return true;
+        return TRUE;
       }
       else {
-        return false;
+        return FALSE;
       }
     } 
     else {
-      return false;
+      return FALSE;
     }
   }
 }
