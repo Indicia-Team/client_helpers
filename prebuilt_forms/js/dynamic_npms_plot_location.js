@@ -1,3 +1,17 @@
+// Remove delete sketch icon in summary mode
+jQuery(document).ready(function () {
+  function hide_sketch_icon_in_summary_mode() {
+      jQuery('.delete-file').remove();
+  }
+  indiciaData.onloadFns.push(function() {
+    // Need to add a timeout to even get this to work as think there are
+    // difficulties with the order Pantheon is loading Javascript files
+    if (indiciaData.summaryMode) {
+      setTimeout(hide_sketch_icon_in_summary_mode, 1000);
+    }
+  });
+});
+
 jQuery(window).load(function () {
   jQuery('#imp-sref').keyup(function() {
     //Remove spaces from most spatial references.

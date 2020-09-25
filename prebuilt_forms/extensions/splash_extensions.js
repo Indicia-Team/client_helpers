@@ -1,6 +1,6 @@
 var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, limit_to_post_code,context_sensitive_instructions;
 
-(function($) {
+jQuery(document).ready(function ($) {
   //If the use selects a private plot, then we need to set the privacy precision
   //Switch off input form Occurrence Sensitivity option as this may end up overriding this code.
   private_plots_set_precision = function (privatePlots) {
@@ -291,4 +291,83 @@ var private_plots_set_precision,clear_map_features, plot_type_dropdown_change, l
       }
       return false;
   }
-})(jQuery); 
+
+  /**
+   * Code for misc_extensions.query_locations_on_map_click control.
+   */
+  if (indiciaData.queryLocationsOnMapClickSettings) {
+    mapSettingsHooks.push(function(opts) {
+      opts.hintQueryDataPointsTool = 'Select this tool and click on individual squares to display information about the square, or to request the square';
+      opts.hintClickSpatialRefTool = 'Select this tool to enable clicking on the map to display locational information (e.g. National Parks and National Nature Reserves)';
+    });
+    // Attach handler when map clicked on.
+    mapClickForSpatialRefHooks.push(function onMapClick(clickInfo) {
+      var reportingURL = indiciaData.read.url + 'index.php/services/report/requestReport' +
+        '?report=library/locations/locations_list_3.xml&callback=?';
+      var reportOptions = {
+        mode: 'json',
+        nonce: indiciaData.read.nonce,
+        auth_token: indiciaData.read.auth_token,
+        reportSource: 'local',
+        intersects: clickInfo.mapwkt
+      };
+      $.each(indiciaData.queryLocationsOnMapClickSettings, function eachLocationType(id, data) {
+        reportOptions.location_type_ids = data.locationTypeIds.join(',');
+        // Find locations that intersect a click point.
+        $.getJSON(reportingURL, reportOptions,
+          function success(locations) {
+            var output = [];
+            var templateArray = [];
+            // For each location in response, build HTML.
+            $.each(locations, function eachLocation() {
+              var template = data.template;
+              $.each(this, function eachField(field, value) {
+                // Empty values.
+                if (value === null) {
+                  value = '';
+                }
+                template = template.replace(new RegExp('{{ ' + field + ' }}', 'g'), value);
+                if (!inArray(template,templateArray)) {
+                  templateArray.push(template);
+                }
+              });
+            });
+            //Firstly sort the list of locations
+            templateArray.sort();
+            var previousFieldNameWithSpace = '';
+            var fieldNameWithSpace = '';
+            var templateArrayOptimised = [];
+            var templateArrayOptimisedStringBuilder = '';
+            // Cycle through each returned location
+            for (var i = 0; i < templateArray.length; i++) {
+              // Get the type of the location by getting everything before the colon
+              fieldNameWithSpace = templateArray[i].substr(0,templateArray[i].indexOf(':'));
+              // If the location is the same type as previous location, then add it on the add of the previous location
+              // with a comma, don't need to display the type again so remove it
+              if (fieldNameWithSpace === previousFieldNameWithSpace) {
+                templateArrayOptimisedStringBuilder = templateArrayOptimisedStringBuilder + ', ' + templateArray[i].replace(fieldNameWithSpace + ':', '');
+              } else {                 
+                // If the type is different to the previous location
+                // then push the previous location type ready for display, then add the current
+                // location complete with type to the string builder (ready for more locations to be added as needed)
+                templateArrayOptimised.push(templateArrayOptimisedStringBuilder);
+                templateArrayOptimisedStringBuilder = templateArray[i];           
+              }
+              // If have reached the last location then we need to push it for display immediately as there is nothing 
+              //  else to examine
+              if (i === (templateArray.length - 1) && fieldNameWithSpace !== previousFieldNameWithSpace) {  
+                templateArrayOptimised.push(templateArrayOptimisedStringBuilder); 
+              }
+              // Save the location type we just worked with so it can be compared with the next one
+              previousFieldNameWithSpace = fieldNameWithSpace;
+            } 
+            // Output final result
+            if (templateArrayOptimised && templateArrayOptimised.length > 0) {
+              alert(templateArrayOptimised.join('\n'));
+            }
+          }
+        );
+      });
+    });
+  }
+});

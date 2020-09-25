@@ -72,6 +72,9 @@ class iform_dynamic_npms_plot_location extends iform_dynamic_location {
   }
   
   public static function get_form($args, $nid) {
+    if (!empty($_GET['summary_mode']) && $_GET['summary_mode']=='true') {
+      data_entry_helper::$javascript .= "indiciaData.summaryMode=true;\n";
+    }
     if (empty($args['square_location_type_id']))
       return '<div><em>Please fill in the square location type id argument</em></div>';
     if (empty($args['user_square_attr_id']))
