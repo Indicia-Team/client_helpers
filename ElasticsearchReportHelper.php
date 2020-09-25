@@ -382,7 +382,7 @@ class ElasticsearchReportHelper {
       $availableColTypes = array(
         "default" => lang::get("Standard download format"),
         "easy-download" => lang::get("Backward-compatible format"),
-        "mapmate" => lang::get("Mapmate-compatible format")
+        "mapmate" => lang::get("Mapmate-compatible format"),
       );
       $optionArr = array();
       foreach ($options['columnsTemplate'] as $colType) {
