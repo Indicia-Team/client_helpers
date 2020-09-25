@@ -664,6 +664,24 @@ HTML;
     ], $options));
     return $r;
   }
+  
+  protected static function get_control_loadattrsfromgenus($auth, $args, $tabAlias, $options) {
+    $options['extraParams']=array();
+    $options['extraParams'] += $auth['read'];
+    //$options['extraParams']['taxon_list_id'] = $options['taxon_list_id'];
+    $options['extraParams']['taxon_list_id'] = $args['taxon_list_id'];
+    $options['speciesIncludeBothNames']=true;
+    $options['id']='load_from_taxon';
+    $options['fieldname']='load_from_taxon';
+    $options['valueField']='preferred_taxa_taxon_list_id';
+    $r = data_entry_helper::species_autocomplete($options);
+
+    $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
+    data_entry_helper::$javascript .= "indiciaData.indiciaSvc = '".data_entry_helper::getRootFolder() . data_entry_helper::client_helper_path() . "proxy.php?url=".data_entry_helper::$base_url."';\n";
+    data_entry_helper::$javascript .= "indiciaData.readAuth = {nonce: '".$readAuth['nonce']."', auth_token: '".$readAuth['auth_token']."'};\n";
+    $r .= '<input id="load-from-genus-button" class="btn-default" type="button" class="btn-default" value="'.lang::get("Copy attribute values from another species").'">';
+    return $r;
+  }
 
   /**
    * Returns a div for dynamic attributes.

@@ -452,6 +452,136 @@ indiciaFns.hookDynamicAttrsAfterLoad = [];
 }());
 
 jQuery(document).ready(function docReady($) {
+//Note that 2175 is the main comment field we also don't want to copy
+var ignoreAttrsDuringCopy = [2175,35,
+  50,
+  51,
+  79,
+  80,
+  91,
+ 125,
+ 145,
+ 146,
+ 147,
+ 178,
+ 179,
+ 180,
+ 181,
+ 182,
+ 183,
+ 219,
+ 220,
+ 242,
+ 243,
+ 244,
+ 245,
+ 265,
+ 266,
+ 267,
+ 268,
+ 286,
+ 287,
+ 288,
+ 289,
+ 313,
+ 314,
+ 336,
+349,
+ 350,
+ 396,
+ 397,
+ 436,
+ 437,
+ 438,
+ 439,
+ 500,
+ 501,
+ 539,
+ 540,
+ 558,
+ 559,
+ 596,
+ 597,
+ 615,
+ 616,
+ 617,
+ 682,
+ 726,
+731,
+ 735,
+ 736,
+ 737,
+ 738,
+ 775,
+ 780,
+ 781,
+ 782,
+ 783,
+ 784,
+ 785,
+ 804,
+ 805,
+ 806,
+ 807,
+ 808,
+ 809,
+ 810,
+ 811,
+ 814,
+ 815,
+ 816,
+ 817,
+818,
+ 819,
+ 820,
+ 821,
+ 823,
+ 826,
+ 827,
+ 828,
+ 872,
+ 873,
+ 874,
+ 875,
+ 877,
+ 878,
+ 879,
+ 881,
+ 882,
+ 883,
+ 884,
+ 885,
+ 890,
+ 891,
+1066,
+1067,
+1068,
+1069,
+1070,
+1071,
+1072,
+1073,
+1074,
+1759,
+1760,
+1766,
+1796,
+1797,
+1798,
+1799,
+1803,
+1804,
+1841,
+1842,
+1843,
+1925,
+1938,
+1939,
+1940,
+1967,
+1968,
+2132,
+2133];
 
   function changeTaxonRestrictionInputs() {
     var urlSep = indiciaData.ajaxUrl.indexOf('?') === -1 ? '?' : '&';
@@ -475,7 +605,62 @@ jQuery(document).ready(function docReady($) {
     }
   }
 
+  $('#load-from-genus-button').click(function() {
+    var r = confirm("Are you sure you want to copy values from the selected species.");
+    if (r == true) {
+      load_other_species_data_from_db();
+    }
+  });
+
+  function load_other_species_data_from_db() {
+    $.getJSON(indiciaData.indiciaSvc + "index.php/services/report/requestReport?report=reports_for_prebuilt_forms/dgfm/lang_independent_list_taxa_taxon_list_attribute_values.xml" + 
+      "&taxa_taxon_list_id=" + $('#load_from_taxon').val() + 
+      "&reportSource=local&mode=json&callback=?&auth_token=" + indiciaData.readAuth.auth_token + "&nonce=" + indiciaData.readAuth.nonce,
+      function(data) {
+        $.each(data, function(attr_value_with_all_lang_tt_ids_to_check_idx,attr_value_with_all_lang_tt_ids_to_check) {
+          if (attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id'] && !inArray(attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id'], ignoreAttrsDuringCopy)) {
+            if ($("#taxAttr\\:" + attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id'] + "\\:0").length)  {
+              $("[id^='taxAttr\\:" + attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id'] + "']").each(function() {
+                if (attr_value_with_all_lang_tt_ids_to_check['deu_value'] && $(this).val()==attr_value_with_all_lang_tt_ids_to_check['deu_value']) {
+                  $(this).prop('checked',true);
+                }
+                if (attr_value_with_all_lang_tt_ids_to_check['eng_value'] && $(this).val()==attr_value_with_all_lang_tt_ids_to_check['eng_value']) {
+                  $(this).prop('checked',true);
+                }
+                if (attr_value_with_all_lang_tt_ids_to_check['cze_value'] && $(this).val()==attr_value_with_all_lang_tt_ids_to_check['cze_value']) {
+                  $(this).prop('checked',true);
+                }
+              });
+            } else {
+              if (!$('#taxAttr\\:' + attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id']).val() &&
+              !$('#taxAttr\\:' + attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id'] + '\\:upper').val()) {
+                if (attr_value_with_all_lang_tt_ids_to_check['raw_value']) {  
+                  $('#taxAttr\\:' + attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id']).val(attr_value_with_all_lang_tt_ids_to_check['raw_value']);
+                }
+                if (attr_value_with_all_lang_tt_ids_to_check['upper_value']) {
+                  $('#taxAttr\\:' + attr_value_with_all_lang_tt_ids_to_check['taxa_taxon_list_attribute_id'] + '\\:upper').val(attr_value_with_all_lang_tt_ids_to_check['upper_value']);
+                }
+              }
+            }
+          }
+        });
+        alert('Copying of values complete')
+      }
+    );  
+  }
+
   // On selection of a taxon or change of sex/stage attribute, load any dynamically linked attrs into the form.
   $('#taxa_taxon_list\\:parent_id').change(changeTaxonRestrictionInputs);
+
+  /*
+   * Returns true if an item is found in an array
+   */
+  function inArray(needle, haystack) {
+    var length = haystack.length;
+    for(var i = 0; i < length; i++) {
+      if(haystack[i] == needle) return true;
+    }
+    return false;
+  }
 });
 
