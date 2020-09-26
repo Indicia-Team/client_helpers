@@ -115,47 +115,52 @@ $indicia_templates = array(
   'tree_browser_node' => '<span>{caption}</span>',
   'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
       '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
-  'autocomplete_javascript' => "jQuery('input#{escaped_input_id}').autocomplete('{url}',
-      {
-        extraParams : {
-          orderby : '{captionField}',
-          mode : 'json',
-          qfield : '{captionField}',
-          {sParams}
-        },
-        simplify: {simplify},
-        selectMode: {selectMode},
-        warnIfNoMatch: {warnIfNoMatch},
-        continueOnBlur: {continueOnBlur},
-        matchContains: {matchContains},
-        parse: function(data)
-        {
-          // Clear the current selected key as the user has changed the search text
-          jQuery('input#{escaped_id}').val('');
-          var results = [], done = [];
-          jQuery.each(data, function(i, item) {
-            if ({duplicateCheck}) {
-              results.push({
-                'data' : item,
-                'result' : item.{captionField},
-                'value' : item.{valueField}
-              });
-              {storeDuplicates}
-            }
+  'autocomplete_javascript' => "
+$('input#{escaped_input_id}').change(function() {
+  $('input#{escaped_id}').val('');
+});
+$('input#{escaped_input_id}').autocomplete('{url}',
+  {
+    extraParams : {
+      orderby : '{captionField}',
+      mode : 'json',
+      qfield : '{captionField}',
+      {sParams}
+    },
+    simplify: {simplify},
+    selectMode: {selectMode},
+    warnIfNoMatch: {warnIfNoMatch},
+    continueOnBlur: {continueOnBlur},
+    matchContains: {matchContains},
+    parse: function(data)
+    {
+      // Clear the current selected key as the user has changed the search text
+      $('input#{escaped_id}').val('');
+      var results = [], done = [];
+      $.each(data, function(i, item) {
+        if ({duplicateCheck}) {
+          results.push({
+            'data' : item,
+            'result' : item.{captionField},
+            'value' : item.{valueField}
           });
-          return results;
-        },
-      formatItem: {formatFunction}
-      {max}
-    });
-    $('input#{escaped_input_id}').result(function(event, data) {
-      $('input#{escaped_id}').attr('value', data.{valueField});
-      $('.item-icon').remove();
-      if (typeof data.icon!=='undefined') {
-        $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
-      }
-      $('input#{escaped_id}').trigger('change', data);
-    });\r\n",
+          {storeDuplicates}
+        }
+      });
+      return results;
+    },
+  formatItem: {formatFunction}
+  {max}
+});
+$('input#{escaped_input_id}').result(function(event, data) {
+  $('input#{escaped_id}').attr('value', data.{valueField});
+  $('.item-icon').remove();
+  if (typeof data.icon!=='undefined') {
+    $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
+  }
+  $('input#{escaped_id}').trigger('change', data);
+});
+",
   'sub_list' => '<div id="{id}:box" class="control-box wide"><div>'."\n".
     '<div>'."\n".
     '{panel_control} <input id="{id}:add" type="button" value="'.lang::get('add').'" />'."\n".
