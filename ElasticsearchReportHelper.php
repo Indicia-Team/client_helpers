@@ -846,6 +846,7 @@ HTML;
       'sortAggregation',
       'size',
       'sort',
+      'switchToGeomsAt',
       'uniqueField',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
@@ -1218,22 +1219,15 @@ HTML;
     // Note the geohash_grid precision will be overridden depending on map zoom.
     $aggText = <<<AGG
 {
-  "filter_agg": {
-    "filter": {
-      "geo_bounding_box": {}
+  "by_hash": {
+    "geohash_grid": {
+      "field": "location.point",
+      "precision": 1
     },
     "aggs": {
-      "by_hash": {
-        "geohash_grid": {
-          "field": "location.point",
-          "precision": 1
-        },
-        "aggs": {
-          "by_centre": {
-            "geo_centroid": {
-              "field": "location.point"
-            }
-          }
+      "by_centre": {
+        "geo_centroid": {
+          "field": "location.point"
         }
       }
     }
@@ -1263,28 +1257,21 @@ AGG;
     }
     $aggText = <<<AGG
 {
-  "filter_agg": {
-    "filter": {
-      "geo_bounding_box": {}
+  "by_srid": {
+    "terms": {
+      "field": "location.grid_square.srid",
+      "size": 1000,
+      "order": {
+        "_count": "desc"
+      }
     },
     "aggs": {
-      "by_srid": {
+      "by_square": {
         "terms": {
-          "field": "location.grid_square.srid",
-          "size": 1000,
+          "field": "$geoField",
+          "size": 100000,
           "order": {
             "_count": "desc"
-          }
-        },
-        "aggs": {
-          "by_square": {
-            "terms": {
-              "field": "$geoField",
-              "size": 100000,
-              "order": {
-                "_count": "desc"
-              }
-            }
           }
         }
       }

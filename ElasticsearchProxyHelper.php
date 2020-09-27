@@ -590,6 +590,7 @@ class ElasticsearchProxyHelper {
     ];
     $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
+    $objectQueryTypes = ['geo_bounding_box'];
     if (isset($query['textFilters'])) {
       // Apply any filter row parameters to the query.
       foreach ($query['textFilters'] as $field => $value) {
@@ -649,6 +650,14 @@ class ElasticsearchProxyHelper {
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $objectQueryTypes)) {
+        $queryDef = [$qryConfig['query_type'] => $qryConfig['value']];
+      }
+      else {
+        header("HTTP/1.1 400 Bad request");
+        echo json_encode(['error' => 'Incorrect filter type parameter']);
+        throw new ElasticsearchProxyAbort('Incorrect filter type parameter: ' . $qryConfig['query_type']);
       }
       if (!empty($qryConfig['nested']) && $qryConfig['nested'] !== 'null') {
         // Must not nested queries should be handled at outer level.
