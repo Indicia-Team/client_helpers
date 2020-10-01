@@ -568,6 +568,7 @@ JS;
       'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
       'label' => 'Records to access',
+      'notices' => '[]'
     ], $options);
 
     $optionArr = [];
@@ -657,7 +658,32 @@ JS;
       'class' => 'permissions-filter',
     ];
 
-    return data_entry_helper::select($controlOptions);
+    $dropdown = data_entry_helper::select($controlOptions);
+    $html = <<<HTML
+<div>
+  $dropdown 
+  <div id="permission-filters-notice"></div>
+</div>
+
+HTML;
+
+  helper_base::$indiciaData['esPermissionFilterNotices'] = json_encode($options['notices']);
+  helper_base::$late_javascript .= <<<JS
+function permissionFilterChanged() {
+  var jsonFilterNotices = JSON.parse(indiciaData.esPermissionFilterNotices);
+  $('#permission-filters-notice').html('');
+  Object.keys(jsonFilterNotices).forEach(function(key) {
+    if ($('#es-permissions-filter option:selected').text().indexOf(key) === 0) {
+      $('#permission-filters-notice').html(jsonFilterNotices[key]);
+    }
+  });
+}
+$('#es-permissions-filter').on('change', permissionFilterChanged);
+permissionFilterChanged();
+
+JS;
+
+    return $html;
   }
 
   /**
