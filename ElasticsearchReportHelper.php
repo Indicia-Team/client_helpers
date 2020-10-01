@@ -568,7 +568,7 @@ JS;
       'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
       'label' => 'Records to access',
-      'notices' => '[]'
+      'notices' => '[]',
     ], $options);
 
     $optionArr = [];
