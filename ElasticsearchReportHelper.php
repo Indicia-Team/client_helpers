@@ -563,6 +563,10 @@ JS;
   public static function permissionFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
 
+    $wrapperOptions = array_merge([
+      'id' => "es-permissions-filter-wrapper",
+    ], $options);
+
     $options = array_merge([
       'id' => "es-permissions-filter",
       'includeFiltersForGroups' => FALSE,
@@ -668,23 +672,8 @@ JS;
 
 HTML;
 
-  helper_base::$indiciaData['esPermissionFilterNotices'] = json_encode($options['notices']);
-  helper_base::$late_javascript .= <<<JS
-function permissionFilterChanged() {
-  var jsonFilterNotices = JSON.parse(indiciaData.esPermissionFilterNotices);
-  $('#permission-filters-notice').html('');
-  Object.keys(jsonFilterNotices).forEach(function(key) {
-    if ($('#es-permissions-filter option:selected').text().indexOf(key) === 0) {
-      $('#permission-filters-notice').html(jsonFilterNotices[key]);
-    }
-  });
-}
-$('#es-permissions-filter').on('change', permissionFilterChanged);
-permissionFilterChanged();
-
-JS;
-
-    return $html;
+    $dataOptions = helper_base::getOptionsForJs($options, ['notices'], TRUE);
+    return self::getControlContainer('permissionFilters', $wrapperOptions, $dataOptions, $html);
   }
 
   /**
