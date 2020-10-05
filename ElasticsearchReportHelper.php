@@ -258,6 +258,10 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+    // Always allow filtering by group.
+    if (!empty($_GET['group_id'])) {
+      helper_base::$indiciaData['group_id'] = $_GET['group_id'];
+    }
   }
 
   /**
