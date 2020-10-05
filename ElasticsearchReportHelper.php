@@ -385,7 +385,8 @@ class ElasticsearchReportHelper {
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = array(
         "default" => lang::get("Standard download format"),
-        "easy-download" => lang::get("Backward-compatible format")
+        "easy-download" => lang::get("Backward-compatible format"),
+        "mapmate" => lang::get("Mapmate-compatible format"),
       );
       $optionArr = array();
       foreach ($options['columnsTemplate'] as $colType) {
@@ -566,12 +567,17 @@ JS;
   public static function permissionFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
 
+    $wrapperOptions = array_merge([
+      'id' => "es-permissions-filter-wrapper",
+    ], $options);
+
     $options = array_merge([
       'id' => "es-permissions-filter",
       'includeFiltersForGroups' => FALSE,
       'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
       'label' => 'Records to access',
+      'notices' => '[]',
     ], $options);
 
     $optionArr = [];
@@ -661,7 +667,17 @@ JS;
       'class' => 'permissions-filter',
     ];
 
-    return data_entry_helper::select($controlOptions);
+    $dropdown = data_entry_helper::select($controlOptions);
+    $html = <<<HTML
+<div>
+  $dropdown 
+  <div id="permission-filters-notice"></div>
+</div>
+
+HTML;
+
+    $dataOptions = helper_base::getOptionsForJs($options, ['notices'], TRUE);
+    return self::getControlContainer('permissionFilters', $wrapperOptions, $dataOptions, $html);
   }
 
   /**
