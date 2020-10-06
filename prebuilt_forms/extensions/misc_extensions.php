@@ -490,23 +490,33 @@ $('form#entry_form').tooltip({
   }
 
   /**
-   * An extension control that takes a scratchpad_list_id parameter in the URL and uses it to load the list onto a
-   * species grid on the page. This allows a scratchpad to be used as the first step in data entry.
+   * Loads a scratchpad species list into a species_checklist control.
+   *
+   * An extension control that takes a scratchpad_list_id parameter in the URL
+   * and uses it to load the list onto a species grid on the page. This allows
+   * a scratchpad to be used as the first step in data entry.
    *
    * @param array $auth
    * @param array $args
    * @param string $tabalias
    * @param array $options
-   *   Array of options. Set parameter to the name of the URL parameter for the
-   *   scratchpad_list_id, if you want to override the default. Or provide an
-   *   option @scratchpad_list_id to directly set the loaded list.
-   *
+   *   Array of options. The following options are available:
+   *   * **parameter* set to the name of the URL parameter for the
+   *     scratchpad_list_id, if you want to override the default.
+   *   * **scratchpad_list_id** to directly set the loaded list, overriding the
+   *     URL parameter.
+   *   * **tickAll** can be set to FALSE to disable ticking the list of
+   *     species when initially loaded.
+   *   * **showMessage** can be set to FALSE to disable the explanatory
+   *     message.
    * @return string HTML to add to the page. Contains hidden inputs which set values required for functionality to work.
    */
   public static function load_species_list_from_scratchpad($auth, $args, $tabalias, $options) {
     $options = array_merge(
       array(
-        'parameter' => 'scratchpad_list_id'
+        'parameter' => 'scratchpad_list_id',
+        'tickAll' => TRUE,
+        'showMessage' => TRUE,
       ), $options
     );
     if (empty($options['scratchpad_list_id']) && empty($_GET[$options['parameter']])) {
@@ -521,14 +531,18 @@ $('form#entry_form').tooltip({
       'caching' => FALSE
     ));
     $r = '';
+    // Are the taxa pre-ticked, or just loaded.
+    $mode = $options['tickAll'] ? 'present' : 'preloadUnticked';
     if (count($entries)) {
       foreach ($entries as $idx => $entry) {
         if ($entry['entity'] === 'taxa_taxon_list') {
-          data_entry_helper::$entity_to_load["sc:$idx::present"] = $entry['entry_id'];
+          data_entry_helper::$entity_to_load["sc:$idx::$mode"] = $entry['entry_id'];
         }
       }
-      hostsite_show_message(lang::get('The list of species has been loaded into the form for you. ' .
-        'Please fill in the other form values before saving the form.'));
+      if ($options['showMessage']) {
+        hostsite_show_message(lang::get('The list of species has been loaded into the form for you. ' .
+            'Please fill in the other form values before saving the form.'));
+      }
       $r = data_entry_helper::hidden_text([
         'fieldname' => 'scratchpad_list_id',
         'default' => $scratchpad_list_id,
