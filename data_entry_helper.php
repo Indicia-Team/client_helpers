@@ -3433,11 +3433,6 @@ RIJS;
       // tell the addTowToGrid javascript how many rows are already used, so it has a unique index for new rows
       self::$javascript .= "indiciaData['gridCounter-".$options['id']."'] = ".count($taxonRows) . ";\n";
       self::$javascript .= "indiciaData['gridSampleCounter-".$options['id']."'] = ".count($subSampleRows) . ";\n";
-      // Loop through all the rows needed in the grid
-      // Get the checkboxes (hidden or otherwise) that indicate a species is present
-      if (is_array(self::$entity_to_load)) {
-        $presenceValues = preg_grep("/^sc:[0-9]*:[0-9]*:present$/", array_keys(self::$entity_to_load));
-      }
       // if subspecies are stored, then need to load up the parent species info into the $taxonRows data
       if ($options['subSpeciesColumn']) {
         self::load_parent_species($taxalist, $options);
@@ -3451,6 +3446,7 @@ RIJS;
         $mediaBtnLabel = lang::get($onlyImages ? 'Add images' : 'Add media');
         $mediaBtnClass = 'sc' . ($onlyImages ? 'Image' : 'Media') . 'Link';
       }
+      // Loop through all the rows needed in the grid.
       foreach ($taxonRows as $txIdx => $rowIds) {
         $ttlId = $rowIds['ttlId'];
         $loadedTxIdx = isset($rowIds['loadedTxIdx']) ? $rowIds['loadedTxIdx'] : -1;
@@ -4465,8 +4461,8 @@ JS;
       foreach(self::$entity_to_load as $key => $value) {
         $parts = explode(':', $key);
         // Is this an occurrence?
-        $present = count($parts) > 2 && $parts[0] === 'sc' && $parts[1]!='-idx-' && $parts[3] === 'present';
-        if ($present && !empty($options['gridIdAttributeId'])) {
+        $loadIntoList = count($parts) > 2 && $parts[0] === 'sc' && $parts[1]!='-idx-' && ($parts[3] === 'present' || $parts[3] === 'preloadUnticked');
+        if ($loadIntoList && !empty($options['gridIdAttributeId'])) {
           // filtering records by grid ID. Skip them if from a different input grid (multiple grids on one form scenario).
           // The suffix containing attr_value_id will not be present if reloading due to error on submission
           $matches = preg_grep("/^sc:$parts[1]:$parts[2]:occAttr:$options[gridIdAttributeId](:[0-9]+)?$/", array_keys(self::$entity_to_load));
@@ -4477,7 +4473,7 @@ JS;
             }
           }
         }
-        if ($present) {
+        if ($loadIntoList) {
           $ttlId = $value;
           if ($options['speciesControlToUseSubSamples'])
             $smpIdx = self::$entity_to_load['sc:'.$parts[1].':'.$parts[2].':occurrence:sampleIDX'];
