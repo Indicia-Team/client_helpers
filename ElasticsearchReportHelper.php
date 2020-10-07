@@ -452,6 +452,7 @@ HTML;
       'aggregation',
       'buttonContainerElement',
       'columnsTemplate',
+      'columnsSurveyId',
       'linkToDataGrid',
       'removeColumns',
       'source',
@@ -547,6 +548,51 @@ JS;
   }
 
   /**
+   * Output a selector for a survey.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyFilter
+   */
+  public static function surveyFilter(array $options) {
+    $options = array_merge([
+      'id' => "es-survey-filter",
+      'label' => lang::get('Limit to survey'),
+    ], $options);
+
+    iform_load_helpers(['report_helper']);
+    $sources = report_helper::get_report_data(array(
+      'dataSource' => 'library/surveys/surveys_list',
+      'readAuth' => $options['readAuth'],
+      'caching' => TRUE,
+      'cachePerUser' => FALSE,
+    ));
+
+    $optionArr = [];
+    $optionArr['all'] = lang::get('All surveys');
+    usort($sources, function ($item1, $item2) {
+      $v1 = strtolower($item1['title']);
+      $v2 = strtolower($item2['title']);
+      if ($v2 == $v1) return 0;
+      return $v1 < $v2 ? -1 : 1;
+    });
+    foreach ($sources as $source) {
+      $optionArr[$source['id']] = $source['title'];
+    }
+
+    // Return the select control.
+    $controlOptions = [
+      'label' => lang::get($options['label']),
+      'fieldname' => $options['id'],
+      'lookupValues' => $optionArr,
+      'class' => 'survey-filter',
+    ];
+
+    return data_entry_helper::select($controlOptions);
+  }
+
+  /**
    * Output a selector for sets of records defined by a permission.
    *
    * Allows user to select from:
@@ -572,7 +618,7 @@ JS;
       'includeFiltersForGroups' => FALSE,
       'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
-      'label' => 'Records to access',
+      'label' => lang::get('Records to access'),
       'notices' => '[]',
     ], $options);
 
@@ -703,7 +749,7 @@ HTML;
 
   helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
-$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
+$('.es-filter-param, .user-filter, .permissions-filter, .survey-filter, .standalone-quality-filter select').change(function () {
     // Update any summary output
     $('#es-filter-summary').idcFilterSummary('populate');
 });
