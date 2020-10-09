@@ -670,7 +670,7 @@ JS;
     $dropdown = data_entry_helper::select($controlOptions);
     $html = <<<HTML
 <div>
-  $dropdown 
+  $dropdown
   <div id="permission-filters-notice"></div>
 </div>
 
@@ -1522,15 +1522,13 @@ HTML;
    *   Node ID, used to retrieve the node parameters which contain ES settings.
    */
   private static function getMappings($nid) {
+    require_once 'ElasticsearchProxyHelper.php';
     $config = hostsite_get_es_config($nid);
     // /doc added to URL only for Elasticsearch 6.x.
     $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
       ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'],
-    ]);
+    curl_setopt($session, CURLOPT_HTTPHEADER, ElasticsearchProxyHelper::getHttpRequestHeaders($config));
     curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
     curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($session, CURLOPT_HEADER, FALSE);
