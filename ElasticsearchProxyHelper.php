@@ -50,7 +50,7 @@ class ElasticsearchProxyHelper {
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
     if (empty(self::$config['es']['endpoint']) ||
-        (self::$config['es']['auth_method'] == 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
+        (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
       throw new ElasticsearchProxyAbort('Configuration incomplete');
