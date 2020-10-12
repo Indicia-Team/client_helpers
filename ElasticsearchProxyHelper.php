@@ -915,6 +915,7 @@ class ElasticsearchProxyHelper {
         $filterField => $filterValues,
         'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
       ] + $readAuth,
+      'cachePerUser' => FALSE,
     ]);
     $keys = [];
     foreach ($taxonData as $taxon) {
