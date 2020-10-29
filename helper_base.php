@@ -1820,7 +1820,7 @@ HTML;
           $r[] = "indiciaData.$key = $value;";
         }
       }
-      return implode("\n", $r);
+      return implode("\n", $r) . "\n";
     }
     return '';
   }
