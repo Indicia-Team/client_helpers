@@ -19,6 +19,8 @@
  * @link http://code.google.com/p/indicia/
  */
 
+use Masterminds\HTML5;
+
 /**
  * Link in other required php files.
  */
@@ -2497,7 +2499,7 @@ JS;
       // Hidden field for the system
       $keys = array_keys($options['systems']);
       $r .= "<input type=\"hidden\" id=\"imp-sref-system\" name=\"".$options['fieldname']."\" value=\"".$keys[0]."\" />\n";
-      self::include_sref_handler_js($options['systems']);
+      self::includeSrefHandlerJs($options['systems']);
     }
     else {
       $r .= self::sref_system_select($options);
@@ -2560,7 +2562,7 @@ JS;
       );
     }
     $options['items'] = $opts;
-    self::include_sref_handler_js($options['systems']);
+    self::includeSrefHandlerJs($options['systems']);
     return self::apply_template('select', $options);
   }
 
@@ -3470,7 +3472,10 @@ RIJS;
         // Get the cell content from the taxon_label template
         $firstCell = self::mergeParamsIntoTemplate($firstColumnTaxon, 'taxon_label');
         // If the taxon label template is PHP, evaluate it.
-        if ($options['PHPtaxonLabel']) $firstCell = eval($firstCell);
+        if ($options['PHPtaxonLabel']) {
+          echo('Evaluating: ' . htmlspecialchars(($firstCell)));
+          $firstCell = eval($firstCell);
+        }
         // Now create the table cell to contain this.
         $colspan = !empty($options['lookupListId']) && $options['rowInclusionCheck']!='alwaysRemovable' ? ' colspan="2"' : '';
         $row = '';
@@ -3848,17 +3853,17 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     static $doneAddLinkPopup=false;
     $typeTermData = self::get_population_data(array(
       'table'=>'termlists_term',
-      'extraParams'=>$options['readAuth']+array(
+      'extraParams'=>$options['readAuth'] + array(
         'view' => 'cache',
         'termlist_title' => 'Media types',
         'allow_data_entry' => 't',
         'columns' => 'id,term')
     ));
-    $typeTermIdLookup = array();
+    $typeTermIdLookup = [];
     foreach ($typeTermData as $record) {
-      $typeTermIdLookup[$record['term']]=$record['id'];
+      $typeTermIdLookup[$record['term']] = $record['id'];
     }
-    self::$javascript .= "indiciaData.mediaTypeTermIdLookup=".json_encode($typeTermIdLookup) . ";\n";
+    self::$javascript .= "indiciaData.mediaTypeTermIdLookup=" . json_encode($typeTermIdLookup) . ";\n";
     if ($options['mediaTypes'] && !$onlyLocal && !$doneAddLinkPopup) {
       $doneAddLinkPopup=true;
       $readableTypes = array_pop($linkMediaTypes);
@@ -4815,6 +4820,223 @@ HTML;
 
     $r .= "</tr></tbody></table>\n";
     return $r;
+  }
+
+  /**
+   * A variant of the species_checklist for recording at multiple sites.
+   *
+   * Works alongside a map which must also be added to the page. When the user
+   * clicks a location on the map, the species checklist is shown as well as
+   * controls for any sub-sample attributes, allowing data entry at that point.
+   * The user can finish the list of species at that point before adding
+   * another location and continuing to add records.
+   *
+   * Options are identical to the species_checklist control with the addition
+   * of the following which are specific to the multiple_places_species_checklist:
+   * * **readAuth** - read authorisation tokens.
+   * * **sample_method_id** - sample method for the samples created. This
+   *   allows different sample attributes to be attached to the sub-samples
+   *   than the parent sample, because the warehouse allows samples to be
+   *   linked to sample methods in the survey's setup attributes section.
+   * * **spatialSystem** - grid square system which the map will operate in, e.g.
+   *   OSGB.
+   */
+  public static function multiple_places_species_checklist($options) {
+    if (empty($options['spatialSystem'])) {
+      global $indicia_templates;
+      return str_replace(
+        '{message',
+        'Incorrect configuration - multiple_places_species_checklist requires a @include_sref_handler_jsspatialSystem option.',
+        $indicia_templates['messageBox']
+      );
+      return;
+    }
+    // The ID must be done here so it can be accessed by both the species grid and the buttons.
+    $code = rand(0, 1000);
+    $options = array_merge([
+      'id' => "species-grid-$code",
+      'buttonsId' => "species-grid-buttons-$code",
+      'speciesControlToUseSubSamples' => TRUE,
+      'base_url' => self::$base_url,
+    ], $options);
+    $attrOptions = self::getAttrSpecificOptions($options);
+    $speciesListEntryCtrl = data_entry_helper::species_checklist($options);
+    // Since we handle the system ourself, we need to include the system
+    // handled js files.
+    self::includeSrefHandlerJs([$options['spatialSystem']]);
+    $r = '';
+    if (isset($options['sample_method_id'])) {
+      $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options);
+      foreach ($sampleAttrs as &$attr) {
+        $attr['fieldname'] = "sc:n::$attr[fieldname]";
+        $attr['id'] = "sc:n::$attr[id]";
+      }
+      $sampleCtrls = get_attribute_html($sampleAttrs, [], ['extraParams' => $options['readAuth']], NULL, $attrOptions);
+      $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\">$sampleCtrls</div>";
+    }
+    $enteredSref = self::check_default_value('sample:entered_sref', '');
+    $geom = self::check_default_value('sample:geom', '');
+    $buttonCtrls = self::getMultiplePlacesSpeciesChecklistButtons($options);
+    $r .= <<<TXT
+<div id="$options[id]-cluster" style="display: none"></div>
+<div id="$options[id]-container" style="display: none">
+  <!-- Dummy inputs to capture feedback from the map. -->
+  <input type="hidden" id="imp-sref" />
+  <input type="hidden" id="imp-geom" />
+  <input type="hidden" name="sample:entered_sref" value="$enteredSref" />
+  <input type="hidden" name="sample:geom" value="$geom" />
+  <input type="hidden" id="imp-sref-system" name="sample:entered_sref_system" value="$options[spatialSystem]" />
+  <div id="$options[id]-blocks">
+    $buttonCtrls
+  </div>
+  <input type="hidden" value="true" name="speciesgridmapmode" />
+  $speciesListEntryCtrl
+</div>
+TXT;
+    return $r;
+  }
+
+  /**
+   * Summary of data entered into a multiple_places_species_checklist.
+   *
+   * Just a simple HTML container for the grid to output a summary of added
+   * points and species into.
+   *
+   * @return string
+   *   HTML for the container.
+   */
+  public static function multiple_places_species_checklist_summary() {
+    return <<<HTML
+<div class="control_speciesmapsummary">
+  <table class="ui-widget ui-widget-content species-grid-summary">
+    <thead class="ui-widget-header"></thead>
+    <tbody/>
+  </table>
+</div>
+
+HTML;
+  }
+
+  /**
+   * Retrieve the attribute definitions for the sub-sample's sample type.
+   *
+   * @param array $options
+   *   Options passed to the multiple_places_species_checklist control.
+   * @param int $id
+   * The list of sample attributes
+   */
+  private static function getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, $id = NULL) {
+    $attrOptions = [
+      'valuetable' => 'sample_attribute_value',
+      'attrtable' => 'sample_attribute',
+      'key' => 'sample_id',
+      'fieldprefix' => 'smpAttr',
+      'extraParams' => ['auth_token' => $options['extraParams']['auth_token'], 'nonce' => $options['extraParams']['nonce']],
+      'survey_id' => $options['survey_id'],
+      'sample_method_id' => $options['sample_method_id'],
+    ];
+    if (!empty($id)) {
+      $attrOptions['id'] = $id;
+    }
+    return self::getAttributes($attrOptions, false);
+  }
+
+  /**
+   * Extracts options specific to attributes.
+   *
+   * Parses an options array to extract the attribute specific option settings,
+   * e.g. smpAttr:4|caption=Habitat etc.
+   *
+   * @return array
+   *   Outer array keyed by attribute names, each containing a sub-array of
+   *   option/value pairs.
+   */
+  public static function getAttrSpecificOptions($options) {
+    $attrOptions = array();
+    foreach ($options as $option => $value) {
+      if (preg_match('/^(?P<controlname>[a-z][a-z][a-z]Attr:[0-9]*)\|(?P<option>.*)$/', $option, $matches)) {
+        if (!isset($attrOptions[$matches['controlname']]))
+          $attrOptions[$matches['controlname']] = array();
+        $attrOptions[$matches['controlname']][$matches['option']] = $value;
+      }
+    }
+    return $attrOptions;
+  }
+
+  /**
+   * Retrieves the buttons for a multiple_places_species_checklist.
+   *
+   * The buttons appear above the map and include options for adding, modifying
+   * and deleting grid squares to add records to.
+   */
+  private static function getMultiplePlacesSpeciesChecklistButtons($options) {
+    $options = array_merge([
+      'singleRecordSubsamples' => FALSE,
+    ], $options);
+    self::addLanguageStringsToJs('speciesMap', [
+      'AddLabel' => 'Add records to map',
+      'AddMessage' => 'Please click on the map where you would like to add your records. Zoom the map in for greater precision.',
+      'AddDataMessage' => 'Please enter all the species records for this position into the grid below. When you have finished, click the Finish button to return to the map where you may choose another grid reference to enter data for.',
+
+      'MoveLabel' => 'Move records',
+      'MoveMessage1' => 'Please select the records on the map you wish to move.',
+      'MoveMessage2' => 'Please click on the map to choose the new position. Press the Cancel button to choose another set of records to move instead.',
+
+      'ModifyLabel' => 'Modify records',
+      'ModifyMessage1' => 'Please select the records on the map you wish to change.',
+      'ModifyMessage2' => 'Change (or add to) the records for this position. When you have finished, click the Finish button which will return you to the map where you may choose another set of records to change.',
+
+      'DeleteLabel' => 'Delete records',
+      'DeleteMessage' => 'Please select the records on the map you wish to delete.',
+      'ConfirmDeleteTitle' => 'Confirm deletion of records',
+      'ConfirmDeleteText' => 'Are you sure you wish to delete all the records at {OLD}?',
+
+      'ClusterMessage' => 'You selected a cluster of places on the map, pick one of them to work with.',
+
+      'CancelLabel' => 'Cancel',
+      'FinishLabel' => 'Finish',
+      'Yes' => 'Yes',
+      'No' => 'No',
+      'SRefLabel' => 'LANG_SRef_Label',
+    ]);
+    // make sure we load the JS.
+    data_entry_helper::add_resource('control_speciesmap_controls');
+    data_entry_helper::$javascript .= "control_speciesmap_addcontrols(" . json_encode($options) . ");\n";
+    $blocks = "";
+    if (isset(data_entry_helper::$entity_to_load)) {
+      foreach(data_entry_helper::$entity_to_load as $key => $value){
+        $a = explode(':', $key, 4);
+        if(count($a) === 4  && $a[0] === 'sc' && $a[3] == 'sample:entered_sref') {
+          $sampleId = $a[2];
+          $geomKey = "$a[0]:$a[1]:$sampleId:sample:geom";
+          $idKey = "$a[0]:$a[1]:$sampleId:sample:id";
+          $deletedKey = "$a[0]:$a[1]:$sampleId:sample:deleted";
+          $blocks .= '<div id="scm-'.$a[1].'-block" class="scm-block">'.
+                    '<label>'.lang::get('LANG_SRef_Label').':</label> '.
+                    '<input type="text" value="'.$value.'" readonly="readonly" name="'.$key.'">'.
+                    '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$geomKey].'" name="'.$geomKey.'">'.
+                    '<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
+                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey].'" name="'.$idKey.'">' : '');
+
+          if (!empty($options['sample_method_id'])) {
+            $sampleAttrs = self::getMultiplePlacesSpeciesChecklistSubsampleAttrs($options, empty($sampleId) ? NULL : $sampleId);
+            foreach ($sampleAttrs as &$attr) {
+              $attr['fieldname'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['fieldname'];
+              $attr['id'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['id'];
+            }
+            $attrOptions = self::getAttrSpecificOptions($options);
+            $sampleCtrls = get_attribute_html($sampleAttrs, [], array('extraParams' =>  $options['readAuth']), null, $attrOptions);
+            $blocks .= <<<HTML
+<div id="scm-$a[1]-subsample-ctrls">
+  $sampleCtrls
+</div>
+HTML;
+          }
+          $blocks .= '</div>';
+        }
+      }
+    }
+    return $blocks;
   }
 
   /**
@@ -7854,7 +8076,7 @@ TXT;
           if (isset($item['control_type']) &&
             ($item['control_type']=='autocomplete' || $item['control_type']=='checkbox_group'
               || $item['control_type']=='listbox' || $item['control_type']=='radio_group' || $item['control_type']=='select'
-              || $item['control_type']=='hierarchical_select')) {
+              || $item['control_type']=='hierarchical_select' || $item['control_type']=='sub_list')) {
             $ctrl = $item['control_type'];
           } else {
             $ctrl = 'select';
@@ -8152,20 +8374,25 @@ HTML;
   }
 
   /**
-   * Includes any spatial reference handler JavaScript files that exist for the codes selected
-   * for picking spatial references. If a handler file does not exist then the transform is handled
-   * by a web-service request to the warehouse. Handlers are only required for grid systems, not for
-   * coordinate systems that are entirely described by an EPSG code.
-   * @param array $systems List of spatial reference system codes.
+   * Includes any spatial reference handler JavaScript files.
+   *
+   * Includes files that exist for the codes selected for picking spatial
+   * references. If a handler file does not exist then the transform is handled
+   * by a web-service request to the warehouse. Handlers are only required for
+   * grid systems, not for coordinate systems that are entirely described by an
+   * EPSG code.
+   *
+   * @param array $systems
+   *   List of spatial reference system codes.
    */
-  public static function include_sref_handler_js($systems) {
-    // extract the codes and make lowercase
-    $systems=unserialize(strtolower(serialize(array_keys($systems))));
-    // find the systems that have client-side JavaScript handlers
-    $handlers = array_intersect($systems, array('osgb','osie','4326','2169'));
+  public static function includeSrefHandlerJs($systems) {
+    // Extract the codes and make lowercase.
+    $systems = unserialize(strtolower(serialize(array_keys($systems))));
+    // Find the systems that have client-side JavaScript handlers.
+    $handlers = array_intersect($systems, ['osgb','osie','4326','2169']);
     self::get_resources();
     foreach ($handlers as $code) {
-      // dynamically find a resource to link us to the handler js file.
+      // Dynamically find a resource to link us to the handler js file.
       self::$required_resources[] = 'sref_handlers_'.$code;
     }
   }

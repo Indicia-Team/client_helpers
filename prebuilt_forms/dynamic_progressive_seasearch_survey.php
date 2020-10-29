@@ -248,7 +248,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         'readAuth'=>$auth['read'],
         'extraParams'=>array('parent_sample_id' => $_GET['sample_id'])
       ));
-      $attrOptions = self::get_attr_specific_options($options);
+      $attrOptions = data_entry_helper::getAttrSpecificOptions($options);
       if (!empty($existingHabitatSubSamples)) {
         $existingHabitatSubSamplesIds=array();
         //Setup the html as we initially see it on the page
