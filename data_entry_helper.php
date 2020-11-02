@@ -3038,19 +3038,19 @@ RIJS;
   * checkboxes could be output in 2 or 3 columns.Defaults to 1.</li>
   * <li><b>rowInclusionCheck</b><br/>
   * Defines how the system determines whether a row in the grid actually
-  * contains an occurrence or not. There are 4 options: <br/>
-  * checkbox - a column is included in the grid containing a presence checkbox.
-  * If checked then an occurrence is created for the row. This is the default
-  * unless listId is not set.<br/>
-  * alwaysFixed - occurrences are created for all rows in the grid. Rows cannot
-  * be removed from the grid apart from newly added rows.<br/>
-  * alwaysRemovable - occurrences are created for all rows in the grid. Rows can
-  * always be removed from the grid. Best used with no listId so there are no
-  * default taxa in the grid, otherwise editing an existing sample will re-add
-  * all the existing taxa. This is the default when listId is not set, but
-  * lookupListId is set.<br/>
-  * hasData - occurrences are created for any row which has a data value
-  * specified in at least one of its columns. <br/>
+  * contains an occurrence or not. There are 4 options:
+  * * checkbox - a column is included in the grid containing a presence
+  *   checkbox. If checked then an occurrence is created for the row. This is
+  *   the default unless listId is not set.
+  * * alwaysFixed - occurrences are created for all rows in the grid. Rows
+  *   cannot be removed from the grid apart from newly added rows.
+  * * alwaysRemovable - occurrences are created for all rows in the grid. Rows
+  *   can always be removed from the grid. Best used with no listId so there
+  *   are no default taxa in the grid, otherwise editing an existing sample
+  *   will re-add all the existing taxa. This is the default when listId is not
+  *   set, but lookupListId is set.
+  * * hasData - occurrences are created for any row which has a data value
+  *   specified in at least one of its columns.
   * This option supercedes the checkboxCol option which is still recognised for
   * backwards compatibility.</li>
   * <li><b>hasDataIgnoreAttrs</b><br/>
@@ -3418,7 +3418,7 @@ RIJS;
       self::species_checklist_prepare_attributes($options, $attributes, $occAttrControls, $occAttrControlsExisting, $occAttrs);
       self::speciesChecklistPrepareDynamicAttributes($options, $attributes);
       $beforegrid = '<span style="display: none;">Step 1</span>'."\n";
-      if (!empty($options['lookupListId'])) {
+      if (!empty($options['allowAdditionalTaxa'])) {
         $beforegrid .= self::get_species_checklist_clonable_row($options, $occAttrControls, $attributes);
       }
       $onlyImages = true;
@@ -3752,7 +3752,7 @@ RIJS;
       self::add_resource('addrowtogrid');
       // If the lookupListId parameter is specified then the user is able to add extra rows to the grid,
       // selecting the species from this list. Add the required controls for this.
-      if (!empty($options['lookupListId'])) {
+      if (!empty($options['allowAdditionalTaxa'])) {
         // Javascript to add further rows to the grid
         if (isset($indicia_templates['format_species_autocomplete_fn'])) {
           self::$javascript .= 'formatter = '.$indicia_templates['format_species_autocomplete_fn'];
@@ -4573,6 +4573,7 @@ JS;
       'mediaTypes' => !empty($options['occurrenceImages']) && $options['occurrenceImages'] ?
         array('Image:Local') : array(),
       'responsive' => FALSE,
+      'allowAdditionalTaxa' => !empty($options['lookupListId']),
     ), $options);
     // subSamplesPerRow can't be set without speciesControlToUseSubSamples
     $options['subSamplePerRow'] = $options['subSamplePerRow'] && $options['speciesControlToUseSubSamples'];
