@@ -3473,7 +3473,6 @@ RIJS;
         $firstCell = self::mergeParamsIntoTemplate($firstColumnTaxon, 'taxon_label');
         // If the taxon label template is PHP, evaluate it.
         if ($options['PHPtaxonLabel']) {
-          echo('Evaluating: ' . htmlspecialchars(($firstCell)));
           $firstCell = eval($firstCell);
         }
         // Now create the table cell to contain this.
