@@ -1174,6 +1174,7 @@ HTML
     $extra['recorder'] = $record['recorder'];
     $extra['sample_id'] = $record['sample_id'];
     $extra['created_by_id'] = $record['created_by_id'];
+    $extra['created_by_person_id'] = $record['created_by_person_id'];
     $extra['input_by_first_name'] = $record['input_by_first_name'];
     $extra['input_by_surname'] = $record['input_by_surname'];
     $extra['website_id'] = $record['website_id'];

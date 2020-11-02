@@ -141,7 +141,7 @@ while ($buff = fread($in, 4096)) {
 clearstatcache();
 $file['size'] = filesize("{$filePath}.part");
 $file['error'] = '';
-if (!data_entry_helper::check_upload_size($file)) {
+if (!data_entry_helper::checkUploadSize($file)) {
   unlink("{$filePath}.part");
   die('{"jsonrpc" : "2.0", "error" : {"code": 104, "message": "Uploaded file too big."}, "id" : "id"}');
 }

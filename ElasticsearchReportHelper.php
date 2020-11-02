@@ -258,6 +258,10 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+    // Always allow filtering by group.
+    if (!empty($_GET['group_id'])) {
+      helper_base::$indiciaData['group_id'] = $_GET['group_id'];
+    }
   }
 
   /**
@@ -381,7 +385,8 @@ class ElasticsearchReportHelper {
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = array(
         "default" => lang::get("Standard download format"),
-        "easy-download" => lang::get("Backward-compatible format")
+        "easy-download" => lang::get("Backward-compatible format"),
+        "mapmate" => lang::get("Mapmate-compatible format"),
       );
       $optionArr = array();
       foreach ($options['columnsTemplate'] as $colType) {
@@ -562,12 +567,17 @@ JS;
   public static function permissionFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
 
+    $wrapperOptions = array_merge([
+      'id' => "es-permissions-filter-wrapper",
+    ], $options);
+
     $options = array_merge([
       'id' => "es-permissions-filter",
       'includeFiltersForGroups' => FALSE,
       'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
       'label' => 'Records to access',
+      'notices' => '[]',
     ], $options);
 
     $optionArr = [];
@@ -657,7 +667,17 @@ JS;
       'class' => 'permissions-filter',
     ];
 
-    return data_entry_helper::select($controlOptions);
+    $dropdown = data_entry_helper::select($controlOptions);
+    $html = <<<HTML
+<div>
+  $dropdown
+  <div id="permission-filters-notice"></div>
+</div>
+
+HTML;
+
+    $dataOptions = helper_base::getOptionsForJs($options, ['notices'], TRUE);
+    return self::getControlContainer('permissionFilters', $wrapperOptions, $dataOptions, $html);
   }
 
   /**
@@ -760,7 +780,7 @@ $('#$options[id]').idcRecordDetailsPane();
 
 JS;
     $r = <<<HTML
-<div class="details-container" id="$options[id]" data-idc-config="$dataOptions">
+<div class="record-details-container" id="$options[id]" data-idc-config="$dataOptions">
   <div class="empty-message alert alert-info"><span class="fas fa-info-circle fa-2x"></span>Select a row to view details</div>
   <div class="tabs" style="display: none">
     <ul>
@@ -846,6 +866,7 @@ HTML;
       'sortAggregation',
       'size',
       'sort',
+      'switchToGeomsAt',
       'uniqueField',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
@@ -1084,14 +1105,10 @@ HTML;
     helper_base::add_resource('fancybox');
     helper_base::add_resource('validation');
     helper_base::addLanguageStringsToJs('verificationButtons', [
-      'commentAvoidAsUserNotNotified' => 'Although you can add your query as a comment, there is no guarantee that the recorder will check their notifications. ',
-      'commentOkAsUserNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
-      'emailAvoidAsUserNotified' => 'Although you can send your query as an email, this recorded does check notifications so you might prefer to add the query to the comments tab.',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
       'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
-      'emailOkAsUserNotNotified' => 'Sending the query as an email is preferred as the recorder does not check their notifications.',
       'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
         'stating how confident you are that the record is correct and any other information you have which may help ' .
         'to confirm this. You can reply to this message and it will be forwarded direct to the verifier.',
@@ -1100,8 +1117,15 @@ HTML;
       'emailSent' => 'The email was sent successfully.',
       'emailTabTitle' => 'Email record details',
       'nothingSelected' => 'There are no selected records. Either select some rows using the checkboxes in the leftmost column or set the "Apply decision to" mode to "all".',
+      'queryEmailTabAnonWithEmail' => 'This record was posted by a recorder who was not logged in but provided their email address so email is the best method of contact.',
+      'queryEmailTabAnonWithoutEmail' => 'As this record does not have an email address for the recorder, the query is best added as a comment to the record unless you know the recorder and have their email address and permission to use it. There is no guarantee that the recorder will check their notifications.',
+      'queryEmailTabUserIsNotified' => 'Although you can email this recorder directly, they check their notifications so adding a comment should be sufficient.',
+      'queryEmailTabUserIsNotNotified' => 'Sending the query as an email is likely to be the best method of contact as the recorder does not check their notifications.',
+      'queryCommentTabAnonWithEmail' => 'This record was posted by a recorder who was not logged in but provided their email address. You can add a comment using this tab but they are unlikely to see it so email is likely to be the best method of contact.',
+      'queryCommentTabAnonWithoutEmail' => 'As this record does not have an email address for the recorder, the query can be added to the record as a comment. The query can only be sent to the recorder if you know their email address and have permission to use it.',
+      'queryCommentTabUserIsNotified' => 'Adding your query as a comment should be OK as this recorder normally checks their notifications.',
+      'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
-      'queryUnavailableEmail' => 'As this record does not have an email address for the recorder, the query must be added as a comment to the record. There is no guarantee that the recorder will check their notifications.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
@@ -1215,22 +1239,15 @@ HTML;
     // Note the geohash_grid precision will be overridden depending on map zoom.
     $aggText = <<<AGG
 {
-  "filter_agg": {
-    "filter": {
-      "geo_bounding_box": {}
+  "by_hash": {
+    "geohash_grid": {
+      "field": "location.point",
+      "precision": 1
     },
     "aggs": {
-      "by_hash": {
-        "geohash_grid": {
-          "field": "location.point",
-          "precision": 1
-        },
-        "aggs": {
-          "by_centre": {
-            "geo_centroid": {
-              "field": "location.point"
-            }
-          }
+      "by_centre": {
+        "geo_centroid": {
+          "field": "location.point"
         }
       }
     }
@@ -1260,28 +1277,21 @@ AGG;
     }
     $aggText = <<<AGG
 {
-  "filter_agg": {
-    "filter": {
-      "geo_bounding_box": {}
+  "by_srid": {
+    "terms": {
+      "field": "location.grid_square.srid",
+      "size": 1000,
+      "order": {
+        "_count": "desc"
+      }
     },
     "aggs": {
-      "by_srid": {
+      "by_square": {
         "terms": {
-          "field": "location.grid_square.srid",
-          "size": 1000,
+          "field": "$geoField",
+          "size": 100000,
           "order": {
             "_count": "desc"
-          }
-        },
-        "aggs": {
-          "by_square": {
-            "terms": {
-              "field": "$geoField",
-              "size": 100000,
-              "order": {
-                "_count": "desc"
-              }
-            }
           }
         }
       }
@@ -1512,15 +1522,13 @@ HTML;
    *   Node ID, used to retrieve the node parameters which contain ES settings.
    */
   private static function getMappings($nid) {
+    require_once 'ElasticsearchProxyHelper.php';
     $config = hostsite_get_es_config($nid);
     // /doc added to URL only for Elasticsearch 6.x.
     $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
       ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'],
-    ]);
+    curl_setopt($session, CURLOPT_HTTPHEADER, ElasticsearchProxyHelper::getHttpRequestHeaders($config));
     curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
     curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($session, CURLOPT_HEADER, FALSE);

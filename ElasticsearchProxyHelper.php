@@ -49,7 +49,8 @@ class ElasticsearchProxyHelper {
    */
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
-    if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
+    if (empty(self::$config['es']['endpoint']) ||
+        (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
       throw new ElasticsearchProxyAbort('Configuration incomplete');
@@ -505,6 +506,48 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Retrieves the required HTTP headers for an Elasticsearch request.
+   *
+   * Header sets content type to application/json and adds an Authorization
+   * header appropriate to the method.
+   *
+   * @return array
+   *   Header strings.
+   */
+  public static function getHttpRequestHeaders($esConfig) {
+    $headers = [
+      'Content-Type: application/json',
+    ];
+    if ($esConfig['es']['auth_method'] === 'directClient') {
+      $headers[] = 'Authorization: USER:' . $esConfig['es']['user'] . ':SECRET:' . $esConfig['es']['secret'];
+    }
+    else {
+      $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
+      if (!file_exists($keyFile)) {
+        \Drupal::logger('iform')->error('Missing private key file for jwtUser Elasticsearch authentication.');
+        echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
+        throw new ElasticsearchProxyAbort('Configuration incomplete');
+      }
+      $privateKey = file_get_contents($keyFile);
+      $payload = [
+        'iss' => \Drupal::urlGenerator()->generateFromRoute('<front>', [], ['absolute' => TRUE]),
+        'http://indicia.org.uk/user:id' => \Drupal::currentUser()->id(),
+        'exp' => time() + 300,
+      ];
+      if (empty($post['permissions_filter']) || $post['permissions_filter'] === 'all') {
+        // Additional claim that we have rights to all data.
+        $payload['http://indicia.org.uk/alldata'] = 'true';
+      }
+      $modulePath = \Drupal::service('module_handler')->getModule('iform')->getPath();
+      // @todo persist the token in the cache?
+      require_once "$modulePath/lib/php-jwt/vendor/autoload.php";
+      $token = \Firebase\JWT\JWT::encode($payload, $privateKey, 'RS256');
+      $headers[] = "Authorization: Bearer $token";
+    }
+    return $headers;
+  }
+
+  /**
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
   private static function curlPost($url, $data, $getParams = []) {
@@ -521,10 +564,7 @@ class ElasticsearchProxyHelper {
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . self::$config['es']['user'] . ':SECRET:' . self::$config['es']['secret'],
-    ]);
+    curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config));
     curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
     curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($session, CURLOPT_HEADER, FALSE);
@@ -590,6 +630,7 @@ class ElasticsearchProxyHelper {
     ];
     $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
+    $objectQueryTypes = ['geo_bounding_box'];
     if (isset($query['textFilters'])) {
       // Apply any filter row parameters to the query.
       foreach ($query['textFilters'] as $field => $value) {
@@ -649,6 +690,14 @@ class ElasticsearchProxyHelper {
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $objectQueryTypes)) {
+        $queryDef = [$qryConfig['query_type'] => $qryConfig['value']];
+      }
+      else {
+        header("HTTP/1.1 400 Bad request");
+        echo json_encode(['error' => 'Incorrect filter type parameter']);
+        throw new ElasticsearchProxyAbort('Incorrect filter type parameter: ' . $qryConfig['query_type']);
       }
       if (!empty($qryConfig['nested']) && $qryConfig['nested'] !== 'null') {
         // Must not nested queries should be handled at outer level.
@@ -782,6 +831,8 @@ class ElasticsearchProxyHelper {
     self::convertLocationListToSearchArea($definition, $readAuth);
     self::applyUserFiltersTaxonGroupList($definition, $bool);
     self::applyUserFiltersTaxaTaxonList($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxonMeaning($definition, $bool, $readAuth);
+    self::applyUserFiltersTaxaTaxonListExternalKey($definition, $bool, $readAuth);
     self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
     self::applyUserFiltersTaxonMarineFlag($definition, $bool);
     self::applyUserFiltersSearchArea($definition, $bool);
@@ -843,6 +894,38 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Generic function to apply a taxonomy filter to ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param string $filterField
+   *   Name of the field to filter on ('id' or 'taxon_meaning_id').
+   * @param string $filterValues
+   *   Comma separated list of IDs to filter against.
+   */
+  private static function applyTaxonomyFilter(array $definition, array &$bool, array $readAuth, $filterField, $filterValues) {
+    // Convert the IDs to external keys, stored in ES as taxon_ids.
+    $taxonData = helper_base::get_population_data([
+      'report' => 'library/taxa/convert_ids_to_external_keys',
+      'extraParams' => [
+        $filterField => $filterValues,
+        'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
+      ] + $readAuth,
+      'cachePerUser' => FALSE,
+    ]);
+    $keys = [];
+    foreach ($taxonData as $taxon) {
+      $keys[] = $taxon['external_key'];
+    }
+    $keys = array_unique($keys);
+    $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
+  }
+
+  /**
    * Converts an Indicia filter definition taxa_taxon_list_list to an ES query.
    *
    * @param array $definition
@@ -860,19 +943,46 @@ class ElasticsearchProxyHelper {
       'higher_taxa_taxon_list_id',
     ]);
     if (!empty($filter)) {
-      // Convert the IDs to external keys, stored in ES as taxon_ids.
-      $taxonData = helper_base::get_population_data([
-        'table' => 'taxa_taxon_list',
-        'extraParams' => [
-          'view' => 'cache',
-          'query' => json_encode(['in' => ['id' => explode(',', $filter['value'])]]),
-        ] + $readAuth,
-      ]);
-      $keys = [];
-      foreach ($taxonData as $taxon) {
-        $keys[] = $taxon['external_key'];
-      }
-      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => $keys]];
+      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'id', $filter['value']);
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition taxon_meaning_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyUserFiltersTaxonMeaning(array $definition, array &$bool, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, [
+      'taxon_meaning_list',
+      'taxon_meaning_id',
+    ]);
+    if (!empty($filter)) {
+      self::applyTaxonomyFilter($definition, $bool, $readAuth, 'taxon_meaning_id', $filter['value']);
+    }
+  }
+
+  /**
+   * Converts an Indicia filter definition taxa_taxon_list_external_key_list to an ES query.
+   *
+   * @param array $definition
+   *   Definition loaded for the Indicia filter.
+   * @param array $bool
+   *   Bool clauses that filters can be added to (e.g. $bool['must']).
+   * @param array $readAuth
+   *   Read authentication tokens.
+   */
+  private static function applyUserFiltersTaxaTaxonListExternalKey(array $definition, array &$bool, array $readAuth) {
+    $filter = self::getDefinitionFilter($definition, [
+      'taxa_taxon_list_external_key_list',
+    ]);
+    if (!empty($filter)) {
+      $bool['must'][] = ['terms' => ['taxon.higher_taxon_ids' => explode(',', $filter['value'])]];
     }
   }
 
@@ -1039,9 +1149,9 @@ class ElasticsearchProxyHelper {
   /**
    * Converts an Indicia filter definition date filter to an ES query.
    *
-   * Support for recorded, input, edited, verified dates. Age is supported as
-   * long as format specifies age in minutes, hours, days, weeks, months or
-   * years.
+   * Support for recorded (default), input, edited, verified dates. Age is
+   * supported as long as format specifies age in minutes, hours, days, weeks,
+   * months or years.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
@@ -1060,30 +1170,30 @@ class ElasticsearchProxyHelper {
       'to' => 'lte',
       'age' => 'gte',
     ];
-    if (!empty($definition['date_type'])) {
-      foreach ($dateTypes as $type => $op) {
-        $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
-        if (!empty($definition[$fieldName])) {
-          $value = $definition[$fieldName];
-          // Convert date format.
-          if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
-            $value = "$matches[Y]-$matches[m]-$matches[d]";
-          }
-          elseif ($type === 'age') {
-            $value = 'now-' . str_replace(
-              ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
-              ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
-              strtolower($value)
-            );
-          }
-          $bool['must'][] = [
-            'range' => [
-              $esFields[$definition['date_type']] => [
-                $op => $value,
-              ],
-            ],
-          ];
+    // Default to recorded date.
+    $definition['date_type'] = empty($definition['date_type']) ? 'recorded' : $definition['date_type'];
+    foreach ($dateTypes as $type => $op) {
+      $fieldName = $definition['date_type'] === 'recorded' ? "date_$type" : "$definition[date_type]_date_$type";
+      if (!empty($definition[$fieldName])) {
+        $value = $definition[$fieldName];
+        // Convert date format.
+        if (preg_match('/^(?P<d>\d{2})\/(?P<m>\d{2})\/(?P<Y>\d{4})$/', $value, $matches)) {
+          $value = "$matches[Y]-$matches[m]-$matches[d]";
         }
+        elseif ($type === 'age') {
+          $value = 'now-' . str_replace(
+            ['minute', 'hour', 'day', 'week', 'month', 'year', 's', ' '],
+            ['m', 'H', 'd', 'w', 'M', 'y', '', ''],
+            strtolower($value)
+          );
+        }
+        $bool['must'][] = [
+          'range' => [
+            $esFields[$definition['date_type']] => [
+              $op => $value,
+            ],
+          ],
+        ];
       }
     }
   }

@@ -804,6 +804,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
               //warehouse as part of the sample so that the spatial reference can be calculated
               &&$key!=='smpAttr:'.$options['vice_county_attr_id']
               &&$key!=='smpAttr:'.$options['country_attr_id']
+              &&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
               ) {
           //If the field isn't in the list of what we want to keep we are probably not going to use it
           $canUnset=true;

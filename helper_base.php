@@ -38,9 +38,6 @@ $indicia_templates = array(
   // Template for control with associated buttons/icons to appear to the side.
   'controlAddonsWrap' => "{control}{addons}",
   'justControl' => "{control}\n",
-  'jsWrap' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n" .
-      "document.write('{content}');" .
-      "/* ]]> */</script>\n",
   'label' => '<label for="{id}"{labelClass}>{label}:</label>',
   // Use if label ends with another punctuation mark.
   'labelNoColon' => '<label for="{id}"{labelClass}>{label}</label>',
@@ -94,7 +91,7 @@ $indicia_templates = array(
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {attributes} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}"{class} {attributes} value="1"{checked} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" {class} {attributes} value="1"{checked} {title} />'."\n",
-  'date_picker' => '<input type="text" id="{id}" name="{fieldname}"{class} {attributes} placeholder="{placeholder}" size="30" value="{default}" {title}/>'."\n",
+  'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" autocomplete="off" {title}/>'."\n",
   'select' => '<select id="{id}" name="{fieldname}"{class} {attributes} {title}>{items}</select>',
   'select_item' => '<option value="{value}" {selected} >{caption}</option>',
   'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
@@ -103,14 +100,12 @@ $indicia_templates = array(
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
   'check_or_radio_group' => '<ul {class} id="{id}">{items}</ul>',
   'check_or_radio_group_item' => '<li><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
-  'map_panel' => "<div id=\"{divId}\" style=\"width: {width}; height: {height};\"{class}></div>",
-  'georeference_lookup' => "<script type=\"text/javascript\">\n/* <![CDATA[ */\n".
-    "document.write('<input type=\"text\" id=\"imp-georef-search\"{class} />{searchButton}');\n".
-    "document.write('<div id=\"imp-georef-div\" class=\"ui-corner-all ui-widget-content ui-helper-hidden\">');\n".
-    "document.write('  <div id=\"imp-georef-output-div\">');\n".
-    "document.write('  </div>  {closeButton}');\n".
-    "document.write('</div>');".
-    "\n/* ]]> */</script>",
+  'map_panel' => '<div id="map-container" style="width: {width};"><div id="map-loading" class="loading-spinner" style="display: none"><div>Loading...</div></div><div id="{divId}" style="width: {width}; height: {height};"{class}></div></div>',
+  'georeference_lookup' => '<input type="text" id="imp-georef-search"{class} />{searchButton}' .
+    '<div id="imp-georef-div" class="ui-corner-all ui-widget-content ui-helper-hidden">' .
+    '<div id="imp-georef-output-div"></div> ' .
+    '{closeButton}' .
+    '</div>',
   'tab_header' => "<ul>{tabs}</ul>\n",
   'taxon_label' => '<div class="biota"><span class="nobreak sci binomial"><em class="taxon-name">{taxon}</em></span> {authority} '.
       '<span class="nobreak vernacular">{default_common_name}</span></div>',
@@ -118,6 +113,7 @@ $indicia_templates = array(
   'treeview_node' => '<span>{caption}</span>',
   'tree_browser' => '<div{outerClass} id="{divId}"></div><input type="hidden" name="{fieldname}" id="{id}" value="{default}"{class}/>',
   'tree_browser_node' => '<span>{caption}</span>',
+<<<<<<< HEAD
   'autocomplete' => '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
   'autocomplete_javascript' => "$('input#{escaped_input_id}').indiciaAutocomplete({
     id: '{id}',
@@ -131,6 +127,56 @@ $indicia_templates = array(
     mode: '{mode}',
     formatOptions: {formatOptions}
   });\n",
+=======
+  'autocomplete' => '<input type="hidden" class="hidden" id="{id}" name="{fieldname}" value="{default}" />' .
+      '<input id="{inputId}" name="{inputId}" type="text" value="{defaultCaption}" {class} {disabled} {title}/>' . "\n",
+  'autocomplete_javascript' => "
+$('input#{escaped_input_id}').change(function() {
+  $('input#{escaped_id}').val('');
+});
+$('input#{escaped_input_id}').autocomplete('{url}',
+  {
+    extraParams : {
+      orderby : '{captionField}',
+      mode : 'json',
+      qfield : '{captionField}',
+      {sParams}
+    },
+    simplify: {simplify},
+    selectMode: {selectMode},
+    warnIfNoMatch: {warnIfNoMatch},
+    continueOnBlur: {continueOnBlur},
+    matchContains: {matchContains},
+    parse: function(data)
+    {
+      // Clear the current selected key as the user has changed the search text
+      $('input#{escaped_id}').val('');
+      var results = [], done = [];
+      $.each(data, function(i, item) {
+        if ({duplicateCheck}) {
+          results.push({
+            'data' : item,
+            'result' : item.{captionField},
+            'value' : item.{valueField}
+          });
+          {storeDuplicates}
+        }
+      });
+      return results;
+    },
+  formatItem: {formatFunction}
+  {max}
+});
+$('input#{escaped_input_id}').result(function(event, data) {
+  $('input#{escaped_id}').attr('value', data.{valueField});
+  $('.item-icon').remove();
+  if (typeof data.icon!=='undefined') {
+    $('input#{escaped_input_id}').after(data.icon).next().hover(indiciaFns.hoverIdDiffIcon);
+  }
+  $('input#{escaped_id}').trigger('change', data);
+});
+",
+>>>>>>> master
   'sub_list' => '<div id="{id}:box" class="control-box wide"><div>'."\n".
     '<div>'."\n".
     '{panel_control} <input id="{id}:add" type="button" value="'.lang::get('add').'" />'."\n".
@@ -268,8 +314,15 @@ class helper_base {
    */
   public static $delegate_translation_to_hostsite = FALSE;
 
+  /**
+   * Check on maximum file size for image uploads.
+   *
+   * @var string
+   */
+  public static $upload_max_filesize = '4M';
+
   /*
-   * End of ariables that can be specified in helper_config.php.
+   * End of variables that can be specified in helper_config.php.
    */
 
   /**
@@ -942,6 +995,8 @@ class helper_base {
             self::$js_path . 'indicia.datacomponents/jquery.idc.templatedOutput.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.verificationButtons.js',
             self::$js_path . 'indicia.datacomponents/jquery.idc.filterSummary.js',
+            self::$js_path . 'indicia.datacomponents/jquery.idc.permissionFilters.js',
+            'https://unpkg.com/@ungap/url-search-params',
           ],
         ],
       );
@@ -1844,7 +1899,7 @@ HTML;
           $r[] = "indiciaData.$key = $value;";
         }
       }
-      return implode("\n", $r);
+      return implode("\n", $r) . "\n";
     }
     return '';
   }
@@ -2644,47 +2699,51 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
   }
 
   /**
-   * Issue a post request to get the population data required for a control either from
-   * direct access to a data entity (table) or via a report query. The response will be cached
-   * locally unless the caching option is set to false.
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>table</b><br/>
-   * Singular table name used when loading from a database entity.
-   * </li>
-   * <li><b>report</b><br/>
-   * Path to the report file to use when loading data from a report, e.g. "library/occurrences/explore_list",
-   * excluding the .xml extension.
-   * </li>
-   * <li><b>orderby</b><br/>
-   * Optional. For a non-default sort order, provide the field name to sort by. Can be comma separated
-   * to sort by several fields in descending order of precedence.
-   * </li>
-   * <li><b>sortdir</b><br/>
-   * Optional. Specify ASC or DESC to define ascending or descending sort order respectively. Can
-   * be comma separated if several sort fields are specified in the orderby parameter.
-   * </li>
-   * <li><b>extraParams</b><br/>
-   * Array of extra URL parameters to send with the web service request. Should include key value
-   * pairs for the field filters (for table data) or report parameters (for the report data) as well
-   * as the read authorisation tokens. Can also contain a parameter for:
-   * orderby - for a non-default sort order, provide the field name to sort by. Can be comma separated
-   * to sort by several fields in descending order of precedence.
-   * sortdir - specify ASC or DESC to define ascending or descending sort order respectively. Can
-   * be comma separated if several sort fields are specified in the orderby parameter.
-   * limit - number of records to return.
-   * offset - number of records to offset by into the dataset, useful when paginating through the
-   * records.
-   * view - use to specify which database view to load for an entity (e.g. list, detail, gv or cache).
-   * Defaults to list.
-   * </li>
-   * <li><b>caching</b>
-   * If true, then the response will be cached and the cached copy used for future calls. Default true.
-   * If 'store' then although the response is not fetched from a cache, the response will be stored in the cache for possible
-   * later use. Replaces the legacy nocache parameter.
-   * </li>
-   * <li><b>sharing</b><br/>
-   * Optional. Set to verification, reporting, peer_review, moderation, data_flow or editing to request
-   * data sharing with other websites for the task. Further information is given in the link below.
+   * Requests data from the warehouse data or reporting services.
+   *
+   * Issue a request to get the population data required for a control either
+   * from direct access to a data entity (table) or via a report query. The
+   * response will be cached locally unless the caching option is set to false.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * **table** - Singular table name used when loading from a database
+   *     entity.
+   *   * **report** - Path to the report file to use when loading data from a
+   *     report, e.g. "library/occurrences/explore_list", excluding the .xml
+   *     extension.
+   *   * **orderby** - Optional. For a non-default sort order, provide the
+   *     field name to sort by. Can be comma separated to sort by several
+   *     fields in descending order of precedence.
+   *   * **sortdir** - Optional. Specify ASC or DESC to define ascending or
+   *     descending sort order respectively. Can be comma separated if several
+   *     sort fields are specified in the orderby parameter.
+   *   * **extraParams** - Array of extra URL parameters to send with the web
+   *     service request. Should include key value pairs for the field filters
+   *     (for table data) or report parameters (for the report data) as well as
+   *     the read authorisation tokens. Can also contain a parameter for:
+   *     * orderby - for a non-default sort order, provide the field name to
+   *       sort by. Can be comma separated to sort by several fields in
+   *       descending order of precedence.
+   *     * sortdir - specify ASC or DESC to define ascending or descending sort
+   *       order respectively. Can be comma separated if several sort fields
+   *       are specified in the orderby parameter.
+   *     * limit - number of records to return.
+   *     * offset - number of records to offset by into the dataset, useful
+   *       when paginating through the records.
+   *     * view - use to specify which database view to load for an entity
+   *       (e.g. list, detail, gv or cache). Defaults to list.
+   *   * **caching** - If true, then the response will be cached and the cached
+   *     copy used for future calls. Default true. If 'store' then although the
+   *     response is not fetched from a cache, the response will be stored in
+   *     the cache for possible later use. Replaces the legacy nocache
+   *     parameter.
+   *   * **cachePerUser** - if the data are not specific to the logged in user,
+   *     then set to True so that a single cached response can be shared by
+   *     multiple users.
+   *   * **sharing** - Optional. Set to verification, reporting, peer_review,
+   *     moderation, data_flow or editing to request data sharing with other
+   *     websites for the task. Further information is given in the link below.
    * </li>
    * </ul>
    * @link https://indicia-docs.readthedocs.org/en/latest/developing/web-services/data-services-entity-list.html
@@ -3181,5 +3240,8 @@ if (class_exists('helper_config')) {
   }
   if (isset(helper_config::$delegate_translation_to_hostsite)) {
     helper_base::$delegate_translation_to_hostsite = helper_config::$delegate_translation_to_hostsite;
+  }
+  if (isset(helper_config::$upload_max_filesize)) {
+    helper_base::$upload_max_filesize = helper_config::$upload_max_filesize;
   }
 }

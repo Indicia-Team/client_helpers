@@ -52,6 +52,10 @@ class lang {
    *   Translated term.
    */
   public static function get($key) {
+    if (!is_string($key)) {
+      // Objects, e.g. Drupal translated strings, can't be re-translated.
+      return $key;
+    }
     global $default_terms;
     global $custom_terms;
     $output = $key;

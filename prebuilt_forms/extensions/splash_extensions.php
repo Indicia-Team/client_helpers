@@ -187,11 +187,14 @@ class extension_splash_extensions {
    * <li><b>SurveyId</b><br/>
    * The survey ID for the data entry form this control is placed onto.</li>
    * </ul>
-   * <li><b>squaresPlotsReportPathOverride</b><br/>
-   * Optional. Optionally override the path to the report used to return the squares and plots to select from.</li>
+   * <li><b>mySquaresWithPlotsReportPath</b><br/>
+   * Optional. Optionally override the path to the report used to return the squares for the user.</li>
    * </ul>
-   * <li><b>squaresPlotsControlHelpOverride</b><br/>
+   * <li><b>squaresPlotsControlHelp</b><br/>
    * Optional. Optionally override helpText under the square/plots selection control.</li>
+   * </ul>
+   * <li><b>plotsForSquareReportPath</b><br/>
+   * Optional. Optionally override the path to the report used to return the plots for the selected square.</li>
    * </ul>
    */
   public static function splash_location_select($auth, $args, $tabAlias, $options) {
@@ -219,17 +222,20 @@ class extension_splash_extensions {
       drupal_set_message('Please fill in the @surveyId option for the splash_location_select control');
       return '';
     }
-    if (empty($options['squaresPlotsReportPathOverride'])) {
-      $options['squaresPlotsReportPathOverride'] = 'projects/npms/get_my_squares_that_have_plots_2';
+    if (empty($options['mySquaresWithPlotsReportPath'])) {
+      $options['mySquaresWithPlotsReportPath'] = 'projects/npms/get_my_squares_that_have_plots_2';
     }
-    if (empty($options['squaresPlotsControlHelpOverride'])) {
-      $options['squaresPlotsControlHelpOverride'] = '<em>Please note: If you cannot see any plots, you might have created survey 1 & 2 for all your plots
+    if (empty($options['squaresPlotsControlHelp'])) {
+      $options['squaresPlotsControlHelp'] = '<em>Please note: If you cannot see any plots, you might have created survey 1 & 2 for all your plots
       already.</em>';
     }
+    if (empty($options['plotsForSquareReportPath'])) {
+      $options['plotsForSquareReportPath'] = 'projects/npms/get_plots_for_square_id_3';
+    }
     if (empty($options['adminUsersIndiciaUserIds'])) {
-      $adminUsersIndiciaUserIds=[];
+      $adminUsersIndiciaUserIdsArray=[];
     } else {
-      $adminUsersIndiciaUserIds=explode(',',$options['adminUsersIndiciaUserIds']);
+      $adminUsersIndiciaUserIdsArray=explode(',',$options['adminUsersIndiciaUserIds']);
     }
     $coreSquareLocationTypeId=$options['coreSquareLocationTypeId'];
     $additionalSquareLocationTypeId=$options['additionalSquareLocationTypeId'];
@@ -245,7 +251,7 @@ class extension_splash_extensions {
                         'no_vice_county_found_message'=>$noViceCountyFoundMessage,
                         'user_square_attr_id'=>$userSquareAttrId);
     $reportOptions = array(
-      'dataSource'=>$options['squaresPlotsReportPathOverride'],
+      'dataSource'=>$options['mySquaresWithPlotsReportPath'],
       'readAuth'=>$auth['read'],
       'mode'=>'report',
       'extraParams' => $extraParamForSquarePlotReports
@@ -291,7 +297,7 @@ class extension_splash_extensions {
           }
         }
         // If it is an admin user, we always want them to have access.
-        if (in_array($currentUserId,$adminUsersIndiciaUserIds)) {
+        if (in_array($currentUserId,$adminUsersIndiciaUserIdsArray)) {
           $ownsPlot=true;
         }
         //If the plot is still marked as not owned by the user after tests, then warn the user that we are locking the plot
@@ -317,7 +323,7 @@ class extension_splash_extensions {
           $squaresData[$rawRow['id']]=$rawRow['name'];
       }
       // Admin users probably won't be allocated a square, but we still want them to be able to make edits, so allocate them the square associated with the sample.
-      if (in_array($currentUserId,$adminUsersIndiciaUserIds)) {
+      if (in_array($currentUserId,$adminUsersIndiciaUserIdsArray)) {
         $squaresData[$selectedSquareAndPlotInfo[0]['id']]=$selectedSquareAndPlotInfo[0]['square_name'];
       }
       //Need report data to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
@@ -353,18 +359,19 @@ class extension_splash_extensions {
       $options['label']='Plot';
       $options['validation'] = 'required';
       $options['extraParams']['user_square_attr_id']=$userSquareAttrId;
-      $options['report']='projects/npms/get_plots_for_square_id';
+      $options['report'] = $options['plotsForSquareReportPath'];
       $options['extraParams']['current_user_id']=$currentUserId;
       $options['extraParams']['year_start_date'] = date("Y").'-'.'01-01';
       $options['extraParams']['survey_id'] = $options['surveyId'];
       $options['extraParams']['plot_location_type_id'] = $options['coreSquareLocationTypeId'];
+      $options['extraParams']['admin_users_indicia_user_ids'] = $options['adminUsersIndiciaUserIds'];
       if (!empty($_GET['sample_id'])) {
         $options['extraParams']['current_sample_id'] = $_GET['sample_id'];
       }
       if (!empty($options['plotNumberAttrId']))
         $options['extraParams']['plot_number_attr_id']=$options['plotNumberAttrId'];
       //Create the drop-down for the plot
-      $options['helpText'] = $options['squaresPlotsControlHelpOverride'];
+      $options['helpText'] = $options['squaresPlotsControlHelp'];
       $location_list_args = array_merge(array(
           'label'=>lang::get('LANG_Location_Label'),
           'view'=>'detail'
@@ -1217,11 +1224,19 @@ class extension_splash_extensions {
   }
 
   /*
-   * In a similar way to the simple square upload, this function is designed only to be used once, so is not
+   * In a similar way to the simple square upload, this function was originally designed only to be used once, so is not
    * optimised for speed or elegance.
    * This will upload the Address/Town/County/Country/Post Code/Over 18 and Data Access Policy Agreement profile fields into person_attribute_values on the warehouse.
-   * This is needed as the site went live before the easy_login syncing was working, and the easy login syncing needs a user to be logged
-   * in for the sync to work, which is not useful in this situation as some people have already used the site and won't be logging in again soon.
+   * This was needed as the site went live before the easy_login syncing was working fully.
+   * @minimumUid Lowest Drupal user ID to process
+   * @maximumUid Maximum Drupal user ID to process
+   * @addressAttrId Optional, ID of the Address field person_attribute. Do not include if you do not want to sync this field
+   * @townAttrId Optional, ID of the Town field person_attribute. Do not include if you do not want to sync this field
+   * @countyAttrId Optional, ID of the County field person_attribute. Do not include if you do not want to sync this field
+   * @countryAttrId Optional, ID of the Country field person_attribute. Do not include if you do not want to sync this field
+   * @postCodeAttrId Optional, ID of the Post Code field person_attribute. Do not include if you do not want to sync this field
+   * @over18AttrId Optional, ID of the Over 18 field person_attribute. Do not include if you do not want to sync this field
+   * @dataAccessAttrId Optional, ID of the Data Access Agreement field person_attribute. Do not include if you do not want to sync this field
    */
   public static function simple_user_address_upload($auth, $args, $tabalias, $options, $path) {
     //Warn user if any mandatory options are not filled in
@@ -1247,9 +1262,6 @@ class extension_splash_extensions {
 
     $convertedExistingUploadDataToDelete=array();
 
-
-
-
     $r = '';
     $r .= '<div><form method="post">';
     $r .= '<input type="submit" id="sync-addresses" value="Sync"></form></div><br>';
@@ -1258,8 +1270,39 @@ class extension_splash_extensions {
     //Need to call this so we can use indiciaData.read
     data_entry_helper::$js_read_tokens = $auth['read'];
 
-    //Make a list of the different address fields we need to upload to warehouse
     $typesOfAddressField=array('Address','Town','County','Country','Post Code');
+
+
+    //Get a comma separated list of person IDs we are going to process
+    $personIds = '';
+    for ($idx=$options['minimumUid']; $idx<=$options['maximumUid']; $idx++) {
+      $user=user_load($idx);
+      if (!empty($user->field_indicia_user_id['und'][0]['value'])) {
+        //We need to collect the id of the person in the warehouse, as this is not held on the drupal profile (only the indicia user id)
+        $userData = data_entry_helper::get_population_data(array(
+          'table' => 'user',
+          'extraParams' => $auth['read'] + array('id' => $user->field_indicia_user_id['und'][0]['value']),
+          'nocache' => true
+        ));
+      }
+      $personIds = $personIds.$userData[0]['person_id'].',';
+    }
+    $personIds = rtrim($personIds, ",");
+    // Get all existing attribute values for the people we are going to process (doing this all in one go is quicker)
+    $reportOptions = array(
+      'dataSource'=>'projects/npms/check_existing_person_attribute_values',
+      'readAuth'=>$auth['read'],
+      'extraParams' => array('website_id'=>$args['website_id'],'person_ids'=>$personIds),
+    );
+    $existingAttrVal = data_entry_helper::get_report_data($reportOptions);
+    // Change the array format to to be a multi-dimensional array with person_id, person_attribute_id indexes and
+    // person_attribute_value_id indexes
+    $tempExistingAttrVal = array();
+    foreach ($existingAttrVal as $existingAttrValData) {
+      $tempExistingAttrVal[$existingAttrValData['person_id']][$existingAttrValData['person_attribute_id']] = $existingAttrValData['pav_id'];
+    }
+    $existingAttrVal = $tempExistingAttrVal;
+
     //Cycle through users, the starting and ending user id are supplied as configurations, as we can make the upload work in smaller chunks in case performance is poor.
     for ($idx=$options['minimumUid']; $idx<=$options['maximumUid']; $idx++) {
       //On each cycle it is safer to make sure variables are empty, so data isn't picked up from previous user.
@@ -1278,111 +1321,115 @@ class extension_splash_extensions {
       if (!empty($userData[0]['person_id'])) {
         //Cycle through all the address types to upload.
         foreach ($typesOfAddressField as $addressFieldToCheck) {
-          $existingAttrVal=null;
           $existingOver18AttrVal=null;
           //Grab the field we are interested in and save to a variable
-          if ($addressFieldToCheck==='Address') {
+          if ($addressFieldToCheck==='Address' && !empty($options['addressAttrId'])) {
             $attributeId=$options['addressAttrId'];
             if (!empty($user->field_indicia_address['und'][0]['value']))
               $fieldData=$user->field_indicia_address['und'][0]['value'];
             else
               $fieldData="";
           }
-          if ($addressFieldToCheck==='Town') {
+          if ($addressFieldToCheck==='Town' && !empty($options['townAttrId'])) {
             $attributeId=$options['townAttrId'];
             if (!empty($user->field_indicia_town['und'][0]['value']))
               $fieldData=$user->field_indicia_town['und'][0]['value'];
             else
               $fieldData="";
           }
-          if ($addressFieldToCheck==='County') {
+          if ($addressFieldToCheck==='County' && !empty($options['countyAttrId'])) {
             $attributeId=$options['countyAttrId'];
             if (!empty($user->field_indicia_county['und'][0]['value']))
               $fieldData=$user->field_indicia_county['und'][0]['value'];
             else
               $fieldData="";
           }
-          if ($addressFieldToCheck==='Country') {
+          if ($addressFieldToCheck==='Country' && !empty($options['countryAttrId'])) {
             $attributeId=$options['countryAttrId'];
-            if (!empty($user->field_indicia_country['und'][0]['value']))
+            if (!empty($user->field_indicia_country['und'][0]['value'])) {
               $fieldData=$user->field_indicia_country['und'][0]['value'];
-            else
+            } else {
               $fieldData="";
+            }
           }
-          if ($addressFieldToCheck==='Post Code') {
+          if ($addressFieldToCheck==='Post Code' && !empty($options['postCodeAttrId'])) {
             $attributeId=$options['postCodeAttrId'];
             if (!empty($user->field_indicia_post_code['und'][0]['value']))
               $fieldData=$user->field_indicia_post_code['und'][0]['value'];
             else
               $fieldData="";
           }
-          //Try to get any existing data from the warehouse for the person and that attribute.
+          if (($addressFieldToCheck==='Address' && !empty($options['addressAttrId'])) ||
+          ($addressFieldToCheck==='Town' && !empty($options['townAttrId'])) ||
+          ($addressFieldToCheck==='County' && !empty($options['countyAttrId'])) ||
+          ($addressFieldToCheck==='Country' && !empty($options['countryAttrId'])) ||
+          ($addressFieldToCheck==='Post Code' && !empty($options['postCodeAttrId']))) {
+            //If the data item already exists then save it into the array of existing data to update (this is different as it
+            //has the data the existing attribute value id to update)
+            //Otherwise add it to the array of new data to create.
+            if (!empty($existingAttrVal[$userData[0]['person_id']][$attributeId])&&$fieldData!=="") {
+              $convertedExistingUploadData[$convertedExistingUploadIdx][0]=$existingAttrVal[$userData[0]['person_id']][$attributeId];
+              $convertedExistingUploadData[$convertedExistingUploadIdx][1]=$fieldData;
+              $convertedExistingUploadIdx++;
+            } elseif (!empty($existingAttrVal[0]['id'])&&$fieldData==="") {
+              $convertedExistingUploadDataToDelete[]=$existingAttrVal[$userData[0]['person_id']][$attributeId];
+            }  else {
+              $convertedNewUploadData[$convertedNewUploadIdx][0]=$userData[0]['person_id'];
+              $convertedNewUploadData[$convertedNewUploadIdx][1]=$attributeId;
+              $convertedNewUploadData[$convertedNewUploadIdx][2]=$fieldData;
+              $convertedNewUploadIdx++;
+            }
+          }
+        }
+        // Commented out as I don't think this bit will ever be used again and doesn't currently work without changes (as the report has changed)
+        /*if (!empty($options['postCodeAttrId'])) {
           $reportOptions = array(
             'dataSource'=>'projects/npms/check_existing_person_attribute_values',
             'readAuth'=>$auth['read'],
-            'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$attributeId, 'person_id'=>$userData[0]['person_id']),
+            'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['over18AttrId'], 'person_id'=>$userData[0]['person_id']),
           );
-          $existingAttrVal = data_entry_helper::get_report_data($reportOptions);
-          //If the data item already exists then save it into the array of existing data to update (this is different as it
-          //has the data the existing attribute value id to update)
-          //Otherwise add it to the array of new data to create.
-          if (!empty($existingAttrVal[0]['id'])&&$fieldData!=="") {
-            $convertedExistingUploadData[$convertedExistingUploadIdx][0]=$existingAttrVal[0]['id'];
-            $convertedExistingUploadData[$convertedExistingUploadIdx][1]=$fieldData;
-            $convertedExistingUploadIdx++;
-          } elseif (!empty($existingAttrVal[0]['id'])&&$fieldData==="") {
-            $convertedExistingUploadDataToDelete[]=$existingAttrVal[0]['id'];
-          }  else {
-            $convertedNewUploadData[$convertedNewUploadIdx][0]=$userData[0]['person_id'];
-            $convertedNewUploadData[$convertedNewUploadIdx][1]=$attributeId;
-            $convertedNewUploadData[$convertedNewUploadIdx][2]=$fieldData;
-            $convertedNewUploadIdx++;
+          $existingOver18AttrVal = data_entry_helper::get_report_data($reportOptions);
+          if (!empty($user->field_indicia_over_18['und'][0]['value']))
+            $over18Data=$user->field_indicia_over_18['und'][0]['value'];
+          else
+            $over18Data=0;
+          if (!empty($existingOver18AttrVal[0]['id'])&&$over18Data==1) {
+            $convertedExistingOver18UploadData[$convertedExistingOver18UploadIdx][0]=$existingOver18AttrVal[0]['id'];
+            $convertedExistingOver18UploadData[$convertedExistingOver18UploadIdx][1]=$over18Data;
+            $convertedExistingOver18UploadIdx++;
+          } elseif (!empty($existingOver18AttrVal[0]['id'])&& $over18Data==0) {
+            $convertedExistingUploadDataToDelete[]=$existingOver18AttrVal[0]['id'];
+          } elseif (empty($existingOver18AttrVal[0]['id'])&& $over18Data==1) {
+            $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][0]=$userData[0]['person_id'];
+            $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][1]=$options['over18AttrId'];
+            $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][2]=$over18Data;
+            $convertedNewOver18UploadIdx++;
           }
         }
-        $reportOptions = array(
-          'dataSource'=>'projects/npms/check_existing_person_attribute_values',
-          'readAuth'=>$auth['read'],
-          'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['over18AttrId'], 'person_id'=>$userData[0]['person_id']),
-        );
-        $existingOver18AttrVal = data_entry_helper::get_report_data($reportOptions);
-        if (!empty($user->field_indicia_over_18['und'][0]['value']))
-          $over18Data=$user->field_indicia_over_18['und'][0]['value'];
-        else
-          $over18Data=0;
-        if (!empty($existingOver18AttrVal[0]['id'])&&$over18Data==1) {
-          $convertedExistingOver18UploadData[$convertedExistingOver18UploadIdx][0]=$existingOver18AttrVal[0]['id'];
-          $convertedExistingOver18UploadData[$convertedExistingOver18UploadIdx][1]=$over18Data;
-          $convertedExistingOver18UploadIdx++;
-        } elseif (!empty($existingOver18AttrVal[0]['id'])&& $over18Data==0) {
-          $convertedExistingUploadDataToDelete[]=$existingOver18AttrVal[0]['id'];
-        } elseif (empty($existingOver18AttrVal[0]['id'])&& $over18Data==1) {
-          $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][0]=$userData[0]['person_id'];
-          $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][1]=$options['over18AttrId'];
-          $convertedNewOver18UploadData[$convertedNewOver18UploadIdx][2]=$over18Data;
-          $convertedNewOver18UploadIdx++;
-        }
-        $reportOptions = array(
-          'dataSource'=>'projects/npms/check_existing_person_attribute_values',
-          'readAuth'=>$auth['read'],
-          'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['dataAccessAttrId'], 'person_id'=>$userData[0]['person_id']),
-        );
-        $existingDataAccessAttrVal = data_entry_helper::get_report_data($reportOptions);
-        if (!empty($user->field_indicia_i_agree['und'][0]['value']))
-          $dataAccessData=$user->field_indicia_i_agree['und'][0]['value'];
-        else
-          $dataAccessData=0;
-        if (!empty($existingDataAccessAttrVal[0]['id'])&&$dataAccessData==1) {
-          $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][0]=$existingDataAccessAttrVal[0]['id'];
-          $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][1]=$dataAccessData;
-          $convertedExistingDataAccessUploadIdx++;
-        } elseif (!empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==0) {
-          $convertedExistingUploadDataToDelete[]=$existingDataAccessAttrVal[0]['id'];
-        } elseif (empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==1) {
-          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][0]=$userData[0]['person_id'];
-          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][1]=$options['dataAccessAttrId'];
-          $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][2]=$dataAccessData;
-          $convertedNewDataAccessUploadIdx++;
-        }
+        if (!empty($options['dataAccessAttrId'])) {
+          $reportOptions = array(
+            'dataSource'=>'projects/npms/check_existing_person_attribute_values',
+            'readAuth'=>$auth['read'],
+            'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['dataAccessAttrId'], 'person_id'=>$userData[0]['person_id']),
+          );
+          $existingDataAccessAttrVal = data_entry_helper::get_report_data($reportOptions);
+          if (!empty($user->field_indicia_i_agree['und'][0]['value']))
+            $dataAccessData=$user->field_indicia_i_agree['und'][0]['value'];
+          else
+            $dataAccessData=0;
+          if (!empty($existingDataAccessAttrVal[0]['id'])&&$dataAccessData==1) {
+            $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][0]=$existingDataAccessAttrVal[0]['id'];
+            $convertedExistingDataAccessUploadData[$convertedExistingDataAccessUploadIdx][1]=$dataAccessData;
+            $convertedExistingDataAccessUploadIdx++;
+          } elseif (!empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==0) {
+            $convertedExistingUploadDataToDelete[]=$existingDataAccessAttrVal[0]['id'];
+          } elseif (empty($existingDataAccessAttrVal[0]['id'])&& $dataAccessData==1) {
+            $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][0]=$userData[0]['person_id'];
+            $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][1]=$options['dataAccessAttrId'];
+            $convertedNewDataAccessUploadData[$convertedNewDataAccessUploadIdx][2]=$dataAccessData;
+            $convertedNewDataAccessUploadIdx++;
+          }
+        }*/
       }
     }
     if (!empty($convertedExistingUploadData)||!empty($convertedNewUploadData)) {
@@ -1514,34 +1561,6 @@ class extension_splash_extensions {
       drupal_set_message('Please enter a maximumUid for the maximum user id for the user address upload');
       return false;
     }
-    if (empty($options['addressAttrId'])) {
-      drupal_set_message('Please enter the person_attribute_id that holds the address field');
-      return false;
-    }
-    if (empty($options['townAttrId'])) {
-      drupal_set_message('Please enter the person_attribute_id that holds the town field');
-      return false;
-    }
-    if (empty($options['countyAttrId'])) {
-      drupal_set_message('Please enter the person_attribute_id that holds the county field');
-      return false;
-    }
-    if (empty($options['countryAttrId'])) {
-      drupal_set_message('Please enter the person_attribute_id that holds the country field');
-      return false;
-    }
-    if (empty($options['postCodeAttrId'])) {
-      drupal_set_message('Please enter the person_attribute_id that holds the post code field');
-      return false;
-    }
-    if (empty($options['over18AttrId'])) {
-      drupal_set_message('Please enter the person_attribute_id that holds the over 18 field');
-      return false;
-    }
-    if (empty($options['dataAccessAttrId'])) {
-      drupal_set_message('Please enter the person_attribute_id that holds the data access policy agreement selection');
-      return false;
-    }
   }
 
   /*
@@ -1561,6 +1580,8 @@ class extension_splash_extensions {
    * @dontReturnAllocatedLocations Optional, when true then locations that are already allocated to another user are not available for selection (maximum of one location allocation per person)
    * @maxAllocationForLocationAttrId Optional, Id of attribute that holds the maximum number of people that can be allocated to a location before it becomes hidden for selection. Provide this attribute id to enable this option.
    * An example might be an event location, where only a certain number of people can attend.
+   * @historicAttrId Optional, Id of attribute that holds whether an NPMS event location is historical. If included, then historical events are ignored by report.
+   * Everything is returned if this option is not included.
    * @allocatedLocationEmailSubject Optional, Provide a subject line if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailMessage option must also be provided.
    * @allocatedLocationEmailMessage Optional, Provide the message if you want to send an email to the user when a location is allocated to the user. allocatedLocationEmailSubject option must also be provided.
    * Put {location_name} or {username} into the text to replace with the location or username when message is sent.
@@ -1569,15 +1590,16 @@ class extension_splash_extensions {
    * This option is useful if we want users to be only able to edit themselves.
    */
   public static function add_locations_to_user($auth, $args, $tabalias, $options, $path) {
+    $indiciaUserIdColectedFromDB = hostsite_get_user_field('indicia_user_id');
     if (!empty($options['overrideCurrentUserIdParam'])&&$options['overrideCurrentUserIdParam']==true) {
       //If we only want to show the current user's locations, and a user has been supplied in the url, then if that user
       //isn't the current user, draw a blank page.
-      if (!empty($_GET['dynamic-the_user_id']) && $_GET['dynamic-the_user_id']!=hostsite_get_user_field('indicia_user_id')) {
+      if (empty($indiciaUserIdColectedFromDB) || (!empty($_GET['dynamic-the_user_id']) && $_GET['dynamic-the_user_id'] != $indiciaUserIdColectedFromDB)) {
         data_entry_helper::$javascript.="$('form').remove();";
       } else {
         //If nothing is supplied in the URL params, and we want to only show locations for the current user, then set the $_GET
         //parameter to the current user so the rest of the control acts as if the user has been supplied in the URL
-        $_GET['dynamic-the_user_id']=hostsite_get_user_field('indicia_user_id');
+        $_GET['dynamic-the_user_id'] = $indiciaUserIdColectedFromDB;
       }
     }
     global $user;
@@ -1622,7 +1644,7 @@ class extension_splash_extensions {
       $userIdFromURL=$_GET['dynamic-the_user_id'];
     else
       $userIdFromURL=0;
-    $extraParams=array('location_type_ids'=>$options['locationTypes'], 'user_id'=>hostsite_get_user_field('indicia_user_id'),
+    $extraParams=array('location_type_ids'=>$options['locationTypes'], 'user_id' => $indiciaUserIdColectedFromDB,
         'my_sites_person_attr_id'=>$options['mySitesPsnAttrId']);
     //Can limit results in location drop-down to certain distance of a post code
     if (!empty($options['postCodeGeomParamName'])&&!empty($_GET[$options['postCodeGeomParamName']]))
@@ -1635,6 +1657,8 @@ class extension_splash_extensions {
       $extraParams['dont_return_allocated_locations']=$options['dontReturnAllocatedLocations'];
     if (!empty($options['maxAllocationForLocationAttrId']))
       $extraParams['max_allocation_for_location_attr_id']=$options['maxAllocationForLocationAttrId'];
+    if (!empty($options['historicAttrId']))
+      $extraParams['historic_attr_id']=$options['historicAttrId'];
     //If we don't want to automatically get the location id from the URL, then display a drop-down of locations the user can select from
     if (empty($locationIdFromURL)) {
       $r .= '<label>'.$locationDropDownLabel.'</label> ';
@@ -1902,7 +1926,7 @@ class extension_splash_extensions {
     else 
       $emailFrom='support@npms.org.uk';
     // Left this line commented out as method of emailing can differ depending on host
-    //$sent = mail($emailTo, $subject, wordwrap($message, 70)); 
+    //$sent = mail($emailTo, $subject, wordwrap($message, 70));       
     $sent = drupal_mail('iform', 'location_signup_removal_mail', $emailTo, user_preferred_language($user), array('body' => $message, 'subject' => $subject/*, 'headers' => array('Cc' => $header_cc, 'Bcc' => $header_bcc)*/), $emailFrom, TRUE);
     // Change the logging message depending on email purpose
     if ($type==='Allocate') {
@@ -2046,5 +2070,31 @@ class extension_splash_extensions {
       If these options have been filled in, please make sure a user id param which matches the @userIdParamName option has been supplied in the URL.';
     }
     return $r;
+  }
+
+  /**
+   * Displays information about locations found under a map click point.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/prebuilt-forms/dynamic-forms.html#misc-extensions-query-locations-on-map-click
+   *
+   * @return string
+   *   HTML for the control's container.
+   */
+  public static function query_locations_on_map_click($auth, $args, $tabalias, $options, $path) {
+    static $queryLocationsOnMapClickCount = 0;
+    $queryLocationsOnMapClickCount++;
+    if (!isset($options['locationTypeIds']) || !is_array($options['locationTypeIds'])) {
+      return 'The query_locations_on_map_click extension requires a locationTypeIds array in the options.';
+    }
+    $options = array_merge([
+      'template' => '<div><h2>{{ name }}</h2>{{ comment }}</div>',
+      'id' => "locationsOnMapClick-$queryLocationsOnMapClickCount",
+    ], $options);
+    if (!isset(helper_base::$indiciaData['queryLocationsOnMapClickSettings'])) {
+      helper_base::$indiciaData['queryLocationsOnMapClickSettings'] = [];
+    }
+    helper_base::$indiciaData['queryLocationsOnMapClickSettings'][$options['id']]
+      = $options;
+    return "<div id=\"$options[id]\"></div>";
   }
 }
