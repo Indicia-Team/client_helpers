@@ -49,7 +49,8 @@ class ElasticsearchProxyHelper {
    */
   public static function callMethod($method, $nid) {
     self::$config = hostsite_get_es_config($nid);
-    if (empty(self::$config['es']['endpoint']) || empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])) {
+    if (empty(self::$config['es']['endpoint']) ||
+        (self::$config['es']['auth_method'] === 'directClient' && (empty(self::$config['es']['user']) || empty(self::$config['es']['secret'])))) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
       throw new ElasticsearchProxyAbort('Configuration incomplete');
@@ -505,6 +506,48 @@ class ElasticsearchProxyHelper {
   }
 
   /**
+   * Retrieves the required HTTP headers for an Elasticsearch request.
+   *
+   * Header sets content type to application/json and adds an Authorization
+   * header appropriate to the method.
+   *
+   * @return array
+   *   Header strings.
+   */
+  public static function getHttpRequestHeaders($esConfig) {
+    $headers = [
+      'Content-Type: application/json',
+    ];
+    if ($esConfig['es']['auth_method'] === 'directClient') {
+      $headers[] = 'Authorization: USER:' . $esConfig['es']['user'] . ':SECRET:' . $esConfig['es']['secret'];
+    }
+    else {
+      $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
+      if (!file_exists($keyFile)) {
+        \Drupal::logger('iform')->error('Missing private key file for jwtUser Elasticsearch authentication.');
+        echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
+        throw new ElasticsearchProxyAbort('Configuration incomplete');
+      }
+      $privateKey = file_get_contents($keyFile);
+      $payload = [
+        'iss' => \Drupal::urlGenerator()->generateFromRoute('<front>', [], ['absolute' => TRUE]),
+        'http://indicia.org.uk/user:id' => \Drupal::currentUser()->id(),
+        'exp' => time() + 300,
+      ];
+      if (empty($post['permissions_filter']) || $post['permissions_filter'] === 'all') {
+        // Additional claim that we have rights to all data.
+        $payload['http://indicia.org.uk/alldata'] = 'true';
+      }
+      $modulePath = \Drupal::service('module_handler')->getModule('iform')->getPath();
+      // @todo persist the token in the cache?
+      require_once "$modulePath/lib/php-jwt/vendor/autoload.php";
+      $token = \Firebase\JWT\JWT::encode($payload, $privateKey, 'RS256');
+      $headers[] = "Authorization: Bearer $token";
+    }
+    return $headers;
+  }
+
+  /**
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
   private static function curlPost($url, $data, $getParams = []) {
@@ -521,10 +564,7 @@ class ElasticsearchProxyHelper {
     $session = curl_init($url);
     curl_setopt($session, CURLOPT_POST, 1);
     curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . self::$config['es']['user'] . ':SECRET:' . self::$config['es']['secret'],
-    ]);
+    curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config));
     curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
     curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($session, CURLOPT_HEADER, FALSE);
@@ -590,6 +630,7 @@ class ElasticsearchProxyHelper {
     ];
     $arrayFieldQueryTypes = ['terms'];
     $stringQueryTypes = ['query_string', 'simple_query_string'];
+    $objectQueryTypes = ['geo_bounding_box'];
     if (isset($query['textFilters'])) {
       // Apply any filter row parameters to the query.
       foreach ($query['textFilters'] as $field => $value) {
@@ -649,6 +690,14 @@ class ElasticsearchProxyHelper {
       elseif (in_array($qryConfig['query_type'], $stringQueryTypes)) {
         // One of the ES query string based query types.
         $queryDef = [$qryConfig['query_type'] => ['query' => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $objectQueryTypes)) {
+        $queryDef = [$qryConfig['query_type'] => $qryConfig['value']];
+      }
+      else {
+        header("HTTP/1.1 400 Bad request");
+        echo json_encode(['error' => 'Incorrect filter type parameter']);
+        throw new ElasticsearchProxyAbort('Incorrect filter type parameter: ' . $qryConfig['query_type']);
       }
       if (!empty($qryConfig['nested']) && $qryConfig['nested'] !== 'null') {
         // Must not nested queries should be handled at outer level.
@@ -866,6 +915,7 @@ class ElasticsearchProxyHelper {
         $filterField => $filterValues,
         'master_checklist_id' => hostsite_get_config_value('iform', 'master_checklist_id', 0),
       ] + $readAuth,
+      'cachePerUser' => FALSE,
     ]);
     $keys = [];
     foreach ($taxonData as $taxon) {

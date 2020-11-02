@@ -258,6 +258,10 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+    // Always allow filtering by group.
+    if (!empty($_GET['group_id'])) {
+      helper_base::$indiciaData['group_id'] = $_GET['group_id'];
+    }
   }
 
   /**
@@ -381,7 +385,8 @@ class ElasticsearchReportHelper {
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = array(
         "default" => lang::get("Standard download format"),
-        "easy-download" => lang::get("Backward-compatible format")
+        "easy-download" => lang::get("Backward-compatible format"),
+        "mapmate" => lang::get("Mapmate-compatible format"),
       );
       $optionArr = array();
       foreach ($options['columnsTemplate'] as $colType) {
@@ -562,12 +567,17 @@ JS;
   public static function permissionFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
 
+    $wrapperOptions = array_merge([
+      'id' => "es-permissions-filter-wrapper",
+    ], $options);
+
     $options = array_merge([
       'id' => "es-permissions-filter",
       'includeFiltersForGroups' => FALSE,
       'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
       'label' => 'Records to access',
+      'notices' => '[]',
     ], $options);
 
     $optionArr = [];
@@ -657,7 +667,17 @@ JS;
       'class' => 'permissions-filter',
     ];
 
-    return data_entry_helper::select($controlOptions);
+    $dropdown = data_entry_helper::select($controlOptions);
+    $html = <<<HTML
+<div>
+  $dropdown
+  <div id="permission-filters-notice"></div>
+</div>
+
+HTML;
+
+    $dataOptions = helper_base::getOptionsForJs($options, ['notices'], TRUE);
+    return self::getControlContainer('permissionFilters', $wrapperOptions, $dataOptions, $html);
   }
 
   /**
@@ -846,6 +866,7 @@ HTML;
       'sortAggregation',
       'size',
       'sort',
+      'switchToGeomsAt',
       'uniqueField',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
@@ -1218,22 +1239,15 @@ HTML;
     // Note the geohash_grid precision will be overridden depending on map zoom.
     $aggText = <<<AGG
 {
-  "filter_agg": {
-    "filter": {
-      "geo_bounding_box": {}
+  "by_hash": {
+    "geohash_grid": {
+      "field": "location.point",
+      "precision": 1
     },
     "aggs": {
-      "by_hash": {
-        "geohash_grid": {
-          "field": "location.point",
-          "precision": 1
-        },
-        "aggs": {
-          "by_centre": {
-            "geo_centroid": {
-              "field": "location.point"
-            }
-          }
+      "by_centre": {
+        "geo_centroid": {
+          "field": "location.point"
         }
       }
     }
@@ -1263,28 +1277,21 @@ AGG;
     }
     $aggText = <<<AGG
 {
-  "filter_agg": {
-    "filter": {
-      "geo_bounding_box": {}
+  "by_srid": {
+    "terms": {
+      "field": "location.grid_square.srid",
+      "size": 1000,
+      "order": {
+        "_count": "desc"
+      }
     },
     "aggs": {
-      "by_srid": {
+      "by_square": {
         "terms": {
-          "field": "location.grid_square.srid",
-          "size": 1000,
+          "field": "$geoField",
+          "size": 100000,
           "order": {
             "_count": "desc"
-          }
-        },
-        "aggs": {
-          "by_square": {
-            "terms": {
-              "field": "$geoField",
-              "size": 100000,
-              "order": {
-                "_count": "desc"
-              }
-            }
           }
         }
       }
@@ -1515,15 +1522,13 @@ HTML;
    *   Node ID, used to retrieve the node parameters which contain ES settings.
    */
   private static function getMappings($nid) {
+    require_once 'ElasticsearchProxyHelper.php';
     $config = hostsite_get_es_config($nid);
     // /doc added to URL only for Elasticsearch 6.x.
     $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
       ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'],
-    ]);
+    curl_setopt($session, CURLOPT_HTTPHEADER, ElasticsearchProxyHelper::getHttpRequestHeaders($config));
     curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
     curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($session, CURLOPT_HEADER, FALSE);

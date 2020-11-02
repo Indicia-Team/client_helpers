@@ -303,9 +303,15 @@ mapInitialisationHooks.push(function(mapdiv) {
     if ($tabalias)
       $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
+    if (!self::editLocationPermitted()) {
+      $options['standardControls'] = NULL;
+      $r = '<p><strong>You cannot edit this location because you do not own it.</strong></p>';
+    }
+    else {
+      $r = '';
+    }
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
-    $r = '';
     $r .= data_entry_helper::map_panel($options, $olOptions);
     // Add a geometry hidden field for boundary support
     if ($boundaries) {
@@ -540,6 +546,9 @@ mapInitialisationHooks.push(function(mapdiv) {
    * Override the default submit buttons to add a delete button where appropriate.
    */
   protected static function getSubmitButtons($args) {
+    if (!self::editLocationPermitted()) {
+      return '';
+    }
     $r = '';
     global $indicia_templates;
     $r .= '<input type="submit" class="' . $indicia_templates['buttonDefaultClass'] . '" id="save-button" value="'.lang::get('Submit')."\" />\n";
@@ -556,5 +565,25 @@ mapInitialisationHooks.push(function(mapdiv) {
     return $r;
   }
 
+  /**
+   * Indicates whether or not the current user is permitted to edit the location entity.
+   */
+  private function editLocationPermitted() {
+    if (empty(data_entry_helper::$entity_to_load['location:id'])) {
+      return TRUE;
+    }
+    elseif (function_exists('hostsite_get_user_field')) {
+      $iUserId = hostsite_get_user_field('indicia_user_id');
+      if ($iUserId === "1" || $iUserId === data_entry_helper::$entity_to_load['location:created_by_id']) {
+        return TRUE;
+      }
+      else {
+        return FALSE;
+      }
+    } 
+    else {
+      return FALSE;
+    }
+  }
 }
 
