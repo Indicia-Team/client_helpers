@@ -530,8 +530,8 @@ class ElasticsearchProxyHelper {
       }
       $privateKey = file_get_contents($keyFile);
       $payload = [
-        'iss' => \Drupal::urlGenerator()->generateFromRoute('<front>', [], ['absolute' => TRUE]),
-        'http://indicia.org.uk/user:id' => \Drupal::currentUser()->id(),
+        'iss' => hostsite_get_url('<front>', FALSE, FALSE, TRUE),
+        'http://indicia.org.uk/user:id' => hostsite_get_user_field('indicia_user_id'),
         'exp' => time() + 300,
       ];
       if (empty($post['permissions_filter']) || $post['permissions_filter'] === 'all') {
