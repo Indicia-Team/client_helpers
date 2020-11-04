@@ -5090,6 +5090,8 @@ HTML;
    *   * class - Optional. CSS class names to add to the control.
    *   * readonly - Optional. can be set to 'readonly="readonly"' to set this
    *     control as read only.
+   *   * attributes - Optional. Additional HTML attribute to attach, e.g.
+   *     ["type": "number", "step": "any", "min": "4"].
    *
    * The output of this control can be configured using the following
    * templates:
@@ -5102,7 +5104,17 @@ HTML;
     $options = array_merge([
       'default' => '',
       'isFormControl' => TRUE,
+      'attributes' => [],
     ], self::check_options($options));
+    if (empty($options['attributes']['type'])) {
+      // Default to HTML5 text input.
+      $options['attributes']['type'] = 'text';
+    }
+    $attrArray = [];
+    foreach ($options['attributes'] as $attrName => $attrValue) {
+      $attrArray[] = "$attrName=\"$attrValue\"";
+    }
+    $options['attribute_list'] = implode(' ', $attrArray);
     return self::apply_template('text_input', $options);
   }
 
