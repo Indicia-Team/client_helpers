@@ -460,16 +460,18 @@ HTML;
   }
 
   /**
-   * Integrates the page with group (activity) permissions.
+   * Integrates the page with groups (activities).
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupPermissions
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
    *
    * @return string
    *   Control HTML
    */
-  public static function groupPermissions(array $options) {
+  public static function groupIntegration(array $options) {
     $options = array_merge([
       'missingGroupIdBehaviour' => 'error',
+      'showGroupSummary' => FALSE,
+      'showGroupPages' => FALSE,
     ], $options);
     $group_id = !empty($options['group_id']) ? $options['group_id'] : FALSE;
     if (empty($group_id) && !empty($_GET['group_id'])) {
@@ -480,11 +482,61 @@ HTML;
       hostsite_goto_page('<front>');
     }
     require_once 'prebuilt_forms/includes/groups.php';
-    group_authorise_group_id($group_id, $options['readAuth']);
-    // Always allow filtering by group.
+    $member = group_authorise_group_id($group_id, $options['readAuth']);
+    $output = '';
     if (!empty($group_id)) {
+      // Apply filtering by group.
       helper_base::$indiciaData['group_id'] = $group_id;
+      if ($options['showGroupSummary'] || $options['showGroupPages']) {
+        global $indicia_templates;
+        $groups = data_entry_helper::get_population_data(array(
+          'table' => 'group',
+          'extraParams' => $options['readAuth'] + [
+            'view' => 'detail',
+            'id' => $group_id,
+          ]
+        ));
+        if (!count($groups)) {
+          hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
+          hostsite_goto_page('<front>');
+        }
+        $group = $groups[0];
+        if ($options['showGroupSummary']) {
+          data_entry_helper::get_uploaded_image_folder();
+          $logo = empty($group['logo_path']) ? '' : "<img style=\"width: 30%; float: left; padding: 0 5% 5%;\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
+          $msg = "<h3>$group[title]</div>";
+          if (!empty($group['description'])) {
+            $msg .= "<p>$group[description]</p>";
+          }
+          $output .= $logo . $msg;
+        }
+      }
+      if ($options['showGroupPages']) {
+        $pageData = data_entry_helper::get_population_data(array(
+          'table'=>'group_page',
+          'extraParams' => $options['readAuth'] + array(
+              'group_id' => $group_id,
+              'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))),
+              'orderby' => 'caption'
+            )
+        ));
+        $pageLinks = [];
+        $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);;
+        foreach ($pageData as $page) {
+          // Don't link to the current page, plus block member-only pages for
+          // non-members.
+          if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
+            $pageLinks[] = '<li><a href="' .
+              hostsite_get_url($page['path'], array('group_id'=>$group['id'], 'implicit'=>$group['implicit_record_inclusion'])) .
+              '">' . lang::get($page['caption']) . '</a></li>';
+          }
+        }
+        if (!empty($pageLinks)) {
+          $output .= '<ul>' . implode('', $pageLinks) . '</ul>';
+        }
+      }
     }
+    return $output;
   }
 
   /**
