@@ -320,6 +320,20 @@ TXT;
   }
 
   /**
+   * Integrates the page with group (activity) permissions.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupPermissions
+   *
+   * @return string
+   *   Control HTML
+   */
+  protected static function get_control_groupPermissions($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::groupPermissions(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
    * A select box for choosing from a list of higher geography boundaries.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-higherGeographySelect

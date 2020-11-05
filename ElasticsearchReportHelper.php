@@ -258,10 +258,6 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
-    // Always allow filtering by group.
-    if (!empty($_GET['group_id'])) {
-      helper_base::$indiciaData['group_id'] = $_GET['group_id'];
-    }
   }
 
   /**
@@ -461,6 +457,34 @@ HTML;
       'source',
     ], TRUE);
     return self::getControlContainer('esDownload', $options, $dataOptions, $html);
+  }
+
+  /**
+   * Integrates the page with group (activity) permissions.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupPermissions
+   *
+   * @return string
+   *   Control HTML
+   */
+  public static function groupPermissions(array $options) {
+    $options = array_merge([
+      'missingGroupIdBehaviour' => 'error',
+    ], $options);
+    $group_id = !empty($options['group_id']) ? $options['group_id'] : FALSE;
+    if (empty($group_id) && !empty($_GET['group_id'])) {
+      $group_id = $_GET['group_id'];
+    }
+    if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
+      hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
+      hostsite_goto_page('<front>');
+    }
+    require_once 'prebuilt_forms/includes/groups.php';
+    group_authorise_group_id($group_id, $options['readAuth']);
+    // Always allow filtering by group.
+    if (!empty($group_id)) {
+      helper_base::$indiciaData['group_id'] = $group_id;
+    }
   }
 
   /**
