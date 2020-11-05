@@ -502,41 +502,68 @@ HTML;
         }
         $group = $groups[0];
         if ($options['showGroupSummary']) {
-          data_entry_helper::get_uploaded_image_folder();
-          $logo = empty($group['logo_path']) ? '' : "<img style=\"width: 30%; float: left; padding: 0 5% 5%;\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
-          $msg = "<h3>$group[title]</div>";
-          if (!empty($group['description'])) {
-            $msg .= "<p>$group[description]</p>";
-          }
-          $output .= $logo . $msg;
+          $output .= self::getGroupSummaryHtml($group);
         }
-      }
-      if ($options['showGroupPages']) {
-        $pageData = data_entry_helper::get_population_data(array(
-          'table'=>'group_page',
-          'extraParams' => $options['readAuth'] + array(
-              'group_id' => $group_id,
-              'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))),
-              'orderby' => 'caption'
-            )
-        ));
-        $pageLinks = [];
-        $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);;
-        foreach ($pageData as $page) {
-          // Don't link to the current page, plus block member-only pages for
-          // non-members.
-          if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
-            $pageLinks[] = '<li><a href="' .
-              hostsite_get_url($page['path'], array('group_id'=>$group['id'], 'implicit'=>$group['implicit_record_inclusion'])) .
-              '">' . lang::get($page['caption']) . '</a></li>';
-          }
-        }
-        if (!empty($pageLinks)) {
-          $output .= '<ul>' . implode('', $pageLinks) . '</ul>';
+        if ($options['showGroupPages']) {
+          $output .= self::getGroupPageLinks($group, $options);
         }
       }
     }
     return $output;
+  }
+
+  /**
+   * Return the HTML for a summary panel for a group.
+   *
+   * @param array $group
+   *   Group data loaded from the database.
+   *
+   * @return string
+   *   HTML for the panel.
+   */
+  public static function getGroupSummaryHtml(array $group) {
+    $path = data_entry_helper::get_uploaded_image_folder();
+    $logo = empty($group['logo_path']) ? '' : "<img style=\"width: 30%; float: left; padding: 0 5% 5%;\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
+    $msg = "<h3>$group[title]</div>";
+    if (!empty($group['description'])) {
+      $msg .= "<p>$group[description]</p>";
+    }
+    return $logo . $msg;
+  }
+
+  /**
+   * Return the HTML for a list of page links for a group.
+   *
+   * @param array $group
+   *   Group data loaded from the database.
+   *
+   * @return string
+   *   HTML for the list of links.
+   */
+  public static function getGroupPageLinks(array $group, $options) {
+    $pageData = data_entry_helper::get_population_data(array(
+      'table'=>'group_page',
+      'extraParams' => $options['readAuth'] + array(
+          'group_id' => $group['id'],
+          'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))),
+          'orderby' => 'caption'
+        )
+    ));
+    $pageLinks = [];
+    $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);;
+    foreach ($pageData as $page) {
+      // Don't link to the current page, plus block member-only pages for
+      // non-members.
+      if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
+        $pageLinks[] = '<li><a href="' .
+          hostsite_get_url($page['path'], array('group_id'=>$group['id'], 'implicit'=>$group['implicit_record_inclusion'])) .
+          '">' . lang::get($page['caption']) . '</a></li>';
+      }
+    }
+    if (!empty($pageLinks)) {
+      return '<ul>' . implode('', $pageLinks) . '</ul>';
+    }
+    return '';
   }
 
   /**
