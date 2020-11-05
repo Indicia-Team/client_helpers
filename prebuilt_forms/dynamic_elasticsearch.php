@@ -320,15 +320,15 @@ TXT;
   }
 
   /**
-   * Integrates the page with group (activity) permissions.
+   * Integrates the page with groups (activities).
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupPermissions
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
    *
    * @return string
    *   Control HTML
    */
-  protected static function get_control_groupPermissions($auth, $args, $tabalias, $options) {
-    return ElasticsearchReportHelper::groupPermissions(array_merge($options, [
+  protected static function get_control_groupIntegration($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::groupIntegration(array_merge($options, [
       'readAuth' => $auth['read'],
     ]));
   }
