@@ -2338,10 +2338,10 @@ else
     // Find the taxon lists this form uses. We can limit the taxa found
     // accordingly.
     $configuredLists = [];
-    if ($args['taxon_list_id']) {
+    if (!empty($args['taxon_list_id'])) {
       $configuredLists[] = $args['taxon_list_id'];
     }
-    if ($args['extra_list_id']) {
+    if (!empty($args['extra_list_id'])) {
       $configuredLists[] = $args['extra_list_id'];
     }
     $options = array_merge([
