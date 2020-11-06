@@ -518,7 +518,7 @@ class ElasticsearchProxyHelper {
     $headers = [
       'Content-Type: application/json',
     ];
-    if ($esConfig['es']['auth_method'] === 'directClient') {
+    if (empty($esConfig['es']['auth_method']) || $esConfig['es']['auth_method'] === 'directClient') {
       $headers[] = 'Authorization: USER:' . $esConfig['es']['user'] . ':SECRET:' . $esConfig['es']['secret'];
     }
     else {
