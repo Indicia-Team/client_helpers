@@ -2410,6 +2410,8 @@ JS;
    *   * termImageSize - Optional. Set to an Indicia image size preset
    *     (normally thumb, med or original) to include term images in the
    *     output.
+   *   * attributes - Optional. Additional HTML attribute to attach, e.g.
+   *     data-es_* attributes.
    *
    * @return string
    *   HTML code for a select control.
@@ -2420,10 +2422,16 @@ JS;
       array(
         'template' => 'select',
         'itemTemplate' => 'select_item',
-        'isFormControl' => TRUE
+        'isFormControl' => TRUE,
+        'attributes' => [],
       ),
       self::check_options($options)
     );
+    $attrArray = [];
+    foreach ($options['attributes'] as $attrName => $attrValue) {
+      $attrArray[] = "$attrName=\"$attrValue\"";
+    }
+    $options['attribute_list'] = implode(' ', $attrArray);
     return self::select_or_listbox($options);
   }
 

@@ -687,13 +687,16 @@ JS;
     foreach ($sources as $source) {
       $optionArr[$source['id']] = $source['title'];
     }
-
-    // Return the select control.
     $controlOptions = [
       'label' => lang::get($options['label']),
       'fieldname' => $options['id'],
       'lookupValues' => $optionArr,
-      'class' => 'survey-filter',
+      'class' => 'es-filter-param survey-filter',
+      'attributes' => array (
+        'data-es-bool-clause' => 'must',
+        'data-es-query' => '{&quot;term&quot;: {&quot;metadata.survey.id&quot;: #value#}}',
+        'data-es-summary' => 'limit to records in survey: #value#'
+      ),
     ];
 
     return data_entry_helper::select($controlOptions);
@@ -856,7 +859,7 @@ HTML;
 
   helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
-$('.es-filter-param, .user-filter, .permissions-filter, .survey-filter, .standalone-quality-filter select').change(function () {
+$('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
     // Update any summary output
     $('#es-filter-summary').idcFilterSummary('populate');
 });
