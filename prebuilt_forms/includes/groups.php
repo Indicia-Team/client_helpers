@@ -42,36 +42,50 @@ function group_authorise_form($args, $readAuth) {
       hostsite_goto_page('<front>');
     }
   }
-  $gu = array();
+
   if (!empty($_GET['group_id'])) {
-    // Loading data into a recording group. Are they a member or is the page
-    // public?
-    // @todo: consider performance - 2 web services hits required to check permissions.
-    if (hostsite_get_user_field('indicia_user_id')) {
-      $gu = data_entry_helper::get_population_data(array(
-        'table' => 'groups_user',
-        'extraParams' => $readAuth + array(
-          'group_id' => $_GET['group_id'],
-          'user_id' => hostsite_get_user_field('indicia_user_id'),
-          'pending' => 'f',
-        ),
-        'nocache' => true
-      ));
-    }
-    $gp = data_entry_helper::get_population_data(array(
-      'table' => 'group_page',
-      'extraParams' => $readAuth + array('group_id' => $_GET['group_id'], 'path' => hostsite_get_current_page_path())
+    return group_authorise_group_id($_GET['group_id'], $readAuth);
+  }
+  return FALSE;
+}
+
+/**
+ * Authorise the user/page combination against a specified group ID.
+ *
+ * @param int $group_id
+ *   ID of the group.
+ * @param array $readAuth
+ *   Authentication tokens.
+ */
+function group_authorise_group_id($group_id, $readAuth) {
+  $gu = [];
+  // Loading data into a recording group. Are they a member or is the page
+  // public?
+  // @todo: consider performance - 2 web services hits required to check permissions.
+  if (hostsite_get_user_field('indicia_user_id')) {
+    $gu = data_entry_helper::get_population_data(array(
+      'table' => 'groups_user',
+      'extraParams' => $readAuth + array(
+        'group_id' => $group_id,
+        'user_id' => hostsite_get_user_field('indicia_user_id'),
+        'pending' => 'f',
+      ),
+      'nocache' => true
     ));
-    if (count($gp) === 0) {
-      hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'alert', TRUE);
-      hostsite_goto_page('<front>');
-    }
-    elseif (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
-      // Administrator field is null if the page is fully public. Else if not
-      // a group member, then throw them out.
-      hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'alert', TRUE);
-      hostsite_goto_page('<front>');
-    }
+  }
+  $gp = data_entry_helper::get_population_data(array(
+    'table' => 'group_page',
+    'extraParams' => $readAuth + array('group_id' => $group_id, 'path' => hostsite_get_current_page_path())
+  ));
+  if (count($gp) === 0) {
+    hostsite_show_message(lang::get('You are trying to access a page which is not available for this group.'), 'warning', TRUE);
+    hostsite_goto_page('<front>');
+  }
+  elseif (count($gu) === 0 && $gp[0]['administrator'] !== NULL) {
+    // Administrator field is null if the page is fully public. Else if not
+    // a group member, then throw them out.
+    hostsite_show_message(lang::get('You are trying to access a page for a group you do not belong to.'), 'warning', TRUE);
+    hostsite_goto_page('<front>');
   }
   return count($gu) > 0;
 }

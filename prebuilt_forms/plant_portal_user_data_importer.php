@@ -126,7 +126,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'plot_group_identifier_name_text_attr_id',
         'caption'=>'Plot group identifier name text location attribute ID',
-        'description'=>'ID of the attribute that stores the plot group identifier name as text to assist with the import process.',
+        'description'=>'ID of the location attribute that stores the plot group identifier name as text to assist with the import process.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -134,7 +134,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'plot_group_identifier_name_lookup_loc_attr_id',
         'caption'=>'Plot group identifier name lookup location attribute ID',
-        'description'=>'ID of the attribute that stores the plot group identifier name as a lookup ID. This is needed in additional to the text attribute '
+        'description'=>'ID of the location attribute that stores the plot group identifier name as a lookup ID. This is needed in additional to the text attribute '
           . 'as the lookup id is unknown during the import itself as the group has not been created yet',
         'type'=>'string',
         'required'=>true,
@@ -143,7 +143,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'plot_width_attr_id',
         'caption'=>'Plot width location attribute ID',
-        'description'=>'ID of the attribute that stores the plot width.',
+        'description'=>'ID of the location attribute that stores the plot width.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -151,7 +151,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'plot_length_attr_id',
         'caption'=>'Plot length location attribute ID',
-        'description'=>'ID of the attribute that stores the plot length.',
+        'description'=>'ID of the location attribute that stores the plot length.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -159,7 +159,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'plot_radius_attr_id',
         'caption'=>'Plot radius location attribute ID',
-        'description'=>'ID of the attribute that stores the plot radius.',
+        'description'=>'ID of the location attribute that stores the plot radius.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -167,14 +167,14 @@ class iform_plant_portal_user_data_importer extends helper_base {
       array(
         'name'=>'plot_shape_attr_id',
         'caption'=>'Plot shape location attribute ID',
-        'description'=>'ID of the attribute that stores the plot shape.',
+        'description'=>'ID of the location attribute that stores the plot shape.',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
       ),
       array(
         'name'=>'vice_county_attr_id',
-        'caption'=>'Vice county location attribute ID',
+        'caption'=>'Vice county sample attribute ID',
         'description'=>'ID of the sample attribute that stores the vice county name.',
         'type'=>'string',
         'required'=>true,
@@ -182,7 +182,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
       ),
       array(
         'name'=>'country_attr_id',
-        'caption'=>'Country location attribute ID',
+        'caption'=>'Country sample attribute ID',
         'description'=>'ID of the sample attribute that stores the country.',
         'type'=>'string',
         'required'=>true,
@@ -199,8 +199,8 @@ class iform_plant_portal_user_data_importer extends helper_base {
       ),
       array(
         'name'=>'spatial_reference_type_attr_id',
-        'caption'=>'Spatial reference type attribute ID',
-        'description'=>'ID of the attribute that holds the spatial reference type (e.g. vague).',
+        'caption'=>'Spatial reference type sample attribute ID',
+        'description'=>'ID of the sample attribute that holds the spatial reference type (e.g. vague).',
         'type'=>'string',
         'required'=>true,
         'group'=>'Database IDs Required By Form'
@@ -804,6 +804,7 @@ class iform_plant_portal_user_data_importer extends helper_base {
               //warehouse as part of the sample so that the spatial reference can be calculated
               &&$key!=='smpAttr:'.$options['vice_county_attr_id']
               &&$key!=='smpAttr:'.$options['country_attr_id']
+              &&$key!=='smpAttr:fk_'.$options['spatial_reference_type_attr_id']
               ) {
           //If the field isn't in the list of what we want to keep we are probably not going to use it
           $canUnset=true;
@@ -1770,12 +1771,12 @@ TD;
     </form>';
     //Show appropriate button depending on what user wants to do. Also make sure the import step is correct for the option the user chooses
     data_entry_helper::$javascript .= "
-      $('#reupload').click(function () {
+      $('#reupload').on('click', function() {
         $('#import_step').val(1);
         $('#re-upload-import').show();
         $('#create-import-data').hide();
       });
-      $('#continue').click(function () {
+      $('#continue').on('click', function() {
         $('#re-upload-import').hide();
         $('#create-import-data').show();
       });\n";
@@ -1833,18 +1834,28 @@ TD;
     $warehouseUrl = self::get_warehouse_url();
     
     data_entry_helper::$javascript .= "
-    $('#create-import-data').click(function () {
+    $('#create-import-data').on('click', function() {
     $('#create-import-data').attr('disabled','true');
     $('#import-loading-msg').show();";
-    if (!empty($websiteId)&&!empty($distinctPlotGroupNamesToCreate) && !empty($args['plot_group_permission_person_attr_id'])) {
-      data_entry_helper::$javascript .= "send_new_groups_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($distinctPlotGroupNamesToCreate).",".$currentUserId.",".$args['plot_group_permission_person_attr_id'].");";
+    // Send new plots, groups, and plot group attachments to the Warehouse
+    if (empty($plotsToCreateNames) || empty($plotsToCreateSrefs) || empty($plotsToCreateSrefSystems)) {
+      $plotsToCreateNames = array();
+      $plotsToCreateSrefs = array();
+      $plotsToCreateSrefSystems = array();
     }
-    if (!empty($websiteId)&&!empty($plotsToCreateNames) && !empty($plotsToCreateSrefs) && !empty($plotsToCreateSrefSystems)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id'])) {
-      data_entry_helper::$javascript .= "send_new_plots_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_location_type_id'].");";
+    if (empty($distinctPlotGroupNamesToCreate)) {
+      $distinctPlotGroupNamesToCreate = array();
     }
-    if (!empty($websiteId)&&!empty($plotPairsForPlotGroupAttachment)&&!empty($args['plot_group_identifier_name_lookup_loc_attr_id']&&!empty($args['plot_group_permission_person_attr_id'])))
-      data_entry_helper::$javascript .= "send_new_group_to_plot_attachments_to_warehouse('".$warehouseUrl."',websiteId,".json_encode($plotPairsForPlotGroupAttachment).",".$currentUserId.",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id'].");";
-    data_entry_helper::$javascript .= "$('#submit-import').click(); });";
+    if (empty($plotPairsForPlotGroupAttachment)) {
+      $plotPairsForPlotGroupAttachment = array();
+    }
+    data_entry_helper::$javascript .= "create_warehouse_ajax_requests(
+      '".$warehouseUrl."',websiteId,".$currentUserId.",
+      ".json_encode($plotsToCreateNames).",".json_encode($plotsToCreateSrefs).",".json_encode($plotsToCreateSrefSystems).",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_location_type_id'].",
+      ".json_encode($distinctPlotGroupNamesToCreate).",
+      ".json_encode($plotPairsForPlotGroupAttachment).",".$args['plot_group_identifier_name_lookup_loc_attr_id'].",".$args['plot_group_permission_person_attr_id']."
+    );\n";
+    data_entry_helper::$javascript .= "});";
     
   }
   

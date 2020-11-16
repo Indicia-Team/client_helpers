@@ -1323,169 +1323,57 @@ HTML;
    * controls to show for subsamples.
    */
   protected static function get_control_speciesmap($auth, $args, $tabAlias, $options) {
-    // The ID must be done here so it can be accessed by both the species grid and the buttons.
-    $code = rand(0, 1000);
-    $defaults = array('id' => "species-grid-$code", 'buttonsId' => "species-grid-buttons-$code");
-    $options = array_merge($defaults, $options);
-
+    $options = array_merge([
+      'extraParams' => [],
+      'readAuth' => $auth['read'],
+    ], $options);
     $gridmode = call_user_func(array(self::$called_class, 'getGridMode'), $args);
     if (!$gridmode) {
       return "<b>The SpeciesMap control must be used in gridmode.</b><br/>";
     }
-    // Force a new option.
-    $options['speciesControlToUseSubSamples'] = TRUE;
-    $options['base_url'] = data_entry_helper::$base_url;
-    // The filter can be a URL or on the edit tab, so do the processing to work
-    // out the filter to use.
-    $filterLines = self::get_species_filter($args);
-    // Store in the argument so that it can be used elsewhere.
-    $args['taxon_filter'] = implode("\n", $filterLines);
-    // Single species mode only ever applies if we have supplied only one
-    // filter species and we aren't in taxon group mode.
-    if ($args['taxon_filter_field'] !== 'taxon_group' && count($filterLines) === 1 && ($args['multiple_occurrence_mode'] !== 'multi')) {
-      $response = self::get_single_species_data($auth, $args, $filterLines);
-      // Optional message to display the single species on the page.
-      if ($args['single_species_message']) {
-        self::$singleSpeciesName = data_entry_helper::apply_static_template('single_species_taxon_label', $response[0]);
-      }
-      if (count($response) === 0) {
-        // If the response is empty there is no matching taxon, so clear the
-        // filter as we can try and display the checklist with all data.
-        $args['taxon_filter'] = '';
-      }
-      elseif (count($response) === 1) {
-        // Keep the id of the single species in a hidden field for processing
-        // if in single species mode.
-        // TBD.
-        return '<input type="hidden" name="occurrence:taxa_taxon_list_id" value="' . $response[0]['id'] . "\"/>\n";
-      }
+    if (!empty($args['taxon_filter_field'])) {
+      $options['taxonFilterField'] = $args['taxon_filter_field'];
+      $filterLines = helper_base::explode_lines($args['taxon_filter']);
+      $options['taxonFilter'] = $filterLines;
     }
-    $extraParams = $auth['read'];
-    // The imp-sref & imp-geom are within the dialog so it is updated.
-    $speciesCtrl = self::get_control_species_checklist($auth, $args, $extraParams, $options); // this preloads the subsample data.
+    $occAttrOptions = self::extractOccurrenceAttributeOptions($options);
     $systems = explode(',', str_replace(' ', '', $args['spatial_systems']));
-    // Note that this control only uses the first spatial reference system in the list.
-    $system = '<input type="hidden" id="imp-sref-system" name="sample:entered_sref_system" value="' . $systems[0] . '" />';
-    // Since we handle the system ourself, we need to include the system
-    // handled js files.
-    data_entry_helper::include_sref_handler_js([$systems[0] => '']);
-    $r = '';
-    if (isset($options['sampleMethodId'])) {
-      $args['sample_method_id'] = $options['sampleMethodId'];
-      $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth['read']);
-      foreach ($sampleAttrs as &$attr) {
-        $attr['fieldname'] = "sc:n::$attr[fieldname]";
-        $attr['id'] = "sc:n::$attr[id]";
-      }
-      $attrOptions = self::get_attr_specific_options($options);
-      $sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), NULL, $attrOptions);
-      $r .= "<div id=\"$options[id]-subsample-ctrls\" style=\"display: none\">$sampleCtrls</div>";
-    }
-    $r .= "<div id=\"$options[id]-cluster\" style=\"display: none\"></div>";
-    $r .= "<div id=\"$options[id]-container\" style=\"display: none\">" .
-           // A dummy to capture feedback from the map.
-           '<input type="hidden" id="imp-sref" />' .
-           // A dummy to capture feedback from the map.
-           '<input type="hidden" id="imp-geom" />' .
-           '<input type="hidden" name="sample:entered_sref" value="' . data_entry_helper::check_default_value('sample:entered_sref', '') . '">' .
-           '<input type="hidden" name="sample:geom" value="' . data_entry_helper::check_default_value('sample:geom', '') . '" >' .
-           $system .
-           "<div id=\"$options[id]-blocks\">" .
-           self::get_control_speciesmap_controls($auth, $args, $options) .
-           '</div>' .
-           '<input type="hidden" value="true" name="speciesgridmapmode" />' .
-           $speciesCtrl .
-        '</div>';
-    return $r;
+    call_user_func(array(self::$called_class, 'build_grid_taxon_label_function'), $args, $options);
+    return data_entry_helper::multiple_places_species_checklist(array_merge([
+      'readAuth' => $auth['read'],
+      'survey_id' => $args['survey_id'],
+      'listId' => $args['list_id'],
+      'lookupListId' => $args['extra_list_id'],
+      'occAttrOptions' => $occAttrOptions,
+      'systems' => $args['spatial_systems'],
+      'occurrenceComment' => $args['occurrence_comment'],
+      'occurrenceSensitivity' => (isset($args['occurrence_sensitivity']) ? $args['occurrence_sensitivity'] : false),
+      'occurrenceImages' => $args['occurrence_images'],
+      'sample_method_id' => isset($options['sampleMethodId']) ? $options['sampleMethodId'] : NULL,
+      'speciesNameFilterMode' => self::getSpeciesNameFilterMode($args),
+      'userControlsTaxonFilter' => isset($args['user_controls_taxon_filter']) ? $args['user_controls_taxon_filter'] : false,
+      'subSpeciesColumn' => $args['sub_species_column'],
+      'copyDataFromPreviousRow' => !empty($args['copy_species_row_data_to_new_rows']) && $args['copy_species_row_data_to_new_rows'],
+      'previousRowColumnsToInclude' => empty($args['previous_row_columns_to_include']) ? '' : $args['previous_row_columns_to_include'],
+      'editTaxaNames' => !empty($args['edit_taxa_names']) && $args['edit_taxa_names'],
+      'includeSpeciesGridLinkPage' => !empty($args['include_species_grid_link_page']) && $args['include_species_grid_link_page'],
+      'speciesGridPageLinkUrl' => $args['species_grid_page_link_url'],
+      'speciesGridPageLinkParameter' => $args['species_grid_page_link_parameter'],
+      'speciesGridPageLinkTooltip' => $args['species_grid_page_link_tooltip'],
+      'spatialSystem' => $systems[0],
+      'label' => lang::get('occurrence:taxa_taxon_list_id'),
+      'columns' => 1,
+      'PHPtaxonLabel' => TRUE,
+      'speciesInLabel' => FALSE,
+      'language' => iform_lang_iso_639_2(hostsite_get_user_field('language')),
+    ], $options));
   }
 
   /**
    * Get the control for the summary for the map based species input.
    */
   protected static function get_control_speciesmapsummary($auth, $args, $tabAlias, $options) {
-    // don't have access to the id for the species map control, and visa versa (has a random element)
-    // have to use a clas to identify it.
-    return '<div class="control_speciesmapsummary"><table class="ui-widget ui-widget-content species-grid-summary"><thead class="ui-widget-header"></thead><tbody/></table></div>';
-  }
-
-  /* Set up the control JS and also return the existing data subsample blocks */
-  protected static function get_control_speciesmap_controls($auth, $args, $options){
-    $defaults = array('singleRecordSubsamples' => false);
-    $options = array_merge($defaults, $options);
-    $langStrings = array('AddLabel' => lang::get("Add records to map"),
-        'AddMessage' => lang::get("Please click on the map where you would like to add your records. Zoom the map in for greater precision."),
-        'AddDataMessage' => lang::get("Please enter all the species records for this position into the grid below. When you have finished, click the Finish button to return to the map where you may choose another grid reference to enter data for."),
-
-        'MoveLabel' => lang::get("Move records"),
-        'MoveMessage1' => lang::get("Please select the records on the map you wish to move."),
-        'MoveMessage2' => lang::get("Please click on the map to choose the new position. Press the Cancel button to choose another set of records to move instead."),
-
-        'ModifyLabel' => lang::get("Modify records"),
-        'ModifyMessage1' => lang::get("Please select the records on the map you wish to change."),
-        'ModifyMessage2' => lang::get("Change (or add to) the records for this position. When you have finished, click the Finish button which will return you to the map where you may choose another set of records to change."),
-
-        'DeleteLabel' => lang::get("Delete records"),
-        'DeleteMessage' => lang::get("Please select the records on the map you wish to delete."),
-        'ConfirmDeleteTitle' => lang::get("Confirm deletion of records"),
-        'ConfirmDeleteText' => lang::get("Are you sure you wish to delete all the records at {OLD}?"),
-
-        'ClusterMessage' => lang::get("You selected a cluster of places on the map, pick one of them to work with."),
-
-        'CancelLabel' => lang::get("Cancel"),
-        'FinishLabel' => lang::get("Finish"),
-        'Yes' => lang::get("Yes"),
-        'No' => lang::get("No"),
-        'SRefLabel' => lang::get('LANG_SRef_Label'));
-    // make sure we load the JS.
-    data_entry_helper::add_resource('control_speciesmap_controls');
-    data_entry_helper::$javascript .= "control_speciesmap_addcontrols(".json_encode($options).",".json_encode($langStrings).");\n";
-    $blocks = "";
-    if (isset(data_entry_helper::$entity_to_load)) {
-      foreach(data_entry_helper::$entity_to_load as $key => $value){
-        $a = explode(':', $key, 4);
-        if(count($a)==4 && $a[0] == 'sc' && $a[3] == 'sample:entered_sref'){
-          $geomKey = $a[0].':'.$a[1].':'.$a[2].':sample:geom';
-          $idKey = $a[0].':'.$a[1].':'.$a[2].':sample:id';
-          $deletedKey = $a[0].':'.$a[1].':'.$a[2].':sample:deleted';
-          $blocks .= '<div id="scm-'.$a[1].'-block" class="scm-block">'.
-                    '<label>'.lang::get('LANG_SRef_Label').':</label> '.
-                    '<input type="text" value="'.$value.'" readonly="readonly" name="'.$key.'">'.
-                    '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$geomKey].'" name="'.$geomKey.'">'.
-                    '<input type="hidden" value="'.(isset(data_entry_helper::$entity_to_load[$deletedKey]) ? data_entry_helper::$entity_to_load[$deletedKey] : 'f').'" name="'.$deletedKey.'">'.
-                    (isset(data_entry_helper::$entity_to_load[$idKey]) ? '<input type="hidden" value="'.data_entry_helper::$entity_to_load[$idKey].'" name="'.$idKey.'">' : '');
-
-          if (!empty($options['sampleMethodId'])) {
-            $sampleAttrs = self::getAttributesForEntity('sample', $args, $auth['read'], $a[2]);
-            foreach ($sampleAttrs as &$attr) {
-              $attr['fieldname'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['fieldname'];
-              $attr['id'] = 'sc:'.$a[1].':'.$a[2].':'.$attr['id'];
-            }
-            $attrOptions = self::get_attr_specific_options($options);
-            $sampleCtrls = get_attribute_html($sampleAttrs, $args, array('extraParams' => $auth['read']), null, $attrOptions);
-            $blocks .= '<div id="scm-'.$a[1].'-subsample-ctrls">' .
-                $sampleCtrls .
-                '</div>';
-          }
-          $blocks .= '</div>';
-        }
-      }
-    }
-    return $blocks;
-  }
-
-  /**
-   * Parses an options array to extract the attribute specific option settings, e.g. smpAttr:4|caption=Habitat etc.
-   */
-  protected static function get_attr_specific_options($options) {
-    $attrOptions = array();
-    foreach ($options as $option => $value) {
-      if (preg_match('/^(?P<controlname>[a-z][a-z][a-z]Attr:[0-9]*)\|(?P<option>.*)$/', $option, $matches)) {
-        if (!isset($attrOptions[$matches['controlname']]))
-          $attrOptions[$matches['controlname']] = array();
-        $attrOptions[$matches['controlname']][$matches['option']] = $value;
-      }
-    }
-    return $attrOptions;
+    return data_entry_helper::multiple_places_species_checklist_summary();
   }
 
   /**
@@ -1604,28 +1492,7 @@ HTML;
     // Build the configuration options
     if (isset($options['view']))
       $extraParams['view'] = $options['view'];
-    // There may be options in the form occAttr:n|param => value targetted at specific attributes
-    $occAttrOptions = array();
-    $optionToUnset = array();
-    foreach ($options as $option => $value) {
-      // split the id of the option into the attribute name and option name.
-      $optionParts = explode('|', $option);
-      if ($optionParts[0] != $option) {
-        // an occurrence attribute option was found
-        $attrName = $optionParts[0];
-        $optName = $optionParts[1];
-        // split the attribute name into the type and id (type will always be occAttr)
-        $attrParts = explode(':', $attrName);
-        $attrId = $attrParts[1];
-        if (!isset($occAttrOptions[$attrId])) $occAttrOptions[$attrId]=array();
-        $occAttrOptions[$attrId][$optName] = apply_user_replacements($value);
-        $optionToUnset[] = $option;
-      }
-    }
-    // tidy up options array
-    foreach ($optionToUnset as $value) {
-      unset($options[$value]);
-    }
+    $occAttrOptions = self::extractOccurrenceAttributeOptions($options);
     // make sure that if extraParams is specified as a config option, it does not replace the essential stuff
     if (isset($options['extraParams']))
       $options['extraParams'] = array_merge($extraParams, $options['extraParams']);
@@ -1664,16 +1531,42 @@ HTML;
       $filterLines = helper_base::explode_lines($args['taxon_filter']);
       $species_ctrl_opts['taxonFilter']=$filterLines;
     }
-    if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths']=explode(',', $args['col_widths']);
+    if (isset($args['col_widths']) && $args['col_widths']) $species_ctrl_opts['colWidths'] = explode(',', $args['col_widths']);
     call_user_func(array(self::$called_class, 'build_grid_taxon_label_function'), $args, $options);
     if (self::$mode == self::MODE_CLONE)
       $species_ctrl_opts['useLoadedExistingRecords'] = true;
 
-    //Set speciesInLabel flag on indiciaData
+    // Set speciesInLabel flag on indiciaData.
     $speciesInLabel = !empty($options['speciesInLabel']) ? 'true' : 'false';
     data_entry_helper::$javascript .= "\nindiciaData.speciesInLabel=".$speciesInLabel.";\n";
 
     return data_entry_helper::species_checklist($species_ctrl_opts);
+  }
+
+  protected static function extractOccurrenceAttributeOptions(&$options) {
+    // There may be options in the form occAttr:n|param => value targetted at specific attributes
+    $occAttrOptions = array();
+    $optionToUnset = array();
+    foreach ($options as $option => $value) {
+      // split the id of the option into the attribute name and option name.
+      $optionParts = explode('|', $option);
+      if ($optionParts[0] != $option) {
+        // an occurrence attribute option was found
+        $attrName = $optionParts[0];
+        $optName = $optionParts[1];
+        // split the attribute name into the type and id (type will always be occAttr)
+        $attrParts = explode(':', $attrName);
+        $attrId = $attrParts[1];
+        if (!isset($occAttrOptions[$attrId])) $occAttrOptions[$attrId]=array();
+        $occAttrOptions[$attrId][$optName] = apply_user_replacements($value);
+        $optionToUnset[] = $option;
+      }
+    }
+    // tidy up options array
+    foreach ($optionToUnset as $value) {
+      unset($options[$value]);
+    }
+    return $occAttrOptions;
   }
 
   /**
@@ -2445,10 +2338,10 @@ else
     // Find the taxon lists this form uses. We can limit the taxa found
     // accordingly.
     $configuredLists = [];
-    if ($args['taxon_list_id']) {
+    if (!empty($args['taxon_list_id'])) {
       $configuredLists[] = $args['taxon_list_id'];
     }
-    if ($args['extra_list_id']) {
+    if (!empty($args['extra_list_id'])) {
       $configuredLists[] = $args['extra_list_id'];
     }
     $options = array_merge([

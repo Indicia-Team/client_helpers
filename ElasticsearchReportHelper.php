@@ -258,10 +258,6 @@ class ElasticsearchReportHelper {
     helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
     $config = hostsite_get_es_config($nid);
     helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
-    // Always allow filtering by group.
-    if (!empty($_GET['group_id'])) {
-      helper_base::$indiciaData['group_id'] = $_GET['group_id'];
-    }
   }
 
   /**
@@ -462,6 +458,113 @@ HTML;
       'source',
     ], TRUE);
     return self::getControlContainer('esDownload', $options, $dataOptions, $html);
+  }
+
+  /**
+   * Integrates the page with groups (activities).
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
+   *
+   * @return string
+   *   Control HTML
+   */
+  public static function groupIntegration(array $options) {
+    $options = array_merge([
+      'missingGroupIdBehaviour' => 'error',
+      'showGroupSummary' => FALSE,
+      'showGroupPages' => FALSE,
+    ], $options);
+    $group_id = !empty($options['group_id']) ? $options['group_id'] : FALSE;
+    if (empty($group_id) && !empty($_GET['group_id'])) {
+      $group_id = $_GET['group_id'];
+    }
+    if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
+      hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
+      hostsite_goto_page('<front>');
+    }
+    require_once 'prebuilt_forms/includes/groups.php';
+    $member = group_authorise_group_id($group_id, $options['readAuth']);
+    $output = '';
+    if (!empty($group_id)) {
+      // Apply filtering by group.
+      helper_base::$indiciaData['group_id'] = $group_id;
+      if ($options['showGroupSummary'] || $options['showGroupPages']) {
+        global $indicia_templates;
+        $groups = data_entry_helper::get_population_data(array(
+          'table' => 'group',
+          'extraParams' => $options['readAuth'] + [
+            'view' => 'detail',
+            'id' => $group_id,
+          ]
+        ));
+        if (!count($groups)) {
+          hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
+          hostsite_goto_page('<front>');
+        }
+        $group = $groups[0];
+        if ($options['showGroupSummary']) {
+          $output .= self::getGroupSummaryHtml($group);
+        }
+        if ($options['showGroupPages']) {
+          $output .= self::getGroupPageLinks($group, $options);
+        }
+      }
+    }
+    return $output;
+  }
+
+  /**
+   * Return the HTML for a summary panel for a group.
+   *
+   * @param array $group
+   *   Group data loaded from the database.
+   *
+   * @return string
+   *   HTML for the panel.
+   */
+  public static function getGroupSummaryHtml(array $group) {
+    $path = data_entry_helper::get_uploaded_image_folder();
+    $logo = empty($group['logo_path']) ? '' : "<img style=\"width: 30%; float: left; padding: 0 5% 5%;\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
+    $msg = "<h3>$group[title]</div>";
+    if (!empty($group['description'])) {
+      $msg .= "<p>$group[description]</p>";
+    }
+    return $logo . $msg;
+  }
+
+  /**
+   * Return the HTML for a list of page links for a group.
+   *
+   * @param array $group
+   *   Group data loaded from the database.
+   *
+   * @return string
+   *   HTML for the list of links.
+   */
+  public static function getGroupPageLinks(array $group, $options) {
+    $pageData = data_entry_helper::get_population_data(array(
+      'table'=>'group_page',
+      'extraParams' => $options['readAuth'] + array(
+          'group_id' => $group['id'],
+          'query' => json_encode(array('in'=>array('administrator'=>array('', 'f')))),
+          'orderby' => 'caption'
+        )
+    ));
+    $pageLinks = [];
+    $thisPage = empty($options['nid']) ? '' : hostsite_get_alias($options['nid']);;
+    foreach ($pageData as $page) {
+      // Don't link to the current page, plus block member-only pages for
+      // non-members.
+      if ($page['path'] !== $thisPage && ($member || $page['administrator'] === NULL)) {
+        $pageLinks[] = '<li><a href="' .
+          hostsite_get_url($page['path'], array('group_id'=>$group['id'], 'implicit'=>$group['implicit_record_inclusion'])) .
+          '">' . lang::get($page['caption']) . '</a></li>';
+      }
+    }
+    if (!empty($pageLinks)) {
+      return '<ul>' . implode('', $pageLinks) . '</ul>';
+    }
+    return '';
   }
 
   /**
@@ -716,7 +819,7 @@ JS;
     $dropdown = data_entry_helper::select($controlOptions);
     $html = <<<HTML
 <div>
-  $dropdown 
+  $dropdown
   <div id="permission-filters-notice"></div>
 </div>
 
@@ -1568,15 +1671,13 @@ HTML;
    *   Node ID, used to retrieve the node parameters which contain ES settings.
    */
   private static function getMappings($nid) {
+    require_once 'ElasticsearchProxyHelper.php';
     $config = hostsite_get_es_config($nid);
     // /doc added to URL only for Elasticsearch 6.x.
     $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
       ($config['es']['version'] == 6 ? '/doc' : '');
     $session = curl_init($url);
-    curl_setopt($session, CURLOPT_HTTPHEADER, [
-      'Content-Type: application/json',
-      'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'],
-    ]);
+    curl_setopt($session, CURLOPT_HTTPHEADER, ElasticsearchProxyHelper::getHttpRequestHeaders($config));
     curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
     curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
     curl_setopt($session, CURLOPT_HEADER, FALSE);
