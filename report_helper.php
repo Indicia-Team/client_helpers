@@ -853,6 +853,7 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   imageThumbPreset: '$options[imageThumbPreset]',
   currentUrl: '$currentUrl[path]',
   rowId: '" . (isset($options['rowId']) ? $options['rowId'] : '') . "',
+  currentPageCount: " . min($options['itemsPerPage'], count($records)) . ",
   galleryColCount: $options[galleryColCount],
   pagingTemplate: '$indicia_templates[paging]',
   pathParam: '$pathParam',
