@@ -92,7 +92,7 @@ class import_helper extends helper_base {
    *     of database fields you are defining for this dataset, one per line. If
    *     you want to link this field to a column title then follow the database
    *     field name with an equals, then the column title, e.g.
-   *     sample:date=Record date.
+   *     sample:date=Record date or occAttr:fk_293=Life stage.
    *   * **onlyAllowMappedFields** - set to true and supply field mappings in
    *     the fieldMap parameter to ensure that only the fields you have
    *     specified for the selected survey will be available for selection.
