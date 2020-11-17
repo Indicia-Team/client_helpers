@@ -663,40 +663,23 @@ JS;
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyFilter
    */
   public static function surveyFilter(array $options) {
-    $options = array_merge([
-      'id' => "es-survey-filter",
-      'label' => lang::get('Limit to survey'),
-    ], $options);
 
-    iform_load_helpers(['report_helper']);
-    $sources = report_helper::get_report_data(array(
-      'dataSource' => 'library/surveys/surveys_list',
-      'readAuth' => $options['readAuth'],
-      'caching' => TRUE,
-      'cachePerUser' => FALSE,
-    ));
-
-    $optionArr = [];
-    $optionArr['all'] = lang::get('All surveys');
-    usort($sources, function ($item1, $item2) {
-      $v1 = strtolower($item1['title']);
-      $v2 = strtolower($item2['title']);
-      if ($v2 == $v1) return 0;
-      return $v1 < $v2 ? -1 : 1;
-    });
-    foreach ($sources as $source) {
-      $optionArr[$source['id']] = $source['title'];
-    }
     $controlOptions = [
-      'label' => lang::get($options['label']),
-      'fieldname' => $options['id'],
-      'lookupValues' => $optionArr,
+      'label' => lang::get('Limit to survey'),
+      'fieldname' => 'es-survey-filter',
       'class' => 'es-filter-param survey-filter',
       'attributes' => array (
         'data-es-bool-clause' => 'must',
         'data-es-query' => '{&quot;term&quot;: {&quot;metadata.survey.id&quot;: #value#}}',
         'data-es-summary' => 'limit to records in survey: #value#'
       ),
+      'table' => 'survey',
+      'valueField' => 'id',
+      'captionField' => 'title',
+      'extraParams' => $options['readAuth'] + array(
+        'orderby' => 'title',
+        'sharing' => 'data_flow'
+      )
     ];
 
     return data_entry_helper::select($controlOptions);
