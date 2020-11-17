@@ -3637,8 +3637,19 @@ RIJS;
           if ($existing_value<>"") {
             // For select controls, specify which option is selected from the existing value
             if (substr(trim($oc), 0, 7)==='<select') {
-              $oc = str_replace('value="'.$existing_value.'"',
-                'value="'.$existing_value.'" selected="selected"', $oc);
+              if (strpos($oc, 'value="'.$existing_value.'"')) {
+                $oc = str_replace('value="'.$existing_value.'"',
+                  'value="'.$existing_value.'" selected="selected"', $oc);
+              }
+              elseif (isset(self::$entity_to_load["$loadedCtrlFieldName:term"])) {
+                // Value not available for some reason, e.g. editing record in
+                // wrong language. Inject it so the default data associated
+                // with the record does not change.
+                $term = self::$entity_to_load["$loadedCtrlFieldName:term"];
+                $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existing_value\">$term</option></select>", $oc);
+              }
+
+
             } else if(strpos($oc, 'type="checkbox"') !== false) {
               if($existing_value=="1")
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
@@ -4232,8 +4243,13 @@ JS;
           foreach($attrValues as $attrValue) {
             // vague date controls need the processed vague date put back in, not the raw parts.
             $valueField = $attrValue['data_type'] === 'Vague Date' ? 'value' : 'raw_value';
-            self::$entity_to_load['sc:'.$occurrenceIds[$attrValue['occurrence_id']].':'.$attrValue['occurrence_id'].':occAttr:'.$attrValue['occurrence_attribute_id'].(isset($attrValue['id'])?':'.$attrValue['id']:'')]
-              = $attrValue[$valueField];
+            $attrFieldName = 'sc:'.$occurrenceIds[$attrValue['occurrence_id']].':'.$attrValue['occurrence_id'].':occAttr:'.$attrValue['occurrence_attribute_id'].(isset($attrValue['id'])?':'.$attrValue['id']:'');
+            self::$entity_to_load[$attrFieldName] = $attrValue[$valueField];
+            if ($attrValue['data_type'] === 'Lookup List') {
+              // Also capture the stored term in case not available in the
+              // lookup list, e.g. if viewing in the wrong language.
+              self::$entity_to_load["$attrFieldName:term"] = $attrValue['value'];
+            }
           }
           if (count($loadMedia)>0) {
             // @todo: Filter to the appropriate list of media types
