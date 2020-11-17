@@ -3617,22 +3617,23 @@ RIJS;
                 $valId = null;
             }
             else {
-              // go for the default, which has no suffix.
+              // Go for the default, which has no suffix.
               $loadedCtrlFieldName = str_replace('-idx-:', $loadedTxIdx.':'.$existingRecordId, $attributes[$attrId]['fieldname']);
               $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
             }
             if (isset(self::$entity_to_load[$loadedCtrlFieldName]))
               $existing_value = self::$entity_to_load[$loadedCtrlFieldName];
           } else {
-            // no existing record, so use a default control ID which excludes the existing record ID.
+            // No existing record, so use a default control ID which excludes
+            // the existing record ID.
             $ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
             $loadedCtrlFieldName='-';
           }
           if (!$existingRecordId && $existing_value==='' && array_key_exists('default', $attributes[$attrId])) {
-            // this case happens when reloading an existing record
+            // This case happens when reloading an existing record.
             $existing_value = $attributes[$attrId]['default'];
           }
-          // inject the field name into the control HTML
+          // Inject the field name into the control HTML
           $oc = str_replace('{fieldname}', $ctrlId, $control);
           if ($existing_value<>"") {
             // For select controls, specify which option is selected from the existing value
@@ -3648,13 +3649,11 @@ RIJS;
                 $term = self::$entity_to_load["$loadedCtrlFieldName:term"];
                 $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existing_value\">$term</option></select>", $oc);
               }
-
-
             } else if(strpos($oc, 'type="checkbox"') !== false) {
               if($existing_value=="1")
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
             } else {
-              // dates (including single day vague dates) need formatting to the local date format.
+              // Dates (including single day vague dates) need formatting to the local date format.
               if ($attributes[$attrId]['data_type'] === 'D' || $attributes[$attrId]['data_type'] === 'V'
                   && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existing_value)) {
                 $d = new DateTime($existing_value);
