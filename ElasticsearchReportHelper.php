@@ -452,6 +452,7 @@ HTML;
       'aggregation',
       'buttonContainerElement',
       'columnsTemplate',
+      'columnsSurveyId',
       'linkToDataGrid',
       'removeColumns',
       'source',
@@ -654,6 +655,38 @@ JS;
   }
 
   /**
+   * Output a selector for a survey.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyFilter
+   */
+  public static function surveyFilter(array $options) {
+
+    $controlOptions = [
+      'label' => lang::get('Limit to survey'),
+      'fieldname' => 'es-survey-filter',
+      'class' => 'es-filter-param survey-filter',
+      'attributes' => array (
+        'data-es-bool-clause' => 'must',
+        'data-es-query' => '{&quot;term&quot;: {&quot;metadata.survey.id&quot;: #value#}}',
+        'data-es-summary' => 'limit to records in survey: #value#'
+      ),
+      'table' => 'survey',
+      'valueField' => 'id',
+      'captionField' => 'title',
+      'extraParams' => $options['readAuth'] + array(
+        'orderby' => 'title',
+        'sharing' => 'data_flow'
+      ),
+      'blankText' => '- Please select -',
+    ];
+
+    return data_entry_helper::select($controlOptions);
+  }
+
+  /**
    * Output a selector for sets of records defined by a permission.
    *
    * Allows user to select from:
@@ -679,7 +712,7 @@ JS;
       'includeFiltersForGroups' => FALSE,
       'includeFiltersForSharingCodes' => [],
       'useSharingPrefix' => TRUE,
-      'label' => 'Records to access',
+      'label' => lang::get('Records to access'),
       'notices' => '[]',
     ], $options);
 

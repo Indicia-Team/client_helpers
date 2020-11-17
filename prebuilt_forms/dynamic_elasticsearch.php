@@ -247,6 +247,17 @@ TXT;
   }
 
   /**
+   * Output a selector for filtering on survey.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyFilter
+   */
+  protected static function get_control_surveyFilter($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::surveyFilter(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
    * Output a selector for various high level permissions filtering options.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
