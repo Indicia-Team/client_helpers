@@ -679,7 +679,8 @@ JS;
       'extraParams' => $options['readAuth'] + array(
         'orderby' => 'title',
         'sharing' => 'data_flow'
-      )
+      ),
+      'blankText' => '- Please select -',
     ];
 
     return data_entry_helper::select($controlOptions);
