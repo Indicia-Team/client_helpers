@@ -163,12 +163,10 @@ $('input#{escaped_input_id}').result(function(event, data) {
 ",
   'sub_list' => '<div id="{id}:box" class="control-box wide"><div>'."\n".
     '<div>'."\n".
-    '{panel_control} <input id="{id}:add" type="button" value="'.lang::get('add').'" />'."\n".
+    "{panel_control}\n".
     '</div>'."\n".
     '<ul id="{id}:sublist" class="ind-sub-list">{items}</ul>{subListAdd}'."\n".
     '</div></div>'."\n",
-  'sub_list_add' => "\n".'<input type="hidden"  id="{id}:addToTable" name="{mainEntity}:insert_captions_use" value="{basefieldname}" />'.
-    '<input type="hidden" name="{mainEntity}:insert_captions_to_create" value="{table}" />',
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.

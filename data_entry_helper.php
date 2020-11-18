@@ -517,10 +517,11 @@ $('#$escaped').change(function(e) {
    *     supports multiple values.
    *   * table - Required. Table name to get data from for the autocomplete
    *     options. The control will use the captionField from this table.
-   *   * captionField - Required if addToTable is false. Field to draw values
-   *     from to show in the control from. If addToTable is true, this setting
-   *     will be ignored and 'caption' will always be used.
+   *     Defaults to 'termlists_term'.
+   *   * captionField - Field to draw values from to show in the control from.
+   *     Defaults to 'term'.
    *   * valueField - Field to obtain the value to store for each item from.
+   *     Defaults to 'id'.
    *   * extraParams - Required. Associative array of items to pass via the
    *     query string to the service. This should at least contain the read
    *     authorisation array.
@@ -533,11 +534,11 @@ $('#$escaped').change(function(e) {
    *   * class - Optional. CSS class names to add to the control.
    *   * numValues - Optional. Number of returned values in the drop down list.
    *     Defaults to 20.
-   *   * addToTable - Optional. Boolean, if false, only existing items from the
-   *     table can be selected, and no rows can be added. The control then acts
-   *     like a multi-value autocomplete and submits a list of ID values for
-   *     the chosen items. If true, the control allows new values to be added
-   *     and inserts them into the source table. Defaults to true.
+   *   * allowTermCreation - Optional, defaults to false. If set to true and
+   *     being used for a lookup custom attribute, then new terms will be
+   *     inserted into the associated termlist if entries are added which are
+   *     not already in the list. Otherwise, only existing entries can be
+   *     added. The termlist_id should be supplied in the extraParams.
    *   * selectMode - Should the autocomplete simulate a select drop down control
    *     by adding a drop down arrow after the input box which, when clicked,
    *     populates the drop down list with all search results to a maximum of
@@ -554,72 +555,46 @@ $('#$escaped').change(function(e) {
     // Checks essential options, uses fieldname as id default and loads
     // defaults if error or edit.
     $options = self::check_options($options);
-    $options = array_merge(array(
-      'addToTable' => TRUE,
-      'autocompleteControl' => 'autocomplete'
-    ), $options);
-    if ($options['addToTable'] === TRUE) {
-      // We can only work with the caption field.
-      $options['captionField'] = 'caption';
-    }
+    $options = array_merge([
+      'allowTermCreation' => FALSE,
+      'table' => 'termlists_term',
+      'captionField' => 'term',
+      'valueField' => 'id',
+      'autocompleteControl' => 'autocomplete',
+      'subListAdd' => '',
+    ], $options);
     // This control submits many values with the same control name so add [] to
     // fieldname so PHP puts multiple submitted values in an array
     if (substr($options['fieldname'], -2) !== '[]') {
       $options['fieldname'] .= '[]';
     }
-
-    if ($options['addToTable'] === TRUE) {
-      // Prepare options for updating the source table.
-      $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname']) - 2);
-      if (preg_match('/^[a-z]{3}Attr\:[1-9][0-9]*$/', $options['basefieldname'])) {
-        switch (substr($options['basefieldname'], 0, 3)) {
-          case 'loc':
-            $options['mainEntity'] = 'location';
-            break;
-
-          case 'occ':
-            $options['mainEntity'] = 'occurrence';
-            break;
-
-          case 'smp':
-            $options['mainEntity'] = 'sample';
-            break;
-
-          case 'srv':
-            $options['mainEntity'] = 'survey';
-            break;
-
-          case 'psn':
-            $options['mainEntity'] = 'person';
-            break;
-
-          default:
-            $options['mainEntity'] = '';
-        }
-      }
-      if (empty($options['mainEntity'])) {
-        // AddToTable only works with custom attributes
-      }
-      $options['subListAdd'] = self::mergeParamsIntoTemplate($options, 'sub_list_add');
-    } else {
-      $options['subListAdd'] = '';
+    if ($options['allowTermCreation'] && $options['table'] === 'termlists_term'
+        && isset($options['extraParams']) && isset($options['extraParams']['termlist_id'])) {
+      // Add a hidden input to store the language so new terms can be created.
+      $lang = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+      $options['subListAdd'] = "<input name=\"$options[id]:allowTermCreationLang\" type=\"hidden\" value=\"$lang\" />";
     }
-
     // Prepare embedded search control for add bar panel.
-    $list_options = $options;
+    $ctrlOptions = $options;
     unset($list_options['helpText']);
-    $list_options['id'] = "$list_options[id]:search";
-    $list_options['fieldname'] = $list_options['id'];
-    $list_options['default'] = '';
-    $list_options['lockable'] = NULL;
-    $list_options['label'] = NULL;
-    $list_options['controlWrapTemplate'] = 'justControl';
+    $ctrlOptions['id'] = "$ctrlOptions[id]:search";
+    $ctrlOptions['fieldname'] = $ctrlOptions['id'];
+    $ctrlOptions['default'] = '';
+    $ctrlOptions['lockable'] = NULL;
+    $ctrlOptions['label'] = NULL;
+    $ctrlOptions['controlWrapTemplate'] = 'justControl';
+    $ctrlOptions['afterControl'] = str_replace(
+      ['{id}', '{title}', '{class}', '{caption}'],
+      ["$options[id]:add", lang::get('Add the chosen term to the list.'), " class=\"$indicia_templates[buttonDefaultClass]\"", lang::get('Add')],
+      $indicia_templates['button']);
+
+    '<input id="{id}:add" type="button" value="'.lang::get('add').'" />';
     if (!empty($options['selectMode']) && $options['selectMode']) {
-      $list_options['selectMode'] = TRUE;
+      $ctrlOptions['selectMode'] = TRUE;
     }
     // Set up add panel.
     $control = $options['autocompleteControl'];
-    $options['panel_control'] = self::$control($list_options);
+    $options['panel_control'] = self::$control($ctrlOptions);
 
     // Prepare other main control options.
     $options['inputId'] = "$options[id]:$options[captionField]";
