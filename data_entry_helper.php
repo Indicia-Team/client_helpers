@@ -3757,7 +3757,7 @@ RIJS;
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20) . ";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=".(!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false') . ";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].matchContains=".(!empty($options['matchContains']) && $options['matchContains'] ? 'true' : 'false') . ";\n";
-        self::$javascript .= "addRowToGrid('$url', '".
+        self::$javascript .= "indiciaFns.addRowToGrid('$url', '".
           $options['id']."', '".$options['lookupListId']."', {'auth_token' : '".
           $options['readAuth']['auth_token']."', 'nonce' : '".$options['readAuth']['nonce']."'},".
           " formatter);\r\n";
