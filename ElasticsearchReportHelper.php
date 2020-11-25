@@ -489,7 +489,6 @@ HTML;
       // Apply filtering by group.
       helper_base::$indiciaData['group_id'] = $group_id;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
-        global $indicia_templates;
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'group',
           'extraParams' => $options['readAuth'] + [
@@ -506,7 +505,7 @@ HTML;
           $output .= self::getGroupSummaryHtml($group);
         }
         if ($options['showGroupPages']) {
-          $output .= self::getGroupPageLinks($group, $options);
+          $output .= self::getGroupPageLinks($group, $options, $member);
         }
       }
     }
@@ -537,11 +536,15 @@ HTML;
    *
    * @param array $group
    *   Group data loaded from the database.
+   * @param array $options
+   *   [groupIntegration] control options.
+   * @param bool $member
+   *   True if member of the group.
    *
    * @return string
    *   HTML for the list of links.
    */
-  public static function getGroupPageLinks(array $group, $options) {
+  public static function getGroupPageLinks(array $group, array $options, $member) {
     $pageData = data_entry_helper::get_population_data(array(
       'table'=>'group_page',
       'extraParams' => $options['readAuth'] + array(
