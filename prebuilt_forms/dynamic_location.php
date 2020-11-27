@@ -143,6 +143,14 @@ class iform_dynamic_location extends iform_dynamic {
           'type'=>'textarea',
           'required' => false,
         ),
+        [
+          'name' => 'edit_permission',
+          'caption' => 'Permission required for editing other people\'s data',
+          'description' => 'Set to the name of a permission which is required in order to be able to edit other people\'s data.',
+          'type' => 'text_input',
+          'required' => FALSE,
+          'default' => 'indicia data admin',
+        ],
       )
     );
     return $retVal;
@@ -193,6 +201,25 @@ class iform_dynamic_location extends iform_dynamic {
       self::zoom_map_when_adding($auth['read'], 'location', $_GET['zoom_id']);
     } else
       data_entry_helper::load_existing_record($auth['read'], 'location', $_GET['location_id'], 'detail', false, true);
+  }
+
+  /**
+   * Declare the list of permissions we've got set up.
+   *
+   * @param int $nid
+   *   Node ID, not used.
+   * @param array $args
+   *   Form parameters array, used to extract the defined permissions.
+   *
+   * @return array
+   *   List of distinct permissions.
+   */
+  public static function get_perms($nid, $args) {
+    $perms = [];
+    if (!empty($args['edit_permission']))
+      $perms[] = $args['edit_permission'];
+    $perms += parent::get_perms($nid, $args);
+    return $perms;
   }
 
   /*
@@ -303,7 +330,7 @@ mapInitialisationHooks.push(function(mapdiv) {
     if ($tabalias)
       $options['tabDiv'] = $tabalias;
     $olOptions = iform_map_get_ol_options($args);
-    if (!self::editLocationPermitted()) {
+    if (!self::editLocationPermitted($args)) {
       $options['standardControls'] = NULL;
       $r = '<p><strong>You cannot edit this location because you do not own it.</strong></p>';
     }
@@ -546,7 +573,7 @@ mapInitialisationHooks.push(function(mapdiv) {
    * Override the default submit buttons to add a delete button where appropriate.
    */
   protected static function getSubmitButtons($args) {
-    if (!self::editLocationPermitted()) {
+    if (!self::editLocationPermitted($args)) {
       return '';
     }
     $r = '';
@@ -567,23 +594,27 @@ mapInitialisationHooks.push(function(mapdiv) {
 
   /**
    * Indicates whether or not the current user is permitted to edit the location entity.
+   *
+   * @param array $args
+   *   Form options array.
+   *
+   * @return bool
+   *   TRUE if permitted, otherwise FALSE.
    */
-  private function editLocationPermitted() {
+  private static function editLocationPermitted(array $args) {
     if (empty(data_entry_helper::$entity_to_load['location:id'])) {
+      return TRUE;
+    }
+    elseif (!empty($args['edit_permission']) && hostsite_user_has_permission($args['edit_permission'])) {
       return TRUE;
     }
     elseif (function_exists('hostsite_get_user_field')) {
       $iUserId = hostsite_get_user_field('indicia_user_id');
-      if ($iUserId === "1" || $iUserId === data_entry_helper::$entity_to_load['location:created_by_id']) {
+      if ($iUserId === '1' || $iUserId === data_entry_helper::$entity_to_load['location:created_by_id']) {
         return TRUE;
       }
-      else {
-        return FALSE;
-      }
-    } 
-    else {
-      return FALSE;
     }
+    return FALSE;
   }
 }
 
