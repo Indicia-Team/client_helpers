@@ -1472,8 +1472,11 @@ HTML;
         return '<input type="hidden" name="occurrence:taxa_taxon_list_id" value="'.$response[0]['id']."\"/>\n";
     }
     $extraParams = $auth['read'];
-    if ($gridmode)
+    if ($gridmode) {
+      // Pass through i18n settings for attr drop-downs.
+      $options['attributeTermlistLanguageFilter'] = $args['attribute_termlist_language_filter'];
       return self::get_control_species_checklist($auth, $args, $extraParams, $options);
+    }
     else
       return self::get_control_species_single($auth, $args, $extraParams, $options);
   }
@@ -2559,7 +2562,7 @@ JS;
     if (!isset($args['occurrence_images']))
       $args['occurrence_images'] == false;
     if (!isset($args['attribute_termlist_language_filter']))
-      $args['attribute_termlist_language_filter'] == false;
+      $args['attribute_termlist_language_filter'] == '0';
     if (!isset($args['grid_report']))
       $args['grid_report'] = 'reports_for_prebuilt_forms/simple_sample_list_1';
     return $args;

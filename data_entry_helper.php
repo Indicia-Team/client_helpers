@@ -3253,6 +3253,13 @@ RIJS;
   * impact since every time a species is selected in the grid a web services
   * request is sent to check for dynamic attributes.
   * </li>
+  * <li><b>attributeTermlistLanguageFilter</b>
+  * Set to:
+  * * '0' to display all terms untranslated
+  * * '1' (default) to display only terms in the current language
+  * * 'clientI18n' to display only preferred terms, but enable client-side
+  *    translation.
+  * </li>
   * </ul>
   *
   * @return string
@@ -3374,15 +3381,16 @@ RIJS;
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
     if (! array_key_exists('error', $taxalist)) {
-      $attrOptions = array(
-        'id' => NULL
-      ,'valuetable'=>'occurrence_attribute_value'
-      ,'attrtable'=>'occurrence_attribute'
-      ,'key'=>'occurrence_id'
-      ,'fieldprefix'=>"sc:-idx-::occAttr"
-      ,'extraParams'=>$options['readAuth']
-      ,'survey_id'=>array_key_exists('survey_id', $options) ? $options['survey_id'] : null
-      );
+      $attrOptions = [
+        'id' => NULL,
+        'valuetable' => 'occurrence_attribute_value',
+        'attrtable' => 'occurrence_attribute',
+        'key' => 'occurrence_id',
+        'fieldprefix' => "sc:-idx-::occAttr",
+        'extraParams' => $options['readAuth'],
+        'survey_id' => array_key_exists('survey_id', $options) ? $options['survey_id'] : NULL,
+        'attributeTermlistLanguageFilter' => empty($options['attributeTermlistLanguageFilter']) ? '1' : $options['attributeTermlistLanguageFilter'],
+      ];
       if (isset($options['attributeIds'])) {
         // make sure we load the grid ID attribute
         if (!empty($options['gridIdAttributeId']) && !in_array($options['gridIdAttributeId'], $options['attributeIds']))
@@ -4638,11 +4646,19 @@ JS;
         'class' => $class,
         'controlWrapTemplate' => 'justControl',
         'extraParams' => $options['readAuth'],
-        // Required for lists eg radio boxes: kept separate from options extra
-        // params as that is used to indicate filtering of species list by
-        // language
-        'language' => isset($options['language']) ? $options['language'] : '',
       );
+      if (!empty($options['attributeTermlistLanguageFilter'])) {
+        if ($options['attributeTermlistLanguageFilter'] === '1') {
+          // Required for lists eg radio boxes: kept separate from options extra
+          // params as that is used to indicate filtering of species list by
+          // language
+          $ctrlOptions['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+        }
+        elseif ($options['attributeTermlistLanguageFilter'] === 'clientI18n') {
+          $ctrlOptions['extraParams']['preferred'] = 't';
+          $ctrlOptions['translate'] = 't';
+        }
+      }
       // Some undocumented checklist options that are applied to all attributes
       if(isset($options['lookUpKey'])) $ctrlOptions['lookUpKey'] = $options['lookUpKey'];
       if(isset($options['blankText'])) $ctrlOptions['blankText'] = $options['blankText'];
@@ -5921,7 +5937,9 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * When populating a list control (select, listbox, checkbox or radio group), use either the
    * table, captionfield and valuefield to build the list of values as an array, or if lookupValues
    * is in the options array use that instead of making a database call.
-   * @param array $options Options array for the control.
+   * @param array $options
+   *   Options array for the control. If translate set to TRUE then option
+   *   captions are run through translation.
    * @param string $selectedItemAttribute Name of the attribute that should be set in each list element if the item is selected/checked. For
    * option elements, pass "selected", for checkbox inputs, pass "checked".
    * @return array Associative array of the lookup values and templated list items.
@@ -5968,8 +5986,12 @@ $('div#$escaped_divId').indiciaTreeBrowser({
           if (array_key_exists($options['valueField'], $record)) {
             if (isset($options['captionTemplate']))
               $caption = self::mergeParamsIntoTemplate($record, $options['captionTemplate']);
-            else
+            elseif (!empty($options['translate'])) {
+              $caption = lang::get($record[$options['captionField']]);
+            }
+            else {
               $caption = $record[$options['captionField']];
+            }
             if(isset($options['listCaptionSpecialChars'])) {
               $caption=htmlspecialchars($caption);
             }
