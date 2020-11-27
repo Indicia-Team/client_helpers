@@ -307,7 +307,7 @@ class extension_splash_extensions {
             }
             $options['noSquareRightsMessage']=$options['noSquareRightsMessage'].
                     '<br><br>The square is <b>'.$selectedSquareAndPlotInfo[0]['square_name'].'</b> and the plot is <b>'.$selectedSquareAndPlotInfo[0]['plot_name'].'.</b><br><br>';
-            data_entry_helper::$javascript="
+            data_entry_helper::$javascript .= "
               $(window).load(function() {
                 $('[id*=_lock]').remove();\n $('.remove-row').remove();\n
                 $('.scImageLink,.scClonableRow').hide();
@@ -387,7 +387,7 @@ class extension_splash_extensions {
         ';
       }
       if (!empty($selectedSquareAndPlotInfo[0]['plot_id'])) {
-        data_entry_helper::$javascript="
+        data_entry_helper::$javascript .= "
         $(window).load(function() {
           $('#imp-location').val(".$selectedSquareAndPlotInfo[0]['plot_id'].");
           update_square_plot_info_labels();
