@@ -161,6 +161,21 @@ $('input#{escaped_input_id}').result(function(event, data) {
   $('input#{escaped_id}').trigger('change', data);
 });
 ",
+  'autocomplete_new_taxon_form' => '
+<div style="display: none">
+  <fieldset class="popup-form" id="new-taxon-form">
+    <legend>{title}</legend>
+    <p>{helpText}</p>
+    <label for="new-taxon-name">Taxon name:</label>
+    <input type="text" id="new-taxon-name" class="{required:true}"/><span class="deh-required">*</span><br />
+    <label for="new-taxon-group">Taxon group:</label>
+    <select id="new-taxon-group" class="{required:true}"><span class="deh-required">*</span>
+      {taxonGroupOpts}
+    </select><br/>
+    <button type="button" class="indicia-button" id="do-add-new-taxon">Add taxon</button>
+  </fieldset>
+</div>
+  ',
   'sub_list' => '<div id="{id}:box" class="control-box wide"><div>'."\n".
     '<div>'."\n".
     "{panel_control}\n".
@@ -670,6 +685,7 @@ class helper_base {
    *   * locationFinder
    *   * createPersonalSites
    *   * autocomplete
+   *   * addNewTaxon
    *   * indicia_locks
    *   * jquery_cookie
    *   * jquery_ui
@@ -784,6 +800,7 @@ class helper_base {
         'locationFinder' => array('deps' =>array('indiciaMapEdit'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.locationFinder.js")),
         'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."createPersonalSites.js")),
         'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
+        'addNewTaxon' => array('javascript' => array(self::$js_path."addNewTaxon.js")),
         'import' => array('javascript' => array(self::$js_path . "import.js")),
         'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
         'jquery_cookie' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."jquery.cookie.js")),

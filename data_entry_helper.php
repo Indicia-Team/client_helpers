@@ -2722,25 +2722,33 @@ JS;
    * * **autocomplete_javascript** - Defines the JavaScript which will be inserted onto the page in order to activate
    *   the autocomplete control.
    *
-   * @param type $options Array of configuration options with the following possible entries.
-   * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
-   * * **speciesIncludeBothNames** - include both latin and common names. Default false.
-   * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
-   * * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
-   * * **speciesNameFilterMode** - Optional. Method of filtering the available species names (both for
-   * * initial population into the grid and additional rows). Options are
-   *   * preferred - only preferred names
-   *   * currentLanguage - only names in the language identified by the language option are included
-   *   * excludeSynonyms - all names except synonyms (non-preferred latin names) are included.
-   * * **extraParams** - Should contain the read authorisation array and taxon_list_id to filter against.
-   * * **warnIfNoMatch** - Should the autocomplete control warn the user if they leave the control whilst
-   *   searching and then nothing is matched? Default true.
-   * * **>matchContains** - If true, then the search looks for matches which contain the search
-   *   characters. Otherwise, the search looks for matches which start with the search characters. Default false.
-   * * **outputPreferredNameToSelector** - If set, then the contents of the HTML element with the matching selector are
-   *   replaced with the preferred name of the selected species when chosen. Default false.
+   * @param type $options
+   *   Array of configuration options with the following possible entries.
+   *   * **speciesIncludeAuthorities** - include author strings in species names. Default false.
+   *   * **speciesIncludeBothNames** - include both latin and common names. Default false.
+   *   * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
+   *   * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
+   *   * **speciesNameFilterMode** - Optional. Method of filtering the available species names (both for
+   *   * initial population into the grid and additional rows). Options are
+   *     * preferred - only preferred names
+   *     * currentLanguage - only names in the language identified by the language option are included
+   *     * excludeSynonyms - all names except synonyms (non-preferred latin names) are included.
+   *   * **extraParams** - Should contain the read authorisation array and taxon_list_id to filter against.
+   *   * **warnIfNoMatch** - Should the autocomplete control warn the user if they leave the control whilst
+   *     searching and then nothing is matched? Default true.
+   *   * **>matchContains** - If true, then the search looks for matches which contain the search
+   *     characters. Otherwise, the search looks for matches which start with the search characters. Default false.
+   *   * **outputPreferredNameToSelector** - If set, then the contents of the HTML element with the matching selector are
+   *     replaced with the preferred name of the selected species when chosen. Default false.
+   *   * **allowTaxonAdditionToList** - If a taxon list Id is specified in this
+   *     option, then when the user fails to find a taxon they search for, a
+   *     button is shown allowing them to popup a form to specify a new taxon
+   *     to add to this list. This list will typically be a temporary storage
+   *     area for user-proposed taxa that should later be correctly added to
+   *     the main taxon list.
    *
-   * @return string Html for the species autocomplete control.
+   * @return string
+   *   Html for the species autocomplete control.
    */
   public static function species_autocomplete($options) {
     global $indicia_templates;
@@ -2791,7 +2799,12 @@ JS;
         self::$uncheckedRecordsCount++;
       }
     }
-    return self::autocomplete($options);
+    $options['readAuth'] = [
+      'auth_token' => $options['extraParams']['auth_token'],
+      'nonce' => $options['extraParams']['nonce'],
+    ];
+    $r = self::enableTaxonAdditionControls($options);
+    return $r . self::autocomplete($options);
   }
 
   /**
@@ -3259,6 +3272,13 @@ RIJS;
   * * '1' (default) to display only terms in the current language
   * * 'clientI18n' to display only preferred terms, but enable client-side
   *    translation.
+  * </li>
+  * <li><b>allowTaxonAdditionToList</b></li>
+  * If a taxon list Id is specified in this option, then when the user fails to
+  * find a taxon they search for, a button is shown allowing them to popup a
+  * form to specify a new taxon to add to this list. This list will typically
+  * be a temporary storage area for user-proposed taxa that should later be
+  * correctly added to the main taxon list.
   * </li>
   * </ul>
   *
@@ -3814,10 +3834,59 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         $footable_options = json_encode($options['responsiveOpts']);
         self::$javascript .= "jQuery('#{$options['id']}').indiciaFootableChecklist($footable_options);\n";
       }
+      $r .= self::enableTaxonAdditionControls($options);
       return $r;
     } else {
       return $taxalist['error'];
     }
+  }
+
+  /**
+   * Enable taxon addition controls for species autocompletes.
+   *
+   * If a species autocomplete or species checklist specifies an option
+   * @allowTaxonAdditionToList then enable the functionality to allow the user
+   * to immediately add a taxon to the warehouse so it can be recorded.
+   *
+   * @param array $options
+   *   Control options.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function enableTaxonAdditionControls(array $options) {
+    if (!empty($options['allowTaxonAdditionToList'])) {
+      helper_base::add_resource('addNewTaxon');
+      self::$indiciaData['allowTaxonAdditionToList'] = $options['allowTaxonAdditionToList'];
+      self::$indiciaData['taxonAdditionPostUrl'] = iform_ajaxproxy_url(NULL, 'taxa_taxon_list');
+      $languages = self::get_population_data([
+        'table' => 'language',
+        'extraParams' => $options['readAuth'] + ['iso' => 'lat'],
+        'cachePerUser' => FALSE,
+        'cacheTimeout' => 24 * 3600 * 7,
+      ]);
+      self::$indiciaData['latinLanguageId'] = (int) $languages[0]['id'];
+      $taxonGroupData = self::get_population_data([
+        'table' => 'taxon_group',
+        'extraParams' => $options['readAuth'] + ['order_by' => 'title'],
+        'cachePerUser' => FALSE,
+      ]);
+      $taxonGroupOpts = ['<option value="">' . lang::get('- Please select -') . '</option>'];
+      foreach ($taxonGroupData as $group) {
+        $taxonGroupOpts[] = "<option value=\"$group[id]\">$group[title]</option>";
+      }
+      global $indicia_templates;
+      return str_replace(
+        ['{title}', '{helpText}', '{taxonGroupOpts}'],
+        [
+          lang::get('Record an unrecognised taxon'),
+          lang::get('If you cannot find the name of a species or higher taxon when searching then request it using this form.'),
+          implode("\n", $taxonGroupOpts),
+        ],
+        $indicia_templates['autocomplete_new_taxon_form']
+      );
+    }
+    return '';
   }
 
   /**

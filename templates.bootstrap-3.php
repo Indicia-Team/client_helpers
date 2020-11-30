@@ -1,5 +1,7 @@
 <?php
 
+use Masterminds\HTML5;
+
 global $indicia_templates;
 
 $indicia_templates['formControlClass'] = 'form-control';
@@ -23,4 +25,43 @@ $indicia_templates['anchorButtonClass'] = 'indicia-button btn btn-default';
 
 $indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div>';
 
-$indicia_templates['speciesDetailsThumbnail'] = '<div class="thumbnail"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>';
+$indicia_templates['speciesDetailsThumbnail'] = <<<HTML
+<div class="thumbnail">
+  <a class="fancybox" href="{imageFolder}{the_text}">
+    <img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>
+    {caption}
+  </a>
+</div>
+
+HTML;
+
+$indicia_templates['autocomplete_new_taxon_form'] = <<<HTML
+<div style="display: none">
+  <fieldset class="popup-form" id="new-taxon-form" >
+    <legend>{title}</legend>
+    <p>{helpText}</p>
+    <div class="form-group">
+      <label for="new-taxon-name">Taxon name:</label>
+      <div class="input-group">
+        <input type="text" id="new-taxon-name" class="form-control {required:true}"/>
+        <div class="input-group-addon ctrl-addons">
+          <span class="deh-required">*</span>
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label for="new-taxon-group">Taxon group:</label>
+      <div class="input-group">
+        <select id="new-taxon-group" class="form-control {required:true}">
+          {taxonGroupOpts}
+        </select>
+        <div class="input-group-addon ctrl-addons">
+          <span class="deh-required">*</span>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-primary" id="do-add-new-taxon">Add taxon</button>
+  </fieldset>
+</div>
+
+HTML;
