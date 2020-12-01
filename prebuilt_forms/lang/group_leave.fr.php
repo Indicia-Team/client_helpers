@@ -32,5 +32,5 @@ $custom_terms = array(
   'Cancel' => 'Annuler',
   'Confirm' => 'Confirmer',
   'Confirmation' => 'Confirmation',
-  'You are no longer participating in {!}!' => 'Vous ne participez plus à {1}!'
+  'You are no longer participating in {1}!' => 'Vous ne participez plus à {1}!'
 );

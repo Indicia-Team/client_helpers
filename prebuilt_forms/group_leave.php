@@ -21,15 +21,15 @@
  */
 
 /**
- * A page allowing a user to leave a group. Takes a group_id parameter. Example use would be to 
+ * A page allowing a user to leave a group. Takes a group_id parameter. Example use would be to
  * link to this page using the actions column of a report listing a user's recording groups.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_group_leave {
-   
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -41,7 +41,7 @@ class iform_group_leave {
       'recommended' => true
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -54,7 +54,7 @@ class iform_group_leave {
       'type'=>'text_input'
     ));
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -91,14 +91,14 @@ class iform_group_leave {
     if (!empty($_POST['response']) && $_POST['response']===lang::get('Cancel')) {
       hostsite_goto_page($args['groups_page_path']);
     }
-    elseif (!empty($_POST['response']) && $_POST['response']===lang::get('Confirm')) {     
+    elseif (!empty($_POST['response']) && $_POST['response']===lang::get('Confirm')) {
       $data = array('groups_user:id' => $existing[0]['id'], 'groups_user:group_id' => $group['id'], 'groups_user:user_id' => $user_id, 'deleted' => 't');
       $wrap = submission_builder::wrap($data, 'groups_user');
       $response = data_entry_helper::forward_post_to('groups_user', $wrap, $auth['write_tokens']);
       if (isset($response['success'])) {
-        hostsite_show_message(lang::get('You are no longer participating in {!}!', $group['title']));
+        hostsite_show_message(lang::get('You are no longer participating in {1}!', $group['title']));
         hostsite_goto_page($args['groups_page_path']);
-      } 
+      }
       else {
         return self::abort('An error occurred whilst trying to update your group membership.');
       }
@@ -116,10 +116,10 @@ class iform_group_leave {
     }
     return $r;
   }
-  
+
   private static function abort($msg, $args) {
     hostsite_show_message(lang::get($msg));
     if (!empty($_GET['group_id']) && !empty($args['groups_page_path']))
-      hostsite_goto_page($args['groups_page_path']);  
+      hostsite_goto_page($args['groups_page_path']);
   }
 }
