@@ -132,22 +132,32 @@ class filter_what extends FilterBase {
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
     if (!$options['elasticsearch']) {
-      $r .= "<div id=\"designations-tab\">\n";
-      $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-      $subListOptions = array(
-        'fieldname' => 'taxon_designation_list',
-        'table' => 'taxon_designation',
-        'captionField' => 'title',
-        'valueField' => 'id',
-        'extraParams' => $readAuth,
-        'addToTable' => FALSE,
-        'autocompleteControl' => 'select',
-        'extraParams' => $readAuth + array('orderby' => 'title'),
-        'continueOnBlur' => FALSE,
-      );
-      $r .= data_entry_helper::sub_list($subListOptions);
-      $r .= "</div>\n";
+      try {
+        $r .= "<div id=\"designations-tab\">\n";
+        $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
+          ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
+        $subListOptions = array(
+          'fieldname' => 'taxon_designation_list',
+          'table' => 'taxon_designation',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => $readAuth,
+          'addToTable' => FALSE,
+          'autocompleteControl' => 'select',
+          'extraParams' => $readAuth + array('orderby' => 'title'),
+          'continueOnBlur' => FALSE,
+        );
+        $r .= data_entry_helper::sub_list($subListOptions);
+        $r .= "</div>\n";
+      } catch (Exception $e) {
+        if (strpos($e->getMessage(), 'Unrecognised entity') !== FALSE) {
+          global $indicia_templates;
+          $r .= '<p>' . str_replace(['{message}'], [lang::get('Designations functionality is not enabled on this server.')], $indicia_templates['messageBox']);
+        }
+        else {
+          throw $e;
+        }
+      }
     }
     $r .= "<div id=\"rank-tab\">\n";
     $r .= '<p id="level-label">' . lang::get('Include records where the level') . '</p>';
