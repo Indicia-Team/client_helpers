@@ -911,7 +911,7 @@ class helper_base {
             'googlemaps'
           ],
           'javascript' => [
-            'https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js',
+            'https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js',
           ],
         ],
         'datacomponents' => [
