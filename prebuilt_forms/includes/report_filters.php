@@ -462,19 +462,25 @@ class filter_where extends FilterBase {
       // Need our own map on the popup.
       $mapOpts = [
         'divId' => 'filter-pane-map',
-        'presetLayers' => array('osm'),
+        'presetLayers' => ['osm'],
         'editLayer' => TRUE,
         'initial_lat' => $initialLat,
         'initial_long' => $initialLong,
         'initial_zoom' => $initialZoom,
         'width' => '100%',
         'height' => 400,
-        'standardControls' => array('layerSwitcher', 'panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
-          'modifyFeature', 'clearEditLayer'),
+        'standardControls' => ['panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
+          'modifyFeature', 'clearEditLayer'],
         'allowPolygonRecording' => TRUE,
         'readAuth' => $readAuth,
         'gridRefHint' => TRUE,
       ];
+      // Enable Google layers if API key available.
+      if (!empty(helper_base::$google_maps_api_key)) {
+        $mapOpts['presetLayers'][] = 'google_streets';
+        $mapOpts['presetLayers'][] = 'google_satellite';
+        $mapOpts['standardControls'][] = 'layerSwitcher';
+      }
       // Pass through buffering option.
       if (!empty($options['selectFeatureBufferProjection'])) {
         $mapOpts['selectFeatureBufferProjection'] = $options['selectFeatureBufferProjection'];
