@@ -864,7 +864,8 @@ class filter_source extends FilterBase {
 
 }
 
-function status_control ($readAuth, $options) {
+function status_control($readAuth, $options) {
+  iform_load_helpers(['report_helper']);
   report_helper::add_resource('reportfilters');
   $ctl = new filter_quality();
   $r = '<div class="standalone-quality-filter">';
