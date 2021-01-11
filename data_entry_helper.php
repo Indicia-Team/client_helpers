@@ -19,8 +19,6 @@
  * @link http://code.google.com/p/indicia/
  */
 
-use Masterminds\HTML5;
-
 /**
  * Link in other required php files.
  */
