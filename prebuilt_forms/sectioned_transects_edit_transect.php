@@ -616,7 +616,7 @@ deleteSurvey = function(){
     $('#delete-transect').html('Deleting Transect');
     deleteLocation(".$settings['locationId'].");
     $('#delete-transect').html('Done');
-    window.location='".url($args['sites_list_path'])."';
+    window.location='".hostsite_get_url($args['sites_list_path'])."';
   };
 };
 $('#delete-transect').click(deleteSurvey);
@@ -675,7 +675,7 @@ $('#delete-transect').click(deleteSurvey);
     if(count($settings['section_attributes']) == 0)
       $r .= '<button class="indicia-button right" type="button" title="'.
             lang::get('Returns to My Sites page. Any changes to sections carried out on this page (including creating new ones) are saved to the database as they are done, but changes to the Site Details must be saved using the Save button on that tab.').
-            '" onclick="window.location.href=\'' . url($args['redirect_on_success']) . '\'">'.lang::get('Return to My Sites').'</button>';
+            '" onclick="window.location.href=\'' . hostsite_get_url($args['redirect_on_success']) . '\'">'.lang::get('Return to My Sites').'</button>';
     $r .= '</div>';
     return $r;
   }
