@@ -380,9 +380,8 @@ class ElasticsearchReportHelper {
     // a select control that will be used to indicate the selected columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = array(
-        "default" => lang::get("Standard download format"),
-        "easy-download" => lang::get("Backward-compatible format"),
-        "mapmate" => lang::get("Mapmate-compatible format"),
+        "easy-download" => lang::get("Standard download format"),
+        "mapmate" => lang::get("Simple download format"),
       );
       $optionArr = array();
       foreach ($options['columnsTemplate'] as $colType) {
@@ -667,8 +666,12 @@ JS;
    */
   public static function surveyFilter(array $options) {
 
-    $controlOptions = [
+    $options = array_merge([
       'label' => lang::get('Limit to survey'),
+    ], $options);
+
+    $controlOptions = [
+      'label' => $options['label'],
       'fieldname' => 'es-survey-filter',
       'class' => 'es-filter-param survey-filter',
       'attributes' => array (
@@ -748,7 +751,7 @@ JS;
     }
 
     // Add in permission filters.
-    // Find allowed values onle.
+    // Find allowed values only.
     $sharingCodes = array_intersect(
       $options['includeFiltersForSharingCodes'],
       ['R', 'V', 'D', 'M', 'P']

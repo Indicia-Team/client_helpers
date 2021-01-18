@@ -652,12 +652,16 @@ class filter_quality extends FilterBase {
         'R4' => lang::get('Not accepted as reviewer unable to verify records only'),
         'DR' => lang::get('Queried or not accepted records'),
       ];
-      if ($options['elasticsearch']) {
+      if ($options['elasticsearch']) { 
         // Elasticsearch doesn't currently support recorder trust.
         unset($qualityOptions['T']);
       }
-      $r .= data_entry_helper::select([
+      $options = array_merge([
         'label' => lang::get('Records to include'),
+      ], $options);
+
+      $r .= data_entry_helper::select([
+        'label' => $options['label'],
         'fieldname' => 'quality',
         'id' => 'quality-filter',
         'lookupValues' => $qualityOptions,
