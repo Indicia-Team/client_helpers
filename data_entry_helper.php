@@ -3854,6 +3854,9 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
    */
   private static function enableTaxonAdditionControls(array $options) {
     if (!empty($options['allowTaxonAdditionToList'])) {
+      if (!is_numeric($options['allowTaxonAdditionToList'])) {
+        throw new exception('@allowTaxonAdditionToList should be a list ID');
+      }
       helper_base::add_resource('addNewTaxon');
       self::$indiciaData['allowTaxonAdditionToList'] = $options['allowTaxonAdditionToList'];
       self::$indiciaData['taxonAdditionPostUrl'] = iform_ajaxproxy_url(NULL, 'taxa_taxon_list');
