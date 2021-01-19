@@ -41,6 +41,14 @@ class ElasticsearchReportHelper {
   private static $esMappings;
 
   /**
+   * Has the ES proxy been setup on this page?
+   * 
+   * @var bool
+   *   Set to true when done to prevent double-initialisation.
+   */
+  private static $proxyEnabled = false;
+
+  /**
    * List of ES fields with caption and description for each.
    *
    * @internal
@@ -241,23 +249,26 @@ class ElasticsearchReportHelper {
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
    */
   public static function enableElasticsearchProxy($nid = NULL) {
-    helper_base::add_resource('datacomponents');
-    // Retrieve the Elasticsearch mappings.
-    self::getMappings($nid);
-    // Prepare the stuff we need to pass to the JavaScript.
-    $mappings = self::$esMappings;
-    $dateFormat = helper_base::$date_format;
-    $rootFolder = helper_base::getRootFolder(TRUE);
-    $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-    helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
-    helper_base::$indiciaData['esSources'] = [];
-    helper_base::$indiciaData['esMappings'] = $mappings;
-    helper_base::$indiciaData['dateFormat'] = $dateFormat;
-    helper_base::$indiciaData['rootFolder'] = $rootFolder;
-    helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
-    helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
-    $config = hostsite_get_es_config($nid);
-    helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+    if (!self::$proxyEnabled) {
+      helper_base::add_resource('datacomponents');
+      // Retrieve the Elasticsearch mappings.
+      self::getMappings($nid);
+      // Prepare the stuff we need to pass to the JavaScript.
+      $mappings = self::$esMappings;
+      $dateFormat = helper_base::$date_format;
+      $rootFolder = helper_base::getRootFolder(TRUE);
+      $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
+      helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
+      helper_base::$indiciaData['esSources'] = [];
+      helper_base::$indiciaData['esMappings'] = $mappings;
+      helper_base::$indiciaData['dateFormat'] = $dateFormat;
+      helper_base::$indiciaData['rootFolder'] = $rootFolder;
+      helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
+      helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+      $config = hostsite_get_es_config($nid);
+      helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+      self::$proxyEnabled = TRUE;
+    }
   }
 
   /**
@@ -267,11 +278,14 @@ class ElasticsearchReportHelper {
    */
   public static function customScript(array $options) {
     self::checkOptions('customScript', $options, ['source', 'functionName'], []);
+    $options = array_merge([
+      'template' => '',
+    ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'source',
       'functionName',
     ], TRUE);
-    return self::getControlContainer('customScript', $options, $dataOptions);
+    return self::getControlContainer('customScript', $options, $dataOptions, $options['template']);
   }
 
   /**
@@ -463,7 +477,7 @@ HTML;
   /**
    * Integrates the page with groups (activities).
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupintegration
    *
    * @return string
    *   Control HTML
@@ -474,9 +488,13 @@ HTML;
       'showGroupSummary' => FALSE,
       'showGroupPages' => FALSE,
     ], $options);
-    $group_id = !empty($options['group_id']) ? $options['group_id'] : FALSE;
-    if (empty($group_id) && !empty($_GET['group_id'])) {
+    if (isset($options['group_id'])) {
+      $group_id = $options['group_id'];
+      $implicit = isset($options['implicit']) ? $options['implicit'] : FALSE;
+    } 
+    elseif (!empty($_GET['group_id'])) {
       $group_id = $_GET['group_id'];
+      $implicit = isset($_GET['implicit']) ? $_GET['implicit'] : 'f';
     }
     if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
       hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
@@ -487,7 +505,9 @@ HTML;
     $output = '';
     if (!empty($group_id)) {
       // Apply filtering by group.
-      helper_base::$indiciaData['group_id'] = $group_id;
+      helper_base::$indiciaData['filter_group_id'] = $group_id;
+      $implicitVal = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
+      helper_base::$indiciaData['filter_group_implicit'] = $implicitVal;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'group',
@@ -1002,6 +1022,7 @@ HTML;
       'initialMapBounds',
       'mapGridSquareSize',
       'mode',
+      'proxyCacheTimeout',
       'sortAggregation',
       'size',
       'sort',

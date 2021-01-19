@@ -551,38 +551,63 @@ class ElasticsearchProxyHelper {
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
   private static function curlPost($url, $data, $getParams = []) {
-    $allowedGetParams = ['filter_path'];
-    // Additional GET params should only be used if valid for ES.
-    foreach ($allowedGetParams as $param) {
-      if (!empty($_GET[$param])) {
-        $getParams[$param] = $_GET[$param];
+    $curlResponse = FALSE;
+    $cacheTimeout = FALSE;
+    if (!empty($data['proxyCacheTimeout'])) {
+      $cacheKey = [
+        'post' => json_encode($data),
+        'get' => json_encode($getParams),
+      ];
+      $curlResponse = helper_base::cache_get($cacheKey);
+      if ($curlResponse) {
+        $curlResponse = json_decode($curlResponse, TRUE);
       }
+      else {
+        $cacheTimeout = $data['proxyCacheTimeout'];
+      }
+      unset($data['proxyCacheTimeout']);
     }
-    if (count($getParams)) {
-      $url .= '?' . http_build_query($getParams);
+    if (!$curlResponse) {
+      $allowedGetParams = ['filter_path'];
+      // Additional GET params should only be used if valid for ES.
+      foreach ($allowedGetParams as $param) {
+        if (!empty($_GET[$param])) {
+          $getParams[$param] = $_GET[$param];
+        }
+      }
+      if (count($getParams)) {
+        $url .= '?' . http_build_query($getParams);
+      }
+      $session = curl_init($url);
+      curl_setopt($session, CURLOPT_POST, 1);
+      curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
+      curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config));
+      curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
+      curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
+      curl_setopt($session, CURLOPT_HEADER, FALSE);
+      curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
+      // Do the POST and then close the session.
+      $response = curl_exec($session);
+      $curlResponse = [
+        'output' => $response,
+        'headers' => curl_getinfo($session),
+        'httpCode' => curl_getinfo($session, CURLINFO_HTTP_CODE),
+      ];
+      curl_close($session);
     }
-    $session = curl_init($url);
-    curl_setopt($session, CURLOPT_POST, 1);
-    curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config));
-    curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
-    curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
-    curl_setopt($session, CURLOPT_HEADER, FALSE);
-    curl_setopt($session, CURLOPT_RETURNTRANSFER, TRUE);
-    // Do the POST and then close the session.
-    $response = curl_exec($session);
-    $headers = curl_getinfo($session);
-    $httpCode = curl_getinfo($session, CURLINFO_HTTP_CODE);
-    curl_close($session);
     // Check for an error, or check if the http response was not OK.
-    if ($httpCode != 200) {
-      http_response_code($httpCode);
+    if ($curlResponse['httpCode'] != 200) {
+      http_response_code($curlResponse['httpCode']);
     }
-    if (array_key_exists('charset', $headers)) {
-      $headers['content_type'] .= '; ' . $headers['charset'];
+    elseif ($cacheTimeout) {
+      helper_base::array_to_query_string($cacheKey);
+      helper_base::cache_set($cacheKey, json_encode($curlResponse), $cacheTimeout);
     }
-    header('Content-type: ' . $headers['content_type']);
-    return $response;
+    if (array_key_exists('charset', $curlResponse['headers'])) {
+      $curlResponse['headers']['content_type'] .= '; ' . $curlResponse['headers']['charset'];
+    }
+    header('Content-type: ' . $curlResponse['headers']['content_type']);
+    return $curlResponse['output'];
   }
 
   /**
@@ -727,12 +752,15 @@ class ElasticsearchProxyHelper {
     iform_load_helpers([]);
     $readAuth = helper_base::get_read_auth(self::$config['indicia']['website_id'], self::$config['indicia']['password']);
     self::applyPermissionsFilter($post, $bool);
+    if (!empty($query['group_filter'])) {
+      self::applyGroupFilter($readAuth, $query['group_filter'], $bool, $query);
+    }
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
     }
     if (!empty($query['filter_def'])) {
       self::applyFilterDef($readAuth, $query['filter_def'], $bool);
-    }
+    }    
     // Apply default restrictions.
     if (!self::$confidentialFilterApplied) {
       // Unless explicitly specified in a filter, hide confidential.
@@ -746,6 +774,7 @@ class ElasticsearchProxyHelper {
     unset($query['refresh_user_filters']);
     unset($query['permissions_filter']);
     unset($query['filter_def']);
+    unset($query['group_filter']);
 
     $bool = array_filter($bool, function ($k) {
       return count($k) > 0;
@@ -815,6 +844,36 @@ class ElasticsearchProxyHelper {
         self::applyFilterDef($readAuth, $definition, $bool);
       }
     }
+  }
+
+  private static function applyGroupFilter(array $readAuth, $groupFilter, array &$bool, &$query) {
+    /*
+     * Modes 
+     * - match group ID + match filter (implicit=f)
+     * - match group members + match filter (implicit=t)
+     * - match filter only (implicit=null)
+    */
+    if ($groupFilter['implicit'] === 'false') {
+      // Records added to group linked form.
+      $bool['must'][] = [
+        'term' => ['metadata.group.id' => $groupFilter['id']],
+      ];
+    } elseif ($groupFilter['implicit'] === 'true') {
+      // Records added by group members.
+    }
+    // Apply the filter.
+    $groupData = helper_base::get_population_data([
+      'table' => 'group',
+      'extraParams' => $readAuth + [
+        'id' => $groupFilter['id'],
+      ],
+      'cachePerUser' => FALSE,
+    ]);
+    if (count($groupData) === 0) {
+      throw new exception("Group $groupFilter[id] not found");
+    }
+    // Load the filter into user filters, so it gets applied with the rest.
+    $query['user_filters'][] = $groupData[0]['filter_id'];
   }
 
   /**
@@ -1617,6 +1676,9 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * Works out the filter value and associated operation for a set of params.
+   */
   private static function getDefinitionFilter($definition, array $params) {
     foreach ($params as $param) {
       if (!empty($definition[$param])) {
