@@ -247,6 +247,17 @@ TXT;
   }
 
   /**
+   * Output a selector for filtering on survey.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-surveyFilter
+   */
+  protected static function get_control_surveyFilter($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::surveyFilter(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
+  }
+
+  /**
    * Output a selector for various high level permissions filtering options.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
@@ -317,6 +328,20 @@ TXT;
    */
   protected static function get_control_dataGrid($auth, $args, $tabalias, $options) {
     return ElasticsearchReportHelper::dataGrid($options);
+  }
+
+  /**
+   * Integrates the page with groups (activities).
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
+   *
+   * @return string
+   *   Control HTML
+   */
+  protected static function get_control_groupIntegration($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::groupIntegration(array_merge($options, [
+      'readAuth' => $auth['read'],
+    ]));
   }
 
   /**

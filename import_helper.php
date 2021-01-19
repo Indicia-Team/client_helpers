@@ -56,8 +56,7 @@ class import_helper extends helper_base {
   /**
    * Outputs an import wizard.
    *
-   * The csv file to be imported should be available in the $_POST data, unless
-   * the existing_file option is specified.
+   * The csv file to be imported should be available in the $_POST data.
    * Additionally, if there are any preset values which apply to each row in
    * the import data then you can pass these to the importer in the $_POST
    * data. For example, you could set taxa_taxon_list:taxon_list_id=3 in the
@@ -67,8 +66,6 @@ class import_helper extends helper_base {
    *   Options array with the following possibilities:
    *   * **model** - Required. The name of the model data is being imported
    *     into.
-   *   * **existing_file** - Optional. The full path on the server to an
-   *     already uploaded file to import.
    *   * **auth** - Read and write authorisation tokens.
    *   * **presetSettings** - Optional associative array of any preset values
    *     for the import settings. Any settings which have a presetSetting
@@ -92,7 +89,7 @@ class import_helper extends helper_base {
    *     of database fields you are defining for this dataset, one per line. If
    *     you want to link this field to a column title then follow the database
    *     field name with an equals, then the column title, e.g.
-   *     sample:date=Record date.
+   *     sample:date=Record date or occAttr:fk_293=Life stage.
    *   * **onlyAllowMappedFields** - set to true and supply field mappings in
    *     the fieldMap parameter to ensure that only the fields you have
    *     specified for the selected survey will be available for selection.
@@ -110,6 +107,15 @@ class import_helper extends helper_base {
    *     upload form into this page only when the last upload had errors, in
    *     which case a message is shown explaining that the user can use the
    *     form to upload the errors file. Defaults to EMBED_REUPLOAD_OFF.
+   *   * **importPreventCommitBehaviour** - default is 'partial_import' which
+   *     allows working rows to commit and reports errors on failing rows.
+   *     'user_defined' displays a checkbox allowing the user to select which
+   *     behaviour to use and 'prevent' prevents any commit if there are any
+   *     errors.
+   *   * **importSampleLogic** - @todo Document.
+   *   * **allowExcel** - set to TRUE to enable experimental Excel import.
+   *     Currently defaults to false but may change to true when the Excel
+   *     import development is stable.
    *
    * @return string
    *   HTML for the next page of the importer.
@@ -118,6 +124,14 @@ class import_helper extends helper_base {
    */
 
   public static function importer($options) {
+    $options = array_merge([
+      // Default is to allow working rows to commit and only report errors on
+      // failing rows.
+      'importPreventCommitBehaviour' => 'partial_import',
+      // Default which to not use sample example key for verification.
+      'importSampleLogic' => 'consecutive_rows',
+      'allowExcel' => FALSE,
+    ], $options);
     // Currently the preventCommitsOnError on error option won't work with existing data updates.
     // Hopefully this will change in the future, the problem is the preserve_fields function does
     // not currently preserve the existing data lookup selections because preserve fields was coded first.
@@ -177,7 +191,8 @@ class import_helper extends helper_base {
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     $r = '<form action="' . $reloadpath . '" method="post" enctype="multipart/form-data">';
-    $r .= '<label for="upload">' . lang::get('Select *.csv (comma separated values) file to upload') . ':</label>';
+    $excel = $options['allowExcel'] ? ' or Excel (*.xls, *.xlsx)' : '';
+    $r .= '<label for="upload">' . lang::get("Select Comma Separated Values (*.csv)$excel file to upload") . ':</label>';
     $r .= '<input type="file" name="upload" id="upload"/>';
     $r .= '<input type="Submit" value="' . lang::get('Upload') . '"></form>';
     return $r;
@@ -192,22 +207,12 @@ class import_helper extends helper_base {
    *   Options array passed to the import control.
    */
   private static function importSettingsForm(array $options) {
-    // If the behaviour of the import is not specified, then fall back on the
-    // default which is to allow working rows to commit and only report errors
-    // on failing rows.
-    if (empty($options['importPreventCommitBehaviour'])) {
-      $options['importPreventCommitBehaviour'] = 'partial_import';
-    }
-    // If the behaviour of the import is not specified, then fall back on the
-    // default which to not use sample example key for verification.
-    if (empty($options['importSampleLogic'])) {
-      $options['importSampleLogic'] = 'consecutive_rows';
-    }
-    $_SESSION['uploaded_file'] = self::get_uploaded_file($options);
+    $_SESSION['uploaded_file'] = self::uploadFile($options);
     // By this time, we should always have an existing file.
     if (empty($_SESSION['uploaded_file'])) {
       throw new Exception('File to upload could not be found');
     }
+
     $request = parent::$base_url . "index.php/services/import/get_import_settings/" . $options['model'];
     $request .= '?' . self::array_to_query_string($options['auth']['read']);
     $switches = isset($options['switches']) && is_array($options['switches']) ? $options['switches'] : array();
@@ -215,7 +220,6 @@ class import_helper extends helper_base {
       $switches['occurrence_associations'] = 't';
     }
     $request .= '&' . self::array_to_query_string($switches);
-
     $response = self::http_post($request, array());
     if (!empty($response['output'])) {
       // Get the path back to the same page.
@@ -340,7 +344,7 @@ class import_helper extends helper_base {
     ini_set('auto_detect_line_endings', 1);
     $t = self::getTranslations([
       'Because you are looking up existing records to import into, required field validation will only be applied when the new data are merged into the existing data during import.',
-      'Column in CSV File',
+      'Column in import File',
       'column_mapping_instructions',
       'Maps to attribute',
       'Tasks',
@@ -447,8 +451,7 @@ class import_helper extends helper_base {
     // Only use the required fields that are available for selection - the rest
     // are handled somehow else.
     $unlinked_required_fields = array_intersect($model_required_fields, array_keys($unlinked_fields));
-    $handle = fopen($_SESSION['uploaded_file'], "r");
-    $columns = fgetcsv($handle, 1000, ",");
+    $columns = self::getImportFileColumns($options);
     $reload = self::get_reload_link_parts();
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
     self::clear_website_survey_fields($unlinked_fields, $settings);
@@ -464,7 +467,7 @@ class import_helper extends helper_base {
   <div class="ui-helper-clearfix import-mappings-table">
     <table class="ui-widget ui-widget-content">
       <thead class="ui-widget-header">
-        <tr><th>{$t['Column in CSV File']}</th><th>{$t['Maps to attribute']}</th>
+        <tr><th>{$t['Column in import File']}</th><th>{$t['Maps to attribute']}</th>
 HTML;
 
 
@@ -616,9 +619,9 @@ JS;
     // Preserve the post from the website/survey selection screen.
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB'] === FALSE) {
       //If we are error checking before upload we do an extra step, which is import step 2
-      $r .= self::preserve_fields($options, $filename, 2);
+      $r .= self::preserve_fields($options, $filename, 2, FALSE);
     } else {
-      $r .= self::preserve_fields($options, $filename, 3);
+      $r .= self::preserve_fields($options, $filename, 3, FALSE);
     }
     $r .= '<input type="submit" name="submit" id="submit" value="' . lang::get('Upload') . '" class="ui-corner-all ui-state-default button" />';
     $r .= '</form>';
@@ -643,16 +646,29 @@ JS;
     return $r;
   }
 
+  /**
+   * Retrieve the list of column names from the import file.
+   *
+   * Uses the get_column_names service end-point on the warehouse.
+   */
+  private static function getImportFileColumns($options) {
+    $request = parent::$base_url . "index.php/services/import/get_column_names?file=$_SESSION[uploaded_file]&" . self::array_to_query_string($options['auth']['read']);
+    $response = self::http_post($request, []);
+    return json_decode($response['output']);
+  }
+
   /* Function used to preserve the post from previous stages as we move through the importer otherwise values are lost from
       2 steps ago. Also preserves the automatic mappings used to skip the mapping stage by saving it to the post */
-  private static function preserve_fields($options, $filename, $importStep) {
+  private static function preserve_fields($options, $filename, $importStep, $formWrapper) {
     $mappingsAndSettings = self::getMappingsAndSettings($options);
     $settingFields = $mappingsAndSettings['settings'];
     $mappingFields = $mappingsAndSettings['mappings'];
     $reload = self::get_reload_link_parts();
     $reload['params']['uploaded_csv'] = $filename;
     $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
-    $r = "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n";
+    $r = $formWrapper
+      ? "<div><form method=\"post\" id=\"fields_to_retain_form\" action=\"$reloadpath\" class=\"iform\" onSubmit=\"window.location = '$reloadpath;\">\n"
+      : '';
 
     foreach ($settingFields as $field => $value) {
       if (!empty($settingFields[$field])) {
@@ -672,8 +688,10 @@ JS;
     if (!empty($importStep)&&$importStep != NULL) {
       $r .= '<input type="hidden" name="import_step" value="' . $importStep . '" />';
     }
-    $r .= '<input id="hidden_submit" type="submit" style="display: none" value="' . lang::get('Upload') . '"></form>';
-    $r .= "</form><div>\n";
+    if ($formWrapper) {
+      $r .= '<input id="hidden_submit" type="submit" style="display: none" value="' . lang::get('Upload') . '">';
+      $r .= "</form><div>\n";
+    }
     return $r;
   }
 
@@ -847,24 +865,22 @@ JS;
    */
   private static function runUpload($options, $calledFromSkippedMappingsPage = FALSE) {
     self::add_resource('jquery_ui');
-    if (!file_exists($_SESSION['uploaded_file']))
-      return lang::get('upload_not_available');
-    $filename=basename($_SESSION['uploaded_file']);
+    $filename = $_SESSION['uploaded_file'];
     $reload = self::get_reload_link_parts();
-    $reload['params']['uploaded_csv']=$filename;
-    $reloadpath = $reload['path'] . '?' . self::array_to_query_string($reload['params']);
+    $reload['params']['uploaded_csv'] = $filename;
     $mappingsAndSettings=self::getMappingsAndSettings($options);
     if ($calledFromSkippedMappingsPage===false) {
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
-    $rows=file($_SESSION['uploaded_file']);
     $r = '';
     // If we are using the sample external key to verify samples,
     // then we need to check the sample data is consistant between the
     // rows which share the same external key. If not, warn the user.
     if ($options['model']==='occurrence'||$options['model']==='sample') {
       if (!empty($mappingsAndSettings['settings']['verifySamplesUsingExternalKey'])&&$mappingsAndSettings['settings']['verifySamplesUsingExternalKey']==true) {
-        $checkArrays = self::sample_external_key_issue_checks($options,$rows);
+        // @TODO convert the following to server side as currently only works for CSV.
+        $rows=file($_SESSION['uploaded_file']);
+        $checkArrays = self::sample_external_key_issue_checks($options, $rows);
         $inconsistencyFailureRows = $checkArrays['inconsistencyFailureRows'];
         $clusteringFailureRows = $checkArrays['clusteringFailureRows'];
         if (!empty($inconsistencyFailureRows)||!empty($clusteringFailureRows)) {
@@ -878,11 +894,11 @@ JS;
     if (isset($options['allowCommitToDB'])&&$options['allowCommitToDB']===false) {
       //If we hit this line it means we are doing the error checking step and the next step
       //is step 3 which is the actual upload. Preserve the fields from previous steps in the post
-      $r .= self::preserve_fields($options,$filename,3);
+      $r .= self::preserve_fields($options, $filename, 3, TRUE);
     } else {
       //This line is hit if we are doing the actual upload now (rather than error check).
       //The next step is the results step which does not have an import_step number
-      $r .= self::preserve_fields($options,$filename,null);
+      $r .= self::preserve_fields($options, $filename, NULL, TRUE);
     }
     // If there is an upload total as this point, it means an error check stage must of just been run, so we
 	  // need to check for errors in the response
@@ -897,30 +913,29 @@ JS;
       $mappingsAndSettings=self::getMappingsAndSettings($options);
       self::send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings);
     }
-    $transferFileDataToWarehouseSuccess = self::send_file_to_warehouse($filename, false, $options['auth']['write_tokens'], 'import/upload_csv',$options['allowCommitToDB']);
-    if ($transferFileDataToWarehouseSuccess === TRUE) {
-      //Progress message depends if we are uploading or simply checking for errors
-      if ($options['allowCommitToDB']) {
-        $progressMessage = lang::get('{1} records uploaded');
-      } else {
-        $progressMessage = lang::get('{1} records checked');
-      }
-      $errorMessage = 'and {1} error(s) encountered.';
-      // initiate local javascript to do the upload with a progress feedback
-      $r .= <<<HTML
+    // Progress message depends if we are uploading or simply checking for
+    // errors.
+    if ($options['allowCommitToDB']) {
+      $progressMessage = lang::get('{1} records uploaded');
+    } else {
+      $progressMessage = lang::get('{1} records checked');
+    }
+    $errorMessage = 'and {1} error(s) encountered.';
+    // initiate local javascript to do the upload with a progress feedback
+    $r .= <<<HTML
 <div id="progress">
 <div id="progress-bar"></div>
 HTML;
-      if (isset($options['allowCommitToDB']) && $options['allowCommitToDB']) {
-        $actionMessage='Preparing to upload.';
-      } else {
-        $actionMessage='Checking file for errors..';
-      }
-      $r .= "<div id='progress-text'>$actionMessage.</div>
-      </div>
-      ";
-      $baseUrl = parent::getProxiedBaseUrl();
-      self::$onload_javascript .= <<<JS
+    if (isset($options['allowCommitToDB']) && $options['allowCommitToDB']) {
+      $actionMessage='Preparing to upload.';
+    } else {
+      $actionMessage='Checking file for errors..';
+    }
+    $r .= "<div id='progress-text'>$actionMessage.</div>
+    </div>
+    ";
+    $baseUrl = parent::getProxiedBaseUrl();
+    self::$onload_javascript .= <<<JS
 /**
  * Upload a single chunk of a file, by doing an AJAX get. If there is more, then on receiving the response upload the
  * next chunk.
@@ -967,14 +982,13 @@ jQuery('#progress-bar').progressbar ({value: 0});
 uploadChunk();
 
 JS;
-    }
     return $r;
   }
+
   /*
    * Collect errors from error checking stage
    */
-  private static function collect_errors($options,$filename) {
-    $errorsDetected=false;
+  private static function collect_errors($options, $filename) {
     $request = parent::$base_url."index.php/services/import/get_upload_result?uploaded_csv=".$filename;
     $request .= '&'.self::array_to_query_string($options['auth']['read']);
     $response = self::http_post($request, array());
@@ -1450,14 +1464,16 @@ TD;
   }
 
   /**
-   * Method to upload the file in the $_FILES array, or return the existing file if already uploaded.
-   * @param array $options Options array passed to the import control.
+   * Method to upload the file in the $_FILES array.
+   *
+   * @param array $options
+   *   Options array passed to the import control.
+   *
    * @return string
-   * @throws \Exception
-   * @access private
+   *   Unique file name allocated to the file.
    */
-  public static function get_uploaded_file($options) {
-    if (!isset($options['existing_file']) && !isset($_POST['import_step'])) {
+  private static function uploadFile($options) {
+    if (!isset($_POST['import_step'])) {
       // No existing file, but on the first step, so the $_POST data must contain the single file.
       if (count($_FILES)!=1)
         throw new Exception('There must be a single file uploaded to import');
@@ -1466,18 +1482,22 @@ TD;
       // Get the original file's extension
       $parts = explode(".",$file['name']);
       $fext = array_pop($parts);
-      if ($fext!='csv')
-        throw new Exception('Uploaded file must be a csv file');
+      if (!in_array(strtolower($fext), ['csv', 'xls', 'xlsx'])) {
+        throw new Exception('Uploaded file must be a CSV, XLS or XLSX file');
+      }
       // Generate a file id to store the upload as
       $destination = time() . rand(0,1000) . "." . $fext;
       $interimPath = self::getInterimImageFolder('fullpath');
       if (move_uploaded_file($file['tmp_name'], "$interimPath$destination")) {
-        return "$interimPath$destination";
+        $r = self::send_file_to_warehouse($destination, false, $options['auth']['write_tokens'], 'import/upload_file', TRUE);
+        if ($r === TRUE) {
+          return $destination;
+        } else {
+          throw new Exception($r);
+        }
       }
     }
-    elseif (isset($options['existing_file']))
-      return $options['existing_file'];
-    return isset($_POST['existing_file']) ? $_POST['existing_file'] : '';
+    return '';
   }
 
   /**
@@ -1539,15 +1559,14 @@ TD;
     }
   }
 
-  private static function send_mappings_and_settings_to_warehouse($filename,$options,$mappingsAndSettings) {
-    $mappings=$mappingsAndSettings['mappings'];
-    $settings=$mappingsAndSettings['settings'];
+  private static function send_mappings_and_settings_to_warehouse($filename, $options, $mappingsAndSettings) {
+    $mappings = $mappingsAndSettings['mappings'];
+    $settings = $mappingsAndSettings['settings'];
     if (empty($settings['useAssociations']) || !$settings['useAssociations']) {
-      $settings=self::remove_unused_associations($options,$settings);
+      $settings = self::remove_unused_associations($options,$settings);
     }
-
-    $settings=self::remove_unused_settings($settings);
-    $metadata=self::create_metadata_array($mappings,$settings,$options);
+    $settings = self::remove_unused_settings($settings);
+    $metadata = self::create_metadata_array($mappings, $settings, $options);
 
     if (function_exists('hostsite_set_user_field')) {
       self::save_user_import_mappings($mappings);
@@ -1567,21 +1586,21 @@ TD;
    * Column mappings must be in the same order as the import file, so sort
    * according to the columns in the file and discard any not in the file.
    *
+   * @param array $options
+   *   Control options.
    * @param array $mappings
    *   Existing column mappings.
    *
    * @return array
    *   Sorted and cleaned mappings.
    */
-  private static function cleanMappings(array $mappings) {
+  private static function cleanMappings(array $options, array $mappings) {
     if (empty($mappings)) {
       return $mappings;
     }
     $correctedMappings = [];
     // Ensure mappings are clean and in the same order as the column headings.
-    $handle = fopen($_SESSION['uploaded_file'], "r");
-    $columns = fgetcsv($handle, 1000, ",");
-    fclose($handle);
+    $columns = self::getImportFileColumns($options);
     foreach($columns as $column) {
       $internalColumn = self::columnMachineName($column);
       $idx=0;
@@ -1630,7 +1649,8 @@ TD;
       // get the settings as the general post fields.
       $mappingsAndSettings['settings'] = array_merge($mappingsAndSettings['settings'], $_POST['setting']);
     }
-    if (!isset($_POST['setting'])) {
+    // Import step 1 is the settings form (data to apply to every row).
+    if (isset($_POST['import_step']) && $_POST['import_step'] === '1') {
       $mappingsAndSettings['settings'] = array_merge($mappingsAndSettings['settings'], $_POST);
     }
     // The settings should simply be the settings, so remove any mappings or
@@ -1653,16 +1673,16 @@ TD;
       }
       $mappingsAndSettings['mappings'] = $adjustedAutomaticMappings;
     }
-    //If there is a settings sub-array we know that there won't be any settings outside this sub-array in the post,
+    // Import step 2 or 3 are both mappings forms.
     //so we can cleanup any remaining fields in the post as they will be mappings not settings
-    if (isset($_POST['setting'])) {
+    if (isset($_POST['import_step']) && in_array($_POST['import_step'], ['2', '3'])) {
       $mappingsAndSettings['mappings'] = array_merge($mappingsAndSettings['mappings'], $_POST);
     }
     // If a configured existing record lookup method, copy it over.
     if (!empty($options['existingRecordLookupMethod'])) {
       $mappingsAndSettings['mappings']["lookupSelect$options[model]"] = $options['existingRecordLookupMethod'];
     }
-    $mappingsAndSettings['mappings'] = self::cleanMappings($mappingsAndSettings['mappings']);
+    $mappingsAndSettings['mappings'] = self::cleanMappings($options, $mappingsAndSettings['mappings']);
     // The mappings should simply be the mappings, so remove any mappings or
     // settings sub-arrays if these have become jumbled up inside our mappings
     // array.
@@ -1737,8 +1757,8 @@ TD;
    * We also need to check that rows with the same sample external key appear on consecutive
    * rows (otherwise the importer would create separate samples)
    */
-  private static function sample_external_key_issue_checks($options,$rows) {
-    $mappingsAndSettings=self::getMappingsAndSettings($options);
+  private static function sample_external_key_issue_checks($options, $rows) {
+    $mappingsAndSettings = self::getMappingsAndSettings($options);
     $columnIdx=0;
     $columnIdxsToCheck=array();
     // Cycle through each of the column mappings and get the position of the sample external key column

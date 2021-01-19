@@ -407,38 +407,40 @@ indiciaFns.zoomToBounds = function(mapdiv, bounds) {
     }
   }
 }
-mapInitialisationHooks.push(function(mapdiv) {
-  var parser;
-  var feature;
-  var features=[];
-  var loclayer = new OpenLayers.Layer.Vector(
-    '$name',
-    {'sphericalMercator': true, displayInLayerSwitcher: true}
-  );
-  var geoms = $geomJson;
-  parser = new OpenLayers.Format.WKT();
-  $.each(geoms, function(idx, geom) {
-    feature = parser.read(geom);
-    if (Array.isArray(feature)) {
-      $.merge(features, feature);
-    } else {
-      features.push(feature);
-    }
+if (typeof mapInitialisationHooks !== 'undefined') {
+  mapInitialisationHooks.push(function(mapdiv) {
+    var parser;
+    var feature;
+    var features=[];
+    var loclayer = new OpenLayers.Layer.Vector(
+      '$name',
+      {'sphericalMercator': true, displayInLayerSwitcher: true}
+    );
+    var geoms = $geomJson;
+    parser = new OpenLayers.Format.WKT();
+    $.each(geoms, function(idx, geom) {
+      feature = parser.read(geom);
+      if (Array.isArray(feature)) {
+        $.merge(features, feature);
+      } else {
+        features.push(feature);
+      }
+    });
+    $.each(features, function() {
+      this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};
+      this.style.fillOpacity=0;
+      if (mapdiv.map.projection.getCode() != mapdiv.indiciaProjection.getCode()) {
+        feature.geometry.transform(mapdiv.indiciaProjection, mapdiv.map.projection);
+      }
+    });
+    loclayer.addFeatures(features);
+    var bounds=loclayer.getDataExtent();
+    mapdiv.map.updateSize();
+    indiciaData.initialBounds = bounds;
+    mapdiv.map.addLayer(loclayer);
+    indiciaFns.zoomToBounds(mapdiv, bounds);
   });
-  $.each(features, function() {
-    this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};
-    this.style.fillOpacity=0;
-    if (mapdiv.map.projection.getCode() != mapdiv.indiciaProjection.getCode()) {
-      feature.geometry.transform(mapdiv.indiciaProjection, mapdiv.map.projection);
-    }
-  });
-  loclayer.addFeatures(features);
-  var bounds=loclayer.getDataExtent();
-  mapdiv.map.updateSize();
-  indiciaData.initialBounds = bounds;
-  mapdiv.map.addLayer(loclayer);
-  indiciaFns.zoomToBounds(mapdiv, bounds);
-});
+}
 
 JS;
 }

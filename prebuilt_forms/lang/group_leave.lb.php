@@ -32,5 +32,5 @@ $custom_terms = array(
   'Cancel' => 'Annuléieren',
   'Confirm' => 'Bestätegen',
   'Confirmation' => 'Confirmatioun',
-  'You are no longer participating in {!}!' => 'Dir bedeelegt Iech net méi un {1}!'
+  'You are no longer participating in {1}!' => 'Dir bedeelegt Iech net méi un {1}!'
 );

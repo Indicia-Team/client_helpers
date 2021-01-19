@@ -110,15 +110,19 @@ class iform_dynamic {
           'required' => false,
           'group' => 'User Interface'
         ),
-        array(
+        [
           'name'=>'attribute_termlist_language_filter',
-          'caption'=>'Internationalise lookups',
-          'description'=>'In lookup custom attribute controls, use the language associated with the current user account to filter to show only the terms in that language.',
-          'type'=>'boolean',
-          'default' => false,
-          'required' => false,
+          'caption' => 'Internationalise lookups mode',
+          'description' => 'In lookup custom attribute controls, how should term translation be handled?',
+          'type' => 'select',
+          'lookupValues' => [
+            '0' => 'Show all terms in the termlist',
+            '1' => 'Show only terms in selected language',
+            'clientI18n' => 'Show only preferred terms but enable localisation (e.g. Drupal or Indicia translation)',
+          ],
+          'default' => '0',
           'group' => 'User Interface'
-        ),
+        ],
         array(
           'name'=>'no_grid',
           'caption'=>'Skip initial grid of data',
@@ -407,7 +411,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       // want to only show it on the species tab otherwise in 'All one page'
       // mode it will appear multiple times.
       if (isset($args['single_species_message']) && $args['single_species_message'] && $tabalias === 'tab-species' && isset($singleSpeciesLabel)) {
-        $r .= '<div class="page-notice ui-state-highlight ui-corner-all">' . lang::get('You are submitting a record of {1}', $singleSpeciesLabel) . '</div>';
+        $r .= str_replace('{message}', lang::get('You are submitting a record of {1}', $singleSpeciesLabel), $indicia_templates['messageBox']);
       }
       // For wizard include the tab title as a header.
       if ($args['interface'] === 'wizard') {
@@ -568,8 +572,15 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
     // cols array used if we find | splitters
     $cols = array();
     $defAttrOptions = array('extraParams'=>$auth['read']);
-    if(isset($args['attribute_termlist_language_filter']) && $args['attribute_termlist_language_filter'])
-      $defAttrOptions['language'] = iform_lang_iso_639_2($args['language']);
+    if (isset($args['attribute_termlist_language_filter'])) {
+      if ($args['attribute_termlist_language_filter'] === '1') {
+        $defAttrOptions['language'] = iform_lang_iso_639_2($args['language']);
+      }
+      elseif ($args['attribute_termlist_language_filter'] === 'clientI18n') {
+        $defAttrOptions['extraParams']['preferred'] = 't';
+        $defAttrOptions['translate'] = 't';
+      }
+    }
     //create array of attribute field names to test against later
     $attribNames = array();
     foreach ($attributes as $key => $attrib){
@@ -704,7 +715,7 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
             $value = apply_user_replacements($value);
           }
           if ($attribKey!==false) {
-            // a smpAttr control
+            // A smpAttr control.
             $html .= data_entry_helper::outputAttribute($attributes[$attribKey], $options);
             $attributes[$attribKey]['handled'] = true;
           }

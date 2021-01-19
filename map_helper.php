@@ -467,7 +467,7 @@ SCRIPT;
             'title="When you hover the mouse over the map, the grid reference is displayed here. Hold the minus key or plus key when clicking on the map ' .
             'to decrease or increase the grid square precision respectively.">';
         if ($options['clickForSpatialRef']) {
-          $r .= $div . '<h3>' . lang::get('Click to set map ref') . '</h3>' .
+          $r .= $div . '<span>' . lang::get('Click to set map ref') . '</span>' .
               '<div class="grid-ref-hint hint-minus">' .
                   '<span class="label"></span><span class="data"></span> <span>(' . lang::get('hold -') . ')</span></div>' .
               '<div class="grid-ref-hint hint-normal"><span class="label"> </span><span class="data"></span></div>' .

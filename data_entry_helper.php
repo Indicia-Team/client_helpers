@@ -19,8 +19,6 @@
  * @link http://code.google.com/p/indicia/
  */
 
-use Masterminds\HTML5;
-
 /**
  * Link in other required php files.
  */
@@ -517,10 +515,11 @@ $('#$escaped').change(function(e) {
    *     supports multiple values.
    *   * table - Required. Table name to get data from for the autocomplete
    *     options. The control will use the captionField from this table.
-   *   * captionField - Required if addToTable is false. Field to draw values
-   *     from to show in the control from. If addToTable is true, this setting
-   *     will be ignored and 'caption' will always be used.
+   *     Defaults to 'termlists_term'.
+   *   * captionField - Field to draw values from to show in the control from.
+   *     Defaults to 'term'.
    *   * valueField - Field to obtain the value to store for each item from.
+   *     Defaults to 'id'.
    *   * extraParams - Required. Associative array of items to pass via the
    *     query string to the service. This should at least contain the read
    *     authorisation array.
@@ -533,11 +532,11 @@ $('#$escaped').change(function(e) {
    *   * class - Optional. CSS class names to add to the control.
    *   * numValues - Optional. Number of returned values in the drop down list.
    *     Defaults to 20.
-   *   * addToTable - Optional. Boolean, if false, only existing items from the
-   *     table can be selected, and no rows can be added. The control then acts
-   *     like a multi-value autocomplete and submits a list of ID values for
-   *     the chosen items. If true, the control allows new values to be added
-   *     and inserts them into the source table. Defaults to true.
+   *   * allowTermCreation - Optional, defaults to false. If set to true and
+   *     being used for a lookup custom attribute, then new terms will be
+   *     inserted into the associated termlist if entries are added which are
+   *     not already in the list. Otherwise, only existing entries can be
+   *     added. The termlist_id should be supplied in the extraParams.
    *   * selectMode - Should the autocomplete simulate a select drop down control
    *     by adding a drop down arrow after the input box which, when clicked,
    *     populates the drop down list with all search results to a maximum of
@@ -554,72 +553,46 @@ $('#$escaped').change(function(e) {
     // Checks essential options, uses fieldname as id default and loads
     // defaults if error or edit.
     $options = self::check_options($options);
-    $options = array_merge(array(
-      'addToTable' => TRUE,
-      'autocompleteControl' => 'autocomplete'
-    ), $options);
-    if ($options['addToTable'] === TRUE) {
-      // We can only work with the caption field.
-      $options['captionField'] = 'caption';
-    }
+    $options = array_merge([
+      'allowTermCreation' => FALSE,
+      'table' => 'termlists_term',
+      'captionField' => 'term',
+      'valueField' => 'id',
+      'autocompleteControl' => 'autocomplete',
+      'subListAdd' => '',
+    ], $options);
     // This control submits many values with the same control name so add [] to
     // fieldname so PHP puts multiple submitted values in an array
     if (substr($options['fieldname'], -2) !== '[]') {
       $options['fieldname'] .= '[]';
     }
-
-    if ($options['addToTable'] === TRUE) {
-      // Prepare options for updating the source table.
-      $options['basefieldname'] = substr($options['fieldname'], 0, strlen($options['fieldname']) - 2);
-      if (preg_match('/^[a-z]{3}Attr\:[1-9][0-9]*$/', $options['basefieldname'])) {
-        switch (substr($options['basefieldname'], 0, 3)) {
-          case 'loc':
-            $options['mainEntity'] = 'location';
-            break;
-
-          case 'occ':
-            $options['mainEntity'] = 'occurrence';
-            break;
-
-          case 'smp':
-            $options['mainEntity'] = 'sample';
-            break;
-
-          case 'srv':
-            $options['mainEntity'] = 'survey';
-            break;
-
-          case 'psn':
-            $options['mainEntity'] = 'person';
-            break;
-
-          default:
-            $options['mainEntity'] = '';
-        }
-      }
-      if (empty($options['mainEntity'])) {
-        // AddToTable only works with custom attributes
-      }
-      $options['subListAdd'] = self::mergeParamsIntoTemplate($options, 'sub_list_add');
-    } else {
-      $options['subListAdd'] = '';
+    if ($options['allowTermCreation'] && $options['table'] === 'termlists_term'
+        && isset($options['extraParams']) && isset($options['extraParams']['termlist_id'])) {
+      // Add a hidden input to store the language so new terms can be created.
+      $lang = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+      $options['subListAdd'] = "<input name=\"$options[id]:allowTermCreationLang\" type=\"hidden\" value=\"$lang\" />";
     }
-
     // Prepare embedded search control for add bar panel.
-    $list_options = $options;
+    $ctrlOptions = $options;
     unset($list_options['helpText']);
-    $list_options['id'] = "$list_options[id]:search";
-    $list_options['fieldname'] = $list_options['id'];
-    $list_options['default'] = '';
-    $list_options['lockable'] = NULL;
-    $list_options['label'] = NULL;
-    $list_options['controlWrapTemplate'] = 'justControl';
+    $ctrlOptions['id'] = "$ctrlOptions[id]:search";
+    $ctrlOptions['fieldname'] = $ctrlOptions['id'];
+    $ctrlOptions['default'] = '';
+    $ctrlOptions['lockable'] = NULL;
+    $ctrlOptions['label'] = NULL;
+    $ctrlOptions['controlWrapTemplate'] = 'justControl';
+    $ctrlOptions['afterControl'] = str_replace(
+      ['{id}', '{title}', '{class}', '{caption}'],
+      ["$options[id]:add", lang::get('Add the chosen term to the list.'), " class=\"$indicia_templates[buttonDefaultClass]\"", lang::get('Add')],
+      $indicia_templates['button']);
+
+    '<input id="{id}:add" type="button" value="'.lang::get('add').'" />';
     if (!empty($options['selectMode']) && $options['selectMode']) {
-      $list_options['selectMode'] = TRUE;
+      $ctrlOptions['selectMode'] = TRUE;
     }
     // Set up add panel.
     $control = $options['autocompleteControl'];
-    $options['panel_control'] = self::$control($list_options);
+    $options['panel_control'] = self::$control($ctrlOptions);
 
     // Prepare other main control options.
     $options['inputId'] = "$options[id]:$options[captionField]";
@@ -2410,6 +2383,8 @@ JS;
    *   * termImageSize - Optional. Set to an Indicia image size preset
    *     (normally thumb, med or original) to include term images in the
    *     output.
+   *   * attributes - Optional. Additional HTML attribute to attach, e.g.
+   *     data-es_* attributes.
    *
    * @return string
    *   HTML code for a select control.
@@ -2420,10 +2395,16 @@ JS;
       array(
         'template' => 'select',
         'itemTemplate' => 'select_item',
-        'isFormControl' => TRUE
+        'isFormControl' => TRUE,
+        'attributes' => [],
       ),
       self::check_options($options)
     );
+    $attrArray = [];
+    foreach ($options['attributes'] as $attrName => $attrValue) {
+      $attrArray[] = "$attrName=\"$attrValue\"";
+    }
+    $options['attribute_list'] = implode(' ', $attrArray);
     return self::select_or_listbox($options);
   }
 
@@ -2739,25 +2720,33 @@ JS;
    * * **autocomplete_javascript** - Defines the JavaScript which will be inserted onto the page in order to activate
    *   the autocomplete control.
    *
-   * @param type $options Array of configuration options with the following possible entries.
-   * * **speciesIncludeAuthorities** - include author strings in species names. Default false.
-   * * **speciesIncludeBothNames** - include both latin and common names. Default false.
-   * * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
-   * * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
-   * * **speciesNameFilterMode** - Optional. Method of filtering the available species names (both for
-   * * initial population into the grid and additional rows). Options are
-   *   * preferred - only preferred names
-   *   * currentLanguage - only names in the language identified by the language option are included
-   *   * excludeSynonyms - all names except synonyms (non-preferred latin names) are included.
-   * * **extraParams** - Should contain the read authorisation array and taxon_list_id to filter against.
-   * * **warnIfNoMatch** - Should the autocomplete control warn the user if they leave the control whilst
-   *   searching and then nothing is matched? Default true.
-   * * **>matchContains** - If true, then the search looks for matches which contain the search
-   *   characters. Otherwise, the search looks for matches which start with the search characters. Default false.
-   * * **outputPreferredNameToSelector** - If set, then the contents of the HTML element with the matching selector are
-   *   replaced with the preferred name of the selected species when chosen. Default false.
+   * @param type $options
+   *   Array of configuration options with the following possible entries.
+   *   * **speciesIncludeAuthorities** - include author strings in species names. Default false.
+   *   * **speciesIncludeBothNames** - include both latin and common names. Default false.
+   *   * **speciesIncludeTaxonGroup** - include the taxon group for each shown name. Default false.
+   *   * **speciesIncludeIdDiff** - include identification difficulty icons. Default true.
+   *   * **speciesNameFilterMode** - Optional. Method of filtering the available species names (both for
+   *   * initial population into the grid and additional rows). Options are
+   *     * preferred - only preferred names
+   *     * currentLanguage - only names in the language identified by the language option are included
+   *     * excludeSynonyms - all names except synonyms (non-preferred latin names) are included.
+   *   * **extraParams** - Should contain the read authorisation array and taxon_list_id to filter against.
+   *   * **warnIfNoMatch** - Should the autocomplete control warn the user if they leave the control whilst
+   *     searching and then nothing is matched? Default true.
+   *   * **>matchContains** - If true, then the search looks for matches which contain the search
+   *     characters. Otherwise, the search looks for matches which start with the search characters. Default false.
+   *   * **outputPreferredNameToSelector** - If set, then the contents of the HTML element with the matching selector are
+   *     replaced with the preferred name of the selected species when chosen. Default false.
+   *   * **allowTaxonAdditionToList** - If a taxon list Id is specified in this
+   *     option, then when the user fails to find a taxon they search for, a
+   *     button is shown allowing them to popup a form to specify a new taxon
+   *     to add to this list. This list will typically be a temporary storage
+   *     area for user-proposed taxa that should later be correctly added to
+   *     the main taxon list.
    *
-   * @return string Html for the species autocomplete control.
+   * @return string
+   *   Html for the species autocomplete control.
    */
   public static function species_autocomplete($options) {
     global $indicia_templates;
@@ -2808,7 +2797,12 @@ JS;
         self::$uncheckedRecordsCount++;
       }
     }
-    return self::autocomplete($options);
+    $options['readAuth'] = [
+      'auth_token' => $options['extraParams']['auth_token'],
+      'nonce' => $options['extraParams']['nonce'],
+    ];
+    $r = self::enableTaxonAdditionControls($options);
+    return $r . self::autocomplete($options);
   }
 
   /**
@@ -3270,6 +3264,20 @@ RIJS;
   * impact since every time a species is selected in the grid a web services
   * request is sent to check for dynamic attributes.
   * </li>
+  * <li><b>attributeTermlistLanguageFilter</b>
+  * Set to:
+  * * '0' to display all terms untranslated
+  * * '1' (default) to display only terms in the current language
+  * * 'clientI18n' to display only preferred terms, but enable client-side
+  *    translation.
+  * </li>
+  * <li><b>allowTaxonAdditionToList</b></li>
+  * If a taxon list Id is specified in this option, then when the user fails to
+  * find a taxon they search for, a button is shown allowing them to popup a
+  * form to specify a new taxon to add to this list. This list will typically
+  * be a temporary storage area for user-proposed taxa that should later be
+  * correctly added to the main taxon list.
+  * </li>
   * </ul>
   *
   * @return string
@@ -3391,15 +3399,16 @@ RIJS;
     $taxalist = self::get_species_checklist_taxa_list($options, $taxonRows);
     // If we managed to read the species list data we can proceed
     if (! array_key_exists('error', $taxalist)) {
-      $attrOptions = array(
-        'id' => NULL
-      ,'valuetable'=>'occurrence_attribute_value'
-      ,'attrtable'=>'occurrence_attribute'
-      ,'key'=>'occurrence_id'
-      ,'fieldprefix'=>"sc:-idx-::occAttr"
-      ,'extraParams'=>$options['readAuth']
-      ,'survey_id'=>array_key_exists('survey_id', $options) ? $options['survey_id'] : null
-      );
+      $attrOptions = [
+        'id' => NULL,
+        'valuetable' => 'occurrence_attribute_value',
+        'attrtable' => 'occurrence_attribute',
+        'key' => 'occurrence_id',
+        'fieldprefix' => "sc:-idx-::occAttr",
+        'extraParams' => $options['readAuth'],
+        'survey_id' => array_key_exists('survey_id', $options) ? $options['survey_id'] : NULL,
+        'attributeTermlistLanguageFilter' => empty($options['attributeTermlistLanguageFilter']) ? '1' : $options['attributeTermlistLanguageFilter'],
+      ];
       if (isset($options['attributeIds'])) {
         // make sure we load the grid ID attribute
         if (!empty($options['gridIdAttributeId']) && !in_array($options['gridIdAttributeId'], $options['attributeIds']))
@@ -3617,22 +3626,23 @@ RIJS;
                 $valId = null;
             }
             else {
-              // go for the default, which has no suffix.
+              // Go for the default, which has no suffix.
               $loadedCtrlFieldName = str_replace('-idx-:', $loadedTxIdx.':'.$existingRecordId, $attributes[$attrId]['fieldname']);
               $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
             }
             if (isset(self::$entity_to_load[$loadedCtrlFieldName]))
               $existing_value = self::$entity_to_load[$loadedCtrlFieldName];
           } else {
-            // no existing record, so use a default control ID which excludes the existing record ID.
+            // No existing record, so use a default control ID which excludes
+            // the existing record ID.
             $ctrlId = str_replace('-idx-', "$options[id]-$txIdx", $attributes[$attrId]['fieldname']);
             $loadedCtrlFieldName='-';
           }
           if (!$existingRecordId && $existing_value==='' && array_key_exists('default', $attributes[$attrId])) {
-            // this case happens when reloading an existing record
+            // This case happens when reloading an existing record.
             $existing_value = $attributes[$attrId]['default'];
           }
-          // inject the field name into the control HTML
+          // Inject the field name into the control HTML
           $oc = str_replace('{fieldname}', $ctrlId, $control);
           if ($existing_value<>"") {
             // For select controls, specify which option is selected from the existing value
@@ -3648,13 +3658,11 @@ RIJS;
                 $term = self::$entity_to_load["$loadedCtrlFieldName:term"];
                 $oc = str_replace('</select>', "<option selected=\"selected\" value=\"$existing_value\">$term</option></select>", $oc);
               }
-
-
             } else if(strpos($oc, 'type="checkbox"') !== false) {
               if($existing_value=="1")
                 $oc = str_replace('type="checkbox"', 'type="checkbox" checked="checked"', $oc);
             } else {
-              // dates (including single day vague dates) need formatting to the local date format.
+              // Dates (including single day vague dates) need formatting to the local date format.
               if ($attributes[$attrId]['data_type'] === 'D' || $attributes[$attrId]['data_type'] === 'V'
                   && preg_match('/^\d{2}\/\d{2}\/\d{4}$/', $existing_value)) {
                 $d = new DateTime($existing_value);
@@ -3769,16 +3777,12 @@ RIJS;
         } else {
           self::$javascript .= "formatter = '".$indicia_templates['taxon_label']."';\n";
         }
-        $url = parent::getProxiedBaseUrl() . 'index.php/services/data';
         self::$javascript .= "if (typeof indiciaData.speciesGrid==='undefined') {indiciaData.speciesGrid={};}\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]']={};\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].numValues=".(!empty($options['numValues']) ? $options['numValues'] : 20) . ";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].selectMode=".(!empty($options['selectMode']) && $options['selectMode'] ? 'true' : 'false') . ";\n";
         self::$javascript .= "indiciaData.speciesGrid['$options[id]'].matchContains=".(!empty($options['matchContains']) && $options['matchContains'] ? 'true' : 'false') . ";\n";
-        self::$javascript .= "addRowToGrid('$url', '".
-          $options['id']."', '".$options['lookupListId']."', {'auth_token' : '".
-          $options['readAuth']['auth_token']."', 'nonce' : '".$options['readAuth']['nonce']."'},".
-          " formatter);\r\n";
+        self::$javascript .= "indiciaFns.addRowToGrid('$options[id]', '$options[lookupListId]');\n";
       }
       // If options contain a help text, output it at the end if that is the preferred position
       $options['helpTextClass'] = (isset($options['helpTextClass'])) ? $options['helpTextClass'] : 'helpTextLeft';
@@ -3828,10 +3832,62 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         $footable_options = json_encode($options['responsiveOpts']);
         self::$javascript .= "jQuery('#{$options['id']}').indiciaFootableChecklist($footable_options);\n";
       }
+      $r .= self::enableTaxonAdditionControls($options);
       return $r;
     } else {
       return $taxalist['error'];
     }
+  }
+
+  /**
+   * Enable taxon addition controls for species autocompletes.
+   *
+   * If a species autocomplete or species checklist specifies an option
+   * @allowTaxonAdditionToList then enable the functionality to allow the user
+   * to immediately add a taxon to the warehouse so it can be recorded.
+   *
+   * @param array $options
+   *   Control options.
+   *
+   * @return string
+   *   HTML.
+   */
+  private static function enableTaxonAdditionControls(array $options) {
+    if (!empty($options['allowTaxonAdditionToList'])) {
+      if (!is_numeric($options['allowTaxonAdditionToList'])) {
+        throw new exception('@allowTaxonAdditionToList should be a list ID');
+      }
+      helper_base::add_resource('addNewTaxon');
+      self::$indiciaData['allowTaxonAdditionToList'] = $options['allowTaxonAdditionToList'];
+      self::$indiciaData['taxonAdditionPostUrl'] = iform_ajaxproxy_url(NULL, 'taxa_taxon_list');
+      $languages = self::get_population_data([
+        'table' => 'language',
+        'extraParams' => $options['readAuth'] + ['iso' => 'lat'],
+        'cachePerUser' => FALSE,
+        'cacheTimeout' => 24 * 3600 * 7,
+      ]);
+      self::$indiciaData['latinLanguageId'] = (int) $languages[0]['id'];
+      $taxonGroupData = self::get_population_data([
+        'table' => 'taxon_group',
+        'extraParams' => $options['readAuth'] + ['order_by' => 'title'],
+        'cachePerUser' => FALSE,
+      ]);
+      $taxonGroupOpts = ['<option value="">' . lang::get('- Please select -') . '</option>'];
+      foreach ($taxonGroupData as $group) {
+        $taxonGroupOpts[] = "<option value=\"$group[id]\">$group[title]</option>";
+      }
+      global $indicia_templates;
+      return str_replace(
+        ['{title}', '{helpText}', '{taxonGroupOpts}'],
+        [
+          lang::get('Record an unrecognised taxon'),
+          lang::get('If you cannot find the name of a species or higher taxon when searching then request it using this form.'),
+          implode("\n", $taxonGroupOpts),
+        ],
+        $indicia_templates['autocomplete_new_taxon_form']
+      );
+    }
+    return '';
   }
 
   /**
@@ -4660,11 +4716,19 @@ JS;
         'class' => $class,
         'controlWrapTemplate' => 'justControl',
         'extraParams' => $options['readAuth'],
-        // Required for lists eg radio boxes: kept separate from options extra
-        // params as that is used to indicate filtering of species list by
-        // language
-        'language' => isset($options['language']) ? $options['language'] : '',
       );
+      if (!empty($options['attributeTermlistLanguageFilter'])) {
+        if ($options['attributeTermlistLanguageFilter'] === '1') {
+          // Required for lists eg radio boxes: kept separate from options extra
+          // params as that is used to indicate filtering of species list by
+          // language
+          $ctrlOptions['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
+        }
+        elseif ($options['attributeTermlistLanguageFilter'] === 'clientI18n') {
+          $ctrlOptions['extraParams']['preferred'] = 't';
+          $ctrlOptions['translate'] = 't';
+        }
+      }
       // Some undocumented checklist options that are applied to all attributes
       if(isset($options['lookUpKey'])) $ctrlOptions['lookUpKey'] = $options['lookUpKey'];
       if(isset($options['blankText'])) $ctrlOptions['blankText'] = $options['blankText'];
@@ -5106,6 +5170,8 @@ HTML;
    *   * class - Optional. CSS class names to add to the control.
    *   * readonly - Optional. can be set to 'readonly="readonly"' to set this
    *     control as read only.
+   *   * attributes - Optional. Additional HTML attribute to attach, e.g.
+   *     ["type": "number", "step": "any", "min": "4"].
    *
    * The output of this control can be configured using the following
    * templates:
@@ -5118,7 +5184,17 @@ HTML;
     $options = array_merge([
       'default' => '',
       'isFormControl' => TRUE,
+      'attributes' => [],
     ], self::check_options($options));
+    if (empty($options['attributes']['type'])) {
+      // Default to HTML5 text input.
+      $options['attributes']['type'] = 'text';
+    }
+    $attrArray = [];
+    foreach ($options['attributes'] as $attrName => $attrValue) {
+      $attrArray[] = "$attrName=\"$attrValue\"";
+    }
+    $options['attribute_list'] = implode(' ', $attrArray);
     return self::apply_template('text_input', $options);
   }
 
@@ -5931,7 +6007,9 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * When populating a list control (select, listbox, checkbox or radio group), use either the
    * table, captionfield and valuefield to build the list of values as an array, or if lookupValues
    * is in the options array use that instead of making a database call.
-   * @param array $options Options array for the control.
+   * @param array $options
+   *   Options array for the control. If translate set to TRUE then option
+   *   captions are run through translation.
    * @param string $selectedItemAttribute Name of the attribute that should be set in each list element if the item is selected/checked. For
    * option elements, pass "selected", for checkbox inputs, pass "checked".
    * @return array Associative array of the lookup values and templated list items.
@@ -5978,8 +6056,12 @@ $('div#$escaped_divId').indiciaTreeBrowser({
           if (array_key_exists($options['valueField'], $record)) {
             if (isset($options['captionTemplate']))
               $caption = self::mergeParamsIntoTemplate($record, $options['captionTemplate']);
-            else
+            elseif (!empty($options['translate'])) {
+              $caption = lang::get($record[$options['captionField']]);
+            }
+            else {
               $caption = $record[$options['captionField']];
+            }
             if(isset($options['listCaptionSpecialChars'])) {
               $caption=htmlspecialchars($caption);
             }

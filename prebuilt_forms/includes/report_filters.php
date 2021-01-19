@@ -132,22 +132,32 @@ class filter_what extends FilterBase {
     $r .= data_entry_helper::sub_list($subListOptions);
     $r .= "</div>\n";
     if (!$options['elasticsearch']) {
-      $r .= "<div id=\"designations-tab\">\n";
-      $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
-        ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
-      $subListOptions = array(
-        'fieldname' => 'taxon_designation_list',
-        'table' => 'taxon_designation',
-        'captionField' => 'title',
-        'valueField' => 'id',
-        'extraParams' => $readAuth,
-        'addToTable' => FALSE,
-        'autocompleteControl' => 'select',
-        'extraParams' => $readAuth + array('orderby' => 'title'),
-        'continueOnBlur' => FALSE,
-      );
-      $r .= data_entry_helper::sub_list($subListOptions);
-      $r .= "</div>\n";
+      try {
+        $r .= "<div id=\"designations-tab\">\n";
+        $r .= '<p>' . lang::get('Search for and build a list of designations to filter against') . '</p>' .
+          ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions will limit the records returned to the species you are allowed to see.') . '</div>';
+        $subListOptions = array(
+          'fieldname' => 'taxon_designation_list',
+          'table' => 'taxon_designation',
+          'captionField' => 'title',
+          'valueField' => 'id',
+          'extraParams' => $readAuth,
+          'addToTable' => FALSE,
+          'autocompleteControl' => 'select',
+          'extraParams' => $readAuth + array('orderby' => 'title'),
+          'continueOnBlur' => FALSE,
+        );
+        $r .= data_entry_helper::sub_list($subListOptions);
+        $r .= "</div>\n";
+      } catch (Exception $e) {
+        if (strpos($e->getMessage(), 'Unrecognised entity') !== FALSE) {
+          global $indicia_templates;
+          $r .= '<p>' . str_replace(['{message}'], [lang::get('Designations functionality is not enabled on this server.')], $indicia_templates['messageBox']);
+        }
+        else {
+          throw $e;
+        }
+      }
     }
     $r .= "<div id=\"rank-tab\">\n";
     $r .= '<p id="level-label">' . lang::get('Include records where the level') . '</p>';
@@ -452,19 +462,25 @@ class filter_where extends FilterBase {
       // Need our own map on the popup.
       $mapOpts = [
         'divId' => 'filter-pane-map',
-        'presetLayers' => array('osm'),
+        'presetLayers' => ['osm'],
         'editLayer' => TRUE,
         'initial_lat' => $initialLat,
         'initial_long' => $initialLong,
         'initial_zoom' => $initialZoom,
         'width' => '100%',
         'height' => 400,
-        'standardControls' => array('layerSwitcher', 'panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
-          'modifyFeature', 'clearEditLayer'),
+        'standardControls' => ['panZoomBar', 'drawPolygon', 'drawLine', 'drawPoint',
+          'modifyFeature', 'clearEditLayer'],
         'allowPolygonRecording' => TRUE,
         'readAuth' => $readAuth,
         'gridRefHint' => TRUE,
       ];
+      // Enable Google layers if API key available.
+      if (!empty(helper_base::$google_maps_api_key)) {
+        $mapOpts['presetLayers'][] = 'google_streets';
+        $mapOpts['presetLayers'][] = 'google_satellite';
+        $mapOpts['standardControls'][] = 'layerSwitcher';
+      }
       // Pass through buffering option.
       if (!empty($options['selectFeatureBufferProjection'])) {
         $mapOpts['selectFeatureBufferProjection'] = $options['selectFeatureBufferProjection'];
@@ -640,8 +656,12 @@ class filter_quality extends FilterBase {
         // Elasticsearch doesn't currently support recorder trust.
         unset($qualityOptions['T']);
       }
-      $r .= data_entry_helper::select([
+      $options = array_merge([
         'label' => lang::get('Records to include'),
+      ], $options);
+
+      $r .= data_entry_helper::select([
+        'label' => $options['label'],
         'fieldname' => 'quality',
         'id' => 'quality-filter',
         'lookupValues' => $qualityOptions,
@@ -854,7 +874,8 @@ class filter_source extends FilterBase {
 
 }
 
-function status_control ($readAuth, $options) {
+function status_control($readAuth, $options) {
+  iform_load_helpers(['report_helper']);
   report_helper::add_resource('reportfilters');
   $ctl = new filter_quality();
   $r = '<div class="standalone-quality-filter">';

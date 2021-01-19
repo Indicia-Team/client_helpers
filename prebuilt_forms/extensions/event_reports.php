@@ -95,7 +95,6 @@ class extension_event_reports {
   public static function totals_block($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
     $userId = hostsite_get_user_field('indicia_user_id');
-    iform_load_helpers(array('report_helper'));
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(

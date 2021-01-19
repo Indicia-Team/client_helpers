@@ -85,14 +85,14 @@ $indicia_templates = array(
         }",
   'image_upload' => '<input type="file" id="{id}" name="{fieldname}" accept="png|jpg|gif|jpeg|mp3|wav" {title}/>'."\n".
       '<input type="hidden" id="{pathFieldName}" name="{pathFieldName}" value="{pathFieldValue}"/>'."\n",
-  'text_input' => '<input type="text" id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default}" {title} {maxlength} />'."\n",
+  'text_input' => '<input {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {readonly} value="{default}" {title} {maxlength} />'."\n",
   'hidden_text' => '<input type="hidden" id="{id}" name="{fieldname}" {disabled} value="{default}" />',
   'password_input' => '<input type="password" id="{id}" name="{fieldname}"{class} {disabled} value="{default}" {title} />'."\n",
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" autocomplete="off" {title}/>'."\n",
-  'select' => '<select id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
+  'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
   'select_item' => '<option value="{value}" {selected} >{caption}</option>',
   'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
   'listbox' => '<select id="{id}" name="{fieldname}"{class} {disabled} size="{size}" multiple="{multiple}" {title}>{items}</select>',
@@ -161,14 +161,27 @@ $('input#{escaped_input_id}').result(function(event, data) {
   $('input#{escaped_id}').trigger('change', data);
 });
 ",
+  'autocomplete_new_taxon_form' => '
+<div style="display: none">
+  <fieldset class="popup-form" id="new-taxon-form">
+    <legend>{title}</legend>
+    <p>{helpText}</p>
+    <label for="new-taxon-name">Taxon name:</label>
+    <input type="text" id="new-taxon-name" class="{required:true}"/><span class="deh-required">*</span><br />
+    <label for="new-taxon-group">Taxon group:</label>
+    <select id="new-taxon-group" class="{required:true}"><span class="deh-required">*</span>
+      {taxonGroupOpts}
+    </select><br/>
+    <button type="button" class="indicia-button" id="do-add-new-taxon">Add taxon</button>
+  </fieldset>
+</div>
+  ',
   'sub_list' => '<div id="{id}:box" class="control-box wide"><div>'."\n".
     '<div>'."\n".
-    '{panel_control} <input id="{id}:add" type="button" value="'.lang::get('add').'" />'."\n".
+    "{panel_control}\n".
     '</div>'."\n".
     '<ul id="{id}:sublist" class="ind-sub-list">{items}</ul>{subListAdd}'."\n".
     '</div></div>'."\n",
-  'sub_list_add' => "\n".'<input type="hidden"  id="{id}:addToTable" name="{mainEntity}:insert_captions_use" value="{basefieldname}" />'.
-    '<input type="hidden" name="{mainEntity}:insert_captions_to_create" value="{table}" />',
   'sub_list_item' => '<li class="ui-widget-content ui-corner-all"><span class="ind-delete-icon">&nbsp;</span>{caption}'.
     '<input type="hidden" name="{fieldname}" value="{value}" /></li>',
   'postcode_textbox' => '<input type="text" name="{fieldname}" id="{id}"{class} value="{default}" '.
@@ -672,6 +685,7 @@ class helper_base {
    *   * locationFinder
    *   * createPersonalSites
    *   * autocomplete
+   *   * addNewTaxon
    *   * indicia_locks
    *   * jquery_cookie
    *   * jquery_ui
@@ -786,6 +800,7 @@ class helper_base {
         'locationFinder' => array('deps' =>array('indiciaMapEdit'), 'javascript' => array(self::$js_path."jquery.indiciaMap.edit.locationFinder.js")),
         'createPersonalSites' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."createPersonalSites.js")),
         'autocomplete' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.autocomplete.css"), 'javascript' => array(self::$js_path."jquery.autocomplete.js")),
+        'addNewTaxon' => array('javascript' => array(self::$js_path."addNewTaxon.js")),
         'import' => array('javascript' => array(self::$js_path . "import.js")),
         'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
         'jquery_cookie' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."jquery.cookie.js")),
@@ -896,7 +911,7 @@ class helper_base {
             'googlemaps'
           ],
           'javascript' => [
-            'https://unpkg.com/leaflet.gridlayer.googlemutant@latest/Leaflet.GoogleMutant.js',
+            'https://unpkg.com/leaflet.gridlayer.googlemutant@latest/dist/Leaflet.GoogleMutant.js',
           ],
         ],
         'datacomponents' => [
