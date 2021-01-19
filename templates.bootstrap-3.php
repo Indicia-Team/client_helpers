@@ -1,7 +1,5 @@
 <?php
 
-use Masterminds\HTML5;
-
 global $indicia_templates;
 
 $indicia_templates['formControlClass'] = 'form-control';
