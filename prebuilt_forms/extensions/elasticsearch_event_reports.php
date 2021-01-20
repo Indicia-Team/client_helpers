@@ -67,10 +67,8 @@ class extension_elasticsearch_event_reports {
         'dataLabelPositionFactor' => 1
       ],
     ], $options);
-    $r = ElasticsearchReportHelper::source([
-      'id' => "source-$options[id]",
+    $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => 0,
-      'proxyCacheTimeout' => $options['cacheTimeout'],
       'aggregation' => [
         'taxon_group' => [
           'terms' => [
@@ -79,6 +77,7 @@ class extension_elasticsearch_event_reports {
         ],
       ],
     ]);
+    $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
@@ -94,7 +93,9 @@ class extension_elasticsearch_event_reports {
         'class' => '',        
         // Data will be filled in by AJAX, but need a dummy value to load the chart.
         'dataSource' => 'static',
-        'staticData' => [['loading', 1]],
+        'xLabels' => 'group',
+        'yValues' => 'value',
+        'staticData' => [['group' => 'Loading', 'value' => 1]],
       ])), 
     ]);
     return $r;
@@ -130,9 +131,7 @@ class extension_elasticsearch_event_reports {
       'cacheTimeout' => 300,
       'speciesOnly' => TRUE,
     ], $options);
-    $r = ElasticsearchReportHelper::source([
-      'id' => "source-$options[id]",
-      'proxyCacheTimeout' => $options['cacheTimeout'],
+    $srcOptions = array_merge(self::getSourceOptions($options), [
       'mode' => 'termAggregation',
       'size' => 50,
       'sort' => ['doc_count' => 'desc'],
@@ -161,6 +160,8 @@ class extension_elasticsearch_event_reports {
         ],
       ],
     ]);
+    
+    $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
@@ -221,21 +222,20 @@ class extension_elasticsearch_event_reports {
       'photosSingle' => '{1} photo',
       'photosMulti' => '{1} photos',
     ]);    
-    $r = ElasticsearchReportHelper::source([
-      'id' => "source-$options[id]",
+    $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => 0,
-      'proxyCacheTimeout' => $options['cacheTimeout'],
       'aggregation' => [
         'species_count' => [
           'cardinality' => [
-            'field' => 'taxon.species_taxon_id'
+            'field' => 'taxon.species_taxon_id',
           ],
         ],
         'photo_count' => [
-          'nested' => [ 'path' => 'occurrence.media' ]
+          'nested' => [ 'path' => 'occurrence.media' ],
         ],
       ],
     ]);
+    $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
@@ -283,12 +283,11 @@ HTML;
       'title' => FALSE,
       'cacheTimeout' => 300,
     ], $options);
-    $r = ElasticsearchReportHelper::source([
-      'id' => "source-$options[id]",
+    $srcOptions = array_merge(self::getSourceOptions($options), [
       'mode' => 'mapGridSquare',
       'initialMapBounds' => TRUE,
-      'proxyCacheTimeout' => $options['cacheTimeout'],
     ]);
+    $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
@@ -312,10 +311,8 @@ HTML;
       'title' => FALSE,
       'cacheTimeout' => 300,
     ], $options);
-    $r = ElasticsearchReportHelper::source([
-      'id' => "source-$options[id]",
+    $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => 0,
-      'proxyCacheTimeout' => $options['cacheTimeout'],
       'mode' => 'termAggregation',
       'sort' => ['species' => 'desc'],
       'uniqueField' => 'event.recorded_by',
@@ -327,6 +324,7 @@ HTML;
         ],
       ],
     ]);
+    $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
@@ -351,14 +349,13 @@ HTML;
       'title' => FALSE,
       'cacheTimeout' => 300,
     ], $options);
-    $r = ElasticsearchReportHelper::source([
-      'id' => "source-$options[id]",
+    $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => 0,
-      'proxyCacheTimeout' => $options['cacheTimeout'],
       'mode' => 'termAggregation',
       'sort' => ['doc_count' => 'desc'],
       'uniqueField' => 'event.recorded_by',
     ]);
+    $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
       $r .= "<h2>$options[title]</h2>\n";
     }
@@ -374,6 +371,27 @@ HTML;
       ],
     ]);
     return $r;
+  }
+
+  /**
+   * Function to return default options for source controls.
+   * 
+   * Sets the options ID, proxy caching and filters out absence records.
+   */
+  private static function getSourceOptions($options) {
+    return [
+      'id' => "source-$options[id]",
+      'proxyCacheTimeout' => $options['cacheTimeout'],
+      'filterBoolClauses' => [
+        'must_not' => [
+          [
+            'query_type' => 'term',
+            'field' => 'occurrence.zero_abundance', 
+            'value' => 'true',
+          ],
+        ],
+      ],
+    ];
   }
 
   private static function initControl($auth) {
