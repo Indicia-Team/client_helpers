@@ -926,7 +926,7 @@ class ElasticsearchProxyHelper {
    * transformed to EPSG:4326.
    */
   private static function convertLocationListToSearchArea(array &$definition, array $readAuth) {
-    $filter = self::getDefinitionFilter($definition, ['location_list', 'location_ids']);
+    $filter = self::getDefinitionFilter($definition, ['location_list', 'location_id']);
     if (!empty($filter)) {
       require_once 'report_helper.php';
       $boundaryData = report_helper::get_report_data([
