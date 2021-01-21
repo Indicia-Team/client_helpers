@@ -23,7 +23,7 @@
  */
 class extension_elasticsearch_event_reports {
 
-  private static $groupIntegrationDone = FALSE;
+  private static $esIntegrationDone = FALSE;
 
   private static $controlCount = 0;
 
@@ -51,7 +51,7 @@ class extension_elasticsearch_event_reports {
    *   to the variables in helper_base.
    */
   public static function groups_pie($auth, $args, $tabalias, $options, $path) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     iform_load_helpers(['report_helper']);
     helper_base::addLanguageStringsToJs('esGroupsPie', [
       'other' => 'Other groups',
@@ -134,7 +134,7 @@ class extension_elasticsearch_event_reports {
    *   variables in helper_base.
    */
   public static function photos_block($auth, $args, $tabalias, $options, $path) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     helper_base::add_resource('fancybox');
     $options = array_merge([
       'id' => 'photos-block-' . self::$controlCount,
@@ -189,7 +189,7 @@ class extension_elasticsearch_event_reports {
    *   variables in helper_base.
    */
   public static function species_table($auth, $args, $tabalias, $options) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     $options = array_merge([
       'id' => 'species-table-' . self::$controlCount,
       'title' => FALSE,
@@ -271,7 +271,7 @@ class extension_elasticsearch_event_reports {
    *   variables in helper_base.
    */
   public static function totals_block($auth, $args, $tabalias, $options) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     $options = array_merge([
       'id' => 'totals-block-' . self::$controlCount,
       'title' => FALSE,
@@ -353,7 +353,7 @@ HTML;
    *   variables in helper_base.
    */
   public static function trending_recorders_cloud($auth, $args, $tabalias, $options, $path) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     $options = array_merge([
       'id' => 'trending-recorders-cloud-' . self::$controlCount,
       'title' => FALSE,
@@ -407,7 +407,7 @@ HTML;
    *   variables in helper_base.
    */
   public static function trending_taxa_cloud($auth, $args, $tabalias, $options, $path) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     $options = array_merge([
       'id' => 'trending-taxa-cloud-' . self::$controlCount,
       'title' => FALSE,
@@ -467,7 +467,7 @@ HTML;
    *   variables in helper_base.
    */
   public static function records_map($auth, $args, $tabalias, $options, $path) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     iform_load_helpers(['report_helper']);
     $options = array_merge([
       'id' => 'records-map-block-' . self::$controlCount,
@@ -531,7 +531,7 @@ JS;
    *   variables in helper_base.
    */
   public static function records_by_recorders_league($auth, $args, $tabalias, $options, $path) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     $options = array_merge([
       'id' => 'records-by-recorders-league-block-' . self::$controlCount,
       'title' => FALSE,
@@ -583,7 +583,7 @@ JS;
    *   variables in helper_base.
    */
   public static function species_by_recorders_league($auth, $args, $tabalias, $options, $path) {
-    self::initControl($auth);
+    self::initControl($auth, $args);
     $options = array_merge([
       'id' => 'species-by-recorders-league-block-' . self::$controlCount,
       'title' => FALSE,
@@ -690,12 +690,15 @@ JS;
   /**
    * Generic control initialisation.
    */
-  private static function initControl($auth) {
-    if (!self::$groupIntegrationDone) {
+  private static function initControl($auth, $args) {
+    if (!self::$esIntegrationDone) {
       iform_load_helpers(['ElasticsearchReportHelper']);
       ElasticsearchReportHelper::enableElasticsearchProxy();
-      ElasticsearchReportHelper::groupIntegration(['readAuth' => $auth['read']]);
-      self::$groupIntegrationDone = TRUE;
+      // Apply group filter if this is a group page.
+      if ($args['available_for_groups'] === '1') {
+        ElasticsearchReportHelper::groupIntegration(['readAuth' => $auth['read']]);
+      }
+      self::$esIntegrationDone = TRUE;
     }
     self::$controlCount++;
   }
