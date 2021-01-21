@@ -32,7 +32,7 @@ jQuery(document).ready(function($) {
     if (response.hits && typeof response.hits.total !== 'undefined') {
       occs = response.hits.total;
       // ES version agnostic.
-      occs = occs.value ? occs.value : occs;
+      occs = typeof occs.value === 'undefined' ? occs : occs.value;
       occsString = occs === 1 ? indiciaData.lang.esTotalsBlock.occurrencesSingle : indiciaData.lang.esTotalsBlock.occurrencesMulti;
       speciesString = response.aggregations.species_count.value === 1 ? indiciaData.lang.esTotalsBlock.speciesSingle : indiciaData.lang.esTotalsBlock.speciesMulti;
       photosString = response.aggregations.photo_count.doc_count === 1 ? indiciaData.lang.esTotalsBlock.photosSingle : indiciaData.lang.esTotalsBlock.photosMulti;
