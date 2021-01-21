@@ -42,7 +42,7 @@ class ElasticsearchReportHelper {
 
   /**
    * Has the ES proxy been setup on this page?
-   * 
+   *
    * @var bool
    *   Set to true when done to prevent double-initialisation.
    */
@@ -490,7 +490,7 @@ HTML;
     if (isset($options['group_id'])) {
       $group_id = $options['group_id'];
       $implicit = isset($options['implicit']) ? $options['implicit'] : FALSE;
-    } 
+    }
     elseif (!empty($_GET['group_id'])) {
       $group_id = $_GET['group_id'];
       $implicit = isset($_GET['implicit']) ? $_GET['implicit'] : 'f';
@@ -1031,6 +1031,7 @@ HTML;
       'sort',
       'switchToGeomsAt',
       'uniqueField',
+      'disabled',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
     // A source is entirely JS driven - no HTML.

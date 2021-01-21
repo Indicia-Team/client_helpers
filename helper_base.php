@@ -1825,6 +1825,8 @@ HTML;
           $value = "'$data'";
         } elseif (is_bool($data)) {
           $value = $data ? 'true' : 'false';
+        } elseif (is_null($data)) {
+          $value = 'null';
         } else {
           $value = $data;
         }

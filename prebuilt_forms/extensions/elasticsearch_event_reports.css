@@ -1,0 +1,8 @@
+.jqplot-data-label {
+  color: #333;
+  text-shadow: 0 0 3px #EEE;
+}
+.cloud-term {
+  margin: 8px 15px;
+  white-space: nowrap;
+}
