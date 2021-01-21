@@ -173,9 +173,12 @@ jQuery(document).ready(function($) {
    * after the map has initialised.
    */
   indiciaFns.loadReportBoundaries = function() {
-    if (indiciaData.reportBoundary) {
+    if (indiciaData.reportBoundaries) {
       $.each($('.idc-output-leafletMap'), function eachMap() {
-        $(this).idcLeafletMap('showFeature', indiciaData.reportBoundary, true);
+        var map = this;
+        $.each(indiciaData.reportBoundaries, function eachBoundary() {
+          $(map).idcLeafletMap('showFeature', this, true);
+        });
       });
     }
   };
