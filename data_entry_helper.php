@@ -555,12 +555,16 @@ $('#$escaped').change(function(e) {
     $options = self::check_options($options);
     $options = array_merge([
       'allowTermCreation' => FALSE,
-      'table' => 'termlists_term',
-      'captionField' => 'term',
-      'valueField' => 'id',
       'autocompleteControl' => 'autocomplete',
       'subListAdd' => '',
     ], $options);
+    if ($options['autocompleteControl'] !== 'species_autocomplete') {
+      $options = array_merge([
+        'table' => 'termlists_term',
+        'captionField' => 'term',
+        'valueField' => 'id',
+      ], $options);
+    }
     // This control submits many values with the same control name so add [] to
     // fieldname so PHP puts multiple submitted values in an array
     if (substr($options['fieldname'], -2) !== '[]') {
