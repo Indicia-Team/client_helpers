@@ -646,11 +646,13 @@ class ElasticsearchProxyHelper {
       'filter' => [],
     ];
     $basicQueryTypes = ['match_all', 'match_none'];
-    $fieldQueryTypes = [
+    $fieldValueQueryTypes = [
       'term',
       'match',
       'match_phrase',
       'match_phrase_prefix',
+    ];
+    $fieldQueryTypes = [
       'exists',
     ];
     $arrayFieldQueryTypes = ['terms'];
@@ -704,9 +706,13 @@ class ElasticsearchProxyHelper {
       elseif (in_array($qryConfig['query_type'], $basicQueryTypes)) {
         $queryDef = [$qryConfig['query_type'] => new stdClass()];
       }
-      elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
+      elseif (in_array($qryConfig['query_type'], $fieldValueQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
         $queryDef = [$qryConfig['query_type'] => [$qryConfig['field'] => $qryConfig['value']]];
+      }
+      elseif (in_array($qryConfig['query_type'], $fieldQueryTypes)) {
+        // A query type that just needs a field name.
+        $queryDef = [$qryConfig['query_type'] => ['field' => $qryConfig['field']]];
       }
       elseif (in_array($qryConfig['query_type'], $arrayFieldQueryTypes)) {
         // One of the standard ES field based query types (e.g. term or match).
@@ -760,7 +766,7 @@ class ElasticsearchProxyHelper {
     }
     if (!empty($query['filter_def'])) {
       self::applyFilterDef($readAuth, $query['filter_def'], $bool);
-    }    
+    }
     // Apply default restrictions.
     if (!self::$confidentialFilterApplied) {
       // Unless explicitly specified in a filter, hide confidential.
@@ -848,7 +854,7 @@ class ElasticsearchProxyHelper {
 
   private static function applyGroupFilter(array $readAuth, $groupFilter, array &$bool, &$query) {
     /*
-     * Modes 
+     * Modes
      * - match group ID + match filter (implicit=f)
      * - match group members + match filter (implicit=t)
      * - match filter only (implicit=null)
