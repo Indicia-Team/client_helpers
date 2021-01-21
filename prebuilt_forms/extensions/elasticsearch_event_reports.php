@@ -474,15 +474,16 @@ HTML;
       'title' => FALSE,
       'cacheTimeout' => 300,
     ], $options);
-    $filterBoundary = report_helper::get_report_data([
+    $filterBoundaries = report_helper::get_report_data([
       'dataSource' => 'library/groups/group_boundary_transformed',
       'readAuth' => $auth['read'],
       'extraParams' => ['group_id' => $_GET['group_id']],
     ]);
     $srcOptions = array_merge(self::getSourceOptions($options), [
       'mode' => 'mapGridSquare',
-      // If group has no boundary filter, use the data to zoom the map.
-      'initialMapBounds' => count($filterBoundaries) === 0,
+      // If group has a single boundary object, we can use that to set
+      // viewpoint. Otherwise use the data.
+      'initialMapBounds' => count($filterBoundaries) !== 1,
       'switchToGeomsAt' => 12,
     ]);
     $r = ElasticsearchReportHelper::source($srcOptions);
@@ -499,8 +500,11 @@ HTML;
         ],
       ],
     ]);
-    if (count($filterBoundary) > 0) {
-      report_helper::$indiciaData['reportBoundary'] = $filterBoundary[0]['boundary'];
+    if (count($filterBoundaries) > 0) {
+      report_helper::$indiciaData['reportBoundaries'] = [];
+      foreach ($filterBoundaries as $boundary) {
+        report_helper::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
+      }
       report_helper::$late_javascript .= <<<JS
 indiciaFns.loadReportBoundaries();
 
@@ -577,6 +581,10 @@ JS;
    *   * cacheTimeout - number of seconds after which the data will refresh.
    *     Default to 300.
    *   * size - number of records to return. Defaults to 50.
+   *   * minDocCount - minimum number of records required before a recorder
+   *     name gets included. Default is 10 which should be kept for performance
+   *     reasons on large dataesets - reduce this number for reports on small
+   *     datasets.
    *
    * @return string
    *   HTML to insert into the page for the table. JavaScript is added to the
@@ -589,18 +597,101 @@ JS;
       'title' => FALSE,
       'cacheTimeout' => 300,
       'size' => 50,
+      'minDocCount' => 10,
     ], $options);
     $srcOptions = array_merge(self::getSourceOptions($options), [
-      'size' => $options['size'],
-      'mode' => 'termAggregation',
-      'sort' => ['species' => 'desc'],
-      'uniqueField' => 'event.recorded_by',
+      'size' => '0',
       'aggregation' => [
-        'species' => [
-          'cardinality' => [
-            'field' => 'taxon.species_taxon_id',
+        'recorder_agg' => [
+          'terms' => [
+            'field' => 'event.recorded_by.keyword',
+            'size' => $options['size'],
+            'order' => ['rough_species_count' => 'desc'],
+            'min_doc_count' => $options['minDocCount']
           ],
-        ],
+          'aggs' => [
+            'rough_species_count' => [
+              'cardinality' => [
+                'field' => 'taxon.species_taxon_id',
+                'precision_threshold' => $options['minDocCount'] * 10
+              ]
+            ],
+            'species_count' => [
+              'cardinality' => [
+                'field' => 'taxon.species_taxon_id'
+              ]
+            ]
+          ]
+        ]
+      ]
+    ]);
+    $r = ElasticsearchReportHelper::source($srcOptions);
+    if ($options['title']) {
+      $r .= "<h2>$options[title]</h2>\n";
+    }
+    $r .= ElasticsearchReportHelper::dataGrid([
+      'id' => $options['id'],
+      'source' => "source-$options[id]",
+      'aggregation' => 'simple',
+      'includeColumnSettingsTool' => FALSE,
+      'includeFullScreenTool' => FALSE,
+      'includePager' => FALSE,
+      'columns' => [
+        ['caption' => 'Recorder', 'field' => 'key'],
+        ['caption' => 'No. of species', 'field' => 'species_count.value'],
+      ],
+    ]);
+    return $r;
+  }
+
+  public static function species_by_location_league($auth, $args, $tabalias, $options, $path) {
+    self::initControl($auth, $args);
+    $options = array_merge([
+      'id' => 'species-by-location-league-block-' . self::$controlCount,
+      'title' => FALSE,
+      'cacheTimeout' => 300,
+      'size' => 50,
+    ], $options);
+    $srcOptions = array_merge(self::getSourceOptions($options), [
+      'size' => 0,
+      'aggregation' => [
+        'by_nesting' => [
+          'nested' => [
+            'path' => 'location.higher_geography',
+          ],
+          'aggs' => [
+            'filtered' => [
+              'filter'  => [
+                'match'  => [
+                  'location.higher_geography.type' => 'Vice County'
+                ]
+              ],
+              'aggs' => [
+                'by_loc' => [
+                  'terms' => [
+                    'field' => 'location.higher_geography.name.keyword',
+                    'size' => $options['size'],
+                    'order' => [
+                      '_count' => 'desc'
+                    ],
+                  ],
+                  'aggs' => [
+                    'reverse_loc' => [
+                      'reverse_nested' => '#emptyobj#',
+                      'aggs' => [
+                        'species' => [
+                          'cardinality' => [
+                            'field' => 'taxon.species_taxon_id'
+                          ]
+                        ]
+                      ]
+                    ]
+                  ]
+                ]
+              ]
+            ]
+          ]
+        ]
       ],
     ]);
     $r = ElasticsearchReportHelper::source($srcOptions);
@@ -611,11 +702,7 @@ JS;
       'id' => $options['id'],
       'source' => "source-$options[id]",
       'includeColumnSettingsTool' => FALSE,
-      'includeFullScreenTool' => FALSE,
-      'columns' => [
-        ['caption' => 'Recorder', 'field' => 'event.recorded_by'],
-        ['caption' => 'No. of species', 'field' => 'species'],
-      ],
+      'includeFullScreenTool' => FALSE
     ]);
     return $r;
   }
