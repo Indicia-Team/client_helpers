@@ -1,7 +1,1 @@
-{
-"version": 3,
-"mappings": "AACE,gFAAiC;EAC/B,OAAO,EAAE,YAAY;EACrB,cAAc,EAAE,MAAM;EACtB,MAAM,EAAE,GAAG;AAEb,iBAAM;EACJ,KAAK,EAAE,IAAI;EACX,WAAW,EAAE,IAAI;AAEnB,uBAAY;EACV,aAAa,EAAE,CAAC;AAElB,yBAAc;EACZ,KAAK,EAAE,IAAI",
-"sources": ["sass/dynamic_elasticsearch.scss"],
-"names": [],
-"file": "dynamic_elasticsearch.css"
-}
+{"version":3,"sourceRoot":"","sources":["sass/dynamic_elasticsearch.scss"],"names":[],"mappings":"AACE;EACE;EACA;EACA;;AAEF;EACE;EACA;;AAEF;EACE;;AAEF;EACE","file":"dynamic_elasticsearch.css"}
