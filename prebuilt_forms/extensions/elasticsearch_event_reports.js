@@ -166,21 +166,4 @@ jQuery(document).ready(function($) {
     }
   };
 
-  /**
-   * Loads the boundary defined by a report filter.
-   *
-   * Can be either from a location ID, or a search area polygon. Must be run
-   * after the map has initialised.
-   */
-  indiciaFns.loadReportBoundaries = function() {
-    if (indiciaData.reportBoundaries) {
-      $.each($('.idc-output-leafletMap'), function eachMap() {
-        var map = this;
-        $.each(indiciaData.reportBoundaries, function eachBoundary() {
-          $(map).idcLeafletMap('showFeature', this, true);
-        });
-      });
-    }
-  };
-
 });
