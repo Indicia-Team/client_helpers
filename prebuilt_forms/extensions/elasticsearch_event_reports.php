@@ -594,23 +594,23 @@ HTML;
             'field' => 'event.recorded_by.keyword',
             'size' => $options['size'],
             'order' => ['rough_species_count' => 'desc'],
-            'min_doc_count' => $options['minDocCount']
+            'min_doc_count' => $options['minDocCount'],
           ],
           'aggs' => [
             'rough_species_count' => [
               'cardinality' => [
                 'field' => 'taxon.species_taxon_id',
-                'precision_threshold' => $options['minDocCount'] * 10
-              ]
+                'precision_threshold' => $options['minDocCount'] * 10,
+              ],
             ],
             'species_count' => [
               'cardinality' => [
-                'field' => 'taxon.species_taxon_id'
-              ]
-            ]
-          ]
-        ]
-      ]
+                'field' => 'taxon.species_taxon_id',
+              ],
+            ],
+          ],
+        ],
+      ],
     ]);
     $r = ElasticsearchReportHelper::source($srcOptions);
     if ($options['title']) {
@@ -631,10 +631,35 @@ HTML;
     return $r;
   }
 
-  public static function species_by_location_league($auth, $args, $tabalias, $options, $path) {
+  /**
+   * Displays a league table of indexed locations and recoprd counts.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form arguments (the settings on the form edit tab).
+   * @param string $tabalias
+   *   The alias of the tab this is being loaded onto.
+   * @param array $options
+   *   The options passed to this control using @option=value settings in the
+   *   form structure. Options supported include:
+   *   * title - set to include a heading in the output.
+   *   * cacheTimeout - number of seconds after which the data will refresh.
+   *     Default to 300.
+   *   * size - number of records to return. Defaults to 50.
+   *   * type - Required. Location type to load.
+   *
+   * @return string
+   *   HTML to insert into the page for the table. JavaScript is added to the
+   *   variables in helper_base.
+   */
+  public static function records_by_location_league($auth, $args, $tabalias, $options, $path) {
     self::initControl($auth, $args);
+    if (empty($options['type'])) {
+      return 'Records by location league requires a @type parameter.<br/>';
+    }
     $options = array_merge([
-      'id' => 'species-by-location-league-block-' . self::$controlCount,
+      'id' => 'records-by-location-league-block-' . self::$controlCount,
       'title' => FALSE,
       'cacheTimeout' => 300,
       'size' => 50,
@@ -662,6 +687,89 @@ HTML;
                       '_count' => 'desc'
                     ],
                   ],
+                ],
+              ],
+            ],
+          ],
+        ],
+      ],
+    ]);
+    $r = ElasticsearchReportHelper::source($srcOptions);
+    if ($options['title']) {
+      $r .= "<h2>$options[title]</h2>\n";
+    }
+    $r .= ElasticsearchReportHelper::dataGrid([
+      'id' => $options['id'],
+      'source' => "source-$options[id]",
+      'includeColumnSettingsTool' => FALSE,
+      'includeFullScreenTool' => FALSE,
+      'aggregation' => 'simple',
+      'columns' => [
+        ['caption' => 'Location', 'field' => 'key'],
+        ['caption' => 'Records', 'field' => 'doc_count'],
+      ],
+      'includePager' => FALSE,
+      'includeFilterRow' => FALSE,
+    ]);
+    return $r;
+  }
+
+  /**
+   * Displays a league table of indexed locations and species counts.
+   *
+   * @param array $auth
+   *   Authorisation tokens.
+   * @param array $args
+   *   Form arguments (the settings on the form edit tab).
+   * @param string $tabalias
+   *   The alias of the tab this is being loaded onto.
+   * @param array $options
+   *   The options passed to this control using @option=value settings in the
+   *   form structure. Options supported include:
+   *   * title - set to include a heading in the output.
+   *   * cacheTimeout - number of seconds after which the data will refresh.
+   *     Default to 300.
+   *   * size - number of records to return. Defaults to 50.
+   *   * type - Required. Location type to load.
+   *
+   * @return string
+   *   HTML to insert into the page for the table. JavaScript is added to the
+   *   variables in helper_base.
+   */
+  public static function species_by_location_league($auth, $args, $tabalias, $options, $path) {
+    self::initControl($auth, $args);
+    if (empty($options['type'])) {
+      return 'Species by location league requires a @type parameter.<br/>';
+    }
+    $options = array_merge([
+      'id' => 'species-by-location-league-block-' . self::$controlCount,
+      'title' => FALSE,
+      'cacheTimeout' => 300,
+      'size' => 50,
+    ], $options);
+    $srcOptions = array_merge(self::getSourceOptions($options), [
+      'size' => 0,
+      'aggregation' => [
+        'by_nesting' => [
+          'nested' => [
+            'path' => 'location.higher_geography',
+          ],
+          'aggs' => [
+            'filtered' => [
+              'filter'  => [
+                'match'  => [
+                  'location.higher_geography.type' => $options['type'],
+                ]
+              ],
+              'aggs' => [
+                'by_loc' => [
+                  'terms' => [
+                    'field' => 'location.higher_geography.name.keyword',
+                    'size' => $options['size'],
+                    'order' => [
+                      'reverse_loc' => 'desc'
+                    ],
+                  ],
                   'aggs' => [
                     'reverse_loc' => [
                       'reverse_nested' => '#emptyobj#',
@@ -669,16 +777,16 @@ HTML;
                         'species' => [
                           'cardinality' => [
                             'field' => 'taxon.species_taxon_id'
-                          ]
-                        ]
-                      ]
-                    ]
-                  ]
-                ]
-              ]
-            ]
-          ]
-        ]
+                          ],
+                        ],
+                      ],
+                    ],
+                  ],
+                ],
+              ],
+            ],
+          ],
+        ],
       ],
     ]);
     $r = ElasticsearchReportHelper::source($srcOptions);
