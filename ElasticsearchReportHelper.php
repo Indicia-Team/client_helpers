@@ -528,6 +528,21 @@ HTML;
         }
       }
     }
+    $filterBoundaries = helper_base::get_population_data([
+      'report' => 'library/groups/group_boundary_transformed',
+      'extraParams' => $options['readAuth'] + ['group_id' => $_GET['group_id']],
+      'cachePerUser' => FALSE,
+    ]);
+    if (count($filterBoundaries) > 0) {
+      helper_base::$indiciaData['reportBoundaries'] = [];
+      foreach ($filterBoundaries as $boundary) {
+        helper_base::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
+      }
+      helper_base::$late_javascript .= <<<JS
+indiciaFns.loadReportBoundaries();
+
+JS;
+    }
     return $output;
   }
 

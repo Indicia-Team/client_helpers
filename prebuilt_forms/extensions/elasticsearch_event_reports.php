@@ -357,7 +357,8 @@ HTML;
     $options = array_merge([
       'id' => 'trending-recorders-cloud-' . self::$controlCount,
       'title' => FALSE,
-    ]);
+      'cacheTimeout' => 300,
+    ], $options);
     $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => 0,
       'disabled' => true,
@@ -411,7 +412,8 @@ HTML;
     $options = array_merge([
       'id' => 'trending-taxa-cloud-' . self::$controlCount,
       'title' => FALSE,
-    ]);
+      'cacheTimeout' => 300,
+    ], $options);
     $srcOptions = array_merge(self::getSourceOptions($options), [
       'size' => 0,
       'disabled' => true,
@@ -468,22 +470,17 @@ HTML;
    */
   public static function records_map($auth, $args, $tabalias, $options, $path) {
     self::initControl($auth, $args);
-    iform_load_helpers(['report_helper']);
     $options = array_merge([
       'id' => 'records-map-block-' . self::$controlCount,
       'title' => FALSE,
       'cacheTimeout' => 300,
     ], $options);
-    $filterBoundaries = report_helper::get_report_data([
-      'dataSource' => 'library/groups/group_boundary_transformed',
-      'readAuth' => $auth['read'],
-      'extraParams' => ['group_id' => $_GET['group_id']],
-    ]);
+
     $srcOptions = array_merge(self::getSourceOptions($options), [
       'mode' => 'mapGridSquare',
       // If group has a single boundary object, we can use that to set
       // viewpoint. Otherwise use the data.
-      'initialMapBounds' => count($filterBoundaries) !== 1,
+      'initialMapBounds' => !isset(helper_base::$indiciaData['reportBoundaries']) || count(helper_base::$indiciaData['reportBoundaries']) !== 1,
       'switchToGeomsAt' => 12,
     ]);
     $r = ElasticsearchReportHelper::source($srcOptions);
@@ -500,16 +497,6 @@ HTML;
         ],
       ],
     ]);
-    if (count($filterBoundaries) > 0) {
-      report_helper::$indiciaData['reportBoundaries'] = [];
-      foreach ($filterBoundaries as $boundary) {
-        report_helper::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
-      }
-      report_helper::$late_javascript .= <<<JS
-indiciaFns.loadReportBoundaries();
-
-JS;
-    }
     return $r;
   }
 
@@ -702,7 +689,14 @@ JS;
       'id' => $options['id'],
       'source' => "source-$options[id]",
       'includeColumnSettingsTool' => FALSE,
-      'includeFullScreenTool' => FALSE
+      'includeFullScreenTool' => FALSE,
+      'aggregation' => 'simple',
+      'columns' => [
+        ['caption' => 'Location', 'field' => 'key'],
+        ['caption' => 'Species', 'field' => 'reverse_loc.species.value'],
+      ],
+      'includePager' => FALSE,
+      'includeFilterRow' => FALSE,
     ]);
     return $r;
   }

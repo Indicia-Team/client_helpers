@@ -852,6 +852,27 @@ class ElasticsearchProxyHelper {
     }
   }
 
+  /**
+   * For group filter where implicit=true, apply a members filter.
+   */
+  private static function applyGroupMembersFilter(array $readAuth, $groupFilter, array &$bool) {
+    $groupUsersData = helper_base::get_population_data([
+      'table' => 'groups_user',
+      'extraParams' => $readAuth + [
+        'group_id' => $groupFilter['id'],
+        'columns' => 'user_id',
+      ],
+      'cachePerUser' => FALSE,
+    ]);
+    $userIds = [];
+    foreach ($groupUsersData as $user) {
+      $userIds[] = (integer) $user['user_id'];
+    }
+    $bool['must'][] = [
+      'terms' => ['metadata.created_by_id' => $userIds],
+    ];
+  }
+
   private static function applyGroupFilter(array $readAuth, $groupFilter, array &$bool, &$query) {
     /*
      * Modes
@@ -866,6 +887,7 @@ class ElasticsearchProxyHelper {
       ];
     } elseif ($groupFilter['implicit'] === 'true') {
       // Records added by group members.
+      self::applyGroupMembersFilter($readAuth, $groupFilter, $bool);
     }
     // Apply the filter.
     $groupData = helper_base::get_population_data([
