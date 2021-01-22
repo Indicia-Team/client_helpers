@@ -578,7 +578,7 @@ $('#$escaped').change(function(e) {
     }
     // Prepare embedded search control for add bar panel.
     $ctrlOptions = $options;
-    unset($list_options['helpText']);
+    unset($ctrlOptions['helpText']);
     $ctrlOptions['id'] = "$ctrlOptions[id]:search";
     $ctrlOptions['fieldname'] = $ctrlOptions['id'];
     $ctrlOptions['default'] = '';
