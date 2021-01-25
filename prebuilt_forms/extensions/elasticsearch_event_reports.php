@@ -30,6 +30,23 @@ class extension_elasticsearch_event_reports {
   private static $rangeLimitApplied = FALSE;
 
   /**
+   * Integrates the page with group parameters.
+   *
+   * Although this integration is automatic when another
+   * elasticsearch_event_reports control is added to the page, calling it
+   * manually at the top of the page allows the group summary information
+   * to be added to the page. Options include:
+   *
+   * * showGroupSummary - includes group title, description and logo.
+   * * showGroupPages - adds a list of page links for the group.
+   *
+   * Must be the first elasticsearch_event_reports control on the page.
+   */
+  public static function group_integration($auth, $args, $tabalias, $options) {
+    return self::initControl($auth, $args, $options);
+  }
+
+  /**
    * Outputs a pie chart of taxon groups.
 
    * @param array $auth
@@ -879,17 +896,24 @@ HTML;
   /**
    * Generic control initialisation.
    */
-  private static function initControl($auth, $args) {
+  private static function initControl($auth, $args, $options = []) {
+    $r = '';
     if (!self::$esIntegrationDone) {
+      $options = array_merge([
+        'showGroupSummary' => FALSE,
+        'showGroupPages' => FALSE,
+        'readAuth' => $auth['read'],
+      ], $options);
       iform_load_helpers(['ElasticsearchReportHelper']);
       ElasticsearchReportHelper::enableElasticsearchProxy();
       // Apply group filter if this is a group page.
       if ($args['available_for_groups'] === '1') {
-        ElasticsearchReportHelper::groupIntegration(['readAuth' => $auth['read']]);
+        $r = ElasticsearchReportHelper::groupIntegration($options);
       }
       self::$esIntegrationDone = TRUE;
     }
     self::$controlCount++;
+    return $r;
   }
 
 }
