@@ -558,7 +558,7 @@ JS;
   public static function getGroupSummaryHtml(array $group) {
     $path = data_entry_helper::get_uploaded_image_folder();
     $logo = empty($group['logo_path']) ? '' : "<img style=\"width: 30%; float: left; padding: 0 5% 5%;\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
-    $msg = "<h3>$group[title]</div>";
+    $msg = "<h3>$group[title]</h3>";
     if (!empty($group['description'])) {
       $msg .= "<p>$group[description]</p>";
     }
