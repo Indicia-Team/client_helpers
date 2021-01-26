@@ -1868,7 +1868,7 @@ class iform_wwt_colour_marked_report {
     // load values from profile. This is Drupal specific code, so degrade gracefully.
     if (function_exists('profile_load_profile')) {
       global $user;
-      profile_load_all_profile($user);
+      self::profile_load_all_profile($user);
       foreach($attributes as &$attribute) {
         if (!isset($attribute['default'])) {
           $attrPropName = 'profile_'.strtolower(str_replace(' ','_',$attribute['caption']));
@@ -1898,6 +1898,25 @@ class iform_wwt_colour_marked_report {
     }
 
     return $attrHtml;
+  }
+
+
+  /**
+   * Variant on the profile modules profile_load_profile, that also gets empty profile values.
+   */
+  private static function profile_load_all_profile(&$user) {
+    // don't do anything unless in Drupal, with the profile module enabled, and the user logged in.
+    if ($user->uid > 0 && function_exists('profile_load_profile')) {
+      $result = db_query('SELECT f.name, f.type, v.value FROM {profile_fields} f LEFT JOIN {profile_values} v ON f.fid = v.fid AND uid = %d', $user->uid);
+      while ($field = db_fetch_object($result)) {
+        if (empty($user->{$field->name})) {
+          if (empty($field->value))
+            $user->{$field->name} = '';
+          else
+            $user->{$field->name} = _profile_field_serialize($field->type) ? unserialize($field->value) : $field->value;
+        }
+      }
+    }
   }
 
   /*

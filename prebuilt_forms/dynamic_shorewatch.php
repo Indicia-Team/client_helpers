@@ -311,7 +311,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
   }
 
   /**
-   * 
+   *
    * @param type $args The args for the page including the options selected on the edit tab.
    * @param type $node The node
    * @return type The parent get_form method html
@@ -322,37 +322,22 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     //Always override any role a user has with a larger role if they have that role.
     $roleType = 'guest';
     if (in_array('volunteer', $user->roles))
-     $roleType = 'volunteer'; 
+     $roleType = 'volunteer';
     if (in_array('staff', $user->roles))
-     $roleType = 'staff';  
+     $roleType = 'staff';
     if (in_array('data manager', $user->roles))
-     $roleType = 'data manager';  
-    //Get the data such as phone number associated with the user
-    $user_fields = user_load($user->uid);
+     $roleType = 'data manager';
 
     // If locks are used, make sure they only apply to this user: some people masquerade, and this causes problems.
     data_entry_helper::$javascript .= "if (indicia && indicia.locks && indicia.locks.setUser) {
   indicia.locks.setUser ('".$user->uid."');
 }\n";
 
-    $userPhoneNum = null; 
-    $userEmail= null;
-    $userName= null;
-    if (!empty($user_fields->field_main_phone_number['und']['0']['value']))
-      $userPhoneNum = $user_fields->field_main_phone_number['und']['0']['value'];
-    
-    if (!empty($user->mail))
-      $userEmail = $user->mail;
-    else 
-      //we need to pass javascript an empty string rather than null variable
-      $userEmail = '';
-    
-    if (!empty($user->name))
-      $userName = "$user->name";
-    else 
-      //we need to pass javascript an empty string rather than null variable
-      $userName = "''";
-    
+    $userPhoneNum = empty(hostsite_get_user_field('main_phone_number')) ? NULL : hostsite_get_user_field('main_phone_number');
+    // For email and username we need to pass javascript an empty string rather than null variable.
+    $userEmail = empty(hostsite_get_user_field('mail')) ? '' : hostsite_get_user_field('mail');
+    $userName=  empty(hostsite_get_user_field('name')) ? NULL : hostsite_get_user_field('name');
+
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     //Need to collect the user's name from the people table
     $defaultUserData = data_entry_helper::get_report_data(array(
@@ -360,24 +345,24 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
       'readAuth'=>$readAuth,
       'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
     ));
-    
+
     //Pass the javascript the sample id if in edit mode.
     if (!empty($_GET['sample_id']))
       data_entry_helper::$javascript .= "indiciaData.sample_id = ".$_GET['sample_id'].";\n";
-    
+
     //Allow the user to match up the attributes on the edit tab so we don't hard code attribute ids
     //Pass these into javascript
     data_entry_helper::$javascript .= "
-    indiciaData.person_name = '".$defaultUserData[0]['fullname_surname_first']."';     
+    indiciaData.person_name = '".$defaultUserData[0]['fullname_surname_first']."';
     indiciaData.observer_name_attr_id = ".$args['observer_name'].";
     indiciaData.observer_email_attr_id = ".$args['observer_email'].";
     indiciaData.observer_phone_number_attr_id = ".$args['observer_phone_number'].";
-    
+
     indiciaData.start_time_attr_id = ".$args['start_time'].";
-    indiciaData.end_time_attr_id = ".$args['end_time'].";  
-      
-    indiciaData.sea_state_attr_id = ".$args['sea_state'].";  
-    indiciaData.visibility_attr_id = ".$args['visibility'].";  
+    indiciaData.end_time_attr_id = ".$args['end_time'].";
+
+    indiciaData.sea_state_attr_id = ".$args['sea_state'].";
+    indiciaData.visibility_attr_id = ".$args['visibility'].";
     indiciaData.cetaceans_seen_attr_id = ".$args['cetaceans_seen'].";
     indiciaData.non_cetacean_marine_animals_seen_attr_id = ".$args['non_cetacean_marine_animals_seen'].";
     indiciaData.feeding_birds_seen_attr_id = ".$args['feeding_birds_seen'].";
@@ -387,28 +372,28 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     indiciaData.bearing_to_sighting_attr_id = ".$args['bearing_to_sighting'].";
     indiciaData.reticules_attr_id = ".$args['reticules'].";
     indiciaData.reticules_from_attr_id = ".$args['reticules_from'].";
-    indiciaData.distance_estimate_attr_id = ".$args['distance_estimate']."; 
+    indiciaData.distance_estimate_attr_id = ".$args['distance_estimate'].";
     indiciaData.adults_attr_id = ".$args['adults'].";
-    indiciaData.calves_attr_id = ".$args['calves']."; 
+    indiciaData.calves_attr_id = ".$args['calves'].";
     indiciaData.activity_attr_id = ".$args['activity'].";
     indiciaData.behaviour_attr_id = ".$args['behaviour'].";
-    
-    indiciaData.user_phone_number = \"$userPhoneNum\"; 
-    indiciaData.user_email = \"$userEmail\";   
+
+    indiciaData.user_phone_number = \"$userPhoneNum\";
+    indiciaData.user_email = \"$userEmail\";
     indiciaData.username = \"$userName\";
-    indiciaData.roleType = \"$roleType\"; 
+    indiciaData.roleType = \"$roleType\";
     indiciaData.adhocMode = \"".$args['adhocMode']."\";
     indiciaData.tenMinMessage = \"".lang::get('SW efforts should always be 10 mins. If you saw a sightings that started after the 10 mins then please use the ad-hoc form')."\";
-    indiciaData.emailPhoneMessage = \"".lang::get('Please supply a phone number or email address')."\";  
+    indiciaData.emailPhoneMessage = \"".lang::get('Please supply a phone number or email address')."\";
     indiciaData.addSpeciesMessage = \"".lang::get('Please add a species')."\";";
     //We need to put root folder into indiciadata so the addrowtogrid.js code knows the details of the server
     //we are running without hard coding it
     //The user needs to specify which page to go to when the user clicks on the notes icon on the species grid
     //The indiciaData.notesIcon is used by the addrowtogrid.js code so that the code for notes on the species grid is not run by old code.
     data_entry_helper::$javascript .= "
-    indiciaData.rootFolder = '".data_entry_helper::getRootFolder()."';    
+    indiciaData.rootFolder = '".data_entry_helper::getRootFolder()."';
     ";
-    
+
     $r = '';
     //We need a div so we can can put the form into read only mode when required.
     $r = '<div id = "disableDiv">';
@@ -428,24 +413,24 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     if ($roleType != 'data manager' && !empty($sightingsData)) {
       //If any verified sightings are found then put page into read-only mode.
       foreach ($sightingsData as $sightingData) {
-        if ($verifiedDataDetected===false) {         
+        if ($verifiedDataDetected===false) {
           if ($sightingData['verification_status']==='D' || $sightingData['verification_status']==='V' || $sightingData['verification_status']==='R') {
             $r = '<div><i>This page is locked as it has at least 1 verified sighting.</i></div>'.$r;
             data_entry_helper::$javascript .= "$('[id*=_lock]').remove();\n $('.remove-row').remove();\n";
             data_entry_helper::$javascript .= "$('.scImageLink,.scClonableRow').hide();\n";
             data_entry_helper::$javascript .= "$('.edit-taxon-name,.remove-row').hide();\n";
-            data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');\n";  
+            data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, button, select').attr('disabled','disabled');\n";
             //If the page is locked then we don't run the logic on the Save/Next Step button
             //as this logic enables the button when we don't want it enabled.
-            data_entry_helper::$javascript .= "indiciaData.dontRunCetaceanSaveButtonLogic=true;"; 
+            data_entry_helper::$javascript .= "indiciaData.dontRunCetaceanSaveButtonLogic=true;";
             $verifiedDataDetected=true;
           }
         }
       }
-    }     
+    }
     return $r;
   }
-  
+
   /**
    * Get the observer control as an autocomplete.
    */
@@ -493,10 +478,10 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
   protected static function get_control_species($auth, $args, $tabAlias, $options) {
     $options['subSamplePerRow']=true;
     $options['speciesControlToUseSubSamples']=true;
-    $r = parent::get_control_species($auth, $args, $tabAlias, $options); 
+    $r = parent::get_control_species($auth, $args, $tabAlias, $options);
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
@@ -504,11 +489,11 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
    * @param integer $nid The node's ID
    * @return array Submission structure.
    */
-  
+
   public static function get_submission($values, $args, $nid) {
     return create_submission($values, $args);
   }
 }
-  
+
 
 
