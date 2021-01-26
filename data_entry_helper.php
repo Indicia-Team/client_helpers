@@ -7498,7 +7498,7 @@ HTML;
    * server side but where there are no matching controls on the form.
    *
    * If running inside Drupal then the errors are returned with explanation
-   * in a call to Drupal_set_message. Otherwise they are returned, normally for
+   * in a call to Drupal Messenger. Otherwise they are returned, normally for
    * addition to the bottom of the form.
    *
    *
