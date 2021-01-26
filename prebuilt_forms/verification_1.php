@@ -23,7 +23,7 @@
 /**
  * Prebuilt Indicia data form that lists the output of an occurrences report with an option
  * to verify or reject each record.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
@@ -32,7 +32,7 @@ class iform_verification_1 {
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'report_name',
@@ -225,15 +225,15 @@ class iform_verification_1 {
       ),
     );
   }
-  
-  /** 
+
+  /**
    * Return the form title.
    * @return string The title of the form.
    */
   public static function get_title() {
-    return 'Verification 1 - a simple grid for verification';  
+    return 'Verification 1 - a simple grid for verification';
   }
-  
+
   /**
    * Return the Indicia form code.
    * Expects there to be a sample attribute with caption 'Email' containing the email
@@ -266,26 +266,26 @@ class iform_verification_1 {
         if (isset($_POST['photoHTML']))
           $emailBody = str_replace('[photo]', '<br/>' . $_POST['photoHTML'], $_POST['email_content']);
         else
-          $emailBody = $_POST['email_content'];        
+          $emailBody = $_POST['email_content'];
         $emailBody = str_replace("\n", "<br/>", $emailBody);
         // Send email. Depends upon settings in php.ini being correct
         $success = mail($_POST['email_to'],
              $_POST['email_subject'],
              wordwrap($emailBody, 70),
-             $headers);        
+             $headers);
         if ($success) {
           $r .= '<div class="page-notice ui-state-highlight ui-corner-all"><p>An email was sent to '.$_POST['email_to'].'.</p></div>';
-        }  
+        }
         else
           $r.= '<div class="page-notice ui-widget-content ui-corner-all ui-state-highlight left">The webserver is not correctly configured to send emails. Please send the following email manually: <br/>'.
               '<div id="manual-email"><span>To:</span><div>' . $_POST['email_to'] . '</div>' .
               '<span>Subject:</span><div>' . $_POST['email_subject'] . '</div>' .
               '<span>Content:</span><div>' . $emailBody . '</div>'.
               '</div></div><div style="clear: both">';
-      } else if (isset($_POST['occurrence:record_status']) && isset($response['success']) && $args['emails_enabled']) {        
+      } else if (isset($_POST['occurrence:record_status']) && isset($response['success']) && $args['emails_enabled']) {
         $r .= self::get_notification_email_form($args, $response, $auth);
       }
-      if (isset($_POST['action']) && $_POST['action']=='send_to_verifier' && $args['log_send_to_verifier']) 
+      if (isset($_POST['action']) && $_POST['action']=='send_to_verifier' && $args['log_send_to_verifier'])
         $comment = str_replace(array('%email%', '%date%', '%user%'), array($_POST['email_to'], date('jS F Y'), $user->name), $args['log_send_to_verifier_comment']);
       elseif (isset($_POST['action']) && $_POST['action']='general_comment')
         $comment = $_POST['comment'];
@@ -325,11 +325,11 @@ class iform_verification_1 {
     if ($args['send_for_verification']) {
       // store authorisation details as a global in js, since some of the JavaScript needs to be able to access Indicia data
       data_entry_helper::$javascript .= 'auth=' . json_encode($auth) . ';';
-      $actions[] = 
+      $actions[] =
         array('caption' => str_replace(' ', '&nbsp;', lang::get('Send to verifier')), 'class'=>'send_for_verification_btn',
             'javascript'=>'indicia_send_to_verifier(\'{taxon}\', {occurrence_id}, '.$user->uid.', '.$args['website_id'].'); return false;'
-        );     
-      $r .= self::get_send_for_verification_form();  
+        );
+      $r .= self::get_send_for_verification_form();
     }
     $actions[] = array('caption' => str_replace(' ', '&nbsp;', lang::get('Verify')), 'javascript'=>'indicia_verify(\'{taxon}\', {occurrence_id}, true, '.$user->uid.'); return false;');
     $actions[] = array('caption' => str_replace(' ', '&nbsp;', lang::get('Reject')), 'javascript'=>'indicia_verify(\'{taxon}\', {occurrence_id}, false, '.$user->uid.'); return false;');
@@ -337,8 +337,8 @@ class iform_verification_1 {
         ', \''.$auth['read']['nonce'].'\', \''.$auth['read']['auth_token'].'\'); return false;');
     if (isset($args['path_to_record_details_page']) && $args['path_to_record_details_page'])
       $actions[] = array(
-          'caption' => str_replace(' ', '&nbsp;', lang::get('View details')), 
-          'url' => '{rootFolder}' . $args['path_to_record_details_page'], 
+          'caption' => str_replace(' ', '&nbsp;', lang::get('View details')),
+          'url' => '{rootFolder}' . $args['path_to_record_details_page'],
           'urlParams' => array('occurrence_id'=>'{occurrence_id}')
       );
     // default columns behaviour is to just include anything returned by the report plus add an actions column
@@ -346,9 +346,11 @@ class iform_verification_1 {
         array('display' => 'Actions', 'actions' => $actions)
     );
     // this can be overridden
-    if (isset($args['columns_config']) && !empty($args['columns_config']))
+    if (isset($args['columns_config']) && !empty($args['columns_config'])) {
       $columns = array_merge(json_decode($args['columns_config'], true), $columns);
-    $r .= data_entry_helper::report_grid(array(
+    }
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'verification-grid',
       'dataSource' => $args['report_name'],
       'mode' => 'report',
@@ -372,7 +374,7 @@ class iform_verification_1 {
   <input type="hidden" id="occurrence:verified_by_id" name="occurrence:verified_by_id" value="" />
 </form>
 ';
-    
+
     drupal_add_js('
 var indicia_user_id = '.$indicia_user_id.';
 var url = '.json_encode(data_entry_helper::get_reload_link_parts()).';
@@ -387,7 +389,7 @@ var email_body_send_to_verifier = "'.str_replace(array("\r", "\n"), array('', '\
 ');*/
     return $r;
   }
-  
+
   /**
    * Use the mapping from Drupal to Indicia users to get the Indicia user ID for the current logged in Drupal user.
    */
@@ -409,18 +411,18 @@ var email_body_send_to_verifier = "'.str_replace(array("\r", "\n"), array('', '\
       // verifiers mapping is just a single number
       return trim($args['verifiers_mapping']);
     }
-	  return 1; // default to admin  
+	  return 1; // default to admin
   }
-  
+
   private static function get_send_for_verification_form() {
     data_entry_helper::add_resource('fancybox');
     data_entry_helper::add_resource('validation');
   }
-  
+
   /**
   *  Provide a send email form to allow the user to send a verification email
   */
-  private static function get_notification_email_form($args, $response, $auth) {  
+  private static function get_notification_email_form($args, $response, $auth) {
     if ($_POST['occurrence:record_status']=='V') $action = 'verified';
     elseif ($_POST['occurrence:record_status']=='R') $action = 'rejected';
     else $action='';
@@ -446,7 +448,7 @@ var email_body_send_to_verifier = "'.str_replace(array("\r", "\n"), array('', '\
           (($args['email_request_attribute'] == '') ||
           (!empty($email_request_attr[0]['value']) && $email_request_attr[0]['value']))) {
         $subject = self::get_email_component('subject', $action, $occ[0], $args);
-        if ($action=='verified') 
+        if ($action=='verified')
           // Use the verifier's comment, not the comment from the record, in the email body
           $occ[0]['comment'] = $_POST['occurrence_comment:comment'];
         $body = self::get_email_component('body', $action, $occ[0], $args);
@@ -470,17 +472,17 @@ var email_body_send_to_verifier = "'.str_replace(array("\r", "\n"), array('', '\
             '<div class="page-notice ui-state-highlight ui-corner-all" id="email">The record has been '.$action.
             '. The recorder did not leave an email address or did not want an email so cannot be notified.</div>\');';
       }
-    }    
+    }
   }
-  
+
   /**
-   * Internal method to get the email subject or body field from the template in the arguments, 
-   * and apply the values in the occurrence to the template. Finally it is encoded for inclusion 
+   * Internal method to get the email subject or body field from the template in the arguments,
+   * and apply the values in the occurrence to the template. Finally it is encoded for inclusion
    * in the mailto form.
    * @access private
-   * @param string $part subject or body. 
-   * @param string $action verified or rejected, for inclusion in the template. 
-   * @param array $occ Occurrence data, to provide values for the template replacements. 
+   * @param string $part subject or body.
+   * @param string $action verified or rejected, for inclusion in the template.
+   * @param array $occ Occurrence data, to provide values for the template replacements.
    * @param array $args Form arguments
    * @return Encoded string
    */
@@ -493,21 +495,21 @@ var email_body_send_to_verifier = "'.str_replace(array("\r", "\n"), array('', '\
     $r = str_replace('%verifier%', $user->name, $r);
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
     // Submission includes the occurrence comment only if it is populated. This occurs when entering a verification or rejection comment.
     if (isset($_POST['occurrence_comment:comment']) && !empty($_POST['occurrence_comment:comment'])) {
-      return data_entry_helper::build_submission($values, array('model'=>'occurrence','subModels' => array('occurrence_comment' =>  array(          
+      return data_entry_helper::build_submission($values, array('model'=>'occurrence','subModels' => array('occurrence_comment' =>  array(
           'fk' => 'occurrence_id'
       ))));
     } else
       return data_entry_helper::build_submission($values, array('model'=>'occurrence'));
   }
-  
+
 }

@@ -300,16 +300,17 @@ myTerms_change();
     } else {
       $extraparams['userID'] = $user->uid;
     }
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid([
       'id' => 'samples-grid',
       'dataSource' => $reportName,
       'mode' => 'report',
       'readAuth' => $auth['read'],
       'columns' => call_user_func(array(get_called_class(), 'getReportActions')),
       'itemsPerPage' => $args['grid_num_rows'],
-      'autoParamsForm' => true,
+      'autoParamsForm' => TRUE,
       'extraParams' => $extraparams
-    ));
+    ]);
     $r .= '<form>';
     $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url('node/'.$nid, array('query' => 'new')).'\'">';
     $r .= "</form>

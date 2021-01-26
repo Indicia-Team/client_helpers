@@ -23,10 +23,10 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
- * 
+ *
  * Should be set up in "wizard" buttons mode
  * TBD: extend conditions grid to allow specification of column widths.
  */
@@ -37,26 +37,26 @@ require_once('includes/mnhnl_common.php');
 class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
   protected static $svcUrl;
   protected static $locationsInGrid;
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_mnhnl_butterflies2_definition() {
     return array(
       'title'=>self::get_title(),
-      'category' => 'MNHNL forms',      
+      'category' => 'MNHNL forms',
       'description'=>'Luxembourg Butterfly Biomonitoring (site based) form. Inherits from Dynamic 1.'
     );
   }
-  /** 
+  /**
    * Return the form title.
    * @return string The title of the form.
    */
   public static function get_title() {
-    return 'Luxembourg Butterfly Biomonitoring (site based)';  
+    return 'Luxembourg Butterfly Biomonitoring (site based)';
   }
 
-  public static function get_parameters() {    
+  public static function get_parameters() {
     $retVal=array();
     $parentVal = array_merge(
       parent::get_parameters(),
@@ -126,16 +126,16 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
         $param['default'] = true;
       if($param['name'] == 'grid_report')
         $param['default'] = 'reports_for_prebuilt_forms/MNHNL/mnhnl_butterflies2';
-        
+
       if($param['name'] != 'species_include_taxon_group' &&
           $param['name'] != 'link_species_popups' &&
           $param['name'] != 'species_include_both_names')
         $retVal[] = $param;
     }
-    
+
     return $retVal;
   }
-  
+
   public static function get_css() {
     return array('mnhnl_butterflies.css');
   }
@@ -176,34 +176,36 @@ class iform_mnhnl_butterflies2 extends iform_mnhnl_dynamic_1 {
     $userNameAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'CMS Username', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
     if (!$userNameAttr) return lang::get('This form must be used with a survey that has the CMS User Name attribute associated with it so records can be tagged against their creator.');
     $passageAttr=iform_mnhnl_getAttrID($auth, $args, 'sample', 'Passage', isset($args['sample_method_id'])&&$args['sample_method_id']!="" ? $args['sample_method_id'] : false);
-    if (!$passageAttr) return lang::get('This form must be used with a survey that has the Passage attribute associated with it.');    
-      
+    if (!$passageAttr) return lang::get('This form must be used with a survey that has the Passage attribute associated with it.');
+
     if (isset($args['grid_report'])) $reportName = $args['grid_report'];
     else // provide a default in case the form settings were saved in an old version of the form
       $reportName = 'reports_for_prebuilt_forms/MNHNL/mnhnl_butterflies';
-    $r = call_user_func(array(get_called_class(), 'getSampleListGridPreamble'));
-    $r .= data_entry_helper::report_grid(array(
+    $r = call_user_func([get_called_class(), 'getSampleListGridPreamble']);
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid([
       'id' => 'samples-grid',
       'dataSource' => $reportName,
       'mode' => 'report',
       'readAuth' => $auth['read'],
-      'columns' => call_user_func(array(get_called_class(), 'getReportActions')),
-      'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 25),
-      'autoParamsForm' => true,
-      'extraParams' => array(
-        'survey_id'=>$args['survey_id'], 
-        'userID_attr_id'=>$userIdAttr,
-        'userID'=>(hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid), // use -1 if manager - non logged in will not get this far.
-        'userName_attr_id'=>$userNameAttr
-       ,'passage_attr_id'=>$passageAttr
-        )));	
-    $r .= '<form>';    
+      'columns' => call_user_func([get_called_class(), 'getReportActions']),
+      'itemsPerPage' => (isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 25),
+      'autoParamsForm' => TRUE,
+      'extraParams' => [
+        'survey_id' => $args['survey_id'],
+        'userID_attr_id' => $userIdAttr,
+        'userID' => (hostsite_user_has_permission($args['edit_permission']) ? -1 :  $user->uid), // use -1 if manager - non logged in will not get this far.
+        'userName_attr_id' => $userNameAttr,
+        'passage_attr_id' => $passageAttr,
+      ]
+    ]);
+    $r .= '<form>';
     $r .= '<input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => 'new')).'\'">';
     $r .= "</form>
 <div style=\"display:none\" />
-    <form id=\"form-delete-survey\" method=\"POST\">".parent::$auth['write']."
-       <input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />
-       <input type=\"hidden\" name=\"survey_id\" value=\"".$args['survey_id']."\" />
+    <form id=\"form-delete-survey\" method=\"POST\">" . parent::$auth['write']."
+       <input type=\"hidden\" name=\"website_id\" value=\"" . $args['website_id']."\" />
+       <input type=\"hidden\" name=\"survey_id\" value=\"" . $args['survey_id']."\" />
        <input type=\"hidden\" name=\"sample:id\" value=\"\" />
        <input type=\"hidden\" name=\"sample:deleted\" value=\"t\" />
     </form>
@@ -220,10 +222,10 @@ deleteSurvey = function(sampleID){
   }});
   };
 };";
-    
+
     return $r;
   }
-  
+
   protected static function get_control_lux5kgrid2($auth, $args, $tabalias, $options) {
     // can only change the location for a new sample: fixed afterwards. *
     global $indicia_templates;
@@ -384,16 +386,16 @@ hook_mnhnl_parent_changed = function(){
     return $retVal;
   }
   protected static function get_control_pointgrid($auth, $args, $tabalias, $options) {
-    return iform_mnhnl_PointGrid($auth, $args, $options); 
+    return iform_mnhnl_PointGrid($auth, $args, $options);
   }
-  
+
  /**
    * Get the recorder names control
    */
   protected static function get_control_recordernames($auth, $args, $tabalias, $options) {
     return iform_mnhnl_recordernamesControl(parent::$node, $auth, $args, $tabalias, $options);
   }
-    
+
   /**
    * Get the year names control
    */
@@ -415,7 +417,7 @@ hook_mnhnl_parent_changed = function(){
 jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");';
     return '';
   }
-  
+
   private static function getLocationsInGrid($auth, $args)
   {
     if(isset(self::$locationsInGrid)) return self::$locationsInGrid;
@@ -451,7 +453,7 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
     }
     return self::$locationsInGrid;
   }
-  
+
   protected static function get_control_speciesgrid($auth, $args, $tabalias, $options) {
   	/* We will make the assumption that only one of these will be put onto a form.
   	 * A lot of this is copied from the species control and has the same features. */
@@ -515,7 +517,7 @@ jQuery("#fieldset-'.$options['boltTo'].'").find("legend").after("'.$retVal.'");'
           'table'=>'taxa_taxon_list',
           'captionField'=>'taxon',
           'valueField'=>'id',
-          'columns'=>2,          
+          'columns'=>2,
           'parentField'=>'parent_id',
           'extraParams'=>$extraParams,
           'numValues'=>$args['max_species_ids']
@@ -698,7 +700,7 @@ indiciaFns.bindTabsActivate(jQuery(jQuery('#species').parent()), function(e, ui)
 })";
     return $ret;
   }
-  
+
   protected static function get_control_conditionsgrid($auth, $args, $tabalias, $options) {
   	/* We will make the assumption that only one of these will be put onto a form.
   	 * A lot of this is copied from the species control and has the same features.
@@ -993,7 +995,7 @@ hook_multisite_setGeomFields=function(feature, boundaryWKT, centreWKT){
   jQuery('.cgAddedRow').each(function (index, Element){
     if(jQuery(this).data('SiteNum') == feature.attributes.SiteNum) newCGrow=jQuery(this);
   });
-  if(!newCGrow) return; 
+  if(!newCGrow) return;
   newCGrow.find('.cggrid-boundary_geom').val(boundaryWKT);
   newCGrow.find('.cggrid-centroid_geom').val(centreWKT);
   jQuery.getJSON(\"".data_entry_helper::$base_url."/index.php/services/spatial/wkt_to_sref?wkt=\" + centreWKT + \"&system=2169&precision=8&callback=?\",
@@ -1045,11 +1047,11 @@ conditionsTabHandler = function(e, ui){
 }
 indiciaFns.bindTabsActivate(jQuery(jQuery('#conditions').parent()), conditionsTabHandler);
 ";
-    
+
     return $ret;
   }
 
-  // This function pays no attention to the outer block. This is needed when the there is no outer/inner block pair, 
+  // This function pays no attention to the outer block. This is needed when the there is no outer/inner block pair,
   // if the attribute is put in a single block level, then that block appears in the inner, rather than the outer .
   private function get_sample_attribute_html($attributes, $args, $defAttrOptions, $outerBlockFilter, $innerBlockFilter, $useCaptions = false) {
    $r = '';
@@ -1091,8 +1093,8 @@ hook_new_site_added = function(feature) {
     iform_mnhnl_locationmodule_lateJS($auth, $args, $tabalias, $options);
     return '';
   }
-  
-  
+
+
   protected static function getSampleListGridPreamble() {
     global $user;
     $r = '<p>'.lang::get('LANG_SampleListGrid_Preamble').(hostsite_user_has_permission($args['edit_permission']) ? lang::get('LANG_All_Users') : $user->name).'</p>';
@@ -1101,7 +1103,7 @@ hook_new_site_added = function(feature) {
 
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
+   * @param array $values Associative array of form data values.
    * @param array $args iform parameters.
    * @param integer $nid The node's ID
    * @return array Submission structure.
@@ -1174,8 +1176,8 @@ hook_new_site_added = function(feature) {
         foreach($values as $key => $value){
           $parts = explode(':', $key, 7);
           // SG:--sgrownum--:--cgrownum--:--sampleid--:--ttlid--:--occid--:occAttr:--attr_id--[:--attr_value_id--]
-          if($parts[0]=='SG' && count($parts)>1 && 
-              $parts[4] != '--ttlid--' && $parts[4] != '' && 
+          if($parts[0]=='SG' && count($parts)>1 &&
+              $parts[4] != '--ttlid--' && $parts[4] != '' &&
               $parts[2] == $sampleIndex &&
               (($parts[5] != "--occid--" && $parts[5] != "")||$value!="")){
             $occ = array('fkId' => 'sample_id',
@@ -1235,11 +1237,11 @@ hook_new_site_added = function(feature) {
     if(count($subsamples3)>0) $sampleMod['subModels'] = $subsamples3;
     return($sampleMod);
   }
-  
+
   protected static function getReportActions() {
-    return array(array('display' => '', 'actions' => 
+    return array(array('display' => '', 'actions' =>
             array(array('caption' => lang::get('Edit'), 'url'=>'{currentUrl}', 'urlParams'=>array('sample_id'=>'{sample_id}')))),
-        array('display' => '', 'actions' => 
+        array('display' => '', 'actions' =>
             array(array('caption' => lang::get('Delete'), 'javascript'=>'deleteSurvey({sample_id})'))));
-  } 
+  }
 }

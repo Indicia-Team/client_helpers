@@ -218,7 +218,8 @@ class iform_earthwormwatch_sample_occurrence extends iform_dynamic_sample_occurr
     else
       $r = '';
 
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',

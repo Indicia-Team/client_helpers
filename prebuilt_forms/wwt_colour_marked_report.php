@@ -1681,7 +1681,8 @@ class iform_wwt_colour_marked_report {
     $r = '';
     if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
       $reportName = 'reports_for_prebuilt_forms/sample_comments_list';
-      $r .= data_entry_helper::report_grid(array(
+      iform_load_helpers(['report_helper']);
+      $r .= report_helper::report_grid(array(
         'id' => 'sample-comments-grid',
         'dataSource' => $reportName,
         'mode' => 'report',
@@ -1689,7 +1690,7 @@ class iform_wwt_colour_marked_report {
         'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
         'autoParamsForm' => true,
         'extraParams' => array(
-          'sample_id'=>data_entry_helper::$entity_to_load['sample:id'],
+          'sample_id' => data_entry_helper::$entity_to_load['sample:id'],
         )
       ));
     }
@@ -2973,7 +2974,8 @@ class iform_wwt_colour_marked_report {
       $r = call_user_func(array(get_called_class(), 'getSampleListGridPreamble'));
     else
       $r = '';
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $reportName,
       'mode' => 'report',

@@ -423,7 +423,8 @@ class iform_npms_paths extends iform_wildflower_count {
     if (!isset($filter)) {
       return lang::get('LANG_No_User_Id');
     }
-    $r = data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r = report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',

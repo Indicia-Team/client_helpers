@@ -23,7 +23,7 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code. Relies on presence of IForm Proxy.
- * 
+ *
  * @package	Client
  * @subpackage PrebuiltForms
  */
@@ -38,10 +38,10 @@ class iform_mnhnl_collaborators_1 {
 	 * 	Survey List
 	 * 		Put in "loading" message functionality.
 	 *  	Add a map and put samples on it, clickable
-	 *  
+	 *
 	 *  Sort out {common}.
-	 * 
-	 * The report paging will not be converted to use LIMIT & OFFSET because we want the full list returned so 
+	 *
+	 * The report paging will not be converted to use LIMIT & OFFSET because we want the full list returned so
 	 * we can display all the occurrences on the map.
 	 * When displaying transects, we should display children locations as well as parent.
 	 */
@@ -49,14 +49,14 @@ class iform_mnhnl_collaborators_1 {
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {    
+  public static function get_parameters() {
     $retVal = array_merge(
      iform_map_get_map_parameters(),
      iform_map_get_georef_parameters(),
      array(
         array(
           'name'=>'spatial_systems',
-          'caption'=>'Allowed Spatial Ref Systems',      
+          'caption'=>'Allowed Spatial Ref Systems',
           'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326). '.
               'Set to "default" to use the settings defined in the IForm Settings page.',
           'type'=>'string',
@@ -109,84 +109,84 @@ class iform_mnhnl_collaborators_1 {
       ),
       array(
           'name'=>'uid_attr_id',
-          'caption'=>'User ID Attribute ID',      
+          'caption'=>'User ID Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the CMS User ID.',
           'type'=>'smpAttr',
           'group'=>'Sample Attributes'
         ),
-        array(      
+        array(
           'name'=>'username_attr_id',
-          'caption'=>'Username Attribute ID',      
+          'caption'=>'Username Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the user\'s username.',
           'type'=>'smpAttr',
           'group'=>'Sample Attributes'
         ),
         array(
           'name'=>'email_attr_id',
-          'caption'=>'Email Attribute ID',      
+          'caption'=>'Email Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the user\'s email.',
           'type'=>'smpAttr',
           'group'=>'Sample Attributes'
         ),
         array(
           'name'=>'first_name_attr_id',
-          'caption'=>'First Name Attribute ID',      
+          'caption'=>'First Name Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the user\'s first name.',
           'type'=>'smpAttr',
           'group'=>'Sample Attributes'
         ),
         array(
           'name'=>'surname_attr_id',
-          'caption'=>'Surname Attribute ID',      
+          'caption'=>'Surname Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the user\'s surname.',
           'type'=>'smpAttr',
           'group'=>'Sample Attributes'
         ),
         array(
           'name'=>'phone_attr_id',
-          'caption'=>'Phone Attribute ID',      
+          'caption'=>'Phone Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the user\'s phone.',
           'type'=>'smpAttr',
           'group'=>'Sample Attributes'
         ),
         array(
           'name'=>'biotope_attr_id',
-          'caption'=>'Biotope Attribute ID',      
+          'caption'=>'Biotope Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the Biotope.',
           'type'=>'smpAttr',
           'group'=>'Sample Attributes'
         ),
         array(
           'name'=>'checklist_attributes',
-          'caption'=>'Species Checklist Grid Contents',      
+          'caption'=>'Species Checklist Grid Contents',
           'description'=>'List of Indicia IDs for occurrence attributes included in the species checklist grid, comma separated.',
           'type'=>'string',
           'group'=>'Species Checklist Attributes'
         )
-      ) 
+      )
     );
     return $retVal;
   }
-  
-  /** 
+
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_mnhnl_collaborators_1_definition() {
     return array(
       'title'=>self::get_title(),
-      'category' => 'MNHNL forms',      
+      'category' => 'MNHNL forms',
       'description'=>'MNHNL Collaborators 1 - form designed for collaboration projects.'
     );
   }
-  /** 
+  /**
    * Return the form title.
    * @return string The title of the form.
    */
   public static function get_title() {
-    return 'MNHNL Collaborators 1';  
+    return 'MNHNL Collaborators 1';
   }
-  
+
 /**
    * Return the generated form output.
    * @return Form HTML.
@@ -223,8 +223,9 @@ class iform_mnhnl_collaborators_1 {
     ///////////////////////////////////////////////////////////////////
     // default mode 0 : display survey selector
     ///////////////////////////////////////////////////////////////////
-    if($mode == 0){
-      $r .= data_entry_helper::report_grid(array(
+    if ($mode == 0) {
+      iform_load_helpers(['report_helper']);
+      $r .= report_helper::report_grid(array(
         'id' => 'samples-grid',
         'dataSource' => 'reports_for_prebuilt_forms/simple_sample_list_1',
         'mode' => 'report',
@@ -237,16 +238,16 @@ class iform_mnhnl_collaborators_1 {
         'itemsPerPage' =>10,
         'autoParamsForm' => true,
         'extraParams' => array(
-          'survey_id'=>$args['survey_id'], 
+          'survey_id'=>$args['survey_id'],
           'userID_attr_id'=>$args['uid_attr_id'],
           'userID'=>$user->uid
         )
-      ));	
+      ));
       $r .= '<form><input type="button" value="'.lang::get('LANG_Add_Sample').'" onclick="window.location.href=\''.url("node/$nid", array('query' => 'newSample')).'\'"></form>';
       return $r;
     }
     ///////////////////////////////////////////////////////////////////
-    
+
         data_entry_helper::$javascript .= "
 // Create vector layers: one to display the location onto, and another for the occurrence list
 // the default edit layer is used for the occurrences themselves
@@ -261,7 +262,7 @@ locStyleMap = new OpenLayers.StyleMap({
 locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")."\",
                                     {styleMap: locStyleMap});
 ";
-    
+
     if($loadID){
     	// Can't cache these as data may have just changed
     	data_entry_helper::$entity_to_load['occurrence:record_status']='I';
@@ -288,17 +289,17 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
 		data_entry_helper::$entity_to_load['sample:date'] = data_entry_helper::$entity_to_load['sample:date_start']; // bit of a bodge to get around vague dates.
     }
     $defAttrOptions = array('extraParams'=>$auth['read']);
-        
+
 //    $r .= "<h1>MODE = ".$mode."</h1>";
 //    $r .= "<h2>readOnly = ".$readOnly."</h2>";
-    
+
     $r = "<form method=\"post\" id=\"entry_form\">\n";
     // Insert authorisation tokens to update the Warehouse.
     $r .= $auth['write'];
     $r .= "<input type=\"hidden\" id=\"website_id\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
     $r .= "<input type=\"hidden\" id=\"survey_id\" name=\"survey_id\" value=\"".$args['survey_id']."\" />\n";
     if(array_key_exists('sample:id', data_entry_helper::$entity_to_load)){
-    	$r .= "<input type=\"hidden\" id=\"sample:id\" name=\"sample:id\" value=\"".data_entry_helper::$entity_to_load['sample:id']."\" />\n";	
+    	$r .= "<input type=\"hidden\" id=\"sample:id\" name=\"sample:id\" value=\"".data_entry_helper::$entity_to_load['sample:id']."\" />\n";
     }
     // request automatic JS validation
     data_entry_helper::enable_validation('entry_form');
@@ -316,32 +317,32 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
       $uid = $user->uid;
       $email = $user->mail;
       $username = $user->name;
-      $uid_attr_id = $args['uid_attr_id'];      
+      $uid_attr_id = $args['uid_attr_id'];
       $email_attr_id = $args['email_attr_id'];
       $username_attr_id = $args['username_attr_id'];
       // This assumes that we have the following attributes : no built in error checking.
       $r .= "<input type=\"hidden\" name=\"".$attributes[$uid_attr_id]['fieldname']."\" value=\"$uid\" />\n";
       $r .= "<input type=\"hidden\" name=\"".$attributes[$email_attr_id]['fieldname']."\" value=\"$email\" />\n";
-      $r .= "<input type=\"hidden\" name=\"".$attributes[$username_attr_id]['fieldname']."\" value=\"$username\" />\n";    
+      $r .= "<input type=\"hidden\" name=\"".$attributes[$username_attr_id]['fieldname']."\" value=\"$username\" />\n";
     }
     $r .= "<div id=\"controls\">\n";
-    if ($args['interface']!='one_page') {    	
+    if ($args['interface']!='one_page') {
       $r .= "<ul>\n";
       if (!$logged_in) {
-        $r .= '  <li><a href="#about_you"><span>'.lang::get('LANG_About_You_Tab')."</span></a></li>\n";      
+        $r .= '  <li><a href="#about_you"><span>'.lang::get('LANG_About_You_Tab')."</span></a></li>\n";
       }
-      $r .= '  <li><a href="#species"><span>'.lang::get('LANG_Species_Tab')."</span></a></li>\n";      
+      $r .= '  <li><a href="#species"><span>'.lang::get('LANG_Species_Tab')."</span></a></li>\n";
       $r .= '  <li><a href="#place"><span>'.lang::get('LANG_Place_Tab')."</span></a></li>\n";
       $r .= '  <li><a href="#other"><span>'.lang::get('LANG_Other_Information_Tab')."</span></a></li>\n";
-      $r .= "</ul>\n";      
+      $r .= "</ul>\n";
       data_entry_helper::enable_tabs(array(
           'divId'=>'controls',
           'style'=>$args['interface']
       ));
     }
-        
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     if (!$logged_in) {
       $r .= "<div id=\"about_you\">\n";
       $r .= '<p class="page-notice ui-state-highlight ui-corner-all">'.lang::get('LANG_About_You_Tab_Instructions')."</p>";
@@ -354,14 +355,14 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
         $r .= data_entry_helper::wizard_buttons(array(
           'divId'=>'controls',
           'page'=>'first'
-        ));      
+        ));
       }
-      unset($defAttrOptions['class']);    
-      $r .= "</div>\n";      
+      unset($defAttrOptions['class']);
+      $r .= "</div>\n";
     }
-        
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     global $indicia_templates;
     $indicia_templates ['taxon_label'] = '<div class="biota"><span class="nobreak sci binomial"><em>{taxon}</em></span> {authority}</div>';
     $r .= "<div id=\"species\">\n";
@@ -378,17 +379,17 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
     if ($args['extra_list_id']) $species_list_args['lookupListId']=$args['extra_list_id'];
     $r .= data_entry_helper::species_checklist($species_list_args);
     $r .= "<label for=\"sample:comment\">".lang::get('LANG_Sample_Comment_Label')."</label><input type=\"text\" id=\"sample:comment\" name=\"sample:comment\" value=\"".data_entry_helper::$entity_to_load['sample:comment']."\" />\n";
-    
+
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
         'divId'=>'controls',
-        'page'=>($user->id==0) ? 'first' : 'middle'        
+        'page'=>($user->id==0) ? 'first' : 'middle'
       ));
     }
     $r .= "</div>\n";
-    
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     $r .= "<div id=\"place\">\n";
     $r .= '<p class="page-notice ui-state-highlight ui-corner-all">'.lang::get('LANG_Place_Tab_Instructions')."</p>";
     // Build the array of spatial reference systems into a format Indicia can use.
@@ -396,7 +397,7 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) {
       $systems[$system] = lang::get($system);
-    }    
+    }
     $r .= data_entry_helper::sref_and_system(array(
       'label' => lang::get('LANG_SRef_Label'),
       'systems' => $systems
@@ -406,9 +407,9 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
         'view'=>'detail',
         'extraParams'=>array_merge(array('view'=>'detail', 'orderby'=>'name'), $auth['read'])
     );
-    
+
     $r .= call_user_func(array('data_entry_helper', $args['location_ctrl']), $location_list_args);
-    
+
     $r .= data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
     $options = iform_map_get_map_options($args, $auth['read']);
     $options['layers'][] = 'locationLayer';
@@ -417,12 +418,12 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
         'divId'=>'controls'
-      ));      
+      ));
     }
-    $r .= "</div>\n";   
-        
+    $r .= "</div>\n";
+
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    
+
     $r .= "<div id=\"other\">\n";
     $r .= '<p class="page-notice ui-state-highlight ui-corner-all">'.lang::get('LANG_Other_Information_Tab_Instructions')."</p>";
     $r .= data_entry_helper::date_picker(array(
@@ -453,19 +454,19 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
         'divId'=>'controls',
         'page'=>'last'
       ));
-    } else { 
+    } else {
       $r .= "<input type=\"submit\" class=\"ui-state-default ui-corner-all\" value=\"".lang::get('LANG_Save')."\" />\n";
     }
-    $r .= "</div>\n";        
-    $r .= "</div>\n"; 
+    $r .= "</div>\n";
+    $r .= "</div>\n";
     if(!empty(data_entry_helper::$validation_errors)){
 		$r .= data_entry_helper::dump_remaining_errors();
-    }   
+    }
     $r .= "</form>";
-        
+
     // may need to keep following code for location change functionality
 	data_entry_helper::$onload_javascript .= "
-    
+
 locationChange = function(obj){
 	locationLayer.destroyFeatures();
 	if(obj.value != ''){
@@ -480,7 +481,7 @@ locationChange = function(obj){
 						feature = parser.read(data[i].centroid_geom);
 						centre = feature.geometry.getCentroid();
 						centrefeature = new OpenLayers.Feature.Vector(centre, {}, {label: data[i].name});
-						locationLayer.addFeatures([feature, centrefeature]); 
+						locationLayer.addFeatures([feature, centrefeature]);
 					}
 					if(data[i].boundary_geom){
 						feature = parser.read(data[i].boundary_geom);
@@ -507,11 +508,11 @@ jQuery('#imp-sref').change();
 	return $r;
 
   }
-  
+
     /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
@@ -522,10 +523,10 @@ jQuery('#imp-sref').change();
   /**
    * Retrieves a list of the css files that this form requires in addition to the standard
    * Drupal, theme or Indicia ones.
-   * 
+   *
    * @return array List of css files to include for this form.
    */
   public static function get_css() {
     return array('mnhnl_collaborators_1.css');
-  }  
+  }
 }

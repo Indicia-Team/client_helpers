@@ -280,7 +280,8 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
       }
     }
     $r = call_user_func(array(get_called_class(), 'getSampleListGridPreamble'));
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',

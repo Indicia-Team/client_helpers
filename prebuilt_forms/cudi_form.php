@@ -1405,7 +1405,8 @@ mapInitialisationHooks.push(function(mapdiv) {
       // The option to list all locations is denied so enforce selection of own data.
       $extraParams['ownData'] = '1';
     }
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'locations-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',

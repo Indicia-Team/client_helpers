@@ -2512,7 +2512,8 @@ JS;
       $r = call_user_func(array(self::$called_class, 'getSampleListGridPreamble'));
     else
       $r = '';
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',

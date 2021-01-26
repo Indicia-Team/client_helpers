@@ -23,7 +23,7 @@
 /**
  * Prebuilt Indicia data form that lists the output of an occurrences report with an option
  * to verify or reject each record.
- * 
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
@@ -32,7 +32,7 @@ class iform_verification_2 {
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     return array(
       array(
         'name'=>'report_name',
@@ -132,15 +132,15 @@ class iform_verification_2 {
       ),
     );
   }
-  
-  /** 
+
+  /**
    * Return the form title.
    * @return string The title of the form.
    */
   public static function get_title() {
     return 'Verification 2 - a grid for verification where the verifier may update the taxon';
   }
-  
+
   /**
    * Return the Indicia form code
    * @param array $args Input parameters.
@@ -191,7 +191,7 @@ class iform_verification_2 {
           }
           $subject = self::get_email_component('subject', $action, $occ, $args);
           $body = self::get_email_component('body', $action, $occ, $args);
-          
+
           if (!empty($email_attr[0]['value'])) {
             $r .= '
 <form id="email" action="" method="post">
@@ -244,17 +244,18 @@ class iform_verification_2 {
     $species .= '<input type="hidden" value="{taxa_taxon_list_id}" />';
     $columns = array_merge($columns, array(array('display' => 'Taxon','template' => $species)));
 
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid([
       'id' => 'verification-grid',
       'dataSource' => $args['report_name'],
       'mode' => 'report',
       'readAuth' => $auth['read'],
       'columns' => $columns,
-      'itemsPerPage' =>10,
+      'itemsPerPage' => 10,
       'autoParamsForm' => $args['auto_params_form'],
       'extraParams' => $extraParams,
-      'callback' => 'indicia_verification_2_species_init'
-    ));
+      'callback' => 'indicia_verification_2_species_init',
+    ]);
     $r .= '
 <form id="verify" method="post" action="">
   '.$auth['write'].'
@@ -265,22 +266,22 @@ class iform_verification_2 {
   <input type="hidden" id="occAttr:' . $args['occ_attr_id']. '" name="occAttr:' . $args['occ_attr_id']. '" value="" />
 </form>
 ';
-    
+
     drupal_add_js('
 var verifiers_mapping = "'.$args['verifiers_mapping'].'";
 var url = '.json_encode(data_entry_helper::get_reload_link_parts()).';
 var verified_species = "occAttr:'. $args['occ_attr_id'] .'";', 'inline');
     return $r;
   }
-  
+
   /**
-   * Internal method to get the email subject or body field from the template in the arguments, 
-   * and apply the values in the occurrence to the template. Finally it is encoded for inclusion 
+   * Internal method to get the email subject or body field from the template in the arguments,
+   * and apply the values in the occurrence to the template. Finally it is encoded for inclusion
    * in the mailto form.
    * @access private
-   * @param string $part subject or body. 
-   * @param string $action verified or rejected, for inclusion in the template. 
-   * @param array $occ Occurrence data, to provide values for the template replacements. 
+   * @param string $part subject or body.
+   * @param string $action verified or rejected, for inclusion in the template.
+   * @param array $occ Occurrence data, to provide values for the template replacements.
    * @param array $args Form arguments
    * @return Encoded string
    */
@@ -293,15 +294,15 @@ var verified_species = "occAttr:'. $args['occ_attr_id'] .'";', 'inline');
     $r = str_replace('%verifier%', $user->name, $r);
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
     return data_entry_helper::build_submission($values, array('model'=>'occurrence'));
   }
-  
+
 }

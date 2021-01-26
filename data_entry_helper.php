@@ -2285,16 +2285,6 @@ JS;
   }
 
   /**
-   * Outputs a grid that loads the content of a report or Indicia table.
-   * @param array $options Refer to report_helper::report_grid documentation.
-   * @deprecated Use report_helper::report_grid.
-   */
-  public static function report_grid($options) {
-    require_once('report_helper.php');
-    return report_helper::report_grid($options);
-  }
-
-  /**
    * Outputs a chart that loads the content of a report or Indicia table.
    * @param array $options Refer to report_helper::report_chart documentation.
    * @deprecated Use report_helper::report_chart.
