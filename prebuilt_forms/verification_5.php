@@ -1047,7 +1047,7 @@ HTML
       // Submit the stucture for processing.
       $response = data_entry_helper::forward_post_to('save', $submission, $auth['write_tokens']);
       if (!is_array($response) || !array_key_exists('success', $response)) {
-        drupal_set_message(print_r($response, TRUE));
+        hostsite_show_message(print_r($response, TRUE));
       }
     }
   }

@@ -101,10 +101,10 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
    */
   public static function get_form($args, $nid, $response=null) {
     if (empty($args['group_id'])) {
-      drupal_set_message('Please specify a group_id in the page configuration.');
+      hostsite_show_message('Please specify a group_id in the page configuration.');
     }
     if (empty($args['instructions_configuration'])) {
-      drupal_set_message('Please provide a page configuration in the User Interface options.');
+      hostsite_show_message('Please provide a page configuration in the User Interface options.');
     }
     //Only perform if the user has specified an instruction to appear under each page like.
     if (!empty($args['instructions_configuration'])) {

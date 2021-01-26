@@ -342,7 +342,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    */
   protected static function get_control_linkhabitatstophotos($auth, $args, $tabalias, $options) {
     if (empty($options['imageMediaTypeId']))
-      drupal_set_message('Please fill in the imageMediaTypeId option for the Link Habitats To Photos control.');
+      hostsite_show_message('Please fill in the imageMediaTypeId option for the Link Habitats To Photos control.');
     $r='';
     //Need to add the query libraries manually
     drupal_add_library('system', 'ui.draggable');
@@ -436,7 +436,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         $(window).load(function () {
           $('#tab-next').trigger('click');\n
         });";
-      drupal_set_message('Please wait: Only 1 habitat found, so I am automatically allocating the photos to that habitat for you.');
+      hostsite_show_message('Please wait: Only 1 habitat found, so I am automatically allocating the photos to that habitat for you.');
     }
     return $r;
   }
@@ -611,35 +611,35 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     $paramsSeparator=variable_get('clean_url', 0) ? '?' : '&';
     data_entry_helper::$javascript .= "indiciaData.paramsSeparator='".$paramsSeparator."';\n";
     if (empty($args['in_progress_sample_attr_id'])) {
-      drupal_set_message('Please fill in the edit tab option for the In-Progress Sample attribute id');
+      hostsite_show_message('Please fill in the edit tab option for the In-Progress Sample attribute id');
       return false;
     }
     if (empty($args['gpx_data_attr_id'])) {
-      drupal_set_message('Please fill in the edit tab option for the GPX Data attribute id');
+      hostsite_show_message('Please fill in the edit tab option for the GPX Data attribute id');
       return false;
     }
     if (empty($args['habitat_smpAttr_cluster_ids'])) {
-      drupal_set_message('Please fill in the option for the Habitat Sample Attribute Cluster');
+      hostsite_show_message('Please fill in the option for the Habitat Sample Attribute Cluster');
       return false;
     }
     if (empty($args['mandatory_habitat_smpAttr_cluster_ids'])) {
-      drupal_set_message('Please fill in the option for the Mandatory Cluster Ids');
+      hostsite_show_message('Please fill in the option for the Mandatory Cluster Ids');
       return false;
     }
     if (empty($args['dive_duration_attr_id'])) {
-      drupal_set_message('Please fill in the option for the Dive Duration attribute id');
+      hostsite_show_message('Please fill in the option for the Dive Duration attribute id');
       return false;
     }
     if (empty($args['dive_start_time_attr_id'])) {
-      drupal_set_message('Please fill in the option for the Dive Start Time attribute id');
+      hostsite_show_message('Please fill in the option for the Dive Start Time attribute id');
       return false;
     }
     if (empty($args['exif_date_time_attr_id'])) {
-      drupal_set_message('Please fill in the option for the Exif Date Times attribute id');
+      hostsite_show_message('Please fill in the option for the Exif Date Times attribute id');
       return false;
     }
     if (empty($args['image_media_type_id'])) {
-      drupal_set_message('Please fill in the option for the Image Media Sub Type id');
+      hostsite_show_message('Please fill in the option for the Image Media Sub Type id');
       return false;
     }
 
@@ -797,7 +797,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //When the first page is saved we create a sample but we don't have a spatial reference. An attempt is made to read
       //a position from the first photo exif (elsewhere in code), however if GPS data can't be found on photo, then just fall back on a point on the Isle of Wight (as it is on land it won't get confused with a real position.
       if (empty($ModelOrWarning['fields']['entered_sref']['value'])) {
-        drupal_set_message('Please specify the location of your dive.');
+        hostsite_show_message('Please specify the location of your dive.');
         $ModelOrWarning['fields']['entered_sref_system']['value']='4277';
         $ModelOrWarning['fields']['entered_sref']['value']='50:41.0994N, 1:17.1864W';
       }
@@ -930,7 +930,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         $values['sample:entered_sref']=$gpsFromFirstExif;
         $modelWrapped['fields']['entered_sref_system']['value']='4277';
         $values['sample:entered_sref_system']='4277';
-        drupal_set_message('The GPS position of your dive has been obtained from the information in the earliest uploaded photo. Please check it is correct before proceeding and correct it if necessary');
+        hostsite_show_message('The GPS position of your dive has been obtained from the information in the earliest uploaded photo. Please check it is correct before proceeding and correct it if necessary');
       }
     }
       if (!empty($mediaDates)) {

@@ -475,15 +475,15 @@ class iform_sectioned_transects_edit_transect {
     // check required modules installed
     if (isset($_POST['enable'])) {
       module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
+      hostsite_show_message(lang::get('The Indicia AJAX Proxy module has been enabled.'));
     }
     $ok=true;
     if (!hostsite_module_exists('iform_ajaxproxy')) {
-       drupal_set_message('This form must be used in Drupal with the Indicia AJAX Proxy module enabled.');
+       hostsite_show_message('This form must be used in Drupal with the Indicia AJAX Proxy module enabled.');
        $ok=false;
     }
     if (!function_exists('iform_ajaxproxy_url')) {
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
+      hostsite_show_message(lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
           'Indicia Warehouse without having to reload the page.'));
       $r = '<form method="post">';
       $r .= '<input type="hidden" name="enable" value="t"/>';

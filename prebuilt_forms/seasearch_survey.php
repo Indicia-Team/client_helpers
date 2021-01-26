@@ -221,7 +221,7 @@ class iform_seasearch_survey extends iform_dynamic_sample_occurrence {
     // form data reloads correctly.
     if ($_POST) {
       $count = $_POST['habitat-count'];
-      drupal_set_message(var_export(array_keys($_POST, true)));
+      hostsite_show_message(var_export(array_keys($_POST, true)));
       for ($idx = 1; $idx <= $count; $idx ++) {
         // Is this an existing habitat we are posting against?
         $habitatKey = isset($_POST["habitat_sample_id:$idx"]) ? 'sample:'.$_POST["habitat_sample_id:$idx"] : "idx:$idx";

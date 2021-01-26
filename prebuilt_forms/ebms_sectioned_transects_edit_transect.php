@@ -481,7 +481,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     ));
 
     // The following deals with special processing associate with specific attributes.
-//    drupal_set_message(print_r($settings['attributes'],true));
+//    hostsite_show_message(print_r($settings['attributes'],true));
 
     // TODO NTH Add functionality to allow selection between CMS Attr ID and Indicia User ID
     // We are assigning people to locations, rather than locations to people.
@@ -689,7 +689,7 @@ class iform_ebms_sectioned_transects_edit_transect extends iform_sectioned_trans
     $r .= "<input type=\"hidden\" name=\"website_id\" value=\"".$args['website_id']."\" />\n";
     $r .= '<input type="hidden" name="read_nonce" value="' . $auth['read']['nonce'] . '"/>';
     $r .= '<input type="hidden" name="read_auth_token" value="' . $auth['read']['auth_token'] . '"/>';
-    
+
     $r .= '<div id="cols" class="ui-helper-clearfix"><div class="left" style="width: 54%">';
 
     // Special for EBMS is the country block: this should just have the country attribute in it: a text location attribute; powered
@@ -1069,9 +1069,9 @@ $('#delete-transect').click(deleteSurvey);
       }
       $values['location:code'] = implode(':',$newCode);
     }
-    
+
     $submission = parent::get_submission($values, $args);
-    
+
     // Build the sections
     // Create a list of section Codes needed for this value of number of sections.
     $read = array(
@@ -1153,7 +1153,7 @@ $('#delete-transect').click(deleteSurvey);
       $sectionLocationType = helper_base::get_termlist_terms($auth,
           'indicia:location_types',
           array(empty($params['section_type_term']) ? 'Section' : $params['section_type_term']));
-      
+
       $parent = $_GET['parent_id'];
       $parentLocationTypeId = $_GET['parent_location_type_id'];
       $insertPoint = intval(substr($_GET['section'], 1)); // section comes in like "S1"
@@ -1215,7 +1215,7 @@ $('#delete-transect').click(deleteSurvey);
             // TODO check response
         }
       }
-      
+
       // insert the new section into gap,
       $sectionCode = array_key_exists('before', $_GET) ? $insertPoint : $insertPoint + 1;
       $sectionPostData = ['location:code' => 'S'.($sectionCode),
@@ -1229,10 +1229,10 @@ $('#delete-transect').click(deleteSurvey);
       ];
       $model = data_entry_helper::wrap($sectionPostData, 'location');
       $model['joinsTo'] = array('website' => array($website_id));
-      
+
       $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
       // TODO check response
-      
+
       $transectPostData = ['location:id' => $parent,
           'website_id' => $website_id];
       // Add one to the section count on the transect
@@ -1505,14 +1505,14 @@ $('#delete-transect').click(deleteSurvey);
       iform_load_helpers(array('data_entry_helper'));
       data_entry_helper::$base_url = $conn['base_url'];
       $auth = data_entry_helper::get_read_write_auth($website_id, $password);
-      
+
       $parent = $_GET['id'];
 
       if($parent === '') {
           header('Content-type: application/json');
           echo json_encode(array('error' => 'ID of main transect record not provided'));
       }
-      
+
       $transect = data_entry_helper::get_population_data(array(
           'table' => 'location',
           'cachetimeout' => 0, // can't cache
@@ -1522,7 +1522,7 @@ $('#delete-transect').click(deleteSurvey);
           header('Content-type: application/json');
           echo json_encode(array('error' => 'Main transect record does not exist'));
       }
-      
+
       // Note that the subsections may not have been saved, so may not exist.
       $sections = data_entry_helper::get_population_data(array(
           'table' => 'location',
@@ -1530,7 +1530,7 @@ $('#delete-transect').click(deleteSurvey);
           'extraParams' => $auth['read'] + array('view'=>'detail', 'columns'=>'id,code,name', 'parent_id'=>$parent),
       ));
       $sectionIdList = [];
-      
+
       // loop through all the subsections and delete all samples on the subsection, then delete the subsection itself
       foreach($sections as $section) {
           // delete subsamples first (otherwise they are orphaned), then the section itself
@@ -1574,8 +1574,8 @@ $('#delete-transect').click(deleteSurvey);
       header('Content-type: application/json');
       echo json_encode(array('response' => $response));
   }
-  
-  
+
+
   /**
    * After saving a new transect, reload the transect so that the user can continue to save the sections.
    */

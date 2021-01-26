@@ -194,15 +194,15 @@ class iform_group_send_invites {
       }
     }
     if ($success)
-      drupal_set_message(lang::get('Invitation emails sent'));
+      hostsite_show_message(lang::get('Invitation emails sent'));
     else {
-      drupal_set_message(lang::get('The emails could not be sent due to a server configuration issue. Please contact the site admin. ' .
+      hostsite_show_message(lang::get('The emails could not be sent due to a server configuration issue. Please contact the site admin. ' .
           'The list below gives the emails and the links you need to send to each invitee which they need to click on in order to join the group.'), 'warning');
       $list=array();
       foreach($failedRecipients as $email => $link) {
         $list[] = lang::get("Send link {1} to {2}.", $link, $email);
       }
-      drupal_set_message(implode('<br/>', $list), 'warning');
+      hostsite_show_message(implode('<br/>', $list), 'warning');
     }
     hostsite_goto_page($args['redirect_on_success']);
   }

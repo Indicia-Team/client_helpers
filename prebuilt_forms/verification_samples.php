@@ -13,16 +13,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see http://www.gnu.org/licenses/gpl.html.
  *
- * @package Client
- * @subpackage PrebuiltForms
- * @author  Indicia Team
- * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
- * @link  http://code.google.com/p/indicia/
+ * @author Indicia Team
+ * @licence http://www.gnu.org/licenses/gpl.html GPL 3.0
+ * @link http://code.google.com/p/indicia/
  */
 
-require_once('includes/map.php');
-require_once('includes/report.php');
-require_once('includes/report_filters.php');
+require_once 'includes/map.php';
+require_once 'includes/report.php';
+require_once 'includes/report_filters.php';
 
 /**
  * Prebuilt Indicia data form that lists the output of a samples report with an option
@@ -401,7 +399,7 @@ idlist=';
         "\n\n%record%";
     if (isset($_POST['enable'])) {
       module_enable(array('iform_ajaxproxy'));
-      drupal_set_message(lang::get('The Indicia AJAX Proxy module has been enabled.', 'info'));
+      hostsite_show_message(lang::get('The Indicia AJAX Proxy module has been enabled.'));
     }
     elseif (!defined('IFORM_AJAXPROXY_PATH')) {
       $r = '<p>'.lang::get('The Indicia AJAX Proxy module must be enabled to use this form. This lets the form save verifications to the '.
@@ -579,7 +577,7 @@ idlist=';
       //Submit the stucture for processing
       $response = data_entry_helper::forward_post_to('save', $submission, $auth['write_tokens']);
       if (!is_array($response) || !array_key_exists('success', $response))
-        drupal_set_message(print_r($response,true));
+        hostsite_show_message(print_r($response,true));
     }
   }
 
