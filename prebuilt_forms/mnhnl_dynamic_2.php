@@ -1202,9 +1202,10 @@ bindSpeciesButton(bindSpeciesOptions);\n";
         //      $mapOptions['maxZoom']=$args['zoomLevel'];
       }
       $r = "<div><p>".lang::get('LANG_SpeciesInstructions')."</p>\n";
-      if($options['includeSubSample'] && $options['mapPosition']=='top') $r .= '<div class="topMap-container">'.data_entry_helper::map_panel($mapOptions, $olOptions).'</div>';
+      iform_load_helpers(['map_helper']);
+      if($options['includeSubSample'] && $options['mapPosition']=='top') $r .= '<div class="topMap-container">'.map_helper::map_panel($mapOptions, $olOptions).'</div>';
       $r .= '<div class="grid-container">'.$grid.'</div>';
-      if($options['includeSubSample'] && $options['mapPosition']!='top') $r .= '<div class="sideMap-container">'.data_entry_helper::map_panel($mapOptions, $olOptions).'</div>';
+      if($options['includeSubSample'] && $options['mapPosition']!='top') $r .= '<div class="sideMap-container">'.map_helper::map_panel($mapOptions, $olOptions).'</div>';
       if($options['includeSubSample'])
       	data_entry_helper::$javascript .= "var speciesMapTabHandler = function(event, ui) {
   panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];

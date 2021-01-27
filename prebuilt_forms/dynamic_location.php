@@ -337,9 +337,11 @@ mapInitialisationHooks.push(function(mapdiv) {
     else {
       $r = '';
     }
-    if (!isset($options['standardControls']))
+    if (!isset($options['standardControls'])) {
       $options['standardControls']=array('layerSwitcher','panZoom');
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    }
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
     // Add a geometry hidden field for boundary support
     if ($boundaries) {
       if (!empty(data_entry_helper::$entity_to_load['location:boundary_geom']))

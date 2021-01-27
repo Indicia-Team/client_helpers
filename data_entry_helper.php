@@ -2086,17 +2086,6 @@ JS;
   }
 
   /**
-   * Outputs a map panel.
-   * @param array $options Refer to map_helper::map_panel documentation.
-   * @param array $olOptions Refer to map_helper::map_panel documentation.
-   * @deprecated Use map_helper::map_panel instead.
-   */
-  public static function map_panel($options, $olOptions=array()) {
-    require_once('map_helper.php');
-    return map_helper::map_panel($options, $olOptions);
-  }
-
-  /**
    * Helper function to output an HTML password input. For security reasons, this does not re-load existing values
    * or display validation error messages and no default can be set.
    * The output of this control can be configured using the following templates:

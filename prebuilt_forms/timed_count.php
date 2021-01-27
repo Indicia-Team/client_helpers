@@ -642,8 +642,9 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
 
     if(isset($args['georefDriver']) && $args['georefDriver']!='' && !isset(data_entry_helper::$entity_to_load['sample:id']))
-	    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+      $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
 
     $r .= data_entry_helper::textarea(array('label'=>'Comment', 'fieldname'=>'sample:comment', 'class'=>'wide'));
     if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {

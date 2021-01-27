@@ -1200,7 +1200,8 @@ class iform_wwt_colour_marked_report {
     $olOptions = iform_map_get_ol_options($args);
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
-    return data_entry_helper::map_panel($options, $olOptions);
+    iform_load_helpers(['map_helper']);
+    return map_helper::map_panel($options, $olOptions);
   }
 
   /*

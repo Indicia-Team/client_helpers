@@ -414,7 +414,8 @@ locationLayer = new OpenLayers.Layer.Vector(\"".lang::get("LANG_Location_Layer")
     $options = iform_map_get_map_options($args, $auth['read']);
     $options['layers'][] = 'locationLayer';
     $olOptions = iform_map_get_ol_options($args);
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
     if ($args['interface']=='wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
         'divId'=>'controls'

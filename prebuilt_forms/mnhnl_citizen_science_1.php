@@ -424,7 +424,8 @@ class iform_mnhnl_citizen_science_1 {
     }
     $olOptions = iform_map_get_ol_options($args);
     $options['scroll_wheel_zoom'] = FALSE;
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
     if ($args['interface'] === 'wizard') {
       $r .= data_entry_helper::wizard_buttons(array(
         'divId' => 'controls',

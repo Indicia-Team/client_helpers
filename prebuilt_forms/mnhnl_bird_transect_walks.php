@@ -126,7 +126,7 @@ class iform_mnhnl_bird_transect_walks {
       				'group' => 'User Interface',
       				'required' => false
       		),
-      		
+
       array(
         'name'=>'locationLayer',
         'caption'=>'Location Layer Definition',
@@ -211,23 +211,24 @@ class iform_mnhnl_bird_transect_walks {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $nid, $response = NULL) {
     global $user;
     global $custom_terms;
     $logged_in = $user->uid>0;
     $r = '';
-
+    iform_load_helpers(['map_helper']);
     // Get authorisation tokens to update and read from the Warehouse.
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $readAuth = $auth['read'];
-    $svcUrl = data_entry_helper::$base_url.'/index.php/services';
+    $svcUrl = data_entry_helper::$base_url . '/index.php/services';
 
-    drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
+    drupal_add_js(drupal_get_path('module', 'iform') . '/media/js/jquery.form.js', 'module');
     data_entry_helper::link_default_stylesheet();
     data_entry_helper::add_resource('jquery_ui');
     $language = iform_lang_iso_639_2($args['language']);
-    if($args['language'] != 'en')
-        data_entry_helper::add_resource('jquery_ui_'.$args['language']);
+    if ($args['language'] != 'en') {
+      data_entry_helper::add_resource('jquery_ui_' . $args['language']);
+    }
 
     // If not logged in: Display an information message.
     // This form should only be called in POST mode when setting the location allocation.
@@ -466,7 +467,7 @@ mapInitialisationHooks.push(function (div) {
       if(hostsite_user_has_permission($args['edit_permission'])){
         $r .= '
   <div id="downloads" class="mnhnl-btw-datapanel">
-    <fieldset><legend>' . lang::get('Specify a date range for the records to include') . '</legend>' . 
+    <fieldset><legend>' . lang::get('Specify a date range for the records to include') . '</legend>' .
     data_entry_helper::date_picker(array(
       'label' => lang::get('Records from'),
         'fieldname' => 'filter_date_from',
@@ -549,7 +550,7 @@ $('#filter_date_from,#filter_date_to').change();
       $options['proxy'] = '';
       $options['scroll_wheel_zoom'] = false;
       $options['width'] = 'auto'; // TBD remove from arglist
-      $r .= "<div class=\"mnhnl-btw-mappanel\">\n".(data_entry_helper::map_panel($options, $olOptions))."</div>\n";
+      $r .= "<div class=\"mnhnl-btw-mappanel\">\n".(map_helper::map_panel($options, $olOptions))."</div>\n";
 
       data_entry_helper::$javascript .= "
 indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
@@ -632,7 +633,7 @@ mapInitialisationHooks.push(function (div) {
   });
   control.activate();
 });\n";
-    
+
     $occReadOnly = false;
     $childSample = array();
     if($childLoadID){ // load the occurrence and its associated sample (which holds the position)
@@ -1337,7 +1338,7 @@ if($.browser.msie) {
       $options['width'] = 'auto'; // TBD remove from arglist
 
     $r .= "<div class=\"mnhnl-btw-mappanel\">\n";
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    $r .= map_helper::map_panel($options, $olOptions);
 
     // for timing reasons, all the following has to be done after the map is loaded.
     // 1) feature selector for occurrence list must have the map present to attach the control

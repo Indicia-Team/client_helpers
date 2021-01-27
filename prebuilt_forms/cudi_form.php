@@ -714,7 +714,8 @@ mapInitialisationHooks.push(function(mapdiv) {
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
     $r = '';
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
     // Add a geometry hidden field for boundary support
     if ($boundaries)
       $r .= '<input type="hidden" name="location:boundary_geom" id="imp-boundary-geom" value="' .
