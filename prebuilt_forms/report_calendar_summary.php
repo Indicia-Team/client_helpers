@@ -1240,8 +1240,8 @@ class iform_report_calendar_summary {
        $userList=array();
        if(!isset($args['userLookUp']) || !$args['userLookUp']) {
         // look up all users, not just those that have entered data.
-        $results = db_query('SELECT uid, name FROM {users}');
-        if(version_compare(VERSION, '7', '<')) {
+        if (version_compare(VERSION, '7', '<')) {
+          $results = db_query('SELECT uid, name FROM {users}');
           while($result = db_fetch_object($results)){
             if($result->uid){ // ignore unauthorised user, uid zero
               $account = user_load($result->uid);
@@ -1249,6 +1249,7 @@ class iform_report_calendar_summary {
             }
           }
         } else {
+          $results = \Drupal::database()->query('SELECT uid, name FROM {users}');
           foreach ($results as $result) {  // DB handling is different in 7
             if($result->uid){ // ignore unauthorised user, uid zero
               $account = user_load($result->uid);
@@ -1279,7 +1280,7 @@ class iform_report_calendar_summary {
               }
             } else {
               // @todo: This needs optimising as in the Drupal 6 version - don't want to load ALL users
-              $results = db_query('SELECT uid, name FROM {users}');
+              $results = \Drupal::database()->query('SELECT uid, name FROM {users}');
               foreach ($results as $result) { // DB processing is different in 7
                 if($result->uid){
                   $account = user_load($result->uid); /* this loads the field_ fields, so no need for profile_load_profile */

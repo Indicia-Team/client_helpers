@@ -1210,7 +1210,7 @@ $('#delete-transect').click(deleteSurvey);
                                 'location:name' => $transect[0]['name'] . ' - S' . ($sectionCode+1),
                                 'website_id' => $website_id,
             ];
-            $model = data_entry_helper::wrap($sectionPostData, 'location');
+            $model = submission_builder::wrap($sectionPostData, 'location');
             $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
             // TODO check response
         }
@@ -1227,7 +1227,7 @@ $('#delete-transect').click(deleteSurvey);
           'locations_website:website_id' => $website_id,
           'website_id' => $website_id,
       ];
-      $model = data_entry_helper::wrap($sectionPostData, 'location');
+      $model = submission_builder::wrap($sectionPostData, 'location');
       $model['joinsTo'] = array('website' => array($website_id));
 
       $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
@@ -1242,7 +1242,7 @@ $('#delete-transect').click(deleteSurvey);
               $transectPostData[$transectAttribute['fieldname']] = $transectAttribute['displayValue'] + 1;
           }
       }
-      $model = data_entry_helper::wrap($transectPostData, 'location');
+      $model = submission_builder::wrap($transectPostData, 'location');
       $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']);
       // TODO check response
       header('Content-type: application/json');
@@ -1324,13 +1324,13 @@ $('#delete-transect').click(deleteSurvey);
                   $samplePostData = ['sample:id' => $sample['id'],
                       'sample:deleted' => 't',
                       'website_id' => $website_id,];
-                  $model = data_entry_helper::wrap($samplePostData, 'sample');
+                  $model = submission_builder::wrap($samplePostData, 'sample');
                   $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
               }
               $sectionPostData = ['location:id' => $section['id'],
                   'location:deleted' => 't',
                   'website_id' => $website_id,];
-              $model = data_entry_helper::wrap($sectionPostData, 'location');
+              $model = submission_builder::wrap($sectionPostData, 'location');
               $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
               // TODO check response
           } else {
@@ -1341,7 +1341,7 @@ $('#delete-transect').click(deleteSurvey);
                       'location:code' => 'S'.($sectionCode-1),
                       'location:name' => $transect[0]['name'] . ' - S' . ($sectionCode-1),
                       'website_id' => $website_id,];
-                  $model = data_entry_helper::wrap($sectionPostData, 'location');
+                  $model = submission_builder::wrap($sectionPostData, 'location');
                   $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
                   // TODO check response
               }
@@ -1381,7 +1381,7 @@ $('#delete-transect').click(deleteSurvey);
               }
           }
       }
-      $model = data_entry_helper::wrap($transectPostData, 'location');
+      $model = submission_builder::wrap($transectPostData, 'location');
       $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
       // TODO check response
       header('Content-type: application/json');
@@ -1452,7 +1452,7 @@ $('#delete-transect').click(deleteSurvey);
                   'location:centroid_geom' => $geom,
                   'website_id' => $website_id,
                   'persist_auth' => 'true',];
-              $model = data_entry_helper::wrap($sectionPostData, 'location');
+              $model = submission_builder::wrap($sectionPostData, 'location');
               $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']);
           } else {
               $sectionIdList[] = $section['id'];
@@ -1488,7 +1488,7 @@ $('#delete-transect').click(deleteSurvey);
               }
           }
       }
-      $model = data_entry_helper::wrap($transectPostData, 'location');
+      $model = submission_builder::wrap($transectPostData, 'location');
       $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']);
       // TODO check response
       header('Content-type: application/json');
@@ -1543,13 +1543,13 @@ $('#delete-transect').click(deleteSurvey);
               $samplePostData = ['sample:id' => $sample['id'],
                       'sample:deleted' => 't',
                       'website_id' => $website_id,];
-              $model = data_entry_helper::wrap($samplePostData, 'sample');
+              $model = submission_builder::wrap($samplePostData, 'sample');
               $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
           }
           $sectionPostData = ['location:id' => $section['id'],
                   'location:deleted' => 't',
                   'website_id' => $website_id,];
-          $model = data_entry_helper::wrap($sectionPostData, 'location');
+          $model = submission_builder::wrap($sectionPostData, 'location');
           $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
               // TODO check response
       }
@@ -1562,13 +1562,13 @@ $('#delete-transect').click(deleteSurvey);
           $samplePostData = ['sample:id' => $sample['id'],
               'sample:deleted' => 't',
               'website_id' => $website_id,];
-          $model = data_entry_helper::wrap($samplePostData, 'sample');
+          $model = submission_builder::wrap($samplePostData, 'sample');
           $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
       }
       $transectPostData = ['location:id' => $parent,
           'location:deleted' => 't',
           'website_id' => $website_id,];
-      $model = data_entry_helper::wrap($transectPostData, 'location');
+      $model = submission_builder::wrap($transectPostData, 'location');
       $response = data_entry_helper::forward_post_to('save', $model, $auth['write_tokens']+['persist_auth' => 'true']);
       // TODO check response
       header('Content-type: application/json');

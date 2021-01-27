@@ -1122,7 +1122,7 @@ hook_new_site_added = function(feature) {
         $values['sample:recorder_names'] = implode("\r\n", $values['sample:recorder_names']);
       }
     } // else just load the string
-    $sampleMod = data_entry_helper::wrap_with_attrs($values, 'sample');
+    $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     if(isset($values['sample:deleted'])) return($sampleMod);
     $subsamples = array();
     $locations = array();

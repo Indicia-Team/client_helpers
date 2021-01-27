@@ -283,7 +283,7 @@ class iform_dynamic_sample_occurrence_splash extends iform_dynamic_sample_occurr
       throw new Exception('Cannot find website id in POST array!');
     }
     //Use existing code to wrap subsamples on the grid. This applies only to trees.
-    $subModels = data_entry_helper::wrap_species_checklist_with_subsamples($arr, $include_if_any_data,
+    $subModels = submission_builder::wrap_species_checklist_with_subsamples($arr, $include_if_any_data,
           $zero_attrs, $zero_values,array('Epiphytes-populated','Epiphytes-free'));
     //Each epiphyte has an occurrence_attribute which holds its presence on a particular tree, the list of these custom attributes is supplied
     //to the code as an administrator supplied option.

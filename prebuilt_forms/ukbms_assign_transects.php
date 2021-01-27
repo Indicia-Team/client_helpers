@@ -182,7 +182,7 @@ class iform_ukbms_assign_transects {
           if($value == 0) continue;
           switch($matches[1]) {
             case 'assign_holiday':
-              $Model = data_entry_helper::wrap(array(
+              $Model = submission_builder::wrap(array(
               'website_id' => $args['website_id'],
               'location_attribute_value:location_id' => $matches[2],
               'location_attribute_value:location_attribute_id' => $args['cms_attr_id'],
@@ -233,7 +233,7 @@ class iform_ukbms_assign_transects {
               'table'=>'location_attribute_value');
               $locAttrList = data_entry_helper::get_population_data($location_attr_list_args);
               foreach($locAttrList as $locAttr) {
-                $Model = data_entry_helper::wrap(array(
+                $Model = submission_builder::wrap(array(
                   'website_id' => $args['website_id'],
                   'location_attribute_value:id' => $locAttr['id'],
                   'location_attribute_value:location_id' => $matches[2],

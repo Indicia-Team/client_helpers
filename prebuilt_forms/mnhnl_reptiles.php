@@ -1155,7 +1155,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
         $record['website_id'] = $website_id;
         if (array_key_exists('occurrence:determiner_id', $arr)) $record['determiner_id'] = $arr['occurrence:determiner_id'];
         if (array_key_exists('occurrence:record_status', $arr)) $record['record_status'] = $arr['occurrence:record_status'];
-        $occ = data_entry_helper::wrap($record, 'occurrence');
+        $occ = submission_builder::wrap($record, 'occurrence');
         $subModels[] = array('fkId' => 'sample_id', 'model' => $occ);
       }
     }

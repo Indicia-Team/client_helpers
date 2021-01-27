@@ -302,7 +302,7 @@ var verified_species = "occAttr:'. $args['occ_attr_id'] .'";', 'inline');
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
-    return data_entry_helper::build_submission($values, array('model'=>'occurrence'));
+    return submission_builder::build_submission($values, array('model'=>'occurrence'));
   }
 
 }

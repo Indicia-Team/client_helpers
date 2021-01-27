@@ -293,7 +293,7 @@ class iform_verification_1 {
       if (isset($comment)) {
         // get our own write tokens for this submission, as the main ones are used in the JavaScript form.
         $loggingAuth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-        $sub = data_entry_helper::wrap(array(
+        $sub = submission_builder::wrap(array(
           'comment' => $comment,
           'occurrence_id' => $_POST['occurrence:id'],
           'created_by_id' => $indicia_user_id
@@ -505,11 +505,11 @@ var email_body_send_to_verifier = "'.str_replace(array("\r", "\n"), array('', '\
   public static function get_submission($values, $args) {
     // Submission includes the occurrence comment only if it is populated. This occurs when entering a verification or rejection comment.
     if (isset($_POST['occurrence_comment:comment']) && !empty($_POST['occurrence_comment:comment'])) {
-      return data_entry_helper::build_submission($values, array('model'=>'occurrence','subModels' => array('occurrence_comment' =>  array(
+      return submission_builder::build_submission($values, array('model'=>'occurrence','subModels' => array('occurrence_comment' =>  array(
           'fk' => 'occurrence_id'
       ))));
     } else
-      return data_entry_helper::build_submission($values, array('model'=>'occurrence'));
+      return submission_builder::build_submission($values, array('model'=>'occurrence'));
   }
 
 }

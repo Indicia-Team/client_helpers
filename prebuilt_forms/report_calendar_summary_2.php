@@ -166,7 +166,7 @@ class iform_report_calendar_summary_2 {
           'required' => false,
           'group' => 'Access Control'
         ),
-          
+
         array(
           'name'=>'dateFilter',
           'caption'=>'Date Filter type',
@@ -187,7 +187,7 @@ class iform_report_calendar_summary_2 {
           'required' => false,
           'group'=>'Controls'
         ),
-        
+
         array(
           'name'=>'includeUserFilter',
           'caption'=>'Include user filter',
@@ -882,7 +882,7 @@ class iform_report_calendar_summary_2 {
     $isManager = (!empty($args['manager_permission']) && hostsite_user_has_permission($args['manager_permission']));
     $isBranchManager = (!empty($args['branch_manager_permission']) && hostsite_user_has_permission($args['branch_manager_permission']));
     $myId = hostsite_get_user_field('id');
-	
+
     // Set up common data.
     $locationListArgs = array(
         'extraParams' => array_merge(
@@ -905,7 +905,7 @@ class iform_report_calendar_summary_2 {
         'extraParams' => $readAuth,
         'survey_id' => self::$siteUrlParams[self::$SurveyKey],
         'caching' => $siteUrlParams[self::$cacheKey]['value']);
-	
+
     if(isset($args['locationTypesFilter']) && $args['locationTypesFilter']!=""){
       $types = explode(',',$args['locationTypesFilter']);
       $types1 = array();
@@ -1027,7 +1027,7 @@ class iform_report_calendar_summary_2 {
     foreach($attrKeys as $attrKey) {
       unset($locationListArgs['extraParams'][$attrKey]);
     }
-    
+
     // setup params into report based on actual control values, not requested ones.
     // main options are used for the fecthing of the data, extra params are used in the raw data and report downloads
     // raw data is for single location only, in ['extraParams']['location_id']
@@ -1091,11 +1091,11 @@ class iform_report_calendar_summary_2 {
     }
     $ctrl.='</select>';
     self::set_up_control_change($ctrlid, self::$locationKey, array());
-    
+
     // set up download file prefix
     if($siteUrlParams[self::$locationKey]['value']=='')
         $options['downloadFilePrefix'] .= preg_replace('/[^A-Za-z0-9]/i', '', $siteUrlParams[self::$locationKey]['value']).'_';
-        
+
     return $ctrl;
   }
 
@@ -1148,7 +1148,7 @@ class iform_report_calendar_summary_2 {
   {
     // user filter is keyed on the CMS User ID; converted to cms_user_id/Indicia user_id pair by report_helper, if applicable.
     // we don't use the userID option as the user_id can be blank, and will force the parameter request if left as a blank
-    
+
     $ctrl = '';
     $myId = hostsite_get_user_field('id');
     $siteUrlParams = self::get_site_url_params($args);
@@ -1166,7 +1166,7 @@ class iform_report_calendar_summary_2 {
             if(version_compare(hostsite_get_cms_version(), '8', '<')) {
                 $results = db_query('SELECT uid, name FROM {users} WHERE uid <> 0');
             } else {
-                $results = db_query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0');
+                $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0');
             }
             foreach ($results as $result) {
                 if(in_array("{$result->uid}", array_keys($branchUserList))) {
@@ -1223,7 +1223,7 @@ class iform_report_calendar_summary_2 {
         break;
     }
     self::set_up_control_change($ctrlid, self::$userKey, array('locationID'));
-	
+
     // If a normal user, switch off the links if user is not me.
     if (!$isManager && !$isBranchManager && $siteUrlParams[self::$userKey]['value'] !== "$myId") {
         unset($args['linkURL']);
@@ -1360,7 +1360,7 @@ jQuery('#".$ctrlid."').change(function(){
           $r .= '</select></th>';
           self::set_up_control_change($ctrlid, self::$yearKey, array('locationID'));
         }
-        
+
         if($siteUrlParams[self::$yearKey]['value']<date('Y')){
           $r .= '<th><a id="year-control-next" title="'.($siteUrlParams[self::$yearKey]['value']+1).'" rel="nofollow" href="'.$reloadUrl['path'].$param.($siteUrlParams[self::$yearKey]['value']+1).'" class="ui-datepicker-next ui-corner-all"><span class="ui-icon ui-icon-circle-triangle-e">'.lang::get('Next').'</span></a></th>';
         } else $r .= '<th/>';
@@ -1393,7 +1393,7 @@ jQuery('#".$ctrlid."').change(function(){
    */
   public static function get_form($args, $nid, $response) {
     $retVal = '';
-    
+
     $logged_in = hostsite_get_user_field('id') > 0;
     if(!$logged_in) {
       return('<p>'.lang::get('Please log in before attempting to use this form.').'</p>');
@@ -1436,7 +1436,7 @@ jQuery('#".$ctrlid."').change(function(){
       $reportOptions['countColumn']= 'attr_occurrence_'.str_replace(' ', '_', strtolower($args['countColumn'])); // assume that this is an occurrence attribute.
       $reportOptions['extraParams']['occattrs']=$args['countColumn'];
     }
-   
+
     // Add controls first: set up a control bar
     $retVal .= "\n<table id=\"controls-table\" class=\"ui-widget ui-widget-content ui-corner-all controls-table\"><thead class=\"ui-widget-header\"><tr>";
     $retVal .= self::year_control($args, $auth, $nid, $reportOptions);
@@ -1485,7 +1485,7 @@ jQuery('#".$ctrlid."').change(function(){
     $retVal.= '</tr></thead></table>';
     $reportOptions['survey_id']=self::$siteUrlParams[self::$SurveyKey]; // Sort of assuming that only one location type recorded against per survey.
     $reportOptions['downloads'] = array();
-    
+
     // add the additional downloads.
     if((isset($args['manager_permission']) && $args['manager_permission']!="" && hostsite_user_has_permission($args['manager_permission'])) || // if you are super manager then you can see all the downloads.
         $reportOptions['extraParams']['location_list'] != '' || // only filled in for a branch user in branch mode

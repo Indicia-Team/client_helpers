@@ -1097,7 +1097,7 @@ bindSpeciesAutocomplete(\"taxonLookupControl\",\"".data_entry_helper::$base_url.
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     if(!isset($values['sample:deleted'])) {
       if (isset($values['gridmode']))
-        $occurrences = data_entry_helper::wrap_species_checklist($values);
+        $occurrences = submission_builder::wrap_species_checklist($values);
       else
         $occurrences = submission_builder::wrap_with_images($values, 'occurrence');
       // when a non admin selects an existing location they can not modify it or its attributes and the location record does not form part of the submission

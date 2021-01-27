@@ -844,11 +844,11 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
 
     }
     //Identify any occurrences which don't have images and will therefore be attached to the top level sample.
-    $standardOccurrences = data_entry_helper::wrap_species_checklist($standardGridValues);
+    $standardOccurrences = submission_builder::wrap_species_checklist($standardGridValues);
 
     $modelName='sample';
     //Wrap up the main parent sample
-    $modelWrapped = data_entry_helper::wrap($values, $modelName, null);
+    $modelWrapped = submission_builder::wrap($values, $modelName, null);
     //2nd level samples are prefixed with the word new_sample_sub_sample:<num>: or existing_sample_sub_sample:<id>: in the name.
     //This function returns an array of possible sub-samples (habitats) which have been extracted from the values on the page by looking
     //for this text on the front of the keys in the values array.
@@ -949,7 +949,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //Only add media to the main sample if it isn't already contained in any sub-sample
       if (empty($values['sample_medium:'.$item['id'].':sample_id'])||
           $values['sample_medium:'.$item['id'].':sample_id']==$modelWrapped['fields']['id']['value']) {
-        $wrapped = data_entry_helper::wrap($item, $modelName.'_medium');
+        $wrapped = submission_builder::wrap($item, $modelName.'_medium');
         $modelWrapped['subModels'][] = array(
           'fkId' => $modelName.'_id',
           'model' => $wrapped
@@ -1045,7 +1045,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     //Merge each set of sub-sample values with elements required to make a basic sample (such as entered_sref)
     foreach ($valuesCollection as $idx=>$incompleteSubSampleValueSet) {
       $completeValuesCollection[$idx]=array_merge($incompleteSubSampleValueSet,$cleanValues);
-      $wrappedCollection[$idx] = data_entry_helper::wrap($completeValuesCollection[$idx], 'sample');
+      $wrappedCollection[$idx] = submission_builder::wrap($completeValuesCollection[$idx], 'sample');
       //Make an array of media which is assigned to the sub-sample (photos attached to habitst)
       foreach($values as $key => $value) {
         $keyBreakdown=explode(':',$key);
@@ -1129,7 +1129,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         //Only add the media item to the sub-sample, if the item has been assigned to the sub-sample by the user.
         if (!empty($values['sample_medium:'.$item['id'].':sample_id']) &&
             ($values['sample_medium:'.$item['id'].':sample_id']==$completeValuesCollection[$idx]['sample:id'])) {
-          $wrapped = data_entry_helper::wrap($item, 'sample_medium');
+          $wrapped = submission_builder::wrap($item, 'sample_medium');
           $wrappedCollection[$idx]['subModels'][] = array(
             'fkId' => 'sample_id',
             'model' => $wrapped
@@ -2167,7 +2167,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     }
     $sampleRecords=array();
     foreach ($occurrenceRecords as $id => $record) {
-      $present = data_entry_helper::wrap_species_checklist_record_present($record, $include_if_any_data,
+      $present = submission_builder::wrap_species_checklist_record_present($record, $include_if_any_data,
           $zero_attrs, $zero_values, array());
       if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
         if ($present===null)
@@ -2183,10 +2183,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         if (isset($record_status)) {
           $record['record_status'] = $record_status;
         }
-        $occ = data_entry_helper::wrap($record, 'occurrence');
+        $occ = submission_builder::wrap($record, 'occurrence');
         data_entry_helper::attachOccurrenceMediaToModel($occ, $record);
         //Add the occurrence to a third level sample, which is taken from our sample template
-        $subSample = data_entry_helper::wrap($sampleRecord, 'sample');
+        $subSample = submission_builder::wrap($sampleRecord, 'sample');
         if (array_key_exists('subModels', $subSample)) {
           $subSample['subModels'] = array_merge($sampleMod['subModels'], array('fkId' => 'sample_id','model' => $occ));
         } else {

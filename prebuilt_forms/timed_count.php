@@ -968,12 +968,12 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
             if (array_key_exists('occurrence:determiner_id', $values)) $occurrence['determiner_id'] = $values['occurrence:determiner_id'];
             if (array_key_exists('occurrence:record_status', $values)) $occurrence['record_status'] = $values['occurrence:record_status'];
             if(isset($occurrence['id']) || !isset($occurrence['deleted'])){
-              $occ = data_entry_helper::wrap($occurrence, 'occurrence');
+              $occ = submission_builder::wrap($occurrence, 'occurrence');
               $occModels[] = array('fkId' => 'sample_id', 'model' => $occ);
             }
           }
           $smp = array('fkId' => 'parent_id',
-            'model' => data_entry_helper::wrap($subSample, 'sample'),
+            'model' => submission_builder::wrap($subSample, 'sample'),
             'copyFields' => array('entered_sref'=>'entered_sref','entered_sref_system'=>'entered_sref_system')); // from parent->to child
           if(!isset($subSample['sample:deleted']) && count($occModels)>0) $smp['model']['subModels'] = $occModels;
           $subsampleModels[] = $smp;

@@ -923,7 +923,8 @@ jQuery('input#sectionlist_taxa_taxon_list_id\\\\:taxon').result(function(event, 
    * @return array Submission structure.
    */
   public static function get_submission($values, $args, $nid) {
-    $sampleMod = data_entry_helper::wrap_with_attrs($values, 'sample');
+    iform_load_helpers(['submission_builder']);
+    $sampleMod = submission_builder::wrap_with_images($values, 'sample');
     if(isset($values['sample:deleted'])) return($sampleMod);
     $subsamples = array();
     // first do transect grid

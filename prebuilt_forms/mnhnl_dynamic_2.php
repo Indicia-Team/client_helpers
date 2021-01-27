@@ -1721,13 +1721,13 @@ mapInitialisationHooks.push(function(mapdiv) {
         $occurrence['website_id'] = $arr['website_id'];
         if (array_key_exists('occurrence:determiner_id', $arr)) $occurrence['determiner_id'] = $arr['occurrence:determiner_id'];
         if (array_key_exists('occurrence:record_status', $arr)) $occurrence['record_status'] = $arr['occurrence:record_status'];
-        $occ = data_entry_helper::wrap($occurrence, 'occurrence');
+        $occ = submission_builder::wrap($occurrence, 'occurrence');
         if(isset($arr['includeSubSample'])){
           if (!$present) $samples[$id]['deleted'] = 't';
           $samples[$id]['website_id'] = $arr['website_id'];
           $samples[$id]['entered_sref_system'] = '2169'; // TBD
           $samples[$id]['survey_id'] = $arr['survey_id'];
-          $smp = data_entry_helper::wrap($samples[$id], 'sample');
+          $smp = submission_builder::wrap($samples[$id], 'sample');
           $smp['subModels'] = array(array('fkId' => 'sample_id', 'model' => $occ));
           $smp = array('fkId' => 'parent_id', 'model' => $smp);
           if(!isset($samples[$id]['date'])) $smp['copyFields'] = array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'); // from parent->to child

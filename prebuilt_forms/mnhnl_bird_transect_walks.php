@@ -322,7 +322,7 @@ class iform_mnhnl_bird_transect_walks {
           $entities = json_decode(curl_exec($session), true);
           if(count($entities)>0){
             foreach($entities as $entity){
-              $Model = data_entry_helper::wrap(array('id'=>$entity['id'], 'parent_id' => $_GET['merge_sample_id1']), 'sample');
+              $Model = submission_builder::wrap(array('id'=>$entity['id'], 'parent_id' => $_GET['merge_sample_id1']), 'sample');
               $request = data_entry_helper::$base_url."/index.php/services/data/save";
               $postargs = 'submission='.json_encode($Model).'&auth_token='.$auth['write_tokens']['auth_token'].'&nonce='.$auth['write_tokens']['nonce'].'&persist_auth=true';
               $postresponse = data_entry_helper::http_post($request, $postargs, false);
@@ -333,7 +333,7 @@ class iform_mnhnl_bird_transect_walks {
             }
           }
           // finally delete the no longer used sample
-          $Model = data_entry_helper::wrap(array('id'=>$_GET['merge_sample_id2'], 'deleted' => 'true'), 'sample');
+          $Model = submission_builder::wrap(array('id'=>$_GET['merge_sample_id2'], 'deleted' => 'true'), 'sample');
           $request = data_entry_helper::$base_url."/index.php/services/data/save";
           $postargs = 'submission='.json_encode($Model).'&auth_token='.$auth['write_tokens']['auth_token'].'&nonce='.$auth['write_tokens']['nonce'].'&persist_auth=true';
           $postresponse = data_entry_helper::http_post($request, $postargs, false);

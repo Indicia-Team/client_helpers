@@ -565,7 +565,7 @@ class iform_wildflower_count {
       $s['sample:date']=$values['sample:date'];
       $s['sample:survey_id']=$values['survey_id'];
       $s['location_name']=$prefix;
-      $wrapped = submission_builder::wrap_with_attrs($s, 'sample', $prefix);
+      $wrapped = submission_builder::wrap_with_images($s, 'sample', $prefix);
       $submission['subModels'][]=array('fkId'=>'parent_id', 'model'=>$wrapped);
     }
     return($submission);
