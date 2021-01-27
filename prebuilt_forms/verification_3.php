@@ -961,18 +961,14 @@ idlist=';
 
       }
     }
-    // See if there is a filled in profile_experience field for the user. If so, add
-    // the statement to the response.
+    // See if there is a filled in profile_experience field for the user. If
+    // so, add the statement to the response.
     if (!empty($_GET['user_id'])) {
-      $result = db_query("SELECT vuid.value
-FROM {profile_values} vuser_id
-JOIN {profile_fields} fuser_id ON fuser_id.fid=vuser_id.fid AND fuser_id.name='profile_indicia_user_id'
-JOIN {profile_values} vuid ON vuid.uid=vuser_id.uid
-JOIN {profile_fields} fuid ON fuid.fid=vuid.fid AND fuid.name='profile_experience'
-WHERE vuser_id.value=".$_GET['user_id']);
-      if ($exp = db_fetch_object($result)) {
-        if (!empty($exp->value))
-          $r .= "<h3>User's description of their experience</h3>{$exp->value}\n";
+      // User ID is a warehouse ID, we need the associated Drupal account.
+      $users = hostsite_find_cms_user_by_field_value('indicia_user_id', $_GET['user_id']);
+      $experience = hostsite_get_user_field('experience', FALSE, FALSE, $users[0]);
+      if ($experience) {
+        $r .= "<h3>User's description of their experience</h3><p>$experience</p>\n";
       }
     }
     echo $r;

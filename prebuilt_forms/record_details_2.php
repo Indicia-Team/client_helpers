@@ -778,22 +778,22 @@ JS;
    * @param array $args
    * @param string $tabalias
    * @param array $options
-   *   Options array passed in the configuration to the [login] control. Possible values include instruct - the
-   *   instruction to display above the login form.
+   *   Options array passed in the configuration to the [login] control.
+   *   Possible values include instruct - the instruction to display above
+   *   the login form.
    *
    * @return string
+   *   Control HTML, empty if logged in.
    */
   protected static function get_control_login($auth, $args, $tabalias, $options) {
-    $options = array_merge(array(
-      'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.'
-    ), $options);
+    $options = array_merge([
+      'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.',
+    ], $options);
     if (hostsite_get_user_field('id') === 0) {
-      $form_state = array('noredirect' => TRUE);
-      $form = drupal_build_form('user_login', $form_state);
       return '<div class="detail-panel" id="detail-panel-login">' .
           '<h3>' . lang::get('Login') . '</h3>' .
           '<p>' . lang::get($options['instruct']) . '</p>' .
-          drupal_render($form) .
+         hostsite_render_form('user_login', ['noredirect' => TRUE]) .
           '</div>';
     }
     else {
