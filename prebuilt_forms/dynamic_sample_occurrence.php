@@ -2055,7 +2055,7 @@ JS;
       // pass through the group we are recording in plus its parent, if any, so we can show group sites
       if (!empty($_GET['group_id'])) {
         iform_load_helpers(['report_helper']);
-        $parent = data_entry_helper::report_helper(array(
+        $parent = report_helper::get_report_data(array(
           'dataSource' => 'library/groups/groups_list',
           'readAuth' => $auth['read'],
           'extraParams' => array('to_group_id' => $_GET['group_id'], 'userFilterMode' => 'all', 'currentUser' => ''),
