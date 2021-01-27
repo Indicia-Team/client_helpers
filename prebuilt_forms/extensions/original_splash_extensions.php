@@ -169,7 +169,8 @@ class extension_original_splash_extensions {
                              'vice_county_location_attribute_id'=>$viceCountyLocationAttributeId,
                              'no_vice_county_found_message'=>$noViceCountyFoundMessage)
     );
-    $rawData = data_entry_helper::get_report_data($reportOptions);
+    iform_load_helpers(['report_helper']);
+    $rawData = report_helper::get_report_data($reportOptions);
     if (empty($rawData)) {
       //If the user doesn't have any plots, then hide the map and disable the Spatial Ref field so they can't continue
       hostsite_show_message('Note: You have not been allocated any squares to input data for, or the squares you have been allocated do not have plots.');
@@ -184,7 +185,7 @@ class extension_original_splash_extensions {
       }
       //Need a report to collect the square to default the Location Select to in edit mode, as this is not stored against the sample directly.
       if (!empty($_GET['sample_id'])) {
-        $squareData = data_entry_helper::get_report_data(array(
+        $squareData = report_helper::get_report_data(array(
           'dataSource'=>'projects/npms/get_square_for_sample',
           'readAuth'=>$auth['read'],
           'extraParams'=>array('sample_id'=>$_GET['sample_id'])
@@ -434,14 +435,14 @@ class extension_original_splash_extensions {
     //The plot details page use's location_id as its parameter in edit mode
     if (!empty($_GET['location_id'])) {
       $reportOptions = array(
-        'dataSource'=>'projects/npms/get_square_name_for_plot_id',
-        'readAuth'=>$auth['read'],
+        'dataSource' => 'projects/npms/get_square_name_for_plot_id',
+        'readAuth' => $auth['read'],
         'extraParams' => array('website_id'=>$args['website_id'],
             'vice_county_location_attribute_id'=>$options['viceCountyLocationAttributeId'],
             'no_vice_county_found_message'=>$options['noViceCountyFoundMessage'],
-            'plot_id'=>$_GET['location_id']),
-        'valueField'=>'id',
-        'captionField'=>'name'
+            'plot_id' => $_GET['location_id']),
+        'valueField' => 'id',
+        'captionField' => 'name'
       );
     }
     //The square/user admin page use's dynamic-location_id as its parameter. Only perform code for this
@@ -449,13 +450,13 @@ class extension_original_splash_extensions {
     //In add mode, the Plot Details page is given its parent square in the parent_square_id parameter, so use this to get the parent square name.
     if (!empty($_GET['dynamic-location_id'])||!empty($_GET['parent_square_id'])) {
       $reportOptions = array(
-        'dataSource'=>'projects/npms/get_square_details_for_square_id',
-        'readAuth'=>$auth['read'],
+        'dataSource' => 'projects/npms/get_square_details_for_square_id',
+        'readAuth' => $auth['read'],
         'extraParams' => array('website_id'=>$args['website_id'],
             'vice_county_location_attribute_id'=>$options['viceCountyLocationAttributeId'],
             'no_vice_county_found_message'=>$options['noViceCountyFoundMessage']),
-        'valueField'=>'id',
-        'captionField'=>'name'
+        'valueField' => 'id',
+        'captionField' => 'name'
       );
       if (!empty($_GET['dynamic-location_id']))
         $reportOptions['extraParams']['square_id']= $_GET['dynamic-location_id'];
@@ -464,7 +465,8 @@ class extension_original_splash_extensions {
     }
 
     if (!empty($reportOptions)) {
-      $squareNameData = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $squareNameData = report_helper::get_report_data($reportOptions);
       if (!empty($squareNameData[0]['name']))
         return '<div><label>Square name:</label>'.$squareNameData[0]['name'].'</div>';
     }

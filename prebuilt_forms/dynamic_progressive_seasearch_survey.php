@@ -243,10 +243,11 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     $r .= "<div id=\"habitats-setup\">\n";
     if (!empty($_GET['sample_id'])) {
       //First load any existing sub-samples
-      $existingHabitatSubSamples = data_entry_helper::get_report_data(array(
-        'dataSource'=>'library/samples/subsamples',
-        'readAuth'=>$auth['read'],
-        'extraParams'=>array('parent_sample_id' => $_GET['sample_id'])
+      iform_load_helpers(['report_helper']);
+      $existingHabitatSubSamples = report_helper::get_report_data(array(
+        'dataSource' => 'library/samples/subsamples',
+        'readAuth' => $auth['read'],
+        'extraParams' => array('parent_sample_id' => $_GET['sample_id'])
       ));
       $attrOptions = data_entry_helper::getAttrSpecificOptions($options);
       if (!empty($existingHabitatSubSamples)) {
@@ -376,7 +377,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       return '<div><h3>Please fill in the id of the habitat name attribute in the page configuration</h3></div>';
     //Get the habitat name data
     if (!empty($_GET['sample_id'])) {
-      $habitats = data_entry_helper::get_report_data(array(
+      iform_load_helpers(['report_helper']);
+      $habitats = report_helper::get_report_data(array(
         'dataSource'=>'reports_for_prebuilt_forms/seasearch/habitats_for_parent_sample',
         'readAuth'=>$auth['read'],
         'extraParams'=>array('parent_sample_id' => $_GET['sample_id'], 'name_attr_id'=>$nameAttrId)
@@ -460,7 +462,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
 
     if (!empty($_GET['sample_id'])) {
       $reportOptions['extraParams']['sample_id']=$_GET['sample_id'];
-      $photoResults = data_entry_helper::get_report_data($reportOptions);
+      $photoResults = report_helper::get_report_data($reportOptions);
       //Order using exif
       $photoResults = self::set_photo_order($photoResults);
 
@@ -1075,8 +1077,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
           'media_ids'=>$mediaIdsSet,
         )
       );
-
-      $photoResults = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $photoResults = report_helper::get_report_data($reportOptions);
       //Get an average of all the spatial references associated with the current sub-sample
       //Do this by finding the spatial references from the GPX file which are closest in time to the times in the photo exifs (can't rely on GPS on photo, as taken underwater)
       //We then average them all to make the sub-sample spatial reference.
@@ -1242,8 +1244,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
                     'media_ids'=>$subSampleMedium['model']['fields']['id']['value'],
                   )
                 );
-
-                $photoResults = data_entry_helper::get_report_data($reportOptions);
+                iform_load_helpers(['report_helper']);
+                $photoResults = report_helper::get_report_data($reportOptions);
                 //TODO this code is very similar to code used earlier, perhaps put in separate method when get chance.
                 $mediaSpatialRefs=array();
                 $smallestTimeDistance=null;

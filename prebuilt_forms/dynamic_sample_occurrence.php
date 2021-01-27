@@ -1154,7 +1154,8 @@ HTML;
       $reload['path'] = preg_replace('/^\//', '', $reload['path']);
       $dirname = preg_replace('/^\//', '', dirname($_SERVER['SCRIPT_NAME'])) . '/';
       $reload['path'] = str_replace($dirname, '', $reload['path']);
-      $possibleGroups = data_entry_helper::get_report_data(array(
+      iform_load_helpers(['report_helper']);
+      $possibleGroups = report_helper::get_report_data(array(
         'dataSource' => 'library/groups/groups_for_page',
         'readAuth' => $auth['read'],
         'caching' => TRUE,
@@ -2053,7 +2054,8 @@ JS;
       $location_list_args['allowCreate']=true;
       // pass through the group we are recording in plus its parent, if any, so we can show group sites
       if (!empty($_GET['group_id'])) {
-        $parent = data_entry_helper::get_report_data(array(
+        iform_load_helpers(['report_helper']);
+        $parent = data_entry_helper::report_helper(array(
           'dataSource' => 'library/groups/groups_list',
           'readAuth' => $auth['read'],
           'extraParams' => array('to_group_id' => $_GET['group_id'], 'userFilterMode' => 'all', 'currentUser' => ''),
@@ -2225,7 +2227,8 @@ else
   protected static function get_control_recordernames($auth, $args, $tabAlias, $options) {
     //We don't need to touch the control in edit mode. Make the current user's name the default in add mode if the user has selected that option.
     if (empty($_GET['sample_id']) && empty($_GET['occurrence_id']) && !empty($options['defaultToCurrentUser'])&& $options['defaultToCurrentUser']==true) {
-      $defaultUserData = data_entry_helper::get_report_data(array(
+      iform_load_helpers(['report_helper']);
+      $defaultUserData = report_helper::get_report_data(array(
         'dataSource' => 'library/users/get_people_details_for_website_or_user',
         'readAuth' => $auth['read'],
         'extraParams' => array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])

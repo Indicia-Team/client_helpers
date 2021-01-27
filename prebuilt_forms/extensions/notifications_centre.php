@@ -167,13 +167,13 @@ class extension_notifications_centre {
     //Using 'submission_list' and 'entries' allows us to specify several top-level submissions to the system
     //i.e. we need to be able to submit several notifications.
     $submission['submission_list']['entries'] = array();
-    $submission['id']='notification';
-    $extraParams= array(
-      'user_id'=>$user_id,
-      'system_name'=>'indicia',
-      'default_edit_page_path'=>'',
-      'view_record_page_path'=>'',
-      'website_id'=>$args['website_id']
+    $submission['id'] = 'notification';
+    $extraParams = array(
+      'user_id' => $user_id,
+      'system_name' => 'indicia',
+      'default_edit_page_path' => '',
+      'view_record_page_path' => '',
+      'website_id' => $args['website_id']
     );
     //If the page is using a filter drop-down option, then collect the type of notification
     //to remove from the filter drop-down
@@ -198,7 +198,7 @@ class extension_notifications_centre {
     if (!empty($options['groupIds'])) {
       $extraParams['group_ids'] = $options['groupIds'];
     }
-    $notifications = data_entry_helper::get_report_data(array(
+    $notifications = report_helper::get_report_data(array(
       'dataSource'=>$options['dataSource'],
       'readAuth'=>$auth['read'],
       'extraParams'=>$extraParams

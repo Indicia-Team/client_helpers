@@ -321,16 +321,19 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     global $user;
     //Always override any role a user has with a larger role if they have that role.
     $roleType = 'guest';
-    if (in_array('volunteer', $user->roles))
-     $roleType = 'volunteer';
-    if (in_array('staff', $user->roles))
-     $roleType = 'staff';
-    if (in_array('data manager', $user->roles))
-     $roleType = 'data manager';
-
+    if (in_array('volunteer', $user->roles)) {
+      $roleType = 'volunteer';
+    }
+    if (in_array('staff', $user->roles)) {
+      $roleType = 'staff';
+    }
+    if (in_array('data manager', $user->roles)) {
+      $roleType = 'data manager';
+    }
+    iform_load_helpers(['report_helper']);
     // If locks are used, make sure they only apply to this user: some people masquerade, and this causes problems.
     data_entry_helper::$javascript .= "if (indicia && indicia.locks && indicia.locks.setUser) {
-  indicia.locks.setUser ('".$user->uid."');
+  indicia.locks.setUser ('" . $user->uid . "');
 }\n";
 
     $userPhoneNum = empty(hostsite_get_user_field('main_phone_number')) ? NULL : hostsite_get_user_field('main_phone_number');
@@ -340,7 +343,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
 
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
     //Need to collect the user's name from the people table
-    $defaultUserData = data_entry_helper::get_report_data(array(
+    $defaultUserData = report_helper::get_report_data(array(
       'dataSource'=>'library/users/get_people_details_for_website_or_user',
       'readAuth'=>$readAuth,
       'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])
@@ -403,7 +406,7 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
     //If we find this is the case then we set the form into read only mode.
     if (!empty($_GET['sample_id'])) {
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
-      $sightingsData = data_entry_helper::get_report_data(array(
+      $sightingsData = report_helper::get_report_data(array(
         'dataSource'=>'reports_for_prebuilt_forms/Shorewatch/get_sightings_for_sample',
         'readAuth'=>$readAuth,
         'extraParams'=>array('sample_id' => $_GET['sample_id'])
@@ -437,7 +440,8 @@ class iform_dynamic_shorewatch extends iform_dynamic_sample_occurrence {
   protected static function get_control_observerautocomplete($auth, $args, $tabAlias, $options) {
     global $user;
     //Get the name of the currently logged in user
-    $defaultUserData = data_entry_helper::get_report_data(array(
+    iform_load_helpers(['report_helper']);
+    $defaultUserData = report_helper::get_report_data(array(
       'dataSource'=>'library/users/get_people_details_for_website_or_user',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('user_id' => hostsite_get_user_field('indicia_user_id'), 'website_id' => $args['website_id'])

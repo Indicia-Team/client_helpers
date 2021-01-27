@@ -413,10 +413,10 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
       $sampleCreatedOn = strtok($sampleData[0]['created_on'],  ' ');
     }
     // Find the samples for the squares the user has rights too
-    $reportOptions=array(
+    $reportOptions = array(
       'readAuth' => $auth['read'],
-      'dataSource'=> 'projects/npms/npms_get_minimum_sample_details_for_viewable_samples',
-      'extraParams'=>array(
+      'dataSource' => 'projects/npms/npms_get_minimum_sample_details_for_viewable_samples',
+      'extraParams' => array(
         'survey_id' => $args['survey_id'],
         'person_square_attr_id' => $args['person_square_attr_id'],
         's1AttrID' => $args['survey_1_attr'],
@@ -425,13 +425,14 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
     if (!empty($args['plot_number_attr_id'])) {
       $reportOptions = array_merge($reportOptions,array('plot_number_attr_id' => $args['plot_number_attr_id']));
     }
-    $userCreatedSample=false;
-    $mySamples = data_entry_helper::get_report_data($reportOptions);
+    $userCreatedSample = FALSE;
+    iform_load_helpers(['report_helper']);
+    $mySamples = report_helper::get_report_data($reportOptions);
     // Cycle through each sample associated with the user's squares and
     // find out if current user created it
     foreach ($mySamples as $sampleData) {
-      if ($sampleData['sample_id']===$_GET['sample_id']&&
-        (!empty($sampleData['created_by_id'])&&$sampleData['created_by_id']===$iUserId)) {
+      if ($sampleData['sample_id'] === $_GET['sample_id']&&
+        (!empty($sampleData['created_by_id']) && $sampleData['created_by_id'] === $iUserId)) {
         $userCreatedSample=true;
       }
     }
@@ -729,11 +730,12 @@ protected static function form_lock_logic($args, $auth, $attribute,$iUserId) {
         'core_square_location_type_id' => $args['core_square_location_type_id'],
         's1AttrID' => $args['survey_1_attr'])
     );
-    $samplesForThisPlotThisYear=data_entry_helper::get_report_data($reportOptions);
+    iform_load_helpers(['report_helper']);
+    $samplesForThisPlotThisYear = report_helper::get_report_data($reportOptions);
     // If no samples have been created so far this year and it is a new sample (i.e. not editing)
     // then we know we need to create this as a Survey 1.
     // (noting we store an ID of 0 as the linking sample ID if it is survey 1)
-    if (count($samplesForThisPlotThisYear)==0 && empty($values['sample:id'])) {
+    if (count($samplesForThisPlotThisYear) == 0 && empty($values['sample:id'])) {
       $values[$surveyOneFieldName]='0';
     // If only 1 sample for the plot already exists this year, then need to copy the ID of that sample into
     // the submission so it can be linked to this new sample. The new sample becomes sample 2 that is linked

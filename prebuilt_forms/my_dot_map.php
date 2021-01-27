@@ -356,10 +356,11 @@ class iform_my_dot_map {
     global $indicia_templates;
 
     if (function_exists('iform_load_helpers')) {
-      iform_load_helpers(array('map_helper'));
+      iform_load_helpers(array('map_helper', 'report_helper'));
     }
     else {
       require_once dirname(dirname(__FILE__)) . '/map_helper.php';
+      require_once dirname(dirname(__FILE__)) . '/report_helper.php';
     }
 
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
@@ -378,7 +379,7 @@ class iform_my_dot_map {
         'extraParams' => array('sample_id' => $_GET['id']),
       );
       // @todo Error handling on the response
-      $occurrence = data_entry_helper::get_report_data($fetchOpts);
+      $occurrence = report_helper::get_report_data($fetchOpts);
       self::prepare_layer_titles($args, $occurrence);
       // Add the 3 distribution layers if present. Reverse the order so 1st layer is topmost
       $layerName = self::buildDistributionLayer(3, $args, $occurrence);

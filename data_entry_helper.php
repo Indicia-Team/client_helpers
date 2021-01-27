@@ -8388,17 +8388,6 @@ HTML;
   }
 
   /**
-   * Method that retrieves the data from a report or a table/view, ready to display in a chart or grid.
-   * @param array $options Refer to documentation for report_helper::get_report_data.
-   * @param string $extra Refer to documentation for report_helper::get_report_data.
-   * @deprecated, use report_helper::get_report_data instead.
-   */
-  public static function get_report_data($options, $extra='') {
-    require_once('report_helper.php');
-    return report_helper::get_report_data($options, $extra);
-  }
-
-  /**
    * Provides access to a list of remembered field values from the last time the form was used.
    * Accessor for the $rememberedFields variable. This is a list of the fields on the form
    * which are to be remembered the next time the form is loaded, e.g. for values that do not change

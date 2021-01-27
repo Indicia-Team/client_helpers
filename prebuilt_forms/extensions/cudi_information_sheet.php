@@ -24,7 +24,7 @@
  * Extension class that supplies a new control which allows the user to click on a button to navigate to the cudi form page.
  */
 class extension_cudi_information_sheet {
-  
+
   /*
    * Control is not visible to user, instead it appends "dynamic-" to the front of the $_GET parameter which is then used
    * by the system "behind the scenes" to automatically load that parameter into reports on that page.
@@ -34,16 +34,16 @@ class extension_cudi_information_sheet {
   public function autoLoadReportParamFromGet($auth, $args, $tabalias, $options, $path) {
     $_REQUEST['dynamic-id']=$_GET['id'];
   }
-  
+
   /*
    * Freeform report about a count unit.
    */
   public function informationSheetReport($auth, $args, $tabalias, $options, $path) {
     //List an array of display labels and their database values.
-    //We then loop around an html template of one report line inserting each label and database value name until we have a 
+    //We then loop around an html template of one report line inserting each label and database value name until we have a
     //full template.
     //We then call a freeform report that then populates this template.
-    
+
     $fields = array(
         'Count Unit Name'=>'name',
         'Alternative Name 1'=>'alternative_1',
@@ -58,17 +58,17 @@ class extension_cudi_information_sheet {
     );
     foreach ($fields as $caption=>$databaseValue) {
       $attrsTemplate.='<div class="field ui-helper-clearfix"><span>'.$caption.':</span><span>{'.$databaseValue.'}</span></div>';
-    } 
+    }
 
     if (!empty($options['alternative_1_attr_id'])&&
         !empty($options['alternative_2_attr_id'])&&
         !empty($options['country_attr_id'])&&
-        !empty($options['habitat_attr_id'])&&   
+        !empty($options['habitat_attr_id'])&&
         !empty($options['official_reason_for_change_attr_id'])&&
         !empty($options['site_location_type_id'])&&
-        !empty($options['loc_org_reg_attr_id'])) { 
+        !empty($options['loc_org_reg_attr_id'])) {
     //Call the report to populate the html template
-      
+
     return $attrs_report = report_helper::freeform_report(array(
         'readAuth' => $auth['read'],
         'class'=>'information-sheet-details-fields',
@@ -89,15 +89,15 @@ class extension_cudi_information_sheet {
           'sharing'=>'reporting'
         )
       ));
-    } else {      
+    } else {
       return '<div><h2>Plesse configure the Form Structure for the CUDI Information Sheet report</h2></div>';
     }
-     
+
   }
-  
+
   /*
    * Control used to display the Surveys associated with a Count Unit on the Cudi Information Sheet
-   */ 
+   */
   public function informationSheetSurveysReport($auth, $args, $tabalias, $options, $path) {
     //The Surveys associated with the Count Unit are held as location_attribute_values so collect these
     $surveysAttributeData = data_entry_helper::get_population_data(array(
@@ -131,14 +131,15 @@ class extension_cudi_information_sheet {
     $r .= '</table></div>';
     return $r;
   }
-  
-  /*
+
+  /**
    * A button link to the cudi form for the same location as being viewed on the information sheet
    */
   public function cudiFormButtonLink($auth, $args, $tabalias, $options, $path) {
     global $user;
+    iform_load_helpers(['report_helper']);
     //Get the Count Units that are in the user's tasks list using the same report.
-    $getNormalUserEditableCountUnitData  = data_entry_helper::get_report_data(array(
+    $getNormalUserEditableCountUnitData  = report_helper::get_report_data(array(
       'dataSource'=>'reports_for_prebuilt_forms/cudi/my_cudi_tasks',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('clean_url' => $options['clean_url'],
@@ -156,7 +157,7 @@ class extension_cudi_information_sheet {
     foreach($getNormalUserEditableCountUnitData as $idx => $isNormalUserAccessibleDirtyItem) {
       $isNormalUserAccessibleCountUnitIds[$idx] = $isNormalUserAccessibleDirtyItem['id'];
     }
-    //Only show the Cudi Form button for admin users or the Count Unit is the user's task list 
+    //Only show the Cudi Form button for admin users or the Count Unit is the user's task list
     if (in_array($_GET['id'],$isNormalUserAccessibleCountUnitIds)||$options['admin_mode']) {
       global $base_url;
       $cudiFormOptions = explode('|',$options['cudiFormOptions']);
@@ -164,11 +165,11 @@ class extension_cudi_information_sheet {
       $cudiFormParam = $cudiFormOptions[1];
       $cudi_form_url=(variable_get('clean_url', 0) ? '' : '?q=').$cudiFormPath.(variable_get('clean_url', 0) ? '?' : '&').$cudiFormParam.'='.$_GET[$options['urlParameter']];
       $cudiFormButtonLink = '<div>If you think any of this information is incorrect please submit a CUDI form</br>';
-      $cudiFormButtonLink .= 
+      $cudiFormButtonLink .=
       "<FORM>
         <INPUT Type=\"BUTTON\" VALUE=\"Cudi Form\" ONCLICK=\"window.location.href='$cudi_form_url'\">
       </FORM>";
       return $cudiFormButtonLink;
     }
-  }  
+  }
 }

@@ -23,7 +23,7 @@
 /**
  * Prebuilt Indicia data entry form.
  * NB has Drupal specific code.
- * 
+ *
  * @package    Client
  * @subpackage PrebuiltForms
  */
@@ -32,7 +32,7 @@ require_once('dynamic_location.php');
 
 class iform_dynamic_location_splash_squares extends iform_dynamic_location {
 
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
@@ -40,10 +40,10 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
     return array(
       'title'=>'Location entry form - Splash squares',
       'category' => 'Miscellaneous',
-      'description'=>'A data entry form for adding and editing Splash location squares.' 
+      'description'=>'A data entry form for adding and editing Splash location squares.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -114,17 +114,17 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
     );
     return $retVal;
   }
-  
+
   /**
    * Return the generated form output.
    * @return Form HTML.
    */
   public static function get_form($args, $nid) {
     //Admin can specify an area of the page to disable in the form structure if they wish. This area should be enclosed with a div with the id "disableDiv"
-    data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, select').attr('disabled','disabled');\n"; 
+    data_entry_helper::$javascript .= "$('#disableDiv').find('input, textarea, text, select').attr('disabled','disabled');\n";
     $r = parent::get_form($args, $nid);
     if (empty($args['include_delete_button']) || $args['include_delete_button']==false) {
-      data_entry_helper::$javascript .= "$('#delete-button').hide();\n"; 
+      data_entry_helper::$javascript .= "$('#delete-button').hide();\n";
     }
     //The system page configuration includes a setting to set the default spatial reference system to British National Grid, but
     //we also need to hide the field so the user cannot change it.
@@ -132,13 +132,13 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
       data_entry_helper::$javascript .= "$('#imp-sref-system').hide();";
     return $r;
   }
-  
+
   /*
    * Display a label on the page showing whether the square is allocated to a user or not.
    */
   public static function get_control_allocationlabel($auth, $args, $tabalias, $options) {
     if (!empty($_GET['location_id']) && !empty($args['user_squares_person_attr_id'])) {
-      $r='';    
+      $r='';
       $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
       $allocationData = data_entry_helper::get_population_data(array(
         'table' => 'person_attribute_value',
@@ -149,19 +149,19 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
         $r .= '<div><label>User allocation status:</label><label>Allocated</label></div>';
       } else {
         $r .= '<div><label>User allocation status:</label><label>Not Allocated</label></div>';
-      }  
+      }
       return $r;
     }
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * This is different to a standard location submission because when we submit a new additional square, we find any vice counties the
    * square intersects with, and then we save them to a custom attribute ready for use in the square's name. We use a custom attribute as
    * it is faster than doing the intersection in real-time, particularly in report grids.
-   * 
-   * @param array $values Associative array of form data values. 
-   * @param array $args iform parameters. 
+   *
+   * @param array $values Associative array of form data values.
+   * @param array $args iform parameters.
    * @return array Submission structure.
    */
   public static function get_submission($values, $args) {
@@ -172,10 +172,10 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
       $userData = data_entry_helper::get_population_data(array(
         'table' => 'user',
         'extraParams' => $readAuth + array('id' =>hostsite_get_user_field('indicia_user_id'))
-      ));     
+      ));
 
       $s['subModels'][] = array(
-          'fkId' => 'int_value', 
+          'fkId' => 'int_value',
           'model' => array(
             'id' => 'person_attribute_value',
             'fields' => array(
@@ -195,9 +195,10 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
         'valueField'=>'id',
         'captionField'=>'name'
       );
-      $squareViceCountyData = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $squareViceCountyData = report_helper::get_report_data($reportOptions);
       //Build up a comma seperate list of vice counties if the square interects more than one.
-      $squareViceCountyDataForDatabase = ''; 
+      $squareViceCountyDataForDatabase = '';
       foreach ($squareViceCountyData as $squareViceCounty) {
         if (isset($squareViceCounty['name']))
           $squareViceCountyDataForDatabase .= $squareViceCounty['name'].', ';
@@ -208,7 +209,7 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
       //Save the custom attribute which holds the vice counties.
       if (!empty($squareViceCountyData[0]['name'])) {
         $s['subModels'][] = array(
-            'fkId' => 'location_id', 
+            'fkId' => 'location_id',
             'model' => array(
               'id' => 'location_attribute_value',
               'fields' => array(
@@ -217,7 +218,7 @@ class iform_dynamic_location_splash_squares extends iform_dynamic_location {
             )
           )
         );
-      }   
+      }
     }
     return $s;
   }

@@ -198,6 +198,7 @@ class extension_splash_extensions {
    * </ul>
    */
   public static function splash_location_select($auth, $args, $tabAlias, $options) {
+    iform_load_helpers(['report_helper']);
     if (empty($options['coreSquareLocationTypeId'])) {
       hostsite_show_message('Please fill in the @coreSquareLocationTypeId option for the splash_location_select control');
       return '';
@@ -261,7 +262,7 @@ class extension_splash_extensions {
       $reportOptions['extraParams']=array_merge($reportOptions['extraParams'],['pss_mode'=>true]);
       data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly');";
     }
-    $rawSquarePlotData = data_entry_helper::get_report_data($reportOptions);
+    $rawSquarePlotData = report_helper::get_report_data($reportOptions);
     if (empty($rawSquarePlotData) && empty($_GET['sample_id'])) {
         //If the user doesn't have any plots and is in add mode, then hide the map and disable the Spatial Ref field so they can't continue
         if (!empty($options['noPlotMessageInAlert']))
@@ -279,7 +280,7 @@ class extension_splash_extensions {
       //If the user does have plots and is in edit mode then doing following
       if (!empty($_GET['sample_id'])) {
         //Get square and plot data for sample
-        $selectedSquareAndPlotInfo = data_entry_helper::get_report_data(
+        $selectedSquareAndPlotInfo = report_helper::get_report_data(
           array(
             'dataSource'=>'projects/npms/get_square_for_sample',
             'readAuth'=>$auth['read'],
@@ -716,7 +717,8 @@ class extension_splash_extensions {
     }
     //Make the name of the square a link to the maintain square page
     if (!empty($reportOptions)) {
-      $squareNameData = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $squareNameData = report_helper::get_report_data($reportOptions);
       if (!empty($squareNameData[0]['name'])) {
         //Use user supplied option if present
         if (!empty($options['label']))
@@ -1150,7 +1152,8 @@ class extension_splash_extensions {
           'nocache' => true
         ));
         if (empty($personData[0]['id'])) {
-          $personData = data_entry_helper::get_report_data(array(
+          iform_load_helpers(['report_helper']);
+          $personData = report_helper::get_report_data(array(
             'dataSource'=>'projects/npms/get_person_for_email_address',
             'readAuth'=>$auth['read'],
             'extraParams'=>array('email_address' => $email)
@@ -1294,7 +1297,8 @@ class extension_splash_extensions {
       'readAuth'=>$auth['read'],
       'extraParams' => array('website_id'=>$args['website_id'],'person_ids'=>$personIds),
     );
-    $existingAttrVal = data_entry_helper::get_report_data($reportOptions);
+    iform_load_helpers(['report_helper']);
+    $existingAttrVal = report_helper::get_report_data($reportOptions);
     // Change the array format to to be a multi-dimensional array with person_id, person_attribute_id indexes and
     // person_attribute_value_id indexes
     $tempExistingAttrVal = array();
@@ -1388,7 +1392,7 @@ class extension_splash_extensions {
             'readAuth'=>$auth['read'],
             'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['over18AttrId'], 'person_id'=>$userData[0]['person_id']),
           );
-          $existingOver18AttrVal = data_entry_helper::get_report_data($reportOptions);
+          $existingOver18AttrVal = report_helper::get_report_data($reportOptions);
           if (!empty($user->field_indicia_over_18['und'][0]['value']))
             $over18Data=$user->field_indicia_over_18['und'][0]['value'];
           else
@@ -1412,7 +1416,7 @@ class extension_splash_extensions {
             'readAuth'=>$auth['read'],
             'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['dataAccessAttrId'], 'person_id'=>$userData[0]['person_id']),
           );
-          $existingDataAccessAttrVal = data_entry_helper::get_report_data($reportOptions);
+          $existingDataAccessAttrVal = report_helepr::get_report_data($reportOptions);
           if (!empty($user->field_indicia_i_agree['und'][0]['value']))
             $dataAccessData=$user->field_indicia_i_agree['und'][0]['value'];
           else
@@ -1869,7 +1873,8 @@ class extension_splash_extensions {
       'valueField'=>'id',
       'captionField'=>'fullname_surname_first'
     );
-    $userData = data_entry_helper::get_report_data($reportOptions);
+    iform_load_helpers(['report_helper']);
+    $userData = report_helper::get_report_data($reportOptions);
     $r = '<select id="user-select">\n';
     $r .= '<option value="">'.'please select'.'</option>\n';
     foreach ($userData as $userItem) {
