@@ -924,7 +924,7 @@ JS;
     // initiate local javascript to do the upload with a progress feedback
     $r .= <<<HTML
 <div id="progress">
-<div id="progress-bar"></div>
+<progress id="progress-bar" class="progress" value="0" max="100">0 %</progress>
 HTML;
     if (isset($options['allowCommitToDB']) && $options['allowCommitToDB']) {
       $actionMessage='Preparing to upload.';
@@ -957,7 +957,8 @@ uploadChunk = function() {
         message += ' $errorMessage'.replace('{1}', response.errorCount);
       }
       jQuery('#progress-text').html(message);
-      $('#progress-bar').progressbar ('option', 'value', response.progress);
+      $('#progress-bar').val(response.progress);
+      $('#progress-bar').text(response.progress + ' %');
       if (response.uploaded >= limit) {
         uploadChunk();
       } else {
@@ -978,7 +979,8 @@ uploadChunk = function() {
   });
 };
 var total = 0, filepos = 0;
-jQuery('#progress-bar').progressbar ({value: 0});
+jQuery('#progress-bar').val(0);
+jQuery('#progress-bar').text('0 %');
 uploadChunk();
 
 JS;
