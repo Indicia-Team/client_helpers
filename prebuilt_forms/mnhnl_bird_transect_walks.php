@@ -973,8 +973,8 @@ jQuery('#SurveyForm').ajaxForm({
     data_entry_helper::$javascript .= "// If sample_id filled in -> we have a previously saved collection, so possibly have subsamples.
 if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
     // Put up warning dialogue that we are checking the subsamples: include a progress bar: set to zero%.
-    var dialog = $('<span id=\"subsample-progress-span\"><p>'+\"".lang::get('Please wait whilst some data integrity checks are carried out.')."\"+'</p><div id=\"subsample-progress\"></div></span>').dialog({ title: \"".lang::get('Checks')."\", zIndex: 4000 });
-    jQuery('#subsample-progress').progressbar({value: 0});
+    var dialog = $('<span id=\"subsample-progress-span\"><p>'+\"".lang::get('Please wait whilst some data integrity checks are carried out.')."\"+'</p><progress class=\"progress\" max=\"100\" id=\"subsample-progress\"></progress></span>').dialog({ title: \"".lang::get('Checks')."\", zIndex: 4000 });
+    jQuery('#subsample-progress').val(0);
     jQuery.ajax({ // get all subsamples/occurrences to check if the dates match
             type: 'GET',
             url: \"".$svcUrl."/report/requestReport?report=library/occurrences/occurrences_list_for_parent_sample.xml&reportSource=local&mode=json&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
@@ -984,7 +984,7 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
               jQuery('#subsample-progress').data('max',subData.length+1);
               var mainDate = $.datepicker.formatDate('yy-mm-dd', jQuery('#SurveyForm > input[name=sample\\:date]').datepicker(\"getDate\"));
               for(i=0; i< subData.length; i++){ // loop through all subsamples
-                jQuery('#subsample-progress').progressbar('option','value',(i+1)*100/jQuery('#subsample-progress').data('max'));
+                jQuery('#subsample-progress').val((i+1)*100/jQuery('#subsample-progress').data('max'));
                 var values = {};
                 var url = '';
                 // Check if date on subsamples matches supersample date: if not set up a post array for the sample, with correct date.

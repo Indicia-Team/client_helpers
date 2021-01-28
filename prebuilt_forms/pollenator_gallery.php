@@ -862,14 +862,14 @@ alt="Mes filtres" title="Mes filtres" /></div> <div id="gallery-filter-retrieve"
 	</form>
 	<div id="results-validate-page" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active ui-corner-all" style="display: none">
 	  <div id="validate-page-button" class="ui-state-default ui-corner-all validate-page-button">'.lang::get('LANG_Validate_Page').'</div>
-	  <div id="validate-page-progress"></div>
+	  <progress id="validate-page-progress" class="progress" max="100"></progress>
 	  <div id="validate-page-message"></div>
 	  <div id="cancel-validate-page" class="ui-state-default ui-corner-all cancel-validate-button">'.lang::get('LANG_Cancel').'</div>
 	</div>
 	<div id="results-validate-taxon-outer" style="display: none">
 	  <div id="results-validate-taxon" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active ui-corner-all" style="display: none">
 		<div id="validate-taxon-button" class="ui-state-default ui-corner-all validate-taxon-button">'.lang::get('LANG_Validate_Taxon').'</div>
-		<div id="validate-taxon-progress"></div>
+		<progress id="validate-taxon-progress" class="progress" max="100"></progress>
 		<div id="validate-taxon-message"></div>
 		<div id="cancel-validate-taxon" class="ui-state-default ui-corner-all cancel-validate-button">'.lang::get('LANG_Cancel').'</div>
 	</div></div>';
@@ -971,7 +971,7 @@ alt="Mes filtres" title="Mes filtres" /></div> <div id="gallery-filter-retrieve"
 		$r .= '
     <div id="results-validate-collection" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active ui-corner-all">
 	  <div id="validate-collection-button" class="ui-state-default ui-corner-all validate-collection-button">'.lang::get('LANG_Validate_Collection').'</div>
-	  <div id="validate-collection-progress"></div>
+	  <progress id="validate-collection-progress" class="progress" max="100"></progress>
 	  <div id="validate-collection-message"></div>
 	  <div id="cancel-validate-collection" class="ui-state-default ui-corner-all cancel-validate-button">'.lang::get('LANG_Cancel').'</div>
 	</div>';
@@ -1416,9 +1416,9 @@ bulkValidating=false;";
 		data_entry_helper::$javascript .= "
 bulkCancel=false;
 bulkType='';
-jQuery('#validate-taxon-progress').progressbar({value: 0});
-jQuery('#validate-page-progress').progressbar({value: 0});
-jQuery('#validate-collection-progress').progressbar({value: 0});
+jQuery('#validate-taxon-progress').val(0);
+jQuery('#validate-page-progress').val(0);
+jQuery('#validate-collection-progress').val(0);
 jQuery('form#bulk-validation-form').ajaxForm({
 	dataType:  'json',
 	beforeSubmit:   function(data, obj, options){
@@ -1457,7 +1457,7 @@ uploadValidation = function(){
 	  case 'Taxon':
 		var index = jQuery('#validate-taxon-progress').data('index');
 		jQuery('#validate-taxon-progress').data('index',index+1);
-		jQuery('#validate-taxon-progress').progressbar('option','value',index*100/max);
+		jQuery('#validate-taxon-progress').val(index*100/max);
 		if(index<max){
 			if(jQuery('#results-collections-results').filter(':visible').length > 0)
 				occID=searchResults.features[index].attributes.flower_id;
@@ -1473,7 +1473,7 @@ uploadValidation = function(){
 		else
 			todolist =jQuery('.filter-insect-container').find('.occurrence-dubious,.insect-ok').parent();
 		var completed = max - todolist.length;
-		jQuery('#validate-page-progress').progressbar('option','value',completed*100/max);
+		jQuery('#validate-page-progress').val(completed*100/max);
 		if(todolist.length>0){
 			occID=jQuery(todolist[0]).parent().attr('occID');
 			jQuery('#validate-page-message').html('<span>'+completed+'/'+max+' : '+Math.round(completed*100/max)+'%</span>');
@@ -1482,7 +1482,7 @@ uploadValidation = function(){
 	  case 'Collection': // insects only
 		var todolist = jQuery('.collection-insect-container').find('.occurrence-dubious,.insect-ok').parent().parent();
 		var completed = max - todolist.length;
-		jQuery('#validate-collection-progress').progressbar('option','value',completed*100/max);
+		jQuery('#validate-collection-progress').val(completed*100/max);
 		if(todolist.length>0){
 			occID=jQuery(todolist[0]).attr('occID');
 			jQuery('#validate-collection-message').html('<span>'+completed+'/'+max+' : '+Math.round(completed*100/max)+'%</span>');
@@ -1523,7 +1523,7 @@ bulkValidatePrep=function(type, max){
 	jQuery('#validate-page-message,#validate-taxon-message,#validate-collection-message').empty();
 	jQuery('#imp-georef-search-btn,#search-insee-button,#search-insects-button,#search-collections-button,#validate-page-button,#validate-taxon-button,#validate-collection-button').attr('disabled','disabled');
 	jQuery('#validate-'+bulkType.toLowerCase()+'-message').html('<span>0/'+max+' : 0%</span>');
-	jQuery('#validate-'+bulkType.toLowerCase()+'-progress').data('max',max).data('index',0).progressbar('option','value',0);
+	jQuery('#validate-'+bulkType.toLowerCase()+'-progress').data('max',max).data('index',0).val(0);
 }
 bulkValidateFinish=function(message){
 	bulkCancel=false;
@@ -2797,7 +2797,7 @@ runSearch = function(forCollections){
 		searchResultsLayer.destroy();
     jQuery('#results-collections-results,#results-insects-results,#validate-page-message,#validate-taxon-message,#validate-collection-message,#collection-insects').empty();
 	jQuery('#focus-occurrence,#focus-collection').hide();
-	jQuery('#validate-taxon-progress,#validate-page-progress,,#validate-collection-progress,#cancel-validate-page,#cancel-validate-taxon,#cancel-validate-collection').hide();
+	jQuery('#validate-taxon-progress,#validate-page-progress,#validate-collection-progress,#cancel-validate-page,#cancel-validate-taxon,#cancel-validate-collection').hide();
   	jQuery('#results-validate-taxon,#results-validate-page,#results-validate-taxon-outer').hide();
 	var filters = [];
 
