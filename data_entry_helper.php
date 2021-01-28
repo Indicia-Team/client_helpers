@@ -665,7 +665,7 @@ JS;
     $options = self::check_options($options);
     $default = isset($options['default']) ? $options['default'] : '';
     $value = self::check_default_value($options['fieldname'], $default);
-    $options['checked'] = ($value==='on' || $value === 1 || $value === '1' || $value==='t' || $value===true) ? ' checked="checked"' : '';
+    $options['checked'] = ($value === 'on' || $value === 1 || $value === '1' || $value==='t' || $value === TRUE) ? ' checked="checked"' : '';
     $options['template'] = array_key_exists('template', $options) ? $options['template'] : 'checkbox';
     return self::apply_template($options['template'], $options);
   }
@@ -784,17 +784,18 @@ JS;
    */
   public static function checkbox_group(array $options) {
     $options = self::check_options($options);
-    $options = array_merge(array(
+    $options = array_merge([
       'class' => empty($options['sortable']) || !$options['sortable'] ? 'inline' : ''
-    ), $options);
-    if (substr($options['fieldname'],-2) !='[]')
+    ], $options);
+    if (substr($options['fieldname'], -2) !== '[]') {
       $options['fieldname'] .= '[]';
+    }
     if (!empty($options['sortable']) && $options['sortable']) {
       self::$javascript .= "$('#$options[id]').sortable();\n";
       self::$javascript .= "$('#$options[id]').disableSelection();\n";
       // resort the available options into the saved order
       if (!empty($options['default']) && !empty($options['lookupValues'])) {
-        $sorted = array();
+        $sorted = [];
         // First copy over the ones that are ticked, in order
         foreach ($options['default'] as $option) {
           if (!empty($options['lookupValues'][$option]))
@@ -806,7 +807,7 @@ JS;
             $sorted[$option] = $caption;
           }
         }
-        $options['lookupValues']=$sorted;
+        $options['lookupValues'] = $sorted;
       }
 
     }
@@ -815,47 +816,46 @@ JS;
 
   /**
    * Helper function to insert a date picker control.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>date_picker</b></br>
-   * HTML The output of this controlfor the text input element used for the date picker. Other functionality is added
-   * using JavaScript.
-   * </li>
-   * </ul>
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to, for example 'sample:date'.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>allowFuture</b><br/>
-   * Optional. If true, then future dates are allowed. Default is false.</li>
-   * <li><b>dateFormat</b><br/>
-   * Optional. Allows the date format string to be set, which must match a date format that can be parsed by the JavaScript Date object.
-   * Default is dd/mm/yy.</li>
-   * <li><b>allowVagueDates</b><br/>
-   * Optional. Set to true to enable vague date input, which disables client side validation for standard date input formats.</li>
-   * <li><b>showButton</b><br/>
-   * Optional. Set to true to show a button which must be clicked to drop down the picker. Defaults to false unless allowVagueDates is true
-   * as inputting a vague date without the button is confusing.</li>
-   * <li><b>buttonText</b><br/>
-   * Optional. If showButton is true, this text will be shown as the 'alt' text for the buttom image.</li>
-   * <li><b>placeHolder</b><br/>
-   * Optional. Control the placeholder text shown in the text box before a value has been added.</li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   * * date_picker - HTML The output of this control for the text input element
+   *   used for the date picker. Other functionality is added using JavaScript.
    *
-   * @return string HTML to insert into the page for the date picker control.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to, for example 'sample:date'.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class -  Optional. CSS class names to add to the control.
+   *   * allowFuture - Optional. If true, then future dates are allowed.
+   *     Default is false.
+   *   * dateFormat - Optional. Allows the date format string to be set, which
+   *     must match a date format that can be parsed by the JavaScript Date
+   *     object. Default is dd/mm/yy.
+   *   * allowVagueDates - Optional. Set to true to enable vague date input,
+   *     which disables client side validation for standard date input formats.
+   *   * showButton - Optional. Set to true to show a button which must be
+   *     clicked to drop down the picker. Defaults to false unless
+   *     allowVagueDates is true as inputting a vague date without the button
+   *     is confusing.
+   *   * buttonText - Optional. If showButton is true, this text will be shown
+   *     as the 'alt' text for the buttom image.
+   *   * placeHolder - Optional. Control the placeholder text shown in the text
+   *     box before a value has been added.
+   *
+   * @return string
+   *   HTML to insert into the page for the date picker control.
    */
   public static function date_picker($options) {
     $options = self::check_options($options);
     $options = array_merge(array(
       'dateFormat' => 'dd/mm/yy',
-      'allowVagueDates'=>FALSE,
+      'allowVagueDates' => FALSE,
       'default' => '',
       'isFormControl' => TRUE
     ), $options);
@@ -867,7 +867,7 @@ JS;
     if (!isset($options['placeholder']))
       $options['placeholder'] = $options['showButton'] ? lang::get("Pick or type a$vague date") : lang::get('Click here');
     self::add_resource('jquery_ui');
-    $escaped_id=str_replace(':','\\\\:',$options['id']);
+    $escaped_id=str_replace(':', '\\\\:', $options['id']);
     // Don't set js up for the datepicker in the clonable row for the species checklist grid
     if ($escaped_id!='{fieldname}') {
       // should include even if validated_form_id is null, as could be doing this via AJAX.
@@ -1586,17 +1586,17 @@ JS;
    *   HTML string to insert in the form.
    */
   public static function jsonwidget($options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'id' => 'jsonwidget_container',
       'fieldname' => 'jsonwidget',
       'schema' => '{}',
       'class' => '',
       'default' => '',
-    ), $options);
+    ], $options);
     $options['class'] = trim($options['class'].' control-box jsonwidget');
 
     self::add_resource('jsonwidget');
-    $options['default'] = str_replace(array("\\n", "\r", "\n", "'"), array('\\\n', '\r','\n',"\'"), $options['default']);
+    $options['default'] = str_replace(["\\n", "\r", "\n", "'"], ['\\\n', '\r','\n',"\'"], $options['default']);
     self::$javascript .= <<<JS
 $('#$options[id]').jsonedit({
   schema: $options[schema],
@@ -1688,7 +1688,7 @@ JS;
       $options['id'] = 'imp-location';
     }
     $options = self::check_options($options);
-    $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : null;
+    $caption = isset(self::$entity_to_load['sample:location']) ? self::$entity_to_load['sample:location'] : NULL;
     if (!$caption && !empty($options['useLocationName']) && $options['useLocationName'] && !empty(self::$entity_to_load['sample:location_name']))
       $caption = self::$entity_to_load['sample:location_name'];
     if (empty($caption) && !empty($options['default'])) {
@@ -1700,7 +1700,7 @@ JS;
         $caption = $thisLoc[0]['name'];
       }
     }
-    $options = array_merge(array(
+    $options = array_merge([
       'table' => 'location',
       'fieldname' => 'sample:location_id',
       'valueField' => 'id',
@@ -1712,7 +1712,7 @@ JS;
       'searchUpdatesUsingBoundary' => FALSE,
       'fetchLocationAttributesIntoSample' =>
           !isset($options['fieldname']) || $options['fieldname'] === 'sample:location_id'
-    ), $options);
+    ], $options);
     // Disable warnings for no matches if the user is allowed to input a vague
     // unmatched location name.
     $options['warnIfNoMatch'] = !$options['useLocationName'];
@@ -1820,9 +1820,9 @@ JS;
     $options = self::check_options($options);
     // Apply location type filter if specified.
     if (array_key_exists('location_type_id', $options)) {
-      $options['extraParams'] += array('location_type_id' => $options['location_type_id']);
+      $options['extraParams'] += ['location_type_id' => $options['location_type_id']];
     }
-    $options = array_merge(array(
+    $options = array_merge([
       'table' => 'location',
       'fieldname' => 'sample:location_id',
       'valueField' => 'id',
@@ -1831,8 +1831,8 @@ JS;
       'searchUpdatesSref' => FALSE,
       'searchUpdatesUsingBoundary' => FALSE,
       'isFormControl' => TRUE
-    ), $options);
-    $options['columns']=$options['valueField'].','.$options['captionField'];
+    ], $options);
+    $options['columns'] = $options['valueField'] . ',' . $options['captionField'];
     if ($options['searchUpdatesSref']) {
       self::$javascript .= "indiciaData.searchUpdatesSref=true;\n";
       self::$javascript .= "indiciaData.searchUpdatesUsingBoundary = " .
@@ -1928,10 +1928,9 @@ JS;
    *
    * @return string HTML to insert into the page for the listbox control.
    */
-  public static function listbox($options)
-  {
+  public static function listbox($options) {
     $options = self::check_options($options);
-    // blank text option not applicable to list box
+    // Blank text option not applicable to list box.
     unset($options['blankText']);
     $options = array_merge(
       array(
@@ -1942,13 +1941,14 @@ JS;
       $options
     );
     $r = '';
-    if(isset($options['multiselect']) && $options['multiselect']!=false && $options['multiselect']!=='false') {
-      $options['multiple']='multiple';
-      if (substr($options['fieldname'],-2) !=='[]') {
+    if (isset($options['multiselect']) && $options['multiselect']!=false && $options['multiselect'] !== 'false') {
+      $options['multiple'] = 'multiple';
+      if (substr($options['fieldname'], -2) !=='[]') {
         $options['fieldname'] .= '[]';
       }
-      // ensure a blank value is posted if nothing is selected in the list, otherwise the list can't be cleared in the db.
-      $r = '<input type="hidden" name="'.$options['fieldname'].'" value=""/>';
+      // Ensure a blank value is posted if nothing is selected in the list,
+      // otherwise the list can't be cleared in the db.
+      $r = '<input type="hidden" name="' . $options['fieldname'] . '" value=""/>';
     }
     return $r . self::select_or_listbox($options);
   }
