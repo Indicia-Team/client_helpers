@@ -19,6 +19,8 @@
  * @link http://code.google.com/p/indicia/
  */
 
+use Masterminds\HTML5;
+
 /**
  * Link in other required php files.
  */
@@ -259,8 +261,17 @@ class report_helper extends helper_base {
   * for each row. If set, then the &lt;tr&gt; elements have their id attributes
   * set to row + this field value, e.g. row37. This is used to allow
   * synchronisation of the selected table rows with a report map output showing
-  * the same data.
+  * the same data. Also used to obtain media data (caption and licence info)
+  * when showing a popup after clicking on a media thumbnail.
   * </li>
+  * <li><b>entity</b>
+  * If the report grid contains a media column with thumbnails, then the rowId
+  * is used to determine how to load the media's caption and licence info from
+  * the database. If rowId is of the form '<table>_id', e.g. 'sample_id', then
+  * entity will be worked out by the code so setting this option is
+  * unnecessary. However if rowId is just set to 'id' or some other form, then
+  * the code will default the entity to 'occurrence' so will need to be
+  * overridden for data from other tables.
   * <li><b>includeAllColumns</b>
   * Defaults to true. If true, then any columns in the report, view or table which are not in the columns
   * option array are automatically added to the grid after any columns specified in the columns option array.
@@ -570,10 +581,10 @@ class report_helper extends helper_base {
     $outputCount = 0;
     $imagePath = self::get_uploaded_image_folder();
     $addFeaturesJs = '';
-    $haveUpdates=false;
-    $updateformID=0;
+    $haveUpdates = FALSE;
+    $updateformID = 0;
     if (count($records)>0) {
-      $rowInProgress=false;
+      $rowInProgress = FALSE;
       $rowTitle = !empty($options['rowId']) ?
           ' title="'.lang::get('Click the row to highlight the record on the map. Double click to zoom in.').'"' : '';
       foreach ($records as $rowIdx => $row) {
@@ -590,7 +601,8 @@ class report_helper extends helper_base {
             'currentUrl' => $currentUrl['path']
         ));
         // set a unique id for the row if we know the identifying field.
-        $rowId = isset($options['rowId']) ? ' id="row'.$row[$options['rowId']].'"' : '';
+        $rowId = isset($options['rowId']) ? $row[$options['rowId']] : '';
+        $rowIdAttr = $rowId ? " id=\"row$rowId\"" : '';
         if ($rowIdx % $options['galleryColCount']==0) {
           $classes=array();
           if ($altRowClass)
@@ -613,27 +625,55 @@ class report_helper extends helper_base {
           if ($options['sendOutputToMap'] && isset($field['mappable']) && ($field['mappable']==='true' || $field['mappable']===true)) {
             $data = json_encode($row + array('type'=>'linked'));
             $addFeaturesJs.= "div.addPt(features, ".$data.", '".$field['fieldname']."', {}".
-                (empty($rowId) ? '' : ", '".$row[$options['rowId']]."'").");\n";
+                ", '$rowId');\n";
           }
           if (isset($field['visible']) && ($field['visible']==='false' || $field['visible']===false))
             continue; // skip this column as marked invisible
           if (isset($field['img']) && $field['img']=='true' && !empty($row[$field['fieldname']]) && !isset($field['template'])) {
             $imgs = explode(',', $row[$field['fieldname']]);
             $value='';
-            $imgclass=count($imgs)>1 ? 'multi' : 'single';
-            $group=count($imgs)>1 && !empty($options['rowId']) ? ' rel="group-' . $row[$options['rowId']] . '"' : '';
+            $imgclass = count($imgs)>1 ? 'multi' : 'single';
+            $group = count($imgs)>1 && !empty($rowId) ? "group-$rowId" : '';
             foreach($imgs as $img) {
+              // Attach info so the file's caption and licence can be loaded
+              // on view. We can only do this if we know the row's ID.
+              $mediaInfoAttr = '';
+              if (isset($options['rowId'])) {
+                if (preg_match('/^([a-z_]+)_id$/', $options['rowId'], $matches)) {
+                  $entity = $matches[1];
+                }
+                else {
+                  // Assume the ID is for occurrence data unless specified.
+                  $entity = isset($options['entity']) ? $options['entity'] : 'occurrence';
+                }
+                $mediaInfo = htmlspecialchars(json_encode([
+                  "{$entity}_id" => $rowId,
+                  'path' => $img,
+                ]));
+                $mediaInfoAttr = " data-media-info=\"$mediaInfo\"";
+              }
               if (preg_match('/^https:\/\/static\.inaturalist\.org/', $img)) {
                 $imgLarge = str_replace('/square.', '/large.', $img);
-                $value .= "<a href=\"$imgLarge\" class=\"inaturalist fancybox $imgclass$group\"><img src=\"$img\" /></a>";
+                $value .= "<a href=\"$imgLarge\" data-fancybox=\"$group\"$mediaInfoAttr class=\"inaturalist $imgclass\"><img src=\"$img\" /></a>";
               }
               elseif (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+(\.kr)?)/', $img, $matches)) {
-                // http, means an external file
+                // HTTP, means an external file.
                 // Flickr URLs sometimes have . in them.
                 $matches['site'] = str_replace('.', '', $matches['site']);
                 $value .= "<a href=\"$img\" class=\"social-icon $matches[site]\"></a>";
-              } else {
-                $value .= "<a href=\"$imagePath$img\" class=\"fancybox $imgclass$group\"><img src=\"$imagePath" . $options['imageThumbPreset'] . "-$img\" /></a>";
+              }
+              elseif (preg_match('/(\.wav|\.mp3)$/', strtolower($img))) {
+                $value .= <<<HTML
+<audio controls src="$imagePath$img"$mediaInfoAttr type="audio/mpeg" />
+HTML;
+              }
+              else {
+                $value .= <<<HTML
+<a href="$imagePath$img" class="$imgclass"
+  data-fancybox="$group"$mediaInfoAttr>
+  <img src="$imagePath$options[imageThumbPreset]-$img" />
+</a>
+HTML;
               }
             }
             $row[$field['fieldname']] = $value;
@@ -700,7 +740,7 @@ JS;
         }
         if ($rowIdx % $options['galleryColCount']==$options['galleryColCount']-1) {
           $rowInProgress=false;
-          $tbody .= str_replace(array('{class}','{rowId}','{rowTitle}','{content}'), array($rowClass, $rowId, $rowTitle, $tr), $indicia_templates['report-tbody-tr']);
+          $tbody .= str_replace(array('{class}','{rowId}','{rowTitle}','{content}'), array($rowClass, $rowIdAttr, $rowTitle, $tr), $indicia_templates['report-tbody-tr']);
         }
         $altRowClass = empty($altRowClass) ? $options['altRowClass'] : '';
         $outputCount++;
@@ -719,7 +759,7 @@ JS;
         }
       }
       if ($rowInProgress)
-        $tbody .= str_replace(array('{class}','{rowId}','{title}','{content}'), array($rowClass, $rowId, $rowTitle, $tr), $indicia_templates['report-tbody-tr']);
+        $tbody .= str_replace(array('{class}','{rowId}','{title}','{content}'), array($rowClass, $rowIdAttr, $rowTitle, $tr), $indicia_templates['report-tbody-tr']);
     } else {
       $tbody .= str_replace(array('{class}','{rowId}','{rowTitle}','{content}'), array(' class="empty-row"','','','<td colspan="'.count($options['columns'])*$options['galleryColCount'].
           '">' . lang::get('No information available') . '</td>'), $indicia_templates['report-tbody-tr']);
@@ -866,7 +906,6 @@ indiciaData.reports.$group.$uniqueName = $('#".$options['id']."').reportgrid({
   langNext: '" . lang::get('next') . "',
   langLast: '" . lang::get('last') . "',
   langShowing: '" . lang::get('Showing records {1} to {2} of {3}') . "',
-  langHideInfo: '" . lang::get('Hide info') . "',
   noRecords: '" . lang::get('No records')."',
   altRowClass: '$options[altRowClass]',
   actionButtonTemplate: '" . $indicia_templates['report-action-button'] ."'";

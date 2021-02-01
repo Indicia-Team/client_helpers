@@ -3918,14 +3918,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
       $readableTypes = array_pop($linkMediaTypes);
       if (count($linkMediaTypes)>0)
         $readableTypes = implode(', ', $linkMediaTypes) . ' ' . lang::get('or') . ' ' . $readableTypes;
-      return '<div style="display: none"><div id="add-link-form" title="Add a link to a remote file">
-<p class="validateTips">'.lang::get('Paste in the web address of a resource on {1}', $readableTypes).'.</p>
-<fieldset>
-<label for="name">URL</label>
-<input type="text" name="link_url" id="link_url" class="text ui-widget-content ui-corner-all">
-<p style="display: none" class="error"></p>
-</fieldset>
-</div></div>';
+      return '<div style="display: none"><div id="add-link-form" title="Add a link to a remote file">' .
+        '<p class="validateTips">'.lang::get('Paste in the web address of a resource on {1}', $readableTypes).'.</p>' .
+        self::text_input(['label' => lang::get('URL'), 'fieldname' => 'link_url', 'class' => 'form-control']) .
+        '</div></div>';
     }
     else {
       return '';
@@ -6057,7 +6053,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
               $baseUrl = self::$base_url;
               $preset = $options['termImageSize'] === 'original' ? '' : "$options[termImageSize]-";
               $caption .= <<<HTML
-<a href="{$baseUrl}upload/$record[preferred_image_path]" class="fancybox">
+<a href="{$baseUrl}upload/$record[preferred_image_path]" data-fancybox>
   <img src="{$baseUrl}upload/$preset$record[preferred_image_path]" />
 </a>
 HTML;
@@ -7260,7 +7256,7 @@ HTML;
       $zeroAttrs = true, array $zeroValues=['0','none','absent','not seen']) {
     // We're mainly submitting to the sample model
     $sampleMod = submission_builder::wrap_with_images($values, 'sample');
-    $occurrences = submission_builder::wrap_species_checklist($values, $include_if_any_data,
+    $occurrences = data_entry_helper::wrap_species_checklist($values, $include_if_any_data,
       $zeroAttrs, $zeroValues);
 
     // Add the occurrences in as subModels without overwriting others such as a sample image
@@ -8149,7 +8145,7 @@ TXT;
           $baseUrl = self::$base_url;
           $preset = $options['attrImageSize'] === 'original' ? '' : "$options[attrImageSize]-";
           $output .= <<<HTML
-<a href="{$baseUrl}upload/$item[image_path]" class="fancybox">
+<a href="{$baseUrl}upload/$item[image_path]" data-fancybox>
   <img src="{$baseUrl}upload/$preset$item[image_path]" />
 </a>
 HTML;

@@ -223,7 +223,7 @@ $('input#{escaped_input_id}').result(function(event, data) {
   // Rows in a list of key-value pairs.
   'dataValueList' => '<div class="detail-panel" id="{id}"><h3>{title}</h3><dl class="dl-horizontal">{content}</dl></div>',
   'dataValue' => '<dt>{caption}</dt><dd{class}>{value}</dd>',
-  'speciesDetailsThumbnail' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
+  'speciesDetailsThumbnail' => '<div class="gallery-item"><a data-fancybox="gallery" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
 );
 
 /**
@@ -806,12 +806,19 @@ class helper_base {
         'jquery_ui' => array('deps' => array('jquery'), 'stylesheets' => array("$indicia_theme_path$indicia_theme/jquery-ui.custom.css"), 'javascript' => array(self::$js_path."jquery-ui.custom.min.js", self::$js_path."jquery-ui.effects.js")),
         'jquery_ui_fr' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path."jquery.ui.datepicker-fr.js")),
         'jquery_form' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."jquery.form.js")),
-        'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
+        'reportPicker' => [
+          'deps' => ['treeview', 'fancybox'],
+          'javascript' => [self::$js_path."reportPicker.js"],
+        ],
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
         'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
             (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key))),
-        'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
+        'fancybox' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.css'],
+          'javascript' => [self::$js_path.'fancybox/dist/jquery.fancybox.min.js'],
+        ],
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
         'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
         'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
@@ -1814,31 +1821,38 @@ HTML;
    *   JavaScript.
    */
   public static function getIndiciaData() {
+    global $indicia_templates;
+    self::$indiciaData['btnClasses'] = [
+      'default' => $indicia_templates['buttonDefaultClass'],
+      'highlighted' => $indicia_templates['buttonHighlightedClass'],
+    ];
+    self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
+    // Add language strings used in the indicia.functions.js file.
+    self::addLanguageStringsToJs('indiciaFns', [
+      'hideInfo' => 'Hide info',
+    ]);
     $r = [];
-    if (count(self::$indiciaData) > 0) {
-      foreach (self::$indiciaData as $key => $data) {
-        if (is_array($data)) {
-          $value = json_encode($data);
-        } elseif (is_string($data)) {
-          $data = str_replace("'", "\\'", $data);
-          $value = "'$data'";
-        } elseif (is_bool($data)) {
-          $value = $data ? 'true' : 'false';
-        } elseif (is_null($data)) {
-          $value = 'null';
-        } else {
-          $value = $data;
-        }
-        if (strpos($key, '-') !== FALSE) {
-          $r[] = "indiciaData['$key'] = $value;";
-        }
-        else {
-          $r[] = "indiciaData.$key = $value;";
-        }
+    foreach (self::$indiciaData as $key => $data) {
+      if (is_array($data)) {
+        $value = json_encode($data);
+      } elseif (is_string($data)) {
+        $data = str_replace("'", "\\'", $data);
+        $value = "'$data'";
+      } elseif (is_bool($data)) {
+        $value = $data ? 'true' : 'false';
+      } elseif (is_null($data)) {
+        $value = 'null';
+      } else {
+        $value = $data;
       }
-      return implode("\n", $r) . "\n";
+      if (strpos($key, '-') !== FALSE) {
+        $r[] = "indiciaData['$key'] = $value;";
+      }
+      else {
+        $r[] = "indiciaData.$key = $value;";
+      }
     }
-    return '';
+    return implode("\n", $r) . "\n";
   }
 
   /**

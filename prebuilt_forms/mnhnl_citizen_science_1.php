@@ -275,7 +275,7 @@ class iform_mnhnl_citizen_science_1 {
               (isset(data_entry_helper::$indicia_upload_path) ? data_entry_helper::$indicia_upload_path : 'upload/');
         foreach ($species as $item) {
           if (!empty($item['image_path'])) {
-            $r .= '<a class="fancybox left" href="' . $images_path . $item['image_path'] . '" style="margin: 0 1em 1em;">';
+            $r .= '<a data-fancybox class="left" href="' . $images_path . $item['image_path'] . '" style="margin: 0 1em 1em;">';
             $r .= '<img width="100" src="' . $images_path . 'thumb-' . $item['image_path'] . '" />';
             $r .= '</a>';
           }

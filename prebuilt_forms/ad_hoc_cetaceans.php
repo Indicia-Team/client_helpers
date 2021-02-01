@@ -244,7 +244,7 @@ class iform_ad_hoc_cetaceans {
     // Build a nice template to show a picture of each species, with fancybox.
     data_entry_helper::add_resource('fancybox');
     $indicia_templates['taxon_label'] = 'return \'<div class="taxon-cell">'.
-        '<a href="'.data_entry_helper::$base_url.'upload/{image_path}" class="fancybox" >'.
+        '<a href="'.data_entry_helper::$base_url.'upload/{image_path}" data-fancybox>'.
         '<img alt="{taxon}" src="'.data_entry_helper::$base_url.'upload/med-{image_path}" width="250"/></a>'.
         '<div>{taxon}</div></div>'.
         '<div class="taxon-desc"><ul><li>\'.str_replace("\n", "</li><li>","{description_in_list}").\'</li></ul>'.

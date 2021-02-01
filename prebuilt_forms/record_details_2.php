@@ -465,7 +465,7 @@ Record ID',
       'title' => lang::get('Photos and media'),
     ), $options);
     $settings = array(
-      'table' => 'occurrence_image',
+      'table' => 'occurrence_medium',
       'key' => 'occurrence_id',
       'value' => $_GET['occurrence_id'],
     );
@@ -488,7 +488,7 @@ Record ID',
       'extraParams' => $auth['read'] + array('id' => $_GET['occurrence_id'], 'view' => 'detail'),
     ));
     $settings = array(
-      'table' => 'sample_image',
+      'table' => 'sample_medium',
       'key' => 'sample_id',
       'value' => $occurrence[0]['sample_id'],
     );
@@ -578,10 +578,7 @@ HTML;
       }
       $r .= '<ul>';
       $firstImage = TRUE;
-      foreach ($media as $idx => $medium) {
-        // iNat only uses a thumb or full size image. So force thumb for
-        // preview.
-        $imageSize = $medium['media_type'] === 'Image:iNaturalist' ? 'thumb' : $options['imageSize'];
+      foreach ($media as $medium) {
         if ($firstImage && substr($medium['media_type'], 0, 6) === 'Image:') {
           // First image can be flagged as the main content image. Used for FB OpenGraph for example.
           global $iform_page_metadata;
@@ -592,7 +589,7 @@ HTML;
           $iform_page_metadata['image'] = "$imageFolder$medium[path]";
           $firstImage = FALSE;
         }
-        $r .= iform_report_get_gallery_item($medium, $imageSize);
+        $r .= iform_report_get_gallery_item('occurrence', $medium, $imageSize);
       }
       $r .= '</ul>';
     }

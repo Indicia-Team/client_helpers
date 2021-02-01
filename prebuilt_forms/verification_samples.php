@@ -724,7 +724,7 @@ idlist=';
         } elseif (preg_match('/.(wav|mp3)$/', $file['path'])) {
           $media = "<audio controls src=\"$path$file[path]\" type=\"audio/mpeg\"/>";
         } else {
-          $media = "<a href=\"$path$file[path]\" class=\"fancybox\"><img src=\"{$path}thumb-" .
+          $media = "<a href=\"$path$file[path]\" data-fancybox><img src=\"{$path}thumb-" .
             "$file[path]\"/><br/>$file[caption]</a>";
         }
         $r .= "<li>$media</li>";

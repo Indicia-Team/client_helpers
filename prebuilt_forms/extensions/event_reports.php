@@ -143,7 +143,7 @@ class extension_event_reports {
         'dataSource' => 'library/occurrence_images/filterable_explore_list_minimal',
         'bands' => array(array('content'=>
           '<div class="gallery-item status-{record_status} certainty-{certainty} ">'.
-          '<a class="fancybox" href="{imageFolder}{media}"><img src="{imageFolder}thumb-{media}" title="{taxon}" alt="{taxon}"/><br/>{formatted}</a></div>')),
+          '<a data-fancybox href="{imageFolder}{media}"><img src="{imageFolder}thumb-{media}" title="{taxon}" alt="{taxon}"/><br/>{formatted}</a></div>')),
         'limit' => 10,
         'autoParamsForm' => false,
         'caching' => true,

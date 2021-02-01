@@ -178,7 +178,7 @@ jQuery(document).ready(function enablePdf($) {
    * Show the options popup.
    */
   function showOptions() {
-    $.fancybox($('#pdf-options'));
+    $.fancybox.open($('#pdf-options'));
   }
 
   // Button handlers
