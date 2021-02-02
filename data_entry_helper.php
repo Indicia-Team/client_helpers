@@ -791,15 +791,18 @@ JS;
       $options['fieldname'] .= '[]';
     }
     if (!empty($options['sortable']) && $options['sortable']) {
-      self::$javascript .= "$('#$options[id]').sortable();\n";
-      self::$javascript .= "$('#$options[id]').disableSelection();\n";
-      // resort the available options into the saved order
+      self::add_resource('sortable');
+      $escapedId = str_replace(':', '\\\\:', $options['id']);
+      self::$javascript .= "Sortable.create($('#$escapedId')[0], { handle: '.sort-handle' });\n";
+      self::$javascript .= "$('#$escapedId').disableSelection();\n";
+      // Resort the available options into the saved order.
       if (!empty($options['default']) && !empty($options['lookupValues'])) {
         $sorted = [];
-        // First copy over the ones that are ticked, in order
+        // First copy over the ones that are ticked, in order.
         foreach ($options['default'] as $option) {
-          if (!empty($options['lookupValues'][$option]))
+          if (!empty($options['lookupValues'][$option])) {
             $sorted[$option] = $options['lookupValues'][$option];
+          }
         }
         // Now the unticked ones in original order.
         foreach ($options['lookupValues'] as $option => $caption) {
@@ -809,7 +812,6 @@ JS;
         }
         $options['lookupValues'] = $sorted;
       }
-
     }
     return self::check_or_radio_group($options, 'checkbox');
   }
@@ -5968,13 +5970,15 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     if (is_object($hints)) {
       $hints = get_object_vars($hints);
     }
+    $sortHandle = !empty($options['sortable']) ? '<span class="sort-handle"></span>' : '';
     if (isset($options['lookupValues'])) {
       // lookup values are provided, so run these through the item template
-      foreach ($options['lookupValues'] as $key=>$value) {
+      foreach ($options['lookupValues'] as $key => $caption) {
         $selected=self::get_list_item_selected_attribute($key, $selectedItemAttribute, $options, $itemFieldname);
+
         $r[$key] = str_replace(
-          array('{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
-          array(htmlspecialchars($key), htmlspecialchars($value), $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
+          array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
+          array($sortHandle, htmlspecialchars($key), htmlspecialchars($caption), $selected, (isset($hints[$caption]) ? ' title="'.$hints[$caption].'" ' : '')),
           $indicia_templates[$options['itemTemplate']]
         );
       }
@@ -6023,8 +6027,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
 HTML;
             }
             $item = str_replace(
-              array('{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
-              array($value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
+              array('{sortHandle}', '{value}', '{caption}', '{'.$selectedItemAttribute.'}', '{title}'),
+              array($sortHandle, $value, $caption, $selected, (isset($hints[$value]) ? ' title="'.$hints[$value].'" ' : '')),
               $indicia_templates[$options['itemTemplate']]
             );
             $r[$record[$options['valueField']]] = $item;

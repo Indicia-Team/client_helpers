@@ -327,7 +327,7 @@ class ElasticsearchReportHelper {
         }
       }
     }
-    helper_base::add_resource('jquery_ui');
+    helper_base::add_resource('sortable');
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for simple aggregation tables.
     if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {

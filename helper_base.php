@@ -103,7 +103,7 @@ $indicia_templates = array(
   'listbox_item' => '<option value="{value}"{selected} >{caption}</option>',
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
   'check_or_radio_group' => '<ul {class} id="{id}">{items}</ul>',
-  'check_or_radio_group_item' => '<li><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
+  'check_or_radio_group_item' => '<li>{sortHandle}<input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
   'map_panel' => '<div id="map-container" style="width: {width};"><div id="map-loading" class="loading-spinner" style="display: none"><div>Loading...</div></div><div id="{divId}" style="width: {width}; height: {height};"{class}></div></div>',
   'georeference_lookup' => '<input type="text" id="imp-georef-search"{class} />{searchButton}' .
     '<div id="imp-georef-div" class="ui-corner-all ui-widget-content ui-helper-hidden">' .
@@ -677,6 +677,8 @@ class helper_base {
    *   Name of resource to link. The following options are available:
    *   * indiciaFns
    *   * jquery
+   *   * datepicker
+   *   * sortable
    *   * openlayers
    *   * graticule
    *   * clearLayer
@@ -693,7 +695,6 @@ class helper_base {
    *   * indicia_locks
    *   * jquery_cookie
    *   * jquery_ui
-   *   * jquery_ui_fr
    *   * jquery_form
    *   * json
    *   * reportPicker
@@ -793,6 +794,9 @@ class helper_base {
         'jquery' => array('javascript' => array(self::$js_path."jquery.js",self::$js_path."ie_vml_sizzlepatch_2.js")),
         'datepicker' => [
           'javascript' => [self::$js_path . 'indicia.datepicker.js']
+        ],
+        'sortable' => [
+          'javascript' => ['https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.js'],
         ],
         'openlayers' => array('javascript' => array(self::$js_path.(function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : "OpenLayers.js"),
             self::$js_path."proj4js.js", self::$js_path."proj4defs.js", self::$js_path."lang/en.js")),
