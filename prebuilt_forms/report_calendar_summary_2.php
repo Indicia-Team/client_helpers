@@ -1317,7 +1317,7 @@ class iform_report_calendar_summary_2 {
     $prop = ($checkBox) ? 'filter(":checked").length' : 'val()';
     data_entry_helper::$javascript .="
 jQuery('#".$ctrlid."').change(function(){
-  var dialog = $('<p>Please wait whilst the next set of data is loaded.</p>').dialog({ title: 'Loading...', buttons: { 'OK': function() { dialog.dialog('close'); }}});\n";
+  $.fancyDialog({ title: 'Loading...', message: 'Please wait whilst the next set of data is loaded.', cancelButton: null });\n";
   // no need to update other controls on the page, as we jump off it straight away.
   if($checkBox) {
     data_entry_helper::$javascript .="  window.location = rebuild_page_url(pageURI, \"".$urlparam."\", jQuery(this).filter(':checked').length > 0 ? 'true' : 'false');\n});\n";

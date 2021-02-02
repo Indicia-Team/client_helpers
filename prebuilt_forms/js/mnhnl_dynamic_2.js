@@ -24,9 +24,9 @@ if(typeof OpenLayers != 'undefined'){
 
 /**
  * Helper methods for additional JavaScript functionality required by the species_checklist control.
- * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service 
- * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label 
- * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for 
+ * formatter - The taxon label template, OR a JavaScript function that takes an item returned by the web service
+ * search for a species when adding rows to the grid, and returns a formatted taxon label. Overrides the label
+ * template and controls the appearance of the species name both in the autocomplete for adding new rows, plus for
   the newly added rows.
  */
 var scRow = 0;
@@ -96,7 +96,7 @@ set_up_relationships = function(startAttr, parent, setval, duplicates){
         if(setval) resetChild=true;
       } else {
         childOptions.removeAttr('disabled'); // initialise everything as enabled.
-        for(var j=0; j < relationships.length; j++){ 
+        for(var j=0; j < relationships.length; j++){
           if(relationships[j].child == attrRestrictionsProcessOrder[i]){ // scan through all relationships which feature the child attribute as the child.
             var relParent = scanForAttr(myParentRow, relationships[j].parent);
             if(relParent.length==0) break;
@@ -127,7 +127,7 @@ set_up_relationships = function(startAttr, parent, setval, duplicates){
   tableRows.each(function(index, Row){
     var group = {attrs:{}, firstRow:$(Row)};
     var classList = $(Row).attr('class').split(/\s+/);
-    jQuery.each( classList, function(index, item){ 
+    jQuery.each( classList, function(index, item){
       var parts= item.split(/-/);
       if(parts[0]=='scMeaning') group.species = item;
     });
@@ -184,7 +184,7 @@ set_up_relationships = function(startAttr, parent, setval, duplicates){
           same = false;
         else if(typeof group.Y != 'undefined' && typeof innerGroup.Y != 'undefined' && group.Y.val() != innerGroup.Y.val())
           same = false;
-        else for(var j=0; j < attrRestrictionsDuplicateAttrList.length; j++){ 
+        else for(var j=0; j < attrRestrictionsDuplicateAttrList.length; j++){
           if(attrRestrictionsDuplicateAttrList[j] == attrRestrictionsProcessOrder[lastAttr]) continue; // don't check last attribute.
           var myVal = getAttrVal(group.attrs[attrRestrictionsDuplicateAttrList[j]]);
           var otherVal = getAttrVal(innerGroup.attrs[attrRestrictionsDuplicateAttrList[j]]);
@@ -267,7 +267,7 @@ var _setHighlight = function(myRow) {
     var offset = jQuery('#map2').parent().parent().offset().top;
     offset = (myRow.offset().top+firstRow.offset().top+myRow.height())/2 - offset - jQuery('#map2').height()/2;
     if(offset<0) offset=0;
-    jQuery('#map2').parent().css("margin-top", offset+"px"); 
+    jQuery('#map2').parent().css("margin-top", offset+"px");
     map.map.events.triggerEvent('zoomend');
   }
 };
@@ -396,7 +396,7 @@ var _bindSpeciesGridControls = function(row,rowNum,options){
           var shown = jQuery(this).find('option').filter(':selected')[0].text;
           if(shown=='' || shown == 'm2')
             jQuery(this).closest('tr').find('.scNumber').removeClass('integer').attr('min',0);
-          else 
+          else
             jQuery(this).closest('tr').find('.scNumber').addClass('integer').attr('min',1).valid();
         });
       }
@@ -421,7 +421,7 @@ function _addNewSpeciesGridRow(data,options){
     newRow.addClass('added-row').removeClass('scClonableRow').attr('id','').addClass('scMeaning-'+data.taxon_meaning_id);;
     $.each(newRow.children(), function(j, cell) {
       cell.innerHTML = cell.innerHTML.replace(/--TTLID--/g, data.id).replace(/--GroupID--/g, scRow).replace(/--SampleID--/g, '').replace(/--OccurrenceID--/g, '');
-    }); 
+    });
     newRow.addClass('group-'+scRow).addClass('group-'+scRow+'-'+i).appendTo('#'+options.gridId);
   });
   // sc:--GroupID--:--SampleID--:--TTLID--:--OccurrenceID--
@@ -497,7 +497,7 @@ function _addExistingSpeciesGridRow(index,row,options){
     _bindSpeciesGridControls(row,index,options);
   });
 };
-	
+
 function bindSpeciesButton(options){
   $('#' + options.selectorID).click(function(){
     _addNewSpeciesGridRow(options.speciesData, options)
@@ -617,8 +617,8 @@ mapInitialisationHooks.push(function(mapdiv) {
                   if(inside) break;
                 }
   			    if(inside===false)
-  			      // use jQuery dialog as it does not stop processing.
-  			      var dialog = $('<p>Warning: The point you have selected is outside the limits of the site.</p>').dialog({ title: "Outside Site", buttons: { "OK": function() { dialog.dialog('close'); }}});
+              // use jQuery dialog as it does not stop processing.
+              $.fancyDialog({ title: 'Outside Site', message: 'Warning: The point you have selected is outside the limits of the site.', cancelButton: null});
   			  }
   		  }
   		};
@@ -646,7 +646,7 @@ mapInitialisationHooks.push(function(mapdiv) {
   			  prefix: 'LUREF:',
   			  displayProjection: new OpenLayers.Projection('EPSG:2169'),
   			  emptyString: '',
-  			  numDigits: 0 
+  			  numDigits: 0
   			});
   			mapdiv.map.addControl(mousePosCtrl);
   		}
@@ -677,7 +677,7 @@ function bindSupportingSpeciesAutocomplete(field, options){
     if(container.find('.Speciesname').length == 0) container.empty();
     if(indiciaData.speciesListInTextMax != '' && container.find('.Speciesname').length >= indiciaData.speciesListInTextMax){
       // use jQuery dialog as it does not stop processing.
-      var dialog = $('<p>Warning: You have reached the limit on the number of supporting species you may add.</p>').dialog({ title: "Too Many Supporting Species", buttons: { "OK": function() { dialog.dialog('close'); }}});
+      $.fancyDialog({ title: 'Too Many Supporting Species', message: 'Warning: You have reached the limit on the number of supporting species you may add.', cancelButton: null});
       $(event.target).val('');
       return;
     }
