@@ -834,92 +834,56 @@ JS;
    *   * class -  Optional. CSS class names to add to the control.
    *   * allowFuture - Optional. If true, then future dates are allowed.
    *     Default is false.
-   *   * dateFormat - Optional. Allows the date format string to be set, which
-   *     must match a date format that can be parsed by the JavaScript Date
-   *     object. Default is dd/mm/yy.
    *   * allowVagueDates - Optional. Set to true to enable vague date input,
    *     which disables client side validation for standard date input formats.
-   *   * showButton - Optional. Set to true to show a button which must be
-   *     clicked to drop down the picker. Defaults to false unless
-   *     allowVagueDates is true as inputting a vague date without the button
-   *     is confusing.
-   *   * buttonText - Optional. If showButton is true, this text will be shown
-   *     as the 'alt' text for the buttom image.
-   *   * placeHolder - Optional. Control the placeholder text shown in the text
-   *     box before a value has been added.
+   *   * placeholder - Optional. Control the placeholder text shown in the text
+   *     box before a value has been added. Only shown on browsers which don't
+   *     support the HTML5 date input type.
+   *   * attributes - Optional. Additional HTML attribute to attach, e.g.
+   *     data-es_* attributes.
    *
    * @return string
    *   HTML to insert into the page for the date picker control.
    */
   public static function date_picker($options) {
     $options = self::check_options($options);
-    $options = array_merge(array(
-      'dateFormat' => 'dd/mm/yy',
+    self::add_resource('datepicker');
+    $options = array_merge([
       'allowVagueDates' => FALSE,
       'default' => '',
-      'isFormControl' => TRUE
-    ), $options);
-    if (!isset($options['showButton'])) {
-      // vague dates best with the button
-      $options['showButton'] = $options['allowVagueDates'];
+      'isFormControl' => TRUE,
+      'allowFuture' => FALSE,
+      'attributes' => [],
+      'vagueLabel' => lang::get('Vague date mode')
+    ], $options);
+    if (!isset($options['placeholder'])) {
+      $options['placeholder'] = $options['allowVagueDates'] ? lang::get('dd/mm/yyyy or vague date') : 'dd/mm/yyyy';
     }
-    $vague = $options['allowVagueDates'] ? ' vague' : '';
-    if (!isset($options['placeholder']))
-      $options['placeholder'] = $options['showButton'] ? lang::get("Pick or type a$vague date") : lang::get('Click here');
-    self::add_resource('jquery_ui');
-    $escaped_id=str_replace(':', '\\\\:', $options['id']);
-    // Don't set js up for the datepicker in the clonable row for the species checklist grid
-    if ($escaped_id!='{fieldname}') {
-      // should include even if validated_form_id is null, as could be doing this via AJAX.
-      if (!$options['allowVagueDates']) {
-        self::$javascript .= "if (typeof jQuery.validator !== \"undefined\") {
-  jQuery.validator.addMethod('customDate',
-    function(value, element) {
-      // parseDate throws exception if the value is invalid
-      try{jQuery.datepicker.parseDate( '".$options['dateFormat']."', value);return true;}
-      catch(e){return false;}
-    }, '".lang::get('Please enter a valid date') . "'
-  );
-}\n";
-      }
-      if ($options['showButton']) {
-        $imgPath = empty(self::$images_path) ? self::relative_client_helper_path() . "../media/images/" : self::$images_path;
-        $imgPath .= 'nuvola/date-16px.png';
-        if (!empty($options['buttonText'])) {
-          $buttonText = $options['buttonText'];
-        }
-        else {
-          $buttonText = $options['allowVagueDates'] ? lang::get('To enter an exact date, click here. To enter a vague date, type it into the text box') : lang::get('Click here to pick a date');
-        }
-        $options['afterControl'] = "<img src=\"$imgPath\" title=\"$buttonText\" onclick=\"jQuery('#sample\\\\:date').datepicker('show');\"/>";
-      }
-      self::$javascript .= "jQuery('#$escaped_id').datepicker({
-    dateFormat : '".$options['dateFormat']."',
-    changeMonth: true,
-    changeYear: true,
-    constrainInput: false";
-      // Filter out future dates
-      if (!array_key_exists('allowFuture', $options) || $options['allowFuture']==false) {
-        self::$javascript .= ",
-    maxDate: '0'";
-      }
-      // If the validation plugin is running, we need to trigger it when the datepicker closes.
-      if (self::$validated_form_id) {
-        self::$javascript .= ",
-    onClose: function() {
-      $(this).valid();
-    }";
-      }
-      self::$javascript .= "\n});\n";
-      self::$javascript .= "$('button.ui-datepicker-trigger').addClass('ui-state-default');\n";
+    $attrArray = [];
+    $attrArrayDate = [];
+    if (!empty($options['placeholder'])) {
+      $attrArray[] = 'placeholder="' . htmlspecialchars($options['placeholder']) . '"';
     }
-    // Check for the special default value of today
-    if (isset($options['default']) && $options['default']=='today')
-      $options['default'] = date('d/m/Y');
-
-    // Enforce a class on the control called date
-    if (!array_key_exists('class', $options)) {
-      $options['class']='';
+    foreach ($options['attributes'] as $attrName => $attrValue) {
+      $attrArray[] = "$attrName=\"$attrValue\"";
+    }
+    if (!$options['allowFuture']) {
+      $dateTime = new DateTime();
+      $attrArrayDate[] = 'max="' . $dateTime->format('Y-m-d') . '"';
+    }
+    $options['attribute_list'] = implode(' ', $attrArray);
+    // Options for date control if using a free text vague date input.
+    $options['attribute_list_date'] = implode(' ', $attrArrayDate);
+    if (isset($options['default']) && $options['default'] === 'today') {
+      $options['default'] = date(self::$date_format);
+    }
+    // Text box class helps sync to date picker control.
+    $options['class'] .= ' date-text';
+    // Show text box for vague dates, or date picker if precise.
+    $options['dateDisplay'] = $options['allowVagueDates'] ? 'display: none' : '';
+    $options['textDisplay'] = $options['allowVagueDates'] ? '' : 'display: none';
+    if ($options['allowVagueDates']) {
+      $options['afterControl'] = self::apply_static_template('date_picker_mode_toggle', $options);
     }
     return self::apply_template('date_picker', $options);
   }
@@ -8074,9 +8038,10 @@ TXT;
       case 'Vague Date': // Vague Date
         if (!empty($attrOptions['displayValue']))
           $attrOptions['default'] = $attrOptions['displayValue'];
-        $attrOptions['class'] = ($item['data_type'] == 'D' ? "date-picker " : "vague-date-picker ");
-        if (isset($item['validation_rules']) && strpos($item['validation_rules'],'date_in_past')=== false)
-          $attrOptions['allowFuture']=true;
+        $attrOptions['allowVagueDates'] = ($item['data_type'] == 'D' ? FALSE : TRUE);
+        if (isset($item['validation_rules']) && strpos($item['validation_rules'],'date_in_past') === FALSE) {
+          $attrOptions['allowFuture'] = TRUE;
+        }
         $output = self::date_picker($attrOptions);
         break;
       case 'Lookup List':
