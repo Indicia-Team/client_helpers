@@ -1582,7 +1582,7 @@ $('#delete-transect').click(deleteSurvey);
   public static function get_redirect_on_success($values, $args) {
       if (!isset($values['location:id'])) {
           $current_path = \Drupal::service('path.current')->getPath();
-          return \Drupal::service('path.alias_manager')->getAliasByPath($current_path) .'?route-tab=true#your-route';
+          return \Drupal::service('path_alias.manager')->getAliasByPath($current_path) .'?route-tab=true#your-route';
       }
   }
 

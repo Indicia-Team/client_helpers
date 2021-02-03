@@ -518,8 +518,13 @@ class ElasticsearchProxyHelper {
     $headers = [
       'Content-Type: application/json',
     ];
+    \Drupal::logger('iform')->notice(var_export($esConfig, TRUE));
     if (empty($esConfig['es']['auth_method']) || $esConfig['es']['auth_method'] === 'directClient') {
       $headers[] = 'Authorization: USER:' . $esConfig['es']['user'] . ':SECRET:' . $esConfig['es']['secret'];
+    }
+    elseif ($esConfig['es']['auth_method'] === 'directWebsite') {
+      $config = \Drupal::config('iform.settings');
+      $headers[] = 'Authorization: WEBSITE_ID:' . $config->get('website_id') . ':SECRET:' . $config->get('password');
     }
     else {
       $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
@@ -553,6 +558,10 @@ class ElasticsearchProxyHelper {
   private static function curlPost($url, $data, $getParams = []) {
     $curlResponse = FALSE;
     $cacheTimeout = FALSE;
+    if (self::$config['es']['auth_method'] === 'directWebsite' && isset(self::$config['es']['sharing'])) {
+      \Drupal::logger('iform')->notice('Setting sharing to ' . self::$config['es']['sharing']);
+      $getParams['sharing'] = self::$config['es']['sharing'];
+    }
     if (!empty($data['proxyCacheTimeout'])) {
       $cacheKey = [
         'post' => json_encode($data),
