@@ -258,6 +258,9 @@ class extension_notifications_centre {
     };\n
     ";
     $urlParams=array('occurrence_id'=>'{occurrence_id}');
+    if (!empty($options['recordLinkingParamOverride'])) {
+      $urlParams=array($options['recordLinkingParamOverride'] => '{'.$options['recordLinkingParamOverride'].'}');
+    }
     if (!empty($_GET['group_id']))
       $urlParams['group_id']=$_GET['group_id'];
     $availableActions =
