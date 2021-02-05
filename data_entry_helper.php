@@ -858,11 +858,14 @@ JS;
       'attributes' => [],
       'vagueLabel' => lang::get('Vague date mode')
     ], $options);
+    $dateFormatLabel = str_replace(['d', 'm', 'Y'], ['dd', 'mm', 'yyyy'], helper_base::$date_format);
     if (!isset($options['placeholder'])) {
-      $options['placeholder'] = $options['allowVagueDates'] ? lang::get('dd/mm/yyyy or vague date') : 'dd/mm/yyyy';
+      $options['placeholder'] = $options['allowVagueDates'] ? lang::get('{1} or vague date', $dateFormatLabel) : $dateFormatLabel;
     }
     $attrArray = [];
-    $attrArrayDate = [];
+    $attrArrayDate = [
+      'placeholder' => 'placeholder="' . $dateFormatLabel . '"',
+    ];
     if (!empty($options['placeholder'])) {
       $attrArray[] = 'placeholder="' . htmlspecialchars($options['placeholder']) . '"';
     }

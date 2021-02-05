@@ -2560,10 +2560,8 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         else {
           $converted[] = "$config[jqRule]:true";
         }
-      } elseif ($ruleName === 'date' && !isset($options['allowVagueDates']) ||
-            (isset($options['allowVagueDates']) && $options['allowVagueDates'] === false)) {
-        // Special case for dates where validation disabled when vague dates enabled.
-        $converted[] = 'customDate:true';
+      } elseif ($ruleName === 'date') {
+        $converted[] = 'indiciaDate:true';
       } elseif ($ruleName === 'length' && preg_match("/length\[(?P<val>\d+(,\d+)?)\]/", $rule, $matches)) {
         // Special case for length Kohana rule which can map to jQuery minlenth
         // and maxlength rules.
