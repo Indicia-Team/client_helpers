@@ -163,6 +163,67 @@ class report_helper extends helper_base {
     );
   }
 
+  /**
+   * Converts media paths to thumbnail HTML.
+   *
+   * Creates thumbnails for images and other media to insert into a grid column
+   * or other report output.
+   *
+   * @param array $mediaPaths
+   *   List of paths to media.
+   * @param string $preset
+   *   Size preset, e.g. thumb or med.
+   * @param string $entity
+   *   Entity name.
+   * @param int $rowId
+   *   Record ID.
+   *
+   * @param string
+   *   HTML for thumbnails.
+   */
+  public static function mediaToThumbnails(array $mediaPaths, $preset, $entity, $rowId) {
+    $imagePath = self::get_uploaded_image_folder();
+    $imgclass = count($mediaPaths)>1 ? 'multi' : 'single';
+    $group = count($mediaPaths)>1 && !empty($rowId) ? "group-$rowId" : '';
+    $r = '';
+    foreach($mediaPaths as $path) {
+      // Attach info so the file's caption and licence can be loaded
+      // on view. We can only do this if we know the row's ID.
+      $mediaInfoAttr = '';
+      if (!empty($rowId) && !empty($entity)) {
+        $mediaInfo = htmlspecialchars(json_encode([
+          "{$entity}_id" => $rowId,
+          'path' => $path,
+        ]));
+        $mediaInfoAttr = " data-media-info=\"$mediaInfo\"";
+      }
+      if (preg_match('/^https:\/\/static\.inaturalist\.org/', $path)) {
+        $imgLarge = str_replace('/square.', '/large.', $path);
+        $r .= "<a href=\"$imgLarge\" data-fancybox=\"$group\"$mediaInfoAttr class=\"inaturalist $imgclass\"><img src=\"$path\" /></a>";
+      }
+      elseif (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+(\.kr)?)/', $path, $matches)) {
+        // HTTP, means an external file.
+        // Flickr URLs sometimes have . in them.
+        $matches['site'] = str_replace('.', '', $matches['site']);
+        $r .= "<a href=\"$path\" class=\"social-icon $matches[site]\"></a>";
+      }
+      elseif (preg_match('/(\.wav|\.mp3)$/', strtolower($path))) {
+        $r .= <<<HTML
+<audio controls src="$imagePath$path"$mediaInfoAttr type="audio/mpeg" />
+HTML;
+      }
+      else {
+        $r .= <<<HTML
+<a href="$imagePath$path" class="$imgclass"
+  data-fancybox="$group"$mediaInfoAttr>
+  <img src="$imagePath$preset-$path" />
+</a>
+HTML;
+      }
+    }
+    return $r;
+  }
+
  /**
   * Outputs a grid that loads the content of a report or Indicia table.
   *
@@ -583,6 +644,14 @@ class report_helper extends helper_base {
     $addFeaturesJs = '';
     $haveUpdates = FALSE;
     $updateformID = 0;
+    // Knowing the entity helps build image metadata for popups.
+    if (isset($options['rowId']) && preg_match('/^([a-z_]+)_id$/', $options['rowId'], $matches)) {
+      $entity = $matches[1];
+    }
+    else {
+      // Assume the ID is for occurrence data unless specified.
+      $entity = isset($options['entity']) ? $options['entity'] : 'occurrence';
+    }
     if (count($records)>0) {
       $rowInProgress = FALSE;
       $rowTitle = !empty($options['rowId']) ?
@@ -632,56 +701,12 @@ class report_helper extends helper_base {
           if (isset($field['img']) && $field['img']=='true' && !empty($row[$field['fieldname']]) && !isset($field['template'])) {
             $imgs = explode(',', $row[$field['fieldname']]);
             $value='';
-            $imgclass = count($imgs)>1 ? 'multi' : 'single';
-            $group = count($imgs)>1 && !empty($rowId) ? "group-$rowId" : '';
-            foreach($imgs as $img) {
-              // Attach info so the file's caption and licence can be loaded
-              // on view. We can only do this if we know the row's ID.
-              $mediaInfoAttr = '';
-              if (isset($options['rowId'])) {
-                if (preg_match('/^([a-z_]+)_id$/', $options['rowId'], $matches)) {
-                  $entity = $matches[1];
-                }
-                else {
-                  // Assume the ID is for occurrence data unless specified.
-                  $entity = isset($options['entity']) ? $options['entity'] : 'occurrence';
-                }
-                $mediaInfo = htmlspecialchars(json_encode([
-                  "{$entity}_id" => $rowId,
-                  'path' => $img,
-                ]));
-                $mediaInfoAttr = " data-media-info=\"$mediaInfo\"";
-              }
-              if (preg_match('/^https:\/\/static\.inaturalist\.org/', $img)) {
-                $imgLarge = str_replace('/square.', '/large.', $img);
-                $value .= "<a href=\"$imgLarge\" data-fancybox=\"$group\"$mediaInfoAttr class=\"inaturalist $imgclass\"><img src=\"$img\" /></a>";
-              }
-              elseif (preg_match('/^http(s)?:\/\/(www\.)?(?P<site>[a-z]+(\.kr)?)/', $img, $matches)) {
-                // HTTP, means an external file.
-                // Flickr URLs sometimes have . in them.
-                $matches['site'] = str_replace('.', '', $matches['site']);
-                $value .= "<a href=\"$img\" class=\"social-icon $matches[site]\"></a>";
-              }
-              elseif (preg_match('/(\.wav|\.mp3)$/', strtolower($img))) {
-                $value .= <<<HTML
-<audio controls src="$imagePath$img"$mediaInfoAttr type="audio/mpeg" />
-HTML;
-              }
-              else {
-                $value .= <<<HTML
-<a href="$imagePath$img" class="$imgclass"
-  data-fancybox="$group"$mediaInfoAttr>
-  <img src="$imagePath$options[imageThumbPreset]-$img" />
-</a>
-HTML;
-              }
-            }
-            $row[$field['fieldname']] = $value;
+            $row[$field['fieldname']] = self::mediaToThumbnails($imgs, $options['imageThumbPreset'], $entity, $rowId);
           }
           if (isset($field['img']) && $field['img']=='true')
             $classes[] = 'table-gallery';
           if (isset($field['actions'])) {
-            $value = self::get_report_grid_actions($field['actions'],$row, $pathParam);
+            $value = self::get_report_grid_actions($field['actions'], $row, $pathParam);
             $classes[]='col-actions';
           } elseif (isset($field['template'])) {
             $value = self::mergeParamsIntoTemplate($row, $field['template'], true, true, true);
