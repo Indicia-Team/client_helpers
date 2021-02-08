@@ -2409,8 +2409,8 @@ JS;
       $occAttrs = self::getAttributesForEntity('occurrence', $args, $readAuth, $occIdToLoad);
       foreach ($occAttrs as &$attr) {
         if ($attr['system_function']==='sex_stage_count') {
-          // If we have any lookups, we need to load the terms so we can compare the data properly
-          // as term Ids are never zero
+          // If we have any lookups, we need to load the terms so we can check
+          // the data properly for zero abundance as term Ids are never zero.
           if ($attr['data_type']==='L') {
             $attr['terms'] = data_entry_helper::get_population_data([
               'table' => 'termlists_term',

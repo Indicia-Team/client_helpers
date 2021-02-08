@@ -126,20 +126,29 @@ class ElasticsearchProxyHelper {
     iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    $options = array(
+    $options = [
       'dataSource' => 'reports_for_prebuilt_forms/dynamic_elasticsearch/record_details',
       'readAuth' => $readAuth,
       // @todo Sharing should be dynamically set in a form parameter (use $nid param).
       'sharing' => 'verification',
-      'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
-    );
+      'extraParams' => ['occurrence_id' => $_GET['occurrence_id']],
+    ];
     $reportData = report_helper::get_report_data($options);
     // Convert the output to a structured JSON object.
     $data = [];
-    // Organise some attributes by system function, so we can make output consistent.
+    // Organise some attributes by system function, so we can make output
+    // consistent.
     $sysFuncAttrs = [];
     $sysFuncList = [
-      'Additional occurrence' => ['certainty', 'sex_stage_count', 'sex', 'stage', 'sex_stage'],
+      'Additional occurrence' => [
+        'behaviour',
+        'certainty',
+        'reproductive_condition',
+        'sex_stage_count',
+        'sex',
+        'stage',
+        'sex_stage',
+      ],
       'Additional sample' => ['biotope'],
     ];
     foreach ($reportData as $key => $attribute) {
