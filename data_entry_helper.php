@@ -6759,8 +6759,11 @@ if (errors$uniq.length>0) {
       unset($record['occurrence:sampleIDX']);
       $present = self::wrap_species_checklist_record_present($record, $include_if_any_data,
         $zeroAttrs, $zeroValues, array());
-      if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
-        if ($present===null)
+      // $record[present] holds taxa taxon list ID so will always be available
+      // for genuine rows. All existing rows, plus any that are present in the
+      // list, must be handled.
+      if (!empty($record['present']) && (array_key_exists('id', $record) || $present !== NULL)) {
+        if ($present === NULL)
           // checkboxes do not appear if not checked. If uncheck, delete record.
           $record['deleted'] = 't';
         else
