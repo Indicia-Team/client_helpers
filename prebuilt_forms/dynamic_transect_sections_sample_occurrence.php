@@ -19,20 +19,20 @@
  * @license http://www.gnu.org/licenses/gpl.html GPL 3.0
  * @link  http://code.google.com/p/indicia/
  */
- 
+
 require_once('dynamic_sample_occurrence.php');
 
 /**
  * A input form with a grid for entering records with a section ID attribute that links the record
- * to a given section in a transect. 
- * 
+ * to a given section in a transect.
+ *
  * @package Client
  * @subpackage PrebuiltForms
  */
 class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sample_occurrence {
-  
-  /** 
-   * Return the form metadata. 
+
+  /**
+   * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_dynamic_transect_sections_sample_occurrence_definition() {
@@ -43,12 +43,12 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
          'This form does not currently support occurrence media or different methods of detecting if a record is present in the grid.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
    */
-  public static function get_parameters() {   
+  public static function get_parameters() {
     $r = array_merge(
       parent::get_parameters(),
       array(
@@ -66,7 +66,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     );
     return $r;
   }
-  
+
   protected static function get_control_species($auth, $args, $tabAlias, $options) {
     data_entry_helper::$onload_javascript .= "indiciaFns.bindTabsActivate($($('#$tabAlias').parent()), function(event, ui) {
       panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
@@ -107,7 +107,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     $r .= '<input type="hidden" name="subSampleIds" value="'.htmlspecialchars(json_encode($subSampleIds)).'" />';
     return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
@@ -119,10 +119,10 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     $submission = self::build_sample_subsamples_occurrences_submission($values, $args['section_id_attribute']);
     return($submission);
   }
-  
+
   /**
    * Helper function to simplify building of a submission that contains a single supersample,
-   * with multiple subsamples, each of which has multiple occurrences records, as generated 
+   * with multiple subsamples, each of which has multiple occurrences records, as generated
    * by a species_checklist control.
    *
    * @param array $values List of the posted values to create the submission from.
@@ -133,8 +133,8 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
    * @param array $zero_attrs Set to an array of abundance attribute field IDs that can be
    * treated as abundances. Alternatively set to true to treat all occurrence custom attributes
    * as possible zero abundance indicators.
-   * @param array $zero_values Set to an array of values which are considered to indicate a 
-   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to 
+   * @param array $zero_values Set to an array of values which are considered to indicate a
+   * zero abundance record if found for one of the zero_attrs. Values are case-insensitive. Defaults to
    * array('0','None','Absent').
    * of values that can be treated as meaning a zero abundance record. E.g.
    * array('
@@ -162,7 +162,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
 
     return $sampleMod;
   }
-  
+
   public static function wrap_species_checklist_with_subsamples($arr, $section_id_attribute, $subsites, $subSampleIds, $include_if_any_data=false,
           $zero_attrs = true, $zero_values=array('0','None','Absent')) {
     if (array_key_exists('website_id', $arr)){
@@ -196,7 +196,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
         $a = explode(':', $key, 4);
         $b = explode(':', $a[3], 3);
         if ($value && count($b)>=2) {
-          if($b[0] == "occAttr" && $b[1] == $section_id_attribute){ 
+          if($b[0] == "occAttr" && $b[1] == $section_id_attribute){
             if (!isset($sampleRecords['smp'.$value])) {
               $sampleRecords['smp'.$value] = array();
             }
@@ -204,7 +204,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
           }
         }
         $occurrenceRecords[$a[1]][$a[3]] = $value;
-        if($a[2]) $occurrenceRecords[$a[1]]['id'] = $a[2];        
+        if($a[2]) $occurrenceRecords[$a[1]]['id'] = $a[2];
       }
     }
     foreach ($occurrenceRecords as $record) {
@@ -215,14 +215,14 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
           $record['deleted'] = 't';
         $record['zero_abundance']=self::recordZeroAbundance($record, $section_id_attribute);
         $record['taxa_taxon_list_id'] = $record['present'];
-        $record['website_id'] = $website_id;       
-        if (isset($determiner_id)) 
+        $record['website_id'] = $website_id;
+        if (isset($determiner_id))
           $record['determiner_id'] = $determiner_id;
         if (isset($record_status))
           $record['record_status'] = $record_status;
-        $occ = data_entry_helper::wrap($record, 'occurrence');
+        $occ = submission_builder::wrap($record, 'occurrence');
         // At this point, a deleted record only has present=0 and an id. No link to the sample since our section ID field has been
-        // disabled. So we need to use the subSampleIds data to work out the original site ID and link via that.        
+        // disabled. So we need to use the subSampleIds data to work out the original site ID and link via that.
         if (isset($record['sectionIdVal']))
           $sectionId = $record['sectionIdVal'];
         else {
@@ -230,7 +230,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
           $sectionId = $orderedSubSites[$record['occurrence:sampleIDX']];
         }
         $sampleRecords["smp$sectionId"]['occurrences'][] = array('fkId' => 'sample_id','model' => $occ);
-      } 
+      }
     }
     // convert subsites to a keyed array, for easier lookup
     $keyedSS = array();
@@ -262,7 +262,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
         $sampleRecord['location_name'] = $arr['sample:location_name'];
       if (!empty($arr['sample:input_form']))
         $sampleRecord['input_form'] = $arr['sample:input_form'];
-      $subSample = data_entry_helper::wrap($sampleRecord, 'sample');
+      $subSample = submission_builder::wrap($sampleRecord, 'sample');
       // Add the subsample/soccurrences in as subModels without overwriting others such as a sample image
       if (array_key_exists('subModels', $subSample)) {
         $subSample['subModels'] = array_merge($sampleMod['subModels'], $occs);
@@ -278,7 +278,7 @@ class iform_dynamic_transect_sections_sample_occurrence extends iform_dynamic_sa
     }
     return $subModels;
   }
-  
+
   private static function recordZeroAbundance($record, $section_id_attribute) {
     $zeros=false;
     $nonZeros=false;

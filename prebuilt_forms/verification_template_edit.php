@@ -320,8 +320,9 @@ class iform_verification_template_edit extends iform_dynamic {
      * @return string HTML for grid.
      */
     protected static function getGrid($args, $nid, $auth) {
+        iform_load_helpers(['report_helper']);
         return '<div id="templateList">' .
-            data_entry_helper::report_grid(
+            report_helper::report_grid(
                 array(
                     'id' => 'templates-grid',
                     'dataSource' => 'library/verification_templates/verification_templates_for_report_grid',

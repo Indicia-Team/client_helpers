@@ -243,10 +243,11 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     $r .= "<div id=\"habitats-setup\">\n";
     if (!empty($_GET['sample_id'])) {
       //First load any existing sub-samples
-      $existingHabitatSubSamples = data_entry_helper::get_report_data(array(
-        'dataSource'=>'library/samples/subsamples',
-        'readAuth'=>$auth['read'],
-        'extraParams'=>array('parent_sample_id' => $_GET['sample_id'])
+      iform_load_helpers(['report_helper']);
+      $existingHabitatSubSamples = report_helper::get_report_data(array(
+        'dataSource' => 'library/samples/subsamples',
+        'readAuth' => $auth['read'],
+        'extraParams' => array('parent_sample_id' => $_GET['sample_id'])
       ));
       $attrOptions = data_entry_helper::getAttrSpecificOptions($options);
       if (!empty($existingHabitatSubSamples)) {
@@ -342,7 +343,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
    */
   protected static function get_control_linkhabitatstophotos($auth, $args, $tabalias, $options) {
     if (empty($options['imageMediaTypeId']))
-      drupal_set_message('Please fill in the imageMediaTypeId option for the Link Habitats To Photos control.');
+      hostsite_show_message('Please fill in the imageMediaTypeId option for the Link Habitats To Photos control.');
     $r='';
     //Need to add the query libraries manually
     drupal_add_library('system', 'ui.draggable');
@@ -376,7 +377,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       return '<div><h3>Please fill in the id of the habitat name attribute in the page configuration</h3></div>';
     //Get the habitat name data
     if (!empty($_GET['sample_id'])) {
-      $habitats = data_entry_helper::get_report_data(array(
+      iform_load_helpers(['report_helper']);
+      $habitats = report_helper::get_report_data(array(
         'dataSource'=>'reports_for_prebuilt_forms/seasearch/habitats_for_parent_sample',
         'readAuth'=>$auth['read'],
         'extraParams'=>array('parent_sample_id' => $_GET['sample_id'], 'name_attr_id'=>$nameAttrId)
@@ -436,7 +438,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         $(window).load(function () {
           $('#tab-next').trigger('click');\n
         });";
-      drupal_set_message('Please wait: Only 1 habitat found, so I am automatically allocating the photos to that habitat for you.');
+      hostsite_show_message('Please wait: Only 1 habitat found, so I am automatically allocating the photos to that habitat for you.');
     }
     return $r;
   }
@@ -460,7 +462,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
 
     if (!empty($_GET['sample_id'])) {
       $reportOptions['extraParams']['sample_id']=$_GET['sample_id'];
-      $photoResults = data_entry_helper::get_report_data($reportOptions);
+      $photoResults = report_helper::get_report_data($reportOptions);
       //Order using exif
       $photoResults = self::set_photo_order($photoResults);
 
@@ -611,35 +613,35 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     $paramsSeparator=variable_get('clean_url', 0) ? '?' : '&';
     data_entry_helper::$javascript .= "indiciaData.paramsSeparator='".$paramsSeparator."';\n";
     if (empty($args['in_progress_sample_attr_id'])) {
-      drupal_set_message('Please fill in the edit tab option for the In-Progress Sample attribute id');
+      hostsite_show_message('Please fill in the edit tab option for the In-Progress Sample attribute id');
       return false;
     }
     if (empty($args['gpx_data_attr_id'])) {
-      drupal_set_message('Please fill in the edit tab option for the GPX Data attribute id');
+      hostsite_show_message('Please fill in the edit tab option for the GPX Data attribute id');
       return false;
     }
     if (empty($args['habitat_smpAttr_cluster_ids'])) {
-      drupal_set_message('Please fill in the option for the Habitat Sample Attribute Cluster');
+      hostsite_show_message('Please fill in the option for the Habitat Sample Attribute Cluster');
       return false;
     }
     if (empty($args['mandatory_habitat_smpAttr_cluster_ids'])) {
-      drupal_set_message('Please fill in the option for the Mandatory Cluster Ids');
+      hostsite_show_message('Please fill in the option for the Mandatory Cluster Ids');
       return false;
     }
     if (empty($args['dive_duration_attr_id'])) {
-      drupal_set_message('Please fill in the option for the Dive Duration attribute id');
+      hostsite_show_message('Please fill in the option for the Dive Duration attribute id');
       return false;
     }
     if (empty($args['dive_start_time_attr_id'])) {
-      drupal_set_message('Please fill in the option for the Dive Start Time attribute id');
+      hostsite_show_message('Please fill in the option for the Dive Start Time attribute id');
       return false;
     }
     if (empty($args['exif_date_time_attr_id'])) {
-      drupal_set_message('Please fill in the option for the Exif Date Times attribute id');
+      hostsite_show_message('Please fill in the option for the Exif Date Times attribute id');
       return false;
     }
     if (empty($args['image_media_type_id'])) {
-      drupal_set_message('Please fill in the option for the Image Media Sub Type id');
+      hostsite_show_message('Please fill in the option for the Image Media Sub Type id');
       return false;
     }
 
@@ -797,7 +799,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //When the first page is saved we create a sample but we don't have a spatial reference. An attempt is made to read
       //a position from the first photo exif (elsewhere in code), however if GPS data can't be found on photo, then just fall back on a point on the Isle of Wight (as it is on land it won't get confused with a real position.
       if (empty($ModelOrWarning['fields']['entered_sref']['value'])) {
-        drupal_set_message('Please specify the location of your dive.');
+        hostsite_show_message('Please specify the location of your dive.');
         $ModelOrWarning['fields']['entered_sref_system']['value']='4277';
         $ModelOrWarning['fields']['entered_sref']['value']='50:41.0994N, 1:17.1864W';
       }
@@ -842,11 +844,11 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
 
     }
     //Identify any occurrences which don't have images and will therefore be attached to the top level sample.
-    $standardOccurrences = data_entry_helper::wrap_species_checklist($standardGridValues);
+    $standardOccurrences = submission_builder::wrap_species_checklist($standardGridValues);
 
     $modelName='sample';
     //Wrap up the main parent sample
-    $modelWrapped = data_entry_helper::wrap($values, $modelName, null);
+    $modelWrapped = submission_builder::wrap($values, $modelName, null);
     //2nd level samples are prefixed with the word new_sample_sub_sample:<num>: or existing_sample_sub_sample:<id>: in the name.
     //This function returns an array of possible sub-samples (habitats) which have been extracted from the values on the page by looking
     //for this text on the front of the keys in the values array.
@@ -930,7 +932,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         $values['sample:entered_sref']=$gpsFromFirstExif;
         $modelWrapped['fields']['entered_sref_system']['value']='4277';
         $values['sample:entered_sref_system']='4277';
-        drupal_set_message('The GPS position of your dive has been obtained from the information in the earliest uploaded photo. Please check it is correct before proceeding and correct it if necessary');
+        hostsite_show_message('The GPS position of your dive has been obtained from the information in the earliest uploaded photo. Please check it is correct before proceeding and correct it if necessary');
       }
     }
       if (!empty($mediaDates)) {
@@ -947,7 +949,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
       //Only add media to the main sample if it isn't already contained in any sub-sample
       if (empty($values['sample_medium:'.$item['id'].':sample_id'])||
           $values['sample_medium:'.$item['id'].':sample_id']==$modelWrapped['fields']['id']['value']) {
-        $wrapped = data_entry_helper::wrap($item, $modelName.'_medium');
+        $wrapped = submission_builder::wrap($item, $modelName.'_medium');
         $modelWrapped['subModels'][] = array(
           'fkId' => $modelName.'_id',
           'model' => $wrapped
@@ -1043,7 +1045,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
     //Merge each set of sub-sample values with elements required to make a basic sample (such as entered_sref)
     foreach ($valuesCollection as $idx=>$incompleteSubSampleValueSet) {
       $completeValuesCollection[$idx]=array_merge($incompleteSubSampleValueSet,$cleanValues);
-      $wrappedCollection[$idx] = data_entry_helper::wrap($completeValuesCollection[$idx], 'sample');
+      $wrappedCollection[$idx] = submission_builder::wrap($completeValuesCollection[$idx], 'sample');
       //Make an array of media which is assigned to the sub-sample (photos attached to habitst)
       foreach($values as $key => $value) {
         $keyBreakdown=explode(':',$key);
@@ -1075,8 +1077,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
           'media_ids'=>$mediaIdsSet,
         )
       );
-
-      $photoResults = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $photoResults = report_helper::get_report_data($reportOptions);
       //Get an average of all the spatial references associated with the current sub-sample
       //Do this by finding the spatial references from the GPX file which are closest in time to the times in the photo exifs (can't rely on GPS on photo, as taken underwater)
       //We then average them all to make the sub-sample spatial reference.
@@ -1127,7 +1129,7 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
         //Only add the media item to the sub-sample, if the item has been assigned to the sub-sample by the user.
         if (!empty($values['sample_medium:'.$item['id'].':sample_id']) &&
             ($values['sample_medium:'.$item['id'].':sample_id']==$completeValuesCollection[$idx]['sample:id'])) {
-          $wrapped = data_entry_helper::wrap($item, 'sample_medium');
+          $wrapped = submission_builder::wrap($item, 'sample_medium');
           $wrappedCollection[$idx]['subModels'][] = array(
             'fkId' => 'sample_id',
             'model' => $wrapped
@@ -1242,8 +1244,8 @@ class iform_dynamic_progressive_seasearch_survey extends iform_dynamic_sample_oc
                     'media_ids'=>$subSampleMedium['model']['fields']['id']['value'],
                   )
                 );
-
-                $photoResults = data_entry_helper::get_report_data($reportOptions);
+                iform_load_helpers(['report_helper']);
+                $photoResults = report_helper::get_report_data($reportOptions);
                 //TODO this code is very similar to code used earlier, perhaps put in separate method when get chance.
                 $mediaSpatialRefs=array();
                 $smallestTimeDistance=null;
@@ -2165,7 +2167,7 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
     }
     $sampleRecords=array();
     foreach ($occurrenceRecords as $id => $record) {
-      $present = data_entry_helper::wrap_species_checklist_record_present($record, $include_if_any_data,
+      $present = submission_builder::wrap_species_checklist_record_present($record, $include_if_any_data,
           $zero_attrs, $zero_values, array());
       if (array_key_exists('id', $record) || $present!==null) { // must always handle row if already present in the db
         if ($present===null)
@@ -2181,10 +2183,10 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
         if (isset($record_status)) {
           $record['record_status'] = $record_status;
         }
-        $occ = data_entry_helper::wrap($record, 'occurrence');
+        $occ = submission_builder::wrap($record, 'occurrence');
         data_entry_helper::attachOccurrenceMediaToModel($occ, $record);
         //Add the occurrence to a third level sample, which is taken from our sample template
-        $subSample = data_entry_helper::wrap($sampleRecord, 'sample');
+        $subSample = submission_builder::wrap($sampleRecord, 'sample');
         if (array_key_exists('subModels', $subSample)) {
           $subSample['subModels'] = array_merge($sampleMod['subModels'], array('fkId' => 'sample_id','model' => $occ));
         } else {

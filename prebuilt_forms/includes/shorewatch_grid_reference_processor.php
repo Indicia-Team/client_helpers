@@ -34,7 +34,7 @@
     if (isset($values['gridmode']))
       $submission = data_entry_helper::build_sample_subsamples_occurrences_submission($values);
     else
-      drupal_set_message('Please set the page to "gridmode"');
+      hostsite_show_message('Please set the page to "gridmode"');
     //The parent sample method is always effort for Shorewatch
     $submission['fields']['sample_method_id']['value']=$args['effort'];
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);

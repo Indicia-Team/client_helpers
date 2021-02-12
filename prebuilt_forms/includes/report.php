@@ -365,76 +365,83 @@ function iform_report_apply_explore_user_own_preferences(&$reportOptions) {
 /**
  * Retrieve HTML for a media file in a gallery.
  *
+ * @param string $entity
+ *   Root entity name (occurrence, sample, location etc).
  * @param array $medium
  *   Media file data as loaded from a *_media table's list view.
  * @param string $imageSize
  *   Output file size, e.g. thumb or med.
+ *
  * @return string
  *   HTML.
  */
-function iform_report_get_gallery_item($medium, $imageSize = 'thumb') {
+function iform_report_get_gallery_item($entity, array $medium, $imageSize = 'thumb') {
   $imageFolder = data_entry_helper::get_uploaded_image_folder();
+  $captionItems = [];
   // Find the licence and caption info for the file.
-  $info = [];
+  $info = [
+    'id' => $medium['id'],
+    'entity' => $entity,
+    'loaded' => [
+      'type' => $medium['media_type'],
+      'caption' => $medium['caption'],
+      'licence_code' => $medium['licence_code'],
+      'licence_title' => $medium['licence_title'],
+    ],
+  ];
+  // iNat only uses a thumb or full size image. So force thumb for preview.
+  $imageSize = $medium['media_type'] === 'Image:iNaturalist' ? 'thumb' : $imageSize;
+  $mediaAttr = 'data-media-info="' . htmlspecialchars(json_encode($info)) . '"';
   if (!empty($medium['caption'])) {
-    $info[] = "<div class=\"image-caption\">$medium[caption]</div>";
+    $captionItems[] = $medium['caption'];
   }
-  if (!empty($medium['licence_code'])) {
-    $code = strtolower(str_replace(' ', '-', $medium['licence_code']));
-    $info[] = "<div class=\"licence licence-$code\">$medium[licence_title]</div>";
+  if (!empty($medium['licence_title'])) {
+    $captionItems[] = "Licence is $medium[licence_title]";
   }
-  // If there is any info, build a pane to show it.
-  $infoPane = '';
-  if (count($info)) {
-    $langHideInfo = lang::get('Hide info');
-    $info = implode("\n", $info);
-    $class = substr($medium['media_type'], 0, 6) === 'Image:' ? 'media-info image-info' : 'media-info';
-    $hide = '';
-    $smallVersion = '';
-    // For thumbnails, we still add the main info pane, but hide it. Then it
-    // is still available for showing in the full fancybox output. Also add
-    // a minified version of the info to the displayed output.
-    if ($imageSize === 'thumb' && $medium['media_type'] !== 'Audio:Local') {
-      $hide = ' style="display: none"';
-      $licence = empty($medium['licence_code']) ? '' : " [<abbr title=\"$medium[licence_title]\">$medium[licence_code]</abbr>]";
-      $smallVersion = "<div class=\"image-caption small\">$medium[caption]$licence</div>";
-    }
-    $infoPane = <<<HTML
-<div class="$class"$hide>
-  $info
-  <span class="media-info-close" title="$langHideInfo">x</span>
-</div>
-$smallVersion
+  elseif (!empty($medium['licence_code'])) {
+    $captionItems[] = "Licence is $medium[licence_code]";
+  }
+  $captionAttr = count($captionItems) > 0 ? ' title="' . htmlspecialchars(implode(' | ', $captionItems)) . '"' : '';
+  if ($medium['media_type'] === 'Image:Local') {
+    // Standard link to Indicia image.
+    return <<<HTML
+<li class="gallery-item">
+  <a $mediaAttr$captionAttr
+      href="$imageFolder$medium[path]"
+      data-fancybox="gallery" class="single">
+    <img src="$imageFolder$imageSize-$medium[path]" />
+  </a>
 HTML;
   }
-  // Output the media file content, with the info pane attached.
+  // Output the media file content, with the info attached.
   if ($medium['media_type'] === 'Audio:Local') {
     return <<<HTML
 <li class="gallery-item">
-  <audio controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
-  $infoPane
+  <audio $mediaAttr$captionAttr
+      controls src="$imageFolder$medium[path]" type="audio/mpeg"></audio>
 </li>
 HTML;
   }
-  elseif ($medium['media_type'] === 'Image:iNaturalist') {
+  if ($medium['media_type'] === 'Image:iNaturalist') {
     $imgLarge = str_replace('/square.', '/large.', $medium['path']);
     return <<<HTML
 <li class="gallery-item">
-  <a href="$imgLarge" class="fancybox single">
+  <a $mediaAttr$captionAttr
+      href="$imgLarge"
+      data-fancybox="gallery" class="single">
     <img src="$medium[path]" />
   </a>
-  $infoPane
 </li>
 HTML;
   }
-  else {
-    return <<<HTML
+  // Everything else will be treated using noembed on the popup.
+  // Build icon class using web domain.
+  $matches = preg_match('/^http(s)?:\/\/(www\.)?([a-z]+(\.kr)?)/', $medium['path']);
+  $domainClass = str_replace('.', '', $matches[3]);
+  return <<<HTML
 <li class="gallery-item">
-  <a href="$imageFolder$medium[path]" class="fancybox single">
-    <img src="$imageFolder$imageSize-$medium[path]" />
-  </a>
-  $infoPane
+  <a $mediaAttr$captionAttr
+      href="$medium[path]" class="social-icon $domainClass"></a>
 </li>
 HTML;
-  }
 }

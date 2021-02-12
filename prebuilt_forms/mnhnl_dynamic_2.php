@@ -280,7 +280,8 @@ jQuery('#downloads').find('[name=params]').val('{\"survey_id\":".$args['survey_i
       }
     }
     $r = call_user_func(array(get_called_class(), 'getSampleListGridPreamble'));
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',
@@ -1201,9 +1202,10 @@ bindSpeciesButton(bindSpeciesOptions);\n";
         //      $mapOptions['maxZoom']=$args['zoomLevel'];
       }
       $r = "<div><p>".lang::get('LANG_SpeciesInstructions')."</p>\n";
-      if($options['includeSubSample'] && $options['mapPosition']=='top') $r .= '<div class="topMap-container">'.data_entry_helper::map_panel($mapOptions, $olOptions).'</div>';
+      iform_load_helpers(['map_helper']);
+      if($options['includeSubSample'] && $options['mapPosition']=='top') $r .= '<div class="topMap-container">'.map_helper::map_panel($mapOptions, $olOptions).'</div>';
       $r .= '<div class="grid-container">'.$grid.'</div>';
-      if($options['includeSubSample'] && $options['mapPosition']!='top') $r .= '<div class="sideMap-container">'.data_entry_helper::map_panel($mapOptions, $olOptions).'</div>';
+      if($options['includeSubSample'] && $options['mapPosition']!='top') $r .= '<div class="sideMap-container">'.map_helper::map_panel($mapOptions, $olOptions).'</div>';
       if($options['includeSubSample'])
       	data_entry_helper::$javascript .= "var speciesMapTabHandler = function(event, ui) {
   panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];
@@ -1719,13 +1721,13 @@ mapInitialisationHooks.push(function(mapdiv) {
         $occurrence['website_id'] = $arr['website_id'];
         if (array_key_exists('occurrence:determiner_id', $arr)) $occurrence['determiner_id'] = $arr['occurrence:determiner_id'];
         if (array_key_exists('occurrence:record_status', $arr)) $occurrence['record_status'] = $arr['occurrence:record_status'];
-        $occ = data_entry_helper::wrap($occurrence, 'occurrence');
+        $occ = submission_builder::wrap($occurrence, 'occurrence');
         if(isset($arr['includeSubSample'])){
           if (!$present) $samples[$id]['deleted'] = 't';
           $samples[$id]['website_id'] = $arr['website_id'];
           $samples[$id]['entered_sref_system'] = '2169'; // TBD
           $samples[$id]['survey_id'] = $arr['survey_id'];
-          $smp = data_entry_helper::wrap($samples[$id], 'sample');
+          $smp = submission_builder::wrap($samples[$id], 'sample');
           $smp['subModels'] = array(array('fkId' => 'sample_id', 'model' => $occ));
           $smp = array('fkId' => 'parent_id', 'model' => $smp);
           if(!isset($samples[$id]['date'])) $smp['copyFields'] = array('date_start'=>'date_start','date_end'=>'date_end','date_type'=>'date_type'); // from parent->to child

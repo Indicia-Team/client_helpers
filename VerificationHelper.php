@@ -251,11 +251,11 @@ class VerificationHelper {
       $r .= '<p>' . lang::get('Click on thumbnails to view full size') . '</p>';
       if (count($occ_media) > 0) {
         $r .= '<p class="header">' . lang::get('Record media') . '</p>';
-        $r .= self::getMediaHtml($occ_media);
+        $r .= self::getMediaHtml('occurrence', $occ_media);
       }
       if (count($smp_media) > 0) {
         $r .= '<p class="header">' . lang::get('Sample media') . '</p>';
-        $r .= self::getMediaHtml($smp_media);
+        $r .= self::getMediaHtml('sample', $smp_media);
       }
     }
     return $r;
@@ -264,17 +264,19 @@ class VerificationHelper {
   /**
    * Build a list of media thumbnails as HTML.
    *
+   * @param string $entity
+   *   Root entity for the media, e.g. occurrence, sample.
    * @param array $media
    *   Media data loaded from the database.
    *
    * @return string
    *   HTML.
    */
-  private static function getMediaHtml($media) {
+  private static function getMediaHtml($entity, $media) {
     require_once 'prebuilt_forms/includes/report.php';
     $r = '<div class="media-gallery"><ul >';
     foreach ($media as $file) {
-      $r .= iform_report_get_gallery_item($file);
+      $r .= iform_report_get_gallery_item($entity, $file);
     }
     $r .= '</ul></div>';
     return $r;

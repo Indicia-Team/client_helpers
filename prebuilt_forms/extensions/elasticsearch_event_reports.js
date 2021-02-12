@@ -162,7 +162,6 @@ jQuery(document).ready(function($) {
           return false;
         }
       });
-      $(el).find('.fancybox').fancybox();
     }
   };
 

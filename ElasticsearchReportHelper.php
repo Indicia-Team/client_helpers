@@ -255,13 +255,11 @@ class ElasticsearchReportHelper {
       self::getMappings($nid);
       // Prepare the stuff we need to pass to the JavaScript.
       $mappings = self::$esMappings;
-      $dateFormat = helper_base::$date_format;
       $rootFolder = helper_base::getRootFolder(TRUE);
       $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
       helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
       helper_base::$indiciaData['esSources'] = [];
       helper_base::$indiciaData['esMappings'] = $mappings;
-      helper_base::$indiciaData['dateFormat'] = $dateFormat;
       helper_base::$indiciaData['rootFolder'] = $rootFolder;
       helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
       helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
@@ -329,7 +327,7 @@ class ElasticsearchReportHelper {
         }
       }
     }
-    helper_base::add_resource('jquery_ui');
+    helper_base::add_resource('sortable');
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for simple aggregation tables.
     if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {

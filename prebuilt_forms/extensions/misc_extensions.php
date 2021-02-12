@@ -98,7 +98,7 @@ class extension_misc_extensions {
         $button .= '</div><br>';
       }
       else {
-        drupal_set_message('A link button has been specified without a link path or button label, please fill in the @buttonLinkPath and @buttonLabel options');
+        hostsite_show_message('A link button has been specified without a link path or button label, please fill in the @buttonLinkPath and @buttonLabel options');
         $button = '';
       }
       return $button;
@@ -179,7 +179,7 @@ class extension_misc_extensions {
         $button .= '</div><br>';
       }
       else {
-        drupal_set_message('A text link has been specified without a link path or label, please fill in the @linkPath and @label options');
+        hostsite_show_message('A text link has been specified without a link path or label, please fill in the @linkPath and @label options');
         $button = '';
       }
       return $button;

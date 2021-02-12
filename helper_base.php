@@ -23,7 +23,6 @@ if (file_exists(dirname(__FILE__) . '/helper_config.php')) {
   require_once 'helper_config.php';
 }
 require_once 'lang.php';
-require_once 'libcurlEmulator/libcurlemu.inc.php';
 
 global $indicia_templates;
 
@@ -91,7 +90,12 @@ $indicia_templates = array(
   'textarea' => '<textarea id="{id}" name="{fieldname}"{class} {disabled} cols="{cols}" rows="{rows}" {title}>{default}</textarea>'."\n",
   'checkbox' => '<input type="hidden" name="{fieldname}" value="0"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
   'training' => '<input type="hidden" name="{fieldname}" value="{hiddenValue}"/><input type="checkbox" id="{id}" name="{fieldname}" value="1"{class}{checked}{disabled} {title} />'."\n",
-  'date_picker' => '<input type="text" placeholder="{placeholder}" size="30"{class} id="{id}" name="{fieldname}" value="{default}" autocomplete="off" {title}/>'."\n",
+  'date_picker' => '<input type="text" {attribute_list} {class} id="{id}" name="{fieldname}" value="{default}" style="{textDisplay}" {title}/>
+      <input type="date" {attribute_list_date} class="precise-date-picker" style="{dateDisplay}">' . "\n",
+  'date_picker_mode_toggle' => '{vagueLabel}: <label class="switch">
+        <input type="checkbox" class="date-mode-toggle" checked>
+        <span class="slider round"></span>
+      </label>' . "\n",
   'select' => '<select {attribute_list} id="{id}" name="{fieldname}"{class} {disabled} {title}>{items}</select>',
   'select_item' => '<option value="{value}" {selected} >{caption}</option>',
   'select_species' => '<option value="{value}" {selected} >{caption} - {common}</option>',
@@ -99,7 +103,7 @@ $indicia_templates = array(
   'listbox_item' => '<option value="{value}"{selected} >{caption}</option>',
   'list_in_template' => '<ul{class} {title}>{items}</ul>',
   'check_or_radio_group' => '<ul {class} id="{id}">{items}</ul>',
-  'check_or_radio_group_item' => '<li><input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
+  'check_or_radio_group_item' => '<li>{sortHandle}<input type="{type}" name="{fieldname}" id="{itemId}" value="{value}"{class}{checked}{title} {disabled}/><label for="{itemId}">{caption}</label></li>',
   'map_panel' => '<div id="map-container" style="width: {width};"><div id="map-loading" class="loading-spinner" style="display: none"><div>Loading...</div></div><div id="{divId}" style="width: {width}; height: {height};"{class}></div></div>',
   'georeference_lookup' => '<input type="text" id="imp-georef-search"{class} />{searchButton}' .
     '<div id="imp-georef-div" class="ui-corner-all ui-widget-content ui-helper-hidden">' .
@@ -224,7 +228,7 @@ $('input#{escaped_input_id}').result(function(event, data) {
   // Rows in a list of key-value pairs.
   'dataValueList' => '<div class="detail-panel" id="{id}"><h3>{title}</h3><dl class="dl-horizontal">{content}</dl></div>',
   'dataValue' => '<dt>{caption}</dt><dd{class}>{value}</dd>',
-  'speciesDetailsThumbnail' => '<div class="gallery-item"><a class="fancybox" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
+  'speciesDetailsThumbnail' => '<div class="gallery-item"><a data-fancybox="gallery" href="{imageFolder}{the_text}"><img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>{caption}</a></div>',
 );
 
 /**
@@ -353,7 +357,7 @@ class helper_base {
    * be available from indiciaData.auth.read.
    * @var Array
    */
-  public static $js_read_tokens=null;
+  public static $js_read_tokens = NULL;
 
   /**
    * @var string Path to Indicia JavaScript folder. If not specified, then it is
@@ -361,29 +365,29 @@ class helper_base {
    * This path should be a full path on the server (starting with '/' exluding
    * the domain and ending with '/').
    */
-  public static $js_path = null;
+  public static $js_path = NULL;
 
   /**
    * @var string Path to Indicia CSS folder. If not specified, then it is calculated from the Warehouse $base_url.
    * This path should be a full path on the server (starting with '/' exluding the domain).
    */
-  public static $css_path = null;
+  public static $css_path = NULL;
 
   /**
    * @var string Path to Indicia Images folder.
    */
-  public static $images_path = null;
+  public static $images_path = NULL;
 
   /**
    * @var string Path to Indicia cache folder. Defaults to client_helpers/cache.
    */
-  public static $cache_folder = false;
+  public static $cache_folder = FALSE;
 
   /**
    * @var array List of resources that have already been dumped out, so we don't duplicate them. For example, if the
    * site template includes JQuery set $dumped_resources[]='jquery'.
    */
-  public static $dumped_resources=array();
+  public static $dumped_resources = [];
 
   /**
    * Data to be added to the indiciaData JavaScript variable.
@@ -673,6 +677,8 @@ class helper_base {
    *   Name of resource to link. The following options are available:
    *   * indiciaFns
    *   * jquery
+   *   * datepicker
+   *   * sortable
    *   * openlayers
    *   * graticule
    *   * clearLayer
@@ -689,7 +695,6 @@ class helper_base {
    *   * indicia_locks
    *   * jquery_cookie
    *   * jquery_ui
-   *   * jquery_ui_fr
    *   * jquery_form
    *   * json
    *   * reportPicker
@@ -787,6 +792,12 @@ class helper_base {
       self::$resource_list = array (
         'indiciaFns' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."indicia.functions.js")),
         'jquery' => array('javascript' => array(self::$js_path."jquery.js",self::$js_path."ie_vml_sizzlepatch_2.js")),
+        'datepicker' => [
+          'javascript' => [self::$js_path . 'indicia.datepicker.js']
+        ],
+        'sortable' => [
+          'javascript' => ['https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.js'],
+        ],
         'openlayers' => array('javascript' => array(self::$js_path.(function_exists('iform_openlayers_get_file') ? iform_openlayers_get_file() : "OpenLayers.js"),
             self::$js_path."proj4js.js", self::$js_path."proj4defs.js", self::$js_path."lang/en.js")),
         'graticule' => array('deps' =>array('openlayers'), 'javascript' => array(self::$js_path."indiciaGraticule.js")),
@@ -805,14 +816,20 @@ class helper_base {
         'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
         'jquery_cookie' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."jquery.cookie.js")),
         'jquery_ui' => array('deps' => array('jquery'), 'stylesheets' => array("$indicia_theme_path$indicia_theme/jquery-ui.custom.css"), 'javascript' => array(self::$js_path."jquery-ui.custom.min.js", self::$js_path."jquery-ui.effects.js")),
-        'jquery_ui_fr' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path."jquery.ui.datepicker-fr.js")),
         'jquery_form' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."jquery.form.js")),
-        'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
+        'reportPicker' => [
+          'deps' => ['treeview', 'fancybox'],
+          'javascript' => [self::$js_path."reportPicker.js"],
+        ],
         'treeview' => array('deps' => array('jquery'), 'stylesheets' => array(self::$css_path."jquery.treeview.css"), 'javascript' => array(self::$js_path."jquery.treeview.js")),
         'treeview_async' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."jquery.treeview.async.js", self::$js_path."jquery.treeview.edit.js")),
         'googlemaps' => array('javascript' => array("$protocol://maps.google.com/maps/api/js?v=3" .
             (empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key))),
-        'fancybox' => array('deps' => array('jquery'), 'stylesheets' => array(self::$js_path.'fancybox/source/jquery.fancybox.css'), 'javascript' => array(self::$js_path.'fancybox/source/jquery.fancybox.pack.js')),
+        'fancybox' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [self::$js_path . 'fancybox/dist/jquery.fancybox.min.css'],
+          'javascript' => [self::$js_path.'fancybox/dist/jquery.fancybox.min.js'],
+        ],
         'treeBrowser' => array('deps' => array('jquery','jquery_ui'), 'javascript' => array(self::$js_path."jquery.treebrowser.js")),
         'defaultStylesheet' => array('deps' => array(''), 'stylesheets' => array(self::$css_path."default_site.css", self::$css_path."theme-generic.css"), 'javascript' => array()),
         'validation' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path.'jquery.metadata.js', self::$js_path.'jquery.validate.js', self::$js_path.'additional-methods.js')),
@@ -1815,31 +1832,39 @@ HTML;
    *   JavaScript.
    */
   public static function getIndiciaData() {
+    global $indicia_templates;
+    self::$indiciaData['btnClasses'] = [
+      'default' => $indicia_templates['buttonDefaultClass'],
+      'highlighted' => $indicia_templates['buttonHighlightedClass'],
+    ];
+    self::$indiciaData['inlineErrorClass'] = $indicia_templates['error_class'];
+    self::$indiciaData['dateFormat'] = self::$date_format;
+    // Add language strings used in the indicia.functions.js file.
+    self::addLanguageStringsToJs('indiciaFns', [
+      'hideInfo' => 'Hide info',
+    ]);
     $r = [];
-    if (count(self::$indiciaData) > 0) {
-      foreach (self::$indiciaData as $key => $data) {
-        if (is_array($data)) {
-          $value = json_encode($data);
-        } elseif (is_string($data)) {
-          $data = str_replace("'", "\\'", $data);
-          $value = "'$data'";
-        } elseif (is_bool($data)) {
-          $value = $data ? 'true' : 'false';
-        } elseif (is_null($data)) {
-          $value = 'null';
-        } else {
-          $value = $data;
-        }
-        if (strpos($key, '-') !== FALSE) {
-          $r[] = "indiciaData['$key'] = $value;";
-        }
-        else {
-          $r[] = "indiciaData.$key = $value;";
-        }
+    foreach (self::$indiciaData as $key => $data) {
+      if (is_array($data)) {
+        $value = json_encode($data);
+      } elseif (is_string($data)) {
+        $data = str_replace("'", "\\'", $data);
+        $value = "'$data'";
+      } elseif (is_bool($data)) {
+        $value = $data ? 'true' : 'false';
+      } elseif (is_null($data)) {
+        $value = 'null';
+      } else {
+        $value = $data;
       }
-      return implode("\n", $r) . "\n";
+      if (strpos($key, '-') !== FALSE) {
+        $r[] = "indiciaData['$key'] = $value;";
+      }
+      else {
+        $r[] = "indiciaData.$key = $value;";
+      }
     }
-    return '';
+    return implode("\n", $r) . "\n";
   }
 
   /**
@@ -2535,10 +2560,8 @@ $.validator.messages.integer = $.validator.format(\"".lang::get('validation_inte
         else {
           $converted[] = "$config[jqRule]:true";
         }
-      } elseif ($ruleName === 'date' && !isset($options['allowVagueDates']) ||
-            (isset($options['allowVagueDates']) && $options['allowVagueDates'] === false)) {
-        // Special case for dates where validation disabled when vague dates enabled.
-        $converted[] = 'customDate:true';
+      } elseif ($ruleName === 'date') {
+        $converted[] = 'indiciaDate:true';
       } elseif ($ruleName === 'length' && preg_match("/length\[(?P<val>\d+(,\d+)?)\]/", $rule, $matches)) {
         // Special case for length Kohana rule which can map to jQuery minlenth
         // and maxlength rules.

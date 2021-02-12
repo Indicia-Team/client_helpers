@@ -1350,11 +1350,19 @@ function report_filter_panel(array $readAuth, $options, $website_id, &$hiddenStu
 
 HTML;
     }
+    $r .= '<div class="pane-row">';
+    $done = 0;
     foreach ($list as $moduleName => $module) {
       $r .= "<div class=\"pane\" id=\"pane-$moduleName\"><a class=\"fb-filter-link\" href=\"#controls-$moduleName\"><span class=\"pane-title\">" . $module->getTitle() . '</span>';
       $r .= '<span class="filter-desc"></span></a>';
       $r .= "</div>";
+      $done++;
+      // Split rows if necessary.
+      if (count($list) >= 5 && $done === 3) {
+        $r .= '</div><div class="pane-row">';
+      }
     }
+    $r .= '</div>';
     if ($category) {
       $r .= '</div></fieldset>';
     }
@@ -1408,8 +1416,8 @@ HTML;
   foreach ($filterModules as $category => $list) {
     foreach ($list as $moduleName => $module) {
       $hiddenStuff .= "<div style=\"display: none\"><div class=\"filter-popup\" id=\"controls-$moduleName\"><form action=\"#\" class=\"filter-controls\"><fieldset>" . $module->get_controls($readAuth, $options) .
-        '<button class="fb-close" type="button">' . lang::get('Cancel') . '</button>' .
-        '<button class="fb-apply" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
+        '<button class="' . $indicia_templates['buttonDefaultClass'] . '" type="button" onclick="jQuery.fancybox.close();">' . lang::get('Cancel') . '</button>' .
+        '<button class="' . $indicia_templates['buttonHighlightedClass'] . '" type="submit">' . lang::get('Apply') . '</button></fieldset></form></div></div>';
       $shortName = str_replace('filter_', '', $moduleName);
       $noDescriptionLangStrings[$shortName] = 'Click to Filter ' . ucfirst($shortName);
     }

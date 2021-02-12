@@ -31,7 +31,7 @@
 require_once('includes/map.php');
 require_once('includes/language_utils.php');
 require_once('includes/user.php');
-  
+
 class iform_pollenators {
 
 	/* TODO
@@ -57,7 +57,7 @@ class iform_pollenators {
      array(
 //        array(
 //          'name'=>'spatial_systems',
-//          'caption'=>'Allowed Spatial Ref Systems',      
+//          'caption'=>'Allowed Spatial Ref Systems',
 //          'description'=>'List of allowable spatial reference systems, comma separated. Use the spatial ref system code (e.g. OSGB or the EPSG code number such as 4326).',
 //          'type'=>'string',
 //          'group'=>'Map'
@@ -82,40 +82,40 @@ class iform_pollenators {
       ),
       array(
           'name'=>'protocol_attr_id',
-          'caption'=>'Protocol Attribute ID',      
+          'caption'=>'Protocol Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the Protocol.',
           'type'=>'int',
           'group'=>'Collection Attributes'
       ),
       array(
           'name'=>'complete_attr_id',
-          'caption'=>'Completeness Attribute ID',      
+          'caption'=>'Completeness Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores whether the collection is complete.',
           'type'=>'int',
           'group'=>'Collection Attributes'
       ),
         array(
           'name'=>'uid_attr_id',
-          'caption'=>'User ID Attribute ID',      
+          'caption'=>'User ID Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the CMS User ID.',
           'type'=>'smpAttr',
           'group'=>'Collection Attributes'
         ),
-        array(      
+        array(
           'name'=>'username_attr_id',
-          'caption'=>'Username Attribute ID',      
+          'caption'=>'Username Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the user\'s username.',
           'type'=>'smpAttr',
           'group'=>'Collection Attributes'
         ),
         array(
           'name'=>'email_attr_id',
-          'caption'=>'Email Attribute ID',      
+          'caption'=>'Email Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the user\'s email.',
           'type'=>'smpAttr',
           'group'=>'Collection Attributes'
         ),
-      
+
       array(
           'name'=>'flower_list_id',
           'caption'=>'Flower Species List ID',
@@ -125,104 +125,104 @@ class iform_pollenators {
           ),
       array(
           'name'=>'location_picture_camera_attr_id',
-          'caption'=>'Location Picture Camera Attribute ID',      
+          'caption'=>'Location Picture Camera Attribute ID',
           'description'=>'Indicia ID for the location attribute that stores the Camera EXIF data for the location picture.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
             ),
       array(
           'name'=>'location_picture_datetime_attr_id',
-          'caption'=>'Location Picture Datetime Attribute ID',      
+          'caption'=>'Location Picture Datetime Attribute ID',
           'description'=>'Indicia ID for the location attribute that stores the DateTime EXIF data for the location picture.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
       ),
       array(
           'name'=>'occurrence_picture_camera_attr_id',
-          'caption'=>'Flower and Insect Picture Camera Attribute ID',      
+          'caption'=>'Flower and Insect Picture Camera Attribute ID',
           'description'=>'Indicia ID for the occurrence attribute that stores the Camera EXIF data for the flower and insect pictures.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
             ),
       array(
           'name'=>'occurrence_picture_datetime_attr_id',
-          'caption'=>'Flower and Insect Picture Datetime Attribute ID',      
+          'caption'=>'Flower and Insect Picture Datetime Attribute ID',
           'description'=>'Indicia ID for the occurrence attribute that stores the DateTime EXIF data for the flower and insect pictures.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
             ),
       array(
           'name'=>'flower_type_attr_id',
-          'caption'=>'Flower Type Attribute ID',      
+          'caption'=>'Flower Type Attribute ID',
           'description'=>'Indicia ID for the occurrence attribute that stores how the flower got there.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
             ),
       array(
           'name'=>'habitat_attr_id',
-          'caption'=>'habitat Attribute ID',      
+          'caption'=>'habitat Attribute ID',
           'description'=>'Indicia ID for the location attribute that describes the habitat.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
             ),
       array(
           'name'=>'distance_attr_id',
-          'caption'=>'Distance Attribute ID',      
+          'caption'=>'Distance Attribute ID',
           'description'=>'Indicia ID for the location attribute that stores how far the nearest hive is.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
       ),
       array(
           'name'=>'within50m_attr_id',
-          'caption'=>'within50m Attribute ID',      
+          'caption'=>'within50m Attribute ID',
           'description'=>'Indicia ID for the location attribute that describes whether the location is within 50m of a grand culture.',
           'type'=>'int',
           'group'=>'Floral Station Attributes'
       ),
-      
+
       array(
           'name'=>'start_time_attr_id',
-          'caption'=>'Start Time Attribute ID',      
+          'caption'=>'Start Time Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the start time.',
           'type'=>'int',
           'group'=>'Session Attributes'
             ),
       array(
           'name'=>'end_time_attr_id',
-          'caption'=>'End Time Attribute ID',      
+          'caption'=>'End Time Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the end time.',
           'type'=>'int',
           'group'=>'Session Attributes'
             ),
       array(
           'name'=>'sky_state_attr_id',
-          'caption'=>'Sky State Attribute ID',      
+          'caption'=>'Sky State Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the state of the sky.',
           'type'=>'int',
           'group'=>'Session Attributes'
             ),
       array(
           'name'=>'temperature_attr_id',
-          'caption'=>'Temperature Attribute ID',      
+          'caption'=>'Temperature Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the temperature.',
           'type'=>'int',
           'group'=>'Session Attributes'
             ),
       array(
           'name'=>'wind_attr_id',
-          'caption'=>'Wind Attribute ID',      
+          'caption'=>'Wind Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the Wind.',
           'type'=>'int',
           'group'=>'Session Attributes'
             ),
       array(
           'name'=>'shade_attr_id',
-          'caption'=>'Shade Attribute ID',      
+          'caption'=>'Shade Attribute ID',
           'description'=>'Indicia ID for the sample attribute that stores the shade.',
           'type'=>'int',
           'group'=>'Session Attributes'
           ),
-          
+
       array(
           'name'=>'insect_list_id',
           'caption'=>'Insect Species List ID',
@@ -410,21 +410,21 @@ class iform_pollenators {
           'default'=>'1/1'
       )
 
-      
-      ) 
+
+      )
     );
     return $retVal;
-  	
+
   }
 
-  /** 
+  /**
    * Return the form metadata.
    * @return array The definition of the form.
    */
   public static function get_pollenators_definition() {
     return array(
       'title'=>self::get_title(),
-      'category' => 'SPIPOLL forms',      
+      'category' => 'SPIPOLL forms',
       'description'=>'Pollenators: Data Entry.'
     );
   }
@@ -440,7 +440,7 @@ class iform_pollenators {
   public static function get_perms($nid, $args) {
     return array('IForm n'.$nid.' access');
   }
-  
+
   private function help_button($use_help, $id, $func, $arg) {
   	if($use_help == false) return '';
   	data_entry_helper::$javascript .= "
@@ -470,9 +470,9 @@ jQuery('#".$id."').click(function(){
     if(!hostsite_user_has_permission('IForm n'.$nid.' access')){
     	return "<p>".lang::get('LANG_Insufficient_Privileges')."</p>";
     }
-    
+
   	$r = '';
-  	 
+
     // Get authorisation tokens to update and read from the Warehouse.
     $readAuth = data_entry_helper::get_read_auth($args['website_id'], $args['password']);
 	$svcUrl = data_entry_helper::$base_url.'/index.php/services';
@@ -481,7 +481,7 @@ jQuery('#".$id."').click(function(){
 	data_entry_helper::link_default_stylesheet();
 	data_entry_helper::add_resource('jquery_ui');
 	data_entry_helper::add_resource('autocomplete');
-	
+
 	if($args['language'] != 'en')
 		data_entry_helper::add_resource('jquery_ui_'.$args['language']);
 	data_entry_helper::enable_validation('cc-1-collection-details'); // don't care about ID itself, just want resources
@@ -526,7 +526,7 @@ jQuery('#".$id."').click(function(){
        ,'fieldprefix'=>'taxAttr'
        ,'extraParams'=>$readAuth
     ), false);
-    
+
     if(count($taxon_attributes)!=1 || $taxon_attributes[0][caption]!="XPER ID")
     	return "<p>Internal error: Expected 1 taxon attribute (XPER ID), got ".count($taxon_attributes)."</p>Dump:<br/>".print_r($taxon_attributes,true);
     $defNRAttrOptions = array('extraParams'=>$readAuth+array('orderby'=>'id'),
@@ -585,12 +585,12 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
 		$first=false;
 	}
     data_entry_helper::$javascript .= "];";
-    
+
     // note we have to proxy the post. Every time a write transaction is carried out, the write nonce is trashed.
 	// For security reasons we don't want to give the user the ability to generate their own nonce, so we use
 	// the fact that the user is logged in to drupal as the main authentication/authorisation/identification
 	// process for the user. The proxy packages the post into the correct format
-	// 
+	//
     // There are 2 types of submission:
     // When a user validates a panel using the validate button, the following panel is opened on success
     // When a user presses a modify button, the open panel gets validated, and the panel to be modified is opened.
@@ -603,7 +603,7 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
     // form id="cc-2-floral-station"
     // has the location (+attributes), location_image, main sample (no attributes), flower occurrence (+attributes), determination, flower_image
     // form id="cc-3-delete-session" just has the session sample.
-    // form class=\"poll-session-form\" has the session (+attributes) 
+    // form class=\"poll-session-form\" has the session (+attributes)
     // form id="cc-4-insect-upload" just uploads the insect picture: no DB
     // form id="cc-4-main-form"
     // has the insect occurrence (+attributes), determination, insect image
@@ -640,7 +640,7 @@ document.write("<div class=\"poll-loading-hide\" style=\"display:none;\">");
     <input type="hidden" id="smpAttr:'.$args['complete_attr_id'].'" name="smpAttr:'.$args['complete_attr_id'].'" value="0" />
     <input type="hidden" id="smpAttr:'.$args['uid_attr_id'].'" name="smpAttr:'.$args['uid_attr_id'].'" value="'.$uid.'" />
     <input type="hidden" id="smpAttr:'.$args['email_attr_id'].'" name="smpAttr:'.$args['email_attr_id'].'" value="'.$email.'" />
-    <input type="hidden" id="smpAttr:'.$args['username_attr_id'].'" name="smpAttr:'.$args['username_attr_id'].'" value="'.$username.'" />  
+    <input type="hidden" id="smpAttr:'.$args['username_attr_id'].'" name="smpAttr:'.$args['username_attr_id'].'" value="'.$username.'" />
     <input type="hidden" id="locations_website:website_id" name="locations_website:website_id" value="'.$args['website_id'].'" />
     <input type="hidden" id="location:id"      name="location:id" value="" disabled="disabled" />
     <input type="hidden" id="sample:id"        name="sample:id" value="" disabled="disabled" />
@@ -706,7 +706,7 @@ $.fn.showPanel = function(){
 };
 
 $.fn.hidePanel = function(){
-	this.hide(); 
+	this.hide();
 };
 
 inseeLayer = null;
@@ -741,7 +741,7 @@ $.fn.resetPanel = function(){
 	// TODO Map
 	this.find('.thumb').not('.blankPhoto').remove();
 	this.find('.blankPhoto').addClass('currentPhoto');
-	
+
 	// resetForm does not reset the hidden fields. record_status, website_id and survey_id are not altered so do not reset.
 	// hidden Attributes generally hold unchanging data, but the name needs to be reset (does it for non hidden as well).
 	// hidden location:name are set in code anyway.
@@ -772,7 +772,7 @@ $.fn.resetPanel = function(){
 		});
 		jQuery(this).find('input[name=location\\:centroid_sref]').val('');
 		jQuery(this).find('input[name=location\\:centroid_geom]').val('');
-    });	
+    });
   };
 
 alertIndiciaError = function(data){
@@ -781,7 +781,7 @@ alertIndiciaError = function(data){
 	if(data.errors){
 		for (var i in data.errors){
 			errorString = errorString + ' : ' + data.errors[i];
-		}				
+		}
 	}
 	alert(errorString);
 	// the most likely cause is authentication failure - eg the read authentication has timed out.
@@ -792,7 +792,7 @@ alertIndiciaError = function(data){
 	jQuery('#refresh-message').show();
 	throw('WAREHOUSE ERROR');
 };
-			
+
 checkProtocolStatus = function(display){
   	var checkedProtocol = jQuery('[name=smpAttr\\:".$args['protocol_attr_id']."],[name^=smpAttr\\:".$args['protocol_attr_id']."\\:]').filter('[checked]').parent();
     if(jQuery('[name=location\\:name]').val() != '' && checkedProtocol.length > 0) {
@@ -934,7 +934,7 @@ insertImage = function(path, target, ratio){
   		}
 	}).attr('src', '".(data_entry_helper::$base_url).(data_entry_helper::$indicia_upload_path)."'+path);
 }
-				    
+
 $('#cc-1').ajaxError(function(event, request, settings){
 	var insectURL = insectIDstruc.pollURL+insectIDstruc.sessionID;
 	if(settings.url != insectURL){ // this url may not be present.
@@ -947,7 +947,7 @@ $('#cc-1').ajaxError(function(event, request, settings){
 		throw('AJAX ERROR');
 	}
 });
- 
+
 validateTime = function(name, formSel){
     var control = jQuery(formSel).find('[name='+name+'],[name^='+name+'\\:]');
     if(control.val().match(/^(2[0-3]|[0,1][0-9]):[0-5][0-9]$/) == null) {
@@ -963,7 +963,7 @@ validateTime = function(name, formSel){
 
 $('#cc-1-collection-details').ajaxForm({
 		async: false,
-        dataType:  'json', 
+        dataType:  'json',
         beforeSubmit:   function(data, obj, options){
         	// if location id filled in but sample id is not -> error
         	if(data.length == 15 && data[14].value == ''){
@@ -998,13 +998,13 @@ $('#cc-1-collection-details').ajaxForm({
 				jQuery('#cc-6-consult-collection').attr('href', '".url('node/'.$args['gallery_node'])."'+'?collection_id='+data.struct.children[0].id);
 				jQuery('#cc-1-collection-details,#cc-2-floral-station,#cc-1-delete-collection').find('[name=sample\\:id]').removeAttr('disabled').val(data.struct.children[0].id);
 				// In this case we use loadAttributes to set the names of the attributes to include the attribute_value id.
-				// cant use the struct as it can't tell which attribute is which. 
+				// cant use the struct as it can't tell which attribute is which.
 				loadAttributes('#cc-1-collection-details,#cc-5-collection', 'sample_attribute_value', 'sample_attribute_id', 'sample_id', data.struct.children[0].id, 'smpAttr', true, true);
 			   	checkProtocolStatus(true);
         		$('#cc-1').foldPanel();
     			if(showStationPanel){ $('#cc-2').showPanel(); }
 		    	showStationPanel = true;
-        	}  else 
+        	}  else
 				alertIndiciaError(data);
         },
         complete: function (){
@@ -1012,9 +1012,9 @@ $('#cc-1-collection-details').ajaxForm({
   		}
 });
 
-$('#cc-1-delete-collection').ajaxForm({ 
+$('#cc-1-delete-collection').ajaxForm({
 		async: false,
-		dataType:  'json', 
+		dataType:  'json',
         beforeSubmit:   function(data, obj, options){
   			// Warning this assumes that the data is fixed position:
        		data[3].value = jQuery('#cc-1-collection-details input[name=sample\\:date]').val();
@@ -1048,7 +1048,7 @@ $('#cc-1-delete-collection').ajaxForm({
 					center.transform(div.map.displayProjection, div.map.projection);
 					div.map.setCenter(center, ".((int) $args['map_zoom']).");
 				}
-        	}  else 
+        	}  else
 				alertIndiciaError(data);
   		},
         complete: function (){
@@ -1089,7 +1089,7 @@ $('#cc-1-reinit-button').click(function() {
     	$options['msgGeorefSelectPlace'] = lang::get('msgGeorefSelectPlace');
     if( lang::get('msgGeorefNothingFound') != 'msgGeorefNothingFound')
     	$options['msgGeorefNothingFound'] = lang::get('msgGeorefNothingFound');
-    
+
     $extraParams = $readAuth + array('taxon_list_id' => $args['flower_list_id'], 'view'=>'detail','orderby'=>'taxonomic_sort_order', 'allow_data_entry'=>'t');
     $species_ctrl_args=array(
     		'fieldname'=>'flowerSelect',
@@ -1102,7 +1102,7 @@ $('#cc-1-reinit-button').click(function() {
     		'extraParams'=>$extraParams,
     		'suffixTemplate'=>'nosuffix'
     );
-    
+
     $r .= '
 <div id="cc-2" class="poll-section">
   <div id="cc-2-title" class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-all poll-section-title"><span>'.lang::get('LANG_Flower_Station').'</span>
@@ -1124,7 +1124,7 @@ $('#cc-1-reinit-button').click(function() {
           '.iform_pollenators::help_button($use_help, "flower-help-button", $args['help_function'], $args['help_flower_arg']).'
 		  <p><strong>'.lang::get('LANG_Identify_Flower').' :</strong></p>
           <div class="id-later-group">
-            <label for="id-flower-later" class="follow-on">'.lang::get('LANG_ID_Flower_Later').' </label><input type="checkbox" id="id-flower-later" name="id-flower-later" /> 
+            <label for="id-flower-later" class="follow-on">'.lang::get('LANG_ID_Flower_Later').' </label><input type="checkbox" id="id-flower-later" name="id-flower-later" />
           </div>
 		  <input type="hidden" id="flower:taxon_details" name="flower:taxon_details" value=""/>
           <input type="hidden" name="flower:determination_type" value="A" />
@@ -1134,7 +1134,7 @@ $('#cc-1-reinit-button').click(function() {
           <table id="flower-species-list"><tbody id="flower-species-list-body"></tbody></table>
         </div>
  	    <div class="id-specified-group">
-          <label for="flower:taxon_extra_info" class="follow-on">'.lang::get('LANG_ID_More_Precise').' </label> 
+          <label for="flower:taxon_extra_info" class="follow-on">'.lang::get('LANG_ID_More_Precise').' </label>
           <input type="text" id="flower:taxon_extra_info" name="flower:taxon_extra_info" class="taxon-info" />
         </div>
       </div>
@@ -1167,15 +1167,15 @@ $('#cc-1-reinit-button').click(function() {
       <input type="hidden" id="sample:survey_id" name="sample:survey_id" value="'.$args['survey_id'].'" />
       <input type="hidden" id="sample:id" name="sample:id" value=""/>
       <input type="hidden" name="sample:date" value="2010-01-01"/>
-      <input type="hidden" name="determination:taxa_taxon_list_id" value=""/>  
-      <input type="hidden" name="determination:taxon_details" value=""/>  
-      <input type="hidden" name="determination:taxon_extra_info" value=""/>  
-      <input type="hidden" name="determination:comment" value=""/>  
-      <input type="hidden" name="determination:determination_type" value="A" />  
+      <input type="hidden" name="determination:taxa_taxon_list_id" value=""/>
+      <input type="hidden" name="determination:taxon_details" value=""/>
+      <input type="hidden" name="determination:taxon_extra_info" value=""/>
+      <input type="hidden" name="determination:comment" value=""/>
+      <input type="hidden" name="determination:determination_type" value="A" />
       <input type="hidden" name="determination:cms_ref" value="'.$uid.'" />
       <input type="hidden" name="determination:email_address" value="'.$email.'" />
-      <input type="hidden" name="determination:person_name" value="'.$username.'" />  
-      <input type="hidden" name="occurrence:use_determination" value="Y"/>    
+      <input type="hidden" name="determination:person_name" value="'.$username.'" />
+      <input type="hidden" name="occurrence:use_determination" value="Y"/>
       <input type="hidden" name="occurrence:record_status" value="C" />
       <input type="hidden" id="location_image:id" name="location_image:id" value="" disabled="disabled" />
       <input type="hidden" id="occurrence:id" name="occurrence:id" value="" disabled="disabled" />
@@ -1196,7 +1196,7 @@ $('#cc-1-reinit-button').click(function() {
       <div id="cc-2-location-entry">
         '.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $readAuth)).'
   	    <label for="place:INSEE">'.lang::get('LANG_Or').'</label><input type="text" id="place:INSEE" name="place:INSEE" value="'.lang::get('LANG_INSEE').'"
-	 		onclick="if(this.value==\''.lang::get('LANG_INSEE').'\'){this.value=\'\'; this.style.color=\'#000\'}"  
+	 		onclick="if(this.value==\''.lang::get('LANG_INSEE').'\'){this.value=\'\'; this.style.color=\'#000\'}"
             onblur="if(this.value==\'\'){this.value=\''.lang::get('LANG_INSEE').'\'; this.style.color=\'#555\'}" /><input type="button" id="search-insee-button" class="ui-corner-all ui-widget-content ui-state-default search-button" value="'.lang::get('search').'" />
  	    <label >'.lang::get('LANG_Or').'</label>
     	'.data_entry_helper::sref_textbox(array(
@@ -1214,8 +1214,9 @@ $('#cc-1-reinit-button').click(function() {
  	  </div>
  	  <div class="poll-map-container">';
     $tempScript = data_entry_helper::$onload_javascript;
-    data_entry_helper::$onload_javascript = '';
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+		data_entry_helper::$onload_javascript = '';
+		iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
     $map1JS = data_entry_helper::$onload_javascript;
     data_entry_helper::$onload_javascript = $tempScript;
  	$r .= '</div>
@@ -1269,7 +1270,7 @@ jQuery('select#flowerSelect').change(function() {
 showSessionsPanel = true;
 
 buildMap = function (){
-	if(jQuery('.poll-map-container:visible').length == 0) return; 
+	if(jQuery('.poll-map-container:visible').length == 0) return;
 	if(jQuery('#map').children().length == 0) {
 		".$map1JS."
   		jQuery('#map')[0].map.searchLayer.events.register('featuresadded', {}, function(a1){
@@ -1292,7 +1293,7 @@ buildMap = function (){
 					geometryName:'the_geom',
 					featureNS: '".$args['INSEE_ns']."',
 					srsName: 'EPSG:900913',
-					version: '1.1.0'                  
+					version: '1.1.0'
 					,propertyNames: ['the_geom', 'NOM', 'INSEE_NEW', 'DEPT_NUM', 'DEPT_NOM', 'REG_NUM', 'REG_NOM']
 				}),
 				filter: filter
@@ -1505,7 +1506,7 @@ jQuery('#search-insee-button').click(function(){
               geometryName:'the_geom',
               featureNS: '".$args['INSEE_ns']."',
               srsName: 'EPSG:900913',
-              version: '1.1.0'                  
+              version: '1.1.0'
       		  ,propertyNames: ['the_geom']
   			}),
   		  filter: new OpenLayers.Filter.Logical({
@@ -1593,9 +1594,9 @@ validateStationPanel = function(){
 };
 
 // Flower upload picture form.
-$('#cc-2-flower-upload').ajaxForm({ 
+$('#cc-2-flower-upload').ajaxForm({
 		async: false,
-		dataType:  'json', 
+		dataType:  'json',
         beforeSubmit:   function(data, obj, options){
          	if (!jQuery('form#cc-2-flower-upload').valid() ||
                     jQuery('#cc-2-flower-image').hasClass('loading')) {
@@ -1622,9 +1623,9 @@ $('#cc-2-flower-upload').ajaxForm({
 });
 
 // Flower upload picture form.
-$('#cc-2-environment-upload').ajaxForm({ 
+$('#cc-2-environment-upload').ajaxForm({
 		async: false,
-		dataType:  'json', 
+		dataType:  'json',
         beforeSubmit:   function(data, obj, options){
          	if (!jQuery('form#cc-2-environment-upload').valid()) {
    				return false;
@@ -1655,9 +1656,9 @@ findID = function(name, data){
 	}
 };
 
-$('#cc-2-floral-station').ajaxForm({ 
+$('#cc-2-floral-station').ajaxForm({
 	async: false,
-	dataType:  'json', 
+	dataType:  'json',
     beforeSubmit:   function(data, obj, options){
 		var valid = true;
 		clearErrors('form#cc-2-floral-station');
@@ -1711,7 +1712,7 @@ $('#cc-2-floral-station').ajaxForm({
 			data.splice(findID('determination:cms_ref', data),1);
 			data.splice(findID('determination:email_address', data),1);
 			data.splice(findID('determination:person_name', data),1);
-			// data.splice(12,8); 
+			// data.splice(12,8);
 		}
    		if ( valid == false ) {
 			myScrollToError();
@@ -1744,8 +1745,8 @@ $('#cc-2-floral-station').ajaxForm({
 			showSessionsPanel = true;
         }  else {
 			if(data.error){
-				var lastIndex = data.error.lastIndexOf('Validation error'); 
-    			if (lastIndex != -1 && lastIndex  == (data.error.length - 16)){ 
+				var lastIndex = data.error.lastIndexOf('Validation error');
+    			if (lastIndex != -1 && lastIndex  == (data.error.length - 16)){
 					if(data.errors){
 						if(data.errors['location:centroid_sref']){
 							var label = $('<p/>')
@@ -1797,9 +1798,9 @@ $('#cc-2-valid-button').click(function() {
 </div>';
 
     data_entry_helper::$javascript .= "
-$('#cc-3-delete-session').ajaxForm({ 
+$('#cc-3-delete-session').ajaxForm({
 		async: false,
-		dataType:  'json', 
+		dataType:  'json',
 		beforeSubmit:   function(data, obj, options){
 			// Warning this assumes that the data is fixed position:
 			data[4].value = jQuery('#cc-1-collection-details input[name=location\\:id]').val();
@@ -1869,7 +1870,7 @@ compareTimes = function(nameStart, nameEnd, formSel){
 convertDate = function(dateStr){
 	// Converts a YYYY-MM-DD date to YYYY/MM/DD so IE can handle it.
 	return dateStr.slice(0,4)+'/'+dateStr.slice(5,7)+'/'+dateStr.slice(8,10);
-} 
+}
 
 checkDate = function(name, formSel){
   var control = jQuery(formSel).find('[name='+name+']');
@@ -1923,7 +1924,7 @@ addSession = function(){
 	var newModButton = jQuery('<div class=\"right ui-state-default ui-corner-all mod-button\">".lang::get('LANG_Modify')."</div>')
 		.appendTo(newTitle).hide();
 	var newDeleteButton = jQuery('<div class=\"right ui-state-default ui-corner-all delete-button\">".lang::get('LANG_Delete_Session')."</div>')
-		.appendTo(newTitle);	
+		.appendTo(newTitle);
 	newModButton.click(function() {
 		if(!validateAndSubmitOpenSessions()) return false;
 		var session=$(this).parents('.poll-session');
@@ -2027,7 +2028,7 @@ addSession = function(){
 				thisSession.show();
 				thisSession.children(':first').show().find('*').show();
 				thisSession.children().not(':first').hide();
-  			} else 
+  			} else
 	        	alertIndiciaError(data);
   		},
         complete: function (){
@@ -2105,7 +2106,7 @@ jQuery('.mod-button').click(function() {
     <div class="photo-blurb">'.lang::get('LANG_Photo_Blurb').'</div>
     <div class="blankPhoto thumb currentPhoto"></div>
   </div>
-  <div id="cc-4-body" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active poll-section-body">  
+  <div id="cc-4-body" class="ui-accordion-content ui-helper-reset ui-widget-content ui-accordion-content-active poll-section-body">
     <div id="cc-4-insect">
       <div id="cc-4-insect-title">'.lang::get('LANG_Upload_Insect').'</div>
       <form id="cc-4-insect-upload" enctype="multipart/form-data" action="'.iform_ajaxproxy_url($nid, 'media').'" method="POST">
@@ -2119,17 +2120,17 @@ jQuery('.mod-button').click(function() {
           '.iform_pollenators::help_button($use_help, "insect-help-button", $args['help_function'], $args['help_insect_arg']).'
           <p><strong>'.lang::get('LANG_Identify_Insect').'</strong></p>
           <input type="hidden" id="insect:taxon_details" name="insect:taxon_details" />
-          <input type="hidden" name="insect:determination_type" value="A" />  
+          <input type="hidden" name="insect:determination_type" value="A" />
 		  <label for="insect-id-button">'.lang::get('LANG_Insect_ID_Key_label').' :</label><span id="insect-id-button" class="ui-state-default ui-corner-all poll-id-button" >'.lang::get('LANG_Launch_ID_Key').'</span>
 		  <span id="insect-id-cancel" class="ui-state-default ui-corner-all poll-id-cancel" >'.lang::get('LANG_Cancel_ID').'</span>
-		  <p id="insect_taxa_list"></p> 
+		  <p id="insect_taxa_list"></p>
  	    </div>
  	    <div class="id-later-group">
  	      <label for="id-insect-later" class="follow-on">'.lang::get('LANG_ID_Insect_Later').' </label><input type="checkbox" id="id-insect-later" name="id-insect-later" />
  	    </div>
  	    <div class="id-specified-group">
  	      '.data_entry_helper::select($species_ctrl_args).'
-          <label for="insect:taxon_extra_info" class="follow-on">'.lang::get('LANG_ID_More_Precise').' </label> 
+          <label for="insect:taxon_extra_info" class="follow-on">'.lang::get('LANG_ID_More_Precise').' </label>
     	  <input type="text" id="insect:taxon_extra_info" name="insect:taxon_extra_info" class="taxon-info" />
         </div>
       </div>
@@ -2138,20 +2139,20 @@ jQuery('.mod-button').click(function() {
         <textarea id="insect:comment" name="insect:comment" class="taxon-comment" rows="3" ></textarea>
       </div>
     </div>
-    <div class="poll-break"></div> 
+    <div class="poll-break"></div>
  	<form id="cc-4-main-form" action="'.iform_ajaxproxy_url($nid, 'occurrence').'" method="POST" >
     	<input type="hidden" id="website_id" name="website_id" value="'.$args['website_id'].'" />
     	<input type="hidden" id="occurrence_image:path" name="occurrence_image:path" value="" />
     	<input type="hidden" id="occurrence:record_status" name="occurrence:record_status" value="C" />
-        <input type="hidden" name="occurrence:use_determination" value="Y"/>    
-        <input type="hidden" name="determination:taxa_taxon_list_id" value=""/> 
-        <input type="hidden" name="determination:taxon_details" value=""/>  	
-        <input type="hidden" name="determination:taxon_extra_info" value=""/>  	
-        <input type="hidden" name="determination:comment" value=""/>  	
-    	<input type="hidden" name="determination:determination_type" value="A" /> 
+        <input type="hidden" name="occurrence:use_determination" value="Y"/>
+        <input type="hidden" name="determination:taxa_taxon_list_id" value=""/>
+        <input type="hidden" name="determination:taxon_details" value=""/>
+        <input type="hidden" name="determination:taxon_extra_info" value=""/>
+        <input type="hidden" name="determination:comment" value=""/>
+    	<input type="hidden" name="determination:determination_type" value="A" />
         <input type="hidden" name="determination:cms_ref" value="'.$uid.'" />
     	<input type="hidden" name="determination:email_address" value="'.$email.'" />
-    	<input type="hidden" name="determination:person_name" value="'.$username.'" /> 
+    	<input type="hidden" name="determination:person_name" value="'.$username.'" />
     	<input type="hidden" id="occurrence:id" name="occurrence:id" value="" disabled="disabled" />
 	    <input type="hidden" id="determination:id" name="determination:id" value="" disabled="disabled" />
 	    <input type="hidden" id="occurrence_image:id" name="occurrence_image:id" value="" disabled="disabled" />
@@ -2179,7 +2180,7 @@ jQuery('.mod-button').click(function() {
 <div style="display:none" />
     <form id="cc-4-delete-insect" action="'.iform_ajaxproxy_url($nid, 'occurrence').'" method="POST">
        <input type="hidden" name="website_id" value="'.$args['website_id'].'" />
-       <input type="hidden" name="occurrence:use_determination" value="Y"/>    
+       <input type="hidden" name="occurrence:use_determination" value="Y"/>
        <input type="hidden" name="occurrence:id" value="" />
        <input type="hidden" name="occurrence:sample_id" value="" />
        <input type="hidden" name="occurrence:deleted" value="t" />
@@ -2227,9 +2228,9 @@ jQuery('#id-insect-later').change(function (){
 });
 
 // Insect upload picture form.
-$('#cc-4-insect-upload').ajaxForm({ 
+$('#cc-4-insect-upload').ajaxForm({
 		async: false,
-		dataType:  'json', 
+		dataType:  'json',
         beforeSubmit:   function(data, obj, options){
         	if(jQuery('#cc-4-insect-upload input[name=upload_file]').val() == '')
         		return false;
@@ -2253,9 +2254,9 @@ $('#cc-4-insect-upload').ajaxForm({
   		}
 });
 
-$('#cc-4-main-form').ajaxForm({ 
+$('#cc-4-main-form').ajaxForm({
 	async: false,
-	dataType:  'json', 
+	dataType:  'json',
     beforeSubmit:   function(data, obj, options){
     	var valid = true;
     	clearErrors('form#cc-4-main-form');
@@ -2285,7 +2286,7 @@ $('#cc-4-main-form').ajaxForm({
 				var toolValues = insectIDstruc.storedTaxaList;
 				for(var i = 0; i<toolValues.length; i++){
 					data.push({name: 'determination:taxa_taxon_list_id_list[]', value: toolValues[i]});
-				}			
+				}
 			}
 		} else {
 			prepPhotoReelForNew(true, jQuery('#cc-4-main-form').find('[name=occurrence\\:id]').val());
@@ -2324,12 +2325,12 @@ clearInsect = function(){
 	insectIDstruc.storedTaxaList = [];
 	jQuery('#insect_taxa_list').empty();
 	jQuery('[name=insect\\:taxa_taxon_list_id],[name=insect\\:taxon_extra_info],[name=insect\\:comment],[name=insect\\:taxon_details]').val('');
-    jQuery('[name=insect\\:determination_type]').val('A'); 
+    jQuery('[name=insect\\:determination_type]').val('A');
 	jQuery('#id-insect-later').removeAttr('checked').removeAttr('disabled');
     jQuery('#cc-4-main-form').find('[name=determination\\:cms_ref]').val('".$uid."');
     jQuery('#cc-4-main-form').find('[name=determination\\:email_address]').val('".$email."');
-    jQuery('#cc-4-main-form').find('[name=determination\\:person_name]').val('".$username."'); 
-    jQuery('#cc-4-main-form').find('[name=determination\\:determination_type]').val('A'); 
+    jQuery('#cc-4-main-form').find('[name=determination\\:person_name]').val('".$username."');
+    jQuery('#cc-4-main-form').find('[name=determination\\:determination_type]').val('A');
     jQuery('#cc-4-main-form').find('[name=occurrence_image\\:path]').val('');
 	jQuery('#cc-4-main-form').find('[name=occurrence\\:id],[name=occurrence_image\\:id],[name=determination\\:id]').val('').attr('disabled', 'disabled');
 	// First rename, to be safe. Then add [] to multiple choice checkboxes.
@@ -2373,7 +2374,7 @@ loadInsect = function(id){
         if(!(data instanceof Array)){
    			alertIndiciaError(data);
    		} else loadDetermination(data, insectIDstruc);
-	});	
+	});
 	jQuery('.currentPhoto').removeClass('currentPhoto');
 	jQuery('[occId='+id+']').addClass('currentPhoto');
 }
@@ -2425,14 +2426,14 @@ addExistingToPhotoReel = function(occId){
 		    setInsect(occId)});
 	else
 		container.empty();
-	// we use the presence of the text to determine whether the 
+	// we use the presence of the text to determine whether the
 	// insect has been identified or not. NB an insect tagged as unidentified (type = 'X') has actually been through the ID
 	// process, so is not unidentified!!!
-	jQuery.ajax({ 
-        type: \"GET\", 
-        url: \"".$svcUrl."/data/determination\" + 
-    		\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" + 
-    		\"&reset_timeout=true&occurrence_id=\" + occId + \"&orderby=id&deleted=f&callback=?\", 
+	jQuery.ajax({
+        type: \"GET\",
+        url: \"".$svcUrl."/data/determination\" +
+    		\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
+    		\"&reset_timeout=true&occurrence_id=\" + occId + \"&orderby=id&deleted=f&callback=?\",
         success: function(detData) {
 	    	if(!(detData instanceof Array)){
    				alertIndiciaError(detData);
@@ -2469,8 +2470,8 @@ addExistingToPhotoReel = function(occId){
 					}
 				});
 	    	}
-  		}, 
-    	dataType: 'json' 
+  		},
+    	dataType: 'json'
     });
 }
 
@@ -2491,7 +2492,7 @@ setNoInsect = function(){
 	// first close all the other panels, ensuring any data is saved.
 	if(!validateCollectionPanel() || !validateStationPanel() || !validateSessionsPanel())
 		return;
-		
+
 	if(jQuery('#cc-4-body:visible').length == 0)
 		jQuery('div#cc-4').unFoldPanel();
 	else
@@ -2564,9 +2565,9 @@ $('#cc-4-delete-insect-button').click(function() {
 	}
 });
 
-$('#cc-4-delete-insect').ajaxForm({ 
+$('#cc-4-delete-insect').ajaxForm({
 		async: false,
-		dataType:  'json', 
+		dataType:  'json',
         beforeSubmit:   function(data, obj, options){
   			// Warning this assumes that the data is fixed position:
         	if(data[2].value == '') return false;
@@ -2601,12 +2602,12 @@ $('#cc-4-valid-photo-button').click(function(){
 	}
 });
 ";
-    
+
  	$r .= '
 <div id="cc-5" class="poll-section">
-  <div id="cc-5-body" class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top poll-section-body"> 
-   <p id="cc-5-good">'.lang::get('LANG_Can_Complete_Msg').'</p> 
-   <p id="cc-5-bad">'.lang::get('LANG_Cant_Complete_Msg').'</p> 
+  <div id="cc-5-body" class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top poll-section-body">
+   <p id="cc-5-good">'.lang::get('LANG_Can_Complete_Msg').'</p>
+   <p id="cc-5-bad">'.lang::get('LANG_Cant_Complete_Msg').'</p>
    <div style="display:none" />
     <form id="cc-5-collection" action="'.iform_ajaxproxy_url($nid, 'sample').'" method="POST">
        <input type="hidden" name="website_id" value="'.$args['website_id'].'" />
@@ -2634,9 +2635,9 @@ $('#cc-4-valid-photo-button').click(function(){
   </div>
 </div>';
 data_entry_helper::$javascript .= "
-$('#cc-5-collection').ajaxForm({ 
+$('#cc-5-collection').ajaxForm({
 		async: false,
-		dataType:  'json', 
+		dataType:  'json',
         beforeSubmit:   function(data, obj, options){
             // double check that location id and sample id are filled in
 			if(jQuery('#cc-1-collection-details input[name=location\\:id]').val() == ''){
@@ -2699,9 +2700,9 @@ $('#cc-5-complete-collection').click(function(){
 
  	$r .= '
 <div id="cc-6" class="poll-section">
-  <div id="cc-6-body" class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top poll-section-body"> 
-   <p>'.lang::get('LANG_Final_1').'</p> 
-   <p>'.lang::get('LANG_Final_2').'</p> 
+  <div id="cc-6-body" class="ui-accordion-header ui-helper-reset ui-state-active ui-corner-top poll-section-body">
+   <p>'.lang::get('LANG_Final_1').'</p>
+   <p>'.lang::get('LANG_Final_2').'</p>
    </div>
   <div id="cc-6-footer" class="ui-accordion-content ui-helper-reset ui-widget-content ui-corner-bottom ui-accordion-content-active poll-section-footer">
     <a id="cc-6-consult-collection" href="" class="ui-state-default ui-corner-all link-button">'.lang::get('LANG_Consult_Collection').'</a>
@@ -2714,7 +2715,7 @@ $('#cc-5-complete-collection').click(function(){
 document.write("</div>");
 /* ]]> */</script>
 ';
- 
+
 data_entry_helper::$javascript .= "
 loadAttributes = function(formsel, attributeTable, attributeKey, key, keyValue, prefix, reset_timeout, required){
 	// first need to remove any hidden multiselect checkbox unclick fields
@@ -2731,11 +2732,11 @@ loadAttributes = function(formsel, attributeTable, attributeKey, key, keyValue, 
 		if(similar.length > 1)
 			jQuery(this).attr('name', myName[0]+':'+myName[1]+'[]');
 	});
-    jQuery.ajax({ 
-        type: \"GET\", 
+    jQuery.ajax({
+        type: \"GET\",
         url: \"".$svcUrl."/data/\" + attributeTable + \"?mode=json&view=list\" +
         	(reset_timeout ? \"&reset_timeout=true\" : \"\") + \"&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
-   			\"&\" + key + \"=\" + keyValue + \"&callback=?\", 
+   			\"&\" + key + \"=\" + keyValue + \"&callback=?\",
         data: {},
         myFormsel: formsel,
         myAttributeKey: attributeKey,
@@ -2922,11 +2923,11 @@ jQuery('#cc-1').ajaxStop(function(){
 				return;
 			}
 			setPreloadStage(2);
-			// main sample date is only set when collection is completed, so don't need to load collection sample itself, and keep date as default 
+			// main sample date is only set when collection is completed, so don't need to load collection sample itself, and keep date as default
 			loadAttributes('#cc-1-collection-details,#cc-5-collection', 'sample_attribute_value', 'sample_attribute_id', 'sample_id', preloadIDs.sample_id, 'smpAttr', false, true);
   			jQuery.getJSON('".$svcUrl."/data/location/' + preloadIDs.location_id +
           					\"?mode=json&view=detail&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
-          					\"&callback=?\", 
+          					\"&callback=?\",
 					function(locationdata) {
 		    		  if(!(locationdata instanceof Array)){
    						alertIndiciaError(locationdata);
@@ -2966,9 +2967,9 @@ jQuery('#cc-1').ajaxStop(function(){
 			loadImage('location_image', 'location_id', 'location\\:id', preloadIDs.location_id, '#cc-2-environment-image', ".$args['Environment_Image_Ratio'].", false);
 			jQuery.getJSON(\"".$svcUrl."/data/occurrence/\" +
           					\"?mode=json&view=detail&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
-          					\"&sample_id=\"+preloadIDs.sample_id+\"&deleted=f&callback=?\", 
+          					\"&sample_id=\"+preloadIDs.sample_id+\"&deleted=f&callback=?\",
 					function(flowerData) {
-          			  // there will only be an occurrence if the floral station panel has previously been displayed & validated. 
+          			  // there will only be an occurrence if the floral station panel has previously been displayed & validated.
 		    		  if(!(flowerData instanceof Array)){
 						alertIndiciaError(flowerData);
 					  } else if (flowerData.length>0) { // do we need another >1 check as well?
@@ -2994,8 +2995,8 @@ jQuery('#cc-1').ajaxStop(function(){
 			setPreloadStage(4);
 			loadAttributes('#cc-2-floral-station', 'occurrence_attribute_value', 'occurrence_attribute_id', 'occurrence_id', preloadIDs.flower_id, 'occAttr', false, true);
 			loadImage('occurrence_image', 'occurrence_id', 'occurrence\\:id', preloadIDs.flower_id, '#cc-2-flower-image', ".$args['Flower_Image_Ratio'].", true);
-			jQuery.getJSON(\"".$svcUrl."/data/determination\" + 
-					\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."&occurrence_id=\"+preloadIDs.flower_id+\"&orderby=id&deleted=f&callback=?\", 
+			jQuery.getJSON(\"".$svcUrl."/data/determination\" +
+					\"?mode=json&view=list&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."&occurrence_id=\"+preloadIDs.flower_id+\"&orderby=id&deleted=f&callback=?\",
 				function(detData) {
 					if(!(detData instanceof Array)){
    						alertIndiciaError(detData);
@@ -3010,8 +3011,8 @@ jQuery('#cc-1').ajaxStop(function(){
 			setPreloadStage(5);
 			jQuery('#cc-2').foldPanel();
 			jQuery('#cc-3').showPanel();
-			jQuery.getJSON(\"".$svcUrl."/data/sample\" + 
-					\"?mode=json&view=detail&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."&parent_id=\"+preloadIDs.sample_id+\"&callback=?\", 
+			jQuery.getJSON(\"".$svcUrl."/data/sample\" +
+					\"?mode=json&view=detail&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."&parent_id=\"+preloadIDs.sample_id+\"&callback=?\",
 				function(sessiondata) {
 					if(!(sessiondata instanceof Array)){
 						alertIndiciaError(sessiondata);
@@ -3071,8 +3072,8 @@ jQuery('#cc-1').ajaxStop(function(){
   }
 });
 jQuery.getJSON(\"".$svcUrl."\" + \"/report/requestReport?report=reports_for_prebuilt_forms/poll_my_collections.xml&reportSource=local&mode=json\" +
-			\"&auth_token=".$readAuth['auth_token']."&reset_timeout=true&nonce=".$readAuth["nonce"]."\" + 
-			\"&survey_id=".$args['survey_id']."&userID_attr_id=".$args['uid_attr_id']."&userID=".$uid."&complete_attr_id=".$args['complete_attr_id']."&callback=?\", 
+			\"&auth_token=".$readAuth['auth_token']."&reset_timeout=true&nonce=".$readAuth["nonce"]."\" +
+			\"&survey_id=".$args['survey_id']."&userID_attr_id=".$args['uid_attr_id']."&userID=".$uid."&complete_attr_id=".$args['complete_attr_id']."&callback=?\",
 	function(data) {
 	if(!(data instanceof Array)){
    		alertIndiciaError(data);
@@ -3096,7 +3097,7 @@ jQuery.getJSON(\"".$svcUrl."\" + \"/report/requestReport?report=reports_for_preb
 // is not practical - it will do its stuff before the data is loaded, defeating the purpose. Also it uses hide (display:none)
 // which is a no-no in relation to the map. This means we have to dispense with the slow fade in.
 // it is also complicated by the attibutes and images being loaded asynchronously - and non-linearly.
-// Do the best we can! 
+// Do the best we can!
 //    data_entry_helper::$onload_javascript = "jQuery('.my-loading-hide').addClass('loading-hide').removeClass('my-loading-hide');\n".data_entry_helper::$onload_javascript."\nbuildMap();";
 	data_entry_helper::$onload_javascript .= "\nbuildMap();";
 	return $r;

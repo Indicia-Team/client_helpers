@@ -101,10 +101,10 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
    */
   public static function get_form($args, $nid, $response=null) {
     if (empty($args['group_id'])) {
-      drupal_set_message('Please specify a group_id in the page configuration.');
+      hostsite_show_message('Please specify a group_id in the page configuration.');
     }
     if (empty($args['instructions_configuration'])) {
-      drupal_set_message('Please provide a page configuration in the User Interface options.');
+      hostsite_show_message('Please provide a page configuration in the User Interface options.');
     }
     //Only perform if the user has specified an instruction to appear under each page like.
     if (!empty($args['instructions_configuration'])) {
@@ -136,10 +136,10 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
       $titleDescriptions[$titleNumber]=array($key=>$description);
       $description='';
     }
-    $r='';
+    $r = '';
     global $user;
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
-    //Get all the links to display
+    // Get all the links to display.
     $reportOptions = array(
       'dataSource'=>'library/groups/groups_list',
       'readAuth'=>$auth['read'],
@@ -147,15 +147,15 @@ class iform_group_link_to_pages_from_single_group extends iform_dynamic {
       'extraParams' => array('currentUser'=>hostsite_get_user_field('indicia_user_id'), 'id'=>$args['group_id'],
           'pending_path'=>'{rootFolder}?q=groups/pending&group_id=','userFilterMode'=>'member')
     );
-    // automatic handling for Drupal clean urls.
+    // Automatic handling for Drupal clean urls.
     $rootFolder = helper_base::getRootFolder(true);
-
-    $groupsData = data_entry_helper::get_report_data($reportOptions);
+    iform_load_helpers(['report_helper']);
+    $groupsData = report_helper::get_report_data($reportOptions);
     if (empty($groupsData)) {
       if (!empty($args['no_group_found_message'])) {
         $r = '<div>'.$args['no_group_found_message'].'</div>';
       } else {
-        $r = '<div>'.'Sorry, you do not appear to be a member of this group so there are no links to display.'.'</div>';
+        $r = '<div>Sorry, you do not appear to be a member of this group so there are no links to display.</div>';
       }
       return $r;
     }

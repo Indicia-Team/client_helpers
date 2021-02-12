@@ -7,7 +7,7 @@ global $indicia_templates;
 // Remove colon compared to default indicia label.
 $indicia_templates['label'] = '<label for="{id}"{labelClass}>{label}</label>'."\n";
 // Use style to set thumbnail width. Remove <br> as label is a block item.
-$indicia_templates ['file_box_uploaded_image'] = '<a class="fancybox" href="{origfilepath}">'
+$indicia_templates ['file_box_uploaded_image'] = '<a data-fancybox href="{origfilepath}">'
         . '<img src="{thumbnailfilepath}" style="width:{imagewidth}px;"/>'
         . '</a>'
         . '<input type="hidden" name="{idField}" id="{idField}" value="{idValue}" />'
@@ -21,7 +21,7 @@ $indicia_templates ['file_box_uploaded_image'] = '<a class="fancybox" href="{ori
 
 
 class iform_icpveg_ozone extends iform_dynamic_sample_occurrence {
-  
+
   public static function get_icpveg_ozone_definition() {
     return array(
       'title'=>'ICP Vegetaion Ozone Injury Survey',
@@ -31,7 +31,7 @@ class iform_icpveg_ozone extends iform_dynamic_sample_occurrence {
   }
 
   /**
-   * Override the sensitivity control to create a simple select with default value 
+   * Override the sensitivity control to create a simple select with default value
    * set by user profile.
    */
   protected static function get_control_sensitivity($auth, $args, $tabAlias, $options) {
@@ -45,7 +45,7 @@ class iform_icpveg_ozone extends iform_dynamic_sample_occurrence {
       // no blurring of detail.
       $default_value = '';
     }
-    
+
     return data_entry_helper::select(array(
       'fieldname'=>'occurrence:sensitivity_precision',
       'label'=>lang::get('ICPVeg Sensitivity'),
@@ -54,7 +54,7 @@ class iform_icpveg_ozone extends iform_dynamic_sample_occurrence {
       'default' => $default_value,
     ));
   }
-  
-  
+
+
 }
 
