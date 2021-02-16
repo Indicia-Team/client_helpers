@@ -756,30 +756,41 @@ $('#delete-transect').click(deleteSurvey);
   }
 
   /**
+   * Returns the Drupal list of users.
+   *
+   * @return array
+   *   Associative array of uid and user names.
+   */
+  private static function getUserList() {
+    $users = [];
+    if(version_compare(hostsite_get_cms_version(), '7', '<')) {
+      $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
+      while($result = db_fetch_object($results)){
+          $users[$result->uid] = $result->name;
+      }
+    } else if(version_compare(hostsite_get_cms_version(), '8', '<')) {
+      $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
+      foreach ($results as $result) {  // DB handling is different in 7 and 8
+          $users[$result->uid] = $result->name;
+      }
+    } else {
+      $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->sort('name', 'DESC')->execute();
+      $userList = \Drupal\user\Entity\User::loadMultiple($result[['user']]);
+      foreach ($userList as $user) {
+        if ($user->id() != 0) {
+          $users[$user->id()] = $user->getDisplayName();
+        }
+      }
+    }
+    return $users;
+  }
+
+  /**
    * If the user has permissions, then display a control so that they can specify the list of users associated with this site.
    */
   protected static function get_user_assignment_control($readAuth, $cmsUserAttr, $args) {
     if(self::$cmsUserList == null) {
-      $users = array();
-      if(version_compare(hostsite_get_cms_version(), '7', '<')) {
-          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-          while($result = db_fetch_object($results)){
-              $users[$result->uid] = $result->name;
-          }
-      } else if(version_compare(hostsite_get_cms_version(), '8', '<')) {
-          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-          foreach ($results as $result) {  // DB handling is different in 7 and 8
-              $users[$result->uid] = $result->name;
-          }
-      } else {
-          $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->execute();
-          $userList = \Drupal\user\Entity\User::loadMultiple($result[['user']]);
-          foreach ($userList as $user) {
-            if ($user->id() != 0) {
-              $users[$user->id()] = $user->getDisplayName();
-            }
-          }
-      }
+      $users = self::getUserList();
       self::$cmsUserList = $users;
   	} else $users= self::$cmsUserList;
     $r = '<fieldset id="alloc-recorders"><legend>'.lang::get('Allocate recorders to the site').'</legend>';
@@ -811,33 +822,22 @@ $('#delete-transect').click(deleteSurvey);
   }
 
   protected static function get_branch_assignment_control($readAuth, $branchCmsUserAttr, $args, $settings) {
-    if(!$branchCmsUserAttr) return '<span style="display:none;">No branch location attribute</span>'; // no attribute so don't display
-    if(self::$cmsUserList == null) {
-      $users = array();
-      if(version_compare(hostsite_get_cms_version(), '7', '<')) {
-          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-          while($result = db_fetch_object($results)){
-              $users[$result->uid] = $result->name;
-          }
-      } else if(version_compare(hostsite_get_cms_version(), '8', '<')) {
-          $results = db_query("SELECT uid, name FROM {users} where name <> '' order by name");
-          foreach ($results as $result) {  // DB handling is different in 7 and 8
-              $users[$result->uid] = $result->name;
-          }
-      } else {
-          $results = db_query("SELECT uid, name FROM {users_field_data} where name <> '' order by name");
-          foreach ($results as $result) {
-              $users[$result->uid] = $result->name;
-          }
-      }
+    if (!$branchCmsUserAttr) {
+      // No attribute so don't display.
+      return '<span style="display:none;">No branch location attribute</span>';
+    }
+    if (self::$cmsUserList == NULL) {
+      $users = self::getUserList();
       self::$cmsUserList = $users;
-    } else $users= self::$cmsUserList;
+    } else {
+      $users= self::$cmsUserList;
+    }
 
     // next reduce the list to branch users
     if($settings['canAllocBranch']){ // only check the users permissions if can change value - for performance reasons.
       $new_users = array();
       foreach ($users as $uid=>$name){
-        if(hostsite_user_has_permission($args['branch_assignment_permission'], $uid))
+        if (hostsite_user_has_permission($args['branch_assignment_permission'], $uid))
           $new_users[$uid]=$name;
       }
       $users = $new_users;
