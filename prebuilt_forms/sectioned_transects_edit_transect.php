@@ -772,9 +772,12 @@ $('#delete-transect').click(deleteSurvey);
               $users[$result->uid] = $result->name;
           }
       } else {
-          $results = db_query("SELECT uid, name FROM {users_field_data} where name <> '' order by name");
-          foreach ($results as $result) {
-              $users[$result->uid] = $result->name;
+          $result = \Drupal::entityTypeManager()->getStorage('user')->getQuery()->execute();
+          $userList = \Drupal\user\Entity\User::loadMultiple($result[['user']]);
+          foreach ($userList as $user) {
+            if ($user->id() != 0) {
+              $users[$user->id()] = $user->getDisplayName();
+            }
           }
       }
       self::$cmsUserList = $users;
