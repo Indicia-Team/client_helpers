@@ -527,7 +527,6 @@ class ElasticsearchProxyHelper {
     $headers = [
       'Content-Type: application/json',
     ];
-    \Drupal::logger('iform')->notice(var_export($esConfig, TRUE));
     if (empty($esConfig['es']['auth_method']) || $esConfig['es']['auth_method'] === 'directClient') {
       $headers[] = 'Authorization: USER:' . $esConfig['es']['user'] . ':SECRET:' . $esConfig['es']['secret'];
     }
