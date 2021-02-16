@@ -85,11 +85,11 @@ TXT;
         'caption' => 'Interface Style Option',
         'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, wizard pages or having all controls on a single page.',
         'type' => 'select',
-        'options' => array(
+        'options' => [
           'tabs' => 'Tabs',
           'wizard' => 'Wizard',
           'one_page' => 'All one page',
-        ),
+        ],
         'group' => 'User interface',
         'default' => 'tabs',
       ],
@@ -108,7 +108,7 @@ TXT;
         'type' => 'select',
         'options' => [
           'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
-          'directWebsite' => 'Authenticate as a website configured in the Warehouse REST API',
+          'directWebsite' => 'Authenticate as a website registered on the Warehouse',
           'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
         ],
         'blankText' => '- Use site-wide configuration -',
