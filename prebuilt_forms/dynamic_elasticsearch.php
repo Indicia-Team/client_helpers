@@ -123,9 +123,9 @@ TXT;
         'required' => FALSE,
       ],
       [
-        'name' => 'sharing',
-        'caption' => 'Page purpose (for identifying which websites will share records)',
-        'description' => 'Type of sharing mode, used when authentication as a website.',
+        'name' => 'scope',
+        'caption' => 'Data scope (for identifying which websites will share records)',
+        'description' => 'Scope or sharing mode. Not used when authenticating as a client configured in the Warehouse REST API.',
         'type' => 'select',
         'options' => [
           'reporting' => lang::get('Reporting'),
@@ -133,6 +133,7 @@ TXT;
           'data_flow' => lang::get('Data-flow'),
           'moderation' => lang::get('Moderation'),
           'peer_review' => lang::get('Peer review'),
+          'user' => lang::get('My records'),
         ],
         'required' => TRUE,
         'group' => 'Elasticsearch settings',
