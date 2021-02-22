@@ -102,19 +102,46 @@ TXT;
         'default' => '',
       ],
       [
+        'name' => 'auth_method',
+        'caption' => 'Elasticsearch authentication method',
+        'description' => 'Authentication approach used to connect to the Elasticsearch warehouse proxy.',
+        'type' => 'select',
+        'options' => [
+          'directClient' => 'Authenticate as a client configured in the Warehouse REST API',
+          'directWebsite' => 'Authenticate as a website configured in the Warehouse REST API',
+          'jwtUser' => 'Authenticate as the logged in user using Java Web Tokens',
+        ],
+        'blankText' => '- Use site-wide configuration -',
+        'group' => 'Elasticsearch settings',
+      ],
+      [
         'name' => 'endpoint',
         'caption' => 'Endpoint',
-        'description' => 'Elasticsearch endpoint declared in the REST API. Alternatively, leave this blank to use ' .
-          'the site wide setting on the Indicia configuration settings page.',
+        'description' => 'Elasticsearch endpoint declared in the REST API. Alternatively, leave this blank to use the site wide setting on the Indicia configuration settings page.',
         'type' => 'text_input',
         'group' => 'Elasticsearch settings',
         'required' => FALSE,
       ],
       [
+        'name' => 'scope',
+        'caption' => 'Data scope (for identifying which websites will share records)',
+        'description' => 'Scope or sharing mode. Not used when authenticating as a client configured in the Warehouse REST API.',
+        'type' => 'select',
+        'options' => [
+          'reporting' => lang::get('Reporting'),
+          'verification' => lang::get('Verification'),
+          'data_flow' => lang::get('Data-flow'),
+          'moderation' => lang::get('Moderation'),
+          'peer_review' => lang::get('Peer review'),
+          'user' => lang::get('My records'),
+        ],
+        'required' => TRUE,
+        'group' => 'Elasticsearch settings',
+      ],
+      [
         'name' => 'user',
         'caption' => 'User',
-        'description' => 'REST API user with Elasticsearch access. Alternatively, leave this blank to use ' .
-          'the site wide setting on the Indicia configuration settings page.',
+        'description' => 'REST API client with Elasticsearch access when authentication as a client configured in the Warehouse REST API. Alternatively, leave this blank to use the site wide setting on the Indicia configuration settings page.',
         'type' => 'text_input',
         'group' => 'Elasticsearch settings',
         'required' => FALSE,
@@ -122,8 +149,7 @@ TXT;
       [
         'name' => 'secret',
         'caption' => 'Secret',
-        'description' => 'REST API user secret. Alternatively, leave this blank to use ' .
-          'the site wide setting on the Indicia configuration settings page.',
+        'description' => 'REST API user secret when authentication as a client configured in the Warehouse REST API. Alternatively, leave this blank to use the site wide setting on the Indicia configuration settings page.',
         'type' => 'text_input',
         'group' => 'Elasticsearch settings',
         'required' => FALSE,

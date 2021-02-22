@@ -558,7 +558,7 @@ JS;
   public static function getGroupSummaryHtml(array $group) {
     $path = data_entry_helper::get_uploaded_image_folder();
     $logo = empty($group['logo_path']) ? '' : "<img style=\"width: 30%; float: left; padding: 0 5% 5%;\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
-    $msg = "<h3>$group[title]</div>";
+    $msg = "<h3>$group[title]</h3>";
     if (!empty($group['description'])) {
       $msg .= "<p>$group[description]</p>";
     }
@@ -728,47 +728,32 @@ JS;
   }
 
   /**
-   * Output a selector for sets of records defined by a permission.
+   * Finds a list of the options available for permission filters.
    *
-   * Allows user to select from:
-   * * All records (if permission is set)
-   * * My records
-   * * Permission filters
-   * * Groups.
+   * Can be used to populate the [permissionFilters] control or for the proxy
+   * to verify that a requested permissions filter is authorised.
    *
-   * @return string
-   *   Select HTML.
+   * @param array $options
+   *   Options for the [permissionFilters] control.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+   * @return array
+   *   Associative array of options.
    */
-  public static function permissionFilters(array $options) {
+  public static function getPermissionFiltersOptions(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
-
-    $wrapperOptions = array_merge([
-      'id' => "es-permissions-filter-wrapper",
-    ], $options);
-
     $options = array_merge([
-      'id' => "es-permissions-filter",
       'includeFiltersForGroups' => FALSE,
       'includeFiltersForSharingCodes' => [],
-      'useSharingPrefix' => TRUE,
-      'label' => lang::get('Records to access'),
-      'notices' => '[]',
     ], $options);
-
     $optionArr = [];
-
     // Add My records download permission if allowed.
     if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
       $optionArr['p-my'] = lang::get('My records');
     }
-
     // Add All records if website permission allows.
     if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
       $optionArr['p-all'] = lang::get('All records');
     }
-
     // Add collated location (e.g. LRC boundary) records if website
     // permissions allow.
     if (!empty($options['location_collation_records_permission'])
@@ -791,13 +776,13 @@ JS;
       $options['includeFiltersForSharingCodes'],
       ['R', 'V', 'D', 'M', 'P']
     );
-    $sharingTypes = array(
+    $sharingTypes = [
       'R' => lang::get('Reporting'),
       'V' => lang::get('Verification'),
       'D' => lang::get('Data-flow'),
       'M' => lang::get('Moderation'),
       'P' => lang::get('Peer review'),
-    );
+    ];
     foreach ($sharingCodes as $sharingCode) {
       $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
       foreach ($filterData as $filter) {
@@ -820,9 +805,9 @@ JS;
       ];
 
       if ($params['user_id']) {
-        $groups = data_entry_helper::get_population_data(array(
+        $groups = helper_base::get_population_data(array(
           'table' => 'groups_user',
-          'extraParams' => data_entry_helper::$js_read_tokens + $params,
+          'extraParams' => helper_base::$js_read_tokens + $params,
         ));
         foreach ($groups as $group) {
           $title = $group['group_title'] . (isset($group['group_expired']) && $group['group_expired'] === 't' ?
@@ -835,6 +820,38 @@ JS;
       }
     }
 
+    return $optionArr;
+  }
+
+  /**
+   * Output a selector for sets of records defined by a permission.
+   *
+   * Allows user to select from:
+   * * All records (if permission is set)
+   * * My records
+   * * Permission filters
+   * * Groups.
+   *
+   * @todo Allow hide if only one option.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+   */
+  public static function permissionFilters(array $options) {
+    $wrapperOptions = array_merge([
+      'id' => "es-permissions-filter-wrapper",
+    ], $options);
+
+    $options = array_merge([
+      'id' => "es-permissions-filter",
+      'useSharingPrefix' => TRUE,
+      'label' => lang::get('Records to access'),
+      'notices' => '[]',
+    ], $options);
+
+    $optionArr = self::getPermissionFiltersOptions($options);
     // Return the select control. There will always be at least one option (my
     // records).
     $controlOptions = [
@@ -906,10 +923,10 @@ JS;
    */
   public static function statusFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
-    $options = array_merge(array(
+    $options = array_merge([
       'sharing' => 'reporting',
       'elasticsearch' => TRUE,
-    ), $options);
+    ], $options);
 
     return status_control($options['readAuth'], $options);
   }
@@ -1060,11 +1077,11 @@ HTML;
    */
   public static function standardParams(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
-    $options = array_merge(array(
+    $options = array_merge([
       'allowSave' => TRUE,
       'sharing' => 'reporting',
       'elasticsearch' => TRUE,
-    ), $options);
+    ], $options);
     foreach ($options as &$value) {
       $value = apply_user_replacements($value);
     }
