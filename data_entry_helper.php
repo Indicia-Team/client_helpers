@@ -4071,11 +4071,9 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
           $filterFields['preferred'] = 'true';
           break;
         case 'currentLanguage' :
-          // look for Drupal user variable. Will degrade gracefully if it doesn't exist
-          global $user;
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
-          } elseif (isset($user) && function_exists('hostsite_get_user_field')) {
+          } elseif (function_exists('hostsite_get_user_field')) {
             // if in Drupal we can use the user's language
             require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
