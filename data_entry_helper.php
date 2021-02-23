@@ -884,6 +884,11 @@ JS;
     }
     // Text box class helps sync to date picker control.
     $options['class'] .= ' date-text';
+    $options['datePickerClass'] = 'precise-date-picker';
+    global $indicia_templates;
+    if (isset($indicia_templates['formControlClass'])) {
+      $options['datePickerClass'] .= ' ' . $indicia_templates['formControlClass'];
+    }
     // Show text box for vague dates, or date picker if precise.
     $options['dateDisplay'] = $options['allowVagueDates'] ? 'display: none' : '';
     $options['textDisplay'] = $options['allowVagueDates'] ? '' : 'display: none';
