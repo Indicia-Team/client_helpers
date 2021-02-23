@@ -22,9 +22,9 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
- /**
-  * Exception class for request abort.
-  */
+/**
+ * Exception class for request abort.
+ */
 class ElasticsearchProxyAbort extends Exception {
 }
 
@@ -33,14 +33,33 @@ class ElasticsearchProxyAbort extends Exception {
  */
 class ElasticsearchProxyHelper {
 
+  /**
+   * Elasticsearch config.
+   *
+   * @var bool
+   */
   private static $config;
 
+  /**
+   * Track if filter applied specifies confidential flag.
+   *
+   * If not specified, then code can apply a default confidential=f filter.
+   *
+   * @var bool
+   */
   private static $confidentialFilterApplied = FALSE;
 
+  /**
+   * Track if filter applied specifies releast_status flag.
+   *
+   * If not specified, then code can apply a default releast_status=R filter.
+   *
+   * @var bool
+   */
   private static $releaseStatusFilterApplied = FALSE;
 
   /**
-   * If a filter is selected in a permissionFilters control, apply request scope.
+   * If a filter is selected in a permissionFilters control, apply scope.
    *
    * E.g. if a verification filter selected, apply the verification scope.
    *
@@ -896,7 +915,7 @@ class ElasticsearchProxyHelper {
    * @param array $bool
    *   Constructed bool query for Elasticsearch.
    */
-  private static function applyPermissionsFilter($readAuth, &$query, array &$bool) {
+  private static function applyPermissionsFilter(array $readAuth, array &$query, array &$bool) {
     switch ($query['permissions_filter']) {
       case 'p-my':
         $bool['must'][] = [
@@ -950,7 +969,7 @@ class ElasticsearchProxyHelper {
    * Converts a sharing term to a scope term for the REST API.
    *
    * @param string $term
-   *   Sharing term, e.g. 'Data Flow', 'My'
+   *   Sharing term, e.g. 'Data Flow', 'My'.
    *
    * @return string
    *   Scope term, e.g. 'data_flow', 'user'.
@@ -1029,13 +1048,14 @@ class ElasticsearchProxyHelper {
      * - match group ID + match filter (implicit=f)
      * - match group members + match filter (implicit=t)
      * - match filter only (implicit=null)
-    */
+     */
     if ($groupFilter['implicit'] === 'false') {
       // Records added to group linked form.
       $bool['must'][] = [
         'term' => ['metadata.group.id' => $groupFilter['id']],
       ];
-    } elseif ($groupFilter['implicit'] === 'true') {
+    }
+    elseif ($groupFilter['implicit'] === 'true') {
       // Records added by group members.
       self::applyGroupMembersFilter($readAuth, $groupFilter, $bool);
     }
@@ -1098,7 +1118,10 @@ class ElasticsearchProxyHelper {
    * transformed to EPSG:4326.
    */
   private static function convertLocationListToSearchArea(array &$definition, array $readAuth) {
-    $filter = self::getDefinitionFilter($definition, ['location_list', 'location_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'location_list',
+      'location_id',
+    ]);
     if (!empty($filter)) {
       require_once 'report_helper.php';
       $boundaryData = report_helper::get_report_data([
@@ -1122,7 +1145,10 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersTaxonGroupList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['taxon_group_list', 'taxon_group_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'taxon_group_list',
+      'taxon_group_id',
+    ]);
     if (!empty($filter)) {
       $bool['must'][] = [
         'terms' => ['taxon.group_id' => explode(',', $filter['value'])],
@@ -1205,7 +1231,7 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Converts an Indicia filter definition taxa_taxon_list_external_key_list to an ES query.
+   * Converts an filter def taxa_taxon_list_external_key_list to an ES query.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
@@ -1557,7 +1583,14 @@ class ElasticsearchProxyHelper {
           break;
 
         case 'L':
-          $bool['must'][] = ['terms' => ['identification.recorder_certainty.keyword' => ['Certain', 'Likely']]];
+          $bool['must'][] = [
+            'terms' => [
+              'identification.recorder_certainty.keyword' => [
+                'Certain',
+                'Likely',
+              ],
+            ],
+          ];
           $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
           break;
 
@@ -1572,8 +1605,12 @@ class ElasticsearchProxyHelper {
           break;
 
         case '!D':
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          $bool['must_not'][] = ['terms' => ['identification.query.keyword' => ['Q', 'A']]];
+          $bool['must_not'][] = [
+            'match' => ['identification.verification_status' => 'R'],
+          ];
+          $bool['must_not'][] = [
+            'terms' => ['identification.query.keyword' => ['Q', 'A']],
+          ];
           break;
 
         case 'D':
@@ -1647,7 +1684,10 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['website_list', 'website_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'website_list',
+      'website_id',
+    ]);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
@@ -1665,7 +1705,10 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['survey_list', 'survey_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'survey_list',
+      'survey_id',
+    ]);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
