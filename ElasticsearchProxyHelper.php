@@ -951,7 +951,7 @@ class ElasticsearchProxyHelper {
             self::$config['es']['scope'] = 'reporting';
             self::applyGroupFilter($readAuth, [
               'id' => $matches['id'],
-              'implicit' => 't',
+              'implicit' => FALSE,
             ], $bool, $query);
           }
           if (!empty($matches['users']) && $matches['users'] === '-my') {
@@ -1048,14 +1048,16 @@ class ElasticsearchProxyHelper {
      * - match group ID + match filter (implicit=f)
      * - match group members + match filter (implicit=t)
      * - match filter only (implicit=null)
+     * Bool implicit value may be read from URL, or code, so need to be
+     * flexible.
      */
-    if ($groupFilter['implicit'] === 'false') {
+    if ($groupFilter['implicit'] === FALSE || $groupFilter['implicit'] == 'f' || $groupFilter['implicit'] == 'false') {
       // Records added to group linked form.
       $bool['must'][] = [
         'term' => ['metadata.group.id' => $groupFilter['id']],
       ];
     }
-    elseif ($groupFilter['implicit'] === 'true') {
+    elseif ($groupFilter['implicit'] === TRUE || $groupFilter['implicit'] == 't' || $groupFilter['implicit'] == 'true') {
       // Records added by group members.
       self::applyGroupMembersFilter($readAuth, $groupFilter, $bool);
     }
