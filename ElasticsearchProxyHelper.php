@@ -556,12 +556,13 @@ class ElasticsearchProxyHelper {
       $headers[] = 'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'];
     }
     elseif ($config['es']['auth_method'] === 'directWebsite') {
-      $iformConfig = \Drupal::config('iform.settings');
+      iform_load_helpers(['helper_base']);
+      $conn = iform_get_connection_details();
       $tokens = [
         'WEBSITE_ID',
-        $iformConfig->get('website_id'),
+        $conn['website_id'],
         'SECRET',
-        $iformConfig->get('password'),
+        $conn['password'],
       ];
       if (isset($config['es']['scope'])) {
         $tokens[] = 'SCOPE';
