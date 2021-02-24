@@ -917,6 +917,10 @@ class ElasticsearchProxyHelper {
    */
   private static function applyPermissionsFilter(array $readAuth, array &$query, array &$bool) {
     switch ($query['permissions_filter']) {
+      case 'p-all':
+        // No filter.
+        break;
+
       case 'p-my':
         $bool['must'][] = [
           'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
@@ -960,6 +964,12 @@ class ElasticsearchProxyHelper {
               'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
             ];
           }
+        }
+        else {
+          // This shouldn't happen.
+          header("HTTP/1.1 400 Bad request");
+          echo json_encode(['error' => 'Incorrect permissions_filter parameter']);
+          throw new ElasticsearchProxyAbort('Incorrect permissions_filter parameter: ' . $query['permissions_filter']);
         }
 
     }
