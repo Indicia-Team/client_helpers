@@ -940,7 +940,7 @@ class ElasticsearchProxyHelper {
         // g-my-ID (my group records)
         // g-ID (group records)
         // f-ID (filter)
-        if (preg_match('/^(?P<type>[fg])(?P<users>-(my|all))-(?P<id>\d+)$/', $query['permissions_filter'], $matches)) {
+        if (preg_match('/^(?P<type>[fg])(?P<users>-(my|all))?-(?P<id>\d+)$/', $query['permissions_filter'], $matches)) {
           if ($matches['type'] === 'f') {
             // Add filter ID to list that will be applied later.
             $query['user_filters'][] = $matches['id'];
