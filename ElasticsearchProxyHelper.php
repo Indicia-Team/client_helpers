@@ -245,13 +245,13 @@ class ElasticsearchProxyHelper {
     iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    $options = array(
+    $options = [
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
       // @todo Sharing should be dynamically set in a form parameter (use $nid param).
       'sharing' => 'verification',
       'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
-    );
+    ];
     $reportData = report_helper::get_report_data($options);
     header('Content-type: application/json');
     echo json_encode($reportData);
@@ -917,6 +917,10 @@ class ElasticsearchProxyHelper {
    */
   private static function applyPermissionsFilter(array $readAuth, array &$query, array &$bool) {
     switch ($query['permissions_filter']) {
+      case 'p-all':
+        // No filter.
+        break;
+
       case 'p-my':
         $bool['must'][] = [
           'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
@@ -940,7 +944,7 @@ class ElasticsearchProxyHelper {
         // g-my-ID (my group records)
         // g-ID (group records)
         // f-ID (filter)
-        if (preg_match('/^(?P<type>[fg])(?P<users>-(my|all))-(?P<id>\d+)$/', $query['permissions_filter'], $matches)) {
+        if (preg_match('/^(?P<type>[fg])(?P<users>-(my|all))?-(?P<id>\d+)$/', $query['permissions_filter'], $matches)) {
           if ($matches['type'] === 'f') {
             // Add filter ID to list that will be applied later.
             $query['user_filters'][] = $matches['id'];
@@ -960,6 +964,12 @@ class ElasticsearchProxyHelper {
               'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
             ];
           }
+        }
+        else {
+          // This shouldn't happen.
+          header("HTTP/1.1 400 Bad request");
+          echo json_encode(['error' => 'Incorrect permissions_filter parameter']);
+          throw new ElasticsearchProxyAbort('Incorrect permissions_filter parameter: ' . $query['permissions_filter']);
         }
 
     }
