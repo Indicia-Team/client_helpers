@@ -586,8 +586,11 @@ class ElasticsearchProxyHelper {
       if (isset($config['es']['scope'])) {
         $tokens[] = 'SCOPE';
         $tokens[] = $config['es']['scope'];
-        $tokens[] = 'USER_ID';
-        $tokens[] = hostsite_get_user_field('indicia_user_id');
+        $userId = hostsite_get_user_field('indicia_user_id');
+        if ($userId) {
+          $tokens[] = 'USER_ID';
+          $tokens[] = $userId;
+        }
       }
       $headers[] = 'Authorization: ' . implode(':', $tokens);
     }

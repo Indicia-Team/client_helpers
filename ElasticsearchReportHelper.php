@@ -1719,6 +1719,9 @@ HTML;
   private static function getMappings($nid) {
     require_once 'ElasticsearchProxyHelper.php';
     $config = hostsite_get_es_config($nid);
+    if (empty($config['es']['endpoint'])) {
+      throw new Exception(lang::get('Elasticsearch configuration incomplete - endpoint not specified in Indicia settings.'));
+    }
     // /doc added to URL only for Elasticsearch 6.x.
     $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
       ($config['es']['version'] == 6 ? '/doc' : '');
