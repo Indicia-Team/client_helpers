@@ -897,7 +897,7 @@ HTML;
 
 HTML;
 
-  helper_base::$late_javascript .= <<<JS
+    helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
 $('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
     // Update any summary output
@@ -1708,7 +1708,8 @@ HTML;
     }
   }
 
-  /* Retrieves the ES index mappings data.
+  /**
+   * Retrieves the ES index mappings data.
    *
    * A list of mapped fields is stored in self::$esMappings.
    *
@@ -1749,4 +1750,5 @@ HTML;
     self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
+
 }
