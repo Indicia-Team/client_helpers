@@ -105,7 +105,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download type.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'peer_review_type_permission',
@@ -114,7 +114,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download type.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'verification_type_permission',
@@ -141,7 +141,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download type.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'editing_type_permission',
@@ -150,7 +150,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download type.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'csv_format_permission',
@@ -159,7 +159,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download format.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'tsv_format_permission',
@@ -168,7 +168,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download format.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'kml_format_permission',
@@ -177,7 +177,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download format.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'gpx_format_permission',
@@ -186,7 +186,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download format.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
         'name'=>'nbn_format_permission',
@@ -195,7 +195,7 @@ class iform_easy_download_2 {
             'Leave blank to disallow this download format.',
         'type'=>'text_input',
         'required'=>false,
-        'default'=>'access iform'
+        'default'=>'access iform content'
       ),
       array(
           'name' => 'custom_formats',
