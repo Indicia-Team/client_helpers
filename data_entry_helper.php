@@ -5587,7 +5587,11 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * centre to position the div, making sure the containing element is either floated, or has
    * overflow: auto applied to its style. Default is right.</li>
    * <li><b>buttonClass</b><br/>
-   * Class to add to the button elements.</li>
+   * Class to add to the button elements other than delete and save.</li>
+   * <li><b>deleteButtonClass</b><br/>
+   * Class to add to the delete button.</li>
+   * <li><b>saveButtonClass</b><br/>
+   * Class to add to the save button.</li>
    * <li><b>page</b><br/>
    * Specify first, middle or last to indicate which page this is for. Use middle (the default) for
    * all pages other than the first or last.</li>
@@ -5613,6 +5617,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'captionSave' => 'Save',
       'captionDelete'=> 'Delete',
       'buttonClass' => "$indicia_templates[buttonDefaultClass] inline-control",
+      'saveButtonClass' => "$indicia_templates[buttonHighlightedClass] inline-control",
+      'deleteButtonClass' => "$indicia_templates[buttonWarningClass] inline-control",
       'class'       => 'right',
       'page'        => 'middle',
       'includeVerifyButton' => FALSE,
@@ -5623,42 +5629,51 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     $options['class'] .= ' buttons wizard-buttons';
     // Output the buttons
     $r = '<div class="'.$options['class'].'">';
-    $buttonClass=$options['buttonClass'];
     if (array_key_exists('divId', $options)) {
       if ($options['includeVerifyButton']) {
         $r .= self::apply_replacements_to_template($indicia_templates['button'], array(
-          'href'=>'#',
-          'id'=>'verify-btn',
+          'href' => '#',
+          'id' => 'verify-btn',
           'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
           'caption'=>lang::get('Precheck my records'),
           'title'=>''
         ));
       }
-      if ($options['page']!='first') {
-        $options['class']=$buttonClass." tab-prev";
-        $options['id']='tab-prev';
-        $options['caption']='&lt; '.lang::get($options['captionPrev']);
+      if ($options['page'] !== 'first') {
+        $options['class'] = "$options[buttonClass] tab-prev";
+        $options['id'] = 'tab-prev';
+        $options['caption'] = '&lt; '.lang::get($options['captionPrev']);
         $r .= self::apply_template('button', $options);
       }
-      if ($options['page']!='last') {
-        $options['class']=$buttonClass." tab-next";
-        $options['id']='tab-next';
-        $options['caption']=lang::get($options['captionNext']).' &gt;';
+      if ($options['page'] !== 'last') {
+        $options['class'] = "$options[buttonClass] tab-next";
+        $options['id'] = 'tab-next';
+        $options['caption'] = lang::get($options['captionNext']).' &gt;';
         $r .= self::apply_template('button', $options);
       } else {
         if ($options['includeSubmitButton']) {
-          $options['class']=$buttonClass." tab-submit";
-          $options['id']='tab-submit';
-          $options['caption']=lang::get($options['captionSave']);
-          $options['name']='action-submit';
+          $options['class'] = "$options[saveButtonClass] tab-submit";
+          $options['id'] = 'tab-submit';
+          $options['caption'] = lang::get($options['captionSave']);
+          $options['name'] = 'action-submit';
           $r .= self::apply_template('submitButton', $options);
         }
         if ($options['includeDeleteButton']) {
-          $options['class']=$buttonClass." tab-delete";
-          $options['id']='tab-delete';
-          $options['caption']=lang::get($options['captionDelete']);
-          $options['name']='delete-button';
+          $options['class'] = "$options[deleteButtonClass] tab-delete";
+          $options['id'] = 'tab-delete';
+          $options['caption'] = lang::get($options['captionDelete']);
+          $options['name'] = 'delete-button';
           $r .= self::apply_template('submitButton', $options);
+          $msg = lang::get('Are you sure you want to delete this form?');
+          self::$javascript .= <<<JS
+$('#tab-delete').click(function(e) {
+  if (!confirm('$msg')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+JS;
         }
       }
     }
