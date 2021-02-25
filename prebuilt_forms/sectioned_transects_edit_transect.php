@@ -696,7 +696,7 @@ $('#delete-transect').click(deleteSurvey);
     $systems = array();
     $list = explode(',', str_replace(' ', '', $args['spatial_systems']));
     foreach($list as $system) {
-      $systems[$system] = lang::get($system);
+      $systems[$system] = lang::get("sref:$system");
     }
     $options = array(
     		'fieldname' => '',
