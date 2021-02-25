@@ -33,8 +33,8 @@ jQuery(document).ready(function($) {
     var intValue = parseInt(val);
     if (!isNaN(intValue)) {
       // Change the location control requests the location's geometry to place on the map.
-      $.getJSON(indiciaData.read.url + "index.php/services/data/location?parent_id="+val +
-        "&mode=json&view=detail&auth_token=" + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + "&callback=?", function(data) {
+      $.getJSON(indiciaData.read.url + 'index.php/services/data/location?parent_id=' + val + '&orderby=name' +
+        '&mode=json&view=detail&auth_token=' + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + "&callback=?", function(data) {
         indiciaData.subsites = data;
         $('#subsites').val(JSON.stringify(data));
         indiciaData.mapdiv.removeAllFeatures(indiciaData.mapdiv.map.editLayer, 'section');
