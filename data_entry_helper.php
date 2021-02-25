@@ -5531,7 +5531,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * </ul>
    * @return type HTML to insert onto the page for the verification panel.
    */
-  public function verification_panel($options) {
+  public static function verification_panel($options) {
     global $indicia_templates;
     $options = array_merge(array(
       'panelOnly'=>false

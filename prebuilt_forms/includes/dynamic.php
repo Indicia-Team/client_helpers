@@ -415,40 +415,44 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       }
       // For wizard include the tab title as a header.
       if ($args['interface'] === 'wizard') {
-        $r .= '<h1>' . $headerOptions['tabs']['#'.$tabalias] . '</h1>';
+        $r .= '<h1>' . $headerOptions['tabs']["#$tabalias"] . '</h1>';
       }
       $r .= $tabContent;
-      if (isset($args['verification_panel']) && $args['verification_panel'] && $pageIdx==count($tabHtml)-1)
-        $r .= data_entry_helper::verification_panel(array('readAuth'=>$auth['read'], 'panelOnly'=>true));
-      // Add any buttons required at the bottom of the tab
-      if ($args['interface']==='wizard' || ($args['interface']==='tabs' && isset($args['force_next_previous']) && $args['force_next_previous'])) {
-        $r .= data_entry_helper::wizard_buttons(array(
-          'divId'=>'controls',
-          'page'=>$pageIdx===0 ? 'first' : (($pageIdx==count($tabHtml)-1) ? 'last' : 'middle'),
-          'includeVerifyButton'=>isset($args['verification_panel']) && $args['verification_panel']
-              && ($pageIdx==count($tabHtml)-1),
-          'includeSubmitButton'=>(self::$mode !== self::MODE_EXISTING_RO),
-          'includeDeleteButton'=>(self::$mode === self::MODE_EXISTING)
-        ));
-      } elseif ($pageIdx==count($tabHtml)-1) {
+      if (isset($args['verification_panel']) && $args['verification_panel'] && $pageIdx == count($tabHtml) - 1) {
+        $r .= data_entry_helper::verification_panel([
+          'readAuth' => $auth['read'],
+          'panelOnly' => TRUE,
+        ]);
+      }
+      // Add any buttons required at the bottom of the tab.
+      if ($args['interface'] === 'wizard' || ($args['interface'] === 'tabs' && isset($args['force_next_previous']) && $args['force_next_previous'])) {
+        $r .= data_entry_helper::wizard_buttons([
+          'divId' => 'controls',
+          'page' => $pageIdx === 0 ? 'first' : (($pageIdx === count($tabHtml) - 1) ? 'last' : 'middle'),
+          'includeVerifyButton' => isset($args['verification_panel']) && $args['verification_panel'] && ($pageIdx === count($tabHtml) - 1),
+          'includeSubmitButton' => (self::$mode !== self::MODE_EXISTING_RO),
+          'includeDeleteButton' => (self::$mode === self::MODE_EXISTING),
+        ]);
+      }
+      elseif ($pageIdx === count($tabHtml) - 1) {
         // We need the verify button as well if this option is enabled
         if (isset($args['verification_panel']) && $args['verification_panel']) {
-          $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">'.lang::get('Precheck my records')."</button>\n";
+          $r .= '<button type="button" class="' . $indicia_templates['buttonDefaultClass'] . '" id="verify-btn">' . lang::get('Precheck my records')."</button>\n";
         }
         if (call_user_func([self::$called_class, 'isDataEntryForm']) && method_exists(self::$called_class, 'getSubmitButtons')
             && !($args['interface'] === 'tabs' && !empty($args['save_button_below_all_pages']))) {
           // Last part of a non wizard interface must insert a save button,
           // unless it is tabbed interface with save button beneath all pages.
-          $r .= call_user_func(array(self::$called_class, 'getSubmitButtons'), $args);
+          $r .= call_user_func([self::$called_class, 'getSubmitButtons'], $args);
         }
       }
       $pageIdx++;
       $r .= "</div>\n";
     }
     $r .= "</div>\n";
-    $r .= call_user_func(array(self::$called_class, 'getFooter'), $args);
+    $r .= call_user_func([self::$called_class, 'getFooter'], $args);
     if (method_exists(self::$called_class, 'linkSpeciesPopups')) {
-      $r .= call_user_func(array(self::$called_class, 'linkSpeciesPopups'), $args);
+      $r .= call_user_func([self::$called_class, 'linkSpeciesPopups'], $args);
     }
     return $r;
   }
@@ -456,15 +460,18 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
   /**
    * Overridable function to retrieve the HTML to appear above the dynamically constructed form,
    * which by default is an HTML form for data submission
-   * @param type $args
+   *
+   * @param array $args
+   *   Form parameters.
    */
-  protected static function getHeader($args) {
+  protected static function getHeader(array $args) {
     if (call_user_func([self::$called_class, 'isDataEntryForm'])) {
-      // Make sure the form action points back to this page
+      // Make sure the form action points back to this page.
       $reloadPath = call_user_func(array(self::$called_class, 'getReloadPath'));
-      // request automatic JS validation
-      if (!isset($args['clientSideValidation']) || $args['clientSideValidation'])
+      // Request automatic JS validation.
+      if (!isset($args['clientSideValidation']) || $args['clientSideValidation']) {
         data_entry_helper::enable_validation('entry_form');
+      }
       return "<form method=\"post\" id=\"entry_form\" action=\"$reloadPath\" enctype=\"multipart/form-data\">\n";
     }
     return '';

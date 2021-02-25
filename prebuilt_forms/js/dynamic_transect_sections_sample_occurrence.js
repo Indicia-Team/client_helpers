@@ -5,7 +5,7 @@ jQuery(document).ready(function($) {
   indiciaData.siteChanged = false;
 
   /**
-   * When viewing the species input tab, if the seelcted site has been changed, then update the sections input controls for 
+   * When viewing the species input tab, if the seelcted site has been changed, then update the sections input controls for
    * each row to a drop down with the available subsites.
    */
   setSectionDropDown = function(event, ui) {
@@ -14,8 +14,8 @@ jQuery(document).ready(function($) {
       html = '<select id="{id}" name="{name}"><option value="">&lt;Please select&gt;</option>';
       $.each(indiciaData.subsites, function(idx, subsite) {
         html += '<option value="' + subsite.id + '">' + subsite.name + '</option>';
-      });  
-      html += '</select>';  
+      });
+      html += '</select>';
       $('.scSectionID').each(function(idx, ctrl) {
         val=ctrl.value, id=ctrl.id;
         instance = $(html.replace('\{id\}', id).replace('\{name\}', ctrl.name));
@@ -24,7 +24,7 @@ jQuery(document).ready(function($) {
       });
     }
   };
-  
+
   /**
    * A public method that can be fired when a location is selected in an input control, to load the location's
    * boundary onto the map.
@@ -37,11 +37,13 @@ jQuery(document).ready(function($) {
         "&mode=json&view=detail&auth_token=" + indiciaData.read.auth_token + '&nonce=' + indiciaData.read.nonce + "&callback=?", function(data) {
         indiciaData.subsites = data;
         $('#subsites').val(JSON.stringify(data));
+        indiciaData.mapdiv.removeAllFeatures(indiciaData.mapdiv.map.editLayer, 'section');
         $.each(data, function(idx, subsite) {
-          indiciaData.siteChanged = true;
           var geomwkt = subsite.boundary_geom || data[0].centroid_geom;
           var parser = new OpenLayers.Format.WKT();
           var feature = parser.read(geomwkt);
+          indiciaData.siteChanged = true;
+          feature.attributes.type = 'section';
           if (indiciaData.mapdiv.indiciaProjection.projCode!==indiciaData.mapdiv.map.projection.projCode){
             geomwkt = feature.geometry.transform(div.indiciaProjection, indiciaData.mapdiv.map.projection).toString();
           }
@@ -51,7 +53,7 @@ jQuery(document).ready(function($) {
       });
     }
   }
-  
+
   mapInitialisationHooks.push(function() {
     if ($('#imp-location').length) {
       var locChange = function() {locationSelectedInInput(indiciaData.mapdiv, $('#imp-location').val());};
@@ -60,5 +62,5 @@ jQuery(document).ready(function($) {
       locChange();
     }
   });
-  
+
 });
