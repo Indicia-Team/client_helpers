@@ -441,7 +441,7 @@ $(document).ready(function() {
             div.map.editLayer.removeFeatures(oldSection, {});
           }
         } else return; // no existing route to clear
-        if (typeof indiciaData.sections[current]=="undefined") {
+        if (typeof indiciaData.sections[current] === 'undefined') {
           return; // not currently stored in database
         }
         indiciaData.sections[current].sectionLen = 0;
@@ -631,10 +631,12 @@ $(document).ready(function() {
             'location:location_type_id':indiciaData.sectionTypeId,
             'website_id':indiciaData.website_id
           };
-          if (typeof indiciaData.sections[current]!=="undefined") {
-            data['location:id']=indiciaData.sections[current].id;
+          if (typeof indiciaData.sections[current] === 'undefined') {
+            // First save, so need to link website.
+            data['locations_website:website_id'] = indiciaData.website_id;
+            indiciaData.sections[current] = {};
           } else {
-            data['locations_website:website_id']=indiciaData.website_id;
+            data['location:id']=indiciaData.sections[current].id;
           }
           if (indiciaData.defaultSectionGridRef==='parent') {
             // initially set the section Sref etc to match the parent. Geom will be auto generated on the server
