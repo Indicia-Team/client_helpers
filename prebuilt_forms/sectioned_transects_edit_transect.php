@@ -908,7 +908,7 @@ $('#delete-transect').click(deleteSurvey);
    */
   public static function get_redirect_on_success($values, $args) {
     if (!isset($values['location:id'])) {
-      return drupal_get_path_alias($_GET['q']).'#your-route';
+      return hostsite_get_current_page_path() . '#your-route';
     }
   }
 
