@@ -22,9 +22,9 @@
  * @link https://github.com/indicia-team/client_helpers
  */
 
- /**
-  * Exception class for request abort.
-  */
+/**
+ * Exception class for request abort.
+ */
 class ElasticsearchProxyAbort extends Exception {
 }
 
@@ -33,11 +33,40 @@ class ElasticsearchProxyAbort extends Exception {
  */
 class ElasticsearchProxyHelper {
 
+  /**
+   * Elasticsearch config.
+   *
+   * @var bool
+   */
   private static $config;
 
+  /**
+   * Track if filter applied specifies confidential flag.
+   *
+   * If not specified, then code can apply a default confidential=f filter.
+   *
+   * @var bool
+   */
   private static $confidentialFilterApplied = FALSE;
 
+  /**
+   * Track if filter applied specifies releast_status flag.
+   *
+   * If not specified, then code can apply a default releast_status=R filter.
+   *
+   * @var bool
+   */
   private static $releaseStatusFilterApplied = FALSE;
+
+  /**
+   * If a filter is selected in a permissionFilters control, apply scope.
+   *
+   * E.g. if a verification filter selected, apply the verification scope.
+   *
+   * @var int
+   *   Filter ID.
+   */
+  private static $setScopeUsingFilter;
 
   /**
    * Route into the functions provided by the proxy.
@@ -70,7 +99,7 @@ class ElasticsearchProxyHelper {
         break;
 
       case 'download':
-        self::proxyDownload();
+        self::proxyDownload($nid);
         break;
 
       case 'mediaAndComments':
@@ -82,7 +111,7 @@ class ElasticsearchProxyHelper {
         break;
 
       case 'searchbyparams':
-        self::proxySearchByParams();
+        self::proxySearchByParams($nid);
         break;
 
       case 'updateall':
@@ -216,20 +245,23 @@ class ElasticsearchProxyHelper {
     iform_load_helpers(['report_helper']);
     $conn = iform_get_connection_details($nid);
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
-    $options = array(
+    $options = [
       'dataSource' => 'reports_for_prebuilt_forms/verification_5/occurrence_comments_and_dets',
       'readAuth' => $readAuth,
       // @todo Sharing should be dynamically set in a form parameter (use $nid param).
       'sharing' => 'verification',
       'extraParams' => array('occurrence_id' => $_GET['occurrence_id']),
-    );
+    ];
     $reportData = report_helper::get_report_data($options);
     header('Content-type: application/json');
     echo json_encode($reportData);
   }
 
-  private static function proxySearchByParams() {
-    self::checkPermissionsFilter($_POST);
+  private static function proxySearchByParams($nid) {
+    iform_load_helpers(['helper_base']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($_POST, $readAuth, $nid);
     $url = self::getEsUrl() . '/_search';
     $query = self::buildEsQueryFromRequest($_POST);
     echo self::curlPost($url, $query);
@@ -254,10 +286,13 @@ class ElasticsearchProxyHelper {
   /**
    * A search proxy that handles build of a CSV download file.
    */
-  private static function proxyDownload() {
+  private static function proxyDownload($nid) {
     $isScrollToNextPage = array_key_exists('scroll_id', $_GET);
     if (!$isScrollToNextPage) {
-      self::checkPermissionsFilter($_POST);
+      iform_load_helpers(['helper_base']);
+      $conn = iform_get_connection_details($nid);
+      $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+      self::checkPermissionsFilter($_POST, $readAuth, $nid);
     }
     $url = self::getEsUrl() . '/_search?' . self::getPassThroughUrlParams(['format' => 'csv'], [
       'aggregation_type',
@@ -337,7 +372,10 @@ class ElasticsearchProxyHelper {
       echo json_encode(['error' => 'Missing website_id parameter']);
       throw new ElasticsearchProxyAbort('Parameter missing');
     }
-    self::checkPermissionsFilter($_POST['occurrence:idsFromElasticFilter']);
+    iform_load_helpers(['helper_base']);
+    $conn = iform_get_connection_details($nid);
+    $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
+    self::checkPermissionsFilter($_POST['occurrence:idsFromElasticFilter'], $readAuth, $nid);
     $url = self::getEsUrl() . '/_search';
     $query = self::buildEsQueryFromRequest($_POST['occurrence:idsFromElasticFilter']);
     // Limit response for efficiency.
@@ -467,11 +505,17 @@ class ElasticsearchProxyHelper {
     ];
     // Update index immediately and overwrite update conflicts.
     // Sensitive records first.
-    $r1 = self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
+    $r1 = self::curlPost($url, $doc, [
+      'refresh' => 'true',
+      'conflicts' => 'proceed',
+    ]);
     $r1js = json_decode($r1);
     // Now normal records/blurred records.
     $doc['query']['terms']['_id'] = $_ids;
-    $r2 = self::curlPost($url, $doc, ['refresh' => 'true', 'conflicts' => 'proceed']);
+    $r2 = self::curlPost($url, $doc, [
+      'refresh' => 'true',
+      'conflicts' => 'proceed',
+    ]);
     $r2js = json_decode($r2);
     // Since the verification alias can only see 1 copy of each record (e.g.
     // full precision), combine the totals to report the total records changed.
@@ -523,16 +567,32 @@ class ElasticsearchProxyHelper {
    * @return array
    *   Header strings.
    */
-  public static function getHttpRequestHeaders($esConfig) {
+  public static function getHttpRequestHeaders($config) {
     $headers = [
       'Content-Type: application/json',
     ];
-    if (empty($esConfig['es']['auth_method']) || $esConfig['es']['auth_method'] === 'directClient') {
-      $headers[] = 'Authorization: USER:' . $esConfig['es']['user'] . ':SECRET:' . $esConfig['es']['secret'];
+    if (empty($config['es']['auth_method']) || $config['es']['auth_method'] === 'directClient') {
+      $headers[] = 'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'];
     }
-    elseif ($esConfig['es']['auth_method'] === 'directWebsite') {
-      $config = \Drupal::config('iform.settings');
-      $headers[] = 'Authorization: WEBSITE_ID:' . $config->get('website_id') . ':SECRET:' . $config->get('password');
+    elseif ($config['es']['auth_method'] === 'directWebsite') {
+      iform_load_helpers(['helper_base']);
+      $conn = iform_get_connection_details();
+      $tokens = [
+        'WEBSITE_ID',
+        $conn['website_id'],
+        'SECRET',
+        $conn['password'],
+      ];
+      if (isset($config['es']['scope'])) {
+        $tokens[] = 'SCOPE';
+        $tokens[] = $config['es']['scope'];
+        $userId = hostsite_get_user_field('indicia_user_id');
+        if ($userId) {
+          $tokens[] = 'USER_ID';
+          $tokens[] = $userId;
+        }
+      }
+      $headers[] = 'Authorization: ' . implode(':', $tokens);
     }
     else {
       $keyFile = \Drupal::service('file_system')->realpath("private://") . '/rsa_private.pem';
@@ -543,14 +603,11 @@ class ElasticsearchProxyHelper {
       }
       $privateKey = file_get_contents($keyFile);
       $payload = [
-        'iss' => hostsite_get_url('<front>', FALSE, FALSE, TRUE),
+        'iss' => hostsite_get_url('<front>', [], FALSE, TRUE),
         'http://indicia.org.uk/user:id' => hostsite_get_user_field('indicia_user_id'),
+        'scope' => $config['es']['scope'],
         'exp' => time() + 300,
       ];
-      if (empty($post['permissions_filter']) || $post['permissions_filter'] === 'all') {
-        // Additional claim that we have rights to all data.
-        $payload['http://indicia.org.uk/alldata'] = 'true';
-      }
       $modulePath = \Drupal::service('module_handler')->getModule('iform')->getPath();
       // @todo persist the token in the cache?
       require_once "$modulePath/lib/php-jwt/vendor/autoload.php";
@@ -566,10 +623,6 @@ class ElasticsearchProxyHelper {
   private static function curlPost($url, $data, $getParams = []) {
     $curlResponse = FALSE;
     $cacheTimeout = FALSE;
-    if (self::$config['es']['auth_method'] === 'directWebsite' && isset(self::$config['es']['sharing'])) {
-      \Drupal::logger('iform')->notice('Setting sharing to ' . self::$config['es']['sharing']);
-      $getParams['sharing'] = self::$config['es']['sharing'];
-    }
     if (!empty($data['proxyCacheTimeout'])) {
       $cacheKey = [
         'post' => json_encode($data),
@@ -636,19 +689,60 @@ class ElasticsearchProxyHelper {
    *
    * @param array $post
    *   Section of the $_POST data which holds the filter info.
+   * @param array $readAuth
+   *   Read authentication tokens.
+   * @param int $nid
+   *   Node ID to load configuration from.
    */
-  private static function checkPermissionsFilter(array $post) {
-    $permissionsFilter = empty($post['permissions_filter']) ? 'all' : $post['permissions_filter'];
-    $validPermissionsFilter = [
-      'all',
-      'my',
-      'location_collation',
+  private static function checkPermissionsFilter(array $post, array $readAuth, $nid) {
+    $permissionsFilter = empty($post['permissions_filter']) ? 'p-all' : $post['permissions_filter'];
+    $roleBasedPermissionsFilters = [
+      'p-all',
+      'p-my',
+      'p-location_collation',
     ];
-    if (!in_array($permissionsFilter, $validPermissionsFilter)
-        || !hostsite_user_has_permission(self::$config['es'][$permissionsFilter . '_records_permission'])) {
-      header("HTTP/1.1 401 Unauthorised");
-      echo json_encode(['error' => "User does not have permission to $permissionsFilter records"]);
-      throw new ElasticsearchProxyAbort('Unauthorised');
+    $permissionName = substr($permissionsFilter, 2) . '_records_permission';
+    if (in_array($permissionsFilter, $roleBasedPermissionsFilters)) {
+      if (!hostsite_user_has_permission(self::$config['es'][$permissionName])) {
+        header("HTTP/1.1 401 Unauthorised");
+        echo json_encode(['error' => "User does not have permission to $permissionsName"]);
+        throw new ElasticsearchProxyAbort('Unauthorised');
+      }
+    }
+    else {
+      $options = ['readAuth' => $readAuth];
+      iform_load_helpers(['ElasticsearchReportHelper']);
+      if ($nid) {
+        // Fetch available permissions filters for node.
+        $nodeParams = hostsite_get_node_field_value($nid, 'params');
+        if (!empty($nodeParams['structure'])) {
+          $structure = helper_base::explode_lines($nodeParams['structure']);
+          $state = 'search';
+          foreach ($structure as $line) {
+            if ($line === '[permissionFilters]') {
+              $state = 'foundControl';
+            }
+            elseif ($state === 'foundControl') {
+              if (substr($line, 0, 1) === '@') {
+                $parts = explode('=', $line, 2);
+                $decoded = json_decode($parts[1]);
+                $options[substr($parts[0], 1)] = $decoded === NULL ? $parts[1] : $decoded;
+              }
+              else {
+                // Finish loop as done permissionFilters control options.
+                break;
+              }
+            }
+          }
+        }
+      }
+      $availablePermissionFilters = ElasticsearchReportHelper::getPermissionFiltersOptions($options);
+      // Check $permissionsFilter in list, else access denied.
+      if (!array_key_exists($permissionsFilter, $availablePermissionFilters)) {
+        header("HTTP/1.1 401 Unauthorised");
+        echo json_encode(['error' => "User does not have permission to $permissionsFilter records"]);
+        throw new ElasticsearchProxyAbort("Unauthorised - $permissionsFilter not in " . var_export($availablePermissionFilters, TRUE));
+      }
     }
   }
 
@@ -774,13 +868,16 @@ class ElasticsearchProxyHelper {
     ];
     iform_load_helpers([]);
     $readAuth = helper_base::get_read_auth(self::$config['indicia']['website_id'], self::$config['indicia']['password']);
-    self::applyPermissionsFilter($post, $bool);
+    if (!empty($query['permissions_filter'])) {
+      self::applyPermissionsFilter($readAuth, $query, $bool);
+    }
     if (!empty($query['group_filter'])) {
       self::applyGroupFilter($readAuth, $query['group_filter'], $bool, $query);
     }
     if (!empty($query['user_filters'])) {
       self::applyUserFilters($readAuth, $query, $bool);
     }
+
     if (!empty($query['filter_def'])) {
       self::applyFilterDef($readAuth, $query['filter_def'], $bool);
     }
@@ -808,30 +905,92 @@ class ElasticsearchProxyHelper {
     return $query;
   }
 
-  private static function applyPermissionsFilter($post, array &$bool) {
-    if (!empty($post['permissions_filter'])) {
-      switch ($post['permissions_filter']) {
-        case 'my':
-          $bool['must'][] = [
-            'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
-          ];
-          break;
+  /**
+   * Applies an option from the [permissionFilters] control.
+   *
+   * Converts the option to a user ID filter, geo filter, group filter, or
+   * applies the selected filter ID.
+   *
+   * @param array $readAuth
+   *   Read authorisation tokens.
+   * @param array $query
+   *   Request query object. May be updated, e.g. to append a user filter ID.
+   * @param array $bool
+   *   Constructed bool query for Elasticsearch.
+   */
+  private static function applyPermissionsFilter(array $readAuth, array &$query, array &$bool) {
+    switch ($query['permissions_filter']) {
+      case 'p-all':
+        // No filter.
+        break;
 
-        case 'location_collation':
-          $bool['must'][] = [
-            'nested' => [
-              'path' => 'location.higher_geography',
-              'query' => [
-                'term' => ['location.higher_geography.id' => hostsite_get_user_field('location_collation')],
-              ],
+      case 'p-my':
+        $bool['must'][] = [
+          'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+        ];
+        self::$config['es']['scope'] = 'user';
+        break;
+
+      case 'p-location_collation':
+        $bool['must'][] = [
+          'nested' => [
+            'path' => 'location.higher_geography',
+            'query' => [
+              'term' => ['location.higher_geography.id' => hostsite_get_user_field('location_collation')],
             ],
-          ];
-          break;
+          ],
+        ];
+        break;
 
-        default:
-          // All records, no filter.
-      }
+      default:
+        // Filter possible formats.
+        // g-my-ID (my group records)
+        // g-ID (group records)
+        // f-ID (filter)
+        if (preg_match('/^(?P<type>[fg])(?P<users>-(my|all))?-(?P<id>\d+)$/', $query['permissions_filter'], $matches)) {
+          if ($matches['type'] === 'f') {
+            // Add filter ID to list that will be applied later.
+            $query['user_filters'][] = $matches['id'];
+            self::$setScopeUsingFilter = $matches['id'];
+          }
+          elseif ($matches['type'] === 'g') {
+            // Group filter, should allow reporting access.
+            self::$config['es']['scope'] = 'reporting';
+            self::applyGroupFilter($readAuth, [
+              'id' => $matches['id'],
+              'implicit' => FALSE,
+            ], $bool, $query);
+          }
+          if (!empty($matches['users']) && $matches['users'] === '-my') {
+            // If limited to my records.
+            $bool['must'][] = [
+              'term' => ['metadata.created_by_id' => hostsite_get_user_field('indicia_user_id')],
+            ];
+          }
+        }
+        else {
+          // This shouldn't happen.
+          header("HTTP/1.1 400 Bad request");
+          echo json_encode(['error' => 'Incorrect permissions_filter parameter']);
+          throw new ElasticsearchProxyAbort('Incorrect permissions_filter parameter: ' . $query['permissions_filter']);
+        }
+
     }
+  }
+
+  /**
+   * Converts a sharing term to a scope term for the REST API.
+   *
+   * @param string $term
+   *   Sharing term, e.g. 'Data Flow', 'My'.
+   *
+   * @return string
+   *   Scope term, e.g. 'data_flow', 'user'.
+   */
+  private static function sharingTermToScope($term) {
+    $scope = str_replace(' ', '_', strtolower($term));
+    $scope = $scope === 'my' ? 'user' : $scope;
+    return $scope;
   }
 
   /**
@@ -865,6 +1024,9 @@ class ElasticsearchProxyHelper {
         $definition['searchArea'] = $filterData[0]['search_area']
           ? $filterData[0]['search_area'] : $filterData[0]['location_area'];
         self::applyFilterDef($readAuth, $definition, $bool);
+        if ($userFilter == self::$setScopeUsingFilter) {
+          self::$config['es']['scope'] = self::sharingTermToScope($filterData[0]['sharing']);
+        }
       }
     }
   }
@@ -890,19 +1052,25 @@ class ElasticsearchProxyHelper {
     ];
   }
 
+  /**
+   * Applies a group's filter to the request.
+   */
   private static function applyGroupFilter(array $readAuth, $groupFilter, array &$bool, &$query) {
     /*
      * Modes
      * - match group ID + match filter (implicit=f)
      * - match group members + match filter (implicit=t)
      * - match filter only (implicit=null)
-    */
-    if ($groupFilter['implicit'] === 'false') {
+     * Bool implicit value may be read from URL, or code, so need to be
+     * flexible.
+     */
+    if ($groupFilter['implicit'] === FALSE || $groupFilter['implicit'] == 'f' || $groupFilter['implicit'] == 'false') {
       // Records added to group linked form.
       $bool['must'][] = [
         'term' => ['metadata.group.id' => $groupFilter['id']],
       ];
-    } elseif ($groupFilter['implicit'] === 'true') {
+    }
+    elseif ($groupFilter['implicit'] === TRUE || $groupFilter['implicit'] == 't' || $groupFilter['implicit'] == 'true') {
       // Records added by group members.
       self::applyGroupMembersFilter($readAuth, $groupFilter, $bool);
     }
@@ -965,7 +1133,10 @@ class ElasticsearchProxyHelper {
    * transformed to EPSG:4326.
    */
   private static function convertLocationListToSearchArea(array &$definition, array $readAuth) {
-    $filter = self::getDefinitionFilter($definition, ['location_list', 'location_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'location_list',
+      'location_id',
+    ]);
     if (!empty($filter)) {
       require_once 'report_helper.php';
       $boundaryData = report_helper::get_report_data([
@@ -989,7 +1160,10 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersTaxonGroupList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['taxon_group_list', 'taxon_group_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'taxon_group_list',
+      'taxon_group_id',
+    ]);
     if (!empty($filter)) {
       $bool['must'][] = [
         'terms' => ['taxon.group_id' => explode(',', $filter['value'])],
@@ -1072,7 +1246,7 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Converts an Indicia filter definition taxa_taxon_list_external_key_list to an ES query.
+   * Converts an filter def taxa_taxon_list_external_key_list to an ES query.
    *
    * @param array $definition
    *   Definition loaded for the Indicia filter.
@@ -1424,7 +1598,14 @@ class ElasticsearchProxyHelper {
           break;
 
         case 'L':
-          $bool['must'][] = ['terms' => ['identification.recorder_certainty.keyword' => ['Certain', 'Likely']]];
+          $bool['must'][] = [
+            'terms' => [
+              'identification.recorder_certainty.keyword' => [
+                'Certain',
+                'Likely',
+              ],
+            ],
+          ];
           $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
           break;
 
@@ -1439,8 +1620,12 @@ class ElasticsearchProxyHelper {
           break;
 
         case '!D':
-          $bool['must_not'][] = ['match' => ['identification.verification_status' => 'R']];
-          $bool['must_not'][] = ['terms' => ['identification.query.keyword' => ['Q', 'A']]];
+          $bool['must_not'][] = [
+            'match' => ['identification.verification_status' => 'R'],
+          ];
+          $bool['must_not'][] = [
+            'terms' => ['identification.query.keyword' => ['Q', 'A']],
+          ];
           break;
 
         case 'D':
@@ -1514,7 +1699,10 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersWebsiteList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['website_list', 'website_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'website_list',
+      'website_id',
+    ]);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [
@@ -1532,7 +1720,10 @@ class ElasticsearchProxyHelper {
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
   private static function applyUserFiltersSurveyList(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['survey_list', 'survey_id']);
+    $filter = self::getDefinitionFilter($definition, [
+      'survey_list',
+      'survey_id',
+    ]);
     if (!empty($filter)) {
       $boolClause = !empty($filter['op']) && $filter['op'] === 'not in' ? 'must_not' : 'must';
       $bool[$boolClause][] = [

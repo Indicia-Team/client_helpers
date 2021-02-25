@@ -884,6 +884,11 @@ JS;
     }
     // Text box class helps sync to date picker control.
     $options['class'] .= ' date-text';
+    $options['datePickerClass'] = 'precise-date-picker';
+    global $indicia_templates;
+    if (isset($indicia_templates['formControlClass'])) {
+      $options['datePickerClass'] .= ' ' . $indicia_templates['formControlClass'];
+    }
     // Show text box for vague dates, or date picker if precise.
     $options['dateDisplay'] = $options['allowVagueDates'] ? 'display: none' : '';
     $options['textDisplay'] = $options['allowVagueDates'] ? '' : 'display: none';
@@ -1096,11 +1101,11 @@ JS;
           $images = self::extract_media_data(self::$entity_to_load,
             isset($options['loadExistingRecordKey']) ? $options['loadExistingRecordKey'] : $options['table']);
         }
-        $javascript .= ",\n  existingFiles : ".json_encode($images);
+        $javascript .= ",\n  existingFiles : " . json_encode($images);
       }
       $javascript .= "\n});\n";
     }
-    if ($options['codeGenerated']=='js')
+    if ($options['codeGenerated'] === 'js')
       // we only want to return the JavaScript, so go no further.
       return $javascript;
     elseif ($options['codeGenerated']=='all') {
@@ -1109,11 +1114,11 @@ JS;
         $javascript =
           "var uploaderTabHandler = function(event, ui) { \n" .
           "  panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];\n" .
-          "  if ($(panel).attr('id')==='".$options['tabDiv']."') {\n    ".
+          "  if ($(panel).attr('id')==='" . $options['tabDiv'] . "') {\n    ".
           $javascript.
-          "    indiciaFns.unbindTabsActivate($($('#".$options['tabDiv']."').parent()), uploaderTabHandler);\n".
+          "    indiciaFns.unbindTabsActivate($($('#" . $options['tabDiv'] . "').parent()), uploaderTabHandler);\n".
           "  }\n};\n".
-          "indiciaFns.bindTabsActivate($($('#".$options['tabDiv']."').parent()), uploaderTabHandler);\n";
+          "indiciaFns.bindTabsActivate($($('#" . $options['tabDiv'] . "').parent()), uploaderTabHandler);\n";
         // Insert this script at the beginning, because it must be done before the tabs are initialised or the
         // first tab cannot fire the event
         self::$javascript = $javascript . self::$javascript;
@@ -1123,9 +1128,9 @@ JS;
     }
     // Output a placeholder div for the jQuery plugin. Also output a normal
     // file input for the noscripts version.
-    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>'.self::image_upload(array(
+    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>' . self::image_upload(array(
       'label' => $options['caption'],
-      // Convert table into a pseudo field name for the images
+      // Convert table into a pseudo field name for the images.
       'id' => $options['id'],
       'fieldname' => str_replace('_', ':', $options['table'])
     )) . '</noscript>';
@@ -1134,6 +1139,8 @@ JS;
   }
 
   /**
+   * Search for place name control.
+   *
    * Generates a text input control with a search button that looks up an
    * entered place against a georeferencing web service. The control is
    * automatically linked to any map panel added to the page.
@@ -1261,57 +1268,57 @@ JS;
   }
 
   /**
-   * A version of the select control which supports hierarchical termlist data by adding new selects to the next line
-   * populated with the child terms when a parent term is selected.
+   * Hierarchical select control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>  *
-   * <li><b>table</b><br/>
-   * Table name to get data from for the select options. Should be termlists_term for termlist data.</li>
-   * <li><b>report</b><br/>
-   * Report name to get data from for the select options if the select is being populated by a service call using a report.
-   * Mutually exclusive with the table option. The report should return a parent_id field.</li>
-   * <li><b>captionField</b><br/>
-   * Field to draw values to show in the control from if the select is being populated by a service call.</li>
-   * <li><b>valueField</b><br/>
-   * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
-   * to the value of captionField.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array if the select is being populated by a service call. It can also contain
-   * view=cache to use the cached termlists entries or view=detail for the uncached version.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>select</b></br>
-   * Template used for the HTML select element.
-   * </li>
-   * <li><b>select_item</b></br>
-   * Template used for each option item placed within the select element.
-   * </li>
-   * <li><b>hidden_text</b></br>
-   * HTML used for a hidden input that will hold the value to post to the database.
-   * </li>
-   * <li><b>autoSelectSingularChildItem</b></br>
-   * When selecting parent items in the hierarchical select, then sometimes there might be only one child item.
-   * Set this option to true if you want that single item to be automatically selected in that scenario.
-   * </li>
-   * </ul>
+   * A version of the select control which supports hierarchical termlist data
+   * by adding new selects to the next line populated with the child terms when
+   * a parent term is selected.
+   *
+   * The output of this control can be configured using the following
+   * templates:
+   * * select - Template used for the HTML select element.
+   * * select_item - Template used for each option item placed within the
+   *   select element.
+   * * hidden_text - HTML used for a hidden input that will hold the value to
+   *   post to the database.
+   * * autoSelectSingularChildItem - When selecting parent items in the
+   *   hierarchical select, then sometimes there might be only one child item.
+   *   Set this option to true if you want that single item to be automatically
+   *   selected in that scenario.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Table name to get data from for the select options. Should be
+   *     termlists_term for termlist data.
+   *   * report - Report name to get data from for the select options if the
+   *     select is being populated by a service call using a report. Mutually
+   *     exclusive with the table option. The report should return a parent_id
+   *     field.
+   *   * captionField - Field to draw values to show in the control from if the
+   *     select is being populated by a service call.
+   *   * valueField - Field to draw values to return from the control from if
+   *     the select is being populated by a service call. Defaults to the value
+   *     of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array if the select is being populated by a service
+   *     call. It can also contain view=cache to use the cached termlists
+   *     entries or view=detail for the uncached version.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
    */
   public static function hierarchical_select($options) {
     $options = array_merge(array(
-      'id' => 'select-'.rand(0,10000),
+      'id' => 'select-' . rand(0,10000),
       'blankText' => '<please select>',
       'extraParams' => array(),
       'preferredIdField' => 'preferred_termlists_term_id',
@@ -4071,11 +4078,9 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
           $filterFields['preferred'] = 'true';
           break;
         case 'currentLanguage' :
-          // look for Drupal user variable. Will degrade gracefully if it doesn't exist
-          global $user;
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
-          } elseif (isset($user) && function_exists('hostsite_get_user_field')) {
+          } elseif (function_exists('hostsite_get_user_field')) {
             // if in Drupal we can use the user's language
             require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));

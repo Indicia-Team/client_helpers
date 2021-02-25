@@ -582,11 +582,11 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
       }
     }
     //create array of attribute field names to test against later
-    $attribNames = array();
-    foreach ($attributes as $key => $attrib){
+    $attribNames = [];
+    foreach ($attributes as $key => $attrib) {
       $attribNames[$key] = $attrib['id'];
     }
-    $html='';
+    $html = '';
     // Now output the content of the tab. Use a for loop, not each, so we can treat several rows as one object
     for ($i = 0; $i < count($tabContent); $i++) {
       $component = trim($tabContent[$i]);
@@ -615,17 +615,22 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
               }
               $option[1] = preg_replace('/\-\->$/', '', trim($option[1]));
             }
-            if (!isset($option[1])||$option[1] === 'false')
+            if (!isset($option[1])||$option[1] === 'false') {
               $options[$option[0]] = FALSE;
+            }
             else {
               $options[$option[0]] = json_decode($option[1], TRUE);
               // If not json then need to use option value as it is.
-              if ($options[$option[0]] == '') $options[$option[0]] = $option[1];
+              if ($options[$option[0]] == '') {
+                $options[$option[0]] = $option[1];
+              }
             }
-            // UrlParam is special as it loads the control's default value from $_GET.
-            if ($option[0] === 'urlParam' && isset($_GET[$option[1]]))
+            // UrlParam is special as it loads the control's default value from
+            // $_GET.
+            if ($option[0] === 'urlParam' && isset($_GET[$option[1]])) {
               $options['default'] = $_GET[$option[1]];
-            // label and helpText should both get translated
+            }
+            // Label and helpText should both get translated.
             if (preg_match('/^([a-z]{3}Attr:\d+\|)?label$/', $option[0])) {
               $options[$option[0]] = lang::get($options[$option[0]]);
             }
@@ -634,41 +639,45 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
         // if @permission specified as an option, then check that the user has access to this control
         if (!empty($options['permission']) && !hostsite_user_has_permission($options['permission']))
           continue;
-        $parts = explode('.', str_replace(array('[', ']'), '', $component));
-        $method = 'get_control_'.preg_replace('/[^a-zA-Z0-9]/', '', strtolower($component));
+        $parts = explode('.', str_replace(['[', ']'], '', $component));
+        $method = 'get_control_' . preg_replace('/[^a-zA-Z0-9]/', '', strtolower($component));
         if (!empty($args['high_volume']) && $args['high_volume']) {
-          // enable control level report caching when in high_volume mode
-          $options['caching']=empty($options['caching']) ? true : $options['caching'];
-          $options['cachetimeout']=empty($options['cachetimeout']) ? HIGH_VOLUME_CONTROL_CACHE_TIMEOUT : $options['cachetimeout'];
+          // Enable control level report caching when in high_volume mode.
+          $options['caching'] = empty($options['caching']) ? TRUE : $options['caching'];
+          $options['cachetimeout'] = empty($options['cachetimeout']) ? HIGH_VOLUME_CONTROL_CACHE_TIMEOUT : $options['cachetimeout'];
         }
         // allow user settings to override the control - see iform_user_ui_options.module
         if (isset(data_entry_helper::$data['structureControlOverrides']) && !empty(data_entry_helper::$data['structureControlOverrides'][$component]))
           $options = array_merge($options, data_entry_helper::$data['structureControlOverrides'][$component]);
-        if (count($parts)===1 && method_exists(self::$called_class, $method)) {
-          //outputs a control for which a specific output function has been written.
+        if (count($parts) === 1 && method_exists(self::$called_class, $method)) {
+          // Outputs a control for which a specific output function has been
+          // written.
           $html .= call_user_func(array(self::$called_class, $method), $auth, $args, $tabalias, array_merge($defAttrOptions, $options));
-          $hasControls = true;
+          $hasControls = TRUE;
         }
-        elseif (count($parts)===2) {
+        elseif (count($parts) === 2) {
           $extensionPath = dirname($_SERVER['SCRIPT_FILENAME']) . '/' .
-            data_entry_helper::relative_client_helper_path() . 'prebuilt_forms/extensions/'.$parts[0].'.php';
-          require_once($extensionPath);
+            data_entry_helper::relative_client_helper_path() . "prebuilt_forms/extensions/$parts[0].php";
+          require_once $extensionPath;
           if (method_exists("extension_$parts[0]", $parts[1])) {
             if (!empty($options['fieldname'])) {
-              // If reloading an existing attribute, set the default and fieldname to contain the value ID.
-              // First, if this is an occurrence attribute then the list of attributes might not be loaded.
+              // If reloading an existing attribute, set the default and
+              // fieldname to contain the value ID.
+              // First, if this is an occurrence attribute then the list of
+              // attributes might not be loaded.
               if (substr($options['fieldname'], 0, 7) === 'occAttr'
                 && method_exists(self::$called_class, 'load_custom_occattrs')
                 && !empty(data_entry_helper::$entity_to_load['occurrence:id'])) {
                 $occAttrs = call_user_func(
-                  array(self::$called_class, 'load_custom_occattrs'), $auth['read'], $args['survey_id']);
+                  [self::$called_class, 'load_custom_occattrs'], $auth['read'], $args['survey_id']);
                 foreach ($occAttrs as $attr) {
                   if ($options['fieldname'] === $attr['id']) {
                     $options['fieldname'] = $attr['fieldname'];
                     $options['default'] = $attr['default'];
                   }
                 }
-              } else {
+              }
+              else {
                 $attribKey = array_search($options['fieldname'], $attribNames);
                 if ($attribKey !== FALSE) {
                   $options['fieldname'] = $attributes[$attribKey]['fieldname'];
@@ -676,45 +685,50 @@ $('#" . data_entry_helper::$validated_form_id . "').submit(function() {
                 }
               }
             }
-            //outputs a control for which a specific extension function has been written.
-            $path = call_user_func(array(self::$called_class, 'getReloadPath'));
-            //pass the classname of the form through to the extension control method to allow access to calling class functions and variables
-            $args["calling_class"]=self::$called_class;
-            $html .= call_user_func(array('extension_' . $parts[0], $parts[1]), $auth, $args, $tabalias, $options, $path, $attributes);
+            // Outputs a control for which a specific extension function has
+            // been written.
+            $path = call_user_func([self::$called_class, 'getReloadPath']);
+            // Pass the classname of the form through to the extension control
+            // method to allow access to calling class functions and variables
+            $args['calling_class'] = self::$called_class;
+            $html .= call_user_func(['extension_' . $parts[0], $parts[1]], $auth, $args, $tabalias, $options, $path, $attributes);
             $hasControls = true;
-            // auto-add JavaScript for the extension
-            $d6 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='6.x');
-            $d7 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY==='7.x');
+            // Auto-add JavaScript for the extension.
+            $d6 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY === '6.x');
+            $d7 = (defined('DRUPAL_CORE_COMPATIBILITY') && DRUPAL_CORE_COMPATIBILITY === '7.x');
             // Ignore D8 as it uses asset libraries instead of drupal_add_js
             if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js')) {
               if ($d6)
                 drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', 'module', 'header', FALSE, TRUE, FALSE);
               elseif ($d7)
-                drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', array('preprocess'=>FALSE));
+                drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.js', array('preprocess' => FALSE));
             }
             if (file_exists(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css')) {
               if ($d6)
                 drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', 'module', 'all', FALSE);
               elseif ($d7)
-                drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', array('preprocess'=>FALSE));
+                drupal_add_css(iform_client_helpers_path().'prebuilt_forms/extensions/' . $parts[0] . '.css', array('preprocess' => FALSE));
             }
           }
-          else
+          else {
             $html .= lang::get("The $component extension cannot be found.");
+          }
         }
-        elseif (($attribKey = array_search(substr($component, 1, -1), $attribNames)) !== false
+        elseif (($attribKey = array_search(substr($component, 1, -1), $attribNames)) !== FALSE
             || preg_match('/^\[[a-zA-Z]+:(?P<ctrlId>[0-9]+)\]/', $component, $matches)) {
           // control is a smpAttr or other attr control.
-          if (empty($options['extraParams']))
+          if (empty($options['extraParams'])) {
             $options['extraParams'] = array_merge($defAttrOptions['extraParams']);
-          else
-            $options['extraParams'] = array_merge($defAttrOptions['extraParams'], (array)$options['extraParams']);
-          //merge extraParams first so we don't loose authentication
+          }
+          else {
+            $options['extraParams'] = array_merge($defAttrOptions['extraParams'], (array) $options['extraParams']);
+          }
+          // Merge extraParams first so we don't loose authentication.
           $options = array_merge($defAttrOptions, $options);
           foreach ($options as $key=>&$value) {
             $value = apply_user_replacements($value);
           }
-          if ($attribKey!==false) {
+          if ($attribKey !== FALSE) {
             // A smpAttr control.
             $html .= data_entry_helper::outputAttribute($attributes[$attribKey], $options);
             $attributes[$attribKey]['handled'] = true;
