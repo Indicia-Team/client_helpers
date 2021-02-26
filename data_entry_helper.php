@@ -884,6 +884,11 @@ JS;
     }
     // Text box class helps sync to date picker control.
     $options['class'] .= ' date-text';
+    $options['datePickerClass'] = 'precise-date-picker';
+    global $indicia_templates;
+    if (isset($indicia_templates['formControlClass'])) {
+      $options['datePickerClass'] .= ' ' . $indicia_templates['formControlClass'];
+    }
     // Show text box for vague dates, or date picker if precise.
     $options['dateDisplay'] = $options['allowVagueDates'] ? 'display: none' : '';
     $options['textDisplay'] = $options['allowVagueDates'] ? '' : 'display: none';
@@ -1096,11 +1101,11 @@ JS;
           $images = self::extract_media_data(self::$entity_to_load,
             isset($options['loadExistingRecordKey']) ? $options['loadExistingRecordKey'] : $options['table']);
         }
-        $javascript .= ",\n  existingFiles : ".json_encode($images);
+        $javascript .= ",\n  existingFiles : " . json_encode($images);
       }
       $javascript .= "\n});\n";
     }
-    if ($options['codeGenerated']=='js')
+    if ($options['codeGenerated'] === 'js')
       // we only want to return the JavaScript, so go no further.
       return $javascript;
     elseif ($options['codeGenerated']=='all') {
@@ -1109,11 +1114,11 @@ JS;
         $javascript =
           "var uploaderTabHandler = function(event, ui) { \n" .
           "  panel = typeof ui.newPanel==='undefined' ? ui.panel : ui.newPanel[0];\n" .
-          "  if ($(panel).attr('id')==='".$options['tabDiv']."') {\n    ".
+          "  if ($(panel).attr('id')==='" . $options['tabDiv'] . "') {\n    ".
           $javascript.
-          "    indiciaFns.unbindTabsActivate($($('#".$options['tabDiv']."').parent()), uploaderTabHandler);\n".
+          "    indiciaFns.unbindTabsActivate($($('#" . $options['tabDiv'] . "').parent()), uploaderTabHandler);\n".
           "  }\n};\n".
-          "indiciaFns.bindTabsActivate($($('#".$options['tabDiv']."').parent()), uploaderTabHandler);\n";
+          "indiciaFns.bindTabsActivate($($('#" . $options['tabDiv'] . "').parent()), uploaderTabHandler);\n";
         // Insert this script at the beginning, because it must be done before the tabs are initialised or the
         // first tab cannot fire the event
         self::$javascript = $javascript . self::$javascript;
@@ -1123,9 +1128,9 @@ JS;
     }
     // Output a placeholder div for the jQuery plugin. Also output a normal
     // file input for the noscripts version.
-    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>'.self::image_upload(array(
+    $r = '<div class="file-box" id="' . $containerId . '"></div><noscript>' . self::image_upload(array(
       'label' => $options['caption'],
-      // Convert table into a pseudo field name for the images
+      // Convert table into a pseudo field name for the images.
       'id' => $options['id'],
       'fieldname' => str_replace('_', ':', $options['table'])
     )) . '</noscript>';
@@ -1134,6 +1139,8 @@ JS;
   }
 
   /**
+   * Search for place name control.
+   *
    * Generates a text input control with a search button that looks up an
    * entered place against a georeferencing web service. The control is
    * automatically linked to any map panel added to the page.
@@ -1261,57 +1268,57 @@ JS;
   }
 
   /**
-   * A version of the select control which supports hierarchical termlist data by adding new selects to the next line
-   * populated with the child terms when a parent term is selected.
+   * Hierarchical select control.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>  *
-   * <li><b>table</b><br/>
-   * Table name to get data from for the select options. Should be termlists_term for termlist data.</li>
-   * <li><b>report</b><br/>
-   * Report name to get data from for the select options if the select is being populated by a service call using a report.
-   * Mutually exclusive with the table option. The report should return a parent_id field.</li>
-   * <li><b>captionField</b><br/>
-   * Field to draw values to show in the control from if the select is being populated by a service call.</li>
-   * <li><b>valueField</b><br/>
-   * Field to draw values to return from the control from if the select is being populated by a service call. Defaults
-   * to the value of captionField.</li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array if the select is being populated by a service call. It can also contain
-   * view=cache to use the cached termlists entries or view=detail for the uncached version.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>select</b></br>
-   * Template used for the HTML select element.
-   * </li>
-   * <li><b>select_item</b></br>
-   * Template used for each option item placed within the select element.
-   * </li>
-   * <li><b>hidden_text</b></br>
-   * HTML used for a hidden input that will hold the value to post to the database.
-   * </li>
-   * <li><b>autoSelectSingularChildItem</b></br>
-   * When selecting parent items in the hierarchical select, then sometimes there might be only one child item.
-   * Set this option to true if you want that single item to be automatically selected in that scenario.
-   * </li>
-   * </ul>
+   * A version of the select control which supports hierarchical termlist data
+   * by adding new selects to the next line populated with the child terms when
+   * a parent term is selected.
+   *
+   * The output of this control can be configured using the following
+   * templates:
+   * * select - Template used for the HTML select element.
+   * * select_item - Template used for each option item placed within the
+   *   select element.
+   * * hidden_text - HTML used for a hidden input that will hold the value to
+   *   post to the database.
+   * * autoSelectSingularChildItem - When selecting parent items in the
+   *   hierarchical select, then sometimes there might be only one child item.
+   *   Set this option to true if you want that single item to be automatically
+   *   selected in that scenario.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Table name to get data from for the select options. Should be
+   *     termlists_term for termlist data.
+   *   * report - Report name to get data from for the select options if the
+   *     select is being populated by a service call using a report. Mutually
+   *     exclusive with the table option. The report should return a parent_id
+   *     field.
+   *   * captionField - Field to draw values to show in the control from if the
+   *     select is being populated by a service call.
+   *   * valueField - Field to draw values to return from the control from if
+   *     the select is being populated by a service call. Defaults to the value
+   *     of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array if the select is being populated by a service
+   *     call. It can also contain view=cache to use the cached termlists
+   *     entries or view=detail for the uncached version.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
    */
   public static function hierarchical_select($options) {
     $options = array_merge(array(
-      'id' => 'select-'.rand(0,10000),
+      'id' => 'select-' . rand(0,10000),
       'blankText' => '<please select>',
       'extraParams' => array(),
       'preferredIdField' => 'preferred_termlists_term_id',
@@ -4071,11 +4078,9 @@ if ($('#$options[id]').parents('.ui-tabs-panel').length) {
           $filterFields['preferred'] = 'true';
           break;
         case 'currentLanguage' :
-          // look for Drupal user variable. Will degrade gracefully if it doesn't exist
-          global $user;
           if (isset($options['language'])) {
             $filterFields['language'] = $options['language'];
-          } elseif (isset($user) && function_exists('hostsite_get_user_field')) {
+          } elseif (function_exists('hostsite_get_user_field')) {
             // if in Drupal we can use the user's language
             require_once 'prebuilt_forms/includes/language_utils.php';
             $filterFields['language'] = iform_lang_iso_639_2(hostsite_get_user_field('language'));
@@ -5526,7 +5531,7 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * </ul>
    * @return type HTML to insert onto the page for the verification panel.
    */
-  public function verification_panel($options) {
+  public static function verification_panel($options) {
     global $indicia_templates;
     $options = array_merge(array(
       'panelOnly'=>false
@@ -5582,7 +5587,11 @@ $('div#$escaped_divId').indiciaTreeBrowser({
    * centre to position the div, making sure the containing element is either floated, or has
    * overflow: auto applied to its style. Default is right.</li>
    * <li><b>buttonClass</b><br/>
-   * Class to add to the button elements.</li>
+   * Class to add to the button elements other than delete and save.</li>
+   * <li><b>deleteButtonClass</b><br/>
+   * Class to add to the delete button.</li>
+   * <li><b>saveButtonClass</b><br/>
+   * Class to add to the save button.</li>
    * <li><b>page</b><br/>
    * Specify first, middle or last to indicate which page this is for. Use middle (the default) for
    * all pages other than the first or last.</li>
@@ -5608,6 +5617,8 @@ $('div#$escaped_divId').indiciaTreeBrowser({
       'captionSave' => 'Save',
       'captionDelete'=> 'Delete',
       'buttonClass' => "$indicia_templates[buttonDefaultClass] inline-control",
+      'saveButtonClass' => "$indicia_templates[buttonHighlightedClass] inline-control",
+      'deleteButtonClass' => "$indicia_templates[buttonWarningClass] inline-control",
       'class'       => 'right',
       'page'        => 'middle',
       'includeVerifyButton' => FALSE,
@@ -5618,42 +5629,51 @@ $('div#$escaped_divId').indiciaTreeBrowser({
     $options['class'] .= ' buttons wizard-buttons';
     // Output the buttons
     $r = '<div class="'.$options['class'].'">';
-    $buttonClass=$options['buttonClass'];
     if (array_key_exists('divId', $options)) {
       if ($options['includeVerifyButton']) {
         $r .= self::apply_replacements_to_template($indicia_templates['button'], array(
-          'href'=>'#',
-          'id'=>'verify-btn',
+          'href' => '#',
+          'id' => 'verify-btn',
           'class' => "class=\"$indicia_templates[buttonDefaultClass]\"",
           'caption'=>lang::get('Precheck my records'),
           'title'=>''
         ));
       }
-      if ($options['page']!='first') {
-        $options['class']=$buttonClass." tab-prev";
-        $options['id']='tab-prev';
-        $options['caption']='&lt; '.lang::get($options['captionPrev']);
+      if ($options['page'] !== 'first') {
+        $options['class'] = "$options[buttonClass] tab-prev";
+        $options['id'] = 'tab-prev';
+        $options['caption'] = '&lt; '.lang::get($options['captionPrev']);
         $r .= self::apply_template('button', $options);
       }
-      if ($options['page']!='last') {
-        $options['class']=$buttonClass." tab-next";
-        $options['id']='tab-next';
-        $options['caption']=lang::get($options['captionNext']).' &gt;';
+      if ($options['page'] !== 'last') {
+        $options['class'] = "$options[buttonClass] tab-next";
+        $options['id'] = 'tab-next';
+        $options['caption'] = lang::get($options['captionNext']).' &gt;';
         $r .= self::apply_template('button', $options);
       } else {
         if ($options['includeSubmitButton']) {
-          $options['class']=$buttonClass." tab-submit";
-          $options['id']='tab-submit';
-          $options['caption']=lang::get($options['captionSave']);
-          $options['name']='action-submit';
+          $options['class'] = "$options[saveButtonClass] tab-submit";
+          $options['id'] = 'tab-submit';
+          $options['caption'] = lang::get($options['captionSave']);
+          $options['name'] = 'action-submit';
           $r .= self::apply_template('submitButton', $options);
         }
         if ($options['includeDeleteButton']) {
-          $options['class']=$buttonClass." tab-delete";
-          $options['id']='tab-delete';
-          $options['caption']=lang::get($options['captionDelete']);
-          $options['name']='delete-button';
+          $options['class'] = "$options[deleteButtonClass] tab-delete";
+          $options['id'] = 'tab-delete';
+          $options['caption'] = lang::get($options['captionDelete']);
+          $options['name'] = 'delete-button';
           $r .= self::apply_template('submitButton', $options);
+          $msg = lang::get('Are you sure you want to delete this form?');
+          self::$javascript .= <<<JS
+$('#tab-delete').click(function(e) {
+  if (!confirm('$msg')) {
+    e.preventDefault();
+    return false;
+  }
+});
+
+JS;
         }
       }
     }

@@ -1501,6 +1501,9 @@ JS;
 function report_filters_load_existing($readAuth, $sharing, $caching = FALSE) {
   if (function_exists('hostsite_get_user_field')) {
     $userId = hostsite_get_user_field('indicia_user_id');
+    if ($userId === NULL) {
+      return [];
+    }
   }
   else {
     $userId = $_SESSION['auth_user']->id;
