@@ -349,6 +349,7 @@ class ElasticsearchReportHelper {
       'includeFullScreenTool',
       'includePager',
       'includeMultiSelectTool',
+      'keyboardNavigation',
       'responsive',
       'responsiveOptions',
       'rowClasses',
