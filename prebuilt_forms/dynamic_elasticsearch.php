@@ -321,6 +321,18 @@ TXT;
   }
 
   /**
+   * A control for outputting a gallery of record cards.
+   *
+   * @return string
+   *   HTML for the container element.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-cardGallery
+   */
+  protected static function get_control_cardGallery($auth, $args, $tabalias, $options) {
+    return ElasticsearchReportHelper::cardGallery($options);
+  }
+
+  /**
    * A control for flexibly outputting data formatted using a JS function.
    *
    * @return string

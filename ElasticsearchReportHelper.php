@@ -270,6 +270,38 @@ class ElasticsearchReportHelper {
   }
 
   /**
+   * An Elasticsearch records card gallery.
+   *
+   * @return string
+   *   Gallery container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-cardgallery
+   */
+  public static function cardGallery(array $options) {
+    self::checkOptions(
+      'cardGallery',
+      $options,
+      ['source'],
+      [
+        'actions',
+        'columns',
+        'rowsPerPageOptions',
+      ]
+    );
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'actions',
+      'columns',
+      'includeFieldCaptions',
+      'includeFullScreenTool',
+      'includePager',
+      'keyboardNavigation',
+      'rowsPerPageOptions',
+      'source',
+    ], TRUE);
+    return self::getControlContainer('cardGallery', $options, $dataOptions);
+  }
+
+  /**
    * A control for flexibly outputting data formatted using a custom script.
    *
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-customScript
@@ -684,7 +716,7 @@ JS;
     ], TRUE);
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
-$('#$options[id]').idcLeafletMap('bindGrids');
+$('#$options[id]').idcLeafletMap('bindRecordListControls');
 
 JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
