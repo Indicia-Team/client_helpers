@@ -146,6 +146,10 @@ class ElasticsearchReportHelper {
       'caption' => 'Common name',
       'description' => 'Common name for the recorded taxon.',
     ],
+    '#taxon_label#' => [
+      'caption' => 'Taxon label',
+      'description' => 'Combination of accepted and common name.',
+    ],
     'taxon.group' => [
       'caption' => 'Taxon group',
       'description' => 'Taxon reporting group associated with the current identification of this record.',
