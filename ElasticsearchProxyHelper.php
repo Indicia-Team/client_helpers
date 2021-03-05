@@ -1106,7 +1106,10 @@ class ElasticsearchProxyHelper {
     self::applyUserFiltersTaxonMeaning($definition, $bool, $readAuth);
     self::applyUserFiltersTaxaTaxonListExternalKey($definition, $bool, $readAuth);
     self::applyUserFiltersTaxonRankSortOrder($definition, $bool);
-    self::applyUserFiltersTaxonMarineFlag($definition, $bool);
+    self::applyFlagFilter('marine', $definition, $bool);
+    self::applyFlagFilter('freshwater', $definition, $bool);
+    self::applyFlagFilter('terrestrial', $definition, $bool);
+    self::applyFlagFilter('non_native', $definition, $bool);
     self::applyUserFiltersSearchArea($definition, $bool);
     self::applyUserFiltersLocationName($definition, $bool);
     self::applyUserFiltersIndexedLocationList($definition, $bool);
@@ -1299,20 +1302,22 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Converts a filter definition marine flag filter to an ES query.
+   * Converts a filter definition flag filter to an ES query.
    *
+   * @param string $flag
+   *   Flag name, e.g. marine, terrestrial, freshwater, non_native.
    * @param array $definition
    *   Definition loaded for the Indicia filter.
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFiltersTaxonMarineFlag(array $definition, array &$bool) {
-    $filter = self::getDefinitionFilter($definition, ['marine_flag']);
+  private static function applyFlagFilter($flag, array $definition, array &$bool) {
+    $filter = self::getDefinitionFilter($definition, ["{$flag}_flag"]);
     // Filter op can be =, >= or <=.
     if (!empty($filter) && $filter['value'] !== 'all') {
       $bool['must'][] = [
         'match' => [
-          'taxon.marine' => $filter['value'] === 'Y',
+          "taxon.$flag" => $filter['value'] === 'Y',
         ],
       ];
     }

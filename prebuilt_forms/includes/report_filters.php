@@ -52,12 +52,12 @@ class filter_what extends FilterBase {
     $r = '';
     // There is only one tab when running on the Warehouse.
     if (!isset($options['runningOnWarehouse']) || $options['runningOnWarehouse'] == FALSE) {
-      if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
-        $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
-            'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab), a species scratchpad (fifth tab) or other flags such as marine taxa (sixth tab).') . "</p>\n";
+      if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch'] == true) {
+        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to filter by species group, taxon name, ' .
+            'the level within the taxonomic hierarchy, a species scratchpad or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
       } else {
-        $r .= "<p id=\"what-filter-instruct\">" . lang::get('You can filter by species group (first tab), a selection of families or other higher taxa (second tab), ' .
-            'a selection of genera or species (third tab), the level within the taxonomic hierarchy (fourth tab) or other flags such as marine taxa (fifth tab).') . "</p>\n";
+        $r .= "<p id=\"what-filter-instruct\">" . lang::get('Select the appropriate tab to You can filter by species group, taxon name, ' .
+            'the level within the taxonomic hierarchy or other flags such as marine/terrestrial/freshwater or non-native taxa.') . "</p>\n";
       }
     }
     $r .= '<div id="what-tabs">' . "\n";
@@ -185,30 +185,57 @@ class filter_what extends FilterBase {
     if (!empty($options['scratchpadSearch']) && $options['scratchpadSearch']==true) {
       $r .= "<div id=\"scratchpad-tab\">\n";
       $r .= '<p>' . lang::get('Select a species scratchpad to filter against') . '</p>' .
-      $form .= data_entry_helper::select(array(
+      $r .= data_entry_helper::select([
         'blankText' => lang::get('<Please select>'),
         'fieldname' => 'taxa_scratchpad_list_id',
         'id' => 'taxa_scratchpad_list_id',
         'table' => 'scratchpad_list',
         'captionField' => 'title',
         'valueField' => 'id',
-        'extraParams' => $readAuth + array('orderby' => 'title'),
-        'sharing' => 'reporting'
-      ));
+        'extraParams' => $readAuth + ['orderby' => 'title'],
+        'sharing' => 'reporting',
+      ]);
       $r .= "</div>\n";
     }
     $r .= "<div id=\"flags-tab\">\n";
     $r .= '<p>' . lang::get('Select additional flags to filter for.') . '</p>' .
         ' <div class="context-instruct messages warning">' . lang::get('Please note that your access permissions limit the settings you can change on this tab.') . '</div>';
-    $r .= data_entry_helper::select(array(
+    $r .= data_entry_helper::select([
       'label' => lang::get('Marine species'),
       'fieldname' => 'marine_flag',
-      'lookupValues' => array(
+      'lookupValues' => [
         'all' => lang::get('Include marine and non-marine species'),
         'Y' => lang::get('Only marine species'),
-        'N' => lang::get('Exclude marine species')
-      )
-    ));
+        'N' => lang::get('Exclude marine species'),
+      ],
+    ]);
+    $r .= data_entry_helper::select([
+      'label' => lang::get('Freshwater species'),
+      'fieldname' => 'freshwater_flag',
+      'lookupValues' => [
+        'all' => lang::get('Include freshwater and non-freshwater species'),
+        'Y' => lang::get('Only freshwater species'),
+        'N' => lang::get('Exclude freshwater species'),
+      ],
+    ]);
+    $r .= data_entry_helper::select([
+      'label' => lang::get('Terrestrial species'),
+      'fieldname' => 'terrestrial_flag',
+      'lookupValues' => [
+        'all' => lang::get('Include terrestrial and non-terrestrial species'),
+        'Y' => lang::get('Only terrestrial species'),
+        'N' => lang::get('Exclude terrestrial species'),
+      ],
+    ]);
+    $r .= data_entry_helper::select([
+      'label' => lang::get('Non-native species'),
+      'fieldname' => 'non_native_flag',
+      'lookupValues' => [
+        'all' => lang::get('Include native and non-native species'),
+        'Y' => lang::get('Only non-native species'),
+        'N' => lang::get('Exclude non-native species'),
+      ],
+    ]);
     if (!empty($options['allowConfidential'])) {
       $r .= data_entry_helper::select([
         'label' => lang::get('Confidential records'),
@@ -218,7 +245,7 @@ class filter_what extends FilterBase {
           't' => lang::get('Only confidential records'),
           'all' => lang::get('Include both confidential and non-confidential records'),
         ],
-        'defaultValue' => 'f'
+        'defaultValue' => 'f',
       ]);
     }
     if (!empty($options['allowUnreleased'])) {
@@ -239,7 +266,7 @@ class filter_what extends FilterBase {
         $attrs = data_entry_helper::get_population_data([
           'table' => 'taxa_taxon_list_attribute',
           'extraParams' => $readAuth + [
-            'query' => json_encode(['in' => ['id' => $attrIds]])
+            'query' => json_encode(['in' => ['id' => $attrIds]]),
           ],
         ]);
         $termlistIds = [];
