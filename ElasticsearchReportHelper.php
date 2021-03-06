@@ -1306,8 +1306,9 @@ HTML;
       $options['viewPath'] = helper_base::getRootFolder(TRUE) . $options['viewPath'];
     }
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'showSelectedRow',
       'editPath',
+      'keyboardNavigation',
+      'showSelectedRow',
       'viewPath',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
