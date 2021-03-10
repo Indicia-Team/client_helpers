@@ -474,6 +474,13 @@ class helper_base {
   public static $validated_form_id = NULL;
 
   /**
+   * jQuery Validation should only initialise once.
+   *
+   * @var bool
+   */
+  private static $validationInitialised = FALSE;
+
+  /**
    * @var string Helptext positioning. Determines where the information is displayed when helpText is defined for a control.
    * Options are before, after.
    */
@@ -2032,7 +2039,8 @@ JS;
   public static function setup_jquery_validation_js() {
     // In the following block, we set the validation plugin's error class to our template.
     // We also define the error label to be wrapped in a <p> if it is on a newline.
-    if (self::$validated_form_id) {
+    if (self::$validated_form_id && !self::$validationInitialised) {
+      self::$validationInitialised = TRUE;
       global $indicia_templates;
       self::$javascript .= "
 indiciaData.controlWrapErrorClass = '$indicia_templates[controlWrapErrorClass]';
