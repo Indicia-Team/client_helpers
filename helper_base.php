@@ -804,7 +804,17 @@ class helper_base {
         'import' => array('javascript' => array(self::$js_path . "import.js")),
         'indicia_locks' => array('deps' =>array('jquery_cookie', 'json'), 'javascript' => array(self::$js_path."indicia.locks.js")),
         'jquery_cookie' => array('deps' =>array('jquery'), 'javascript' => array(self::$js_path."jquery.cookie.js")),
-        'jquery_ui' => array('deps' => array('jquery'), 'stylesheets' => array("$indicia_theme_path$indicia_theme/jquery-ui.custom.css"), 'javascript' => array(self::$js_path."jquery-ui.custom.min.js", self::$js_path."jquery-ui.effects.js")),
+        'jquery_ui' => [
+          'deps' => ['jquery'],
+          'stylesheets' => [
+            self::$css_path . 'jquery-ui.min.css',
+            "$indicia_theme_path$indicia_theme/jquery-ui.theme.min.css",
+          ],
+          'javascript' => [
+            self::$js_path . 'jquery-ui.min.js',
+            self::$js_path . 'jquery-ui.effects.js',
+          ]
+        ],
         'jquery_ui_fr' => array('deps' => array('jquery_ui'), 'javascript' => array(self::$js_path."jquery.ui.datepicker-fr.js")),
         'jquery_form' => array('deps' => array('jquery'), 'javascript' => array(self::$js_path."jquery.form.js")),
         'reportPicker' => array('deps' => array('treeview'), 'javascript' => array(self::$js_path."reportPicker.js")),
