@@ -642,8 +642,9 @@ if(jQuery('#C1\\\\:sample\\\\:date').val() != '') jQuery('#sample\\\\:date').val
     data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly').css('color','graytext').css('background-color','#d0d0d0');\n";
 
     if(isset($args['georefDriver']) && $args['georefDriver']!='' && !isset(data_entry_helper::$entity_to_load['sample:id']))
-	    $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+      $r .= '<br />'.data_entry_helper::georeference_lookup(iform_map_get_georef_options($args, $auth['read']));
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
 
     $r .= data_entry_helper::textarea(array('label'=>'Comment', 'fieldname'=>'sample:comment', 'class'=>'wide'));
     if (lang::get('LANG_DATA_PERMISSION') !== 'LANG_DATA_PERMISSION') {
@@ -967,12 +968,12 @@ indiciaData.indiciaSvc = '".data_entry_helper::$base_url."';\n";
             if (array_key_exists('occurrence:determiner_id', $values)) $occurrence['determiner_id'] = $values['occurrence:determiner_id'];
             if (array_key_exists('occurrence:record_status', $values)) $occurrence['record_status'] = $values['occurrence:record_status'];
             if(isset($occurrence['id']) || !isset($occurrence['deleted'])){
-              $occ = data_entry_helper::wrap($occurrence, 'occurrence');
+              $occ = submission_builder::wrap($occurrence, 'occurrence');
               $occModels[] = array('fkId' => 'sample_id', 'model' => $occ);
             }
           }
           $smp = array('fkId' => 'parent_id',
-            'model' => data_entry_helper::wrap($subSample, 'sample'),
+            'model' => submission_builder::wrap($subSample, 'sample'),
             'copyFields' => array('entered_sref'=>'entered_sref','entered_sref_system'=>'entered_sref_system')); // from parent->to child
           if(!isset($subSample['sample:deleted']) && count($occModels)>0) $smp['model']['subModels'] = $occModels;
           $subsampleModels[] = $smp;

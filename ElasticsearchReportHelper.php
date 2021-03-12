@@ -41,6 +41,14 @@ class ElasticsearchReportHelper {
   private static $esMappings;
 
   /**
+   * Has the ES proxy been setup on this page?
+   *
+   * @var bool
+   *   Set to true when done to prevent double-initialisation.
+   */
+  private static $proxyEnabled = false;
+
+  /**
    * List of ES fields with caption and description for each.
    *
    * @internal
@@ -137,6 +145,10 @@ class ElasticsearchReportHelper {
     'taxon.vernacular_name' => [
       'caption' => 'Common name',
       'description' => 'Common name for the recorded taxon.',
+    ],
+    '#taxon_label#' => [
+      'caption' => 'Taxon label',
+      'description' => 'Combination of accepted and common name.',
     ],
     'taxon.group' => [
       'caption' => 'Taxon group',
@@ -241,23 +253,56 @@ class ElasticsearchReportHelper {
    * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-enableElasticsearchProxy
    */
   public static function enableElasticsearchProxy($nid = NULL) {
-    helper_base::add_resource('datacomponents');
-    // Retrieve the Elasticsearch mappings.
-    self::getMappings($nid);
-    // Prepare the stuff we need to pass to the JavaScript.
-    $mappings = self::$esMappings;
-    $dateFormat = helper_base::$date_format;
-    $rootFolder = helper_base::getRootFolder(TRUE);
-    $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
-    helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
-    helper_base::$indiciaData['esSources'] = [];
-    helper_base::$indiciaData['esMappings'] = $mappings;
-    helper_base::$indiciaData['dateFormat'] = $dateFormat;
-    helper_base::$indiciaData['rootFolder'] = $rootFolder;
-    helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
-    helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
-    $config = hostsite_get_es_config($nid);
-    helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+    if (!self::$proxyEnabled) {
+      helper_base::add_resource('datacomponents');
+      // Retrieve the Elasticsearch mappings.
+      self::getMappings($nid);
+      // Prepare the stuff we need to pass to the JavaScript.
+      $mappings = self::$esMappings;
+      $rootFolder = helper_base::getRootFolder(TRUE);
+      $esProxyAjaxUrl = hostsite_get_url('iform/esproxy');
+      helper_base::$indiciaData['esProxyAjaxUrl'] = $esProxyAjaxUrl;
+      helper_base::$indiciaData['esSources'] = [];
+      helper_base::$indiciaData['esMappings'] = $mappings;
+      helper_base::$indiciaData['rootFolder'] = $rootFolder;
+      helper_base::$indiciaData['currentLanguage'] = hostsite_get_user_field('language');
+      helper_base::$indiciaData['gridMappingFields'] = self::MAPPING_FIELDS;
+      $config = hostsite_get_es_config($nid);
+      helper_base::$indiciaData['esVersion'] = (int) $config['es']['version'];
+      self::$proxyEnabled = TRUE;
+    }
+  }
+
+  /**
+   * An Elasticsearch records card gallery.
+   *
+   * @return string
+   *   Gallery container HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-cardgallery
+   */
+  public static function cardGallery(array $options) {
+    self::checkOptions(
+      'cardGallery',
+      $options,
+      ['source'],
+      [
+        'actions',
+        'columns',
+        'rowsPerPageOptions',
+      ]
+    );
+    $dataOptions = helper_base::getOptionsForJs($options, [
+      'actions',
+      'columns',
+      'includeFieldCaptions',
+      'includeFullScreenTool',
+      'includePager',
+      'keyboardNavigation',
+      'rowsPerPageOptions',
+      'source',
+    ], TRUE);
+    return self::getControlContainer('cardGallery', $options, $dataOptions);
   }
 
   /**
@@ -267,11 +312,14 @@ class ElasticsearchReportHelper {
    */
   public static function customScript(array $options) {
     self::checkOptions('customScript', $options, ['source', 'functionName'], []);
+    $options = array_merge([
+      'template' => '',
+    ], $options);
     $dataOptions = helper_base::getOptionsForJs($options, [
       'source',
       'functionName',
     ], TRUE);
-    return self::getControlContainer('customScript', $options, $dataOptions);
+    return self::getControlContainer('customScript', $options, $dataOptions, $options['template']);
   }
 
   /**
@@ -315,7 +363,7 @@ class ElasticsearchReportHelper {
         }
       }
     }
-    helper_base::add_resource('jquery_ui');
+    helper_base::add_resource('sortable');
     helper_base::add_resource('indiciaFootableReport');
     // Add footableSort for simple aggregation tables.
     if (!empty($options['aggregation']) && $options['aggregation'] === 'simple') {
@@ -337,6 +385,7 @@ class ElasticsearchReportHelper {
       'includeFullScreenTool',
       'includePager',
       'includeMultiSelectTool',
+      'keyboardNavigation',
       'responsive',
       'responsiveOptions',
       'rowClasses',
@@ -380,9 +429,8 @@ class ElasticsearchReportHelper {
     // a select control that will be used to indicate the selected columns template.
     if (!empty($options['columnsTemplate']) && is_array($options['columnsTemplate'])) {
       $availableColTypes = array(
-        "default" => lang::get("Standard download format"),
-        "easy-download" => lang::get("Backward-compatible format"),
-        "mapmate" => lang::get("Mapmate-compatible format"),
+        "easy-download" => lang::get("Standard download format"),
+        "mapmate" => lang::get("Simple download format"),
       );
       $optionArr = array();
       foreach ($options['columnsTemplate'] as $colType) {
@@ -463,7 +511,7 @@ HTML;
   /**
    * Integrates the page with groups (activities).
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupIntegration
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-groupintegration
    *
    * @return string
    *   Control HTML
@@ -474,9 +522,13 @@ HTML;
       'showGroupSummary' => FALSE,
       'showGroupPages' => FALSE,
     ], $options);
-    $group_id = !empty($options['group_id']) ? $options['group_id'] : FALSE;
-    if (empty($group_id) && !empty($_GET['group_id'])) {
+    if (isset($options['group_id'])) {
+      $group_id = $options['group_id'];
+      $implicit = isset($options['implicit']) ? $options['implicit'] : FALSE;
+    }
+    elseif (!empty($_GET['group_id'])) {
       $group_id = $_GET['group_id'];
+      $implicit = isset($_GET['implicit']) ? $_GET['implicit'] : 'f';
     }
     if (empty($group_id) && $options['missingGroupIdBehaviour'] !== 'showAll') {
       hostsite_show_message(lang::get('The link you have followed is invalid.'), 'warning', TRUE);
@@ -487,7 +539,9 @@ HTML;
     $output = '';
     if (!empty($group_id)) {
       // Apply filtering by group.
-      helper_base::$indiciaData['group_id'] = $group_id;
+      helper_base::$indiciaData['filter_group_id'] = $group_id;
+      $implicitVal = ['f' => FALSE, 't' => TRUE, '' => NULL][$implicit];
+      helper_base::$indiciaData['filter_group_implicit'] = $implicitVal;
       if ($options['showGroupSummary'] || $options['showGroupPages']) {
         $groups = data_entry_helper::get_population_data(array(
           'table' => 'group',
@@ -509,6 +563,21 @@ HTML;
         }
       }
     }
+    $filterBoundaries = helper_base::get_population_data([
+      'report' => 'library/groups/group_boundary_transformed',
+      'extraParams' => $options['readAuth'] + ['group_id' => $_GET['group_id']],
+      'cachePerUser' => FALSE,
+    ]);
+    if (count($filterBoundaries) > 0) {
+      helper_base::$indiciaData['reportBoundaries'] = [];
+      foreach ($filterBoundaries as $boundary) {
+        helper_base::$indiciaData['reportBoundaries'][] = $boundary['boundary'];
+      }
+      helper_base::$late_javascript .= <<<JS
+indiciaFns.loadReportBoundaries();
+
+JS;
+    }
     return $output;
   }
 
@@ -524,7 +593,7 @@ HTML;
   public static function getGroupSummaryHtml(array $group) {
     $path = data_entry_helper::get_uploaded_image_folder();
     $logo = empty($group['logo_path']) ? '' : "<img style=\"width: 30%; float: left; padding: 0 5% 5%;\" alt=\"Logo\" src=\"$path$group[logo_path]\"/>";
-    $msg = "<h3>$group[title]</div>";
+    $msg = "<h3>$group[title]</h3>";
     if (!empty($group['description'])) {
       $msg .= "<p>$group[description]</p>";
     }
@@ -651,7 +720,7 @@ HTML;
     ], TRUE);
     // Extra setup required after map loads.
     helper_base::$late_javascript .= <<<JS
-$('#$options[id]').idcLeafletMap('bindGrids');
+$('#$options[id]').idcLeafletMap('bindRecordListControls');
 
 JS;
     return self::getControlContainer('leafletMap', $options, $dataOptions);
@@ -667,8 +736,12 @@ JS;
    */
   public static function surveyFilter(array $options) {
 
-    $controlOptions = [
+    $options = array_merge([
       'label' => lang::get('Limit to survey'),
+    ], $options);
+
+    $controlOptions = [
+      'label' => $options['label'],
       'fieldname' => 'es-survey-filter',
       'class' => 'es-filter-param survey-filter',
       'attributes' => array (
@@ -690,47 +763,32 @@ JS;
   }
 
   /**
-   * Output a selector for sets of records defined by a permission.
+   * Finds a list of the options available for permission filters.
    *
-   * Allows user to select from:
-   * * All records (if permission is set)
-   * * My records
-   * * Permission filters
-   * * Groups.
+   * Can be used to populate the [permissionFilters] control or for the proxy
+   * to verify that a requested permissions filter is authorised.
    *
-   * @return string
-   *   Select HTML.
+   * @param array $options
+   *   Options for the [permissionFilters] control.
    *
-   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+   * @return array
+   *   Associative array of options.
    */
-  public static function permissionFilters(array $options) {
+  public static function getPermissionFiltersOptions(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
-
-    $wrapperOptions = array_merge([
-      'id' => "es-permissions-filter-wrapper",
-    ], $options);
-
     $options = array_merge([
-      'id' => "es-permissions-filter",
       'includeFiltersForGroups' => FALSE,
       'includeFiltersForSharingCodes' => [],
-      'useSharingPrefix' => TRUE,
-      'label' => lang::get('Records to access'),
-      'notices' => '[]',
     ], $options);
-
     $optionArr = [];
-
     // Add My records download permission if allowed.
     if (!empty($options['my_records_permission']) && hostsite_user_has_permission($options['my_records_permission'])) {
       $optionArr['p-my'] = lang::get('My records');
     }
-
     // Add All records if website permission allows.
     if (!empty($options['all_records_permission']) && hostsite_user_has_permission($options['all_records_permission'])) {
       $optionArr['p-all'] = lang::get('All records');
     }
-
     // Add collated location (e.g. LRC boundary) records if website
     // permissions allow.
     if (!empty($options['location_collation_records_permission'])
@@ -748,18 +806,18 @@ JS;
     }
 
     // Add in permission filters.
-    // Find allowed values onle.
+    // Find allowed values only.
     $sharingCodes = array_intersect(
       $options['includeFiltersForSharingCodes'],
       ['R', 'V', 'D', 'M', 'P']
     );
-    $sharingTypes = array(
+    $sharingTypes = [
       'R' => lang::get('Reporting'),
       'V' => lang::get('Verification'),
       'D' => lang::get('Data-flow'),
       'M' => lang::get('Moderation'),
       'P' => lang::get('Peer review'),
-    );
+    ];
     foreach ($sharingCodes as $sharingCode) {
       $filterData = report_filters_load_existing($options['readAuth'], $sharingCode, TRUE);
       foreach ($filterData as $filter) {
@@ -782,9 +840,9 @@ JS;
       ];
 
       if ($params['user_id']) {
-        $groups = data_entry_helper::get_population_data(array(
+        $groups = helper_base::get_population_data(array(
           'table' => 'groups_user',
-          'extraParams' => data_entry_helper::$js_read_tokens + $params,
+          'extraParams' => helper_base::$js_read_tokens + $params,
         ));
         foreach ($groups as $group) {
           $title = $group['group_title'] . (isset($group['group_expired']) && $group['group_expired'] === 't' ?
@@ -797,6 +855,38 @@ JS;
       }
     }
 
+    return $optionArr;
+  }
+
+  /**
+   * Output a selector for sets of records defined by a permission.
+   *
+   * Allows user to select from:
+   * * All records (if permission is set)
+   * * My records
+   * * Permission filters
+   * * Groups.
+   *
+   * @todo Allow hide if only one option.
+   *
+   * @return string
+   *   Select HTML.
+   *
+   * @link https://indicia-docs.readthedocs.io/en/latest/site-building/iform/helpers/elasticsearch-report-helper.html#elasticsearchreporthelper-permissionFilters
+   */
+  public static function permissionFilters(array $options) {
+    $wrapperOptions = array_merge([
+      'id' => "es-permissions-filter-wrapper",
+    ], $options);
+
+    $options = array_merge([
+      'id' => "es-permissions-filter",
+      'useSharingPrefix' => TRUE,
+      'label' => lang::get('Records to access'),
+      'notices' => '[]',
+    ], $options);
+
+    $optionArr = self::getPermissionFiltersOptions($options);
     // Return the select control. There will always be at least one option (my
     // records).
     $controlOptions = [
@@ -844,7 +934,7 @@ HTML;
 
 HTML;
 
-  helper_base::$late_javascript .= <<<JS
+    helper_base::$late_javascript .= <<<JS
 $('#es-filter-summary').idcFilterSummary('populate');
 $('.es-filter-param, .user-filter, .permissions-filter, .standalone-quality-filter select').change(function () {
     // Update any summary output
@@ -868,10 +958,10 @@ JS;
    */
   public static function statusFilters(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
-    $options = array_merge(array(
+    $options = array_merge([
       'sharing' => 'reporting',
       'elasticsearch' => TRUE,
-    ), $options);
+    ], $options);
 
     return status_control($options['readAuth'], $options);
   }
@@ -1002,11 +1092,13 @@ HTML;
       'initialMapBounds',
       'mapGridSquareSize',
       'mode',
+      'proxyCacheTimeout',
       'sortAggregation',
       'size',
       'sort',
       'switchToGeomsAt',
       'uniqueField',
+      'disabled',
     ];
     helper_base::$indiciaData['esSources'][] = array_intersect_key($options, array_combine($jsOptions, $jsOptions));
     // A source is entirely JS driven - no HTML.
@@ -1020,11 +1112,11 @@ HTML;
    */
   public static function standardParams(array $options) {
     require_once 'prebuilt_forms/includes/report_filters.php';
-    $options = array_merge(array(
+    $options = array_merge([
       'allowSave' => TRUE,
       'sharing' => 'reporting',
       'elasticsearch' => TRUE,
-    ), $options);
+    ], $options);
     foreach ($options as &$value) {
       $value = apply_user_replacements($value);
     }
@@ -1214,8 +1306,9 @@ HTML;
       $options['viewPath'] = helper_base::getRootFolder(TRUE) . $options['viewPath'];
     }
     $dataOptions = helper_base::getOptionsForJs($options, [
-      'showSelectedRow',
       'editPath',
+      'keyboardNavigation',
+      'showSelectedRow',
       'viewPath',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
@@ -1653,7 +1746,8 @@ HTML;
     }
   }
 
-  /* Retrieves the ES index mappings data.
+  /**
+   * Retrieves the ES index mappings data.
    *
    * A list of mapped fields is stored in self::$esMappings.
    *
@@ -1663,6 +1757,9 @@ HTML;
   private static function getMappings($nid) {
     require_once 'ElasticsearchProxyHelper.php';
     $config = hostsite_get_es_config($nid);
+    if (empty($config['es']['endpoint'])) {
+      throw new Exception(lang::get('Elasticsearch configuration incomplete - endpoint not specified in Indicia settings.'));
+    }
     // /doc added to URL only for Elasticsearch 6.x.
     $url = $config['indicia']['base_url'] . 'index.php/services/rest/' . $config['es']['endpoint'] . '/_mapping' .
       ($config['es']['version'] == 6 ? '/doc' : '');
@@ -1694,4 +1791,5 @@ HTML;
     self::recurseMappings($props, $mappings);
     self::$esMappings = $mappings;
   }
+
 }

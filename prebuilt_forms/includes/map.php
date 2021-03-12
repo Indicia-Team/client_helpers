@@ -251,7 +251,7 @@ function iform_map_get_georef_parameters() {
 }
 
 /**
- * Return a list of options to pass to the data_entry_helper::map_panel method, built from the prebuilt
+ * Return a list of options to pass to the map_helper::map_panel method, built from the prebuilt
  * form arguments.
  * @param $args
  * @param $readAuth
@@ -407,38 +407,40 @@ indiciaFns.zoomToBounds = function(mapdiv, bounds) {
     }
   }
 }
-mapInitialisationHooks.push(function(mapdiv) {
-  var parser;
-  var feature;
-  var features=[];
-  var loclayer = new OpenLayers.Layer.Vector(
-    '$name',
-    {'sphericalMercator': true, displayInLayerSwitcher: true}
-  );
-  var geoms = $geomJson;
-  parser = new OpenLayers.Format.WKT();
-  $.each(geoms, function(idx, geom) {
-    feature = parser.read(geom);
-    if (Array.isArray(feature)) {
-      $.merge(features, feature);
-    } else {
-      features.push(feature);
-    }
+if (typeof mapInitialisationHooks !== 'undefined') {
+  mapInitialisationHooks.push(function(mapdiv) {
+    var parser;
+    var feature;
+    var features=[];
+    var loclayer = new OpenLayers.Layer.Vector(
+      '$name',
+      {'sphericalMercator': true, displayInLayerSwitcher: true}
+    );
+    var geoms = $geomJson;
+    parser = new OpenLayers.Format.WKT();
+    $.each(geoms, function(idx, geom) {
+      feature = parser.read(geom);
+      if (Array.isArray(feature)) {
+        $.merge(features, feature);
+      } else {
+        features.push(feature);
+      }
+    });
+    $.each(features, function() {
+      this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};
+      this.style.fillOpacity=0;
+      if (mapdiv.map.projection.getCode() != mapdiv.indiciaProjection.getCode()) {
+        feature.geometry.transform(mapdiv.indiciaProjection, mapdiv.map.projection);
+      }
+    });
+    loclayer.addFeatures(features);
+    var bounds=loclayer.getDataExtent();
+    mapdiv.map.updateSize();
+    indiciaData.initialBounds = bounds;
+    mapdiv.map.addLayer(loclayer);
+    indiciaFns.zoomToBounds(mapdiv, bounds);
   });
-  $.each(features, function() {
-    this.style = {fillOpacity: 0, strokeColor: '#0000ff', strokeWidth: 2};
-    this.style.fillOpacity=0;
-    if (mapdiv.map.projection.getCode() != mapdiv.indiciaProjection.getCode()) {
-      feature.geometry.transform(mapdiv.indiciaProjection, mapdiv.map.projection);
-    }
-  });
-  loclayer.addFeatures(features);
-  var bounds=loclayer.getDataExtent();
-  mapdiv.map.updateSize();
-  indiciaData.initialBounds = bounds;
-  mapdiv.map.addLayer(loclayer);
-  indiciaFns.zoomToBounds(mapdiv, bounds);
-});
+}
 
 JS;
 }
@@ -446,8 +448,8 @@ JS;
 /**
  * Return a list of OpenLayers options to pass to the map.
  *
- * Options are for the data_entry_helper::map_panel method olOptions parameter,
- * built from the prebuilt form arguments.
+ * Options are for the map_helper::map_panel method olOptions parameter, built
+ * from the prebuilt form arguments.
  *
  * @param array $args
  *   Form arguments.

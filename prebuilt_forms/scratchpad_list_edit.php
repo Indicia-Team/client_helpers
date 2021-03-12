@@ -256,7 +256,7 @@ HTML;
    */
   public static function get_submission($values, $args) {
     $structure = array('model' => 'scratchpad_list', 'metaFields' => array('entries'));
-    return data_entry_helper::build_submission($values, $structure);
+    return submission_builder::build_submission($values, $structure);
 
   }
 

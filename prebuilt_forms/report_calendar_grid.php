@@ -323,7 +323,7 @@ class iform_report_calendar_grid {
   	$prop = ($checkBox) ? 'attr("checked")' : 'val()';
   	data_entry_helper::$javascript .="
 jQuery('#".$ctrlid."').change(function(){
-  var dialog = $('<p>Please wait whilst the next set of data is loaded.</p>').dialog({ title: 'Loading...', buttons: { 'OK': function() { dialog.dialog('close'); }}});
+  $.fancyDialog({ title: 'Loading...', message: 'Please wait whilst the next set of data is loaded.', cancelButton: null });
   // no need to update other controls on the page, as we jump off it straight away.
   var newUrl = rebuild_page_url(pageURI, \"".$urlparam."\", jQuery(this).$prop, ['".implode("','",$skipParams)."']);
   window.location.assign(newUrl);

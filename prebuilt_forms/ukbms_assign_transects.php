@@ -25,7 +25,7 @@ require_once 'includes/form_generation.php';
  * Form for adding or editing the site details on a transect which contains a number of sections.
  */
 class iform_ukbms_assign_transects {
-  
+
   /**
    * Return the form metadata.
    * @return array The definition of the form.
@@ -37,7 +37,7 @@ class iform_ukbms_assign_transects {
       'description'=>'Form for requesting exsting sites be assigned to a user.'
     );
   }
-  
+
   /**
    * Get the list of parameters for this form.
    * @return array List of parameters that this form requires.
@@ -133,7 +133,7 @@ class iform_ukbms_assign_transects {
     }
     return $retVal;
   }
-  
+
   /**
    * Return the generated form output.
    * @param array $args List of parameter values passed through to the form depending on how the form has been configured.
@@ -146,14 +146,14 @@ class iform_ukbms_assign_transects {
    */
   public static function get_form($args, $nid, $response=null) {
     global $user;
-    
+
     $userID = $user->uid;
-    
+
     iform_load_helpers(array('map_helper'));
     data_entry_helper::add_resource('jquery_form');
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $auth['write_tokens']['persist_auth'] = true;
-    
+
     $typeTerms = array();
     if(!empty($args['main_type_term_1'])) $typeTerms[] = $args['main_type_term_1'];
     if(!empty($args['main_type_term_2'])) $typeTerms[] = $args['main_type_term_2'];
@@ -163,7 +163,7 @@ class iform_ukbms_assign_transects {
     foreach($typeTermIDs as $termDetails){
       $lookUpValues[$termDetails['id']] = $termDetails['term'];
     }
-    
+
     $preLoad=array();
     $headers = array();
     $headers[] = 'MIME-Version: 1.0';
@@ -182,14 +182,14 @@ class iform_ukbms_assign_transects {
           if($value == 0) continue;
           switch($matches[1]) {
             case 'assign_holiday':
-              $Model = data_entry_helper::wrap(array(
+              $Model = submission_builder::wrap(array(
               'website_id' => $args['website_id'],
               'location_attribute_value:location_id' => $matches[2],
               'location_attribute_value:location_attribute_id' => $args['cms_attr_id'],
               'location_attribute_value:int_value' => $matches[3]
               ), 'location_attribute_value');
               $response = data_entry_helper::forward_post_to('save', $Model, $auth['write_tokens']);
-              
+
               if (array_key_exists('email', $args) && !empty($args['email'])) {
                 $subject = 'Holiday square allocation : {first_name} {last_name} : {location_name}';
                 $message = '{first_name} {last_name} {email} has allocated themselves site {location_name} as a Holiday square.';
@@ -216,9 +216,9 @@ class iform_ukbms_assign_transects {
                   $message);
                 $sent = mail($emailTo, $subject, wordwrap($message, 70), $headers);
                 if ($sent) {
-                  drupal_set_message('Management notification email sent succesfully');
+                  hostsite_show_message('Management notification email sent succesfully');
                 } else {
-                  drupal_set_message('Management notification email send failed');
+                  hostsite_show_message('Management notification email send failed');
                 }
               }
               break;
@@ -233,7 +233,7 @@ class iform_ukbms_assign_transects {
               'table'=>'location_attribute_value');
               $locAttrList = data_entry_helper::get_population_data($location_attr_list_args);
               foreach($locAttrList as $locAttr) {
-                $Model = data_entry_helper::wrap(array(
+                $Model = submission_builder::wrap(array(
                   'website_id' => $args['website_id'],
                   'location_attribute_value:id' => $locAttr['id'],
                   'location_attribute_value:location_id' => $matches[2],
@@ -269,9 +269,9 @@ class iform_ukbms_assign_transects {
                   $message);
                 $sent = mail($emailTo, $subject, wordwrap($message, 70), $headers);
                 if ($sent) {
-                  drupal_set_message('Management notification email sent succesfully');
+                  hostsite_show_message('Management notification email sent succesfully');
                 } else {
-                  drupal_set_message('Management notification email send failed');
+                  hostsite_show_message('Management notification email send failed');
                 }
               }
               break;
@@ -279,19 +279,19 @@ class iform_ukbms_assign_transects {
         }
       }
     }
-    
+
     // Set up the form
     data_entry_helper::enable_validation('input-form');
     $r = '<div id="site-details" class="ui-helper-clearfix">' . PHP_EOL;
     $r .= '<form  method="post">' . PHP_EOL;
     $r .= $auth['write'] . PHP_EOL;
     $r .= '<input type="hidden" name="website_id" value="'.$args['website_id'].'"/>' . PHP_EOL;
-    
+
     $help = '<p>' . t('The aim of the holiday squares webpage is to improve coverage of WCBS squares in the uplands of ' .
       'northern and western Britain. Few recorders live in these areas, but they are very popular holiday ' .
       'destinations. Squares are currently available in Cumbria, Lancashire, North East England, Scotland, ' .
       'Wales and Yorkshire.') . '</p>';
-    
+
     $help2 = '<ol>' .
       '<li>' . t('Use the &quot;Find place&quot; control above the map to find a town or village near the area you ' .
         'are interested in, then tailor your search area by dragging and/or zooming the map.') . '</li>' .
@@ -304,7 +304,7 @@ class iform_ukbms_assign_transects {
             $help2 .= '<li>' .t('The table will display an individual control per site, indicating what action you may request ' .
               'for each of square. Use the checkboxes to pick what you wish to happen.') . '</li>' .
               '<li>' . t('When you have selected what action(s) you wish to carry out, click on the &quot;Carry out checked actions&quot; button.'). '</li></ol>' ;
-            
+
             $help2 .= '<p>' . t('Squares that are already allocated to you will be shown in red; assigned to someone else in green, and unallocated in blue.') . '</p>';
           } else {
             $help2 .= '<li>' .t('In order to request a square to be assigned to you, you must be registered and logged in.') . '</li></ol>';
@@ -317,17 +317,17 @@ class iform_ukbms_assign_transects {
               $help2 .= '<p>' . t('An email will be sent to @email to provide management visibility of the Holiday square allocation.', array('@email' => $args['email'])) . '</p>';
             }
           }
-          
+
           // TODO : check de-assignment for normal users, as well as admin.
-          
+
           if(count($lookUpValues)>2) { // includes the "please select" empty option
             $help .= '<p>' . t('First pick the site type you are interested in.') . '</p>' . $help2;
-            
+
             $r .= '<div class="ui-state-highlight page-notice ui-corner-all">'.$help.'</div>';
             $value = '';
             if ($_POST && array_key_exists('location:location_type_id', $_POST))
               $value = $_POST['location:location_type_id'];
-              
+
               $r .= data_entry_helper::select(array(
                 'label' => lang::get('Site Type'),
                 'id' => 'location_type_id',
@@ -337,7 +337,7 @@ class iform_ukbms_assign_transects {
                 'default' => $value
               ));
           } else {
-            
+
             $help .= $help2 .
             '<p>' . t('Currently this form is configured to handle @type sites only.', array('@type' => $typeTermIDs[0]['term'])) . '</p>';
             $r .= '<div class="ui-state-highlight page-notice ui-corner-all">'.$help.'</div>';
@@ -362,7 +362,7 @@ class iform_ukbms_assign_transects {
           '</form>';
           $r .= '</div>'; // site-details
           // This must go after the map panel, so it has created its toolbar
-          
+
           // Inform JS where to post data to for AJAX form saving
           data_entry_helper::$javascript .= 'indiciaData.limit = ' . $args['limit'] . ';' . PHP_EOL . // max number of features in feature grid
           'indiciaData.userID = ' . $userID . ';' . PHP_EOL .
@@ -372,10 +372,10 @@ class iform_ukbms_assign_transects {
           'indiciaData.siteDetails = "' . hostsite_get_url('/site-details') . '";' . PHP_EOL .
           'indiciaData.initFeatureIds = [' . implode(', ', $preLoad) . '];' . PHP_EOL .
           'indiciaData.user_id = ' . (($user_id = hostsite_get_user_field('indicia_user_id')) ? $user_id : 0) . ';' . PHP_EOL ;
-          
+
           return $r;
   }
-  
+
   /**
    * Handles the construction of a submission array from a set of form values.
    * @param array $values Associative array of form data values.
@@ -385,5 +385,5 @@ class iform_ukbms_assign_transects {
   public static function get_submission($values, $args) {
     return null;
   }
-  
+
 }

@@ -1200,7 +1200,8 @@ class iform_wwt_colour_marked_report {
     $olOptions = iform_map_get_ol_options($args);
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
-    return data_entry_helper::map_panel($options, $olOptions);
+    iform_load_helpers(['map_helper']);
+    return map_helper::map_panel($options, $olOptions);
   }
 
   /*
@@ -1681,7 +1682,8 @@ class iform_wwt_colour_marked_report {
     $r = '';
     if (isset(data_entry_helper::$entity_to_load['sample:id'])) {
       $reportName = 'reports_for_prebuilt_forms/sample_comments_list';
-      $r .= data_entry_helper::report_grid(array(
+      iform_load_helpers(['report_helper']);
+      $r .= report_helper::report_grid(array(
         'id' => 'sample-comments-grid',
         'dataSource' => $reportName,
         'mode' => 'report',
@@ -1689,7 +1691,7 @@ class iform_wwt_colour_marked_report {
         'itemsPerPage' =>(isset($args['grid_num_rows']) ? $args['grid_num_rows'] : 10),
         'autoParamsForm' => true,
         'extraParams' => array(
-          'sample_id'=>data_entry_helper::$entity_to_load['sample:id'],
+          'sample_id' => data_entry_helper::$entity_to_load['sample:id'],
         )
       ));
     }
@@ -1867,7 +1869,7 @@ class iform_wwt_colour_marked_report {
     // load values from profile. This is Drupal specific code, so degrade gracefully.
     if (function_exists('profile_load_profile')) {
       global $user;
-      profile_load_all_profile($user);
+      self::profile_load_all_profile($user);
       foreach($attributes as &$attribute) {
         if (!isset($attribute['default'])) {
           $attrPropName = 'profile_'.strtolower(str_replace(' ','_',$attribute['caption']));
@@ -1897,6 +1899,25 @@ class iform_wwt_colour_marked_report {
     }
 
     return $attrHtml;
+  }
+
+
+  /**
+   * Variant on the profile modules profile_load_profile, that also gets empty profile values.
+   */
+  private static function profile_load_all_profile(&$user) {
+    // don't do anything unless in Drupal, with the profile module enabled, and the user logged in.
+    if ($user->uid > 0 && function_exists('profile_load_profile')) {
+      $result = db_query('SELECT f.name, f.type, v.value FROM {profile_fields} f LEFT JOIN {profile_values} v ON f.fid = v.fid AND uid = %d', $user->uid);
+      while ($field = db_fetch_object($result)) {
+        if (empty($user->{$field->name})) {
+          if (empty($field->value))
+            $user->{$field->name} = '';
+          else
+            $user->{$field->name} = _profile_field_serialize($field->type) ? unserialize($field->value) : $field->value;
+        }
+      }
+    }
   }
 
   /*
@@ -2973,7 +2994,8 @@ class iform_wwt_colour_marked_report {
       $r = call_user_func(array(get_called_class(), 'getSampleListGridPreamble'));
     else
       $r = '';
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'samples-grid',
       'dataSource' => $reportName,
       'mode' => 'report',

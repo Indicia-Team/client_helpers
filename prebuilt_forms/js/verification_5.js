@@ -343,7 +343,7 @@ indiciaData.rowIdToReselect = false;
   }
 
   function popupQueryForm(html) {
-    $.fancybox(html);
+    $.fancybox.open(html);
     loadVerificationTemplates('Q');
     if ($('#popup-tabs')) {
       $('#popup-tabs').tabs();
@@ -430,7 +430,7 @@ indiciaData.rowIdToReselect = false;
           $.fancybox.close();
           alert(indiciaData.popupTranslations.emailSent);
         } else {
-          $.fancybox('<div class="manual-email">' + indiciaData.popupTranslations.requestManualEmail +
+          $.fancybox.open('<div class="manual-email">' + indiciaData.popupTranslations.requestManualEmail +
             '<div class="ui-helper-clearfix"><span class="left">To:</span><div class="right">' + email.to + '</div></div>' +
             '<div class="ui-helper-clearfix"><span class="left">Subject:</span><div class="right">' + email.subject + '</div></div>' +
             '<div class="ui-helper-clearfix"><span class="left">Content:</span><div class="right">' + email.body.replace(/\n/g, '<br/>') + '</div></div>' +
@@ -559,7 +559,7 @@ indiciaData.rowIdToReselect = false;
   function popupEmailExpert() {
     var workflow = (indiciaData.workflowEnabled &&
                 indiciaData.workflowTaxonMeaningIDsLogAllComms.indexOf(currRec.extra.taxon_meaning_id) !== -1);
-    $.fancybox('<form id="email-form"><fieldset class="popup-form">' +
+    $.fancybox.open('<form id="email-form"><fieldset class="popup-form">' +
       '<legend>' + indiciaData.popupTranslations.emailTitle + '</legend>' +
       '<p>' + indiciaData.popupTranslations.emailInstruction + '</p>' +
       (workflow ? '<label><input type="checkbox" id="email-confidential" /> ' + indiciaData.popupTranslations.confidential + '</label><br>' : '') +
@@ -778,7 +778,7 @@ indiciaData.rowIdToReselect = false;
         null,
         function (data) {
           $('#media-tab').html(data);
-          $('#media-tab a.fancybox').fancybox({ afterLoad: indiciaFns.afterFancyboxLoad });
+          $('#media-tab [data-fancybox]').fancybox({ afterLoad: indiciaFns.afterFancyboxLoad });
         }
       );
     }
@@ -938,7 +938,7 @@ indiciaData.rowIdToReselect = false;
       indiciaData.popupTranslations.redetermine + '" />' +
       '</fieldset></form>';
     $('#redet\\:taxon').setExtraParams({"taxon_list_id": currRec.extra.taxon_list_id});
-    $.fancybox(html, {
+    $.fancybox.open(html, {
       "beforeClose": function () {
         // hide the species dropdown if left in open state
         $('.ac_results').hide();
@@ -991,7 +991,7 @@ indiciaData.rowIdToReselect = false;
       indiciaData.popupTranslations.save.replace('{1}', verb) + '</button>' +
       '</fieldset>';
 
-    $.fancybox(html);
+    $.fancybox.open(html);
     if (multimode) {
       // Doing multiple records, so can't use templates
       $('.verify-template-container').hide();
@@ -1217,7 +1217,7 @@ indiciaData.rowIdToReselect = false;
       trustedHtml += '<button type="button" class="default-button" id="verify-trusted-button">Accept trusted records</button>';
       trustedHtml += '<button type="button" class="default-button" id="verify-all-button">Accept all records</button></div>';
 
-      $.fancybox(trustedHtml);
+      $.fancybox.open(trustedHtml);
       $('#verify-trusted-button').click(function () {
         verifyRecordSet(true);
       });
@@ -1268,7 +1268,7 @@ indiciaData.rowIdToReselect = false;
       }
       popupHtml += '<button type="button" class="default-button verify-button">Verify chosen records</button>' +
         '<button type="button" class="default-button cancel-button">Cancel</button></p></div>';
-      $.fancybox(popupHtml);
+      $.fancybox.open(popupHtml);
       $('.quick-verify-popup .verify-button').click(function () {
         var params = indiciaData.reports.verification.grid_verification_grid.getUrlParamsForAllRecords();
         var radio = $('.quick-verify-popup input[name=quick-option]:checked');
@@ -1365,7 +1365,7 @@ indiciaData.rowIdToReselect = false;
         }
       }
       popupHtml += '<button type="button" id="trust-button" class="default-button trust-button">Set trust for ' + currRec.extra.recorder + '</button>' + "</div>\n";
-      $.fancybox(popupHtml);
+      $.fancybox.open(popupHtml);
       $('.quick-verify-popup .trust-button').click(function () {
         var theData = {
           website_id: indiciaData.website_id,
@@ -1629,7 +1629,7 @@ indiciaData.rowIdToReselect = false;
       html += '<input type="submit" class="default-button" ' +
         'value="' + indiciaData.popupTranslations.logResponse + '" />' +
         '</fieldset></form>';
-      $.fancybox(html);
+      $.fancybox.open(html);
       validator = $('#log-response-form').validate({});
       $('#log-response-form').submit(logResponse);
     }

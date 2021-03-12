@@ -212,7 +212,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
   }
 
   function popupQueryForm(html) {
-    $.fancybox(html);
+    $.fancybox.open(html);
     if ($('#popup-tabs')) {
       $('#popup-tabs').tabs();
     }
@@ -287,7 +287,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
   }
 
   function popupEmailExpert() {
-    $.fancybox('<form id="email-form"><fieldset class="popup-form">' +
+    $.fancybox.open('<form id="email-form"><fieldset class="popup-form">' +
           '<legend>' + indiciaData.popupTranslations.emailTitle + '</legend>' +
           '<p>' + indiciaData.popupTranslations.emailInstruction + '</p>' +
           '<label>To:</label><input type="text" id="email-to" class="email required" value="'+email.to+'"/><br />' +
@@ -339,7 +339,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
           $.fancybox.close();
           alert(indiciaData.popupTranslations.emailSent);
         } else {
-          $.fancybox('<div class="manual-email">' + indiciaData.popupTranslations.requestManualEmail +
+          $.fancybox.open('<div class="manual-email">' + indiciaData.popupTranslations.requestManualEmail +
               '<div class="ui-helper-clearfix"><span class="left">To:</span><div class="right">' + email.to + '</div></div>' +
               '<div class="ui-helper-clearfix"><span class="left">Subject:</span><div class="right">' + email.subject + '</div></div>' +
               '<div class="ui-helper-clearfix"><span class="left">Content:</span><div class="right">' + email.body.replace(/\n/g, '<br/>') + '</div></div>' +
@@ -477,7 +477,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
           '<button type="button" class="default-button" onclick="saveVerifyComment();">' +
               indiciaData.popupTranslations.save.replace('{1}', verb) + '</button>' +
           '</fieldset>';
-    $.fancybox(html);
+    $.fancybox.open(html);
   }
 
   mapInitialisationHooks.push(function (div) {
@@ -528,7 +528,7 @@ var saveComment, saveVerifyComment, verificationGridLoaded, reselectRow, rowIdTo
       }
       html += '<button type="button" class="default-button" id="verify-all-button">Accept all records</button></div>';
 
-      $.fancybox(html);
+      $.fancybox.open(html);
       $('#verify-all-button').click(function() {
         verifyRecordSet(false);
       });

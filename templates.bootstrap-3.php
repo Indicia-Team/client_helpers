@@ -1,7 +1,5 @@
 <?php
 
-use Masterminds\HTML5;
-
 global $indicia_templates;
 
 $indicia_templates['formControlClass'] = 'form-control';
@@ -27,7 +25,7 @@ $indicia_templates['messageBox'] = '<div class="alert alert-info">{message}</div
 
 $indicia_templates['speciesDetailsThumbnail'] = <<<HTML
 <div class="thumbnail">
-  <a class="fancybox" href="{imageFolder}{the_text}">
+  <a data-fancybox="gallery" href="{imageFolder}{the_text}">
     <img src="{imageFolder}{imageSize}-{the_text}" title="{caption}" alt="{caption}"/><br/>
     {caption}
   </a>

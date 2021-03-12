@@ -95,7 +95,6 @@ class extension_event_reports {
   public static function totals_block($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('report_helper'));
     $userId = hostsite_get_user_field('indicia_user_id');
-    iform_load_helpers(array('report_helper'));
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $auth['read']),
       array(
@@ -144,7 +143,7 @@ class extension_event_reports {
         'dataSource' => 'library/occurrence_images/filterable_explore_list_minimal',
         'bands' => array(array('content'=>
           '<div class="gallery-item status-{record_status} certainty-{certainty} ">'.
-          '<a class="fancybox" href="{imageFolder}{media}"><img src="{imageFolder}thumb-{media}" title="{taxon}" alt="{taxon}"/><br/>{formatted}</a></div>')),
+          '<a data-fancybox href="{imageFolder}{media}"><img src="{imageFolder}thumb-{media}" title="{taxon}" alt="{taxon}"/><br/>{formatted}</a></div>')),
         'limit' => 10,
         'autoParamsForm' => false,
         'caching' => true,

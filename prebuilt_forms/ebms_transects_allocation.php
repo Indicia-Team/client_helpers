@@ -396,7 +396,7 @@ class iform_ebms_transects_allocation {
     if(version_compare(hostsite_get_cms_version(), '8', '<')) {
       $results = db_query('SELECT uid, name FROM {users} WHERE uid <> 0'); // assume drupal7
     } else {
-      $results = db_query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8
+      $results = \Drupal::database()->query('SELECT uid, name FROM {users_field_data} WHERE uid <> 0'); // drupal8
     }
     foreach ($results as $result) {
       if($result->uid){ // ignore unauthorised user, uid zero
@@ -486,7 +486,7 @@ class iform_ebms_transects_allocation {
     data_entry_helper::$base_url = $conn['base_url'];
     $auth = data_entry_helper::get_read_write_auth($website_id, $password);
     $writeTokens = $auth['write_tokens'];
-    $Model = data_entry_helper::wrap($_POST, 'location_attribute_value');
+    $Model = submission_builder::wrap($_POST, 'location_attribute_value');
     // pass through the user ID as this can then be used to set created_by and updated_by_ids
     //if (isset($_REQUEST['user_id'])) $writeTokens['user_id'] = $_REQUEST['user_id'];
     //if (isset($_REQUEST['sharing'])) $writeTokens['sharing'] = $_REQUEST['sharing'];

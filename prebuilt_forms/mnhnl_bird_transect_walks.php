@@ -126,7 +126,7 @@ class iform_mnhnl_bird_transect_walks {
       				'group' => 'User Interface',
       				'required' => false
       		),
-      		
+
       array(
         'name'=>'locationLayer',
         'caption'=>'Location Layer Definition',
@@ -211,23 +211,24 @@ class iform_mnhnl_bird_transect_walks {
    * Return the generated form output.
    * @return Form HTML.
    */
-  public static function get_form($args, $nid, $response=null) {
+  public static function get_form($args, $nid, $response = NULL) {
     global $user;
     global $custom_terms;
     $logged_in = $user->uid>0;
     $r = '';
-
+    iform_load_helpers(['map_helper']);
     // Get authorisation tokens to update and read from the Warehouse.
     $auth = data_entry_helper::get_read_write_auth($args['website_id'], $args['password']);
     $readAuth = $auth['read'];
-    $svcUrl = data_entry_helper::$base_url.'/index.php/services';
+    $svcUrl = data_entry_helper::$base_url . '/index.php/services';
 
-    drupal_add_js(drupal_get_path('module', 'iform') .'/media/js/jquery.form.js', 'module');
+    drupal_add_js(drupal_get_path('module', 'iform') . '/media/js/jquery.form.js', 'module');
     data_entry_helper::link_default_stylesheet();
     data_entry_helper::add_resource('jquery_ui');
     $language = iform_lang_iso_639_2($args['language']);
-    if($args['language'] != 'en')
-        data_entry_helper::add_resource('jquery_ui_'.$args['language']);
+    if ($args['language'] != 'en') {
+      data_entry_helper::add_resource('jquery_ui_' . $args['language']);
+    }
 
     // If not logged in: Display an information message.
     // This form should only be called in POST mode when setting the location allocation.
@@ -321,7 +322,7 @@ class iform_mnhnl_bird_transect_walks {
           $entities = json_decode(curl_exec($session), true);
           if(count($entities)>0){
             foreach($entities as $entity){
-              $Model = data_entry_helper::wrap(array('id'=>$entity['id'], 'parent_id' => $_GET['merge_sample_id1']), 'sample');
+              $Model = submission_builder::wrap(array('id'=>$entity['id'], 'parent_id' => $_GET['merge_sample_id1']), 'sample');
               $request = data_entry_helper::$base_url."/index.php/services/data/save";
               $postargs = 'submission='.json_encode($Model).'&auth_token='.$auth['write_tokens']['auth_token'].'&nonce='.$auth['write_tokens']['nonce'].'&persist_auth=true';
               $postresponse = data_entry_helper::http_post($request, $postargs, false);
@@ -332,7 +333,7 @@ class iform_mnhnl_bird_transect_walks {
             }
           }
           // finally delete the no longer used sample
-          $Model = data_entry_helper::wrap(array('id'=>$_GET['merge_sample_id2'], 'deleted' => 'true'), 'sample');
+          $Model = submission_builder::wrap(array('id'=>$_GET['merge_sample_id2'], 'deleted' => 'true'), 'sample');
           $request = data_entry_helper::$base_url."/index.php/services/data/save";
           $postargs = 'submission='.json_encode($Model).'&auth_token='.$auth['write_tokens']['auth_token'].'&nonce='.$auth['write_tokens']['nonce'].'&persist_auth=true';
           $postresponse = data_entry_helper::http_post($request, $postargs, false);
@@ -466,7 +467,7 @@ mapInitialisationHooks.push(function (div) {
       if(hostsite_user_has_permission($args['edit_permission'])){
         $r .= '
   <div id="downloads" class="mnhnl-btw-datapanel">
-    <fieldset><legend>' . lang::get('Specify a date range for the records to include') . '</legend>' . 
+    <fieldset><legend>' . lang::get('Specify a date range for the records to include') . '</legend>' .
     data_entry_helper::date_picker(array(
       'label' => lang::get('Records from'),
         'fieldname' => 'filter_date_from',
@@ -549,7 +550,7 @@ $('#filter_date_from,#filter_date_to').change();
       $options['proxy'] = '';
       $options['scroll_wheel_zoom'] = false;
       $options['width'] = 'auto'; // TBD remove from arglist
-      $r .= "<div class=\"mnhnl-btw-mappanel\">\n".(data_entry_helper::map_panel($options, $olOptions))."</div>\n";
+      $r .= "<div class=\"mnhnl-btw-mappanel\">\n".(map_helper::map_panel($options, $olOptions))."</div>\n";
 
       data_entry_helper::$javascript .= "
 indiciaFns.bindTabsActivate($('#controls'), function(event, ui) {
@@ -632,7 +633,7 @@ mapInitialisationHooks.push(function (div) {
   });
   control.activate();
 });\n";
-    
+
     $occReadOnly = false;
     $childSample = array();
     if($childLoadID){ // load the occurrence and its associated sample (which holds the position)
@@ -972,8 +973,8 @@ jQuery('#SurveyForm').ajaxForm({
     data_entry_helper::$javascript .= "// If sample_id filled in -> we have a previously saved collection, so possibly have subsamples.
 if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
     // Put up warning dialogue that we are checking the subsamples: include a progress bar: set to zero%.
-    var dialog = $('<span id=\"subsample-progress-span\"><p>'+\"".lang::get('Please wait whilst some data integrity checks are carried out.')."\"+'</p><div id=\"subsample-progress\"></div></span>').dialog({ title: \"".lang::get('Checks')."\", zIndex: 4000 });
-    jQuery('#subsample-progress').progressbar({value: 0});
+    var dialog = $('<span id=\"subsample-progress-span\"><p>'+\"".lang::get('Please wait whilst some data integrity checks are carried out.')."\"+'</p><progress class=\"progress\" max=\"100\" id=\"subsample-progress\"></progress></span>').dialog({ title: \"".lang::get('Checks')."\", zIndex: 4000 });
+    jQuery('#subsample-progress').val(0);
     jQuery.ajax({ // get all subsamples/occurrences to check if the dates match
             type: 'GET',
             url: \"".$svcUrl."/report/requestReport?report=library/occurrences/occurrences_list_for_parent_sample.xml&reportSource=local&mode=json&nonce=".$readAuth['nonce']."&auth_token=".$readAuth['auth_token']."\" +
@@ -983,7 +984,7 @@ if(jQuery('#SurveyForm > input[name=sample\\:id]').val() != ''){
               jQuery('#subsample-progress').data('max',subData.length+1);
               var mainDate = $.datepicker.formatDate('yy-mm-dd', jQuery('#SurveyForm > input[name=sample\\:date]').datepicker(\"getDate\"));
               for(i=0; i< subData.length; i++){ // loop through all subsamples
-                jQuery('#subsample-progress').progressbar('option','value',(i+1)*100/jQuery('#subsample-progress').data('max'));
+                jQuery('#subsample-progress').val((i+1)*100/jQuery('#subsample-progress').data('max'));
                 var values = {};
                 var url = '';
                 // Check if date on subsamples matches supersample date: if not set up a post array for the sample, with correct date.
@@ -1337,7 +1338,7 @@ if($.browser.msie) {
       $options['width'] = 'auto'; // TBD remove from arglist
 
     $r .= "<div class=\"mnhnl-btw-mappanel\">\n";
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    $r .= map_helper::map_panel($options, $olOptions);
 
     // for timing reasons, all the following has to be done after the map is loaded.
     // 1) feature selector for occurrence list must have the map present to attach the control

@@ -1,13 +1,17 @@
-#filter-bar label, #filter-bar select, #filter-bar input, #filter-bar .ctrl-wrap {
+#filter-bar label, #filter-bar select, #filter-bar input, #filter-bar .ctrl-wrap, #filter-bar > div {
   display: inline-block;
   vertical-align: middle;
-  margin: 4px; }
+  margin: 4px;
+}
 #filter-bar label {
   width: auto;
-  margin-left: 15px; }
+  margin-left: 15px;
+}
 #filter-bar .form-group {
-  margin-bottom: 0; }
+  margin-bottom: 0;
+}
 #filter-bar .form-control {
-  width: auto; }
+  width: auto;
+}
 
 /*# sourceMappingURL=dynamic_elasticsearch.css.map */

@@ -345,9 +345,10 @@ class map_helper extends helper_base {
         foreach ($options['presetLayers'] as $layer) {
           $a = explode('_', $layer);
           $a = strtolower($a[0]);
-          // Google also used in the dynamicOSGoogleSat layer pairing.
+          // Google also used in the dynamicOSGoogleSat layer pairing. We just
+          // store the key so the API can be lazy-loaded.
           if ($a === 'google' || substr($a, 0, 7) === 'dynamic') {
-            self::add_resource('googlemaps');
+            self::$indiciaData['googleApiKey'] = empty(self::$google_maps_api_key) ? '' : '&key=' . self::$google_maps_api_key;
           }
           if ($a === 'bing' && (!isset(self::$bing_api_key) || empty(self::$bing_api_key))) {
             return '<p class="error">To use the Bing map layers, please ensure that you declare the $bing_api_key ' .
@@ -361,9 +362,6 @@ class map_helper extends helper_base {
           }
         }
       }
-
-      // This resource has a dependency on the googlemaps resource so has to be
-      // added afterwards.
       self::add_resource('indiciaMapPanel');
       if (array_key_exists('standardControls', $options)) {
         if (in_array('graticule', $options['standardControls'])) {
@@ -446,10 +444,12 @@ var mapTabHandler = function(event, ui) {
     } else if (typeof indiciaData.initialBounds !== "undefined") {
       indiciaFns.zoomToBounds(indiciaData.mapdiv, indiciaData.initialBounds);
       delete indiciaData.initialBounds;
-    } else
-	  // Sometimes the map is not resized : googlemaps are too optimised and don't redraw with updateSize above.
-      if(typeof indiciaData.mapdiv.map.baseLayer.onMapResize !== "undefined")
+    } else {
+      // Sometimes the map is not resized : googlemaps are too optimised and don't redraw with updateSize above.
+      if (typeof indiciaData.mapdiv.map.baseLayer.onMapResize !== "undefined") {
       	indiciaData.mapdiv.map.baseLayer.onMapResize();
+      }
+    }
   }
 }
 indiciaFns.bindTabsActivate($($('#$options[tabDiv]').parent()), mapTabHandler);
@@ -484,45 +484,45 @@ SCRIPT;
     }
   }
 
- /**
-  * Map layer legend.
-  *
-  * Outputs a map layer list panel which automatically integrates with the
-  * map_panel added to the same page. The list by default will behave like a
-  * map legend, showing an icon and caption for each visible layer, but can be
-  * configured to show all hidden layers and display a checkbox or radio button
-  * alongside each item, making it into a layer switcher panel.
-  *
-  * @param array $options
-  *   Associative array of options to pass to the jQuery.indiciaMapPanel
-  *   plugin. Has the following possible options:
-  *   * id - Optional CSS id for the output panel. Always set a value if there
-  *     are multiple layer pickers on one page.
-  *   * includeIcons - Set to true to include icons alongside each layer item.
-  *     Default true.
-  *   * includeSwitchers - Set to true to include radio buttons and/or
-  *     checkboxes for switching on or off the visible base layers and
-  *     overlays. Default false.
-  *   * includeHiddenLayers - True or false to include layers that are not
-  *     currently visible on the map. Default is false.
-  *   * layerTypes - Array of layer types to include, options are base or
-  *     overlay. Default is both.
-  *   * class - Class to add to the outer div.
-  *
-  * @return string
-  *   Control HTML.
-  */
+  /**
+   * Map layer legend.
+   *
+   * Outputs a map layer list panel which automatically integrates with the
+   * map_panel added to the same page. The list by default will behave like a
+   * map legend, showing an icon and caption for each visible layer, but can be
+   * configured to show all hidden layers and display a checkbox or radio button
+   * alongside each item, making it into a layer switcher panel.
+   *
+   * @param array $options
+   *   Associative array of options to pass to the jQuery.indiciaMapPanel
+   *   plugin. Has the following possible options:
+   *   * id - Optional CSS id for the output panel. Always set a value if there
+   *     are multiple layer pickers on one page.
+   *   * includeIcons - Set to true to include icons alongside each layer item.
+   *     Default true.
+   *   * includeSwitchers - Set to true to include radio buttons and/or
+   *     checkboxes for switching on or off the visible base layers and
+   *     overlays. Default false.
+   *   * includeHiddenLayers - True or false to include layers that are not
+   *     currently visible on the map. Default is false.
+   *   * layerTypes - Array of layer types to include, options are base or
+   *     overlay. Default is both.
+   *   * class - Class to add to the outer div.
+   *
+   * @return string
+   *   Control HTML.
+   */
   public static function layer_list($options) {
-    $options = array_merge(array(
+    $options = array_merge([
       'id' => 'layers',
       'includeIcons' => TRUE,
       'includeSwitchers' => FALSE,
       'includeHiddenLayers' => FALSE,
-      'layerTypes' => array('base', 'overlay'),
+      'layerTypes' => ['base', 'overlay'],
       'class' => '',
       'prefix' => '',
       'suffix' => '',
-    ), $options);
+    ], $options);
     $options['class'] .= (empty($options['class']) ? '' : ' ') . 'layer_list';
     $r = '<div class="' . $options['class'] . '" id="' . $options['id'] . '" class="ui-widget ui-widget-content ui-corner-all">';
     $r .= "$options[prefix]\n<ul>";

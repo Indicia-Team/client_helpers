@@ -25,13 +25,13 @@
  * and zoom to sub-sites of a given location type.
  */
 class extension_site_hierarchy_navigator {
-  
+
   /**
    * Hierarchy map control, which can be added to user interface form configurations using [site_hierarchy_navigator.map].
    *
    * Display a map with polygons loaded onto it of a particular location type. When the user clicks on one, reloads the map layer
-   * to show the intersecting polygons from the next location type. Continues down the locations hierarchy in a supplied sequence of 
-   * location types (e.g. you might set the location type sequence to Country, County, Parish, Site). 
+   * to show the intersecting polygons from the next location type. Continues down the locations hierarchy in a supplied sequence of
+   * location types (e.g. you might set the location type sequence to Country, County, Parish, Site).
    *
    * Supply the following options:
    *   @layerLocationTypes with a comma separated array of the location types ID to load in top down order.
@@ -51,22 +51,22 @@ class extension_site_hierarchy_navigator {
     map_helper::$javascript .= "indiciaData.informationSheetLink='".$path."';\n";
     if (empty($options['layerLocationTypes']))
       return '<p>Please provide a @layerLocationTypes option for the [site_hierarchy_navigator.map] map control on the edit tab</p>';
-    $msg=self::check_format($options, 'layerLocationTypes', 'location_type_id (from the termlists term table)', '/^([0-9]*,\s*)*[0-9]*\s*$/'); 
+    $msg=self::check_format($options, 'layerLocationTypes', 'location_type_id (from the termlists term table)', '/^([0-9]*,\s*)*[0-9]*\s*$/');
     if ($msg!==true) return $msg;
     //This option is optional, so don't need to check if it isn't present
     $msg=self::check_format($options, 'showCountUnitsForLayers', 'location_type_id (from the termlists term table)', '/^([0-9]*,\s*)*[0-9]*\s*$/');
-    if ($msg!==true) return $msg;   
+    if ($msg!==true) return $msg;
     drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/site_hierarchy_navigator.js');
     //The location types are supplied by the user in a comma seperated list.
     //The first number is used as the initial location type to display.
     //The second number is used after the user clicks the first time on a feature and so on
-    $layerLocationTypes = explode(',', $options['layerLocationTypes']); 
-    //Comma seperated list of location types which signify which layers should also display the Count Unit location type. 
+    $layerLocationTypes = explode(',', $options['layerLocationTypes']);
+    //Comma seperated list of location types which signify which layers should also display the Count Unit location type.
     //This should be a subset of $layerLocationTypes.
-    $showCountUnitsForLayers = explode(',', $options['showCountUnitsForLayers']); 
-    $locationTypesWithSymbols = explode(',', $options['locationTypesWithSymbols']); 
+    $showCountUnitsForLayers = explode(',', $options['showCountUnitsForLayers']);
+    $locationTypesWithSymbols = explode(',', $options['locationTypesWithSymbols']);
     //Annotation location types as defined on edit tab
-    $annotationTypeIds = explode(',', $options['annotationTypeIds']); 
+    $annotationTypeIds = explode(',', $options['annotationTypeIds']);
     $mapOptions = iform_map_get_map_options($args, $auth);
     $olOptions = iform_map_get_ol_options($args);
     $mapOptions['readAuth'] = $mapOptions['readAuth']['read'];
@@ -76,7 +76,7 @@ class extension_site_hierarchy_navigator {
     $mapOptions['customClickFn']='move_to_new_layer';
     $mapOptions['clickableLayersOutputDiv'] = '';
     //Tell the system which layers we to be clickable.
-    $mapOptions['clickableLayers']=array('indiciaData.reportlayer');     
+    $mapOptions['clickableLayers']=array('indiciaData.reportlayer');
     $r .= map_helper::map_panel(
       $mapOptions,
       $olOptions
@@ -90,7 +90,7 @@ class extension_site_hierarchy_navigator {
     );
     //Return a list of location type names for the location type id layers list
     //provided by the user in the form structure.
-    $locationTypeNamesDirty = data_entry_helper::get_report_data($reportOptions);
+    $locationTypeNamesDirty = report_helper::get_report_data($reportOptions);
     //The data returned by the database is not a simple array of names, so convert the data and put into correct order
     foreach ($layerLocationTypes as $originalLayerIndex=>$layerLocationTypeFromOriginalList) {
       foreach ($locationTypeNamesDirty as $locationTypeNamesData) {
@@ -99,7 +99,7 @@ class extension_site_hierarchy_navigator {
       }
     }
     //Send the array of names to javascript
-    map_helper::$javascript .= "indiciaData.layerLocationTypesNames=".json_encode($locationTypeNamesClean).";\n";   
+    map_helper::$javascript .= "indiciaData.layerLocationTypesNames=".json_encode($locationTypeNamesClean).";\n";
     //Send the user supplied options for layers to display count units to Javascript
     map_helper::$javascript .= "indiciaData.showCountUnitsForLayers=".json_encode($showCountUnitsForLayers).";\n";
     map_helper::$javascript .= "indiciaData.countUnitBoundaryTypeId=".$options['countUnitBoundaryTypeId'].";\n";
@@ -115,7 +115,7 @@ class extension_site_hierarchy_navigator {
     //Get the report options such as the Preset Parameters on the Edit Tab
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $readAuth),
-    $reportOptions);    
+    $reportOptions);
     //Run the report that shows the locations (features) to the user when the map loads the first time.
     map_helper::$javascript .= "indiciaData.layerReportRequest='".
        report_helper::get_report_data($reportOptions)."';\n";
@@ -128,20 +128,20 @@ class extension_site_hierarchy_navigator {
     //Get the report options such as the Preset Parameters on the Edit Tab
     $reportOptions = array_merge(
       iform_report_get_report_options($args, $readAuth),
-    $reportOptions);    
+    $reportOptions);
     //Run the report that builds the map breadcrumb.
     map_helper::$javascript .= "indiciaData.breadcrumbReportRequest='".
        report_helper::get_report_data($reportOptions)."';\n";
     return $r;
   }
-  
+
   /*
    * A breadcrumb trail of the site hierarchy locations the user has clicked through as a seperate control
    */
   public static function breadcrumb($auth, $args, $tabalias, $options, $path) {
     iform_load_helpers(array('map_helper'));
     map_helper::$javascript .= "indiciaData.useBreadCrumb=true;\n";
-    //If the id parameter is supplied in the url, it means the user has clicked on another page homepage link to zoom to the location, so we need to rebuild the 
+    //If the id parameter is supplied in the url, it means the user has clicked on another page homepage link to zoom to the location, so we need to rebuild the
     //map breadcrumb trail and zoom the map. In order to do this we need to supply the location id and location type id to the javascript in indiciaData.
     $locationTypeId = data_entry_helper::get_population_data(array(
       'table' => 'location',
@@ -157,7 +157,7 @@ class extension_site_hierarchy_navigator {
                    </div>';
     return $breadcrumb;
   }
-  
+
   /*
    * A select list that displays the same locations as on the map. Selecting a location
    * from the select list is the same as clicking on it on the map with the exception that
@@ -177,7 +177,7 @@ class extension_site_hierarchy_navigator {
                    </div>";
     return $selectlist;
   }
-  
+
   /*
    * A control where we construct a button linking to a report page whose path and parameter are as per administrator supplied options.
    * The options format is comma seperated where the format of the elements is "location_type_id|report_path|report_parameter".
@@ -186,7 +186,7 @@ class extension_site_hierarchy_navigator {
   public static function listreportlink($auth, $args, $tabalias, $options, $path) {
     global $base_root;
     iform_load_helpers(array('map_helper'));
-    $msg=self::check_format($options, 'listReportLinks', 'location_type_id|report_path|report_parameter', 
+    $msg=self::check_format($options, 'listReportLinks', 'location_type_id|report_path|report_parameter',
         '/^([0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*,)*[0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*$/');
     if ($msg!==true) return $msg;
     //Tell the javascript we are using the report link control
@@ -210,7 +210,7 @@ class extension_site_hierarchy_navigator {
     map_helper::$javascript .= "indiciaData.reportLinkUrls=".json_encode($reportLinkUrls).";\n";
     return $selectlist;
   }
-  
+
   /*
    * Control button that takes user to Add Count Unit page whose path and parameter are as per administrator supplied options.
    * The parameter is used to automatically zoom the map to the area we want to add the count unit.
@@ -220,12 +220,12 @@ class extension_site_hierarchy_navigator {
   public static function addcountunit($auth, $args, $tabalias, $options, $path) {
     global $base_root;
     iform_load_helpers(array('map_helper'));
-    $msg=self::check_format($options, 'addCountUnitLinks', 'location_type_id|page_path|parameter_name', 
+    $msg=self::check_format($options, 'addCountUnitLinks', 'location_type_id|page_path|parameter_name',
         '/^([0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*,)*[0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*$/');
     if ($msg!==true) return $msg;
     map_helper::$javascript .= "indiciaData.useAddCountUnit=true;\n";
     $addcountunit = '<div id="map-addcountunit"></div>';
-    
+
     $linksToCreate=explode(',',$options['addCountUnitLinks']);
     //Cycle through all the supplied options, get the options and save the locations types and the paths we are going to use.
     foreach ($linksToCreate as $id=>$linkToCreate) {
@@ -243,7 +243,7 @@ class extension_site_hierarchy_navigator {
     map_helper::$javascript .= "indiciaData.addCountUnitLinkUrls=".json_encode($linkUrls).";\n";
     return $addcountunit;
   }
-  
+
   /*
    * Control button that takes user to Review Count Units page whose path is per an administrator supplied option.
    * The options format is comma seperated where the format of the elements is "location_type_id|page_path".
@@ -252,7 +252,7 @@ class extension_site_hierarchy_navigator {
   public static function viwcountunitsreport($auth, $args, $tabalias, $options, $path) {
     global $base_root;
     iform_load_helpers(array('map_helper'));
-    $msg=self::check_format($options, 'viewCountUnitsReportLinks', 'location_type_id|page_path', 
+    $msg=self::check_format($options, 'viewCountUnitsReportLinks', 'location_type_id|page_path',
         '/^([0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*,)*[0-9]+\|[0-9a-z_\-\/]*/');
     if ($msg!==true) return $msg;
     map_helper::$javascript .= "indiciaData.useCountUnitsReview=true;\n";
@@ -274,7 +274,7 @@ class extension_site_hierarchy_navigator {
     map_helper::$javascript .= "indiciaData.countUnitsReviewLinkUrls=".json_encode($linkUrls).";\n";
     return $reviewcountunits;
   }
-  
+
   /*
    * Control button that takes user to Add Site page whose path and parameter are as per administrator supplied options.
    * The location type of the site we are adding is taken from the location layer we are viewing, so this button is
@@ -286,24 +286,24 @@ class extension_site_hierarchy_navigator {
   public static function addsite($auth, $args, $tabalias, $options, $path) {
     global $base_root;
     iform_load_helpers(array('map_helper'));
-    $msg=self::check_format($options, 'addSiteLinks', 'location_type_id|page_path|parameter_name', 
+    $msg=self::check_format($options, 'addSiteLinks', 'location_type_id|page_path|parameter_name',
         '/^([0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*,)*[0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*$/');
     if ($msg!==true) return $msg;
     map_helper::$javascript .= "indiciaData.useAddSite=true;\n";
     $addsite = '<div id="map-addsite"></div>';
     //Get the options are speciified in the Form Structure
-    $optionResults = self::get_link_options($options['addSiteLinks']); 
+    $optionResults = self::get_link_options($options['addSiteLinks']);
     //Defines which layers we display the Add Site button for.
     $locationTypesForAddSite = $optionResults[0];
-    $linkUrls = $optionResults[1]; 
+    $linkUrls = $optionResults[1];
     //Send the options to javascript
     map_helper::$javascript .= "indiciaData.locationTypesForAddSites=".json_encode($locationTypesForAddSite).";\n";
     map_helper::$javascript .= "indiciaData.addSiteLinkUrls=".json_encode($linkUrls).";\n";
     return $addsite;
   }
-  
+
   /*
-   * An extension that can be added to the Site Details page to limit the Local Organiser Region field so that it is 
+   * An extension that can be added to the Site Details page to limit the Local Organiser Region field so that it is
    * displayed only when the location type is Site.
    */
   public static function site_detail_ext_local_organiser_site_limiter($auth, $args, $tabalias, $options, $path) {
@@ -323,36 +323,36 @@ class extension_site_hierarchy_navigator {
                                      $('#locAttr\\\\:".$options['local_org_reg_attribute_id']."').remove();\n";
       }
     } else {
-      //If in add mode and the type we are adding is not site then hide Local Organiser region 
+      //If in add mode and the type we are adding is not site then hide Local Organiser region
       if ($_GET['location_type_id']!=$options['site_location_type_id']) {
         data_entry_helper::$javascript .= "$('[for=\"locAttr\\\\:".$options['local_org_reg_attribute_id']."\"]').remove();\n
-                                           $('#locAttr\\\\:".$options['local_org_reg_attribute_id']."').remove();\n";  
-      }  
+                                           $('#locAttr\\\\:".$options['local_org_reg_attribute_id']."').remove();\n";
+      }
     }
   }
-  
+
   /*
    * Allow the user to specify a button to edit the parent site with
    */
   public static function editsite($auth, $args, $tabalias, $options, $path) {
     global $base_root;
     iform_load_helpers(array('map_helper'));
-    $msg=self::check_format($options, 'editSiteLinks', 'location_type_id|page_path|parameter_name', 
+    $msg=self::check_format($options, 'editSiteLinks', 'location_type_id|page_path|parameter_name',
         '/^([0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*,)*[0-9]+\|[0-9a-z_\-\/]*\|[0-9a-z_\-]*$/');
     if ($msg!==true) return $msg;
     map_helper::$javascript .= "indiciaData.useEditSite=true;\n";
-    $editsite = '<div id="map-editsite"></div>';  
+    $editsite = '<div id="map-editsite"></div>';
     //Get the options are speciified in the Form Structure
-    $optionResults = self::get_link_options($options['editSiteLinks']); 
+    $optionResults = self::get_link_options($options['editSiteLinks']);
     //Defines which layers we display the Edit Site button for.
     $locationTypesForEditSite = $optionResults[0];
-    $linkUrls = $optionResults[1]; 
+    $linkUrls = $optionResults[1];
     //Send the options to javascript
     map_helper::$javascript .= "indiciaData.locationTypesForEditSites=".json_encode($locationTypesForEditSite).";\n";
     map_helper::$javascript .= "indiciaData.editSiteLinkUrls=".json_encode($linkUrls).";\n";
     return $editsite;
   }
-  
+
   /*
    * Collect options from the form sturcture for buttons whose options are in the format
    * location_type_id_to_display_button_for|path_to_page|parameter_to_send_to_page
@@ -373,8 +373,8 @@ class extension_site_hierarchy_navigator {
     $optionResults[0] = $locationTypesForToDisplayButtonFor;
     $optionResults[1] = $linkUrls;
     return $optionResults;
-  }        
-          
+  }
+
   /**
    * Internal function that checks a form structure control option against a regular expression to check it's format.
    */
@@ -385,5 +385,5 @@ class extension_site_hierarchy_navigator {
           "<p>The supplied @$optionName option is not of the correct format, it should be a comma separated list with each item of the form \"$friendlyFormat\".</p>";
     return true;
   }
-    
+
 }

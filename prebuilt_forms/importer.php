@@ -50,36 +50,36 @@ class iform_importer {
    * @return array List of parameters that this form requires.
    */
   public static function get_parameters() {
-    return array(
-      array(
+    return [
+      [
         'name' => 'model',
         'caption' => 'Type of data to import',
         'description' => 'Select the type of data that each row represents in the file you want to import.',
         'type' => 'select',
-        'options' => array(
+        'options' => [
           'url' => 'Use setting in URL (&type=...)',
           'occurrence' => 'Species records',
           'sample' => 'Samples without records',
           'location' => 'Locations',
-          'other' => 'Other (specify below)'
-        ),
-        'required' => TRUE
-      ),
-      array(
+          'other' => 'Other (specify below)',
+        ],
+        'required' => TRUE,
+      ],
+      [
         'name' => 'otherModel',
         'caption' => 'Other model',
         'description' => 'If type of data to import is set to other, then specify the singular name of the model to import into here.',
         'type' => 'text_input',
-        'required' => FALSE
-      ),
-      array(
+        'required' => FALSE,
+      ],
+      [
         'name' => 'allowDataDeletions',
         'caption' => 'Allow deletions?',
         'description' => 'Should the Deleted flag be exposed as a column mapping field during the import process.',
         'type' => 'boolean',
-        'default' => FALSE
-      ),
-      array(
+        'default' => FALSE,
+      ],
+      [
         'name' => 'presetSettings',
         'caption' => 'Preset Settings',
         'description' => 'Provide a list of predetermined settings which the user does not need to specify, one on each line in the form name=value. ' .
@@ -87,16 +87,16 @@ class iform_importer {
             'are inputting data for. You can use the following replacement tokens in the values: {user_id}, {username}, {email} or {profile_*} (i.e. any ' .
             'field in the user profile data).',
         'type' => 'textarea',
-        'required' => FALSE
-      ),
-      array(
+        'required' => FALSE,
+      ],
+      [
         'name' => 'occurrenceAssociations',
         'caption' => 'Allow import of associated occurrences',
         'description' => 'If the data might include 2 associated occurrences in a single row then this option must be enabled.',
         'type' => 'boolean',
-        'default' => FALSE
-      ),
-      array(
+        'default' => FALSE,
+      ],
+      [
         'name' => 'fieldMap',
         'caption' => 'Field/column mappings',
         'description' => 'Use this control to predefine mappings between database fields and columns in the spreadsheet. ' .
@@ -128,18 +128,18 @@ class iform_importer {
               }
             }
           }]
-        }'
-      ),
-      array(
+        }',
+      ],
+      [
         'name' => 'onlyAllowMappedFields',
         'caption' => 'Only allow mapped fields',
         'description' => 'If this box is ticked and a survey is chosen which has fields defined above ' .
             'then only fields which are listed will be available for selection. All other fields will ' .
             'be hidden from the mapping stage.',
         'type' => 'boolean',
-        'default' => TRUE
-      ),
-      array(
+        'default' => TRUE,
+      ],
+      [
         'name' => 'skipMappingIfPossible',
         'caption' => 'Skip the mapping step if possible',
         'description' => 'If this box is ticked and all the columns in the import spreadsheet can be automatically ' .
@@ -147,8 +147,8 @@ class iform_importer {
           'columns in the spreadsheet in the field/column mappings above the import process can be significantly ' .
           'simplified.',
         'type' => 'boolean',
-        'default' => FALSE
-      ),
+        'default' => FALSE,
+      ],
       [
         'name' => 'existingRecordLookupMethod',
         'caption' => 'Existing record lookup method',
@@ -174,7 +174,7 @@ class iform_importer {
         'required' => FALSE,
         'type' => 'textarea',
       ],
-      array(
+      [
         'name' => 'importMergeFields',
         'caption' => 'Merge Field mappings',
         'description' => 'Use this control to define virtual submission fields and how they are merged into a real field before submission.',
@@ -255,7 +255,7 @@ class iform_importer {
             }
           }]
         }'
-      ),
+      ],
       [
         'name' => 'embedReupload',
         'caption' => 'Embed reupload form in last page',
@@ -267,7 +267,7 @@ class iform_importer {
           2 => 'Provide embedded upload form after any import',
         ],
       ],
-      array(
+      [
         'name' => 'synonymProcessing',
         'caption' => 'Synonym Processing',
         'description' => 'Use this control to define how synonyms are handled. Currently only relevant for taxa imports.',
@@ -303,58 +303,66 @@ class iform_importer {
               }]
             },
           },
-        }'
-      ),
-      array(
-        'name'=>'importPreventCommitBehaviour',
-        'caption'=>'Importer Prevent Commit Behaviour',
-        'description'=>'<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. Please note: Functionality to update '
+        }',
+      ],
+      [
+        'name' => 'importPreventCommitBehaviour',
+        'caption' => 'Importer Prevent Commit Behaviour',
+        'description' => '<em>Prevent all commits on error</em> - Rows are only imported once all errors are corrected. Please note: Functionality to update '
         . 'existing data is currently disabled when this option is selected, only new data can be imported.'
         . '<em>Only commit valid rows</em> - Import rows which do not error. '
         . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
-        'type'=>'select',
-        'options'=>array(
+        'type' => 'select',
+        'options' => [
           'prevent' => 'Prevent all commits on error',
           'partial_import' => 'Only commit valid rows',
-          'user_defined' => 'Allow user to choose'
-        ),
-        'required'=>true,
-        'default'=>'partial_import',
-        'group' => 'Import Behaviour'
-      ),
-      array(
-        'name'=>'importSampleLogic',
-        'caption'=>'Importer Sample Logic (only applicable when using the Species Records import type)',
-        'description'=>'<em>Verify using sample external key. Rows with the same sample external key must be consistent</em> - '.
+          'user_defined' => 'Allow user to choose',
+        ],
+        'required' => TRUE,
+        'default' => 'partial_import',
+        'group' => 'Import Behaviour',
+      ],
+      [
+        'name' => 'importSampleLogic',
+        'caption' => 'Importer Sample Logic (only applicable when using the Species Records import type)',
+        'description' => '<em>Verify using sample external key. Rows with the same sample external key must be consistent</em> - '.
         'Allows verification of samples using the sample external key field to determine consistency between the import rows. Rows from same sample must still be placed on consecutive rows. '
         . '<em>Do not use sample key verification</em> - Rows are placed into the same sample based on comparison of '
           . 'sample related columns of consecutive rows without taking sample external key into account. '
         . '<em>Allow user to choose</em> - Give the user the option to choose which behaviour they want with a checkbox.',
-        'type'=>'select',
-        'options'=>array(
+        'type' => 'select',
+        'options' => [
           'sample_ext_key' => 'Verify using sample external key. Rows with the same sample external key must be consistent',
           'consecutive_rows' => 'Do not use sample key verification',
-          'user_defined' => 'Allow user to choose'
-        ),
-        'required'=>true,
-        'default'=>'consecutive_rows',
-        'group' => 'Import Behaviour'
-      )
-    );
+          'user_defined' => 'Allow user to choose',
+        ],
+        'required' => TRUE,
+        'default' => 'consecutive_rows',
+        'group' => 'Import Behaviour',
+      ],
+    ];
   }
 
   /**
-   * Return the Indicia form code
-   * @param array $args Input parameters.
-   * @param array $nid Drupal node object's ID
-   * @param array $response Response from Indicia services after posting a verification.
-   * @return HTML string
+   * Return the Indicia form code.
+   *
+   * @param array $args
+   *   Input parameters.
+   * @param array $nid
+   *   Drupal node object's ID.
+   * @param array $response
+   *   Response from Indicia services after posting a verification.
+   *
+   * @return string
+   *   HTML string.
    */
   public static function get_form($args, $nid, $response) {
-    if (empty($args['importPreventCommitBehaviour']))
-      $args['importPreventCommitBehaviour']='partial_import';
-    if (empty($args['importSampleLogic']))
-      $args['importSampleLogic']='consecutive_rows';
+    if (empty($args['importPreventCommitBehaviour'])) {
+      $args['importPreventCommitBehaviour'] = 'partial_import';
+    }
+    if (empty($args['importSampleLogic'])) {
+      $args['importSampleLogic'] = 'consecutive_rows';
+    }
     iform_load_helpers(array('import_helper'));
     // apply defaults
     $args = array_merge(array(
@@ -368,7 +376,7 @@ class iform_importer {
     ), $args);
     $auth = import_helper::get_read_write_auth($args['website_id'], $args['password']);
     group_authorise_form($args, $auth['read']);
-    if ($args['model']=='url') {
+    if ($args['model'] === 'url') {
       if (!isset($_GET['type']))
         return "This form is configured so that it must be called with a type parameter in the URL";
       $model = $_GET['type'];
@@ -389,7 +397,7 @@ class iform_importer {
     if (!empty($_GET['group_id'])) {
       // loading data into a recording group.
       $group = data_entry_helper::get_population_data(array(
-        'table'=>'group',
+        'table' => 'group',
         'extraParams'=>$auth['read'] + array('id' => $_GET['group_id'], 'view' => 'detail')
       ));
       $group = $group[0];

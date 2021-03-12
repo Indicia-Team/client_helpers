@@ -1047,7 +1047,7 @@ HTML
       // Submit the stucture for processing.
       $response = data_entry_helper::forward_post_to('save', $submission, $auth['write_tokens']);
       if (!is_array($response) || !array_key_exists('success', $response)) {
-        drupal_set_message(print_r($response, TRUE));
+        hostsite_show_message(print_r($response, TRUE));
       }
     }
   }
@@ -1412,21 +1412,14 @@ HTML;
 
       }
     }
-    // See if there is a filled in profile_experience field for the user. If so, add
-    // the statement to the response.
-    // @todo Drupal 8 compatibility
-    if (!empty($_GET['user_id']) && class_exists('EntityFieldQuery')) {
+    // See if there is a filled in profile_experience field for the user. If
+    // so, add the statement to the response.
+    if (!empty($_GET['user_id'])) {
       // User ID is a warehouse ID, we need the associated Drupal account.
-      $query = new EntityFieldQuery();
-      $query->entityCondition('entity_type', 'user')
-        ->fieldCondition('field_indicia_user_id', 'value', $_GET['user_id'], '=');
-      $result = $query->execute();
-      if ($result) {
-        $users = array_keys($result['user']);
-        $experience = hostsite_get_user_field('experience', FALSE, FALSE, $users[0]);
-        if ($experience) {
-          $r .= "<h3>User's description of their experience</h3><p>$experience</p>\n";
-        }
+      $users = hostsite_find_cms_user_by_field_value('indicia_user_id', $_GET['user_id']);
+      $experience = hostsite_get_user_field('experience', FALSE, FALSE, $users[0]);
+      if ($experience) {
+        $r .= "<h3>User's description of their experience</h3><p>$experience</p>\n";
       }
     }
     if (empty($r)) {

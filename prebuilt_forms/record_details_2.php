@@ -20,12 +20,15 @@
  */
 
 /**
- * Displays the details of a single record. Takes an occurrence_id in the URL and displays the following using a configurable
- * page template:
- * Record Details including custom attributes
- * A map including geometry
- * Any photos associated with the occurrence
- * Any comments associated with the occurrence including the ability to add comments
+ * Displays the details of a single record.
+ *
+ * Takes an occurrence_id in the URL and displays the following using a
+ * configurable page template:
+ * * Record Details including custom attributes.
+ * * A map including geometry.
+ * * Any photos associated with the occurrence.
+ * * Any comments associated with the occurrence including the ability to add
+ *   comments.
  */
 
 
@@ -36,12 +39,18 @@ require_once 'includes/groups.php';
 
 class iform_record_details_2 extends iform_dynamic {
 
+  /**
+   * Details of the currently loaded record.
+   *
+   * @var array
+   */
   protected static $record;
 
   /**
    * Disable form element wrapped around output.
    *
    * @return bool
+   *   Always FALSE.
    */
   protected static function isDataEntryForm() {
     return FALSE;
@@ -54,14 +63,14 @@ class iform_record_details_2 extends iform_dynamic {
    *   The definition of the form.
    */
   public static function get_record_details_2_definition() {
-    return array(
+    return [
       'title' => 'View details of a record 2',
       'category' => 'Utilities',
       'description' => 'A summary view of a record with commenting capability. Pass a parameter in the URL called ' .
         'occurrence_id to define which occurrence to show.',
       'supportsGroups' => TRUE,
       'recommended' => TRUE,
-    );
+    ];
   }
 
   /**
@@ -73,23 +82,23 @@ class iform_record_details_2 extends iform_dynamic {
   public static function get_parameters() {
     $retVal = array_merge(
       iform_map_get_map_parameters(),
-      array(
-        array(
+      [
+        [
           'name' => 'interface',
           'caption' => 'Interface Style Option',
           'description' => 'Choose the style of user interface, either dividing the form up onto separate tabs, ' .
             'wizard pages or having all controls on a single page.',
           'type' => 'select',
-          'options' => array(
+          'options' => [
             'tabs' => 'Tabs',
             'wizard' => 'Wizard',
-            'one_page' => 'All One Page'
-          ),
+            'one_page' => 'All One Page',
+          ],
           'default' => 'one_page',
-          'group' => 'User Interface'
-        ),
+          'group' => 'User Interface',
+        ],
         // List of fields to hide in the Record Details section.
-        array(
+        [
           'name' => 'fields',
           'caption' => 'Fields to include or exclude',
           'description' => 'List of data fields to hide, one per line. ' .
@@ -102,37 +111,38 @@ CMS User ID
 Email
 Sample ID
 Record ID',
-          'group' => 'Fields for record details'
-        ),
-        array(
+          'group' => 'Fields for record details',
+        ],
+        [
           'name' => 'operator',
           'caption' => 'Include or exclude',
           'description' => "Do you want to include only the list of fields you've defined, or exclude them?",
           'type' => 'select',
-          'options' => array(
+          'options' => [
             'in' => 'Include',
-            'not in' => 'Exclude'
-          ),
+            'not in' => 'Exclude',
+          ],
           'default' => 'not in',
-          'group' => 'Fields for record details'
-        ),
-        array(
+          'group' => 'Fields for record details',
+        ],
+        [
           'name' => 'testagainst',
           'caption' => 'Test attributes against',
           'description' => 'For custom attributes, do you want to filter the list to show using the caption or the system function? If the latter, then ' .
               'any custom attributes referred to in the fields list above should be referred to by their system function which might be one of: email, ' .
-              'cms_user_id, cms_username, first_name, last_name, full_name, biotope, sex_stage, sex, stage, sex_stage_count, certainty, det_first_name, det_last_name.',
+              'cms_user_id, cms_username, first_name, last_name, full_name, biotope, behaviour, reproductive_condition, sex_stage, sex, stage, ' .
+              'sex_stage_count, certainty, det_first_name, det_last_name.',
           'type' => 'select',
-          'options' => array(
+          'options' => [
             'caption' => 'Caption',
-            'system_function' => 'System Function'
-          ),
+            'system_function' => 'System Function',
+          ],
           'default' => 'caption',
-          'group' => 'Fields for record details'
-        ),
+          'group' => 'Fields for record details',
+        ],
         // Allows the user to define how the page will be displayed.
-        array(
-        'name' => 'structure',
+        [
+          'name' => 'structure',
           'caption' => 'Form Structure',
           'description' => 'Define the structure of the form. Each component must be placed on a new line. <br/>' .
             "The following types of component can be specified. <br/>" .
@@ -163,16 +173,16 @@ Record ID',
 |
 [photos]',
           'group' => 'User Interface',
-        ),
-        array(
+        ],
+        [
           'name' => 'default_input_form',
           'caption' => 'Default input form path',
           'description' => 'Default path to use to the edit form for old records which did not have their input form recorded in the database. Specify the ' .
               'path to a general purpose list entry form.',
           'type' => 'text_input',
           'group' => 'Path configuration',
-        ),
-        array(
+        ],
+        [
           'name' => 'explore_url',
           'caption' => 'Explore URL',
           'description' => 'When you click on the Explore this species\' records button you are taken to this URL. Use {rootfolder} as a replacement ' .
@@ -181,8 +191,8 @@ Record ID',
           'required' => FALSE,
           'default' => '',
           'group' => 'Path configuration',
-        ),
-        array(
+        ],
+        [
           'name' => 'species_details_url',
           'caption' => 'Species details URL',
           'description' => 'When you click on the ... species page button you are taken to this URL with taxon_meaning_id as a parameter. Use {rootfolder} as a replacement ' .
@@ -191,8 +201,8 @@ Record ID',
           'required' => FALSE,
           'default' => '',
           'group' => 'Path configuration',
-        ),
-        array(
+        ],
+        [
           'name' => 'explore_param_name',
           'caption' => 'Explore Parameter Name',
           'description' => 'Name of the parameter added to the Explore URL to pass through the taxon_meaning_id of the species being explored. ' .
@@ -201,48 +211,48 @@ Record ID',
           'required' => FALSE,
           'default' => '',
           'group' => 'Path configuration',
-        ),
-        array(
+        ],
+        [
           'name' => 'map_geom_precision',
           'caption' => 'Map geometry precision',
           'description' => 'If you want to output a lower precision map geometry than was actually recorded, ' .
               'select the precision here',
           'type' => 'select',
-          'options' => array('1' => '1km', '2' => '2km', '10' => '10km'),
+          'options' => ['1' => '1km', '2' => '2km', '10' => '10km'],
           'required' => FALSE,
           'group' => 'Other Map Settings',
-        ),
-        array(
+        ],
+        [
           'name' => 'allow_confidential',
           'caption' => 'Allow viewing of confidential records',
           'description' => 'Tick this box to enable viewing of confidential records. Ensure that the page is only ' .
             'available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
-        ),
-        array(
+        ],
+        [
           'name' => 'allow_sensitive_full_precision',
           'caption' => 'Allow viewing of sensitive records at full precision',
           'description' => 'Tick this box to enable viewing of sensitive records at full precision records. Ensure ' .
             'that the page is only available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
           'required' => FALSE,
-        ),
-        array(
+        ],
+        [
           'name' => 'allow_unreleased',
           'caption' => 'Allow viewing of unreleased records',
           'description' => 'Tick this box to enable viewing of unreleased records. Ensure that the page is only ' .
             'available to logged in users with appropropriate permissions if using this option',
           'type' => 'checkbox',
-          'required' => FALSE
-        ),
-        array(
+          'required' => FALSE,
+        ],
+        [
           'name' => 'sharing',
           'caption' => 'Record sharing mode',
           'description' => 'Identify the task this page is being used for, which determines the websites that will ' .
             'share records for use here.',
           'type' => 'select',
-          'options' => array(
+          'options' => [
             'reporting' => 'Reporting',
             'peer_review' => 'Peer review',
             'verification' => 'Verification',
@@ -250,10 +260,10 @@ Record ID',
             'moderation' => 'Moderation',
             'editing' => 'Editing',
             'me' => 'My records only',
-          ),
+          ],
           'default' => 'reporting',
-        ),
-      )
+        ],
+      ]
     );
     return $retVal;
   }
@@ -465,7 +475,7 @@ Record ID',
       'title' => lang::get('Photos and media'),
     ), $options);
     $settings = array(
-      'table' => 'occurrence_image',
+      'table' => 'occurrence_medium',
       'key' => 'occurrence_id',
       'value' => $_GET['occurrence_id'],
     );
@@ -488,7 +498,7 @@ Record ID',
       'extraParams' => $auth['read'] + array('id' => $_GET['occurrence_id'], 'view' => 'detail'),
     ));
     $settings = array(
-      'table' => 'sample_image',
+      'table' => 'sample_medium',
       'key' => 'sample_id',
       'value' => $occurrence[0]['sample_id'],
     );
@@ -578,21 +588,18 @@ HTML;
       }
       $r .= '<ul>';
       $firstImage = TRUE;
-      foreach ($media as $idx => $medium) {
-        // iNat only uses a thumb or full size image. So force thumb for
-        // preview.
-        $imageSize = $medium['media_type'] === 'Image:iNaturalist' ? 'thumb' : $options['imageSize'];
+      foreach ($media as $medium) {
         if ($firstImage && substr($medium['media_type'], 0, 6) === 'Image:') {
           // First image can be flagged as the main content image. Used for FB OpenGraph for example.
           global $iform_page_metadata;
           if (!isset($iform_page_metadata)) {
-            $iform_page_metadata = array();
+            $iform_page_metadata = [];
           }
           $imageFolder = data_entry_helper::get_uploaded_image_folder();
           $iform_page_metadata['image'] = "$imageFolder$medium[path]";
           $firstImage = FALSE;
         }
-        $r .= iform_report_get_gallery_item($medium, $imageSize);
+        $r .= iform_report_get_gallery_item('occurrence', $medium, $options['imageSize']);
       }
       $r .= '</ul>';
     }
@@ -778,22 +785,22 @@ JS;
    * @param array $args
    * @param string $tabalias
    * @param array $options
-   *   Options array passed in the configuration to the [login] control. Possible values include instruct - the
-   *   instruction to display above the login form.
+   *   Options array passed in the configuration to the [login] control.
+   *   Possible values include instruct - the instruction to display above
+   *   the login form.
    *
    * @return string
+   *   Control HTML, empty if logged in.
    */
   protected static function get_control_login($auth, $args, $tabalias, $options) {
-    $options = array_merge(array(
-      'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.'
-    ), $options);
+    $options = array_merge([
+      'instruct' => 'Please log in or <a href="user/register">register</a> to see more details of this record.',
+    ], $options);
     if (hostsite_get_user_field('id') === 0) {
-      $form_state = array('noredirect' => TRUE);
-      $form = drupal_build_form('user_login', $form_state);
       return '<div class="detail-panel" id="detail-panel-login">' .
           '<h3>' . lang::get('Login') . '</h3>' .
           '<p>' . lang::get($options['instruct']) . '</p>' .
-          drupal_render($form) .
+         hostsite_render_form('user_login', ['noredirect' => TRUE]) .
           '</div>';
     }
     else {
@@ -1059,7 +1066,7 @@ STRUCT;
       // Set the page metadata.
       global $iform_page_metadata;
       if (!isset($iform_page_metadata)) {
-        $iform_page_metadata = array();
+        $iform_page_metadata = [];
       }
       $species = self::$record['taxon'];
       if (!empty(self::$record['preferred_taxon']) && $species !== self::$record['preferred_taxon']) {

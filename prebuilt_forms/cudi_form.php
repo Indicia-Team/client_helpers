@@ -294,7 +294,8 @@ class iform_cudi_form extends iform_dynamic {
    * If a preferred boundary is not found then return null. The preferred_boundary_location_attribute_id holds the preferred boundary id.
    */
   protected static function getIdForCountUnitPreferredBoundaryIfApplicable($args, $auth) {
-    $preferredBoundaryValueReportData = data_entry_helper::get_report_data(array(
+    iform_load_helpers(['report_helper']);
+    $preferredBoundaryValueReportData = report_helper::get_report_data(array(
       'dataSource'=>'reports_for_prebuilt_forms/cudi/get_preferred_boundary_id',
       'readAuth'=>$auth['read'],
       'extraParams'=>array('count_unit_id' => $_GET['location_id'], 'preferred_boundary_location_attribute_id' => $args['preferred_boundary_attribute_id'],
@@ -714,7 +715,8 @@ mapInitialisationHooks.push(function(mapdiv) {
     if (!isset($options['standardControls']))
       $options['standardControls']=array('layerSwitcher','panZoom');
     $r = '';
-    $r .= data_entry_helper::map_panel($options, $olOptions);
+    iform_load_helpers(['map_helper']);
+    $r .= map_helper::map_panel($options, $olOptions);
     // Add a geometry hidden field for boundary support
     if ($boundaries)
       $r .= '<input type="hidden" name="location:boundary_geom" id="imp-boundary-geom" value="' .
@@ -793,7 +795,8 @@ mapInitialisationHooks.push(function(mapdiv) {
         'mode'=>'report',
         'extraParams' => array('user_id'=>$locationCreatedByData[0]['created_by_id'])
       );
-      $userData = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $userData = report_helper::get_report_data($reportOptions);
       return "<label>".lang::get('LANG_Location_Created_By').":</label> <label>".$userData[0]['fullname_firstname_first']."</label><br>";
     }
   }
@@ -1405,7 +1408,8 @@ mapInitialisationHooks.push(function(mapdiv) {
       // The option to list all locations is denied so enforce selection of own data.
       $extraParams['ownData'] = '1';
     }
-    $r .= data_entry_helper::report_grid(array(
+    iform_load_helpers(['report_helper']);
+    $r .= report_helper::report_grid(array(
       'id' => 'locations-grid',
       'dataSource' => $args['grid_report'],
       'mode' => 'report',

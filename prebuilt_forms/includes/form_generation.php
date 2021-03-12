@@ -281,21 +281,3 @@ function get_user_profile_hidden_inputs(&$attributes, $args, $exists, $readAuth)
   }
   return $hiddens;
 }
-
-/**
- * Variant on the profile modules profile_load_profile, that also gets empty profile values.
- */
-function profile_load_all_profile(&$user) {
-  // don't do anything unless in Drupal, with the profile module enabled, and the user logged in.
-  if ($user->uid > 0 && function_exists('profile_load_profile')) {
-    $result = db_query('SELECT f.name, f.type, v.value FROM {profile_fields} f LEFT JOIN {profile_values} v ON f.fid = v.fid AND uid = %d', $user->uid);
-    while ($field = db_fetch_object($result)) {
-      if (empty($user->{$field->name})) {
-        if (empty($field->value))
-          $user->{$field->name} = '';
-        else
-          $user->{$field->name} = _profile_field_serialize($field->type) ? unserialize($field->value) : $field->value;
-      }
-    }
-  }
-}

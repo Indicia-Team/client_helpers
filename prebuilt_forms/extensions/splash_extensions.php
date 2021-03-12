@@ -43,7 +43,7 @@ class extension_splash_extensions {
    */
   public static function splash_validate($auth, $args, $tabAlias, $options) {
     if (empty($options['treeOccurrenceAttrIds']) && !empty($options['treeGridRefAndEpiphyteMode']) && $options['treeGridRefAndEpiphyteMode']===true) {
-      drupal_set_message('Please fill in the @treeOccurrenceAttrIds option for the splash_validate control.
+      hostsite_show_message('Please fill in the @treeOccurrenceAttrIds option for the splash_validate control.
                           This should be a comma seperated list of attribute ids that hold the Epiphyte counts for trees.');
       return '';
     }
@@ -198,28 +198,29 @@ class extension_splash_extensions {
    * </ul>
    */
   public static function splash_location_select($auth, $args, $tabAlias, $options) {
+    iform_load_helpers(['report_helper']);
     if (empty($options['coreSquareLocationTypeId'])) {
-      drupal_set_message('Please fill in the @coreSquareLocationTypeId option for the splash_location_select control');
+      hostsite_show_message('Please fill in the @coreSquareLocationTypeId option for the splash_location_select control');
       return '';
     }
     if (empty($options['additionalSquareLocationTypeId'])) {
-      drupal_set_message('Please fill in the @additionalSquareLocationTypeId option for the splash_location_select control');
+      hostsite_show_message('Please fill in the @additionalSquareLocationTypeId option for the splash_location_select control');
       return '';
     }
     if (empty($options['viceCountyLocationAttributeId'])) {
-      drupal_set_message('Please fill in the @viceCountyLocationAttributeId option for the splash_location_select control');
+      hostsite_show_message('Please fill in the @viceCountyLocationAttributeId option for the splash_location_select control');
       return '';
     }
     if (empty($options['noViceCountyFoundMessage'])) {
-      drupal_set_message('Please fill in the @noViceCountyFoundMessage option for the splash_location_select control');
+      hostsite_show_message('Please fill in the @noViceCountyFoundMessage option for the splash_location_select control');
       return '';
     }
     if (empty($options['userSquareAttrId'])) {
-      drupal_set_message('Please fill in the @userSquareAttrId option for the splash_location_select control');
+      hostsite_show_message('Please fill in the @userSquareAttrId option for the splash_location_select control');
       return '';
     }
     if (empty($options['surveyId'])) {
-      drupal_set_message('Please fill in the @surveyId option for the splash_location_select control');
+      hostsite_show_message('Please fill in the @surveyId option for the splash_location_select control');
       return '';
     }
     if (empty($options['mySquaresWithPlotsReportPath'])) {
@@ -261,14 +262,14 @@ class extension_splash_extensions {
       $reportOptions['extraParams']=array_merge($reportOptions['extraParams'],['pss_mode'=>true]);
       data_entry_helper::$javascript .= "$('#imp-sref').attr('readonly','readonly');";
     }
-    $rawSquarePlotData = data_entry_helper::get_report_data($reportOptions);
+    $rawSquarePlotData = report_helper::get_report_data($reportOptions);
     if (empty($rawSquarePlotData) && empty($_GET['sample_id'])) {
         //If the user doesn't have any plots and is in add mode, then hide the map and disable the Spatial Ref field so they can't continue
         if (!empty($options['noPlotMessageInAlert']))
           data_entry_helper::$javascript .= "alert('".$options['noPlotMessageInAlert']."');";
         else
-          drupal_set_message('Note: You have not been allocated any squares to input data for, or the squares you have been allocated do not have plots.');
-        drupal_set_message('You cannot enter data without having a plot to select.');
+          hostsite_show_message('Note: You have not been allocated any squares to input data for, or the squares you have been allocated do not have plots.');
+        hostsite_show_message('You cannot enter data without having a plot to select.');
         data_entry_helper::$javascript .= "$('#map').hide();";
         data_entry_helper::$javascript .= "$('#imp-sref').attr('disabled','disabled');";
         if (!empty($options['noPlotMessageInAlert']))
@@ -279,7 +280,7 @@ class extension_splash_extensions {
       //If the user does have plots and is in edit mode then doing following
       if (!empty($_GET['sample_id'])) {
         //Get square and plot data for sample
-        $selectedSquareAndPlotInfo = data_entry_helper::get_report_data(
+        $selectedSquareAndPlotInfo = report_helper::get_report_data(
           array(
             'dataSource'=>'projects/npms/get_square_for_sample',
             'readAuth'=>$auth['read'],
@@ -375,7 +376,7 @@ class extension_splash_extensions {
       $location_list_args = array_merge(array(
           'label'=>lang::get('LANG_Location_Label'),
           'view'=>'detail'
-      ), $options);    
+      ), $options);
       $r .= data_entry_helper::location_select($location_list_args);
       //Create the mini report, not currently required on PSS site
       if (empty($options['pssMode']))
@@ -412,7 +413,7 @@ class extension_splash_extensions {
   public static function labels_displayed_from_splash_location_select($auth, $args, $tabAlias, $options) {
     if (!empty($options['selectedSquareLabel'])) {
       $selectedSquareLabel=$options['selectedSquareLabel'];
-    } 
+    }
     else {
       $selectedSquareLabel='';
     }
@@ -426,15 +427,15 @@ class extension_splash_extensions {
     $squareLabelOptions=array();
     $squareLabelOptions=array_merge($squareLabelOptions,
         array('id'=>'selected-square-id','class'=>'selected-square-class', 'label'=>$selectedSquareLabel,'readonly'=>'readonly', 'disabled'=>'disabled'));
-    
+
     $plotLabelOptions=array();
     $plotLabelOptions=array_merge($squareLabelOptions,
         array('id'=>'selected-plot-id', 'class'=>'selected-plot-class', 'label'=>$selectedPlotLabel,'readonly'=>'readonly', 'disabled'=>'disabled'));
-    
+
     if (empty($options['sectionTitle'])) {
       $options['sectionTitle']='';
     }
-    
+
     $r .= '<div>' . $options['sectionTitle'];
     // Dsplay the square and the plot
     $r .= data_entry_helper::text_input($squareLabelOptions);
@@ -455,7 +456,7 @@ class extension_splash_extensions {
     $('#imp-location').change(function() {
       update_square_plot_info_labels();
     });
-    
+
     function update_square_plot_info_labels() {
      var plotLabel=$('#imp-location :selected').text();
      plotLabel=plotLabel.substring(0, plotLabel.indexOf(' ('))
@@ -716,7 +717,8 @@ class extension_splash_extensions {
     }
     //Make the name of the square a link to the maintain square page
     if (!empty($reportOptions)) {
-      $squareNameData = data_entry_helper::get_report_data($reportOptions);
+      iform_load_helpers(['report_helper']);
+      $squareNameData = report_helper::get_report_data($reportOptions);
       if (!empty($squareNameData[0]['name'])) {
         //Use user supplied option if present
         if (!empty($options['label']))
@@ -766,7 +768,7 @@ class extension_splash_extensions {
   public static function draw_map_plot($auth, $args, $tabalias, $options, $path) {
     drupal_add_js(iform_client_helpers_path().'prebuilt_forms/extensions/splash_extensions.js');
     if (empty($options['squareSizes'])) {
-      drupal_set_message('Please fill in the @squareSizes option for the draw_map_plot control');
+      hostsite_show_message('Please fill in the @squareSizes option for the draw_map_plot control');
       return '';
     }
     iform_load_helpers(array('map_helper'));
@@ -1114,7 +1116,7 @@ class extension_splash_extensions {
   //AVB note: This function can be improved, as elegance and performance was at a low priority at the time of writing, clean up when I have time
   public static function simple_user_square_upload($auth, $args, $tabalias, $options, $path) {
     if (empty($options['minimumLocationDate'])) {
-      drupal_set_message('Please enter a @minimumLocationDate option to specify minimum square created_on date to look for');
+      hostsite_show_message('Please enter a @minimumLocationDate option to specify minimum square created_on date to look for');
       return false;
     }
     $minSquareDate=new DateTime($options['minimumLocationDate']);
@@ -1150,7 +1152,8 @@ class extension_splash_extensions {
           'nocache' => true
         ));
         if (empty($personData[0]['id'])) {
-          $personData = data_entry_helper::get_report_data(array(
+          iform_load_helpers(['report_helper']);
+          $personData = report_helper::get_report_data(array(
             'dataSource'=>'projects/npms/get_person_for_email_address',
             'readAuth'=>$auth['read'],
             'extraParams'=>array('email_address' => $email)
@@ -1176,11 +1179,11 @@ class extension_splash_extensions {
                 $convertedUploadIdx++;
               }
             } else {
-              drupal_set_message('An upload issue has been detected.');
+              hostsite_show_message('An upload issue has been detected.');
               if (empty($personData[0]['id']))
-                drupal_set_message('Could not upload to person. The following email address was not found '.$email);
+                hostsite_show_message('Could not upload to person. The following email address was not found '.$email);
               if (empty($locationData[0]['id']))
-                drupal_set_message('Could not upload square. The following location was not found '.$location);
+                hostsite_show_message('Could not upload square. The following location was not found '.$location);
         }
       }
         }
@@ -1294,7 +1297,8 @@ class extension_splash_extensions {
       'readAuth'=>$auth['read'],
       'extraParams' => array('website_id'=>$args['website_id'],'person_ids'=>$personIds),
     );
-    $existingAttrVal = data_entry_helper::get_report_data($reportOptions);
+    iform_load_helpers(['report_helper']);
+    $existingAttrVal = report_helper::get_report_data($reportOptions);
     // Change the array format to to be a multi-dimensional array with person_id, person_attribute_id indexes and
     // person_attribute_value_id indexes
     $tempExistingAttrVal = array();
@@ -1388,7 +1392,7 @@ class extension_splash_extensions {
             'readAuth'=>$auth['read'],
             'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['over18AttrId'], 'person_id'=>$userData[0]['person_id']),
           );
-          $existingOver18AttrVal = data_entry_helper::get_report_data($reportOptions);
+          $existingOver18AttrVal = report_helper::get_report_data($reportOptions);
           if (!empty($user->field_indicia_over_18['und'][0]['value']))
             $over18Data=$user->field_indicia_over_18['und'][0]['value'];
           else
@@ -1412,7 +1416,7 @@ class extension_splash_extensions {
             'readAuth'=>$auth['read'],
             'extraParams' => array('website_id'=>$args['website_id'],'person_attribute_id'=>$options['dataAccessAttrId'], 'person_id'=>$userData[0]['person_id']),
           );
-          $existingDataAccessAttrVal = data_entry_helper::get_report_data($reportOptions);
+          $existingDataAccessAttrVal = report_helepr::get_report_data($reportOptions);
           if (!empty($user->field_indicia_i_agree['und'][0]['value']))
             $dataAccessData=$user->field_indicia_i_agree['und'][0]['value'];
           else
@@ -1554,11 +1558,11 @@ class extension_splash_extensions {
       return 'An AJAX Proxy module must be enabled for user address syncing to work.';
 
     if (empty($options['minimumUid'])) {
-      drupal_set_message('Please enter a minimumUid for the minimum user id for the user address upload');
+      hostsite_show_message('Please enter a minimumUid for the minimum user id for the user address upload');
       return false;
     }
     if (empty($options['maximumUid'])) {
-      drupal_set_message('Please enter a maximumUid for the maximum user id for the user address upload');
+      hostsite_show_message('Please enter a maximumUid for the maximum user id for the user address upload');
       return false;
     }
   }
@@ -1740,7 +1744,7 @@ class extension_splash_extensions {
           function (data) {
             if (typeof data.error === 'undefined') {
               alert('User site configuration saved successfully');
-              
+
               var parameters;
               //remove overlay off back of URL
               var url = window.location.href.split('#')[0];
@@ -1795,7 +1799,7 @@ class extension_splash_extensions {
     return $r;
   }
   /*
-   * Decide if we need to send an information email to user when they allocate themselves a location, 
+   * Decide if we need to send an information email to user when they allocate themselves a location,
    * or do we need to send email to support on location removal
    * @auth Authentication to pass to functions for calling Warehouse.
    * @options Options complete set of options passed to the control.
@@ -1819,7 +1823,7 @@ class extension_splash_extensions {
       self::setup_and_prepare_location_allocation_remove_email($auth, $options['npmsSupportEmail'],$options['removalLocationEmailSubject'], $options['removalLocationEmailMessage'], 'Remove');
     }
   }
-  
+
   private static function user_site_delete($postUrl,$args) {
     //Function for when user elects to remove site allocations
     data_entry_helper::$javascript .= "
@@ -1869,7 +1873,8 @@ class extension_splash_extensions {
       'valueField'=>'id',
       'captionField'=>'fullname_surname_first'
     );
-    $userData = data_entry_helper::get_report_data($reportOptions);
+    iform_load_helpers(['report_helper']);
+    $userData = report_helper::get_report_data($reportOptions);
     $r = '<select id="user-select">\n';
     $r .= '<option value="">'.'please select'.'</option>\n';
     foreach ($userData as $userItem) {
@@ -1905,7 +1910,7 @@ class extension_splash_extensions {
         $emailAddress = $userData[0]['email_address'];
       } elseif ($type == 'Remove') {
         $emailAddress = $npmsSupportEmail;
-      } 
+      }
       if (!empty($locationData[0]['name'])&&!empty($emailAddress)&&!empty($userData[0]['username'])) {
         self::send_location_allocation_or_removal_email($userData[0]['username'], $subject, $message, $emailAddress, $locationData[0]['name'], $type);
       } else {
@@ -1923,25 +1928,25 @@ class extension_splash_extensions {
     $message = str_replace("{location_name}", $locationName, $message);
     if (!empty(variable_get('site_mail', '')))
       $emailFrom=variable_get('site_mail', '');
-    else 
+    else
       $emailFrom='support@npms.org.uk';
     // Left this line commented out as method of emailing can differ depending on host
-    //$sent = mail($emailTo, $subject, wordwrap($message, 70));       
+    //$sent = mail($emailTo, $subject, wordwrap($message, 70));
     $sent = drupal_mail('iform', 'location_signup_removal_mail', $emailTo, user_preferred_language($user), array('body' => $message, 'subject' => $subject/*, 'headers' => array('Cc' => $header_cc, 'Bcc' => $header_bcc)*/), $emailFrom, TRUE);
     // Change the logging message depending on email purpose
     if ($type==='Allocate') {
-      $action='signup';    
+      $action='signup';
     }
     if ($type==='Remove') {
-      $action='removal';    
-    }    
+      $action='removal';
+    }
     if ($sent['result']) {
       watchdog('iform', 'Location '.$action.' email sent to '.$username.' '.$emailTo);
     } else {
       watchdog('iform', 'Location '.$action.' email failed to '.$username.' '.$emailTo);
     }
   }
-  
+
   //The map pages uses node specific javascript that is very similar to the javascript functions found in
   //add_locations_to_user in this file (we couldn't call this code for re-use).
   //Use a simple function to supply the required indiciaData for that node specific javascript
@@ -2042,8 +2047,8 @@ class extension_splash_extensions {
    */
   public static function squares_user_has_entered_data_for($auth, $args, $tabAlias, $options) {
     //
-    if (!empty($options['userIdParamName']) && !empty($_GET[$options['userIdParamName']]) 
-     && !empty($options['limitToSurveyIds']) && !empty($options['ignoreSampleDatesBefore']) 
+    if (!empty($options['userIdParamName']) && !empty($_GET[$options['userIdParamName']])
+     && !empty($options['limitToSurveyIds']) && !empty($options['ignoreSampleDatesBefore'])
      && !empty($options['squareAdminPageLink']) && !empty($options['ignoreSquareDatesBefore'])) {
       $r = '<h4>Squares user has entered data for</h4>';
       $userIdParamName = $options['userIdParamName'];
@@ -2063,7 +2068,7 @@ class extension_splash_extensions {
           'ignore_square_dates_before' => $options['ignoreSquareDatesBefore'],
           'square_admin_page_link' => $options['squareAdminPageLink'],
           'website_id'=>$args['website_id']),
-      )); 
+      ));
     } else {
       $r = 'Please check all the required options for the "squares_user_has_entered_data_for_grid" extension have been filled in.
       Please fill in @limitToSurveyIds, @userIdParamName, @ignoreSampleDatesBefore, @ignoreSquareDatesBefore, @squareAdminPageLink<br><br>

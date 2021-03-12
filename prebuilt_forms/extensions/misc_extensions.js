@@ -18,7 +18,7 @@ jQuery(document).ready(function ($) {
     url = link.protocol + '//' + link.host + link.pathname + link.search + link.hash;
     $('#share-link').val(url);
     $.fancybox.close();
-    $.fancybox($('#group-link-popup'));
+    $.fancybox.open($('#group-link-popup'));
   };
 
   $('#area-picker').change(function areaPickerSelect() {
