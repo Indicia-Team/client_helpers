@@ -1276,11 +1276,15 @@ HTML;
       return '';
     }
     else {
+      $classes = ['user-filter'];
+      if ($options['definesPermissions']) {
+        $classes[] = 'defines-permissions';
+      }
       $controlOptions = [
         'label' => $options['label'],
         'fieldname' => $options['id'],
         'lookupValues' => $optionArr,
-        'class' => 'user-filter',
+        'class' => implode(' ', $classes),
       ];
       if (!$options['definesPermissions']) {
         $controlOptions['blankText'] = '- ' . lang::get('Please select') . ' - ';
@@ -1298,6 +1302,11 @@ HTML;
    *   Panel HTML;
    */
   public static function verificationButtons(array $options) {
+    if (!empty($options['includeUploadButton'])) {
+      $config = hostsite_get_es_config($nid);
+      helper_base::$indiciaData['esEndpoint'] = $config['es']['endpoint'];
+      helper_base::$indiciaData['idPrefix'] = $config['es']['warehouse_prefix'];
+    }
     self::checkOptions('verificationButtons', $options, ['showSelectedRow'], []);
     if (!empty($options['editPath'])) {
       $options['editPath'] = helper_base::getRootFolder(TRUE) . $options['editPath'];
@@ -1309,6 +1318,7 @@ HTML;
       'editPath',
       'keyboardNavigation',
       'showSelectedRow',
+      'uploadButtonContainerElement',
       'viewPath',
     ], TRUE);
     $userId = hostsite_get_user_field('indicia_user_id');
@@ -1340,6 +1350,7 @@ HTML;
       'commentTabTitle' => 'Comment on the record',
       'elasticsearchUpdateError' => 'An error occurred whilst updating the reporting index. It may not reflect your changes temporarily but will be updated automatically later.',
       'commentReplyInstruct' => 'Click here to add a publicly visible comment to the record on iRecord.',
+      'csvDisallowedMessage' => 'Uploading verification decisions is only allowed when there is a filter that defines the scope of the records you can verify.',
       'emailLoggedAsComment' => 'I emailed this record to the recorder for checking.',
       'emailQueryBodyHeader' => 'The following record requires confirmation. Please could you reply to this email ' .
         'stating how confident you are that the record is correct and any other information you have which may help ' .
@@ -1359,6 +1370,7 @@ HTML;
       'queryCommentTabUserIsNotNotified' => 'Although you can add a comment, sending the query as an email is preferred as the recorder does not check their notifications.',
       'queryInMultiselectMode' => 'As you are in multi-select mode, email facilities cannot be used and queries can only be added as comments to the record.',
       'requestManualEmail' => 'The webserver is not correctly configured to send emails. Please send the following email usual your email client:',
+      'uploadError' => 'An error occurred whilst uploading your spreadsheet.',
       'saveQueryToComments' => 'Save query to comments log',
       'sendQueryAsEmail' => 'Send query as email',
     ]);
@@ -1386,27 +1398,33 @@ HTML;
       'helpText' => lang::get('Please give reasons why you are changing this record.'),
       'fieldname' => 'redet-comment',
     ]);
-    return <<<HTML
+    global $indicia_templates;
+    $btnClass = $indicia_templates['buttonDefaultClass'];
+    $uploadButton = empty($options['includeUploadButton']) ? '' : <<<HTML
+      <button class="upload-decisions $btnClass" title="Upload a CSV file of verification decisions"><span class="fas fa-file-upload"></span></button>
+HTML;
+    $r = <<<HTML
 <div id="$options[id]" class="idc-verification-buttons" style="display: none;" data-idc-config="$dataOptions">
   <div class="selection-buttons-placeholder">
     <div class="all-selected-buttons idc-verification-buttons-row">
       Actions:
       <span class="fas fa-toggle-on toggle fa-2x" title="Toggle additional status levels"></span>
-      <button class="verify l1" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
-      <button class="verify l2" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
-      <button class="verify l2" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
-      <button class="verify" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
-      <button class="verify l1" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
-      <button class="verify l2" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
-      <button class="verify l2" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
+      <button class="verify l1 $btnClass" data-status="V" title="Accepted"><span class="far fa-check-circle status-V"></span></button>
+      <button class="verify l2 $btnClass" data-status="V1" title="Accepted :: correct"><span class="fas fa-check-double status-V1"></span></button>
+      <button class="verify l2 $btnClass" data-status="V2" title="Accepted :: considered correct"><span class="fas fa-check status-V2"></span></button>
+      <button class="verify $btnClass" data-status="C3" title="Plausible"><span class="fas fa-check-square status-C3"></span></button>
+      <button class="verify l1 $btnClass" data-status="R" title="Not accepted"><span class="far fa-times-circle status-R"></span></button>
+      <button class="verify l2 $btnClass" data-status="R4" title="Not accepted :: unable to verify"><span class="fas fa-times status-R4"></span></button>
+      <button class="verify l2 $btnClass" data-status="R5" title="Not accepted :: incorrect"><span class="fas fa-times status-R5"></span></button>
       <div class="multi-only apply-to">
         <span>Apply decision to:</span>
-        <button class="multi-mode-selected active">selected</button>
+        <button class="multi-mode-selected active $btnClass">selected</button>
         |
-        <button class="multi-mode-table">all</button>
+        <button class="multi-mode-table $btnClass">all</button>
       </div>
       <span class="sep"></span>
-      <button class="query" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
+      <button class="query $btnClass" data-query="Q" title="Raise a query"><span class="fas fa-question-circle query-Q"></span></button>
+      $uploadButton
     </div>
   </div>
   <div class="single-record-buttons idc-verification-buttons-row">
@@ -1422,7 +1440,53 @@ HTML;
   </form>
 </div>
 HTML;
+    if (!empty($options['includeUploadButton'])) {
+      $instruct = <<<TXT
+This form can be used to upload a spreadsheet of verification decisions. First, use the
+Download button to obtain a list of the records in your current verification grid. This has columns
+called *Decision status* and *Decision comment*. For rows you wish to verify, enter one of the
+status terms in the *Decision status* column and optionally fill in the *Decision comment*. Any
+comments without an associated status will be attached to the record without changing the status.
+When ready, save the spreadsheet and upload it using this tool. Valid status terms include:
+<ul>
+  <li>Accepted</li>
+  <li>Accepted as correct</li>
+  <li>Accepted as considered correct</li>
+  <li>Plausible</li>
+  <li>Not accepted</li>
+  <li>Not accepted as unable to verify</li>
+  <li>Not accepted as incorrect</li>
+  <li>Queried</li>
+</ul>
+TXT;
+      $instruct = lang::get($instruct);
+      $r .= <<<HTML
+<div id="upload-decisions-form-cntr" style="display: none">
+  <div id="upload-decisions-form">
+    <div class="instruct">$instruct</div>
+    <div class="form-group">
+      <label for="decisions-file">Excel or CSV file:</label>
+      <input type="file" class="form-control" id="decisions-file" accept=".csv, .xls, .xlsx" />
+    </div>
+    <button type="button" id="upload-decisions-file" class="btn btn-primary">Upload</button>
+    <div class="upload-output alert alert-info" style="display: none">
+      <div class="msg"></div>
+      <progress value="0" max="100" style="display: none"></progress>
+      <dl class="dl-horizontal">
+        <dt>Rows checked:</dt>
+        <dd class="checked">0</dd>
+        <dt>Verifications, comments or queries found:</dt>
+        <dd class="verifications">0</dd>
+        <dt>Errors found:</dt>
+        <dd class="errors">0</dd>
+      </dl>
+    </div>
+  </div>
+</div>
+HTML;
 
+    }
+    return $r;
   }
 
   /**
@@ -1778,7 +1842,6 @@ HTML;
         ? $error['message']
         : curl_errno($session) . ': ' . curl_error($session);
       throw new Exception(lang::get('An error occurred whilst connecting to Elasticsearch. {1}', $msg));
-
     }
     curl_close($session);
     $mappingData = json_decode($response, TRUE);
