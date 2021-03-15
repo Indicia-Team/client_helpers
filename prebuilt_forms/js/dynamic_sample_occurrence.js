@@ -124,4 +124,9 @@ jQuery(document).ready(function docReady($) {
     $(taxonRestrictionInputSelectors).change(changeTaxonRestrictionInputs);
   }
 
+  // If dynamic attrs loaded for existing record on initial page load, ensure
+  // they replace existing non-dynamic attributes of the same system function.
+  $.each($('.species-dynamic-attributes'), function loadAttrDiv() {
+    repositionDynamicAttributes(this);
+  });
 });
