@@ -114,12 +114,16 @@ class ElasticsearchProxyHelper {
         self::proxySearchByParams($nid);
         break;
 
-      case 'updateall':
-        self::proxyUpdateAll($nid);
+      case 'verifyall':
+        self::proxyVerifyAll($nid);
         break;
 
-      case 'updateids':
-        self::proxyUpdateIds();
+      case 'verifyspreadsheet':
+        self::proxyVerifySpreadsheet();
+        break;
+
+      case 'verifyids':
+        self::proxyVerifyIds();
         break;
 
       case 'verificationQueryEmail':
@@ -339,19 +343,19 @@ class ElasticsearchProxyHelper {
   }
 
   /**
-   * Proxy method that receives a list of IDs to perform updates on in Elastic.
+   * Proxy method that receives a list of IDs to verify in Elastic.
    *
    * Used by the verification system when in checklist mode to allow setting a
    * comment and status on multiple records in one go.
    */
-  private static function proxyUpdateIds() {
+  private static function proxyVerifyIds() {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
       throw new ElasticsearchProxyAbort('Configuration incomplete');
     }
     $statuses = isset($_POST['doc']['identification']) ? $_POST['doc']['identification'] : [];
-    echo self::internalUpdateIds($_POST['ids'], $statuses,
+    echo self::internalVerifyIds($_POST['ids'], $statuses,
       isset($_POST['doc']['metadata']['website']['id']) ? $_POST['doc']['metadata']['website']['id'] : NULL);
   }
 
@@ -361,7 +365,7 @@ class ElasticsearchProxyHelper {
    * Uses a filter definition passed in the post to retrieve the records from
    * ES then applies the decision to all aof them.
    */
-  private static function proxyUpdateAll($nid) {
+  private static function proxyVerifyAll($nid) {
     if (empty(self::$config['es']['warehouse_prefix'])) {
       header("HTTP/1.1 405 Method not allowed");
       echo json_encode(['error' => 'Method not allowed as server configuration incomplete']);
@@ -391,7 +395,7 @@ class ElasticsearchProxyHelper {
       'verification_status' => $_POST['occurrence:record_status'],
       'verification_substatus' => empty($_POST['occurrence:record_substatus']) ? 0 : $_POST['occurrence:record_substatus'],
     ];
-    self::internalUpdateIds($ids, $statuses, NULL);
+    self::internalVerifyIds($ids, $statuses, NULL);
     try {
       self::updateWarehouseVerificationAction($ids, $nid);
     }
@@ -403,6 +407,46 @@ class ElasticsearchProxyHelper {
     echo json_encode([
       'updated' => count($ids),
     ]);
+  }
+
+  /**
+   * Applies an uploaded spreadsheet containing verification decisions.
+   *
+   * Forwards the spreadsheet to the /occurrences/verify-spreadsheet end-point,
+   * applying the decisons to the records on the warehouse. The client JS code
+   * should call this multiple times, the first time with the file in a POSTed
+   * field called decisions, then subsequently send back the fileId (returned
+   * in the response metadata). This will process the file in chunks, which
+   * should continue until the response contains state=done.
+   */
+  private static function proxyVerifySpreadsheet() {
+    $url = self::$config['indicia']['base_url'] . 'index.php/services/rest/occurrences/verify-spreadsheet';
+
+    if (isset($_FILES['decisions'])) {
+      // Initial file upload.
+      $file = $_FILES['decisions'];
+      $payload = [
+        'decisions' => curl_file_create($file['tmp_name'], $file['type'], $file['name']),
+        'filter_id' => $_POST['filter_id'],
+        'user_id' => hostsite_get_user_field('indicia_user_id'),
+        'es_endpoint' => $_POST['es_endpoint'],
+        'id_prefix' => $_POST['id_prefix'],
+      ];
+    }
+    else {
+      if (!empty($_POST['fileId'])) {
+        // Subsequent processing request.
+        $payload = [
+          'fileId' => $_POST['fileId'],
+        ];
+      }
+    }
+    if (empty($payload)) {
+      header("HTTP/1.1 400 Bad request");
+      echo json_encode(['error' => 'Missing decisions file or fileId parameter']);
+      throw new ElasticsearchProxyAbort('Missing decisions file or fileId parameter');
+    }
+    echo self::curlPost($url, $payload, [], TRUE);
   }
 
   /**
@@ -466,7 +510,7 @@ class ElasticsearchProxyHelper {
    * @return string
    *   Result of the POST to ES.
    */
-  private static function internalUpdateIds(array $ids, array $statuses, $websiteIdToModify) {
+  private static function internalVerifyIds(array $ids, array $statuses, $websiteIdToModify) {
     $url = self::getEsUrl() . "/_update_by_query";
     $scripts = [];
     if (!empty($statuses['verification_status'])) {
@@ -564,12 +608,17 @@ class ElasticsearchProxyHelper {
    * Header sets content type to application/json and adds an Authorization
    * header appropriate to the method.
    *
+   * @param array $config
+   *   Elasticsearch configuration.
+   * @param string $contentType
+   *   Content type, defaults to application/json.
+   *
    * @return array
    *   Header strings.
    */
-  public static function getHttpRequestHeaders($config) {
+  public static function getHttpRequestHeaders($config, $contentType = 'application/json') {
     $headers = [
-      'Content-Type: application/json',
+      "Content-Type: $contentType",
     ];
     if (empty($config['es']['auth_method']) || $config['es']['auth_method'] === 'directClient') {
       $headers[] = 'Authorization: USER:' . $config['es']['user'] . ':SECRET:' . $config['es']['secret'];
@@ -620,7 +669,7 @@ class ElasticsearchProxyHelper {
   /**
    * A simple wrapper for the cUrl functionality to POST to Elastic.
    */
-  private static function curlPost($url, $data, $getParams = []) {
+  private static function curlPost($url, $data, $getParams = [], $multipart = FALSE) {
     $curlResponse = FALSE;
     $cacheTimeout = FALSE;
     if (!empty($data['proxyCacheTimeout'])) {
@@ -650,8 +699,8 @@ class ElasticsearchProxyHelper {
       }
       $session = curl_init($url);
       curl_setopt($session, CURLOPT_POST, 1);
-      curl_setopt($session, CURLOPT_POSTFIELDS, json_encode($data));
-      curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config));
+      curl_setopt($session, CURLOPT_POSTFIELDS, $multipart ? $data : json_encode($data));
+      curl_setopt($session, CURLOPT_HTTPHEADER, self::getHttpRequestHeaders(self::$config, $multipart ? 'multipart/form-data' : 'application/json'));
       curl_setopt($session, CURLOPT_REFERER, $_SERVER['HTTP_HOST']);
       curl_setopt($session, CURLOPT_SSL_VERIFYPEER, FALSE);
       curl_setopt($session, CURLOPT_HEADER, FALSE);
