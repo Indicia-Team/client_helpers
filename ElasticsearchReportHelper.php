@@ -1453,9 +1453,9 @@ When ready, save the spreadsheet and upload it using this tool. Valid status ter
   <li>Accepted as correct</li>
   <li>Accepted as considered correct</li>
   <li>Plausible</li>
-  <li>Rejected</li>
-  <li>Rejected as unable to verify</li>
-  <li>Rejected as incorrect</li>
+  <li>Not accepted</li>
+  <li>Not accepted as unable to verify</li>
+  <li>Not accepted as incorrect</li>
   <li>Queried</li>
 </ul>
 TXT;
