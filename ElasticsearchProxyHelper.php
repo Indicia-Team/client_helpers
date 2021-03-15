@@ -1004,7 +1004,7 @@ class ElasticsearchProxyHelper {
    * @param array $bool
    *   Bool clauses that filters can be added to (e.g. $bool['must']).
    */
-  private static function applyUserFilters(array $readAuth, array $query, array &$bool) {
+  public static function applyUserFilters(array $readAuth, array $query, array &$bool) {
     if (count($query['user_filters']) > 0) {
       require_once 'report_helper.php';
       foreach ($query['user_filters'] as $userFilter) {
