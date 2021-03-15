@@ -23,12 +23,12 @@ jQuery(document).ready(function docReady($) {
       $(this)[0].classList.forEach(function(c) {
         var standardControl;
         if (c.match(/^system\-function/)) {
-          // See if there is a control with same function already on the form. 
+          // See if there is a control with same function already on the form.
           // If so, we need to replace this control with the dynamic one.
           standardControl = $('.' + c).not('[class*=dynamic-attr]');
           if (standardControl.length > 0) {
-            // Disable the non-dynamic version, tag the wrapper so we can undo 
-            // this and hide it. Finally, add the dynamic version of the 
+            // Disable the non-dynamic version, tag the wrapper so we can undo
+            // this and hide it. Finally, add the dynamic version of the
             // control at this location in the form.
             standardControl
               .prop('disabled', true)
@@ -67,7 +67,7 @@ jQuery(document).ready(function docReady($) {
             '&language=' + indiciaData.userLang +
             '&options=' + JSON.stringify(indiciaData['dynamicAttrOptions' + type]), null,
           function getAttrsReportCallback(data) {
-            // Reset any controls affected by earlier loading of attrs for a 
+            // Reset any controls affected by earlier loading of attrs for a
             // different taxon.
             $('.dynamically-replaced').show();
             $('.dynamically-replaced :input').prop('disabled', false);
@@ -170,4 +170,10 @@ jQuery(document).ready(function docReady($) {
       });
     }
   }
+
+  // If dynamic attrs loaded for existing record on initial page load, ensure
+  // they replace existing non-dynamic attributes of the same system function.
+  $.each($('.species-dynamic-attributes'), function loadAttrDiv() {
+    repositionDynamicAttributes(this);
+  });
 });
