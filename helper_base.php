@@ -374,18 +374,26 @@ class helper_base {
   public static $css_path = NULL;
 
   /**
-   * @var string Path to Indicia Images folder.
+   * Path to Indicia Images folder.
+   *
+   * @var string
    */
   public static $images_path = NULL;
 
   /**
-   * @var string Path to Indicia cache folder. Defaults to client_helpers/cache.
+   * Path to Indicia cache folder. Defaults to client_helpers/cache.
+   *
+   * @var string
    */
   public static $cache_folder = FALSE;
 
   /**
-   * @var array List of resources that have already been dumped out, so we don't duplicate them. For example, if the
-   * site template includes JQuery set $dumped_resources[]='jquery'.
+   * List of resources that have already been dumped out.
+   *
+   * Avoids duplication. For example, if the site template includes JQuery set
+   * $dumped_resources[]='jquery'.
+   *
+   * @var array
    */
   public static $dumped_resources = [];
 
@@ -397,46 +405,63 @@ class helper_base {
   public static $indiciaData = [];
 
   /**
-   * @var string JavaScript text to be emitted after the data entry form. Each control that
-   * needs custom JavaScript can append the script to this variable.
+   * Inline JavaScript to be added to the page.
+   *
+   * Each control that needs custom JavaScript can append the script to this
+   * variable. Will be enclosed in a document ready event hander.
+   *
+   * @var string
    */
   public static $javascript = '';
 
   /**
-   * @var string JavaScript text to be emitted after the data entry form and all other JavaScript.
+   * JavaScript text to be emitted after all other JavaScript.
+   *
+   * @var string
    */
   public static $late_javascript = '';
 
   /**
-   * @var string JavaScript text to be emitted during window.onload.
+   * JavaScript text to be emitted during window.onload.
+   *
+   * @var string
    */
   public static $onload_javascript = '';
 
   /**
-   * @var boolean Setting to completely disable loading from the cache
+   * Setting to completely disable loading from the cache
+   *
+   * @var bool
    */
   public static $nocache = FALSE;
 
  /**
-  * @var integer On average, every 1 in $interim_image_chance_purge times the
+  * Chance of a cache purge occurring.
+  * On average, every 1 in $interim_image_chance_purge times the
   * Warehouse is called for data, all interim images older than $interim_image_expiry
   * seconds will be deleted. These are images that should have uploaded to the
   * warehouse but the form was not finally submitted.
+  *
+  * @var integer
   */
   public static $interim_image_chance_purge = 100;
 
   /**
-   * @var integer On average, every 1 in $cache_chance_expire times the Warehouse
-   * is called for data which is
+   * Age of image files in seconds before they will be considered for purging.
+   *
+   * @var int
    */
   public static $interim_image_expiry = 14400;
 
   /**
-   * @var array Contains elements for each media type that can be uploaded. Each
-   * element is an array of allowed file extensions for that media type. Used
-   * for filtering files to upload on client side. File extensions must be in
-   * lower case. Each entry should have its mime type included in
-   * $upload_mime_types.
+   * File types and extensions allowed for upload.
+   *
+   * Contains elements for each media type that can be uploaded. Each element
+   * is an array of allowed file extensions for that media type. Used for
+   * filtering files to upload on client side. File extensions must be in lower
+   * case. Each entry should have its mime type included in $upload_mime_types.
+   *
+   * @var array
    */
   public static $upload_file_types = [
     'image' => ['jpg', 'gif', 'png', 'jpeg'],
@@ -445,10 +470,14 @@ class helper_base {
   ];
 
   /**
-   * @var array Contains elements for each media type that can be uploaded. Each
-   * element is an array of the allowed mime subtypes for that media type. Used
-   * for testing uploaded files. Each entry in $upload_file_types should have
-   * its mime type in this list.
+   * Mime types allowed for upload.
+   *
+   * Contains elements for each media type that can be uploaded. Each element
+   * is an array of the allowed mime subtypes for that media type. Used for
+   * testing uploaded files. Each entry in $upload_file_types should have its
+   * mime type in this list.
+   *
+   * @var array
    */
   public static $upload_mime_types = [
     'image' => ['jpeg', 'gif', 'png'],
