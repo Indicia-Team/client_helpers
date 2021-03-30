@@ -3039,7 +3039,7 @@ RIJS;
   * <li><b>mediaTypes</b><br/>
   * Optional. Array of media types that can be uploaded. Choose from Audio:Local, Audio:SoundCloud, Image:Flickr,
   * Image:Instagram, Image:Local, Image:Twitpic, Pdf:Local, Social:Facebook, Social:Twitter, Video:Youtube,
-  * Video:Vimeo.
+  * Video:Vimeo, Zerocrossing:Local.
   * Currently not supported for multi-column grids.</li>
   * <li><b>resizeWidth</b><br/>
   * If set, then the image files will be resized before upload using this as the maximum pixels width.

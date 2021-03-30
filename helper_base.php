@@ -467,6 +467,7 @@ class helper_base {
     'image' => ['jpg', 'gif', 'png', 'jpeg'],
     'pdf' => ['pdf'],
     'audio' => ['mp3', 'wav'],
+    'zerocrossing' => ['zc'],
   ];
 
   /**
@@ -481,7 +482,7 @@ class helper_base {
    */
   public static $upload_mime_types = [
     'image' => ['jpeg', 'gif', 'png'],
-    'application' => ['pdf'],
+    'application' => ['pdf', 'octet-stream'],
     'audio' => ['mpeg', 'x-wav'],
   ];
 
