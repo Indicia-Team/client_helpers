@@ -58,8 +58,7 @@ class DynamicAttrsProxyHelper {
       $_GET['taxa_taxon_list_ids'],
       NULL,
       'occurrence',
-      $_GET['language'],
-      empty($_GET['occurrence_id']) ? NULL : $_GET['occurrence_id']
+      $_GET['language']
     );
     // Convert to a response with control HTML.
     $attrData = [];
@@ -90,7 +89,7 @@ class DynamicAttrsProxyHelper {
   /**
    * Retrieve the dynamic attribute data for this taxon from the db.
    */
-  private static function getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language, $occurrenceId = NULL) {
+  private static function getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language) {
     $params = [
       'survey_id' => $surveyId,
       'taxa_taxon_list_id' => $ttlId,
@@ -100,13 +99,10 @@ class DynamicAttrsProxyHelper {
     if (!empty($stageTermlistsTermIds)) {
       $params['stage_termlists_term_ids'] = implode(',', $stageTermlistsTermIds);
     }
-    if (!empty($occurrenceId)) {
-      $params['occurrence_id'] = $occurrenceId;
-    }
     $r = helper_base::get_population_data([
-      'report' => "library/{$type}_attributes/{$type}_attributes_for_form",
+      'report' => "library/{$type}_attributes/{$type}_attributes_for_form_2",
       'extraParams' => $params + $readAuth,
-      'caching' => TRUE,
+      'caching' => FALSE,
     ]);
     return $r;
   }
