@@ -18,7 +18,7 @@ jQuery(document).ready(function docReady($) {
   function repositionDynamicAttributes(div) {
     // Locate each dynamic attribute.
     $.each($(div).find('[class*=system-function-][class*=dynamic-attr]'), function() {
-      var ctrlWrap = $(this).parent();
+      var ctrlWrap = $(this).closest('.ctrl-wrap');
       // Find the system-function-* class.
       $(this)[0].classList.forEach(function(c) {
         var standardControl;

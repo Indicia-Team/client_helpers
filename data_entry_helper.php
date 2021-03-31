@@ -3485,7 +3485,7 @@ RIJS;
             if ($img) {
               $label = lang::get($statusLabel);
               $title = lang::get('This record has been {1}. Changing it will mean that it will need to be rechecked by an expert.', $label);
-              $firstCell .= "<img alt=\"$label\" title=\"$title\" src=\"{$imgPath}nuvola/$img-16px.png\">";
+              $firstCell .= "<img class=\"record-status-set\" alt=\"$label\" title=\"$title\" src=\"{$imgPath}nuvola/$img-16px.png\">";
             }
             data_entry_helper::$checkedRecordsCount++;
           }
@@ -3589,8 +3589,9 @@ RIJS;
               $loadedCtrlFieldName = str_replace('-idx-:', $loadedTxIdx.':'.$existingRecordId, $attributes[$attrId]['fieldname']);
               $ctrlId = str_replace('-idx-:', "$options[id]-$txIdx:$existingRecordId", $attributes[$attrId]['fieldname']);
             }
-            if (isset(self::$entity_to_load[$loadedCtrlFieldName]))
+            if (isset(self::$entity_to_load[$loadedCtrlFieldName])) {
               $existing_value = self::$entity_to_load[$loadedCtrlFieldName];
+            }
           } else {
             // No existing record, so use a default control ID which excludes
             // the existing record ID.
@@ -3603,9 +3604,10 @@ RIJS;
           }
           // Inject the field name into the control HTML
           $oc = str_replace('{fieldname}', $ctrlId, $control);
-          if ($existing_value<>"") {
-            // For select controls, specify which option is selected from the existing value
-            if (substr(trim($oc), 0, 7)==='<select') {
+          if ($existing_value !== '') {
+            // For select controls, specify which option is selected from the
+            // existing value.
+            if (strpos($oc, '<select') !== FALSE) {
               if (strpos($oc, 'value="'.$existing_value.'"')) {
                 $oc = str_replace('value="'.$existing_value.'"',
                   'value="'.$existing_value.'" selected="selected"', $oc);
@@ -4729,13 +4731,20 @@ JS;
         // data values to use for the dynamic attrs once they are loaded by the
         // script.
         foreach (self::$entity_to_load as $key => $value) {
-          if (preg_match('/^sc:\d+:\d+:occAttr:\d+:\d+$/', $key)) {
+          if (preg_match('/^sc:[a-z0-9\-]+:\d+:occAttr:\d+(:\d+)?$/', $key)) {
             $attrData[$key] = $value;
           }
         }
         if (count($attrData) > 0) {
-          self::$indiciaData['loadExistingDynamicAttrs'] = true;
+          self::$indiciaData['loadExistingDynamicAttrs'] = TRUE;
           self::$indiciaData['existingOccAttrData'] = $attrData;
+          helper_base::addLanguageStringsToJs('dynamicattrs', [
+            'manualMappingMessage' => 'Some existing records have values that could be better replaced by one chosen ' .
+              'from the list of options that are now available for that species. This is optional - the values you ' .
+              'can replace are highlighted for you. The column(s) affected are: {cols}.',
+            'manualMappingVerificationWarning' => 'Please note if you change records that are already verified they ' .
+              'will need to be rechecked by an expert.'
+          ]);
         }
       }
       // Works out which attributes are for which system function.
