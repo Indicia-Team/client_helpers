@@ -52,12 +52,11 @@ class DynamicAttrsProxyHelper {
     $conn = iform_get_connection_details();
     $readAuth = helper_base::get_read_auth($conn['website_id'], $conn['password']);
     // Get the attributes for this taxon.
-    $attrList = self::getDynamicAttrsList(
+    $attrList = self::getOccurrenceDynamicAttrsList(
       $readAuth,
       $_GET['survey_id'],
       $_GET['taxa_taxon_list_ids'],
       NULL,
-      'occurrence',
       $_GET['language']
     );
     // Convert to a response with control HTML.
@@ -87,9 +86,9 @@ class DynamicAttrsProxyHelper {
   }
 
   /**
-   * Retrieve the dynamic attribute data for this taxon from the db.
+   * Retrieve the dynamic occAttr data for this taxon from the db.
    */
-  private static function getDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $type, $language) {
+  private static function getOccurrenceDynamicAttrsList($readAuth, $surveyId, $ttlId, $stageTermlistsTermIds, $language) {
     $params = [
       'survey_id' => $surveyId,
       'taxa_taxon_list_id' => $ttlId,
@@ -100,7 +99,7 @@ class DynamicAttrsProxyHelper {
       $params['stage_termlists_term_ids'] = implode(',', $stageTermlistsTermIds);
     }
     $r = helper_base::get_population_data([
-      'report' => "library/{$type}_attributes/{$type}_attributes_for_form_2",
+      'report' => "library/occurrence_attributes/occurrence_attributes_for_form_2",
       'extraParams' => $params + $readAuth,
       'caching' => FALSE,
     ]);
