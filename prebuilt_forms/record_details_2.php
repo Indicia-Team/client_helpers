@@ -272,6 +272,9 @@ Record ID',
     if (empty($_GET['occurrence_id'])) {
       return 'This form requires an occurrence_id parameter in the URL.';
     }
+    if (!preg_match('/^\d+$/', trim($_GET['occurrence_id']))) {
+      return 'The occurrence_id parameter in the URL must be a valid record ID.';
+    }
     iform_load_helpers(array('report_helper'));
     if ($args['available_for_groups'] === '1') {
       if (empty($_GET['group_id'])) {
