@@ -434,6 +434,19 @@ HTML;
 </li>
 HTML;
   }
+  // Other local files can be displayed as a file icon.
+  if (substr($medium['media_type'], -6) === ':Local') {
+    $fileType = substr($medium['media_type'], 0, strlen($medium['media_type']) - 6);
+    return <<<HTML
+<li class="gallery-item">
+  <a $mediaAttr$captionAttr
+      href="$imageFolder$medium[path]">
+    <span class="fas fa-file-invoice fa-2x"></span><br/>
+    $fileType
+  </a>
+</li>
+HTML;
+  }
   // Everything else will be treated using noembed on the popup.
   // Build icon class using web domain.
   $matches = preg_match('/^http(s)?:\/\/(www\.)?([a-z]+(\.kr)?)/', $medium['path']);
