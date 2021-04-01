@@ -2185,61 +2185,57 @@ JS;
   }
 
   /**
-   * Helper function to generate a radio group from a Indicia core service query.
+   * Helper function to generate a radio group from a termlist.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>table</b><br/>
-   * Optional. Table name to get data from for the select options. Required unless lookupValues is specified.</li>
-   * <li><b>captionField</b><br/>
-   * Optional. Field to draw values to show in the control from. Required unless lookupValues is specified.</li>
-   * <li><b>valueField</b><br/>
-   * Optional. Field to draw values to return from the control from. Defaults
-   * to the value of captionField. </li>
-   * <li><b>extraParams</b><br/>
-   * Optional. Associative array of items to pass via the query string to the service. This
-   * should at least contain the read authorisation array.</li>
-   * <li><b>lookupValues</b><br/>
-   * If the group is to be populated with a fixed list of values, rather than via a service call, then the
-   * values can be passed into this parameter as an associated array of key=>caption.</li>
-   * <li><b>cachetimeout</b><br/>
-   * Optional. Specifies the number of seconds before the data cache times out - i.e. how long
-   * after a request for data to the Indicia Warehouse before a new request will refetch the data,
-   * rather than use a locally stored (cached) copy of the previous request. This speeds things up
-   * and reduces the loading on the Indicia Warehouse. Defaults to the global website-wide value:
-   * if this is not specified then 1 hour.</li>
-   * <li><b>template</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for the outer control.</li>
-   * <li><b>itemTemplate</b><br/>
-   * Optional. If specified, specifies the name of the template (in global $indicia_templates) to use
-   * for each item in the control.</li>
-   * <li><b>captionTemplate</b><br/>
-   * Optional and only relevant when loading content from a data service call. Specifies the template used to build the caption,
-   * with each database field represented as {fieldname}.</li>
-   * <li><b>termImageSize</b><br/>
-   * Optional. Set to an Indicia image size preset (normally thumb, med or original) to include term images in the
-   * output.</li>
-   * </ul>
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>check_or_radio_group</b></br>
-   * Container element for the group of checkboxes.
-   * </li>
-   * <li><b>check_or_radio_group_item</b></br>
-   * Template for the HTML element used for each item in the group.
-   * </li>
-   * </ul>
+   * The output of this control can be configured using the following
+   * templates:
+   *   * check_or_radio_group - Container element for the group of checkboxes.
+   *   * check_or_radio_group_item - Template for the HTML element used for
+   *     each item in the group.
    *
-   * @return string HTML to insert into the page for the group of radio buttons.
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to.
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.
+   *   * table - Optional. Table name to get data from for the select options.
+   *     Required unless lookupValues is specified.
+   *   * captionField - Optional. Field to draw values to show in the control
+   *     from. Required unless lookupValues is specified.
+   *   * valueField - Optional. Field to draw values to return from the control
+   *     from. Defaults to the value of captionField.
+   *   * extraParams - Optional. Associative array of items to pass via the
+   *     query string to the service. This should at least contain the read
+   *     authorisation array.
+   *   * lookupValues - If the group is to be populated with a fixed list of
+   *     values, rather than via a service call, then the values can be passed
+   *     into this parameter as an associated array of key=>caption.
+   *   * cachetimeout - Optional. Specifies the number of seconds before the
+   *     data cache times out - i.e. how long after a request for data to the
+   *     Indicia Warehouse before a new request will refetch the data, rather
+   *     than use a locally stored (cached) copy of the previous request. This
+   *     speeds things up and reduces the loading on the Indicia Warehouse.
+   *     Defaults to the global website-wide value; if this is not specified
+   *     then 1 hour.
+   *   * template - Optional. If specified, specifies the name of the template
+   *     (in global $indicia_templates) to use for the outer control.
+   *   * itemTemplate - Optional. If specified, specifies the name of the
+   *     template (in global $indicia_templates) to use for each item in the
+   *     control.
+   *   * captionTemplate - Optional and only relevant when loading content from
+   *     a data service call. Specifies the template used to build the caption,
+   *     with each database field represented as {fieldname}.
+   *   * termImageSize - Optional. Set to an Indicia image size preset
+   *     (normally thumb, med or original) to include term images in the
+   *     output.
+   *
+   * @return string
+   *   HTML to insert into the page for the group of radio buttons.
    */
   public static function radio_group($options) {
     $options = self::check_options($options);
@@ -2247,22 +2243,34 @@ JS;
   }
 
   /**
-   * Returns a simple HTML link to download the contents of a report defined by the options. The options arguments supported are the same as for the
-   * report_grid method. Pagination information will be ignored (e.g. itemsPerPage).
-   * @param array $options Refer to report_helper::report_download_link documentation.
-   * @deprecated Use report_helper::report_download_link.
+   * Report download link.
+   *
+   * Returns a simple HTML link to download the contents of a report defined by
+   * the options. The options arguments supported are the same as for the
+   * report_grid method. Pagination information will be ignored (e.g.
+   * itemsPerPage).
+   *
+   * @param array $options
+   *   Refer to report_helper::report_download_link documentation.
+   *
+   * @deprecated
+   *   Use report_helper::report_download_link.
    */
-  public static function report_download_link($options) {
-    require_once('report_helper.php');
+  public static function report_download_link(array $options) {
+    require_once 'report_helper.php';
     return report_helper::report_download_link($options);
   }
 
   /**
    * Outputs a chart that loads the content of a report or Indicia table.
-   * @param array $options Refer to report_helper::report_chart documentation.
-   * @deprecated Use report_helper::report_chart.
+   *
+   * @param array $options
+   *   Refer to report_helper::report_chart documentation.
+   *
+   * @deprecated
+   *   Use report_helper::report_chart.
    */
-  public static function report_chart($options) {
+  public static function report_chart(array $options) {
     require_once('report_helper.php');
     return report_helper::report_chart($options);
   }
@@ -2356,15 +2364,14 @@ JS;
    * @return string
    *   HTML code for a select control.
    */
-  public static function select($options)
-  {
+  public static function select(array $options) {
     $options = array_merge(
-      array(
+      [
         'template' => 'select',
         'itemTemplate' => 'select_item',
         'isFormControl' => TRUE,
         'attributes' => [],
-      ),
+      ],
       self::check_options($options)
     );
     $attrArray = [];
@@ -2376,136 +2383,134 @@ JS;
   }
 
   /**
-   * Outputs a spatial reference input box and a drop down select control populated with a list of
-   * spatial reference systems for the user to select from. If there is only 1 system available then
-   * the system drop down is ommitted since it is not required.
-   * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>sref_textbox</b></br>
-   * Template used for the text input box for the spatial reference.
-   * </li>
-   * <li><b>sref_textbox_latlong</b></br>
-   * Template used for the latitude and longitude input boxes when the splitLatLong option is set
-   * to true.
-   * </li>
-   * <li><b>select</b></br>
-   * Template used for the select element which contains the spatial reference system options available
-   * for input.
-   * </li>
-   * <li><b>select_item</b></br>
-   * Template used for the option elements in the select list of spatial reference system options available
-   * for input.
-   * </li>
-   * </ul>
+   * Spatial ref input with system picker.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. Name of the database field that spatial reference will be posted to. Defaults to
-   * sample:entered_sref. The system field is automatically constructed from this.</li>
-   * <li><b>systems</b>
-   * Optional. List of spatial reference systems to display. Associative array with the key
-   * being the EPSG code for the system or the notation abbreviation (e.g. OSGB), and the value being
-   * the description to display.</li>
-   * <li><b>defaultSystem</b>
-   * Optional. Code for the default system value to load.</li>
-   * <li><b>defaultGeom</b>
-   * Optional. WKT value for the default geometry to load (hidden).</li>
-   * </ul>
+   * Outputs a spatial reference input box and a drop down select control
+   * populated with a list of spatial reference systems for the user to select
+   * from. If there is only 1 system available then the system drop down is
+   * ommitted since it is not required.
    *
-   * @return string HTML to insert into the page for the spatial reference and system selection control.
+   * The output of this control can be configured using the following
+   * templates:
+   * * sref_textbox - Template used for the text input box for the spatial
+   *   reference.
+   * * sref_textbox_latlong - Template used for the latitude and longitude
+   *   input boxes when the splitLatLong option is set to true.
+   * * select - Template used for the select element which contains the spatial
+   *   reference system options available for input.
+   * * select_item - Template used for the option elements in the select list
+   *   of spatial reference system options available for input.
+   *
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. Name of the database field that spatial
+   *     reference will be posted to. Defaults to sample:entered_sref. The
+   *     system field is automatically constructed from this.
+   *   * systems - Optional. List of spatial reference systems to display.
+   *     Associative array with the key being the EPSG code for the system or
+   *     the notation abbreviation (e.g. OSGB), and the value being the
+   *     description to display.
+   *   * defaultSystem - Optional. Code for the default system value to load.
+   *   * defaultGeom - Optional. WKT value for the default geometry to load
+   *     (hidden).
+   *
+   * @return string
+   *   HTML to insert into the page for the spatial reference and system
+   *   selection control.
    */
-  public static function sref_and_system($options) {
-    $options = array_merge(array(
-      'fieldname'=>'sample:entered_sref'
-    ), $options);
+  public static function sref_and_system(array $options) {
+    $options = array_merge([
+      'fieldname' => 'sample:entered_sref'
+    ], $options);
     // If we have more than one possible system, need a control to allow user selection
     $systemControlRequired = !(array_key_exists('systems', $options) && count($options['systems']) === 1);
     // in which case, no wrap around the 2 inner controls, just one around the outer added later
     if ($systemControlRequired)
       $options['controlWrapTemplate'] = 'justControl';
-    if (array_key_exists('systems',$options) && count($options['systems']) == 1) {
-      // The system select will be hidden since there is only one system
+    if (array_key_exists('systems', $options) && count($options['systems']) === 1) {
+      // The system select will be hidden since there is only one system.
       $srefOptions = $options;
     } else {
       $srefOptions = array_merge($options);
-      // Show the help text after the 2nd control
+      // Show the help text after the 2nd control.
       if (isset($srefOptions['helpText'])) {
         unset($srefOptions['helpText']);
       }
     }
-    // Output the sref control
+    // Output the sref control.
     $r = self::sref_textbox($srefOptions);
 
-    // tweak the options passed to the system selector
-    $options['fieldname']=$options['fieldname']."_system";
+    // Tweak the options passed to the system selector.
+    $options['fieldname'] = "$options[fieldname]_system";
     unset($options['label']);
     if (isset($options['defaultSystem'])) {
-      $options['default']=$options['defaultSystem'];
+      $options['default'] = $options['defaultSystem'];
     }
     // Output the system control
     if (!$systemControlRequired) {
       // Hidden field for the system
       $keys = array_keys($options['systems']);
-      $r .= "<input type=\"hidden\" id=\"imp-sref-system\" name=\"".$options['fieldname']."\" value=\"".$keys[0]."\" />\n";
+      $r .= "<input type=\"hidden\" id=\"imp-sref-system\" name=\"$options[fieldname]\" value=\"$keys[0]\" />\n";
       self::includeSrefHandlerJs($options['systems']);
     }
     else {
       $r .= self::sref_system_select($options);
-      // put an outer container to keep them together
+      // Put an outer container to keep them together.
       global $indicia_templates;
-      $r = str_replace(array('{control}', '{id}'), array($r, 'imp-sref-and-system'), $indicia_templates['controlWrap']);
+      $r = str_replace(['{control}', '{id}'], [$r, 'imp-sref-and-system'], $indicia_templates['controlWrap']);
     }
     return $r;
   }
 
   /**
-   * Outputs a drop down select control populated with a list of spatial reference systems
-   * for the user to select from.
+   * Spatial reference system picker.
+   *
+   * Outputs a drop down select control populated with a list of spatial
+   * reference systems for the user to select from.
+   *
    * The output of this control can be configured using the following templates:
-   * <ul>
-   * <li><b>select</b></br>
-   * Template used for the select element which contains the spatial reference system options available
-   * for input.
-   * </li>
-   * <li><b>select_item</b></br>
-   * Template used for the option elements in the select list of spatial reference system options available
-   * for input.
-   * </li>
-   * </ul>
+   * * select - Template used for the select element which contains the spatial
+   *   reference system options available for input.
+   * * select_item - Template used for the option elements in the select list
+   *   of spatial reference system options available for input.
    *
-   * @param array $options Options array with the following possibilities:<ul>
-   * <li><b>fieldname</b><br/>
-   * Required. The name of the database field this control is bound to. Defaults to sample:entered_sref_system.</li>
-   * <li><b>id</b><br/>
-   * Optional. The id to assign to the HTML control. If not assigned the fieldname is used.</li>
-   * <li><b>default</b><br/>
-   * Optional. The default value to assign to the control. This is overridden when reloading a
-   * record with existing data for this control.</li>
-   * <li><b>class</b><br/>
-   * Optional. CSS class names to add to the control.</li>
-   * <li><b>systems</b>
-   * Optional. List of spatial reference systems to display. Associative array with the key
-   * being the EPSG code for the system or the notation abbreviation (e.g. OSGB), and the value being
-   * the description to display.</li>
-   * </ul>
+   * @param array $options
+   *   Options array with the following possibilities:
+   *   * fieldname - Required. The name of the database field this control is
+   *     bound to. Defaults to sample:entered_sref_system.</li>
+   *   * id - Optional. The id to assign to the HTML control. If not assigned
+   *     the fieldname is used.</li>
+   *   * default - Optional. The default value to assign to the control. This
+   *     is overridden when reloading a record with existing data for this
+   *     control.
+   *   * class - Optional. CSS class names to add to the control.>
+   *   * systems - Optional. List of spatial reference systems to display.
+   *     Associative array with the key being the EPSG code for the system or
+   *     the notation abbreviation (e.g. OSGB), and the value being the
+   *     description to display.
    *
-   * @return string HTML to insert into the page for the spatial reference systems selection control.
+   * @return string
+   *   HTML to insert into the page for the spatial reference systems selection
+   *   control.
    */
-  public static function sref_system_select($options) {
+  public static function sref_system_select(array $options) {
     global $indicia_templates;
-    $options = array_merge(array(
-      'fieldname'=>'sample:entered_sref_system',
-      'systems'=>array('OSGB'=>lang::get('sref:OSGB'), '4326'=>lang::get('sref:4326')),
-      'id'=>'imp-sref-system',
+    $options = array_merge([
+      'fieldname' => 'sample:entered_sref_system',
+      'systems'=> [
+        'OSGB' => lang::get('sref:OSGB'),
+        '4326' => lang::get('sref:4326')
+      ],
+      'id' => 'imp-sref-system',
       'isFormControl' => TRUE
-    ), $options);
+    ], $options);
     $options = self::check_options($options);
-    $opts = "";
-    foreach ($options['systems'] as $system=>$caption){
+    $opts = '';
+    foreach ($options['systems'] as $system => $caption){
       $selected = ($options['default'] == $system ? 'selected' : '');
       $opts .= str_replace(
-        array('{value}', '{caption}', '{selected}'),
-        array($system, $caption, $selected),
+        ['{value}', '{caption}', '{selected}'],
+        [$system, $caption, $selected],
         $indicia_templates['select_item']
       );
     }
